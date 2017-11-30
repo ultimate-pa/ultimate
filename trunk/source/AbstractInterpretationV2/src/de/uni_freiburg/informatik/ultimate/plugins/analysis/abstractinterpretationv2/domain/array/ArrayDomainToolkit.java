@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -154,22 +156,21 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public Term getTerm(final Expression expression) {
-		// TODO: What to use here?
-		final IIdentifierTranslator[] identifierTranslators = null;
-		return mBoogie2Smt.getExpression2Term().translateToTerm(identifierTranslators, expression).getTerm();
+		return mBoogie2Smt.getExpression2Term()
+				.translateToTerm(new IIdentifierTranslator[] { new IdentifierTranslator() }, expression).getTerm();
 	}
 
-	public IProgramVarOrConst getBoogieVar(final IdentifierExpression expr) {
-		IProgramVarOrConst returnVar =
-				mVariableProvider.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
-
+	private IProgramVarOrConst getBoogieVar(final String id, final DeclarationInformation declInfo,
+			final boolean isOldContext) {
+		final IProgramVarOrConst returnVar = mVariableProvider.getBoogieVar(id, declInfo, isOldContext);
 		if (returnVar != null) {
 			return returnVar;
 		}
+		return mVariableProvider.getBoogieConst(id);
+	}
 
-		returnVar = mVariableProvider.getBoogieConst(expr.getIdentifier());
-		assert returnVar != null;
-		return returnVar;
+	public IProgramVarOrConst getBoogieVar(final IdentifierExpression expr) {
+		return getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
 	}
 
 	public IProgramVar getBoogieVar(final VariableLHS variable) {
@@ -204,5 +205,13 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, getManagedScript(),
 				term, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		return SmtUtils.simplify(getManagedScript(), eliminated, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+	}
+
+	private class IdentifierTranslator implements IIdentifierTranslator {
+		@Override
+		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
+				final BoogieASTNode boogieASTNode) {
+			return getBoogieVar(id, declInfo, isOldContext).getTerm();
+		}
 	}
 }

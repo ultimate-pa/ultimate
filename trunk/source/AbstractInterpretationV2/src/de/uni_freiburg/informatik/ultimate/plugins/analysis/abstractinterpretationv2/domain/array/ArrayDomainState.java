@@ -205,7 +205,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		while (idx1 < s1.size() || idx2 < s2.size()) {
 			final IProgramVar b1 = s1.getBound(idx1);
 			final IProgramVar b2 = s2.getBound(idx2);
-			final IProgramVarOrConst v1 = s1.getValue(idx1);
+			final IProgramVar v1 = s1.getValue(idx1);
 			final IProgramVar v2 = s2.getValue(idx2);
 			final IProgramVar v1Old = s1.getValue(idx1 - 1);
 			final IProgramVar v2Old = s2.getValue(idx2 - 1);
@@ -510,7 +510,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final STATE completeState2 = renamedState2.addVariables(renamedState1.getVariables());
 		STATE result = completeState1.intersect(completeState2).addVariables(mVariables);
 		for (final IProgramVarOrConst var : mVariables) {
-			final Term term = getEqualities(var, Arrays.asList(map1.get(var), map2.get(var)), Operator.LOGICOR);
+			final Term term = getEqualities(var,
+					Arrays.asList((IProgramVar) map1.get(var), (IProgramVar) map2.get(var)), Operator.LOGICOR);
 			result = mToolkit.handleStatementBySubdomain(result, createAssume(term));
 		}
 		return result.removeVariables(map1.values()).removeVariables(map2.values());
@@ -582,8 +583,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			return false;
 		}
 		final TermVariable value = segmentation.getValue(0).getTermVariable();
-		final Term valueConstraints =
-				SmtUtils.filterFormula(term, Collections.singleton(value), mToolkit.getScript(), true);
+		final Term valueConstraints = SmtUtils.filterFormula(term, Collections.singleton(value), mToolkit.getScript());
 		return SmtUtils.isTrue(valueConstraints);
 
 	}
@@ -593,16 +593,15 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		if (isBottom()) {
 			return script.term("false");
 		}
-		final Term term = mSubState.getTerm(script);
+		final Term term = mToolkit.simplifyTerm(mSubState.getTerm(script));
 		final Set<TermVariable> bounds = getTermVars(mSegmentationMap.getBoundVars());
 		final Set<TermVariable> values = getTermVars(mSegmentationMap.getValueVars());
-		final Term valueTerm = SmtUtils.filterFormula(term, values, script, true);
-		final Term nonValueTerm = SmtUtils.filterFormula(term, values, script, false);
+		final Term valueTerm = SmtUtils.filterFormula(term, values, script);
 		final Term arrayTerm = mSegmentationMap.getTerm(mToolkit.getManagedScript(), valueTerm);
-		final Term conjunction = Util.and(script, nonValueTerm, arrayTerm);
+		final Term conjunction = Util.and(script, term, arrayTerm);
 		final Set<TermVariable> auxVars = DataStructureUtils.union(bounds, values);
-		final Term result = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, conjunction);
-		return mToolkit.simplifyTerm(result);
+		final Term quantifiedAuxVars = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, conjunction);
+		return mToolkit.simplifyTerm(quantifiedAuxVars);
 	}
 
 	private Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {
@@ -612,8 +611,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	@Override
 	public String toString() {
 		final StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append(mSegmentationMap);
-		stringBuilder.append("\n\nSubstate: ").append(mSubState);
+		stringBuilder.append("Arrays: ").append(mSegmentationMap);
+		stringBuilder.append(", Substate: ").append(mSubState);
 		return stringBuilder.toString();
 	}
 
@@ -661,7 +660,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 					newBounds.add(segmentation.getBound(i));
 					newValues.add(segmentation.getValue(i));
 				}
-				final List<IProgramVarOrConst> oldValues = new ArrayList<>();
+				final List<IProgramVar> oldValues = new ArrayList<>();
 				for (int i = min; i < max; i++) {
 					oldValues.add(segmentation.getValue(i));
 				}
@@ -709,14 +708,20 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return new AssumeStatement(null, mToolkit.getExpression(term));
 	}
 
-	private Term getEqualities(final IProgramVarOrConst var, final List<IProgramVarOrConst> others, final Operator op) {
+	private Term getEqualities(final IProgramVarOrConst var, final List<IProgramVar> others, final Operator op) {
 		assert op == Operator.LOGICAND || op == Operator.LOGICOR;
+		final Script script = mToolkit.getScript();
+		final Term term = mSubState.getTerm(script);
 		final List<Term> xjuncts = new ArrayList<>();
-		for (final IProgramVarOrConst v : others) {
-			xjuncts.add(getEquality(var, v));
+		final Term varTerm = NonrelationalTermUtils.getTermVar(var);
+		for (final IProgramVar v : others) {
+			final TermVariable other = v.getTermVariable();
+			final Term constraint = SmtUtils.filterFormula(term, Collections.singleton(other), script);
+			final Term equivalentConstraint =
+					new Substitution(script, Collections.singletonMap(other, varTerm)).transform(constraint);
+			xjuncts.add(equivalentConstraint);
 		}
-		return op == Operator.LOGICOR ? SmtUtils.or(mToolkit.getScript(), xjuncts)
-				: SmtUtils.and(mToolkit.getScript(), xjuncts);
+		return op == Operator.LOGICOR ? SmtUtils.or(script, xjuncts) : SmtUtils.and(script, xjuncts);
 	}
 
 	private Term getEquality(final IProgramVarOrConst var1, final IProgramVarOrConst var2) {
@@ -798,8 +803,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		while (next < segmentation.size()) {
 			final TermVariable currentValueVar = segmentation.getValue(current).getTermVariable();
 			final TermVariable nextValueVar = segmentation.getValue(next).getTermVariable();
-			final Term currentTerm = SmtUtils.filterFormula(term, Collections.singleton(currentValueVar), script, true);
-			final Term nextTerm = SmtUtils.filterFormula(term, Collections.singleton(nextValueVar), script, true);
+			final Term currentTerm = SmtUtils.filterFormula(term, Collections.singleton(currentValueVar), script);
+			final Term nextTerm = SmtUtils.filterFormula(term, Collections.singleton(nextValueVar), script);
 			final Substitution substitution = new Substitution(mToolkit.getManagedScript(),
 					Collections.singletonMap(nextValueVar, currentValueVar));
 			final Term currentSubstitutedTerm = substitution.transform(currentTerm);

@@ -911,8 +911,8 @@ public final class SmtUtils {
 		for (final Term dualJunction : dualJunctions) {
 			final Term[] innerDualJuncts = QuantifierUtils
 					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
-			final Term[] remainingInnerDualJuncts = new Term[innerDualJuncts.length
-					- omnipresentInnerDualJuncts.size()];
+			final Term[] remainingInnerDualJuncts =
+					new Term[innerDualJuncts.length - omnipresentInnerDualJuncts.size()];
 			int offset = 0;
 			for (final Term innerDualJunct : innerDualJuncts) {
 				if (!omnipresentInnerDualJuncts.contains(innerDualJunct)) {
@@ -1033,11 +1033,11 @@ public final class SmtUtils {
 		}
 		return false;
 	}
-	
+
 	private static class InnerDualJunctTracker {
-		
+
 		Set<Term> mInnerDualJuncts = null;
-		
+
 		public void addOuterJunct(final Term outerJunct, final String outerConnective) {
 			final Term[] innerDualJuncts = QuantifierUtils
 					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
@@ -1047,7 +1047,7 @@ public final class SmtUtils {
 				mInnerDualJuncts.retainAll(Arrays.asList(innerDualJuncts));
 			}
 		}
-		
+
 		public Set<Term> getInnerDualJuncts() {
 			return mInnerDualJuncts;
 		}
@@ -1806,22 +1806,16 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Returns a filtered Term of {@code formula} w.r.t to the given {@code variables}. This is done by checking for
-	 * checking for each conjunct, if any of the free variables is contained in {@code variables}. Depending on
-	 * {@code keepIfFound} these conjuncts are kept or discarded. <br>
-	 * <br>
-	 * Example: <br>
-	 * Given: variables={x}, formula=(x > 0 and y < 0),<br>
-	 * this method returns x > 0 for keepIfFound=true and y < 0 for keepIfFound=false
+	 * Returns a filtered Term of {@code formula} w.r.t to the given {@code variables}. This means, all conjuncts of
+	 * {@code formula}, that do not contain any of {@code variables} are discarded and the other ones returned.
 	 */
-	public static Term filterFormula(final Term formula, final Set<TermVariable> variables, final Script script,
-			final boolean keepIfFound) {
+	public static Term filterFormula(final Term formula, final Set<TermVariable> variables, final Script script) {
 		final Term[] oldConjuncts = getConjuncts(formula);
 		final List<Term> newConjuncts = new ArrayList<>(oldConjuncts.length);
 		for (final Term c : oldConjuncts) {
 			final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(c.getFreeVars()));
 			freeVars.retainAll(variables);
-			if (!freeVars.isEmpty() == keepIfFound) {
+			if (!freeVars.isEmpty()) {
 				newConjuncts.add(c);
 			}
 		}

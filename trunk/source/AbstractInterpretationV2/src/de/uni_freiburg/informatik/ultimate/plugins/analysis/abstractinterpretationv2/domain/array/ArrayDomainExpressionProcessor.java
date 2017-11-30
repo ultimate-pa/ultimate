@@ -41,16 +41,15 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 
 	public ExpressionResult<STATE> process(final Expression expression, final ArrayDomainState<STATE> state,
 			final boolean isAssume) {
-		// TODO: For no don't process any expressions (e.g. assume-statements)
-		// if (expression instanceof ArrayAccessExpression) {
-		// return processArrayAccessExpression((ArrayAccessExpression) expression, state);
-		// } else if (expression instanceof BinaryExpression) {
-		// return processBinaryExpression((BinaryExpression) expression, state, isAssume);
-		// } else if (expression instanceof QuantifierExpression) {
-		// return processQuantifierExpression((QuantifierExpression) expression, state, isAssume);
-		// } else if (expression instanceof UnaryExpression) {
-		// return processUnaryExpression((UnaryExpression) expression, state, isAssume);
-		// }
+		if (expression instanceof ArrayAccessExpression) {
+			return processArrayAccessExpression((ArrayAccessExpression) expression, state);
+		} else if (expression instanceof BinaryExpression) {
+			return processBinaryExpression((BinaryExpression) expression, state, isAssume);
+		} else if (expression instanceof QuantifierExpression) {
+			return processQuantifierExpression((QuantifierExpression) expression, state, isAssume);
+		} else if (expression instanceof UnaryExpression) {
+			return processUnaryExpression((UnaryExpression) expression, state, isAssume);
+		}
 		return new ExpressionResult<>(expression, state);
 	}
 
@@ -63,7 +62,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		}
 		final IProgramVar auxVar = mAuxVarCache.get(expression);
 		final Expression newExpr = getExpression(auxVar);
-		ArrayDomainState<STATE> newState = state.addVariable(auxVar);
+		ArrayDomainState<STATE> newState = state.updateState(state.getSubState().addVariable(auxVar));
 		final Expression array = expression.getArray();
 		final Expression[] indices = expression.getIndices();
 		final Script script = mToolkit.getScript();
