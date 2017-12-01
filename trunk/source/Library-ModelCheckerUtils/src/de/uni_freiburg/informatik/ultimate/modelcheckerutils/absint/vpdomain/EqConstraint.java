@@ -366,12 +366,15 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return true iff this is more or equally constraining than other
 	 */
 	public boolean isStrongerThan(final EqConstraint<NODE> other) {
-		return mPartialArrangement.isStrongerThan(other.mPartialArrangement);
+//		return mPartialArrangement.isStrongerThan(other.mPartialArrangement);
+		return mFactory.getWeqCcManager().isStrongerThan(mPartialArrangement, other.mPartialArrangement);
 	}
 
 	public void addNode(final NODE nodeToAdd) {
 		assert !mIsFrozen;
-		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
+//		mPartialArrangement.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
+//		mPartialArrangement.addElement(nodeToAdd);
+		mFactory.getWeqCcManager().addNode(nodeToAdd, mPartialArrangement);
 	}
 
 	public void removeElement(final NODE elemToHavoc) {

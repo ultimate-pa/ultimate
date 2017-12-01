@@ -681,4 +681,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		return true;
 	}
+
+	public WeakEquivalenceGraph<NODE> getWeqGraph() {
+		return mWeakEquivalenceGraph;
+	}
 }

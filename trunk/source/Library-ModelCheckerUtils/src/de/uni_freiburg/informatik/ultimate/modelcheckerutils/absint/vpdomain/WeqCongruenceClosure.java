@@ -232,12 +232,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		final CongruenceClosure<NODE> newConstraint = computeWeqConstraintForIndex(
 				Collections.singletonList(storeIndex));
-		reportWeakEquivalence(array1, array2, Collections.singleton(newConstraint));
+//		reportWeakEquivalence(array1, array2, Collections.singleton(newConstraint));
+		reportWeakEquivalence(array1, array2,
+				mFactory.getWeqCcManager().getSingletonEdgeLabel(mWeakEquivalenceGraph, newConstraint));
 		assert sanityCheck();
 	}
 
 	private void reportWeakEquivalence(final NODE array1, final NODE array2,
-			final Set<CongruenceClosure<NODE>> edgeLabel) {
+			final WeakEquivalenceEdgeLabel<NODE> edgeLabel) {
+//			final Set<CongruenceClosure<NODE>> edgeLabel) {
 		assert !isFrozen();
 		if (isInconsistent()) {
 			return;
@@ -275,7 +278,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> fwEdge : fwResult
 				.entrySet()) {
 			fwmc |= reportWeakEquivalenceDoOnlyRoweqPropagations(fwEdge.getKey().getOneElement(),
-					fwEdge.getKey().getOtherElement(), fwEdge.getValue().getLabelContents());
+					fwEdge.getKey().getOtherElement(), fwEdge.getValue());
 			assert sanityCheck();
 		}
 		assert sanityCheck();
@@ -283,12 +286,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	private boolean reportWeakEquivalenceDoOnlyRoweqPropagations(final NODE array1, final NODE array2,
-			final Set<CongruenceClosure<NODE>> edgeLabel) {
-		assert edgeLabel.stream().allMatch(l -> l.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes()));
+			final WeakEquivalenceEdgeLabel<NODE> edgeLabel) {
+//			final Set<CongruenceClosure<NODE>> edgeLabel) {
+		assert edgeLabel.getLabelContents().stream()
+			.allMatch(l -> l.assertHasOnlyWeqVarConstraints(mFactory.getAllWeqNodes()));
 		if (isInconsistent()) {
 			return false;
 		}
-		if (isLabelTautological(edgeLabel)) {
+//		if (isLabelTautological(edgeLabel)) {
+		if (edgeLabel.isTautological()) {
 			return false;
 		}
 
@@ -313,12 +319,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return false;
 		}
 
-		Set<CongruenceClosure<NODE>> strengthenedEdgeLabelContents = mWeakEquivalenceGraph
-				.getEdgeLabelContents(array1Rep, array2Rep);
+//		Set<CongruenceClosure<NODE>> strengthenedEdgeLabelContents = mWeakEquivalenceGraph
+//				.getEdgeLabelContents(array1Rep, array2Rep);
+		final WeakEquivalenceEdgeLabel<NODE> strengthenedEdgeLabel =
+				mWeakEquivalenceGraph.getEdgeLabel(array1Rep, array2Rep);
 
-		if (strengthenedEdgeLabelContents == null) {
+		if (strengthenedEdgeLabel == null) {
 			// edge became "false";
-			strengthenedEdgeLabelContents = Collections.emptySet();
+			assert false : "TODO : check this case, this does not happen, right? (and the comment above is nonsense..)";
+//			strengthenedEdgeLabel = Collections.emptySet();
 		}
 
 		/*
@@ -349,8 +358,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				 * arrayX[Y] nodes, possibly -- EDIT: not..)
 				 */
 
-				final Set<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
-						strengthenedEdgeLabelContents, ccp1.getArgument(),
+//				final Set<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+				final WeakEquivalenceEdgeLabel<NODE> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+						strengthenedEdgeLabel, ccp1.getArgument(),
 						mFactory.getAllWeqVarsNodeForFunction(array1));
 
 				// recursive call
@@ -369,8 +379,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					continue;
 				}
 
-				final Set<CongruenceClosure<NODE>> shiftedLabelWithException = mWeakEquivalenceGraph
-						.shiftLabelAndAddException(strengthenedEdgeLabelContents, ccc1.getValue(),
+				final WeakEquivalenceEdgeLabel<NODE> shiftedLabelWithException = mWeakEquivalenceGraph
+						.shiftLabelAndAddException(strengthenedEdgeLabel, ccc1.getValue(),
 								mFactory.getAllWeqVarsNodeForFunction(ccc1.getKey()));
 
 				// recursive call
@@ -542,7 +552,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>(mLogger);
 				qUnequalI.reportDisequality(firstWeqVar, ccc1ArgReplaced);
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1AfReplaced, ccc2AfReplaced,
-						Collections.singleton(qUnequalI));
+						mFactory.getWeqCcManager().getSingletonEdgeLabel(mWeakEquivalenceGraph, qUnequalI));
+//						Collections.singleton(qUnequalI));
 			}
 		}
 
@@ -563,9 +574,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				/*
 				 * roweq:
 				 */
-				final Set<CongruenceClosure<NODE>> aToBLabel = mWeakEquivalenceGraph
-						.getEdgeLabelContents(ccp1.getAppliedFunction(), ccp2.getAppliedFunction());
-				final Set<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+//				final Set<CongruenceClosure<NODE>> aToBLabel = mWeakEquivalenceGraph
+//						.getEdgeLabelContents(ccp1.getAppliedFunction(), ccp2.getAppliedFunction());
+				final WeakEquivalenceEdgeLabel<NODE> aToBLabel = mWeakEquivalenceGraph
+						.getEdgeLabel(ccp1.getAppliedFunction(), ccp2.getAppliedFunction());
+//				final Set<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+				final WeakEquivalenceEdgeLabel<NODE> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
 						aToBLabel, ccp1.getArgument(),
 						mFactory.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
 				// recursive call
@@ -574,9 +588,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				/*
 				 * roweq-1:
 				 */
-				final Set<CongruenceClosure<NODE>> aiToBjLabel = mWeakEquivalenceGraph.getEdgeLabelContents(ccp1,
+				final WeakEquivalenceEdgeLabel<NODE> aiToBjLabel = mWeakEquivalenceGraph.getEdgeLabel(ccp1,
 						ccp2);
-				final Set<CongruenceClosure<NODE>> shiftedLabelWithException = mWeakEquivalenceGraph
+				final WeakEquivalenceEdgeLabel<NODE> shiftedLabelWithException = mWeakEquivalenceGraph
 						.shiftLabelAndAddException(aiToBjLabel, node1,
 								mFactory.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
 				// recursive call
@@ -597,8 +611,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>(mLogger);
 					qUnequalI.reportDisequality(firstWeqVar, ccp1.getArgument());
 
-					reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
-							ccp2.getAppliedFunction(), Collections.singleton(qUnequalI));
+					reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(), ccp2.getAppliedFunction(),
+							//Collections.singleton(qUnequalI));
+							mFactory.getWeqCcManager().getSingletonEdgeLabel(mWeakEquivalenceGraph, qUnequalI));
 				}
 			}
 
@@ -645,8 +660,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 					// propagate b -- q != j, Phi+ -- a
 
-					final Set<CongruenceClosure<NODE>> shiftedLabelWithException = mWeakEquivalenceGraph
-							.shiftLabelAndAddException(phi.getLabelContents(), ccc.getValue(),
+					final WeakEquivalenceEdgeLabel<NODE> shiftedLabelWithException = mWeakEquivalenceGraph
+							.shiftLabelAndAddException(phi, ccc.getValue(),
 									mFactory.getAllWeqVarsNodeForFunction(ccc.getKey()));
 					// recursive call
 					madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccc.getKey(), aj.getKey(),
@@ -838,12 +853,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				continue;
 			}
 
-			final Set<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph
-					.projectEdgeLabelToPoint(edge.getValue().getLabelContents(),
+			final WeakEquivalenceEdgeLabel<NODE> projectedLabel = mWeakEquivalenceGraph
+					.projectEdgeLabelToPoint(edge.getValue(),
 							elemToRemove.getArgument(),
 							mFactory.getAllWeqVarsNodeForFunction(elemToRemove.getAppliedFunction()));
 
-			if (isLabelTautological(projectedLabel)) {
+			if (projectedLabel.isTautological()) {
 				continue;
 			}
 
@@ -851,7 +866,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			 *  best case: projectedLabel is inconsistent, this means if we introduce b[i] we can later propagate
 			 *  a[i] = b[i], this also means we don't need to introduce any other node
 			 */
-			if (projectedLabel.isEmpty()) {
+			if (projectedLabel.isInconsistent()) {
 				final NODE bi = mFactory.getEqNodeAndFunctionFactory()
 						.getOrConstructFuncAppElement(edge.getKey(), j);
 				assert !mCongruenceClosure.getElementCurrentlyBeingRemoved().getRemovedElements().contains(bi);
@@ -868,11 +883,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			 * node (we would get a weak equivalence with a ground disjunct
 			 * EDIT: this case should be treatable via check for tautology (see also assert below)
 			 */
-			if (isLabelTautological(projectedLabel)) {
+			if (projectedLabel.isTautological()) {
 				continue;
 			}
 			// if a disjunct was ground, the the projectToElem(weqvars) operation should have made it "true"
-			assert !projectedLabel.stream().anyMatch(l ->
+			assert !projectedLabel.getLabelContents().stream().anyMatch(l ->
 				DataStructureUtils.intersection(l.getAllElements(), mFactory.getAllWeqNodes()).isEmpty());
 
 
@@ -953,10 +968,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			}
 
 			// get label of edge between a and b
-			final Set<CongruenceClosure<NODE>> weqEdgeLabelContents =
-					mWeakEquivalenceGraph.getEdgeLabelContents(ccp.getAppliedFunction(), elem.getAppliedFunction());
+			final WeakEquivalenceEdgeLabel<NODE> weqEdgeLabelContents =
+					mWeakEquivalenceGraph.getEdgeLabel(ccp.getAppliedFunction(), elem.getAppliedFunction());
 
-			final Set<CongruenceClosure<NODE>> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
+			final WeakEquivalenceEdgeLabel<NODE> projectedLabel = mWeakEquivalenceGraph.projectEdgeLabelToPoint(
 					weqEdgeLabelContents,
 					ccp.getArgument(),
 					mFactory.getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
@@ -1094,7 +1109,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			newWeqCc.reportWeakEquivalenceDoOnlyRoweqPropagations(edge.getKey().getOneElement(),
 					edge.getKey().getOtherElement(),
-					edge.getValue().getLabelContents());
+					edge.getValue());
 			assert newWeqCc.sanityCheck();
 		}
 
@@ -1240,9 +1255,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mCongruenceClosure.addElementRec(node);
 	}
 
-	public NODE getRepresentativeAndAddElementIfNeeded(final NODE nodeToAdd) {
-		return mCongruenceClosure.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
-	}
+//	public NODE getRepresentativeAndAddElementIfNeeded(final NODE nodeToAdd) {
+//		return mCongruenceClosure.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
+//	}
 
 //	public void removeSimpleElement(final NODE elem) {
 //		CongruenceClosure.removeSimpleElement(this, elem);

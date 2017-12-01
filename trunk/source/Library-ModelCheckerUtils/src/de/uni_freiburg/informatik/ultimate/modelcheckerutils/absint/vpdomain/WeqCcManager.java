@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
@@ -63,6 +64,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> addNode(final NODE node, final WeqCongruenceClosure<NODE> origWeqCc) {
+		if (origWeqCc.hasElement(node)) {
+			// node is already present --> nothing to do
+			return origWeqCc;
+		}
+
 		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 		unfrozen.addElement(node);
 		unfrozen.freeze();
@@ -72,6 +78,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
 		assert origWeqCc.isFrozen();
 		return new WeqCongruenceClosure<>(origWeqCc);
+	}
+
+	public WeakEquivalenceEdgeLabel<NODE> filterRedundantCcs(final WeakEquivalenceEdgeLabel<NODE> label) {
+		final Set<CongruenceClosure<NODE>> filtered = mCcManager.filterRedundantCcs(label.getLabelContents());
+		return new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), filtered);
 	}
 
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs) {
@@ -143,6 +154,21 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> mPartialArrangement,
 			final WeqCongruenceClosure<NODE> partialArrangement) {
 		return mPartialArrangement.join(partialArrangement);
+	}
+
+	public boolean isStrongerThan(final WeqCongruenceClosure<NODE> partialArrangement,
+			final WeqCongruenceClosure<NODE> partialArrangement2) {
+		return partialArrangement.isStrongerThan(partialArrangement2);
+	}
+
+	public WeakEquivalenceEdgeLabel<NODE> getSingletonEdgeLabel(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+			final CongruenceClosure<NODE> newConstraint) {
+		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(newConstraint));
+	}
+
+	public WeakEquivalenceEdgeLabel<NODE> getSingletonEdgeLabel(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+			final Set<CongruenceClosure<NODE>> constraints) {
+		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, constraints);
 	}
 
 }
