@@ -41,6 +41,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -602,7 +603,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		if (edge != null) {
 			return edge.getLabelContents();
 		}
-		return Collections.singleton(new CongruenceClosure<>());
+		return Collections.singleton(new CongruenceClosure<>(getLogger()));
 	}
 
 	/**
@@ -625,7 +626,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 		final NODE firstDimWeqVarNode = weqVarsForThisEdge.get(0);
 
-		final CongruenceClosure<NODE> qEqualsI = new CongruenceClosure<>();
+		final CongruenceClosure<NODE> qEqualsI = new CongruenceClosure<>(getLogger());
 
 		qEqualsI.reportEquality(firstDimWeqVarNode, value);
 
@@ -691,7 +692,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		final Set<CongruenceClosure<NODE>> shiftedLabelContents =
 				new HashSet<>(labelToShiftAndAdd.getLabelContents());
 
-		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>();
+		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>(getLogger());
 		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
 		shiftedLabelContents.add(firstWeqVarUnequalArgument);
 		assert shiftedLabelContents.stream().allMatch(l -> l.sanityCheckOnlyCc());
@@ -1039,6 +1040,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 	static class WeqSettings {
 		static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = !false;
+	}
+
+	public ILogger getLogger() {
+		return mPartialArrangement.getLogger();
 	}
 
 //	public void resetArrayEqualities() {

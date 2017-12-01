@@ -35,10 +35,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
@@ -74,8 +76,14 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final BidirectionalMap<Term, Term> mWeqVarsToWeqPrimedVars;
 
+	private final boolean mIsDebugMode;
+
+	private final ILogger mLogger;
+
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, Term> eqNodeAndFunctionFactory,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript) {
+		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
+
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
 
@@ -83,6 +91,9 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		mEmptyConstraint.freeze();
 
 		mServices = services;
+
+
+		mIsDebugMode = true;
 
 		mMgdScript = mgdScript;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
@@ -302,6 +313,11 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		if (original.isBottom()) {
 			return original;
 		}
+
+		if (mIsDebugMode) {
+			mLogger.debug("project variables " + termsToProjectAway + " from " + original.hashCode());
+		}
+
 		final EqConstraint<NODE> unfrozen = unfreeze(original);
 
 		for (final Term term : termsToProjectAway) {
@@ -327,6 +343,11 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		unfrozen.freeze();
 		assert VPDomainHelpers.constraintFreeOfVars(termsToProjectAway, unfrozen, getMgdScript().getScript()) :
 					"resulting constraint still has at least one of the to-be-projected vars";
+
+		if (mIsDebugMode) {
+			mLogger.debug("projected variables " + termsToProjectAway + " from " + original.hashCode() + " result: "
+					+ unfrozen);
+		}
 
 		return unfrozen;
 	}
@@ -421,5 +442,13 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			result.add(mEqNodeAndFunctionFactory.getExistingNode(mWeqVarsToWeqPrimedVars.get(en.getThird().getTerm())));
 		}
 		return result;
+	}
+
+	public ILogger getLogger() {
+		return mLogger;
+	}
+
+	public boolean isDebugMode() {
+		return mIsDebugMode;
 	}
 }

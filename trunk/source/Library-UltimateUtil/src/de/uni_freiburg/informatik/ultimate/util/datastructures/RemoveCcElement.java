@@ -21,7 +21,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	private final Set<ELEM> mAddedNodes;
 	private boolean mDidRemoval = false;
-	private ICcRemoveElement<ELEM> mElementContainer;;
+	private ICcRemoveElement<ELEM> mElementContainer;
 
 	public RemoveCcElement(final ICcRemoveElement<ELEM> elementContainer, final ELEM elem,
 			final boolean introduceNewNodes, final boolean useWeqGpa) {
@@ -29,6 +29,11 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		if (elementContainer.isInconsistent()) {
 			throw new IllegalStateException();
+		}
+
+		if (elementContainer.isDebugMode()) {
+			elementContainer.getLogger().debug("RemoveElement " + hashCode() + " : removing " + elem + " from " +
+				elementContainer.hashCode());
 		}
 
 		if (!elementContainer.hasElement(elem)) {
@@ -106,12 +111,26 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 				break;
 			}
 
+			if (mElementContainer.isDebugMode()) {
+				mElementContainer.getLogger().debug("RemoveElement: adding nodes " + nodesToAdd);
+			}
+
 			// add proxy elements
 			for (final ELEM proxyElem : nodesToAdd) {
+				if (mElementContainer.isDebugMode()) {
+					mElementContainer.getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
+							mElementContainer.hashCode() + " because it was added in weq graph label");
+				}
+
 				mElementContainer.addElementRec(proxyElem);
 
 				if (mElementContainer.isInconsistent()) {
 					// Cc became inconsistent through adding proxyElem --> nothing more to do
+					if (mElementContainer.isDebugMode()) {
+						mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
+								" became inconsistent when adding" + proxyElem);
+					}
+					mDidRemoval = true;
 					return;
 				}
 
@@ -141,12 +160,33 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 		// the edge labels may have added nodes when projecting something --> add them to the gpa
 		for (final ELEM nail : nodesAddedInLabels) {
 			mElementContainer.addElementRec(nail);
+
+			if (mElementContainer.isInconsistent()) {
+				// Cc became inconsistent through adding proxyElem --> nothing more to do
+				if (mElementContainer.isDebugMode()) {
+					mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
+							" became inconsistent when adding" + nail);
+				}
+				mDidRemoval = true;
+				return;
+			}
 		}
 		assert mElementContainer.sanityCheck();
 		mElementContainer.applyClosureOperations();
 
+		if (mElementContainer.isDebugMode() && mElementContainer.isInconsistent()) {
+			mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
+					" became inconsistent during closure operation");
+		}
+
+
+
 		mDidRemoval = true;
 		assert mElementContainer.sanityCheck();
+
+		if (mElementContainer.isDebugMode()) {
+			mElementContainer.getLogger().debug("RemoveElement " + hashCode() + " finished normally");
+		}
 	}
 
 	public boolean madeChanges() {
@@ -173,19 +213,24 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param preferredReplacements
 	 * @return
 	 */
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> void removeSimpleElement(final ICcRemoveElement<ELEM> cc, final ELEM elem) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void removeSimpleElement(
+			final ICcRemoveElement<ELEM> cc, final ELEM elem) {
 		removeSimpleElement(cc, elem, true, CcSettings.MEET_WITH_WEQ_CC);
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> void removeSimpleElementDontIntroduceNewNodes(final ICcRemoveElement<ELEM> cc, final ELEM elem) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void removeSimpleElementDontIntroduceNewNodes(
+			final ICcRemoveElement<ELEM> cc, final ELEM elem) {
 		removeSimpleElement(cc, elem, false, false);
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<ELEM> removeSimpleElementDontUseWeqGpaTrackAddedNodes(final ICcRemoveElement<ELEM> cc, final ELEM elem) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>>
+			Set<ELEM> removeSimpleElementDontUseWeqGpaTrackAddedNodes(final ICcRemoveElement<ELEM> cc,
+					final ELEM elem) {
 		return removeSimpleElement(cc, elem, true, false).getAddedNodes();
 	}
 
-	private static <ELEM extends ICongruenceClosureElement<ELEM>> RemoveCcElement<ELEM> removeSimpleElement(final ICcRemoveElement<ELEM> cc, final ELEM elem, final boolean introduceNewNodes,
+	private static <ELEM extends ICongruenceClosureElement<ELEM>> RemoveCcElement<ELEM> removeSimpleElement(
+			final ICcRemoveElement<ELEM> cc, final ELEM elem, final boolean introduceNewNodes,
 			final boolean useWeqGpa) {
 		if (elem.isFunctionApplication()) {
 			throw new IllegalArgumentException();

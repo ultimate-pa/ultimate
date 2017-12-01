@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeakEquivalenceGraph.WeqSettings;
@@ -65,6 +66,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	private boolean mIsFrozen = false;
 
+	private final ILogger mLogger;
+
 	/**
 	 * Create an empty ("True"/unconstrained) WeqCC.
 	 *
@@ -72,7 +75,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 */
 	public WeqCongruenceClosure(final EqConstraintFactory<NODE> factory) {
 //		super();
-		mCongruenceClosure = new CongruenceClosure<>();
+		mLogger = factory.getLogger();
+		mCongruenceClosure = new CongruenceClosure<>(mLogger);
 		assert factory != null;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
@@ -92,6 +96,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 		mWeakEquivalenceGraph = null;
 		mFactory = null;
+		mLogger = null;
 		mMeetWithGpaCase = false;
 	}
 
@@ -109,6 +114,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, factory);
 		mFactory = factory;
 		mMeetWithGpaCase = false;
+		mLogger = factory.getLogger();
 		assert sanityCheck();
 	}
 
@@ -120,6 +126,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 */
 	public WeqCongruenceClosure(final CongruenceClosure<NODE> original,
 			final WeakEquivalenceGraph<NODE> weqGraph, final EqConstraintFactory<NODE> factory) {
+		mLogger = factory.getLogger();
 		mCongruenceClosure = new CongruenceClosure<>(original);
 		assert factory != null;
 		if (original.isInconsistent()) {
@@ -137,6 +144,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	public WeqCongruenceClosure(final WeqCongruenceClosure<NODE> original, final boolean meetWGpaCase) {
+		mLogger = original.getLogger();
 		mCongruenceClosure = new CongruenceClosure<>(original.mCongruenceClosure);
 		assert original.mFactory != null;
 		mMeetWithGpaCase = meetWGpaCase;
@@ -382,7 +390,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @return
 	 */
 	private CongruenceClosure<NODE> computeWeqConstraintForIndex(final List<NODE> nodes) {
-		final CongruenceClosure<NODE> result = new CongruenceClosure<>();
+		final CongruenceClosure<NODE> result = new CongruenceClosure<>(mLogger);
 		for (int i = 0; i < nodes.size(); i++) {
 			final NODE ithNode = nodes.get(i);
 			result.reportEquality(mFactory.getWeqVariableNodeForDimension(i, ithNode.getTerm().getSort()), ithNode);
@@ -526,7 +534,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				// i = j
 
 				final NODE firstWeqVar = mFactory.getAllWeqVarsNodeForFunction(ccc1AfReplaced).get(0);
-				final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
+				final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>(mLogger);
 				qUnequalI.reportDisequality(firstWeqVar, ccc1ArgReplaced);
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1AfReplaced, ccc2AfReplaced,
 						Collections.singleton(qUnequalI));
@@ -581,7 +589,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					assert getEqualityStatus(ccp2.getArgument(), ccp1.getArgument()) == EqualityStatus.EQUAL :
 						" propagation is only allowed if i = j";
 
-					final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>();
+					final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>(mLogger);
 					qUnequalI.reportDisequality(firstWeqVar, ccp1.getArgument());
 
 					reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
@@ -1251,6 +1259,16 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	@Override
 	public void setElementCurrentlyBeingRemoved(final RemoveCcElement<NODE> re) {
 		mCongruenceClosure.setElementCurrentlyBeingRemoved(re);
+	}
+
+	@Override
+	public boolean isDebugMode() {
+		return mLogger != null;
+	}
+
+	@Override
+	public ILogger getLogger() {
+		return mLogger;
 	}
 
 }

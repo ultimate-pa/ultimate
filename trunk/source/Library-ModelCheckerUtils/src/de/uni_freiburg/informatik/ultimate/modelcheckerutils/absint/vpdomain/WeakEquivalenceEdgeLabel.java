@@ -117,7 +117,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeakEquivalenceEdgeLabel(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph) {
 		mWeakEquivalenceGraph = weakEquivalenceGraph;
 		mLabel = new HashSet<>();
-		mLabel.add(new CongruenceClosure<>());
+		mLabel.add(new CongruenceClosure<>(mWeakEquivalenceGraph.getLogger()));
 		assert sanityCheck();
 	}
 
@@ -184,7 +184,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 			if (lab.isTautological()) {
 				// a disjunct became "true" through projection --> the whole disjunction is tautological
 				mLabel.clear();
-				mLabel.add(new CongruenceClosure<>());
+				mLabel.add(new CongruenceClosure<>(mWeakEquivalenceGraph.getLogger()));
 				return Collections.emptySet();
 			}
 			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
@@ -577,7 +577,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 
 			if (paCopy.isTautological()) {
 				mLabel.clear();
-				mLabel.add(new CongruenceClosure<NODE>());
+				mLabel.add(new CongruenceClosure<NODE>(mWeakEquivalenceGraph.getLogger()));
 				return;
 			}
 
@@ -604,7 +604,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 					return;
 				}
 				mLabel.clear();
-				mLabel.add(new CongruenceClosure<>());
+				mLabel.add(new CongruenceClosure<>(mWeakEquivalenceGraph.getLogger()));
 				return;
 			}
 			final CongruenceClosure<NODE> meet;
@@ -627,7 +627,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 						+ "is, too, right?";
 			// we have one "true" disjunct --> the whole disjunction is tautological
 			mLabel.clear();
-			mLabel.add(new CongruenceClosure<>());
+			mLabel.add(new CongruenceClosure<>(mWeakEquivalenceGraph.getLogger()));
 			return;
 			}
 			newLabelContents.add(meet);

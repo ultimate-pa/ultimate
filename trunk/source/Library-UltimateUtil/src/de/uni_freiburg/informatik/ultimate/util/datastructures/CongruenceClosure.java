@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -90,15 +91,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	private RemoveCcElement<ELEM> mExternalRemovalInfo;
 
+	private final ILogger mLogger;
+
 	/**
 	 * Constructs CongruenceClosure instance without any equalities or
 	 * disequalities.
+	 *
+	 * @param logger a logger, can be null (isDebug will return false, then)
 	 */
-	public CongruenceClosure() {
+	public CongruenceClosure(final ILogger logger) {
 		mElementTVER = new ThreeValuedEquivalenceRelation<>(CongruenceClosure::literalComparator);
 		mAuxData = new CcAuxData<ELEM>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
 		mAllLiterals = new HashSet<>();
+		mLogger = logger;
 	}
 
 	/**
@@ -117,9 +123,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mAuxData = null;
 		mFaAuxData = null;
 		mAllLiterals = null;
+		mLogger = null;
 	}
 
-	public CongruenceClosure(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
+	/**
+	 *
+	 * @param logger a logger, can be null (isDebug will return false, then)
+	 * @param newElemPartition
+	 */
+	public CongruenceClosure(final ILogger logger, final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData<>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
@@ -131,10 +143,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			registerNewElement(elem);
 		}
 		mConstructorInitializationPhase = false;
+
+		mLogger = logger;
 		assert sanityCheck();
 	}
 
-	public CongruenceClosure(final ThreeValuedEquivalenceRelation<ELEM> newElemPartition, final RemoveCcElement remInfo) {
+	/**
+	 *
+	 * @param logger a logger, can be null (isDebug will return false, then)
+	 * @param newElemPartition
+	 * @param remInfo
+	 */
+	public CongruenceClosure(final ILogger logger, final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
+			final RemoveCcElement<ELEM> remInfo) {
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData<>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
@@ -146,10 +167,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			registerNewElement(elem, remInfo);
 		}
 		mConstructorInitializationPhase = false;
+		mLogger = logger;
 		assert sanityCheck(remInfo);
 	}
 
-	public CongruenceClosure(final CongruenceClosure<ELEM> original, final RemoveCcElement externalRemovalInfo) {
+	/**
+	 *
+	 * @param original
+	 * @param externalRemovalInfo
+	 */
+	public CongruenceClosure(final CongruenceClosure<ELEM> original, final RemoveCcElement<ELEM> externalRemovalInfo) {
 		if (original.isInconsistent()) {
 			throw new IllegalArgumentException("use other constructor!");
 		}
@@ -158,6 +185,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mFaAuxData = new FuncAppTreeAuxData(original.mFaAuxData);
 		mAllLiterals = new HashSet<>(original.mAllLiterals);
 		mExternalRemovalInfo = externalRemovalInfo;
+		mLogger = original.mLogger;
 		assert sanityCheck(externalRemovalInfo); // can be violated during remove (?)
 	}
 
@@ -704,7 +732,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = thisAligned.mElementTVER
 				.join(otherAligned.mElementTVER);
 
-		return new CongruenceClosure<>(newElemTver);
+		return new CongruenceClosure<>(mLogger, newElemTver);
 	}
 
 	/**
@@ -1512,7 +1540,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
 		 *  we either need a special constructor or do something else..
 		 */
-		return new CongruenceClosure<>(newTver, removeElementInfo);
+		return new CongruenceClosure<>(mLogger, newTver, removeElementInfo);
 	}
 
 	public Collection<ELEM> getAllElementRepresentatives() {
@@ -1700,5 +1728,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public void setElementCurrentlyBeingRemoved(final RemoveCcElement<ELEM> re) {
 		assert re == null || mElementCurrentlyBeingRemoved == null;
 		mElementCurrentlyBeingRemoved = re;
+	}
+
+	@Override
+	public boolean isDebugMode() {
+		return mLogger != null;
+	}
+
+	@Override
+	public ILogger getLogger() {
+		return mLogger;
 	}
 }

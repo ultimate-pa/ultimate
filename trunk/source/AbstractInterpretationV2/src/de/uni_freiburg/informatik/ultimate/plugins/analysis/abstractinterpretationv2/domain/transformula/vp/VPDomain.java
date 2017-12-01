@@ -57,6 +57,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractDomain<EqState, ACTION> {
 
+	public static final boolean DEBUG = true;
+
 	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;

@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+
 public interface ICcRemoveElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	boolean isInconsistent();
@@ -33,5 +35,9 @@ public interface ICcRemoveElement<ELEM extends ICongruenceClosureElement<ELEM>> 
 	void setElementCurrentlyBeingRemoved(RemoveCcElement<ELEM> re);
 
 	boolean assertSimpleElementIsFullyRemoved(ELEM elem);
+
+	boolean isDebugMode();
+
+	ILogger getLogger();
 
 }

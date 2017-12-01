@@ -90,8 +90,8 @@ public class EqOperationProvider implements
 	@Override
 	public EqDisjunctiveConstraint<EqNode> projectExistentially(final Set<TermVariable> varsToProjectAway,
 			final EqDisjunctiveConstraint<EqNode> constraint) {
-		return constraint.projectExistentially(varsToProjectAway.stream()
-				.map(tv -> (Term) tv).collect(Collectors.toSet()));
+		final Set<Term> castToSetOfTerm = varsToProjectAway.stream().map(tv -> (Term) tv).collect(Collectors.toSet());
+		return constraint.projectExistentially(castToSetOfTerm);
 	}
 
 

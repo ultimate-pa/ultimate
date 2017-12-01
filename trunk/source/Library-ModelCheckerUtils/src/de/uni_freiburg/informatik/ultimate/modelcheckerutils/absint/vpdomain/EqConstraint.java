@@ -85,7 +85,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param factory
 	 */
 	public EqConstraint(final int id, final EqConstraintFactory<NODE> factory) {
-		this(id, factory, new WeqCongruenceClosure<>(factory));
+		this(id, factory, id == 0 ? new WeqCongruenceClosure<>(true) : new WeqCongruenceClosure<>(factory));
 		assert id != 0 || this instanceof EqBottomConstraint : "0 is reserved for the bottom constraint";
 	}
 

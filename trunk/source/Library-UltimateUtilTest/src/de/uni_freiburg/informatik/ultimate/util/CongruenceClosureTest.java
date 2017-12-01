@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElementFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
@@ -22,7 +23,7 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void test01() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -85,7 +86,7 @@ public class CongruenceClosureTest {
 
 	@Test
 	public void test02() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -139,7 +140,7 @@ public class CongruenceClosureTest {
 
 	@Test
 	public void test03() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -175,7 +176,7 @@ public class CongruenceClosureTest {
 
 	@Test
 	public void test04() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -221,7 +222,7 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void test05() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -257,7 +258,7 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void test06() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -292,7 +293,7 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void test07() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -315,7 +316,7 @@ public class CongruenceClosureTest {
 
 	@Test
 	public void test07a() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -343,7 +344,7 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void test07b() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -379,7 +380,7 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void test08() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -404,7 +405,7 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void test09() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -431,8 +432,8 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void testOperators1() {
-		final CongruenceClosure<StringCcElement> cc1 = new CongruenceClosure<>();
-		final CongruenceClosure<StringCcElement> cc2 = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc1 = new CongruenceClosure<>((ILogger) null);
+		final CongruenceClosure<StringCcElement> cc2 = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -537,8 +538,8 @@ public class CongruenceClosureTest {
 	 */
 	@Test
 	public void testOperators2() {
-		final CongruenceClosure<StringCcElement> cc1 = new CongruenceClosure<>();
-		final CongruenceClosure<StringCcElement> cc2 = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc1 = new CongruenceClosure<>((ILogger) null);
+		final CongruenceClosure<StringCcElement> cc2 = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -638,7 +639,7 @@ public class CongruenceClosureTest {
 
 	@Test
 	public void testRemove01() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -660,7 +661,7 @@ public class CongruenceClosureTest {
 
 	@Test
 	public void testRemove02() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -690,7 +691,7 @@ public class CongruenceClosureTest {
 
 	@Test
 	public void testRemove03() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -717,7 +718,7 @@ public class CongruenceClosureTest {
 
 	@Test
 	public void testRemove04() {
-		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>();
+		final CongruenceClosure<StringCcElement> cc = new CongruenceClosure<>((ILogger) null);
 
 		final StringElementFactory factory = new StringElementFactory();
 
