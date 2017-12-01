@@ -25,6 +25,8 @@ hs_err_pid*
 /trunk/source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples/terminationC/*.c
 /trunk/source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples/verifyBoogie/*.bpl
 /trunk/source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples/verifyC/*.c
+/trunk/source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples/AUTOMATA_SCRIPT/*.ats
+/trunk/source/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples/verifyConcurrentBoogie/*.bpl
 
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLResultExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ACSLTransformer.java
@@ -240,3 +242,4 @@ hs_err_pid*
 /trunk/source/JavaCup/java/java_cup
 /trunk/source/CoreRCP/version.properties
 /releaseScripts/default/adds/.idea
+/releaseScripts/svcomp2018/adds/.idea
