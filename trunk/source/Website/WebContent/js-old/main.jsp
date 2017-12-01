@@ -1,3 +1,4 @@
+<%@ page language="java" contentType="application/javascript; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page trimDirectiveWhitespaces="true" %>
 <%@ page import="java.util.*" %>
@@ -12,7 +13,6 @@
     pageContext.setAttribute("examples", examples);
     pageContext.setAttribute("toolchains", toolchains);
 %>
-<%@ page language="java" contentType="text/javascript; charset=ISO-8859-1" pageEncoding="ISO-8859-1"%>
 <%-- @author Markus Lindenmann, Oleksii Saukh, Stefan Wissert
     @since 10.10.2011
     

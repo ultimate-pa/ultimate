@@ -1,3 +1,4 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%--
 Params:
 - task={VerifyBoogie, VerifyC, RunAutomataTestFile, RunSmt2Script}
@@ -22,7 +23,6 @@ Params:
     pageContext.setAttribute("examples", examples);
     pageContext.setAttribute("toolchains", toolchains);
 %>
-<%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1"%>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>

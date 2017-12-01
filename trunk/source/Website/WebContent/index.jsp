@@ -5,17 +5,23 @@ Params:
 - task={VerifyBoogie, VerifyC, RunAutomataTestFile, RunSmt2Script}
 - sample={}
 --%>
+<%@ page import="java.nio.charset.StandardCharsets"%>
 <%@ page import="org.apache.catalina.core.ApplicationContext"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ page trimDirectiveWhitespaces="true"%>
 <%@ page import="java.util.*"%>
 <%@ page
 	import="de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Worker"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Example"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tool"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Setting"%>
+<%@ page
+	import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks"%>
+<%@ page
+	import="de.uni_freiburg.informatik.ultimate.webbridge.website.Worker"%>
+<%@ page
+	import="de.uni_freiburg.informatik.ultimate.webbridge.website.Example"%>
+<%@ page
+	import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tool"%>
+<%@ page
+	import="de.uni_freiburg.informatik.ultimate.webbridge.website.Setting"%>
 <%@ page
 	import="de.uni_freiburg.informatik.ultimate.webbridge.toolchains.*"%>
 <%@ page import="java.text.DateFormat"%>
@@ -38,12 +44,12 @@ Params:
 <%@ page import="org.json.simple.JSONArray"%>
 
 <%!String getData(String address) throws Exception {
-	    System.out.println("Requesting URL "+address);
+		System.out.println("Requesting URL " + address);
 		URL page = new URL(address);
 		StringBuffer text = new StringBuffer();
 		HttpURLConnection conn = (HttpURLConnection) page.openConnection();
-		BufferedReader buff = new BufferedReader(new InputStreamReader(
-				openConnectionCheckRedirects(conn)));
+		BufferedReader buff = new BufferedReader(
+				new InputStreamReader(openConnectionCheckRedirects(conn), StandardCharsets.UTF_8));
 
 		String line = new String();
 		while (true) {
@@ -55,8 +61,8 @@ Params:
 		buff.close();
 		return text.toString();
 	}
-	private InputStream openConnectionCheckRedirects(URLConnection c)
-			throws IOException {
+
+	private InputStream openConnectionCheckRedirects(URLConnection c) throws IOException {
 		boolean redir;
 		int redirects = 0;
 		InputStream in = null;
@@ -71,8 +77,7 @@ Params:
 			if (c instanceof HttpURLConnection) {
 				HttpURLConnection http = (HttpURLConnection) c;
 				int stat = http.getResponseCode();
-				if (stat >= 300 && stat <= 307 && stat != 306
-						&& stat != HttpURLConnection.HTTP_NOT_MODIFIED) {
+				if (stat >= 300 && stat <= 307 && stat != 306 && stat != HttpURLConnection.HTTP_NOT_MODIFIED) {
 					// we follow redirects in certain cases. For convenience, here is the Wikipedia cutnpaste
 					/*
 					300 Multiple Choices
@@ -131,9 +136,7 @@ Params:
 					http.disconnect();
 					// Redirection should be allowed only for HTTP and HTTPS
 					// and should be limited to 5 redirections at most.
-					if (target == null
-							|| !(target.getProtocol().equals("http") || target
-									.getProtocol().equals("https"))
+					if (target == null || !(target.getProtocol().equals("http") || target.getProtocol().equals("https"))
 							|| redirects >= 5) {
 						String errorMsg = "";
 						if (target == null) {
@@ -141,8 +144,7 @@ Params:
 						} else if (redirects >= 5) {
 							errorMsg = "There are more than 5 redirects";
 						} else {
-							errorMsg = "The redirect points to an illegal protocol: "
-									+ target.getProtocol();
+							errorMsg = "The redirect points to an illegal protocol: " + target.getProtocol();
 						}
 						throw new IOException("Illegal redirect: " + errorMsg);
 					}
@@ -155,13 +157,13 @@ Params:
 		} while (redir);
 		return in;
 	}
-	
-	String getFromLocalJson(String jsonPath) throws FileNotFoundException, IOException{
-	    File file = new File(jsonPath);
-	    System.out.println("Requesting content of local JSON file from "+file.getAbsolutePath());
-	    FileInputStream fis = new FileInputStream(file);
-		BufferedReader buff = new BufferedReader(new InputStreamReader(fis));
-		
+
+	String getFromLocalJson(String jsonPath) throws FileNotFoundException, IOException {
+		File file = new File(jsonPath);
+		System.out.println("Requesting content of local JSON file from " + file.getAbsolutePath());
+		FileInputStream fis = new FileInputStream(file);
+		BufferedReader buff = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8));
+
 		StringBuffer text = new StringBuffer();
 
 		String line = new String();
@@ -173,102 +175,96 @@ Params:
 		}
 		buff.close();
 		return text.toString();
-	}
-	
-	%>
+	}%>
 
 <%
+	Tasks tasks = new Tasks();
+	Map<String, Worker> currentWorker = new HashMap<>();
+	Map<String, ArrayList<WebToolchain>> toolchains = Tasks.getActiveToolchains();
+	Map<String, Worker> worker = Tasks.getWorker();
+	Map<Tasks.TaskNames, ArrayList<Example>> examples = Example.getExamples();
 
-  Tasks tasks = new Tasks();
-  Map<String, Worker> currentWorker = new HashMap<String, Worker>();
-  Map<String, ArrayList<WebToolchain>> toolchains = Tasks.getActiveToolchains();
-  Map<String, Worker> worker = Tasks.getWorker();
-  Map<Tasks.TaskNames, ArrayList<Example>> examples = Example.getExamples();
+	/*
+	 *
+	 * setting request variables
+	 *
+	 */
+	int s = PageContext.SESSION_SCOPE;
+	String tool = request.getParameter("tool");
+	String task = request.getParameter("task");
+	String ui = request.getParameter("ui");
+	Boolean noUI = (null == ui || ui.isEmpty());
 
-  /*
-   *
-   * setting request variables
-   *
-   */
-  int s = PageContext.SESSION_SCOPE;
-  String tool   = request.getParameter("tool");
-  String task   = request.getParameter("task");
-  String ui     = request.getParameter("ui");
-  Boolean noUI  = (null == ui || ui.isEmpty());
-  
-           tool = (null == tool) ? "" : tool;
-           task = (null == task) ? "" : task;
-           ui   = noUI ? "home" : ui;
+	tool = (null == tool) ? "" : tool;
+	task = (null == task) ? "" : task;
+	ui = noUI ? "home" : ui;
 
-  /*
-   *
-   * request exception handling
-   *
-   */
-  // if no tool is requested, opt in all tools
-  Boolean showAll = (!ui.equals("home")) && (null == tool || tool.isEmpty() || null == worker.get(tool));
-  Boolean multipleTools = worker.size() > 1;
-  Boolean multipleTasks = (worker.containsKey(tool) && worker.get(tool).getToolchains().size() > 1);
+	/*
+	 *
+	 * request exception handling
+	 *
+	 */
+	// if no tool is requested, opt in all tools
+	Boolean showAll = (!ui.equals("home")) && ( tool.isEmpty() || null == worker.get(tool));
+	Boolean multipleTools = worker.size() > 1;
+	Boolean multipleTasks = (worker.containsKey(tool) && worker.get(tool).getToolchains().size() > 1);
 
-  // redirect unspecified tool-page to home-page
-  if(ui.equals("tool") && multipleTools && showAll){
-	  response.sendRedirect(request.getContextPath() + "/");
-  }
-  
-  // handling invalid worker names
-  if(worker.containsKey(tool)){
-	  currentWorker.put(tool, worker.get(tool));
-  }
-  else{
-	  currentWorker = worker;
-  }
-  
+	// redirect unspecified tool-page to home-page
+	if (ui.equals("tool") && multipleTools && showAll) {
+		response.sendRedirect(request.getContextPath() + "/");
+	}
 
-  /*
-   * fetching JSON data as tool-page
-   */
+	// handling invalid worker names
+	if (worker.containsKey(tool)) {
+		currentWorker.put(tool, worker.get(tool));
+	} else {
+		currentWorker = worker;
+	}
 
-  String str = "";
+	/*
+	 * fetching JSON data as tool-page
+	 */
 
-  try{ 
-	  if (ui.equals("home")){
-		  str = getFromLocalJson(request.getServletContext().getRealPath("/json/home.json"));
-	  } else if(ui.equals("tool") && worker.containsKey(tool) 
-			  && !(null == worker.get(tool).getContentURL() || worker.get(tool).getContentURL().isEmpty())){
-		// getting tool page URL from worker
-	    str = getData(worker.get(tool).getContentURL()); 	
-	  } else {
-        str = getFromLocalJson(request.getServletContext().getRealPath("/json/"+tool+".json"));
-	  }
-  }
-  catch (Exception e) {
-	  System.out.println("Exception while retrieving data for "+ui+":");
-	  System.out.println(e);
-	  str = "{ \"description\": \"Error fetching JSON.  (for "+ui+")\" }"; 
-  }
+	String str = "";
 
-  JSONObject jsonObject = (JSONObject)  JSONValue.parse(str); // for { a: {}, b: {} } JSONs (Object)
+	try {
+		if (ui.equals("home")) {
+			str = getFromLocalJson(request.getServletContext().getRealPath("/json/home.json"));
+		} else if (ui.equals("tool") && worker.containsKey(tool)
+				&& !(null == worker.get(tool).getContentURL() || worker.get(tool).getContentURL().isEmpty())) {
+			// getting tool page URL from worker
+			str = getData(worker.get(tool).getContentURL());
+		} else {
+			str = getFromLocalJson(request.getServletContext().getRealPath("/json/" + tool + ".json"));
+		}
+	} catch (Exception e) {
+		System.out.println("Exception while retrieving data for " + ui + ":");
+		System.out.println(e);
+		str = "{ \"description\": \"Error fetching JSON.  (for " + ui + ")\" }";
+	}
 
-  /*
-   *
-   * setting session variables
-   *
-   */
-  pageContext.setAttribute("tasks", tasks);
-  pageContext.setAttribute("worker", worker, s);
-  pageContext.setAttribute("currentWorker", currentWorker, s);
-  pageContext.setAttribute("examples", examples, s);
-  pageContext.setAttribute("toolchains", toolchains);
-  pageContext.setAttribute("showAll", showAll);
-  pageContext.setAttribute("ui", ui);
-  pageContext.setAttribute("tool", tool, s);
-  pageContext.setAttribute("task", task);
-  pageContext.setAttribute("multipleTools", multipleTools);
-  pageContext.setAttribute("multipleTasks", multipleTasks);
-  pageContext.setAttribute("content", jsonObject, s);
+	JSONObject jsonObject = (JSONObject) JSONValue.parse(str); // for { a: {}, b: {} } JSONs (Object)
+
+	/*
+	 *
+	 * setting session variables
+	 *
+	 */
+	pageContext.setAttribute("tasks", tasks);
+	pageContext.setAttribute("worker", worker, s);
+	pageContext.setAttribute("currentWorker", currentWorker, s);
+	pageContext.setAttribute("examples", examples, s);
+	pageContext.setAttribute("toolchains", toolchains);
+	pageContext.setAttribute("showAll", showAll);
+	pageContext.setAttribute("ui", ui);
+	pageContext.setAttribute("tool", tool, s);
+	pageContext.setAttribute("task", task);
+	pageContext.setAttribute("multipleTools", multipleTools);
+	pageContext.setAttribute("multipleTasks", multipleTasks);
+	pageContext.setAttribute("content", jsonObject, s);
 %>
-<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
-	pageEncoding="ISO-8859-1"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>

@@ -396,7 +396,7 @@ function encode_utf8(s)
 
 function decode_utf8(s)
 {
-  return decodeURIComponent(escape(s));
+  return decodeURIComponent(unescape(s));
 }
 
 function htmlEncode(value){

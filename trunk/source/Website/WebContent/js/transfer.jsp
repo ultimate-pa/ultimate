@@ -1,3 +1,4 @@
+<%@ page language="java" contentType="application/javascript; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.webbridge.website.Worker"%>
@@ -5,7 +6,6 @@
 <%@ page import="org.json.simple.JSONObject"%>
 <%@ page import="java.util.*"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@ page language="java" contentType="application/javascript; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
 	int s = PageContext.SESSION_SCOPE;
  
