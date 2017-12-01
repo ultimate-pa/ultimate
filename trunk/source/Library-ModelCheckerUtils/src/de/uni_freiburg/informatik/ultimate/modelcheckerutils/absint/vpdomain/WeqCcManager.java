@@ -71,7 +71,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
 		assert origWeqCc.isFrozen();
-		return new WeqCongruenceClosure<>(origWeqCc, false);
+		return new WeqCongruenceClosure<>(origWeqCc);
 	}
 
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs) {
@@ -93,16 +93,38 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 
-	public WeqCongruenceClosure<NODE> reportEquality(final NODE node1, final NODE node2,
-			final WeqCongruenceClosure<NODE> origWeqCc) {
-		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
-		unfrozen.reportEquality(node1, node2);
-		unfrozen.freeze();
-		return unfrozen;
+	public WeqCongruenceClosure<NODE> reportEquality(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node1,
+			final NODE node2) {
+		if (WeqSettings.REPORT_EQ_DEQ_INPLACE) {
+			origWeqCc.reportEquality(node1, node2);
+			return origWeqCc;
+		} else {
+			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+			unfrozen.reportEquality(node1, node2);
+			unfrozen.freeze();
+			return unfrozen;
+		}
+	}
+
+	public WeqCongruenceClosure<NODE> reportDisequality(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node1,
+			final NODE node2) {
+		if (WeqSettings.REPORT_EQ_DEQ_INPLACE) {
+			origWeqCc.reportDisequality(node1, node2);
+			return origWeqCc;
+		} else {
+			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+			unfrozen.reportDisequality(node1, node2);
+			unfrozen.freeze();
+			return unfrozen;
+		}
 	}
 
 	public WeqCongruenceClosure<NODE> makeCopyForWeqMeet(final WeqCongruenceClosure<NODE> originalPa) {
-		return new WeqCongruenceClosure<>(originalPa, true);
+		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(originalPa, true);
+		if (!WeqSettings.REPORT_EQ_DEQ_INPLACE) {
+			result.freeze();
+		}
+		return result;
 	}
 
 	public WeqCongruenceClosure<NODE> makeCopy(final WeqCongruenceClosure<NODE> original) {
@@ -112,4 +134,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		return new WeqCongruenceClosure<>(original, false);
 	}
+
+	public WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> partialArrangement,
+			final WeqCongruenceClosure<NODE> partialArrangement2) {
+		return partialArrangement.meet(partialArrangement2);
+	}
+
+	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> mPartialArrangement,
+			final WeqCongruenceClosure<NODE> partialArrangement) {
+		return mPartialArrangement.join(partialArrangement);
+	}
+
 }

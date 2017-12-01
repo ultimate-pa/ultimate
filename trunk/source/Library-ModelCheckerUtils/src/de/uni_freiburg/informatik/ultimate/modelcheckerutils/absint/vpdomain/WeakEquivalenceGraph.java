@@ -64,9 +64,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
-	final WeqCcManager<NODE> mCcManager;
+	private final WeqCcManager<NODE> mWeqCcManager;
 
-	final EqConstraintFactory<NODE> mFactory;
+	private final EqConstraintFactory<NODE> mFactory;
 
 	private final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> mWeakEquivalenceEdges;
 
@@ -91,7 +91,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		mArrayEqualities = new HashRelation<>();
 		assert factory != null;
 		mFactory = factory;
-		mCcManager = factory.getCcManager();
+		mWeqCcManager = factory.getWeqCcManager();
 		assert sanityCheck();
 	}
 
@@ -113,7 +113,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		mArrayEqualities = arrayEqualities;
 		assert factory != null;
 		mFactory = factory;
-		mCcManager = factory.getCcManager();
+		mWeqCcManager = factory.getWeqCcManager();
 		assert sanityCheck();
 	}
 
@@ -131,7 +131,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		mArrayEqualities = new HashRelation<>(weakEquivalenceGraph.mArrayEqualities);
 		mWeakEquivalenceEdges = new HashMap<>();
 		mFactory = weakEquivalenceGraph.mFactory;
-		mCcManager = mFactory.getCcManager();
+		mWeqCcManager = mFactory.getWeqCcManager();
 
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> weqEdge
 				: weakEquivalenceGraph.mWeakEquivalenceEdges.entrySet()) {
@@ -697,7 +697,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		shiftedLabelContents.add(firstWeqVarUnequalArgument);
 		assert shiftedLabelContents.stream().allMatch(l -> l.sanityCheckOnlyCc());
 
-		final Set<CongruenceClosure<NODE>> normalized = mCcManager
+		final Set<CongruenceClosure<NODE>> normalized = mWeqCcManager
 				.filterRedundantCcs(new HashSet<>(shiftedLabelContents));
 
 		assert normalized.stream().allMatch(l -> l.sanityCheckOnlyCc());
@@ -897,6 +897,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	boolean sanityCheck() {
+		assert mWeqCcManager != null;
+
 		//		if (mPartialArrangement.mMeetWithGpaCase) {
 		//			// TODO sharpen sanity check for this case
 		//			return true;
@@ -1023,7 +1025,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		private final PartialOrderCache<CongruenceClosure<NODE>> mCcPoCache;
 
 		public CachingWeqEdgeLabelPoComparator() {
-			mCcPoCache = new PartialOrderCache<>(mCcManager.getCcComparator());
+			mCcPoCache = new PartialOrderCache<>(mWeqCcManager.getCcComparator());
 		}
 
 		boolean isStrongerOrEqual(final WeakEquivalenceEdgeLabel<NODE> label1,
@@ -1038,12 +1040,16 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 	}
 
-	static class WeqSettings {
-		static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = !false;
-	}
-
 	public ILogger getLogger() {
 		return mPartialArrangement.getLogger();
+	}
+
+	public WeqCcManager<NODE> getWeqCcManager() {
+		return mWeqCcManager;
+	}
+
+	public EqConstraintFactory<NODE> getFactory() {
+		return mFactory;
 	}
 
 //	public void resetArrayEqualities() {

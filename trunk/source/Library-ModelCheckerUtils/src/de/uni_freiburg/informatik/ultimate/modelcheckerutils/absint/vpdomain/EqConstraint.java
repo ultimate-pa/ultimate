@@ -91,7 +91,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public EqConstraint(final int id, final WeqCongruenceClosure<NODE> cClosure,
 			final EqConstraintFactory<NODE> factory) {
-		this(id, factory, factory.getCcManager().makeCopy(cClosure));
+		this(id, factory, factory.getWeqCcManager().makeCopy(cClosure));
 //		this(id, factory, new WeqCongruenceClosure<>(cClosure));
 	}
 
@@ -101,7 +101,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param constraint
 	 */
 	public EqConstraint(final int id, final EqConstraint<NODE> constraint) {
-		this(id, constraint.mFactory,  constraint.mFactory.getCcManager().makeCopy(constraint.mPartialArrangement));
+		this(id, constraint.mFactory,  constraint.mFactory.getWeqCcManager().makeCopy(constraint.mPartialArrangement));
 		//new WeqCongruenceClosure<>(constraint.mPartialArrangement));
 	}
 
@@ -328,8 +328,10 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		if (other.isTop()) {
 			return other;
 		}
-		final WeqCongruenceClosure<NODE> newPartialArrangement = this.mPartialArrangement
-				.join(other.mPartialArrangement);
+//		final WeqCongruenceClosure<NODE> newPartialArrangement = this.mPartialArrangement
+//				.join(other.mPartialArrangement);
+		final WeqCongruenceClosure<NODE> newPartialArrangement = mFactory.getWeqCcManager().join(
+				this.mPartialArrangement, other.mPartialArrangement);
 		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement);
 		res.freeze();
 		return res;
@@ -349,7 +351,9 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			return this;
 		}
 
-		final WeqCongruenceClosure<NODE> newPa = mPartialArrangement.meet(other.mPartialArrangement);
+//		final WeqCongruenceClosure<NODE> newPa = mPartialArrangement.meet(other.mPartialArrangement);
+		final WeqCongruenceClosure<NODE> newPa = mFactory.getWeqCcManager().meet(mPartialArrangement,
+				other.mPartialArrangement);
 
 		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPa);
 		res.freeze();
