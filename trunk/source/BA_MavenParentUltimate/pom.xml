@@ -142,7 +142,7 @@
 		<sonar.issue.ignore.multicriteria></sonar.issue.ignore.multicriteria>
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
-		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
+		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps
 			on OutOfMemory exceptions -->
 		<manualtest-argline>-Xmx4g </manualtest-argline>
 		<coverage-argline>-Xmx4g -ea</coverage-argline>
@@ -150,8 +150,8 @@
 	</properties>
 
 	<repositories>
-		<!-- We proxy repositories via monteverdi to reduce load and speed up the 
-			build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url> 
+		<!-- We proxy repositories via monteverdi to reduce load and speed up the
+			build in our LAN You can configure monteverdis proxy by visiting <url>https://monteverdi.informatik.uni-freiburg.de/nexus</url>
 			The user/password is managed by DD -->
 
 		<repository>
@@ -163,7 +163,7 @@
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
-		<!-- <repository> <id>eclipse-neon</id> <layout>p2</layout> <url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-neon/</url> 
+		<!-- <repository> <id>eclipse-neon</id> <layout>p2</layout> <url>https://monteverdi.informatik.uni-freiburg.de/nexus/content/repositories/eclipse-neon/</url>
 			<snapshots> <enabled>false</enabled> </snapshots> </repository> -->
 
 		<repository>
@@ -237,10 +237,10 @@
 					<commitIdGenerationMode>flat</commitIdGenerationMode>
 					<gitDescribe>
 						<skip>false</skip>
-						<!-- when the build is triggered while the repo is in "dirty state", 
+						<!-- when the build is triggered while the repo is in "dirty state",
 							append this suffix -->
 						<dirty>-m</dirty>
-						<!-- Only consider tags matching the given pattern. This can be used 
+						<!-- Only consider tags matching the given pattern. This can be used
 							to avoid leaking private tags from the repository. -->
 						<match>*</match>
 						<tags>true</tags>
@@ -270,7 +270,7 @@
 
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -314,8 +314,6 @@
 	</build>
 
 	<modules>
-		<module>../WebInterface</module>
-		<module>../Website</module>
 		<module>../CoreRCP</module>
 		<module>../GuiRCP</module>
 		<module>../BlockEncodingV2</module>
@@ -341,7 +339,7 @@
 		<module>../GUIGeneratedPreferencePages</module>
 		<module>../GUILoggingWindow</module>
 		<module>../LassoRanker</module>
-		<module>../WebUltimateBridge</module>
+		
 		<module>../Library-ModelCheckerUtils</module>
 		<module>../AutomataScriptParser</module>
 		<module>../AutomataScriptInterpreter</module>
@@ -393,23 +391,15 @@
 		<module>../TreeAutomizer</module>
 		<module>../UltimateDeltaDebugger</module>
 		<module>../InvariantSynthesis</module>
-		<module>../BA_FeatureUltimateDebug</module>
-		<module>../BA_FeatureUltimateCommandLine</module>
-		<module>../BA_FeatureUltimateDeltaDebugger</module>
-		<module>../BA_FeatureDependenciesCommandlineE4</module>
-		<module>../BA_FeatureDependenciesDebugE4</module>
-		<module>../BA_FeatureUltimateCommon</module>
-		<module>../BA_FeatureUltimateWebbridge</module>
-		<module>../BA_SiteRepository</module>
-		<module>../BA_Website</module>
+
 	</modules>
 
 	<profiles>
 
 		<profile>
-			<!-- The profile coverage is used to generate junit test case coverage 
-				through jenkins and sonar. It uses all regression tests, but not UltimateTest, 
-				as those tests are very slow and should be executed manually via profile 
+			<!-- The profile coverage is used to generate junit test case coverage
+				through jenkins and sonar. It uses all regression tests, but not UltimateTest,
+				as those tests are very slow and should be executed manually via profile
 				manualtest. You should not need to run this profile manually. -->
 			<id>coverage</id>
 
@@ -487,20 +477,20 @@
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
 
-				<!-- UltimateRegressionTest contains system tests that are relatively 
+				<!-- UltimateRegressionTest contains system tests that are relatively
 					fast -->
 				<module>../UltimateRegressionTest</module>
 
-				<!-- UltimateTest contains system tests, but should not be run. It is 
+				<!-- UltimateTest contains system tests, but should not be run. It is
 					excluded in surefire. -->
 				<module>../UltimateTest</module>
 			</modules>
 		</profile>
 
 		<profile>
-			<!-- The profile travis is used to generate junit test case coverage through 
-				travis and coveralls. It uses all regression tests, but not UltimateTest, 
-				as those tests are very slow and should be executed manually via profile 
+			<!-- The profile travis is used to generate junit test case coverage through
+				travis and coveralls. It uses all regression tests, but not UltimateTest,
+				as those tests are very slow and should be executed manually via profile
 				manualtest. You should not need to run this profile manually. -->
 			<id>travis</id>
 
@@ -552,7 +542,7 @@
 						<artifactId>coveralls-maven-plugin</artifactId>
 						<version>${coveralls-version}</version>
 						<configuration>
-							<!-- We should not publish the repo token, but I dont know any other 
+							<!-- We should not publish the repo token, but I dont know any other
 								way of telling travis. Its either here or in .travis.yml -->
 							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
 							<jacocoReports>
@@ -587,18 +577,23 @@
 		</profile>
 
 		<profile>
-			<!-- The profile manualtest is used to start manual tests from the commandline. 
-				It allows you to run all tests, but you should nevertheless specify which 
-				suite you want to run, as all the suites may require several days to run. 
-				To run this, you can use the following syntax: time mvn clean integration-test 
-				-Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1 You can also use 
-				the following options to customize your run: -o enables offline mode, skipping 
-				lookup of online repositories -T n uses n threads during build export _JAVA_OPTIONS="-enableassertions" 
-				(Linux) or set _JAVA_OPTIONS=-enableassertions (Windows) before the actual 
-				command supplies additional options to the test VM without changing this 
-				pom.xml Further notes: Maven chooses your VM by inspecting JAVA_HOME. Under 
-				Windows, you can show it with echo %JAVA_HOME% and change it temporarily 
-				with set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05 This profile should 
+			<!-- The profile manualtest is used to start manual tests from the commandline.
+				It allows you to run all tests, but you should nevertheless specify which
+				suite you want to run, as all the suites may require several days to
+				run.
+				To run this, you can use the following syntax: time mvn clean integration-test
+				-Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1 You can also
+				use
+				the following options to customize your run: -o enables offline mode,
+				skipping
+				lookup of online repositories -T n uses n threads during build export
+				_JAVA_OPTIONS="-enableassertions"
+				(Linux) or set _JAVA_OPTIONS=-enableassertions (Windows) before the actual
+				command supplies additional options to the test VM without changing this
+				pom.xml Further notes: Maven chooses your VM by inspecting JAVA_HOME.
+				Under
+				Windows, you can show it with echo %JAVA_HOME% and change it temporarily
+				with set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05 This profile should
 				(probably) only be used manually. -->
 			<id>manualtest</id>
 			<build>
@@ -616,11 +611,12 @@
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
-							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
-								maven/junit bugs, you may want to set it to true to have all the test output 
+							<!-- redirectTestOutputToFile=false is the default, but to debug strange
+								maven/junit bugs, you may want to set it to true to have all the
+								test output
 								written to file -->
 							<redirectTestOutputToFile>false</redirectTestOutputToFile>
-							<!-- if you want to change the argLine, use the global property; Note: 
+							<!-- if you want to change the argLine, use the global property; Note:
 								for some reason, in this profile we cannot use ${tycho.testArgLine} -->
 							<argLine>${manualtest-argline}</argLine>
 
@@ -657,13 +653,32 @@
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
 
-				<!-- UltimateRegressionTest contains system tests that are relatively 
+				<!-- UltimateRegressionTest contains system tests that are relatively
 					fast -->
 				<module>../UltimateRegressionTest</module>
 
-				<!-- UltimateTest contains system tests, but should not be run. It is 
+				<!-- UltimateTest contains system tests, but should not be run. It is
 					excluded in surefire. -->
 				<module>../UltimateTest</module>
+			</modules>
+		</profile>
+
+		<profile>
+			<id>materialize</id>
+			<modules>
+				<module>../WebInterface</module>
+				<module>../Website</module>
+				<module>../WebUltimateBridge</module>
+
+				<module>../BA_FeatureUltimateDebug</module>
+				<module>../BA_FeatureUltimateCommandLine</module>
+				<module>../BA_FeatureUltimateDeltaDebugger</module>
+				<module>../BA_FeatureDependenciesCommandlineE4</module>
+				<module>../BA_FeatureDependenciesDebugE4</module>
+				<module>../BA_FeatureUltimateCommon</module>
+				<module>../BA_FeatureUltimateWebbridge</module>
+				<module>../BA_SiteRepository</module>
+				<module>../BA_Website</module>
 			</modules>
 		</profile>
 	</profiles>
