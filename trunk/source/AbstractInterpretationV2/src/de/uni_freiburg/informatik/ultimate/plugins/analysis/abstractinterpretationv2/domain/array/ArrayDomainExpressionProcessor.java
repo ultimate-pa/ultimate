@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>> {
@@ -92,6 +93,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		final Operator operator = expression.getOperator();
 		final Expression left = expression.getLeft();
 		final Expression right = expression.getRight();
+		final IBoogieType type = expression.getType();
 		switch (operator) {
 		case COMPGEQ:
 		case COMPGT:
@@ -102,10 +104,10 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			if (isAssume) {
 				return processArrayAssumption(leftResult, rightResult, operator);
 			}
-			return intersectResults(leftResult, rightResult, operator);
+			return intersectResults(leftResult, rightResult, operator, type);
 		}
 		case COMPEQ: {
-			if (isBooleanType(left.getType())) {
+			if (TypeUtils.isBoolean(left.getType())) {
 				final BinaryExpression logicIff =
 						new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICIFF, left, right);
 				return processBinaryExpression(logicIff, state, isAssume);
@@ -120,10 +122,10 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			if (isAssume) {
 				return processArrayAssumption(leftResult, rightResult, operator);
 			}
-			return intersectResults(leftResult, rightResult, operator);
+			return intersectResults(leftResult, rightResult, operator, type);
 		}
 		case COMPNEQ: {
-			if (isBooleanType(left.getType())) {
+			if (TypeUtils.isBoolean(left.getType())) {
 				final BinaryExpression logicIff =
 						new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICIFF, left, right);
 				final UnaryExpression negated =
@@ -133,7 +135,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			if (left.getType() instanceof ArrayType) {
 				// TODO a!=b (Check if in same equivalence class if identifier expressions)
 			}
-			return intersectResults(process(left, state, isAssume), process(right, state, isAssume), operator);
+			return intersectResults(process(left, state, isAssume), process(right, state, isAssume), operator, type);
 		}
 		case LOGICIFF:
 			final BinaryExpression leftImpl =
@@ -150,9 +152,9 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 					new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICOR, leftNegated, right);
 			return processBinaryExpression(orExpression, state, isAssume);
 		case LOGICOR:
-			return unionResults(process(left, state, isAssume), process(right, state, isAssume), operator);
+			return unionResults(process(left, state, isAssume), process(right, state, isAssume), operator, type);
 		default:
-			return intersectResults(process(left, state, isAssume), process(right, state, isAssume), operator);
+			return intersectResults(process(left, state, isAssume), process(right, state, isAssume), operator, type);
 		}
 	}
 
@@ -174,7 +176,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		switch (expression.getOperator()) {
 		case ARITHNEGATIVE: {
 			final ExpressionResult<STATE> subResult = process(subExpression, state, isAssume);
-			final Expression newExpr = new UnaryExpression(null, expression.getOperator(), subResult.getExpression());
+			final Expression newExpr = new UnaryExpression(null, expression.getType(), expression.getOperator(),
+					subResult.getExpression());
 			return new ExpressionResult<>(newExpr, subResult.getState());
 		}
 		case LOGICNEG:
@@ -191,7 +194,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				return processQuantifierExpression(quantifier, state, isAssume);
 			}
 			final ExpressionResult<STATE> subResult = process(subExpression, state, isAssume);
-			final Expression newExpr = new UnaryExpression(null, expression.getOperator(), subResult.getExpression());
+			final Expression newExpr = new UnaryExpression(null, PrimitiveType.TYPE_BOOL, expression.getOperator(),
+					subResult.getExpression());
 			return new ExpressionResult<>(newExpr, subResult.getState());
 		case OLD:
 			// TODO: How to handle this?
@@ -203,8 +207,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 	private QuantifierExpression negateQuantifierExpression(final QuantifierExpression expression) {
 		final Expression newSubformula =
 				new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, expression.getSubformula());
-		return new QuantifierExpression(null, expression.isUniversal(), expression.getTypeParams(),
-				expression.getParameters(), expression.getAttributes(), newSubformula);
+		return new QuantifierExpression(null, PrimitiveType.TYPE_BOOL, expression.isUniversal(),
+				expression.getTypeParams(), expression.getParameters(), expression.getAttributes(), newSubformula);
 	}
 
 	private BinaryExpression negateBinaryExpression(final BinaryExpression expression) {
@@ -270,18 +274,11 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		return NonrelationalTermUtils.getTermVar(var);
 	}
 
-	private boolean isBooleanType(final IBoogieType type) {
-		if (type instanceof PrimitiveType) {
-			return (PrimitiveType) type == PrimitiveType.TYPE_BOOL;
-		}
-		return false;
-	}
-
 	private ExpressionResult<STATE> intersectResults(final ExpressionResult<STATE> leftResult,
-			final ExpressionResult<STATE> rightResult, final Operator operator) {
+			final ExpressionResult<STATE> rightResult, final Operator operator, final IBoogieType type) {
 		final Expression leftExpression = leftResult.getExpression();
 		final Expression rightExpression = rightResult.getExpression();
-		final Expression newExpression = new BinaryExpression(null, operator, leftExpression, rightExpression);
+		final Expression newExpression = new BinaryExpression(null, type, operator, leftExpression, rightExpression);
 		final Set<IProgramVarOrConst> leftAuxVars = rightResult.getState().getUnusedAuxVars();
 		final Set<IProgramVarOrConst> rightAuxVars = rightResult.getState().getUnusedAuxVars();
 		final ArrayDomainState<STATE> leftState = leftResult.getState().addVariables(rightAuxVars);
@@ -291,10 +288,10 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 	}
 
 	private ExpressionResult<STATE> unionResults(final ExpressionResult<STATE> leftResult,
-			final ExpressionResult<STATE> rightResult, final Operator operator) {
+			final ExpressionResult<STATE> rightResult, final Operator operator, final IBoogieType type) {
 		final Expression leftExpression = leftResult.getExpression();
 		final Expression rightExpression = rightResult.getExpression();
-		final Expression newExpression = new BinaryExpression(null, operator, leftExpression, rightExpression);
+		final Expression newExpression = new BinaryExpression(null, type, operator, leftExpression, rightExpression);
 		final Set<IProgramVarOrConst> leftAuxVars = rightResult.getState().getUnusedAuxVars();
 		final Set<IProgramVarOrConst> rightAuxVars = rightResult.getState().getUnusedAuxVars();
 		final ArrayDomainState<STATE> leftState = leftResult.getState().addVariables(rightAuxVars);

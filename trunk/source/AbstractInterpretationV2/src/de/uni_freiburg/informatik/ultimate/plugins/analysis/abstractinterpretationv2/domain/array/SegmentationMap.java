@@ -140,6 +140,7 @@ public class SegmentationMap {
 
 	public void remove(final IProgramVarOrConst variable) {
 		mEqualArrays.remove(variable);
+		mRepresentiveSegmentations.remove(variable);
 	}
 
 	public void move(final IProgramVarOrConst variable, final IProgramVarOrConst target) {

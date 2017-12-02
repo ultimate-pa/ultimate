@@ -109,7 +109,7 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 				}
 			} else {
 				final AssignmentStatement assignment = constructSingleAssignment(lhs, newExpr);
-				newSubState = mToolkit.handleStatementBySubdomain(tmpState.getSubState(), assignment);
+				newSubState = mToolkit.handleStatementBySubdomain(newSubState, assignment);
 			}
 			return tmpState.updateState(newSubState, newSegmentationMap).removeUnusedAuxVars();
 		} else if (lhs instanceof ArrayLHS) {

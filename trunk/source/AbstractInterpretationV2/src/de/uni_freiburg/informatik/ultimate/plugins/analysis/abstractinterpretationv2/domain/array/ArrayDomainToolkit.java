@@ -35,10 +35,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.Boogie2SmtSymbolTableTmpVars;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -68,8 +64,6 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final Set<TemporaryBoogieVar> mCreatedVars;
 	private final MappedTerm2Expression mMappedTerm2Expression;
 	private final Boogie2SmtSymbolTableTmpVars mVariableProvider;
-	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 
 	public ArrayDomainToolkit(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
 			final IUltimateServiceProvider services, final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
@@ -80,8 +74,6 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 		final Script script = mBoogie2Smt.getScript();
 		final ManagedScript managedScript = mBoogie2Smt.getManagedScript();
-		mServices = services;
-		mLogger = logger;
 		mBoogieVarFactory = new BoogieVarFactory(managedScript);
 		mCallInfoCache = new CallInfoCache(icfg.getCfgSmtToolkit(), boogieSymbolTable);
 		mTypeSortTranslator = new TypeSortTranslator(script, services);
@@ -199,12 +191,6 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		final Segmentation segmentation =
 				new Segmentation(Arrays.asList(mMinBound, mMaxBound), Arrays.asList(newValue));
 		return new Pair<>(newValue, segmentation);
-	}
-
-	public Term simplifyTerm(final Term term) {
-		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, getManagedScript(),
-				term, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		return SmtUtils.simplify(getManagedScript(), eliminated, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
 	private class IdentifierTranslator implements IIdentifierTranslator {

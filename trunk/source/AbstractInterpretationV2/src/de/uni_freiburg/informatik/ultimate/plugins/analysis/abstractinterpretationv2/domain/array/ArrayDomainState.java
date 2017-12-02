@@ -82,8 +82,9 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		mVariables = variables;
 	}
 
-	public ArrayDomainState(final STATE subState, final ArrayDomainToolkit<STATE> toolkit) {
-		this(subState, new SegmentationMap(), subState.getVariables(), toolkit);
+	public ArrayDomainState(final STATE subState, final Set<IProgramVarOrConst> variables,
+			final ArrayDomainToolkit<STATE> toolkit) {
+		this(subState, new SegmentationMap(), variables, toolkit);
 	}
 
 	@Override
@@ -299,14 +300,13 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		if (other.isBottom()) {
 			return other;
 		}
-		final ArrayDomainState<STATE> renamedState = other.renameSegmentations(this, true);
+		final ArrayDomainState<STATE> otherState = other.renameSegmentations(this, true);
 		final Set<IProgramVarOrConst> auxVars1 = new HashSet<>(mSegmentationMap.getAuxVars());
-		final Set<IProgramVarOrConst> auxVars2 = new HashSet<>(renamedState.mSegmentationMap.getAuxVars());
-		final ArrayDomainState<STATE> state1 = addVariables(DataStructureUtils.difference(auxVars2, auxVars1));
-		final ArrayDomainState<STATE> state2 =
-				renamedState.addVariables(DataStructureUtils.difference(auxVars1, auxVars2));
-		final STATE subState = state1.mSubState.intersect(state2.mSubState);
-		ArrayDomainState<STATE> result = new ArrayDomainState<>(subState, mToolkit);
+		final Set<IProgramVarOrConst> auxVars2 = new HashSet<>(otherState.mSegmentationMap.getAuxVars());
+		final STATE state1 = mSubState.addVariables(DataStructureUtils.difference(auxVars2, auxVars1));
+		final STATE state2 = otherState.mSubState.addVariables(DataStructureUtils.difference(auxVars1, auxVars2));
+		final STATE subState = state1.intersect(state2);
+		ArrayDomainState<STATE> result = new ArrayDomainState<>(subState, mVariables, mToolkit);
 		final Set<IProgramVarOrConst> processedArrays = new HashSet<>();
 		for (final IProgramVarOrConst v : mSegmentationMap.getArrays()) {
 			if (processedArrays.contains(v)) {
@@ -322,22 +322,24 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				}
 				processedArrays.add(current);
 				final Set<IProgramVarOrConst> currentEquivalenceClass = new HashSet<>();
-				currentEquivalenceClass.addAll(state1.getEqualArrays(current));
-				currentEquivalenceClass.addAll(state2.getEqualArrays(current));
+				currentEquivalenceClass.addAll(getEqualArrays(current));
+				currentEquivalenceClass.addAll(otherState.getEqualArrays(current));
 				queue.addAll(currentEquivalenceClass);
 				equivalenceClass.addAll(currentEquivalenceClass);
 			}
 			final Set<Segmentation> segmentations = new HashSet<>();
 			for (final IProgramVarOrConst eq : equivalenceClass) {
-				segmentations.add(state1.mSegmentationMap.getSegmentation(eq));
-				segmentations.add(state2.mSegmentationMap.getSegmentation(eq));
-			}
-			if (segmentations.size() < 2) {
-				// If the segmentations are equal, we do not need to change it
-				continue;
+				segmentations.add(mSegmentationMap.getSegmentation(eq));
+				segmentations.add(otherState.mSegmentationMap.getSegmentation(eq));
 			}
 			final Iterator<Segmentation> iterator = segmentations.iterator();
-			result = result.setSegmentationIntersection(iterator.next(), iterator.next(), equivalenceClass);
+			final Segmentation firstSegmentation = iterator.next();
+			if (!iterator.hasNext()) {
+				// If the segmentations are equal, we can directly set it
+				result.mSegmentationMap.add(v, firstSegmentation);
+				continue;
+			}
+			result = result.setSegmentationIntersection(firstSegmentation, iterator.next(), equivalenceClass);
 			while (iterator.hasNext()) {
 				result = result.setSegmentationIntersection(result.mSegmentationMap.getSegmentation(v), iterator.next(),
 						equivalenceClass);
@@ -413,6 +415,9 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			if (processedArrays.contains(array)) {
 				continue;
 			}
+			final Sort sort = array.getSort();
+			final Sort boundSort = TypeUtils.getIndexSort(sort);
+			final Sort valueSort = TypeUtils.getInnermostArrayValueSort(sort);
 			processedArrays.add(array);
 			final Set<IProgramVarOrConst> equivalenceClass = new HashSet<>();
 			equivalenceClass.addAll(getEqualArrays(array));
@@ -427,6 +432,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			newBoundTerms.addAll(getEquivalentTerms(eqClassesOther, oldBoundTermsOther));
 			final List<IProgramVar> newBounds = new ArrayList<>();
 			final List<IProgramVar> newValues = new ArrayList<>();
+			newBounds.add(mToolkit.getMinBound());
 			for (final Term t : newBoundTerms) {
 				final IProgramVar newBoundVar = mToolkit.createBoundVar(mToolkit.getType(t.getSort()));
 				subState = mToolkit.handleStatementBySubdomain(subState.addVariable(newBoundVar),
@@ -453,26 +459,30 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 					}
 				}
 			}
-			for (int i = 0; i < newBounds.size() + 1; i++) {
-				final IProgramVar idxAuxVar =
-						mToolkit.createBoundVar(mToolkit.getType(thisSegmentation.getBoundSort()));
+			newBounds.add(mToolkit.getMaxBound());
+			for (int i = 0; i < newBounds.size() - 1; i++) {
+				final IProgramVar idxAuxVar = mToolkit.createBoundVar(mToolkit.getType(boundSort));
 				final List<Term> idxConstraints = new ArrayList<>();
+				STATE tmpSubStateThis = mSubState.addVariable(idxAuxVar);
+				STATE tmpSubStateOther = otherRenamed.mSubState.addVariable(idxAuxVar);
 				if (i > 0) {
-					final TermVariable prevIdx = newBounds.get(i - 1).getTermVariable();
-					idxConstraints.add(SmtUtils.leq(script, prevIdx, idxAuxVar.getTermVariable()));
+					final IProgramVar prevIdx = newBounds.get(i - 1);
+					tmpSubStateThis = tmpSubStateThis.addVariable(prevIdx);
+					tmpSubStateOther = tmpSubStateOther.addVariable(prevIdx);
+					idxConstraints.add(SmtUtils.leq(script, prevIdx.getTermVariable(), idxAuxVar.getTermVariable()));
 				}
 				if (i < newBounds.size()) {
-					final TermVariable nextIdx = newBounds.get(i).getTermVariable();
-					idxConstraints.add(SmtUtils.less(script, idxAuxVar.getTermVariable(), nextIdx));
+					final IProgramVar nextIdx = newBounds.get(i);
+					tmpSubStateThis = tmpSubStateThis.addVariable(nextIdx);
+					tmpSubStateOther = tmpSubStateOther.addVariable(nextIdx);
+					idxConstraints.add(SmtUtils.less(script, idxAuxVar.getTermVariable(), nextIdx.getTermVariable()));
 				}
 				final Term idxConstraint = SmtUtils.and(script, idxConstraints);
-				final ArrayDomainState<STATE> tmpThisState = updateState(mToolkit
-						.handleStatementBySubdomain(mSubState.addVariable(idxAuxVar), createAssume(idxConstraint)));
-				final ArrayDomainState<STATE> tmpOtherState =
-						otherRenamed.updateState(mToolkit.handleStatementBySubdomain(
-								otherRenamed.mSubState.addVariable(idxAuxVar), createAssume(idxConstraint)));
-				final IProgramVar newValueVar =
-						mToolkit.createValueVar(mToolkit.getType(thisSegmentation.getValueSort()));
+				final ArrayDomainState<STATE> tmpThisState =
+						updateState(mToolkit.handleStatementBySubdomain(tmpSubStateThis, createAssume(idxConstraint)));
+				final ArrayDomainState<STATE> tmpOtherState = otherRenamed.updateState(
+						mToolkit.handleStatementBySubdomain(tmpSubStateOther, createAssume(idxConstraint)));
+				final IProgramVar newValueVar = mToolkit.createValueVar(mToolkit.getType(valueSort));
 				newValues.add(newValueVar);
 				final List<Term> disjuncts = new ArrayList<>();
 				final Pair<Integer, Integer> thisMinMax =
@@ -593,15 +603,14 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		if (isBottom()) {
 			return script.term("false");
 		}
-		final Term term = mToolkit.simplifyTerm(mSubState.getTerm(script));
+		final Term term = mSubState.getTerm(script);
 		final Set<TermVariable> bounds = getTermVars(mSegmentationMap.getBoundVars());
 		final Set<TermVariable> values = getTermVars(mSegmentationMap.getValueVars());
 		final Term valueTerm = SmtUtils.filterFormula(term, values, script);
 		final Term arrayTerm = mSegmentationMap.getTerm(mToolkit.getManagedScript(), valueTerm);
 		final Term conjunction = Util.and(script, term, arrayTerm);
 		final Set<TermVariable> auxVars = DataStructureUtils.union(bounds, values);
-		final Term quantifiedAuxVars = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, conjunction);
-		return mToolkit.simplifyTerm(quantifiedAuxVars);
+		return SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, auxVars, conjunction);
 	}
 
 	private Set<TermVariable> getTermVars(final Collection<IProgramVar> programVars) {

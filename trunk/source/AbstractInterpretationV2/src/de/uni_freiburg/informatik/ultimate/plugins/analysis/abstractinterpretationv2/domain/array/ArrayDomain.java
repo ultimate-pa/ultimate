@@ -44,26 +44,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class ArrayDomain<STATE extends IAbstractState<STATE>>
 		implements IAbstractDomain<ArrayDomainState<STATE>, IcfgEdge> {
 	private IAbstractPostOperator<ArrayDomainState<STATE>, IcfgEdge> mPostOperator;
-	private final IAbstractDomain<STATE, IcfgEdge> mSubDomain;
 	private final ArrayDomainToolkit<STATE> mToolkit;
 
 	public ArrayDomain(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
 			final IUltimateServiceProvider services, final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
 			final IBoogieSymbolTableVariableProvider variableProvider) {
 		assert variableProvider instanceof Boogie2SmtSymbolTableTmpVars;
-		mSubDomain = subDomain;
 		mToolkit = new ArrayDomainToolkit<>(subDomain, icfg, services, logger, boogieSymbolTable,
 				(Boogie2SmtSymbolTableTmpVars) variableProvider);
 	}
 
 	@Override
 	public ArrayDomainState<STATE> createTopState() {
-		return new ArrayDomainState<>(mSubDomain.createTopState(), mToolkit);
+		final STATE substate = mToolkit.getSubDomain().createTopState();
+		return new ArrayDomainState<>(substate, substate.getVariables(), mToolkit);
 	}
 
 	@Override
 	public ArrayDomainState<STATE> createBottomState() {
-		return new ArrayDomainState<>(mSubDomain.createBottomState(), mToolkit);
+		final STATE substate = mToolkit.getSubDomain().createBottomState();
+		return new ArrayDomainState<>(substate, substate.getVariables(), mToolkit);
 	}
 
 	@Override
