@@ -369,7 +369,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param elem
 	 * @return true iff the element was not known to this CongruenceClosure before
 	 */
-	protected void addElement(final ELEM elem) {
+	public void addElement(final ELEM elem) {
 		addElementRec(elem);
 		assert sanityCheck();
 	}

@@ -84,7 +84,9 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
-		mWeqCcManager = new WeqCcManager<>(new CongruenceClosureComparator<NODE>());
+		mMgdScript = mgdScript;
+
+		mWeqCcManager = new WeqCcManager<>(new CongruenceClosureComparator<NODE>(), mMgdScript);
 
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
@@ -97,7 +99,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mIsDebugMode = true;
 
-		mMgdScript = mgdScript;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
 		mDimensionToWeqVariableNode = new NestedMap2<>();

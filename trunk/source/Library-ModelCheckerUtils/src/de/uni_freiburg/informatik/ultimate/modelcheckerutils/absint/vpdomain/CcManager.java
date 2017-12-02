@@ -26,9 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
@@ -39,16 +46,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	private final IPartialComparator<CongruenceClosure<ELEM>> mCcComparator;
+	private final ManagedScript mMgdScript;
 
-	public CcManager(final IPartialComparator<CongruenceClosure<ELEM>> ccComparator) {
+	public CcManager(final IPartialComparator<CongruenceClosure<ELEM>> ccComparator, final ManagedScript mgdScript) {
 		mCcComparator = ccComparator;
+		mMgdScript = mgdScript;
 	}
 
-	public CongruenceClosure<ELEM> getMeet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
-		return getMeet(cc1, cc2, null);
+	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
+		return meet(cc1, cc2, null);
 	}
 
-	public CongruenceClosure<ELEM> getMeet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
 			final RemoveCcElement<ELEM> remInfo) {
 		final CongruenceClosure<ELEM> result;
 		if (remInfo == null) {
@@ -61,7 +70,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 
 
-	public CongruenceClosure<ELEM> getJoin(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
+	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
 		return cc1.join(cc2);
 	}
 
@@ -71,7 +80,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	/**
-	 * The given list is implictly a disjunction.
+	 * The given list is implicitly a disjunction.
 	 * If one element in the disjunction is stronger than another, we can drop it.
 	 *
 	 * TODO: poor man's solution, could be done much nicer with lattice representation..
@@ -83,19 +92,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final PartialOrderCache<CongruenceClosure<ELEM>> poc = new PartialOrderCache<>(mCcComparator);
 		return filterRedundantCcs(unionList, poc);
 	}
-
-//	public CongruenceClosure<ELEM> getSingleDisequalityCc(final ELEM elem1, final ELEM elem2) {
-//		final CongruenceClosure<ELEM> newCC = new CongruenceClosure<>();
-//		newCC.reportDisequality(elem1, elem2);
-//		return newCC;
-//	}
-
-//	public CongruenceClosure<ELEM> getSingleEqualityCc(final ELEM elem1,
-//			final ELEM  elem2) {
-//		final CongruenceClosure<ELEM> newCC = new CongruenceClosure<>();
-//		newCC.reportEquality(elem1, elem2);
-//		return newCC;
-//	}
 
 	public  IPartialComparator<CongruenceClosure<ELEM>> getCcComparator() {
 		return mCcComparator;
@@ -161,4 +157,39 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert origCc.isFrozen();
 		return new CongruenceClosure<>(origCc);
 	}
+
+	public CongruenceClosure<ELEM> addElement(final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem) {
+		final CongruenceClosure<ELEM> unfrozen = unfreeze(congruenceClosure);
+		unfrozen.addElement(elem);
+		unfrozen.freeze();
+		return unfrozen;
+	}
+
+
+
+
+	public static <NODE extends IEqNodeIdentifier<NODE>> Term congruenceClosureToTerm(final Script script,
+			final CongruenceClosure<NODE> pa) {
+		return SmtUtils.and(script, congruenceClosureToCube(script, pa));
+	}
+
+	public static <NODE extends IEqNodeIdentifier<NODE>> List<Term> congruenceClosureToCube(final Script script,
+//	public static <NODE extends ICongruenceClosureElement<NODE>> List<Term> congruenceClosureToCube(final Script script,
+			final CongruenceClosure<NODE> pa) {
+
+		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
+				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
+				.collect(Collectors.toList());
+		final List<Term> elementDisequalities = pa.getElementDisequalities().entrySet().stream()
+				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
+				.collect(Collectors.toList());
+
+		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
+		result.addAll(elementEqualities);
+		result.addAll(elementDisequalities);
+		return result;
+	}
+
+
+
 }

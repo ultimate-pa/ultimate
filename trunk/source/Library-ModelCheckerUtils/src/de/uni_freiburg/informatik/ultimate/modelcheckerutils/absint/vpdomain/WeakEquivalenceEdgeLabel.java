@@ -309,7 +309,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 		for (final CongruenceClosure<NODE> l : mLabel) {
 			assert mWeakEquivalenceGraph.mPartialArrangement.sanityCheck();
 			assert l.sanityCheckOnlyCc();
-			final CongruenceClosure<NODE> currentPaWgpa = mWeqCcManager.getMeet(l,
+			final CongruenceClosure<NODE> currentPaWgpa = mWeqCcManager.meet(l,
 					mWeakEquivalenceGraph.mPartialArrangement.getCongruenceClosure(),
 					mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
 
@@ -352,7 +352,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 	public List<Term> toDNF(final Script script) {
 		final List<Term> result = new ArrayList<>();
 		for (final CongruenceClosure<NODE> cc : mLabel) {
-			final List<Term> cube = EqConstraint.partialArrangementToCube(script, cc);
+			final List<Term> cube = CcManager.congruenceClosureToCube(script, cc);
 			final Term cubeTerm = SmtUtils.and(script, cube);
 			result.add(cubeTerm);
 		}
@@ -619,7 +619,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 //			if (meetWithFullWeqCc) {
 //				meet = mWeakEquivalenceGraph.mCcManager.getWeqMeet(l, mWeakEquivalenceGraph.mPartialArrangement);
 //			} else {
-				meet = mWeqCcManager.getMeet(l,
+				meet = mWeqCcManager.meet(l,
 						mWeakEquivalenceGraph.mPartialArrangement.getCongruenceClosure(),
 						mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
 //			}

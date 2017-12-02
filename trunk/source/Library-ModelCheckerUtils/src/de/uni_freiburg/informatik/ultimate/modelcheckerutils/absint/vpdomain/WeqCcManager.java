@@ -26,9 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
@@ -37,9 +51,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrde
 public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final CcManager<NODE> mCcManager;
+	private final ManagedScript mMgdScript;
 
-	public WeqCcManager(final IPartialComparator<CongruenceClosure<NODE>> ccComparator) {
-		mCcManager = new CcManager<>(ccComparator);
+	public WeqCcManager(final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript) {
+		mCcManager = new CcManager<>(ccComparator, mgdScript);
+		mMgdScript = mgdScript;
 	}
 
 	WeqCongruenceClosure<NODE> getWeqMeet(final CongruenceClosure<NODE> cc,
@@ -93,11 +109,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager.getCcComparator();
 	}
 
-	public CongruenceClosure<NODE> getMeet(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
-			final RemoveCcElement<NODE> elementCurrentlyBeingRemoved) {
-		return mCcManager.getMeet(cc1, cc2, elementCurrentlyBeingRemoved);
-	}
-
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs,
 			final PartialOrderCache<CongruenceClosure<NODE>> ccPoCache) {
 		return mCcManager.filterRedundantCcs(ccs, ccPoCache);
@@ -146,14 +157,32 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return new WeqCongruenceClosure<>(original, false);
 	}
 
-	public WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> partialArrangement,
-			final WeqCongruenceClosure<NODE> partialArrangement2) {
-		return partialArrangement.meet(partialArrangement2);
+	public WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> weqcc1,
+			final WeqCongruenceClosure<NODE> weqcc2) {
+		return weqcc1.meet(weqcc2);
 	}
 
-	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> mPartialArrangement,
-			final WeqCongruenceClosure<NODE> partialArrangement) {
-		return mPartialArrangement.join(partialArrangement);
+	public CongruenceClosure<NODE> meet(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
+			final RemoveCcElement<NODE> elementCurrentlyBeingRemoved) {
+		// (just passing it through to CcManager)
+		final CongruenceClosure<NODE> result = mCcManager.meet(cc1, cc2, elementCurrentlyBeingRemoved);
+		assert checkMeetResult(cc1, cc2, result);
+		return result;
+	}
+
+	public CongruenceClosure<NODE> join(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
+			final RemoveCcElement<NODE> elementCurrentlyBeingRemoved) {
+		// (just passing it through to CcManager)
+		final CongruenceClosure<NODE> result = mCcManager.join(cc1, cc2);
+		assert checkJoinResult(cc1, cc2, result);
+		return result;
+	}
+
+	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> weqcc1,
+			final WeqCongruenceClosure<NODE> weqcc2) {
+		final WeqCongruenceClosure<NODE> result = weqcc1.join(weqcc2);
+		assert checkJoinResult(weqcc1, weqcc2, result);
+		return result;
 	}
 
 	public boolean isStrongerThan(final WeqCongruenceClosure<NODE> partialArrangement,
@@ -170,5 +199,109 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final Set<CongruenceClosure<NODE>> constraints) {
 		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, constraints);
 	}
+
+	public CongruenceClosure<NODE> addNode(final NODE storeIndex, final CongruenceClosure<NODE> congruenceClosure) {
+		return mCcManager.addElement(congruenceClosure, storeIndex);
+	}
+
+
+
+	public static <NODE extends IEqNodeIdentifier<NODE>> Term weqCcToTerm(final Script script,
+			final WeqCongruenceClosure<NODE> weqCc) {
+		final List<Term> allConjuncts = new ArrayList<>();
+//		allConjuncts.addAll(EqConstraint.partialArrangementToCube(script, this));
+		allConjuncts.addAll(CcManager.congruenceClosureToCube(script, weqCc.getCongruenceClosure()));
+
+		final List<Term> weakEqConstraints = weqCc.getWeakEquivalenceGraph()
+				.getWeakEquivalenceConstraintsAsTerms(script);
+		allConjuncts.addAll(weakEqConstraints);
+
+		final Term result = SmtUtils.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
+		return result;
+	}
+
+	private boolean checkMeetResult(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
+			final CongruenceClosure<NODE> result) {
+		return checkMeetResult(
+				CcManager.congruenceClosureToTerm(mMgdScript.getScript(), cc1),
+				CcManager.congruenceClosureToTerm(mMgdScript.getScript(), cc2),
+				CcManager.congruenceClosureToTerm(mMgdScript.getScript(), result));
+	}
+
+	private boolean checkJoinResult(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
+			final CongruenceClosure<NODE> result) {
+		return checkJoinResult(
+				CcManager.congruenceClosureToTerm(mMgdScript.getScript(), cc1),
+				CcManager.congruenceClosureToTerm(mMgdScript.getScript(), cc2),
+				CcManager.congruenceClosureToTerm(mMgdScript.getScript(), result));
+	}
+
+	private boolean checkJoinResult(final WeqCongruenceClosure<NODE> cc1, final WeqCongruenceClosure<NODE> cc2,
+			final WeqCongruenceClosure<NODE> result) {
+		return checkJoinResult(
+				weqCcToTerm(mMgdScript.getScript(), cc1),
+				weqCcToTerm(mMgdScript.getScript(), cc2),
+				weqCcToTerm(mMgdScript.getScript(), result));
+	}
+
+	private boolean checkMeetResult(final Term cc1, final Term cc2,
+			final Term resultTerm) {
+		// check that cc1 /\ cc2 -> result
+		mMgdScript.lock(this);
+		final Script script = mMgdScript.getScript();
+		final Term cc1AndCc2Term = SmtUtils.and(script, cc1, cc2);
+		final boolean res = checkImplicationHolds(script, cc1AndCc2Term, resultTerm);
+		mMgdScript.unlock(this);
+		return res;
+	}
+
+	private boolean checkJoinResult(final Term cc1, final Term cc2,
+			final Term resultTerm) {
+		// check that cc1 /\ cc2 -> result
+		mMgdScript.lock(this);
+		final Script script = mMgdScript.getScript();
+		final Term cc1AndCc2Term = SmtUtils.or(script, cc1, cc2);
+		final boolean res = checkImplicationHolds(script, cc1AndCc2Term, resultTerm);
+		mMgdScript.unlock(this);
+		return res;
+	}
+
+	private boolean checkImplicationHolds(final Script script, final Term ante, final Term succ) {
+		assert mMgdScript.isLockOwner(this);
+
+		mMgdScript.push(this, 1);
+
+		/*
+		 * declare a constant for each variable and substitute the variables
+		 */
+		final Set<TermVariable> freeVars = new HashSet<>();
+		freeVars.addAll(Arrays.asList(ante.getFreeVars()));
+		freeVars.addAll(Arrays.asList(succ.getFreeVars()));
+
+		final Map<Term, Term> subsMap = new HashMap<>();
+		for (final TermVariable fv : freeVars) {
+			// assuming the constant is already declared..
+			mMgdScript.declareFun(this, fv.getName(), new Sort[0], fv.getSort());
+			final Term cons = mMgdScript.term(this, fv.getName());
+			subsMap.put(fv, cons);
+		}
+
+		final Substitution substitution = new Substitution(mMgdScript, subsMap);
+
+		/*
+		 * check the implication
+		 */
+		mMgdScript.assertTerm(this, substitution.transform(ante));
+
+		mMgdScript.assertTerm(this, SmtUtils.not(script, substitution.transform(succ)));
+
+		final LBool satResult = mMgdScript.checkSat(this);
+
+		mMgdScript.pop(this, 1);
+
+		assert satResult == LBool.UNSAT;
+		return satResult == LBool.UNSAT;
+	}
+
 
 }

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,9 +37,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CcAuxData;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -167,17 +163,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //		this(original, false);
 //	}
 
-	public Term getTerm(final Script script) {
-		final List<Term> allConjuncts = new ArrayList<>();
-//		allConjuncts.addAll(EqConstraint.partialArrangementToCube(script, this));
-		allConjuncts.addAll(EqConstraint.partialArrangementToCube(script, mCongruenceClosure));
 
-		final List<Term> weakEqConstraints = mWeakEquivalenceGraph.getWeakEquivalenceConstraintsAsTerms(script);
-		allConjuncts.addAll(weakEqConstraints);
-
-		final Term result = SmtUtils.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
-		return result;
-	}
 
 	public void addElement(final NODE elem) {
 		assert !isFrozen();
@@ -227,8 +213,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !isFrozen();
 		assert array1.hasSameTypeAs(array2);
 
-		mCongruenceClosure.getRepresentativeAndAddElementIfNeeded(storeIndex);
+		mCongruenceClosure.addElement(storeIndex);
 		assert sanityCheck();
+//		CongruenceClosure<NODE> ccWithNodeAdded = mFactory.getWeqCcManager().addNode(storeIndex, mCongruenceClosure);
 
 		final CongruenceClosure<NODE> newConstraint = computeWeqConstraintForIndex(
 				Collections.singletonList(storeIndex));
@@ -1289,6 +1276,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	@Override
 	public ILogger getLogger() {
 		return mLogger;
+	}
+
+	public WeakEquivalenceGraph<NODE> getWeakEquivalenceGraph() {
+		return mWeakEquivalenceGraph;
 	}
 
 }

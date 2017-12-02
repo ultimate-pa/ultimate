@@ -26,11 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -44,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
 
@@ -222,26 +219,11 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			return mTerm;
 		}
 
-		final Term result = mPartialArrangement.getTerm(script);
+//		final Term result = mPartialArrangement.getTerm(script);
+		final Term result = WeqCcManager.weqCcToTerm(script, mPartialArrangement);
 		if (mIsFrozen) {
 			mTerm = result;
 		}
-		return result;
-	}
-
-	static <NODE extends IEqNodeIdentifier<NODE>> List<Term> partialArrangementToCube(final Script script,
-			final CongruenceClosure<NODE> pa) {
-
-		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
-				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> elementDisequalities = pa.getElementDisequalities().entrySet().stream()
-				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
-				.collect(Collectors.toList());
-
-		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
-		result.addAll(elementEqualities);
-		result.addAll(elementDisequalities);
 		return result;
 	}
 
