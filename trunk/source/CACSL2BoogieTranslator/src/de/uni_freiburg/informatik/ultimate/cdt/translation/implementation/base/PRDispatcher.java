@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -118,6 +119,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -174,13 +176,13 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(final DecoratorNode node) {
+	public Result dispatch(final Collection<DecoratedUnit> nodes) {
 		// this.decoratorTree = node;
 		// this.decoratorTreeIterator = node.iterator();
-		if (node.getCNode() != null) {
-			return dispatch(node.getCNode());
-		}
-		return dispatch(node.getAcslNode());
+		return mCHandler.visit(this, nodes);
+		// ACSL dispatch just returns null..
+		// return dispatch(node.getAcslNode());
+		// return null;
 	}
 
 	@Override

@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -140,6 +141,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -326,17 +328,20 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	protected void preRun(final DecoratorNode node) {
-		super.preRun(node);
-		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
+	protected void preRun(final Collection<DecoratedUnit> nodes) {
+		super.preRun(nodes);
 
 		mVariablesOnHeap = new LinkedHashSet<>();
 
 		final FunctionTableBuilder ftb = new FunctionTableBuilder();
-		tu.accept(ftb);
+		for (DecoratedUnit unit : nodes) {
+			unit.getRootNode().getCNode().accept(ftb);
+		}
 		mFunctionTable.putAll(ftb.getFunctionTable());
 		final PreRunner pr = new PreRunner(mFunctionTable);
-		tu.accept(pr);
+		for (DecoratedUnit unit : nodes) {
+			unit.getRootNode().getCNode().accept(pr);
+		}
 
 		mVariablesOnHeap.addAll(pr.getVarsForHeap());
 
@@ -345,7 +350,9 @@ public class MainDispatcher extends Dispatcher {
 		if (DETERMINIZE_NECESSARY_DECLARATIONS) {
 			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(), this,
 					ftb.getFunctionTable(), mFunctionToIndex);
-			tu.accept(dnd);
+			for (DecoratedUnit unit : nodes) {
+				unit.getRootNode().getCNode().accept(dnd);
+			}
 
 			mReachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
 		} else {
@@ -355,7 +362,7 @@ public class MainDispatcher extends Dispatcher {
 		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
 				mReachableDeclarations, getLocationFactory(), mFunctionTable, mMultiparseTable);
 		prd.init();
-		prd.dispatch(node);
+		prd.dispatch(nodes);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());
 
 		mIndexToFunction = new LinkedHashMap<>();
@@ -867,13 +874,13 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(final DecoratorNode node) {
-		mDecoratorTree = node;
-		mDecoratorTreeIterator = node.iterator();
-		if (node.getCNode() != null) {
-			return dispatch(node.getCNode());
-		}
-		return dispatch(node.getAcslNode());
+	public Result dispatch(final Collection<DecoratedUnit> nodes) {
+		// Fix these two
+		mDecoratorTree = nodes.stream().findFirst().get().getRootNode();
+		mDecoratorTreeIterator = mDecoratorTree.iterator();
+		return mCHandler.visit(this, nodes);
+		// TODO Make this usable again
+		// return dispatch(node.getAcslNode());
 	}
 
 	@Override

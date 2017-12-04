@@ -154,6 +154,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
@@ -514,6 +515,11 @@ public class CHandler implements ICHandler {
 	 * three nested declarators: A PointerDeclarator contains an ArrayDeclarator contains a Pointer contains a function.
 	 */
 	protected ArrayDeque<TypesResult> mCurrentDeclaredTypes;
+	
+	/**
+	 * The boogie declarations that are the result of the translation process.
+	 */
+	private ArrayList<Declaration> mDeclarations;
 
 	/**
 	 * Constructor.
@@ -580,6 +586,8 @@ public class CHandler implements ICHandler {
 
 		mStandardFunctionHandler = new StandardFunctionHandler(mTypeHandler, mExpressionTranslation, mMemoryHandler,
 				mStructHandler, mTypeSizeComputer, mFunctionHandler, this);
+
+		mDeclarations = new ArrayList<>();
 	}
 
 	/**
@@ -594,6 +602,36 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final CASTDesignatedInitializer node) {
 		return mStructHandler.handleDesignatedInitializer(main, mMemoryHandler, mStructHandler, node);
+	}
+	
+	@Override
+	public Result visit(Dispatcher main, Collection<DecoratedUnit> units) {
+		for (DecoratedUnit du : units) {
+			if (du.getRootNode().getCNode() != null) {
+				visit(main, (IASTTranslationUnit) du.getRootNode().getCNode());
+			}
+			// ACSL?
+		}
+		
+		// TODO Need to get a CLocation from somewhere
+		final Unit boogieUnit = new Unit(null, mDeclarations.toArray(new Declaration[mDeclarations.size()]));
+
+		// annotate the Unit with LTLPropertyChecks if applicable
+		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
+			final Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<>();
+
+			for (final Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex
+					.getAP2SubExpressionMap().entrySet()) {
+				final ExpressionResult r = (ExpressionResult) main.dispatch(en.getValue());
+				// TODO: some switchToRValue and handling of sideeffects?
+				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression(r.mLrVal.getValue(), null));
+			}
+			final LTLPropertyCheck propCheck =
+					new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
+			propCheck.annotate(boogieUnit);
+		}
+
+		return new Result(boogieUnit);
 	}
 
 	@Override
@@ -2038,10 +2076,9 @@ public class CHandler implements ICHandler {
 			final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
 			main.unsupportedSyntax(loc, msg);
 		}
-		final ArrayList<Declaration> decl = new ArrayList<>();
 
 		// TODO(thrax): Check if decl should be passed as null or not.
-		checkForACSL(main, null, decl, node, null);
+		checkForACSL(main, null, mDeclarations, node, null);
 
 		// delayed processing of IASTFunctionDefinitions and structs
 		// This is a workaround. Invariants my use global variables that
@@ -2059,16 +2096,16 @@ public class CHandler implements ICHandler {
 						|| simpleDecl.getDeclSpecifier() instanceof IASTNamedTypeSpecifier) {
 					complexNodes.add(child);
 				} else {
-					processTUchild(main, decl, child);
+					processTUchild(main, mDeclarations, child);
 				}
 			} else if (child instanceof IASTFunctionDefinition) {
 				complexNodes.add(child);
 			} else {
-				processTUchild(main, decl, child);
+				processTUchild(main, mDeclarations, child);
 			}
 		}
 		for (final IASTNode funcDef : complexNodes) {
-			processTUchild(main, decl, funcDef);
+			processTUchild(main, mDeclarations, funcDef);
 		}
 
 		// (alex:) new function pointers
@@ -2077,71 +2114,56 @@ public class CHandler implements ICHandler {
 			final String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
 			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
 			// would unique make sense here?? -- would potentially add lots of axioms
-			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
+			mDeclarations.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
 
 			final BigInteger offsetValue = BigInteger.valueOf(en.getValue());
-			decl.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc,
+			mDeclarations.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc,
 					BinaryExpression.Operator.COMPEQ, new IdentifierExpression(loc, funcId), mExpressionTranslation
 							.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
 		}
 
 		for (final Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
 			assert d instanceof ConstDeclaration || d instanceof VariableDeclaration || d instanceof TypeDeclaration;
-			decl.add(d);
+			mDeclarations.add(d);
 		}
-		decl.addAll(mAxioms);
+		mDeclarations.addAll(mAxioms);
 
-		decl.addAll(0,
+		mDeclarations.addAll(0,
 				mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler,
 						(TypeHandler) mTypeHandler, mTypeHandler.getUndefinedTypes(), mDeclarationsGlobalInBoogie,
 						mExpressionTranslation));
 
 		// this has to happen after postprocessing as pping may add sizeof
 		// constants for initializations
-		decl.addAll(mTypeSizeComputer.getConstants());
-		decl.addAll(mTypeSizeComputer.getAxioms());
-		decl.addAll(mMemoryHandler.declareMemoryModelInfrastructure(main, loc));
-		decl.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
+		mDeclarations.addAll(mTypeSizeComputer.getConstants());
+		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
+		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(main, loc));
+		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
-		decl.addAll(((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
+		mDeclarations.addAll(((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
 
 		// have to block this in prerun, because there, Memorymodel is not declared which may make probelms with the
 		// callgraph computation
 		if (!(main instanceof PRDispatcher)) {
 			// handle proc. declaration & resolve their transitive modified globals
-			decl.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
+			mDeclarations.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
 		}
 
 		final Collection<FunctionDeclaration> declaredFunctions =
 				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
-		decl.addAll(declaredFunctions);
+		mDeclarations.addAll(declaredFunctions);
 
 		// handle global ACSL stuff
 		// TODO: do it!
 
 		// TODO(thrax): Check if decl should be passed as null.
-		checkForACSL(main, null, decl, node, null);
+		checkForACSL(main, null, mDeclarations, node, null);
 
-		// the overall translation result:
-		final Unit boogieUnit = new Unit(loc, decl.toArray(new Declaration[decl.size()]));
-
-		// annotate the Unit with LTLPropertyChecks if applicable
-		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
-			final Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<>();
-
-			for (final Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex
-					.getAP2SubExpressionMap().entrySet()) {
-				final ExpressionResult r = (ExpressionResult) main.dispatch(en.getValue());
-				// TODO: some switchToRValue and handling of sideeffects?
-				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression(r.mLrVal.getValue(), null));
-			}
-			final LTLPropertyCheck propCheck =
-					new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
-			propCheck.annotate(boogieUnit);
-		}
-
-		return new Result(boogieUnit);
+		// The declarations (which are needed for the caller) are handled as a member as they
+		// do not consist of a Boogie node.
+		// So as a workaround null is returned here
+		return null;
 	}
 
 	@Override

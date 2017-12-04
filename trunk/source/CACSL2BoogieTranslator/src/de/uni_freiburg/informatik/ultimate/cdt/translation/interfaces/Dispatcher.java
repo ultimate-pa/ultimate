@@ -195,7 +195,7 @@ public abstract class Dispatcher {
 	 *            the node to dispatch
 	 * @return the result for the given node
 	 */
-	public abstract Result dispatch(DecoratorNode node);
+	public abstract Result dispatch(final Collection<DecoratedUnit> nodes);
 
 	/**
 	 * Dispatch a given C node to a specific handler.
@@ -241,11 +241,9 @@ public abstract class Dispatcher {
 	 * @return the result for the given node
 	 */
 	public final Result run(final Collection<DecoratedUnit> nodes) {
-		// Implement handling of multiple decorator nodes
-		DecoratorNode node = nodes.stream().findFirst().get().getRootNode();
-		preRun(node);
+		preRun(nodes);
 		init();
-		return dispatch(node);
+		return dispatch(nodes);
 	}
 
 	/**
@@ -254,11 +252,15 @@ public abstract class Dispatcher {
 	 * @param node
 	 *            the node for which the pre run should be started
 	 */
-	protected void preRun(final DecoratorNode node) {
-		assert node.getCNode() != null;
-		assert node.getCNode() instanceof IASTTranslationUnit;
+	protected void preRun(final Collection<DecoratedUnit> nodes) {
+		assert !nodes.isEmpty();
+		
+		// Line Directive mapping doesn't work with multiple TUs right now
+		DecoratorNode ldmNode = nodes.stream().findFirst().get().getRootNode();
+		assert ldmNode.getCNode() != null;
+		assert ldmNode.getCNode() instanceof IASTTranslationUnit;
 
-		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
+		final IASTTranslationUnit tu = (IASTTranslationUnit) ldmNode.getCNode();
 		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
 		mLocationFactory = new LocationFactory(lineDirectiveMapping);
 		mBacktranslator.setLocationFactory(mLocationFactory);

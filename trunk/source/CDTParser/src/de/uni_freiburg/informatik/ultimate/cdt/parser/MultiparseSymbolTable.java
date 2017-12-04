@@ -185,7 +185,7 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		mLogger.info("Function table:");
 		for (Pair<String, String> key : mFunctionMapping.keySet()) {
 			final String newName = mNamePrefixMapping.get(key);
-			mLogger.info("Function definition of " + newName + " in " + key.getFirst());
+			mLogger.info("Function definition of " + newName + " ('" + key.getSecond() + "') in " + key.getFirst());
 		}
 		if (mFunctionMapping.isEmpty()) {
 			mLogger.info("<empty function table>");

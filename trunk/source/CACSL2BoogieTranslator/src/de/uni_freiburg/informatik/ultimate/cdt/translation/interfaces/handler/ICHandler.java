@@ -33,6 +33,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
 import java.math.BigInteger;
+import java.util.Collection;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
@@ -81,6 +82,7 @@ import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
@@ -140,6 +142,17 @@ public interface ICHandler extends IHandler {
     public TypesResult checkForPointer(Dispatcher main,
             IASTPointerOperator[] pointerOps, TypesResult resType, boolean putOnHeap);
 
+    /**
+     * Translates mulitple DecoratorNodes, wrapped in DecoratedUnits.
+     * 
+     * @param main
+     * 			  a reference to the main dispatcher
+     * @param units
+     * 			  the decorator units to visit
+     * @return a result object
+     */
+    public Result visit(Dispatcher main, Collection<DecoratedUnit> units);
+    
     /**
      * Translates an IASTTranslationUnit.
      *
