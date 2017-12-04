@@ -5275,15 +5275,15 @@ void *ldv_malloc(size_t size )
   int tmp___0 ;
 
   {
-  tmp___0 = __VERIFIER_nondet_int();
-  if (tmp___0 != 0) {
-    return ((void *)0);
-  } else {
+//  tmp___0 = __VERIFIER_nondet_int();
+//  if (tmp___0 != 0) {
+//    return ((void *)0);
+//  } else {
     tmp = malloc(size);
     p = tmp;
     __VERIFIER_assume((unsigned long )p != (unsigned long )((void *)0));
     return (p);
-  }
+//  }
 }
 }
 void *ldv_zalloc(size_t size ) 
