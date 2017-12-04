@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -47,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends EqConstraint<NODE> {
 
 	public EqBottomConstraint(final EqConstraintFactory<NODE> factory) {
-		super(0, factory);
+		super(0, null, null);
 	}
 
 	@Override
@@ -80,10 +79,10 @@ public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends Eq
 		return Collections.emptySet();
 	}
 
-	@Override
-	public void renameVariables(final Map<Term, Term> substitutionMapping) {
-		// do nothing
-	}
+//	@Override
+//	public void renameVariables(final Map<Term, Term> substitutionMapping) {
+//		// do nothing
+//	}
 
 	@Override
 	public boolean areEqual(final NODE node1, final NODE node2) {

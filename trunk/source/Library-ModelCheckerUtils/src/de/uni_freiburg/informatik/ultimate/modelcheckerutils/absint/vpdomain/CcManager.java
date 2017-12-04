@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -166,8 +167,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 
-
-
 	public static <NODE extends IEqNodeIdentifier<NODE>> Term congruenceClosureToTerm(final Script script,
 			final CongruenceClosure<NODE> pa) {
 		return SmtUtils.and(script, congruenceClosureToCube(script, pa));
@@ -176,6 +175,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public static <NODE extends IEqNodeIdentifier<NODE>> List<Term> congruenceClosureToCube(final Script script,
 //	public static <NODE extends ICongruenceClosureElement<NODE>> List<Term> congruenceClosureToCube(final Script script,
 			final CongruenceClosure<NODE> pa) {
+		if (pa.isInconsistent()) {
+			return Collections.emptyList();
+		}
 
 		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
 				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))

@@ -75,7 +75,8 @@ public class EqOperationProvider implements
 	public EqDisjunctiveConstraint<EqNode> renameVariables(
 			final Map<Term, Term> substitutionMapping,
 			final EqDisjunctiveConstraint<EqNode> constraint) {
-		return constraint.renameVariables(substitutionMapping);
+//		return constraint.renameVariables(substitutionMapping);
+		return mEqConstraintFactory.renameVariables(constraint, substitutionMapping);
 	}
 
 	@Override

@@ -70,16 +70,16 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		return mConstraints.isEmpty();
 	}
 
-	public EqDisjunctiveConstraint<NODE> renameVariables(final Map<Term, Term> substitutionMapping) {
-		final Collection<EqConstraint<NODE>> constraintList = new HashSet<>();
-		for (final EqConstraint<NODE> constraint : mConstraints) {
-			final EqConstraint<NODE> newConstraint = mFactory.unfreeze(constraint);
-			newConstraint.renameVariables(substitutionMapping);
-			newConstraint.freeze();
-			constraintList.add(newConstraint);
-		}
-		return mFactory.getDisjunctiveConstraint(constraintList);
-	}
+//	public EqDisjunctiveConstraint<NODE> renameVariables(final Map<Term, Term> substitutionMapping) {
+//		final Collection<EqConstraint<NODE>> constraintList = new HashSet<>();
+//		for (final EqConstraint<NODE> constraint : mConstraints) {
+//			final EqConstraint<NODE> newConstraint = mFactory.unfreeze(constraint);
+//			newConstraint.renameVariables(substitutionMapping);
+//			newConstraint.freeze();
+//			constraintList.add(newConstraint);
+//		}
+//		return mFactory.getDisjunctiveConstraint(constraintList);
+//	}
 
 
 	public EqDisjunctiveConstraint<NODE> projectExistentially(final Collection<Term> termsToProjectAway) {
@@ -157,7 +157,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
 			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
-			unfrozen.reportEquality(node1, node2);
+			unfrozen.reportEqualityInPlace(node1, node2);
 			unfrozen.freeze();
 			constraintList.add(unfrozen);
 		}
@@ -176,7 +176,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
 			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
-			unfrozen.reportDisequality(node1, node2);
+			unfrozen.reportDisequalityInPlace(node1, node2);
 			unfrozen.freeze();
 			constraintList.add(unfrozen);
 		}
