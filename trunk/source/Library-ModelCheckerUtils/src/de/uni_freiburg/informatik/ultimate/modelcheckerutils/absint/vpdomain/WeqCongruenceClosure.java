@@ -1150,7 +1150,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (mWeakEquivalenceGraph != null && !mWeakEquivalenceGraph.isEmpty()) {
 			sb.append("Weak equivalences:\n");
 			sb.append(mWeakEquivalenceGraph.toLogString());
-		} else if (mWeakEquivalenceGraph.isEmpty()) {
+		} else if (mWeakEquivalenceGraph != null && mWeakEquivalenceGraph.isEmpty()) {
 			sb.append("weak equivalence graph is empty\n");
 		} else {
 			sb.append("weak equivalence graph is null\n");

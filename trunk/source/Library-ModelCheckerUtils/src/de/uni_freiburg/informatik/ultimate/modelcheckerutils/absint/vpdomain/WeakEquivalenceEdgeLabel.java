@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CcManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
@@ -88,7 +87,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 		mWeakEquivalenceGraph = weakEquivalenceGraph;
 		mWeqCcManager = weakEquivalenceGraph.getWeqCcManager();
 		mLabel = new HashSet<>();
-		mLabel.add(new CongruenceClosure<>(mWeakEquivalenceGraph.getLogger()));
+		mLabel.add(mWeqCcManager.getEmptyCc());
 		assert sanityCheck();
 	}
 
@@ -191,7 +190,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 			if (lab.isTautological()) {
 				// a disjunct became "true" through projection --> the whole disjunction is tautological
 				mLabel.clear();
-				mLabel.add(new CongruenceClosure<>(mWeakEquivalenceGraph.getLogger()));
+				mLabel.add(mWeqCcManager.getEmptyCc());
 				return Collections.emptySet();
 			}
 			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
@@ -353,7 +352,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 	public List<Term> toDNF(final Script script) {
 		final List<Term> result = new ArrayList<>();
 		for (final CongruenceClosure<NODE> cc : mLabel) {
-			final List<Term> cube = CcManager.congruenceClosureToCube(script, cc);
+			final List<Term> cube = CongruenceClosureSmtUtils.congruenceClosureToCube(script, cc);
 			final Term cubeTerm = SmtUtils.and(script, cube);
 			result.add(cubeTerm);
 		}
@@ -587,7 +586,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 
 			if (paCopy.isTautological()) {
 				mLabel.clear();
-				mLabel.add(new CongruenceClosure<NODE>(mWeakEquivalenceGraph.getLogger()));
+				mLabel.add(mWeqCcManager.getEmptyCc());
 				return;
 			}
 
@@ -614,7 +613,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 					return;
 				}
 				mLabel.clear();
-				mLabel.add(new CongruenceClosure<>(mWeakEquivalenceGraph.getLogger()));
+				mLabel.add(mWeqCcManager.getEmptyCc());
 				return;
 			}
 			final CongruenceClosure<NODE> meet;
@@ -637,7 +636,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 						+ "is, too, right?";
 			// we have one "true" disjunct --> the whole disjunction is tautological
 			mLabel.clear();
-			mLabel.add(new CongruenceClosure<>(mWeakEquivalenceGraph.getLogger()));
+			mLabel.add(mWeqCcManager.getEmptyCc());
 			return;
 			}
 			newLabelContents.add(meet);
