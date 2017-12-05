@@ -120,7 +120,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 * represents the amount of transitions per letter of that rank. The number of
 	 * transitions of nullary letters specify the amount of initial states.
 	 */
-	private final int[] mRankToNumberOfTransitionsPerLetter;
+	protected final int[] mRankToNumberOfTransitionsPerLetter;
 	/**
 	 * The resulting tree automaton after generation.
 	 */
@@ -191,6 +191,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 */
 	@Override
 	public TreeAutomatonBU<StringRankedLetter, String> getResult() {
+		assert new isDetereministic<>(mServices, mResult).getResult();
 		return this.mResult;
 	}
 

@@ -2,8 +2,10 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +21,16 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.tree.DummySemanticStatesSetReducer;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.SemanticStatesSetReducer;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -56,18 +61,36 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 	 */
 	private NestedMap2<STATE, STATE, STATE> mCache;
 	
+	/***
+	 * Reducer for semantically redundant states
+	 */
+	private final SemanticStatesSetReducer<STATE> mReducer;
+	
 	
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> &
 			IIntersectionStateFactory<STATE>> LazyDifference(
 			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> firstOperand, final ITreeAutomatonBU<LETTER, STATE> secondOperand)
 					throws AutomataOperationCanceledException {
+
+		this(services, factory, firstOperand, secondOperand, new DummySemanticStatesSetReducer<>());
+	}
+	
+	
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> &
+			IIntersectionStateFactory<STATE>> LazyDifference(
+			final AutomataLibraryServices services, final SF factory,
+			final ITreeAutomatonBU<LETTER, STATE> firstOperand, final ITreeAutomatonBU<LETTER, STATE> secondOperand,
+			final SemanticStatesSetReducer<STATE> reducer)
+					throws AutomataOperationCanceledException {
+		
 		super(services);
 
 		this.mFirstOperand = firstOperand;
 		this.mSecondOperand = secondOperand;
 
 		mSink = factory.createSinkStateContent();
+		this.mReducer = reducer;
 		this.mCache = new NestedMap2<>();
 		if (this.mLogger.isInfoEnabled()) {
 			this.mLogger.info(startMessage());
@@ -78,15 +101,16 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		if (this.mLogger.isInfoEnabled()) {
 			this.mLogger.info(exitMessage());
 		}
+		
 	}
-	
+
 	private <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>>
-			boolean getAllDestinations(final SF fac, final List<Set<Pair<STATE, STATE>>> combination,
+			boolean getAllDestinations(final SF fac, final List<Collection<Pair<STATE, STATE>>> combinationValues,
 				final Map<STATE, Set<STATE>> successors, final TreeAutomatonRule<LETTER, STATE> rule,
 				final Set<TreeAutomatonRule<LETTER, STATE>> newRules) {
 		
 		boolean newReached = false;
-		for (final List<Pair<STATE, STATE>> srcState : getCombinations(combination)) {
+		for (final List<Pair<STATE, STATE>> srcState : CombinatoricsUtils.getCombinations(combinationValues)) {
 			 
 			final List<STATE> first = new ArrayList<>();
 			final List<STATE> second = new ArrayList<>();
@@ -100,11 +124,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 				if (successors.get(firstSucc) == null) {
 					successors.put(firstSucc, new HashSet<>());
 				}
-				final Iterable<STATE> succ = mSecondOperand.getSuccessors(second, rule.getLetter());
-				final Set<STATE> successorsSet = new HashSet<>();
-				for (final STATE s : succ) {
-					successorsSet.add(s);
-				}
+				final Set<STATE> successorsSet = CombinatoricsUtils.iterateAll(mSecondOperand.getSuccessors(second, rule.getLetter()));
 				if (successorsSet.isEmpty()) {
 					newRules.add(new TreeAutomatonRule<LETTER, STATE>(rule.getLetter(), newSource,
 							intersectPair(fac, firstSucc, mSink)));
@@ -113,6 +133,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 					successors.get(firstSucc).add(mSink);
 					
 				} else {
+				
 					for (final STATE secondSucc : successorsSet) {
 						newRules.add(new TreeAutomatonRule<LETTER, STATE>(rule.getLetter(), newSource,
 								intersectPair(fac, firstSucc, secondSucc)));
@@ -127,7 +148,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 	
 	private <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> &
 			 IIntersectionStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE> computeDifference(final SF fac) {
-
+		
 		// Map of all states from t1 to the states from t2 that are derived as a pair
 		final Map<STATE, Set<STATE>> successors = new HashMap<>();
 		
@@ -143,10 +164,10 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 					continue;
 				}
 				// a, y are all visited so we can derive x
-				final List<Set<Pair<STATE, STATE>>> combinations = new LinkedList<>();
+				final List<Collection<Pair<STATE, STATE>>> combinations = new LinkedList<>();
 				for (final STATE first : rule.getSource()) {
 					final Set<Pair<STATE, STATE>> s = new HashSet<>();
-					for (final STATE second : successors.get(first)) {
+					for (final STATE second : mReducer.filter(successors.get(first))) {
 						// all derived pairs (a, b)
 						s.add(new Pair<STATE, STATE>(first, second));
 					}
@@ -165,12 +186,14 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		}
 		
 		for (final STATE s1 : mFirstOperand.getStates()) {
+			// TODO(mostafa): Add state pair to result only if the pair already exists (reachable)
 			for (final STATE s2 : mSecondOperand.getStates()) {
 				result.addState(intersectPair(fac, s1, s2));
 				if (mFirstOperand.isFinalState(s1) && !mSecondOperand.isFinalState(s2)) {
 					result.addFinalState(intersectPair(fac, s1, s2));
 				}
 			}
+			assert !mSecondOperand.isFinalState(mSink);
 			result.addState(intersectPair(fac, s1, mSink));
 			if (mFirstOperand.isFinalState(s1)) {
 				result.addFinalState(intersectPair(fac, s1, mSink));
@@ -191,29 +214,6 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		return res;
 	}
 
-	private static <T> Set<List<T>> getCombinations(final List<Set<T>> r) {
-		return getCombinations(r, r.size());
-	}
-	
-	private static <T> Set<List<T>> getCombinations(final List<Set<T>> r, int idx) {
-		if (idx == 0) {
-			final List<T> singleton = new ArrayList<>();
-			final Set<List<T>> res = new HashSet<>();
-			res.add(singleton);
-			return res;
-		}
-		final Set<List<T>> cc = getCombinations(r, idx - 1);
-		final Set<List<T>> res = new HashSet<>();
-		for (final T s : r.get(idx - 1)) {
-			for (final List<T> x : cc) {
-				List<T> xc = new ArrayList<>();
-				xc.addAll(x);
-				xc.add(s);
-				res.add(xc);
-			}
-		}
-		return res;
-	}
 	
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
@@ -234,10 +234,10 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		s1.add(2); s1.add(3); s1.add(5);
 		Set<Integer> s2 = new HashSet<Integer>();
 		s2.add(1); s2.add(10); s2.add(100);
-		List<Set<Integer>> rr = Arrays.asList(new Set[]{s1, s2});
+		List<Collection<Integer>> rr = Arrays.asList(new Set[]{s1, s2});
 		System.out.println(s1);
 		System.out.println(s2);
-		System.out.println(getCombinations(rr));
+		System.out.println(CombinatoricsUtils.getCombinations(rr));
 		TreeAutomatonBU<StringRankedLetter, String> ones = new TreeAutomatonBU<>();
 		final String NUM = "Num", LIST = "List";
 		ones.addRule(new TreeAutomatonRule<StringRankedLetter, String>(new StringRankedLetter("cons", 2), Arrays.asList(new String[]{NUM, LIST}), LIST));

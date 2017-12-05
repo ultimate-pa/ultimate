@@ -331,11 +331,14 @@ public final class GetRandomDftaBU extends AGetRandomFtaBU {
 	protected void checkInputValidity() throws IllegalArgumentException {
 		super.checkInputValidity();
 
+		if (this.mRankToNumberOfTransitionsPerLetter.length > 0 && mRankToNumberOfTransitionsPerLetter[0] != 1) {
+			throw new IllegalArgumentException(
+					"The transitions of 0 ranked letters can be only 1 if the automaton is deterministic.");
+		}
 		// No extra checks if density variant was not chosen.
 		if (this.mRankToTransitionDensity == null) {
 			return;
-		}
-
+		} 
 		// Transition densities
 		for (int i = 0; i < this.mRankToTransitionDensity.length; i++) {
 			final double transitionDensity = this.mRankToTransitionDensity[i];

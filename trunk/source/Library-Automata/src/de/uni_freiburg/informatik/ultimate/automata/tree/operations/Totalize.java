@@ -195,6 +195,7 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
+		assert new isTotal<>(mServices, mResult).getResult();
 		return mResult;
 	}
 

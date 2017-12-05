@@ -119,9 +119,7 @@ public final class IsIncluded<LETTER extends IRankedLetter, STATE>
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Starting to compute difference(first, second).");
 		}
-		final ITreeAutomatonBU<LETTER, STATE> difference = new Difference<>(services, factory, firstOperand,
-				secondOperand).getResult();
-
+	
 		// If operation was canceled, for example from the
 		// Ultimate framework
 		if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
@@ -133,6 +131,12 @@ public final class IsIncluded<LETTER extends IRankedLetter, STATE>
 		if (this.mLogger.isDebugEnabled()) {
 			this.mLogger.debug("Starting to compute isEmpty(difference).");
 		}
+
+		// final ITreeAutomatonBU<LETTER, STATE> difference = new Difference<>(services, factory, firstOperand,
+		// 		secondOperand).getResult();
+		final ITreeAutomatonBU<LETTER, STATE> difference = new LazyDifference<>(services, factory, firstOperand,
+				secondOperand).getResult();
+
 		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<>(services, difference);
 
 		this.mResult = emptinessCheck.getResult();

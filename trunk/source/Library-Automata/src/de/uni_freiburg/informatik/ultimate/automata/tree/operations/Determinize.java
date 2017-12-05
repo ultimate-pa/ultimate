@@ -259,6 +259,7 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 
 	@Override
 	public ITreeAutomatonBU<LETTER, STATE> getResult() {
+		assert new isDetereministic<>(mServices, mResult).getResult();
 		return mResult;
 	}
 
