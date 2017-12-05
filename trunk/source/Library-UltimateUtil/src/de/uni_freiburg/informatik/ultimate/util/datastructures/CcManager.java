@@ -24,34 +24,26 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
+package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosureElement;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
-	private final IPartialComparator<CongruenceClosure<ELEM>> mCcComparator;
-	private final ManagedScript mMgdScript;
 
-	public CcManager(final IPartialComparator<CongruenceClosure<ELEM>> ccComparator, final ManagedScript mgdScript) {
+	private final IPartialComparator<CongruenceClosure<ELEM>> mCcComparator;
+
+	private final ILogger mLogger;
+
+	public CcManager(final ILogger logger, final IPartialComparator<CongruenceClosure<ELEM>> ccComparator) {
+		mLogger = logger;
 		mCcComparator = ccComparator;
-		mMgdScript = mgdScript;
 	}
 
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
@@ -166,31 +158,33 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return unfrozen;
 	}
 
-
-	public static <NODE extends IEqNodeIdentifier<NODE>> Term congruenceClosureToTerm(final Script script,
-			final CongruenceClosure<NODE> pa) {
-		return SmtUtils.and(script, congruenceClosureToCube(script, pa));
+	public boolean isDebugMode() {
+		return true;
 	}
 
-	public static <NODE extends IEqNodeIdentifier<NODE>> List<Term> congruenceClosureToCube(final Script script,
-//	public static <NODE extends ICongruenceClosureElement<NODE>> List<Term> congruenceClosureToCube(final Script script,
-			final CongruenceClosure<NODE> pa) {
-		if (pa.isInconsistent()) {
-			return Collections.emptyList();
-		}
-
-		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()
-				.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> elementDisequalities = pa.getElementDisequalities().entrySet().stream()
-				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
-				.collect(Collectors.toList());
-
-		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
-		result.addAll(elementEqualities);
-		result.addAll(elementDisequalities);
-		return result;
+	public ILogger getLogger() {
+		return mLogger;
 	}
+
+	public CongruenceClosure<ELEM> getSingleEqualityCc() {
+		// TODO Auto-generated method stub
+		assert false;
+		return null;
+	}
+
+	public CongruenceClosure<ELEM> getSingleDisequalityCc() {
+		// TODO Auto-generated method stub
+		assert false;
+		return null;
+	}
+
+	public CongruenceClosure<ELEM> getEmptyCc() {
+		// TODO Auto-generated method stub
+		assert false;
+		return null;
+	}
+
+
 
 
 
