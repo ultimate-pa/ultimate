@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CcManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.RemoveCcElement;

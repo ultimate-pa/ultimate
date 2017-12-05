@@ -630,9 +630,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 		final NODE firstDimWeqVarNode = weqVarsForThisEdge.get(0);
 
-		final CongruenceClosure<NODE> qEqualsI = new CongruenceClosure<>(getLogger());
+//		final CongruenceClosure<NODE> qEqualsI = new CongruenceClosure<>(getLogger());
+//		qEqualsI.reportEquality(firstDimWeqVarNode, value);
 
-		qEqualsI.reportEquality(firstDimWeqVarNode, value);
+		final CongruenceClosure<NODE> qEqualsI = mWeqCcManager.getSingleEqualityCc(firstDimWeqVarNode, value);
+
 
 		final WeakEquivalenceEdgeLabel<NODE> copy =
 				new WeakEquivalenceEdgeLabel<NODE>(this, originalEdgeLabel);
@@ -695,8 +697,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		final Set<CongruenceClosure<NODE>> shiftedLabelContents =
 				new HashSet<>(labelToShiftAndAdd.getLabelContents());
 
-		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>(getLogger());
-		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
+//		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>(getLogger());
+//		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
+		final CongruenceClosure<NODE> firstWeqVarUnequalArgument =
+				mWeqCcManager.getSingleDisequalityCc(firstWeqVar, argument);
 		shiftedLabelContents.add(firstWeqVarUnequalArgument);
 		assert shiftedLabelContents.stream().allMatch(l -> l.sanityCheckOnlyCc());
 

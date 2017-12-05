@@ -88,7 +88,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
 
-		mEmptyConstraint = new EqConstraint<>(1, mWeqCcManager.getEmptyWeqCc(), this);
+		mEmptyConstraint = new EqConstraint<>(1, mWeqCcManager.getTautologicalWeqCc(), this);
 		mEmptyConstraint.freeze();
 		mEmptyDisjunctiveConstraint = new EqDisjunctiveConstraint<>(Collections.singleton(mEmptyConstraint), this);
 
