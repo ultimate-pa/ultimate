@@ -1305,7 +1305,8 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTFunctionDefinition node) {
 		final LinkedHashSet<IASTDeclaration> reachableDecs = main.getReachableDeclarationsOrDeclarators();
-		if (reachableDecs != null) {
+		// TODO hack skip defunct reachable check
+		if (false && reachableDecs != null) {
 			if (!reachableDecs.contains(node)) {
 				return new SkipResult();
 			}
@@ -1663,7 +1664,8 @@ public class CHandler implements ICHandler {
 		 * skip this declaration if we have inferred that it is not reachable
 		 */
 		final LinkedHashSet<IASTDeclaration> reachableDecs = main.getReachableDeclarationsOrDeclarators();
-		if (reachableDecs != null && node.getParent() instanceof IASTTranslationUnit && !reachableDecs.contains(node)) {
+		// TODO HACK: ignore skipping of decls because recognition is defunct
+		if (false && reachableDecs != null && node.getParent() instanceof IASTTranslationUnit && !reachableDecs.contains(node)) {
 			boolean skip = true;
 			for (final IASTDeclarator d : node.getDeclarators()) {
 				if (reachableDecs.contains(d)) {
@@ -2087,6 +2089,10 @@ public class CHandler implements ICHandler {
 		// process function body in a second pass
 		final List<IASTNode> complexNodes = new ArrayList<>();
 		for (final IASTNode child : node.getChildren()) {
+			// Ignore included declarations which might cause problems
+			if (!child.isPartOfTranslationUnitFile()) {
+				continue;
+			}
 			if (child instanceof IASTSimpleDeclaration) {
 				final IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) child;
 				if (simpleDecl.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier
