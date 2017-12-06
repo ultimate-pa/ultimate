@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.util.datastructures;
+package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 

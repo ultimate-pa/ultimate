@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.util.datastructures;
+package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.util.datastructures;
+package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -7,7 +7,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.CongruenceClosure.CcSettings;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure.CcSettings;
 
 public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
