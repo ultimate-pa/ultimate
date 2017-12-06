@@ -17,10 +17,9 @@ public class CongruenceClosureSmtUtils {
 	}
 
 	public static <NODE extends IEqNodeIdentifier<NODE>> List<Term> congruenceClosureToCube(final Script script,
-//	public static <NODE extends ICongruenceClosureElement<NODE>> List<Term> congruenceClosureToCube(final Script script,
 			final CongruenceClosure<NODE> pa) {
 		if (pa.isInconsistent()) {
-			return Collections.emptyList();
+			return Collections.singletonList(script.term("false"));
 		}
 
 		final List<Term> elementEqualities = pa.getSupportingElementEqualities().entrySet().stream()

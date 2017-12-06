@@ -92,7 +92,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	private RemoveCcElement<ELEM> mExternalRemovalInfo;
 
-
 	private final CcManager<ELEM> mManager;
 
 	/**
@@ -102,7 +101,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *
 	 * @param logger a logger, can be null (isDebug will return false, then)
 	 */
-	public CongruenceClosure(final CcManager<ELEM> manager) {
+	CongruenceClosure(final CcManager<ELEM> manager) {
 		mElementTVER = new ThreeValuedEquivalenceRelation<>(CongruenceClosure::literalComparator);
 		mAuxData = new CcAuxData<ELEM>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
@@ -117,7 +116,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param isInconsistent dummy parameter separating this constructor from the one for the empty CongruenceClosure;
 	 * 	  	must always be "true".
 	 */
-	public CongruenceClosure(final boolean isInconsistent) {
+	CongruenceClosure(final boolean isInconsistent) {
 		if (!isInconsistent) {
 			throw new AssertionError("use other constructor");
 		}
@@ -133,7 +132,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param logger a logger, can be null (isDebug will return false, then)
 	 * @param newElemPartition
 	 */
-	public CongruenceClosure(final CcManager<ELEM> manager,
+	CongruenceClosure(final CcManager<ELEM> manager,
 			final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData<>(this);
@@ -157,7 +156,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param newElemPartition
 	 * @param remInfo
 	 */
-	public CongruenceClosure(final CcManager<ELEM> manager, final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
+	CongruenceClosure(final CcManager<ELEM> manager, final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
 			final RemoveCcElement<ELEM> remInfo) {
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData<>(this);
@@ -179,7 +178,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param original
 	 * @param externalRemovalInfo
 	 */
-	public CongruenceClosure(final CongruenceClosure<ELEM> original, final RemoveCcElement<ELEM> externalRemovalInfo) {
+	CongruenceClosure(final CongruenceClosure<ELEM> original, final RemoveCcElement<ELEM> externalRemovalInfo) {
 		if (original.isInconsistent()) {
 			throw new IllegalArgumentException("use other constructor!");
 		}
@@ -197,7 +196,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *
 	 * @param original the CC to copy
 	 */
-	public CongruenceClosure(final CongruenceClosure<ELEM> original) {
+	CongruenceClosure(final CongruenceClosure<ELEM> original) {
 		this(original, null);
 	}
 
@@ -220,13 +219,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mIsFrozen;
 	}
 
-	public boolean reportEquality(final ELEM elem1, final ELEM elem2) {
+	boolean reportEquality(final ELEM elem1, final ELEM elem2) {
 		final boolean result = reportEqualityRec(elem1, elem2);
 		assert sanityCheck();
 		return result;
 	}
 
-	protected boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
+	public boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
 		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
@@ -330,7 +329,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return result;
 	}
 
-	public boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
+	boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
 		final boolean result = reportDisequalityRec(elem1, elem2);
 		assert sanityCheck();
 		return result;
@@ -372,7 +371,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param elem
 	 * @return true iff the element was not known to this CongruenceClosure before
 	 */
-	public void addElement(final ELEM elem) {
+	void addElement(final ELEM elem) {
 		addElementRec(elem);
 		assert sanityCheck();
 	}
@@ -382,7 +381,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return addElementRec(elem, null);
 	}
 
-	private boolean addElementRec(final ELEM elem, final RemoveCcElement<ELEM> remInfo) {
+	boolean addElementRec(final ELEM elem, final RemoveCcElement<ELEM> remInfo) {
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
 			registerNewElement(elem, remInfo);
@@ -400,7 +399,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *
 	 * @param elem
 	 */
-	protected void registerNewElement(final ELEM elem) {
+	private void registerNewElement(final ELEM elem) {
 		registerNewElement(elem, null);
 	}
 
@@ -469,11 +468,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 //		assert sanityCheck();
 	}
 
-	public ELEM getRepresentativeAndAddElementIfNeeded(final ELEM elem) {
-		addElement(elem);
-		return mElementTVER.getRepresentative(elem);
-	}
-
 	public ELEM getRepresentativeElement(final ELEM elem) {
 		final ELEM result = mElementTVER.getRepresentative(elem);
 		if (result == null) {
@@ -481,12 +475,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					"Use this method only for elements that you now have been added " + "already");
 		}
 		return result;
-
 	}
-
-
-
-
 
 	@Override
 	public Set<ELEM> collectElementsToRemove(final ELEM elem) {
@@ -503,7 +492,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return result;
 	}
 
-	protected Set<ELEM> collectTransitiveParents(final ELEM elem) {
+	private Set<ELEM> collectTransitiveParents(final ELEM elem) {
 		final Set<ELEM> result = new HashSet<>();
 
 		final Deque<ELEM> worklist = new ArrayDeque<>();
@@ -680,11 +669,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return null;
 	}
 
-//	public void prepareForRemove(final boolean useWeqGpa) {
-//		// do nothing (method relevant for subclasses)
-//	}
-
-	protected ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
+	private ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
 
 		final ELEM newRep = mElementTVER.removeElement(elem);
@@ -705,7 +690,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param elem the element we are about to remove
 	 * @param preferredReplacements
 	 */
-	protected void addNodesEquivalentToNodesWithRemovedElement(final ELEM elem) {
+	private void addNodesEquivalentToNodesWithRemovedElement(final ELEM elem) {
 		final ELEM otherRep = getOtherEquivalenceClassMember(elem);
 		if (otherRep != null) {
 			for (final ELEM parent : new ArrayList<>(mFaAuxData.getAfParents(elem))) {
@@ -721,7 +706,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 	}
 
-	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
+	CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological();
 
 		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other.getAllElements(), null);
@@ -1065,7 +1050,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return sanityCheck(null);
 	}
 
-	protected boolean sanityCheck(final RemoveCcElement remInfo) {
+	protected boolean sanityCheck(final RemoveCcElement<ELEM> remInfo) {
 		return sanityCheckOnlyCc(remInfo);
 	}
 
@@ -1078,7 +1063,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *
 	 * @return
 	 */
-	public boolean sanityCheckOnlyCc(final RemoveCcElement remInfo) {
+	@SuppressWarnings("unused")
+	public boolean sanityCheckOnlyCc(final RemoveCcElement<ELEM> remInfo) {
 		if (mConstructorInitializationPhase) {
 			return true;
 		}
@@ -1209,6 +1195,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 			final ELEM rep = getRepresentativeElement(elem);
 			if (!afCcparFromDirectParents.equals(getAuxData().getAfCcPars(rep))) {
+				// d1 and d2 are not used by the program, but nice to have precomputed when the assertion fails
 				final Set<ELEM> d1 =
 						DataStructureUtils.difference(afCcparFromDirectParents,
 								new HashSet<>(getAuxData().getAfCcPars(rep)));
@@ -1219,6 +1206,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				return false;
 			}
 			if (!argCcparFromDirectParents.equals(getAuxData().getArgCcPars(rep))) {
+				// d1 and d2 are not used by the program, but nice to have precomputed when the assertion fails
 				final Set<ELEM> d1 =
 						DataStructureUtils.difference(argCcparFromDirectParents,
 								new HashSet<>(getAuxData().getArgCcPars(rep)));
@@ -1452,7 +1440,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param removeElement
 	 * @return
 	 */
-	public CongruenceClosure<ELEM> projectToElements(final Set<ELEM> elemsToKeep,
+	CongruenceClosure<ELEM> projectToElements(final Set<ELEM> elemsToKeep,
 			final RemoveCcElement<ELEM> removeElementInfo) {
 		if (isInconsistent()) {
 			return this;
@@ -1585,40 +1573,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mElementTVER.isRepresentative(elem);
 	}
 
-//	protected ELEM replaceFuncAppArgsWOtherRepIfNecAndPoss(final ELEM c) {
-//		assert c.isFunctionApplication();
-//		final ELEM cReplaced = c;
-//
-//		final ELEM afReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getAppliedFunction());
-//		final ELEM argReplaced = replaceWithOtherRepIfNecessaryAndPossible(c.getArgument());
-//		if (afReplaced == null || argReplaced == null) {
-//			return null;
-//		}
-//		assert afReplaced == c.getAppliedFunction() || argReplaced == c.getArgument();
-//		if (afReplaced != c.getAppliedFunction()) {
-//			final ELEM rpaf = c.replaceAppliedFunction(mElementCurrentlyBeingRemoved.getOtherRep());
-//			if (hasElement(rpaf)) {
-//				return rpaf;
-//			} else {
-//				return null;
-//			}
-//		} else if (argReplaced != c.getArgument()) {
-//			final ELEM rparg = c.replaceArgument(mElementCurrentlyBeingRemoved.getOtherRep());
-//			if (hasElement(rparg)) {
-//				return rparg;
-//			} else {
-//				return null;
-//			}
-//		}
-//		return cReplaced;
-//	}
-
 	public CcAuxData<ELEM> getAuxData() {
 		return mAuxData;
 	}
 
 	/**
-	 * auxilliary data related to the tree where an edge a -> b means that b is an argument to function a
+	 * auxiliary data related to the tree where an edge a -> b means that b is an argument to function a
 	 * (this is mostly/only needed for element removal)
 	 */
 	protected class FuncAppTreeAuxData {

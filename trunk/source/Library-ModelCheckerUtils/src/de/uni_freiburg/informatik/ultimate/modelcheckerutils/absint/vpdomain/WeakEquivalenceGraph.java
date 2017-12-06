@@ -572,7 +572,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			&& mPartialArrangement.isRepresentative(sourceAndTarget.getOtherElement());
 		assert sourceAndTarget.getOneElement().getTerm().getSort().equals(sourceAndTarget.getOtherElement().getTerm().getSort());
 
-		final boolean result = strengthenEdgeLabel(sourceAndTarget, value.getLabelContents());
+		final boolean result = strengthenEdgeLabel(sourceAndTarget, value.getDisjuncts());
 		assert sanityCheck();
 		return result;
 	}
@@ -652,7 +652,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		assert !meet.getAppearingNodes().contains(weqVarsForThisEdge.get(weqVarsForThisEdge.size() - 1)) : "double "
 				+ "check the condition if this assertion fails, but as we decreased all weq vars, the last one should "
 				+ "not be present in the result, right?..";
-		assert !meet.mLabel.stream().anyMatch(l -> l.isInconsistent()) : "label not well-formed";
+		assert !meet.getDisjuncts().stream().anyMatch(l -> l.isInconsistent()) : "label not well-formed";
 
 		assert meet.sanityCheckDontEnforceProjectToWeqVars(mPartialArrangement);
 
@@ -695,7 +695,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		assert !labelToShiftAndAdd.getAppearingNodes().contains(firstWeqVar);
 
 		final Set<CongruenceClosure<NODE>> shiftedLabelContents =
-				new HashSet<>(labelToShiftAndAdd.getLabelContents());
+				new HashSet<>(labelToShiftAndAdd.getDisjuncts());
 
 //		final CongruenceClosure<NODE> firstWeqVarUnequalArgument = new CongruenceClosure<>(getLogger());
 //		firstWeqVarUnequalArgument.reportDisequality(firstWeqVar, argument);
@@ -706,7 +706,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 		final WeakEquivalenceEdgeLabel<NODE> normalized = mWeqCcManager
 				.filterRedundantCcs(new WeakEquivalenceEdgeLabel<>(this, shiftedLabelContents));
-		assert normalized.getLabelContents().stream().allMatch(l -> l.sanityCheckOnlyCc());
+		assert normalized.getDisjuncts().stream().allMatch(l -> l.sanityCheckOnlyCc());
 		return normalized;
 
 //		final Set<CongruenceClosure<NODE>> normalized = mWeqCcManager
@@ -793,7 +793,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public Integer getMaxSizeOfEdgeLabelStatistic() {
 		final Optional<Integer> opt = mWeakEquivalenceEdges.values().stream()
-				.map(weqlabel -> weqlabel.mLabel.size()).reduce(Math::max);
+				.map(weqlabel -> weqlabel.getDisjuncts().size()).reduce(Math::max);
 		if (opt.isPresent()) {
 			return opt.get();
 		}
@@ -860,7 +860,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		result.put("#Edges", mWeakEquivalenceEdges.size());
 
 		final int noEdgeLabelDisjuncts = mWeakEquivalenceEdges.values().stream()
-				.map(weqEdge -> weqEdge.getLabelContents().size())
+				.map(weqEdge -> weqEdge.getDisjuncts().size())
 				.reduce((i1, i2) -> i1 + i2)
 				.get();
 		result.put("#EdgeLabelDisjuncts", noEdgeLabelDisjuncts);

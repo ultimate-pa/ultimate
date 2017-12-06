@@ -131,11 +131,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
 		assert origWeqCc.isFrozen();
-		return new WeqCongruenceClosure<>(origWeqCc);
+		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
+		assert !result.isFrozen();
+		return result;
 	}
 
 	public WeakEquivalenceEdgeLabel<NODE> filterRedundantCcs(final WeakEquivalenceEdgeLabel<NODE> label) {
-		final Set<CongruenceClosure<NODE>> filtered = mCcManager.filterRedundantCcs(label.getLabelContents());
+		final Set<CongruenceClosure<NODE>> filtered = mCcManager.filterRedundantCcs(label.getDisjuncts());
 		return new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), filtered);
 	}
 
@@ -253,7 +255,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public CongruenceClosure<NODE> join(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2) {
 		// (just passing it through to CcManager)
 		final CongruenceClosure<NODE> result = mCcManager.join(cc1, cc2);
-		result.freeze();
 		assert checkJoinResult(cc1, cc2, result);
 		return result;
 	}
@@ -277,6 +278,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		result.freeze();
 		assert checkJoinResult(weqcc1, weqcc2, result);
 		return result;
+	}
+
+	public CongruenceClosure<NODE> renameVariablesCc(final CongruenceClosure<NODE> weqCc,
+			final Map<Term, Term> substitutionMapping) {
+		return mCcManager.transformElements(weqCc, e -> e.renameVariables(substitutionMapping));
 	}
 
 	public WeqCongruenceClosure<NODE> renameVariables(final WeqCongruenceClosure<NODE> weqCc,
@@ -581,11 +587,37 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager.getSingleDisequalityCc(node1, node2);
 	}
 
+	public CongruenceClosure<NODE> getEmptyUnfrozenCc() {
+		return mCcManager.getEmptyUnfrozenCc();
+	}
+
 	public CongruenceClosure<NODE> getEmptyCc() {
 		return mCcManager.getEmptyCc();
 	}
 
+	/**
+	 * (keeps isFrozen()-status)
+	 *
+	 * @param cc
+	 * @return
+	 */
 	public CongruenceClosure<NODE> copyCcNoRemInfo(final CongruenceClosure<NODE> cc) {
-		return mCcManager.copyNoRemInfo(cc);
+		final CongruenceClosure<NODE> result = mCcManager.copyNoRemInfo(cc);
+		assert result.isFrozen() == cc.isFrozen();
+//		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
+//			if (!result.isFrozen()) {
+//				result.freeze();
+//			}
+//		}
+		return result;
+	}
+
+	public CongruenceClosure<NODE> copyCcNoRemInfoUnfrozen(final CongruenceClosure<NODE> cc) {
+		return mCcManager.copyNoRemInfoUnfrozen(cc);
+	}
+
+	public CongruenceClosure<NODE> projectToElements(final CongruenceClosure<NODE> cc, final Set<NODE> nodesToKeep,
+			final RemoveCcElement<NODE> remInfo) {
+		return mCcManager.projectToElements(cc, nodesToKeep, remInfo);
 	}
 }
