@@ -281,7 +281,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			final IASTDeclSpecifier declSpec = cSimpleDecl.getDeclSpecifier();
 
 			if (decIsGlobal) {
-				// global declaration
+				// we have a global declaration
+
 				// if we have a global declaration of a structType with a name
 				// for example: struct s { int x; };
 				// we have to remember that struct name
@@ -321,7 +322,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					mLocalSymbolTable.put(declaratorName, declaration);
 					addIfNecessaryPrelimInverseDependency(declaration, declaratorName);
 				}
-			} else { // local declaration
+			} else {
+				// we have a local declaration
+
 				/*
 				 * if we use a globally defined type, this introduces a dependency for example in the program ----
 				 * typedef int _int; struct s { _int i; }; ---- this code section will introduce a dependency struct s
@@ -329,8 +332,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 				 *
 				 * when we visit the declaration _int i;
 				 */
-				if (declSpec instanceof IASTElaboratedTypeSpecifier) {// i.e. sth like struct/union/enum typename
-																		// varname
+				if (declSpec instanceof IASTElaboratedTypeSpecifier) {
+					// we have an elaborated type specifier, i.e., something like [struct|union|enum] typename varname
 					final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
 					final String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
 					final IASTDeclaration decOfName = mLocalSymbolTable.get(name);
@@ -346,12 +349,18 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					final IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
 					final String name = nts.getName().toString();
 					final IASTDeclaration decOfName = mLocalSymbolTable.get(name);
-					if (decOfName != null) { // if it is null, it must reference to a local declaration (of the same
-												// scope..) that we keep anyway
+					if (decOfName != null) {
+						/*
+						 * if it is null, it must reference to a local declaration (of the same scope..) that we keep
+						 * anyway
+						 */
 						addDependency(mCurrentFunOrStructOrEnumDefOrInitializer.peek(), decOfName);
-					} else { // .. or it may reference a global declaration that we haven't seen yet (this may
-								// overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely
-								// clear..
+					} else {
+						/*
+						 *  .. or it may reference a global declaration that we haven't seen yet (this may
+						 * overapproximate, as we declare shadowed decls reachable, right??
+						 * TODO: not entirely clear..
+						 */
 						mDependencyGraphPreliminaryInverse.put(name, mCurrentFunOrStructOrEnumDefOrInitializer.peek());
 					}
 				} else if (declSpec instanceof IASTCompositeTypeSpecifier) {
@@ -359,41 +368,49 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					addDependency(mCurrentFunOrStructOrEnumDefOrInitializer.peek(), declaration);
 				}
 			}
-			/////////////////////////////
-			// global or local
-			for (final IASTDeclarator declarator : cSimpleDecl.getDeclarators()) {
-				// "typedef declSpec declarators" introduces a dependency from each declarator to
-				// - the declspec itself it it is a compositeType
-				// - the declspec's sT entry otherwise
-				// if (declSpec.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
-				// case: the declSpecifier references a declaration we have to add to the dependencyGraph
-				String declSpecName = "";
-				if (declSpec instanceof IASTSimpleDeclSpecifier) {
-					// addDependency(declaration, declSpec); //not needed for what delcarations are made but for
-					// computing the memory model requirements
-					// addDependency(d, declaration); //not needed for what delcarations are made but for computing the
-					// memory model requirements
-				} else if (declSpec instanceof IASTElaboratedTypeSpecifier) {
-					// i.e. sth like struct/union/enum typename varname
-					final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
-					declSpecName = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
-					final IASTDeclaration declOfName = mLocalSymbolTable.get(declSpecName);
-					if (declOfName != null) {
-						addDependency(declaration, mLocalSymbolTable.get(declSpecName));
-					} else if (decIsGlobal) {
-						// if it is null, it must reference to a local declaration (of the same
-						// scope..) that we keep anyway (most cases..)
-						mDependencyGraphPreliminaryInverse.put(declSpecName, declaration);
-					}
-				} else if (declSpec instanceof IASTNamedTypeSpecifier) {
-					registerNamedTypeSpecifier(declaration, decIsGlobal, declSpec);
-				} else if (declSpec instanceof IASTCompositeTypeSpecifier) {
-					// addDependency(declaration, declSpec);
+			/*
+			 * things we do for both global or local declarations
+			 */
+
+			// (alex, Dec 17:) not sure what the following code block was supposed to do, removing it for now
+//			for (final IASTDeclarator declarator : cSimpleDecl.getDeclarators()) {
+//				/*
+//				 * "typedef declSpec declarators" introduces a dependency from each declarator to
+//				 * - the declspec itself if it is a compositeType
+//				 * - the declspec's sT entry otherwise
+//				 * if (declSpec.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
+//				 * case: the declSpecifier references a declaration we have to add to the dependencyGraph
+//				 *
+//				 */
+
+			String declSpecName = "";
+			if (declSpec instanceof IASTSimpleDeclSpecifier) {
+				// do nothing
+			} else if (declSpec instanceof IASTElaboratedTypeSpecifier) {
+				// we have an elaborated type specifier, i.e., something like [struct|union|enum] typename varname
+
+				final IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
+				declSpecName = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
+				final IASTDeclaration declOfName = mLocalSymbolTable.get(declSpecName);
+				if (declOfName != null) {
+					addDependency(declaration, mLocalSymbolTable.get(declSpecName));
+				} else if (decIsGlobal) {
+					// if it is null, it must reference to a local declaration (of the same
+					// scope..) that we keep anyway (most cases..)
+					mDependencyGraphPreliminaryInverse.put(declSpecName, declaration);
+				} else {
+					// do nothing
 				}
-			}
-			if (declSpec instanceof IASTCompositeTypeSpecifier || declSpec instanceof IASTEnumerationSpecifier) {
+			} else if (declSpec instanceof IASTNamedTypeSpecifier) {
+				registerNamedTypeSpecifier(declaration, decIsGlobal, declSpec);
+			} else if (declSpec instanceof IASTCompositeTypeSpecifier) {
 				mCurrentFunOrStructOrEnumDefOrInitializer.push(declaration);
+			} else if (declSpec instanceof IASTEnumerationSpecifier) {
+				mCurrentFunOrStructOrEnumDefOrInitializer.push(declaration);
+			} else {
+				assert false : "missed a case?";
 			}
+
 			return super.visit(declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
 			final IASTFunctionDefinition funDef = (IASTFunctionDefinition) declaration;
