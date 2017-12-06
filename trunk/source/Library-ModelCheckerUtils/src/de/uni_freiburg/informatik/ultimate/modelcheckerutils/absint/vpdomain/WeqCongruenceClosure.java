@@ -91,7 +91,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (!isInconsistent) {
 			throw new IllegalArgumentException("use other constructor!");
 		}
-		mCongruenceClosure = new CongruenceClosure<>(true);
+		mCongruenceClosure = null;
 		mWeakEquivalenceGraph = null;
 		mManager = null;
 		mLogger = null;
@@ -103,15 +103,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * Create a WeqCC using the given CongruenceClosure as ground partial
 	 * arrangement (gpa) and the given WeakEquivalenceGraph.
 	 *
-	 * @param original
+	 * @param cc
 	 * @param manager
 	 */
-	public WeqCongruenceClosure(final CongruenceClosure<NODE> original, final WeakEquivalenceGraph<NODE> weqGraph,
+	public WeqCongruenceClosure(final CongruenceClosure<NODE> cc, final WeakEquivalenceGraph<NODE> weqGraph,
 			final WeqCcManager<NODE> manager) {
 		mLogger = manager.getLogger();
-		mCongruenceClosure = new CongruenceClosure<>(original);
+		mCongruenceClosure = manager.copyCcNoRemInfo(cc);
 		assert manager != null;
-		if (original.isInconsistent()) {
+		if (cc.isInconsistent()) {
 			throw new IllegalArgumentException("use other constructor!");
 		}
 		mManager = manager;
@@ -131,10 +131,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public WeqCongruenceClosure(final WeqCongruenceClosure<NODE> original, final boolean meetWGpaCase) {
 		mLogger = original.getLogger();
-		mCongruenceClosure = new CongruenceClosure<>(original.mCongruenceClosure);
+		mManager = original.mManager;
+		mCongruenceClosure = mManager.copyCcNoRemInfo(original.mCongruenceClosure);
 		assert original.mManager != null;
 		mMeetWithGpaCase = meetWGpaCase;
-		mManager = original.mManager;
 		mWeakEquivalenceGraph = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraph,
 				meetWGpaCase && WeqSettings.FLATTEN_WEQ_EDGES_BEFORE_JOIN); //TODO simplify
 		assert sanityCheck();
@@ -160,16 +160,16 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mIsFrozen = true;
 	}
 
-	private WeqCongruenceClosure<NODE> alignElementsAndFunctionsWeqRec(final CongruenceClosure<NODE> otherCC,
+	private WeqCongruenceClosure<NODE> alignElementsAndFunctionsWeqRec(final Set<NODE> otherCCElems,
 			final RemoveCcElement<NODE> remInfo) {
 		assert !isFrozen();
-		assert !this.isInconsistent() && !otherCC.isInconsistent();
+		assert !this.isInconsistent();
 		assert remInfo == null;
 
 		final WeqCongruenceClosure<NODE> result = mManager.makeCopy(this);
 		assert result.sanityCheck();
 
-		for (final NODE e : otherCC.getAllElements()) {
+		for (final NODE e : otherCCElems) {
 			result.mCongruenceClosure.addElementRec(e);
 		}
 
@@ -995,7 +995,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological()
 			: "catch this case in WeqCcManager";
 
-		return mManager.getWeqCongruenceClosure(mCongruenceClosure.join(other.mCongruenceClosure),
+		return mManager.getWeqCongruenceClosure(mManager.join(mCongruenceClosure, other.mCongruenceClosure),
 				mWeakEquivalenceGraph.join(other.mWeakEquivalenceGraph));
 	}
 
@@ -1073,8 +1073,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	private WeqCongruenceClosure<NODE> meetWeqWithCc(final CongruenceClosure<NODE> other) {
 		assert !this.isInconsistent() && !other.isInconsistent();
 
-		final WeqCongruenceClosure<NODE> thisAligned = this.alignElementsAndFunctionsWeqRec(other, null);
-		final CongruenceClosure<NODE> otherAligned = other.alignElementsAndFunctionsCc(this.mCongruenceClosure, null);
+		final WeqCongruenceClosure<NODE> thisAligned = this.alignElementsAndFunctionsWeqRec(other.getAllElements(), null);
+		final CongruenceClosure<NODE> otherAligned = other.alignElementsAndFunctionsCc(
+				this.mCongruenceClosure.getAllElements(), null);
 
 		for (final Entry<NODE, NODE> eq : otherAligned.getSupportingElementEqualities().entrySet()) {
 			if (thisAligned.isInconsistent()) {

@@ -41,9 +41,19 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	private final ILogger mLogger;
 
+	private final CongruenceClosure<ELEM> mInconsistentCc;
+
+	private final CongruenceClosure<ELEM> mEmptyFrozenCc;
+
 	public CcManager(final ILogger logger, final IPartialComparator<CongruenceClosure<ELEM>> ccComparator) {
 		mLogger = logger;
 		mCcComparator = ccComparator;
+
+		mInconsistentCc = new CongruenceClosure<>(true);
+		mInconsistentCc.freeze();
+
+		mEmptyFrozenCc = new CongruenceClosure<>(this);
+		mEmptyFrozenCc.freeze();
 	}
 
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
@@ -52,19 +62,52 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
 			final RemoveCcElement<ELEM> remInfo) {
+		assert cc1.sanityCheck();
+		assert cc2.sanityCheck();
+
+		if (cc1.isTautological()) {
+			assert cc2.isFrozen();
+			return cc2;
+		}
+		if (cc2.isTautological()) {
+			assert cc1.isFrozen();
+			return cc1;
+		}
+		if (cc1.isInconsistent() || cc2.isInconsistent()) {
+			return getInconsistentCc();
+		}
+
 		final CongruenceClosure<ELEM> result;
 		if (remInfo == null) {
 			result = cc1.meetRec(cc2);
 		} else {
 			result = cc1.meetRec(cc2, remInfo);
 		}
+
+		assert result.sanityCheck();
 		return result;
 	}
 
 
 
 	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
+		if (cc1.isInconsistent()) {
+			assert cc2.isFrozen();
+			return cc2;
+		}
+		if (cc2.isInconsistent()) {
+			assert cc1.isFrozen();
+			return cc1;
+		}
+		if (cc1.isTautological() || cc2.isTautological()) {
+			return getEmptyFrozenCc();
+		}
+
 		return cc1.join(cc2);
+	}
+
+	public CongruenceClosure<ELEM> getEmptyFrozenCc() {
+		return mEmptyFrozenCc;
 	}
 
 	public ComparisonResult compare(final CongruenceClosure<ELEM> cc1,
@@ -166,22 +209,40 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mLogger;
 	}
 
-	public CongruenceClosure<ELEM> getSingleEqualityCc() {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+	public CongruenceClosure<ELEM> getSingleEqualityCc(final ELEM node1, final ELEM node2) {
+		final CongruenceClosure<ELEM> cc = getEmptyCc();
+		return reportEquality(node1, node2, cc);
 	}
 
-	public CongruenceClosure<ELEM> getSingleDisequalityCc() {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+	public CongruenceClosure<ELEM> getSingleDisequalityCc(final ELEM node1, final ELEM node2) {
+		final CongruenceClosure<ELEM> cc = getEmptyCc();
+		return reportDisequality(node1, node2, cc);
 	}
 
 	public CongruenceClosure<ELEM> getEmptyCc() {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		return new CongruenceClosure<>(this);
+	}
+
+	public CongruenceClosure<ELEM> getInconsistentCc() {
+		return mInconsistentCc;
+	}
+
+	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver) {
+		return new CongruenceClosure<>(this, tver);
+	}
+
+	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver,
+			final RemoveCcElement<ELEM> removeElementInfo) {
+		return new CongruenceClosure<>(this, tver, removeElementInfo);
+	}
+
+	public CongruenceClosure<ELEM> getCopyWithRemovalInfo(final CongruenceClosure<ELEM> cc,
+			final RemoveCcElement<ELEM> remInfo) {
+		return new CongruenceClosure<>(cc, remInfo);
+	}
+
+	public CongruenceClosure<ELEM> copyNoRemInfo(final CongruenceClosure<ELEM> cc) {
+		return new CongruenceClosure<>(cc);
 	}
 
 

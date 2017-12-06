@@ -54,7 +54,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 		for (final CongruenceClosure<NODE> l : original.getLabelContents()) {
 			assert !l.isInconsistent();
 			assert !l.isTautological() || original.getLabelContents().size() == 1;
-			mLabel.add(new CongruenceClosure<>(l));
+			mLabel.add(mWeqCcManager.copyCcNoRemInfo(l));
 		}
 		assert sanityCheck();
 	}
@@ -198,7 +198,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 			final CongruenceClosure<NODE> lab2;
 			if (useWeqGpaMode) {
 				// unprime weqvars
-				lab2 = new CongruenceClosure<>(lab);
+				lab2 = mWeqCcManager.copyCcNoRemInfo(lab);
 				lab2.transformElementsAndFunctions(
 						node -> node.renameVariables(mWeakEquivalenceGraph.getWeqCcManager().getWeqPrimedVarsToWeqVars()));
 			} else {
@@ -393,7 +393,10 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 		final Set<CongruenceClosure<NODE>> newLabelContent = new HashSet<>();
 		for (final CongruenceClosure<NODE> lc1 : mLabel) {
 			for (final CongruenceClosure<NODE> lc2 : paList) {
-				newLabelContent.add(lc1.meetRec(lc2));
+//				newLabelContent.add(lc1.meetRec(lc2));
+//				final Object meet = mWeqCcManager.meet(lc1, lc2, elementCurrentlyBeingRemoved)
+				final CongruenceClosure<NODE> meet = mWeqCcManager.meet(lc1, lc2);
+				newLabelContent.add(meet);
 			}
 		}
 
@@ -562,7 +565,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 
 
 			// make a copy of the label, prime the weq vars
-			final CongruenceClosure<NODE> lCopy = new CongruenceClosure<>(l);
+			final CongruenceClosure<NODE> lCopy = mWeqCcManager.copyCcNoRemInfo(l);
 			lCopy.transformElementsAndFunctions(
 					n -> n.renameVariables(mWeakEquivalenceGraph.getWeqCcManager().getWeqVarsToWeqPrimedVars()));
 

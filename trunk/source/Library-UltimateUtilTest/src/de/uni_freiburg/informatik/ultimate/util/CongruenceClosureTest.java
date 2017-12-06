@@ -564,7 +564,7 @@ public class CongruenceClosureTest {
 		assertFalse(cc1.isStrongerThan(cc2));
 		assertFalse(cc2.isStrongerThan(cc1));
 
-		final CongruenceClosure<StringCcElement> cc3 = cc1.join(cc2);
+		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2);
 		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}}
 		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
@@ -582,7 +582,7 @@ public class CongruenceClosureTest {
 		assertTrue(cc2.isStrongerThan(cc3));
 		assertFalse(cc3.isStrongerThan(cc2));
 
-		final CongruenceClosure<StringCcElement> cc4 = cc1.meet(cc2);
+		final CongruenceClosure<StringCcElement> cc4 = manager.meet(cc1, cc2);
 		// state of cc4 should be {{a, b, i, j, x, y, f(f(a)), f(f(b))}, {f(a), f(b)}}
 		assertTrue(cc4.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc4.getEqualityStatus(b, i) == EqualityStatus.EQUAL);
@@ -676,7 +676,7 @@ public class CongruenceClosureTest {
 		assertFalse(cc1.isStrongerThan(cc2));
 		assertFalse(cc2.isStrongerThan(cc1));
 
-		final CongruenceClosure<StringCcElement> cc3 = cc1.join(cc2);
+		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2);
 		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}} (unchanged from testOperators1)
 		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
@@ -694,7 +694,7 @@ public class CongruenceClosureTest {
 		assertTrue(cc2.isStrongerThan(cc3));
 		assertFalse(cc3.isStrongerThan(cc2));
 
-		final CongruenceClosure<StringCcElement> cc4 = cc1.meet(cc2);
+		final CongruenceClosure<StringCcElement> cc4 = manager.meet(cc1, cc2);
 		// state of cc4 should be {{a, b, i, j, x, y, f(f(a)), f(f(b))}, {f(a), f(b)}}, x != f(a)
 		// (includes the extra disequality from cc2, in comparison to testOperators1)
 		assertTrue(cc4.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
