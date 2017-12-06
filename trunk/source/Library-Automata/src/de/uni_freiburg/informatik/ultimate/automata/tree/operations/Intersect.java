@@ -127,25 +127,29 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<>();
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<>();
 
-		for (final TreeAutomatonRule<LETTER, STATE> ruleA : mTreeA.getRules()) {
-			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
-			if (symbolToRuleA.containsKey(ruleA.getLetter())) {
-				rules = symbolToRuleA.get(ruleA.getLetter());
-			} else {
-				rules = new LinkedList<>();
-				symbolToRuleA.put(ruleA.getLetter(), rules);
+		for (final List<STATE> src : mTreeA.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> ruleA : mTreeA.getSuccessors(src)) {
+				Collection<TreeAutomatonRule<LETTER, STATE>> rules;
+				if (symbolToRuleA.containsKey(ruleA.getLetter())) {
+					rules = symbolToRuleA.get(ruleA.getLetter());
+				} else {
+					rules = new LinkedList<>();
+					symbolToRuleA.put(ruleA.getLetter(), rules);
+				}
+				rules.add(ruleA);
 			}
-			rules.add(ruleA);
 		}
-		for (final TreeAutomatonRule<LETTER, STATE> ruleB : mTreeB.getRules()) {
-			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
-			if (symbolToRuleB.containsKey(ruleB.getLetter())) {
-				rules = symbolToRuleB.get(ruleB.getLetter());
-			} else {
-				rules = new LinkedList<>();
-				symbolToRuleB.put(ruleB.getLetter(), rules);
+		for (final List<STATE> src : mTreeB.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> ruleB : mTreeB.getSuccessors(src)) {
+				Collection<TreeAutomatonRule<LETTER, STATE>> rules;
+				if (symbolToRuleB.containsKey(ruleB.getLetter())) {
+					rules = symbolToRuleB.get(ruleB.getLetter());
+				} else {
+					rules = new LinkedList<>();
+					symbolToRuleB.put(ruleB.getLetter(), rules);
+				}
+				rules.add(ruleB);
 			}
-			rules.add(ruleB);
 		}
 
 		for (final LETTER letter : symbolToRuleA.keySet()) {

@@ -73,7 +73,7 @@ public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends I
 	 * @param state
 	 * @return a map that denotes all the lists of rules that goes to given state.
 	 */
-	Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state);
+	//Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state);
 
 	// /**
 	// * @param state
@@ -87,14 +87,25 @@ public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends I
 	 * @return Given a letter and a state, get all rules that goes to the given
 	 *         state using the given letter.
 	 */
-	Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter);
+	//Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter);
 
 	/**
 	 * 
 	 * @return Get the rules of the automaton.
 	 */
-	Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
+	//Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
+	
+	/**
+	 * 
+	 * @return iterable of all source lists occuring in some rules.
+	 */
+	Iterable<List<STATE>> getSourceCombinations();
 
+	/***
+	 * Complement the set of final states
+	 */
+	void complementFinals();
+	
 	/**
 	 * @return a set of all the states in the automaton.
 	 */
@@ -105,6 +116,12 @@ public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends I
 	 * @return a list of all successor states for given states.
 	 */
 	Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final List<STATE> states);
+	
+	/***
+	 * @param letter
+	 * @return
+	 */
+	Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final LETTER letter);
 
 	/**
 	 * @param states

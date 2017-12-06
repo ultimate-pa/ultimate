@@ -161,15 +161,17 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 				res.addFinalState(st);
 			}
 		}
-		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
-			res.addRule(rule);
-			for (final List<STATE> srcSt : combinations(rule.getArity())) {
-				final Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, rule.getLetter());
-				if (st == null || !st.iterator().hasNext()) {
-					res.addRule(new TreeAutomatonRule<>(rule.getLetter(), srcSt, mDummyState));
+		for (final List<STATE> src : mTreeAutomaton.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getSuccessors(src)) {
+				res.addRule(rule);
+				for (final List<STATE> srcSt : combinations(rule.getArity())) {
+					final Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, rule.getLetter());
+					if (st == null || !st.iterator().hasNext()) {
+						res.addRule(new TreeAutomatonRule<>(rule.getLetter(), srcSt, mDummyState));
+					}
 				}
+				assert rule.getLetter().getRank() == rule.getArity();
 			}
-			assert rule.getLetter().getRank() == rule.getArity();
 		}
 		for (final LETTER sym : mAlphabet) {
 			int arity = sym.getRank();

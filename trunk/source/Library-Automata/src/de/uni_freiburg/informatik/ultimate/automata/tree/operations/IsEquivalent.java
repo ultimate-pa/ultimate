@@ -91,15 +91,15 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 				rankToNumberOfTransitionsPerLetter, acceptanceDensity, 41);
 		final ITreeAutomatonBU<StringRankedLetter, String> firstTree = getRandomTree.getResult();
 
-		//final ITreeAutomatonBU<StringRankedLetter, String> secondTree = new Minimize<>(services, factory, firstTree)
-		//		.getResult();
+		final ITreeAutomatonBU<StringRankedLetter, String> fourthTree = new Minimize<>(services, factory, firstTree)
+				.getResult();
 
 		final GetRandomDftaBU getRandomTree2 = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters,
 				rankToNumberOfTransitionsPerLetter, acceptanceDensity, 10007);
 		final ITreeAutomatonBU<StringRankedLetter, String> secondTree = getRandomTree2.getResult();
 
 		final IsEquivalent<StringRankedLetter, String> isEquivalent = new IsEquivalent<>(services, factory, firstTree,
-				secondTree);
+				fourthTree);
 		
 
 		final GetRandomDftaBU getRandomTree3 = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters,

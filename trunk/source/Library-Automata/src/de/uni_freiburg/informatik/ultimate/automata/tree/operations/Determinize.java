@@ -139,30 +139,32 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 
 		final Map<STATE, Set<STATE>> stateToSState = new HashMap<>();
 		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<>();
-		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
-			if (!rules.containsKey(rule.getLetter())) {
-				rules.put(rule.getLetter(), new HashMap<>());
-			}
-			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(rule.getLetter());
-			final List<Set<STATE>> source = new ArrayList<>();
-			for (final STATE sr : rule.getSource()) {
+		for (final List<STATE> src : mTreeAutomaton.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getSuccessors(src)) {
+				if (!rules.containsKey(rule.getLetter())) {
+					rules.put(rule.getLetter(), new HashMap<>());
+				}
+				final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(rule.getLetter());
+				final List<Set<STATE>> source = new ArrayList<>();
+				for (final STATE sr : rule.getSource()) {
+					if (!stateToSState.containsKey(sr)) {
+						final Set<STATE> nw = new HashSet<>();
+						nw.add(sr);
+						stateToSState.put(sr, nw);
+					}
+					source.add(stateToSState.get(sr));
+				}
+				final STATE sr = rule.getDest();
 				if (!stateToSState.containsKey(sr)) {
 					final Set<STATE> nw = new HashSet<>();
 					nw.add(sr);
 					stateToSState.put(sr, nw);
 				}
-				source.add(stateToSState.get(sr));
+				if (!mp.containsKey(source)) {
+					mp.put(source, new HashSet<STATE>());
+				}
+				mp.get(source).add(sr);
 			}
-			final STATE sr = rule.getDest();
-			if (!stateToSState.containsKey(sr)) {
-				final Set<STATE> nw = new HashSet<>();
-				nw.add(sr);
-				stateToSState.put(sr, nw);
-			}
-			if (!mp.containsKey(source)) {
-				mp.put(source, new HashSet<STATE>());
-			}
-			mp.get(source).add(sr);
 		}
 		return rules;
 	}

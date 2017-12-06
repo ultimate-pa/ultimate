@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -157,24 +156,26 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		boolean newReached;
 		do {
 			newReached = false;
-			for (final TreeAutomatonRule<LETTER, STATE> rule : mFirstOperand.getRules()) {
-				// f(a, y) -> x : f(b, z) -> w
-				if (!successors.keySet().containsAll(rule.getSource())) {
-					assert !rule.getSource().isEmpty();
-					continue;
-				}
-				// a, y are all visited so we can derive x
-				final List<Collection<Pair<STATE, STATE>>> combinations = new LinkedList<>();
-				for (final STATE first : rule.getSource()) {
-					final Set<Pair<STATE, STATE>> s = new HashSet<>();
-					for (final STATE second : mReducer.filter(successors.get(first))) {
-						// all derived pairs (a, b)
-						s.add(new Pair<STATE, STATE>(first, second));
+			for (final List<STATE> src : mFirstOperand.getSourceCombinations()) {
+				for (final TreeAutomatonRule<LETTER, STATE> rule : mFirstOperand.getSuccessors(src)) {
+					// f(a, y) -> x : f(b, z) -> w
+					if (!successors.keySet().containsAll(rule.getSource())) {
+						assert !rule.getSource().isEmpty();
+						continue;
 					}
-					s.add(new Pair<STATE, STATE>(first, mSink));
-					combinations.add(s);
+					// a, y are all visited so we can derive x
+					final List<Collection<Pair<STATE, STATE>>> combinations = new LinkedList<>();
+					for (final STATE first : rule.getSource()) {
+						final Set<Pair<STATE, STATE>> s = new HashSet<>();
+						for (final STATE second : mReducer.filter(successors.get(first))) {
+							// all derived pairs (a, b)
+							s.add(new Pair<STATE, STATE>(first, second));
+						}
+						s.add(new Pair<STATE, STATE>(first, mSink));
+						combinations.add(s);
+					}
+					newReached |= getAllDestinations(fac, combinations, successors, rule, newRules);
 				}
-				newReached |= getAllDestinations(fac, combinations, successors, rule, newRules);
 			}
 		} while (newReached);
 		final TreeAutomatonBU<LETTER, STATE> result = new TreeAutomatonBU<>();

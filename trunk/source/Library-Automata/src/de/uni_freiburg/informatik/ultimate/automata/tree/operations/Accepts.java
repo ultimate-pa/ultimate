@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
-import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 
@@ -53,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  *            state of the tree automaton.
  */
 public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final Tree<LETTER> mExample;
 	private final Boolean mResult;
 
@@ -80,7 +79,7 @@ public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<
 	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> automaton,
 			final Tree<LETTER> run) {
 		mExample = run;
-		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) automaton;
+		mTreeAutomaton = automaton;
 		mResult = computeResult();
 	}
 
@@ -111,7 +110,7 @@ public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<
 		}
 		
 		final Iterable<TreeAutomatonRule<LETTER, STATE>> rulesForCurrentLetter = 
-				mTreeAutomaton.getRulesByLetter(t.getSymbol());
+				mTreeAutomaton.getSuccessors(t.getSymbol());
 
 		if (rulesForCurrentLetter == null) {
 			// there is no rule we can go on with from the current letter

@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
@@ -29,9 +31,11 @@ public class isDetereministic<LETTER extends IRankedLetter, STATE> extends Gener
 	}
 
 	private boolean computeResult() {
-		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
-			if (CombinatoricsUtils.iterateAll(mTreeAutomaton.getSuccessors(rule.getSource(), rule.getLetter())).size() != 1) {
-				return false;
+		for (final List<STATE> src : mTreeAutomaton.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getSuccessors(src)) {
+				if (CombinatoricsUtils.iterateAll(mTreeAutomaton.getSuccessors(rule.getSource(), rule.getLetter())).size() != 1) {
+					return false;
+				}
 			}
 		}
 		return true;

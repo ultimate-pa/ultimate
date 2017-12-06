@@ -37,12 +37,14 @@ public class isTotal<LETTER extends IRankedLetter, STATE> extends GeneralOperati
 
 	private boolean computeResult() {
 		final Map<LETTER, Set<List<STATE>>> mp = new HashMap<>();
-		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
-			final LETTER letter = rule.getLetter();
-			if (!mp.containsKey(letter)) {
-				mp.put(letter, new HashSet<>());
+		for (final List<STATE> src : mTreeAutomaton.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getSuccessors(src)) {
+				final LETTER letter = rule.getLetter();
+				if (!mp.containsKey(letter)) {
+					mp.put(letter, new HashSet<>());
+				}
+				mp.get(letter).add(rule.getSource());
 			}
-			mp.get(letter).add(rule.getSource());
 		}
 		final int states = mTreeAutomaton.getStates().size();
 		for (final LETTER letter : mTreeAutomaton.getAlphabet()) {
