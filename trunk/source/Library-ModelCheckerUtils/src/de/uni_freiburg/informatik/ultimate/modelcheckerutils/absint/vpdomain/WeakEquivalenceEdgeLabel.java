@@ -100,7 +100,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 			return this;
 		}
 		return new WeakEquivalenceEdgeLabel<NODE>(weqGraphForFlattenedLabel, Collections.singleton(
-				mLabel.stream().reduce((cc1, cc2) -> cc1.join(cc1)).get()));
+				mLabel.stream().reduce((cc1, cc2) -> mWeqCcManager.join(cc1, cc2)).get()));
 	}
 
 	public void setExternalRemInfo(final RemoveCcElement<NODE> remInfo) {
