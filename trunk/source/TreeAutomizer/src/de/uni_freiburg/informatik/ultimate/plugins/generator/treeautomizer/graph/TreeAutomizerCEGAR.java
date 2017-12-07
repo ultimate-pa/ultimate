@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TreeAutomizerSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences.TreeAutomizerPreferenceInitializer;
 
@@ -165,10 +166,10 @@ public class TreeAutomizerCEGAR {
 
 		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 		mLogger.debug(mAbstraction);
-		final int mITERATIONS = 10;
 
 		while (mServices.getProgressMonitorService().continueProcessing()
-				&& (mITERATIONS == -1 || mIteration < mITERATIONS)) {
+				&& (TreeAutomizerSettings.ITERATIONS_BOUND <= -1
+					|| mIteration < TreeAutomizerSettings.ITERATIONS_BOUND)) {
 			mLogger.debug("Iteration #" + (mIteration + 1));
 			final TreeRun<HornClause, IPredicate> counterExample = isAbstractionCorrect();
 			if (counterExample == null) {
