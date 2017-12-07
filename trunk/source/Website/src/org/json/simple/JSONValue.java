@@ -257,18 +257,21 @@ public class JSONValue {
 				sb.append("\\/");
 				break;
 			default:
-				// Reference: http://www.unicode.org/versions/Unicode5.1.0/
-				if ((ch >= '\u0000' && ch <= '\u001F') || (ch >= '\u007F' && ch <= '\u009F')
-						|| (ch >= '\u2000' && ch <= '\u20FF')) {
-					final String ss = Integer.toHexString(ch);
-					sb.append("\\u");
-					for (int k = 0; k < 4 - ss.length(); k++) {
-						sb.append('0');
-					}
-					sb.append(ss.toUpperCase());
+				if (ch < ' ') {
+					final String t = "000" + Integer.toHexString(ch);
+					sb.append("\\u" + t.substring(t.length() - 4));
 				} else {
 					sb.append(ch);
 				}
+
+				// Reference: http://www.unicode.org/versions/Unicode5.1.0/
+				// Also check JsonObject#quote in Webinterface
+				// if (ch < ' ' || (ch >= '\u0080' && ch < '\u00a0') || (ch >= '\u2000' && ch < '\u2100')) {
+				// final String hhhh = "000" + Integer.toHexString(ch);
+				// sb.append("\\u" + hhhh.substring(hhhh.length() - 4));
+				// } else {
+				// sb.append(ch);
+				// }
 			}
 		} // for
 	}

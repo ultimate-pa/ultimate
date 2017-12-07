@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.AbstractCCElementFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.AbstractCCElementFactory;
 
 public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentifier<NODE>, CONTENT>
 			extends AbstractCCElementFactory<NODE, CONTENT> {

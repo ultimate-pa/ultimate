@@ -46,12 +46,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class StringLiteralResult extends ExpressionResult {
 
 	private final char[] mString;
+	private final boolean mOverapproximatesLongStringLiteral;
+	private final String mAuxVarName;
 
 	public StringLiteralResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Map<VariableDeclaration, ILocation> auxVars, final List<Overapprox> overapproxList,
-			final char[] string) {
+			final String auxVarName, final char[] string, final boolean overAppLongLiteral) {
 		super(stmt, lrVal, decl, auxVars, overapproxList);
+		mAuxVarName = auxVarName;
 		mString = string;
+		mOverapproximatesLongStringLiteral = overAppLongLiteral;
 	}
 
 	public char[] getLiteralString() {
@@ -61,5 +65,17 @@ public class StringLiteralResult extends ExpressionResult {
 	@Override
 	public String toString() {
 		return "StringLiteralResult: " + Arrays.toString(mString);
+	}
+
+	public boolean overApproximatesLongStringLiteral() {
+		return mOverapproximatesLongStringLiteral;
+	}
+
+	/**
+	 * Returns the name of the auxiliary variable that marks the memory location of the string in our Boogie heap array.
+	 * @return
+	 */
+	public String getAuxVarName() {
+		return mAuxVarName;
 	}
 }

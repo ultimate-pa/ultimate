@@ -35,6 +35,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+
 
 /**
  * A run of a tree automaton.
@@ -151,10 +154,27 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 	private Collection<STATE> getStates() {
 		return mAllStates;
 	}
+
+	@Override
+	public <SF extends ISemanticReducerFactory<STATE>> InterpolantTreeAutomatonBU<LETTER, STATE> getInterpolantAutomaton(
+			final SF factory) {
+		final InterpolantTreeAutomatonBU<LETTER, STATE> treeAutomaton = new InterpolantTreeAutomatonBU<>(factory);
+
+		for (final STATE st : getStates()) {
+			treeAutomaton.addState(st);
+		}
+		treeAutomaton.addFinalState(mState);
+		
+		for (final TreeAutomatonRule<LETTER, STATE> rule : getRules()) {
+			treeAutomaton.addRule(rule);
+		}
+		
+		return treeAutomaton;
+	}
 	
 	@Override
-	public ITreeAutomatonBU<LETTER, STATE> getAutomaton() {
-		final TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>();
+	public ITreeAutomatonBU<LETTER, STATE> getAutomaton(final IStateFactory<STATE> factory) {
+		final TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>(factory);
 		
 		for (final STATE st : getStates()) {
 			treeAutomaton.addState(st);

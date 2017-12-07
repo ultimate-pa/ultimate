@@ -30,20 +30,20 @@
    	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.22</version>
+		<version>0.1.23</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent> 
   
   
   <artifactId>de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser</artifactId>
-  <version>0.1.22</version>
+  <version>0.1.23</version>
   <packaging>eclipse-plugin</packaging>
   
   <build>
 		<plugins>
 			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.7</version>
+				<version>${maven-antrun-version}</version>
 				<executions>
 					<execution>
 						<id>generate parser sources</id>
@@ -73,7 +73,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-clean-plugin</artifactId>
-				<version>2.4.1</version>
+				<version>${maven-clean-version}</version>
 				<configuration>
 					<filesets>
 						<fileset>

@@ -29,9 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -119,33 +121,43 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 
 	private TreeAutomatonBU<LETTER, STATE> computeResult() {
 		// Minimal states intersection.
-		final TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res = new TreeAutomatonBU<>();
+		//final TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res = new TreeAutomatonBU<>();
 
-		res.extendAlphabet(mTreeA.getAlphabet());
-		res.extendAlphabet(mTreeB.getAlphabet());
+		//res.extendAlphabet(mTreeA.getAlphabet());
+		//res.extendAlphabet(mTreeB.getAlphabet());
 
+		final Set<LETTER> alphabet = new HashSet<>();
+		final Set<Pair<STATE, STATE>> finalStates = new HashSet<>();
+		final Set<TreeAutomatonRule<LETTER, Pair<STATE, STATE>>> newRules = new HashSet<>();
+		alphabet.addAll(mTreeA.getAlphabet());
+		alphabet.addAll(mTreeB.getAlphabet());
+		
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<>();
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<>();
 
-		for (final TreeAutomatonRule<LETTER, STATE> ruleA : mTreeA.getRules()) {
-			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
-			if (symbolToRuleA.containsKey(ruleA.getLetter())) {
-				rules = symbolToRuleA.get(ruleA.getLetter());
-			} else {
-				rules = new LinkedList<>();
-				symbolToRuleA.put(ruleA.getLetter(), rules);
+		for (final List<STATE> src : mTreeA.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> ruleA : mTreeA.getSuccessors(src)) {
+				Collection<TreeAutomatonRule<LETTER, STATE>> rules;
+				if (symbolToRuleA.containsKey(ruleA.getLetter())) {
+					rules = symbolToRuleA.get(ruleA.getLetter());
+				} else {
+					rules = new LinkedList<>();
+					symbolToRuleA.put(ruleA.getLetter(), rules);
+				}
+				rules.add(ruleA);
 			}
-			rules.add(ruleA);
 		}
-		for (final TreeAutomatonRule<LETTER, STATE> ruleB : mTreeB.getRules()) {
-			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
-			if (symbolToRuleB.containsKey(ruleB.getLetter())) {
-				rules = symbolToRuleB.get(ruleB.getLetter());
-			} else {
-				rules = new LinkedList<>();
-				symbolToRuleB.put(ruleB.getLetter(), rules);
+		for (final List<STATE> src : mTreeB.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> ruleB : mTreeB.getSuccessors(src)) {
+				Collection<TreeAutomatonRule<LETTER, STATE>> rules;
+				if (symbolToRuleB.containsKey(ruleB.getLetter())) {
+					rules = symbolToRuleB.get(ruleB.getLetter());
+				} else {
+					rules = new LinkedList<>();
+					symbolToRuleB.put(ruleB.getLetter(), rules);
+				}
+				rules.add(ruleB);
 			}
-			rules.add(ruleB);
 		}
 
 		for (final LETTER letter : symbolToRuleA.keySet()) {
@@ -159,7 +171,8 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 								source.add(getPair(ruleA.getSource().get(i), ruleB.getSource().get(i)));
 							}
 							final Pair<STATE, STATE> dest = getPair(ruleA.getDest(), ruleB.getDest());
-							res.addRule(new TreeAutomatonRule<>(letter, source, dest));
+							newRules.add(new TreeAutomatonRule<>(letter, source, dest));
+							//res.addRule(new TreeAutomatonRule<>(letter, source, dest));
 						}
 					}
 				}
@@ -170,14 +183,15 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 				final Pair<STATE, STATE> st = getPair(q1, q2);
 
 				if (mTreeA.isFinalState(q1) && mTreeB.isFinalState(q2)) {
-					res.addFinalState(st);
+					finalStates.add(st);
+					//res.addFinalState(st);
 				}
 			}
 		}
 
-		final TreeAutomatonBU<LETTER, STATE> reducedResult = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, STATE> reducedResult = new TreeAutomatonBU<>(mStateFactory);
 
-		for (final TreeAutomatonRule<LETTER, Pair<STATE, STATE>> rule : res.getRules()) {
+		for (final TreeAutomatonRule<LETTER, Pair<STATE, STATE>> rule : newRules) {
 			final List<STATE> src = new ArrayList<>();
 			for (final Pair<STATE, STATE> pr : rule.getSource()) {
 				src.add(reduceState(pr));
@@ -185,12 +199,17 @@ public class Intersect<LETTER extends IRankedLetter, STATE>
 			reducedResult.addRule(new TreeAutomatonRule<>(rule.getLetter(), src, reduceState(rule.getDest())));
 		}
 
+		for (final Pair<STATE, STATE> state : finalStates) {
+			reducedResult.addFinalState(reduceState(state));
+		}
+		/*
 		for (final Pair<STATE, STATE> state : res.getStates()) {
 			reducedResult.addState(reduceState(state));
 			if (res.isFinalState(state)) {
 				reducedResult.addFinalState(reduceState(state));
 			}
 		}
+		*/
 
 		return reducedResult;
 	}

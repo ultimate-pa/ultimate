@@ -41,12 +41,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.InterpolantTreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.LazyDifference;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
@@ -96,6 +97,7 @@ public class TreeAutomizerCEGAR {
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
+	//protected InterpolantTreeAutomatonBU<HornClause, IPredicate> mInterpolAutomaton;
 	protected ITreeAutomatonBU<HornClause, IPredicate> mInterpolAutomaton;
 	private final HCSymbolTable mSymbolTable;
 //	private final CfgSmtToolkit mCfgSmtToolkit;
@@ -137,7 +139,6 @@ public class TreeAutomizerCEGAR {
 		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
 
-		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory);
 
 		mInitialPredicate = mPredicateFactory.getTruePredicate();
 		mFinalPredicate = mPredicateFactory.getFalsePredicate();
@@ -148,6 +149,7 @@ public class TreeAutomizerCEGAR {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
 		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mBackendSmtSolverScript, mPredicateFactory,
 				mSymbolTable);
+		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mLogger);
 
 		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
 		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());
@@ -214,7 +216,7 @@ public class TreeAutomizerCEGAR {
 
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 
-		mAbstraction = new TreeAutomatonBU<>();
+		mAbstraction = new TreeAutomatonBU<>(mStateFactory);
 		for (final HornClause clause : mAlphabet) {
 			final List<IPredicate> tail = new ArrayList<>();
 			for (final HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
@@ -266,14 +268,17 @@ public class TreeAutomizerCEGAR {
 
 		final TreeRun<HornClause, IPredicate> treeRunWithInterpolants = mChecker
 				.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
+		//ITreeAutomatonBU<HornClause, IPredicate> automaton = treeRunWithInterpolants.getAutomaton(mStateFactory);
 
-		mInterpolAutomaton = treeRunWithInterpolants.getAutomaton();
+		//mInterpolAutomaton = treeRunWithInterpolants.getInterpolantAutomaton(mStateFactory);
+		mInterpolAutomaton = treeRunWithInterpolants.getAutomaton(mStateFactory);
 		for (final IPredicate p : mInterpolAutomaton.getStates()) {
 			mPredicateUnifier.getOrConstructPredicate(p.getFormula());
 		}
 
 		((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 
+		assert allRulesAreInductive(mInterpolAutomaton);
 		generalizeCounterExample(mInterpolAutomaton);
 
 		// dump interpolant automaton
@@ -285,6 +290,7 @@ public class TreeAutomizerCEGAR {
 		}
 
 		assert allRulesAreInductive(mInterpolAutomaton);
+
 	}
 
 	/**
@@ -295,10 +301,12 @@ public class TreeAutomizerCEGAR {
 	 * @return boolean if all the rules are inductive.
 	 */
 	private boolean allRulesAreInductive(final ITreeAutomatonBU<HornClause, IPredicate> automaton) {
-		for (final TreeAutomatonRule<HornClause, IPredicate> rule : automaton.getRules()) {
-			final Validity validity = mHoareTripleChecker.check(rule.getSource(), rule.getLetter(), rule.getDest());
-			if (validity != Validity.VALID) {
-				return false;
+		for (final List<IPredicate> source : automaton.getSourceCombinations()) {
+			for (final TreeAutomatonRule<HornClause, IPredicate> rule : automaton.getSuccessors(source)) {
+				final Validity validity = mHoareTripleChecker.check(rule.getSource(), rule.getLetter(), rule.getDest());
+				if (validity != Validity.VALID) {
+					return false;
+				}
 			}
 		}
 		return true;
@@ -350,7 +358,7 @@ public class TreeAutomizerCEGAR {
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
 		*/
 
-		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Difference<HornClause, IPredicate>(
+		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new LazyDifference<HornClause, IPredicate>(
 				mAutomataLibraryServices, mStateFactory, mAbstraction, getCounterExample()).getResult());
 		mLogger.debug(String.format("Size before minimize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
@@ -363,8 +371,8 @@ public class TreeAutomizerCEGAR {
 				mAbstraction.removeState(pred);
 			}
 		}
-		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
-				mStateFactory, mAbstraction)).getResult();
+		//mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
+		//		mStateFactory, mAbstraction)).getResult();
 		mLogger.debug(String.format("Size after minimize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
 

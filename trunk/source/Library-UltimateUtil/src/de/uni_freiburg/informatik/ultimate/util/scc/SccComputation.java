@@ -37,8 +37,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
 
 /**
  * Computes strongly connected components (SCCs) of a graph. Implementation of Tarjan SCC algorithm. See
@@ -99,6 +101,79 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 				+ " non ball SCCs. Number of states in SCCs " + mNumberOfAllStates + ".");
 	}
 
+	/***
+	 * Get a map of nodes to their corresponding components in the SCCs.
+	 * @return
+	 */
+	public Map<NODE, COMP> getNodeToComponents() {
+		final Map<NODE, COMP>componentOf = new HashMap<>();
+		for (final COMP comp : getSCCs()) {
+			for (final NODE pred : comp.getNodes()) {
+				componentOf.put(pred, comp);
+			}
+		}
+		return componentOf;
+	}
+	
+	/***
+	 * Get a successor provider for the SCCs
+	 * @return
+	 */
+	public ISuccessorProvider<COMP> getComponentsSuccessorsProvider() {
+
+		final Map<NODE, COMP> componentOf = getNodeToComponents();
+		final Map<COMP, Set<COMP>> adjComp = new HashMap<>();
+
+		for (final COMP comp : getSCCs()) {
+			if (!adjComp.containsKey(comp)) {
+				adjComp.put(comp, new HashSet<>());
+			}
+		}
+		for (final NODE source : mIndices.keySet()) {
+			final COMP comp = componentOf.get(source);
+			for (final NODE target : CombinatoricsUtils.iterateAll(mSuccessorProvider.getSuccessors(source))) {
+				adjComp.get(comp).add(componentOf.get(target));
+			}
+		}
+		return new ISuccessorProvider<COMP>() {
+			
+			@Override
+			public Iterator<COMP> getSuccessors(COMP node) {
+				return adjComp.get(node).iterator();
+			}
+		};
+	}
+	
+	/***
+	 * Get all components root components
+	 * @return
+	 */
+	public Collection<COMP> getRootComponents() {
+		final Set<COMP> res = new HashSet<>();
+		res.addAll(getSCCs());
+		ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
+		for (final COMP comp : getSCCs()) {
+			for (final COMP next : CombinatoricsUtils.iterateAll(componentsSuccessors.getSuccessors(comp))) {
+				res.remove(next);
+			}
+		}
+		return res;
+	}
+	
+	/***
+	 * Get all the leaf components of the SCC directed-acyclic graph
+	 * @return
+	 */
+	public Collection<COMP> getLeafComponents() {
+		ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
+		final Set<COMP> res = new HashSet<>();
+		for (final COMP comp : getSCCs()) {
+			if (!componentsSuccessors.getSuccessors(comp).hasNext()) {
+				res.add(comp);
+			}
+		}
+		return res;
+	}
 	/**
 	 * @return a {@link Collection} of "ball" SCCs. A ball SCC is a SCC with at least one edge. I.e., this method
 	 *         returns the subset of {@link #getSCCs()} that excludes all trivial SCCs that consist of only one vertex

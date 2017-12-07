@@ -435,6 +435,8 @@ public class ArrayInterpolator {
 			if (mainPath.mSharedIndex[color] != null && mainPath.mSharedIndex[color] == mStorePath.getIndex()) {
 				if (indexEqInfo.isALocal(color) && otherSelectOccur.isBorShared(color)) {
 					mInterpolants[color].add(mInterpolator.unquote(mIndexEquality));
+				} else if (indexEqInfo.isBLocal(color) && mDiseqInfo.isALocal(color)) {
+					mInterpolants[color].add(mTheory.not(mInterpolator.unquote(mIndexEquality)));
 				}
 			}
 		}
@@ -726,9 +728,9 @@ public class ArrayInterpolator {
 								rightSelect = selectEqApp.getParameters()[0];
 							}
 							// Add the index equality for the first select term
-							mTail.addSelectIndexEquality(mHead, leftSelect);
 							mTail.closeAPath(mHead, boundaryTerm, stepInfo);
 							mTail.openAPath(mHead, boundaryTerm, stepInfo);
+							mTail.addSelectIndexEquality(mHead, leftSelect);
 							// If the equality is mixed in some partition, we open or close the path at the mixed
 							// variable, storing the mixed equality as boundary term.
 							if (stepInfo.getMixedVar() != null) {
@@ -1028,6 +1030,11 @@ public class ArrayInterpolator {
 					if (mTail.mTerm[color] != null) {
 						mTail.addInterpolantClauseAPath(color, null);
 					}
+					// The whole path and the diseq are in A, but there can still be B index(dis)eqs
+					if (mHead.mLastChange[color] == null && mTail.mLastChange[color] == null) {
+						// In this case, they are stored in mHead
+						mHead.addInterpolantClauseAPath(color, null);
+					}
 				} else {
 					// B-local paths must be closed, A-local ones are already closed.
 					if (mHead.mLastChange[color] != mHead.mTerm[color]) {
@@ -1035,6 +1042,11 @@ public class ArrayInterpolator {
 					}
 					if (mTail.mLastChange[color] != mTail.mTerm[color]) {
 						mTail.addInterpolantClauseBPath(color, null);
+					}
+					// The whole path and the diseq are in B, but there can still be A index(dis)eqs
+					if (mHead.mLastChange[color] == null && mTail.mLastChange[color] == null) {
+						// In this case, they are stored in mHead
+						mHead.addInterpolantClauseBPath(color, null);
 					}
 				}
 			}

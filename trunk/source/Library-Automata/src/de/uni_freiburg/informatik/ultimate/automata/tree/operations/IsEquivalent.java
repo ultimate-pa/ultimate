@@ -41,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.LazyDifference;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
@@ -81,24 +83,40 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 
 		// Arguments for generation of a random tree automaton
 		final int numberOfStates = 4;
-		final int[] rankToNumberOfLetters = { 2, 0, 1, 2 };
-		final int[] rankToNumberOfTransitionsPerLetter = { 2, 0, 5, 5 };
+		final int[] rankToNumberOfLetters = { 2, 0 , 4, 3};
+		final int[] rankToNumberOfTransitionsPerLetter = { 1, 0 , 2, 1};
 		final double acceptanceDensity = 0.2;
 
 		final GetRandomDftaBU getRandomTree = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters,
 				rankToNumberOfTransitionsPerLetter, acceptanceDensity, 41);
 		final ITreeAutomatonBU<StringRankedLetter, String> firstTree = getRandomTree.getResult();
 
-		final ITreeAutomatonBU<StringRankedLetter, String> secondTree = new Minimize<>(services, factory, firstTree)
+		final ITreeAutomatonBU<StringRankedLetter, String> fourthTree = new Minimize<>(services, factory, firstTree)
 				.getResult();
 
 		final GetRandomDftaBU getRandomTree2 = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters,
 				rankToNumberOfTransitionsPerLetter, acceptanceDensity, 10007);
-		//final ITreeAutomatonBU<StringRankedLetter, String> secondTree = getRandomTree2.getResult();
+		final ITreeAutomatonBU<StringRankedLetter, String> secondTree = getRandomTree2.getResult();
 
 		final IsEquivalent<StringRankedLetter, String> isEquivalent = new IsEquivalent<>(services, factory, firstTree,
-				secondTree);
+				fourthTree);
+		
 
+		final GetRandomDftaBU getRandomTree3 = new GetRandomDftaBU(services, numberOfStates, rankToNumberOfLetters,
+				rankToNumberOfTransitionsPerLetter, acceptanceDensity, 71);
+		final ITreeAutomatonBU<StringRankedLetter, String> thirdTree = getRandomTree3.getResult();
+		
+		assert (new IsEquivalent<>(services, factory,
+				new LazyDifference<>(services, factory, firstTree, secondTree).getResult(),
+				new Difference<>(services, factory, firstTree, secondTree).getResult()).getResult());
+
+		assert (new IsEquivalent<>(services, factory,
+				new LazyDifference<>(services, factory, firstTree, thirdTree).getResult(),
+				new Difference<>(services, factory, firstTree, thirdTree).getResult()).getResult());
+
+		assert !new isTotal<>(services, firstTree).getResult();
+		assert !new isTotal<>(services, secondTree).getResult();
+		assert !new isTotal<>(services, thirdTree).getResult();
 		if (isEquivalent.getResult().booleanValue()) {
 			System.out.println("Is equivalent.");
 		} else {

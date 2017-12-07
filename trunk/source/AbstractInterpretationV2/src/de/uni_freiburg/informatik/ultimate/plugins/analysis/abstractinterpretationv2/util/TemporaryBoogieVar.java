@@ -54,6 +54,10 @@ public final class TemporaryBoogieVar implements IProgramVar {
 		mManagedScript = managedScript;
 	}
 
+	public boolean hasTermVariable() {
+		return mTermVariable != null;
+	}
+
 	@Override
 	public TermVariable getTermVariable() {
 		if (mTermVariable == null) {

@@ -113,12 +113,12 @@ public class Worker {
 	 *
 	 * @return the label of the name's matching worker.
 	 */
-	public String getLabel(final String name) {
+	public String getLabel(final String workerName) {
 		final String result;
 		if (label != null) {
 			result = label;
 		} else {
-			switch (name) {
+			switch (workerName) {
 			case NameStrings.TOOL_AUTOMIZER:
 			case NameStrings.TOOL_AUTOMIZER_CONCURRENT:
 				result = NameStrings.TASK_VERIFY;
@@ -137,7 +137,7 @@ public class Worker {
 				break;
 			}
 		}
-		SimpleLogger.log("getLabel(" + name + ") returned: " + result);
+		SimpleLogger.log("getLabel(" + workerName + ") returned: " + result);
 		return result;
 	}
 

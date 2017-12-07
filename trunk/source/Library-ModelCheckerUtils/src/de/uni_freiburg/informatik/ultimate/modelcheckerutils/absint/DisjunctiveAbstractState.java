@@ -353,8 +353,8 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 		return new DisjunctiveAbstractState<>(mMaxSize, compactedSynchronizedStates);
 	}
 
-	public <ACTION> DisjunctiveAbstractState<STATE> createValidPostOpStateBeforeLeaving(
-			final IVariableProvider<STATE, ACTION> varProvider, final ACTION act) {
+	public <ACTION> DisjunctiveAbstractState<STATE>
+			createValidPostOpStateBeforeLeaving(final IVariableProvider<STATE, ACTION> varProvider, final ACTION act) {
 		return map(a -> varProvider.createValidPostOpStateBeforeLeaving(act, a));
 	}
 
@@ -498,7 +498,6 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	@SuppressWarnings("unchecked")
 	public static <STATE extends IAbstractState<STATE>> DisjunctiveAbstractState<STATE>
 			createDisjunction(final Collection<STATE> states) {
-
 		final Set<STATE> disjuncts = new HashSet<>();
 		for (final STATE state : states) {
 			if (state instanceof DisjunctiveAbstractState<?>) {
@@ -508,6 +507,20 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 			}
 		}
 		return new DisjunctiveAbstractState<>(reduce(disjuncts, disjuncts.size()));
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <STATE extends IAbstractState<STATE>> DisjunctiveAbstractState<STATE>
+			createDisjunction(final Collection<STATE> states, final int maxSize) {
+		final Set<STATE> disjuncts = new HashSet<>();
+		for (final STATE state : states) {
+			if (state instanceof DisjunctiveAbstractState<?>) {
+				disjuncts.addAll(((DisjunctiveAbstractState<STATE>) state).getStates());
+			} else {
+				disjuncts.add(state);
+			}
+		}
+		return new DisjunctiveAbstractState<>(reduce(disjuncts, maxSize));
 	}
 
 	private static <STATE extends IAbstractState<STATE>> Set<STATE> reduce(final Set<STATE> states, final int maxsize) {

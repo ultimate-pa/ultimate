@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
@@ -62,14 +61,6 @@ public class Segmentation {
 
 	public IProgramVar getValue(final int i) {
 		return mValues.get(i);
-	}
-
-	public Sort getBoundSort() {
-		return mBounds.get(1).getSort();
-	}
-
-	public Sort getValueSort() {
-		return mValues.get(1).getSort();
 	}
 
 	public int size() {

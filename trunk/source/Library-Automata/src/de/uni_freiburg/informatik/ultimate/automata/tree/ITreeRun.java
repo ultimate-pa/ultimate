@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.tree;
 
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+
 /**
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -39,7 +42,14 @@ public interface ITreeRun<LETTER extends IRankedLetter, STATE> {
 	 * Get an automaton representation of the tree run.
 	 * @return
 	 */
-	ITreeAutomatonBU<LETTER, STATE> getAutomaton();
+	ITreeAutomatonBU<LETTER, STATE> getAutomaton(final IStateFactory<STATE> factory);
+	
+	/***
+	 * Get an interpolant automaton representation of the tree run.
+	 * @param factory
+	 * @return
+	 */
+	<SF extends ISemanticReducerFactory<STATE>> InterpolantTreeAutomatonBU<LETTER, STATE> getInterpolantAutomaton(final SF factory);
 
 	/***
 	 * Get the tree representation of the tree run

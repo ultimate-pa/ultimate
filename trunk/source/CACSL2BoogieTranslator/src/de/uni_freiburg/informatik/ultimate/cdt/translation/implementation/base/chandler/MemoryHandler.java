@@ -344,9 +344,16 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memcpy)) {
-			decl.addAll(declareMemcpy(main, heapDataArrays));
+			decl.addAll(declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_Memcpy));
 			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
 			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
+				.contains(MemoryModelDeclarations.C_Memmove)) {
+			decl.addAll(declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_Memmove));
+			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memmove.getName());
+			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memmove.getName());
 		}
 		return decl;
 	}
@@ -480,30 +487,32 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Construct specification and implementation for our Boogie representation of the memcpy function defined in
-	 * 7.24.2.1 of C11. void *memcpy(void * restrict s1, const void * restrict s2, size_t n);
+	 * Construct specification and implementation for our Boogie representation of the memcpy and memmove functions
+	 * defined in 7.24.2.1 of C11.
+	 *
+	 * void *memcpy(void * restrict s1, const void * restrict s2, size_t n);
+	 *
+	 * void* memmove( void* dest, const void* src, size_t count );
 	 *
 	 * @param main
 	 * @param heapDataArrays
 	 * @return
 	 */
-	private List<Declaration> declareMemcpy(final Dispatcher main, final Collection<HeapDataArray> heapDataArrays) {
-		final ArrayList<Declaration> memCpyDecl = new ArrayList<>();
+	private List<Declaration> declareMemcpyOrMemmove(final Dispatcher main,
+			final Collection<HeapDataArray> heapDataArrays, final MemoryModelDeclarations memModelDecl) {
+		assert memModelDecl == MemoryModelDeclarations.C_Memcpy || memModelDecl == MemoryModelDeclarations.C_Memmove;
+
+		final List<Declaration> memCpyDecl = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		final String memcpyInParamSize = SFO.MEMCPY_SIZE;
-		final String memcpyInParamDest = SFO.MEMCPY_DEST;
-		final String memcpyInParamSrc = SFO.MEMCPY_SRC;
-		final String memcpyOutParam = SFO.RES;
-
-		final VarList inPDest = new VarList(ignoreLoc, new String[] { memcpyInParamDest },
-				mTypeHandler.constructPointerType(ignoreLoc));
+		final VarList inPDest =
+				new VarList(ignoreLoc, new String[] { SFO.MEMCPY_DEST }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inPSrc =
-				new VarList(ignoreLoc, new String[] { memcpyInParamSrc }, mTypeHandler.constructPointerType(ignoreLoc));
-		final VarList inPSize = new VarList(ignoreLoc, new String[] { memcpyInParamSize },
+				new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SRC }, mTypeHandler.constructPointerType(ignoreLoc));
+		final VarList inPSize = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SIZE },
 				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 		final VarList outP =
-				new VarList(ignoreLoc, new String[] { memcpyOutParam }, mTypeHandler.constructPointerType(ignoreLoc));
+				new VarList(ignoreLoc, new String[] { SFO.RES }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
 		final VarList[] outParams = new VarList[] { outP };
 
@@ -517,12 +526,12 @@ public class MemoryHandler {
 		decl.add(loopCtrDec);
 
 		final List<Statement> loopBody =
-				constructMemcpyLoopBody(heapDataArrays, loopCtr, memcpyInParamDest, memcpyInParamSrc);
+				constructMemcpyOrMemmoveLoopBody(heapDataArrays, loopCtr, SFO.MEMCPY_DEST, SFO.MEMCPY_SRC);
 
-		final IdentifierExpression memcpyInParamSizeExpr = new IdentifierExpression(ignoreLoc, memcpyInParamSize);
+		final IdentifierExpression sizeIdExpr = new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-		final List<Statement> stmt = constructCountingLoop(memcpyInParamSizeExpr, loopCtr, one, loopBody);
+		final List<Statement> stmt = constructCountingLoop(sizeIdExpr, loopCtr, one, loopBody);
 
 		final Body procBody = new Body(ignoreLoc, decl.toArray(new VariableDeclaration[decl.size()]),
 				stmt.toArray(new Statement[stmt.size()]));
@@ -531,52 +540,87 @@ public class MemoryHandler {
 		final ArrayList<Specification> specs = new ArrayList<>();
 
 		// add modifies spec
-		final ModifiesSpecification modifiesSpec =
-				announceModifiedGlobals(MemoryModelDeclarations.C_Memcpy.getName(), heapDataArrays);
+
+		final ModifiesSpecification modifiesSpec = announceModifiedGlobals(memModelDecl.getName(), heapDataArrays);
 		specs.add(modifiesSpec);
 
 		// add requires #valid[dest!base];
-		addPointerBaseValidityCheck(ignoreLoc, memcpyInParamDest, specs);
+		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST, specs);
 		// add requires #valid[src!base];
-		addPointerBaseValidityCheck(ignoreLoc, memcpyInParamSrc, specs);
-
-		final Expression memcpyParamSizeExpr = new IdentifierExpression(ignoreLoc, memcpyInParamSize);
+		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_SRC, specs);
 
 		// add requires (#size + #dest!offset <= #length[#dest!base] && 0 <= #dest!offset)
-		checkPointerTargetFullyAllocated(ignoreLoc, memcpyParamSizeExpr, memcpyInParamDest, specs);
+		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExpr, SFO.MEMCPY_DEST, specs);
 
 		// add requires (#size + #src!offset <= #length[#src!base] && 0 <= #src!offset)
-		checkPointerTargetFullyAllocated(ignoreLoc, memcpyParamSizeExpr, memcpyInParamSrc, specs);
+		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExpr, SFO.MEMCPY_SRC, specs);
+
+		if (memModelDecl == MemoryModelDeclarations.C_Memcpy && false) {
+			// disabled because underapprox. for undefined behavior is ok
+			final RequiresSpecification noOverlapping = constructRequiresSourceDestNoOverlap(ignoreLoc, sizeIdExpr);
+			specs.add(noOverlapping);
+		}
 
 		// free ensures #res == dest;
 		final EnsuresSpecification returnValue = new EnsuresSpecification(ignoreLoc, true,
 				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
-						new IdentifierExpression(ignoreLoc, memcpyOutParam),
-						new IdentifierExpression(ignoreLoc, memcpyInParamDest)));
+						new IdentifierExpression(ignoreLoc, SFO.RES),
+						new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST)));
 		specs.add(returnValue);
 
 		// add the procedure declaration
-		final Procedure memCpyProcDecl =
-				new Procedure(ignoreLoc, new Attribute[0], MemoryModelDeclarations.C_Memcpy.getName(), new String[0],
-						inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
+		final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], memModelDecl.getName(),
+				new String[0], inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
 		memCpyDecl.add(memCpyProcDecl);
 
 		// add the procedure implementation
-		final Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0],
-				MemoryModelDeclarations.C_Memcpy.getName(), new String[0], inParams, outParams, null, procBody);
+		final Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], memModelDecl.getName(), new String[0],
+				inParams, outParams, null, procBody);
 		memCpyDecl.add(memCpyProc);
 
 		return memCpyDecl;
 	}
 
 	/**
-	 * Returns call to our memcpy procedure and announces that memcpy is required by our memory model.
+	 * Construct a requires-clause that states that {@link SFO#MEMCPY_SRC} and {@link SFO#MEMCPY_DEST} do not overlap.
+	 * The clause is marked as {@link Check} for {@link Spec#UNDEFINED_BEHAVIOR}.
+	 *
+	 * @param loc
+	 *            The location of all expressions used in this requires-clause
+	 * @param sizeIdExpr
+	 *            an identifier expression pointing to the size variable that determines the interval of
+	 *            {@link SFO#MEMCPY_SRC} that should not overlap with {@link SFO#MEMCPY_DEST}.
 	 */
-	public CallStatement constructMemcpyCall(final ILocation loc, final Expression dest, final Expression src,
-			final Expression size, final String resVarId) {
-		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.C_Memcpy);
-		return new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, resVarId) },
-				MemoryModelDeclarations.C_Memcpy.getName(), new Expression[] { dest, src, size });
+	private RequiresSpecification constructRequiresSourceDestNoOverlap(final ILocation loc,
+			final IdentifierExpression sizeIdExpr) {
+		// memcpy does not allow overlapping:
+		// add requires dest.base != src.base || src.offset + size < dest.offset || dest.offset + size < src.offset
+		final List<Expression> noOverlapExprs = new ArrayList<>(3);
+		final IdentifierExpression srcpointer = new IdentifierExpression(loc, SFO.MEMCPY_SRC);
+		final IdentifierExpression destpointer = new IdentifierExpression(loc, SFO.MEMCPY_DEST);
+		final Expression srcbase = getPointerBaseAddress(srcpointer, loc);
+		final Expression destbase = getPointerBaseAddress(destpointer, loc);
+		final Expression srcoffset = getPointerOffset(srcpointer, loc);
+		final Expression destoffset = getPointerOffset(destpointer, loc);
+
+		// dest.base != src.base
+		noOverlapExprs.add(ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, srcbase, destbase));
+		// src.offset + size < dest.offset
+
+		noOverlapExprs.add(constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
+				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, srcoffset, sizeIdExpr),
+				destoffset));
+
+		// dest.offset + size < src.offset
+		noOverlapExprs.add(constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
+				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, destoffset, sizeIdExpr),
+				srcoffset));
+
+		// || over all three
+		final RequiresSpecification noOverlapping =
+				new RequiresSpecification(loc, false, ExpressionFactory.or(loc, noOverlapExprs));
+		new Check(Spec.UNDEFINED_BEHAVIOR).annotate(noOverlapping);
+		return noOverlapping;
 	}
 
 	/**
@@ -641,7 +685,7 @@ public class MemoryHandler {
 	 * @param srcPtr
 	 * @return
 	 */
-	private ArrayList<Statement> constructMemcpyLoopBody(final Collection<HeapDataArray> heapDataArrays,
+	private ArrayList<Statement> constructMemcpyOrMemmoveLoopBody(final Collection<HeapDataArray> heapDataArrays,
 			final String loopCtr, final String destPtr, final String srcPtr) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -1152,8 +1196,9 @@ public class MemoryHandler {
 			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc),
 					new Expression[] { ptrBase });
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
-			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
-			leq = constructPointerComponentLessEqual(loc, sum, aae);
+			final Expression sum =
+					constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
+			leq = constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, sum, aae);
 		}
 		final Expression offsetGeqZero;
 		{
@@ -1161,7 +1206,8 @@ public class MemoryHandler {
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
 			final Expression nr0 = mExpressionTranslation.constructLiteralForIntegerType(loc,
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			offsetGeqZero = constructPointerComponentLessEqual(loc, nr0, ptrOffset);
+			offsetGeqZero =
+					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, nr0, ptrOffset);
 
 		}
 		final Expression offsetInAllocatedRange =
@@ -1254,16 +1300,28 @@ public class MemoryHandler {
 		return new IdentifierExpression(loc, SFO.VALID);
 	}
 
-	private Expression constructPointerComponentAddition(final ILocation loc, final Expression left,
-			final Expression right) {
-		return mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, left,
+	/**
+	 * Compare a pointer component (base or offset) to another expression.
+	 *
+	 * @param op
+	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
+	 */
+	private Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
+			final Expression left, final Expression right) {
+		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left,
 				mExpressionTranslation.getCTypeOfPointerComponents(), right,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 	}
 
-	private Expression constructPointerComponentLessEqual(final ILocation loc, final Expression left,
-			final Expression right) {
-		return mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, left,
+	/**
+	 * Create an arithmetic expression from a pointer component (base or offset) and another expression.
+	 *
+	 * @param op
+	 *            One of the arithmetic operators defined in {@link IASTBinaryExpression}.
+	 */
+	private Expression constructPointerBinaryArithmeticExpression(final ILocation loc, final int op,
+			final Expression left, final Expression right) {
+		return mExpressionTranslation.constructArithmeticExpression(loc, op, left,
 				mExpressionTranslation.getCTypeOfPointerComponents(), right,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 	}
@@ -1772,7 +1830,7 @@ public class MemoryHandler {
 								newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
 								fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 				final HeapLValue fieldHlv = new HeapLValue(
-						constructPointerFromBaseAndOffset(newStartAddressBase, newOffset, loc), fieldType);
+						constructPointerFromBaseAndOffset(newStartAddressBase, newOffset, loc), fieldType, null);
 				stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType));
 			}
 
@@ -1825,7 +1883,7 @@ public class MemoryHandler {
 					// }
 					stmt.addAll(getWriteCall(loc,
 							new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase,
-									arrayEntryAddressOffset, loc), arrayType.getValueType()),
+									arrayEntryAddressOffset, loc), arrayType.getValueType(), null),
 							arrayAccRVal.getValue(), arrayAccRVal.getCType()));
 					// TODO 2015-10-11 Matthias: Why is there an addition of value Type size
 					// and no multiplication? Check this more carefully.
@@ -2102,6 +2160,7 @@ public class MemoryHandler {
 		Free(SFO.FREE),
 		Ultimate_MemInit("#Ultimate.meminit"),
 		C_Memcpy("#Ultimate.C_memcpy"),
+		C_Memmove("#Ultimate.C_memmove"),
 		C_Memset("#Ultimate.C_memset"),
 		Ultimate_Length("#length"),
 		Ultimate_Valid("#valid"),
@@ -2186,14 +2245,14 @@ public class MemoryHandler {
 			if (sizeOfChar > dhp.getSize()) {
 				throw new AssertionError("char bigger than size of data array");
 			}
-			possiblyExtendedValueExpr = mExpressionTranslation.signExtend(loc, valueExpr, sizeOfChar * 8,
-					dhp.getSize() * 8);
+			possiblyExtendedValueExpr =
+					mExpressionTranslation.signExtend(loc, valueExpr, sizeOfChar * 8, dhp.getSize() * 8);
 		} else {
 			possiblyExtendedValueExpr = valueExpr;
 
 		}
-		final AssignmentStatement statement = constructOneDimensionalArrayUpdate(loc, pointer, array,
-				possiblyExtendedValueExpr);
+		final AssignmentStatement statement =
+				constructOneDimensionalArrayUpdate(loc, pointer, array, possiblyExtendedValueExpr);
 		return statement;
 	}
 

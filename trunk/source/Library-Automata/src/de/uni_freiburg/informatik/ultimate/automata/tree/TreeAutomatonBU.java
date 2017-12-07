@@ -35,7 +35,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * A Bottom-up TreeAutomaton. The rules have the form f(q1,...,qn) ~> q
@@ -59,11 +62,12 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	private final Set<TreeAutomatonRule<LETTER, STATE>> mRules;
 	private final Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> mSourceMap;
 	private final Set<STATE> mStates;
+	private final IStateFactory<STATE> mFactory;
 
 	/**
 	 * Create a TreeAutomaton.
 	 */
-	public TreeAutomatonBU() {
+	public TreeAutomatonBU(final IStateFactory<STATE> fac) {
 		mChildrenMap = new HashMap<>();
 		mParentsMap = new HashMap<>();
 		mAlphabet = new HashSet<>();
@@ -72,6 +76,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		mRules = new HashSet<>();
 		mFinalStates = new HashSet<>();
 		mStates = new HashSet<>();
+		mFactory = fac;
 	}
 
 	/***
@@ -173,6 +178,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	/***
 	 * Complement the set of final states.
 	 */
+	@Override
 	public void complementFinals() {
 		final Set<STATE> newFinals = new HashSet<>();
 		for (final STATE st : mStates) {
@@ -232,7 +238,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return mFinalStates;
 	}
 
-	@Override
+	//@Override
 	public Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state) {
 		if (!mChildrenMap.containsKey(state)) {
 			return new HashMap<>();
@@ -248,7 +254,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return result;
 	}
 
-	@Override
+	//@Override
 	public Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter) {
 		if (!mChildrenMap.containsKey(state) || !mChildrenMap.get(state).containsKey(letter)) {
 			return new ArrayList<>();
@@ -260,7 +266,6 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return result;
 	}
 
-	@Override
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules() {
 		return mRules;
 	}
@@ -271,7 +276,8 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	 * @param letter
 	 * @return
 	 */
-	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRulesByLetter(final LETTER letter) {
+	@Override
+	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final LETTER letter) {
 		return mLettersMap.get(letter);
 	}
 
@@ -287,7 +293,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
-		return null;
+		return mFactory;
 	}
 
 	@Override
@@ -323,8 +329,8 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return mFinalStates.contains(state);
 	}
 
-	public <ST> TreeAutomatonBU<LETTER, ST> reconstruct(final Map<STATE, ST> mp) {
-		final TreeAutomatonBU<LETTER, ST> res = new TreeAutomatonBU<>();
+	public <ST> TreeAutomatonBU<LETTER, ST> reconstruct(final IStateFactory<ST> factory, final Map<STATE, ST> mp) {
+		final TreeAutomatonBU<LETTER, ST> res = new TreeAutomatonBU<>(factory);
 		res.extendAlphabet(mAlphabet);
 		for (final STATE s : mStates) {
 			res.addState(mp.get(s));
@@ -476,5 +482,17 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		}
 		res.append('"');
 		return res.toString();
+	}
+
+	@Override
+	public IElement transformToUltimateModel(AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<List<STATE>> getSourceCombinations() {
+		return mParentsMap.keySet();
 	}
 }

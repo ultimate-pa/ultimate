@@ -69,6 +69,7 @@ public class UltimateHttpServlet extends HttpServlet {
 		final ServletLogger sessionLogger = new ServletLogger(this, request.getSession().getId(), DEBUG);
 		final Request internalRequest = new Request(request, sessionLogger);
 		response.setContentType("application/json");
+		response.setCharacterEncoding("UTF-8");
 		final PrintWriter out = response.getWriter();
 
 		if (internalRequest.getParameterList().containsKey(CALLBACK)) {

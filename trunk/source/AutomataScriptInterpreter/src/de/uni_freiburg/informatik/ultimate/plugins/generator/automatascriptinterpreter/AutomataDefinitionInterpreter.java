@@ -196,7 +196,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final TreeAutomatonAST astNode) {
 		mErrorLocation = astNode.getLocation();
 
-		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>(new StringFactory());
 
 
 		for (final String s : astNode.getStates()) {
@@ -266,7 +266,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final TreeAutomatonRankedAST astNode) {
 		mErrorLocation = astNode.getLocation();
 
-		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>(new StringFactory());
 		final String nullaryString = "elim0arySymbol_";
 
 		final List<RankedAlphabetEntryAST> ra = astNode.getRankedAlphabet();

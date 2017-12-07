@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.webinterface;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 import org.json.JSONException;
@@ -11,10 +13,10 @@ import org.json.JSONObject;
 
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Setting;
-import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks;
-import de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Setting.SettingType;
+import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks;
 import de.uni_freiburg.informatik.ultimate.webbridge.website.Tasks.TaskNames;
+import de.uni_freiburg.informatik.ultimate.webbridge.website.WebToolchain;
 
 public class UltimateExecutor {
 
@@ -167,9 +169,9 @@ public class UltimateExecutor {
 	private static File writeTemporaryFile(final String name, final String content, final String fileExtension)
 			throws IOException {
 		final File codeFile = File.createTempFile(name, fileExtension);
-		final BufferedWriter out = new BufferedWriter(new FileWriter(codeFile));
-		out.write(content);
-		out.close();
+		try (final Writer fstream = new OutputStreamWriter(new FileOutputStream(codeFile), StandardCharsets.UTF_8)) {
+			fstream.write(content);
+		}
 		return codeFile;
 	}
 

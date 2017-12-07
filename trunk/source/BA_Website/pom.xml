@@ -1,0 +1,90 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+		<artifactId>mavenparent</artifactId>
+		<version>0.1.23</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+
+	<artifactId>UltimateWebsiteRepository</artifactId>
+	<packaging>pom</packaging>
+
+	<dependencies>
+		<!-- The dependencies are here to ensure build order -->
+		<dependency>
+			<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+			<artifactId>UltimateRepository</artifactId>
+			<version>[0.1.23,]</version>
+			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+			<artifactId>UltimateWebsite</artifactId>
+			<version>[0.1.23,]</version>
+			<type>pom</type>
+		</dependency>
+	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>materialize</id>
+
+			<build>
+				<plugins>
+
+					<!-- Configure the assembly plugin to build the final server war file -->
+					<plugin>
+						<artifactId>maven-assembly-plugin</artifactId>
+						<version>${maven-assembly-version}</version>
+						<configuration>
+							<descriptors>
+								<descriptor>webbridge-assembly.xml</descriptor>
+							</descriptors>
+							<finalName>WebsiteEclipseBridge</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+
+						</configuration>
+						<executions>
+							<execution>
+								<id>make-assembly</id>
+								<phase>package</phase>
+								<goals>
+									<goal>single</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<artifactId>maven-resources-plugin</artifactId>
+						<version>${maven-resources-version}</version>
+						<executions>
+							<execution>
+								<id>copy-resources</id>
+								<!-- here the phase you need -->
+								<phase>package</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${basedir}/target</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${basedir}/../Website/target</directory>
+											<include>Website.war</include>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+</project>

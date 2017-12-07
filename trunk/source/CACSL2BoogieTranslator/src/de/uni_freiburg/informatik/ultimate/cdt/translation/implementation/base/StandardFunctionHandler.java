@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -189,8 +190,13 @@ public class StandardFunctionHandler {
 
 		fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
 
-		fill(map, "__builtin_memcpy", this::handleMemCopy);
-		fill(map, "memcpy", this::handleMemCopy);
+		fill(map, "__builtin_memcpy", this::handleMemcpy);
+		fill(map, "__memcpy", this::handleMemcpy);
+		fill(map, "memcpy", this::handleMemcpy);
+
+		fill(map, "__builtin_memmove", this::handleMemmove);
+		fill(map, "__memmove", this::handleMemmove);
+		fill(map, "memmove", this::handleMemmove);
 
 		fill(map, "malloc", this::handleAlloc);
 		fill(map, "alloca", this::handleAlloc);
@@ -483,10 +489,12 @@ public class StandardFunctionHandler {
 	private Result handleStrChr(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		/*
-		 * C11, 7.21.5.2 says: "#include <string.h> char *strchr(const char *s, int c); Description: The strchr function
-		 * locates the first occurrence of c (converted to a char) in the string pointed to by s. The terminating null
-		 * character is considered to be part of the string. Returns : The strchr function returns a pointer to the
-		 * located character, or a null pointer if the character does not occur in the string."
+		 * C11, 7.21.5.2 says: "#include <string.h> char *strchr(const char *s, int c);
+		 *
+		 * Description: The strchr function locates the first occurrence of c (converted to a char) in the string
+		 * pointed to by s. The terminating null character is considered to be part of the string. Returns : The strchr
+		 * function returns a pointer to the located character, or a null pointer if the character does not occur in the
+		 * string."
 		 *
 		 * We replace the method call by a fresh char pointer variable which is havocced, and assumed to be either NULL
 		 * or a pointer into the area where the argument pointer is valid.
@@ -588,6 +596,15 @@ public class StandardFunctionHandler {
 	}
 
 	private static Result handleBuiltinUnreachable(final ILocation loc) {
+		/*
+		 * https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
+		 *
+		 * Built-in Function: void __builtin_unreachable (void)
+		 *
+		 * If control flow reaches the point of the __builtin_unreachable, the program is undefined. It is useful in
+		 * situations where the compiler cannot deduce the unreachability of the code.
+		 */
+
 		// TODO: Add option that allows us to check for builtin_unreachable by adding assert
 		// return new ExpressionResult(Collections.singletonList(new AssertStatement(loc,
 		// new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(loc, false))), null);
@@ -668,13 +685,31 @@ public class StandardFunctionHandler {
 		return result;
 	}
 
+	/**
+	 * Translates free(e) by creating a function call expression for the ~free(e) function and declaring its usage in
+	 * the memory model.
+	 */
 	private Result handleFree(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult pRex = dispatchAndConvert(main, loc, arguments[0]);
-		pRex.mStmt.add(getFreeCall(main, pRex.mLrVal, loc));
+
+		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Free);
+
+		// Further checks are done in the precondition of ~free()!
+		// ~free(E);
+		final CallStatement freeCall = new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
+				new Expression[] { pRex.getLrValue().getValue() });
+		// add required information to function handler.
+		if (mFunctionHandler.getCurrentProcedureID() != null) {
+			mFunctionHandler.addModifiedGlobal(SFO.FREE, SFO.VALID);
+			mFunctionHandler.addCallGraphNode(SFO.FREE);
+			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), SFO.FREE);
+		}
+
+		pRex.mStmt.add(freeCall);
 		return pRex;
 	}
 
@@ -698,7 +733,7 @@ public class StandardFunctionHandler {
 		// for alloc a we have to free the variable ourselves when the
 		// stackframe is closed, i.e. at a return
 		if ("alloca".equals(methodName) || "__builtin_alloca".equals(methodName)) {
-			final LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), resultType);
+			final LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), resultType, null);
 			mMemoryHandler.addVariableToBeFreed(main,
 					new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 			// we need to clear auxVars because otherwise the malloc auxvar is havocced after
@@ -706,31 +741,6 @@ public class StandardFunctionHandler {
 			exprRes.mAuxVars.clear();
 		}
 		return exprRes;
-	}
-
-	/**
-	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will be marked
-	 * as an overapproximation. If you overapproximate a function call, don't forget to dispatch the function call's
-	 * arguments: the arguments may have side effects.
-	 *
-	 * @param functionName
-	 *            the named of the function will be annotated to the overapproximation
-	 * @param resultType
-	 *            CType that determinies the type of the auxiliary variable
-	 */
-	private static ExpressionResult constructOverapproximationForFunctionCall(final Dispatcher main,
-			final ILocation loc, final String functionName, final CType resultType) {
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		// introduce fresh aux variable
-		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-		final ASTType astType = main.mTypeHandler.cType2AstType(loc, resultType);
-		final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, astType, loc);
-		builder.addDeclaration(tmpVarDecl);
-		builder.putAuxVar(tmpVarDecl, loc);
-		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
-		builder.addOverapprox(new Overapprox(functionName, loc));
-		builder.setLRVal(new RValue(tmpVarIdExpr, resultType));
-		return builder.build();
 	}
 
 	private Result handleBuiltinExpect(final Dispatcher main, final IASTFunctionCallExpression node,
@@ -995,35 +1005,49 @@ public class StandardFunctionHandler {
 		return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 	}
 
-	private Result handleMemCopy(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handleMemcpy(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
+		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMCPYRES, MemoryModelDeclarations.C_Memcpy);
+	}
+
+	private Result handleMemmove(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMMOVERES, MemoryModelDeclarations.C_Memmove);
+	}
+
+	private Result handleMemCopyOrMove(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final AUXVAR auxVar, final MemoryModelDeclarations mmDecl) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
 		final ExpressionResult dest = dispatchAndConvert(main, loc, arguments[0]);
-		main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		final ExpressionResult src = dispatchAndConvert(main, loc, arguments[1]);
-		main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		final ExpressionResult size = dispatchAndConvert(main, loc, arguments[2]);
+
+		main.mCHandler.convert(loc, dest, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		main.mCHandler.convert(loc, size, mTypeSizeComputer.getSizeT());
 
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
 
-		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.mLrVal.getCType());
+		final String tId = main.mNameHandler.getTempVarUID(auxVar, dest.mLrVal.getCType());
 		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+
+		final CallStatement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) },
+				mmDecl.getName(), new Expression[] { dest.getLrValue().getValue(), src.getLrValue().getValue(),
+						size.getLrValue().getValue() });
 		result.mDecl.add(tVarDecl);
 		result.mAuxVars.put(tVarDecl, loc);
-
-		final Statement call = mMemoryHandler.constructMemcpyCall(loc, dest.mLrVal.getValue(), src.mLrVal.getValue(),
-				size.mLrVal.getValue(), tId);
 		result.mStmt.add(call);
 		result.mLrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
 
+		// add marker for global declaration to memory handler
+		mMemoryHandler.getRequiredMemoryModelFeatures().require(mmDecl);
+
 		// add required information to function handler.
-		mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
-		mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(),
-				MemoryModelDeclarations.C_Memcpy.getName());
-		mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
+		mFunctionHandler.addCallGraphNode(mmDecl.getName());
+		mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), mmDecl.getName());
+		mFunctionHandler.addModifiedGlobalEntry(mmDecl.getName());
 
 		return result;
 	}
@@ -1090,6 +1114,31 @@ public class StandardFunctionHandler {
 		return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 	}
 
+	/**
+	 * Construct an auxiliary variable that will be use as a substitute for a function call. The result will be marked
+	 * as an overapproximation. If you overapproximate a function call, don't forget to dispatch the function call's
+	 * arguments: the arguments may have side effects.
+	 *
+	 * @param functionName
+	 *            the named of the function will be annotated to the overapproximation
+	 * @param resultType
+	 *            CType that determinies the type of the auxiliary variable
+	 */
+	private static ExpressionResult constructOverapproximationForFunctionCall(final Dispatcher main,
+			final ILocation loc, final String functionName, final CType resultType) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// introduce fresh aux variable
+		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+		final ASTType astType = main.mTypeHandler.cType2AstType(loc, resultType);
+		final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, astType, loc);
+		builder.addDeclaration(tmpVarDecl);
+		builder.putAuxVar(tmpVarDecl, loc);
+		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+		builder.addOverapprox(new Overapprox(functionName, loc));
+		builder.setLRVal(new RValue(tmpVarIdExpr, resultType));
+		return builder.build();
+	}
+
 	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
 			final List<ExpressionResult> results) {
 		final List<Statement> stmt = new ArrayList<>();
@@ -1111,36 +1160,6 @@ public class StandardFunctionHandler {
 	private static ExpressionResult combineExpressionResults(final LRValue finalLRValue,
 			final ExpressionResult... results) {
 		return combineExpressionResults(finalLRValue, Arrays.stream(results).collect(Collectors.toList()));
-	}
-
-	/**
-	 * Creates a function call expression for the ~free(e) function!
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param fh
-	 *            a reference to the FunctionHandler - required to add informations to the call graph.
-	 * @param e
-	 *            the expression referring to the pointer, that should be free'd.
-	 * @param loc
-	 *            Location for errors and new nodes in the AST.
-	 * @return a function call expression for ~free(e).
-	 */
-	private CallStatement getFreeCall(final Dispatcher main, final LRValue lrVal, final ILocation loc) {
-		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
-		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Free);
-
-		// Further checks are done in the precondition of ~free()!
-		// ~free(E);
-		final CallStatement freeCall =
-				new CallStatement(loc, false, new VariableLHS[0], SFO.FREE, new Expression[] { lrVal.getValue() });
-		// add required information to function handler.
-		if (mFunctionHandler.getCurrentProcedureID() != null) {
-			mFunctionHandler.addModifiedGlobal(SFO.FREE, SFO.VALID);
-			mFunctionHandler.addCallGraphNode(SFO.FREE);
-			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), SFO.FREE);
-		}
-		return freeCall;
 	}
 
 	/**

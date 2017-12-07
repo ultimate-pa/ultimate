@@ -140,6 +140,7 @@ public class SegmentationMap {
 
 	public void remove(final IProgramVarOrConst variable) {
 		mEqualArrays.remove(variable);
+		mRepresentiveSegmentations.remove(variable);
 	}
 
 	public void move(final IProgramVarOrConst variable, final IProgramVarOrConst target) {
@@ -158,10 +159,12 @@ public class SegmentationMap {
 	@Override
 	public String toString() {
 		final StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append('{');
 		for (final Entry<IProgramVarOrConst, Segmentation> entry : mRepresentiveSegmentations.entrySet()) {
 			stringBuilder.append(mEqualArrays.getEquivalenceClassMembers(entry.getKey()));
-			stringBuilder.append(" -> ").append(entry.getValue()).append('\n');
+			stringBuilder.append(" -> ").append(entry.getValue()).append(", ");
 		}
+		stringBuilder.append('}');
 		return stringBuilder.toString();
 	}
 
@@ -212,8 +215,8 @@ public class SegmentationMap {
 		}
 		final Term substituted = new Substitution(script, substitution).transform(valueConstraints);
 		final Term body = Util.implies(script, SmtUtils.and(script, boundConstraints), substituted);
-		final Term quntified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, body);
-		conjuncts.add(quntified);
+		final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.FORALL, bounds, body);
+		conjuncts.add(quantified);
 		return SmtUtils.and(script, conjuncts);
 	}
 }

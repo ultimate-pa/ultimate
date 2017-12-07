@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.0//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.0.dtd">
+<benchmark tool="ultimateautomizer"
+           timelimit="900"
+           hardtimelimit="900"
+           memlimit="12GB"
+           cpuCores="4">
+
+  <rundefinition name="LTL">  </rundefinition>
+  
+  <option name="--full-output"/>
+  
+  <tasks name="LTL-eca">
+    <includesfile>../../../trunk/examples/LTL/svcomp17format/LTL-eca.set</includesfile>
+    <propertyfile>${inputfile_path_abs}/${inputfile_name}.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  
+  <tasks name="LTL-realworld">
+    <includesfile>../../../trunk/examples/LTL/svcomp17format/LTL-realworld.set</includesfile>
+	<propertyfile>${inputfile_path}/${inputfile_name}.prp</propertyfile>
+    <option name="--architecture">64bit</option>  
+  </tasks>
+  
+  <tasks name="LTL-toy">
+    <includesfile>../../../trunk/examples/LTL/svcomp17format/LTL-toy.set</includesfile>
+	<propertyfile>${inputfile_path}/${inputfile_name}.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+
+</benchmark>

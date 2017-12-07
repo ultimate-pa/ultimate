@@ -87,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Symbol
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -113,7 +114,7 @@ public interface ICHandler extends IHandler {
      *
      * @return the variables in scopes.
      */
-    public SymbolTable getSymbolTable();
+     SymbolTable getSymbolTable();
 
     /**
      * Setter for the ACSL contract.
@@ -121,7 +122,7 @@ public interface ICHandler extends IHandler {
      * @param rc
      *            the contract to set, null to mark contract as handled.
      */
-    public void clearContract();
+     void clearContract();
 
     /**
      * Checks resType, whether it needs some special treatment for pointers,
@@ -139,7 +140,7 @@ public interface ICHandler extends IHandler {
      *            indicates whether we are dealing with a HeapVar
      * @return the checked ResultTypes object.
      */
-    public TypesResult checkForPointer(Dispatcher main,
+     TypesResult checkForPointer(Dispatcher main,
             IASTPointerOperator[] pointerOps, TypesResult resType, boolean putOnHeap);
 
     /**
@@ -162,9 +163,9 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTTranslationUnit node);
+     Result visit(Dispatcher main, IASTTranslationUnit node);
 
-	public Result visit(Dispatcher main, IASTASMDeclaration node);
+	 Result visit(Dispatcher main, IASTASMDeclaration node);
 
     /**
      * Translates an IASTFunctionDefinition.
@@ -175,7 +176,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTFunctionDefinition node);
+     Result visit(Dispatcher main, IASTFunctionDefinition node);
 
     /**
      * Translates an IASTCompundStatement.
@@ -186,7 +187,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTCompoundStatement node);
+     Result visit(Dispatcher main, IASTCompoundStatement node);
 
     /**
      * Translates an IASTSimpleDeclaration.
@@ -197,7 +198,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTSimpleDeclaration node);
+     Result visit(Dispatcher main, IASTSimpleDeclaration node);
 
     /**
      * Translates an IASTParameterDeclaration.
@@ -208,7 +209,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTParameterDeclaration node);
+     Result visit(Dispatcher main, IASTParameterDeclaration node);
 
     /**
      * Translates an IASTDeclarator.
@@ -219,7 +220,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTDeclarator node);
+     Result visit(Dispatcher main, IASTDeclarator node);
 
     /**
      * Translates an IASTLiteralExpression.
@@ -230,7 +231,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTLiteralExpression node);
+     Result visit(Dispatcher main, IASTLiteralExpression node);
 
     /**
      * Translates an IASTIdExpression.
@@ -241,7 +242,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTIdExpression node);
+     Result visit(Dispatcher main, IASTIdExpression node);
 
     /**
      * Translates an IASTUnaryExpression.
@@ -252,7 +253,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTUnaryExpression node);
+     Result visit(Dispatcher main, IASTUnaryExpression node);
 
     /**
      * Translates an IASTBinaryExpression.
@@ -263,7 +264,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTBinaryExpression node);
+     Result visit(Dispatcher main, IASTBinaryExpression node);
 
     /**
      * Translates an IASTEqualsInitializer.
@@ -274,7 +275,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTEqualsInitializer node);
+     Result visit(Dispatcher main, IASTEqualsInitializer node);
 
     /**
      * Translates an IASTDeclarationStatement.
@@ -285,7 +286,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTDeclarationStatement node);
+     Result visit(Dispatcher main, IASTDeclarationStatement node);
 
     /**
      * Translates an IASTReturnStatement.
@@ -296,7 +297,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTReturnStatement node);
+     Result visit(Dispatcher main, IASTReturnStatement node);
 
     /**
      * Translates an IASTExpressionStatement.
@@ -307,7 +308,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTExpressionStatement node);
+     Result visit(Dispatcher main, IASTExpressionStatement node);
 
     /**
      * Translates an IASTIfStatement.
@@ -318,7 +319,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTIfStatement node);
+     Result visit(Dispatcher main, IASTIfStatement node);
 
     /**
      * Translates an IASTWhileStatement.
@@ -329,7 +330,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTWhileStatement node);
+     Result visit(Dispatcher main, IASTWhileStatement node);
 
     /**
      * Translates an IASTForStatement.
@@ -340,7 +341,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTForStatement node);
+     Result visit(Dispatcher main, IASTForStatement node);
 
     /**
      * Translates an IASTDoStatement.
@@ -351,9 +352,9 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTDoStatement node);
+     Result visit(Dispatcher main, IASTDoStatement node);
 
-	public Result visit(Dispatcher main, IASTContinueStatement cs);
+	 Result visit(Dispatcher main, IASTContinueStatement cs);
 
     /**
      * Translates an IASTExpressionList.
@@ -364,7 +365,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTExpressionList node);
+     Result visit(Dispatcher main, IASTExpressionList node);
 
     /**
      * Translates an IASTFunctionCallExpression.
@@ -375,7 +376,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTFunctionCallExpression node);
+     Result visit(Dispatcher main, IASTFunctionCallExpression node);
 
     /**
      * Translates an IASTBreakStatement.
@@ -386,7 +387,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTBreakStatement node);
+     Result visit(Dispatcher main, IASTBreakStatement node);
 
     /**
      * Translates an CASTNullStatement.
@@ -397,7 +398,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTNullStatement node);
+     Result visit(Dispatcher main, IASTNullStatement node);
 
     /**
      * Handles an IASTSwitchStatement.
@@ -408,7 +409,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTSwitchStatement node);
+     Result visit(Dispatcher main, IASTSwitchStatement node);
 
     /**
      * Handles an IASTCaseStatement.
@@ -419,7 +420,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTCaseStatement node);
+     Result visit(Dispatcher main, IASTCaseStatement node);
 
     /**
      * Handles an IASTDefaultStatement.
@@ -430,7 +431,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTDefaultStatement node);
+     Result visit(Dispatcher main, IASTDefaultStatement node);
 
     /**
      * Handles an IASTLabelStatement.
@@ -441,7 +442,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTLabelStatement node);
+     Result visit(Dispatcher main, IASTLabelStatement node);
 
     /**
      * Handles an IASTGotoStatement.
@@ -452,7 +453,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTGotoStatement node);
+     Result visit(Dispatcher main, IASTGotoStatement node);
 
     /**
      * Handles an IASTCastExpression.
@@ -463,7 +464,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTCastExpression node);
+     Result visit(Dispatcher main, IASTCastExpression node);
 
     /**
      * Handles an IASTConditionalExpression.
@@ -474,7 +475,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-	public Result visit(Dispatcher main, IASTConditionalExpression node);
+	 Result visit(Dispatcher main, IASTConditionalExpression node);
 
     /**
      * Handles an IASTInitializerList.
@@ -485,7 +486,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTInitializerList node);
+     Result visit(Dispatcher main, IASTInitializerList node);
 
     /**
      * Handles an IASTArraySubscriptExpression.
@@ -496,7 +497,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTArraySubscriptExpression node);
+     Result visit(Dispatcher main, IASTArraySubscriptExpression node);
 
     /**
      * Handles an IASTInitializerClause.
@@ -507,7 +508,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTInitializerClause node);
+     Result visit(Dispatcher main, IASTInitializerClause node);
 
     /**
      * Handles an IASTFieldReference (e.g. array field).
@@ -518,7 +519,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTFieldReference node);
+     Result visit(Dispatcher main, IASTFieldReference node);
 
     /**
      * Handles an CASTDesignatedInitializer (e.g. struct initializer).
@@ -529,7 +530,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, CASTDesignatedInitializer node);
+     Result visit(Dispatcher main, CASTDesignatedInitializer node);
 
     /**
      * Handles an IASTProblemStatement.
@@ -540,7 +541,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTProblemStatement node);
+     Result visit(Dispatcher main, IASTProblemStatement node);
 
     /**
      * Handles an IASTProblemDeclaration.
@@ -551,7 +552,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTProblemDeclaration node);
+     Result visit(Dispatcher main, IASTProblemDeclaration node);
 
     /**
      * Handles an IASTProblemExpression.
@@ -562,7 +563,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTProblemExpression node);
+     Result visit(Dispatcher main, IASTProblemExpression node);
 
     /**
      * Handles an IASTProblem.
@@ -573,7 +574,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTProblem node);
+     Result visit(Dispatcher main, IASTProblem node);
 
     /**
      * Handles an IASTProblemTypeId.
@@ -584,7 +585,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTProblemTypeId node);
+     Result visit(Dispatcher main, IASTProblemTypeId node);
 
     /**
      * Handles an IASTPointer.
@@ -595,7 +596,7 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTPointer node);
+     Result visit(Dispatcher main, IASTPointer node);
 
     /**
      * Handles an IASTTypeIdExpression.
@@ -606,21 +607,21 @@ public interface ICHandler extends IHandler {
      *            the node to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, IASTTypeIdExpression node);
+     Result visit(Dispatcher main, IASTTypeIdExpression node);
 
 
-    public Result visit(Dispatcher main, IGNUASTCompoundStatementExpression node);
+     Result visit(Dispatcher main, IGNUASTCompoundStatementExpression node);
 
     /**
      * central methods for beginning a scope in all necessary ScopedThings
      * (f.i. symbolTable,..)
      */
-    public void beginScope();
+     void beginScope();
     /**
      * central methods for ending a scope in all necessary ScopedThings
      * (f.i. symbolTable,..)
      */
-    public void endScope();
+     void endScope();
 
 	boolean isHeapVar(String boogieId);
 
@@ -628,7 +629,7 @@ public interface ICHandler extends IHandler {
 	 * Takes an arithmetic expression that has integer value and can be computed at compile-time, i.e., that
 	 * contains no variables, and returns an IntegerLiteral containing the result.
 	 */
-	public BigInteger computeConstantValue(Expression value);
+	 BigInteger computeConstantValue(Expression value);
 
 	/**
 	 * Modifies a given {@link ExpressionResult} such that the effect of
@@ -637,29 +638,21 @@ public interface ICHandler extends IHandler {
 	 * Method may exchange the {@link RValue} of the  {@link ExpressionResult}
 	 * and add additional objects (statements, auxVars, etc.).
 	 */
-	public void convert(ILocation loc, ExpressionResult rexp, CType resultType);
+	void convert(ILocation loc, ExpressionResult rexp, CType resultType);
 
-	public InitializationHandler getInitHandler();
+	InitializationHandler getInitHandler();
 
 	UnsignedTreatment getUnsignedTreatment();
 
 	FunctionHandler getFunctionHandler();
 
-	public MemoryHandler getMemoryHandler();
+	MemoryHandler getMemoryHandler();
 
-	public TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer();
+	TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer();
 
-	public ExpressionTranslation getExpressionTranslation();
+	ExpressionTranslation getExpressionTranslation();
 
-	public StructHandler getStructHandler();
+	StructHandler getStructHandler();
 
-//	public ResultExpression initVar(ILocation loc, Dispatcher main,
-//			LRValue lrVal, CType underlyingFieldType,
-//			ResultExpression resultExpression);
-//
-//
-//	public ResultExpression initVar(ILocation loc, Dispatcher main,
-//			LeftHandSide lhs, CType cT,
-//			ResultExpression resultExpression);
-
+	StaticObjectsHandler getStaticObjectsHandler();
 }

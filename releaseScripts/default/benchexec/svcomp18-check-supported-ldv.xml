@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="900" cpuCores="2">
+
+    <option name="--full-output"/>
+
+    <rundefinition name="Automizer-Reach">
+        <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+    </rundefinition>
+
+    <rundefinition name="Automizer-NoNullPointerUnsoundBitfields">
+        <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
+        
+        <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
+        <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
+        <option name="--cacsl2boogietranslator.check.unreachability.of.error.function.in.sv-comp.mode">false</option>
+        <option name="--cacsl2boogietranslator.bitprecise.bitfields">false</option>
+    </rundefinition>
+    
+    <rundefinition name="Automizer-Memsafety">
+        <propertyfile>../../../trunk/examples/svcomp/MemSafety.prp</propertyfile>
+    </rundefinition>
+
+    <tasks name="ldv-issue-504">
+        <option name="--architecture">32bit</option>
+
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_safes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--wan--lapbether.ko-entry_point_true-unreach-call.cil.out.c</include>
+        <include>../../../trunk/examples/svcomp/ldv-linux-3.16-rc1/205_9a_array_unsafes_linux-3.16-rc1.tar.xz-205_9a-drivers--net--wan--hdlc_x25.ko-entry_point_true-unreach-call.cil.out.c</include>
+    </tasks>
+
+
+</benchmark>

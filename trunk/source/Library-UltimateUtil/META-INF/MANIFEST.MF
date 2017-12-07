@@ -2,12 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: de.uni_freiburg.informatik.ultimate.lib.util
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.util
-Bundle-Version: 0.1.22
+Bundle-Version: 0.1.23
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel
 Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.csv,
  de.uni_freiburg.informatik.ultimate.util.datastructures,
+ de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure,
  de.uni_freiburg.informatik.ultimate.util.datastructures.poset,
  de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
  de.uni_freiburg.informatik.ultimate.util.scc,

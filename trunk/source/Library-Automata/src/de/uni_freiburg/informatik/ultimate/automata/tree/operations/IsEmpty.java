@@ -34,7 +34,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  * @param <STATE>
  *            state class of tree automaton.
  */
-public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class IsEmpty<LETTER extends IRankedLetter, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	protected final TreeRun<LETTER, STATE> mResultTreeRun;
@@ -62,6 +62,7 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<
 	 * @param tree
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> tree) {
+		super(services);
 		mTreeAutomaton = tree;
 		mResultTreeRun = computeResult();
 	}
@@ -88,22 +89,24 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> implements IOperation<
 		// maps a state s to a treeRun whose root can be labeled with s by mTreeAutomaton
 		final Map<STATE, TreeRun<LETTER, STATE>> soltree = new HashMap<>();
 
-		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
-
-			for (final STATE sourceState : rule.getSource()) {
-
-				Collection<TreeAutomatonRule<LETTER, STATE>> sourceRules;
-				if (rulesBySource.containsKey(sourceState)) {
-					sourceRules = rulesBySource.get(sourceState);
-				} else {
-					sourceRules = new LinkedList<>();
-					rulesBySource.put(sourceState, sourceRules);
+		for (final List<STATE> src : mTreeAutomaton.getSourceCombinations()) {
+			for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getSuccessors(src)) {
+	
+				for (final STATE sourceState : rule.getSource()) {
+	
+					Collection<TreeAutomatonRule<LETTER, STATE>> sourceRules;
+					if (rulesBySource.containsKey(sourceState)) {
+						sourceRules = rulesBySource.get(sourceState);
+					} else {
+						sourceRules = new LinkedList<>();
+						rulesBySource.put(sourceState, sourceRules);
+					}
+					sourceRules.add(rule);
 				}
-				sourceRules.add(rule);
-			}
-			if (rule.getSource().isEmpty()) {
-				// a rule with an empty source list is an "initial rule"
-				worklist.add(rule);
+				if (rule.getSource().isEmpty()) {
+					// a rule with an empty source list is an "initial rule"
+					worklist.add(rule);
+				}
 			}
 		}
 

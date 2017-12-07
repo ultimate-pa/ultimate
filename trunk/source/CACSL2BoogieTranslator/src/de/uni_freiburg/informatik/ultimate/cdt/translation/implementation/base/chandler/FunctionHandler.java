@@ -452,10 +452,7 @@ public class FunctionHandler {
 						new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
 			}
 
-			stmt.addAll(returnValueSwitched.mStmt);
-			decl.addAll(returnValueSwitched.mDecl);
-			auxVars.putAll(returnValueSwitched.mAuxVars);
-			overApp.addAll(returnValueSwitched.mOverappr);
+
 			if (outParams.length == 0) {
 				// void method which is returning something! We remove the
 				// return value!
@@ -467,9 +464,15 @@ public class FunctionHandler {
 			} else {
 				final String id = outParams[0].getIdentifiers()[0];
 				final VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
+				// Ugly workaround: Apply the conversion to the result of the 
+				// dispatched argument. On should first construt a copy of returnValueSwitched
+				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
 				rExp.mLrVal = returnValueSwitched.mLrVal;
-				main.mCHandler.convert(loc, rExp, functionResultType);
 				final RValue castExprResultRVal = (RValue) rExp.mLrVal;
+				stmt.addAll(returnValueSwitched.mStmt);
+				decl.addAll(returnValueSwitched.mDecl);
+				auxVars.putAll(returnValueSwitched.mAuxVars);
+				overApp.addAll(returnValueSwitched.mOverappr);
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
 			}
@@ -1027,11 +1030,11 @@ public class FunctionHandler {
 				final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
 				if (isOnHeap && !(cvar instanceof CArray)) {
 					// we treat an array argument as a pointer -- thus no onHeap treatment here
-					final LocalLValue llv = new LocalLValue(tempLHS, cvar);
+					final LocalLValue llv = new LocalLValue(tempLHS, cvar, null);
 					// malloc
 					memoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llv, igLoc));
 					// dereference
-					final HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
+					final HeapLValue hlv = new HeapLValue(llv.getValue(), cvar, null);
 
 					// convention: if a variable is put on heap or not, its ctype stays the same
 					final ExpressionResult assign = ((CHandler) main.mCHandler).makeAssignment(main, igLoc, stmt, hlv,

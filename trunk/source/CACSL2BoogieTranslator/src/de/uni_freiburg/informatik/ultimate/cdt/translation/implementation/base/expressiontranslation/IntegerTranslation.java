@@ -160,12 +160,17 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			if (typeSizes.isUnsigned(cPrimitive)) {
 				final BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
-				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, operand,
-						new IntegerLiteral(loc, maxValuePlusOne.toString()));
+				return applyEucledeanModulo(loc, operand, maxValuePlusOne);
 			}
 			throw new AssertionError("wraparound only for unsigned types");
 		}
 		throw new AssertionError("wraparound only for integer types");
+	}
+
+	private static Expression applyEucledeanModulo(final ILocation loc, final Expression operand,
+			final BigInteger divisor) {
+		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, operand,
+				new IntegerLiteral(loc, divisor.toString()));
 	}
 
 	@Override
@@ -918,6 +923,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitives cprimitive) {
 		throw new UnsupportedOperationException(
 				"conversion from float to bitvector not supported in non-bitprecise translation");
+	}
+
+	@Override
+	public Expression erazeBits(final ILocation loc, final Expression value, final CPrimitive cType, final int remainingWith) {
+		return applyEucledeanModulo(loc, value, BigInteger.valueOf(2).pow(remainingWith));
 	}
 
 }

@@ -280,5 +280,24 @@ public class CStruct extends CType {
 		return mBitFieldWidths;
 	}
 	
+	/**
+	 * If field with name id is a bitfield returns the bit width (i.e., number 
+	 * of bits of the bitfield) otherwise returns -1.
+	 */
+    public int getBitfieldWidth(final String id) {
+    	assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
+        final int idx = Arrays.asList(fNames).indexOf(id);
+        if (idx < 0) {
+            throw new IllegalArgumentException("Field '" + id
+                    + "' not in struct!");
+        }
+        if (getBitFieldWidths().size() < idx) {
+        	return -1;
+        } else {
+        	return getBitFieldWidths().get(idx);
+        }
+
+    }
+	
 	
 }

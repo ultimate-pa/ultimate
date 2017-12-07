@@ -5,12 +5,14 @@
 	<parent>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 		<artifactId>mavenparent</artifactId>
-		<version>0.1.22</version>
+		<version>0.1.23</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>UltimateRepository</artifactId>
 	<packaging>eclipse-repository</packaging>
+
 	<profiles>
 		<profile>
 			<id>materialize</id>
@@ -29,21 +31,13 @@
 									<goal>materialize-products</goal>
 								</goals>
 							</execution>
-							<execution>
-								<!-- create zip file with the installed product -->
-								<id>archive-products</id>
-								<goals>
-									<goal>archive-products</goal>
-								</goals>
-							</execution>
+							<!-- create zip file with the installed product -->
+							<!-- <execution> <id>archive-products</id> <goals> <goal>archive-products</goal> 
+								</goals> </execution> -->
 						</executions>
 						<!-- We need to say which products will be build and assign each of 
-							them
-							a unique attachId (dont know why, it just is) -->
+							them a unique attachId (dont know why, it just is) -->
 						<configuration>
-							<formats>
-								<linux>tar.gz</linux>
-							</formats>
 							<products>
 								<product>
 									<id>CLI-E4</id>
@@ -60,6 +54,10 @@
 								<product>
 									<id>DeltaDebugger</id>
 									<attachId>UltimateDeltaDebugger</attachId>
+								</product>
+								<product>
+									<id>Webbridge</id>
+									<attachId>Webbridge</attachId>
 								</product>
 							</products>
 						</configuration>

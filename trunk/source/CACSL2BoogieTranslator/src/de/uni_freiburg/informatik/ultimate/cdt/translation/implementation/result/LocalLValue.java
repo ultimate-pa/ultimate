@@ -35,29 +35,36 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 public class LocalLValue extends LRValue {
 
 	public LeftHandSide lhs;
+	private final BitfieldInformation mBitfieldInformation;
 
 	/**
 	 * A Value inside a ResultExpression that is not stored on the heap, but as
 	 * a normal Boogie Variable. It may be written (call getLHS()) or read (by
 	 * making it to an RValue first).
 	 * 
+     * @param bi In case this LocalLValue represents a bit-field this object 
+	 * contains additional information. In case this LocalLValue does not 
+	 * represent a bit-field we use null.
+	 * 
 	 * @param expr
 	 */
-	public LocalLValue(LeftHandSide lhs, CType cType) {
-		this(lhs, cType, false, false);
+	public LocalLValue(final LeftHandSide lhs, final CType cType, final BitfieldInformation bi) {
+		this(lhs, cType, false, false, bi);
+		
 	}
 	
-	public LocalLValue(LeftHandSide lhs, CType cType, boolean isBoogieBool) {
-		this(lhs, cType, isBoogieBool, false);
+	public LocalLValue(final LeftHandSide lhs, final CType cType, final boolean isBoogieBool) {
+		this(lhs, cType, isBoogieBool, false, null);
 	}
 
-	public LocalLValue(LeftHandSide lhs, CType cType, boolean isBoogieBool, boolean isIntFromPtr) {
+	public LocalLValue(final LeftHandSide lhs, final CType cType, final boolean isBoogieBool, final boolean isIntFromPtr, final BitfieldInformation bi) {
 		super(cType, isBoogieBool, isIntFromPtr);
 		this.lhs = lhs;
+		mBitfieldInformation = bi;
 	}
 
-	public LocalLValue(LocalLValue llVal) {
-		this(llVal.lhs, llVal.getCType(), llVal.isBoogieBool(), llVal.isIntFromPointer());
+	public LocalLValue(final LocalLValue llVal) {
+		this(llVal.lhs, llVal.getCType(), llVal.isBoogieBool(), llVal.isIntFromPointer(), null);
 	}
 	
 	public LeftHandSide getLHS() {
@@ -67,5 +74,9 @@ public class LocalLValue extends LRValue {
 	@Override
 	public Expression getValue() {
 		return CHandler.convertLHSToExpression(lhs);
+	}
+	
+	public BitfieldInformation getBitfieldInformation() {
+		return mBitfieldInformation;
 	}
 }

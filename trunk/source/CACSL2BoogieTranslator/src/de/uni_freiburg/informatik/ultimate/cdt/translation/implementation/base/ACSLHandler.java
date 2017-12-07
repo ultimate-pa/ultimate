@@ -626,10 +626,10 @@ public class ACSLHandler implements IACSLHandler {
 		LRValue lrVal;
 		if (((CHandler) main.mCHandler).isHeapVar(id)) {
 			final IdentifierExpression idExp = new IdentifierExpression(loc, id);
-			lrVal = new HeapLValue(idExp, cType);
+			lrVal = new HeapLValue(idExp, cType, null);
 		} else {
 			final VariableLHS idLhs = new VariableLHS(loc, id);
-			lrVal = new LocalLValue(idLhs, cType);
+			lrVal = new LocalLValue(idLhs, cType, null);
 		}
 
 		// for now, to make the error output clearer:

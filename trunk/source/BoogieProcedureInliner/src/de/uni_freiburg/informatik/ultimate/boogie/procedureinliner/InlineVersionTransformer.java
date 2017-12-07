@@ -790,10 +790,6 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				mEdgeIndexStack.pop();
 				mProcedureStack.pop();
 				mCallStackStack.pop();
-				if (call.getPayload().hasAnnotation()) {
-					mLogger.warn("Discarded annotation of " + call + ": "
-							+ getClassString(call.getPayload().getAnnotations()));
-				}
 				mInlinerStatistic.incrementCallsInlined();
 				return inlinedCall;
 			}

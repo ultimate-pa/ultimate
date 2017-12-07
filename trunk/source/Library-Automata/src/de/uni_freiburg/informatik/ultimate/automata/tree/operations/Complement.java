@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 
 /**
  * Complements a given treeAutomaton.
@@ -104,7 +103,7 @@ public class Complement<LETTER extends IRankedLetter, STATE>
 
 	private <F extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE> computeResult(
 			final F stateFactory) {
-		((TreeAutomatonBU<LETTER, STATE>) mTreeAutomaton).complementFinals();
+		mTreeAutomaton.complementFinals();
 		return mTreeAutomaton;
 	}
 

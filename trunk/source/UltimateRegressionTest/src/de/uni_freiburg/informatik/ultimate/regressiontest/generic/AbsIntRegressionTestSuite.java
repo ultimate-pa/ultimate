@@ -49,7 +49,8 @@ public class AbsIntRegressionTestSuite extends AbstractRegressionTestSuite {
 		mFiletypesToConsider = new String[] { ".bpl" };
 
 		// exclude paths that match the following regex
-		mExcludeFilterRegex = ".*open.*";
+//		mExcludeFilterRegex = ".*open.*";
+		mExcludeFilterRegex = ".*((open)|(oct)|(non_taipan)|(non_con)|(all)).*";
 	}
 
 	@Override

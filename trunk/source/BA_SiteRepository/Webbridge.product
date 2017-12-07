@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Webbridge" uid="Webbridge" id="de.uni_freiburg.informatik.ultimate.webbridge.Webbridge" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.23" useFeatures="true" includeLaunchers="false">
+
+   <aboutInfo>
+      <text>
+         Ultimate Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
+      </text>
+   </aboutInfo>
+
+   <configIni use="default">
+      <linux>/BA_SiteRepository/website-config/config.ini</linux>
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>--launcher.suppressErrors -nosplash -consoleLog
+      </programArgs>
+      <programArgsLin>-data @user.home/.ultimate
+      </programArgsLin>
+      <programArgsWin>-data @user.home\ultimate-data
+      </programArgsWin>
+      <vmArgs>-Xmx8g -Xms512M
+      </vmArgs>
+   </launcherArgs>
+
+   <windowImages/>
+
+   <splash
+      location="UltimateCore" />
+   <launcher name="Ultimate">
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+   </vm>
+
+   <plugins>
+   </plugins>
+
+   <features>
+      <feature id="BA_FeatureUltimateCommon" version="0.1.23"/>
+      <feature id="BA_FeatureUltimateWebbridge" version="0.1.23"/>
+   </features>
+
+   <configurations>
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="2" />
+   </configurations>
+
+</product>

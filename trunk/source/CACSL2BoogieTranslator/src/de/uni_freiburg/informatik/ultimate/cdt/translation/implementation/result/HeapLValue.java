@@ -30,6 +30,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 
 public class HeapLValue extends LRValue {
+	
+	private final BitfieldInformation mBitfieldInformation;
 
 	/**
 	 * LRValue that stores a memory address.
@@ -42,14 +44,18 @@ public class HeapLValue extends LRValue {
 	 *
 	 * @param address the memory address
 	 * @param cType the type (in terms of C, as opposed to boogie) of the information that is stored at address
+	 * @param bi In case this HeapLValue represents a bit-field this object 
+	 * contains additional information. In case this HeapLValue does not 
+	 * represent a bit-field we use null.
 	 */
-	public HeapLValue(final Expression address, final CType cType) {
-		this(address, cType, false);
+	public HeapLValue(final Expression address, final CType cType, final BitfieldInformation bi) {
+		this(address, cType, false, bi);
 	}
 
-	public HeapLValue(final Expression address, final CType cType, final boolean isIntFromPtr) {
+	public HeapLValue(final Expression address, final CType cType, final boolean isIntFromPtr, final BitfieldInformation bi) {
 		super(cType, false, isIntFromPtr);
 		this.address = address;
+		mBitfieldInformation = bi;
 	}
 	Expression address;
 
@@ -61,4 +67,10 @@ public class HeapLValue extends LRValue {
 	public Expression getValue() {
 		throw new AssertionError("HeapLValues must be converted to RValue before their value can be queried.");
 	}
+
+	public BitfieldInformation getBitfieldInformation() {
+		return mBitfieldInformation;
+	}
+	
+	
 }

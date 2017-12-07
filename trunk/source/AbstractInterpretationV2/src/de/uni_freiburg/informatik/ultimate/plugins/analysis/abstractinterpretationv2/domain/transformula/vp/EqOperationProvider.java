@@ -75,7 +75,8 @@ public class EqOperationProvider implements
 	public EqDisjunctiveConstraint<EqNode> renameVariables(
 			final Map<Term, Term> substitutionMapping,
 			final EqDisjunctiveConstraint<EqNode> constraint) {
-		return constraint.renameVariables(substitutionMapping);
+//		return constraint.renameVariables(substitutionMapping);
+		return mEqConstraintFactory.renameVariables(constraint, substitutionMapping);
 	}
 
 	@Override
@@ -90,8 +91,8 @@ public class EqOperationProvider implements
 	@Override
 	public EqDisjunctiveConstraint<EqNode> projectExistentially(final Set<TermVariable> varsToProjectAway,
 			final EqDisjunctiveConstraint<EqNode> constraint) {
-		return constraint.projectExistentially(varsToProjectAway.stream()
-				.map(tv -> (Term) tv).collect(Collectors.toSet()));
+		final Set<Term> castToSetOfTerm = varsToProjectAway.stream().map(tv -> (Term) tv).collect(Collectors.toSet());
+		return constraint.projectExistentially(castToSetOfTerm);
 	}
 
 

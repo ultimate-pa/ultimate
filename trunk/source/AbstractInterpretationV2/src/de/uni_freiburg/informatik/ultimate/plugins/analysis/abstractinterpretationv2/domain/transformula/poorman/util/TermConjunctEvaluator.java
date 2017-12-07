@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
@@ -138,8 +139,10 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 				}
 			}
 			return (prestates) -> {
-				mLogger.debug("Abstractables:     " + abstractables);
-				mLogger.debug("Non-Abstractables: " + nonAbstractables);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Abstractables:     " + abstractables);
+					mLogger.debug("Non-Abstractables: " + nonAbstractables);
+				}
 				final List<STATE> preStatesAfterAbstractables =
 						applyPost(prestates, abstractables.toArray(new Term[abstractables.size()]));
 				return computeFixpoint(nonAbstractables, preStatesAfterAbstractables);
@@ -179,25 +182,22 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			return preStates;
 		}
 
-		List<STATE> pres = preStates;
+		DisjunctiveAbstractState<STATE> pres = DisjunctiveAbstractState.createDisjunction(preStates);
 		while (true) {
 			mLogger.debug("Beginning new fixpoint iteration of assumes...");
 			// Compute everything for the prestate
-			List<STATE> abstractableResult = pres;
+			DisjunctiveAbstractState<STATE> abstractableResult = pres;
 			for (final Term nonAbstractable : nonAbstractables) {
-				abstractableResult = visit(nonAbstractable).apply(abstractableResult);
-				if (abstractableResult.stream().allMatch(state -> state.isBottom())) {
-					return abstractableResult;
+				abstractableResult = DisjunctiveAbstractState.createDisjunction(visit(nonAbstractable)
+						.apply(abstractableResult.getStates().stream().collect(Collectors.toList())), 2);
+				if (abstractableResult.isBottom()) {
+					return abstractableResult.getStates().stream().collect(Collectors.toList());
 				}
 			}
 
-			final List<STATE> previousPres = pres;
-			// If for all computed post states there is one state in the prestates which covers the post state, we have
-			// found a fixpoint and may return.
-			if (abstractableResult.stream().allMatch(
-					result -> previousPres.stream().anyMatch(prev -> result.isSubsetOf(prev) != SubsetResult.NONE
-							&& prev.isSubsetOf(result) != SubsetResult.NONE))) {
-				return abstractableResult;
+			final DisjunctiveAbstractState<STATE> previousPres = pres;
+			if (abstractableResult.isSubsetOf(previousPres) != SubsetResult.NONE) {
+				return abstractableResult.getStates().stream().collect(Collectors.toList());
 			}
 			pres = abstractableResult;
 		}
@@ -268,11 +268,15 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 
 	private List<STATE> applyPost(final List<STATE> preStates, final Term... term) {
 		final List<STATE> returnStates = new ArrayList<>();
-		mLogger.debug("PreStates: " + preStates);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("PreStates: " + preStates);
+		}
 
 		// If all preStates are bottom, we just return them and do nothing.
 		if (preStates.stream().allMatch(state -> state.isBottom())) {
-			mLogger.debug("PostStates: " + preStates);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("PostStates: " + preStates);
+			}
 			return preStates;
 		}
 
@@ -288,7 +292,9 @@ public class TermConjunctEvaluator<STATE extends IAbstractState<STATE>> {
 			returnStates.addAll(mBackingDomain.getPostOperator().apply(state, codeBlock));
 		}
 
-		mLogger.debug("PostStates: " + returnStates);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("PostStates: " + returnStates);
+		}
 
 		return returnStates;
 	}

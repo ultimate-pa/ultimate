@@ -103,7 +103,9 @@ public class FixpointEngineParameterFactory {
 		final boolean useFuture = prefs.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG);
 		final boolean poormanSelected = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN_FUTURE)
 				.equals(PoormanAbstractDomain.class.getSimpleName());
-		if (useFuture && poormanSelected) {
+		final boolean arraySelected =
+				prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN).equals(ArrayDomain.class.getSimpleName());
+		if (useFuture && poormanSelected || arraySelected) {
 			mVariableProvider =
 					new Boogie2SmtSymbolTableTmpVars(mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable());
 		} else {
@@ -149,7 +151,7 @@ public class FixpointEngineParameterFactory {
 			} else {
 				subDomain = getFlatDomainOrFail(subDomainName, logger);
 			}
-			return new ArrayDomain<>(subDomain, mBoogieIcfg, mServices, mSymbolTable);
+			return new ArrayDomain<>(subDomain, mBoogieIcfg, mServices, logger, mSymbolTable, mVariableProvider);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
 			return createCompoundDomain(prefs, logger);
 		}

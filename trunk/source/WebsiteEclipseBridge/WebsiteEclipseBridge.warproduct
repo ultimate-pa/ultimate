@@ -4,6 +4,7 @@
 <product useFeatures="false" includeLaunchers="false">
    <plugins>
       <plugin id="com.github.jhoenicke.javacup"/>
+      <plugin id="com.google.gson"/>
       <plugin id="com.ibm.icu"/>
       <plugin id="com.lmax.disruptor"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.acsl.parser"/>
@@ -90,6 +91,7 @@
       <plugin id="org.eclipse.osgi"/>
       <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
       <plugin id="org.eclipse.osgi.services"/>
+      <plugin id="org.eclipse.osgi.util"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.hamcrest.core"/>
       <plugin id="org.junit"/>
@@ -98,6 +100,7 @@
 
    <configurations>
       <plugin id="com.github.jhoenicke.javacup" autoStart="true" startLevel="0" />
+      <plugin id="com.google.gson" autoStart="true" startLevel="0" />
       <plugin id="com.ibm.icu" autoStart="true" startLevel="0" />
       <plugin id="com.lmax.disruptor" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.acsl.parser" autoStart="true" startLevel="0" />
@@ -157,11 +160,13 @@
       <plugin id="org.eclipse.core.expressions" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filebuffers" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.core.filesystem.java7" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem.linux.x86" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem.linux.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.jobs" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.resources" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.core.runtime.compatibility.registry" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.variables" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.app" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="0" />
@@ -174,6 +179,7 @@
       <plugin id="org.eclipse.ltk.core.refactoring" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.osgi.services" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.osgi.util" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.text" autoStart="true" startLevel="0" />
       <plugin id="org.hamcrest.core" autoStart="true" startLevel="0" />
       <plugin id="org.junit" autoStart="true" startLevel="0" />
@@ -182,7 +188,9 @@
 
    <warConfiguration webXml="/WebsiteEclipseBridge/WEB-INF/web.xml" launchIni="/WebsiteEclipseBridge/WEB-INF/launch.ini">
    <libraries>
-      <library path="org.eclipse.equinox.servletbridge_1.3.100.v20160113-1459.jar" fromTarget="true"/>
+      			<library
+				path="org.eclipse.equinox.servletbridge_1.3.200.v20160128-1435.jar"
+				fromTarget="true" />
    </libraries>
    </warConfiguration>
 </product>
