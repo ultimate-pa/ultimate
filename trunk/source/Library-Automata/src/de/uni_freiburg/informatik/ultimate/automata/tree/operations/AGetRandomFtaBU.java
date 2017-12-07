@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
@@ -424,7 +425,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 		}
 
 		// Create the initial empty tree automaton
-		final TreeAutomatonBU<StringRankedLetter, String> result = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<StringRankedLetter, String> result = new TreeAutomatonBU<>(new StringFactory());
 
 		if (this.mNumberOfStates == 0) {
 			// Empty automaton

@@ -216,7 +216,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 		} while (!worklist.equals(oldWorklist));
 
 		// minimize all states
-		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>(mStateFactory);
 		for (final STATE st : mTreeAutomaton.getStates()) {
 			res.addState(minimize(worklist.getPartition(st)));
 			if (mTreeAutomaton.isFinalState(st)) {
@@ -239,7 +239,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	}
 
 	private ITreeAutomatonBU<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {
-		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>(mStateFactory);
 
 		final Set<STATE> worklist = new HashSet<>();
 

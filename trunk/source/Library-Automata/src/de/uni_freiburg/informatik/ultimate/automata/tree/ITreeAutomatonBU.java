@@ -78,7 +78,7 @@ public interface ITreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends I
 	// /**
 	// * @param state
 	// * @return true, if given state is initial.
-	// */
+	// */letter
 	// boolean isInitialState(final STATE state);
 
 	/**

@@ -104,7 +104,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		final StringFactory mergeFactory = new StringFactory();
 
 		// Build example tree automaton from whiteboard
-		final TreeAutomatonBU<StringRankedLetter, String> tree = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<StringRankedLetter, String> tree = new TreeAutomatonBU<>(mergeFactory);
 		// States
 		final String q1 = "q1";
 		final String q2 = "q2";
@@ -274,7 +274,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * @return A minimal tree automaton accepting the empty language
 	 */
 	private ITreeAutomatonBU<LETTER, STATE> buildEmptyLanguageTree() {
-		return new TreeAutomatonBU<>();
+		return new TreeAutomatonBU<>(mSinkMergeIntersectFactory);
 	}
 
 	/**
@@ -555,7 +555,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 			this.mLogger.debug("Starting to construct the result");
 		}
 		final HashMap<STATE, STATE> representativeToMergedState = new HashMap<>();
-		final TreeAutomatonBU<LETTER, STATE> result = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, STATE> result = new TreeAutomatonBU<>(mSinkMergeIntersectFactory);
 
 		// Add resulting states
 		for (final STATE representative : partition.getAllRepresentatives()) {

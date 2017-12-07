@@ -27,22 +27,34 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
+import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.IStronglyConnectedComponentFactory;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
  * HornClause state factory.
@@ -52,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  *
  */
 public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersectionStateFactory<IPredicate>,
-		ISinkStateFactory<IPredicate> {
+		ISinkStateFactory<IPredicate>, ISemanticReducerFactory<IPredicate> {
 
 	private final HCPredicate mSinkState;
 
@@ -138,6 +150,57 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	@Override
 	public IPredicate createEmptyStackState() {
 		return createSinkStateContent();
+	}
+
+	private boolean implies(final IPredicate predA, final IPredicate predB) {
+
+		mBackendSmtSolverScript.lock(this);
+		mBackendSmtSolverScript.push(this, 1);
+
+		final Term statement = SmtUtils.and(mBackendSmtSolverScript.getScript(), predA.getFormula(),
+				SmtUtils.not(mBackendSmtSolverScript.getScript(), predB.getFormula()));
+
+		mBackendSmtSolverScript.assertTerm(this, statement);
+		LBool res = mBackendSmtSolverScript.checkSat(this);
+		
+		mBackendSmtSolverScript.pop(this, 1);
+		mBackendSmtSolverScript.unlock(this);
+		return res == LBool.SAT;
+	}
+	
+	@Override
+	public Iterable<IPredicate> filter(final Iterable<IPredicate> states) {
+		return states;
+		/*
+		final IPredicate[] preds = CombinatoricsUtils.iterateAll(states.iterator()).toArray(new IPredicate[]{});
+		Map<IPredicate, ArrayList<IPredicate>> implication = new HashMap<>();
+ 		for (int i = 0; i < preds.length; ++i) {
+ 			if (!implication.containsKey(preds[i])) {
+ 				implication.put(preds[i], new ArrayList<>());
+ 			}
+			for (int j = 0; j < preds.length; ++j) {
+				if (i != j && implies(preds[i], preds[j])) {
+					implication.get(preds[i]).add(preds[j]);
+				}
+			}
+		}
+ 		
+		ISuccessorProvider<IPredicate> ip = new ISuccessorProvider<IPredicate>() {
+			@Override
+			public Iterator<IPredicate> getSuccessors(IPredicate node) {
+				return implication.get(node).iterator();
+			}
+		};
+
+		SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = new SccComputation<>(null, ip,
+				new DefaultStronglyConnectedComponentFactory<>(), preds.length, implication.keySet());
+
+		final Set<IPredicate> res = new HashSet<>();
+		for (final StronglyConnectedComponent<IPredicate> comp : sccComputer.getBalls()) {
+			res.add(comp.getRootNode());
+		}
+		return res;
+		*/
 	}
 
 }

@@ -62,11 +62,12 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	private final Set<TreeAutomatonRule<LETTER, STATE>> mRules;
 	private final Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> mSourceMap;
 	private final Set<STATE> mStates;
+	private final IStateFactory<STATE> mFactory;
 
 	/**
 	 * Create a TreeAutomaton.
 	 */
-	public TreeAutomatonBU() {
+	public TreeAutomatonBU(final IStateFactory<STATE> fac) {
 		mChildrenMap = new HashMap<>();
 		mParentsMap = new HashMap<>();
 		mAlphabet = new HashSet<>();
@@ -75,6 +76,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		mRules = new HashSet<>();
 		mFinalStates = new HashSet<>();
 		mStates = new HashSet<>();
+		mFactory = fac;
 	}
 
 	/***
@@ -291,7 +293,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
-		return null;
+		return mFactory;
 	}
 
 	@Override
@@ -327,8 +329,8 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return mFinalStates.contains(state);
 	}
 
-	public <ST> TreeAutomatonBU<LETTER, ST> reconstruct(final Map<STATE, ST> mp) {
-		final TreeAutomatonBU<LETTER, ST> res = new TreeAutomatonBU<>();
+	public <ST> TreeAutomatonBU<LETTER, ST> reconstruct(final IStateFactory<ST> factory, final Map<STATE, ST> mp) {
+		final TreeAutomatonBU<LETTER, ST> res = new TreeAutomatonBU<>(factory);
 		res.extendAlphabet(mAlphabet);
 		for (final STATE s : mStates) {
 			res.addState(mp.get(s));

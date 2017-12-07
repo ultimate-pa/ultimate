@@ -151,7 +151,7 @@ public class Totalize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 * @return
 	 */
 	private TreeAutomatonBU<LETTER, STATE> computeTotalize() {
-		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>(mTreeAutomaton.getStateFactory());
 
 		res.extendAlphabet(mTreeAutomaton.getAlphabet());
 		res.extendAlphabet(mAlphabet);

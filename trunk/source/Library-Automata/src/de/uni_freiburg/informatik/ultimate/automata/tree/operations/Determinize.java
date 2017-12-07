@@ -82,7 +82,11 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 		mStateFactoryMerge = factory;
 		mTreeAutomaton = tree;
 
-		mResult = computeDeterminize();
+		if (new isDetereministic<>(services, tree).getResult()) {
+			mResult = tree;
+		} else {
+			mResult = computeDeterminize();
+		}
 	}
 
 	private STATE reduceState(final Set<STATE> key) {
@@ -104,7 +108,7 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 
 	private TreeAutomatonBU<LETTER, STATE> constructFromRules(
 			final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules) {
-		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>(mStateFactoryMerge);
 		res.extendAlphabet(mTreeAutomaton.getAlphabet());
 
 		for (final Entry<LETTER, Map<List<Set<STATE>>, Set<STATE>>> letterMap : rules.entrySet()) {
