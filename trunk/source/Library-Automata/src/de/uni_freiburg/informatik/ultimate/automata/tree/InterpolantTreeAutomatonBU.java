@@ -6,10 +6,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReduce
 
 public class InterpolantTreeAutomatonBU<LETTER extends IRankedLetter, STATE> extends TreeAutomatonBU<LETTER, STATE> {
 
-	private final ISemanticReducerFactory<STATE> mReducer;
-	
-	
-	public <SF extends ISemanticReducerFactory<STATE>> InterpolantTreeAutomatonBU(final SF fac) {
+	private final ISemanticReducerFactory<STATE, LETTER> mReducer;
+
+
+	public <SF extends ISemanticReducerFactory<STATE, LETTER>> InterpolantTreeAutomatonBU(final SF fac) {
 		super(fac);
 		mReducer = fac;
 	}
@@ -21,6 +21,7 @@ public class InterpolantTreeAutomatonBU<LETTER extends IRankedLetter, STATE> ext
 
 	@Override
 	public Iterable<STATE> getSuccessors(final List<STATE> source, final LETTER letter) {
+	//	return mReducer.getOptimalDestination(null, letter, null);
 		return mReducer.filter(super.getSuccessors(source, letter));
 	}
 

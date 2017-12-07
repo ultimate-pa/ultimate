@@ -41,14 +41,12 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.InterpolantTreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.difference.LazyDifference;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.Minimize;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerSatResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TreeAutomizerUnsatResult;
@@ -149,7 +147,7 @@ public class TreeAutomizerCEGAR {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
 		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mBackendSmtSolverScript, mPredicateFactory,
 				mSymbolTable);
-		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mLogger);
+		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mLogger, mPredicateUnifier);
 
 		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
 		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());
@@ -279,7 +277,7 @@ public class TreeAutomizerCEGAR {
 		((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 
 		assert allRulesAreInductive(mInterpolAutomaton);
-		generalizeCounterExample(mInterpolAutomaton);
+//		generalizeCounterExample(mInterpolAutomaton);
 
 		// dump interpolant automaton
 		final String automataDumpPath =

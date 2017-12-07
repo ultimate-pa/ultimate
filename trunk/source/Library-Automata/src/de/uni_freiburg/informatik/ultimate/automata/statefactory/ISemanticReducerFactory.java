@@ -9,15 +9,18 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
-public interface ISemanticReducerFactory<STATE> extends IStateFactory<STATE> {
-	
+public interface ISemanticReducerFactory<STATE, LETTER> extends IStateFactory<STATE> {
+
 	/**
 	 * Filter out semantically redundant states.
 	 * @param states A collection of states.
 	 * @return A collection of filtered states
 	 */
 	Iterable<STATE> filter(final Iterable<STATE> states);
-	
+
+
+	STATE getOptimalDestination(final List<STATE> src, final LETTER letter, final Set<STATE> dest);
+
 	/***
 	 * Reduce a set of rules using the provided filtering states method.
 	 * @param oldRules
@@ -26,7 +29,7 @@ public interface ISemanticReducerFactory<STATE> extends IStateFactory<STATE> {
 	default <LETTER extends IRankedLetter> Iterable<TreeAutomatonRule<LETTER, STATE>> reduceRules(
 			final Iterable<TreeAutomatonRule<LETTER, STATE>> oldRules) {
 
-		NestedMap2<List<STATE>, LETTER, Set<STATE>> strongRules = new NestedMap2<>();
+		final NestedMap2<List<STATE>, LETTER, Set<STATE>> strongRules = new NestedMap2<>();
 		for (final TreeAutomatonRule<LETTER, STATE> rule : oldRules) {
 			if (strongRules.get(rule.getSource(), rule.getLetter()) == null) {
 				strongRules.put(rule.getSource(), rule.getLetter(), new HashSet<>());

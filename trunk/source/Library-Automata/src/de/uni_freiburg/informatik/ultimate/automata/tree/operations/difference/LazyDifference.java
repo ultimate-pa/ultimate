@@ -18,9 +18,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.DummySemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
@@ -29,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.IsEquivalent;
-import de.uni_freiburg.informatik.ultimate.automata.tree.operations.isDetereministic;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -66,12 +65,12 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 	/***
 	 * Reducer for semantically redundant states
 	 */
-	private final ISemanticReducerFactory<STATE> mReducer;
+	private final ISemanticReducerFactory<STATE, LETTER> mReducer;
 
 	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> LazyDifference(
 			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> firstOperand, final ITreeAutomatonBU<LETTER, STATE> secondOperand,
-			final ISemanticReducerFactory<STATE> reducer) throws AutomataOperationCanceledException {
+			final ISemanticReducerFactory<STATE, LETTER> reducer) throws AutomataOperationCanceledException {
 
 		super(services);
 
@@ -97,7 +96,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 			final ITreeAutomatonBU<LETTER, STATE> firstOperand, final ITreeAutomatonBU<LETTER, STATE> secondOperand)
 					throws AutomataOperationCanceledException {
 		this(services, factory, firstOperand, secondOperand,
-				(factory instanceof ISemanticReducerFactory) ? (ISemanticReducerFactory<STATE>) factory
+				(factory instanceof ISemanticReducerFactory) ? (ISemanticReducerFactory<STATE, LETTER>) factory
 				: new DummySemanticReducerFactory<>());
 	}
 
@@ -179,8 +178,8 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 				}
 			}
 		} while (newReached);
-		
-		NestedMap2<List<STATE>, LETTER, Set<STATE>> strongRules = new NestedMap2<>();
+
+		final NestedMap2<List<STATE>, LETTER, Set<STATE>> strongRules = new NestedMap2<>();
 		for (final TreeAutomatonRule<LETTER, STATE> rule : newRules) {
 			if (strongRules.get(rule.getSource(), rule.getLetter()) == null) {
 				strongRules.put(rule.getSource(), rule.getLetter(), new HashSet<>());
@@ -237,27 +236,27 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 	}
 
 	@Override
-	public boolean checkResult(IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 
-	public static void main(String[] args) throws AutomataOperationCanceledException {
+	public static void main(final String[] args) throws AutomataOperationCanceledException {
 
-		Set<Integer> s1 = new HashSet<Integer>();
+		final Set<Integer> s1 = new HashSet<Integer>();
 		s1.add(2);
 		s1.add(3);
 		s1.add(5);
-		Set<Integer> s2 = new HashSet<Integer>();
+		final Set<Integer> s2 = new HashSet<Integer>();
 		s2.add(1);
 		s2.add(10);
 		s2.add(100);
-		List<Collection<Integer>> rr = Arrays.asList(new Set[] { s1, s2 });
+		final List<Collection<Integer>> rr = Arrays.asList(new Set[] { s1, s2 });
 		System.out.println(s1);
 		System.out.println(s2);
 		System.out.println(CombinatoricsUtils.getCombinations(rr));
 
 		final StringFactory factory = new StringFactory();
-		TreeAutomatonBU<StringRankedLetter, String> ones = new TreeAutomatonBU<>(factory);
+		final TreeAutomatonBU<StringRankedLetter, String> ones = new TreeAutomatonBU<>(factory);
 		final String NUM = "Num", LIST = "List";
 		ones.addRule(new TreeAutomatonRule<StringRankedLetter, String>(new StringRankedLetter("cons", 2),
 				Arrays.asList(new String[] { NUM, LIST }), LIST));
@@ -269,7 +268,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 				Arrays.asList(new String[] { NUM }), NUM));
 		ones.addFinalState(LIST);
 
-		TreeAutomatonBU<StringRankedLetter, String> bin = new TreeAutomatonBU<>(factory);
+		final TreeAutomatonBU<StringRankedLetter, String> bin = new TreeAutomatonBU<>(factory);
 		bin.addRule(new TreeAutomatonRule<StringRankedLetter, String>(new StringRankedLetter("cons", 2),
 				Arrays.asList(new String[] { NUM, LIST }), LIST));
 		bin.addRule(new TreeAutomatonRule<StringRankedLetter, String>(new StringRankedLetter("nil", 0),
@@ -288,7 +287,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		final Difference<StringRankedLetter, String> d1 = new Difference<>(services, factory, ones, bin);
 		final LazyDifference<StringRankedLetter, String> d2 = new LazyDifference<>(services, factory, ones, bin);
 
-		boolean equiv = new IsEquivalent<StringRankedLetter, String>(services, factory, d1.getResult(), d2.getResult())
+		final boolean equiv = new IsEquivalent<StringRankedLetter, String>(services, factory, d1.getResult(), d2.getResult())
 				.getResult();
 		System.out.println(equiv);
 

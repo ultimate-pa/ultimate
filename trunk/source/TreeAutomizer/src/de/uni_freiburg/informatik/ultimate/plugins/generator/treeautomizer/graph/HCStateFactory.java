@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
@@ -43,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -51,23 +50,22 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
-import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.IStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
  * HornClause state factory.
- * 
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersectionStateFactory<IPredicate>,
-		ISinkStateFactory<IPredicate>, ISemanticReducerFactory<IPredicate> {
+		ISinkStateFactory<IPredicate>, ISemanticReducerFactory<IPredicate, HornClause> {
 
 	private final HCPredicate mSinkState;
 
@@ -75,32 +73,36 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	private final SimplifyDDA mSimplifier;
 
 	private final HCPredicateFactory mPredicateFactory;
+	private final PredicateUnifier mPredicateUnifier;
 
 	private int mSer;
 
 	private final ILogger mLogger;
+
 	/***
 	 * HornClause State factory constructor.
-	 * 
+	 *
 	 * @param backendSmtSolverScript
 	 * @param predicateFactory
+	 * @param predicateUnifier
 	 * @param symbolTable
 	 */
 	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
-			final ILogger logger) {
+			final ILogger logger, final PredicateUnifier predicateUnifier) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
-		
+
 		mLogger = logger;
 		mSinkState = predicateFactory.getDontCarePredicate();
 		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript.getScript());
 		mPredicateFactory = predicateFactory;
+		mPredicateUnifier = predicateUnifier;
 		mSer = 0;
 	}
 
 	protected int constructFreshSerialNumber() {
 		return ++mSer;
 	}
-	
+
 	@Override
 	public IPredicate createSinkStateContent() {
 		return mSinkState;
@@ -123,7 +125,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	}
 
 	@Override
-	public IPredicate merge(Collection<IPredicate> states) {
+	public IPredicate merge(final Collection<IPredicate> states) {
 		/*
 		 * stricly speaking, we would have to have something like
 		 * "multi-location-HCPredicate" in order to treat merging several
@@ -136,7 +138,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 		List<TermVariable> varsForHcPred = null;
 
-		for (IPredicate pred : states) {
+		for (final IPredicate pred : states) {
 			if (pred instanceof HCPredicate) {
 				mergedLocations.addAll(((HCPredicate) pred).getHcPredicateSymbols());
 				assert varsForHcPred == null || varsForHcPred.equals(((HCPredicate) pred).getSignature()) : "merging "
@@ -168,18 +170,23 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				SmtUtils.not(mBackendSmtSolverScript.getScript(), predB.getClosedFormula()));
 
 		mBackendSmtSolverScript.assertTerm(this, statement);
-		LBool res = mBackendSmtSolverScript.checkSat(this);
-		
+		final LBool res = mBackendSmtSolverScript.checkSat(this);
+
 		mBackendSmtSolverScript.pop(this, 1);
 		mBackendSmtSolverScript.unlock(this);
 		return res == LBool.SAT;
 	}
+
+	private boolean implies2(final IPredicate predA, final IPredicate predB) {
+		return mPredicateUnifier.getCoverageRelation().getCoveredPredicates(predB).contains(predA);
+	}
+
 	@Override
 	public Iterable<IPredicate> filter(final Iterable<IPredicate> states) {
 		//return states;
-		
+
 		final IPredicate[] preds = CombinatoricsUtils.iterateAll(states.iterator()).toArray(new IPredicate[]{});
-		Map<IPredicate, Set<IPredicate>> implication = new HashMap<>();
+		final Map<IPredicate, Set<IPredicate>> implication = new HashMap<>();
  		for (int i = 0; i < preds.length; ++i) {
  			if (!implication.containsKey(preds[i])) {
  				implication.put(preds[i], new HashSet<>());
@@ -190,24 +197,30 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				}
 			}
 		}
- 		
-		ISuccessorProvider<IPredicate> successors = new ISuccessorProvider<IPredicate>() {
+
+		final ISuccessorProvider<IPredicate> successors = new ISuccessorProvider<IPredicate>() {
 			@Override
-			public Iterator<IPredicate> getSuccessors(IPredicate node) {
+			public Iterator<IPredicate> getSuccessors(final IPredicate node) {
 				return implication.get(node).iterator();
 			}
 		};
-		
-		SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = new SccComputation<>(mLogger,
+
+		final SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = new SccComputation<>(mLogger,
 				successors,	new DefaultStronglyConnectedComponentFactory<>(), preds.length, implication.keySet());
-		
+
 		final Set<IPredicate> res = new HashSet<>();
 		for (final StronglyConnectedComponent<IPredicate> leaf : sccComputer.getLeafComponents()) {
 			res.add(leaf.getRootNode());
 		}
-		
+
 		return res;
-		
+
+	}
+
+	@Override
+	public IPredicate getOptimalDestination(final List<IPredicate> src, final HornClause letter, final Set<IPredicate> dest) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
