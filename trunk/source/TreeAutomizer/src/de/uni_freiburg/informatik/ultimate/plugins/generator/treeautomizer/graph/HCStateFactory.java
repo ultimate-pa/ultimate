@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
@@ -75,6 +77,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 	private int mSer;
 
+	private final ILogger mLogger;
 	/***
 	 * HornClause State factory constructor.
 	 * 
@@ -82,8 +85,11 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	 * @param predicateFactory
 	 * @param symbolTable
 	 */
-	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory) {
+	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
+			final ILogger logger) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
+		
+		mLogger = logger;
 		mSinkState = predicateFactory.getDontCarePredicate();
 		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript.getScript());
 		mPredicateFactory = predicateFactory;
@@ -170,8 +176,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	
 	@Override
 	public Iterable<IPredicate> filter(final Iterable<IPredicate> states) {
-		return states;
-		/*
+		//return states;
+		
 		final IPredicate[] preds = CombinatoricsUtils.iterateAll(states.iterator()).toArray(new IPredicate[]{});
 		Map<IPredicate, ArrayList<IPredicate>> implication = new HashMap<>();
  		for (int i = 0; i < preds.length; ++i) {
@@ -191,8 +197,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				return implication.get(node).iterator();
 			}
 		};
-
-		SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = new SccComputation<>(null, ip,
+		SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = new SccComputation<>(mLogger, ip,
 				new DefaultStronglyConnectedComponentFactory<>(), preds.length, implication.keySet());
 
 		final Set<IPredicate> res = new HashSet<>();
@@ -200,7 +205,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 			res.add(comp.getRootNode());
 		}
 		return res;
-		*/
+		
 	}
 
 }
