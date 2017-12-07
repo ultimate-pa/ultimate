@@ -97,7 +97,8 @@ public class TreeAutomizerCEGAR {
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
-	protected InterpolantTreeAutomatonBU<HornClause, IPredicate> mInterpolAutomaton;
+	//protected InterpolantTreeAutomatonBU<HornClause, IPredicate> mInterpolAutomaton;
+	protected ITreeAutomatonBU<HornClause, IPredicate> mInterpolAutomaton;
 	private final HCSymbolTable mSymbolTable;
 //	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final HCHoareTripleChecker mHoareTripleChecker;
@@ -267,8 +268,10 @@ public class TreeAutomizerCEGAR {
 
 		final TreeRun<HornClause, IPredicate> treeRunWithInterpolants = mChecker
 				.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
+		//ITreeAutomatonBU<HornClause, IPredicate> automaton = treeRunWithInterpolants.getAutomaton(mStateFactory);
 
-		mInterpolAutomaton = treeRunWithInterpolants.getInterpolantAutomaton(mStateFactory);
+		//mInterpolAutomaton = treeRunWithInterpolants.getInterpolantAutomaton(mStateFactory);
+		mInterpolAutomaton = treeRunWithInterpolants.getAutomaton(mStateFactory);
 		for (final IPredicate p : mInterpolAutomaton.getStates()) {
 			mPredicateUnifier.getOrConstructPredicate(p.getFormula());
 		}

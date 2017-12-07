@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
@@ -163,8 +164,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		mBackendSmtSolverScript.lock(this);
 		mBackendSmtSolverScript.push(this, 1);
 
-		final Term statement = SmtUtils.and(mBackendSmtSolverScript.getScript(), predA.getFormula(),
-				SmtUtils.not(mBackendSmtSolverScript.getScript(), predB.getFormula()));
+		final Term statement = SmtUtils.and(mBackendSmtSolverScript.getScript(), predA.getClosedFormula(),
+				SmtUtils.not(mBackendSmtSolverScript.getScript(), predB.getClosedFormula()));
 
 		mBackendSmtSolverScript.assertTerm(this, statement);
 		LBool res = mBackendSmtSolverScript.checkSat(this);
@@ -173,16 +174,15 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		mBackendSmtSolverScript.unlock(this);
 		return res == LBool.SAT;
 	}
-	
 	@Override
 	public Iterable<IPredicate> filter(final Iterable<IPredicate> states) {
 		//return states;
 		
 		final IPredicate[] preds = CombinatoricsUtils.iterateAll(states.iterator()).toArray(new IPredicate[]{});
-		Map<IPredicate, ArrayList<IPredicate>> implication = new HashMap<>();
+		Map<IPredicate, Set<IPredicate>> implication = new HashMap<>();
  		for (int i = 0; i < preds.length; ++i) {
  			if (!implication.containsKey(preds[i])) {
- 				implication.put(preds[i], new ArrayList<>());
+ 				implication.put(preds[i], new HashSet<>());
  			}
 			for (int j = 0; j < preds.length; ++j) {
 				if (i != j && implies(preds[i], preds[j])) {
@@ -191,19 +191,21 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 			}
 		}
  		
-		ISuccessorProvider<IPredicate> ip = new ISuccessorProvider<IPredicate>() {
+		ISuccessorProvider<IPredicate> successors = new ISuccessorProvider<IPredicate>() {
 			@Override
 			public Iterator<IPredicate> getSuccessors(IPredicate node) {
 				return implication.get(node).iterator();
 			}
 		};
-		SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = new SccComputation<>(mLogger, ip,
-				new DefaultStronglyConnectedComponentFactory<>(), preds.length, implication.keySet());
-
+		
+		SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = new SccComputation<>(mLogger,
+				successors,	new DefaultStronglyConnectedComponentFactory<>(), preds.length, implication.keySet());
+		
 		final Set<IPredicate> res = new HashSet<>();
-		for (final StronglyConnectedComponent<IPredicate> comp : sccComputer.getBalls()) {
-			res.add(comp.getRootNode());
+		for (final StronglyConnectedComponent<IPredicate> leaf : sccComputer.getLeafComponents()) {
+			res.add(leaf.getRootNode());
 		}
+		
 		return res;
 		
 	}
