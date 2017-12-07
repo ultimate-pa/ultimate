@@ -49,9 +49,6 @@ public class PartialOrderCache<E> {
 	private final UnionFind<E> mEquivalences;
 
 	private final Set<E> mMaximalElements;
-//	private final Set<E> mMinimalElements;
-
-
 
 	public PartialOrderCache(final IPartialComparator<E> comparator) {
 		mComparator = comparator;
@@ -59,7 +56,6 @@ public class PartialOrderCache<E> {
 		mNotStrictlySmaller = new HashRelation<>();
 		mEquivalences = new UnionFind<>();
 		mMaximalElements = new HashSet<>();
-//		mMinimalElements = new HashSet<>();
 	}
 
 	public E addElement(final E elemToAdd) {
@@ -71,7 +67,6 @@ public class PartialOrderCache<E> {
 		// elemToAdd element is new
 		rep = mEquivalences.findAndConstructEquivalenceClassIfNeeded(elemToAdd);
 		assert rep == elemToAdd;
-//		mMinimalElements.add(rep);
 		mMaximalElements.add(rep);
 
 		for (final E otherRep : new ArrayList<>(mEquivalences.getAllRepresentatives())) {
@@ -86,13 +81,11 @@ public class PartialOrderCache<E> {
 				if (newRep == rep) {
 					// representative has changed
 					assert mEquivalences.find(otherRep) == rep;
-//					mMinimalElements.remove(otherRep);
 					mMaximalElements.remove(otherRep);
 					mStrictlySmaller.replaceDomainElement(otherRep, newRep);
 					mStrictlySmaller.replaceRangeElement(otherRep, newRep);
 				} else {
 					// representative is the old one but we have already made some entries into the data structures
-//					mMinimalElements.remove(rep);
 					mMaximalElements.remove(rep);
 					mStrictlySmaller.replaceDomainElement(rep, newRep);
 					mStrictlySmaller.replaceRangeElement(rep, newRep);
@@ -126,9 +119,7 @@ public class PartialOrderCache<E> {
 		mStrictlySmaller.addPair(smallerRep, greaterRep);
 		mNotStrictlySmaller.addPair(greaterRep, smallerRep);
 		assert assertStrictlySmaller(smallerRep, greaterRep);
-//		mExplies.addPair(greaterRep, smallerRep);
 
-//		mMinimalElements.remove(greaterRep);
 		mMaximalElements.remove(smallerRep);
 
 		assert sanityCheck();
@@ -220,10 +211,6 @@ public class PartialOrderCache<E> {
 		return mMaximalElements;
 	}
 
-//	public Set<E> getMinimalRepresentatives() {
-//		return mMinimalElements;
-//	}
-
 	boolean assertStrictlySmaller(final E elem1, final E elem2) {
 		// order must be correct
 		if (mComparator.compare(elem1, elem2) != ComparisonResult.STRICTLY_SMALLER) {
@@ -238,13 +225,6 @@ public class PartialOrderCache<E> {
 		/*
 		 * the sets mMinimalElemnts and mMaximalElements may only contain representatives
 		 */
-//		for (final E e : mMinimalElements) {
-//			if (mEquivalences.find(e) != e) {
-//				final E find = mEquivalences.find(e);
-//				assert false;
-//				return false;
-//			}
-//		}
 		for (final E e : mMaximalElements) {
 			if (mEquivalences.find(e) != e) {
 				final E find = mEquivalences.find(e);
@@ -268,13 +248,6 @@ public class PartialOrderCache<E> {
 			}
 
 		}
-
-
 		return true;
 	}
-
-
-
-
-
 }

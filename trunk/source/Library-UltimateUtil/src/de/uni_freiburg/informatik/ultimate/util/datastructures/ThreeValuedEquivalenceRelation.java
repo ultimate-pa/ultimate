@@ -92,12 +92,20 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	/**
+	 * Remove the given element (first argument) from this Tver.
+	 *
+	 * If elem is not the only element in its equivalence class and is the representative before removal,
+	 *  we need to choose another representative, the second argument allows the caller to participate in that choice.
 	 *
 	 * @param elem
+	 * @param newRepChoice if newRepChoice is non-null, and elem was representative before removal, newRepChoice will
+	 *  be picked as new representative, otherwise this method picks some candidate (nondeterministically, depending on
+	 *  the hashing order)
 	 * @return the representative of elem's equivalence class after removal of elem, null if it was the only element of
 	 *         its equivalence class
 	 */
-	public E removeElement(final E elem) {
+	public E removeElement(final E elem, final E newRepChoice) {
+		assert newRepChoice == null || getRepresentative(elem) == getRepresentative(newRepChoice);
 		final E rep = mUnionFind.find(elem);
 		final Set<E> equivalenceClassCopy = new HashSet<>(mUnionFind.getEquivalenceClassMembers(elem));
 		mUnionFind.remove(elem);
@@ -121,8 +129,13 @@ public class ThreeValuedEquivalenceRelation<E> {
 		assert rep == elem;
 		// elem was the representative of its equivalence class, but not the only element
 		// --> replace it by the new representative in mDistinctElements
-		final E newRep = mUnionFind.find(equivalenceClassCopy.iterator().next());
-		assert newRep != null;
+		final E newRep;
+		if (newRepChoice == null) {
+			newRep = mUnionFind.find(equivalenceClassCopy.iterator().next());
+		} else {
+			newRep = newRepChoice;
+		}
+		assert newRep!= null;
 		mDisequalities.replaceDomainElement(elem, newRep);
 		mDisequalities.replaceRangeElement(elem, newRep);
 		assert sanityCheck();

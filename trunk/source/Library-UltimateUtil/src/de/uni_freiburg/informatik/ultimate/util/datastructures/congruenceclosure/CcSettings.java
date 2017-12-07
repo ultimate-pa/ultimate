@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
 public class CcSettings {
+	static final boolean MEET_WITH_WEQ_CC = true;
+
 	public static final boolean FREEZE_ALL_IN_MANAGER = true;
 
 	public static final boolean REPORT_EQ_DEQ_INPLACE = false;

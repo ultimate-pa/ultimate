@@ -17,7 +17,8 @@ public interface ICcRemoveElement<ELEM extends ICongruenceClosureElement<ELEM>> 
 
 	boolean isConstrained(ELEM elemToRemove);
 
-	Set<ELEM> getNodesToIntroduceBeforeRemoval(ELEM elemToRemove, Map<ELEM, ELEM> nodeToReplacementNode);
+	Set<ELEM> getNodesToIntroduceBeforeRemoval(ELEM elemToRemove, Set<ELEM> elementsToRemove,
+			Map<ELEM, ELEM> nodeToReplacementNode);
 
 	boolean addElementRec(ELEM proxyElem);
 
@@ -39,5 +40,7 @@ public interface ICcRemoveElement<ELEM extends ICongruenceClosureElement<ELEM>> 
 	boolean isDebugMode();
 
 	ILogger getLogger();
+
+	boolean areEqual(ELEM key, ELEM value);
 
 }

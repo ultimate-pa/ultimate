@@ -5,10 +5,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure.CcSettings;
 
 public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
@@ -77,72 +77,38 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * Map in which try to collect a perfect replacement for each element that is to be removed.
 		 * This map is updated through "getOtherEquivalenceMemeber", for already existing nodes,
 		 *  and through getNodesToIntroducebeforeRemoval, for newly introduced equivalents.
+		 *
+		 * Each replacement node must be equivalent to its original node in mElementContainer.
+		 *
+		 * We will ensure that if the original node was a representative of an equivalence class, the replacement node
+		 * will be the new representative in the equivalence class.
+		 *
 		 */
 		final Map<ELEM, ELEM> nodeToReplacementNode = new HashMap<>();
 
 		for (final ELEM elemToRemove : elementsToRemove) {
-			nodeToReplacementNode.put(elemToRemove,
-					mElementContainer.getOtherEquivalenceClassMember(elemToRemove, elementsToRemove));
+			final ELEM otherEqClassMember =
+					mElementContainer.getOtherEquivalenceClassMember(elemToRemove, elementsToRemove);
+			if (otherEqClassMember == null) {
+				continue;
+			}
+			nodeToReplacementNode.put(elemToRemove, otherEqClassMember);
 		}
 		assert DataStructureUtils.intersection(new HashSet<>(nodeToReplacementNode.values()), elementsToRemove)
 			.isEmpty();
 
 		assert !mElementContainer.isInconsistent();
 
-		while (true) {
-			if (!mIntroduceNewNodes) {
-				break;
-			}
-			final Set<ELEM> nodesToAdd = new HashSet<>();
 
-			for (final ELEM elemToRemove : elementsToRemove) {
-				if (elemToRemove.isFunctionApplication() && mElementContainer.isConstrained(elemToRemove)) {
-					// we don't have a replacement, but we want one, try if we can get one
-					final Set<ELEM> replacementNodes =
-							mElementContainer.getNodesToIntroduceBeforeRemoval(elemToRemove, nodeToReplacementNode);
-					nodesToAdd.addAll(replacementNodes);
-				}
-			}
-
-			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
-			assert nodesToAdd.stream().allMatch(n -> !mElementContainer.hasElement(n));
-			assert mElementContainer.sanityCheck();
-
-			if (nodesToAdd.isEmpty()) {
-				break;
-			}
-
-			if (mElementContainer.isDebugMode()) {
-				mElementContainer.getLogger().debug("RemoveElement: adding nodes " + nodesToAdd);
-			}
-
-			// add proxy elements
-			for (final ELEM proxyElem : nodesToAdd) {
-				if (mElementContainer.isDebugMode()) {
-					mElementContainer.getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
-							mElementContainer.hashCode() + " because it was added in weq graph label");
-				}
-
-				mElementContainer.addElementRec(proxyElem);
-
-				if (mElementContainer.isInconsistent()) {
-					// Cc became inconsistent through adding proxyElem --> nothing more to do
-					if (mElementContainer.isDebugMode()) {
-						mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
-								" became inconsistent when adding" + proxyElem);
-					}
-					mDidRemoval = true;
-					return;
-				}
-
-				assert mElementContainer.sanityCheck();
-			}
-
-			if (mIntroduceNewNodes && !mUseWeqGpa) {
-				mAddedNodes.addAll(nodesToAdd);
-			}
+		boolean becameInconsistentWhenAddingANode = false;
+		becameInconsistentWhenAddingANode = addNodesToKeepInformation(elementsToRemove, nodeToReplacementNode);
+		if (becameInconsistentWhenAddingANode) {
+			assert mElementContainer.isInconsistent();
+			mDidRemoval = true;
+			return;
 		}
 
+		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mElementContainer);
 		assert !mElementContainer.isInconsistent();
 
 		mElementContainer.applyClosureOperations();
@@ -155,8 +121,16 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 		mElementContainer.prepareForRemove(mUseWeqGpa);
 
-		final Set<ELEM> nodesAddedInLabels = mElementContainer.removeElementAndDependents(mElem, elementsToRemove,
-				nodeToReplacementNode, mUseWeqGpa);
+		final Set<ELEM> nodesAddedInLabels;
+		if (mElementContainer instanceof CongruenceClosure<?>) {
+			assert mElementContainer instanceof CongruenceClosure<?>;
+			((CongruenceClosure<ELEM>) mElementContainer).removeElements(elementsToRemove, nodeToReplacementNode);
+			nodesAddedInLabels = Collections.emptySet();
+		} else {
+			nodesAddedInLabels = mElementContainer.removeElementAndDependents(mElem, elementsToRemove,
+					nodeToReplacementNode, mUseWeqGpa);
+		}
+
 
 		// the edge labels may have added nodes when projecting something --> add them to the gpa
 		for (final ELEM nail : nodesAddedInLabels) {
@@ -188,6 +162,79 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (mElementContainer.isDebugMode()) {
 			mElementContainer.getLogger().debug("RemoveElement " + hashCode() + " finished normally");
 		}
+	}
+
+
+	private boolean nodeAndReplacementAreEquivalent(final Map<ELEM, ELEM> nodeToReplacementNode,
+			final ICcRemoveElement<ELEM> elementContainer) {
+		for (final Entry<ELEM, ELEM> en : nodeToReplacementNode.entrySet()) {
+//			if (en.getValue() == null) {
+//				continue;
+//			}
+			if (!elementContainer.areEqual(en.getKey(), en.getValue())) {
+				assert false;
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean addNodesToKeepInformation(final Set<ELEM> elementsToRemove,
+			final Map<ELEM, ELEM> nodeToReplacementNode) {
+		if (!mIntroduceNewNodes) {
+			return false;
+		}
+		while (true) {
+			final Set<ELEM> nodesToAdd = new HashSet<>();
+
+			for (final ELEM elemToRemove : elementsToRemove) {
+				if (elemToRemove.isFunctionApplication() && mElementContainer.isConstrained(elemToRemove)) {
+					// we don't have a replacement, but we want one, try if we can get one
+					final Set<ELEM> replacementNodes = mElementContainer.getNodesToIntroduceBeforeRemoval(elemToRemove,
+							elementsToRemove, nodeToReplacementNode);
+
+					nodesToAdd.addAll(replacementNodes);
+				}
+			}
+
+			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
+			assert nodesToAdd.stream().allMatch(n -> !mElementContainer.hasElement(n));
+			assert mElementContainer.sanityCheck();
+
+			if (nodesToAdd.isEmpty()) {
+				break;
+			}
+
+			if (mElementContainer.isDebugMode()) {
+				mElementContainer.getLogger().debug("RemoveElement: adding nodes " + nodesToAdd);
+			}
+
+			// add proxy elements
+			for (final ELEM proxyElem : nodesToAdd) {
+				if (mElementContainer.isDebugMode()) {
+					mElementContainer.getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
+							mElementContainer.hashCode() + " because it was added in weq graph label");
+				}
+
+				mElementContainer.addElementRec(proxyElem);
+
+				if (mElementContainer.isInconsistent()) {
+					// Cc became inconsistent through adding proxyElem --> nothing more to do
+					if (mElementContainer.isDebugMode()) {
+						mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
+								" became inconsistent when adding" + proxyElem);
+					}
+					return true;
+				}
+
+				assert mElementContainer.sanityCheck();
+			}
+
+			if (mIntroduceNewNodes && !mUseWeqGpa) {
+				mAddedNodes.addAll(nodesToAdd);
+			}
+		}
+		return false;
 	}
 
 	public boolean madeChanges() {
@@ -250,14 +297,12 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return re;
 		}
 
-		//		mElementCurrentlyBeingRemoved = re;
 		cc.setElementCurrentlyBeingRemoved(re);
 
 		re.doRemoval();
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
 		assert cc.sanityCheck();
 
-		//		mElementCurrentlyBeingRemoved = null;
 		cc.setElementCurrentlyBeingRemoved(null);
 
 		assert cc.assertSimpleElementIsFullyRemoved(elem);

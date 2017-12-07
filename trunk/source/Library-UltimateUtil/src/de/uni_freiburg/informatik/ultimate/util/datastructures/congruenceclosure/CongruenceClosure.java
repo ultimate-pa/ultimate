@@ -472,7 +472,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ELEM result = mElementTVER.getRepresentative(elem);
 		if (result == null) {
 			throw new IllegalArgumentException(
-					"Use this method only for elements that you now have been added " + "already");
+					"Use this method only for elements that you know have been added already");
 		}
 		return result;
 	}
@@ -518,9 +518,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @return a set of nodes that have been added to dependent objects (weakEqLabels in the WeqCC case)
 	 *		 empty set for this class (only meaningful in subclasses)
 	 */
-	@Override
-	public Set<ELEM> removeElementAndDependents(final ELEM elem, final Set<ELEM> elementsToRemove,
-			final Map<ELEM, ELEM> nodeToReplacementNode, final boolean useWeqGpa) {
+	public void removeElements(final Set<ELEM> elementsToRemove, final Map<ELEM, ELEM> nodeToReplacementNode) {
 
 		for (final ELEM etr : elementsToRemove) {
 			mFaAuxData.removeFromNodeToDependents(etr);
@@ -531,9 +529,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			if (!hasElement(etr)) {
 				continue;
 			}
-			updateElementTverAndAuxDataOnRemoveElement(etr);
+			updateElementTverAndAuxDataOnRemoveElement(etr, nodeToReplacementNode.get(etr));
 		}
-		return Collections.emptySet();
+//		return Collections.emptySet();
 	}
 
 	@Override
@@ -552,11 +550,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @return
 	 */
 	@Override
-	public Set<ELEM> getNodesToIntroduceBeforeRemoval(final ELEM elemToRemove,
+	public Set<ELEM> getNodesToIntroduceBeforeRemoval(final ELEM elemToRemove, final Set<ELEM> elementsToRemove,
 			final Map<ELEM, ELEM> elemToRemoveToReplacement) {
 
-		assert elemToRemoveToReplacement.keySet().contains(elemToRemove);
-		assert elemToRemoveToReplacement.keySet().equals(mElementCurrentlyBeingRemoved.getRemovedElements());
+		assert elementsToRemove.contains(elemToRemove);
+//		assert elemToRemoveToReplacement.keySet().equals(mElementCurrentlyBeingRemoved.getRemovedElements());
 
 		/*
 		 * say
@@ -579,16 +577,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *  three cases: appliedfunction, argument, both
 		 */
 		final boolean etrIsRemovedBecauseOfAf =
-				elemToRemoveToReplacement.keySet().contains(elemToRemove.getAppliedFunction());
+				elementsToRemove.contains(elemToRemove.getAppliedFunction());
 		final boolean etrIsRemovedBecauseOfArg =
-				elemToRemoveToReplacement.keySet().contains(elemToRemove.getArgument());
+				elementsToRemove.contains(elemToRemove.getArgument());
 
 		if (etrIsRemovedBecauseOfAf && etrIsRemovedBecauseOfArg) {
 			// look for b with a ~ b, and j with i ~ j
 			final ELEM afReplacement = getOtherEquivalenceClassMember(elemToRemove.getAppliedFunction(),
-				elemToRemoveToReplacement.keySet());
+				elementsToRemove);
 			final ELEM argReplacement = getOtherEquivalenceClassMember(elemToRemove.getArgument(),
-					elemToRemoveToReplacement.keySet());
+					elementsToRemove);
 			if (afReplacement != null && argReplacement != null) {
 				final ELEM afReplaced = elemToRemove.replaceAppliedFunction(afReplacement);
 				final ELEM afAndArgReplaced = afReplaced.replaceArgument(argReplacement);
@@ -603,7 +601,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		} else if (etrIsRemovedBecauseOfAf) {
 			// look for b with a ~ b
 			final ELEM afReplacement = getOtherEquivalenceClassMember(elemToRemove.getAppliedFunction(),
-					elemToRemoveToReplacement.keySet());
+					elementsToRemove);
 			if (afReplacement != null) {
 				final ELEM afReplaced = elemToRemove.replaceAppliedFunction(afReplacement);
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afReplaced);
@@ -617,7 +615,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		} else {
 			// look for j with i ~ j
 			final ELEM argReplacement = getOtherEquivalenceClassMember(elemToRemove.getArgument(),
-					elemToRemoveToReplacement.keySet());
+					elementsToRemove);
 			if (argReplacement != null) {
 				final ELEM argReplaced = elemToRemove.replaceArgument(argReplacement);
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(argReplaced);
@@ -669,10 +667,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return null;
 	}
 
-	private ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem) {
+	private ELEM updateElementTverAndAuxDataOnRemoveElement(final ELEM elem, final ELEM newRepChoice) {
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
 
-		final ELEM newRep = mElementTVER.removeElement(elem);
+		final ELEM newRep = mElementTVER.removeElement(elem, newRepChoice);
+		assert !elemWasRepresentative || newRepChoice == null || newRep == newRepChoice;
 
 		getAuxData().removeElement(this, elem, elemWasRepresentative, newRep);
 		if (elem.isFunctionApplication()) {
@@ -1656,10 +1655,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 	}
 
-	static class CcSettings {
-		static final boolean MEET_WITH_WEQ_CC = true;
-	}
-
 	public void reportEqualityToElementTVER(final ELEM node1, final ELEM node2) {
 		mElementTVER.reportEquality(node1, node2);
 	}
@@ -1696,5 +1691,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	@Override
 	public ILogger getLogger() {
 		return mManager.getLogger();
+	}
+
+	@Override
+	public boolean areEqual(final ELEM key, final ELEM value) {
+		return getRepresentativeElement(key) == getRepresentativeElement(value);
+	}
+
+	/**
+	 * only here due to interface -- until I find a nicer solution..
+	 */
+	@Override
+	public Set<ELEM> removeElementAndDependents(final ELEM elem, final Set<ELEM> elementsToRemove,
+			final Map<ELEM, ELEM> nodeToReplacementNode, final boolean useWeqGpa) {
+		throw new UnsupportedOperationException();
 	}
 }

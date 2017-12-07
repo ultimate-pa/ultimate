@@ -747,26 +747,25 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			final Map<NODE, NODE> nodeToReplacementNode, final boolean useWeqGpa) {
 
 		for (final NODE etr : elementsToRemove) {
-			mWeakEquivalenceGraph.updateVerticesOnRemoveElement(etr, nodeToReplacementNode.get(etr));
+			mWeakEquivalenceGraph.replaceVertex(etr, nodeToReplacementNode.get(etr));
 		}
-
 
 		final Set<NODE> nodesToAddInGpa = mWeakEquivalenceGraph.projectSimpleElementInEdgeLabels(elem, useWeqGpa);
 
 		assert !useWeqGpa || nodesToAddInGpa.isEmpty() : "we don't allow introduction of new nodes at labels if we"
 				+ "are not in the meet-with-WeqGpa case";
 
-		mCongruenceClosure.removeElementAndDependents(elem, elementsToRemove, nodeToReplacementNode, useWeqGpa);
+		mCongruenceClosure.removeElements(elementsToRemove, nodeToReplacementNode);
 
 		return nodesToAddInGpa;
 	}
 
 	@Override
-	public Set<NODE> getNodesToIntroduceBeforeRemoval(final NODE elemToRemove,
+	public Set<NODE> getNodesToIntroduceBeforeRemoval(final NODE elemToRemove, final Set<NODE> elementsToRemove,
 			final Map<NODE, NODE> elemToRemoveToReplacement) {
 		final boolean stopAtFirst = false;
 
-	    final Set<NODE> replByFwcc = mCongruenceClosure.getNodesToIntroduceBeforeRemoval(elemToRemove,
+	    final Set<NODE> replByFwcc = mCongruenceClosure.getNodesToIntroduceBeforeRemoval(elemToRemove, elementsToRemove,
 	    		elemToRemoveToReplacement);
 
 
@@ -777,8 +776,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 
-		final boolean etrIsRemovedBecauseOfAf =
-				elemToRemoveToReplacement.keySet().contains(elemToRemove.getAppliedFunction());
+		final boolean etrIsRemovedBecauseOfAf = elementsToRemove.contains(elemToRemove.getAppliedFunction());
 		if (!etrIsRemovedBecauseOfAf) {
 			return Collections.emptySet();
 		}
@@ -793,9 +791,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		/*
 		 * we may need this later if i is also scheduled for removal
 		 */
-		final boolean iToBeRemovedToo = elemToRemoveToReplacement.keySet().contains(elemToRemove.getArgument());
+		final boolean iToBeRemovedToo = elementsToRemove.contains(elemToRemove.getArgument());
 		final NODE jEqualToI =
-				mCongruenceClosure.getOtherEquivalenceClassMember(elemToRemove.getArgument(), elemToRemoveToReplacement.keySet());
+				mCongruenceClosure.getOtherEquivalenceClassMember(elemToRemove.getArgument(), elementsToRemove);
 		if (iToBeRemovedToo && jEqualToI == null) {
 			// no way of introducing a b[j] because we cannot find a j (and i is being removed, too..)
 			return Collections.emptySet();
@@ -807,7 +805,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE>> edge
 				: mWeakEquivalenceGraph.getAdjacentWeqEdges(elemToRemove.getAppliedFunction()).entrySet()) {
 			assert !edge.getKey().equals(elemToRemove.getAppliedFunction());
-			if (elemToRemoveToReplacement.keySet().contains(edge.getKey())) {
+			if (elementsToRemove.contains(edge.getKey())) {
 				// b is also being removed, cannot use it for propagations..
 				continue;
 			}
@@ -1251,4 +1249,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mWeakEquivalenceGraph;
 	}
 
+	@Override
+	public boolean areEqual(final NODE key, final NODE value) {
+		return getRepresentativeElement(key) == getRepresentativeElement(value);
+	}
 }
