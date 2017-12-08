@@ -79,7 +79,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	 * The table containing all functions.
 	 */
 	private final LinkedHashMap<String, IASTNode> mFunctionTable;
-	// private LinkedHashMap<String, IASTFunctionDefinition> functionTable;
 
 	private final Stack<IASTDeclaration> mCurrentDeclarationStack;
 
