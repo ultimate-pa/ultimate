@@ -129,10 +129,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return unfrozen;
 	}
 
-	private WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
+	WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
 		assert origWeqCc.isFrozen();
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
 		assert !result.isFrozen();
+		assert result.sanityCheck();
 		return result;
 	}
 
@@ -214,22 +215,45 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
+	/**
+	 * Could also be called "makeSnapshot"
+	 * Used when we want to use a WeqCc but also want to remember its original state.
+	 * This is called when we need a copy in any case (roughly..)
+	 * If we are doing things inplace, we may need a copy from time to time, that is the purpose of this method.
+	 * If the manager freezes everything before returning it, and the original is frozen, we don't need to make a copy
+	 * here.
+	 * TODO: not entirely clear.. think through..
+	 * @param original
+	 * @return
+	 */
 	public WeqCongruenceClosure<NODE> makeCopy(final WeqCongruenceClosure<NODE> original) {
-		if (original.isFrozen()) {
+		if (WeqSettings.FREEZE_ALL_IN_MANAGER && original.isFrozen()) {
 			// original is frozen --> a copy should not be necessary (use unfreeze if an
 			// unfrozen copy is needed)
 			return original;
 		}
-		return new WeqCongruenceClosure<>(original, false);
+		final WeqCongruenceClosure<NODE> copy = new WeqCongruenceClosure<>(original, false);
+		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
+			copy.freeze();
+		}
+		return copy;
 	}
 
 	public WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> weqcc1,
 			final WeqCongruenceClosure<NODE> weqcc2) {
-		final WeqCongruenceClosure<NODE> weqcc1Unfrozen = unfreeze(weqcc1);
-		final WeqCongruenceClosure<NODE> weqcc2Unfrozen = unfreeze(weqcc2);
+//		final WeqCongruenceClosure<NODE> weqcc1Unfrozen = unfreeze(weqcc1);
+//		final WeqCongruenceClosure<NODE> weqcc2Unfrozen = unfreeze(weqcc2);
+		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
+			assert weqcc1.isFrozen();
+			assert weqcc2.isFrozen();
+		} else {
+			assert !weqcc1.isFrozen();
+			assert !weqcc2.isFrozen();
+		}
 
 		// final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2);
-		final WeqCongruenceClosure<NODE> result = weqcc1Unfrozen.meet(weqcc2Unfrozen);
+//		final WeqCongruenceClosure<NODE> result = weqcc1Unfrozen.meet(weqcc2Unfrozen);
+		final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2);
 		result.freeze();
 
 		assert checkMeetResult(weqcc1, weqcc2, result);
@@ -576,7 +600,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> getWeqCongruenceClosure(final CongruenceClosure<NODE> cc,
 			final WeakEquivalenceGraph<NODE> weqGraph) {
-		return new WeqCongruenceClosure<>(cc, weqGraph, this);
+		final CongruenceClosure<NODE> ccUnfrozen = mCcManager.unfreezeIfNecessary(cc);
+		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(ccUnfrozen, weqGraph, this);
+		result.freeze();
+		return result;
 	}
 
 	public CongruenceClosure<NODE> getSingleEqualityCc(final NODE node1, final NODE node2) {
@@ -619,5 +646,34 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public CongruenceClosure<NODE> projectToElements(final CongruenceClosure<NODE> cc, final Set<NODE> nodesToKeep,
 			final RemoveCcElement<NODE> remInfo) {
 		return mCcManager.projectToElements(cc, nodesToKeep, remInfo);
+	}
+
+	public WeqCongruenceClosure<NODE> addAllElements(final WeqCongruenceClosure<NODE> weqcc,
+			final Set<NODE> nodesToAdd, final RemoveCcElement<NODE> remInfo) {
+		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
+			assert weqcc.isFrozen();
+		} else {
+			assert !weqcc.isFrozen();
+		}
+
+		assert !weqcc.isInconsistent();
+		assert remInfo == null;
+
+		final WeqCongruenceClosure<NODE> result = unfreeze(weqcc);
+
+		for (final NODE e : nodesToAdd) {
+			result.addElementRec(e);
+		}
+
+		assert result.sanityCheck();
+		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
+			result.freeze();
+		}
+		return result;
+	}
+
+	public CongruenceClosure<NODE> addAllElementsCc(final CongruenceClosure<NODE> cc,
+			final Set<NODE> elemsToAdd, final RemoveCcElement<NODE> remInfo) {
+		return mCcManager.addAllElements(cc, elemsToAdd, remInfo);
 	}
 }

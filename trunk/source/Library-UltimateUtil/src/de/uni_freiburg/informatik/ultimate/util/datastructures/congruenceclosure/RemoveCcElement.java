@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
 public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
@@ -173,7 +174,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 	private boolean nodeAndReplacementAreEquivalent(final Map<ELEM, ELEM> nodeToReplacementNode,
 			final ICcRemoveElement<ELEM> elementContainer) {
 		for (final Entry<ELEM, ELEM> en : nodeToReplacementNode.entrySet()) {
-			if (!elementContainer.areEqual(en.getKey(), en.getValue())) {
+			if (elementContainer.getEqualityStatus(en.getKey(), en.getValue()) != EqualityStatus.EQUAL) {
 				assert false;
 				return false;
 			}

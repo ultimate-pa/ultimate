@@ -16,4 +16,10 @@ public class WeqSettings {
 	 */
 	public static final boolean INTRODUCE_AT_MOST_ONE_NODE_FOR_EACH_REMOVED_NODE = false;
 
+	public static final int MAX_NO_ELEMENTS_FOR_VERBOSE_TO_STRING = 20;
+
+	public static final int MAX_NO_EDGELABELDISJUNCTS_FOR_VERBOSE_TO_STRING = 3;
+
+	public static final int MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING = 4;
+
 }

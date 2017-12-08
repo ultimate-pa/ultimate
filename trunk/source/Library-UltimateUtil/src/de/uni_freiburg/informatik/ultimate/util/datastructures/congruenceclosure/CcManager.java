@@ -73,15 +73,22 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert cc2.sanityCheck();
 
 		if (cc1.isTautological()) {
-//			assert cc2.isFrozen();
+			assert !CcSettings.FREEZE_ALL_IN_MANAGER || cc2.isFrozen();
 			return cc2;
 		}
 		if (cc2.isTautological()) {
-//			assert cc1.isFrozen();
+			assert !CcSettings.FREEZE_ALL_IN_MANAGER || cc1.isFrozen();
 			return cc1;
 		}
 		if (cc1.isInconsistent() || cc2.isInconsistent()) {
 			return getInconsistentCc();
+		}
+
+		if (CcSettings.FREEZE_ALL_IN_MANAGER && !cc1.isFrozen()) {
+			cc1.freeze();
+		}
+		if (CcSettings.FREEZE_ALL_IN_MANAGER && !cc2.isFrozen()) {
+			cc2.freeze();
 		}
 
 		final CongruenceClosure<ELEM> result;
@@ -202,9 +209,14 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return new Pair<>(unfrozen, addedNodes);
 	}
 
-	private CongruenceClosure<ELEM> unfreeze(final CongruenceClosure<ELEM> origCc) {
+	public CongruenceClosure<ELEM> unfreeze(final CongruenceClosure<ELEM> origCc) {
 		assert origCc.isFrozen();
 		return new CongruenceClosure<>(origCc);
+	}
+
+	private CongruenceClosure<ELEM> unfreeze(final CongruenceClosure<ELEM> cc, final RemoveCcElement<ELEM> remInfo) {
+		assert cc.isFrozen();
+		return new CongruenceClosure<>(cc, remInfo);
 	}
 
 	public CongruenceClosure<ELEM> addElement(final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem) {
@@ -307,8 +319,25 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
+	public CongruenceClosure<ELEM> addAllElements(final CongruenceClosure<ELEM> cc, final Set<ELEM> elemsToAdd,
+			final RemoveCcElement<ELEM> remInfo) {
+		assert !cc.isInconsistent();
 
+		// TODO: is it redundant to add remInfo to the result Cc and give it to addElementRec??
+		final CongruenceClosure<ELEM> result = unfreeze(cc, remInfo);
 
+		for (final ELEM elem : elemsToAdd) {
+			result.addElementRec(elem, remInfo);
+		}
 
+		return result;
+	}
 
+	public CongruenceClosure<ELEM> unfreezeIfNecessary(final CongruenceClosure<ELEM> cc) {
+		if (cc.isFrozen()) {
+			return unfreeze(cc);
+		} else {
+			return cc;
+		}
+	}
 }

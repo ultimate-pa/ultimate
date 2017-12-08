@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 
 public interface ICcRemoveElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 
@@ -41,6 +42,8 @@ public interface ICcRemoveElement<ELEM extends ICongruenceClosureElement<ELEM>> 
 
 	ILogger getLogger();
 
-	boolean areEqual(ELEM key, ELEM value);
+	EqualityStatus getEqualityStatus(ELEM key, ELEM value);
+
+//	boolean areEqual(ELEM key, ELEM value);
 
 }

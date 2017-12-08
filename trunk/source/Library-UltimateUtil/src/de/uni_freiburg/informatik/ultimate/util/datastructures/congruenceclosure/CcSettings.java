@@ -10,4 +10,6 @@ public class CcSettings {
 	public static final boolean ADD_NODE_INPLACE = false;
 	public static final boolean PROJECTTOELEMENTS_INPLACE = false;
 
+	public static final int MAX_NO_ELEMENTS_FOR_VERBOSE_TO_STRING = 20;
+
 }

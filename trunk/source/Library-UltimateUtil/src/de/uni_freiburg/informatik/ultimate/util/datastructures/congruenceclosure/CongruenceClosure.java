@@ -226,6 +226,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	public boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
+		assert !mIsFrozen;
 		if (isInconsistent()) {
 			throw new IllegalStateException();
 		}
@@ -336,6 +337,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	public boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2) {
+		assert !mIsFrozen;
 		assert elem1.hasSameTypeAs(elem2);
 
 		if (isInconsistent()) {
@@ -382,6 +384,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	boolean addElementRec(final ELEM elem, final RemoveCcElement<ELEM> remInfo) {
+		assert !mIsFrozen;
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
 			registerNewElement(elem, remInfo);
@@ -519,6 +522,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *		 empty set for this class (only meaningful in subclasses)
 	 */
 	public void removeElements(final Set<ELEM> elementsToRemove, final Map<ELEM, ELEM> nodeToReplacementNode) {
+		assert !mIsFrozen;
 
 		for (final ELEM etr : elementsToRemove) {
 			mFaAuxData.removeFromNodeToDependents(etr);
@@ -635,7 +639,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	private boolean nodeToAddIsEquivalentToOriginal(final ELEM afAndArgReplaced, final ELEM elemToRemove) {
 		final CongruenceClosure<ELEM> copy = mManager.copyNoRemInfoUnfrozen(this);
 		copy.addElement(afAndArgReplaced);
-		if (!copy.areEqual(afAndArgReplaced, elemToRemove)) {
+		if (copy.getEqualityStatus(afAndArgReplaced, elemToRemove) != EqualityStatus.EQUAL) {
 			assert false;
 			return false;
 		}
@@ -720,8 +724,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological();
 
-		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other.getAllElements(), null);
-		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this.getAllElements(), null);
+//		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other.getAllElements(), null);
+//		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this.getAllElements(), null);
+		final CongruenceClosure<ELEM> thisAligned = mManager.addAllElements(this, other.getAllElements(), null);
+		final CongruenceClosure<ELEM> otherAligned = mManager.addAllElements(other, this.getAllElements(), null);
 
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = thisAligned.mElementTVER
 				.join(otherAligned.mElementTVER);
@@ -729,24 +735,24 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mManager.getCongruenceClosureFromTver(newElemTver);
 	}
 
-	/**
-	 * returns a copy of this where all elements and functions from other have been added.
-	 * @param other
-	 * @param remInfo
-	 * @return
-	 */
-	public CongruenceClosure<ELEM> alignElementsAndFunctionsCc(final Set<ELEM> otherElems,
-			final RemoveCcElement<ELEM> remInfo) {
-		assert !this.isInconsistent();
-
-		final CongruenceClosure<ELEM> result = mManager.getCopyWithRemovalInfo(this, remInfo);
-
-		otherElems.stream().forEach(result::addElementRec);
-
-//		assert result.sanityCheckOnlyCc();
-		assert assertElementsAreSuperset(result.getAllElements(), otherElems);
-		return result;
-	}
+//	/**
+//	 * returns a copy of this where all elements and functions from other have been added.
+//	 * @param other
+//	 * @param remInfo
+//	 * @return
+//	 */
+//	public CongruenceClosure<ELEM> alignElementsAndFunctionsCc(final Set<ELEM> otherElems,
+//			final RemoveCcElement<ELEM> remInfo) {
+//		assert !this.isInconsistent();
+//
+//		final CongruenceClosure<ELEM> result = mManager.getCopyWithRemovalInfo(this, remInfo);
+//
+//		otherElems.stream().forEach(result::addElementRec);
+//
+////		assert result.sanityCheckOnlyCc();
+//		assert assertElementsAreSuperset(result.getAllElements(), otherElems);
+//		return result;
+//	}
 
 	public CongruenceClosure<ELEM> meetRec(final CongruenceClosure<ELEM> other, final RemoveCcElement<ELEM> remInfo) {
 		if (this.isInconsistent() || other.isInconsistent()) {
@@ -775,8 +781,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	private CongruenceClosure<ELEM> naiveMeet(final CongruenceClosure<ELEM> other, final RemoveCcElement<ELEM> remInfo) {
 		assert !this.isInconsistent() && !other.isInconsistent();
 
-		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other.getAllElements(), remInfo);
-		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this.getAllElements(), remInfo);
+//		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other.getAllElements(), remInfo);
+//		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this.getAllElements(), remInfo);
+		final CongruenceClosure<ELEM> thisAligned = mManager.addAllElements(this, other.getAllElements(), remInfo);
+		final CongruenceClosure<ELEM> otherAligned = mManager.addAllElements(other, this.getAllElements(), remInfo);
 
 		for (final Entry<ELEM, ELEM> eq : otherAligned.getSupportingElementEqualities().entrySet()) {
 			if (thisAligned.isInconsistent()) {
@@ -814,9 +822,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			// we know other != True, and this = True
 			return false;
 		}
-		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other.getAllElements(), null);
+//		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other.getAllElements(), null);
+		final CongruenceClosure<ELEM> thisAligned = mManager.addAllElements(this, other.getAllElements(), null);
 		assert assertElementsAreSuperset(thisAligned, other);
-		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this.getAllElements(), null);
+//		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this.getAllElements(), null);
+		final CongruenceClosure<ELEM> otherAligned = mManager.addAllElements(other, this.getAllElements(), null);
 		assert assertElementsAreSuperset(thisAligned, otherAligned);
 		assert assertElementsAreSuperset(otherAligned, thisAligned);
 		return checkIsStrongerThan(thisAligned, otherAligned);
@@ -875,8 +885,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return false;
 		}
 
-		final CongruenceClosure<ELEM> thisAligned = this.alignElementsAndFunctionsCc(other.getAllElements(), null);
-		final CongruenceClosure<ELEM> otherAligned = other.alignElementsAndFunctionsCc(this.getAllElements(), null);
+		final CongruenceClosure<ELEM> thisAligned = mManager.addAllElements(this, other.getAllElements(), null);
+		final CongruenceClosure<ELEM> otherAligned =  mManager.addAllElements(other, this.getAllElements(), null);
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
 	}
 
@@ -915,6 +925,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return true;
 	}
 
+	@Override
 	public EqualityStatus getEqualityStatus(final ELEM elem1, final ELEM elem2) {
 		assert hasElement(elem1) && hasElement(elem2);
 
@@ -1280,7 +1291,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (isInconsistent()) {
 			return "False";
 		}
-		if (getAllElements().size() < 20) {
+		if (getAllElements().size() < CcSettings.MAX_NO_ELEMENTS_FOR_VERBOSE_TO_STRING) {
 			return toLogString();
 		}
 
@@ -1359,6 +1370,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @return
 	 */
 	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
+		assert !mIsFrozen;
 //		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
 //				+ "produce elements that were in the relation before!";
 
@@ -1453,6 +1465,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 */
 	CongruenceClosure<ELEM> projectToElements(final Set<ELEM> elemsToKeep,
 			final RemoveCcElement<ELEM> removeElementInfo) {
+		assert !mIsFrozen;
 		if (isInconsistent()) {
 			return this;
 		}
@@ -1552,7 +1565,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @return
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean dependsOnAny(final ELEM elem,
-//	public boolean dependsOnAny(final ELEM elem,
 			final Set<ELEM> sub) {
 
 		if (elem.isDependent()) {
@@ -1705,10 +1717,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mManager.getLogger();
 	}
 
-	@Override
-	public boolean areEqual(final ELEM key, final ELEM value) {
-		return getRepresentativeElement(key) == getRepresentativeElement(value);
-	}
+//	@Override
+//	public boolean areEqual(final ELEM key, final ELEM value) {
+//		return getRepresentativeElement(key) == getRepresentativeElement(value);
+//	}
 
 	/**
 	 * only here due to interface -- until I find a nicer solution..

@@ -887,7 +887,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		if (isEmpty()) {
 			return "Empty";
 		}
-		if (mWeakEquivalenceEdges.size() < 4) {
+		if (mWeakEquivalenceEdges.size() < WeqSettings.MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING) {
 			return toLogString();
 		}
 
