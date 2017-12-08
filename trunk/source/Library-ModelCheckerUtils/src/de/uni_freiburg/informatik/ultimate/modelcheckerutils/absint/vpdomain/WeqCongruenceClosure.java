@@ -763,13 +763,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	@Override
 	public Set<NODE> getNodesToIntroduceBeforeRemoval(final NODE elemToRemove, final Set<NODE> elementsToRemove,
 			final Map<NODE, NODE> elemToRemoveToReplacement) {
-		final boolean stopAtFirst = false;
 
 	    final Set<NODE> replByFwcc = mCongruenceClosure.getNodesToIntroduceBeforeRemoval(elemToRemove, elementsToRemove,
 	    		elemToRemoveToReplacement);
 
 
 		if (!replByFwcc.isEmpty()) {
+			/*
+			 * We have found a replacement in mCongruenceClosure, this is always a "perfect" replacement, i.e., a node
+			 * that is equivalent to elemToRemove.
+			 */
+			assert replByFwcc.size() == 1;
 			assert DataStructureUtils.intersection(
 					mCongruenceClosure.getElementCurrentlyBeingRemoved().getRemovedElements(), replByFwcc).isEmpty();
 			return replByFwcc;
@@ -829,6 +833,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert !mCongruenceClosure.getElementCurrentlyBeingRemoved().getRemovedElements().contains(bi);
 				elemToRemoveToReplacement.put(elemToRemove, bi);
 				if (!mCongruenceClosure.hasElement(bi)) {
+					assert nodeToAddIsEquivalentToOriginal(bi, elemToRemove);
 					return Collections.singleton(bi);
 				} else {
 					return Collections.emptySet();
@@ -850,7 +855,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			final NODE bi = mManager.getEqNodeAndFunctionFactory() .getOrConstructFuncAppElement(edge.getKey(), j);
 
-			if (stopAtFirst) {
+			if (WeqSettings.INTRODUCE_AT_MOST_ONE_NODE_FOR_EACH_REMOVED_NODE) {
 				assert !mCongruenceClosure.getElementCurrentlyBeingRemoved().getRemovedElements().contains(bi);
 				if (!hasElement(bi)) {
 					return Collections.singleton(bi);
@@ -866,6 +871,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		return result;
 	}
+
+	private boolean nodeToAddIsEquivalentToOriginal(final NODE nodeToAdd, final NODE elemToRemove) {
+		final WeqCongruenceClosure<NODE> copy = mManager.makeCopy(this);
+		copy.addElement(nodeToAdd);
+		if (!copy.areEqual(nodeToAdd, elemToRemove)) {
+			assert false;
+			return false;
+		}
+		return true;
+	}
+
 
 	@Override
 	public boolean hasElement(final NODE node) {

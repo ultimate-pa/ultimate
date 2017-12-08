@@ -11,4 +11,9 @@ public class WeqSettings {
 	public static final boolean ADD_NODE_INPLACE = false;
 	public static final boolean PROJECTTOELEMENTS_INPLACE = false;
 
+	/**
+	 * the rules pi^#-roweq and pi^
+	 */
+	public static final boolean INTRODUCE_AT_MOST_ONE_NODE_FOR_EACH_REMOVED_NODE = false;
+
 }

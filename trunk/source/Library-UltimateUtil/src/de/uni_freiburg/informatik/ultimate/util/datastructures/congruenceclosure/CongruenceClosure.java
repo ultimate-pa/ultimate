@@ -542,11 +542,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	/**
 	 *
 	 * @param elemToRemove
-	 * @param elemToRemoveIsAppliedFunctionNotArgument
+	 * @param elemToRemoveIsAppliedFunctionNotArgument serves as info which elements are currently being removed -- we don't want to schedule
+	 *   any of these for adding
 	 * @param elemToRemoveToReplacement this method may schedule elements for adding that can replace elements being
 	 *   removed -- it should update this map accordingly
-	 *   this map's keyset also serves as info which elements are currently being removed -- we don't want to schedule
-	 *   any of these for adding
 	 * @return
 	 */
 	@Override
@@ -593,6 +592,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afAndArgReplaced);
 				elemToRemoveToReplacement.put(elemToRemove, afAndArgReplaced);
 				if (!hasElement(afAndArgReplaced)) {
+					assert nodeToAddIsEquivalentToOriginal(afAndArgReplaced, elemToRemove);
 					return Collections.singleton(afAndArgReplaced);
 				} else {
 					return Collections.emptySet();
@@ -607,6 +607,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(afReplaced);
 				elemToRemoveToReplacement.put(elemToRemove, afReplaced);
 				if (!hasElement(afReplaced)) {
+					assert nodeToAddIsEquivalentToOriginal(afReplaced, elemToRemove);
 					return Collections.singleton(afReplaced);
 				} else {
 					return Collections.emptySet();
@@ -621,6 +622,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				assert !mElementCurrentlyBeingRemoved.getRemovedElements().contains(argReplaced);
 				elemToRemoveToReplacement.put(elemToRemove, argReplaced);
 				if (!hasElement(argReplaced)) {
+					assert nodeToAddIsEquivalentToOriginal(argReplaced, elemToRemove);
 					return Collections.singleton(argReplaced);
 				} else {
 					return Collections.emptySet();
@@ -628,6 +630,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		}
 		return Collections.emptySet();
+	}
+
+	private boolean nodeToAddIsEquivalentToOriginal(final ELEM afAndArgReplaced, final ELEM elemToRemove) {
+		final CongruenceClosure<ELEM> copy = mManager.copyNoRemInfoUnfrozen(this);
+		copy.addElement(afAndArgReplaced);
+		if (!copy.areEqual(afAndArgReplaced, elemToRemove)) {
+			assert false;
+			return false;
+		}
+		return true;
 	}
 
 	/**

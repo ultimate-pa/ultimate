@@ -83,6 +83,10 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 		 * We will ensure that if the original node was a representative of an equivalence class, the replacement node
 		 * will be the new representative in the equivalence class.
 		 *
+		 * Note that this map only needs to keep some equivalent element for each removed one (if possible). That needs
+		 * to be the one that will be the new representative of the removed element's equivalence class, i.e., all the
+		 * constraints that held for the removed element need to hold for its replacement.
+		 * Preserving information through adding nodes is only partially related to this map.
 		 */
 		final Map<ELEM, ELEM> nodeToReplacementNode = new HashMap<>();
 
@@ -96,6 +100,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 		assert DataStructureUtils.intersection(new HashSet<>(nodeToReplacementNode.values()), elementsToRemove)
 			.isEmpty();
+		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mElementContainer);
 
 		assert !mElementContainer.isInconsistent();
 
@@ -168,9 +173,6 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 	private boolean nodeAndReplacementAreEquivalent(final Map<ELEM, ELEM> nodeToReplacementNode,
 			final ICcRemoveElement<ELEM> elementContainer) {
 		for (final Entry<ELEM, ELEM> en : nodeToReplacementNode.entrySet()) {
-//			if (en.getValue() == null) {
-//				continue;
-//			}
 			if (!elementContainer.areEqual(en.getKey(), en.getValue())) {
 				assert false;
 				return false;
@@ -190,10 +192,10 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 			for (final ELEM elemToRemove : elementsToRemove) {
 				if (elemToRemove.isFunctionApplication() && mElementContainer.isConstrained(elemToRemove)) {
 					// we don't have a replacement, but we want one, try if we can get one
-					final Set<ELEM> replacementNodes = mElementContainer.getNodesToIntroduceBeforeRemoval(elemToRemove,
+					final Set<ELEM> nodes = mElementContainer.getNodesToIntroduceBeforeRemoval(elemToRemove,
 							elementsToRemove, nodeToReplacementNode);
 
-					nodesToAdd.addAll(replacementNodes);
+					nodesToAdd.addAll(nodes);
 				}
 			}
 
