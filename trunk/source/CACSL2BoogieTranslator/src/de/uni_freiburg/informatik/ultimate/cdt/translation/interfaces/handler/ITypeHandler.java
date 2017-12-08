@@ -50,6 +50,7 @@ import org.eclipse.cdt.core.dom.ast.ITypedef;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -69,14 +70,14 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Whether the current declaration is a struct declaration.
-	 * 
+	 *
 	 * @return true, iff struct field declarations are dispatched.
 	 */
 	boolean isStructDeclaration();
 
 	/**
 	 * Translates an IASTSimpleDeclSpecifier. Basically treats all the build in types of C
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param node
@@ -87,7 +88,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Translates an IASTNamedTypeSpecifier.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param node
@@ -98,7 +99,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Translates an IASTEnumerationSpecifier.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param node
@@ -109,7 +110,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Translates an IASTElaboratedTypeSpecifier.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param node
@@ -120,7 +121,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Translates an IASTCompositeTypeSpecifier.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param node
@@ -131,7 +132,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Translates an CDT IType to a Boogie type.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param type
@@ -142,7 +143,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Translates an CDT IBasicType to a Boogie type. This includes ICBasicType and CBasicType.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param type
@@ -153,7 +154,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Returns the type of the field in the struct.
-	 * 
+	 *
 	 * @param sT
 	 *            the current symbolTable.
 	 * @param loc
@@ -166,7 +167,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Translates an CDT ITypedef to a Boogie type.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param type
@@ -177,7 +178,7 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Translates an CDT IArrayType to a Boogie type.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param type
@@ -188,14 +189,14 @@ public interface ITypeHandler extends IHandler {
 
 	/**
 	 * Returns a list of undefined type identifiers.
-	 * 
+	 *
 	 * @return a list of undefined type identifiers
 	 */
 	Set<String> getUndefinedTypes();
 
 	/**
 	 * Compute the corresponding ASTType from a given CType.
-	 * 
+	 *
 	 * @param loc
 	 * @param cType
 	 * @return
@@ -220,4 +221,8 @@ public interface ITypeHandler extends IHandler {
 	void addDefinedType(String id, TypesResult type);
 
 	ASTType constructPointerType(ILocation loc);
+
+	ICHandler getCHandler();
+
+	void setCHandler(CHandler cHandler);
 }

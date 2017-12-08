@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -139,6 +140,7 @@ public class TypeHandler implements ITypeHandler {
 	 * Is true iff we yet processed a floating type. (And hence floating types have to be added to Boogie).
 	 */
 	private boolean mFloatingTypesNeeded = false;
+	private ICHandler mCHandler;
 
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
@@ -924,5 +926,19 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public ICHandler getCHandler() {
+		assert mCHandler != null : "plan is to call setCHandler in the CHandler constructor (the CHandler constructor "
+				+ "takes a typeHandler as argument)";
+		return mCHandler;
+	}
+
+	@Override
+	public void setCHandler(final CHandler cHandler) {
+		assert cHandler != null;
+		assert mCHandler == null : "don't call this twice";
+		mCHandler = cHandler;
 	}
 }

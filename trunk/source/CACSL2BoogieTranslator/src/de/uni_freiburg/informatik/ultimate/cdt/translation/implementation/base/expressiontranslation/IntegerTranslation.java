@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -617,6 +619,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 					return value.mod(maxValuePlusOne);
 				}
 				return value;
+			} else if (expr instanceof IdentifierExpression) {
+				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
+				final String bId = ((IdentifierExpression) expr).getIdentifier();
+				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCID4BoogieID(bId, expr.getLoc());
+				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().get(cId, expr.getLoc());
+				if (stv.hasConstantValue()) {
+					return extractIntegerValue(stv.getConstantValue(), cType);
+				}
 			}
 			return null;
 		}

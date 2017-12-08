@@ -534,6 +534,7 @@ public class CHandler implements ICHandler {
 		final IPreferenceProvider prefs = main.getPreferences();
 		mLogger = logger;
 		mTypeHandler = typeHandler;
+		mTypeHandler.setCHandler(this);
 		mNameHandler = nameHandler;
 		mBacktranslator = backtranslator;
 		mErrorLabelWarning = errorLabelWarning;
@@ -3548,7 +3549,7 @@ public class CHandler implements ICHandler {
 					new SymbolTableValue(bId, cd,
 							new CDeclaration(typeOfEnumIdentifiers, fId,
 									scConstant2StorageClass(node.getDeclSpecifier().getStorageClass())),
-							true, node, false)); // FIXME ??
+							true, node, false, newValue));
 		}
 	}
 

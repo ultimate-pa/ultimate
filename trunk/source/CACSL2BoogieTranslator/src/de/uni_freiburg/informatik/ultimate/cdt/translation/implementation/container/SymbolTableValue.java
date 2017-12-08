@@ -34,6 +34,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -65,7 +66,27 @@ public class SymbolTableValue {
 
 	private final boolean mIsIntFromPointer;
 
+	private final boolean mHasConstantValue;
+	private final Expression mConstantValue;
+
 	private final IASTNode mDeclarationNode;
+
+
+	/**
+	 * Constructor for SymbolTableValues that don't store a constant value.
+	 *
+	 * @param bId
+	 * @param boogieDecl
+	 * @param cdecl
+	 * @param isGlobal
+	 * @param declNode
+	 * @param isIntFromPointer
+	 */
+	public SymbolTableValue(final String bId, final Declaration boogieDecl, final CDeclaration cdecl,
+			final boolean isGlobal, final IASTNode declNode, final boolean isIntFromPointer) {
+		this(bId, boogieDecl, cdecl, isGlobal, declNode, isIntFromPointer, null);
+	}
+
 
 	/**
 	 * Constructor.
@@ -81,10 +102,15 @@ public class SymbolTableValue {
 	 * @param isStatic
 	 *            whether the variable is static in the C program or not
 	 * @param isIntFromPointer
-	 *            ??
+	 *            whether the variable has an int type and stores a pointer value
+	 * @param constantValue
+	 * 	          if the variable is known to be an alias for a constant expression (e.g. an IntegerLiteral), we give
+	 *            that expression here. Example: enum entries are translated to Boogie variables, and they have a
+	 *            constant integer value (which is stored in an axiom elsewhere)
 	 */
 	public SymbolTableValue(final String bId, final Declaration boogieDecl, final CDeclaration cdecl,
-			final boolean isGlobal, final IASTNode declNode, final boolean isIntFromPointer) {
+			final boolean isGlobal, final IASTNode declNode, final boolean isIntFromPointer,
+			final Expression constantValue) {
 		assert bId != null && !bId.equals(SFO.EMPTY);
 		assert cdecl != null;
 		mBoogieName = bId;
@@ -93,6 +119,14 @@ public class SymbolTableValue {
 		mIsGlobalVar = isGlobal;
 		mDeclarationNode = declNode;
 		mIsIntFromPointer = isIntFromPointer;
+
+		if (constantValue != null) {
+			mConstantValue = constantValue;
+			mHasConstantValue = true;
+		} else {
+			mConstantValue = constantValue;
+			mHasConstantValue = true;
+		}
 	}
 
 	/**
@@ -144,7 +178,20 @@ public class SymbolTableValue {
 		return mIsIntFromPointer;
 	}
 
+	public boolean hasConstantValue() {
+		return mHasConstantValue;
+	}
+
+	public Expression getConstantValue() {
+		if (!mHasConstantValue) {
+			throw new IllegalStateException("check hasConstantValue() first!");
+		}
+		return mConstantValue;
+	}
+
+
 	public SymbolTableValue createMarkedIsIntFromPointer() {
-		return new SymbolTableValue(mBoogieName, mBoogieDecl, mCDecl, mIsGlobalVar, mDeclarationNode, true);
+		return new SymbolTableValue(mBoogieName, mBoogieDecl, mCDecl, mIsGlobalVar, mDeclarationNode, true,
+				mConstantValue);
 	}
 }
