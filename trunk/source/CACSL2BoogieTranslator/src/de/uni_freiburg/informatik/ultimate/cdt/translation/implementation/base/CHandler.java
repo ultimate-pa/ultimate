@@ -624,8 +624,8 @@ public class CHandler implements ICHandler {
 		final ExpressionResult l = (ExpressionResult) main.dispatch(node.getOperand1());
 		final ExpressionResult r = (ExpressionResult) main.dispatch(node.getOperand2());
 
-		final ExpressionResult rl = l.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		final ExpressionResult rr = r.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		final ExpressionResult rl = l.switchToRValueIfNecessary(main, loc);
+		final ExpressionResult rr = r.switchToRValueIfNecessary(main, loc);
 
 		final CType lType = l.mLrVal.getCType().getUnderlyingType();
 		final CType rType = r.mLrVal.getCType().getUnderlyingType();
@@ -862,8 +862,7 @@ public class CHandler implements ICHandler {
 	public Result visit(final Dispatcher main, final IASTCaseStatement node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		ExpressionResult c = (ExpressionResult) main.dispatch(node.getExpression());
-		c = c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler,
-				main.getLocationFactory().createCLocation(node));
+		c = c.switchToRValueIfNecessary(main, main.getLocationFactory().createCLocation(node));
 		mExpressionTranslation.convertIntToInt(loc, c, new CPrimitive(CPrimitives.INT));
 		return c;
 	}
@@ -892,7 +891,7 @@ public class CHandler implements ICHandler {
 				expr.mLrVal = new RValue(expr.mLrVal.getValue(), new CPointer(valueType));
 			}
 		} else {
-			expr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			expr = expr.switchToRValueIfNecessary(main, loc);
 		}
 
 		if (POINTER_CAST_IS_UNSUPPORTED_SYNTAX && newCType instanceof CPointer
@@ -980,11 +979,11 @@ public class CHandler implements ICHandler {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		assert node.getChildren().length == 3;
 		ExpressionResult opCondition = (ExpressionResult) main.dispatch(node.getLogicalConditionExpression());
-		opCondition = opCondition.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		opCondition = opCondition.switchToRValueIfNecessary(main, loc);
 		ExpressionResult opPositive = (ExpressionResult) main.dispatch(node.getPositiveResultExpression());
-		opPositive = opPositive.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		opPositive = opPositive.switchToRValueIfNecessary(main, loc);
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getNegativeResultExpression());
-		opNegative = opNegative.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		opNegative = opNegative.switchToRValueIfNecessary(main, loc);
 		return handleConditionalOperator(loc, opCondition, opPositive, opNegative);
 	}
 
@@ -1031,7 +1030,7 @@ public class CHandler implements ICHandler {
 					// case where we have a number between the brackets,
 					// e.g., a[23] or a[n+1]
 					ExpressionResult er = (ExpressionResult) main.dispatch(am.getConstantExpression());
-					er = er.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+					er = er.switchToRValueIfNecessary(main, loc);
 					// FIXME: 2015-10-25 Matthias: uncomment once the simplification of Boogie expressions is
 					// implemented
 					mExpressionTranslation.convertIntToInt(loc, er,
@@ -1370,7 +1369,7 @@ public class CHandler implements ICHandler {
 		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>();
 
 		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getConditionExpression());
-		condResult = condResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		condResult = condResult.switchToRValueIfNecessary(main, loc);
 		condResult.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
 		final RValue cond = (RValue) condResult.mLrVal;
 		decl.addAll(condResult.mDecl);
@@ -1435,8 +1434,7 @@ public class CHandler implements ICHandler {
 		final Result r = main.dispatch(node.getChildren()[0]);
 		assert r instanceof ExpressionResult;
 		final ExpressionResult rex = (ExpressionResult) r;
-		return rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler,
-				main.getLocationFactory().createCLocation(node));
+		return rex.switchToRValueIfNecessary(main, main.getLocationFactory().createCLocation(node));
 	}
 
 	@Override
@@ -1453,7 +1451,7 @@ public class CHandler implements ICHandler {
 				result.addChild((InitializerResult) r);
 			} else if (r instanceof ExpressionResult) {
 				ExpressionResult rex = (ExpressionResult) r;
-				rex = rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+				rex = rex.switchToRValueIfNecessary(main, loc);
 				result.addChild(new InitializerResultBuilder().setRootExpressionResult(rex).build());
 
 			} else {
@@ -1863,7 +1861,7 @@ public class CHandler implements ICHandler {
 		final Result switchParam = main.dispatch(node.getControllerExpression());
 		assert switchParam instanceof ExpressionResult;
 		final ExpressionResult l =
-				((ExpressionResult) switchParam).switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+				((ExpressionResult) switchParam).switchToRValueIfNecessary(main, loc);
 		// 6.8.4.2-1: "The controlling expression of a switch statement shall have integer type."
 		// note that this does not mean that it has "int" type, it may be long or char, for instance
 		assert l.mLrVal.getCType().isIntegerType();
@@ -2184,7 +2182,7 @@ public class CHandler implements ICHandler {
 		case IASTUnaryExpression.op_not:
 		case IASTUnaryExpression.op_plus:
 		case IASTUnaryExpression.op_tilde: {
-			final ExpressionResult rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			final ExpressionResult rop = o.switchToRValueIfNecessary(main, loc);
 			return handleUnaryArithmeticOperators(main, loc, node.getOperator(), rop);
 		}
 		case IASTUnaryExpression.op_postFixIncr:
@@ -3158,7 +3156,7 @@ public class CHandler implements ICHandler {
 	 * pointer dereference.)
 	 */
 	private Result handleIndirectionOperator(final Dispatcher main, final ExpressionResult er, final ILocation loc) {
-		final ExpressionResult rop = er.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		final ExpressionResult rop = er.switchToRValueIfNecessary(main, loc);
 		final RValue rValue = (RValue) rop.mLrVal;
 		if (!(rValue.getCType().getUnderlyingType() instanceof CPointer)) {
 			throw new IllegalArgumentException("dereference needs pointer but got " + rValue.getCType());
@@ -3289,7 +3287,7 @@ public class CHandler implements ICHandler {
 			}
 		}
 
-		condResult = condResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		condResult = condResult.switchToRValueIfNecessary(main, loc);
 		condResult.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
 		decl.addAll(condResult.mDecl);
 		final RValue condRVal = (RValue) condResult.mLrVal;
@@ -3372,7 +3370,7 @@ public class CHandler implements ICHandler {
 			ExpressionResult exprRes) {
 		assert !exprRes.mLrVal.isBoogieBool();
 		final LRValue modifiedLValue = exprRes.mLrVal;
-		exprRes = exprRes.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		exprRes = exprRes.switchToRValueIfNecessary(main, loc);
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(exprRes);
 
 		// In this case we need a temporary variable for the old value
@@ -3427,7 +3425,7 @@ public class CHandler implements ICHandler {
 			ExpressionResult exprRes) {
 		assert !exprRes.mLrVal.isBoogieBool();
 		final LRValue modifiedLValue = exprRes.mLrVal;
-		exprRes = exprRes.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		exprRes = exprRes.switchToRValueIfNecessary(main, loc);
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(exprRes);
 
 		// In this case we need a temporary variable for the new value

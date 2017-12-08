@@ -432,7 +432,7 @@ public class FunctionHandler {
 					loc, main, main.dispatch(node.getReturnValue()));
 
 			final ExpressionResult returnValueSwitched =
-					returnValue.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+					returnValue.switchToRValueIfNecessary(main, loc);
 			returnValueSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
 			// do some implicit casts
@@ -739,7 +739,7 @@ public class FunctionHandler {
 					in.mLrVal = new RValue(in.mLrVal.getValue(), new CPointer(valueType));
 				}
 			} else {
-				in = in.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+				in = in.switchToRValueIfNecessary(main, loc);
 			}
 
 			if (in.mLrVal.getValue() == null) {

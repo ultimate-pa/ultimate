@@ -187,20 +187,11 @@ public class ExpressionResult extends Result {
 		return builder.build();
 	}
 
-	/**
-	 * deprecated: use the other overloading of this method instead: ExpressionResult switchToRValueIfNecessary(final
-	 * Dispatcher main, final ILocation loc) (because once can easily obtain the memoryhandler and structhandler from
-	 * the Dispatcher)
-	 *
-	 * @param main
-	 * @param memoryHandler
-	 * @param structHandler
-	 * @param loc
-	 * @return
-	 */
-	@Deprecated
-	public ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final ILocation loc) {
+	public ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final ILocation loc) {
+
+		final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
+		final StructHandler structHandler = main.mCHandler.getStructHandler();
+
 		final ExpressionResult result;
 		if (mLrVal == null) {
 			result = this;
@@ -433,12 +424,9 @@ public class ExpressionResult extends Result {
 			final int dim = dimBigInteger.intValue();
 
 			final String newArrayId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY, arrayType);
-			final VarList newArrayVl =
-					new VarList(loc, new String[] { newArrayId },
-							new ArrayType(loc, new String[0],
-									new ASTType[] { main.mTypeHandler.cType2AstType(loc,
-											arrayType.getDimensions()[0].getCType()) },
-									main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
+			final VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, new ArrayType(loc, new String[0],
+					new ASTType[] { main.mTypeHandler.cType2AstType(loc, arrayType.getDimensions()[0].getCType()) },
+					main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
 			final VariableDeclaration newArrayDec =
 					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
 			xfieldHeapLValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null);
@@ -639,10 +627,4 @@ public class ExpressionResult extends Result {
 	public Collection<ExpressionResult> getNeighbourUnionFields() {
 		return Collections.unmodifiableCollection(mOtherUnionFields);
 	}
-
-	public ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final ILocation loc) {
-		return switchToRValueIfNecessary(main, main.mCHandler.getMemoryHandler(), main.mCHandler.getStructHandler(),
-				loc);
-	}
-
 }

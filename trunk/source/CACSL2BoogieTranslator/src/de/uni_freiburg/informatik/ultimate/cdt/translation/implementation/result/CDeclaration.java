@@ -33,32 +33,22 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
 public class CDeclaration {
-	CType  mType;
-	String mName;
-	InitializerResult mInitializer;
-	IASTInitializer mCAstInitializer;
+	private final CType mType;
+	private final String mName;
+	private InitializerResult mInitializer;
+	private final IASTInitializer mCAstInitializer;
 
-
-	boolean mIsOnHeap;
-	boolean mIsInitializerTranslated;
-	private CStorageClass mstorageClass;
+	private final boolean mIsOnHeap;
+	private boolean mIsInitializerTranslated;
+	private CStorageClass mStorageClass;
 	/**
-	 * Int that represents width in case this is a bit-field,
-	 * we use -1 to indicate that this is not a bit-field
+	 * Int that represents width in case this is a bit-field, we use -1 to indicate that this is not a bit-field
 	 */
 	private final int mBitfieldSize;
 
-//	public CDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
-//		mType = type;
-//		mName = name;
-////		mCAstInitializer = cAstInitializer;
-//		mInitializer = initializer;
-//		mIsOnHeap = onHeap;//TODO actually make use of this flag
-//		mIsInitializerTranslated = false;
-//	}
-//
 	/**
 	 * We can give either an initializer from C-AST and an ResultExpression.
+	 *
 	 * @param type
 	 * @param name
 	 * @param cAstInitializer
@@ -67,25 +57,26 @@ public class CDeclaration {
 	 * @param bitfieldSize
 	 */
 	public CDeclaration(final CType type, final String name, final IASTInitializer cAstInitializer,
-			final InitializerResult initializer, final boolean onHeap, final CStorageClass storageClass, final int bitfieldSize) {
+			final InitializerResult initializer, final boolean onHeap, final CStorageClass storageClass,
+			final int bitfieldSize) {
 		mType = type;
 		mName = name;
 		mCAstInitializer = cAstInitializer;
 		mInitializer = initializer;
 		assert cAstInitializer == null || initializer == null;
-		mIsOnHeap = onHeap;//TODO actually make use of this flag
+		mIsOnHeap = onHeap;// TODO actually make use of this flag
 		mIsInitializerTranslated = false;
-		mstorageClass = storageClass;
+		mStorageClass = storageClass;
 		mBitfieldSize = bitfieldSize;
 	}
 
-//	public CDeclaration(CType type, String name, ResultExpression initializer) {
-//		mType = type;
-//		mName = name;
-//		mInitializer = initializer;
-//		mIsOnHeap = false;
-//		mIsInitializerTranslated = true;
-//    }
+	// public CDeclaration(CType type, String name, ResultExpression initializer) {
+	// mType = type;
+	// mName = name;
+	// mInitializer = initializer;
+	// mIsOnHeap = false;
+	// mIsInitializerTranslated = true;
+	// }
 
 	public CDeclaration(final CType type, final String name, final CStorageClass storageClass) {
 		this(type, name, null, null, false, storageClass, -1);
@@ -96,17 +87,20 @@ public class CDeclaration {
 	}
 
 	public CType getType() {
-//		if (mIsOnHeap)
-//			return new CPointer(mType);
-//		else
-			return mType;
+		// if (mIsOnHeap)
+		// return new CPointer(mType);
+		// else
+		return mType;
 	}
+
 	public String getName() {
 		return mName;
 	}
+
 	public InitializerResult getInitializer() {
 		if (!mIsInitializerTranslated) {
-			throw new AssertionError("Initializer must have been translated (with method CDeclaration.translateInitializer()) before this is called.");
+			throw new AssertionError(
+					"Initializer must have been translated (with method CDeclaration.translateInitializer()) before this is called.");
 		}
 		return mInitializer;
 	}
@@ -114,7 +108,6 @@ public class CDeclaration {
 	public boolean hasInitializer() {
 		return mCAstInitializer != null || mInitializer != null;
 	}
-
 
 	public boolean isOnHeap() {
 		return mIsOnHeap;
@@ -126,11 +119,10 @@ public class CDeclaration {
 	}
 
 	/**
-	 * Triggers the translation of the untranslated initializer from the CAST into a ResultDeclaration
-	 * that we work with.
-	 * (Earlier this was done in visit IASTDeclarator, i.e. where the declarator was dispatched, but
-	 * this is too early when we have something like struct list myList = { &myList}, because we need to
-	 * have some symbolTable entry for translating this initializer, see visit ISimpleDeclaraton for this, too.)
+	 * Triggers the translation of the untranslated initializer from the CAST into a ResultDeclaration that we work
+	 * with. (Earlier this was done in visit IASTDeclarator, i.e. where the declarator was dispatched, but this is too
+	 * early when we have something like struct list myList = { &myList}, because we need to have some symbolTable entry
+	 * for translating this initializer, see visit ISimpleDeclaraton for this, too.)
 	 */
 	public void translateInitializer(final Dispatcher main) {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
@@ -150,20 +142,19 @@ public class CDeclaration {
 	}
 
 	public boolean isStatic() {
-    	return mstorageClass == CStorageClass.STATIC;
-    }
+		return mStorageClass == CStorageClass.STATIC;
+	}
 
-    public boolean isExtern() {
-    	return mstorageClass == CStorageClass.EXTERN;
-    }
+	public boolean isExtern() {
+		return mStorageClass == CStorageClass.EXTERN;
+	}
 
 	public void setStorageClass(final CStorageClass storageClass) {
-		mstorageClass = storageClass;
+		mStorageClass = storageClass;
 	}
 
 	public Integer getBitfieldSize() {
 		return mBitfieldSize;
 	}
-
 
 }

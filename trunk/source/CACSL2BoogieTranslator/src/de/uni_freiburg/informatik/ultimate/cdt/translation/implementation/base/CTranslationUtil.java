@@ -312,7 +312,7 @@ public class CTranslationUtil {
 			 * --> thus we can immediately switch to rvalue here
 			 */
 			result.addAllExceptLrValue(listResult.list.get(i)
-					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc));
+					.switchToRValueIfNecessary(main, loc));
 		}
 		result.setLRVal(listResult.list.get(listResult.list.size() - 1).getLrValue());
 

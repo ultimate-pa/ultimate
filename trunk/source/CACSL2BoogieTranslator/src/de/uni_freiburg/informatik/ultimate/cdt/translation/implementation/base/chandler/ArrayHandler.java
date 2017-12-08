@@ -85,7 +85,7 @@ public class ArrayHandler {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
-		subscript = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		subscript = subscript.switchToRValueIfNecessary(main, loc);
 		subscript.rexBoolToIntIfNecessary(loc, ((CHandler) main.mCHandler).getExpressionTranslation());
 		assert subscript.mLrVal.getCType().isIntegerType();
 
@@ -95,7 +95,7 @@ public class ArrayHandler {
 		final CType cTypeLeft = leftExpRes.mLrVal.getCType();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
-			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, loc);
 			assert cTypeLeft.equals(leftExpRes.mLrVal.getCType());
 			final Expression oldAddress = leftExpRes.mLrVal.getValue();
 			final RValue integer = (RValue) subscript.mLrVal;
