@@ -4,6 +4,7 @@ DD 2017-12-06
 
 Leads to empty stack exception in CACSL2Boogie 
 
+(further minimized by AN, reintroduced extern)
  */
 
 #include <stdio.h>
@@ -19,12 +20,8 @@ struct the_struct {
 };
 
 extern struct the_struct my_struct[SECOND];
-struct the_struct my_struct[SECOND] = {2, 4};
+struct the_struct my_struct[SECOND];
 
 int main(){
   my_struct[0];
-  if (my_struct[0].a != 2) {
-    //@ assert \false;
-  }
-  return my_struct[0].a;
 }
