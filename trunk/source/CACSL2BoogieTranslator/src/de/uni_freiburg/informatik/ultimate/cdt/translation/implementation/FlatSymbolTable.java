@@ -33,9 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -53,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 /**
  * @author Yannick Bühler
@@ -61,9 +58,10 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  */
 public class FlatSymbolTable {
 	/**
-	 * Maps ACSL nodes to scopes
+	 * The global scope, spanning all translation units.
+	 * Every translation unit points to this scope.
 	 */
-	private final Map<ACSLNode, Map<String, SymbolTableValue>> mACSLTable;
+	private final Map<String, SymbolTableValue> mGlobalScope;
 	/**
 	 * Maps C nodes to scopes
 	 */
@@ -76,10 +74,6 @@ public class FlatSymbolTable {
 	 * Used for assigning unique IDs to scopes
 	 */
 	private int mScopeCounter;
-	/**
-	 * Maps ACSL nodes to scope IDs
-	 */
-	private final Map<ACSLNode, Integer> mACSLScopeIDs;
 	/**
 	 * Maps C nodes to scope IDs
 	 */
@@ -102,17 +96,16 @@ public class FlatSymbolTable {
 	private final Map<CDeclaration, Declaration> mCDeclToBoogieDecl;
 	
 	public FlatSymbolTable(final MultiparseSymbolTable mst, final Dispatcher disp) {
-		mACSLTable = new LinkedHashMap<>();
+		mGlobalScope = new LinkedHashMap<>();
 		mCTable = new LinkedHashMap<>();
-		mMultiparseInformation = mst; // TODO import into global scope!
+		mMultiparseInformation = mst;
 		mScopeCounter = 1;
-		mACSLScopeIDs = new HashMap<>();
 		mCScopeIDs = new HashMap<>();
 		mDispatcher = disp;
 		mCHookSkip = n -> {
 			if (n instanceof IASTExpression && n.getParent() instanceof IASTSwitchStatement) {
 				if (((IASTSwitchStatement) n.getParent()).getControllerExpression() == n) {
-					// the controller expression is not part of the scope of the switch (= its parent)
+					// the controller expression is not part of the scope of the switch
 					// so the scope holder for the controller expression is the parent of the switch...
 					return n.getParent().getParent();
 				}
@@ -129,26 +122,23 @@ public class FlatSymbolTable {
 	 * 			the hook which acts as an anchor for the current context in the AST
 	 * @param id
 	 * 			the id of the entry to look for
-	 * @param table
-	 * 			the table to check for entries
-	 * @param parentProvider
-	 * 			a function that maps a hook to its parent for traversal
-	 * @param hookSkip
-	 * 			as scopes might not only depend on the parentship relation (e.g. switch statement
-	 * 			controller expressions) another layer of mapping is needed
 	 * @param onlyInnermost
 	 * 			if true, only the innermost scope will be searched
 	 * @return the table entry or null
 	 */
-	private <T> SymbolTableValue genericTableFind(final T hook, final String id,
-			final Map<T, Map<String, SymbolTableValue>> table, final Function<T, T> parentProvider,
-			final Function<T, T> hookSkip, final boolean onlyInnermost) {
-		T cursor = hookSkip.apply(hook);
+	private SymbolTableValue tableFind(final IASTNode hook, final String id, final boolean onlyInnermost) {
+		IASTNode cursor = mCHookSkip.apply(hook);
 		SymbolTableValue result = null;
 		while (cursor != null) {
-			if (table.containsKey(cursor)) {
+			Map<String, SymbolTableValue> scope = null;
+			if (cursor instanceof IASTTranslationUnit) {
+				// This node references the global scope
+				scope = mGlobalScope;
+			} else if (mCTable.containsKey(cursor)) {
 				// This node has an associated scope, check whether the ID is found in that scope
-				Map<String, SymbolTableValue> scope = table.get(cursor);
+				scope = mCTable.get(cursor);
+			}
+			if (scope != null) {
 				if (scope.containsKey(id)) {
 					// This scope shadows all outer (=upper) scopes
 					result = scope.get(id);
@@ -161,18 +151,18 @@ public class FlatSymbolTable {
 				}
 			}
 			// Check the next level of the AST for scopes
-			cursor = parentProvider.apply(cursor);
-			cursor = hookSkip.apply(cursor);
+			cursor = cursor.getParent();
+			cursor = mCHookSkip.apply(cursor);
 		}
 		return result;
 	}
 	
 	/**
 	 * Lookup in the C-AST symbol table
-	 * @see FlatSymbolTable#genericTableFind(Object, String, Map, Function)
+	 * @see FlatSymbolTable#tableFind(IASTNode, String, Map, boolean)
 	 */
 	public SymbolTableValue findCSymbol(final IASTNode hook, final String id) {
-		return genericTableFind(hook, id, mCTable, IASTNode::getParent, mCHookSkip, false);
+		return tableFind(hook, id, false);
 	}
 	
 	/**
@@ -188,7 +178,7 @@ public class FlatSymbolTable {
 	 * @see FlatSymbolTable#containsCSymbol(IASTNode, String)
 	 */
 	public boolean containsCSymbolInInnermostScope(final IASTNode hook, final String id) {
-		return genericTableFind(hook, id, mCTable, IASTNode::getParent, mCHookSkip, true) != null;
+		return tableFind(hook, id, true) != null;
 	}
 	
 	/**
@@ -200,8 +190,23 @@ public class FlatSymbolTable {
 	public int getCScopeId(final IASTNode hook) {
 		IASTNode cursor = mCHookSkip.apply(hook);
 		while (cursor != null) {
-			if (mCScopeIDs.containsKey(cursor)) {
-				return mCScopeIDs.get(cursor);
+			if (cursor instanceof IASTTranslationUnit) {
+				// The global scope is 1
+				return 1; 
+			}
+			boolean hasImplicitScope = cursor instanceof IASTFunctionDefinition
+					|| cursor instanceof IASTForStatement;
+			boolean hasExplicitScope = cursor instanceof IASTCompoundStatement
+					&& !(cursor.getParent() instanceof IASTFunctionDefinition)
+					&& !(cursor.getParent() instanceof IASTForStatement);
+			if (hasImplicitScope || hasExplicitScope) {
+				if (mCScopeIDs.containsKey(cursor)) {
+					return mCScopeIDs.get(cursor);
+				} else {
+					mScopeCounter++;
+					mCScopeIDs.put(cursor, mScopeCounter);
+					return mScopeCounter;
+				}
 			}
 			cursor = cursor.getParent();
 			cursor = mCHookSkip.apply(cursor);
@@ -217,37 +222,29 @@ public class FlatSymbolTable {
 	 * 			the ID of the value
 	 * @param val
 	 * 			the value
-	 * @param table
-	 * 			the table to store values in
-	 * @param parentProvider
-	 * 			a function mapping a hook to its parent
-	 * @param hookSkip
-	 * 			as scopes might not only depend on the parentship relation (e.g. switch statement
-	 * 			controller expressions) another layer of mapping is needed
-	 * @param scopeHolderCheck
-	 * 			a predicate matching all hooks that can hold scopes
-	 * @param scopeInitializer
-	 * 			called when a scope is initialized
-	 * @see FlatSymbolTable#genericTableFind(Object, String, Map, Function, boolean)
+	 * @see FlatSymbolTable#tableFind(IASTNode, String, boolean)
 	 */
-	private <T> void genericTableStore(final T hook, final String id, final SymbolTableValue val,
-			final Map<T, Map<String, SymbolTableValue>> table, final Function<T, T> parentProvider,
-			final Function<T, T> hookSkip, final Predicate<T> scopeHolderCheck,
-			final Consumer<T> scopeInitializer) {
+	private void tableStore(final IASTNode hook, final String id, final SymbolTableValue val) {
 		if (!mDispatcher.mTypeHandler.isStructDeclaration()) {
-			T cursor = hookSkip.apply(hook);
+			IASTNode cursor = mCHookSkip.apply(hook);
 			while (cursor != null) {
-				if (scopeHolderCheck.test(cursor)) {
-					// This node is the scope where values are currently stored inside
-					table.computeIfAbsent(cursor, x -> {
-						scopeInitializer.accept(x);
-						return new LinkedHashMap<>();
-					});
-					table.get(cursor).put(id, val);
+				if (cursor instanceof IASTTranslationUnit) {
+					mGlobalScope.put(id, val);
 					break;
 				}
-				cursor = parentProvider.apply(cursor);
-				cursor = hookSkip.apply(cursor);
+				boolean hasImplicitScope = cursor instanceof IASTFunctionDefinition
+						|| cursor instanceof IASTForStatement;
+				boolean hasExplicitScope = cursor instanceof IASTCompoundStatement
+						&& !(cursor.getParent() instanceof IASTFunctionDefinition)
+						&& !(cursor.getParent() instanceof IASTForStatement);
+				if (hasImplicitScope || hasExplicitScope) {
+					// This node is the scope where values are currently stored inside
+					mCTable.computeIfAbsent(cursor, x -> new LinkedHashMap<>());
+					mCTable.get(cursor).put(id, val);
+					break;
+				}
+				cursor = cursor.getParent();
+				cursor = mCHookSkip.apply(cursor);
 			}
 			if (cursor == null) {
 				throw new IllegalStateException("Found no possible scope holder");				
@@ -257,25 +254,10 @@ public class FlatSymbolTable {
 	
 	/**
 	 * Stores a C symbol
-	 * @see FlatSymbolTable#genericTableStore(Object, String, SymbolTableValue, Map, Function, Function, Predicate)
+	 * @see FlatSymbolTable#tableStore(IASTNode, String, SymbolTableValue)
 	 */
 	public void storeCSymbol(final IASTNode hook, final String id, final SymbolTableValue val) {
-		genericTableStore(hook, id, val, mCTable, IASTNode::getParent, mCHookSkip, h -> {
-			if (h instanceof IASTTranslationUnit) {
-				// this node has the global scope
-				return true;
-			}
-			if (h instanceof IASTFunctionDefinition || h instanceof IASTForStatement) {
-				// this opens an implicit scope (for, functions)
-				return true;
-			}
-			if (h instanceof IASTCompoundStatement) {
-				// Watch out! Don't open a second scope for for-loops and functions
-				return !(h.getParent() instanceof IASTForStatement)
-						&& !(h.getParent() instanceof IASTFunctionDefinition);
-			}
-			return h instanceof IASTSwitchStatement;
-		}, x -> mCScopeIDs.put(x, ++mScopeCounter));
+		tableStore(hook, id, val);
 		mBoogieIdToCId.put(val.getBoogieName(), id);
 		mCDeclToBoogieDecl.put(val.getCDecl(), val.getBoogieDecl());
 	}

@@ -9,8 +9,14 @@ int main() {
 }
 
 int bar(int y) {
+    int w = 3;
     if (y < magic) {
-        return 0;
+        int z = 5;
+        if (1) {
+          int q = 3;
+          int z = 2;
+        }
+        return z;
     }
-    return y + foo(y);
+    return y + foo(y) + w;
 }
