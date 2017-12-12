@@ -123,7 +123,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -448,7 +448,7 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(final ACSLNode node) {
+	public Result dispatch(final ACSLNode node, final IASTNode cHook) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -471,7 +471,7 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr,
-			final Map<VariableDeclaration, ILocation> auxVars) {
+			final Map<VariableDeclaration, ILocation> auxVars, final IASTNode hook) {
 		final Set<String> auxVarIds = new HashSet<>();
 		for (final VariableDeclaration decl : auxVars.keySet()) {
 			for (final VarList varList : decl.getVariables()) {
@@ -486,9 +486,9 @@ public class PRDispatcher extends Dispatcher {
 			// auxVars do not have a corresponding C var, hence we move nothing
 			// onto the heap
 			if (!auxVarIds.contains(id)) {
-				final SymbolTable st = mCHandler.getSymbolTable();
-				final String cid = st.getCID4BoogieID(id, loc);
-				final SymbolTableValue value = st.get(cid, loc);
+				final FlatSymbolTable st = mCHandler.getSymbolTable();
+				final String cid = st.getCIdForBoogieId(id);
+				final SymbolTableValue value = st.findCSymbol(hook, cid);
 				final CType type = value.getCVariable().getUnderlyingType();
 				if (type instanceof CArray || type instanceof CStruct) {
 					getVariablesOnHeap().add(value.getDeclarationNode());
@@ -497,11 +497,11 @@ public class PRDispatcher extends Dispatcher {
 		}
 	}
 
-	public void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr) {
+	public void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr, final IASTNode hook) {
 		final String id = idExpr.getIdentifier();
-		final SymbolTable st = mCHandler.getSymbolTable();
-		final String cid = st.getCID4BoogieID(id, loc);
-		final SymbolTableValue value = st.get(cid, loc);
+		final FlatSymbolTable st = mCHandler.getSymbolTable();
+		final String cid = st.getCIdForBoogieId(id);
+		final SymbolTableValue value = st.findCSymbol(hook, cid);
 		getVariablesOnHeap().add(value.getDeclarationNode());
 	}
 }

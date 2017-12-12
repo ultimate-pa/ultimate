@@ -141,6 +141,8 @@ public abstract class Dispatcher {
 	private final boolean mUseSvcompSettings;
 
 	protected final Map<String, IASTNode> mFunctionTable;
+	
+	protected IASTNode mAcslHook;
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable,
@@ -229,9 +231,11 @@ public abstract class Dispatcher {
 	 *
 	 * @param node
 	 *            the node to dispatch
+	 * @param cHook
+	 * 			  the C AST node where this ACSL node has scope access
 	 * @return the result for the given node
 	 */
-	public abstract Result dispatch(ACSLNode node);
+	public abstract Result dispatch(ACSLNode node, IASTNode cHook);
 
 	/**
 	 * Entry point for a translation.
@@ -363,7 +367,7 @@ public abstract class Dispatcher {
 	 * @return the mapping of Boogie identifiers to origin C identifiers.
 	 */
 	public Map<String, String> getIdentifierMapping() {
-		return mCHandler.getSymbolTable().getIdentifierMapping();
+		return mCHandler.getSymbolTable().getBoogieCIdentifierMapping();
 	}
 
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
@@ -411,5 +415,9 @@ public abstract class Dispatcher {
 		public PointerCheckMode getDivisionByZeroOfFloatingTypes() {
 			return mDivisionByZeroOfFloatingTypes;
 		}
+	}
+	
+	public IASTNode getAcslHook() {
+		return mAcslHook;
 	}
 }

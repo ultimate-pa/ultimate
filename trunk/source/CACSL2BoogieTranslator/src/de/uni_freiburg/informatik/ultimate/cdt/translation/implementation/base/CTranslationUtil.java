@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -292,7 +293,7 @@ public class CTranslationUtil {
 	 * @return
 	 */
 	public static ExpressionResult convertExpressionListToExpressionResultIfNecessary(final ILocation loc,
-			final Dispatcher main, final Result dispatch) {
+			final Dispatcher main, final Result dispatch, final IASTNode hook) {
 		assert dispatch instanceof ExpressionListResult || dispatch instanceof ExpressionResult;
 		if (dispatch instanceof ExpressionResult) {
 			return (ExpressionResult) dispatch;
@@ -312,7 +313,7 @@ public class CTranslationUtil {
 			 * --> thus we can immediately switch to rvalue here
 			 */
 			result.addAllExceptLrValue(listResult.list.get(i)
-					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc));
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc, hook));
 		}
 		result.setLRVal(listResult.list.get(listResult.list.size() - 1).getLrValue());
 

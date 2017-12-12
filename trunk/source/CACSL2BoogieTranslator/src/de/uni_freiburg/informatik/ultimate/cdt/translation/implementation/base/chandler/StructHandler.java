@@ -116,7 +116,7 @@ public class StructHandler {
 		final int bitfieldWidth = cStructType.getBitfieldWidth(field);
 
 		if (node.isPointerDereference()) {
-			final ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, loc);
+			final ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, loc, node);
 			final Expression address = rFieldOwnerRex.mLrVal.getValue();
 			fieldOwner = new ExpressionResult(rFieldOwnerRex.mStmt,
 					new HeapLValue(address, rFieldOwnerRex.mLrVal.getCType(), null), rFieldOwnerRex.mDecl,

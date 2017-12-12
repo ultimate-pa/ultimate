@@ -1232,7 +1232,7 @@ public class StandardFunctionHandler {
 
 	private static ExpressionResult dispatchAndConvert(final Dispatcher main, final ILocation loc,
 			final IASTInitializerClause initClause) {
-		return ((ExpressionResult) main.dispatch(initClause)).switchToRValueIfNecessary(main, loc);
+		return ((ExpressionResult) main.dispatch(initClause)).switchToRValueIfNecessary(main, loc, initClause);
 	}
 
 	private static <K, V> void fill(final Map<K, V> map, final K key, final V value) {

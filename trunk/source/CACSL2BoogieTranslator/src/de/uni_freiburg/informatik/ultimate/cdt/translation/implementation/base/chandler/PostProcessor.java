@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -162,11 +164,11 @@ public class PostProcessor {
 			final MemoryHandler memoryHandler, final ArrayHandler arrayHandler, final FunctionHandler functionHandler,
 			final StructHandler structHandler, final TypeHandler typeHandler, final Set<String> undefinedTypes,
 			final LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie,
-			final ExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
-				mDeclarationsGlobalInBoogie, expressionTranslation));
+				mDeclarationsGlobalInBoogie, expressionTranslation, hook));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
@@ -303,7 +305,7 @@ public class PostProcessor {
 			final Dispatcher main, final MemoryHandler memoryHandler, final ArrayHandler arrayHandler,
 			final FunctionHandler functionHandler, final StructHandler structHandler,
 			final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie,
-			final ExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
 		functionHandler.beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
 		final ArrayList<Statement> initStatements = new ArrayList<>();
 
@@ -361,7 +363,7 @@ public class PostProcessor {
 					}
 
 					final ExpressionResult initRex = main.mCHandler.getInitHandler().initialize(currentDeclsLoc, main,
-							new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
+							new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer, hook);
 					initStatements.addAll(initRex.mStmt);
 					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.mAuxVars));
 					for (final Declaration d : initRex.mDecl) {
@@ -487,7 +489,7 @@ public class PostProcessor {
 				assert checkedMethodOutParams.length == 1;
 				// there is 1(!) return value
 				final String checkMethodRet = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
-				main.mCHandler.getSymbolTable().addToReverseMap(checkMethodRet, SFO.NO_REAL_C_VAR + checkMethodRet,
+				main.mCHandler.getSymbolTable().addBoogieCIdPair(checkMethodRet, SFO.NO_REAL_C_VAR + checkMethodRet,
 						loc);
 				final VarList tempVar =
 						new VarList(loc, new String[] { checkMethodRet }, checkedMethodOutParams[0].getType());

@@ -394,7 +394,7 @@ public class MainDispatcher extends Dispatcher {
 		if (mWitnessInvariants != null) {
 			invariantBefore = mWitnessInvariants.get(n);
 			final ILocation loc = getLocationFactory().createCLocation(n);
-			witnessInvariantsBefore = translateWitnessInvariant(loc, invariantBefore, a -> a.isBefore());
+			witnessInvariantsBefore = translateWitnessInvariant(loc, invariantBefore, a -> a.isBefore(), n);
 		} else {
 			invariantBefore = null;
 			witnessInvariantsBefore = Collections.emptyList();
@@ -554,7 +554,7 @@ public class MainDispatcher extends Dispatcher {
 			// TODO: Use the new information as you see fit
 			invariantAfter = mWitnessInvariants.get(n);
 			final ILocation loc = getLocationFactory().createCLocation(n);
-			witnessInvariantsAfter = translateWitnessInvariant(loc, invariantAfter, a -> a.isAfter());
+			witnessInvariantsAfter = translateWitnessInvariant(loc, invariantAfter, a -> a.isAfter(), n);
 		} else {
 			invariantAfter = null;
 			witnessInvariantsAfter = Collections.emptyList();
@@ -611,7 +611,8 @@ public class MainDispatcher extends Dispatcher {
 
 	private List<AssertStatement> translateWitnessInvariant(final ILocation loc,
 			final ExtractedWitnessInvariant invariant,
-			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition) throws AssertionError {
+			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition,
+			final IASTNode hook) throws AssertionError {
 		if (invariant != null) {
 			if (!funHasCorrectPosition.test(invariant)) {
 				return Collections.emptyList();
@@ -626,7 +627,7 @@ public class MainDispatcher extends Dispatcher {
 			} catch (final Exception e) {
 				throw new AssertionError(e);
 			}
-			final Result translationResult = dispatch(acslNode);
+			final Result translationResult = dispatch(acslNode, hook);
 			final List<AssertStatement> invariants = new ArrayList<>();
 			if (translationResult instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) translationResult;
@@ -671,7 +672,8 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(final ACSLNode n) {
+	public Result dispatch(final ACSLNode n, final IASTNode cHook) {
+		mAcslHook = cHook;
 		if (n instanceof CodeAnnot) {
 			return mAcslHandler.visit(this, (CodeAnnot) n);
 		}
@@ -1071,7 +1073,7 @@ public class MainDispatcher extends Dispatcher {
 			final ExtractedWitnessInvariant invariants = mWitnessInvariants.get(node);
 			try {
 				final ILocation loc = getLocationFactory().createCLocation(node);
-				final List<AssertStatement> list = translateWitnessInvariant(loc, invariants, (x -> x.isAt()));
+				final List<AssertStatement> list = translateWitnessInvariant(loc, invariants, (x -> x.isAt()), node);
 				if (list.isEmpty()) {
 					result = null;
 				} else {

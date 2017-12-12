@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -135,7 +137,7 @@ public class InitializationHandler {
 	 * @return
 	 */
 	public ExpressionResult initialize(final ILocation loc, final Dispatcher main, final LeftHandSide lhsRaw,
-			final CType targetCTypeRaw, final InitializerResult initializerRaw) {
+			final CType targetCTypeRaw, final InitializerResult initializerRaw, final IASTNode hook) {
 
 		boolean onHeap = false;
 		if (lhsRaw != null && lhsRaw instanceof VariableLHS) {
@@ -153,7 +155,7 @@ public class InitializationHandler {
 		final InitializerInfo initializerInfo;
 		if (initializerRaw != null) {
 			// construct an InitializerInfo from the InitializerResult
-			initializerInfo = InitializerInfo.constructInitializerInfo(loc, main, initializerRaw, targetCTypeRaw);
+			initializerInfo = InitializerInfo.constructInitializerInfo(loc, main, initializerRaw, targetCTypeRaw, hook);
 		} else {
 			initializerInfo = null;
 		}
@@ -995,7 +997,7 @@ public class InitializationHandler {
 		 * @param targetCType
 		 */
 		public static InitializerInfo constructInitializerInfo(final ILocation loc, final Dispatcher main,
-				final InitializerResult initializerResult, final CType targetCTypeRaw) {
+				final InitializerResult initializerResult, final CType targetCTypeRaw, final IASTNode hook) {
 			final CType targetCType = targetCTypeRaw.getUnderlyingType();
 
 			if (initializerResult.hasRootExpressionResult()) {
@@ -1059,7 +1061,7 @@ public class InitializationHandler {
 
 //					final ExpressionResult exprResult = initializerResult.getRootExpressionResult();
 					final StringLiteralResult exprResult = (StringLiteralResult)
-							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult);
+							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult, hook);
 
 					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
 
@@ -1092,14 +1094,14 @@ public class InitializationHandler {
 					 * make initializerInfo with one ExpressionResult
 					 */
 					final ExpressionResult converted = convertInitResultWithExpressionResult(loc, main, targetCType,
-							initializerResult);
+							initializerResult, hook);
 					return new InitializerInfo(converted, Collections.emptyList());
 				}
 			}
 
 			if (targetCType instanceof CArray || targetCType instanceof CStruct) {
 //				// aggregate or union type
-				return constructIndexToInitInfo(loc, main, initializerResult.getList(), targetCType);
+				return constructIndexToInitInfo(loc, main, initializerResult.getList(), targetCType, hook);
 //			} else if (targetCType instanceof CStruct) {
 //				// target type is a struct or a union type
 //				return constructArrayIndexToInitInfo(loc, main, initializerResult.getList(), targetCType);
@@ -1111,7 +1113,7 @@ public class InitializationHandler {
 				final InitializerResult first = ad.pollFirst();
 
 				final ExpressionResult expressionResultSwitched =
-						convertInitResultWithExpressionResult(loc, main, targetCType, first);
+						convertInitResultWithExpressionResult(loc, main, targetCType, first, hook);
 
 				return new InitializerInfo(expressionResultSwitched, new ArrayList<>(ad));
 
@@ -1120,9 +1122,9 @@ public class InitializationHandler {
 		}
 
 		protected static ExpressionResult convertInitResultWithExpressionResult(final ILocation loc,
-				final Dispatcher main, final CType targetCType, final InitializerResult first) {
+				final Dispatcher main, final CType targetCType, final InitializerResult first, final IASTNode hook) {
 			final ExpressionResult expressionResultSwitched = first.getRootExpressionResult()
-					.switchToRValueIfNecessary(main, loc);
+					.switchToRValueIfNecessary(main, loc, hook);
 			expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
 			// 2017-11-19 Matthias: introduced workaround to omit conversion
 			if ((expressionResultSwitched.getLrValue().getCType() instanceof CArray)) {
@@ -1134,7 +1136,7 @@ public class InitializationHandler {
 		}
 
 		private static InitializerInfo constructIndexToInitInfo(final ILocation loc, final Dispatcher main,
-				final List<InitializerResult> initializerResults, final CType targetCType) {
+				final List<InitializerResult> initializerResults, final CType targetCType, final IASTNode hook) {
 			assert targetCType instanceof CArray || targetCType instanceof CStruct;
 
 			final Map<Integer, InitializerInfo> indexInitInfos = new HashMap<>();
@@ -1209,7 +1211,7 @@ public class InitializationHandler {
 
 					final InitializerResult first = rest.pollFirst();
 //					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first.getList(), cellType);
-					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first, cellType);
+					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first, cellType, hook);
 
 					indexInitInfos.put(currentCellIndex, cellInitInfo);
 				} else {
@@ -1221,7 +1223,7 @@ public class InitializationHandler {
 					final InitializerResultBuilder restInitResultBuilder = new InitializerResultBuilder();
 					rest.forEach(restInitResultBuilder::addChild);
 					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main,
-							restInitResultBuilder.build(), cellType);
+							restInitResultBuilder.build(), cellType, hook);
 					indexInitInfos.put(currentCellIndex, cellInitInfo);
 					rest = new ArrayDeque<>(cellInitInfo.getUnusedListEntries());
 				}

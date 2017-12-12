@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashM
  * @author Markus Lindenmann
  * @since 13.07.2012
  */
-public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
+public class OldSymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
     /**
      * Holds a map from BoogieIDs and the corresponding CIDs.
      */
@@ -157,7 +157,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @param main
      *            a reference to the main dispatcher.
      */
-    public SymbolTable(Dispatcher main, final MultiparseSymbolTable mst) {
+    public OldSymbolTable(Dispatcher main, final MultiparseSymbolTable mst) {
         super();
         boogieID2CID = new HashMap<String, String>();
         mCDecl2BoogieDecl = new HashMap<CDeclaration, Declaration>();

@@ -83,8 +83,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
@@ -209,11 +209,11 @@ public class FunctionHandler {
 	 *            the location of the FunctionDeclarator
 	 */
 	public Result handleFunctionDeclarator(final Dispatcher main, final ILocation loc, final List<ACSLNode> contract,
-			final CDeclaration cDec) {
+			final CDeclaration cDec, final IASTNode hook) {
 		final String methodName = cDec.getName();
 		final CFunction funcType = (CFunction) cDec.getType();
 
-		addAProcedure(main, loc, contract, methodName, funcType);
+		addAProcedure(main, loc, contract, methodName, funcType, hook);
 
 		return new SkipResult();
 	}
@@ -246,7 +246,7 @@ public class FunctionHandler {
 
 		updateCFunction(methodName, returnCType, null, null, false);
 
-		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), methodName);
+		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), methodName, node);
 
 		// There is only one return parameter in C, so this array always has size 1.
 		VarList[] out = new VarList[1];
@@ -264,7 +264,7 @@ public class FunctionHandler {
 			assert type != null;
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName, node);
 
 		Procedure proc = mProcedures.get(methodName);
 		if (proc == null) {
@@ -359,7 +359,7 @@ public class FunctionHandler {
 		decls.addAll(cser.mDecl);
 
 		// 3) ,4)
-		stmts = ((CHandler) main.mCHandler).updateStmtsAndDeclsAtScopeEnd(main, decls, stmts);
+		stmts = ((CHandler) main.mCHandler).updateStmtsAndDeclsAtScopeEnd(main, decls, stmts, node);
 
 		final Body body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]),
 				stmts.toArray(new Statement[stmts.size()]));
@@ -395,14 +395,15 @@ public class FunctionHandler {
 		final String rawName = ((IASTIdExpression) functionName).getName().toString();
 		
 		// Resolve the function name (might be prefixed by multiparse)
-		final String methodName = main.mCHandler.getSymbolTable().applyMultiparseFunctionRenaming(
+		final String methodName = main.mCHandler.getSymbolTable().applyMultiparseRenaming(
 				functionName.getContainingFilename(), rawName);
 
-		if (main.mCHandler.getSymbolTable().containsCSymbol(methodName)) {
+		if (main.mCHandler.getSymbolTable().containsCSymbol(functionName, methodName)) {
 			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
 		}
 
-		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, methodName, arguments);
+		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, methodName, arguments,
+				functionName);
 	}
 
 	/**
@@ -434,10 +435,10 @@ public class FunctionHandler {
 			stmt.add(havoc);
 		} else if (node.getReturnValue() != null) {
 			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
-					loc, main, main.dispatch(node.getReturnValue()));
+					loc, main, main.dispatch(node.getReturnValue()), node);
 
 			final ExpressionResult returnValueSwitched =
-					returnValue.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+					returnValue.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc, node);
 			returnValueSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
 			// do some implicit casts
@@ -686,7 +687,7 @@ public class FunctionHandler {
 
 	private Result handleFunctionCallGivenNameAndArguments(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final ILocation loc, final String methodName,
-			final IASTInitializerClause[] arguments) {
+			final IASTInitializerClause[] arguments, final IASTNode hook) {
 
 		mCallGraph.get(mCurrentProcedure.getIdentifier()).add(methodName);
 
@@ -744,7 +745,7 @@ public class FunctionHandler {
 					in.mLrVal = new RValue(in.mLrVal.getValue(), new CPointer(valueType));
 				}
 			} else {
-				in = in.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+				in = in.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc, hook);
 			}
 
 			if (in.mLrVal.getValue() == null) {
@@ -870,14 +871,15 @@ public class FunctionHandler {
 		final CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
 
 		if (!mProcedures.containsKey(procName)) {
-			addAProcedure(main, loc, null, procName, cFuncWithFP);
+			addAProcedure(main, loc, null, procName, cFuncWithFP, functionName);
 		}
 
 		final IASTInitializerClause[] newArgs = new IASTInitializerClause[arguments.length + 1];
 		System.arraycopy(arguments, 0, newArgs, 0, arguments.length);
 		newArgs[newArgs.length - 1] = functionName;
 
-		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, procName, newArgs);
+		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, procName, newArgs,
+				functionName);
 	}
 
 	/**
@@ -890,7 +892,7 @@ public class FunctionHandler {
 	 * @return
 	 */
 	private Specification[] makeBoogieSpecFromACSLContract(final Dispatcher main, final List<ACSLNode> contract,
-			final String methodName) {
+			final String methodName, final IASTNode hook) {
 		Specification[] spec;
 		if (contract == null) {
 			spec = new Specification[0];
@@ -900,7 +902,7 @@ public class FunctionHandler {
 				// retranslate ACSL specification needed e.g., in cases
 				// where ids of function parameters differ from is in ACSL
 				// expression
-				final Result retranslateRes = main.dispatch(contract.get(i));
+				final Result retranslateRes = main.dispatch(contract.get(i), hook);
 				assert retranslateRes instanceof ContractResult;
 				final ContractResult resContr = (ContractResult) retranslateRes;
 				specList.addAll(Arrays.asList(resContr.specs));
@@ -931,7 +933,7 @@ public class FunctionHandler {
 	 * @return
 	 */
 	private VarList[] processInParams(final Dispatcher main, final ILocation loc, final CFunction cFun,
-			final String methodName) {
+			final String methodName, final IASTNode hook) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final VarList[] in = new VarList[paramDecs.length];
 		for (int i = 0; i < paramDecs.length; ++i) {
@@ -947,7 +949,7 @@ public class FunctionHandler {
 
 			final String paramId = main.mNameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
 			in[i] = new VarList(loc, new String[] { paramId }, type);
-			main.mCHandler.getSymbolTable().put(paramDec.getName(),
+			main.mCHandler.getSymbolTable().storeCSymbol(hook, paramDec.getName(),
 					new SymbolTableValue(paramId, null, paramDec, false, null, false));
 		}
 		updateCFunction(methodName, null, paramDecs, null, false);
@@ -1001,10 +1003,10 @@ public class FunctionHandler {
 			// final IASTParameterDeclaration paramDec = paramDecs[i];
 			final IASTNode paramDec = paramDecs[i];
 			for (final String bId : varList.getIdentifiers()) {
-				final String cId = main.mCHandler.getSymbolTable().getCID4BoogieID(bId, loc);
+				final String cId = main.mCHandler.getSymbolTable().getCIdForBoogieId(bId);
 
 				ASTType type = varList.getType();
-				final CType cvar = main.mCHandler.getSymbolTable().get(cId, loc).getCVariable();
+				final CType cvar = main.mCHandler.getSymbolTable().findCSymbol(parent, cId).getCVariable();
 
 				// onHeap case for a function parameter means the parameter is
 				// addressoffed in the function body
@@ -1039,17 +1041,17 @@ public class FunctionHandler {
 					// convention: if a variable is put on heap or not, its ctype stays the same
 					final ExpressionResult assign = ((CHandler) main.mCHandler).makeAssignment(main, igLoc, stmt, hlv,
 							new RValue(rhsId, cvar), new ArrayList<Declaration>(),
-							new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>());
+							new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), parent);
 					stmt.add(memoryHandler.getMallocCall(llv, igLoc));
 					stmt.addAll(assign.mStmt);
 				} else {
 					stmt.add(
 							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 				}
-				assert main.mCHandler.getSymbolTable().containsCSymbol(cId);
+				assert main.mCHandler.getSymbolTable().containsCSymbol(parent, cId);
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
-				main.mCHandler.getSymbolTable().put(cId,
+				main.mCHandler.getSymbolTable().storeCSymbol(parent, cId,
 						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false, paramDec, false));
 			}
 		}
@@ -1093,18 +1095,18 @@ public class FunctionHandler {
 	 * Add a procedure to procedures according to a given CFunction. I.e. do a procedure declaration.
 	 */
 	private void addAProcedure(final Dispatcher main, final ILocation loc, final List<ACSLNode> contract,
-			final String methodName, final CFunction funcType) {
+			final String methodName, final CFunction funcType, IASTNode hook) {
 		// begin new scope for retranslation of ACSL specification
 		main.mCHandler.beginScope();
 
-		final VarList[] in = processInParams(main, loc, funcType, methodName);
+		final VarList[] in = processInParams(main, loc, funcType, methodName, hook);
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
 
 		final Attribute[] attr = new Attribute[0];
 		final String[] typeParams = new String[0];
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName, hook);
 
 		if (funcType.getResultType() instanceof CPrimitive
 				&& ((CPrimitive) funcType.getResultType()).getType() == CPrimitives.VOID
@@ -1159,15 +1161,16 @@ public class FunctionHandler {
 	 * @param errLoc
 	 *            the location for possible errors!
 	 */
-	public void checkIfModifiedGlobal(final SymbolTable symbTab, final String searchString, final ILocation errLoc) {
+	public void checkIfModifiedGlobal(final FlatSymbolTable symbTab, final String searchString, final ILocation errLoc,
+			final IASTNode hook) {
 		String cName;
 		if (!symbTab.containsBoogieSymbol(searchString)) {
 			// temp variable!
 			return;
 		}
-		cName = symbTab.getCID4BoogieID(searchString, errLoc);
+		cName = symbTab.getCIdForBoogieId(searchString);
 		final String cId = mCurrentProcedure.getIdentifier();
-		final SymbolTableValue stValue = symbTab.get(cName, errLoc);
+		final SymbolTableValue stValue = symbTab.findCSymbol(hook, cName);
 		final CType cvar = stValue.getCVariable();
 		if (cvar != null && stValue.getCDecl().isStatic()) {
 			mModifiedGlobals.get(cId).add(searchString);
@@ -1182,7 +1185,7 @@ public class FunctionHandler {
 			// therefore local!
 			isLocal = true;
 		} else {
-			isLocal = !symbTab.get(cName, errLoc).isBoogieGlobalVar();
+			isLocal = !symbTab.findCSymbol(hook, cName).isBoogieGlobalVar();
 		}
 		if (!isLocal) {
 			// the variable is not local but could be a formal parameter

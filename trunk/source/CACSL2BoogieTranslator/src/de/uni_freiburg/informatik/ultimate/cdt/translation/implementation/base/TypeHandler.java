@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
@@ -269,7 +269,7 @@ public class TypeHandler implements ITypeHandler {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.VOID))));
 			} else {
-				final String bId = main.mCHandler.getSymbolTable().get(cId, loc).getBoogieName();
+				final String bId = main.mCHandler.getSymbolTable().findCSymbol(node, cId).getBoogieName();
 				return new TypesResult(new NamedType(loc, bId, null), false, false, // TODO: replace constants
 						new CNamed(bId, mDefinedTypes.get(bId).cType));
 			}
@@ -285,7 +285,7 @@ public class TypeHandler implements ITypeHandler {
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String enumId = main.mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
-				main.mCHandler.getSymbolTable().getCompoundCounter(), false, intType);
+				main.mCHandler.getSymbolTable().getCScopeId(node), false, intType);
 		final int nrFields = node.getEnumerators().length;
 		final String[] fNames = new String[nrFields];
 		final Expression[] fValues = new Expression[nrFields];
@@ -498,14 +498,15 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public ASTType getTypeOfStructLHS(final SymbolTable sT, final ILocation loc, final StructLHS lhs) {
+	public ASTType getTypeOfStructLHS(final FlatSymbolTable sT, final ILocation loc, final StructLHS lhs,
+			final IASTNode hook) {
 		final String[] flat = BoogieASTUtil.getLHSList(lhs);
 		final String leftMostId = flat[0];
 		assert leftMostId.equals(BoogieASTUtil.getLHSId(lhs));
 		assert sT.containsBoogieSymbol(leftMostId);
-		final String cId = sT.getCID4BoogieID(leftMostId, loc);
-		assert sT.containsKey(cId);
-		final ASTType t = cType2AstType(loc, sT.get(cId, loc).getCVariable());
+		final String cId = sT.getCIdForBoogieId(leftMostId);
+		assert sT.containsCSymbol(hook, cId);
+		final ASTType t = cType2AstType(loc, sT.findCSymbol(hook, cId).getCVariable());
 		return traverseForType(loc, t, flat, 1);
 	}
 
