@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -58,96 +57,86 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheoryState, IcfgEdge> {
-	
-	private SMTTheoryTransitionRelationProvider mTransitionRelationProvider;
-	private PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
-	private SMTTheoryStateFactoryAndPredicateHelper mStateFactory;
-	private SMTTheoryOperationProvider mArrayTheoryOperationProvider;
+
+	private final SMTTheoryTransitionRelationProvider mTransitionRelationProvider;
+	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
+	private final SMTTheoryStateFactoryAndPredicateHelper mStateFactory;
+	private final SMTTheoryOperationProvider mArrayTheoryOperationProvider;
 	private final CfgSmtToolkit mCsToolkit;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
-	
-	public SMTTheoryPostOperator(IUltimateServiceProvider services, CfgSmtToolkit csToolkit) {
+
+	public SMTTheoryPostOperator(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
 		mServices = services;
 		mCsToolkit = csToolkit;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mMgdScript = csToolkit.getManagedScript();
-		
+
 		mArrayTheoryOperationProvider = new SMTTheoryOperationProvider(services, csToolkit);
 		mPredicateTransformer = new PredicateTransformer<>(csToolkit.getManagedScript(), mArrayTheoryOperationProvider);
 		mTransitionRelationProvider = new SMTTheoryTransitionRelationProvider(services, csToolkit.getManagedScript());
-		mStateFactory = new SMTTheoryStateFactoryAndPredicateHelper(services, csToolkit, 
-				mArrayTheoryOperationProvider);
+		mStateFactory = new SMTTheoryStateFactoryAndPredicateHelper(services, csToolkit, mArrayTheoryOperationProvider);
 
-		
 	}
 
 	@Override
-	public List<SMTTheoryState> apply(SMTTheoryState oldstate, IcfgEdge transition) {
-		
+	public List<SMTTheoryState> apply(final SMTTheoryState oldstate, final IcfgEdge transition) {
+
 		final Set<TransFormula> transRels = mTransitionRelationProvider.getTransitionRelationDNF(transition);
 
 		final List<SMTTheoryState> result = new ArrayList<>();
-		for (TransFormula transRel : transRels) {
+		for (final TransFormula transRel : transRels) {
 			final Term resTerm = mPredicateTransformer.strongestPostcondition(oldstate.getPredicate(), transRel);
-			
-			
-			List<Term> postProcessed = postProcessStrongestPost(resTerm);
+
+			final List<Term> postProcessed = postProcessStrongestPost(resTerm);
 
 			;
-			
-			result.addAll(postProcessed.stream()
-					.map(term -> mStateFactory.getOrConstructState(term, oldstate.getVariables()))
-					.collect(Collectors.toList()));
-//			result.add();
+
+			result.addAll(
+					postProcessed.stream().map(term -> mStateFactory.getOrConstructState(term, oldstate.getVariables()))
+							.collect(Collectors.toList()));
+			// result.add();
 		}
-		
+
 		return result;
 	}
 
+	private List<Term> postProcessStrongestPost(final Term term) {
 
-	private List<Term> postProcessStrongestPost(Term term) {
-
-		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
-				mCsToolkit.getManagedScript(), term, 
-				SimplificationTechnique.SIMPLIFY_QUICK, 
+		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
+				mCsToolkit.getManagedScript(), term, SimplificationTechnique.SIMPLIFY_QUICK,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		
-		
-//		final Term conjunction = dropQuantifiedConjuncts(resTerm);
-		
-		
+
+		// final Term conjunction = dropQuantifiedConjuncts(resTerm);
+
 		// partial quantifier elimination may introduce disjunctions --> convert to DNF
-		final List<Term> dnfDisjuncts = Arrays.asList(SmtUtils.getDisjuncts(
-				new DnfTransformer(mMgdScript, mServices).transform(eliminated)));
+		final List<Term> dnfDisjuncts =
+				Arrays.asList(SmtUtils.getDisjuncts(new DnfTransformer(mMgdScript, mServices).transform(eliminated)));
 
 		return dnfDisjuncts;
 	}
-	
+
 	// TODO: unclear if this is useful/necessary
 	private Term dropQuantifiedConjuncts(final Term resTerm) {
 		final List<Term> filteredConjuncts = Arrays.stream(SmtUtils.getConjuncts(resTerm))
-				.filter(conjunct -> (!(conjunct instanceof QuantifiedFormula)))
-				.collect(Collectors.toList());
+				.filter(conjunct -> (!(conjunct instanceof QuantifiedFormula))).collect(Collectors.toList());
 		final Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), filteredConjuncts);
 		return conjunction;
 	}
 
 	@Override
-	public List<SMTTheoryState> apply(SMTTheoryState stateBeforeLeaving, 
-			SMTTheoryState hierarchicalPreOrStateAfterLeaving,
-			IcfgEdge transition) {
-		
-		assert hierarchicalPreOrStateAfterLeaving.getVariables().containsAll(
-				mCsToolkit.getSymbolTable().getGlobals());
-		assert hierarchicalPreOrStateAfterLeaving.getVariables().containsAll(
-				mCsToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
+	public List<SMTTheoryState> apply(final SMTTheoryState stateBeforeLeaving,
+			final SMTTheoryState hierarchicalPreOrStateAfterLeaving, final IcfgEdge transition) {
+
+		assert hierarchicalPreOrStateAfterLeaving.getVariables().containsAll(mCsToolkit.getSymbolTable().getGlobals());
+		assert hierarchicalPreOrStateAfterLeaving.getVariables()
+				.containsAll(mCsToolkit.getSymbolTable().getLocals(transition.getSucceedingProcedure()));
 
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return Collections.singletonList(mStateFactory.getTopState());
@@ -157,55 +146,47 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 			final String calledProcedure = transition.getSucceedingProcedure();
 
 			final UnmodifiableTransFormula localVarAssignments = ((ICallAction) transition).getLocalVarsAssignment();
-			final UnmodifiableTransFormula globalVarAssignments = 
-							mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure);
-			final UnmodifiableTransFormula oldVarAssignments = 
+			final UnmodifiableTransFormula globalVarAssignments =
+					mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(calledProcedure);
+			final UnmodifiableTransFormula oldVarAssignments =
 					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(calledProcedure);
-			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure = 
-							mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure);
-			
+			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure =
+					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProcedure);
+
 			// TOOD assert all tfs are conjunctive and only contain equalities
 
 			final Term postConstraint = mPredicateTransformer.strongestPostconditionCall(
-					stateBeforeLeaving.getPredicate(), 
-					localVarAssignments, globalVarAssignments, oldVarAssignments, 
+					stateBeforeLeaving.getPredicate(), localVarAssignments, globalVarAssignments, oldVarAssignments,
 					modifiableGlobalsOfCalledProcedure);
-			return Collections.singletonList(mStateFactory.getOrConstructState(postConstraint, 
+			return Collections.singletonList(mStateFactory.getOrConstructState(postConstraint,
 					hierarchicalPreOrStateAfterLeaving.getVariables()));
 		} else if (transition instanceof IReturnAction) {
 			// the hierarchicalPrestate may contain oldVars in its predicate --> we need to project them out
-			final Set<IProgramVar> oldVars = 
-					hierarchicalPreOrStateAfterLeaving.getPredicate().getVars().stream()
-							.filter(var -> (var instanceof IProgramVar) && ((IProgramVar) var).isOldvar())
-							.map(var -> (IProgramVar) var)
-							.collect(Collectors.toSet());
-			final Set<TermVariable> ovTvs = oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
-			final Term projectedCons = 
-					mArrayTheoryOperationProvider.projectExistentially(ovTvs, 
-							hierarchicalPreOrStateAfterLeaving.getPredicate().getFormula());
-			final SMTTheoryState callPred = mStateFactory.getOrConstructState(projectedCons, 
-					hierarchicalPreOrStateAfterLeaving.getVariables());
+			final Set<IProgramVar> oldVars = hierarchicalPreOrStateAfterLeaving.getPredicate().getVars().stream()
+					.filter(var -> (var instanceof IProgramVar) && var.isOldvar()).map(var -> var)
+					.collect(Collectors.toSet());
+			final Set<TermVariable> ovTvs =
+					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
+			final Term projectedCons = mArrayTheoryOperationProvider.projectExistentially(ovTvs,
+					hierarchicalPreOrStateAfterLeaving.getPredicate().getFormula());
+			final SMTTheoryState callPred =
+					mStateFactory.getOrConstructState(projectedCons, hierarchicalPreOrStateAfterLeaving.getVariables());
 
 			// retrieve all the necessary transformulas
-			final UnmodifiableTransFormula returnTF = ((IReturnAction) transition).getTransformula();//.getAssignmentOfReturn();
+			final UnmodifiableTransFormula returnTF = ((IReturnAction) transition).getTransformula();// .getAssignmentOfReturn();
 			final UnmodifiableTransFormula callTF = ((IReturnAction) transition).getLocalVarsAssignmentOfCall();
-			final UnmodifiableTransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
-					.getOldVarsAssignment(transition.getPrecedingProcedure());
-			final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
-					.getModifiedBoogieVars(transition.getPrecedingProcedure());
+			final UnmodifiableTransFormula oldVarAssignments =
+					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(transition.getPrecedingProcedure());
+			final Set<IProgramNonOldVar> modifiableGlobals =
+					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(transition.getPrecedingProcedure());
 
 			// TOOD assert all tfs are conjunctive and only contain equalities
 
-			 final Term postConstraint = mPredicateTransformer.strongestPostconditionReturn(
-					 stateBeforeLeaving.getPredicate(), 
-					callPred.getPredicate(), 
-					returnTF, 
-					callTF, 
-					oldVarAssignments, 
-					modifiableGlobals);
-			
-			final List<SMTTheoryState> res = Collections.singletonList(mStateFactory.getOrConstructState(
-					postConstraint, 
+			final Term postConstraint =
+					mPredicateTransformer.strongestPostconditionReturn(stateBeforeLeaving.getPredicate(),
+							callPred.getPredicate(), returnTF, callTF, oldVarAssignments, modifiableGlobals);
+
+			final List<SMTTheoryState> res = Collections.singletonList(mStateFactory.getOrConstructState(postConstraint,
 					hierarchicalPreOrStateAfterLeaving.getVariables()));
 			return res;
 		} else {
@@ -213,7 +194,7 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 		}
 	}
 
-	public  SMTTheoryStateFactoryAndPredicateHelper getStateFactory() {
+	public SMTTheoryStateFactoryAndPredicateHelper getStateFactory() {
 		return mStateFactory;
 	}
 

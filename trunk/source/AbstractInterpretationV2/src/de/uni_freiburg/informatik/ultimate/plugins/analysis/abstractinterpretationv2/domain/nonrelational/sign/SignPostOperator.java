@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -50,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class SignPostOperator
-		implements IAbstractPostOperator<SignDomainState, IcfgEdge> {
+public class SignPostOperator implements IAbstractPostOperator<SignDomainState, IcfgEdge> {
 
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final SignDomainStatementProcessor mStatementProcessor;
@@ -76,8 +74,7 @@ public class SignPostOperator
 	 * @return A new abstract state which is the result of applying the post operator to a given abstract state.
 	 */
 	@Override
-	public List<SignDomainState> apply(final SignDomainState oldstate,
-			final IcfgEdge transition) {
+	public List<SignDomainState> apply(final SignDomainState oldstate, final IcfgEdge transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom();
 		assert transition != null;
@@ -94,8 +91,7 @@ public class SignPostOperator
 		for (final Statement stmt : statements) {
 			final List<SignDomainState> afterProcessStates = new ArrayList<>();
 			for (final SignDomainState currentState : currentStates) {
-				final List<SignDomainState> processed =
-						mStatementProcessor.process(currentState, stmt);
+				final List<SignDomainState> processed = mStatementProcessor.process(currentState, stmt);
 				assert !processed.isEmpty();
 				afterProcessStates.addAll(processed);
 			}
