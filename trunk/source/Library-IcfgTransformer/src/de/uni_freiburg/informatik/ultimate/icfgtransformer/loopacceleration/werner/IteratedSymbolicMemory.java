@@ -86,20 +86,14 @@ public class IteratedSymbolicMemory {
 	}
 
 	/**
-	 * Construct new Iterated symbolic memory of a loop
-	 *
+	 * Construct a new iterated symbolic memory for a loop.
+	 * 
 	 * @param script
-	 *            a {@link ManagedScript}
+	 * @param services
 	 * @param logger
-	 *            a {@link ILogger}
-	 * @param tf
-	 * @param oldSymbolTable
 	 * @param loop
-	 *            {@link Loop} whose iterated memory is computed
 	 * @param pathCounters
-	 *            list of pathcounters of the loops backbones
 	 * @param newPathCounter
-	 *            mapping of {@link TermVariable} to new Path Counter Tau
 	 */
 	public IteratedSymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services,
 			final ILogger logger, final Loop loop, final List<TermVariable> pathCounters,
@@ -164,78 +158,77 @@ public class IteratedSymbolicMemory {
 				final TransFormula backboneTf = backbone.getFormula();
 
 				// Case 1: variable not changed in backbone
-				if (memory == null || memory.equals(symbol) || memory instanceof TermVariable
-					) {
+				if (memory == null || memory.equals(symbol) || memory instanceof TermVariable) {
 					continue;
 				}
 
 				// Case 3:
 				// in each backbone the variable is either not changed or set to
 				// an expression,
-				if (memory instanceof ConstantTerm 	|| !backboneTf.getAssignedVars().contains(entry.getKey())) {
+				if (memory instanceof ConstantTerm || !backboneTf.getAssignedVars().contains(entry.getKey())) {
 
 					update = memory;
 					prevCase = currentType;
 					currentType = caseType.CONSTANT_ASSIGNMENT;
 
 					mLogger.debug("Assignment");
-				} else {
+					continue;
+				}
 
-					// Case 2.1: if the variable is changed from its symbol by
-					// adding
-					// a constant for each backbone.
-					if ("+".equals(((ApplicationTerm) memory).getFunction().getName())) {
+				// Case 2.1: if the variable is changed from its symbol by
+				// adding
+				// a constant for each backbone.
+				if ("+".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
-						mLogger.debug("Addition");
+					mLogger.debug("Addition");
 
-						update = mScript.getScript().term("+", update, mScript.getScript().term("*",
-								((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
+					update = mScript.getScript().term("+", update, mScript.getScript().term("*",
+							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
 
-						prevCase = currentType;
-						currentType = caseType.ADDITION;
+					prevCase = currentType;
+					currentType = caseType.ADDITION;
 
-					}
+				}
 
-					// Case 2.2: if the variable is changed from its symbol by
-					// multiplicating
-					if ("*".equals(((ApplicationTerm) memory).getFunction().getName())) {
+				// Case 2.2: if the variable is changed from its symbol by
+				// multiplicating
+				if ("*".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
-						mLogger.debug("Multiplication");
-						update = mScript.getScript().term("*", update, mScript.getScript().term("*",
-								((ApplicationTerm) memory).getParameters()[0], backbone.getPathCounter()));
+					mLogger.debug("Multiplication");
+					update = mScript.getScript().term("*", update, mScript.getScript().term("*",
+							((ApplicationTerm) memory).getParameters()[0], backbone.getPathCounter()));
 
-						prevCase = currentType;
-						currentType = caseType.MULTIPLICATION;
+					prevCase = currentType;
+					currentType = caseType.MULTIPLICATION;
 
-					}
+				}
 
-					// Case 2.3: if the variable is changed from its symbol by
-					// subtracting
-					// a constant for each backbone.
-					if ("-".equals(((ApplicationTerm) memory).getFunction().getName())) {
+				// Case 2.3: if the variable is changed from its symbol by
+				// subtracting
+				// a constant for each backbone.
+				if ("-".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
-						mLogger.debug("Subtraction");
+					mLogger.debug("Subtraction");
 
-						update = mScript.getScript().term("-", update, mScript.getScript().term("*",
-								((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
+					update = mScript.getScript().term("-", update, mScript.getScript().term("*",
+							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
 
-						prevCase = currentType;
-						currentType = caseType.SUBTRACTION;
+					prevCase = currentType;
+					currentType = caseType.SUBTRACTION;
 
-					}
+				}
 
-					if (!Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol) && Arrays
-							.asList(((ApplicationTerm) memory).getParameters()).contains(backbone.getPathCounter())) {
+				if (!Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol) && Arrays
+						.asList(((ApplicationTerm) memory).getParameters()).contains(backbone.getPathCounter())) {
 
-						final Map<Term, Term> mapping = new HashMap<>();
+					final Map<Term, Term> mapping = new HashMap<>();
 
-						final Term newMapping = mScript.getScript().term("-", backbone.getPathCounter(),
-								Rational.ONE.toTerm(SmtSortUtils.getIntSort(mScript)));
-						mapping.put(backbone.getPathCounter(), newMapping);
+					final Term newMapping = mScript.getScript().term("-", backbone.getPathCounter(),
+							Rational.ONE.toTerm(SmtSortUtils.getIntSort(mScript)));
+					mapping.put(backbone.getPathCounter(), newMapping);
 
-						final Substitution sub = new Substitution(mScript, mapping);
-						update = sub.transform(memory);
-					}
+					final Substitution sub = new Substitution(mScript, mapping);
+					update = sub.transform(memory);
 				}
 			}
 
@@ -338,10 +331,6 @@ public class IteratedSymbolicMemory {
 		final List<Term> terms = new ArrayList<>();
 
 		terms.add(mAbstractPathCondition);
-
-		/**
-		 * @TODO Problem: Pathcounters are duplicated
-		 */
 
 		for (final Entry<IProgramVar, TermVariable> outvar : mOutVars.entrySet()) {
 			if (!checkIfVarContained(outvar.getValue(), mAbstractPathCondition)) {
@@ -462,7 +451,7 @@ public class IteratedSymbolicMemory {
 			for (Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 				if (Arrays.asList(((ApplicationTerm) subTerm).getParameters()).contains(entry.getValue())
 						&& !(mIteratedMemory.get(entry.getKey()) instanceof ConstantTerm)) {
-					
+
 					final Sort sort = subTerm.getSort();
 					if (sort.equals(mScript.getScript().sort(SmtSortUtils.INT_SORT))) {
 						result.put(subTerm, mIteratedMemory.get(entry.getKey()));

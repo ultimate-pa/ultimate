@@ -63,21 +63,16 @@ public class Loop {
 	private Deque<IcfgEdge> mPath;
 	private Deque<Backbone> mBackbones;
 	private IteratedSymbolicMemory mIteratedMemory;
-	/**
-	 * @TODO maybe change to Set, so no duplicates
-	 */
 	private List<TermVariable> mAuxVars;
 	private Map<IcfgLocation, Backbone> mErrorPaths;
 	private Set<IcfgEdge> mBreakPaths;
 	private Set<UnmodifiableTransFormula> mBreakFormulas;
 	private Boolean mHasNestedLoops;
 	private Deque<Loop> mNestedLoops;
-	private Boolean mIsSummarized;
 	private Map<IProgramVar, TermVariable> mInVars;
 	private Map<IProgramVar, TermVariable> mOutVars;
 	private IcfgLocation mLoopExit;
 	private List<IcfgEdge> mExitTransitions;
-	private List<IcfgEdge> mEntryTransitions;
 	private List<UnmodifiableTransFormula> mExitConditions;
 	private UnmodifiableTransFormula mFormula;
 
@@ -97,14 +92,12 @@ public class Loop {
 		mAuxVars = new ArrayList<>();
 		mErrorPaths = new HashMap<>();
 		mHasNestedLoops = false;
-		mIsSummarized = false;
 		mNestedLoops = new ArrayDeque<>();
 		mInVars = new HashMap<>();
 		mOutVars = new HashMap<>();
 		mLoopExit = null;
 		mExitConditions = new ArrayList<>();
 		mExitTransitions = new ArrayList<>();
-		mEntryTransitions = new ArrayList<>();
 		mBreakPaths = new HashSet<>();
 		mBreakFormulas = new HashSet<>();
 
@@ -249,10 +242,6 @@ public class Loop {
 		return mExitConditions;
 	}
 
-	public List<IcfgEdge> getEntryTransitions() {
-		return mEntryTransitions;
-	}
-
 	public List<IcfgEdge> getExitTransitions() {
 		return mExitTransitions;
 	}
@@ -270,11 +259,6 @@ public class Loop {
 
 	public void setPath(final Deque<IcfgEdge> path) {
 		mPath = path;
-		for (final IcfgEdge entry : mLoopHead.getOutgoingEdges()) {
-			if (mPath.contains(entry)) {
-				mEntryTransitions.add(entry);
-			}
-		}
 	}
 
 	public void setLoopExit(final IcfgLocation icfgLocation) {
@@ -370,22 +354,11 @@ public class Loop {
 		return mHasNestedLoops;
 	}
 
-	public Boolean isSummarized() {
-		return mIsSummarized;
-	}
-
 	/**
 	 * The Loop has nested Loops
 	 */
 	public void setNested() {
 		mHasNestedLoops = true;
-	}
-
-	/**
-	 * The loop has been summarized, there is a {@link IteratedSymbolicMemory}
-	 */
-	public void setSummarized() {
-		mIsSummarized = true;
 	}
 
 	/**

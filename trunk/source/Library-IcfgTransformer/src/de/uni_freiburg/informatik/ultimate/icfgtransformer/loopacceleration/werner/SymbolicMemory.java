@@ -69,6 +69,9 @@ public class SymbolicMemory {
 	 *            A {@link ManagedScript} instance that can be used to perform
 	 *            SMT operations.
 	 * 
+	 * @param services
+	 *            an {@link IUltimateServiceProvider}
+	 * 
 	 * @param logger
 	 *            A {@link ILogger} instance that is used for debug logging.
 	 * 
@@ -79,8 +82,8 @@ public class SymbolicMemory {
 	 *            {@link TermVariable} to an {@link IProgramVar} for changing in
 	 *            the memory.
 	 */
-	public SymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services,
-			final TransFormula tf, final IIcfgSymbolTable oldSymbolTable) {
+	public SymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services, final TransFormula tf,
+			final IIcfgSymbolTable oldSymbolTable) {
 
 		mScript = script;
 		mServices = services;
@@ -141,7 +144,7 @@ public class SymbolicMemory {
 	 * 
 	 * @param tf
 	 *            {@link TransFormula}
-	 * @return
+	 * @return 	a symbolic memory compatible {@link TransFormula}
 	 */
 	public UnmodifiableTransFormula updateCondition(final UnmodifiableTransFormula tf) {
 
