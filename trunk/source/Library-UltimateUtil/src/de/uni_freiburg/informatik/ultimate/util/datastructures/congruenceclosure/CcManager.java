@@ -57,57 +57,79 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mEmptyFrozenCc.freeze();
 	}
 
-	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
-		final CongruenceClosure<ELEM> result = meet(cc1, cc2, null);
-		if (CcSettings.FREEZE_ALL_IN_MANAGER) {
-			if (!result.isFrozen()) {
-				result.freeze();
-			}
-		}
-		return result;
-	}
+//	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
+//		final CongruenceClosure<ELEM> result = meet(cc1, cc2, null, false);
+//		if (CcSettings.FREEZE_ALL_IN_MANAGER) {
+//			if (!result.isFrozen()) {
+//				result.freeze();
+//			}
+//		}
+//		return result;
+//	}
+//
+//	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+//			final RemoveCcElement<ELEM> remInfo) {
+//		return meet(cc1, cc2, remInfo, false);
+//	}
 
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
-			final RemoveCcElement<ELEM> remInfo) {
+			final boolean inplace) {
+		return meet(cc1, cc2, null, inplace);
+	}
+
+	/**
+	 *
+	 * @param cc1
+	 * @param cc2
+	 * @param remInfo
+	 * @param inplace the result is the same object as the first argument, with all constraints from the second argument
+	 *  added
+	 * @return
+	 */
+	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
+			final RemoveCcElement<ELEM> remInfo, final boolean inplace) {
+		assert !inplace || !cc1.isFrozen();
 		assert cc1.sanityCheck();
 		assert cc2.sanityCheck();
 
-		if (cc1.isTautological()) {
-			assert !CcSettings.FREEZE_ALL_IN_MANAGER || cc2.isFrozen();
+		if (cc1.isTautological() && !inplace) {
+			assert cc1.isFrozen() && cc2.isFrozen() : "unforseen case, when does this happen?";
 			return cc2;
 		}
 		if (cc2.isTautological()) {
-			assert !CcSettings.FREEZE_ALL_IN_MANAGER || cc1.isFrozen();
 			return cc1;
 		}
-		if (cc1.isInconsistent() || cc2.isInconsistent()) {
+		if (cc1.isInconsistent()) {
+			return cc1;
+		}
+		if (cc2.isInconsistent() && !inplace) {
 			return getInconsistentCc();
-		}
-
-		if (CcSettings.FREEZE_ALL_IN_MANAGER && !cc1.isFrozen()) {
-			cc1.freeze();
-		}
-		if (CcSettings.FREEZE_ALL_IN_MANAGER && !cc2.isFrozen()) {
-			cc2.freeze();
 		}
 
 		final CongruenceClosure<ELEM> result;
 		if (remInfo == null) {
-			result = cc1.meetRec(cc2);
+			result = cc1.meetRec(cc2, inplace);
 		} else {
-			result = cc1.meetRec(cc2, remInfo);
+			result = cc1.meetRec(cc2, remInfo, inplace);
 		}
 
 		assert result.sanityCheck();
 
-		if (CcSettings.FREEZE_ALL_IN_MANAGER && !result.isFrozen()) {
-			result.freeze();
-		}
 		return result;
 	}
 
 
 
+	/**
+	 * note: join always happens immutable/non-inplace style. Thus before a join everything has to be frozen.
+	 * The result is not frozen by default (but guaranteed to be a fresh object).
+	 *
+	 * (even though not frozen, the result is probably always completely reduced/closed)
+	 *
+	 * @param cc1
+	 * @param cc2
+	 * @return
+	 */
 	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
 		if (cc1.isInconsistent()) {
 			assert cc2.isFrozen();
@@ -118,14 +140,12 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return cc1;
 		}
 		if (cc1.isTautological() || cc2.isTautological()) {
-			return getEmptyCc();
+			return getEmptyCc(true);
 		}
 
 		final CongruenceClosure<ELEM> result = cc1.join(cc2);
 
-		if (CcSettings.FREEZE_ALL_IN_MANAGER && !result.isFrozen()) {
-			result.freeze();
-		}
+		assert !result.isFrozen();
 
 		return result;
 	}
@@ -159,19 +179,29 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> reportEquality(final ELEM node1, final ELEM node2,
-			final CongruenceClosure<ELEM> origCc) {
-		final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-		unfrozen.reportEquality(node1, node2);
-		unfrozen.freeze();
-		return unfrozen;
+			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
+		if (inplace) {
+			origCc.reportEquality(node1, node2);
+			return origCc;
+		} else {
+			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
+			unfrozen.reportEquality(node1, node2);
+			unfrozen.freeze();
+			return unfrozen;
+		}
 	}
 
 	public CongruenceClosure<ELEM> reportDisequality(final ELEM node1, final ELEM node2,
-			final CongruenceClosure<ELEM> origCc) {
-		final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-		unfrozen.reportDisequality(node1, node2);
-		unfrozen.freeze();
-		return unfrozen;
+			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
+		if (inplace) {
+			origCc.reportDisequality(node1, node2);
+			return origCc;
+		} else {
+			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
+			unfrozen.reportDisequality(node1, node2);
+			unfrozen.freeze();
+			return unfrozen;
+		}
 	}
 
 	public CongruenceClosure<ELEM> transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer,
@@ -184,7 +214,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public CongruenceClosure<ELEM> removeSimpleElement(final ELEM elem, final CongruenceClosure<ELEM> origCc) {
 		final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-//		unfrozen.removeSimpleElement(elem);
 		RemoveCcElement.removeSimpleElement(unfrozen, elem);
 		unfrozen.freeze();
 		return unfrozen;
@@ -234,25 +263,22 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mLogger;
 	}
 
-	public CongruenceClosure<ELEM> getSingleEqualityCc(final ELEM node1, final ELEM node2) {
-		final CongruenceClosure<ELEM> cc = getEmptyCc();
-		return reportEquality(node1, node2, cc);
+	public CongruenceClosure<ELEM> getSingleEqualityCc(final ELEM node1, final ELEM node2, final boolean modifiable) {
+		final CongruenceClosure<ELEM> cc = getEmptyCc(modifiable);
+		return reportEquality(node1, node2, cc, modifiable);
 	}
 
-	public CongruenceClosure<ELEM> getSingleDisequalityCc(final ELEM node1, final ELEM node2) {
-		final CongruenceClosure<ELEM> cc = getEmptyCc();
-		return reportDisequality(node1, node2, cc);
+	public CongruenceClosure<ELEM> getSingleDisequalityCc(final ELEM node1, final ELEM node2, final boolean modifiable) {
+		final CongruenceClosure<ELEM> cc = getEmptyCc(modifiable);
+		return reportDisequality(node1, node2, cc, modifiable);
 	}
 
-	public CongruenceClosure<ELEM> getEmptyUnfrozenCc() {
-		return new CongruenceClosure<>(this);
-	}
-
-	public CongruenceClosure<ELEM> getEmptyCc() {
-//		if (CcSettings.FREEZE_ALL_IN_MANAGER) {
-		return mEmptyFrozenCc;
-//		}
-//		return new CongruenceClosure<>(this);
+	public CongruenceClosure<ELEM> getEmptyCc(final boolean modifiable) {
+		if (modifiable) {
+			return new CongruenceClosure<>(this);
+	 	} else {
+	 		return mEmptyFrozenCc;
+	 	}
 	}
 
 	public CongruenceClosure<ELEM> getInconsistentCc() {
@@ -308,19 +334,19 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			assert false : "CongruenceClosure.projectToElements is currently not suited for inplace operation";
 			return cc.projectToElements(nodesToKeep, remInfo);
 		} else {
-			final CongruenceClosure<ELEM> result = cc.projectToElements(nodesToKeep, remInfo);
-			assert result.isFrozen();
-			return result;
-//			final CongruenceClosure<ELEM> unfrozen = unfreeze(cc);
-//			unfrozen.projectToElements(nodesToKeep, remInfo);
-//			unfrozen.freeze();
-//			// TODO: implement a result check here?
-//			return unfrozen;
+//			final CongruenceClosure<ELEM> result = cc.projectToElements(nodesToKeep, remInfo);
+//			assert result.isFrozen();
+//			return result;
+			final CongruenceClosure<ELEM> unfrozen = unfreeze(cc);
+			unfrozen.projectToElements(nodesToKeep, remInfo);
+			unfrozen.freeze();
+			// TODO: implement a result check here?
+			return unfrozen;
 		}
 	}
 
 	public CongruenceClosure<ELEM> addAllElements(final CongruenceClosure<ELEM> cc, final Set<ELEM> elemsToAdd,
-			final RemoveCcElement<ELEM> remInfo) {
+			final RemoveCcElement<ELEM> remInfo, final boolean inplace) {
 		assert !cc.isInconsistent();
 
 		// TODO: is it redundant to add remInfo to the result Cc and give it to addElementRec??
@@ -338,6 +364,12 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return unfreeze(cc);
 		} else {
 			return cc;
+		}
+	}
+
+	public void freezeIfNecessary(final CongruenceClosure<ELEM> cc) {
+		if (cc.isFrozen()) {
+			cc.freeze();
 		}
 	}
 }

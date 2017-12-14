@@ -79,7 +79,8 @@ public class EqStateFactory {
 
 	public EqState getTopState() {
 		if (mTopStateWithEmptyPvocs == null) {
-			mTopStateWithEmptyPvocs = getEqState(mEqConstraintFactory.getEmptyConstraint(), Collections.emptySet());
+			mTopStateWithEmptyPvocs = getEqState(mEqConstraintFactory.getEmptyConstraint(false),
+					Collections.emptySet());
 		}
 		return mTopStateWithEmptyPvocs;
 	}

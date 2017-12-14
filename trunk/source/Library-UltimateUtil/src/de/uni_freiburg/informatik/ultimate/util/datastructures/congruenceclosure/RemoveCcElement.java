@@ -117,7 +117,9 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mElementContainer);
 		assert !mElementContainer.isInconsistent();
 
-		mElementContainer.applyClosureOperations();
+		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
+			mElementContainer.applyClosureOperations();
+		}
 
 		assert !mElementContainer.isInconsistent();
 		if (mElementContainer.isInconsistent()) {

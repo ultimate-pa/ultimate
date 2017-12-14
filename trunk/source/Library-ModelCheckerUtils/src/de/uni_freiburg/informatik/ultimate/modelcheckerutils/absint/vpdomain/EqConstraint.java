@@ -119,6 +119,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public void freeze() {
 		assert !isInconsistent() : "use EqBottomConstraint instead!!";
+		assert mPartialArrangement.isFrozen();
 		assert sanityCheck();
 		// assert !mIsFrozen;
 		mIsFrozen = true;
@@ -159,7 +160,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	public void reportWeakEquivalenceInPlace(final NODE array1, final NODE array2, final NODE storeIndex) {
 		assert !isInconsistent();
 		assert !mIsFrozen;
-		mPartialArrangement.reportWeakEquivalence(array1, array2, storeIndex);
+		mFactory.getWeqCcManager().reportWeakEquivalence(mPartialArrangement, array1, array2, storeIndex, true);
 	}
 
 	public boolean isFrozen() {
@@ -340,9 +341,9 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			return this;
 		}
 
-//		final WeqCongruenceClosure<NODE> newPa = mPartialArrangement.meet(other.mPartialArrangement);
 		final WeqCongruenceClosure<NODE> newPa = mFactory.getWeqCcManager().meet(mPartialArrangement,
-				other.mPartialArrangement);
+				other.mPartialArrangement, false);
+		assert newPa.isFrozen();
 
 		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPa);
 		res.freeze();
