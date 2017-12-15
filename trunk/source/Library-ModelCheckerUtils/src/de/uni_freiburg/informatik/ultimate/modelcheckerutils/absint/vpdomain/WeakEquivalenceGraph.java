@@ -173,7 +173,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			putEdgeLabel(edge.getKey(), newLabel);
 			// TODO is the madeChanges flag worth this effort?.. should we just always say "true"?..
-			madeChanges |= !newLabel.isStrongerThan(edge.getValue()) || !edge.getValue().isStrongerThan(newLabel);
+			madeChanges |= !mWeqCcManager.isEquivalent(edge.getValue(), newLabel);
 		}
 		return madeChanges;
 	}
@@ -396,7 +396,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 		return true;
 	}
 
-	public boolean isStrongerThan(final WeakEquivalenceGraph<NODE> other) {
+	boolean isStrongerThan(final WeakEquivalenceGraph<NODE> other) {
+		assert this.isFrozen() && other.isFrozen();
+
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> otherWeqEdgeAndLabel
 				: other.getWeqEdgesEntrySet()) {
 			final WeakEquivalenceEdgeLabel<NODE> correspondingWeqEdgeInThis =
@@ -406,11 +408,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 				return false;
 			}
 			// if the this-edge is strictly weaker than the other-edge, we have a counterexample
-			if (!correspondingWeqEdgeInThis.isStrongerThan(otherWeqEdgeAndLabel.getValue())) {
+			if (!mWeqCcManager.isStrongerThan(correspondingWeqEdgeInThis, otherWeqEdgeAndLabel.getValue())) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	boolean isFrozen() {
+		return mIsFrozen;
 	}
 
 	/**
@@ -579,7 +585,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 		labelToStrengthenWith.meetWithCcGpa();
 		oldLabelCopy.meetWithCcGpa();
-		if (oldLabelCopy.isStrongerThan(labelToStrengthenWith)) {
+
+		if (mWeqCcManager.isStrongerThan(oldLabelCopy, labelToStrengthenWith)) {
 			// nothing to do
 			return false;
 		}
@@ -1081,6 +1088,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public void freeze() {
 		assert !hasArrayEqualities() : "report array equalities before freezing";
+
+		// TODO: would this be a good place to trigger closure under triangle rule?
+
+		// set the flags
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE>> edge : getWeqEdgesEntrySet()) {
 			edge.getValue().freeze();
 		}

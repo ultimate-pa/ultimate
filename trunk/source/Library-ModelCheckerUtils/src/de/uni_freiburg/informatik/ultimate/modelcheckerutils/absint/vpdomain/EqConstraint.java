@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.RemoveCcElement;
 
 /**
  *
@@ -89,7 +88,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			final EqConstraintFactory<NODE> factory) {
 //		this(id, factory, cClosure);
 
-		assert id == 0 || cClosure.isFrozen() : "the caller is responsible that this is frozen already";
+//		assert id == 0 || cClosure.isFrozen() : "the caller is responsible that this is frozen already";
 		assert id != Integer.MAX_VALUE : "ran out of ids for EqConstraints";
 
 		mId = id;
@@ -360,13 +359,18 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return mFactory.getWeqCcManager().isStrongerThan(mPartialArrangement, other.mPartialArrangement);
 	}
 
-	public void addNodeInPlace(final NODE nodeToAdd) {
-		assert !mIsFrozen;
-		mFactory.getWeqCcManager().addNode(nodeToAdd, mPartialArrangement);
-	}
+//	public void addNodeInPlace(final NODE nodeToAdd) {
+//		assert !mIsFrozen;
+//		mFactory.getWeqCcManager().addNode(nodeToAdd, mPartialArrangement);
+//	}
 
-	public void projectAwayInPlace(final NODE elemToHavoc) {
-		RemoveCcElement.removeSimpleElement(mPartialArrangement, elemToHavoc);
+	public void projectAway(final NODE elemToHavoc, final boolean inplace) {
+		if (inplace) {
+			mFactory.getWeqCcManager().projectAway(mPartialArrangement, elemToHavoc);
+
+		} else {
+//			RemoveCcElement.removeSimpleElement(mPartialArrangement, elemToHavoc);
+		}
 		assert mPartialArrangement.assertSingleElementIsFullyRemoved(elemToHavoc);
 		assert mPartialArrangement.sanityCheck();
 	}

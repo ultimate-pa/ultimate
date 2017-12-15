@@ -2,6 +2,6 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosur
 
 public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
 
-	RemoveCcElement<ELEM> getElementCurrentlyBeingRemoved();
+	IRemovalInfo<ELEM> getElementCurrentlyBeingRemoved();
 
 }

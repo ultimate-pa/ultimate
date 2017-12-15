@@ -41,25 +41,25 @@ public class CongruenceClosureTest {
 		final StringCcElement g = factory.getBaseElement("g");
 
 		final StringCcElement x = factory.getBaseElement("x");
-		cc = manager.addElement(cc, x);
+		cc = manager.addElement(cc, x, mInPlace, false);
 		final StringCcElement f_x = factory.getFuncAppElement(f, x);
-		cc = manager.addElement(cc, f_x);
+		cc = manager.addElement(cc, f_x, mInPlace, false);
 		final StringCcElement g_x = factory.getFuncAppElement(g, x);
-		cc = manager.addElement(cc, g_x);
+		cc = manager.addElement(cc, g_x, mInPlace, false);
 
 		final StringCcElement y = factory.getBaseElement("y");
-		cc = manager.addElement(cc, y);
+		cc = manager.addElement(cc, y, mInPlace, false);
 		final StringCcElement f_y = factory.getFuncAppElement(f, y);
-		cc = manager.addElement(cc, f_y);
+		cc = manager.addElement(cc, f_y, mInPlace, false);
 		final StringCcElement g_y = factory.getFuncAppElement(g, y);
-		cc = manager.addElement(cc, g_y);
+		cc = manager.addElement(cc, g_y, mInPlace, false);
 
 		final StringCcElement z = factory.getBaseElement("z");
-		cc = manager.addElement(cc, z);
+		cc = manager.addElement(cc, z, mInPlace, false);
 		final StringCcElement f_z = factory.getFuncAppElement(f, z);
-		cc = manager.addElement(cc, f_z);
+		cc = manager.addElement(cc, f_z, mInPlace, false);
 		final StringCcElement g_z = factory.getFuncAppElement(g, z);
-		cc = manager.addElement(cc, g_z);
+		cc = manager.addElement(cc, g_z, mInPlace, false);
 
 		// reflexivity
 		assertTrue(cc.getEqualityStatus(x, x) == EqualityStatus.EQUAL);
@@ -114,25 +114,25 @@ public class CongruenceClosureTest {
 		final StringCcElement g = factory.getBaseElement("g");
 
 		final StringCcElement x = factory.getBaseElement("x");
-		cc = manager.addElement(cc, x);
+		cc = manager.addElement(cc, x, mInPlace, false);
 		final StringCcElement f_x = factory.getFuncAppElement(f, x);
-		cc = manager.addElement(cc, f_x);
+		cc = manager.addElement(cc, f_x, mInPlace, false);
 		final StringCcElement g_x = factory.getFuncAppElement(g, x);
-		cc = manager.addElement(cc, g_x);
+		cc = manager.addElement(cc, g_x, mInPlace, false);
 
 		final StringCcElement y = factory.getBaseElement("y");
-		cc = manager.addElement(cc, y);
+		cc = manager.addElement(cc, y, mInPlace, false);
 		final StringCcElement f_y = factory.getFuncAppElement(f, y);
-		cc = manager.addElement(cc, f_y);
+		cc = manager.addElement(cc, f_y, mInPlace, false);
 		final StringCcElement g_y = factory.getFuncAppElement(g, y);
-		cc = manager.addElement(cc, g_y);
+		cc = manager.addElement(cc, g_y, mInPlace, false);
 
 		final StringCcElement z = factory.getBaseElement("z");
-		cc = manager.addElement(cc, z);
+		cc = manager.addElement(cc, z, mInPlace, false);
 		final StringCcElement f_z = factory.getFuncAppElement(f, z);
-		cc = manager.addElement(cc, f_z);
+		cc = manager.addElement(cc, f_z, mInPlace, false);
 		final StringCcElement g_z = factory.getFuncAppElement(g, z);
-		cc = manager.addElement(cc, g_z);
+		cc = manager.addElement(cc, g_z, mInPlace, false);
 
 //		cc.reportEquality(x, z);
 		cc = manager.reportEquality(x, z, cc, mInPlace);
@@ -177,25 +177,25 @@ public class CongruenceClosureTest {
 		final StringCcElement g = factory.getBaseElement("g");
 
 		final StringCcElement x = factory.getBaseElement("x");
-		cc = manager.addElement(cc, x);
+		cc = manager.addElement(cc, x, mInPlace, false);
 		final StringCcElement f_x = factory.getFuncAppElement(f, x);
-		cc = manager.addElement(cc, f_x);
+		cc = manager.addElement(cc, f_x, mInPlace, false);
 		final StringCcElement g_x = factory.getFuncAppElement(g, x);
-		cc = manager.addElement(cc, g_x);
+		cc = manager.addElement(cc, g_x, mInPlace, false);
 
 		final StringCcElement y = factory.getBaseElement("y");
-		cc = manager.addElement(cc, y);
+		cc = manager.addElement(cc, y, mInPlace, false);
 		final StringCcElement f_y = factory.getFuncAppElement(f, y);
-		cc = manager.addElement(cc, f_y);
+		cc = manager.addElement(cc, f_y, mInPlace, false);
 		final StringCcElement g_y = factory.getFuncAppElement(g, y);
-		cc = manager.addElement(cc, g_y);
+		cc = manager.addElement(cc, g_y, mInPlace, false);
 
 		final StringCcElement z = factory.getBaseElement("z");
-		cc = manager.addElement(cc, z);
+		cc = manager.addElement(cc, z, mInPlace, false);
 		final StringCcElement f_z = factory.getFuncAppElement(f, z);
-		cc = manager.addElement(cc, f_z);
+		cc = manager.addElement(cc, f_z, mInPlace, false);
 		final StringCcElement g_z = factory.getFuncAppElement(g, z);
-		cc = manager.addElement(cc, g_z);
+		cc = manager.addElement(cc, g_z, mInPlace, false);
 
 		cc = manager.reportDisequality(f_x, f_y, cc, mInPlace);
 		assertTrue(cc.getEqualityStatus(f_x, f_y) == EqualityStatus.NOT_EQUAL);
@@ -220,25 +220,25 @@ public class CongruenceClosureTest {
 		final StringCcElement g = factory.getBaseElement("g");
 
 		final StringCcElement x = factory.getBaseElement("x");
-		cc = manager.addElement(cc, x);
+		cc = manager.addElement(cc, x, mInPlace, false);
 		final StringCcElement f_x = factory.getFuncAppElement(f, x);
-		cc = manager.addElement(cc, f_x);
+		cc = manager.addElement(cc, f_x, mInPlace, false);
 		final StringCcElement g_x = factory.getFuncAppElement(g, x);
-		cc = manager.addElement(cc, g_x);
+		cc = manager.addElement(cc, g_x, mInPlace, false);
 
 		final StringCcElement y = factory.getBaseElement("y");
-		cc = manager.addElement(cc, y);
+		cc = manager.addElement(cc, y, mInPlace, false);
 		final StringCcElement f_y = factory.getFuncAppElement(f, y);
-		cc = manager.addElement(cc, f_y);
+		cc = manager.addElement(cc, f_y, mInPlace, false);
 		final StringCcElement g_y = factory.getFuncAppElement(g, y);
-		cc = manager.addElement(cc, g_y);
+		cc = manager.addElement(cc, g_y, mInPlace, false);
 
 		final StringCcElement z = factory.getBaseElement("z");
-		cc = manager.addElement(cc, z);
+		cc = manager.addElement(cc, z, mInPlace, false);
 		final StringCcElement f_z = factory.getFuncAppElement(f, z);
-		cc = manager.addElement(cc, f_z);
+		cc = manager.addElement(cc, f_z, mInPlace, false);
 		final StringCcElement g_z = factory.getFuncAppElement(g, z);
-		cc = manager.addElement(cc, g_z);
+		cc = manager.addElement(cc, g_z, mInPlace, false);
 
 		cc = manager.reportEquality(f, g, cc, mInPlace);
 		assertTrue(cc.getEqualityStatus(f_x, g_x) == EqualityStatus.EQUAL);
@@ -270,18 +270,18 @@ public class CongruenceClosureTest {
 		final StringCcElement f = factory.getBaseElement("f");
 
 		final StringCcElement x = factory.getBaseElement("x");
-		cc = manager.addElement(cc, x);
+		cc = manager.addElement(cc, x, mInPlace, false);
 		final StringCcElement f_x = factory.getFuncAppElement(f, x);
-		cc = manager.addElement(cc, f_x);
+		cc = manager.addElement(cc, f_x, mInPlace, false);
 		final StringCcElement y = factory.getBaseElement("y");
-		cc = manager.addElement(cc, y);
+		cc = manager.addElement(cc, y, mInPlace, false);
 		final StringCcElement f_y = factory.getFuncAppElement(f, y);
-		cc = manager.addElement(cc, f_y);
+		cc = manager.addElement(cc, f_y, mInPlace, false);
 
 		final StringCcElement i = factory.getBaseElement("i");
-		cc = manager.addElement(cc, i);
+		cc = manager.addElement(cc, i, mInPlace, false);
 		final StringCcElement j = factory.getBaseElement("j");
-		cc = manager.addElement(cc, j);
+		cc = manager.addElement(cc, j, mInPlace, false);
 
 		cc = manager.reportEquality(i, f_y, cc, mInPlace);
 		cc = manager.reportDisequality(j, f_x, cc, mInPlace);
@@ -314,18 +314,18 @@ public class CongruenceClosureTest {
 		final StringCcElement g = factory.getBaseElement("g");
 
 		final StringCcElement x1 = factory.getBaseElement("x1");
-		cc = manager.addElement(cc, x1);
+		cc = manager.addElement(cc, x1, mInPlace, false);
 		final StringCcElement x2 = factory.getBaseElement("x2");
-		cc = manager.addElement(cc, x2);
+		cc = manager.addElement(cc, x2, mInPlace, false);
 		final StringCcElement y1 = factory.getBaseElement("y1");
-		cc = manager.addElement(cc, y1);
+		cc = manager.addElement(cc, y1, mInPlace, false);
 		final StringCcElement y2 = factory.getBaseElement("y2");
-		cc = manager.addElement(cc, y2);
+		cc = manager.addElement(cc, y2, mInPlace, false);
 
 		final StringCcElement f_x1_x2 = factory.getFuncAppElement(f, x1, x2);
-		cc = manager.addElement(cc, f_x1_x2);
+		cc = manager.addElement(cc, f_x1_x2, mInPlace, false);
 		final StringCcElement g_y1_y2 = factory.getFuncAppElement(g, y1, y2);
-		cc = manager.addElement(cc, g_y1_y2);
+		cc = manager.addElement(cc, g_y1_y2, mInPlace, false);
 
 
 		cc = manager.reportDisequality(f_x1_x2, g_y1_y2, cc, mInPlace);
@@ -538,7 +538,7 @@ public class CongruenceClosureTest {
 		cc1 = manager.reportEquality(x, y, cc1, mInPlace);
 		cc1 = manager.reportEquality(i, j, cc1, mInPlace);
 		cc1 = manager.reportEquality(i, x, cc1, mInPlace);
-		cc1 = manager.addElement(cc1, f_f_b);
+		cc1 = manager.addElement(cc1, f_f_b, mInPlace, false);
 		// state of cc1 should be {{a,b}, {f(a), f(b)}, {i,j,x,y,f(f(a)), f(f(b))}}
 		assertTrue(cc1.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc1.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
@@ -569,7 +569,7 @@ public class CongruenceClosureTest {
 		assertFalse(cc1.isStrongerThan(cc2));
 		assertFalse(cc2.isStrongerThan(cc1));
 
-		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2);
+		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2, mInPlace);
 		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}}
 		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
@@ -649,7 +649,7 @@ public class CongruenceClosureTest {
 		cc1 = manager.reportEquality(x, y, cc1, mInPlace);
 		cc1 = manager.reportEquality(i, j, cc1, mInPlace);
 		cc1 = manager.reportEquality(i, x, cc1, mInPlace);
-		cc1 = manager.addElement(cc1, f_f_b);
+		cc1 = manager.addElement(cc1, f_f_b, mInPlace, false);
 		// state of cc1 should be {{a,b}, {f(a), f(b)}, {i,j,x,y,f(f(a)), f(f(b))}}
 		assertTrue(cc1.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc1.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
@@ -682,7 +682,7 @@ public class CongruenceClosureTest {
 		assertFalse(cc1.isStrongerThan(cc2));
 		assertFalse(cc2.isStrongerThan(cc1));
 
-		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2);
+		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2, mInPlace);
 		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}} (unchanged from testOperators1)
 		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
@@ -745,7 +745,7 @@ public class CongruenceClosureTest {
 		assertTrue(cc.getEqualityStatus(a, c) == EqualityStatus.EQUAL);
 		RemoveCcElement.removeSimpleElement(cc, b);
 		assertTrue(cc.getEqualityStatus(a, c) == EqualityStatus.EQUAL);
-		cc = manager.addElement(cc, b);
+		cc = manager.addElement(cc, b, mInPlace, false);
 		assertTrue(cc.getEqualityStatus(a, b) == EqualityStatus.UNKNOWN);
 	}
 
@@ -773,14 +773,14 @@ public class CongruenceClosureTest {
 
 		cc = manager.reportEquality(a, b, cc, mInPlace);
 		cc = manager.reportEquality(b, c, cc, mInPlace);
-		cc = manager.addElement(cc, f_a);
-		cc = manager.addElement(cc, f_b);
-		cc = manager.addElement(cc, f_c);
+		cc = manager.addElement(cc, f_a, mInPlace, false);
+		cc = manager.addElement(cc, f_b, mInPlace, false);
+		cc = manager.addElement(cc, f_c, mInPlace, false);
 		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.EQUAL);
 		assertTrue(cc.getEqualityStatus(f_c, f_b) == EqualityStatus.EQUAL);
 		RemoveCcElement.removeSimpleElement(cc, b);
 		assertTrue(cc.getEqualityStatus(f_a, f_c) == EqualityStatus.EQUAL);
-		cc = manager.addElement(cc, f_b);
+		cc = manager.addElement(cc, f_b, mInPlace, false);
 		assertTrue(cc.getEqualityStatus(f_a, f_b) == EqualityStatus.UNKNOWN);
 	}
 
@@ -808,11 +808,11 @@ public class CongruenceClosureTest {
 
 		cc = manager.reportEquality(a, b, cc, mInPlace);
 		cc = manager.reportEquality(b, c, cc, mInPlace);
-		cc = manager.addElement(cc, f_a);
-		cc = manager.addElement(cc, f_c);
+		cc = manager.addElement(cc, f_a, mInPlace, false);
+		cc = manager.addElement(cc, f_c, mInPlace, false);
 		assertTrue(cc.getEqualityStatus(f_a, f_c) == EqualityStatus.EQUAL);
 		RemoveCcElement.removeSimpleElement(cc, a);
-		cc = manager.addElement(cc, f_b);
+		cc = manager.addElement(cc, f_b, mInPlace, false);
 		assertTrue(cc.getEqualityStatus(f_b, f_c) == EqualityStatus.EQUAL);
 	}
 
@@ -842,7 +842,7 @@ public class CongruenceClosureTest {
 		cc = manager.reportEquality(i, y, cc, mInPlace);
 		RemoveCcElement.removeSimpleElement(cc, y);
 		cc = manager.reportEquality(x, i, cc, mInPlace);
-		cc = manager.addElement(cc, a_x);
+		cc = manager.addElement(cc, a_x, mInPlace, false);
 		assertTrue(cc.getEqualityStatus(a_x, l1) == EqualityStatus.EQUAL);
 	}
 

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.RemoveCcElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -102,7 +102,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	WeqCongruenceClosure<NODE> getWeqMeet(final WeqCongruenceClosure<NODE> weqcc, final CongruenceClosure<NODE> cc,
-			final RemoveCcElement<NODE> remInfo, final boolean inplace) {
+			final IRemovalInfo<NODE> remInfo, final boolean inplace) {
 
 		final WeqCongruenceClosure<NODE> result;
 		if (remInfo == null) {
@@ -119,16 +119,22 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return getWeqMeet(weqcc, cc, null, inplace);
 	}
 
-	public WeqCongruenceClosure<NODE> addNode(final NODE node, final WeqCongruenceClosure<NODE> origWeqCc) {
+	public WeqCongruenceClosure<NODE> addNode(final NODE node, final WeqCongruenceClosure<NODE> origWeqCc,
+			final boolean inplace) {
 		if (origWeqCc.hasElement(node)) {
 			// node is already present --> nothing to do
 			return origWeqCc;
 		}
 
-		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
-		unfrozen.addElement(node);
-		unfrozen.freeze();
-		return unfrozen;
+		if (inplace) {
+			origWeqCc.addElement(node);
+			return origWeqCc;
+		} else {
+			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+			unfrozen.addElement(node);
+			unfrozen.freeze();
+			return unfrozen;
+		}
 	}
 
 	WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
@@ -213,7 +219,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		freezeIfNecessary(origWeqCc);
 
 		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
-		RemoveCcElement.removeSimpleElement(unfrozen, node);
+		RemoveWeqCcElement.removeSimpleElement(unfrozen, node);
 		unfrozen.freeze();
 		assert checkProjectAwayResult(origWeqCc, node, unfrozen);
 		return unfrozen;
@@ -287,26 +293,28 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public CongruenceClosure<NODE> meet(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
-			final RemoveCcElement<NODE> elementCurrentlyBeingRemoved, final boolean inplace) {
+			final IRemovalInfo<NODE> elementCurrentlyBeingRemoved, final boolean inplace) {
 		// (just passing it through to CcManager)
-		CongruenceClosure<NODE> cc1_copy = null;
+		CongruenceClosure<NODE> cc1_old = null;
 		if (mDebug && inplace) {
-			cc1_copy = mCcManager.copyNoRemInfo(cc1);
+			cc1_old = mCcManager.copyNoRemInfo(cc1);
+		} else if (mDebug && !inplace) {
+			cc1_old = cc1;
 		}
+
 		final CongruenceClosure<NODE> result = mCcManager.meet(cc1, cc2, elementCurrentlyBeingRemoved, inplace);
+
 		if (mDebug) {
-			if (inplace) {
-				assert checkMeetResult(cc1_copy, cc2, result);
-			} else {
-				assert checkMeetResult(cc1, cc2, result);
-			}
+				assert checkMeetResult(cc1_old, cc2, result);
 		}
+
 		return result;
 	}
 
-	public CongruenceClosure<NODE> join(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2) {
+	public CongruenceClosure<NODE> join(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
+			final boolean modifiable) {
 		// (just passing it through to CcManager)
-		final CongruenceClosure<NODE> result = mCcManager.join(cc1, cc2);
+		final CongruenceClosure<NODE> result = mCcManager.join(cc1, cc2, modifiable);
 		assert checkJoinResult(cc1, cc2, result);
 		return result;
 	}
@@ -366,8 +374,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, constraints);
 	}
 
-	public CongruenceClosure<NODE> addNode(final NODE storeIndex, final CongruenceClosure<NODE> congruenceClosure) {
-		return mCcManager.addElement(congruenceClosure, storeIndex);
+	public CongruenceClosure<NODE> addNode(final NODE storeIndex, final CongruenceClosure<NODE> congruenceClosure,
+			final boolean inplace, final boolean omitSanityChecks) {
+		return mCcManager.addElement(congruenceClosure, storeIndex, inplace, omitSanityChecks);
 	}
 
 	public static <NODE extends IEqNodeIdentifier<NODE>> Term weqCcToTerm(final Script script,
@@ -633,10 +642,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> getWeqCongruenceClosure(final CongruenceClosure<NODE> cc,
-			final WeakEquivalenceGraph<NODE> weqGraph) {
+			final WeakEquivalenceGraph<NODE> weqGraph, final boolean modifiable) {
 		final CongruenceClosure<NODE> ccUnfrozen = mCcManager.unfreezeIfNecessary(cc);
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(ccUnfrozen, weqGraph, this);
-		result.freeze();
+
+		if (!modifiable) {
+			result.freeze();
+		}
 		return result;
 	}
 
@@ -674,12 +686,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public CongruenceClosure<NODE> projectToElements(final CongruenceClosure<NODE> cc, final Set<NODE> nodesToKeep,
-			final RemoveCcElement<NODE> remInfo) {
+			final IRemovalInfo<NODE> remInfo) {
 		return mCcManager.projectToElements(cc, nodesToKeep, remInfo);
 	}
 
 	public WeqCongruenceClosure<NODE> addAllElements(final WeqCongruenceClosure<NODE> weqcc,
-			final Set<NODE> nodesToAdd, final RemoveCcElement<NODE> remInfo, final boolean inplace) {
+			final Set<NODE> nodesToAdd, final IRemovalInfo<NODE> remInfo, final boolean inplace) {
 		// TODO: use inplace flag
 		assert !inplace : "TODO";
 		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
@@ -705,7 +717,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public CongruenceClosure<NODE> addAllElementsCc(final CongruenceClosure<NODE> cc,
-			final Set<NODE> elemsToAdd, final RemoveCcElement<NODE> remInfo, final boolean inplace) {
+			final Set<NODE> elemsToAdd, final IRemovalInfo<NODE> remInfo, final boolean inplace) {
 		return mCcManager.addAllElements(cc, elemsToAdd, remInfo, inplace);
 	}
 
@@ -765,17 +777,47 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mCcManager.freezeIfNecessary(cc);
 	}
 
+	public boolean isStrongerThan(final WeakEquivalenceEdgeLabel<NODE> oldLabelCopy,
+			final WeakEquivalenceEdgeLabel<NODE> labelToStrengthenWith) {
+		// TODO Auto-generated method stub
+		assert false;
+		return false;
+	}
 
-//	/**
-//	 * Meet that -may- happen inplace. The first argument is the one that is changed, in that case.
-//	 *
-//	 * @param l
-//	 * @param congruenceClosure
-//	 * @param elementCurrentlyBeingRemoved
-//	 * @return
-//	 */
-//	public CongruenceClosure<NODE> asyncMeet(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
-//			final RemoveCcElement<NODE> remInfo) {
-//		return mCcManager.asyncMeet(cc1, cc2, remInfo);
-//	}
+	public boolean isEquivalent(final WeakEquivalenceEdgeLabel<NODE> value,
+			final WeakEquivalenceEdgeLabel<NODE> newLabel) {
+		// TODO Auto-generated method stub
+		assert false;
+		return false;
+	}
+
+	public boolean isStrongerThan(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph2) {
+		// freezing ensures closure
+		freezeIfNecessary(weakEquivalenceGraph);
+		freezeIfNecessary(weakEquivalenceGraph2);
+
+		return weakEquivalenceGraph.isStrongerThan(weakEquivalenceGraph2);
+	}
+
+	private void freezeIfNecessary(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph) {
+		if (!weakEquivalenceGraph.isFrozen()) {
+			weakEquivalenceGraph.freeze();
+		}
+	}
+
+	public WeakEquivalenceGraph<NODE> join(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph2,
+			final boolean modifiable) {
+		freezeIfNecessary(weakEquivalenceGraph);
+		freezeIfNecessary(weakEquivalenceGraph2);
+
+		final WeakEquivalenceGraph<NODE> result = weakEquivalenceGraph.join(weakEquivalenceGraph2);
+
+		if (!modifiable) {
+			result.freeze();
+		}
+
+		return result;
+	}
 }

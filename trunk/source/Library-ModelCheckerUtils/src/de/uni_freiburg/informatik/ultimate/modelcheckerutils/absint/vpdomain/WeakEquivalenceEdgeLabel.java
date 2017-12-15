@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.RemoveCcElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 
@@ -132,10 +133,10 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 			return this;
 		}
 		return new WeakEquivalenceEdgeLabel<NODE>(weqGraphForFlattenedLabel, Collections.singleton(
-				getDisjuncts().stream().reduce((cc1, cc2) -> mWeqCcManager.join(cc1, cc2)).get()));
+				getDisjuncts().stream().reduce((cc1, cc2) -> mWeqCcManager.join(cc1, cc2, false)).get()));
 	}
 
-	void setExternalRemInfo(final RemoveCcElement<NODE> remInfo) {
+	void setExternalRemInfo(final IRemovalInfo<NODE> remInfo) {
 		for (final CongruenceClosure<NODE> lab : getDisjuncts()) {
 			lab.setExternalRemInfo(remInfo);
 		}
@@ -696,7 +697,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private void setNewLabelContents(final Collection<CongruenceClosure<NODE>> newLabelContents) {
-		assert newLabelContents.stream().allMatch(cc -> cc.isFrozen());
+		assert MEET_IN_PLACE || newLabelContents.stream().allMatch(cc -> cc.isFrozen());
 		mDisjuncts.clear();
 		mDisjuncts.addAll(newLabelContents);
 	}
