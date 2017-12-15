@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            or function applications.
  */
 public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
-		implements ICcRemoveElement<ELEM>, ICongruenceClosure<ELEM> {
+		implements ICongruenceClosure<ELEM> {
 
 	protected final ThreeValuedEquivalenceRelation<ELEM> mElementTVER;
 
