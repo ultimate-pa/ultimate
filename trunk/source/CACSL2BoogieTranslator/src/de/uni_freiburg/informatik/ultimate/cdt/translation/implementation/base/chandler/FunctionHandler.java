@@ -105,7 +105,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -172,7 +171,6 @@ public class FunctionHandler {
 	private final LinkedHashSet<ProcedureSignature> mFunctionSignaturesThatHaveAFunctionPointer;
 
 	private final ExpressionTranslation mExpressionTranslation;
-	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 
 	/**
 	 * Constructor.
@@ -184,9 +182,7 @@ public class FunctionHandler {
 	public FunctionHandler(final ExpressionTranslation expressionTranslation,
 			final TypeSizeAndOffsetComputer typeSizeComputer) {
 		mExpressionTranslation = expressionTranslation;
-		mTypeSizeComputer = typeSizeComputer;
 		mCallGraph = new LinkedHashMap<>();
-		// mCurrentProcedureIsVoid = false;
 		mModifiedGlobals = new LinkedHashMap<>();
 		mMethodsCalledBeforeDeclared = new LinkedHashSet<>();
 		mProcedures = new LinkedHashMap<>();
@@ -353,8 +349,7 @@ public class FunctionHandler {
 		// for (VariableDeclaration declaration : body.getLocalVars()) {
 		// decls.add(declaration);
 		// }
-		final CompoundStatementExpressionResult cser =
-				(CompoundStatementExpressionResult) main.dispatch(node.getBody());
+		final ExpressionResult cser = (ExpressionResult) main.dispatch(node.getBody());
 		stmts.addAll(cser.mStmt);
 		decls.addAll(cser.mDecl);
 
@@ -431,8 +426,7 @@ public class FunctionHandler {
 			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
 					loc, main, main.dispatch(node.getReturnValue()));
 
-			final ExpressionResult returnValueSwitched =
-					returnValue.switchToRValueIfNecessary(main, loc);
+			final ExpressionResult returnValueSwitched = returnValue.switchToRValueIfNecessary(main, loc);
 			returnValueSwitched.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
 			// do some implicit casts
@@ -447,7 +441,6 @@ public class FunctionHandler {
 						new RValue(mExpressionTranslation.constructNullPointer(loc), functionResultType);
 			}
 
-
 			if (outParams.length == 0) {
 				// void method which is returning something! We remove the
 				// return value!
@@ -459,7 +452,7 @@ public class FunctionHandler {
 			} else {
 				final String id = outParams[0].getIdentifiers()[0];
 				final VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
-				// Ugly workaround: Apply the conversion to the result of the 
+				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construt a copy of returnValueSwitched
 				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
 				rExp.mLrVal = returnValueSwitched.mLrVal;
@@ -643,7 +636,6 @@ public class FunctionHandler {
 				}
 				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
-			final String lol = main.getCheckedMethod();
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && (main
 					.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY)
 					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(mId)) && main

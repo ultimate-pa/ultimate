@@ -217,9 +217,9 @@ public class PreRunner extends ASTVisitor {
 
 			// a function address may be assigned to a function pointer without addressof
 			// like fptr = f; where f is a function
+			// check if id is the name of a function and not shadowed here
 			final IASTNode function = mFunctionTable.get(id);
-			if (function != null && mTemporarySymbolTable.get(id) == null // id is the name of a function and not
-																			// shadowed here
+			if (function != null && mTemporarySymbolTable.get(id) == null
 					&& !(expression.getParent() instanceof IASTFunctionCallExpression
 							&& ((IASTFunctionCallExpression) expression.getParent()).getFunctionNameExpression()
 									.equals(expression))) {
@@ -228,7 +228,8 @@ public class PreRunner extends ASTVisitor {
 				updateFunctionToIndex(id);
 			}
 
-			final IASTNode d = mTemporarySymbolTable.get(id); // don't check contains here!
+			final IASTNode d = mTemporarySymbolTable.get(id);
+			// don't check contains here!
 			// if the identifier refers to an array and is used in a functioncall, the Array has to go on the heap
 			if (d instanceof IASTArrayDeclarator && expression.getParent() instanceof IASTFunctionCallExpression) {
 				mVariablesOnHeap.add(d);

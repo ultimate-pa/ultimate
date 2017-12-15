@@ -185,7 +185,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CStorageClass;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclaratorResult;
@@ -946,11 +945,6 @@ public class CHandler implements ICHandler {
 				decl.addAll(res.mDecl);
 				stmt.addAll(res.mStmt);
 				expr = res.mLrVal;
-			} else if (r instanceof CompoundStatementExpressionResult) {
-				final CompoundStatementExpressionResult res = (CompoundStatementExpressionResult) r;
-				decl.addAll(res.mDecl);
-				stmt.addAll(res.mStmt);
-				expr = res.mLrVal;
 			} else if (r.node != null && r.node instanceof Body) {
 				assert false : "should not happen, as CompoundStatement now yields an "
 						+ "ExpressionResult or a CompoundStatementExpressionResult";
@@ -971,8 +965,7 @@ public class CHandler implements ICHandler {
 
 			endScope();
 		}
-		return new CompoundStatementExpressionResult(stmt, expr, decl, new HashMap<VariableDeclaration, ILocation>(),
-				new ArrayList<Overapprox>());
+		return new ExpressionResult(stmt, expr, decl, new HashMap<>(), new ArrayList<>());
 	}
 
 	@Override
@@ -1250,10 +1243,8 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTFunctionDefinition node) {
 		final LinkedHashSet<IASTDeclaration> reachableDecs = main.getReachableDeclarationsOrDeclarators();
-		if (reachableDecs != null) {
-			if (!reachableDecs.contains(node)) {
-				return new SkipResult();
-			}
+		if (reachableDecs != null && !reachableDecs.contains(node)) {
+			return new SkipResult();
 		}
 
 		final TypesResult resType = (TypesResult) main.dispatch(node.getDeclSpecifier());
@@ -1602,23 +1593,10 @@ public class CHandler implements ICHandler {
 	public Result visit(final Dispatcher main, final IASTSimpleDeclaration node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
-		/*
-		 * skip this declaration if we have inferred that it is not reachable
-		 */
 		final LinkedHashSet<IASTDeclaration> reachableDecs = main.getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null && node.getParent() instanceof IASTTranslationUnit && !reachableDecs.contains(node)) {
-			boolean skip = true;
-			for (final IASTDeclarator d : node.getDeclarators()) {
-				if (reachableDecs.contains(d)) {
-					skip = false;
-				}
-			}
-			if (reachableDecs.contains(node.getDeclSpecifier())) {
-				skip = false;
-			}
-			if (skip) {
-				return new SkipResult();
-			}
+			// skip this declaration if we have inferred that it is not reachable and if we are in the global scope
+			return new SkipResult();
 		}
 
 		/*
@@ -1755,8 +1733,8 @@ public class CHandler implements ICHandler {
 					 * For Variable length arrays we have a "non-real" initializer which just initializes the aux var
 					 * for the array's size. We do not want to treat this like other initializers (call initVar and so).
 					 */
-					final boolean hasRealInitializer = cDec.hasInitializer() && !(cDec.getType() instanceof CArray
-							&& !(cDec.getInitializer() instanceof InitializerResult));
+					final boolean hasRealInitializer = cDec.hasInitializer()
+							&& (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
 
 					if (!hasRealInitializer && !mFunctionHandler.noCurrentProcedure()
 							&& !mTypeHandler.isStructDeclaration()) {
@@ -1861,8 +1839,7 @@ public class CHandler implements ICHandler {
 		// dispatch the controlling expression, convert it to int
 		final Result switchParam = main.dispatch(node.getControllerExpression());
 		assert switchParam instanceof ExpressionResult;
-		final ExpressionResult l =
-				((ExpressionResult) switchParam).switchToRValueIfNecessary(main, loc);
+		final ExpressionResult l = ((ExpressionResult) switchParam).switchToRValueIfNecessary(main, loc);
 		// 6.8.4.2-1: "The controlling expression of a switch statement shall have integer type."
 		// note that this does not mean that it has "int" type, it may be long or char, for instance
 		assert l.mLrVal.getCType().isIntegerType();
