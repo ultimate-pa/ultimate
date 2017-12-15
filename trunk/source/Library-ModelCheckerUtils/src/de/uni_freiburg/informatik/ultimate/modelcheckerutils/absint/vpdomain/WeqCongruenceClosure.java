@@ -42,14 +42,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcAuxData;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcSettings;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICcRemoveElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
-		implements ICcRemoveElement<NODE>, ICongruenceClosure<NODE> {
+		implements ICongruenceClosure<NODE> {
 
 	private final CongruenceClosure<NODE> mCongruenceClosure;
 	private final WeakEquivalenceGraph<NODE> mWeakEquivalenceGraph;
@@ -173,7 +172,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		// set the flags
 		if (mCongruenceClosure != null) {
-//			mManager.freezeIfNecessary(mCongruenceClosure);
 			mCongruenceClosure.freeze();;
 		}
 		if (mWeakEquivalenceGraph != null) {
@@ -181,23 +179,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 		mIsFrozen = true;
 	}
-
-//	private WeqCongruenceClosure<NODE> alignElementsAndFunctionsWeq(final Set<NODE> otherCCElems,
-//			final RemoveCcElement<NODE> remInfo) {
-//		assert !isFrozen();
-//		assert !this.isInconsistent();
-//		assert remInfo == null;
-//
-//		final WeqCongruenceClosure<NODE> result = mManager.unfreeze(this);
-//		assert result.sanityCheck();
-//
-//		for (final NODE e : otherCCElems) {
-//			result.addElementRec(e);
-//		}
-//
-//		assert result.sanityCheck();
-//		return result;
-//	}
 
 	public boolean isInconsistent() {
 		return mCongruenceClosure == null || mCongruenceClosure.isInconsistent();
@@ -214,7 +195,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !isFrozen();
 		assert array1.hasSameTypeAs(array2);
 
-//		mCongruenceClosure.addElementRec(storeIndex);
 		mManager.addNode(storeIndex, mCongruenceClosure, true, true);
 		assert sanityCheck();
 
@@ -279,7 +259,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	private boolean reportWeakEquivalenceDoOnlyRoweqPropagations(final NODE array1, final NODE array2,
 			final WeakEquivalenceEdgeLabel<NODE> edgeLabel) {
-//			final Set<CongruenceClosure<NODE>> edgeLabel) {
 		assert edgeLabel.getDisjuncts().stream()
 			.allMatch(l -> l.assertHasOnlyWeqVarConstraints(mManager.getAllWeqNodes()));
 		if (isInconsistent()) {
@@ -532,22 +511,19 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				// i = j
 
 				final NODE firstWeqVar = mManager.getAllWeqVarsNodeForFunction(ccc1AfReplaced).get(0);
-//				final CongruenceClosure<NODE> qUnequalI = new CongruenceClosure<>(mLogger);
-//				qUnequalI.reportDisequality(firstWeqVar, ccc1ArgReplaced);
 				final CongruenceClosure<NODE> qUnequalI = mManager.getSingleDisequalityCc(firstWeqVar, ccc1ArgReplaced,
 						true);
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1AfReplaced, ccc2AfReplaced,
 						mManager.getSingletonEdgeLabel(mWeakEquivalenceGraph, qUnequalI));
-//						Collections.singleton(qUnequalI));
 			}
 		}
 
 
 		/*
 		 * roweq, roweq-1 (1)
+		 *
+		 * node1 = i, node2 = j in the paper version of the rule
 		 */
-		// node1 = i, node2 = j in the rule
-		// for (final NODE ccp1 : mAuxData.getArgCcPars(node1)) {
 		for (final NODE ccp1 : oldAuxData.getArgCcPars(node1OldRep)) {
 			for (final NODE ccp2 : oldAuxData.getArgCcPars(node2OldRep)) {
 				// ccp1 = a[i], ccp2 = b[j] in the rule
@@ -727,7 +703,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (mCongruenceClosure == null) {
 			return false;
 		}
-		// TODO: literal disequalities don't prevent being tautological --> account for that!
+		// TODO: literal disequalities don't prevent being tautological --> do we account for that?!?
 		return mCongruenceClosure.isTautological() && mWeakEquivalenceGraph.isEmpty();
 	}
 
@@ -898,10 +874,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public boolean hasElement(final NODE node) {
 		return mCongruenceClosure.hasElement(node);
-	}
-
-	private boolean isLabelTautological(final Set<CongruenceClosure<NODE>> projectedLabel) {
-		return projectedLabel.size() == 1 && projectedLabel.iterator().next().isTautological();
 	}
 
 	public boolean isConstrained(final NODE elem) {
@@ -1214,7 +1186,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		case NO_SUPPORTING_DISEQUALITIES:
 			// we have to eliminate symmetric entries
 			final HashRelation<NODE, NODE> cleanedDeqs = new HashRelation<>();
-//			for (final Entry<NODE, NODE> deq : mElementTVER.getDisequalities()) {
 			for (final Entry<NODE, NODE> deq : mCongruenceClosure.getElementDisequalities()) {
 				if (cleanedDeqs.containsPair(deq.getValue(), deq.getKey())) {
 					continue;
@@ -1238,7 +1209,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	public boolean addElementRec(final NODE node) {
-//		final boolean newlyAdded = mCongruenceClosure.addElementRec(node);
 		final boolean newlyAdded = !mCongruenceClosure.hasElement(node);
 		mManager.addNode(node, mCongruenceClosure, true, true);
 
@@ -1248,14 +1218,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		registerNewElement(node);
 		return true;
 	}
-
-//	public NODE getRepresentativeAndAddElementIfNeeded(final NODE nodeToAdd) {
-//		return mCongruenceClosure.getRepresentativeAndAddElementIfNeeded(nodeToAdd);
-//	}
-
-//	public void removeSimpleElement(final NODE elem) {
-//		CongruenceClosure.removeSimpleElement(this, elem);
-//	}
 
 	@Override
 	public IRemovalInfo<NODE> getElementCurrentlyBeingRemoved() {
