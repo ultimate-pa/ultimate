@@ -1959,7 +1959,7 @@ public class ArrayInterpolator {
 									.or(recPathInterpolantTerms.toArray(new Term[recPathInterpolantTerms.size()]));
 							final Term lastSharedOnIndexPath = this.equals(mHead) ? indexPath.mTail.mLastChange[color]
 									: indexPath.mHead.mLastChange[color];
-							assert !(lastSharedOnIndexPath instanceof ApplicationTerm
+							assert !(lastSharedOnIndexPath instanceof AnnotatedTerm
 									&& mEqualities.containsValue(lastSharedOnIndexPath));
 							rewriteToArray = lastSharedOnIndexPath;
 							rewriteWithElement = mTheory.term("select", rewriteToArray, rewriteAtIndex);
@@ -2076,7 +2076,7 @@ public class ArrayInterpolator {
 									.and(recPathInterpolantTerms.toArray(new Term[recPathInterpolantTerms.size()]));
 							final Term lastSharedOnIndexPath = this.equals(mHead) ? indexPath.mTail.mLastChange[color]
 									: indexPath.mHead.mLastChange[color];
-							if (lastSharedOnIndexPath instanceof ApplicationTerm
+							if (lastSharedOnIndexPath instanceof AnnotatedTerm
 									&& mEqualities.containsValue(lastSharedOnIndexPath)) {
 								rewriteToArray = null;
 								// Last change was at a mixed select equality
@@ -2093,7 +2093,7 @@ public class ArrayInterpolator {
 									.and(recPathInterpolantTerms.toArray(new Term[recPathInterpolantTerms.size()]));
 							final Term lastSharedOnIndexPath = this.equals(mHead) ? indexPath.mTail.mLastChange[color]
 									: indexPath.mHead.mLastChange[color];
-							assert !(lastSharedOnIndexPath instanceof ApplicationTerm
+							assert !(lastSharedOnIndexPath instanceof AnnotatedTerm
 									&& mEqualities.containsValue(lastSharedOnIndexPath));
 							rewriteToArray = lastSharedOnIndexPath;
 							rewriteWithElement = mTheory.term("select", rewriteToArray, rewriteAtIndex);
