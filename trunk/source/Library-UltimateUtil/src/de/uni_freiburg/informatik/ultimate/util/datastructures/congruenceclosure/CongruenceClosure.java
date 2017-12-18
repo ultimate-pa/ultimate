@@ -134,6 +134,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 */
 	CongruenceClosure(final CcManager<ELEM> manager,
 			final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
+		mManager = manager;
+
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData<>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
@@ -146,7 +148,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 		mConstructorInitializationPhase = false;
 
-		mManager = manager;
 		assert sanityCheck();
 	}
 
@@ -737,7 +738,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = thisAligned.mElementTVER
 				.join(otherAligned.mElementTVER);
 
-		return mManager.getCongruenceClosureFromTver(newElemTver);
+		return mManager.getCongruenceClosureFromTver(newElemTver, true);
 	}
 
 	public CongruenceClosure<ELEM> meetRec(final CongruenceClosure<ELEM> other, final IRemovalInfo<ELEM> remInfo,
@@ -807,11 +808,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			// we know other != True, and this = True
 			return false;
 		}
-		final CongruenceClosure<ELEM> thisAligned = mManager.addAllElements(this, other.getAllElements(), null, false);
+		final CongruenceClosure<ELEM> thisAligned = mManager.getCopy(this, true);
+		mManager.addAllElements(thisAligned, other.getAllElements(), null, true);
+		// freeze not necessary but to make clear that thisAligned is closed at this point
+		thisAligned.freeze();
+
 		assert assertElementsAreSuperset(thisAligned, other);
-		final CongruenceClosure<ELEM> otherAligned = mManager.addAllElements(other, this.getAllElements(), null, false);
+		final CongruenceClosure<ELEM> otherAligned = mManager.getCopy(other, true);
+		mManager.addAllElements(otherAligned, this.getAllElements(), null, true);
+		// freeze not necessary but to make clear that thisAligned is closed at this point
+		otherAligned.freeze();
+
 		assert assertElementsAreSuperset(thisAligned, otherAligned);
 		assert assertElementsAreSuperset(otherAligned, thisAligned);
+
 		return checkIsStrongerThan(thisAligned, otherAligned);
 	}
 
@@ -1521,7 +1531,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
 		 *  we either need a special constructor or do something else..
 		 */
-		return mManager.getCongruenceClosureFromTver(newTver, removeElementInfo);
+		return mManager.getCongruenceClosureFromTver(newTver, removeElementInfo, true);
 	}
 
 	public Collection<ELEM> getAllElementRepresentatives() {

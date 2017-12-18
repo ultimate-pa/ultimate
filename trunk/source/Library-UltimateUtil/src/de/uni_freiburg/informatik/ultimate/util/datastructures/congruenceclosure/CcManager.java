@@ -153,7 +153,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		final CongruenceClosure<ELEM> result = cc1.join(cc2);
 
-		if (modifiable) {
+		if (!modifiable) {
 			result.freeze();
 		}
 		assert modifiable != result.isFrozen();
@@ -339,16 +339,21 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return mInconsistentCc;
 	}
 
-	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver) {
+	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver,
+			final boolean modifiable) {
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver);
-		result.freeze();
+		if (!modifiable) {
+			result.freeze();
+		}
 		return result;
 	}
 
 	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver,
-			final IRemovalInfo<ELEM> removeElementInfo) {
+			final IRemovalInfo<ELEM> removeElementInfo, final boolean modifiable) {
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver, removeElementInfo);
-		result.freeze();
+		if (!modifiable) {
+			result.freeze();
+		}
 		return result;
 	}
 
@@ -407,6 +412,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (inplace) {
 			result = cc;
 		} else {
+
+			freezeIfNecessary(cc);
+
 			// TODO: is it redundant to add remInfo to the result Cc and give it to addElementRec??
 			result = unfreeze(cc, remInfo);
 		}
@@ -414,6 +422,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		for (final ELEM elem : elemsToAdd) {
 //			result.addElementRec(elem, remInfo);
 			addElement(result, elem, true, true);
+		}
+
+		if (!inplace) {
+			result.freeze();
 		}
 
 		return result;
@@ -428,8 +440,20 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public void freezeIfNecessary(final CongruenceClosure<ELEM> cc) {
-		if (cc.isFrozen()) {
+		if (!cc.isFrozen()) {
 			cc.freeze();
 		}
+	}
+
+	public CongruenceClosure<ELEM> getCopy(final CongruenceClosure<ELEM> congruenceClosure, final boolean modifiable) {
+		final CongruenceClosure<ELEM> copy = new CongruenceClosure<>(congruenceClosure);
+		/*
+		 * remark: if there were any closure operations during a CongruenceClosure.freeze, we would have to trigger
+		 *  them here.
+		 */
+		if (!modifiable) {
+			copy.freeze();
+		}
+		return copy;
 	}
 }

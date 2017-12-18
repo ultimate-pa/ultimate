@@ -510,8 +510,6 @@ public class CongruenceClosureTest {
 				new CongruenceClosureComparator<StringCcElement>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
-		CongruenceClosure<StringCcElement> cc1 = manager.getEmptyCc(mInPlace);
-		CongruenceClosure<StringCcElement> cc2 = manager.getEmptyCc(mInPlace);
 
 
 		final StringElementFactory factory = new StringElementFactory();
@@ -533,6 +531,7 @@ public class CongruenceClosureTest {
 		final StringCcElement f_f_b = factory.getFuncAppElement(f, f_b);
 
 
+		CongruenceClosure<StringCcElement> cc1 = manager.getEmptyCc(mInPlace);
 		cc1 = manager.reportEquality(a, b, cc1, mInPlace);
 		cc1 = manager.reportEquality(f_f_a, j, cc1, mInPlace);
 		cc1 = manager.reportEquality(x, y, cc1, mInPlace);
@@ -551,6 +550,7 @@ public class CongruenceClosureTest {
 		assertTrue(cc1.getEqualityStatus(a, f_f_a) == EqualityStatus.UNKNOWN);
 
 
+		CongruenceClosure<StringCcElement> cc2 = manager.getEmptyCc(mInPlace);
 		cc2 = manager.reportEquality(i, x, cc2, mInPlace);
 		cc2 = manager.reportEquality(f_a, f_b, cc2, mInPlace);
 		cc2 = manager.reportEquality(f_f_a, b, cc2, mInPlace);
@@ -567,9 +567,21 @@ public class CongruenceClosureTest {
 
 		// cc1 and cc2 should be incomparable
 		assertFalse(cc1.isStrongerThan(cc2));
-		assertFalse(cc2.isStrongerThan(cc1));
+		assertTrue(!mInPlace || !cc1.isFrozen());
+		assertTrue(!mInPlace || !cc2.isFrozen());
 
-		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2, mInPlace);
+		assertFalse(cc2.isStrongerThan(cc1));
+		assertTrue(!mInPlace || !cc1.isFrozen());
+		assertTrue(!mInPlace || !cc2.isFrozen());
+
+//		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2, mInPlace);
+		final CongruenceClosure<StringCcElement> cc3 = manager.join(
+				manager.getCopy(cc1, false),
+				manager.getCopy(cc2, false),
+				mInPlace);
+		assertTrue(!mInPlace || !cc1.isFrozen());
+		assertTrue(!mInPlace || !cc2.isFrozen());
+
 		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}}
 		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
@@ -586,8 +598,13 @@ public class CongruenceClosureTest {
 		assertFalse(cc3.isStrongerThan(cc1));
 		assertTrue(cc2.isStrongerThan(cc3));
 		assertFalse(cc3.isStrongerThan(cc2));
+		assertTrue(!mInPlace || !cc1.isFrozen());
+		assertTrue(!mInPlace || !cc2.isFrozen());
 
-		final CongruenceClosure<StringCcElement> cc4 = manager.meet(cc1, cc2, mInPlace);
+		final CongruenceClosure<StringCcElement> cc4 = manager.meet(
+				manager.getCopy(cc1, true),
+				manager.getCopy(cc2, false),
+				mInPlace);
 		// state of cc4 should be {{a, b, i, j, x, y, f(f(a)), f(f(b))}, {f(a), f(b)}}
 		assertTrue(cc4.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc4.getEqualityStatus(b, i) == EqualityStatus.EQUAL);
@@ -598,7 +615,7 @@ public class CongruenceClosureTest {
 		assertTrue(cc4.getEqualityStatus(f_b, f_a) == EqualityStatus.EQUAL);
 		assertTrue(cc4.getEqualityStatus(b, f_b) == EqualityStatus.UNKNOWN);
 
-		// cc3 should be strictly stronger than both cc1 and cc2
+		// cc4 should be strictly stronger than both cc1 and cc2
 		assertTrue(cc4.isStrongerThan(cc1));
 		assertFalse(cc1.isStrongerThan(cc4));
 		assertTrue(cc4.isStrongerThan(cc2));
@@ -622,8 +639,6 @@ public class CongruenceClosureTest {
 				new CongruenceClosureComparator<StringCcElement>();
 		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
 
-		CongruenceClosure<StringCcElement> cc1 = manager.getEmptyCc(mInPlace);
-		CongruenceClosure<StringCcElement> cc2 = manager.getEmptyCc(mInPlace);
 
 		final StringElementFactory factory = new StringElementFactory();
 
@@ -644,6 +659,7 @@ public class CongruenceClosureTest {
 		final StringCcElement f_f_b = factory.getFuncAppElement(f, f_b);
 
 
+		CongruenceClosure<StringCcElement> cc1 = manager.getEmptyCc(mInPlace);
 		cc1 = manager.reportEquality(a, b, cc1, mInPlace);
 		cc1 = manager.reportEquality(f_f_a, j, cc1, mInPlace);
 		cc1 = manager.reportEquality(x, y, cc1, mInPlace);
@@ -661,12 +677,12 @@ public class CongruenceClosureTest {
 		assertTrue(cc1.getEqualityStatus(a, i) == EqualityStatus.UNKNOWN);
 		assertTrue(cc1.getEqualityStatus(a, f_f_a) == EqualityStatus.UNKNOWN);
 
-
-		cc2 = manager.reportEquality(i, x, cc1, mInPlace);
-		cc2 = manager.reportEquality(f_a, f_b, cc1, mInPlace);
-		cc2 = manager.reportEquality(f_f_a, b, cc1, mInPlace);
-		cc2 = manager.reportEquality(f_f_a, a, cc1, mInPlace);
-		cc2 = manager.reportDisequality(f_b, x, cc1, mInPlace);
+		CongruenceClosure<StringCcElement> cc2 = manager.getEmptyCc(mInPlace);
+		cc2 = manager.reportEquality(i, x, cc2, mInPlace);
+		cc2 = manager.reportEquality(f_a, f_b, cc2, mInPlace);
+		cc2 = manager.reportEquality(f_f_a, b, cc2, mInPlace);
+		cc2 = manager.reportEquality(f_f_a, a, cc2, mInPlace);
+		cc2 = manager.reportDisequality(f_b, x, cc2, mInPlace);
 		// ONLY CHANGE to testOperators1 in terms of constraints in cc1 and cc2
 		// state of cc2 should be {{a, b, f(f(a))}, {i,x} {f(a), f(b)}}, x != f(a) (element f_f_b is not known to cc2)
 		assertTrue(cc2.getEqualityStatus(a, f_f_a) == EqualityStatus.EQUAL);
@@ -682,7 +698,10 @@ public class CongruenceClosureTest {
 		assertFalse(cc1.isStrongerThan(cc2));
 		assertFalse(cc2.isStrongerThan(cc1));
 
-		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2, mInPlace);
+		final CongruenceClosure<StringCcElement> cc3 = manager.join(
+				manager.getCopy(cc1, true),
+				manager.getCopy(cc2, true),
+				mInPlace);
 		// state of cc3 should be {{a, b}, {i,x} {f(a), f(b)}, {f(f(a)), f(f(b))}} (unchanged from testOperators1)
 		assertTrue(cc3.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
 		assertTrue(cc3.getEqualityStatus(i, x) == EqualityStatus.EQUAL);
@@ -700,7 +719,10 @@ public class CongruenceClosureTest {
 		assertTrue(cc2.isStrongerThan(cc3));
 		assertFalse(cc3.isStrongerThan(cc2));
 
-		final CongruenceClosure<StringCcElement> cc4 = manager.meet(cc1, cc2, mInPlace);
+		final CongruenceClosure<StringCcElement> cc4 = manager.meet(
+				manager.getCopy(cc1, true),
+				manager.getCopy(cc2, true),
+				mInPlace);
 		// state of cc4 should be {{a, b, i, j, x, y, f(f(a)), f(f(b))}, {f(a), f(b)}}, x != f(a)
 		// (includes the extra disequality from cc2, in comparison to testOperators1)
 		assertTrue(cc4.getEqualityStatus(a, b) == EqualityStatus.EQUAL);
