@@ -164,6 +164,10 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			return new LazyTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
 					abstraction, taskIdentifier);
+		case TOOTHLESS_TAIPAN:
+			return new ToothlessTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					abstraction, taskIdentifier);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());

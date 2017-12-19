@@ -413,6 +413,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		LAZY_TAIPAN,
 		/**
+		 * Taipan with abstract interpretation only (no SMT solver)
+		 */
+		TOOTHLESS_TAIPAN,
+		/**
 		 * Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
 		 */
 		PENGUIN,
@@ -461,7 +465,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	/**
 	 * Reuse Floyd-Hoare that were built for one error location for succeeding error locations.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 *
 	 */

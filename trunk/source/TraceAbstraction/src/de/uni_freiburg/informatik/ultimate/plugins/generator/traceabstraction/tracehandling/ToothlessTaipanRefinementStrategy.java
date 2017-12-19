@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2016-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016-2017 University of Freiburg
+ * Copyright (C) 2017 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -41,30 +40,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.Task
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
- * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceCheck} using
- * {@link SMTInterpol} with {@link InterpolationTechnique#Craig_TreeInterpolation}.<br>
- * If successful and the interpolant sequence is perfect, those interpolants are used.<br>
- * If not successful, it tries {@link TraceCheck} {@code Z3} and, if again not successful, {@code CVC4}.<br>
- * If none of those is successful, the strategy gives up.<br>
- * Otherwise, if the trace is infeasible, the strategy uses an {@link CegarAbsIntRunner} to construct interpolants.<br>
- * If not successful, the strategy again tries {@code Z3} and {@code CVC4}, but this time using interpolation
- * {@link InterpolationTechnique#FPandBP}.
+ * Taipan refinement strategy that only uses Abstract Interpretation and no SMT solver. There is also no possibility to
+ * generate interpolants other than the generated AI predicates.
  *
- * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ * @param <LETTER>
+ *            The type of ICFG transitions.
  */
-public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
+public class ToothlessTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends BaseTaipanRefinementStrategy<LETTER> {
 
-	protected boolean mZ3TraceCheckUnsuccessful;
-
-	public LazyTaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
+	public ToothlessTaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner<LETTER> absIntRunner,
@@ -77,24 +67,57 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected Mode getInitialMode() {
-		return Mode.SMTINTERPOL;
+		return Mode.ABSTRACT_INTERPRETATION;
+	}
+
+	@Override
+	public boolean hasNextTraceCheck() {
+		switch (getCurrentMode()) {
+		case ABSTRACT_INTERPRETATION:
+			return false;
+		case SMTINTERPOL:
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+		case Z3_IG:
+		case CVC4_IG:
+			return true;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
+		}
 	}
 
 	@Override
 	protected Mode getNextTraceCheckMode() {
+		Mode nextMode;
 		switch (getCurrentMode()) {
-		case ABSTRACT_INTERPRETATION:
-			return Mode.SMTINTERPOL;
 		case SMTINTERPOL:
-			return Mode.Z3_NO_IG;
-		case Z3_NO_IG:
-			mZ3TraceCheckUnsuccessful = true;
-			return Mode.CVC4_NO_IG;
-		case CVC4_NO_IG:
 		case Z3_IG:
 		case CVC4_IG:
-			assert !hasNextTraceCheck();
-			throw new NoSuchElementException("No next trace checker available.");
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+			nextMode = Mode.ABSTRACT_INTERPRETATION;
+			break;
+		case ABSTRACT_INTERPRETATION:
+			assert !hasNextInterpolantGeneratorAvailable();
+			throw new NoSuchElementException("No next interpolant generator available.");
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
+		}
+		resetTraceCheck();
+		return nextMode;
+	}
+
+	@Override
+	protected boolean hasNextInterpolantGeneratorAvailable() {
+		switch (getCurrentMode()) {
+		case SMTINTERPOL:
+		case CVC4_IG:
+		case Z3_IG:
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+			return true;
+		case ABSTRACT_INTERPRETATION:
+			return false;
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
@@ -105,17 +128,13 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		Mode nextMode;
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
-			nextMode = Mode.Z3_IG;
-			break;
 		case Z3_IG:
-			nextMode = Mode.CVC4_IG;
-			break;
 		case CVC4_IG:
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
 			nextMode = Mode.ABSTRACT_INTERPRETATION;
 			break;
 		case ABSTRACT_INTERPRETATION:
-		case Z3_NO_IG:
-		case CVC4_NO_IG:
 			assert !hasNextInterpolantGeneratorAvailable();
 			throw new NoSuchElementException("No next interpolant generator available.");
 		default:
@@ -137,55 +156,18 @@ public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 
 	@Override
 	protected InterpolationTechnique getInterpolationTechnique(final Mode mode) {
-		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
+		case ABSTRACT_INTERPRETATION:
+			return null;
 		case SMTINTERPOL:
-			interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
-			break;
 		case Z3_IG:
 		case CVC4_IG:
-			interpolationTechnique = InterpolationTechnique.FPandBP;
-			break;
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
-		case ABSTRACT_INTERPRETATION:
-			interpolationTechnique = null;
-			break;
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
-		}
-		return interpolationTechnique;
-	}
-
-	@Override
-	public boolean hasNextTraceCheck() {
-		switch (getCurrentMode()) {
-		case SMTINTERPOL:
-		case Z3_NO_IG:
-			return true;
-		case CVC4_NO_IG:
-		case ABSTRACT_INTERPRETATION:
-		case Z3_IG:
-		case CVC4_IG:
-			return false;
+			throw new IllegalArgumentException("No interpolation technique for mode " + mode + " available.");
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
 	}
 
-	@Override
-	protected boolean hasNextInterpolantGeneratorAvailable() {
-		switch (getCurrentMode()) {
-		case SMTINTERPOL:
-		case CVC4_IG:
-		case Z3_IG:
-			return true;
-		case ABSTRACT_INTERPRETATION:
-		case Z3_NO_IG:
-		case CVC4_NO_IG:
-			return false;
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
-		}
-	}
 }
