@@ -27,9 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -347,8 +344,9 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 		{
 			final PathProgramCache<LETTER> pathProgramCache = new PathProgramCache<>(mLogger);
-			final CegarAbsIntRunner<LETTER> absIntRunner = new CegarAbsIntRunner<>(services, mBenchmarkGenerator, mIcfg,
-					mSimplificationTechnique, mXnfConversionTechnique, mCsToolkitWithoutRankVars, pathProgramCache);
+			final CegarAbsIntRunner<LETTER> absIntRunner =
+					new CegarAbsIntRunner<>(services, mBenchmarkGenerator, mIcfg, mSimplificationTechnique,
+							mXnfConversionTechnique, mCsToolkitWithoutRankVars, pathProgramCache, taPrefs);
 			final InterpolantAutomatonBuilderFactory<LETTER> mInterpolantAutomatonBuilderFactory =
 					new InterpolantAutomatonBuilderFactory<>(mServices, mCsToolkitWithoutRankVars, mDefaultStateFactory,
 							mIcfg, absIntRunner, taPrefs, mInterpolation, mPref.interpolantAutomaton(),
@@ -401,7 +399,6 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		
 		// DD: Please take care that you do not commit enabled debug code. You should ask Matthias about integrating
 		// your own statistics into Ultimate's .csv infrastructure.
 		// YFC: Now by default it is disabled. It is enabled only when a special file machine.conf is in the system.
@@ -673,16 +670,16 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	 */
 	private void reduceAbstractionSize(final Minimization automataMinimization)
 			throws AutomataOperationCanceledException, AssertionError {
-		//added by Yu-Fang Chen for experiments, if machine.conf is there, disable minimization
-		if(BenchmarkRecord.canDump()) { 
-			return ;
+		// added by Yu-Fang Chen for experiments, if machine.conf is there, disable minimization
+		if (BenchmarkRecord.canDump()) {
+			return;
 		}
-		//end of the code added by Yu-Fang Chen
-		
+		// end of the code added by Yu-Fang Chen
+
 		if ((mAbstraction instanceof IGeneralizedNestedWordAutomaton)) {
-			return;//GBA does not have minimization support yet.
+			return;// GBA does not have minimization support yet.
 		}
-		
+
 		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
 			mAbstraction = new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
@@ -902,9 +899,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 				final NestedWordAutomatonReachableStates<WitnessEdge, WitnessNode> reach =
 						new NestedWordAutomatonReachableStates<>(services, mWitnessAutomaton);
 				final INestedWordAutomaton<WitnessEdge, WitnessNode> allAccepting =
-						new NestedWordAutomatonFilteredStates<>(services, reach,
-								mWitnessAutomaton.getStates(), mWitnessAutomaton.getInitialStates(),
-								mWitnessAutomaton.getStates());
+						new NestedWordAutomatonFilteredStates<>(services, reach, mWitnessAutomaton.getStates(),
+								mWitnessAutomaton.getInitialStates(), mWitnessAutomaton.getStates());
 				mAbstraction = WitnessUtils.constructIcfgAndWitnessProduct(mServices, mAbstraction, allAccepting,
 						mCsToolkitWithoutRankVars, mPredicateFactory, mStateFactoryForRefinement, mLogger,
 						Property.TERMINATION);

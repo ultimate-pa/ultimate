@@ -75,19 +75,18 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		implements IRefinementStrategy<LETTER> {
+public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BaseStrategy<LETTER> {
 	protected static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final PredicateFactory mPredicateFactory;
-	private final PredicateUnifier mPredicateUnifierSmt;
-	private final CegarAbsIntRunner<LETTER> mAbsIntRunner;
+	protected final PredicateUnifier mPredicateUnifierSmt;
+	protected final CegarAbsIntRunner<LETTER> mAbsIntRunner;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
-	private final IRun<LETTER, IPredicate, ?> mCounterexample;
-	private final IAutomaton<LETTER, IPredicate> mAbstraction;
+	protected final IRun<LETTER, IPredicate, ?> mCounterexample;
+	protected final IAutomaton<LETTER, IPredicate> mAbstraction;
 
 	private Mode mCurrentMode;
 
@@ -131,6 +130,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier) {
+		super(logger);
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -326,7 +326,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		switch (mode) {
 		case SMTINTERPOL:
 		case ABSTRACT_INTERPRETATION:
-			final long timeout = useTimeout ? RefinementStrategyUtils.TIMEOUT_SMTINTERPOL : RefinementStrategyUtils.TIMEOUT_NONE_SMTINTERPOL;
+			final long timeout = useTimeout ? RefinementStrategyUtils.TIMEOUT_SMTINTERPOL
+					: RefinementStrategyUtils.TIMEOUT_NONE_SMTINTERPOL;
 			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.Internal_SMTInterpol;
@@ -334,7 +335,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			break;
 		case Z3_IG:
 		case Z3_NO_IG:
-			command = useTimeout ? RefinementStrategyUtils.COMMAND_Z3_TIMEOUT : RefinementStrategyUtils.COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_Z3_TIMEOUT
+					: RefinementStrategyUtils.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -342,7 +344,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			break;
 		case CVC4_IG:
 		case CVC4_NO_IG:
-			command = useTimeout ? RefinementStrategyUtils.COMMAND_CVC4_TIMEOUT : RefinementStrategyUtils.COMMAND_CVC4_NO_TIMEOUT;
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_CVC4_TIMEOUT
+					: RefinementStrategyUtils.COMMAND_CVC4_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;

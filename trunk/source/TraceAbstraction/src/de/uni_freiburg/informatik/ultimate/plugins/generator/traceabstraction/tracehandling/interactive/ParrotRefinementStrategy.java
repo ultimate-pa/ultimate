@@ -38,12 +38,14 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.interactive.commondata.ChoiceRequest;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InterpolantSequences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -227,5 +229,29 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 	@Override
 	protected String getCvc4Logic() {
 		return RefinementStrategyUtils.LOGIC_CVC4_DEFAULT;
+	}
+
+	@Override
+	protected LBool constructAutomatonFromIpps(List<TracePredicates> perfectIpps, List<TracePredicates> imperfectIpps) {
+		if (getInteractive().isInteractiveMode()) {
+			final InterpolantSequences sequences = InterpolantSequences.instance.set(perfectIpps, imperfectIpps);
+			if (getInteractive().getPreferences().isIPS() && perfectIpps.size() + imperfectIpps.size() > 1) {
+				mLogger.info("Asking the user to select interpolant sequences.");
+				try {
+					final InterpolantSequences userSequences =
+							getInteractive().getInterface().request(InterpolantSequences.class, sequences).get();
+					perfectIpps = userSequences.mPerfectIpps;
+					imperfectIpps = userSequences.mImperfectIpps;
+					mLogger.info("User Selected " + perfectIpps.size() + " perfect and " + imperfectIpps.size()
+							+ " imperfect interpolant sequences.");
+				} catch (InterruptedException | ExecutionException e) {
+					mLogger.error(e);
+				}
+			} else {
+				getInteractive().send(sequences);
+			}
+		}
+
+		return super.constructAutomatonFromIpps(perfectIpps, imperfectIpps);
 	}
 }

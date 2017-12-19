@@ -88,9 +88,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.AbsIntHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AbstractInterpretationMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
@@ -122,12 +124,15 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private AbsIntCurrentIteration<?> mCurrentIteration;
 	private IPredicateUnifier mPredicateUnifierSmt;
 
+	private final TAPreferences mTaPreferences;
+
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
 			final IIcfg<?> root, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit csToolkit,
-			final PathProgramCache<LETTER> pathProgramCache) {
+			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
+		mTaPreferences = taPrefs;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -179,7 +184,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				return;
 			}
 			final Set<LETTER> pathProgramSet = currentCex.getWord().asSet();
-			if (!containsLoop(pathProgramSet)) {
+			if (!containsLoop(pathProgramSet)
+					&& mTaPreferences.getRefinementStrategy() != RefinementStrategy.TOOTHLESS_TAIPAN) {
 				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
 				return;
 			}

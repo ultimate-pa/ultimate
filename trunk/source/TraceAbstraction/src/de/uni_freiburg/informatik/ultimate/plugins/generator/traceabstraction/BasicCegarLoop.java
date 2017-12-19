@@ -234,7 +234,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		final PathProgramCache<LETTER> pathProgramCache = new PathProgramCache<>(mLogger);
 		final CegarAbsIntRunner<LETTER> absIntRunner = new CegarAbsIntRunner<>(services, mCegarLoopBenchmark, rootNode,
-				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit, pathProgramCache);
+				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit, pathProgramCache, taPrefs);
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory<>(mServices, mCsToolkit,
 				mPredicateFactoryInterpolantAutomata, mIcfg, absIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
@@ -363,7 +363,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mRefinementStrategyFactory.createStrategy(mPref.getRefinementStrategy(), mCounterexample, mAbstraction,
 						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()));
 		try {
-			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
+			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()

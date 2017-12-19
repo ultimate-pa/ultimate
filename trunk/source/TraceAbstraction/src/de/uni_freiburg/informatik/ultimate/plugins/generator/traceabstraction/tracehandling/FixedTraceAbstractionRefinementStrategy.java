@@ -56,8 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		implements IRefinementStrategy<LETTER> {
+public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BaseStrategy<LETTER> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
@@ -101,6 +100,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final IAutomaton<LETTER, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaskIdentifier taskIdentifier) {
+		super(logger);
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;

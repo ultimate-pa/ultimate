@@ -27,12 +27,15 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Collections;
 import java.util.NoSuchElementException;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -40,7 +43,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.Task
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * Taipan refinement strategy that only uses Abstract Interpretation and no SMT solver. There is also no possibility to
@@ -72,76 +77,22 @@ public class ToothlessTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	@Override
 	public boolean hasNextTraceCheck() {
-		switch (getCurrentMode()) {
-		case ABSTRACT_INTERPRETATION:
-			return false;
-		case SMTINTERPOL:
-		case Z3_NO_IG:
-		case CVC4_NO_IG:
-		case Z3_IG:
-		case CVC4_IG:
-			return true;
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
-		}
+		return false;
 	}
 
 	@Override
 	protected Mode getNextTraceCheckMode() {
-		Mode nextMode;
-		switch (getCurrentMode()) {
-		case SMTINTERPOL:
-		case Z3_IG:
-		case CVC4_IG:
-		case Z3_NO_IG:
-		case CVC4_NO_IG:
-			nextMode = Mode.ABSTRACT_INTERPRETATION;
-			break;
-		case ABSTRACT_INTERPRETATION:
-			assert !hasNextInterpolantGeneratorAvailable();
-			throw new NoSuchElementException("No next interpolant generator available.");
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
-		}
-		resetTraceCheck();
-		return nextMode;
+		throw new NoSuchElementException("No next interpolant generator available.");
 	}
 
 	@Override
 	protected boolean hasNextInterpolantGeneratorAvailable() {
-		switch (getCurrentMode()) {
-		case SMTINTERPOL:
-		case CVC4_IG:
-		case Z3_IG:
-		case Z3_NO_IG:
-		case CVC4_NO_IG:
-			return true;
-		case ABSTRACT_INTERPRETATION:
-			return false;
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
-		}
+		return false;
 	}
 
 	@Override
 	protected Mode getNextInterpolantGenerator() {
-		Mode nextMode;
-		switch (getCurrentMode()) {
-		case SMTINTERPOL:
-		case Z3_IG:
-		case CVC4_IG:
-		case Z3_NO_IG:
-		case CVC4_NO_IG:
-			nextMode = Mode.ABSTRACT_INTERPRETATION;
-			break;
-		case ABSTRACT_INTERPRETATION:
-			assert !hasNextInterpolantGeneratorAvailable();
-			throw new NoSuchElementException("No next interpolant generator available.");
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
-		}
-		resetTraceCheck();
-		return nextMode;
+		throw new NoSuchElementException("No next interpolant generator available.");
 	}
 
 	@Override
@@ -156,18 +107,24 @@ public class ToothlessTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	@Override
 	protected InterpolationTechnique getInterpolationTechnique(final Mode mode) {
-		switch (mode) {
-		case ABSTRACT_INTERPRETATION:
-			return null;
-		case SMTINTERPOL:
-		case Z3_IG:
-		case CVC4_IG:
-		case Z3_NO_IG:
-		case CVC4_NO_IG:
-			throw new IllegalArgumentException("No interpolation technique for mode " + mode + " available.");
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
-		}
+		return null;
 	}
 
+	@Override
+	public LBool executeStrategy() {
+		mAbsIntRunner.generateFixpoints(mCounterexample,
+				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, mPredicateUnifierSmt);
+
+		if (mAbsIntRunner.hasShownInfeasibility()) {
+			final TracePredicates tp = new TracePredicates(getInterpolantGenerator());
+			return constructAutomatonFromIpps(Collections.singletonList(tp), Collections.emptyList());
+		}
+
+		return LBool.UNKNOWN;
+	}
+
+	@Override
+	public IInterpolantGenerator getInterpolantGenerator() {
+		return mAbsIntRunner.getInterpolantGenerator();
+	}
 }
