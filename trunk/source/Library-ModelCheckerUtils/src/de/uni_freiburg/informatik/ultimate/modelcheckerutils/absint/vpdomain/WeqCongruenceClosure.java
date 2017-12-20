@@ -706,6 +706,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param reporter
 	 * @return
 	 */
+	@Deprecated
 	private boolean reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 			final Predicate<CongruenceClosure<NODE>> reporter) {
 		assert sanityCheck();

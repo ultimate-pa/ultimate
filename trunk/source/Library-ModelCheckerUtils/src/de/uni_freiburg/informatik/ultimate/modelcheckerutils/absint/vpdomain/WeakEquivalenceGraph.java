@@ -89,7 +89,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 */
 	boolean mWeqFat;
 
-	private final DISJUNCT mEmptyDisjunct;
+	/**
+	 * Used as a representative of the DISJUNCT type as it is currently instantiated
+	 */
+	final DISJUNCT mEmptyDisjunct;
 
 	/**
 	 * Constructs an empty WeakEquivalenceGraph
@@ -173,6 +176,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		return en;
 	}
 
+	@Deprecated
 	public boolean reportChangeInGroundPartialArrangement(final Predicate<DISJUNCT> action) {
 		assert !mIsFrozen;
 		boolean madeChanges = false;
@@ -263,7 +267,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			assert !elem.equals(en.getKey().getOneElement());
 			assert !elem.equals(en.getKey().getOtherElement());
 
-			nodesToAdd.addAll(en.getValue().projectSimpleElement(elem, useWeqGpa));
+			nodesToAdd.addAll(en.getValue().projectAwaySimpleElement(elem, useWeqGpa));
 		}
 		assert assertElementIsFullyRemoved(elem);
 		return nodesToAdd;

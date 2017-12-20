@@ -174,11 +174,11 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	/**
 	 * TODO rewrite for generic Disjunct, probably get rid of flag and projectTo/slim method
 	 *
-	 * @param elem
+	 * @param elemToRemove
 	 * @param useWeqGpaMode
 	 * @return a set containing all nodes that have been added to the label's Ccs during execution of this method
 	 */
-	Set<NODE> projectSimpleElement(final NODE elem, final boolean useWeqGpaMode) {
+	Set<NODE> projectAwaySimpleElement(final NODE elemToRemove) {
 		if (isTautological()) {
 			return Collections.emptySet();
 		}
@@ -205,9 +205,11 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			 *   then when we remove a, the removeSimpleElement will just say the cc does not have a and do
 			 *   nothing
 			 *
-			 *  plan: compute all dependents, and remove them one by one
+			 *  old plan: compute all dependents, and remove them one by one
+			 *  current plan: do removeSimpleElement, but take care that no wrong nodes are added
 			 */
-			if (useWeqGpaMode) {
+//			if (useWeqGpaMode) {
+			if (mWeakEquivalenceGraph.mEmptyDisjunct instanceof WeqCongruenceClosure<?>) {
 				/*
 				 *  current label has been joined with WeqGpa
 				 *  (i.e. lab is a WeqCongruenceClosure, not only a CongruenceClosure)
@@ -215,21 +217,26 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				 */
 //				final Set<NODE> nodesAdded = RemoveCcElement.removeSimpleElementDontUseWeqGpaTrackAddedNodes(lab, elem);
 				final Set<NODE> nodesAdded = RemoveWeqCcElement.removeSimpleElementDontUseWeqGpaTrackAddedNodes(
-						(WeqCongruenceClosure<NODE>) lab, elem);
+						(WeqCongruenceClosure<NODE>) lab, elemToRemove);
 				// some nodes may have been introduced
-				nodesAdded.stream()
-				.filter(n -> !CongruenceClosure.dependsOnAny(n,
-						mWeakEquivalenceGraph.getWeqCcManager().getAllWeqPrimedNodes()))
-				.forEach(nodesToAddToGpa::add);
+				for (final NODE an : nodesAdded) {
+					if (!CongruenceClosure.dependsOnAny(an,
+							mWeakEquivalenceGraph.getWeqCcManager().getAllWeqPrimedNodes())) {
+						nodesToAddToGpa.add(an);
+					}
+				}
+//				nodesAdded.stream().filter(n -> !CongruenceClosure.dependsOnAny(n,
+//						mWeakEquivalenceGraph.getWeqCcManager().getAllWeqPrimedNodes()))
+//				.forEach(nodesToAddToGpa::add);
 			} else {
 				/*
 				 * lightweight case, current label is a CongruenceClosure, not a WeqCongruenceClosure
 				 * --> we do not allow introduction of new nodes during the remove operation in the labels here
 				 */
-				RemoveCcElement.removeSimpleElementDontIntroduceNewNodes((CongruenceClosure<NODE>) lab, elem);
+				RemoveCcElement.removeSimpleElementDontIntroduceNewNodes((CongruenceClosure<NODE>) lab, elemToRemove);
 			}
 
-			assert lab.assertSingleElementIsFullyRemoved(elem);
+			assert lab.assertSingleElementIsFullyRemoved(elemToRemove);
 
 			if (lab.isTautological()) {
 				// a disjunct became "true" through projection --> the whole disjunction is tautological
@@ -238,27 +245,33 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			}
 			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
 
-			final CongruenceClosure<NODE> lab2;
-			if (useWeqGpaMode) {
+//			final CongruenceClosure<NODE> lab2;
+			final DISJUNCT lab2;
+//			if (useWeqGpaMode) {
+			if (mWeakEquivalenceGraph.mEmptyDisjunct instanceof WeqCongruenceClosure<?>) {
 				// unprime weqvars
 //				lab2 = mWeqCcManager.copyCcNoRemInfo(lab);
-				lab2 = mWeqCcManager.copyCcOnly(lab, true);
+//				lab2 = mWeqCcManager.copyCcOnly(lab, true);
+				lab2 = lab;
 				lab2.transformElementsAndFunctions(
-						node -> node.renameVariables(mWeakEquivalenceGraph.getWeqCcManager().getWeqPrimedVarsToWeqVars()));
+						node -> node.renameVariables(
+								mWeakEquivalenceGraph.getWeqCcManager().getWeqPrimedVarsToWeqVars()));
 			} else {
-				lab2 = (CongruenceClosure<NODE>) lab;
+//				lab2 = (CongruenceClosure<NODE>) lab;
+				lab2 = lab;
 			}
 
-			final CongruenceClosure<NODE> newLab = mWeqCcManager.projectToElements(lab2,
-					mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes(),
-					mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
-			assert newLab.assertSingleElementIsFullyRemoved(elem);
+//			final CongruenceClosure<NODE> newLab = mWeqCcManager.projectToElements(lab2,
+//					mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes(),
+//					mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
+			final DISJUNCT newLab = lab2;
+			assert newLab.assertSingleElementIsFullyRemoved(elemToRemove);
 			assert !newLab.isTautological();
 			assert newLab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
 			newLabelContents.add(newLab);
 		}
 		setNewLabelContents(newLabelContents);
-		assert getDisjuncts().stream().allMatch(l -> l.assertSingleElementIsFullyRemoved(elem));
+		assert getDisjuncts().stream().allMatch(l -> l.assertSingleElementIsFullyRemoved(elemToRemove));
 		assert sanityCheck();
 		return nodesToAddToGpa;
 	}
@@ -350,6 +363,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	 *   CongruenceClosure object
 	 * @return a fresh, updated WeqLabel, null if the label became inconsistent
 	 */
+	@Deprecated
 	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> reportChangeInGroundPartialArrangement(
 			final Predicate<DISJUNCT> reportX) {
 		assert this.sanityCheck();
@@ -781,5 +795,11 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		for (final DISJUNCT disjunct : getDisjuncts()) {
 			disjunct.freeze();
 		}
+	}
+
+	public boolean assertIsSlim() {
+		assert assertHasOnlyWeqVarConstraints(mWeqCcManager.getAllWeqNodes());
+		assert mWeakEquivalenceGraph.mEmptyDisjunct instanceof CongruenceClosure<?>;
+		return true;
 	}
 }

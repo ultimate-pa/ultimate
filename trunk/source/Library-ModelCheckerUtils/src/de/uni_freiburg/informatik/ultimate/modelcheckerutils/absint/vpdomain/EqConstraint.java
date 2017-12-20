@@ -320,7 +320,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 //		final WeqCongruenceClosure<NODE> newPartialArrangement = this.mPartialArrangement
 //				.join(other.mPartialArrangement);
 		final WeqCongruenceClosure<NODE> newPartialArrangement = mFactory.getWeqCcManager().join(
-				this.mPartialArrangement, other.mPartialArrangement);
+				this.mPartialArrangement, other.mPartialArrangement, false);
 		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement);
 		res.freeze();
 		return res;
