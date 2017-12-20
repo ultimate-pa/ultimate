@@ -66,6 +66,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		return mAddedNodes;
 	}
 
+	@Override
 	public Collection<NODE> getAlreadyRemovedElements() {
 		return mElementsAlreadyRemoved;
 	}
@@ -130,7 +131,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		}
 
 		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
-		mElementContainer.prepareForRemove(mUseWeqGpa);
+		mElementContainer.meetLabelsWithGroundPart(mUseWeqGpa);
 
 		final Set<NODE> nodesAddedInLabels = mElementContainer.removeElementAndDependents(mElem, elementsToRemove,
 					nodeToReplacementNode, mUseWeqGpa);
@@ -265,7 +266,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 	 */
 	public static <NODE extends IEqNodeIdentifier<NODE>> void removeSimpleElement(
 			final WeqCongruenceClosure<NODE> cc, final NODE elem) {
-		removeSimpleElement(cc, elem, true, WeqSettings.MEET_WITH_WEQ_CC);
+		removeSimpleElement(cc, elem, true, WeqSettings.USE_FULL_WEQCC_DURING_PROJECTAWAY);
 	}
 
 	private static <NODE extends IEqNodeIdentifier<NODE>> RemoveWeqCcElement<NODE> removeSimpleElement(
@@ -299,6 +300,13 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
 		assert cc.sanityCheck();
 		return re;
+	}
+
+	public static <NODE extends IEqNodeIdentifier<NODE>> Set<NODE> removeSimpleElementDontUseWeqGpaTrackAddedNodes(
+			final WeqCongruenceClosure<NODE> lab, final NODE elem) {
+		// TODO Auto-generated method stub
+		assert false;
+		return null;
 	}
 
 }

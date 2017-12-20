@@ -26,10 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -455,5 +459,154 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			copy.freeze();
 		}
 		return copy;
+	}
+//	public boolean isStrongerThan(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
+//			final BiPredicate<CongruenceClosure<NODE>, CongruenceClosure<NODE>> lowerOrEqual) {
+
+	public boolean isStrongerThan(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
+		if (cc1.isInconsistent()) {
+			return true;
+		}
+		if (cc2.isInconsistent()) {
+			// we know this != False, and other = False
+			return false;
+		}
+		if (cc2.isTautological()) {
+			return true;
+		}
+		if (cc1.isTautological()) {
+			// we know other != True, and this = True
+			return false;
+		}
+		final CongruenceClosure<ELEM> thisAligned = getCopy(cc1, true);
+		addAllElements(thisAligned, cc2.getAllElements(), null, true);
+		// freeze not necessary but to make clear that thisAligned is closed at this point
+		thisAligned.freeze();
+
+		assert assertElementsAreSuperset(thisAligned, cc2);
+		final CongruenceClosure<ELEM> otherAligned = getCopy(cc2, true);
+		addAllElements(otherAligned, cc1.getAllElements(), null, true);
+		// freeze not necessary but to make clear that thisAligned is closed at this point
+		otherAligned.freeze();
+
+		assert assertElementsAreSuperset(thisAligned, otherAligned);
+		assert assertElementsAreSuperset(otherAligned, thisAligned);
+
+		return checkIsStrongerThan(thisAligned, otherAligned);
+	}
+
+	/**
+	 * We check for each equivalence representative in "other" if its equivalence
+	 * class is a subset of the equivalence class of the representative in "this".
+	 *
+	 * (going through the representatives in "this" would be unsound because we
+	 * might not see all relevant equivalence classes in "other")
+	 *
+	 * assumes that this and other have the same elements and functions
+	 *
+	 * Induces a non-strict (antisymmetric) partial ordering of the CongruenceClosure instances.
+	 */
+	private boolean checkIsStrongerThan(final CongruenceClosure<ELEM> thisAligned,
+			final CongruenceClosure<ELEM> otherAligned) {
+		assert !thisAligned.isInconsistent() && !otherAligned.isInconsistent();
+
+		assert assertElementsAreSuperset(thisAligned, otherAligned);
+		assert assertElementsAreSuperset(otherAligned, thisAligned);
+
+		if (!isPartitionStronger(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
+			return false;
+		}
+
+		/*
+		 * We check if each disequality that holds in "other" also holds in "this".
+		 */
+		if (!areDisequalitiesStrongerThan(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
+			return false;
+		}
+		return true;
+	}
+
+	public boolean isEquivalent(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
+		if (cc1.isInconsistent() && cc2.isInconsistent()) {
+			return true;
+		}
+		if (cc1.isTautological() && cc2.isTautological()) {
+			return true;
+		}
+		if (cc2.isInconsistent() || cc1.isInconsistent()) {
+			return false;
+		}
+		if (cc2.isTautological() || cc1.isTautological()) {
+			return false;
+		}
+
+		final CongruenceClosure<ELEM> thisAligned =
+				addAllElements(cc1, cc2.getAllElements(), null, false);
+		final CongruenceClosure<ELEM> otherAligned =
+				addAllElements(cc2, cc1.getAllElements(), null, false);
+		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
+	}
+
+	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,
+			final ThreeValuedEquivalenceRelation<E> otherTVER) {
+		for (final E rep : otherTVER.getAllRepresentatives()) {
+			for (final E disequalRep : otherTVER.getRepresentativesUnequalTo(rep)) {
+				if (thisTVER.getEqualityStatus(rep, disequalRep) != EqualityStatus.NOT_EQUAL) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+
+	private boolean assertElementsAreSuperset(final Set<ELEM> a, final Set<ELEM> b) {
+		final Set<ELEM> difference = DataStructureUtils.difference(b, a);
+		if (!difference.isEmpty()) {
+			assert false;
+			return false;
+		}
+		return true;
+
+	}
+
+	/**
+	 * check that elements in a are a superset of elements in b
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	private boolean assertElementsAreSuperset(final CongruenceClosure<ELEM> a,
+			final CongruenceClosure<ELEM> b) {
+		final Set<ELEM> difference = DataStructureUtils.difference(b.getAllElements(), a.getAllElements());
+		if (!difference.isEmpty()) {
+			assert false;
+			return false;
+		}
+		return true;
+	}
+
+
+		/**
+	 *
+	 * @param first
+	 * @param second
+	 * @return true if first is stronger/more constraining than second
+	 */
+	private static <E> boolean isPartitionStronger(final ThreeValuedEquivalenceRelation<E> first,
+			final ThreeValuedEquivalenceRelation<E> second) {
+		final Collection<E> representativesFromBoth = new ArrayList<>(first.getAllRepresentatives().size()
+				+ second.getAllRepresentatives().size());
+		representativesFromBoth.addAll(first.getAllRepresentatives());
+		representativesFromBoth.addAll(second.getAllRepresentatives());
+
+		for (final E rep : representativesFromBoth) {
+			final Set<E> eqInOther = second.getEquivalenceClass(rep);
+			final Set<E> eqInThis = first.getEquivalenceClass(rep);
+			if (!eqInThis.containsAll(eqInOther)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

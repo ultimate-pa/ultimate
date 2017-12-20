@@ -11,7 +11,13 @@ public class WeqSettings {
 	public static final boolean ADD_NODE_INPLACE = false;
 	public static final boolean PROJECTTOELEMENTS_INPLACE = false;
 
-	public static final boolean MEET_WITH_WEQ_CC = true;
+	public static final boolean USE_FULL_WEQCC_DURING_PROJECTAWAY = true;
+ 	public static final boolean USE_FULL_WEQCC_DURING_CLOSURE = true;
+
+	/**
+	 * if reportChangeToGpa should be called during every report(Dis)Equality
+	 */
+	public static final boolean ALWAYS_REPORT_CHANGE_TO_GPA = false;
 
 	/**
 	 * the rules pi^#-roweq and pi^
@@ -23,6 +29,7 @@ public class WeqSettings {
 	public static final int MAX_NO_EDGELABELDISJUNCTS_FOR_VERBOSE_TO_STRING = 3;
 
 	public static final int MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING = 4;
+
 
 
 }

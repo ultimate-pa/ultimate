@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
@@ -147,22 +149,53 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	public WeakEquivalenceEdgeLabel<NODE> filterRedundantCcs(final WeakEquivalenceEdgeLabel<NODE> label) {
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> filterRedundantICcs(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label) {
+		// TODO
+		assert false;
+		return null;
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> Set<DISJUNCT> filterRedundantICcs(final Set<DISJUNCT> ccs,
+			final PartialOrderCache<DISJUNCT> ccPoCache) {
+		// TODO
+		assert false;
+		return null;
+	}
+
+	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> filterRedundantCcs(
+			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label) {
 		final Set<CongruenceClosure<NODE>> filtered = mCcManager.filterRedundantCcs(label.getDisjuncts());
 		return new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), filtered);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> Set<DISJUNCT> filterRedundantICcs(final Set<DISJUNCT> ccs) {
+		// TODO
+		assert false;
+		return null;
 	}
 
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs) {
 		return mCcManager.filterRedundantCcs(ccs);
 	}
 
+	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs,
+			final PartialOrderCache<CongruenceClosure<NODE>> ccPoCache) {
+		return mCcManager.filterRedundantCcs(ccs, ccPoCache);
+	}
+
 	public IPartialComparator<CongruenceClosure<NODE>> getCcComparator() {
 		return mCcManager.getCcComparator();
 	}
 
-	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs,
-			final PartialOrderCache<CongruenceClosure<NODE>> ccPoCache) {
-		return mCcManager.filterRedundantCcs(ccs, ccPoCache);
+	public <DISJUNCT extends ICongruenceClosure<NODE>> IPartialComparator<CongruenceClosure<NODE>> getICcComparator(
+			final DISJUNCT emptyDisjunct) {
+		if (emptyDisjunct instanceof CongruenceClosure<?>) {
+			return getCcComparator();
+		} else {
+			throw new AssertionError();
+		}
 	}
 
 	public WeqCongruenceClosure<NODE> reportEquality(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node1,
@@ -233,28 +266,51 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
-	/**
-	 * Could also be called "makeSnapshot"
-	 * Used when we want to use a WeqCc but also want to remember its original state.
-	 * This is called when we need a copy in any case (roughly..)
-	 * If we are doing things inplace, we may need a copy from time to time, that is the purpose of this method.
-	 * If the manager freezes everything before returning it, and the original is frozen, we don't need to make a copy
-	 * here.
-	 * TODO: not entirely clear.. think through..
-	 * @param original
-	 * @return
-	 */
-	public WeqCongruenceClosure<NODE> getFrozenCopy(final WeqCongruenceClosure<NODE> original) {
-		if (WeqSettings.FREEZE_ALL_IN_MANAGER && original.isFrozen()) {
-			// original is frozen --> a copy should not be necessary (use unfreeze if an
-			// unfrozen copy is needed)
-			return original;
+//	/**
+//	 * Could also be called "makeSnapshot"
+//	 * Used when we want to use a WeqCc but also want to remember its original state.
+//	 * This is called when we need a copy in any case (roughly..)
+//	 * If we are doing things inplace, we may need a copy from time to time, that is the purpose of this method.
+//	 * If the manager freezes everything before returning it, and the original is frozen, we don't need to make a copy
+//	 * here.
+//	 * TODO: not entirely clear.. think through..
+//	 * @param original
+//	 * @return
+//	 */
+//	public WeqCongruenceClosure<NODE> getFrozenCopy(final WeqCongruenceClosure<NODE> original) {
+//		if (WeqSettings.FREEZE_ALL_IN_MANAGER && original.isFrozen()) {
+//			// original is frozen --> a copy should not be necessary (use unfreeze if an
+//			// unfrozen copy is needed)
+//			return original;
+//		}
+//		final WeqCongruenceClosure<NODE> copy = new WeqCongruenceClosure<>(original, false);
+//		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
+//			copy.freeze();
+//		}
+//		return copy;
+//	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT meet(final DISJUNCT icc1,
+			final DISJUNCT icc2, final IRemovalInfo<NODE> remInfo, final boolean inplace) {
+		assert icc1.getClass().equals(icc2.getClass());
+		if (icc1.getClass().equals(CongruenceClosure.class)) {
+			return (DISJUNCT) meet((CongruenceClosure<NODE>) icc1, (CongruenceClosure<NODE>) icc2, remInfo, inplace);
+		} else {
+			throw new AssertionError("unexpected, does this happen??");
+//			assert icc1.getClass().equals(WeqCongruenceClosure.class);
+//			return meet((WeqCongruenceClosure<NODE>) icc1, (WeqCongruenceClosure<NODE>) icc2, inplace);
 		}
-		final WeqCongruenceClosure<NODE> copy = new WeqCongruenceClosure<>(original, false);
-		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
-			copy.freeze();
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT meet(final DISJUNCT icc1,
+			final DISJUNCT icc2, final boolean inplace) {
+		assert icc1.getClass().equals(icc2.getClass());
+		if (icc1.getClass().equals(CongruenceClosure.class)) {
+			return (DISJUNCT) meet((CongruenceClosure<NODE>) icc1, (CongruenceClosure<NODE>) icc2, inplace);
+		} else {
+			assert icc1.getClass().equals(WeqCongruenceClosure.class);
+			return (DISJUNCT) meet((WeqCongruenceClosure<NODE>) icc1, (WeqCongruenceClosure<NODE>) icc2, inplace);
 		}
-		return copy;
 	}
 
 	public WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> weqcc1,
@@ -262,7 +318,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (inplace) {
 			WeqCongruenceClosure<NODE> weqcc1_old = null;
 			if (mDebug) {
-				weqcc1_old = getFrozenCopy(weqcc1);
+//				weqcc1_old = getFrozenCopy(weqcc1);
+				weqcc1_old = copyWeqCc(weqcc1, false);
 			}
 			weqcc1.meet(weqcc2, true);
 			if (mDebug) {
@@ -311,6 +368,17 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT join(final DISJUNCT icc1,
+			final DISJUNCT icc2, final boolean modifiable) {
+		assert icc1.getClass().equals(icc2.getClass());
+		if (icc1.getClass().equals(CongruenceClosure.class)) {
+			return (DISJUNCT) join((CongruenceClosure<NODE>) icc1, (CongruenceClosure<NODE>) icc2, modifiable);
+		} else {
+			assert icc1.getClass().equals(WeqCongruenceClosure.class);
+			return (DISJUNCT) join((WeqCongruenceClosure<NODE>) icc1, (WeqCongruenceClosure<NODE>) icc2, modifiable);
+		}
+	}
+
 	public CongruenceClosure<NODE> join(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
 			final boolean modifiable) {
 		// (just passing it through to CcManager)
@@ -320,7 +388,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> join(final WeqCongruenceClosure<NODE> weqcc1,
-			final WeqCongruenceClosure<NODE> weqcc2) {
+			final WeqCongruenceClosure<NODE> weqcc2, final boolean modifiable) {
 		freezeIfNecessary(weqcc1);
 		freezeIfNecessary(weqcc2);
 
@@ -335,7 +403,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 
 		final WeqCongruenceClosure<NODE> result = weqcc1.join(weqcc2);
-		result.freeze();
+		assert result != weqcc1 && result != weqcc2 : "join should construct a new object";
+		if (!modifiable) {
+			result.freeze();
+		}
 		assert checkJoinResult(weqcc1, weqcc2, result);
 		return result;
 	}
@@ -360,17 +431,41 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return unfrozen;
 	}
 
+	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThan(final DISJUNCT d1, final DISJUNCT d2) {
+		assert d1.getClass().equals(d2.getClass());
+		if (d1 instanceof CongruenceClosure<?>) {
+			return isStrongerThan((CongruenceClosure<NODE>) d1, (CongruenceClosure<NODE>) d2);
+		} else {
+			return isStrongerThan((WeqCongruenceClosure<NODE>) d1, (WeqCongruenceClosure<NODE>) d2);
+		}
+	}
+
 	public boolean isStrongerThan(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2) {
 		return weqcc1.isStrongerThan(weqcc2);
 	}
 
-	public WeakEquivalenceEdgeLabel<NODE> getSingletonEdgeLabel(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT getEmptyIcc(final DISJUNCT lab, final boolean modifiable) {
+		if (lab instanceof CongruenceClosure<?>) {
+			return (DISJUNCT) getEmptyCc(modifiable);
+		} else {
+			assert lab instanceof WeqCongruenceClosure<?>;
+			return (DISJUNCT) getTautologicalWeqCc(modifiable);
+		}
+	}
+
+	public CongruenceClosure<NODE> getEmptyCc(final boolean modifiable) {
+		return mCcManager.getEmptyCc(modifiable);
+	}
+
+	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> getSingletonEdgeLabel(
+			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weakEquivalenceGraph,
 			final CongruenceClosure<NODE> newConstraint) {
 		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(newConstraint));
 	}
 
-	public WeakEquivalenceEdgeLabel<NODE> getSingletonEdgeLabel(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
-			final Set<CongruenceClosure<NODE>> constraints) {
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> getSingletonEdgeLabel(
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
+			final Set<DISJUNCT> constraints) {
 		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, constraints);
 	}
 
@@ -642,7 +737,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> getWeqCongruenceClosure(final CongruenceClosure<NODE> cc,
-			final WeakEquivalenceGraph<NODE> weqGraph, final boolean modifiable) {
+			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weqGraph, final boolean modifiable) {
 		final CongruenceClosure<NODE> ccUnfrozen = mCcManager.unfreezeIfNecessary(cc);
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(ccUnfrozen, weqGraph, this);
 
@@ -658,10 +753,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public CongruenceClosure<NODE> getSingleDisequalityCc(final NODE node1, final NODE node2, final boolean modifiable) {
 		return mCcManager.getSingleDisequalityCc(node1, node2, modifiable);
-	}
-
-	public CongruenceClosure<NODE> getEmptyCc(final boolean modifiable) {
-		return mCcManager.getEmptyCc(modifiable);
 	}
 
 	/**
@@ -683,6 +774,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public CongruenceClosure<NODE> copyCcNoRemInfoUnfrozen(final CongruenceClosure<NODE> cc) {
 		return mCcManager.copyNoRemInfoUnfrozen(cc);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT projectToElements(final DISJUNCT cc,
+			final Set<NODE> nodesToKeep, final IRemovalInfo<NODE> remInfo) {
+		if (cc.getClass().equals(CongruenceClosure.class)) {
+			return (DISJUNCT) projectToElements((CongruenceClosure<NODE>) cc, nodesToKeep, remInfo);
+		} else {
+			throw new AssertionError();
+		}
 	}
 
 	public CongruenceClosure<NODE> projectToElements(final CongruenceClosure<NODE> cc, final Set<NODE> nodesToKeep,
@@ -752,22 +852,25 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param storeIndex
 	 * @return
 	 */
-	public WeakEquivalenceEdgeLabel<NODE> getEdgeLabelForIndex(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
+	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> getEdgeLabelForIndex(
+			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weakEquivalenceGraph,
 			final NODE storeIndex) {
 		return getSingletonEdgeLabel(weakEquivalenceGraph,
 				computeWeqConstraintForIndex(Collections.singletonList(storeIndex)));
 	}
 
-	public WeakEquivalenceEdgeLabel<NODE> meetEdgeLabels(final WeakEquivalenceEdgeLabel<NODE> oldLabelCopy,
-			final WeakEquivalenceEdgeLabel<NODE> labelToStrengthenWith, final boolean inplace) {
+	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> meetEdgeLabels(
+			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> oldLabelCopy,
+			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> labelToStrengthenWith, final boolean inplace) {
 		// TODO Auto-generated method stub
 		assert false;
 		return null;
 	}
 
-	public WeakEquivalenceEdgeLabel<NODE> meetEdgeLabelsNonDestructive(
-			final WeakEquivalenceEdgeLabel<NODE> oldLabelCopy,
-			final WeakEquivalenceEdgeLabel<NODE> labelToStrengthenWith) {
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
+		meetEdgeLabelsNonDestructive(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> oldLabelCopy,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToStrengthenWith) {
 		// TODO Auto-generated method stub
 		assert false;
 		return null;
@@ -777,22 +880,80 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mCcManager.freezeIfNecessary(cc);
 	}
 
-	public boolean isStrongerThan(final WeakEquivalenceEdgeLabel<NODE> oldLabelCopy,
-			final WeakEquivalenceEdgeLabel<NODE> labelToStrengthenWith) {
-		// TODO Auto-generated method stub
-		assert false;
-		return false;
+	/**
+	 * rule:  Disjunction A isStrongerThan disjunction B
+	 *     iff
+	 *   forall ai exists bi. ai subseteq bi
+	 * @param ccPoCache
+	 * @param value
+	 * @return
+	 */
+	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThan(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2) {
+		return isStrongerThan(label1, label2, this::isStrongerThan);
 	}
 
-	public boolean isEquivalent(final WeakEquivalenceEdgeLabel<NODE> value,
-			final WeakEquivalenceEdgeLabel<NODE> newLabel) {
-		// TODO Auto-generated method stub
-		assert false;
-		return false;
+//	public boolean isStrongerThan(final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label1,
+//			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label2) {
+//		return isStrongerThan(label1, label2, this::isStrongerThan);
+//	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThan(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2,
+			final BiPredicate<DISJUNCT, DISJUNCT> lowerOrEqual) {
+		for (final DISJUNCT label1disjunct : label1.getDisjuncts()) {
+			boolean existsWeaker = false;
+			for (final DISJUNCT label2disjunct : label2.getDisjuncts()) {
+				if (lowerOrEqual.test(label1disjunct, label2disjunct)) {
+					existsWeaker = true;
+					break;
+				}
+			}
+			if (!existsWeaker) {
+				return false;
+			}
+		}
+		return true;
 	}
 
-	public boolean isStrongerThan(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph2) {
+//		public boolean isStrongerThan(final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label1,
+//			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label2,
+//			final BiPredicate<CongruenceClosure<NODE>, CongruenceClosure<NODE>> lowerOrEqual) {
+//		for (final CongruenceClosure<NODE> label1disjunct : label1.getDisjuncts()) {
+//			boolean existsWeaker = false;
+//			for (final CongruenceClosure<NODE> label2disjunct : label2.getDisjuncts()) {
+//				if (lowerOrEqual.test(label1disjunct, label2disjunct)) {
+//					existsWeaker = true;
+//					break;
+//				}
+//			}
+//			if (!existsWeaker) {
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
+
+	public boolean isStrongerThan(final CongruenceClosure<NODE> paThis, final CongruenceClosure<NODE> paOther) {
+		return mCcManager.isStrongerThan(paThis, paOther);
+	}
+
+	public boolean isEquivalentCc(final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label1,
+			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label2) {
+		return isStrongerThan(label1, label2) && isStrongerThan(label2, label1);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isEquivalentICc(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2) {
+		return isStrongerThan(label1, label2) && isStrongerThan(label2, label1);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThan(
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph2) {
 		// freezing ensures closure
 		freezeIfNecessary(weakEquivalenceGraph);
 		freezeIfNecessary(weakEquivalenceGraph2);
@@ -800,19 +961,21 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return weakEquivalenceGraph.isStrongerThan(weakEquivalenceGraph2);
 	}
 
-	private void freezeIfNecessary(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph) {
+	private <DISJUNCT extends ICongruenceClosure<NODE>> void freezeIfNecessary(
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph) {
 		if (!weakEquivalenceGraph.isFrozen()) {
 			weakEquivalenceGraph.freeze();
 		}
 	}
 
-	public WeakEquivalenceGraph<NODE> join(final WeakEquivalenceGraph<NODE> weakEquivalenceGraph,
-			final WeakEquivalenceGraph<NODE> weakEquivalenceGraph2,
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceGraph<NODE, DISJUNCT> join(
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph2,
 			final boolean modifiable) {
 		freezeIfNecessary(weakEquivalenceGraph);
 		freezeIfNecessary(weakEquivalenceGraph2);
 
-		final WeakEquivalenceGraph<NODE> result = weakEquivalenceGraph.join(weakEquivalenceGraph2);
+		final WeakEquivalenceGraph<NODE, DISJUNCT> result = weakEquivalenceGraph.join(weakEquivalenceGraph2);
 
 		if (!modifiable) {
 			result.freeze();
@@ -820,4 +983,47 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		return result;
 	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT copyICc(final DISJUNCT icc,
+			final boolean modifiable) {
+		if (icc.getClass().equals(CongruenceClosure.class)) {
+			return (DISJUNCT) copyCc((CongruenceClosure<NODE>) icc, modifiable);
+		} else {
+			return (DISJUNCT) copyWeqCc((WeqCongruenceClosure<NODE>) icc, modifiable);
+		}
+	}
+
+	public WeqCongruenceClosure<NODE> copyWeqCc(final WeqCongruenceClosure<NODE> icc, final boolean modifiable) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * If icc is a CongruenceClosure return a copy of it. If icc is a WeqCongruenceClosure return a copy of its
+	 * CongruenceClosure.
+	 *
+	 * @param icc
+	 * @param modifiable
+	 * @return
+	 */
+	public CongruenceClosure<NODE> copyCcOnly(final ICongruenceClosure<NODE> icc, final boolean modifiable) {
+		if (icc.getClass().equals(CongruenceClosure.class)) {
+			return copyCc((CongruenceClosure<NODE>) icc, modifiable);
+		} else {
+			return copyCc(((WeqCongruenceClosure<NODE>) icc).getCongruenceClosure(), modifiable);
+		}
+	}
+
+	private CongruenceClosure<NODE> copyCc(final CongruenceClosure<NODE> icc, final boolean modifiable) {
+		return mCcManager.getCopy(icc, modifiable);
+	}
+
+//	public Object join(final ICongruenceClosure<NODE> cc1, final ICongruenceClosure<NODE> cc2, final boolean modifiable) {
+//		assert cc1.getClass().equals(cc2.getClass());
+//		if (cc1.getClass().equals(CongruenceClosure.class)) {
+//			return join((CongruenceClosure<NODE>) cc1, (CongruenceClosure<NODE>) cc2, modifiable);
+//		} else {
+//			return join((WeqCongruenceClosure<NODE>) cc1, (WeqCongruenceClosure<NODE>) cc2, modifiable);
+//		}
+//	}
 }

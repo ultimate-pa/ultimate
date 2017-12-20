@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -214,11 +213,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	/**
 	 * Sets the flag for isFrozen() to true.
 	 */
+	@Override
 	public void freeze() {
 		assert !mIsFrozen;
 		mIsFrozen = true;
 	}
 
+	@Override
 	public boolean isFrozen() {
 		return mIsFrozen;
 	}
@@ -794,123 +795,74 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *         the other given CongruenceClosure
 	 */
 	public boolean isStrongerThan(final CongruenceClosure<ELEM> other) {
-		if (this.isInconsistent()) {
-			return true;
-		}
-		if (other.isInconsistent()) {
-			// we know this != False, and other = False
-			return false;
-		}
-		if (other.isTautological()) {
-			return true;
-		}
-		if (this.isTautological()) {
-			// we know other != True, and this = True
-			return false;
-		}
-		final CongruenceClosure<ELEM> thisAligned = mManager.getCopy(this, true);
-		mManager.addAllElements(thisAligned, other.getAllElements(), null, true);
-		// freeze not necessary but to make clear that thisAligned is closed at this point
-		thisAligned.freeze();
-
-		assert assertElementsAreSuperset(thisAligned, other);
-		final CongruenceClosure<ELEM> otherAligned = mManager.getCopy(other, true);
-		mManager.addAllElements(otherAligned, this.getAllElements(), null, true);
-		// freeze not necessary but to make clear that thisAligned is closed at this point
-		otherAligned.freeze();
-
-		assert assertElementsAreSuperset(thisAligned, otherAligned);
-		assert assertElementsAreSuperset(otherAligned, thisAligned);
-
-		return checkIsStrongerThan(thisAligned, otherAligned);
+		return mManager.isStrongerThan(this, other);
 	}
 
-	/**
-	 * We check for each equivalence representative in "other" if its equivalence
-	 * class is a subset of the equivalence class of the representative in "this".
-	 *
-	 * (going through the representatives in "this" would be unsound because we
-	 * might not see all relevant equivalence classes in "other")
-	 *
-	 * assumes that this and other have the same elements and functions
-	 *
-	 * Induces a non-strict (antisymmetric) partial ordering of the CongruenceClosure instances.
-	 */
-	private boolean checkIsStrongerThan(final CongruenceClosure<ELEM> thisAligned,
-			final CongruenceClosure<ELEM> otherAligned) {
-		assert !thisAligned.isInconsistent() && !otherAligned.isInconsistent();
+//	/**
+//	 * We check for each equivalence representative in "other" if its equivalence
+//	 * class is a subset of the equivalence class of the representative in "this".
+//	 *
+//	 * (going through the representatives in "this" would be unsound because we
+//	 * might not see all relevant equivalence classes in "other")
+//	 *
+//	 * assumes that this and other have the same elements and functions
+//	 *
+//	 * Induces a non-strict (antisymmetric) partial ordering of the CongruenceClosure instances.
+//	 */
+//	private boolean checkIsStrongerThan(final CongruenceClosure<ELEM> thisAligned,
+//			final CongruenceClosure<ELEM> otherAligned) {
+//		assert !thisAligned.isInconsistent() && !otherAligned.isInconsistent();
+//
+//		assert assertElementsAreSuperset(thisAligned, otherAligned);
+//		assert assertElementsAreSuperset(otherAligned, thisAligned);
+//
+//		if (!isPartitionStronger(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
+//			return false;
+//		}
+//
+//		/*
+//		 * We check if each disequality that holds in "other" also holds in "this".
+//		 */
+//		if (!areDisequalitiesStrongerThan(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
+//			return false;
+//		}
+//		return true;
+//	}
 
-		assert assertElementsAreSuperset(thisAligned, otherAligned);
-		assert assertElementsAreSuperset(otherAligned, thisAligned);
+//	public boolean isEquivalent(final CongruenceClosure<ELEM> other) {
+//		if (this.isInconsistent() && other.isInconsistent()) {
+//			return true;
+//		}
+//		if (this.isTautological() && other.isTautological()) {
+//			return true;
+//		}
+//		if (other.isInconsistent() || this.isInconsistent()) {
+//			return false;
+//		}
+//		if (other.isTautological() || this.isTautological()) {
+//			return false;
+//		}
+//
+//		final CongruenceClosure<ELEM> thisAligned =
+//				mManager.addAllElements(this, other.getAllElements(), null, false);
+//		final CongruenceClosure<ELEM> otherAligned =
+//				mManager.addAllElements(other, this.getAllElements(), null, false);
+//		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
+//	}
 
-		if (!isPartitionStronger(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
-			return false;
-		}
+//	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,
+//			final ThreeValuedEquivalenceRelation<E> otherTVER) {
+//		for (final E rep : otherTVER.getAllRepresentatives()) {
+//			for (final E disequalRep : otherTVER.getRepresentativesUnequalTo(rep)) {
+//				if (thisTVER.getEqualityStatus(rep, disequalRep) != EqualityStatus.NOT_EQUAL) {
+//					return false;
+//				}
+//			}
+//		}
+//		return true;
+//	}
 
-		/*
-		 * We check if each disequality that holds in "other" also holds in "this".
-		 */
-		if (!areDisequalitiesStrongerThan(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
-			return false;
-		}
-		return true;
-	}
 
-	public boolean isEquivalent(final CongruenceClosure<ELEM> other) {
-		if (this.isInconsistent() && other.isInconsistent()) {
-			return true;
-		}
-		if (this.isTautological() && other.isTautological()) {
-			return true;
-		}
-		if (other.isInconsistent() || this.isInconsistent()) {
-			return false;
-		}
-		if (other.isTautological() || this.isTautological()) {
-			return false;
-		}
-
-		final CongruenceClosure<ELEM> thisAligned =
-				mManager.addAllElements(this, other.getAllElements(), null, false);
-		final CongruenceClosure<ELEM> otherAligned =
-				mManager.addAllElements(other, this.getAllElements(), null, false);
-		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
-	}
-
-	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,
-			final ThreeValuedEquivalenceRelation<E> otherTVER) {
-		for (final E rep : otherTVER.getAllRepresentatives()) {
-			for (final E disequalRep : otherTVER.getRepresentativesUnequalTo(rep)) {
-				if (thisTVER.getEqualityStatus(rep, disequalRep) != EqualityStatus.NOT_EQUAL) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 *
-	 * @param first
-	 * @param second
-	 * @return true if first is stronger/more constraining than second
-	 */
-	private static <E> boolean isPartitionStronger(final ThreeValuedEquivalenceRelation<E> first,
-			final ThreeValuedEquivalenceRelation<E> second) {
-		final Collection<E> representativesFromBoth = new ArrayList<>(first.getAllRepresentatives().size()
-				+ second.getAllRepresentatives().size());
-		representativesFromBoth.addAll(first.getAllRepresentatives());
-		representativesFromBoth.addAll(second.getAllRepresentatives());
-
-		for (final E rep : representativesFromBoth) {
-			final Set<E> eqInOther = second.getEquivalenceClass(rep);
-			final Set<E> eqInThis = first.getEquivalenceClass(rep);
-			if (!eqInThis.containsAll(eqInOther)) {
-				return false;
-			}
-		}
-		return true;
-	}
 
 	public EqualityStatus getEqualityStatus(final ELEM elem1, final ELEM elem2) {
 		assert hasElement(elem1) && hasElement(elem2);
@@ -926,6 +878,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mElementTVER.getEqualityStatus(elem1, elem2);
 	}
 
+	@Override
 	public Set<ELEM> getAllElements() {
 		return Collections.unmodifiableSet(mElementTVER.getAllElements());
 	}
@@ -938,6 +891,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				.collect(Collectors.toSet());
 	}
 
+	@Override
 	public boolean isInconsistent() {
 		return mElementTVER == null || mElementTVER.isInconsistent();
 	}
@@ -958,7 +912,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param b
 	 * @return
 	 */
-	private boolean assertElementsAreSuperset(final CongruenceClosure<ELEM> a,
+	boolean assertElementsAreSuperset(final CongruenceClosure<ELEM> a,
 			final CongruenceClosure<ELEM> b) {
 		final Set<ELEM> difference = DataStructureUtils.difference(b.getAllElements(), a.getAllElements());
 		if (!difference.isEmpty()) {
@@ -992,6 +946,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return true;
 	}
 
+	@Override
 	public boolean assertSingleElementIsFullyRemoved(final ELEM elem) {
 //		for (final Entry<ELEM, ELEM> en : mNodeToDependents.entrySet()) {
 		for (final Entry<ELEM, ELEM> en : mFaAuxData.getNodeToDependentPairs()) {
@@ -1055,10 +1010,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return sanityCheck(null);
 	}
 
-	protected boolean sanityCheck(final IRemovalInfo<ELEM> remInfo) {
+	public boolean sanityCheck(final IRemovalInfo<ELEM> remInfo) {
 		return sanityCheckOnlyCc(remInfo);
 	}
 
+	@Override
 	public boolean sanityCheckOnlyCc() {
 		return sanityCheckOnlyCc(null);
 	}
@@ -1068,6 +1024,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *
 	 * @return
 	 */
+	@Override
 	@SuppressWarnings("unused")
 	public boolean sanityCheckOnlyCc(final IRemovalInfo<ELEM> remInfo) {
 		if (mConstructorInitializationPhase) {
@@ -1286,6 +1243,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return sb.toString();
 	}
 
+	@Override
 	public String toLogString() {
 		if (isTautological()) {
 			return "True";
@@ -1337,6 +1295,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 //		return newCollection;
 //	}
 
+	@Override
 	public boolean isTautological() {
 		if (isInconsistent()) {
 			return false;
@@ -1352,6 +1311,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param functionTransformer
 	 * @return
 	 */
+	@Override
 	public void transformElementsAndFunctions(final Function<ELEM, ELEM> elemTransformer) {
 		assert !mIsFrozen;
 //		assert sanitizeTransformer(elemTransformer, getAllElements()) : "we assume that the transformer does not "
@@ -1406,6 +1366,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param elem
 	 * @return true
 	 */
+	@Override
 	public boolean isConstrained(final ELEM elem) {
 		if (!hasElement(elem)) {
 			return false;

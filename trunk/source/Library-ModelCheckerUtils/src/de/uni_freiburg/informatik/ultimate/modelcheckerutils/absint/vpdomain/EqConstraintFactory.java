@@ -130,7 +130,8 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		if (constraint.isBottom()) {
 			return constraint;
 		}
-		final WeqCongruenceClosure<NODE> weqCcCopy = mWeqCcManager.getFrozenCopy(constraint.getWeqCc());
+//		final WeqCongruenceClosure<NODE> weqCcCopy = mWeqCcManager.getFrozenCopy(constraint.getWeqCc());
+		final WeqCongruenceClosure<NODE> weqCcCopy = mWeqCcManager.copyWeqCc(constraint.getWeqCc(), false);
 		return new EqConstraint<>(mConstraintIdCounter++, weqCcCopy, this);
 	}
 
