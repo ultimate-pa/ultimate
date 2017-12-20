@@ -772,7 +772,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	private void projectGroundPartFromLabels() {
-		mWeakEquivalenceGraph.projectAwayGroundPartFromLabels();
+		mWeakEquivalenceGraph.thinLabels();
 
 	}
 

@@ -84,10 +84,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 */
 	private boolean mFat;
 
-	/**
-	 * true if mFat and the ground information is the whole WeqCc (as opposed to just the Cc)
-	 */
-	boolean mWeqFat;
+//	/**
+//	 * true if mFat and the ground information is the whole WeqCc (as opposed to just the Cc)
+//	 */
+//	boolean mWeqFat;
 
 	/**
 	 * Used as a representative of the DISJUNCT type as it is currently instantiated
@@ -233,21 +233,24 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		}
 	}
 
-	public void projectAwayGroundPartFromLabels() {
+	/**
+	 * Computes a new WeakEquivalenceGraph whose edges are _thinned_ copies of this's edges.
+	 *
+	 * @param baseWeqCc
+	 * @return
+	 */
+	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> thinLabels(final WeqCongruenceClosure<NODE> baseWeqCc) {
+		assert mFat;
+
+		final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> result =
+			new WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>>(baseWeqCc, mWeqCcManager,
+					mWeqCcManager.getEmptyCc(false));
+
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> en : getWeqEdgesEntrySet()) {
-
-//			if (mWeqFat) {
-//				// unprime weqvars
-////				lab2 = mWeqCcManager.copyCcNoRemInfo(lab);
-////				lab2.transformElementsAndFunctions(
-////						node -> node.renameVariables(mWeakEquivalenceGraph.getWeqCcManager().getWeqPrimedVarsToWeqVars()));
-//				en.getValue().backToCcLabels();
-//			}
-
-			en.getValue().backToSlim();
+			result.reportWeakEquivalence(en.getKey().getOneElement(), en.getKey().getOtherElement(),
+					en.getValue().thin(result));
 		}
-		mFat = false;
-		mWeqFat = false;
+		return result;
 	}
 
 	/**

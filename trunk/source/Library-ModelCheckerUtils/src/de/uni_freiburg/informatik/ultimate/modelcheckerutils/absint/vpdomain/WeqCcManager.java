@@ -431,6 +431,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return unfrozen;
 	}
 
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT renameVariablesICc(final DISJUNCT labelCopy,
+			final Map<Term, Term> substitutionMapping) {
+		if (labelCopy instanceof CongruenceClosure<?>) {
+			return (DISJUNCT) renameVariablesCc((CongruenceClosure<NODE>) labelCopy, substitutionMapping);
+		} else {
+			return (DISJUNCT) renameVariables((WeqCongruenceClosure<NODE>) labelCopy, substitutionMapping);
+		}
+	}
+
 	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThan(final DISJUNCT d1, final DISJUNCT d2) {
 		assert d1.getClass().equals(d2.getClass());
 		if (d1 instanceof CongruenceClosure<?>) {
@@ -1014,7 +1023,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	private CongruenceClosure<NODE> copyCc(final CongruenceClosure<NODE> icc, final boolean modifiable) {
+	public CongruenceClosure<NODE> copyCc(final CongruenceClosure<NODE> icc, final boolean modifiable) {
 		return mCcManager.getCopy(icc, modifiable);
 	}
 
