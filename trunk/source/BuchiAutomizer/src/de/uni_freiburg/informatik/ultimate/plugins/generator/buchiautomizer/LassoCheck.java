@@ -93,7 +93,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
@@ -472,7 +472,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		private TraceAbstractionRefinementEngine checkFeasibilityAndComputeInterpolants(
 				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
 
-			final IRefinementStrategy<LETTER> strategy =
+			final BaseRefinementStrategy<LETTER> strategy =
 					mRefinementStrategyFactory.createStrategy(mRefinementStrategy, run, mAbstraction, taskIdentifier);
 
 			final TraceAbstractionRefinementEngine result;

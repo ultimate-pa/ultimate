@@ -56,7 +56,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BaseStrategy<LETTER> {
+public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransition<?>>
+		extends BaseRefinementStrategy<LETTER> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
@@ -158,7 +159,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		// use all interpolant sequences
-		final List<TracePredicates> allIpps = IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+		final List<TracePredicates> allIpps = BaseRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder = constructInterpolantAutomatonBuilder(getInterpolantGenerator(), allIpps);

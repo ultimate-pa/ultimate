@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 
@@ -41,29 +42,46 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbsIntBaseInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
- * Base class for all refinement strategies. This class implements the executeStrategy() method which is called by the
- * refinement engine and executes the strategy. If a different behavior is necessary, override the executeStrategy()
- * method in the sub-classes (see {@link ToothlessTaipanRefinementStrategy}).
+ * A {@link BaseRefinementStrategy} allows an {@link IRefinementEngine} to try multiple combinations of
+ * <ol>
+ * <li>a {@link TraceCheck},</li>
+ * <li>an {@link IInterpolantGenerator}, and</li>
+ * <li>an {@link InterpolantAutomatonBuilderFactory}.</li>
+ * </ol>
+ * In the following class documentation this combination is just called "combination".
+ * <p>
+ * The contract is that if {@link #hasNextTraceCheck()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) returns
+ * {@code true}, then {@link #nextTraceCheck()} (resp. {@link #nextInterpolantGenerator()}) advances the respective
+ * component (but the strategy may also return {@code false} to enforce early termination).<br>
+ * Between two calls to {@link #nextTraceCheck()} (resp. {@link #nextInterpolantGenerator()}) the respective getter (
+ * {@link #getTraceCheck()} resp. {@link IRefinementStrategy#getInterpolantGenerator()}) always returns the same object
+ * and {@link #hasNextTraceCheck()} (resp. {@link #hasNextInterpolantGenerator(List, List)}) always returns the same
+ * answer. However, for instance by a call to {@link #nextInterpolantGenerator()}, the {@link TraceCheck} may change. A
+ * user should hence not store these objects temporarily.
  *
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- *
- * @param <LETTER>
- *            The type of the transitions.
  */
-public abstract class BaseStrategy<LETTER> implements IRefinementStrategy<LETTER> {
+public abstract class BaseRefinementStrategy<LETTER> {
 
 	private final ILogger mLogger;
 
@@ -76,8 +94,94 @@ public abstract class BaseStrategy<LETTER> implements IRefinementStrategy<LETTER
 
 	private InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
 
-	public BaseStrategy(final ILogger logger) {
+	public BaseRefinementStrategy(final ILogger logger) {
 		mLogger = logger;
+	}
+
+	/**
+	 * A user should use this method whenever the trace check was unsuccessful (i.e., crashed or returned
+	 * {@link LBool.UNKNOWN}. The strategy then decides whether it wants to and whether it can use another
+	 * {@link TraceCheck}.
+	 *
+	 * @return {@code true} iff there is another {@link TraceCheck} available and should be used
+	 */
+	public abstract boolean hasNextTraceCheck();
+
+	/**
+	 * Changes the {@link TraceCheck}.<br>
+	 * Throws a {@link NoSuchElementException} if there is no next {@link TraceCheck}; use {@link #hasNextTraceCheck()}
+	 * to check this.
+	 */
+	public abstract void nextTraceCheck();
+
+	/**
+	 * @return The trace checker of the current combination.
+	 */
+	public abstract TraceCheck getTraceCheck();
+
+	/**
+	 * A user should use this method whenever new interpolants have been computed (or the computation has failed). The
+	 * strategy then decides whether it wants to and whether it can use another {@link IInterpolantGenerator}.
+	 *
+	 * @param perfectIpps
+	 *            perfect interpolant sequences constructed so far
+	 * @param imperfectIpps
+	 *            imperfect interpolant sequences constructed so far
+	 * @return {@code true} iff there is another {@link IInterpolantGenerator} available and should be used
+	 */
+	public abstract boolean hasNextInterpolantGenerator(List<TracePredicates> perfectIpps,
+			List<TracePredicates> imperfectIpps);
+
+	/**
+	 * Changes the {@link IInterpolantGenerator}.<br>
+	 * Throws a {@link NoSuchElementException} if there is no next {@link IInterpolantGenerator}; use
+	 * {@link #hasNextInterpolantGenerator(List, List)} to check this.
+	 */
+	public abstract void nextInterpolantGenerator();
+
+	/**
+	 * This method must only be called if the {@link TraceCheck} returns {@code UNSAT}.
+	 *
+	 * @return The interpolant generator of the current combination.
+	 */
+	public abstract IInterpolantGenerator getInterpolantGenerator();
+
+	/**
+	 * @param perfectIpps
+	 *            Sequences of perfect interpolants.
+	 * @param imperfectIpps
+	 *            sequences of imperfect interpolants
+	 * @return an interpolant automaton builder
+	 */
+	public abstract IInterpolantAutomatonBuilder<LETTER, IPredicate>
+			getInterpolantAutomatonBuilder(List<TracePredicates> perfectIpps, List<TracePredicates> imperfectIpps);
+
+	/**
+	 * @return Predicate unifier.
+	 */
+	public abstract IPredicateUnifier getPredicateUnifier();
+
+	/**
+	 * @return Object that encapsulates which exceptions are blacklisted.
+	 * @see RefinementStrategyExceptionBlacklist
+	 */
+	public abstract RefinementStrategyExceptionBlacklist getExceptionBlacklist();
+
+	public abstract RefinementEngineStatisticsGenerator getRefinementEngineStatistics();
+
+	/**
+	 * @param list1
+	 *            First list.
+	 * @param list2
+	 *            second list
+	 * @return new list containing all elements from the two lists
+	 */
+	public static List<TracePredicates> wrapTwoListsInOne(final List<TracePredicates> list1,
+			final List<TracePredicates> list2) {
+		final List<TracePredicates> allIpps = new ArrayList<>(list1.size() + list2.size());
+		allIpps.addAll(list1);
+		allIpps.addAll(list2);
+		return allIpps;
 	}
 
 	/**

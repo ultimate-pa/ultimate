@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		extends BaseStrategy<LETTER> {
+		extends BaseRefinementStrategy<LETTER> {
 	/**
 	 * Possible tracks.
 	 *
@@ -267,7 +267,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		// current policy: use all interpolant sequences
-		final List<TracePredicates> allIpps = IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+		final List<TracePredicates> allIpps = BaseRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =

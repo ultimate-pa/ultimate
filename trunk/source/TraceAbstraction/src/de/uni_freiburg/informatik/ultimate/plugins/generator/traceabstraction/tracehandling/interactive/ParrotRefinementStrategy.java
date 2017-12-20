@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.AssertionOrderModulation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
 
-	private IRefinementStrategy<LETTER> mFallback;
+	private BaseRefinementStrategy<LETTER> mFallback;
 	private Track mNextTrack;
 	private boolean mAsked;
 	private boolean mInitialized;
@@ -92,7 +92,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	protected abstract InteractiveCegar getInteractive();
 
-	protected abstract IRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy);
+	protected abstract BaseRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy);
 
 	private void ask() {
 		if (mAsked) {

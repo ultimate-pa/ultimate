@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -47,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public final class TraceAbstractionRefinementEngine<LETTER>
 		implements IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> {
 	private final ILogger mLogger;
-	private final BaseStrategy<LETTER> mStrategy;
+	private final BaseRefinementStrategy<LETTER> mStrategy;
 
 	/* outputs */
 	private final LBool mFeasibility;
@@ -58,14 +60,10 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	 * @param strategy
 	 *            strategy
 	 */
-	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy) {
+	public TraceAbstractionRefinementEngine(final ILogger logger, final BaseRefinementStrategy<LETTER> strategy) {
 		// initialize fields
 		mLogger = logger;
-		if (strategy == null || !(strategy instanceof BaseStrategy)) {
-			throw new IllegalArgumentException("Strategy must be of base type BaseStrategy.");
-		}
-
-		mStrategy = (BaseStrategy<LETTER>) strategy;
+		mStrategy = Objects.requireNonNull(strategy);
 		mLogger.info("Using refinement strategy " + mStrategy.getClass().getSimpleName());
 		mFeasibility = mStrategy.executeStrategy();
 	}

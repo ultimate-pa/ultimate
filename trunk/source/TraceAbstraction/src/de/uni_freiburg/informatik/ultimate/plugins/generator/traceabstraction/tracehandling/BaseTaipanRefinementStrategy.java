@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BaseStrategy<LETTER> {
+public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BaseRefinementStrategy<LETTER> {
 	protected static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	private final IUltimateServiceProvider mServices;

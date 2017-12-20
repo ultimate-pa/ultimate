@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 
@@ -40,12 +40,12 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 	}
 
 	@Override
-	public IRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
+	public BaseRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
 
-		final Function<RefinementStrategy, IRefinementStrategy<LETTER>> fallBack =
+		final Function<RefinementStrategy, BaseRefinementStrategy<LETTER>> fallBack =
 				s -> super.createStrategy(s, counterexample, abstraction, taskIdentifier);
 
 		return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
@@ -61,7 +61,7 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 			}
 
 			@Override
-			protected IRefinementStrategy<LETTER> createFallbackStrategy(final RefinementStrategy strategy) {
+			protected BaseRefinementStrategy<LETTER> createFallbackStrategy(final RefinementStrategy strategy) {
 				return fallBack.apply(strategy);
 			}
 
