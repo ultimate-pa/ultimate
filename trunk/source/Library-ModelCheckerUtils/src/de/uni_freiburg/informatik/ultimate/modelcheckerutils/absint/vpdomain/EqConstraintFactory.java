@@ -374,7 +374,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 				// havoccing an element
 				final NODE nodeToHavoc = getEqNodeAndFunctionFactory().getExistingNode(term);
-				unfrozen.projectAway(nodeToHavoc, true);
+				unfrozen.projectAway(nodeToHavoc);
 
 				if (unfrozen.isInconsistent()) {
 					return getBottomConstraint();

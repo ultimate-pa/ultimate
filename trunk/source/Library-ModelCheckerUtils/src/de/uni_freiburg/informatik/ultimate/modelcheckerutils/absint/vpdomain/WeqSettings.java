@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 public class WeqSettings {
-	public static final boolean FREEZE_ALL_IN_MANAGER = true;
+//	public static final boolean FREEZE_ALL_IN_MANAGER = true;
 
 //	static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = true;
 	static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = false;

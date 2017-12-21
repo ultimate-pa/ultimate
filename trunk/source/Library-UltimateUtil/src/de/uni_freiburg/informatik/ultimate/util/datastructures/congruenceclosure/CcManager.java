@@ -386,10 +386,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 //			assert result.isFrozen();
 //			return result;
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(cc);
-			unfrozen.projectToElements(nodesToKeep, remInfo);
-			unfrozen.freeze();
+			final CongruenceClosure<ELEM> result = unfrozen.projectToElements(nodesToKeep, remInfo);
+			result.freeze();
 			// TODO: implement a result check here?
-			return unfrozen;
+			return result;
 		}
 	}
 

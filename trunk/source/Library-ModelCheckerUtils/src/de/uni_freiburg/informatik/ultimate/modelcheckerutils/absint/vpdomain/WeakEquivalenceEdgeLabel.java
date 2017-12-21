@@ -611,9 +611,11 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			}
 		}
 
-		// check that labels are free of constraints that don't contain weq nodes
-		for (final DISJUNCT lab : getDisjuncts()) {
-			assert ((CongruenceClosure<NODE>) lab).assertHasOnlyWeqVarConstraints(mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes());
+		if (mWeakEquivalenceGraph.mWeqCc.mDiet == Diet.THIN) {
+			// in THIN-mode: check that labels are free of constraints that don't contain weq nodes
+			for (final DISJUNCT lab : getDisjuncts()) {
+				assert ((CongruenceClosure<NODE>) lab).assertHasOnlyWeqVarConstraints(mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes());
+			}
 		}
 
 		return sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);

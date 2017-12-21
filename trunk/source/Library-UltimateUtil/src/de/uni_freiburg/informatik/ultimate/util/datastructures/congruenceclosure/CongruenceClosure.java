@@ -162,6 +162,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mAuxData = new CcAuxData<>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
 		mAllLiterals = new HashSet<>();
+		mManager = manager;
 
 		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
@@ -169,7 +170,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			registerNewElement(elem, remInfo);
 		}
 		mConstructorInitializationPhase = false;
-		mManager = manager;
 		assert sanityCheck(remInfo);
 	}
 

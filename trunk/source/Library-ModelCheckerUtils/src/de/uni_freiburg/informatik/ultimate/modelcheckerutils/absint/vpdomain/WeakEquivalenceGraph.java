@@ -80,16 +80,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	private boolean mIsFrozen;
 
 	/**
-	 * true iff currently the labels incorporate the ground information we have
-	 */
-	private boolean mFat;
-
-//	/**
-//	 * true if mFat and the ground information is the whole WeqCc (as opposed to just the Cc)
-//	 */
-//	boolean mWeqFat;
-
-	/**
 	 * Used as a representative of the DISJUNCT type as it is currently instantiated
 	 */
 	final DISJUNCT mEmptyDisjunct;
@@ -240,7 +230,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 * @return
 	 */
 	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> thinLabels(final WeqCongruenceClosure<NODE> baseWeqCc) {
-		assert mFat;
+		assert mWeqCc.mDiet != Diet.THIN;
 
 		final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> result =
 			new WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>>(baseWeqCc, mWeqCcManager,
@@ -928,8 +918,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		return mWeakEquivalenceEdges.entrySet();
 	}
 
-	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> meetEdgeLabelsWithCcGpaBeforeRemove(
-			final WeqCongruenceClosure<NODE> originalWeqCc) {
+	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> ccFattenEdgeLabels() {
+//			final WeqCongruenceClosure<NODE> originalWeqCc) {
 		assert mWeqCc.mDiet == Diet.THIN;
 
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edgeLabel : getWeqEdgesEntrySet()) {

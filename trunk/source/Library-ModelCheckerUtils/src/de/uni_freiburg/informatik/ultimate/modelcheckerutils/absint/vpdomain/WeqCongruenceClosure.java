@@ -777,7 +777,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			mDiet = Diet.WEQCCFAT;
 		} else {
 			mWeakEquivalenceGraphCcFat =
-					getWeakEquivalenceGraph().meetEdgeLabelsWithCcGpaBeforeRemove(mManager.copyWeqCc(this, false));
+//					getWeakEquivalenceGraph().ccFattenEdgeLabels(mManager.copyWeqCc(this, false));
+					getWeakEquivalenceGraph().ccFattenEdgeLabels();
 			mWeakEquivalenceGraphThin = null;
 			mDiet = Diet.CCFAT;
 		}
@@ -833,7 +834,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	    final Set<NODE> replByFwcc = mCongruenceClosure.getNodesToIntroduceBeforeRemoval(elemToRemove, elementsToRemove,
 	    		elemToRemoveToReplacement);
-
 
 		if (!replByFwcc.isEmpty()) {
 			/*

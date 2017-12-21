@@ -59,8 +59,8 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 			final EqConstraintFactory<NODE> factory) {
 		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent()
 		  : "we filter out EqBottomConstraints up front, right? (could also do it here..)";
-		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent()
-		  : "all the constraints inside a disjunctive constraint should be frozen";
+//		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent()
+//		  : "all the constraints inside a disjunctive constraint should be frozen";
 		mConstraints = new HashSet<>(constraintList);
 		mFactory = factory;
 		mNodeAndFunctionFactory = factory.getEqNodeAndFunctionFactory();

@@ -181,7 +181,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		final DISJUNCT sample = ccs.iterator().next();
 		if (sample instanceof CongruenceClosure<?>) {
-			return (Set<DISJUNCT>) filterRedundantCcs((WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>) ccs);
+			return (Set<DISJUNCT>) filterRedundantCcs((Set<CongruenceClosure<NODE>>) ccs);
 		} else {
 			throw new AssertionError();
 		}
@@ -338,13 +338,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			return weqcc1;
 		} else {
-			if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
-				assert weqcc1.isFrozen();
-				assert weqcc2.isFrozen();
-			} else {
-				assert !weqcc1.isFrozen();
-				assert !weqcc2.isFrozen();
-			}
 
 			final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2, true);
 			result.freeze();
@@ -830,28 +823,25 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> addAllElements(final WeqCongruenceClosure<NODE> weqcc,
 			final Set<NODE> nodesToAdd, final IRemovalInfo<NODE> remInfo, final boolean inplace) {
-		// TODO: use inplace flag
-		assert !inplace : "TODO";
-		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
-			assert weqcc.isFrozen();
+		if (inplace) {
+			for (final NODE e : nodesToAdd) {
+				if (weqcc.isInconsistent()) {
+					return weqcc;
+				}
+				addNode(e, weqcc, true);
+			}
+			return weqcc;
 		} else {
-			assert !weqcc.isFrozen();
+			WeqCongruenceClosure<NODE> result = unfreeze(weqcc);
+			for (final NODE e : nodesToAdd) {
+				if (weqcc.isInconsistent()) {
+					return weqcc;
+				}
+				result = addNode(e, weqcc, false);
+			}
+			assert result.isFrozen();
+			return result;
 		}
-
-		assert !weqcc.isInconsistent();
-		assert remInfo == null;
-
-		final WeqCongruenceClosure<NODE> result = unfreeze(weqcc);
-
-		for (final NODE e : nodesToAdd) {
-			result.addElementRec(e);
-		}
-
-		assert result.sanityCheck();
-		if (WeqSettings.FREEZE_ALL_IN_MANAGER) {
-			result.freeze();
-		}
-		return result;
 	}
 
 	public CongruenceClosure<NODE> addAllElementsCc(final CongruenceClosure<NODE> cc,

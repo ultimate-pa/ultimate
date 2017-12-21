@@ -73,48 +73,15 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final int mId;
 
-//	/**
-//	 * Creates an empty constraint (i.e. an EqConstraint that does not constrain
-//	 * anything, whose toTerm() will return "true").
-//	 *
-//	 * @param factory
-//	 */
-//	public EqConstraint(final int id, final EqConstraintFactory<NODE> factory) {
-//		this(id, factory, id == 0 ? new WeqCongruenceClosure<>(true) : new WeqCongruenceClosure<>(factory));
-//		assert id != 0 || this instanceof EqBottomConstraint : "0 is reserved for the bottom constraint";
-//	}
-
 	public EqConstraint(final int id, final WeqCongruenceClosure<NODE> cClosure,
 			final EqConstraintFactory<NODE> factory) {
-//		this(id, factory, cClosure);
 
-//		assert id == 0 || cClosure.isFrozen() : "the caller is responsible that this is frozen already";
 		assert id != Integer.MAX_VALUE : "ran out of ids for EqConstraints";
 
 		mId = id;
 		mFactory = factory;
 		mPartialArrangement = cClosure;
-//		this(id, factory, factory.getWeqCcManager().makeCopy(cClosure));
-//		this(id, factory, new WeqCongruenceClosure<>(cClosure));
 	}
-
-//	/**
-//	 * Copy constructor.
-//	 *
-//	 * @param constraint
-//	 */
-//	public EqConstraint(final int id, final EqConstraint<NODE> constraint) {
-//		this(id, constraint.mFactory,  constraint.mFactory.getWeqCcManager().makeCopy(constraint.mPartialArrangement));
-//		//new WeqCongruenceClosure<>(constraint.mPartialArrangement));
-//	}
-
-//	private EqConstraint(final int id, final EqConstraintFactory<NODE> factory,
-//			final WeqCongruenceClosure<NODE> cClosure) {
-//		assert id != Integer.MAX_VALUE;
-//		mId = id;
-//		mFactory = factory;
-//		mPartialArrangement = cClosure;
-//	}
 
 	public void freeze() {
 		assert !isInconsistent() : "use EqBottomConstraint instead!!";
@@ -180,19 +147,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		return false;
 	}
-
-//	public void renameVariables(final Map<Term, Term> substitutionMapping) {
-//		assert !mIsFrozen;
-////		mPartialArrangement.renameVariables(substitutionMapping);
-//		mPartialArrangement.transformElementsAndFunctions(e -> e.renameVariables(substitutionMapping));
-//		resetCachingFields();
-//	}
-
-//	private void resetCachingFields() {
-//		mVariables = null;
-//		mPvocs = null;
-//		mTerm = null;
-//	}
 
 	/**
 	 *
@@ -290,10 +244,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 				.forEach(node -> constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
 		// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
 
-		// mPartialArrangement.getAllFunctions().stream()
-		// .forEach(func -> constants.addAll(new
-		// ConstantFinder().findConstants(func.getTerm(), false)));
-
 		mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
 
 		assert !mPvocs.stream().anyMatch(Objects::isNull);
@@ -317,8 +267,6 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		if (other.isTop()) {
 			return other;
 		}
-//		final WeqCongruenceClosure<NODE> newPartialArrangement = this.mPartialArrangement
-//				.join(other.mPartialArrangement);
 		final WeqCongruenceClosure<NODE> newPartialArrangement = mFactory.getWeqCcManager().join(
 				this.mPartialArrangement, other.mPartialArrangement, false);
 		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement);
@@ -355,22 +303,12 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return true iff this is more or equally constraining than other
 	 */
 	public boolean isStrongerThan(final EqConstraint<NODE> other) {
-//		return mPartialArrangement.isStrongerThan(other.mPartialArrangement);
 		return mFactory.getWeqCcManager().isStrongerThan(mPartialArrangement, other.mPartialArrangement);
 	}
 
-//	public void addNodeInPlace(final NODE nodeToAdd) {
-//		assert !mIsFrozen;
-//		mFactory.getWeqCcManager().addNode(nodeToAdd, mPartialArrangement);
-//	}
+	public void projectAway(final NODE elemToHavoc) {
+		mFactory.getWeqCcManager().projectAway(mPartialArrangement, elemToHavoc);
 
-	public void projectAway(final NODE elemToHavoc, final boolean inplace) {
-		if (inplace) {
-			mFactory.getWeqCcManager().projectAway(mPartialArrangement, elemToHavoc);
-
-		} else {
-//			RemoveCcElement.removeSimpleElement(mPartialArrangement, elemToHavoc);
-		}
 		assert mPartialArrangement.assertSingleElementIsFullyRemoved(elemToHavoc);
 		assert mPartialArrangement.sanityCheck();
 	}
