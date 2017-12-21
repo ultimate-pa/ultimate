@@ -6,7 +6,8 @@ public class WeqSettings {
 //	static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = true;
 	static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = false;
 
-	static final boolean REPORT_EQ_DEQ_INPLACE = false;
+	static final boolean REPORT_EQ_DEQ_INPLACE = true;
+
 	public static final boolean REMOVE_ELEMENT_INPLACE = false;
 	public static final boolean ADD_NODE_INPLACE = false;
 	public static final boolean PROJECTTOELEMENTS_INPLACE = false;

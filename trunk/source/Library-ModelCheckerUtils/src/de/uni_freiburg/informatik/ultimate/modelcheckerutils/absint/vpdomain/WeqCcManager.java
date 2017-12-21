@@ -223,7 +223,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	public CongruenceClosure<NODE> reportEquality(final CongruenceClosure<NODE> origCc, final NODE node1,
+	private CongruenceClosure<NODE> reportEquality(final CongruenceClosure<NODE> origCc, final NODE node1,
 			final NODE node2, final boolean inplace) {
 		final CongruenceClosure<NODE> result = mCcManager.reportEquality(node1, node2, origCc, inplace);
 		assert checkReportEqualityResult(origCc, node1, node2, result);
@@ -231,8 +231,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> reportDisequality(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node1,
-			final NODE node2) {
-		if (WeqSettings.REPORT_EQ_DEQ_INPLACE) {
+			final NODE node2, final boolean inplace) {
+		if (inplace) {
 			origWeqCc.reportDisequality(node1, node2);
 			return origWeqCc;
 		} else {
@@ -897,26 +897,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 				computeWeqConstraintForIndex(Collections.singletonList(storeIndex)));
 	}
 
-//		public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> meetEdgeLabels(
-//			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> oldLabelCopy,
-//			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> labelToStrengthenWith, final boolean inplace) {
-
-
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
 		meetEdgeLabels( final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l1,
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l2, final boolean inplace) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
-	}
-
-	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
-		meetEdgeLabelsNonDestructive(
-			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> oldLabelCopy,
-			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToStrengthenWith) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		return l1.meet(l2, inplace);
 	}
 
 	public void freezeIfNecessary(final CongruenceClosure<NODE> cc) {
@@ -937,11 +921,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return isStrongerThan(label1, label2, this::isStrongerThan);
 	}
 
-//	public boolean isStrongerThan(final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label1,
-//			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label2) {
-//		return isStrongerThan(label1, label2, this::isStrongerThan);
-//	}
-
 	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThan(
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2,
@@ -960,24 +939,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		return true;
 	}
-
-//		public boolean isStrongerThan(final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label1,
-//			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> label2,
-//			final BiPredicate<CongruenceClosure<NODE>, CongruenceClosure<NODE>> lowerOrEqual) {
-//		for (final CongruenceClosure<NODE> label1disjunct : label1.getDisjuncts()) {
-//			boolean existsWeaker = false;
-//			for (final CongruenceClosure<NODE> label2disjunct : label2.getDisjuncts()) {
-//				if (lowerOrEqual.test(label1disjunct, label2disjunct)) {
-//					existsWeaker = true;
-//					break;
-//				}
-//			}
-//			if (!existsWeaker) {
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
 
 	public boolean isStrongerThan(final CongruenceClosure<NODE> paThis, final CongruenceClosure<NODE> paOther) {
 		return mCcManager.isStrongerThan(paThis, paOther);
@@ -1045,9 +1006,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	public WeqCongruenceClosure<NODE> copyWeqCc(final WeqCongruenceClosure<NODE> icc, final boolean modifiable) {
-		// TODO Auto-generated method stub
-		return null;
+	public WeqCongruenceClosure<NODE> copyWeqCc(final WeqCongruenceClosure<NODE> original, final boolean modifiable) {
+		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(original, true);
+		if (!modifiable) {
+			result.freeze();
+		}
+		return result;
 	}
 
 	/**
@@ -1075,12 +1039,4 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return new WeakEquivalenceEdgeLabel<>(original.getWeqGraph(), original);
 	}
 
-//	public Object join(final ICongruenceClosure<NODE> cc1, final ICongruenceClosure<NODE> cc2, final boolean modifiable) {
-//		assert cc1.getClass().equals(cc2.getClass());
-//		if (cc1.getClass().equals(CongruenceClosure.class)) {
-//			return join((CongruenceClosure<NODE>) cc1, (CongruenceClosure<NODE>) cc2, modifiable);
-//		} else {
-//			return join((WeqCongruenceClosure<NODE>) cc1, (WeqCongruenceClosure<NODE>) cc2, modifiable);
-//		}
-//	}
 }

@@ -772,7 +772,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			mDiet = Diet.WEQCCFAT;
 		} else {
 			mWeakEquivalenceGraphCcFat =
-					getWeakEquivalenceGraph().meetEdgeLabelsWithCcGpaBeforeRemove();
+					getWeakEquivalenceGraph().meetEdgeLabelsWithCcGpaBeforeRemove(mManager.copyWeqCc(this, false));
 			mWeakEquivalenceGraphThin = null;
 			mDiet = Diet.CCFAT;
 		}

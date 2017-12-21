@@ -169,7 +169,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				throw new AssertionError("implement this?");
 			}
 		}
-		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 	}
 
 	/**
@@ -191,7 +191,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 		final List<DISJUNCT> newLabelContents = new ArrayList<>(getNumberOfDisjuncts());
 		for (final DISJUNCT lab : getDisjuncts()) {
-			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
+			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved());
 
 			/*
 			 * just removing elem is not enough
@@ -239,11 +239,11 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				setToTrue(mWeqCcManager.getEmptyIcc(lab, false));
 				return Collections.emptySet();
 			}
-			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
+			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved());
 
 			assert lab.assertSingleElementIsFullyRemoved(elemToRemove);
 			assert !lab.isTautological();
-			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
+			assert lab.sanityCheckOnlyCc(mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved());
 			newLabelContents.add(lab);
 		}
 		setNewLabelContents(newLabelContents);
@@ -265,7 +265,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			//			newLabelContents.add(item.projectToElements(allWeqNodes,
 //					mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved()));
 			final DISJUNCT projected = mWeqCcManager.projectToElements(item,
-					allWeqNodes, mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
+					allWeqNodes, mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved());
 			newLabelContents.add(projected);
 		}
 		assert newLabelContents.stream().allMatch(l -> l.sanityCheckOnlyCc());
@@ -302,7 +302,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 							}
 						}
 						this.transformElements(e -> e.renameVariables(substitutionMapping));
-						assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+						assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 	}
 
 	boolean isConstrained(final NODE elem) {
@@ -349,15 +349,15 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		for (final DISJUNCT disjunct : getDisjuncts()) {
 //			final CongruenceClosure<NODE> disjunct = (CongruenceClosure<NODE>) d;
 
-			assert mWeakEquivalenceGraph.mPartialArrangement.sanityCheck();
+			assert mWeakEquivalenceGraph.mWeqCc.sanityCheck();
 			assert disjunct.sanityCheckOnlyCc();
 
 //			final CongruenceClosure<NODE> meetWgpa;
 			final DISJUNCT meetWgpa;
 			if (MEET_WITH_GPA_ON_REPORTCHANGE) {
 				meetWgpa =  mWeqCcManager.meet(disjunct,
-					(DISJUNCT) mWeakEquivalenceGraph.mPartialArrangement.getCongruenceClosure(),
-					mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved(),
+					(DISJUNCT) mWeakEquivalenceGraph.mWeqCc.getCongruenceClosure(),
+					mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved(),
 					false);
 			} else {
 				meetWgpa = disjunct;
@@ -386,7 +386,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				// add the strengthened version as the new label element
 				final DISJUNCT projected = mWeqCcManager.projectToElements(meetWgpa,
 						mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes(),
-						mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved());
+						mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved());
 				newLabel.add(projected);
 			} else {
 				newLabel.add(meetWgpa);
@@ -417,13 +417,13 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	}
 
 	void transformElements(final Function<NODE, NODE> transformer) {
-		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 
 		for (final DISJUNCT l : getDisjuncts()) {
 			l.transformElementsAndFunctions(transformer);
-			assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+			assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 		}
-		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 	}
 
 	/**
@@ -447,7 +447,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 //	}
 
 	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet(final Set<DISJUNCT> paList, final boolean inplace) {
-		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 
 		final Set<DISJUNCT> newLabelContent = new HashSet<>();
 		for (final DISJUNCT lc1 : getDisjuncts()) {
@@ -467,10 +467,10 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 		final Set<DISJUNCT> newLabelProjected = newLabel.stream()
 				.map(l -> mWeqCcManager.projectToElements(l, mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes(),
-						mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved()))
+						mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved()))
 				.collect(Collectors.toSet());
 		assert newLabelProjected.stream().allMatch(l -> l.sanityCheckOnlyCc(
-				mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved()));
+				mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved()));
 
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result =
 				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(mWeakEquivalenceGraph, newLabelProjected);
@@ -576,7 +576,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	}
 
 	boolean sanityCheck() {
-		return sanityCheck(mWeakEquivalenceGraph.mPartialArrangement);
+		return sanityCheck(mWeakEquivalenceGraph.mWeqCc);
 	}
 
 	private boolean sanityCheck(final WeqCongruenceClosure<NODE> groundPartialArrangement) {
@@ -616,7 +616,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			assert ((CongruenceClosure<NODE>) lab).assertHasOnlyWeqVarConstraints(mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes());
 		}
 
-		return sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+		return sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 	}
 
 	/**
@@ -658,7 +658,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				if (weqCcCopy.isInconsistent()) {
 					break;
 				}
-				weqCcCopy = mWeqCcManager.reportDisequality(weqCcCopy, deq.getKey(), deq.getValue());
+				weqCcCopy = mWeqCcManager.reportDisequality(weqCcCopy, deq.getKey(), deq.getValue(), MEET_IN_PLACE);
 			}
 
 			if (weqCcCopy.isTautological()) {
@@ -675,7 +675,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 //		setNewLabelContents(newLabelContents);
 
-		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 		return new WeakEquivalenceEdgeLabel<>(weqFatWeqGraph, newLabelContents);
 
 	}
@@ -699,8 +699,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			}
 //			final CongruenceClosure<NODE> meet = mWeqCcManager.meet((CongruenceClosure<NODE>) disjunct,
 			final DISJUNCT meet = (DISJUNCT) mWeqCcManager.meet((CongruenceClosure<NODE>) disjunct,
-						mWeakEquivalenceGraph.mPartialArrangement.getCongruenceClosure(),
-						mWeakEquivalenceGraph.mPartialArrangement.getElementCurrentlyBeingRemoved(),
+						mWeakEquivalenceGraph.mWeqCc.getCongruenceClosure(),
+						mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved(),
 						false);
 
 			if (meet.isInconsistent()) {
@@ -722,7 +722,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 		setNewLabelContents(newLabelContents);
 
-		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mPartialArrangement);
+		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 	}
 
 	private void setNewLabelContents(final Collection<DISJUNCT> newLabelContents) {
