@@ -91,7 +91,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mNodeAndFunctionFactory = nodeAndFunctionFactory;
 	}
 
-	public WeqCongruenceClosure<NODE> getTautologicalWeqCc(final boolean modifiable) {
+	public WeqCongruenceClosure<NODE> getEmptyWeqCc(final boolean modifiable) {
 		if (modifiable) {
 			return new WeqCongruenceClosure<>(this);
 		} else {
@@ -189,10 +189,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager.getCcComparator();
 	}
 
-	public <DISJUNCT extends ICongruenceClosure<NODE>> IPartialComparator<CongruenceClosure<NODE>> getICcComparator(
+	public <DISJUNCT extends ICongruenceClosure<NODE>> IPartialComparator<DISJUNCT> getICcComparator(
 			final DISJUNCT emptyDisjunct) {
 		if (emptyDisjunct instanceof CongruenceClosure<?>) {
-			return getCcComparator();
+			return (IPartialComparator<DISJUNCT>) getCcComparator();
 		} else {
 			throw new AssertionError();
 		}
@@ -399,7 +399,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return weqcc1;
 		}
 		if (weqcc1.isTautological() || weqcc2.isTautological()) {
-			return getTautologicalWeqCc(true);
+			return getEmptyWeqCc(true);
 		}
 
 		final WeqCongruenceClosure<NODE> result = weqcc1.join(weqcc2);
@@ -458,7 +458,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return (DISJUNCT) getEmptyCc(modifiable);
 		} else {
 			assert lab instanceof WeqCongruenceClosure<?>;
-			return (DISJUNCT) getTautologicalWeqCc(modifiable);
+			return (DISJUNCT) getEmptyWeqCc(modifiable);
 		}
 	}
 
@@ -1000,6 +1000,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
+	/**
+	 *
+	 * note: the resulting Weq graph has null as its WeqCc, it will be set to the correct WeqCc by copying it, later.
+	 *
+	 * @param weakEquivalenceGraph
+	 * @param weakEquivalenceGraph2
+	 * @param modifiable
+	 * @return
+	 */
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceGraph<NODE, DISJUNCT> join(
 			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
 			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph2,
@@ -1048,6 +1057,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public CongruenceClosure<NODE> copyCc(final CongruenceClosure<NODE> icc, final boolean modifiable) {
 		return mCcManager.getCopy(icc, modifiable);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
+			copy(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original) {
+		return new WeakEquivalenceEdgeLabel<>(original.getWeqGraph(), original);
 	}
 
 //	public Object join(final ICongruenceClosure<NODE> cc1, final ICongruenceClosure<NODE> cc2, final boolean modifiable) {

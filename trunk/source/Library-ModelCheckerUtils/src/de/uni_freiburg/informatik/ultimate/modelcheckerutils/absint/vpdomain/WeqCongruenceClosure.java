@@ -67,7 +67,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	private WeqCcManager<NODE> mManager;
 
-	private Diet mDiet;
+	Diet mDiet;
 
 	/**
 	 * Create an empty ("True"/unconstrained) WeqCC.
