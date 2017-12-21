@@ -466,16 +466,16 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager.getEmptyCc(modifiable);
 	}
 
-	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> getSingletonEdgeLabel(
-			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weakEquivalenceGraph,
-			final CongruenceClosure<NODE> newConstraint) {
-		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(newConstraint));
-	}
+//	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> getSingletonEdgeLabel(
+//			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weakEquivalenceGraph,
+//			final CongruenceClosure<NODE> newConstraint) {
+//		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(newConstraint));
+//	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> getSingletonEdgeLabel(
 			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
-			final Set<DISJUNCT> constraints) {
-		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, constraints);
+			final DISJUNCT disjunct) {
+		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(disjunct));
 	}
 
 	public CongruenceClosure<NODE> addNode(final NODE storeIndex, final CongruenceClosure<NODE> congruenceClosure,
@@ -756,6 +756,24 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return result;
 	}
 
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT getSingleEqualityCc(final NODE node1, final NODE node2,
+			final boolean modifiable, final DISJUNCT dummyDisjunct) {
+		if (dummyDisjunct instanceof CongruenceClosure<?>)  {
+			return (DISJUNCT) mCcManager.getSingleEqualityCc(node1, node2, modifiable);
+		} else {
+			throw new AssertionError();
+		}
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT getSingleDisequalityCc(final NODE node1,
+			final NODE node2, final boolean modifiable, final DISJUNCT dummyDisjunct) {
+		if (dummyDisjunct instanceof CongruenceClosure<?>)  {
+			return (DISJUNCT) mCcManager.getSingleDisequalityCc(node1, node2, modifiable);
+		} else {
+			throw new AssertionError();
+		}
+	}
+
 	public CongruenceClosure<NODE> getSingleEqualityCc(final NODE node1, final NODE node2, final boolean modifiable) {
 		return mCcManager.getSingleEqualityCc(node1, node2, modifiable);
 	}
@@ -868,9 +886,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 				computeWeqConstraintForIndex(Collections.singletonList(storeIndex)));
 	}
 
-	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> meetEdgeLabels(
-			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> oldLabelCopy,
-			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> labelToStrengthenWith, final boolean inplace) {
+//		public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> meetEdgeLabels(
+//			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> oldLabelCopy,
+//			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> labelToStrengthenWith, final boolean inplace) {
+
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
+		meetEdgeLabels( final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l1,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l2, final boolean inplace) {
 		// TODO Auto-generated method stub
 		assert false;
 		return null;

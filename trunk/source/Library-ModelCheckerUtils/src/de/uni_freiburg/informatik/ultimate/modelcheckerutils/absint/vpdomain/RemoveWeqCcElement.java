@@ -26,7 +26,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 	private final Set<NODE> mAddedNodes;
 	private boolean mDidRemoval = false;
-	private WeqCongruenceClosure<NODE> mElementContainer;
+	private WeqCongruenceClosure<NODE> mWeqCc;
 
 	public RemoveWeqCcElement(final WeqCongruenceClosure<NODE> elementContainer, final NODE elem,
 			final boolean introduceNewNodes, final boolean useWeqGpa) {
@@ -51,7 +51,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 			return;
 		}
 
-		mElementContainer = elementContainer;
+		mWeqCc = elementContainer;
 		mElem = elem;
 		mIntroduceNewNodes = introduceNewNodes;
 		mUseWeqGpa = useWeqGpa;
@@ -73,7 +73,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 	public void doRemoval() {
 		assert !mDidRemoval;
-		final Set<NODE> elementsToRemove = mElementContainer.collectElementsToRemove(mElem);
+		final Set<NODE> elementsToRemove = mWeqCc.collectElementsToRemove(mElem);
 		mElementsToRemove = Collections.unmodifiableSet(elementsToRemove);
 
 		assert elementsToRemove.stream().allMatch(e -> CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
@@ -97,7 +97,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		for (final NODE elemToRemove : elementsToRemove) {
 			final NODE otherEqClassMember =
-					mElementContainer.getOtherEquivalenceClassMember(elemToRemove, elementsToRemove);
+					mWeqCc.getOtherEquivalenceClassMember(elemToRemove, elementsToRemove);
 			if (otherEqClassMember == null) {
 				continue;
 			}
@@ -105,67 +105,68 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		}
 		assert DataStructureUtils.intersection(new HashSet<>(nodeToReplacementNode.values()), elementsToRemove)
 			.isEmpty();
-		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mElementContainer);
+		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mWeqCc);
 
-		assert !mElementContainer.isInconsistent();
+		assert !mWeqCc.isInconsistent();
 
 
 		boolean becameInconsistentWhenAddingANode = false;
 		becameInconsistentWhenAddingANode = addNodesToKeepInformation(elementsToRemove, nodeToReplacementNode);
 		if (becameInconsistentWhenAddingANode) {
-			assert mElementContainer.isInconsistent();
+			assert mWeqCc.isInconsistent();
 			mDidRemoval = true;
 			return;
 		}
 
-		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mElementContainer);
-		assert !mElementContainer.isInconsistent();
+		assert nodeAndReplacementAreEquivalent(nodeToReplacementNode, mWeqCc);
+		assert !mWeqCc.isInconsistent();
 
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
-			mElementContainer.applyClosureOperations();
+			mWeqCc.extAndTriangleClosure();
 		}
 
-		assert !mElementContainer.isInconsistent();
-		if (mElementContainer.isInconsistent()) {
+		assert !mWeqCc.isInconsistent();
+		if (mWeqCc.isInconsistent()) {
 			return;
 		}
 
 		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
-		mElementContainer.meetLabelsWithGroundPart(mUseWeqGpa);
+		mWeqCc.fatten(mUseWeqGpa);
 
-		final Set<NODE> nodesAddedInLabels = mElementContainer.removeElementAndDependents(mElem, elementsToRemove,
+		final Set<NODE> nodesAddedInLabels = mWeqCc.removeElementAndDependents(mElem, elementsToRemove,
 					nodeToReplacementNode, mUseWeqGpa);
 
+		mWeqCc.thin();
 
 		// the edge labels may have added nodes when projecting something --> add them to the gpa
 		for (final NODE nail : nodesAddedInLabels) {
-			mElementContainer.addElementRec(nail);
+			mWeqCc.addElementRec(nail);
 
-			if (mElementContainer.isInconsistent()) {
+			if (mWeqCc.isInconsistent()) {
 				// Cc became inconsistent through adding proxyElem --> nothing more to do
-				if (mElementContainer.isDebugMode()) {
-					mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
+				if (mWeqCc.isDebugMode()) {
+					mWeqCc.getLogger().debug("RemoveElement: " + mWeqCc.hashCode() +
 							" became inconsistent when adding" + nail);
 				}
 				mDidRemoval = true;
 				return;
 			}
 		}
-		assert mElementContainer.sanityCheck();
-		mElementContainer.applyClosureOperations();
+		assert mWeqCc.sanityCheck();
+		mWeqCc.extAndTriangleClosure();
 
-		if (mElementContainer.isDebugMode() && mElementContainer.isInconsistent()) {
-			mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
+		if (mWeqCc.isDebugMode() && mWeqCc.isInconsistent()) {
+			mWeqCc.getLogger().debug("RemoveElement: " + mWeqCc.hashCode() +
 					" became inconsistent during closure operation");
 		}
 
 
 
 		mDidRemoval = true;
-		assert mElementContainer.sanityCheck();
+		assert mWeqCc.sanityCheck();
 
-		if (mElementContainer.isDebugMode()) {
-			mElementContainer.getLogger().debug("RemoveElement " + hashCode() + " finished normally");
+		if (mWeqCc.isDebugMode()) {
+			mWeqCc.getLogger().debug("RemoveElement " + hashCode() + " finished normally");
 		}
 	}
 
@@ -190,9 +191,9 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 			final Set<NODE> nodesToAdd = new HashSet<>();
 
 			for (final NODE elemToRemove : elementsToRemove) {
-				if (elemToRemove.isFunctionApplication() && mElementContainer.isConstrained(elemToRemove)) {
+				if (elemToRemove.isFunctionApplication() && mWeqCc.isConstrained(elemToRemove)) {
 					// we don't have a replacement, but we want one, try if we can get one
-					final Set<NODE> nodes = mElementContainer.getNodesToIntroduceBeforeRemoval(elemToRemove,
+					final Set<NODE> nodes = mWeqCc.getNodesToIntroduceBeforeRemoval(elemToRemove,
 							elementsToRemove, nodeToReplacementNode);
 
 					nodesToAdd.addAll(nodes);
@@ -200,36 +201,36 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 			}
 
 			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
-			assert nodesToAdd.stream().allMatch(n -> !mElementContainer.hasElement(n));
-			assert mElementContainer.sanityCheck();
+			assert nodesToAdd.stream().allMatch(n -> !mWeqCc.hasElement(n));
+			assert mWeqCc.sanityCheck();
 
 			if (nodesToAdd.isEmpty()) {
 				break;
 			}
 
-			if (mElementContainer.isDebugMode()) {
-				mElementContainer.getLogger().debug("RemoveElement: adding nodes " + nodesToAdd);
+			if (mWeqCc.isDebugMode()) {
+				mWeqCc.getLogger().debug("RemoveElement: adding nodes " + nodesToAdd);
 			}
 
 			// add proxy elements
 			for (final NODE proxyElem : nodesToAdd) {
-				if (mElementContainer.isDebugMode()) {
-					mElementContainer.getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
-							mElementContainer.hashCode() + " because it was added in weq graph label");
+				if (mWeqCc.isDebugMode()) {
+					mWeqCc.getLogger().debug("RemoveElement: adding element " + proxyElem + " to " +
+							mWeqCc.hashCode() + " because it was added in weq graph label");
 				}
 
-				mElementContainer.addElementRec(proxyElem);
+				mWeqCc.addElementRec(proxyElem);
 
-				if (mElementContainer.isInconsistent()) {
+				if (mWeqCc.isInconsistent()) {
 					// Cc became inconsistent through adding proxyElem --> nothing more to do
-					if (mElementContainer.isDebugMode()) {
-						mElementContainer.getLogger().debug("RemoveElement: " + mElementContainer.hashCode() +
+					if (mWeqCc.isDebugMode()) {
+						mWeqCc.getLogger().debug("RemoveElement: " + mWeqCc.hashCode() +
 								" became inconsistent when adding" + proxyElem);
 					}
 					return true;
 				}
 
-				assert mElementContainer.sanityCheck();
+				assert mWeqCc.sanityCheck();
 			}
 
 			if (mIntroduceNewNodes && !mUseWeqGpa) {
