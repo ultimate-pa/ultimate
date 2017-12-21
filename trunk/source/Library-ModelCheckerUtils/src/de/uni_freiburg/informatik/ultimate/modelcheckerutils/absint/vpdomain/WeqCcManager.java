@@ -461,7 +461,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public boolean isStrongerThan(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2) {
-		return weqcc1.isStrongerThan(weqcc2);
+		final WeqCongruenceClosure<NODE> weqcc1Copy = copyWeqCc(weqcc1, true);
+		final WeqCongruenceClosure<NODE> weqcc2Copy = copyWeqCc(weqcc2, true);;
+
+		freezeIfNecessary(weqcc1Copy);
+		freezeIfNecessary(weqcc2Copy);
+
+		return weqcc1Copy.isStrongerThan(weqcc2Copy);
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT getEmptyIcc(final DISJUNCT lab, final boolean modifiable) {
@@ -476,12 +482,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public CongruenceClosure<NODE> getEmptyCc(final boolean modifiable) {
 		return mCcManager.getEmptyCc(modifiable);
 	}
-
-//	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> getSingletonEdgeLabel(
-//			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weakEquivalenceGraph,
-//			final CongruenceClosure<NODE> newConstraint) {
-//		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(newConstraint));
-//	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> getSingletonEdgeLabel(
 			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,

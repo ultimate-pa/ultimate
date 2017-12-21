@@ -317,7 +317,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			return unfrozen;
 		} else {
 			final WeqCongruenceClosure<NODE> newWeqCc = mWeqCcManager.reportDisequality(originalState.getWeqCc(),
-					node1, node2);
+					node1, node2, false);
 			return getEqConstraint(newWeqCc);
 		}
 	}
