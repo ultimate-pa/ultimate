@@ -61,21 +61,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mEmptyFrozenCc.freeze();
 	}
 
-//	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
-//		final CongruenceClosure<ELEM> result = meet(cc1, cc2, null, false);
-//		if (CcSettings.FREEZE_ALL_IN_MANAGER) {
-//			if (!result.isFrozen()) {
-//				result.freeze();
-//			}
-//		}
-//		return result;
-//	}
-//
-//	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
-//			final RemoveCcElement<ELEM> remInfo) {
-//		return meet(cc1, cc2, remInfo, false);
-//	}
-
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
 			final boolean inplace) {
 		return meet(cc1, cc2, null, inplace);
@@ -424,7 +409,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		for (final ELEM elem : elemsToAdd) {
-//			result.addElementRec(elem, remInfo);
 			addElement(result, elem, true, true);
 		}
 

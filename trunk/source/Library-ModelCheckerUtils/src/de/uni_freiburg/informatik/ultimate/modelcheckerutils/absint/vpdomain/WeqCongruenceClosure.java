@@ -742,7 +742,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (mCongruenceClosure == null) {
 			return false;
 		}
-		// TODO: literal disequalities don't prevent being tautological --> do we account for that?!?
 		return mCongruenceClosure.isTautological() && getWeakEquivalenceGraph().isEmpty();
 	}
 
@@ -758,16 +757,25 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return true;
 	}
 
+	/**
+	 * "Fatten" all weq edge labels by conjoining the ground truth we know (equalities and disequalities) with them.
+	 * Fattening with the whole ground truth (equalities, disequalities, and weak equivalences) is possible, too, but
+	 *  expensive and not implemented in a generic way, so it can only be used for a more precise projectAway operation.
+	 *
+	 * @param useWeqGpa
+	 */
 	public void fatten(final boolean useWeqGpa) {
 		if (useWeqGpa) {
-//			mWeakEquivalenceGraph.meetEdgeLabelsWithWeqGpaBeforeRemove(mManager.getFrozenCopy(this));
 			mWeakEquivalenceGraphWeqCcFat =
 					getWeakEquivalenceGraph().meetEdgeLabelsWithWeqGpaBeforeRemove(mManager.copyWeqCc(this, false));
+			mWeakEquivalenceGraphThin = null;
+			mDiet = Diet.WEQCCFAT;
 		} else {
 			mWeakEquivalenceGraphCcFat =
 					getWeakEquivalenceGraph().meetEdgeLabelsWithCcGpaBeforeRemove();
+			mWeakEquivalenceGraphThin = null;
+			mDiet = Diet.CCFAT;
 		}
-//		mCongruenceClosure.prepareForRemove(useWeqGpa);
 	}
 
 	public void extAndTriangleClosure() {
@@ -1401,6 +1409,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	public void thin() {
+		assert mDiet != Diet.THIN;
 		assert assertDietSanity();
 		if (mWeakEquivalenceGraphWeqCcFat != null) {
 			mWeakEquivalenceGraphThin = mWeakEquivalenceGraphWeqCcFat.thinLabels(this);

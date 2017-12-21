@@ -152,16 +152,21 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> filterRedundantICcs(
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label) {
-		// TODO
-		assert false;
-		return null;
+		return new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), filterRedundantICcs(label.getDisjuncts()));
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> Set<DISJUNCT> filterRedundantICcs(final Set<DISJUNCT> ccs,
 			final PartialOrderCache<DISJUNCT> ccPoCache) {
-		// TODO
-		assert false;
-		return null;
+		if (ccs.isEmpty()) {
+			return ccs;
+		}
+		final DISJUNCT sample = ccs.iterator().next();
+		if (sample instanceof CongruenceClosure<?>) {
+			return (Set<DISJUNCT>) filterRedundantCcs((Set<CongruenceClosure<NODE>>) ccs,
+					(PartialOrderCache<CongruenceClosure<NODE>>) ccPoCache);
+		} else {
+			throw new AssertionError();
+		}
 	}
 
 	public WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> filterRedundantCcs(
@@ -171,9 +176,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> Set<DISJUNCT> filterRedundantICcs(final Set<DISJUNCT> ccs) {
-		// TODO
-		assert false;
-		return null;
+		if (ccs.isEmpty()) {
+			return ccs;
+		}
+		final DISJUNCT sample = ccs.iterator().next();
+		if (sample instanceof CongruenceClosure<?>) {
+			return (Set<DISJUNCT>) filterRedundantCcs((WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>) ccs);
+		} else {
+			throw new AssertionError();
+		}
 	}
 
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs) {

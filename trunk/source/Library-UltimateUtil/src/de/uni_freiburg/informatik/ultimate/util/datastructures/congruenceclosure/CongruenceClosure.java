@@ -798,72 +798,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mManager.isStrongerThan(this, other);
 	}
 
-//	/**
-//	 * We check for each equivalence representative in "other" if its equivalence
-//	 * class is a subset of the equivalence class of the representative in "this".
-//	 *
-//	 * (going through the representatives in "this" would be unsound because we
-//	 * might not see all relevant equivalence classes in "other")
-//	 *
-//	 * assumes that this and other have the same elements and functions
-//	 *
-//	 * Induces a non-strict (antisymmetric) partial ordering of the CongruenceClosure instances.
-//	 */
-//	private boolean checkIsStrongerThan(final CongruenceClosure<ELEM> thisAligned,
-//			final CongruenceClosure<ELEM> otherAligned) {
-//		assert !thisAligned.isInconsistent() && !otherAligned.isInconsistent();
-//
-//		assert assertElementsAreSuperset(thisAligned, otherAligned);
-//		assert assertElementsAreSuperset(otherAligned, thisAligned);
-//
-//		if (!isPartitionStronger(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
-//			return false;
-//		}
-//
-//		/*
-//		 * We check if each disequality that holds in "other" also holds in "this".
-//		 */
-//		if (!areDisequalitiesStrongerThan(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
-//			return false;
-//		}
-//		return true;
-//	}
-
-//	public boolean isEquivalent(final CongruenceClosure<ELEM> other) {
-//		if (this.isInconsistent() && other.isInconsistent()) {
-//			return true;
-//		}
-//		if (this.isTautological() && other.isTautological()) {
-//			return true;
-//		}
-//		if (other.isInconsistent() || this.isInconsistent()) {
-//			return false;
-//		}
-//		if (other.isTautological() || this.isTautological()) {
-//			return false;
-//		}
-//
-//		final CongruenceClosure<ELEM> thisAligned =
-//				mManager.addAllElements(this, other.getAllElements(), null, false);
-//		final CongruenceClosure<ELEM> otherAligned =
-//				mManager.addAllElements(other, this.getAllElements(), null, false);
-//		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
-//	}
-
-//	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,
-//			final ThreeValuedEquivalenceRelation<E> otherTVER) {
-//		for (final E rep : otherTVER.getAllRepresentatives()) {
-//			for (final E disequalRep : otherTVER.getRepresentativesUnequalTo(rep)) {
-//				if (thisTVER.getEqualityStatus(rep, disequalRep) != EqualityStatus.NOT_EQUAL) {
-//					return false;
-//				}
-//			}
-//		}
-//		return true;
-//	}
-
-
-
 	public EqualityStatus getEqualityStatus(final ELEM elem1, final ELEM elem2) {
 		assert hasElement(elem1) && hasElement(elem2);
 
@@ -1629,6 +1563,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mElementTVER.isInconsistent();
 	}
 
+	/**
+	 * only used for technical reasons, to make mElementTVER inconsistent, don't use for anything else!
+	 *
+	 * @param node1
+	 * @param node2
+	 */
 	public void reportDisequalityToElementTver(final ELEM node1, final ELEM node2) {
 		mElementTVER.reportDisequality(node1, node2);
 
