@@ -289,6 +289,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	private boolean reportWeakEquivalenceDoOnlyRoweqPropagations(final NODE array1, final NODE array2,
 			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel) {
+		assert !isFrozen();
 		assert edgeLabel.assertIsSlim();
 
 		if (isInconsistent()) {
@@ -415,6 +416,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @return
 	 */
 	private boolean reportEqualityRec(final NODE node1, final NODE node2) {
+		assert !isFrozen();
 		assert node1.hasSameTypeAs(node2);
 		if (isInconsistent()) {
 			throw new IllegalStateException();
@@ -1076,6 +1078,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	WeqCongruenceClosure<NODE> meet(final WeqCongruenceClosure<NODE> other, final boolean inplace) {
+		assert inplace != isFrozen();
 
 		final WeqCongruenceClosure<NODE> result = meetRec(other, inplace);
 
@@ -1083,12 +1086,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			result.executeFloydWarshallAndReportResultToWeqCc();
 		}
 		if (result.isInconsistent() && !inplace) {
-			return mManager.getInconsistentWeqCc();
+			return mManager.getInconsistentWeqCc(false);
 		}
 		result.reportAllArrayEqualitiesFromWeqGraph();
 
 		if (result.isInconsistent() && !inplace) {
-			return mManager.getInconsistentWeqCc();
+			return mManager.getInconsistentWeqCc(false);
 		}
 
 		assert result.sanityCheck();
@@ -1099,7 +1102,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		final WeqCongruenceClosure<NODE> gPaMeet = meetWeqWithCc(other, inplace);
 		assert gPaMeet.sanityCheck();
 		if (gPaMeet.isInconsistent() && !inplace) {
-			return mManager.getInconsistentWeqCc();
+			return mManager.getInconsistentWeqCc(false);
 		}
 		assert gPaMeet.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
 		assert !this.getWeakEquivalenceGraph().hasArrayEqualities();
@@ -1110,13 +1113,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 
 	public WeqCongruenceClosure<NODE> meetRec(final WeqCongruenceClosure<NODE> other, final boolean inplace) {
+		assert inplace != isFrozen();
 
-		final WeqCongruenceClosure<NODE> gPaMeet = meetWeqWithCc(other.mCongruenceClosure, inplace);
-		assert gPaMeet.sanityCheck();
-		if (gPaMeet.isInconsistent() && !inplace) {
-			return mManager.getInconsistentWeqCc();
+		final WeqCongruenceClosure<NODE> thisUnfrozenIfNec = inplace ? this : mManager.unfreeze(this);
+
+		final WeqCongruenceClosure<NODE> result = thisUnfrozenIfNec.meetWeqWithCc(other.mCongruenceClosure, true);
+
+		assert result.sanityCheck();
+		if (result.isInconsistent() && !inplace) {
+			return mManager.getInconsistentWeqCc(false);
 		}
-		assert gPaMeet.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
+		assert result.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
 		assert !this.getWeakEquivalenceGraph().hasArrayEqualities();
 
 
@@ -1124,8 +1131,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
 		 */
 
-		final WeqCongruenceClosure<NODE> newWeqCc = gPaMeet;
-		assert newWeqCc.sanityCheck();
+		assert result.sanityCheck();
 
 		final WeqCongruenceClosure<NODE> otherWeqCc = other;
 		assert otherWeqCc.getWeakEquivalenceGraph().sanityCheck();
@@ -1137,33 +1143,40 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 //			assert gPaMeet.getAllElements().containsAll(edge.getValue().getAppearingNodes());
 
-			newWeqCc.reportWeakEquivalenceDoOnlyRoweqPropagations(edge.getKey().getOneElement(),
+			result.reportWeakEquivalenceDoOnlyRoweqPropagations(edge.getKey().getOneElement(),
 					edge.getKey().getOtherElement(),
 					edge.getValue());
-			assert newWeqCc.sanityCheck();
+			assert result.sanityCheck();
 		}
 
-		assert inplace != newWeqCc.isFrozen();
-		return newWeqCc;
+		if (!inplace) {
+			result.freeze();
+		}
+
+		assert inplace != result.isFrozen();
+		return result;
 	}
 
 	private WeqCongruenceClosure<NODE> meetWeqWithCc(final CongruenceClosure<NODE> other, final boolean inplace) {
 		assert !this.isInconsistent() && !other.isInconsistent();
+		assert inplace != isFrozen();
 
-		final WeqCongruenceClosure<NODE> thisAligned = mManager.addAllElements(this, other.getAllElements(), null,
+		WeqCongruenceClosure<NODE> thisAligned = mManager.addAllElements(this, other.getAllElements(), null,
 				inplace);
 
 		for (final Entry<NODE, NODE> eq : other.getSupportingElementEqualities().entrySet()) {
 			if (thisAligned.isInconsistent()) {
-				return mManager.getInconsistentWeqCc();
+				return mManager.getInconsistentWeqCc(inplace);
 			}
-			thisAligned.reportEqualityRec(eq.getKey(), eq.getValue());
+//			thisAligned.reportEqualityRec(eq.getKey(), eq.getValue());
+			thisAligned = mManager.reportEquality(thisAligned, eq.getKey(), eq.getValue(), inplace);
 		}
 		for (final Entry<NODE, NODE> deq : other.getElementDisequalities()) {
 			if (thisAligned.isInconsistent()) {
-				return mManager.getInconsistentWeqCc();
+				return mManager.getInconsistentWeqCc(inplace);
 			}
-			thisAligned.reportDisequalityRec(deq.getKey(), deq.getValue());
+//			thisAligned.reportDisequalityRec(deq.getKey(), deq.getValue());
+			thisAligned = mManager.reportDisequality(thisAligned, deq.getKey(), deq.getValue(), inplace);
 		}
 		assert thisAligned.sanityCheck();
 		return thisAligned;

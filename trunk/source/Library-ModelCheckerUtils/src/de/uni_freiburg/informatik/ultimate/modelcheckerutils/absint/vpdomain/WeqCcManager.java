@@ -99,8 +99,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	public WeqCongruenceClosure<NODE> getInconsistentWeqCc() {
-		return mInconsistentWeqCc;
+	public WeqCongruenceClosure<NODE> getInconsistentWeqCc(final boolean modifiable) {
+		if (modifiable) {
+			return new WeqCongruenceClosure<>(true);
+		} else {
+			return mInconsistentWeqCc;
+		}
 	}
 
 	WeqCongruenceClosure<NODE> getWeqMeet(final WeqCongruenceClosure<NODE> weqcc, final CongruenceClosure<NODE> cc,
@@ -151,7 +155,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
 		assert origWeqCc.isFrozen();
-		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
+//		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
+		final WeqCongruenceClosure<NODE> result = copyWeqCc(origWeqCc, true);
 		assert !result.isFrozen();
 		assert result.sanityCheck();
 		assert !result.getCongruenceClosure().isFrozen();
@@ -348,9 +353,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			return weqcc1;
 		} else {
+			freezeIfNecessary(weqcc1);
+			final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2, false);
 
-			final WeqCongruenceClosure<NODE> result = weqcc1.meet(weqcc2, true);
-			result.freeze();
+			freezeIfNecessary(result);
 
 			assert checkMeetResult(weqcc1, weqcc2, result);
 			return result;

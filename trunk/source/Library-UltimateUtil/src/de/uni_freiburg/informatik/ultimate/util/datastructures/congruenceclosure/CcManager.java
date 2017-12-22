@@ -274,6 +274,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public CongruenceClosure<ELEM> addElement(final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem,
 			final boolean inplace, final boolean omitSanityCheck) {
+		assert inplace != congruenceClosure.isFrozen();
 		if (inplace) {
 			congruenceClosure.addElement(elem, omitSanityCheck);
 			return congruenceClosure;
