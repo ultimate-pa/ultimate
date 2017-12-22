@@ -338,7 +338,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	private EqConstraint<NODE> renameVariables(final EqConstraint<NODE> oldConstraint,
 			final Map<Term, Term> substitutionMapping) {
 		final WeqCongruenceClosure<NODE> newWeqCc = mWeqCcManager.renameVariables(oldConstraint.getWeqCc(),
-				substitutionMapping);
+				substitutionMapping, false);
 		return getEqConstraint(newWeqCc);
 	}
 

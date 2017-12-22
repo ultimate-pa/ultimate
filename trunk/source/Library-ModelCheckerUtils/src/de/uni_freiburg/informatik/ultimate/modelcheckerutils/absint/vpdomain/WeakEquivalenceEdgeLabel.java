@@ -88,6 +88,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 //			assert l.isFrozen();
 			mDisjuncts.add(mWeqCcManager.copyICc(l, true));
 		}
+		assert mDisjuncts.stream().allMatch(cc -> mWeakEquivalenceGraph.isFrozen() == cc.isFrozen());
 		assert sanityCheck();
 	}
 
@@ -110,6 +111,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			//case mLabel = "[False]" -- filterRedundantCcs leaves this case so we have to clean up manually to "[]"
 			mDisjuncts.clear();
 		}
+		assert mDisjuncts.stream().allMatch(cc -> mWeakEquivalenceGraph.isFrozen() == cc.isFrozen());
 		assert sanityCheck();
 	}
 
@@ -122,7 +124,12 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		mWeakEquivalenceGraph = weakEquivalenceGraph;
 		mWeqCcManager = weakEquivalenceGraph.getWeqCcManager();
 		mDisjuncts = new HashSet<>();
-		mDisjuncts.add(emptyDisjunct);
+		if (weakEquivalenceGraph.isFrozen()) {
+			mWeqCcManager.freezeIfNecessary(emptyDisjunct);
+			mDisjuncts.add(emptyDisjunct);
+		} else {
+			mDisjuncts.add(mWeqCcManager.unfreezeIfNecessary(emptyDisjunct));
+		}
 		assert sanityCheck();
 	}
 
@@ -730,7 +737,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	}
 
 	private void setNewLabelContents(final Collection<DISJUNCT> newLabelContents) {
-		assert MEET_IN_PLACE || newLabelContents.stream().allMatch(cc -> cc.isFrozen());
+//		assert MEET_IN_PLACE ||
+		assert newLabelContents.stream().allMatch(cc -> mWeakEquivalenceGraph.isFrozen() == cc.isFrozen());
 		mDisjuncts.clear();
 		mDisjuncts.addAll(newLabelContents);
 	}
@@ -829,11 +837,14 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			final CongruenceClosure<NODE> unprimed =
 					mWeqCcManager.renameVariablesCc(cc, mWeqCcManager.getWeqPrimedVarsToWeqVars(), true);
 			// drop constraints that do not constrain a weq variable
-			final CongruenceClosure<NODE> thinned =
+			final CongruenceClosure<NODE> projectedFrozen =
 					mWeqCcManager.projectToElements(unprimed, mWeqCcManager.getAllWeqNodes(), null);
 
+			// projectToElements freezes -- we want to avoid that
+			final CongruenceClosure<NODE> thinned = mWeqCcManager.unfreeze(projectedFrozen);
+
 			if (thinned.isTautological()) {
-				return new WeakEquivalenceEdgeLabel<>(newWeqGraph, mWeqCcManager.getEmptyCc(false));
+				return new WeakEquivalenceEdgeLabel<>(newWeqGraph, mWeqCcManager.getEmptyCc(true));
 			}
 			if (thinned.isInconsistent()) {
 				// drop inconsistent disjunct

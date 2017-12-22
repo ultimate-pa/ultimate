@@ -872,14 +872,16 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param nodes
 	 * @return
 	 */
-	CongruenceClosure<NODE> computeWeqConstraintForIndex(final List<NODE> nodes) {
+	CongruenceClosure<NODE> computeWeqConstraintForIndex(final List<NODE> nodes, final boolean modifiable) {
 		final CongruenceClosure<NODE> result = getEmptyCc(true);
 		for (int i = 0; i < nodes.size(); i++) {
 			final NODE ithNode = nodes.get(i);
 			final NODE weqVarNode = getWeqVariableNodeForDimension(i, ithNode.getTerm().getSort());
 			reportEquality(result, weqVarNode, ithNode, true);
 		}
-		result.freeze();
+		if (!modifiable) {
+			result.freeze();
+		}
 		return result;
 	}
 
@@ -894,7 +896,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weakEquivalenceGraph,
 			final NODE storeIndex) {
 		return getSingletonEdgeLabel(weakEquivalenceGraph,
-				computeWeqConstraintForIndex(Collections.singletonList(storeIndex)));
+				computeWeqConstraintForIndex(Collections.singletonList(storeIndex), !weakEquivalenceGraph.isFrozen()));
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
@@ -1037,6 +1039,22 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
 			copy(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original) {
 		return new WeakEquivalenceEdgeLabel<>(original.getWeqGraph(), original);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> void freezeIfNecessary(final DISJUNCT disjunct) {
+		if (disjunct instanceof CongruenceClosure<?>) {
+			freezeIfNecessary((CongruenceClosure<NODE>) disjunct);
+		} else {
+			throw new AssertionError("implement");
+		}
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT unfreezeIfNecessary(final DISJUNCT disjunct) {
+		if (disjunct instanceof CongruenceClosure<?>) {
+			return (DISJUNCT) mCcManager.unfreezeIfNecessary((CongruenceClosure<NODE>) disjunct);
+		} else {
+			throw new AssertionError("implement");
+		}
 	}
 
 }
