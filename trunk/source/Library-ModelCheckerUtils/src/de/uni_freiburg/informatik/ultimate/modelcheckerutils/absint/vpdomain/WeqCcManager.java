@@ -139,6 +139,16 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
+	<DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT unfreeze(final DISJUNCT orig) {
+		if (orig instanceof CongruenceClosure<?>) {
+			return (DISJUNCT) mCcManager.unfreeze((CongruenceClosure<NODE>) orig);
+		} else {
+			return (DISJUNCT) unfreeze((WeqCongruenceClosure<NODE>) orig);
+
+		}
+	}
+
+
 	WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
 		assert origWeqCc.isFrozen();
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
@@ -422,12 +432,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public CongruenceClosure<NODE> renameVariablesCc(final CongruenceClosure<NODE> weqCc,
-			final Map<Term, Term> substitutionMapping) {
-		return mCcManager.transformElements(weqCc, e -> e.renameVariables(substitutionMapping));
+			final Map<Term, Term> substitutionMapping, final boolean inplace) {
+		return mCcManager.transformElements(weqCc, e -> e.renameVariables(substitutionMapping), inplace);
 	}
 
 	public WeqCongruenceClosure<NODE> renameVariables(final WeqCongruenceClosure<NODE> weqCc,
-			final Map<Term, Term> substitutionMapping) {
+			final Map<Term, Term> substitutionMapping, final boolean inplace) {
 		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(weqCc);
 		unfrozen.transformElementsAndFunctions(e -> e.renameVariables(substitutionMapping));
 		unfrozen.freeze();
@@ -436,11 +446,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT renameVariablesICc(final DISJUNCT labelCopy,
-			final Map<Term, Term> substitutionMapping) {
+			final Map<Term, Term> substitutionMapping, final boolean inplace) {
 		if (labelCopy instanceof CongruenceClosure<?>) {
-			return (DISJUNCT) renameVariablesCc((CongruenceClosure<NODE>) labelCopy, substitutionMapping);
+			return (DISJUNCT) renameVariablesCc((CongruenceClosure<NODE>) labelCopy, substitutionMapping, inplace);
 		} else {
-			return (DISJUNCT) renameVariables((WeqCongruenceClosure<NODE>) labelCopy, substitutionMapping);
+			return (DISJUNCT) renameVariables((WeqCongruenceClosure<NODE>) labelCopy, substitutionMapping, inplace);
 		}
 	}
 

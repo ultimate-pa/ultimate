@@ -368,12 +368,17 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> transformElements(final CongruenceClosure<ELEM> cc,
-			final Function<ELEM, ELEM> transformer) {
-		final CongruenceClosure<ELEM> unfrozen = unfreeze(cc);
-		unfrozen.transformElementsAndFunctions(transformer);
-		unfrozen.freeze();
-		// TODO: implement a result check here?
-		return unfrozen;
+			final Function<ELEM, ELEM> transformer, final boolean inplace) {
+		if (inplace) {
+			cc.transformElementsAndFunctions(transformer);
+			return cc;
+		} else {
+			final CongruenceClosure<ELEM> unfrozen = unfreeze(cc);
+			unfrozen.transformElementsAndFunctions(transformer);
+			unfrozen.freeze();
+			// TODO: implement a result check here?
+			return unfrozen;
+		}
 	}
 
 	public CongruenceClosure<ELEM> projectToElements(final CongruenceClosure<ELEM> cc, final Set<ELEM> nodesToKeep,
@@ -385,7 +390,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 //			final CongruenceClosure<ELEM> result = cc.projectToElements(nodesToKeep, remInfo);
 //			assert result.isFrozen();
 //			return result;
-			final CongruenceClosure<ELEM> unfrozen = unfreeze(cc);
+
+			/* the operation might be lossy, but here we treat a CongruenceClosure, so freezing for closing is not
+			 * needed */
+			final CongruenceClosure<ELEM> unfrozen = unfreezeIfNecessary(cc);
 			final CongruenceClosure<ELEM> result = unfrozen.projectToElements(nodesToKeep, remInfo);
 			result.freeze();
 			// TODO: implement a result check here?

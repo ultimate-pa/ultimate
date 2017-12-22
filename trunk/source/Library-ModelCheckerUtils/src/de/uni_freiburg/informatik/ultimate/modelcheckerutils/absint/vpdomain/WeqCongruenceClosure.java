@@ -782,6 +782,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			mWeakEquivalenceGraphThin = null;
 			mDiet = Diet.CCFAT;
 		}
+		assert sanityCheck();
 	}
 
 	public void extAndTriangleClosure() {
@@ -1119,10 +1120,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !this.getWeakEquivalenceGraph().hasArrayEqualities();
 
 
-//		if (!(other instanceof WeqCongruenceClosure)) {
-//			return gPaMeet;
-//		}
-
 		/*
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
 		 */
@@ -1146,6 +1143,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			assert newWeqCc.sanityCheck();
 		}
 
+		assert inplace != newWeqCc.isFrozen();
 		return newWeqCc;
 	}
 

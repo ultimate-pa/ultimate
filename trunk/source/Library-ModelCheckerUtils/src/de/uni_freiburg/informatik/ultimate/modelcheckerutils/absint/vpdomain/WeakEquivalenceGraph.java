@@ -32,9 +32,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeakEquivalenceGraph.CachingWeqEdgeLabelPoComparator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
@@ -559,6 +560,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	private void putEdgeLabel(final Doubleton<NODE> sourceAndTarget, final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label) {
 		assert mWeqCc.isRepresentative(sourceAndTarget.getOneElement());
 		assert mWeqCc.isRepresentative(sourceAndTarget.getOtherElement());
+		assert mIsFrozen ? label.assertDisjunctsAreFrozen() : label.assertDisjunctsAreUnfrozen();
 		mWeakEquivalenceEdges.put(sourceAndTarget, label);
 	}
 
@@ -1052,9 +1054,27 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			assert en.getValue().sanityCheck();
 		}
 
+		assert assertFrozenStatusInSync();
+
 		assert sanityAllNodesOnWeqLabelsAreKnownToGpa(null);
 
 		return sanityCheckWithoutNodesComparison();
+	}
+
+	private boolean assertFrozenStatusInSync() {
+		if (mIsFrozen != mWeqCc.isFrozen()) {
+			assert false;
+			return false;
+		}
+
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edge : getWeqEdgesEntrySet()) {
+			if (mIsFrozen) {
+				assert edge.getValue().assertDisjunctsAreFrozen();
+			} else {
+				assert edge.getValue().assertDisjunctsAreUnfrozen();
+			}
+		}
+		return true;
 	}
 
 	boolean sanityCheckWithoutNodesComparison() {
