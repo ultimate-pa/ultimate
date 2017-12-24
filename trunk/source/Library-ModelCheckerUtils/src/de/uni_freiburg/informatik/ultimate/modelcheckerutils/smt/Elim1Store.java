@@ -295,8 +295,13 @@ public class Elim1Store {
 			selectIndices.add(selectIndex);
 		}
 
+		final long startTime = System.nanoTime();
 		final Pair<ThreeValuedEquivalenceRelation<Term>, List<Term>> analysisResult =
 				analyzeIndexEqualities(quantifier, selectIndices, stores, preprocessedInputWithContext, equalityInformation, eliminatee);
+		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
+		if (durationMs > 100) {
+			mLogger.info("Index analysis took " + durationMs + " ms");
+		}
 		if (analysisResult == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
