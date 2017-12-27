@@ -82,8 +82,8 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mMgdScript = mgdScript;
 
-		mWeqCcManager = new WeqCcManager<>(mLogger, new CongruenceClosureComparator<NODE>(), mMgdScript,
-				eqNodeAndFunctionFactory);
+		mWeqCcManager = new WeqCcManager<>(mLogger, new WeqCongruenceClosureComparator<NODE>(),
+				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory);
 
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();

@@ -637,19 +637,19 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	 * Note: this cannot happen in place as it changes the generic instance of DISJUNCT
 	 *
 	 * @param weqFatWeqGraph
-	 * @param originalPa
+	 * @param originalWeqCcCopy
 	 * @return
 	 */
 	WeakEquivalenceEdgeLabel<NODE, WeqCongruenceClosure<NODE>> meetWithWeqGpa(
 			final WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>> weqFatWeqGraph,
-			final WeqCongruenceClosure<NODE> originalPa) {
+			final WeqCongruenceClosure<NODE> originalWeqCcCopy) {
 
 		final Set<WeqCongruenceClosure<NODE>> newLabelContents = new HashSet<>();
 		for (final DISJUNCT l : getDisjuncts()) {
 			assert l instanceof CongruenceClosure<?> : "currently this should never be called on a weq-fat instance";
 
 			// make a copy of the full abstract state (ground partial arrangement and weak equivalence graph, weqCc)
-			WeqCongruenceClosure<NODE> weqCcCopy = mWeqCcManager.makeCopyForWeqMeet(originalPa);
+			WeqCongruenceClosure<NODE> weqCcCopy = mWeqCcManager.makeCopyForWeqMeet(originalWeqCcCopy);
 
 
 			// make a copy of the label, prime the weq vars

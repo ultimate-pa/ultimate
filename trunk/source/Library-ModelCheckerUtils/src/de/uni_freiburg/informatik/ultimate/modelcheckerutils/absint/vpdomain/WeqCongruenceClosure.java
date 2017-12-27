@@ -291,7 +291,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	private boolean reportWeakEquivalenceDoOnlyRoweqPropagations(final NODE array1, final NODE array2,
 			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel) {
 		assert !isFrozen();
-		assert edgeLabel.assertIsSlim();
+//		assert edgeLabel.assertIsSlim();
 
 		if (isInconsistent()) {
 			return false;
@@ -497,6 +497,20 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return mCongruenceClosure.getRepresentativeElement(elem);
 	}
 
+	/**
+	 * When we merge two nodes in the weq graph this may trigger propagations in several ways.
+	 *  <li> first, the roweq and roweq-1 rules have a condition "i~j" in their antecedents, we call these the explicit
+	 *   triggers
+	 *  <li> second the weak equivalence condition of the roweq and roweq-1 rules may be triggered by a merge, because
+	 *    something "of the right form" may be added to a weak equivalence class which had only elements "of the wrong
+	 *    form" for example.
+	 *
+	 * @param node1
+	 * @param node2
+	 * @param node1OldRep
+	 * @param node2OldRep
+	 * @param oldAuxData
+	 */
 	private void doRoweqPropagationsOnMerge(final NODE node1, final NODE node2, final NODE node1OldRep,
 			final NODE node2OldRep, final CcAuxData<NODE> oldAuxData) {
 		if (isInconsistent()) {
@@ -560,14 +574,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 */
 		for (final NODE ccp1 : oldAuxData.getArgCcPars(node1OldRep)) {
 			for (final NODE ccp2 : oldAuxData.getArgCcPars(node2OldRep)) {
-				// ccp1 = a[i], ccp2 = b[j] in the rule
+				/* ccp1 = a[i'], ccp2 = b[j'] in the rule, where i'~i, j'~j, before the merge that is currently
+				 * happening */
 
 				if (!ccp1.getSort().equals(ccp2.getSort())) {
 					continue;
 				}
 
 				/*
-				 * roweq:
+				 * roweq, explicit trigger, i.e.,
+				 *  i'~j'  && a--phi(q)--b ==> a[i']--phi(i')--b[j']
+				 *  (the current merge establishes i'~j')
 				 */
 				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> aToBLabel =
 						getCcWeakEquivalenceGraph().getEdgeLabel(ccp1.getAppliedFunction(), ccp2.getAppliedFunction());
@@ -578,7 +595,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel);
 
 				/*
-				 * roweq-1:
+				 * roweq-1, explicit trigger, i.e.,
+				 *  i'~j'  && a[i']--phi(q)--b[j'] ==> a--(q!=i' \/ phi(q+))--b
+				 *  (the current merge establishes i'~j')
 				 */
 				final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> aiToBjLabel =
 						getCcWeakEquivalenceGraph().getEdgeLabel(ccp1, ccp2);
@@ -591,6 +610,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 				/*
 				 * roweqMerge
+				 * --> a special case of roweq-1 (or if you will the combination of roweq-1 and strongtoweak), where
+				 *  the weak equivalence is actually strong, i.e. the label is "false"
+				 *  e.g. a[i']~b[j'] ==> a--(q!=i)--b
 				 */
 				if (getEqualityStatus(ccp1, ccp2) == EqualityStatus.EQUAL) {
 					// we have node1 = i, node2 = j, ccp1 = a[i], ccp2 = b[j]
@@ -615,6 +637,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 * roweq-1(2)
 		 *
 		 * a somewhat more intricate case:
+		 * ("implicit triggers")
 		 *
 		 * the added equality may trigger the pattern matching on the weak equivalence
 		 * condition of the roweq-1 rule

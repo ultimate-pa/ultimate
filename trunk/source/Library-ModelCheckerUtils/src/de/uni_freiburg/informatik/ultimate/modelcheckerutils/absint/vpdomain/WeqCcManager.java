@@ -61,6 +61,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
+	private final IPartialComparator<WeqCongruenceClosure<NODE>> mWeqCcComparator;
+
 	private final CcManager<NODE> mCcManager;
 	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
@@ -76,11 +78,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final boolean mDebug = true;
 	private final boolean mSkipSolverChecks = true;
 
-	public WeqCcManager(final ILogger logger, final IPartialComparator<CongruenceClosure<NODE>> ccComparator,
-			final ManagedScript mgdScript, final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory) {
+	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
+			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
+			final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory) {
 		mCcManager = new CcManager<>(logger, ccComparator);
 		mMgdScript = mgdScript;
 		mLogger = logger;
+
+		mWeqCcComparator = weqCcComparator;
 
 		mTautologicalWeqCc = new WeqCongruenceClosure<>(this);
 		mTautologicalWeqCc.freeze();
@@ -206,8 +211,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (sample instanceof CongruenceClosure<?>) {
 			return (Set<DISJUNCT>) filterRedundantCcs((Set<CongruenceClosure<NODE>>) ccs);
 		} else {
-			throw new AssertionError();
+			return (Set<DISJUNCT>) filterRedundantWeqCcs((Set<WeqCongruenceClosure<NODE>>) ccs);
 		}
+	}
+
+	private Set<WeqCongruenceClosure<NODE>> filterRedundantWeqCcs(final Set<WeqCongruenceClosure<NODE>> ccs) {
+		final PartialOrderCache<WeqCongruenceClosure<NODE>> poc = new PartialOrderCache<>(mWeqCcComparator);
+		return poc.getMaximalRepresentatives(ccs);
 	}
 
 	public Set<CongruenceClosure<NODE>> filterRedundantCcs(final Set<CongruenceClosure<NODE>> ccs) {
@@ -344,7 +354,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 
 		assert icc1.isFrozen() != inplace;
-		assert icc2.isFrozen() != icc1.isFrozen();
+		assert icc2.isFrozen() == icc1.isFrozen();
 		assert icc1.getClass().equals(icc2.getClass());
 		if (icc1.getClass().equals(CongruenceClosure.class)) {
 			return (DISJUNCT) meet((CongruenceClosure<NODE>) icc1, (CongruenceClosure<NODE>) icc2, inplace);

@@ -754,7 +754,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		copy.meetWithCcGpa();
 
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet =
-				mWeqCcManager.meetEdgeLabels(copy, qEqualsI, false);
+				mWeqCcManager.meetEdgeLabels(copy, qEqualsI, true);
 //				copy.meetRec(Collections.singleton(qEqualsI));
 
 		meet.setExternalRemInfo(mWeqCc.getElementCurrentlyBeingRemoved());
