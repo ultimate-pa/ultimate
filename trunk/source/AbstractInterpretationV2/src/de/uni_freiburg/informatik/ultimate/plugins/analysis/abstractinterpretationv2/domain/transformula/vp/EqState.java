@@ -96,7 +96,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 		final Set<Term> termsFromPvocs =
 				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<EqNode> projectedConstraint =
-				mFactory.getEqConstraintFactory().projectExistentially(termsFromPvocs, mConstraint);
+				mFactory.getEqConstraintFactory().projectExistentially(termsFromPvocs, mConstraint, false);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
 		newVariables.removeAll(variables);
@@ -128,7 +128,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	@Override
 	public EqState intersect(final EqState other) {
 		final EqConstraint<EqNode> newConstraint =
-				mFactory.getEqConstraintFactory().conjoin(this.getConstraint(), other.getConstraint());
+				mFactory.getEqConstraintFactory().conjoin(this.getConstraint(), other.getConstraint(), false);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
 		newVariables.addAll(this.getVariables());

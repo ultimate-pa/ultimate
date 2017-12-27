@@ -72,7 +72,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final BidirectionalMap<Term, Term> mWeqVarsToWeqPrimedVars;
 
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
+
 	private final boolean mDebug = true;
+	private final boolean mSkipSolverChecks = true;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<CongruenceClosure<NODE>> ccComparator,
 			final ManagedScript mgdScript, final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory) {
@@ -132,15 +134,21 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return origWeqCc;
 		}
 
+	final WeqCongruenceClosure<NODE>	result;
 		if (inplace) {
 			origWeqCc.addElement(node);
-			return origWeqCc;
+			result = origWeqCc;
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.addElement(node);
 			unfrozen.freeze();
-			return unfrozen;
+			result = unfrozen;
 		}
+
+		if (WeqSettings.SANITYCHECK_AFTER_ADD_NODE) {
+			assert origWeqCc.sanityCheck();
+		}
+		return result;
 	}
 
 	<DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT unfreeze(final DISJUNCT orig) {
@@ -328,8 +336,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT meet(final DISJUNCT icc1,
-			final DISJUNCT icc2, final boolean inplace) {
+	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT meet(final DISJUNCT icc1, final DISJUNCT icc2,
+			final boolean inplace) {
+		if (!inplace) {
+			freezeIfNecessary(icc1);
+			freezeIfNecessary(icc2);
+		}
+
+		assert icc1.isFrozen() != inplace;
+		assert icc2.isFrozen() != icc1.isFrozen();
 		assert icc1.getClass().equals(icc2.getClass());
 		if (icc1.getClass().equals(CongruenceClosure.class)) {
 			return (DISJUNCT) meet((CongruenceClosure<NODE>) icc1, (CongruenceClosure<NODE>) icc2, inplace);
@@ -729,6 +744,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private boolean checkImplicationHolds(final Script script, final Term ante, final Term succ) {
+
+		if (mSkipSolverChecks) {
+			return true;
+		}
+
 		assert mMgdScript.isLockOwner(this);
 
 		mMgdScript.push(this, 1);
@@ -1044,7 +1064,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
 			copy(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original) {
-		return new WeakEquivalenceEdgeLabel<>(original.getWeqGraph(), original);
+//		return new WeakEquivalenceEdgeLabel<>(original.getWeqGraph(), original);
+		return copy(original, original.getWeqGraph());
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> void freezeIfNecessary(final DISJUNCT disjunct) {
@@ -1061,6 +1082,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			throw new AssertionError("implement");
 		}
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> copy(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> value,
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph) {
+		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, value);
 	}
 
 }

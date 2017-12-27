@@ -268,7 +268,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 				} else {
 					if (storeTerm == null) {
 						newConstraint = mEqConstraintFactory.addDisequality(simpleArray, otherSimpleArray,
-								mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS));
+								mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 					} else {
 						/*
 						 * the best approximation for the negation of a weak equivalence that we can express is a
@@ -303,7 +303,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 							mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 				} else {
 					newConstraint = mEqConstraintFactory.addDisequality(node1, node2,
-							mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS));
+							mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 				}
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;

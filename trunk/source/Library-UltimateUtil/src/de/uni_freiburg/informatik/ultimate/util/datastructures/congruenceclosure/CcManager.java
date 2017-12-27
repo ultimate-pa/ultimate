@@ -77,12 +77,17 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
 			final IRemovalInfo<ELEM> remInfo, final boolean inplace) {
-		assert !inplace || !cc1.isFrozen();
+		if (!inplace) {
+			freezeIfNecessary(cc1);
+			freezeIfNecessary(cc2);
+		}
+		assert inplace != cc1.isFrozen();
 		assert cc1.sanityCheck();
 		assert cc2.sanityCheck();
 
 		if (cc1.isTautological() && !inplace) {
-			assert cc1.isFrozen() && cc2.isFrozen() : "unforseen case, when does this happen?";
+//			assert cc1.isFrozen() && cc2.isFrozen() : "unforseen case, when does this happen?";
+			freezeIfNecessary(cc2);
 			return cc2;
 		}
 		if (cc2.isTautological()) {

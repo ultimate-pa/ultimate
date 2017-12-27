@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
  */
 public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
-	private final WeqCongruenceClosure<NODE> mPartialArrangement;
+	private final WeqCongruenceClosure<NODE> mWeqCc;
 
 	private boolean mIsFrozen;
 
@@ -80,14 +80,15 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mId = id;
 		mFactory = factory;
-		mPartialArrangement = cClosure;
+		mWeqCc = cClosure;
 	}
 
 	public void freeze() {
 		assert !isInconsistent() : "use EqBottomConstraint instead!!";
-		assert mPartialArrangement.isFrozen();
+//		assert mWeqCc.isFrozen();
 		assert sanityCheck();
-		// assert !mIsFrozen;
+		assert !mIsFrozen;
+		mWeqCc.freeze();
 		mIsFrozen = true;
 	}
 
@@ -101,32 +102,32 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	public boolean isBottom() {
 		assert !isInconsistent() : "this should only be called on EqConstraints that are either consistent or an "
 				+ "instance of EqBottomConstraint";
-		assert !mPartialArrangement.isInconsistent();
+		assert !mWeqCc.isInconsistent();
 		return false;
 	}
 
 	public Set<NODE> getAllNodes() {
-		return mPartialArrangement.getAllElements();
+		return mWeqCc.getAllElements();
 	}
 
 	public boolean reportEqualityInPlace(final NODE node1, final NODE node2) {
 		assert !isInconsistent();
 		assert !mIsFrozen;
 
-		return mPartialArrangement.reportEquality(node1, node2);
+		return mWeqCc.reportEquality(node1, node2);
 	}
 
 	public boolean reportDisequalityInPlace(final NODE node1, final NODE node2) {
 		assert !isInconsistent();
 		assert !mIsFrozen;
-		final boolean paHasChanged = mPartialArrangement.reportDisequality(node1, node2);
+		final boolean paHasChanged = mWeqCc.reportDisequality(node1, node2);
 		return paHasChanged;
 	}
 
 	public void reportWeakEquivalenceInPlace(final NODE array1, final NODE array2, final NODE storeIndex) {
 		assert !isInconsistent();
 		assert !mIsFrozen;
-		mFactory.getWeqCcManager().reportWeakEquivalence(mPartialArrangement, array1, array2, storeIndex, true);
+		mFactory.getWeqCcManager().reportWeakEquivalence(mWeqCc, array1, array2, storeIndex, true);
 	}
 
 	public boolean isFrozen() {
@@ -136,7 +137,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public boolean isInconsistent() {
-		return mPartialArrangement.isInconsistent();
+		return mWeqCc.isInconsistent();
 	}
 
 	private static <E, F extends E> boolean arrayContains(final E[] freeVars, final F var) {
@@ -155,10 +156,10 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return true iff this constraint implies that node1 and node2 are equal
 	 */
 	public boolean areEqual(final NODE node1, final NODE node2) {
-		if (!mPartialArrangement.hasElement(node1) || !mPartialArrangement.hasElement(node2)) {
+		if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
 			return false;
 		}
-		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL;
+		return mWeqCc.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL;
 	}
 
 	/**
@@ -168,10 +169,10 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return true iff this constraint implies that node1 and node2 are unequal
 	 */
 	public boolean areUnequal(final NODE node1, final NODE node2) {
-		if (!mPartialArrangement.hasElement(node1) || !mPartialArrangement.hasElement(node2)) {
+		if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
 			return false;
 		}
-		return mPartialArrangement.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
+		return mWeqCc.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 	}
 
 	public Term getTerm(final Script script) {
@@ -181,7 +182,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 
 //		final Term result = mPartialArrangement.getTerm(script);
-		final Term result = WeqCcManager.weqCcToTerm(script, mPartialArrangement);
+		final Term result = WeqCcManager.weqCcToTerm(script, mWeqCc);
 		if (mIsFrozen) {
 			mTerm = result;
 		}
@@ -240,7 +241,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		mPvocs.addAll(getVariables(symbolTable));
 
 		final Set<ApplicationTerm> constants = new HashSet<>();
-		mPartialArrangement.getAllElements().stream()
+		mWeqCc.getAllElements().stream()
 				.forEach(node -> constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
 		// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
 
@@ -251,7 +252,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public boolean isTop() {
-		return mPartialArrangement.isTautological();
+		return mWeqCc.isTautological();
 	}
 
 	public EqConstraint<NODE> join(final EqConstraint<NODE> other) {
@@ -268,32 +269,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 			return other;
 		}
 		final WeqCongruenceClosure<NODE> newPartialArrangement = mFactory.getWeqCcManager().join(
-				this.mPartialArrangement, other.mPartialArrangement, false);
-		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement);
-		res.freeze();
-		return res;
-	}
-
-	public EqConstraint<NODE> meet(final EqConstraint<NODE> other) {
-		if (this.isBottom()) {
-			return this;
-		}
-		if (other.isBottom()) {
-			return other;
-		}
-		if (this.isTop()) {
-			return other;
-		}
-		if (other.isTop()) {
-			return this;
-		}
-
-		final WeqCongruenceClosure<NODE> newPa = mFactory.getWeqCcManager().meet(mPartialArrangement,
-				other.mPartialArrangement, false);
-		assert newPa.isFrozen();
-
-		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPa);
-		res.freeze();
+				this.mWeqCc, other.mWeqCc, true);
+		final EqConstraint<NODE> res = mFactory.getEqConstraint(newPartialArrangement, true);
 		return res;
 	}
 
@@ -303,14 +280,14 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @return true iff this is more or equally constraining than other
 	 */
 	public boolean isStrongerThan(final EqConstraint<NODE> other) {
-		return mFactory.getWeqCcManager().isStrongerThan(mPartialArrangement, other.mPartialArrangement);
+		return mFactory.getWeqCcManager().isStrongerThan(mWeqCc, other.mWeqCc);
 	}
 
 	public void projectAway(final NODE elemToHavoc) {
-		mFactory.getWeqCcManager().projectAway(mPartialArrangement, elemToHavoc);
+		mFactory.getWeqCcManager().projectAway(mWeqCc, elemToHavoc);
 
-		assert mPartialArrangement.assertSingleElementIsFullyRemoved(elemToHavoc);
-		assert mPartialArrangement.sanityCheck();
+		assert mWeqCc.assertSingleElementIsFullyRemoved(elemToHavoc);
+		assert mWeqCc.sanityCheck();
 	}
 
 	/**
@@ -320,7 +297,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 */
 	public Collection<TermVariable> getAllTermVariables() {
 		final Set<TermVariable> allTvs = new HashSet<>();
-		mPartialArrangement.getAllElements().stream()
+		mWeqCc.getAllElements().stream()
 				.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
 		return allTvs;
 	}
@@ -329,28 +306,28 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		/*
 		 * the weak equivalence graph may not have any array equalities at this point
 		 */
-		if (!mPartialArrangement.weqGraphFreeOfArrayEqualities()) {
+		if (!mWeqCc.weqGraphFreeOfArrayEqualities()) {
 			assert false;
 			return false;
 		}
 
-		return mPartialArrangement.sanityCheck();
+		return mWeqCc.sanityCheck();
 	}
 
 	public Integer getStatistics(final VPStatistics stat) {
 		switch (stat) {
 		default:
-			return mPartialArrangement.getStatistics(stat);
+			return mWeqCc.getStatistics(stat);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return "EqConstraint#" + mId + "\n" + mPartialArrangement.toString();
+		return "EqConstraint#" + mId + "\n" + mWeqCc.toString();
 	}
 
 	public String toLogString() {
-		return "EqConstraint#" + mId + "\n" + mPartialArrangement.toLogString();
+		return "EqConstraint#" + mId + "\n" + mWeqCc.toLogString();
 	}
 
 	@Override
@@ -381,6 +358,11 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> getWeqCc() {
-		return mPartialArrangement;
+		return mWeqCc;
+	}
+
+	public void superficialFreeze() {
+		assert mWeqCc.isFrozen();
+		mIsFrozen = true;
 	}
 }

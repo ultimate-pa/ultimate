@@ -167,7 +167,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public void addElement(final NODE elem) {
 		assert !isFrozen();
 		addElementRec(elem);
-		assert mCongruenceClosure.sanityCheck();
+//		assert mCongruenceClosure.sanityCheck();
 
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
 			// TODO: do full applyClosureOperations here??
@@ -187,6 +187,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	public void freeze() {
+		assert !mIsFrozen;
 		/*
 		 *  Do all possible propagations that were delayed.
 		 *  Currently: propagations according to the rules ext and delta.
@@ -772,9 +773,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param useWeqGpa
 	 */
 	public void fatten(final boolean useWeqGpa) {
+		assert !isFrozen();
 		if (useWeqGpa) {
 			mWeakEquivalenceGraphWeqCcFat =
-					getWeakEquivalenceGraph().meetEdgeLabelsWithWeqGpaBeforeRemove(mManager.copyWeqCc(this, false));
+					getWeakEquivalenceGraph().meetEdgeLabelsWithWeqGpaBeforeRemove(this,
+							mManager.copyWeqCc(this, false));
 			mWeakEquivalenceGraphThin = null;
 			mDiet = Diet.WEQCCFAT;
 		} else {
@@ -902,7 +905,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert !mCongruenceClosure.getElementCurrentlyBeingRemoved().getRemovedElements().contains(bi);
 				elemToRemoveToReplacement.put(elemToRemove, bi);
 				if (!mCongruenceClosure.hasElement(bi)) {
-					assert nodeToAddIsEquivalentToOriginal(bi, elemToRemove);
+					assert assertNodeToAddIsEquivalentToOriginal(bi, elemToRemove);
 					return Collections.singleton(bi);
 				} else {
 					return Collections.emptySet();
@@ -941,7 +944,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return result;
 	}
 
-	private boolean nodeToAddIsEquivalentToOriginal(final NODE nodeToAdd, final NODE elemToRemove) {
+	private boolean assertNodeToAddIsEquivalentToOriginal(final NODE nodeToAdd, final NODE elemToRemove) {
 //		final WeqCongruenceClosure<NODE> copy = mManager.getFrozenCopy(this);
 		final WeqCongruenceClosure<NODE> copy = mManager.copyWeqCc(this, false);
 		mManager.addNode(nodeToAdd, copy, true);
@@ -1100,7 +1103,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public WeqCongruenceClosure<NODE> meetRec(final CongruenceClosure<NODE> other, final boolean inplace) {
 		final WeqCongruenceClosure<NODE> gPaMeet = meetWeqWithCc(other, inplace);
-		assert gPaMeet.sanityCheck();
+
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+			assert gPaMeet.sanityCheck();
+		}
+
 		if (gPaMeet.isInconsistent() && !inplace) {
 			return mManager.getInconsistentWeqCc(false);
 		}
@@ -1119,7 +1126,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		final WeqCongruenceClosure<NODE> result = thisUnfrozenIfNec.meetWeqWithCc(other.mCongruenceClosure, true);
 
-		assert result.sanityCheck();
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+			assert result.sanityCheck();
+		}
+
 		if (result.isInconsistent() && !inplace) {
 			return mManager.getInconsistentWeqCc(false);
 		}
@@ -1131,15 +1141,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
 		 */
 
-		assert result.sanityCheck();
-
-		final WeqCongruenceClosure<NODE> otherWeqCc = other;
-		assert otherWeqCc.getWeakEquivalenceGraph().sanityCheck();
-		assert otherWeqCc.sanityCheck();
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+			assert result.sanityCheck();
+			assert other.getWeakEquivalenceGraph().sanityCheck();
+			assert other.sanityCheck();
+		}
 
 		// report all weq edges from other
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>> edge
-				: otherWeqCc.getCcWeakEquivalenceGraph().getEdges().entrySet()) {
+				: other.getCcWeakEquivalenceGraph().getEdges().entrySet()) {
 
 //			assert gPaMeet.getAllElements().containsAll(edge.getValue().getAppearingNodes());
 
@@ -1168,14 +1178,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (thisAligned.isInconsistent()) {
 				return mManager.getInconsistentWeqCc(inplace);
 			}
-//			thisAligned.reportEqualityRec(eq.getKey(), eq.getValue());
 			thisAligned = mManager.reportEquality(thisAligned, eq.getKey(), eq.getValue(), inplace);
 		}
 		for (final Entry<NODE, NODE> deq : other.getElementDisequalities()) {
 			if (thisAligned.isInconsistent()) {
 				return mManager.getInconsistentWeqCc(inplace);
 			}
-//			thisAligned.reportDisequalityRec(deq.getKey(), deq.getValue());
 			thisAligned = mManager.reportDisequality(thisAligned, deq.getKey(), deq.getValue(), inplace);
 		}
 		assert thisAligned.sanityCheck();
@@ -1438,6 +1446,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	public void thin() {
+		assert !mIsFrozen;
 		assert mDiet != Diet.THIN;
 		assert assertDietSanity();
 		if (mWeakEquivalenceGraphWeqCcFat != null) {

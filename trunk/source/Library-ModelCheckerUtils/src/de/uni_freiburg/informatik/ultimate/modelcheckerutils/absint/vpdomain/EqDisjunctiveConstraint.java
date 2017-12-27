@@ -85,7 +85,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	public EqDisjunctiveConstraint<NODE> projectExistentially(final Collection<Term> termsToProjectAway) {
 		final Collection<EqConstraint<NODE>> newConstraints = new ArrayList<>();
 		for (final EqConstraint<NODE> c : mConstraints) {
-			newConstraints.add(mFactory.projectExistentially(termsToProjectAway, c));
+			newConstraints.add(mFactory.projectExistentially(termsToProjectAway, c, false));
 		}
 		return mFactory.getDisjunctiveConstraint(newConstraints);
 	}
@@ -107,7 +107,8 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		if (mConstraints.size() == 1) {
 			return mConstraints.iterator().next();
 		}
-		return mConstraints.stream().reduce((c1, c2) -> c1.join(c2)).get();
+//		return mConstraints.stream().reduce((c1, c2) -> c1.join(c2)).get();
+		return mConstraints.stream().reduce((c1, c2) -> mFactory.disjoin(c1, c2)).get();
 	}
 
 	public boolean isEmpty() {
