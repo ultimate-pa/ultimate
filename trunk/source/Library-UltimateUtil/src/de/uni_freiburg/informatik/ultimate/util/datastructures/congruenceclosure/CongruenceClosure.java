@@ -976,6 +976,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return true;
 		}
 
+		if (!mElementTVER.sanityCheck()) {
+					assert false;
+					return false;
+		}
+
 		if (mElementTVER.isInconsistent()) {
 					assert false : "Cc is inconsistent but fields are not null";
 					return false;

@@ -976,7 +976,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	private boolean assertNodeToAddIsEquivalentToOriginal(final NODE nodeToAdd, final NODE elemToRemove) {
 //		final WeqCongruenceClosure<NODE> copy = mManager.getFrozenCopy(this);
-		final WeqCongruenceClosure<NODE> copy = mManager.copyWeqCc(this, false);
+		final WeqCongruenceClosure<NODE> copy = mManager.copyWeqCc(this, true);
 		mManager.addNode(nodeToAdd, copy, true);
 		if (copy.getEqualityStatus(nodeToAdd, elemToRemove) != EqualityStatus.EQUAL) {
 			assert false;

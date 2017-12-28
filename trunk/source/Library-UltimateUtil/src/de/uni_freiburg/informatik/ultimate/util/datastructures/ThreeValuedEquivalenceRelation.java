@@ -282,12 +282,19 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	/**
 	 *
-	 * TODO: note that this sanity check currently forbids null entries for the relation -- if we want null entries, we
+	 * Note that this sanity check currently forbids null entries for the relation -- if we want null entries, we
 	 * have to revise this.
 	 *
 	 * @return true iff sanity check is passed
 	 */
-	private boolean sanityCheck() {
+	public boolean sanityCheck() {
+
+		// call the sanityCheck of the underlying Unionfind
+		if (!mUnionFind.sanityCheck()) {
+			return false;
+		}
+
+
 		// mDisequalities may not contain null entries
 		for (final Entry<E, E> en : mDisequalities.entrySet()) {
 			if (en.getKey() == null) {

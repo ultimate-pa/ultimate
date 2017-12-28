@@ -88,7 +88,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		if (cc1.isTautological() && !inplace) {
-//			assert cc1.isFrozen() && cc2.isFrozen() : "unforseen case, when does this happen?";
+//			assert cc1.isFrozen() && cc2.isFrozen() : "unforeseen case, when does this happen?";
 			freezeIfNecessary(cc2);
 			return cc2;
 		}
@@ -377,16 +377,19 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public CongruenceClosure<ELEM> transformElements(final CongruenceClosure<ELEM> cc,
 			final Function<ELEM, ELEM> transformer, final boolean inplace) {
+		final CongruenceClosure<ELEM> result;
 		if (inplace) {
 			cc.transformElementsAndFunctions(transformer);
-			return cc;
+			result = cc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(cc);
 			unfrozen.transformElementsAndFunctions(transformer);
 			unfrozen.freeze();
 			// TODO: implement a result check here?
-			return unfrozen;
+			result = unfrozen;
 		}
+		assert result.sanityCheck();
+		return result;
 	}
 
 	public CongruenceClosure<ELEM> projectToElements(final CongruenceClosure<ELEM> cc, final Set<ELEM> nodesToKeep,

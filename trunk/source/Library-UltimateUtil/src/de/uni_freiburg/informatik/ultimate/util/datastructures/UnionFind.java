@@ -435,9 +435,6 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 			final E newRep = elemTransformer.apply(entry.getValue());
 
-			// assert mElementComparator == null || mElementComparator.compare(newRep,
-			// entry.getValue()) == 0;
-
 			final CachedHashSet<E> newEqClass = entry.getKey().stream().map(elemTransformer)
 					.collect(Collectors.toCollection(CachedHashSet::new));
 			for (final E newElem : newEqClass) {
@@ -542,6 +539,26 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			for (final E member : en.getKey()) {
 				assert mElementComparator.compare(rep, member) <= 0;
 			}
+		}
+		return true;
+	}
+
+	boolean sanityCheck() {
+		assert assertRepresentativeMapIsInjective();
+		return true;
+	}
+
+	/**
+	 * Asserts a class invariant:
+	 *  mRepresentatives must be injective, i.e., a representative cannot represent two equivalence classes
+	 *
+	 * @return
+	 */
+	private boolean assertRepresentativeMapIsInjective() {
+		final Set<E> alreadySeenRepresentatives = new HashSet<>();
+		for (final E rep : mRepresentative.values()) {
+			assert !alreadySeenRepresentatives.contains(rep);
+			alreadySeenRepresentatives.add(rep);
 		}
 		return true;
 	}

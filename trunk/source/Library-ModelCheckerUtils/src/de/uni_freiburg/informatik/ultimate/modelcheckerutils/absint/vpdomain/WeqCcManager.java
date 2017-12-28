@@ -139,7 +139,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return origWeqCc;
 		}
 
-	final WeqCongruenceClosure<NODE>	result;
+	final WeqCongruenceClosure<NODE> result;
 		if (inplace) {
 			origWeqCc.addElement(node);
 			result = origWeqCc;

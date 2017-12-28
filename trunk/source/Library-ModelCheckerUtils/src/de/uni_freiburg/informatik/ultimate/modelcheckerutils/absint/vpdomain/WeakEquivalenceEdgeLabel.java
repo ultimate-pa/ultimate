@@ -831,12 +831,29 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		for (final DISJUNCT d : getDisjuncts()) {
 			// drop inner WeqGraph if present
 			final CongruenceClosure<NODE> cc = mWeqCcManager.copyCcOnly(d, true);
-			// unprime if necessary
-			final CongruenceClosure<NODE> unprimed =
-					mWeqCcManager.renameVariablesCc(cc, mWeqCcManager.getWeqPrimedVarsToWeqVars(), true);
+
+			/*
+			 * unprime if necessary
+			 *  background:
+			 *   If the current weqCc is CcFat, we must not do this renaming, because it may be the case that it is
+			 *   a weqFat label where we are currently removing something, thus making its labels ccFat..
+			 *
+			 * putting it differently: scenario: a label in a weq-fat weqcc is a weqcc, i.e. has a weq graph, now if
+			 *  we cc-fatten the labels of that weq graph they get the primed weq vars from the weq-fat label, so
+			 *  those labels have primed and unprimed weq vars.
+			 *
+			 *   --> all this is a consequence of the hacky "primed weq vars" business..
+			 */
+			final CongruenceClosure<NODE> unprimedIfWeqFat;
+			if (mWeakEquivalenceGraph.mWeqCc.mDiet == Diet.WEQCCFAT) {
+				unprimedIfWeqFat = mWeqCcManager.renameVariablesCc(cc, mWeqCcManager.getWeqPrimedVarsToWeqVars(), true);
+			} else {
+				unprimedIfWeqFat = cc;
+			}
+
 			// drop constraints that do not constrain a weq variable
 			final CongruenceClosure<NODE> projectedFrozen =
-					mWeqCcManager.projectToElements(unprimed, mWeqCcManager.getAllWeqNodes(), null);
+					mWeqCcManager.projectToElements(unprimedIfWeqFat, mWeqCcManager.getAllWeqNodes(), null);
 
 			// projectToElements freezes -- we want to avoid that
 			final CongruenceClosure<NODE> thinned = mWeqCcManager.unfreeze(projectedFrozen);
