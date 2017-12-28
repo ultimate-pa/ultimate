@@ -294,7 +294,9 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		re.doRemoval();
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
-		assert cc.sanityCheck();
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+			assert cc.sanityCheck();
+		}
 
 		cc.setElementCurrentlyBeingRemoved(null);
 

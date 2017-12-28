@@ -1186,6 +1186,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 				final Set<NODE> nodesOnEdgeLabelWithoutWeqNodes = label.getAppearingNodes().stream()
 						.filter(node -> !CongruenceClosure.dependsOnAny(node, mWeqCcManager.getAllWeqNodes()))
+						.filter(node -> !CongruenceClosure.dependsOnAny(node, mWeqCcManager.getAllWeqPrimedNodes()))
 						.filter(node -> nodesScheduledForAdding == null
 							|| !nodesScheduledForAdding.contains(node))
 						.collect(Collectors.toSet());

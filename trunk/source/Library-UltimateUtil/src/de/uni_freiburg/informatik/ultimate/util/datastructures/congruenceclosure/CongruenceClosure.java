@@ -1365,7 +1365,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		while (!worklist.isEmpty()) {
 //			assert copy.sanityCheck(removeElementInfo);
-			assert copy.sanityCheck();
+			if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+				assert copy.sanityCheck();
+			}
 
 			final ELEM current = worklist.iterator().next();
 			worklist.remove(current);

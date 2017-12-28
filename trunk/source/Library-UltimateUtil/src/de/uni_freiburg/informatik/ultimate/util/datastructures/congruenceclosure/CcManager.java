@@ -82,8 +82,10 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			freezeIfNecessary(cc2);
 		}
 		assert inplace != cc1.isFrozen();
-		assert cc1.sanityCheck();
-		assert cc2.sanityCheck();
+		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+			assert cc1.sanityCheck();
+			assert cc2.sanityCheck();
+		}
 
 		if (cc1.isTautological() && !inplace) {
 //			assert cc1.isFrozen() && cc2.isFrozen() : "unforseen case, when does this happen?";

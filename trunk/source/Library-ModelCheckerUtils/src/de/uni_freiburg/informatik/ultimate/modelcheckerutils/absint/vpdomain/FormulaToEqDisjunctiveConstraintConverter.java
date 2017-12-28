@@ -120,6 +120,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 		assert mResultStack.size() == 1;
 		final EqDisjunctiveConstraint<EqNode> processedTf = mResultStack.pop();
+		processedTf.freezeDisjunctsIfNecessary();
 		mResultConstraint = processedTf.projectExistentially(scs.getReplacementTermVariables());
 	}
 

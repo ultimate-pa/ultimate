@@ -14,4 +14,6 @@ public class CcSettings {
 
 	public static final boolean DELAY_EXT_AND_DELTA_CLOSURE = true;
 
+	public static final boolean SANITYCHECK_FINE_GRAINED = false;
+
 }

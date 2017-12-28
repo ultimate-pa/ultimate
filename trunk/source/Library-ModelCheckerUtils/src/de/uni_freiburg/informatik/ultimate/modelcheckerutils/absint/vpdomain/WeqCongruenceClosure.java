@@ -182,7 +182,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	public boolean isFrozen() {
-		assert mIsFrozen == mCongruenceClosure.isFrozen();
+		assert isInconsistent() || mIsFrozen == mCongruenceClosure.isFrozen();
 		return mIsFrozen;
 	}
 
@@ -224,7 +224,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert array1.hasSameTypeAs(array2);
 
 		mManager.addNode(storeIndex, mCongruenceClosure, true, true);
-		assert sanityCheck();
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+			assert sanityCheck();
+		}
 
 		reportWeakEquivalence(array1, array2, mManager.getEdgeLabelForIndex(getWeakEquivalenceGraph(), storeIndex));
 		assert sanityCheck();
@@ -283,7 +285,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				.entrySet()) {
 			fwmc |= reportWeakEquivalenceDoOnlyRoweqPropagations(fwEdge.getKey().getOneElement(),
 					fwEdge.getKey().getOtherElement(), fwEdge.getValue());
-			assert sanityCheck();
+
+			if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+				assert sanityCheck();
+			}
 		}
 		assert sanityCheck();
 		return fwmc;
@@ -704,7 +709,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert madeChanges;
 				return true;
 			}
-			assert sanityCheck();
+			if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+				assert sanityCheck();
+			}
 		}
 		assert sanityCheck();
 		assert weqGraphFreeOfArrayEqualities();

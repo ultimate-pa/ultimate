@@ -126,7 +126,9 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 
 		mElementContainer.removeElements(mElementsToRemove, nodeToReplacementNode);
 
-		assert mElementContainer.sanityCheck();
+		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+			assert mElementContainer.sanityCheck();
+		}
 
 //		mElementContainer.applyClosureOperations();
 
@@ -136,7 +138,9 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 		}
 
 		mDidRemoval = true;
-		assert mElementContainer.sanityCheck();
+		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+			assert mElementContainer.sanityCheck();
+		}
 
 		if (mElementContainer.isDebugMode()) {
 			mElementContainer.getLogger().debug("RemoveElement " + hashCode() + " finished normally");
@@ -175,7 +179,9 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 
 			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
 			assert nodesToAdd.stream().allMatch(n -> !mElementContainer.hasElement(n));
-			assert mElementContainer.sanityCheck();
+			if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+				assert mElementContainer.sanityCheck();
+			}
 
 			if (nodesToAdd.isEmpty()) {
 				break;
@@ -203,7 +209,9 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 					return true;
 				}
 
-				assert mElementContainer.sanityCheck();
+				if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+					assert mElementContainer.sanityCheck();
+				}
 			}
 
 			if (mIntroduceNewNodes) {
@@ -278,7 +286,10 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 
 		re.doRemoval();
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
-		assert cc.sanityCheck();
+
+		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+			assert cc.sanityCheck();
+		}
 
 		cc.setElementCurrentlyBeingRemoved(null);
 

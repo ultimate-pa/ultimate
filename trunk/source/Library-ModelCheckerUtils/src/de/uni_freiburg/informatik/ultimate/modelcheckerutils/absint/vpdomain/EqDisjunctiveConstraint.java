@@ -273,4 +273,10 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 			return val;
 		}
 	}
+
+	public void freezeDisjunctsIfNecessary() {
+		for (final EqConstraint<NODE> disjunct : mConstraints) {
+			disjunct.freezeIfNecessary();
+		}
+	}
 }

@@ -361,8 +361,17 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		return mWeqCc;
 	}
 
+	/**
+	 * Sets mIsFrozen flag in this EqConstraint to true, assumes that the WeqCc inside is already frozen.
+	 */
 	public void superficialFreeze() {
 		assert mWeqCc.isFrozen();
 		mIsFrozen = true;
+	}
+
+	public void freezeIfNecessary() {
+		if (!isFrozen()) {
+			freeze();
+		}
 	}
 }
