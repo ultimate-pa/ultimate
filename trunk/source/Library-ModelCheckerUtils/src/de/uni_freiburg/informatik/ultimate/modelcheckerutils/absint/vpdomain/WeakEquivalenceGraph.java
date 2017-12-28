@@ -623,12 +623,13 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		if (oldLabel == null || oldLabel.isTautological()) {
 			assert paList.size() != 1 || !paList.iterator().next().isTautological();
 
-			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel =
+			WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel =
 					new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
-			newLabel.meetWithCcGpa();
-			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabelMeetProject =
-					newLabel.projectToElements(mWeqCcManager.getAllWeqNodes());
-			putEdgeLabel(sourceAndTarget, newLabelMeetProject);
+			if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+				newLabel.meetWithCcGpa();
+				newLabel = newLabel.projectToElements(mWeqCcManager.getAllWeqNodes());
+			}
+			putEdgeLabel(sourceAndTarget, newLabel);
 
 			assert sanityCheck();
 			return true;
@@ -642,11 +643,13 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
 		assert labelToStrengthenWith.sanityCheck() : "input label not normalized??";
 
-		/*  (Dec 17) note that we are not fattening/thinning here, as we did before, because that is delayed for
-		 * performance reasons
+		/*  (Dec 17) note that we are not (always) fattening/thinning here, as we did before, because that is delayed
+		 * for performance reasons
 		  */
-//		labelToStrengthenWith.meetWithCcGpa();
-//		oldLabelCopy.meetWithCcGpa();
+		if (!WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+			labelToStrengthenWith.meetWithCcGpa();
+			oldLabelCopy.meetWithCcGpa();
+		}
 
 		if (mWeqCcManager.isStrongerThan(oldLabelCopy, labelToStrengthenWith)) {
 			// nothing to do
@@ -654,12 +657,14 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		}
 
 //		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel = oldLabelCopy.meet(labelToStrengthenWith, inplace);
-		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel =
+		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel =
 				mWeqCcManager.meetEdgeLabels(oldLabelCopy, labelToStrengthenWith, true);
 
-		/* (Dec 17) no thinning */
+		/* (Dec 17) no/optional thinning */
 //		// meet with gpa (done before) and project afterwards
-//		strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes());
+		if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes());
+		}
 
 		// inconsistency check
 		if (strengthenedEdgeLabel.isInconsistent()) {
@@ -751,7 +756,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> copy = mWeqCcManager.copy(originalEdgeLabel);
 //				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, originalEdgeLabel);
 
-		copy.meetWithCcGpa();
+		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+			copy.meetWithCcGpa();
+		}
 
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet =
 				mWeqCcManager.meetEdgeLabels(copy, qEqualsI, true);
@@ -768,8 +775,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		assert meet.sanityCheckDontEnforceProjectToWeqVars(mWeqCc);
 
-		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result =
-				meet.projectToElements(new HashSet<>(weqVarsForThisEdge));
+		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = meet;
+		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge));
+		}
 
 		assert result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));
 
@@ -794,13 +803,17 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet = mWeqCcManager.copy(labelContents);
 //				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, labelContents);
 
-		meet.meetWithCcGpa();
+		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+			meet.meetWithCcGpa();
+		}
 
 		meet.setExternalRemInfo(mWeqCc.getElementCurrentlyBeingRemoved());
 		meet.projectWeqVarNode(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() - 1));
 
-		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToShiftAndAdd =
-				meet.projectToElements(new HashSet<>(weqVarsForResolventEdge));
+		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToShiftAndAdd = meet;
+		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge));
+		}
 
 		labelToShiftAndAdd.inOrDecreaseWeqVarIndices(1, weqVarsForResolventEdge);
 
@@ -902,7 +915,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 					final WeqCongruenceClosure<NODE> originalWeqCcCopy) {
 		assert !originalWeqCc.isFrozen();
 		assert originalWeqCcCopy.isFrozen();
-		assert mWeqCc.mDiet == Diet.THIN;
+		assert mWeqCc.mDiet == Diet.THIN || mWeqCc.mDiet == Diet.TRANSITORY;
 
 		final WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>> result =
 				new WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>>(originalWeqCc, mWeqCcManager,
@@ -932,7 +945,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> ccFattenEdgeLabels() {
 //			final WeqCongruenceClosure<NODE> originalWeqCc) {
-		assert mWeqCc.mDiet == Diet.THIN;
+		assert mWeqCc.mDiet == Diet.TRANSITORY;
 
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edgeLabel : getWeqEdgesEntrySet()) {
 			edgeLabel.getValue().meetWithCcGpa();

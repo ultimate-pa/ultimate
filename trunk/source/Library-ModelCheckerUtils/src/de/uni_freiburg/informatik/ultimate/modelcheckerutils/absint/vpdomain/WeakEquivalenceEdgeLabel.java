@@ -62,8 +62,6 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 	private static final boolean MEET_IN_PLACE = true;
 
-	private static final boolean MEET_WITH_GPA_ON_REPORTCHANGE = false;
-
 	private final WeakEquivalenceGraph<NODE, DISJUNCT> mWeakEquivalenceGraph;
 
 	private final WeqCcManager<NODE> mWeqCcManager;
@@ -362,7 +360,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 //			final CongruenceClosure<NODE> meetWgpa;
 			final DISJUNCT meetWgpa;
-			if (MEET_WITH_GPA_ON_REPORTCHANGE) {
+			if (WeqSettings.MEET_WITH_GPA_ON_REPORTCHANGE) {
 				meetWgpa =  mWeqCcManager.meet(disjunct,
 					(DISJUNCT) mWeakEquivalenceGraph.mWeqCc.getCongruenceClosure(),
 					mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved(),
@@ -390,7 +388,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				continue;
 			}
 
-			if (MEET_WITH_GPA_ON_REPORTCHANGE) {
+			if (WeqSettings.MEET_WITH_GPA_ON_REPORTCHANGE) {
 				// add the strengthened version as the new label element
 				final DISJUNCT projected = mWeqCcManager.projectToElements(meetWgpa,
 						mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes(),

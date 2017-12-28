@@ -305,9 +305,9 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 	public static <NODE extends IEqNodeIdentifier<NODE>> Set<NODE> removeSimpleElementDontUseWeqGpaTrackAddedNodes(
 			final WeqCongruenceClosure<NODE> lab, final NODE elem) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		final RemoveWeqCcElement<NODE> re =
+				removeSimpleElement(lab, elem, true, false);
+		return re.getAddedNodes();
 	}
 
 }
