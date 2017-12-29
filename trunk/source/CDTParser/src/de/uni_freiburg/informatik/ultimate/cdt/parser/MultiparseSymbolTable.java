@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -228,5 +230,13 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		// Fallback: Check the defined names in the file itself & if no definition is found, just use the original name,
 		// i.e. no mapping of the name is performed.
 		return mNamePrefixMapping.getOrDefault(key, name);
+	}
+	
+	/**
+	 * Fetches all global variables
+	 * @return all global variables
+	 */
+	public Map<Pair<String, String>, IASTDeclarator> getGlobalScope() {
+		return Collections.unmodifiableMap(mGlobalsMapping);
 	}
 }

@@ -553,7 +553,7 @@ public class CHandler implements ICHandler {
 		mArrayHandler = new ArrayHandler(prefs);
 		mStaticObjectsHandler = new StaticObjectsHandler();
 
-		mSymbolTable = new FlatSymbolTable(mst, main);
+		mSymbolTable = new FlatSymbolTable(mst, main, nameHandler);
 
 		mDeclarationsGlobalInBoogie = new LinkedHashMap<>();
 		mAxioms = new LinkedHashSet<>();

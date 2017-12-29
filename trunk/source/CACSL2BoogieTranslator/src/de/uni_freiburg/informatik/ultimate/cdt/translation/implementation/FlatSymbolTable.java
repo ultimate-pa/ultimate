@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -50,7 +51,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Yannick Bühler
@@ -95,7 +98,7 @@ public class FlatSymbolTable {
 	 */
 	private final Map<CDeclaration, Declaration> mCDeclToBoogieDecl;
 	
-	public FlatSymbolTable(final MultiparseSymbolTable mst, final Dispatcher disp) {
+	public FlatSymbolTable(final MultiparseSymbolTable mst, final Dispatcher disp, final INameHandler nameHandler) {
 		mGlobalScope = new LinkedHashMap<>();
 		mCTable = new LinkedHashMap<>();
 		mMultiparseInformation = mst;
@@ -114,6 +117,25 @@ public class FlatSymbolTable {
 		};
 		mBoogieIdToCId = new HashMap<>();
 		mCDeclToBoogieDecl = new HashMap<>();
+		
+		importAllGlobals(nameHandler);
+	}
+	
+	/**
+	 * Extracts all global variables into the global scope
+	 */
+	private void importAllGlobals(final INameHandler nameHandler) {
+		Map<Pair<String, String>, IASTDeclarator> globals = mMultiparseInformation.getGlobalScope();
+		for (Map.Entry<Pair<String, String>, IASTDeclarator> entry : globals.entrySet()) {
+			String uId = mMultiparseInformation.getNameMappingIfExists(entry.getKey().getFirst(), 
+					entry.getKey().getSecond());
+			
+			// This entry is minimal, as some of the information is not available yet.
+			// Need to somehow get a real SymbolTableValue here... at least the CDeclaration is required.
+			final String bId = nameHandler.getUniqueIdentifier(null, uId, getCScopeId(entry.getValue()), false, null);
+			SymbolTableValue stv = new SymbolTableValue(bId, null, null, true, entry.getValue(), false);
+			mGlobalScope.put(uId, stv);
+		}
 	}
 	
 	/**

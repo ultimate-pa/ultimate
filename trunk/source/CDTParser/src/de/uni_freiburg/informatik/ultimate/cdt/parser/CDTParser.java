@@ -213,7 +213,10 @@ public class CDTParser implements ISource {
 		// Let's just assume that this string (TempCDTProject/src/) is unique in the path...
 		final String lookingFor = TEMPORARY_CDT_PROJECT_NAME + File.separator + "src" + File.separator;
 		final int posInInput = in.indexOf(lookingFor);
-		assert posInInput != -1 : "Somehow a non-CDT project filename was normalized";
+		if(posInInput < 0) {
+			// The name is already normalized
+			return in;
+		}
 		
 		return in.substring(posInInput + lookingFor.length());
 	}
