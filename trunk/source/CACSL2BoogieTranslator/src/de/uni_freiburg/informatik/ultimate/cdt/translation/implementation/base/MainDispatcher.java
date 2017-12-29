@@ -45,7 +45,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 
+import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
@@ -330,31 +332,23 @@ public class MainDispatcher extends Dispatcher {
 	@Override
 	protected void preRun(final Collection<DecoratedUnit> nodes) {
 		super.preRun(nodes);
-
 		mVariablesOnHeap = new LinkedHashSet<>();
+		
+		// Build the function table
+		executePreRun(new FunctionTableBuilder(), nodes, ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
 
-		final FunctionTableBuilder ftb = new FunctionTableBuilder();
-		for (DecoratedUnit unit : nodes) {
-			unit.getRootNode().getCNode().accept(ftb);
-		}
-		mFunctionTable.putAll(ftb.getFunctionTable());
-		final PreRunner pr = new PreRunner(mFunctionTable);
-		for (DecoratedUnit unit : nodes) {
-			unit.getRootNode().getCNode().accept(pr);
-		}
-
-		mVariablesOnHeap.addAll(pr.getVarsForHeap());
-
-		mFunctionToIndex = pr.getFunctionToIndex();
+		executePreRun(new PreRunner(mFunctionTable), nodes, pr -> {
+			mVariablesOnHeap.addAll(pr.getVarsForHeap());
+			mFunctionToIndex = pr.getFunctionToIndex();
+			mThereAreDereferencedPointerVariables = pr.isMMRequired();
+		});
 
 		if (DETERMINIZE_NECESSARY_DECLARATIONS) {
-			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(), this,
-					ftb.getFunctionTable(), mFunctionToIndex);
-			for (DecoratedUnit unit : nodes) {
-				unit.getRootNode().getCNode().accept(dnd);
-			}
-
-			mReachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
+			executePreRun(
+					new DetermineNecessaryDeclarations(getCheckedMethod(), this, mFunctionTable, mFunctionToIndex), 
+					nodes, 
+					dnd -> mReachableDeclarations = dnd.getReachableDeclarationsOrDeclarators()
+			);
 		} else {
 			mReachableDeclarations = null;
 		}
@@ -370,8 +364,14 @@ public class MainDispatcher extends Dispatcher {
 			mIndexToFunction.put(en.getValue(), en.getKey());
 		}
 
-		mThereAreDereferencedPointerVariables = pr.isMMRequired();
-
+	}
+	
+	private <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,
+			final Consumer<T> callback) {
+		for (DecoratedUnit unit : units) {
+			unit.getRootNode().getCNode().accept(preRun);
+		}
+		callback.accept(preRun);
 	}
 
 	@Override
