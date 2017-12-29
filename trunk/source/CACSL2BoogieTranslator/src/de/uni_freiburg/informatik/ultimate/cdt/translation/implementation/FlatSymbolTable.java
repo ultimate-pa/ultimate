@@ -1,31 +1,31 @@
 /*
  * Copyright (C) 2017 Yannick Bühler (buehlery@tf.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * Flat hierarchy rewrite of the old symbol table for the compiler. 
+ * Flat hierarchy rewrite of the old symbol table for the compiler.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
@@ -61,8 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class FlatSymbolTable {
 	/**
-	 * The global scope, spanning all translation units.
-	 * Every translation unit points to this scope.
+	 * The global scope, spanning all translation units. Every translation unit points to this scope.
 	 */
 	private final Map<String, SymbolTableValue> mGlobalScope;
 	/**
@@ -137,15 +136,16 @@ public class FlatSymbolTable {
 			mGlobalScope.put(uId, stv);
 		}
 	}
-	
+
 	/**
 	 * Implements the generic table lookup
+	 * 
 	 * @param hook
-	 * 			the hook which acts as an anchor for the current context in the AST
+	 *            the hook which acts as an anchor for the current context in the AST
 	 * @param id
-	 * 			the id of the entry to look for
+	 *            the id of the entry to look for
 	 * @param onlyInnermost
-	 * 			if true, only the innermost scope will be searched
+	 *            if true, only the innermost scope will be searched
 	 * @return the table entry or null
 	 */
 	private SymbolTableValue tableFind(final IASTNode hook, final String id, final boolean onlyInnermost) {
@@ -166,7 +166,7 @@ public class FlatSymbolTable {
 					result = scope.get(id);
 					break;
 				}
-				
+
 				if (onlyInnermost) {
 					// This node represents the innermost scope but doesn't contain the ID
 					break;
@@ -178,35 +178,39 @@ public class FlatSymbolTable {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Lookup in the C-AST symbol table
+	 * 
 	 * @see FlatSymbolTable#tableFind(IASTNode, String, Map, boolean)
 	 */
 	public SymbolTableValue findCSymbol(final IASTNode hook, final String id) {
 		return tableFind(hook, id, false);
 	}
-	
+
 	/**
 	 * Convenience method for checking if an entry exists
+	 * 
 	 * @see FlatSymbolTable#findCSymbol(IASTNode, String)
 	 */
 	public boolean containsCSymbol(final IASTNode hook, final String id) {
 		return findCSymbol(hook, id) != null;
 	}
-	
+
 	/**
 	 * Checks whether the entry with the given ID exists (or is shadowed) in the innermost scope
+	 * 
 	 * @see FlatSymbolTable#containsCSymbol(IASTNode, String)
 	 */
 	public boolean containsCSymbolInInnermostScope(final IASTNode hook, final String id) {
 		return tableFind(hook, id, true) != null;
 	}
-	
+
 	/**
 	 * Fetches the unique scope ID at the given hook
+	 * 
 	 * @param hook
-	 * 			where in the AST to look for scopes
+	 *            where in the AST to look for scopes
 	 * @return the unique scope ID
 	 */
 	public int getCScopeId(final IASTNode hook) {
@@ -214,36 +218,36 @@ public class FlatSymbolTable {
 		while (cursor != null) {
 			if (cursor instanceof IASTTranslationUnit) {
 				// The global scope is 1
-				return 1; 
+				return 1;
 			}
-			boolean hasImplicitScope = cursor instanceof IASTFunctionDefinition
-					|| cursor instanceof IASTForStatement;
-			boolean hasExplicitScope = cursor instanceof IASTCompoundStatement
-					&& !(cursor.getParent() instanceof IASTFunctionDefinition)
-					&& !(cursor.getParent() instanceof IASTForStatement);
+			final boolean hasImplicitScope =
+					cursor instanceof IASTFunctionDefinition || cursor instanceof IASTForStatement;
+			final boolean hasExplicitScope =
+					cursor instanceof IASTCompoundStatement && !(cursor.getParent() instanceof IASTFunctionDefinition)
+							&& !(cursor.getParent() instanceof IASTForStatement);
 			if (hasImplicitScope || hasExplicitScope) {
 				if (mCScopeIDs.containsKey(cursor)) {
 					return mCScopeIDs.get(cursor);
-				} else {
-					mScopeCounter++;
-					mCScopeIDs.put(cursor, mScopeCounter);
-					return mScopeCounter;
 				}
+				mScopeCounter++;
+				mCScopeIDs.put(cursor, mScopeCounter);
+				return mScopeCounter;
 			}
 			cursor = cursor.getParent();
 			cursor = mCHookSkip.apply(cursor);
 		}
 		return 0;
 	}
-	
+
 	/**
 	 * Stores a value in the table
+	 * 
 	 * @param hook
-	 * 			anchor in the AST
+	 *            anchor in the AST
 	 * @param id
-	 * 			the ID of the value
+	 *            the ID of the value
 	 * @param val
-	 * 			the value
+	 *            the value
 	 * @see FlatSymbolTable#tableFind(IASTNode, String, boolean)
 	 */
 	private void tableStore(final IASTNode hook, final String id, final SymbolTableValue val) {
@@ -254,9 +258,9 @@ public class FlatSymbolTable {
 					mGlobalScope.put(id, val);
 					break;
 				}
-				boolean hasImplicitScope = cursor instanceof IASTFunctionDefinition
-						|| cursor instanceof IASTForStatement;
-				boolean hasExplicitScope = cursor instanceof IASTCompoundStatement
+				final boolean hasImplicitScope =
+						cursor instanceof IASTFunctionDefinition || cursor instanceof IASTForStatement;
+				final boolean hasExplicitScope = cursor instanceof IASTCompoundStatement
 						&& !(cursor.getParent() instanceof IASTFunctionDefinition)
 						&& !(cursor.getParent() instanceof IASTForStatement);
 				if (hasImplicitScope || hasExplicitScope) {
@@ -269,13 +273,14 @@ public class FlatSymbolTable {
 				cursor = mCHookSkip.apply(cursor);
 			}
 			if (cursor == null) {
-				throw new IllegalStateException("Found no possible scope holder");				
+				throw new IllegalStateException("Found no possible scope holder");
 			}
 		}
 	}
-	
+
 	/**
 	 * Stores a C symbol
+	 * 
 	 * @see FlatSymbolTable#tableStore(IASTNode, String, SymbolTableValue)
 	 */
 	public void storeCSymbol(final IASTNode hook, final String id, final SymbolTableValue val) {
@@ -283,11 +288,12 @@ public class FlatSymbolTable {
 		mBoogieIdToCId.put(val.getBoogieName(), id);
 		mCDeclToBoogieDecl.put(val.getCDecl(), val.getBoogieDecl());
 	}
-	
+
 	/**
 	 * Fetches all values in the innermost C scope
+	 * 
 	 * @param hook
-	 * 			the anchor in the C AST
+	 *            the anchor in the C AST
 	 * @return the values that are present in the innermost scope
 	 */
 	public Iterable<SymbolTableValue> getInnermostCScopeValues(final IASTNode hook) {
@@ -304,84 +310,90 @@ public class FlatSymbolTable {
 
 	/**
 	 * Renames an identifier given the file it is in and the original name
+	 * 
 	 * @param filePath
-	 *			The file the identifier is used in
+	 *            The file the identifier is used in
 	 * @param original
-	 * 			The original identifier
+	 *            The original identifier
 	 * @return the new identifier (might be the same as before)
 	 */
 	public String applyMultiparseRenaming(final String filePath, final String original) {
 		return mMultiparseInformation.getNameMappingIfExists(filePath, original);
 	}
-	
+
 	/**
 	 * Fetches the C ID for the given Boogie ID
+	 * 
 	 * @param boogieId
-	 * 			the boogie ID
+	 *            the boogie ID
 	 * @return the C ID
 	 */
 	public String getCIdForBoogieId(final String boogieId) {
 		return mBoogieIdToCId.get(boogieId);
 	}
-	
+
 	/**
 	 * Fetches the Boogie Declaration for the given C Declaration
+	 * 
 	 * @param cDecl
-	 * 			the C declaration
+	 *            the C declaration
 	 * @return the Boogie Declaration
 	 */
 	public Declaration getBoogieDeclForCDecl(final CDeclaration cDecl) {
 		return mCDeclToBoogieDecl.get(cDecl);
 	}
-	
+
 	/**
-	 * Checks whether a variable with the given boogie ID is known, used for checking if
-	 * a variable is a temporary variable
+	 * Checks whether a variable with the given boogie ID is known, used for checking if a variable is a temporary
+	 * variable
+	 * 
 	 * @param boogieId
-	 * 			the boogie ID
+	 *            the boogie ID
 	 * @return whether the variable is contained in the symbol table
 	 */
 	public boolean containsBoogieSymbol(final String boogieId) {
 		return mBoogieIdToCId.containsKey(boogieId);
 	}
-	
+
 	/**
 	 * Manually adds a C/Boogie ID pair to the symbol table
+	 * 
 	 * @param boogieIdentifier
-	 * 			the boogie ID
+	 *            the boogie ID
 	 * @param cIdentifier
-	 * 			the C ID
+	 *            the C ID
 	 * @param loc
-	 * 			the location, for error reporting
+	 *            the location, for error reporting
 	 */
-	public void addBoogieCIdPair(String boogieIdentifier, String cIdentifier, ILocation loc) {
+	public void addBoogieCIdPair(final String boogieIdentifier, final String cIdentifier, final ILocation loc) {
 		final String old = mBoogieIdToCId.put(boogieIdentifier, cIdentifier);
-        if (old != null && !old.equals(cIdentifier)) {
-            final String msg = "Variable with this name was already declared before:"
-                    + cIdentifier;
-            throw new IncorrectSyntaxException(loc, msg);
-        }
+		if (old != null && !old.equals(cIdentifier)) {
+			final String msg = "Variable with this name was already declared before:" + cIdentifier;
+			throw new IncorrectSyntaxException(loc, msg);
+		}
 	}
-	
+
 	/**
 	 * Returns the Boogie to C ID mapping
+	 * 
 	 * @return the boogie to C ID mapping
 	 */
 	public Map<String, String> getBoogieCIdentifierMapping() {
 		return Collections.unmodifiableMap(mBoogieIdToCId);
 	}
-	
+
 	/**
 	 * Fetches the type of a variable
+	 * 
 	 * @param hook
-	 * 			where to look for the variable
+	 *            where to look for the variable
 	 * @param cId
-	 * 			the c identifier
-	 * @param loc 
-	 * 			location for error reporting
+	 *            the c identifier
+	 * @param loc
+	 *            location for error reporting
 	 * @return the type
 	 */
-	public ASTType getTypeOfVariable(IASTNode hook, String cId, ILocation loc) {
+	public ASTType getTypeOfVariable(final IASTNode hook, final String cId, final ILocation loc) {
 		return mDispatcher.mTypeHandler.cType2AstType(loc, findCSymbol(hook, cId).getCVariable());
 	}
 }
