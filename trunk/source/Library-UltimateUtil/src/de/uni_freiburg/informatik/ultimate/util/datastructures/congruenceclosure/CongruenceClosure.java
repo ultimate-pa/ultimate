@@ -230,6 +230,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return result;
 	}
 
+	@Override
 	public boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
 		assert !mIsFrozen;
 		if (isInconsistent()) {
@@ -265,35 +266,35 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return true;
 		}
 
-		doFwccAndBwccPropagationsFromMerge(propInfo);
+		doFwccAndBwccPropagationsFromMerge(propInfo, this);
 
 //		assert sanityCheck();
 		assert assertAtMostOneLiteralPerEquivalenceClass();
 		return true;
 	}
 
-	public void doFwccAndBwccPropagationsFromMerge(
-			final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo) {
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void doFwccAndBwccPropagationsFromMerge(
+			final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo, final ICongruenceClosure<ELEM> icc) {
 		final HashRelation<ELEM, ELEM> equalitiesToPropagate = propInfo.getFirst();
 		final HashRelation<ELEM, ELEM> disequalitiesToPropagate = propInfo.getSecond();
 		/*
 		 * (fwcc)
 		 */
 		for (final Entry<ELEM, ELEM> congruentParents : equalitiesToPropagate) {
-			if (isInconsistent()) {
+			if (icc.isInconsistent()) {
 				return;
 			}
-			reportEqualityRec(congruentParents.getKey(), congruentParents.getValue());
+			icc.reportEqualityRec(congruentParents.getKey(), congruentParents.getValue());
 		}
 
 		/*
 		 * (bwcc1), (bwcc2)  (-- they're only separate cases during reportDisequality)
 		 */
 		for (final Entry<ELEM, ELEM> unequalNeighborIndices : disequalitiesToPropagate) {
-			if (isInconsistent()) {
+			if (icc.isInconsistent()) {
 				return;
 			}
-			reportDisequalityRec(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
+			icc.reportDisequalityRec(unequalNeighborIndices.getKey(), unequalNeighborIndices.getValue());
 		}
 	}
 
@@ -343,6 +344,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return result;
 	}
 
+	@Override
 	public boolean reportDisequalityRec(final ELEM elem1, final ELEM elem2) {
 		assert !mIsFrozen;
 		assert elem1.hasSameTypeAs(elem2);

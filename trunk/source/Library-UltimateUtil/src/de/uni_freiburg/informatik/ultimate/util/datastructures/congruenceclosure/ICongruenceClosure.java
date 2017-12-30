@@ -31,4 +31,8 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 	boolean sanityCheckOnlyCc(IRemovalInfo<ELEM> remInfo);
 
+	boolean reportEqualityRec(ELEM key, ELEM value);
+
+	boolean reportDisequalityRec(ELEM key, ELEM value);
+
 }

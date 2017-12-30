@@ -51,5 +51,8 @@ public class WeqSettings {
 
 	static final boolean MEET_WITH_GPA_ON_REPORT_WEQ = false;
 
-	public static final boolean MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL = false;
+	/**
+	 * TODO Should we always do meetWGpa during the label operations done in the roweq-rules?? Does it commute???
+	 */
+	public static final boolean MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL = true;
 }

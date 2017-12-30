@@ -422,7 +422,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param node2
 	 * @return
 	 */
-	private boolean reportEqualityRec(final NODE node1, final NODE node2) {
+	@Override
+	public boolean reportEqualityRec(final NODE node1, final NODE node2) {
 		assert !isFrozen();
 		assert node1.hasSameTypeAs(node2);
 		if (isInconsistent()) {
@@ -479,7 +480,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return true;
 		}
 
-		mCongruenceClosure.doFwccAndBwccPropagationsFromMerge(propInfo);
+//		mCongruenceClosure.doFwccAndBwccPropagationsFromMerge(propInfo);
+		CongruenceClosure.doFwccAndBwccPropagationsFromMerge(propInfo, this);
 		if (isInconsistent()) {
 			return true;
 		}
@@ -725,7 +727,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return result;
 	}
 
-	private boolean reportDisequalityRec(final NODE node1, final NODE node2) {
+	@Override
+	public boolean reportDisequalityRec(final NODE node1, final NODE node2) {
 		boolean madeChanges = false;
 
 		madeChanges |= mCongruenceClosure.reportDisequalityRec(node1, node2);

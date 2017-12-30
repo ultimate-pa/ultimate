@@ -112,6 +112,9 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		boolean becameInconsistentWhenAddingANode = false;
 		becameInconsistentWhenAddingANode = addNodesToKeepInformation(elementsToRemove, nodeToReplacementNode);
+		// TODO: seems out of place here, somehow..
+		mWeqCc.reportAllArrayEqualitiesFromWeqGraph();
+
 		if (becameInconsistentWhenAddingANode) {
 			assert mWeqCc.isInconsistent();
 			mDidRemoval = true;
@@ -132,6 +135,8 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 		mWeqCc.fatten(mUseWeqGpa);
+
+		// TODO: should we do a full closure here (like when freezing??)
 
 		final Set<NODE> nodesAddedInLabels = mWeqCc.removeElementAndDependents(mElem, elementsToRemove,
 					nodeToReplacementNode, mUseWeqGpa);

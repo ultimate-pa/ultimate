@@ -208,11 +208,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return ccs;
 		}
 		final DISJUNCT sample = ccs.iterator().next();
+		Set<DISJUNCT> result;
 		if (sample instanceof CongruenceClosure<?>) {
-			return (Set<DISJUNCT>) filterRedundantCcs((Set<CongruenceClosure<NODE>>) ccs);
+			result = (Set<DISJUNCT>) filterRedundantCcs((Set<CongruenceClosure<NODE>>) ccs);
 		} else {
-			return (Set<DISJUNCT>) filterRedundantWeqCcs((Set<WeqCongruenceClosure<NODE>>) ccs);
+			result = (Set<DISJUNCT>) filterRedundantWeqCcs((Set<WeqCongruenceClosure<NODE>>) ccs);
 		}
+		assert checkFilterDisjunctionResult(ccs, result);
+		return result;
 	}
 
 	private Set<WeqCongruenceClosure<NODE>> filterRedundantWeqCcs(final Set<WeqCongruenceClosure<NODE>> ccs) {
@@ -528,24 +531,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager.addElement(congruenceClosure, storeIndex, inplace, omitSanityChecks);
 	}
 
-	public static <NODE extends IEqNodeIdentifier<NODE>> Term weqCcToTerm(final Script script,
-			final WeqCongruenceClosure<NODE> weqCc) {
-		if (weqCc.isInconsistent()) {
-			return script.term("false");
-		}
-
-		final List<Term> allConjuncts = new ArrayList<>();
-		// allConjuncts.addAll(EqConstraint.partialArrangementToCube(script, this));
-		allConjuncts.addAll(CongruenceClosureSmtUtils.congruenceClosureToCube(script, weqCc.getCongruenceClosure()));
-
-		final List<Term> weakEqConstraints = weqCc.getWeakEquivalenceGraph()
-				.getWeakEquivalenceConstraintsAsTerms(script);
-		allConjuncts.addAll(weakEqConstraints);
-
-		final Term result = SmtUtils.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
-		return result;
-	}
-
 	public List<NODE> getAllWeqVarsNodeForFunction(final NODE func) {
 		if (!func.getSort().isArraySort()) {
 			return Collections.emptyList();
@@ -795,6 +780,59 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return satResult == LBool.UNSAT;
 	}
 
+	private <DISJUNCT extends ICongruenceClosure<NODE>> boolean checkFilterDisjunctionResult(final Set<DISJUNCT> ccs1,
+			final Set<DISJUNCT> ccs2) {
+		mMgdScript.lock(this);
+		mMgdScript.echo(this, new QuotedObject("WeqCcManager.checkFilterDisjunctionResult (begin)"));
+		final Term term1 = disjunctionToTerm(mMgdScript.getScript(), ccs1);
+		final Term term2 = disjunctionToTerm(mMgdScript.getScript(), ccs2);
+		final boolean res = checkImplicationHolds(mMgdScript.getScript(), term1, term2)
+				&& checkImplicationHolds(mMgdScript.getScript(), term2, term1);
+
+		mMgdScript.echo(this, new QuotedObject("WeqCcManager.checkFilterDisjunctionResult (end)"));
+		mMgdScript.unlock(this);
+		return res;
+
+	}
+
+	private static <NODE extends IEqNodeIdentifier<NODE> , DISJUNCT extends ICongruenceClosure<NODE>>
+			Term disjunctionToTerm(final Script script, final Set<DISJUNCT> ccs) {
+		if (ccs.isEmpty()) {
+			return script.term("true");
+		}
+		final DISJUNCT sample = ccs.iterator().next();
+		final Set<Term> disjunctTerms = new HashSet<>();
+		if (sample instanceof CongruenceClosure<?>) {
+			for (final DISJUNCT cc : ccs) {
+				disjunctTerms.add(CongruenceClosureSmtUtils.congruenceClosureToTerm(script,
+						(CongruenceClosure<NODE>) cc));
+			}
+		} else {
+			for (final DISJUNCT weqcc : ccs) {
+				disjunctTerms.add(weqCcToTerm(script, (WeqCongruenceClosure<NODE>) weqcc));
+			}
+		}
+		return SmtUtils.or(script, disjunctTerms);
+	}
+
+	public static <NODE extends IEqNodeIdentifier<NODE>> Term weqCcToTerm(final Script script,
+			final WeqCongruenceClosure<NODE> weqCc) {
+		if (weqCc.isInconsistent()) {
+			return script.term("false");
+		}
+
+		final List<Term> allConjuncts = new ArrayList<>();
+		// allConjuncts.addAll(EqConstraint.partialArrangementToCube(script, this));
+		allConjuncts.addAll(CongruenceClosureSmtUtils.congruenceClosureToCube(script, weqCc.getCongruenceClosure()));
+
+		final List<Term> weakEqConstraints = weqCc.getWeakEquivalenceGraph()
+				.getWeakEquivalenceConstraintsAsTerms(script);
+		allConjuncts.addAll(weakEqConstraints);
+
+		final Term result = SmtUtils.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
+		return result;
+	}
+
 	public WeqCongruenceClosure<NODE> getWeqCongruenceClosure(final CongruenceClosure<NODE> cc,
 			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weqGraph, final boolean modifiable) {
 		final CongruenceClosure<NODE> ccUnfrozen = mCcManager.unfreezeIfNecessary(cc);
@@ -854,17 +892,22 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT projectToElements(final DISJUNCT cc,
-			final Set<NODE> nodesToKeep, final IRemovalInfo<NODE> remInfo) {
+			final Set<NODE> nodesToKeep, final IRemovalInfo<NODE> remInfo, final boolean modifiable) {
 		if (cc.getClass().equals(CongruenceClosure.class)) {
-			return (DISJUNCT) projectToElements((CongruenceClosure<NODE>) cc, nodesToKeep, remInfo);
+			return (DISJUNCT) projectToElements((CongruenceClosure<NODE>) cc, nodesToKeep, remInfo, modifiable);
 		} else {
 			throw new AssertionError();
 		}
 	}
 
 	public CongruenceClosure<NODE> projectToElements(final CongruenceClosure<NODE> cc, final Set<NODE> nodesToKeep,
-			final IRemovalInfo<NODE> remInfo) {
-		return mCcManager.projectToElements(cc, nodesToKeep, remInfo);
+			final IRemovalInfo<NODE> remInfo, final boolean modifiable) {
+		CongruenceClosure<NODE> result = mCcManager.projectToElements(cc, nodesToKeep, remInfo);
+		assert result.isFrozen() : "projectToElements always freezes, right?.. (because it cannot work inplace)";
+		if (modifiable) {
+			result = unfreeze(result);
+		}
+		return result;
 	}
 
 	public WeqCongruenceClosure<NODE> addAllElements(final WeqCongruenceClosure<NODE> weqcc,
@@ -938,7 +981,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
 		meetEdgeLabels( final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l1,
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l2, final boolean inplace) {
-		return l1.meet(l2, inplace);
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = l1.meet(l2, inplace);
+		assert !inplace || result == l1 : "if inplace is set, we must return the original object";
+		return result;
 	}
 
 	public void freezeIfNecessary(final CongruenceClosure<NODE> cc) {

@@ -627,7 +627,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 					new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
 			if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
 				newLabel.meetWithCcGpa();
-				newLabel = newLabel.projectToElements(mWeqCcManager.getAllWeqNodes());
+				newLabel = newLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
 			}
 			putEdgeLabel(sourceAndTarget, newLabel);
 
@@ -663,7 +663,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		/* (Dec 17) no/optional thinning */
 //		// meet with gpa (done before) and project afterwards
 		if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
-			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes());
+			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
 		}
 
 		// inconsistency check
@@ -775,9 +775,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		assert meet.sanityCheckDontEnforceProjectToWeqVars(mWeqCc);
 
-		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = meet;
+		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result;
 		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
-			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge));
+			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
+		} else {
+			/* we need to project here any way, to keep to the paradigm "edge labels that do not refer to a weq var
+			 * are either false or stored as true"
+			 * also, not doing the meetWGpa might be a bad idea anyway..
+			 */
+			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
 		}
 
 		assert result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));
@@ -812,7 +818,12 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToShiftAndAdd = meet;
 		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
-			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge));
+			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
+		} else {
+			/*
+			 * probably we need to project anyway (see projectEdgeLabelToPoint..)
+			 */
+			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
 		}
 
 		labelToShiftAndAdd.inOrDecreaseWeqVarIndices(1, weqVarsForResolventEdge);
