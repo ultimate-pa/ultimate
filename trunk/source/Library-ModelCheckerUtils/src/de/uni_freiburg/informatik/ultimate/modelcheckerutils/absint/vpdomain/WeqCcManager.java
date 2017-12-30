@@ -893,6 +893,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT projectToElements(final DISJUNCT cc,
 			final Set<NODE> nodesToKeep, final IRemovalInfo<NODE> remInfo, final boolean modifiable) {
+		assert !cc.isInconsistent() : "catch this outside";
 		if (cc.getClass().equals(CongruenceClosure.class)) {
 			return (DISJUNCT) projectToElements((CongruenceClosure<NODE>) cc, nodesToKeep, remInfo, modifiable);
 		} else {
@@ -902,6 +903,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public CongruenceClosure<NODE> projectToElements(final CongruenceClosure<NODE> cc, final Set<NODE> nodesToKeep,
 			final IRemovalInfo<NODE> remInfo, final boolean modifiable) {
+		assert !cc.isInconsistent() : "catch this outside";
 		CongruenceClosure<NODE> result = mCcManager.projectToElements(cc, nodesToKeep, remInfo);
 		assert result.isFrozen() : "projectToElements always freezes, right?.. (because it cannot work inplace)";
 		if (modifiable) {

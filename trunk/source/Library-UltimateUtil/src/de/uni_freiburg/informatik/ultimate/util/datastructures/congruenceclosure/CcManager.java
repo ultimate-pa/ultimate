@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosur
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -182,7 +183,14 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public Set<CongruenceClosure<ELEM>> filterRedundantCcs(final Set<CongruenceClosure<ELEM>> unionList,
 			final PartialOrderCache<CongruenceClosure<ELEM>> ccPoCache) {
-		return ccPoCache.getMaximalRepresentatives(unionList);
+		final Set<CongruenceClosure<ELEM>> maxReps = ccPoCache.getMaximalRepresentatives(unionList);
+		// some additional processing: if maxReps is {False}, return the empty set
+		assert !maxReps.stream().anyMatch(cc -> cc.isInconsistent()) || maxReps.size() == 1;
+		if (maxReps.iterator().next().isInconsistent()) {
+			return Collections.emptySet();
+		}
+
+		return maxReps;
 	}
 
 	public CongruenceClosure<ELEM> reportEquality(final ELEM node1, final ELEM node2,
