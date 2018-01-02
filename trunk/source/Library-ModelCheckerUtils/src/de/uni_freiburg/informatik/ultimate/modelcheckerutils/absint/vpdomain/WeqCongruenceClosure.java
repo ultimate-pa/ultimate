@@ -832,6 +832,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 */
 	public void fatten(final boolean useWeqGpa) {
 		assert !isFrozen();
+
+		if (this.isInconsistent()) {
+			return;
+		}
+
 		switch (mDiet) {
 		case THIN:
 		case TRANSITORY_THIN_TO_CCFAT:
@@ -869,6 +874,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public void extAndTriangleClosure() {
 
 		while (true) {
+			if (this.isInconsistent()) {
+				return;
+			}
+
 			// 1. fatten, then saturate propagations (fatten may trigger ext, ext may trigger reportEq, etc..)
 			{
 				boolean madeChanges = true;

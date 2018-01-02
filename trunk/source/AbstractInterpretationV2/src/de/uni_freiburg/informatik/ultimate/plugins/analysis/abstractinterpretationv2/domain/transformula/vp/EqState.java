@@ -67,9 +67,14 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
 		mPvocs = new HashSet<>(variables);
-		assert mPvocs.containsAll(constraint.getPvocs(mFactory.getSymbolTable()).stream()
+		assert assertPvocsAreComplete(constraint);
+	}
+
+	private boolean assertPvocsAreComplete(final EqConstraint<EqNode> constraint) {
+		final Set<IProgramVarOrConst> set = constraint.getPvocs(mFactory.getSymbolTable()).stream()
 				.filter(pvoc -> !(pvoc instanceof IProgramOldVar)).filter(pvoc -> !(pvoc instanceof BoogieConst))
-				.collect(Collectors.toSet()));
+				.collect(Collectors.toSet());
+		return mPvocs.containsAll(set);
 	}
 
 	@Override

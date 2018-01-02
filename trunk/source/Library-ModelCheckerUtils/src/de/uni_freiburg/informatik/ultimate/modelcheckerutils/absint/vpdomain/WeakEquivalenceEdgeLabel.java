@@ -613,7 +613,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		return sanityCheck(mWeakEquivalenceGraph.mWeqCc);
 	}
 
-	private boolean sanityCheck(final WeqCongruenceClosure<NODE> groundPartialArrangement) {
+	private boolean sanityCheck(final WeqCongruenceClosure<NODE> baseWeqCc) {
 		if (mWeakEquivalenceGraph.getWeqCcManager() == null) {
 			return true;
 		}
@@ -635,10 +635,11 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 		// check that labels are free of weqPrimed vars
 //		if (!groundPartialArrangement.mMeetWithGpaCase) {
-		if (!groundPartialArrangement.mIsWeqFatEdgeLabel
-		        && groundPartialArrangement.mDiet != Diet.WEQCCFAT
-				&& groundPartialArrangement.mDiet != Diet.TRANSITORY_THIN_TO_WEQCCFAT
-				&& groundPartialArrangement.mDiet != Diet.TRANSITORY_WEQCCREFATTEN) {
+		if (baseWeqCc != null
+				&& !baseWeqCc.mIsWeqFatEdgeLabel
+		        && baseWeqCc.mDiet != Diet.WEQCCFAT
+				&& baseWeqCc.mDiet != Diet.TRANSITORY_THIN_TO_WEQCCFAT
+				&& baseWeqCc.mDiet != Diet.TRANSITORY_WEQCCREFATTEN) {
 			for (final DISJUNCT lab : getDisjuncts()) {
 				for (final NODE el : lab.getAllElements()) {
 					if (CongruenceClosure.dependsOnAny(el,
@@ -650,7 +651,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			}
 		}
 
-		if (mWeakEquivalenceGraph.mWeqCc.mDiet == Diet.THIN) {
+		if (baseWeqCc != null && baseWeqCc.mDiet == Diet.THIN) {
 			// in THIN-mode: check that labels are free of constraints that don't contain weq nodes
 			for (final DISJUNCT lab : getDisjuncts()) {
 				assert ((CongruenceClosure<NODE>) lab).assertHasOnlyWeqVarConstraints(mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes());
@@ -794,11 +795,13 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		mDisjuncts.add(emptyDisjunct);
 	}
 
-	boolean sanityCheckDontEnforceProjectToWeqVars(final ICongruenceClosure<NODE> groundPartialArrangement) {
-		for (final DISJUNCT lab : getDisjuncts()) {
-			if (!lab.sanityCheckOnlyCc(groundPartialArrangement.getElementCurrentlyBeingRemoved())) {
-				assert false;
-				return false;
+	boolean sanityCheckDontEnforceProjectToWeqVars(final ICongruenceClosure<NODE> baseWeqCc) {
+		if (baseWeqCc != null) {
+			for (final DISJUNCT lab : getDisjuncts()) {
+				if (!lab.sanityCheckOnlyCc(baseWeqCc.getElementCurrentlyBeingRemoved())) {
+					assert false;
+					return false;
+				}
 			}
 		}
 
