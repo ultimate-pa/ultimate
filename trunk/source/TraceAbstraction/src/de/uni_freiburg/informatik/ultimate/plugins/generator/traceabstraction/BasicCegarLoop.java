@@ -701,7 +701,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mLogger.fatal("--");
 	}
 
-	private AbstractInterpolantAutomaton<LETTER> constructInterpolantAutomatonForOnDemandEnhancement(
+	protected AbstractInterpolantAutomaton<LETTER> constructInterpolantAutomatonForOnDemandEnhancement(
 			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
@@ -713,7 +713,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		case PREDICATE_ABSTRACTION_CONSERVATIVE:
 		case PREDICATE_ABSTRACTION_CANNIBALIZE:
 			result = constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(inputInterpolantAutomaton,
-					htc, enhanceMode);
+					predicateUnifier, htc, enhanceMode);
 			break;
 		case EAGER:
 		case NO_SECOND_CHANCE:
@@ -741,12 +741,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private DeterministicInterpolantAutomaton<LETTER>
 			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
 					final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-					final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode) {
+					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc, 
+					final InterpolantAutomatonEnhancement enhanceMode) {
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 		return new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-				mTraceCheckAndRefinementEngine.getPredicateUnifier(), conservativeSuccessorCandidateSelection,
+				predicateUnifier, conservativeSuccessorCandidateSelection,
 				cannibalize);
 	}
 
