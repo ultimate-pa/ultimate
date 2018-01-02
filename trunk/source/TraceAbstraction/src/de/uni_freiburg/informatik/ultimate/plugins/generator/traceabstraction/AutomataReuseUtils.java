@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
  */
 public class AutomataReuseUtils {
 
-	static final <LETTER extends IIcfgTransition<?>> List<INestedWordAutomaton<LETTER, IPredicate>> interpretAutomata(
+	static final <LETTER extends IIcfgTransition<?>> List<NestedWordAutomaton<LETTER, IPredicate>> interpretAutomata(
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
@@ -45,7 +45,7 @@ public class AutomataReuseUtils {
 			final CfgSmtToolkit csToolkit) {
 	
 		final Boolean debugOn = true;
-		final List<INestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<INestedWordAutomaton<LETTER, IPredicate>>();
+		final List<NestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<NestedWordAutomaton<LETTER, IPredicate>>();
 
 		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : rawFloydHoareAutomataFromFile) {
 			

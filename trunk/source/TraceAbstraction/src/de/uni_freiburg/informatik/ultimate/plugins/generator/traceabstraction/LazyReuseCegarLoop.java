@@ -89,7 +89,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basic
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
-		final List<INestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = AutomataReuseUtils.interpretAutomata(
+		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = AutomataReuseUtils.interpretAutomata(
 				mRawFloydHoareAutomataFromFiles, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
 				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger, mCsToolkit);
 
