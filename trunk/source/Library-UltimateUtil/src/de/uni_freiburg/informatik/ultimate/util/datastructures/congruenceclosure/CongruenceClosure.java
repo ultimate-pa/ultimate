@@ -1454,11 +1454,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (sub.contains(elem)) {
 			return true;
 		}
+
 		if (elem.isDependentNonFunctionApplication()) {
-			for (final ELEM sn : elem.getSupportingNodes()) {
-				if (sub.contains(sn)) {
-					return true;
-				}
+			if (DataStructureUtils.haveNonEmptyIntersection(elem.getSupportingNodes(), sub)) {
+				return true;
 			}
 		}
 		if (elem.isFunctionApplication()) {

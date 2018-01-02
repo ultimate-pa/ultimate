@@ -58,11 +58,11 @@ public class DataStructureUtils {
 		}
 		return smaller.stream().filter(larger::contains).collect(Collectors.toSet());
 	}
-	
-	
+
+
 	/**
-	 * @return an Optional<T> that contains an element that is contained in 
-	 * set1 and contained in set2 and that does not contain en element otherwise. 
+	 * @return an Optional<T> that contains an element that is contained in
+	 * set1 and contained in set2 and that does not contain en element otherwise.
 	 */
 	public static <T> Optional<T> getSomeCommonElement(final Set<T> set1, final Set<T> set2) {
 		final Set<T> larger;
@@ -107,6 +107,26 @@ public class DataStructureUtils {
 		final Set<T> rtr = new HashSet<>(capacity);
 		rtr.addAll(oldSet);
 		return rtr;
+	}
+
+	/**
+	 * Returns true, if the given sets have at least one common element.
+	 *
+	 * Should be quicker than first computing the intersection and the calling isEmpty() on it.
+	 * Optimized for HashSets, iterates over smaller set (second argument) and does lookups in the larger set (first
+	 * argument).
+	 *
+	 * @param largerSet
+	 * @param smallerSet
+	 * @return
+	 */
+	public static <T> boolean haveNonEmptyIntersection(final Set<T> largerSet, final Set<T> smallerSet) {
+		for (final T t : smallerSet) {
+			if (largerSet.contains(t)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
