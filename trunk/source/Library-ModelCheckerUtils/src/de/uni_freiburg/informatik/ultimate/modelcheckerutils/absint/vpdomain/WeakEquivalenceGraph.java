@@ -556,10 +556,14 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		return Collections.unmodifiableMap(mWeakEquivalenceEdges);
 	}
 
-	private void putEdgeLabel(final Doubleton<NODE> sourceAndTarget, final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label) {
+	private void putEdgeLabel(final Doubleton<NODE> sourceAndTarget,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label) {
+		assert !isFrozen() : "attempting to change a frozen weq graph";
 		assert mWeqCc.isRepresentative(sourceAndTarget.getOneElement());
 		assert mWeqCc.isRepresentative(sourceAndTarget.getOtherElement());
-		assert mIsFrozen ? label.assertDisjunctsAreFrozen() : label.assertDisjunctsAreUnfrozen();
+//		assert mIsFrozen ? label.assertDisjunctsAreFrozen() : label.assertDisjunctsAreUnfrozen();
+		// paradigm "freeze from inside out"
+		assert !mIsFrozen || label.assertDisjunctsAreFrozen();
 		mWeakEquivalenceEdges.put(sourceAndTarget, label);
 	}
 
@@ -594,10 +598,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 * strengthenEdgeWithExceptedPoint..)
 	 *
 	 * @param sourceAndTarget
-	 * @param value
+	 * @param inputLabel
 	 */
 	private boolean reportWeakEquivalence(final Doubleton<NODE> sourceAndTarget,
-			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> value) {
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> inputLabel) {
+		assert !inputLabel.isTautological() : "catch this case before?";
 		assert !mIsFrozen;
 		assert mWeqCc.isRepresentative(sourceAndTarget.getOneElement())
 			&& mWeqCc.isRepresentative(sourceAndTarget.getOtherElement());
@@ -609,25 +614,26 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		assert sanityCheck();
 
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> oldLabel = getEdgeLabel(sourceAndTarget);
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> inputLabelCopy = mWeqCcManager.copy(inputLabel, this);
 
-		final Set<DISJUNCT> paList = value.getDisjuncts();
-		assert paList.size() != 1 || !paList.iterator().next().isTautological() : "catch this case before?";
-//		assert paList.stream().allMatch(l -> l.assertHasOnlyWeqVarConstraints(mWeqCcManager.getAllWeqNodes()));
-
-		if (paList.isEmpty()) {
-			putEdgeLabel(sourceAndTarget, new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList));
+		if (inputLabel.isInconsistent()) {
+			putEdgeLabel(sourceAndTarget, mWeqCcManager.copy(inputLabel, this));
 			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
 			return oldLabel == null || !oldLabel.isInconsistent();
 		}
 
 		if (oldLabel == null || oldLabel.isTautological()) {
-			assert paList.size() != 1 || !paList.iterator().next().isTautological();
-
-			WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel =
-					new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
+			WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel = inputLabelCopy;
+//					new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
+//					mWeqCcManager.copy(inputLabel);
 			if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
 				newLabel.meetWithCcGpa();
 				newLabel = newLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+			} else if (mWeqCc.getDiet() == Diet.THIN) {
+				// if the weq graph is thin, all labels must only have constraints on weqvars
+				newLabel = newLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+			} else {
+				// we are in "fat" mode so the labels may put constraints on any NODE
 			}
 			putEdgeLabel(sourceAndTarget, newLabel);
 
@@ -639,14 +645,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> oldLabelCopy = mWeqCcManager.copy(oldLabel);
 //				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, oldLabel);
 
-		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToStrengthenWith =
-				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToStrengthenWith = inputLabelCopy;
+//				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
 		assert labelToStrengthenWith.sanityCheck() : "input label not normalized??";
 
 		/*  (Dec 17) note that we are not (always) fattening/thinning here, as we did before, because that is delayed
 		 * for performance reasons
 		  */
 		if (!WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+			// we need to do it on both for the following isStrongerThan to be (more) precise
 			labelToStrengthenWith.meetWithCcGpa();
 			oldLabelCopy.meetWithCcGpa();
 		}
@@ -660,16 +667,20 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel =
 				mWeqCcManager.meetEdgeLabels(oldLabelCopy, labelToStrengthenWith, true);
 
-		/* (Dec 17) no/optional thinning */
-//		// meet with gpa (done before) and project afterwards
-		if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
-			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
-		}
-
 		// inconsistency check
 		if (strengthenedEdgeLabel.isInconsistent()) {
 			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
 		}
+
+		/* (Dec 17) no/optional thinning */
+//		// meet with gpa (done before) and project afterwards
+		if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+		} else {
+			// (not totally clear, see also WeakEquivalenceEdgeLabel.[projectToPoint|shift])
+			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+		}
+
 
 		assert strengthenedEdgeLabel.sanityCheck();
 		// replace the edge label by the strengthened version
@@ -741,7 +752,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelContents,
 			final NODE value, final List<NODE> weqVarsForThisEdge) {
 		assert !mIsFrozen;
-		assert assertFrozenStatusInSync();
+//		assert assertFrozenStatusInSync();
+		assert assertFrozenInsideOut();
 
 		assert labelContents.getWeqGraph() == this;
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> originalEdgeLabel = mWeqCcManager.copy(labelContents);
@@ -917,16 +929,16 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 	/**
 	 *
-	 * @param originalWeqCc needed for building the new WeakEquivalencegraph
-	 * @param originalWeqCcCopy a version of the gpa before we started to meet edgeLabels with the gpa (resulting in changed
-	 *  edgeLabels in the gpa (mPartialArrangement))
+	 * @param originalWeqCc the base weqCc for the new WeakEquivalencegraph (it will have a field with this reference)
+	 * @param originalWeqCcCopy a version of the gpa before we started to meet edgeLabels with the gpa (resulting in
+	 *   changed edgeLabels in the gpa (mPartialArrangement))
 	 */
 	public WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>>
 			meetEdgeLabelsWithWeqGpaBeforeRemove(final WeqCongruenceClosure<NODE> originalWeqCc,
 					final WeqCongruenceClosure<NODE> originalWeqCcCopy) {
 		assert !originalWeqCc.isFrozen();
-		assert originalWeqCcCopy.isFrozen();
-		assert mWeqCc.mDiet == Diet.THIN || mWeqCc.mDiet == Diet.TRANSITORY;
+//		assert originalWeqCcCopy.isFrozen();
+		assert mWeqCc.mDiet == Diet.THIN || mWeqCc.mDiet == Diet.TRANSITORY_THIN_TO_FAT;
 
 		final WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>> result =
 				new WeakEquivalenceGraph<NODE, WeqCongruenceClosure<NODE>>(originalWeqCc, mWeqCcManager,
@@ -956,7 +968,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> ccFattenEdgeLabels() {
 //			final WeqCongruenceClosure<NODE> originalWeqCc) {
-		assert mWeqCc.mDiet == Diet.TRANSITORY;
+		assert mWeqCc.mDiet == Diet.TRANSITORY_THIN_TO_FAT;
 
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edgeLabel : getWeqEdgesEntrySet()) {
 			edgeLabel.getValue().meetWithCcGpa();
@@ -1006,7 +1018,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		// set the flags
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edge : getWeqEdgesEntrySet()) {
-			edge.getValue().freeze();
+			edge.getValue().freezeIfNecessary();
 		}
 		mIsFrozen = true;
 	}
@@ -1083,18 +1095,31 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			return true;
 		}
 
+		/*
+		 * All weq edgeLabels must point to this weqGraph in the corresponding field
+		 */
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> en
+				: getWeqEdgesEntrySet()) {
+			if (en.getValue().getWeqGraph() != this) {
+				assert false : "weq graph has edge label with incorrect getWeqGraph()";
+				return false;
+			}
+		}
+
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> en
 				: getWeqEdgesEntrySet()) {
 			assert en.getValue().sanityCheck();
 		}
 
-		assert assertFrozenStatusInSync();
+//		assert assertFrozenStatusInSync();
+		assert assertFrozenInsideOut();
 
 		assert sanityAllNodesOnWeqLabelsAreKnownToGpa(null);
 
 		return sanityCheckWithoutNodesComparison();
 	}
 
+	@Deprecated
 	private boolean assertFrozenStatusInSync() {
 		if (mIsFrozen != mWeqCc.isFrozen()) {
 			assert false;
@@ -1106,6 +1131,21 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				assert edge.getValue().assertDisjunctsAreFrozen();
 			} else {
 				assert edge.getValue().assertDisjunctsAreUnfrozen();
+			}
+		}
+		return true;
+	}
+
+	private boolean assertFrozenInsideOut() {
+		if (mWeqCc.isFrozen() && !mIsFrozen) {
+			assert false;
+			return false;
+		}
+
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edge : getWeqEdgesEntrySet()) {
+			if (mIsFrozen && !edge.getValue().assertDisjunctsAreFrozen()) {
+				assert false;
+				return false;
 			}
 		}
 		return true;
@@ -1232,5 +1272,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				return label1.union(label2, mCcPoCache);
 			}
 		}
+
+	public void freezeIfNecessary() {
+		if (!isFrozen()) {
+			freeze();
+		}
+	}
 }
 

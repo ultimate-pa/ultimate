@@ -368,7 +368,13 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> copyNoRemInfo(final CongruenceClosure<ELEM> cc) {
+		if (cc.isInconsistent()) {
+			// no need for a real copy, as there is no operation that changes an inconsistent cc anyway..
+			return cc;
+		}
+
 		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(cc);
+
 		if (cc.isFrozen()) {
 			result.freeze();
 		}

@@ -107,8 +107,9 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		if (mConstraints.size() == 1) {
 			return mConstraints.iterator().next();
 		}
-//		return mConstraints.stream().reduce((c1, c2) -> c1.join(c2)).get();
-		return mConstraints.stream().reduce((c1, c2) -> mFactory.disjoin(c1, c2)).get();
+		return mConstraints.stream().reduce((c1, c2) -> c1.join(c2)).get();
+		// this caused a loop as disjoin uses flatten..
+//		return mConstraints.stream().reduce((c1, c2) -> mFactory.disjoin(c1, c2)).get();
 	}
 
 	public boolean isEmpty() {

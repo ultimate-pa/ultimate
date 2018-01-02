@@ -1604,4 +1604,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public ILogger getLogger() {
 		return mManager.getLogger();
 	}
+
+	public void freezeIfNecessary() {
+		 if (!isFrozen()) {
+			 freeze();
+		 }
+	}
 }

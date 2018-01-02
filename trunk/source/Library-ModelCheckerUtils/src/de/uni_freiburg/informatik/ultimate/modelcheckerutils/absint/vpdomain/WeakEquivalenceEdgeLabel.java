@@ -262,6 +262,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	}
 
 	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> projectToElements(final Set<NODE> allWeqNodes, final boolean  modifiable) {
+//		assert mWeakEquivalenceGraph.mWeqCc.mDiet != Diet.TRANSITORY &&mWeakEquivalenceGraph.mWeqCc.mDiet != Diet.TRANSITORY
+		assert mWeakEquivalenceGraph.mWeqCc.mDiet == Diet.THIN;
 		if (isInconsistent()) {
 			return this;
 		}
@@ -876,5 +878,11 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		}
 
 		return new WeakEquivalenceEdgeLabel<>(newWeqGraph, newLabelContents);
+	}
+
+	public void freezeIfNecessary() {
+		for (final DISJUNCT disjunct : getDisjuncts()) {
+			disjunct.freezeIfNecessary();
+		}
 	}
 }

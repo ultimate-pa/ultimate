@@ -21,6 +21,8 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 	void freeze();
 
+	void freezeIfNecessary();
+
 	String toLogString();
 
 	// methods used in assertions
