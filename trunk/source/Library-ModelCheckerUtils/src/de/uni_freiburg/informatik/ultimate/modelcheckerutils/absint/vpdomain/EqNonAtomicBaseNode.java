@@ -72,7 +72,7 @@ public class EqNonAtomicBaseNode extends EqNode {
 	}
 
 	@Override
-	public boolean isDependent() {
+	public boolean isDependentNonFunctionApplication() {
 		return true;
 	}
 

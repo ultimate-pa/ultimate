@@ -87,7 +87,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	@Override
-	public boolean isDependent() {
+	public boolean isDependentNonFunctionApplication() {
 		// this is the default case NonAtomicBaseNode must override this
 		return false;
 	}

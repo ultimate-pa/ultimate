@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -53,6 +55,7 @@ public class EqPredicate implements IPredicate {
 	public EqPredicate(final EqDisjunctiveConstraint<EqNode> constraint, final Set<IProgramVar> vars,
 			final String[] procedures, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
 		assert vars != null;
+		assert vars.stream().allMatch(Objects::nonNull);
 		mConstraint = constraint;
 		mVars = vars;
 		mProcedures = procedures;
@@ -68,6 +71,7 @@ public class EqPredicate implements IPredicate {
 	public EqPredicate(final Term formula, final Set<IProgramVar> vars, final String[] procedures,
 			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
 		mConstraint = null;
+		assert vars.stream().allMatch(Objects::nonNull);
 		mVars = vars;
 		mProcedures = procedures;
 
@@ -87,7 +91,7 @@ public class EqPredicate implements IPredicate {
 
 	@Override
 	public Set<IProgramVar> getVars() {
-		return mVars;
+		return Collections.unmodifiableSet(mVars);
 	}
 
 	public EqDisjunctiveConstraint<EqNode> getEqConstraint() {

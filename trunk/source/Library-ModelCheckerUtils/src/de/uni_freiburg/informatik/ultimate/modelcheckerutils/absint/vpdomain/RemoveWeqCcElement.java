@@ -135,6 +135,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 		mWeqCc.fatten(mUseWeqGpa);
+		assert !mUseWeqGpa || mWeqCc.assertAllEdgeLabelsHaveWeqFatFlagSet();
 
 		// TODO: should we do a full closure here (like when freezing??)
 

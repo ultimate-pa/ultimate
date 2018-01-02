@@ -393,10 +393,11 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final Function<ELEM, ELEM> transformer, final boolean inplace) {
 		final CongruenceClosure<ELEM> result;
 		if (inplace) {
+//			assert false : "inplace does not seem to work, currently (problem with representatives...)";
 			cc.transformElementsAndFunctions(transformer);
 			result = cc;
 		} else {
-			final CongruenceClosure<ELEM> unfrozen = unfreeze(cc);
+			final CongruenceClosure<ELEM> unfrozen = unfreezeIfNecessary(cc);
 			unfrozen.transformElementsAndFunctions(transformer);
 			unfrozen.freeze();
 			// TODO: implement a result check here?

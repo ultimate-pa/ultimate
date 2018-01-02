@@ -421,7 +421,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			mAllLiterals.add(elem);
 		}
 
-		if (elem.isDependent()) {
+		if (elem.isDependentNonFunctionApplication()) {
 			for (final ELEM supp : elem.getSupportingNodes()) {
 				mManager.addElement(this, supp, true, true);
 				mFaAuxData.addSupportingNode(supp, elem);
@@ -1451,15 +1451,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean dependsOnAny(final ELEM elem,
 			final Set<ELEM> sub) {
-
-		if (elem.isDependent()) {
-			if (!DataStructureUtils.intersection(elem.getSupportingNodes(), sub).isEmpty()) {
-				return true;
-			}
-		}
-
 		if (sub.contains(elem)) {
 			return true;
+		}
+		if (elem.isDependentNonFunctionApplication()) {
+			for (final ELEM sn : elem.getSupportingNodes()) {
+				if (sub.contains(sn)) {
+					return true;
+				}
+			}
 		}
 		if (elem.isFunctionApplication()) {
 			return dependsOnAny(elem.getAppliedFunction(), sub) || dependsOnAny(elem.getArgument(), sub);
@@ -1557,7 +1557,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 
 		public void removeFromNodeToDependents(final ELEM etr) {
-			if (etr.isDependent()) {
+			if (etr.isDependentNonFunctionApplication()) {
 				mNodeToDependents.removeRangeElement(etr);
 			}
 			mNodeToDependents.removeDomainElement(etr);
@@ -1605,6 +1605,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mManager.getLogger();
 	}
 
+	@Override
 	public void freezeIfNecessary() {
 		 if (!isFrozen()) {
 			 freeze();

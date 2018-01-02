@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiPredicate;
 
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
@@ -166,14 +168,32 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 
+//	/**
+//	 * Unfreezes the given weqcc and all of its components (transitively)
+//	 *
+//	 * @param origWeqCc
+//	 * @return
+//	 */
+//	WeqCongruenceClosure<NODE> unfreezeDeep(final WeqCongruenceClosure<NODE> origWeqCc) {
+//		assert origWeqCc.isFrozen();
+////		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc, true);
+//		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
+//		assert !result.isFrozen();
+//		assert result.sanityCheck();
+//		assert !result.getCongruenceClosure().isFrozen();
+//		assert result.getWeakEquivalenceGraph().assertLabelsAreUnfrozen();
+//		return result;
+//	}
+
+
 	WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
 		assert origWeqCc.isFrozen();
 //		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
 		final WeqCongruenceClosure<NODE> result = copyWeqCc(origWeqCc, true);
 		assert !result.isFrozen();
 		assert result.sanityCheck();
-		assert !result.getCongruenceClosure().isFrozen();
-		assert result.getWeakEquivalenceGraph().assertLabelsAreUnfrozen();
+//		assert !result.getCongruenceClosure().isFrozen();
+//		assert result.getWeakEquivalenceGraph().assertLabelsAreUnfrozen();
 		return result;
 	}
 
@@ -305,12 +325,48 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return unfrozen;
 	}
 
-	public WeqCongruenceClosure<NODE> makeCopyForWeqMeet(final WeqCongruenceClosure<NODE> originalPa) {
-		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(originalPa, true);
-		if (!WeqSettings.REPORT_EQ_DEQ_INPLACE) {
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceGraph<NODE, DISJUNCT> flattenWeqLabels(
+			final WeakEquivalenceGraph<NODE, DISJUNCT> origWeqGraph, final WeqCongruenceClosure<NODE> baseWeqCc) {
+
+		final WeakEquivalenceGraph<NODE, DISJUNCT> result =
+				new WeakEquivalenceGraph<>(baseWeqCc, this, origWeqGraph.getEmptyDisjunct());
+
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> weqEdge
+				: origWeqGraph.getEdges().entrySet()) {
+
+			// make sure that the representatives in pArr and in our new weq edges are compatible
+			final Doubleton<NODE> newSourceAndTarget = new Doubleton<>(
+					baseWeqCc.getRepresentativeElement(weqEdge.getKey().getOneElement()),
+					baseWeqCc.getRepresentativeElement(weqEdge.getKey().getOtherElement()));
+
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> flattenedEdgeLabel = weqEdge.getValue().flatten(result);
+			result.putEdgeLabel(newSourceAndTarget, flattenedEdgeLabel);
+		}
+		return result;
+	}
+
+	public WeqCongruenceClosure<NODE> makeCopyForWeqMeet(final WeqCongruenceClosure<NODE> originalPa,
+			final boolean modifiable) {
+		// note that we use the old WeqCc here as parameter, the field in WeqGraph will be reset by getWeqCongruenceCl..
+		final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> newWeqGraph =
+				WeqSettings.FLATTEN_WEQ_EDGES_BEFORE_JOIN ?
+				flattenWeqLabels(originalPa.getWeakEquivalenceGraph(), originalPa) :
+					copy(originalPa.getWeakEquivalenceGraph());
+
+		final WeqCongruenceClosure<NODE> result = getWeqCongruenceClosure(originalPa.getCongruenceClosure(),
+				newWeqGraph, true);
+		result.setDiet(Diet.TRANSITORY_THIN_TO_WEQCCFAT);
+		result.setIsEdgeLabelDisjunct();
+
+		if (!modifiable) {
 			result.freeze();
 		}
 		return result;
+	}
+
+	private <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceGraph<NODE, DISJUNCT> copy(
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph) {
+		return new WeakEquivalenceGraph<>(weakEquivalenceGraph.getBaseWeqCc(), weakEquivalenceGraph);
 	}
 
 //	/**
@@ -356,7 +412,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			freezeIfNecessary(icc2);
 		}
 
-		assert icc1.isFrozen() != inplace;
+//		assert icc1.isFrozen() != inplace;
+		assert !inplace || !icc1.isFrozen();
 		assert icc2.isFrozen() == icc1.isFrozen();
 		assert icc1.getClass().equals(icc2.getClass());
 		if (icc1.getClass().equals(CongruenceClosure.class)) {
@@ -472,11 +529,20 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> renameVariables(final WeqCongruenceClosure<NODE> weqCc,
 			final Map<Term, Term> substitutionMapping, final boolean inplace) {
-		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(weqCc);
-		unfrozen.transformElementsAndFunctions(e -> e.renameVariables(substitutionMapping));
-		unfrozen.freeze();
-		// TODO: implement a result check here?
-		return unfrozen;
+		assert DataStructureUtils.intersection(new HashSet<>(substitutionMapping.values()),
+				new HashSet<>(weqCc.getCongruenceClosure().getAllElements())).isEmpty();
+
+		if (inplace) {
+			assert !weqCc.isFrozen();
+			weqCc.transformElementsAndFunctions(e -> e.renameVariables(substitutionMapping));
+			return weqCc;
+		} else {
+			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(weqCc);
+			unfrozen.transformElementsAndFunctions(e -> e.renameVariables(substitutionMapping));
+			unfrozen.freeze();
+			// TODO: implement a result check here?
+			return unfrozen;
+		}
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> DISJUNCT renameVariablesICc(final DISJUNCT labelCopy,
@@ -836,6 +902,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> getWeqCongruenceClosure(final CongruenceClosure<NODE> cc,
 			final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weqGraph, final boolean modifiable) {
 		final CongruenceClosure<NODE> ccUnfrozen = mCcManager.unfreezeIfNecessary(cc);
+		addAllElementsCc(ccUnfrozen, weqGraph.getAppearingNonWeqVarNodes(), null, true);
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(ccUnfrozen, weqGraph, this);
 
 		if (!modifiable) {
@@ -1092,7 +1159,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> copyWeqCc(final WeqCongruenceClosure<NODE> original, final boolean modifiable) {
-		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(original, true);
+//		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(original, true);
+		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(original);
 		if (!modifiable) {
 			result.freeze();
 		}
@@ -1120,9 +1188,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
-			copy(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original) {
+			copy(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original, final boolean modifiable) {
 //		return new WeakEquivalenceEdgeLabel<>(original.getWeqGraph(), original);
-		return copy(original, original.getWeqGraph());
+		return copy(original, original.getWeqGraph(), modifiable);
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> void freezeIfNecessary(final DISJUNCT disjunct) {
@@ -1143,8 +1211,30 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> copy(
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> value,
-			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph) {
-		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, value);
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
+			final boolean modifiable) {
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph,
+				value);
+		if (!modifiable) {
+			result.freeze();
+		}
+		return result;
+	}
+
+//	public WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> unfreezeDeep(
+//			WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> weakEquivalenceGraphThin,
+//			WeqCongruenceClosure<NODE> weqCongruenceClosure) {
+//		return new WeakEquivalenceGraph<>(pArr, weakEquivalenceGraph);
+//	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceGraph<NODE, DISJUNCT> unfreeze(
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weqGraph) {
+		return new WeakEquivalenceGraph<>(weqGraph.getBaseWeqCc(), weqGraph);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
+			unfreeze(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> value) {
+		return copy(value, true);
 	}
 
 }

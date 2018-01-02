@@ -1011,7 +1011,7 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	}
 
 	@Override
-	public boolean isDependent() {
+	public boolean isDependentNonFunctionApplication() {
 		// TODO Auto-generated method stub
 		return false;
 	}

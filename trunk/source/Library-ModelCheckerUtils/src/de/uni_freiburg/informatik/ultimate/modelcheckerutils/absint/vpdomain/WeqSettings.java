@@ -4,6 +4,7 @@ public class WeqSettings {
 //	public static final boolean FREEZE_ALL_IN_MANAGER = true;
 
 //	static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = true;
+	// TOOD: is this a good name? was it "before join", not before meetWGpa/fattenWeq/project??
 	static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = false;
 
 	static final boolean REPORT_EQ_DEQ_INPLACE = true;
@@ -53,6 +54,7 @@ public class WeqSettings {
 
 	/**
 	 * TODO Should we always do meetWGpa during the label operations done in the roweq-rules?? Does it commute???
+	 * (observation, 02.01.2018: does seem to impact precision on regression tests, negatively if false)
 	 */
 	public static final boolean MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL = true;
 }
