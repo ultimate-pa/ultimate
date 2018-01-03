@@ -318,8 +318,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				+ "of the weq graphs, because strong equalities influence the weak ones..";
 		assert this.isFrozen() && other.isFrozen() : "frozen <-> fully closed/reduced";
 
-
-
 		// create a weq graph without a WeqCc (that will be added later)
 		final WeakEquivalenceGraph<NODE, DISJUNCT> result = new WeakEquivalenceGraph<>(null, mWeqCcManager,
 				mEmptyDisjunct);
@@ -346,7 +344,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 //						.projectToElements(mWeqCcManager.getAllWeqNodes());
 				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel =
 						mWeqCcManager.copy(thisWeqEdge.getValue(), result, true);
-//						mWeqCcManager.copy(thisWeqEdge.getValue(), true);
 
 				result.putEdgeLabel(thisWeqEdge.getKey(), newEdgeLabel);
 				assert correspondingWeqEdgeLabelInOther == null;
@@ -355,8 +352,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 			if (correspondingWeqEdgeLabelInOther == null) {
 				// case 2: x--phi--y in this, no constraint on x, y in othe --> add nothing to the new weq graph
-				// this was wrong, right!?!:
-//				result.putEdgeLabel(thisWeqEdge.getKey(), mWeqCcManager.copy(thisWeqEdge.getValue(), result, true));
 				continue;
 			}
 
@@ -396,15 +391,17 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel =
 						mWeqCcManager.copy(otherWeqEdge.getValue(), result, true);
 
-				// for consistency, use the representatives from this' weqCc
-				final NODE sourceRep = this.mWeqCc.getRepresentativeElement(source);
-				final NODE targetRep = this.mWeqCc.getRepresentativeElement(target);
+//				// for consistency, use the representatives from this' weqCc
+//				final NODE sourceRep = this.mWeqCc.getRepresentativeElement(source);
+//				final NODE targetRep = this.mWeqCc.getRepresentativeElement(target);
 
-				assert result.getEdgeLabel(sourceRep, targetRep) == null : "there should not already be an edge label "
-						+ "here, if there would be, we should have hit it in case 3";
+//				assert !result.getAppearingNodes().contains(source)
+//						|| !result.getAppearingNodes().contains(target)
+//						|| result.getEdgeLabel(sourceRep, targetRep) == null :
+//					"there should not already be an edge label here, if there would be, we should have hit it in case 3";
 
-				result.putEdgeLabel(new Doubleton<>(sourceRep, targetRep), newEdgeLabel);
-//				result.putEdgeLabel(otherWeqEdge.getKey(), newEdgeLabel);
+//				result.putEdgeLabel(new Doubleton<>(sourceRep, targetRep), newEdgeLabel);
+				result.putEdgeLabel(new Doubleton<>(source, target), newEdgeLabel);
 				continue;
 			}
 		}
