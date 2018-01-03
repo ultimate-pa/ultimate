@@ -302,6 +302,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (isInconsistent()) {
 			return false;
 		}
+
+		WeqCongruenceClosure<NODE> originalCopy = null;
+		if (mManager.areAssertsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
+			originalCopy = mManager.copyWeqCc(this, true);
+		}
+
 		boolean fwmc = false;
 		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>> fwResult =
 				getCcWeakEquivalenceGraph().propagateViaTriangleRule();
@@ -314,6 +320,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert sanityCheck();
 			}
 		}
+
+		assert mManager.checkEquivalence(originalCopy, this);
 		assert sanityCheck();
 		return fwmc;
 	}
@@ -873,12 +881,18 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public void extAndTriangleClosure() {
 
+		WeqCongruenceClosure<NODE> originalCopy = null;
+		if (mManager.areAssertsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
+			originalCopy = mManager.copyWeqCc(this, true);
+		}
+
 		while (true) {
 			// 1. fatten, then saturate propagations (fatten may trigger ext, ext may trigger reportEq, etc..)
 			{
 				boolean madeChanges = true;
 				while (madeChanges) {
 					if (this.isInconsistent()) {
+						assert mManager.checkEquivalence(originalCopy, this);
 						return;
 					}
 
@@ -897,10 +911,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			executeFloydWarshallAndReportResultToWeqCc();
 			if (!getWeakEquivalenceGraph().hasArrayEqualities()) {
 				// status: closed under ext and under triangle --> done
+				assert mManager.checkEquivalence(originalCopy, this);
 				return;
 			}
 			reportAllArrayEqualitiesFromWeqGraph();
 		}
+
 	}
 
 	public Set<NODE> removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
@@ -1238,7 +1254,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert gPaMeet.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
 		assert !this.getWeakEquivalenceGraph().hasArrayEqualities();
 
-
 		return gPaMeet;
 	}
 
@@ -1278,8 +1293,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>>> edge
 				: other.getCcWeakEquivalenceGraph().getEdges().entrySet()) {
 
-//			assert gPaMeet.getAllElements().containsAll(edge.getValue().getAppearingNodes());
-
 			result.reportWeakEquivalenceDoOnlyRoweqPropagations(edge.getKey().getOneElement(),
 					edge.getKey().getOtherElement(),
 					edge.getValue());
@@ -1295,6 +1308,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		if (!inplace) {
+			assert mManager.checkMeetResult(this, other, result);
 			result.freeze();
 		}
 

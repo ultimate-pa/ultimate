@@ -77,8 +77,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
-	private final boolean mDebug = true;
-	private final boolean mSkipSolverChecks = false;
+	final boolean mDebug = true;
+	final boolean mSkipSolverChecks = false;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
@@ -760,7 +760,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result));
 	}
 
-	private boolean checkMeetResult(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2,
+	boolean checkMeetResult(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2,
 			final WeqCongruenceClosure<NODE> result) {
 		return checkMeetResult(weqCcToTerm(mMgdScript.getScript(), weqcc1), weqCcToTerm(mMgdScript.getScript(), weqcc2),
 				weqCcToTerm(mMgdScript.getScript(), result));
@@ -1237,4 +1237,33 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return copy(value, true);
 	}
 
+
+	/**
+	 * Solution from StackOverflow (apparently quoting http://docs.oracle.com/javase/1.4.2/docs/guide/lang/assert.html)
+	 * to detect if asserts are enabled.
+	 * @return true iff Java is running with assertions enabled
+	 */
+	public static boolean areAssertsEnabled() {
+		boolean assertsEnabled = false;
+		assert assertsEnabled = true; // Intentional side effect!!!
+		return assertsEnabled;
+	}
+
+	public boolean checkEquivalence(final WeqCongruenceClosure<NODE> weqcc1,
+			final WeqCongruenceClosure<NODE> weqcc2) {
+		mMgdScript.lock(this);
+
+		final Term term1 = weqCcToTerm(mMgdScript.getScript(), weqcc1);
+		final Term term2 = weqCcToTerm(mMgdScript.getScript(), weqcc2);
+
+		final boolean oneImpliesTwo = checkImplicationHolds(mMgdScript.getScript(), term1, term2);
+		assert oneImpliesTwo;
+
+		final boolean twoImpliesOne = checkImplicationHolds(mMgdScript.getScript(), term2, term1);
+		assert twoImpliesOne;
+
+		mMgdScript.unlock(this);
+
+		return oneImpliesTwo && twoImpliesOne;
+	}
 }
