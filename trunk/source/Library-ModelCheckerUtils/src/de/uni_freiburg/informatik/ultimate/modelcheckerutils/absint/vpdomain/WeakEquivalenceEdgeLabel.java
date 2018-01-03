@@ -78,7 +78,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	 * @param weakEquivalenceGraph TODO
 	 */
 	WeakEquivalenceEdgeLabel(final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
-			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original) {
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original,
+			final boolean omitSanityCheck) {
 		mWeakEquivalenceGraph = weakEquivalenceGraph;
 		mWeqCcManager = weakEquivalenceGraph.getWeqCcManager();
 		mDisjuncts = new HashSet<>(original.getNumberOfDisjuncts());
@@ -90,7 +91,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			mDisjuncts.add(mWeqCcManager.copyICc(l, !mWeakEquivalenceGraph.isFrozen()));
 		}
 		assert !mWeakEquivalenceGraph.isFrozen() || mDisjuncts.stream().allMatch(cc -> cc.isFrozen());
-		assert sanityCheck();
+		assert omitSanityCheck || sanityCheck();
 	}
 
 	/**
@@ -103,17 +104,32 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	 */
 	WeakEquivalenceEdgeLabel(final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
 			final Set<DISJUNCT> newLabelContents) {
+		this(weakEquivalenceGraph, newLabelContents, false);
+	}
+
+	/**
+	 * Construct a weak equivalence edge from a list of label contents.
+	 *
+	 * Does some simplifications.
+	 *
+	 * @param newLabelContents
+	 * @param weakEquivalenceGraph
+	 */
+	WeakEquivalenceEdgeLabel(final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
+			final Set<DISJUNCT> newLabelContents, final boolean omitSanityChecks) {
 //			final Set<CongruenceClosure<NODE>> newLabelContents) {
 //		assert newLabelContents.stream().allMatch(cc -> cc.isFrozen());
 		mWeakEquivalenceGraph = weakEquivalenceGraph;
 		mWeqCcManager = weakEquivalenceGraph.getWeqCcManager();
+
+		// TODO: this filter might be redundant because it is done outside every time (or the others are redundant..)
 		mDisjuncts = mWeqCcManager.filterRedundantICcs(newLabelContents);
 		if (mDisjuncts.size() == 1 && mDisjuncts.iterator().next().isInconsistent()) {
 			//case mLabel = "[False]" -- filterRedundantCcs leaves this case so we have to clean up manually to "[]"
 			mDisjuncts.clear();
 		}
 		assert mDisjuncts.stream().allMatch(cc -> !mWeakEquivalenceGraph.isFrozen() || cc.isFrozen());
-		assert sanityCheck();
+		assert omitSanityChecks || sanityCheck();
 	}
 
 	/**
@@ -464,19 +480,27 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		return res;
 	}
 
+//	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> otherLabel,
+//			final boolean inplace) {
+//		assert !inplace || !isFrozen();
+//		return meet(otherLabel.getDisjuncts(), inplace);
+//	}
+
 	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> otherLabel,
 			final boolean inplace) {
-		assert !inplace || !isFrozen();
-		return meet(otherLabel.getDisjuncts(), inplace);
-	}
-
-	WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet(final Set<DISJUNCT> paList, final boolean inplace) {
 		assert sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 		assert !inplace || !isFrozen();
 
+		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> originalThis = null;
+		if (mWeqCcManager.areAssertsEnabled() && inplace) {
+			originalThis = mWeqCcManager.copy(this, true, true);
+		} else if (mWeqCcManager.areAssertsEnabled() && !inplace) {
+			originalThis = this;
+		}
+
 		final Set<DISJUNCT> newLabelContent = new HashSet<>();
 		for (final DISJUNCT lc1 : getDisjuncts()) {
-			for (final DISJUNCT lc2 : paList) {
+			for (final DISJUNCT lc2 : otherLabel.getDisjuncts()) {
 				if (inplace && !lc1.isFrozen()) {
 					mWeqCcManager.meet(lc1, lc2, true);
 					newLabelContent.add(lc1);
@@ -486,6 +510,10 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				}
 			}
 		}
+
+		// need to do this before the project operation, as it impacts the equivalence check
+		assert mWeqCcManager.checkMeetWeqLabels(originalThis, otherLabel,
+				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(mWeakEquivalenceGraph, newLabelContent, true));
 
 		final Set<DISJUNCT> newLabelContentsFiltered = mWeqCcManager.filterRedundantICcs(newLabelContent);
 		assert newLabelContentsFiltered.stream().allMatch(l -> l.sanityCheckOnlyCc());

@@ -623,24 +623,23 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> oldLabel = getEdgeLabel(sourceAndTarget);
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> inputLabelCopy = mWeqCcManager.copy(inputLabel, this, true);
 
-		if (inputLabel.isInconsistent()) {
-			putEdgeLabel(sourceAndTarget, mWeqCcManager.copy(inputLabel, this, true));
+		if (inputLabelCopy.isInconsistent()) {
+			putEdgeLabel(sourceAndTarget, inputLabelCopy);
 			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
 			return oldLabel == null || !oldLabel.isInconsistent();
 		}
 
 		if (oldLabel == null || oldLabel.isTautological()) {
-			WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel = inputLabelCopy;
-//					new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
-//					mWeqCcManager.copy(inputLabel);
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel;
 			if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
-				newLabel.meetWithCcGpa();
-				newLabel = newLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+				inputLabelCopy.meetWithCcGpa();
+				newLabel = inputLabelCopy.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
 			} else if (mWeqCc.getDiet() == Diet.THIN) {
 				// if the weq graph is thin, all labels must only have constraints on weqvars
-				newLabel = newLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+				newLabel = inputLabelCopy.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
 			} else {
 				// we are in "fat" mode so the labels may put constraints on any NODE
+				newLabel = inputLabelCopy;
 			}
 			putEdgeLabel(sourceAndTarget, newLabel);
 
@@ -650,16 +649,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		assert oldLabel.getWeqGraph() == this;
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> oldLabelCopy = mWeqCcManager.copy(oldLabel, true);
-//				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, oldLabel);
 
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToStrengthenWith = inputLabelCopy;
-//				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, paList);
+
 		assert labelToStrengthenWith.sanityCheck() : "input label not normalized??";
 
 		/*  (Dec 17) note that we are not (always) fattening/thinning here, as we did before, because that is delayed
 		 * for performance reasons
 		  */
-		if (!WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+		if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
 			// we need to do it on both for the following isStrongerThan to be (more) precise
 			labelToStrengthenWith.meetWithCcGpa();
 			oldLabelCopy.meetWithCcGpa();
@@ -670,9 +668,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			return false;
 		}
 
-//		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel = oldLabelCopy.meet(labelToStrengthenWith, inplace);
+		// TODO not doing it inplace because inplace is buggy..
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel =
-				mWeqCcManager.meetEdgeLabels(oldLabelCopy, labelToStrengthenWith, true);
+				mWeqCcManager.meetEdgeLabels(oldLabelCopy, labelToStrengthenWith, false);
 
 		// inconsistency check
 		if (strengthenedEdgeLabel.isInconsistent()) {
@@ -781,30 +779,31 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			copy.meetWithCcGpa();
 		}
 
-//		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet =
-				mWeqCcManager.meetEdgeLabels(copy, qEqualsI, true);
+		// TODO not doing it inplace because inplace is buggy (can be seen via smtSolverCheck)
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet =
+				mWeqCcManager.meetEdgeLabels(copy, qEqualsI, false);
 //				copy.meetRec(Collections.singleton(qEqualsI));
 
-		copy.setExternalRemInfo(mWeqCc.getElementCurrentlyBeingRemoved());
-		copy.projectWeqVarNode(firstDimWeqVarNode);
+		meet.setExternalRemInfo(mWeqCc.getElementCurrentlyBeingRemoved());
+		meet.projectWeqVarNode(firstDimWeqVarNode);
 
-		copy.inOrDecreaseWeqVarIndices(-1, weqVarsForThisEdge);
-		assert !copy.getAppearingNodes().contains(weqVarsForThisEdge.get(weqVarsForThisEdge.size() - 1)) : "double "
+		meet.inOrDecreaseWeqVarIndices(-1, weqVarsForThisEdge);
+		assert !meet.getAppearingNodes().contains(weqVarsForThisEdge.get(weqVarsForThisEdge.size() - 1)) : "double "
 				+ "check the condition if this assertion fails, but as we decreased all weq vars, the last one should "
 				+ "not be present in the result, right?..";
-		assert !copy.getDisjuncts().stream().anyMatch(l -> l.isInconsistent()) : "label not well-formed";
+		assert !meet.getDisjuncts().stream().anyMatch(l -> l.isInconsistent()) : "label not well-formed";
 
-		assert copy.sanityCheckDontEnforceProjectToWeqVars(mWeqCc);
+		assert meet.sanityCheckDontEnforceProjectToWeqVars(mWeqCc);
 
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result;
 		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
-			result = copy.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
+			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
 		} else {
 			/* we need to project here any way, to keep to the paradigm "edge labels that do not refer to a weq var
 			 * are either false or stored as true"
 			 * also, not doing the meetWGpa might be a bad idea anyway..
 			 */
-			result = copy.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
+			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
 		}
 
 		assert result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));

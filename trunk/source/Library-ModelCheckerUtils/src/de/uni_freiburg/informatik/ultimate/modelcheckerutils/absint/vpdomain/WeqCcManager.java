@@ -1050,9 +1050,61 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
 		meetEdgeLabels( final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l1,
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l2, final boolean inplace) {
+
+//		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> originalL1 = null;
+//		if (areAssertsEnabled() && inplace) {
+//			originalL1 = copy(l1, true, true);
+//		} else if (areAssertsEnabled() && !inplace) {
+//			originalL1 = l1;
+//		}
+
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = l1.meet(l2, inplace);
+
 		assert !inplace || result == l1 : "if inplace is set, we must return the original object";
+
+//		assert checkMeetWeqLabels(originalL1, l2, result);
+
 		return result;
+	}
+
+	/**
+	 * Checks if "(l1 /\ l2) <-> result)" holds.
+	 * (Simply takes the ground formulas of the weq labels, which should be what we want..)
+	 *
+	 * @param l1
+	 * @param l2
+	 * @param result
+	 * @return
+	 */
+	<DISJUNCT extends ICongruenceClosure<NODE>> boolean checkMeetWeqLabels(
+					final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l1,
+					final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> l2,
+					final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result) {
+
+		final Script script = mMgdScript.getScript();
+
+		mMgdScript.lock(this);
+
+		final List<Term> l1Dnf = l1.toDnf(script);
+		final Term l1Term = SmtUtils.or(script, l1Dnf);
+
+		final List<Term> l2Dnf = l2.toDnf(script);
+		final Term l2Term = SmtUtils.or(script, l2Dnf);
+
+		final List<Term> resultDnf = result.toDnf(script);
+		final Term resultTerm = SmtUtils.or(script, resultDnf);
+
+		final Term l1AndL2 = SmtUtils.and(script, l1Term, l2Term);
+
+		final boolean oneImpliesTwo = checkImplicationHolds(script, l1AndL2, resultTerm);
+		assert oneImpliesTwo;
+
+		final boolean twoImpliesOne = checkImplicationHolds(script, resultTerm, l1AndL2);
+		assert twoImpliesOne;
+
+		mMgdScript.unlock(this);
+
+		return oneImpliesTwo && twoImpliesOne;
 	}
 
 	public void freezeIfNecessary(final CongruenceClosure<NODE> cc) {
@@ -1188,6 +1240,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
+			copy(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original, final boolean omitSanityCheck,
+					final boolean modifiable) {
+		return copy(original, original.getWeqGraph(), omitSanityCheck, modifiable);
+	}
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT>
 			copy(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> original, final boolean modifiable) {
 //		return new WeakEquivalenceEdgeLabel<>(original.getWeqGraph(), original);
 		return copy(original, original.getWeqGraph(), modifiable);
@@ -1213,8 +1271,17 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> value,
 			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
 			final boolean modifiable) {
+		return copy(value, weakEquivalenceGraph, false, modifiable);
+	}
+
+
+	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> copy(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> value,
+			final WeakEquivalenceGraph<NODE, DISJUNCT> weakEquivalenceGraph,
+			final boolean omitSanityCheck,
+			final boolean modifiable) {
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph,
-				value);
+				value, omitSanityCheck);
 		if (!modifiable) {
 			result.freeze();
 		}
