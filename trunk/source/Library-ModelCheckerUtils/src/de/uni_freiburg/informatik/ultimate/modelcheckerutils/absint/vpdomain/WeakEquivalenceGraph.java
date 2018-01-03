@@ -304,9 +304,12 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 *
 	 *
 	 * note: the resulting Weq graph has null as its WeqCc, it will be set to the correct WeqCc by copying it, later.
+	 *   This also means that the usual "vertices are representatives" invariant is not in place until the weqGraph is
+	 *   recomposed with the joined baseCc.
 	 *
-	 * TODO: before rework (Dec 17) we had more fatten-thin operations in here --> restore them??
-	 * TODO: probably a few copying operations of edges could be omitted
+	 * note: before rework (Dec 17) we had fatten-thin operations on all weq edges here, implications are not 100% clear
+	 *
+	 * TODO: perhaps a few copying operations of edges could be omitted
 	 *
 	 * @param other
 	 * @param newPartialArrangement the joined partialArrangement, we need this because the edges of the the new
@@ -339,9 +342,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 					&& other.mWeqCc.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
 				// case 1: x--phi--y in this, x~y in other --> add x--phi--y to the new weq graph
 
-//				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel = thisWeqEdge.getValue()
-//						.meet(Collections.singleton((DISJUNCT) this.mPartialArrangement.getCongruenceClosure()), true)
-//						.projectToElements(mWeqCcManager.getAllWeqNodes());
 				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel =
 						mWeqCcManager.copy(thisWeqEdge.getValue(), result, true);
 
@@ -358,16 +358,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			// case 3: x--phi--y in this, x--phi'--y in other --> add x--(phi\/phi')--y tothe new weqGraph
 
 			// "meetWGpa", projectTo
-//			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> thisNewEdgeLabel = thisWeqEdge.getValue()
-//						.meet(Collections.singleton(this.mPartialArrangement.getCongruenceClosure()))
-//						.projectToElements(mWeqCcManager.getAllWeqNodes());
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> thisNewEdgeLabel =
 					mWeqCcManager.copy(thisWeqEdge.getValue(), result, true);
 
-//			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> otherNewEdgeLabel =
-//					correspondingWeqEdgeLabelInOther
-//						.meet(Collections.singleton(other.mPartialArrangement.getCongruenceClosure()))
-//						.projectToElements(mWeqCcManager.getAllWeqNodes());
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> otherNewEdgeLabel =
 					mWeqCcManager.copy(correspondingWeqEdgeLabelInOther, result, true);
 
@@ -385,22 +378,17 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			if (this.mWeqCc.hasElements(source, target)
 					&& this.mWeqCc.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
 				// case 4: x~y in this, x--phi--y in other --> add x--phi--y to the new weq graph
-//				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel = otherWeqEdge.getValue()
-//						.meet(Collections.singleton(other.mPartialArrangement.getCongruenceClosure()))
-//						.projectToElements(mWeqCcManager.getAllWeqNodes());
 				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel =
 						mWeqCcManager.copy(otherWeqEdge.getValue(), result, true);
 
-//				// for consistency, use the representatives from this' weqCc
-//				final NODE sourceRep = this.mWeqCc.getRepresentativeElement(source);
-//				final NODE targetRep = this.mWeqCc.getRepresentativeElement(target);
+				/*
+				 * Note that we do not and should not take the representative of source and target in this.mWeqCc here.
+				 * (they would be the same element)
+				 * This means that the resulting weq graph's vertices are representatives from different cc's but that
+				 * is ok as the weq graph has not baseWeqCc, and when it is recomposed with the joined base Ccs the
+				 * a copy of the weq graph is made where the vertices are made representatives again.
+				 */
 
-//				assert !result.getAppearingNodes().contains(source)
-//						|| !result.getAppearingNodes().contains(target)
-//						|| result.getEdgeLabel(sourceRep, targetRep) == null :
-//					"there should not already be an edge label here, if there would be, we should have hit it in case 3";
-
-//				result.putEdgeLabel(new Doubleton<>(sourceRep, targetRep), newEdgeLabel);
 				result.putEdgeLabel(new Doubleton<>(source, target), newEdgeLabel);
 				continue;
 			}
