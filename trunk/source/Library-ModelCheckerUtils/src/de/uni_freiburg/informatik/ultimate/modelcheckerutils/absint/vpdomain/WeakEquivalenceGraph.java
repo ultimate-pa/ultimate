@@ -121,7 +121,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	}
 
 	/**
-	 * Copy constructor, unfreezes edge label disjuncts
+	 * Copy constructor. Allows to set a new baseWeqCc for a given weqGraph. Adapts sources and targets of the weqGraph
+	 * to be representatives in the baseWeqCc.
 	 *
 	 * @param weakEquivalenceGraph
 	 * @param factory
@@ -313,7 +314,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 * @return
 	 */
 	WeakEquivalenceGraph<NODE, DISJUNCT> join(final WeakEquivalenceGraph<NODE, DISJUNCT> other) {
-		assert mWeqCc != null && other.mWeqCc != null : "we need the partial for the join"
+		assert mWeqCc != null && other.mWeqCc != null : "we need the base weqCc for the join"
 				+ "of the weq graphs, because strong equalities influence the weak ones..";
 		assert this.isFrozen() && other.isFrozen() : "frozen <-> fully closed/reduced";
 
@@ -323,7 +324,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		final WeakEquivalenceGraph<NODE, DISJUNCT> result = new WeakEquivalenceGraph<>(null, mWeqCcManager,
 				mEmptyDisjunct);
 
-		final Map<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> newWeakEquivalenceEdges = new HashMap<>();
+		// iterate all edges in weqGraph this
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> thisWeqEdge
 				: this.getWeqEdgesEntrySet()) {
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> correspondingWeqEdgeLabelInOther =
@@ -338,7 +339,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			 */
 			if (other.mWeqCc.hasElements(source, target)
 					&& other.mWeqCc.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
-				// case 1: x--phi--y in this, x~y in other:
+				// case 1: x--phi--y in this, x~y in other --> add x--phi--y to the new weq graph
 
 //				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel = thisWeqEdge.getValue()
 //						.meet(Collections.singleton((DISJUNCT) this.mPartialArrangement.getCongruenceClosure()), true)
@@ -347,21 +348,19 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 						mWeqCcManager.copy(thisWeqEdge.getValue(), result, true);
 //						mWeqCcManager.copy(thisWeqEdge.getValue(), true);
 
-//				putEdgeLabel(thisWeqEdge.getKey(), newEdgeLabel);
-//				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), newEdgeLabel);
 				result.putEdgeLabel(thisWeqEdge.getKey(), newEdgeLabel);
 				assert correspondingWeqEdgeLabelInOther == null;
 				continue;
 			}
 
 			if (correspondingWeqEdgeLabelInOther == null) {
-				// case 2: x--phi--y in this, no constraint on x, y in other
-//				newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), mWeqCcManager.copy(thisWeqEdge.getValue(), true));
-				result.putEdgeLabel(thisWeqEdge.getKey(), mWeqCcManager.copy(thisWeqEdge.getValue(), result, true));
+				// case 2: x--phi--y in this, no constraint on x, y in othe --> add nothing to the new weq graph
+				// this was wrong, right!?!:
+//				result.putEdgeLabel(thisWeqEdge.getKey(), mWeqCcManager.copy(thisWeqEdge.getValue(), result, true));
 				continue;
 			}
 
-			// case 3: x--phi--y in this, x--phi'--y in other
+			// case 3: x--phi--y in this, x--phi'--y in other --> add x--(phi\/phi')--y tothe new weqGraph
 
 			// "meetWGpa", projectTo
 //			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> thisNewEdgeLabel = thisWeqEdge.getValue()
@@ -377,8 +376,6 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> otherNewEdgeLabel =
 					mWeqCcManager.copy(correspondingWeqEdgeLabelInOther, result, true);
 
-//			putEdgeLabel(thisWeqEdge.getKey(), thisNewEdgeLabel.union(otherNewEdgeLabel));
-//			newWeakEquivalenceEdges.put(thisWeqEdge.getKey(), thisNewEdgeLabel.union(otherNewEdgeLabel));
 			result.putEdgeLabel(thisWeqEdge.getKey(), thisNewEdgeLabel.union(otherNewEdgeLabel));
 		}
 
@@ -392,23 +389,26 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 			if (this.mWeqCc.hasElements(source, target)
 					&& this.mWeqCc.getEqualityStatus(source, target) == EqualityStatus.EQUAL) {
-				// case 4: x~y in this, x--phi--y in other
+				// case 4: x~y in this, x--phi--y in other --> add x--phi--y to the new weq graph
 //				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel = otherWeqEdge.getValue()
 //						.meet(Collections.singleton(other.mPartialArrangement.getCongruenceClosure()))
 //						.projectToElements(mWeqCcManager.getAllWeqNodes());
 				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newEdgeLabel =
 						mWeqCcManager.copy(otherWeqEdge.getValue(), result, true);
 
-//				putEdgeLabel(otherWeqEdge.getKey(), newEdgeLabel);
-//				newWeakEquivalenceEdges.put(otherWeqEdge.getKey(), newEdgeLabel);
-				result.putEdgeLabel(otherWeqEdge.getKey(), newEdgeLabel);
+				// for consistency, use the representatives from this' weqCc
+				final NODE sourceRep = this.mWeqCc.getRepresentativeElement(source);
+				final NODE targetRep = this.mWeqCc.getRepresentativeElement(target);
+
+				assert result.getEdgeLabel(sourceRep, targetRep) == null : "there should not already be an edge label "
+						+ "here, if there would be, we should have hit it in case 3";
+
+				result.putEdgeLabel(new Doubleton<>(sourceRep, targetRep), newEdgeLabel);
+//				result.putEdgeLabel(otherWeqEdge.getKey(), newEdgeLabel);
 				continue;
 			}
 		}
 
-		// create a weq graph without a WeqCc (that will be added later)
-//		final WeakEquivalenceGraph<NODE, DISJUNCT> result = new WeakEquivalenceGraph<>(newWeakEquivalenceEdges,
-//				new HashRelation<>(), mWeqCcManager, mEmptyDisjunct);
 		assert result.sanityCheck();
 		return result;
 	}

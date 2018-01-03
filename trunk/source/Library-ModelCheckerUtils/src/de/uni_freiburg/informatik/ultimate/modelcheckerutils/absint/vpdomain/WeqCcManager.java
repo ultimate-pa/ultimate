@@ -78,7 +78,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
 	private final boolean mDebug = true;
-	private final boolean mSkipSolverChecks = true;
+	private final boolean mSkipSolverChecks = false;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
@@ -504,7 +504,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return weqcc1;
 		}
 		if (weqcc1.isTautological() || weqcc2.isTautological()) {
-			return getEmptyWeqCc(true);
+			return getEmptyWeqCc(modifiable);
 		}
 
 		final WeqCongruenceClosure<NODE> result = weqcc1.join(weqcc2);
@@ -767,7 +767,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private boolean checkMeetResult(final Term cc1, final Term cc2, final Term resultTerm) {
-		// check that "cc1 /\ cc2 <-> result" (our meet is precise, right?)
+		// check that "(cc1 /\ cc2) <-> result" (our meet is precise, right?)
 		mMgdScript.lock(this);
 		final Script script = mMgdScript.getScript();
 		final Term cc1AndCc2Term = SmtUtils.and(script, cc1, cc2);
@@ -791,13 +791,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private boolean checkJoinResult(final Term cc1, final Term cc2, final Term resultTerm) {
-		// check that cc1 /\ cc2 -> result
+		// check that "(cc1 \/ cc2) -> result" holds
 		mMgdScript.lock(this);
 		mMgdScript.echo(this, new QuotedObject("WeqCcManager.checkJoinResult (begin)"));
 
 		final Script script = mMgdScript.getScript();
-		final Term cc1AndCc2Term = SmtUtils.or(script, cc1, cc2);
-		final boolean res = checkImplicationHolds(script, cc1AndCc2Term, resultTerm);
+		final Term cc1OrCc2Term = SmtUtils.or(script, cc1, cc2);
+		final boolean res = checkImplicationHolds(script, cc1OrCc2Term, resultTerm);
 
 		mMgdScript.echo(this, new QuotedObject("WeqCcManager.checkJoinResult (end)"));
 		mMgdScript.unlock(this);
@@ -864,7 +864,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private static <NODE extends IEqNodeIdentifier<NODE> , DISJUNCT extends ICongruenceClosure<NODE>>
 			Term disjunctionToTerm(final Script script, final Set<DISJUNCT> ccs) {
 		if (ccs.isEmpty()) {
-			return script.term("true");
+			return script.term("false");
 		}
 		final DISJUNCT sample = ccs.iterator().next();
 		final Set<Term> disjunctTerms = new HashSet<>();

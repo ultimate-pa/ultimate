@@ -797,6 +797,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *         the other given CongruenceClosure
 	 */
 	public boolean isStrongerThan(final CongruenceClosure<ELEM> other) {
+		if (isInconsistent()) {
+			return true;
+		}
 		return mManager.isStrongerThan(this, other);
 	}
 

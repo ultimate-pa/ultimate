@@ -769,6 +769,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (WeqSettings.ALWAYS_REPORT_CHANGE_TO_GPA) {
 			reportGpaChangeToWeqGraphAndPropagateArrayEqualities(
 					(final CongruenceClosure<NODE> cc) -> cc.reportDisequalityRec(node1, node2));
+			assert weqGraphFreeOfArrayEqualities();
 		}
 
 		if (isInconsistent()) {
@@ -776,7 +777,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return true;
 		}
 
-		assert weqGraphFreeOfArrayEqualities();
 		return true;
 	}
 
@@ -874,14 +874,14 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public void extAndTriangleClosure() {
 
 		while (true) {
-			if (this.isInconsistent()) {
-				return;
-			}
-
 			// 1. fatten, then saturate propagations (fatten may trigger ext, ext may trigger reportEq, etc..)
 			{
 				boolean madeChanges = true;
 				while (madeChanges) {
+					if (this.isInconsistent()) {
+						return;
+					}
+
 					/*
 					 *  note:
 					 *  cannot fatten to weqcc-fat with current architecture (weq vars on labels become primed currently
@@ -1254,17 +1254,20 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			assert result.sanityCheck();
 		}
 
-		if (result.isInconsistent() && !inplace) {
-			return mManager.getInconsistentWeqCc(false);
+		if (result.isInconsistent()) {
+			if (inplace) {
+				return result;
+			} else {
+				return mManager.getInconsistentWeqCc(false);
+			}
 		}
+
 		assert result.mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
 		assert !this.getWeakEquivalenceGraph().hasArrayEqualities();
-
 
 		/*
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
 		 */
-
 		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
 			assert result.sanityCheck();
 			assert other.getWeakEquivalenceGraph().sanityCheck();
@@ -1281,6 +1284,14 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					edge.getKey().getOtherElement(),
 					edge.getValue());
 			assert result.sanityCheck();
+
+			if (result.isInconsistent()) {
+				if (inplace) {
+					return result;
+				} else {
+					return mManager.getInconsistentWeqCc(false);
+				}
+			}
 		}
 
 		if (!inplace) {
