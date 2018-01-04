@@ -922,6 +922,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			&& !mArrayEqualities.containsPair(node2OldRep, node1OldRep) : "TODO: treat this case";
 	}
 
+//	public void updateForNewRep(final NODE possiblyOldRep, final NODE newRep) {
+//
+//	}
+
 	public Integer getNumberOfEdgesStatistic() {
 		return mWeakEquivalenceEdges.size();
 	}

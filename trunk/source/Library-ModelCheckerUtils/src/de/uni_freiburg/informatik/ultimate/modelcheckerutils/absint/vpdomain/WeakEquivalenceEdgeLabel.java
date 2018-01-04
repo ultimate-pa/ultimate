@@ -511,7 +511,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			}
 		}
 
-		// need to do this before the project operation, as it impacts the equivalence check
+		// need to do this before the project operation, as the projectToElements may violate the equivalence property
 		assert mWeqCcManager.checkMeetWeqLabels(originalThis, otherLabel,
 				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(mWeakEquivalenceGraph, newLabelContent, true));
 

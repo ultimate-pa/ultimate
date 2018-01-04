@@ -135,19 +135,19 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	public WeqCongruenceClosure<NODE> addNode(final NODE node, final WeqCongruenceClosure<NODE> origWeqCc,
-			final boolean inplace) {
+			final boolean inplace, final boolean omitSanityChecks) {
 		if (origWeqCc.hasElement(node)) {
 			// node is already present --> nothing to do
 			return origWeqCc;
 		}
 
-	final WeqCongruenceClosure<NODE> result;
+		final WeqCongruenceClosure<NODE> result;
 		if (inplace) {
-			origWeqCc.addElement(node);
+			origWeqCc.addElement(node, omitSanityChecks);
 			result = origWeqCc;
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
-			unfrozen.addElement(node);
+			unfrozen.addElement(node, omitSanityChecks);
 			unfrozen.freeze();
 			result = unfrozen;
 		}
@@ -986,7 +986,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 				if (weqcc.isInconsistent()) {
 					return weqcc;
 				}
-				addNode(e, weqcc, true);
+				addNode(e, weqcc, true, false);
 			}
 			return weqcc;
 		} else {
@@ -995,7 +995,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 				if (weqcc.isInconsistent()) {
 					return weqcc;
 				}
-				result = addNode(e, weqcc, false);
+				result = addNode(e, weqcc, false, false);
 			}
 			assert result.isFrozen();
 			return result;

@@ -182,7 +182,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //		assert getWeakEquivalenceGraph().assertLabelsAreUnfrozen();
 	}
 
-	public void addElement(final NODE elem) {
+	public void addElement(final NODE elem, final boolean omitSanityChecks) {
 		assert !isFrozen();
 		addElementRec(elem);
 //		assert mCongruenceClosure.sanityCheck();
@@ -194,7 +194,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 		reportAllArrayEqualitiesFromWeqGraph();
 
-		assert sanityCheck();
+		assert omitSanityChecks || sanityCheck();
 	}
 
 	@Override
@@ -247,7 +247,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert !isFrozen();
 		assert array1.hasSameTypeAs(array2);
 
-		mManager.addNode(storeIndex, mCongruenceClosure, true, true);
+//		mManager.addNode(storeIndex, mCongruenceClosure, true, true);
+		mManager.addNode(storeIndex, this, true, true);
 		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
 			assert sanityCheck();
 		}
@@ -342,8 +343,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		boolean madeChanges = false;
 		madeChanges |= !mCongruenceClosure.hasElement(array1);
 		madeChanges |= !mCongruenceClosure.hasElement(array2);
-		mManager.addNode(array1, mCongruenceClosure, true, true);
-		mManager.addNode(array2, mCongruenceClosure, true, true);
+//		mManager.addNode(array1, mCongruenceClosure, true, true);
+//		mManager.addNode(array2, mCongruenceClosure, true, true);
+		mManager.addNode(array1, this, true, true);
+		mManager.addNode(array2, this, true, true);
 
 		final NODE array1Rep = mCongruenceClosure.getRepresentativeElement(array1);
 		final NODE array2Rep = mCongruenceClosure.getRepresentativeElement(array2);
@@ -463,10 +466,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		boolean freshElem = false;
-		freshElem |= mCongruenceClosure.hasElement(node1);
-		freshElem |= mCongruenceClosure.hasElement(node2);
-		mManager.addNode(node1, mCongruenceClosure, true, true);
-		mManager.addNode(node2, mCongruenceClosure, true, true);
+		freshElem |= !mCongruenceClosure.hasElement(node1);
+		freshElem |= !mCongruenceClosure.hasElement(node2);
+//		mManager.addNode(node1, mCongruenceClosure, true, true);
+//		mManager.addNode(node2, mCongruenceClosure, true, true);
+		mManager.addNode(node1, this, true, true);
+		mManager.addNode(node2, this, true, true);
 		assert mCongruenceClosure.assertAtMostOneLiteralPerEquivalenceClass();
 
 		if (mCongruenceClosure.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL) {
@@ -1048,7 +1053,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	private boolean assertNodeToAddIsEquivalentToOriginal(final NODE nodeToAdd, final NODE elemToRemove) {
 //		final WeqCongruenceClosure<NODE> copy = mManager.getFrozenCopy(this);
 		final WeqCongruenceClosure<NODE> copy = mManager.copyWeqCc(this, true);
-		mManager.addNode(nodeToAdd, copy, true);
+		mManager.addNode(nodeToAdd, copy, true, true);
 		if (copy.getEqualityStatus(nodeToAdd, elemToRemove) != EqualityStatus.EQUAL) {
 			assert false;
 			return false;
@@ -1071,13 +1076,28 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return false;
 	}
 
-	protected void registerNewElement(final NODE elem, final IRemovalInfo<NODE> remInfo) {
-		mCongruenceClosure.registerNewElement(elem, remInfo);
+//	protected void registerNewElement(final NODE elem, final IRemovalInfo<NODE> remInfo) {
+	protected void registerNewElement(final NODE elem) {
+		// would be redundant, as addElement is called before on mCongruenceClosure
+//		mCongruenceClosure.registerNewElement(elem, remInfo);
 
 		if (isInconsistent()) {
 			// nothing more to do
 			return;
 		}
+
+
+//		/*
+//		 * the new element might have become a representative instead of another element
+//		 *  --> we have to update the vertices in the weq graph accordingly
+//		 */
+//		if (isRepresentative(elem)) {
+//			for (final NODE eqElem : mCongruenceClosure.getEquivalenceClass(elem)) {
+//				// is the eqElem a vertext in the weq graph?
+//				getWeakEquivalenceGraph().updateForNewRep(node1OldRep, node2OldRep, newRep);
+//
+//			}
+//		}
 
 		if (!elem.isFunctionApplication()) {
 			// nothing more to do
@@ -1127,10 +1147,6 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public boolean hasElements(final NODE... elems) {
 		return mCongruenceClosure.hasElements(elems);
-	}
-
-	public void registerNewElement(final NODE elem) {
-		registerNewElement(elem, null);
 	}
 
 	@Override

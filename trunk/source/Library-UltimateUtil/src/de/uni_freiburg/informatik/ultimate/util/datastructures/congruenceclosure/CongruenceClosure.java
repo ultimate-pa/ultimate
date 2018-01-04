@@ -416,7 +416,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		registerNewElement(elem, null);
 	}
 
-	public void registerNewElement(final ELEM elem, final IRemovalInfo<ELEM> remInfo) {
+	private void registerNewElement(final ELEM elem, final IRemovalInfo<ELEM> remInfo) {
 		if (elem.isLiteral()) {
 			mAllLiterals.add(elem);
 		}
@@ -1612,5 +1612,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 if (!isFrozen()) {
 			 freeze();
 		 }
+	}
+
+	public Set<ELEM> getEquivalenceClass(final ELEM elem) {
+		return Collections.unmodifiableSet(mElementTVER.getEquivalenceClass(elem));
 	}
 }
