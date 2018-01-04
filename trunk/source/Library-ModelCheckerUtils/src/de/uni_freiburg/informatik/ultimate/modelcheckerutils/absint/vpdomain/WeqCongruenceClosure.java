@@ -1480,7 +1480,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public boolean addElementRec(final NODE node) {
 		final boolean newlyAdded = !mCongruenceClosure.hasElement(node);
-		mManager.addNode(node, mCongruenceClosure, true, true);
+		mManager.addNode(node, mCongruenceClosure, this, true, true);
 
 		if (!newlyAdded) {
 			return false;

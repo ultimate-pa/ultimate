@@ -289,17 +289,39 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public CongruenceClosure<ELEM> addElement(final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem,
 			final boolean inplace, final boolean omitSanityCheck) {
+		return addElement(congruenceClosure, elem, congruenceClosure, inplace, omitSanityCheck);
+	}
+
+
+	public CongruenceClosure<ELEM> addElement(final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem,
+			final ICongruenceClosure<ELEM> newEqualityTarget,
+			final boolean inplace, final boolean omitSanityCheck) {
 		assert inplace != congruenceClosure.isFrozen();
 		if (inplace) {
-			congruenceClosure.addElement(elem, omitSanityCheck);
+			congruenceClosure.addElement(elem, newEqualityTarget, omitSanityCheck);
 			return congruenceClosure;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(congruenceClosure);
-			unfrozen.addElement(elem, omitSanityCheck);
+			unfrozen.addElement(elem, newEqualityTarget, omitSanityCheck);
 			unfrozen.freeze();
 			return unfrozen;
 		}
 	}
+
+//	public Pair<CongruenceClosure<ELEM>, HashRelation<ELEM, ELEM>> addElementAndGetNewEqualities(
+//			final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem, final boolean inplace,
+//			final boolean omitSanityChecks) {
+//		assert inplace != congruenceClosure.isFrozen();
+//		if (inplace) {
+//			final HashRelation<ELEM, ELEM> newEqualities = congruenceClosure.addElement(elem, omitSanityChecks);
+//			return new Pair<>(congruenceClosure, newEqualities);
+//		} else {
+//			final CongruenceClosure<ELEM> unfrozen = unfreeze(congruenceClosure);
+//			final HashRelation<ELEM, ELEM> newEqualities = unfrozen.addElement(elem, omitSanityChecks);
+//			unfrozen.freeze();
+//			return unfrozen;
+//		}
+//	}
 
 	/**
 	 * (always works in place)
@@ -311,7 +333,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public boolean addElementReportChange(final CongruenceClosure<ELEM> congruenceClosure, final ELEM elem,
 			final boolean omitSanityCheck) {
-		return congruenceClosure.addElement(elem, omitSanityCheck);
+		return congruenceClosure.addElement(elem, congruenceClosure, omitSanityCheck);
 	}
 
 	public boolean isDebugMode() {

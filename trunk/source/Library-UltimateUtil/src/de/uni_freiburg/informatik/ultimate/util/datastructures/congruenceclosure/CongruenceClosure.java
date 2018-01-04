@@ -143,7 +143,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
 		for (final ELEM elem : new HashSet<>(mElementTVER.getAllElements())) {
-			registerNewElement(elem);
+			registerNewElement(elem, this);
 		}
 		mConstructorInitializationPhase = false;
 
@@ -167,7 +167,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
 		for (final ELEM elem : new HashSet<>(mElementTVER.getAllElements())) {
-			registerNewElement(elem, remInfo);
+			registerNewElement(elem, this, remInfo);
 		}
 		mConstructorInitializationPhase = false;
 		assert sanityCheck(remInfo);
@@ -388,16 +388,22 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 //	}
 
 	public boolean addElement(final ELEM elem, final boolean omitSanityCheck) {
-		final boolean result = addElementRec(elem, null);
+		return addElement(elem, this, omitSanityCheck);
+	}
+
+	public boolean addElement(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget,
+			final boolean omitSanityCheck) {
+		final boolean result = addElementRec(elem, newEqualityTarget, null);
 		assert omitSanityCheck || sanityCheck();
 		return result;
 	}
 
-	private boolean addElementRec(final ELEM elem, final IRemovalInfo<ELEM> remInfo) {
+	private boolean addElementRec(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget,
+			final IRemovalInfo<ELEM> remInfo) {
 		assert !mIsFrozen;
 		final boolean newlyAdded = mElementTVER.addElement(elem);
 		if (newlyAdded) {
-			registerNewElement(elem, remInfo);
+			registerNewElement(elem, newEqualityTarget, remInfo);
 		}
 //		assert sanityCheckOnlyCc();
 		return newlyAdded;
@@ -412,31 +418,30 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 *
 	 * @param elem
 	 */
-	private void registerNewElement(final ELEM elem) {
-		registerNewElement(elem, null);
+	private void registerNewElement(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget) {
+		registerNewElement(elem, newEqualityTarget, null);
 	}
 
-	private void registerNewElement(final ELEM elem, final IRemovalInfo<ELEM> remInfo) {
+	private void registerNewElement(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget,
+			final IRemovalInfo<ELEM> remInfo) {
 		if (elem.isLiteral()) {
 			mAllLiterals.add(elem);
 		}
 
 		if (elem.isDependentNonFunctionApplication()) {
 			for (final ELEM supp : elem.getSupportingNodes()) {
-				mManager.addElement(this, supp, true, true);
+//				mManager.addElement(this, supp, true, true);
+				mManager.addElement(this, supp, newEqualityTarget, true, true);
 				mFaAuxData.addSupportingNode(supp, elem);
 			}
 		}
-
 
 		if (!elem.isFunctionApplication()) {
 			// nothing to do
 			assert mElementTVER.getRepresentative(elem) != null : "this method assumes that elem has been added "
 					+ "already";
-//			assert sanityCheck();
 			return;
 		}
-
 
 		if (remInfo == null) {
 			// "fast track"
@@ -458,17 +463,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			mManager.addElement(this, elem.getArgument(), true, true);
 		} else {
 			if (!remInfo.getAlreadyRemovedElements().contains(elem.getAppliedFunction())) {
-				addElementRec(elem.getAppliedFunction(), remInfo);
+//				addElementRec(elem.getAppliedFunction(), remInfo);
+				mManager.addElement(this, elem.getAppliedFunction(), newEqualityTarget, true, true);
 			}
 			if (!remInfo.getAlreadyRemovedElements().contains(elem.getArgument())) {
-				addElementRec(elem.getArgument(), remInfo);
+//				addElementRec(elem.getArgument(), remInfo);
+				mManager.addElement(this, elem.getArgument(), newEqualityTarget, true, true);
 			}
 		}
 
 
 		if (remInfo == null) {
 			for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
-				reportEqualityRec(eq.getKey(), eq.getValue());
+//				reportEqualityRec(eq.getKey(), eq.getValue());
+				newEqualityTarget.reportEqualityRec(eq.getKey(), eq.getValue());
 				if (isInconsistent()) {
 					// propagated equality made this Cc inconsistent (break or return here?)
 					break;
@@ -477,8 +485,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		} else {
 			// do nothing in this case, right?..
 		}
-
-//		assert sanityCheck();
 	}
 
 	public ELEM getRepresentativeElement(final ELEM elem) {

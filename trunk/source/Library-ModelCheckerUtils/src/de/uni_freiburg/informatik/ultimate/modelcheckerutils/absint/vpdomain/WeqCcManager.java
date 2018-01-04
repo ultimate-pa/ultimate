@@ -592,10 +592,17 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(disjunct));
 	}
 
-	public CongruenceClosure<NODE> addNode(final NODE storeIndex, final CongruenceClosure<NODE> congruenceClosure,
+	public CongruenceClosure<NODE> addNode(final NODE node, final CongruenceClosure<NODE> congruenceClosure,
+			final WeqCongruenceClosure<NODE> newEqualityTarget,
 			final boolean inplace, final boolean omitSanityChecks) {
-		return mCcManager.addElement(congruenceClosure, storeIndex, inplace, omitSanityChecks);
+		return mCcManager.addElement(congruenceClosure, node, newEqualityTarget, inplace, omitSanityChecks);
 	}
+
+//	public Pair<CongruenceClosure<NODE>, HashRelation<NODE, NODE>>
+//			addNodeAndGetNewEqualities(final NODE node, final CongruenceClosure<NODE> congruenceClosure,
+//					final boolean inplace, final boolean omitSanityChecks) {
+//		return mCcManager.addElementAndGetNewEqualities(congruenceClosure, node, inplace, omitSanityChecks);
+//	}
 
 	public List<NODE> getAllWeqVarsNodeForFunction(final NODE func) {
 		if (!func.getSort().isArraySort()) {
