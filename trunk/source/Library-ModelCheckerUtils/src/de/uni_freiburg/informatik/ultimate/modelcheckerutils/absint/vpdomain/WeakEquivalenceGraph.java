@@ -238,7 +238,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> en : getWeqEdgesEntrySet()) {
 			result.reportWeakEquivalence(en.getKey().getOneElement(), en.getKey().getOtherElement(),
-					en.getValue().thin(result));
+					en.getValue().thin(result), true);
 		}
 		return result;
 	}
@@ -608,7 +608,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 	 * @param inputLabel
 	 */
 	private boolean reportWeakEquivalence(final Doubleton<NODE> sourceAndTarget,
-			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> inputLabel) {
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> inputLabel, final boolean omitSanityChecks) {
 		assert !inputLabel.isTautological() : "catch this case before?";
 		assert !mIsFrozen;
 		assert mWeqCc.isRepresentative(sourceAndTarget.getOneElement())
@@ -618,7 +618,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		assert mWeqCc.isRepresentative(sourceAndTarget.getOneElement())
 			&& mWeqCc.isRepresentative(sourceAndTarget.getOtherElement());
 		assert !sourceAndTarget.getOneElement().equals(sourceAndTarget.getOtherElement());
-		assert sanityCheck();
+		assert omitSanityChecks || sanityCheck();
 
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> oldLabel = getEdgeLabel(sourceAndTarget);
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> inputLabelCopy = mWeqCcManager.copy(inputLabel, this, true);
@@ -643,7 +643,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 			}
 			putEdgeLabel(sourceAndTarget, newLabel);
 
-			assert sanityCheck();
+			assert omitSanityChecks || sanityCheck();
 			return true;
 		}
 
@@ -690,20 +690,20 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		assert strengthenedEdgeLabel.sanityCheck();
 		// replace the edge label by the strengthened version
 		putEdgeLabel(sourceAndTarget, strengthenedEdgeLabel);
-		assert sanityCheck();
+		assert omitSanityChecks || sanityCheck();
 		return true;
 	}
 
 	public boolean reportWeakEquivalence(final NODE array1, final NODE array2,
-			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> edgeLabel) {
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> edgeLabel, final boolean omitSanityChecks) {
 		assert !mIsFrozen;
 		assert mWeqCc.isRepresentative(array1) && mWeqCc.isRepresentative(array2);
 		if (edgeLabel.isTautological()) {
 			return false;
 		}
 
-		final boolean result = reportWeakEquivalence(new Doubleton<NODE>(array1, array2), edgeLabel);
-		assert sanityCheck();
+		final boolean result = reportWeakEquivalence(new Doubleton<NODE>(array1, array2), edgeLabel, omitSanityChecks);
+		assert omitSanityChecks || sanityCheck();
 		return result;
 	}
 
@@ -963,7 +963,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 			// note: reportWeakEquivalence will take care if the edge is inconsistent, too..
 			result.reportWeakEquivalence(edgeLabel.getKey().getOneElement(), edgeLabel.getKey().getOtherElement(),
-					weqFatLabel);
+					weqFatLabel, false);
 			assert result.getEdgeLabel(edgeLabel.getKey()).assertDisjunctsHaveWeqFatFlagSet();
 		}
 		assert result.assertAllEdgeLabelsHaveWeqFatFlagSet();
