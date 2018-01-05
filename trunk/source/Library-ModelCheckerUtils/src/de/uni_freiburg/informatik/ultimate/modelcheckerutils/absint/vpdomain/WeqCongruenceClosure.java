@@ -926,6 +926,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public Set<NODE> removeElementAndDependents(final NODE elem, final Set<NODE> elementsToRemove,
 			final Map<NODE, NODE> nodeToReplacementNode, final boolean useWeqGpa) {
+//			final boolean allowIntroductionOfNewNodes) {
 
 		for (final NODE etr : elementsToRemove) {
 			getWeakEquivalenceGraph().replaceVertex(etr, nodeToReplacementNode.get(etr));
@@ -933,8 +934,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		final Set<NODE> nodesToAddInGpa = getWeakEquivalenceGraph().projectAwaySimpleElementInEdgeLabels(elem);
 
-		assert !useWeqGpa || nodesToAddInGpa.isEmpty() : "we don't allow introduction of new nodes at labels if we"
+		assert useWeqGpa || nodesToAddInGpa.isEmpty() : "we don't allow introduction of new nodes at labels if we"
 				+ "are not in the meet-with-WeqGpa case";
+//		assert !allowIntroductionOfNewNodes || nodesToAddInGpa.isEmpty();
 
 		mCongruenceClosure.removeElements(elementsToRemove, nodeToReplacementNode);
 
