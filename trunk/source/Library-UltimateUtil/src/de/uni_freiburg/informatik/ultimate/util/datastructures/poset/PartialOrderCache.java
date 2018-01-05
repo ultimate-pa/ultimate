@@ -250,4 +250,8 @@ public class PartialOrderCache<E> {
 		}
 		return true;
 	}
+
+	public boolean knowsElement(final E elem) {
+		return mEquivalences.find(elem) != null;
+	}
 }

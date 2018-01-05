@@ -124,6 +124,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 //		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 //		mElementContainer.prepareForRemove(mUseWeqGpa);
 
+		assert mElementContainer.sanityCheck();
 		mElementContainer.removeElements(mElementsToRemove, nodeToReplacementNode);
 
 		if (CcSettings.SANITYCHECK_FINE_GRAINED) {

@@ -391,6 +391,19 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return addElement(elem, this, omitSanityCheck);
 	}
 
+	/**
+	 *
+	 * Note: addElement makes calls to other non-trivial CongruenceClosure-manipulating methods addElement (recursively)
+	 *  and reportEquality. We sometimes want to call these methods on an ICongruenceClosure-object that is different
+	 *   from "this". (current only example: WeqCongruenceClosure.addElement which makes an addElement-call on the
+	 *   CongruenceClosure inside the WeqCc.)
+	 *   We call this other ICc the newEqualityTarget
+	 *
+	 * @param elem
+	 * @param newEqualityTarget
+	 * @param omitSanityCheck
+	 * @return
+	 */
 	public boolean addElement(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget,
 			final boolean omitSanityCheck) {
 		final boolean result = addElementRec(elem, newEqualityTarget, null);
@@ -430,7 +443,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		if (elem.isDependentNonFunctionApplication()) {
 			for (final ELEM supp : elem.getSupportingNodes()) {
-//				mManager.addElement(this, supp, true, true);
 				mManager.addElement(this, supp, newEqualityTarget, true, true);
 				mFaAuxData.addSupportingNode(supp, elem);
 			}
@@ -463,11 +475,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			mManager.addElement(this, elem.getArgument(), true, true);
 		} else {
 			if (!remInfo.getAlreadyRemovedElements().contains(elem.getAppliedFunction())) {
-//				addElementRec(elem.getAppliedFunction(), remInfo);
 				mManager.addElement(this, elem.getAppliedFunction(), newEqualityTarget, true, true);
 			}
 			if (!remInfo.getAlreadyRemovedElements().contains(elem.getArgument())) {
-//				addElementRec(elem.getArgument(), remInfo);
 				mManager.addElement(this, elem.getArgument(), newEqualityTarget, true, true);
 			}
 		}
@@ -475,8 +485,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		if (remInfo == null) {
 			for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {
-//				reportEqualityRec(eq.getKey(), eq.getValue());
 				newEqualityTarget.reportEqualityRec(eq.getKey(), eq.getValue());
+				// this seems nicer but does not work with the current CcManager
+//				mManager.reportEquality(eq.getKey(),  eq.getValue(), newEqualityTarget, true);
 				if (isInconsistent()) {
 					// propagated equality made this Cc inconsistent (break or return here?)
 					break;
@@ -528,13 +539,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	/**
 	 *
-	 * @param elem
 	 * @param elementsToRemove
 	 * @param nodeToReplacementNode
-	 * @param useWeqGpa
 	 *
-	 * @return a set of nodes that have been added to dependent objects (weakEqLabels in the WeqCC case)
-	 *		 empty set for this class (only meaningful in subclasses)
 	 */
 	public void removeElements(final Set<ELEM> elementsToRemove, final Map<ELEM, ELEM> nodeToReplacementNode) {
 		assert !mIsFrozen;
@@ -550,13 +557,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 			updateElementTverAndAuxDataOnRemoveElement(etr, nodeToReplacementNode.get(etr));
 		}
-//		return Collections.emptySet();
 	}
-
-//	@Override
-//	public void applyClosureOperations() {
-//		// do nothing here at them moment (but in overriding methods)
-//	}
 
 	/**
 	 *
@@ -706,7 +707,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ELEM newRep = mElementTVER.removeElement(elem, newRepChoice);
 		assert !elemWasRepresentative || newRepChoice == null || newRep == newRepChoice;
 
-		getAuxData().removeElement(this, elem, elemWasRepresentative, newRep);
+		getAuxData().removeElement(elem, elemWasRepresentative, newRep);
 		if (elem.isFunctionApplication()) {
 			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
 			mFaAuxData.removeArgParent(elem.getArgument(), elem);
@@ -796,12 +797,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return meetRec(other, null, inplace);
 	}
 
-	/**
-	 *
-	 * @param other
-	 * @return true iff this CongruenceClosure is equally or more constraining, than
-	 *         the other given CongruenceClosure
-	 */
+//	/**
+//	 *
+//	 * @param other
+//	 * @return true iff this CongruenceClosure is equally or more constraining, than
+//	 *         the other given CongruenceClosure
+//	 */
 	public boolean isStrongerThan(final CongruenceClosure<ELEM> other) {
 		if (isInconsistent()) {
 			return true;

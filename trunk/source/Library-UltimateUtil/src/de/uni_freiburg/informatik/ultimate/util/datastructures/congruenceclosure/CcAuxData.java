@@ -236,8 +236,7 @@ public class CcAuxData<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	public void removeElement(final CongruenceClosure<ELEM> mCongruenceClosure,
-			final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
+	public void removeElement(final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
 		/*
 		 * ccpar and ccchild only have representatives in their keySets
 		 *  --> move the information to the new representative from elem, if necessary

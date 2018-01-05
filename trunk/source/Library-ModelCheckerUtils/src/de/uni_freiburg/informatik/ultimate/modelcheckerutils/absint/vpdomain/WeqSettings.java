@@ -14,7 +14,9 @@ public class WeqSettings {
 	public static final boolean PROJECTTOELEMENTS_INPLACE = false;
 
 	public static final boolean USE_FULL_WEQCC_DURING_PROJECTAWAY = true;
- 	public static final boolean USE_FULL_WEQCC_DURING_CLOSURE = true;
+
+	// setting would not work -- weq-prime architecture would need rework
+// 	public static final boolean USE_FULL_WEQCC_DURING_CLOSURE = true;
 
 	/**
 	 * if reportChangeToGpa should be called during every report(Dis)Equality

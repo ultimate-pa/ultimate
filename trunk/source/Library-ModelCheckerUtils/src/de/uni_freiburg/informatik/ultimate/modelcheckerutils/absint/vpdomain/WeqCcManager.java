@@ -78,7 +78,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
 	final boolean mDebug = true;
-	final boolean mSkipSolverChecks = false;
+	final boolean mSkipSolverChecks = true;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
@@ -1325,6 +1325,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public boolean checkEquivalence(final WeqCongruenceClosure<NODE> weqcc1,
 			final WeqCongruenceClosure<NODE> weqcc2) {
+		if (mSkipSolverChecks) {
+			return true;
+		}
+
 		mMgdScript.lock(this);
 
 		final Term term1 = weqCcToTerm(mMgdScript.getScript(), weqcc1);

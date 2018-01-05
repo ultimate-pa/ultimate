@@ -16,4 +16,13 @@ public class CcSettings {
 
 	public static final boolean SANITYCHECK_FINE_GRAINED = false;
 
+	/*
+	 * settings related to caching in CcManager
+	 */
+
+	public static final boolean UNIFY_CCS = false;
+
+	// if we want to use unification, we have to forbid in place computations (copy-on-write)
+	public static final boolean FORBID_INPLACE = UNIFY_CCS;
+
 }

@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 
 public class CongruenceClosureTest {
 
-	private static final boolean mInPlace = true;
+	private static final boolean mInPlace = false;
 
 	/**
 	 * Test about basic congruence closure operations.
@@ -566,11 +566,11 @@ public class CongruenceClosureTest {
 
 
 		// cc1 and cc2 should be incomparable
-		assertFalse(cc1.isStrongerThan(cc2));
+		assertFalse(manager.isStrongerThan(cc1, cc2));
 		assertTrue(!mInPlace || !cc1.isFrozen());
 		assertTrue(!mInPlace || !cc2.isFrozen());
 
-		assertFalse(cc2.isStrongerThan(cc1));
+		assertFalse(manager.isStrongerThan(cc2, cc1));
 		assertTrue(!mInPlace || !cc1.isFrozen());
 		assertTrue(!mInPlace || !cc2.isFrozen());
 
@@ -594,10 +594,14 @@ public class CongruenceClosureTest {
 		assertTrue(cc3.getEqualityStatus(f_f_a, a) == EqualityStatus.UNKNOWN);
 
 		// cc3 should be strictly weaker than both cc1 and cc2
-		assertTrue(cc1.isStrongerThan(cc3));
-		assertFalse(cc3.isStrongerThan(cc1));
-		assertTrue(cc2.isStrongerThan(cc3));
-		assertFalse(cc3.isStrongerThan(cc2));
+//		assertTrue(cc1.isStrongerThan(cc3));
+		assertTrue(manager.isStrongerThan(cc1, cc3));
+//		assertFalse(cc3.isStrongerThan(cc1));
+		assertFalse(manager.isStrongerThan(cc3, cc1));
+//		assertTrue(cc2.isStrongerThan(cc3));
+		assertTrue(manager.isStrongerThan(cc2, cc3));
+//		assertFalse(cc3.isStrongerThan(cc2));
+		assertFalse(manager.isStrongerThan(cc3, cc2));
 		assertTrue(!mInPlace || !cc1.isFrozen());
 		assertTrue(!mInPlace || !cc2.isFrozen());
 
@@ -616,10 +620,14 @@ public class CongruenceClosureTest {
 		assertTrue(cc4.getEqualityStatus(b, f_b) == EqualityStatus.UNKNOWN);
 
 		// cc4 should be strictly stronger than both cc1 and cc2
-		assertTrue(cc4.isStrongerThan(cc1));
-		assertFalse(cc1.isStrongerThan(cc4));
-		assertTrue(cc4.isStrongerThan(cc2));
-		assertFalse(cc2.isStrongerThan(cc4));
+//		assertTrue(cc4.isStrongerThan(cc1));
+		assertTrue(manager.isStrongerThan(cc4, cc1));
+//		assertFalse(cc1.isStrongerThan(cc4));
+		assertFalse(manager.isStrongerThan(cc1, cc4));
+//		assertTrue(cc4.isStrongerThan(cc2));
+		assertTrue(manager.isStrongerThan(cc4, cc2));
+//		assertFalse(cc2.isStrongerThan(cc4));
+		assertFalse(manager.isStrongerThan(cc2, cc4));
 	}
 
 	/*
@@ -695,8 +703,10 @@ public class CongruenceClosureTest {
 
 
 		// cc1 and cc2 should be incomparable
-		assertFalse(cc1.isStrongerThan(cc2));
-		assertFalse(cc2.isStrongerThan(cc1));
+//		assertFalse(cc1.isStrongerThan(cc2));
+//		assertFalse(cc2.isStrongerThan(cc1));
+		assertFalse(manager.isStrongerThan(cc1, cc2));
+		assertFalse(manager.isStrongerThan(cc2, cc1));
 
 		final CongruenceClosure<StringCcElement> cc3 = manager.join(
 				manager.getCopy(cc1, true),
@@ -714,10 +724,14 @@ public class CongruenceClosureTest {
 		assertTrue(cc3.getEqualityStatus(f_f_a, a) == EqualityStatus.UNKNOWN);
 
 		// cc3 should be strictly weaker than both cc1 and cc2
-		assertTrue(cc1.isStrongerThan(cc3));
-		assertFalse(cc3.isStrongerThan(cc1));
-		assertTrue(cc2.isStrongerThan(cc3));
-		assertFalse(cc3.isStrongerThan(cc2));
+//		assertTrue(cc1.isStrongerThan(cc3));
+		assertTrue(manager.isStrongerThan(cc1, cc3));
+//		assertFalse(cc3.isStrongerThan(cc1));
+		assertFalse(manager.isStrongerThan(cc3, cc1));
+//		assertTrue(cc2.isStrongerThan(cc3));
+		assertTrue(manager.isStrongerThan(cc2, cc3));
+//		assertFalse(cc3.isStrongerThan(cc2));
+		assertFalse(manager.isStrongerThan(cc3, cc2));
 
 		final CongruenceClosure<StringCcElement> cc4 = manager.meet(
 				manager.getCopy(cc1, true),
@@ -736,10 +750,14 @@ public class CongruenceClosureTest {
 		assertTrue(cc4.getEqualityStatus(b, f_b) == EqualityStatus.NOT_EQUAL);
 
 		// cc3 should be strictly stronger than both cc1 and cc2
-		assertTrue(cc4.isStrongerThan(cc1));
-		assertFalse(cc1.isStrongerThan(cc4));
-		assertTrue(cc4.isStrongerThan(cc2));
-		assertFalse(cc2.isStrongerThan(cc4));
+//		assertTrue(cc4.isStrongerThan(cc1));
+		assertTrue(manager.isStrongerThan(cc4, cc1));
+//		assertFalse(cc1.isStrongerThan(cc4));
+		assertFalse(manager.isStrongerThan(cc1, cc4));
+//		assertTrue(cc4.isStrongerThan(cc2));
+		assertTrue(manager.isStrongerThan(cc4, cc2));
+//		assertFalse(cc2.isStrongerThan(cc4));
+		assertFalse(manager.isStrongerThan(cc2, cc4));
 
 	}
 
