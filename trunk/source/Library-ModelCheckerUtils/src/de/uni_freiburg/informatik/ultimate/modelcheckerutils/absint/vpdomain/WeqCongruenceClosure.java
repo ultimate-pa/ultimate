@@ -185,14 +185,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public void addElement(final NODE elem, final boolean omitSanityChecks) {
 		assert !isFrozen();
 		addElementRec(elem);
-//		assert mCongruenceClosure.sanityCheck();
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+			assert omitSanityChecks || sanityCheck();
+//			assert mCongruenceClosure.sanityCheck();
+		}
 
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
 			// TODO: do full applyClosureOperations here??
-			extAndTriangleClosure();
+			extAndTriangleClosure(omitSanityChecks);
 //			executeFloydWarshallAndReportResultToWeqCc();
 		}
-		reportAllArrayEqualitiesFromWeqGraph();
+		reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
 
 		assert omitSanityChecks || sanityCheck();
 	}
@@ -218,7 +221,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 *  Currently: propagations according to the rules ext and delta.
 		 */
 
-		extAndTriangleClosure();
+		extAndTriangleClosure(false);
 
 		// set the flags
 		if (mCongruenceClosure != null) {
@@ -299,7 +302,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert sanityCheck();
 	}
 
-	boolean executeFloydWarshallAndReportResultToWeqCc() {
+	boolean executeFloydWarshallAndReportResultToWeqCc(final boolean omitSanityChecks) {
 		if (isInconsistent()) {
 			return false;
 		}
@@ -318,12 +321,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					fwEdge.getKey().getOtherElement(), fwEdge.getValue());
 
 			if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
-				assert sanityCheck();
+				assert omitSanityChecks || sanityCheck();
 			}
 		}
 
 		assert mManager.checkEquivalence(originalCopy, this);
-		assert sanityCheck();
+		assert omitSanityChecks || sanityCheck();
 		return fwmc;
 	}
 
@@ -439,16 +442,21 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * (works in place)
 	 * @param node1
 	 * @param node2
+	 * @param omitSanityChecks
 	 * @return
 	 */
-	public boolean reportEquality(final NODE node1, final NODE node2) {
+	public boolean reportEquality(final NODE node1, final NODE node2, final boolean omitSanityChecks) {
 		assert !isFrozen();
-		final boolean result = reportEqualityRec(node1, node2);
-		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
-			executeFloydWarshallAndReportResultToWeqCc();
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+			assert omitSanityChecks || sanityCheck();
 		}
-		assert sanityCheck();
-		return result;
+
+		final boolean madeChanges = reportEqualityRec(node1, node2);
+		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
+			executeFloydWarshallAndReportResultToWeqCc(omitSanityChecks);
+		}
+		assert omitSanityChecks || sanityCheck();
+		return madeChanges;
 	}
 
 	/**
@@ -736,23 +744,29 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	/**
 	 *
+	 * @param omitSanityChecks
 	 * @return true iff any constraints were added
 	 */
-	boolean reportAllArrayEqualitiesFromWeqGraph() {
+	boolean reportAllArrayEqualitiesFromWeqGraph(final boolean omitSanityChecks) {
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+				assert omitSanityChecks || sanityCheck();
+		}
+
 		boolean madeChanges = false;
 		while (getWeakEquivalenceGraph().hasArrayEqualities()) {
 			final Entry<NODE, NODE> aeq = getWeakEquivalenceGraph().pollArrayEquality();
-			madeChanges |= reportEquality(aeq.getKey(), aeq.getValue());
+			madeChanges |= reportEquality(aeq.getKey(), aeq.getValue(), omitSanityChecks);
 			if (isInconsistent()) {
 				assert sanityCheck();
 				assert madeChanges;
 				return true;
 			}
 			if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
-				assert sanityCheck();
+				assert omitSanityChecks || sanityCheck();
 			}
 		}
-		assert sanityCheck();
+
+		assert omitSanityChecks || sanityCheck();
 		assert weqGraphFreeOfArrayEqualities();
 		return madeChanges;
 	}
@@ -811,7 +825,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 		boolean madeChanges = false;
 		madeChanges |= getCcWeakEquivalenceGraph().reportChangeInGroundPartialArrangement(reporter);
-		reportAllArrayEqualitiesFromWeqGraph();
+		reportAllArrayEqualitiesFromWeqGraph(false);
 		assert sanityCheck();
 		return madeChanges;
 	}
@@ -884,7 +898,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		assert sanityCheck();
 	}
 
-	public void extAndTriangleClosure() {
+	public void extAndTriangleClosure(final boolean omitSanityChecks) {
 
 		WeqCongruenceClosure<NODE> originalCopy = null;
 		if (mManager.areAssertsEnabled() && mManager.mDebug && !mManager.mSkipSolverChecks) {
@@ -907,19 +921,19 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					 *  and we don't account for that e.g. in reportWeakEquivalence..)
 					 */
 					fatten(false);
-					madeChanges = reportAllArrayEqualitiesFromWeqGraph();
+					madeChanges = reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
 				}
 			}
 			thin();
 
 			// 2. do floyd-warshall (triangle-rule), report
-			executeFloydWarshallAndReportResultToWeqCc();
+			executeFloydWarshallAndReportResultToWeqCc(omitSanityChecks);
 			if (!getWeakEquivalenceGraph().hasArrayEqualities()) {
 				// status: closed under ext and under triangle --> done
 				assert mManager.checkEquivalence(originalCopy, this);
 				return;
 			}
-			reportAllArrayEqualitiesFromWeqGraph();
+			reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
 		}
 
 	}
@@ -1078,28 +1092,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return false;
 	}
 
-//	protected void registerNewElement(final NODE elem, final IRemovalInfo<NODE> remInfo) {
 	protected void registerNewElement(final NODE elem) {
-		// would be redundant, as addElement is called before on mCongruenceClosure
-//		mCongruenceClosure.registerNewElement(elem, remInfo);
 
 		if (isInconsistent()) {
 			// nothing more to do
 			return;
 		}
-
-
-//		/*
-//		 * the new element might have become a representative instead of another element
-//		 *  --> we have to update the vertices in the weq graph accordingly
-//		 */
-//		if (isRepresentative(elem)) {
-//			for (final NODE eqElem : mCongruenceClosure.getEquivalenceClass(elem)) {
-//				// is the eqElem a vertext in the weq graph?
-//				getWeakEquivalenceGraph().updateForNewRep(node1OldRep, node2OldRep, newRep);
-//
-//			}
-//		}
 
 		if (!elem.isFunctionApplication()) {
 			// nothing more to do
@@ -1141,7 +1139,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		if (madeChanges && !CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
-			extAndTriangleClosure();
+			extAndTriangleClosure(false);
 //			executeFloydWarshallAndReportResultToWeqCc();
 		}
 //		assert sanityCheck();
@@ -1244,12 +1242,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		final WeqCongruenceClosure<NODE> result = meetRec(other, inplace);
 
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
-			result.executeFloydWarshallAndReportResultToWeqCc();
+			result.executeFloydWarshallAndReportResultToWeqCc(false);
 		}
 		if (result.isInconsistent() && !inplace) {
 			return mManager.getInconsistentWeqCc(false);
 		}
-		result.reportAllArrayEqualitiesFromWeqGraph();
+		result.reportAllArrayEqualitiesFromWeqGraph(false);
 
 		if (result.isInconsistent() && !inplace) {
 			return mManager.getInconsistentWeqCc(false);

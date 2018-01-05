@@ -152,9 +152,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			result = unfrozen;
 		}
 
-		if (WeqSettings.SANITYCHECK_AFTER_ADD_NODE) {
-			assert origWeqCc.sanityCheck();
-		}
+		assert omitSanityChecks || origWeqCc.sanityCheck();
+
 		return result;
 	}
 
@@ -268,11 +267,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> reportEquality(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node1,
 			final NODE node2, final boolean inplace) {
 		if (inplace) {
-			origWeqCc.reportEquality(node1, node2);
+			origWeqCc.reportEquality(node1, node2, false);
 			return origWeqCc;
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
-			unfrozen.reportEquality(node1, node2);
+			unfrozen.reportEquality(node1, node2, false);
 			unfrozen.freeze();
 			assert checkReportEqualityResult(origWeqCc, node1, node2, unfrozen);
 			return unfrozen;
@@ -347,6 +346,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> makeCopyForWeqMeet(final WeqCongruenceClosure<NODE> originalPa,
 			final boolean modifiable) {
+		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+			assert originalPa.sanityCheck();
+		}
+
 		// note that we use the old WeqCc here as parameter, the field in WeqGraph will be reset by getWeqCongruenceCl..
 		final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> newWeqGraph =
 				WeqSettings.FLATTEN_WEQ_EDGES_BEFORE_JOIN ?
@@ -361,6 +364,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (!modifiable) {
 			result.freeze();
 		}
+		assert result.sanityCheck();
 		return result;
 	}
 

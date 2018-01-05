@@ -42,10 +42,10 @@ public class WeqSettings {
 
 	/* flags to switch sanity checks on/off */
 
-	public static final boolean SANITYCHECK_AFTER_ADD_NODE = false;
+//	public static final boolean SANITYCHECK_AFTER_ADD_NODE = false;
 
 	// general flag to capture e.g. sanity checks that are done for intermediate steps of a methods and similar ones
-	public static final boolean SANITYCHECK_FINE_GRAINED = false;
+	public static final boolean SANITYCHECK_FINE_GRAINED = true;
 
 	/**
 	 * if reportChangeInGpa should perform a meet and project of the label

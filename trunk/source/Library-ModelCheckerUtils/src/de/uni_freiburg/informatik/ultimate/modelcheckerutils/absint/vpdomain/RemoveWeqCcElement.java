@@ -113,7 +113,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		boolean becameInconsistentWhenAddingANode = false;
 		becameInconsistentWhenAddingANode = addNodesToKeepInformation(elementsToRemove, nodeToReplacementNode);
 		// TODO: seems out of place here, somehow..
-		mWeqCc.reportAllArrayEqualitiesFromWeqGraph();
+		mWeqCc.reportAllArrayEqualitiesFromWeqGraph(false);
 
 		if (becameInconsistentWhenAddingANode) {
 			assert mWeqCc.isInconsistent();
@@ -125,13 +125,10 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 		assert !mWeqCc.isInconsistent();
 
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
-			mWeqCc.extAndTriangleClosure();
+			mWeqCc.extAndTriangleClosure(false);
 		}
 
 		assert !mWeqCc.isInconsistent();
-		if (mWeqCc.isInconsistent()) {
-			return;
-		}
 
 		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 		mWeqCc.fatten(mUseWeqGpa);
@@ -159,7 +156,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 			}
 		}
 		assert mWeqCc.sanityCheck();
-		mWeqCc.extAndTriangleClosure();
+		mWeqCc.extAndTriangleClosure(false);
 
 		if (mWeqCc.isDebugMode() && mWeqCc.isInconsistent()) {
 			mWeqCc.getLogger().debug("RemoveElement: " + mWeqCc.hashCode() +

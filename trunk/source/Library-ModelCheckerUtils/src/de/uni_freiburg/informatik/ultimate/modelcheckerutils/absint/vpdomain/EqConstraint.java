@@ -114,7 +114,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 		assert !isInconsistent();
 		assert !mIsFrozen;
 
-		return mWeqCc.reportEquality(node1, node2);
+		return mWeqCc.reportEquality(node1, node2, false);
 	}
 
 	public boolean reportDisequalityInPlace(final NODE node1, final NODE node2) {

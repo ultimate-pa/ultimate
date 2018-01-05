@@ -471,8 +471,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final HashRelation<ELEM, ELEM> equalitiesToPropagate = getAuxData().registerNewElement(elem);
 
 		if (remInfo == null) {
-			mManager.addElement(this, elem.getAppliedFunction(), true, true);
-			mManager.addElement(this, elem.getArgument(), true, true);
+			mManager.addElement(this, elem.getAppliedFunction(), newEqualityTarget, true, true);
+			mManager.addElement(this, elem.getArgument(), newEqualityTarget, true, true);
 		} else {
 			if (!remInfo.getAlreadyRemovedElements().contains(elem.getAppliedFunction())) {
 				mManager.addElement(this, elem.getAppliedFunction(), newEqualityTarget, true, true);
