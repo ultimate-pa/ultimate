@@ -361,8 +361,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return addedNewNode;
 		}
 
-		final boolean reportedNewWeq = getCcWeakEquivalenceGraph().reportWeakEquivalence(array1Rep, array2Rep, edgeLabel,
-				omitSanityChecks);
+		final boolean reportedNewWeq = getCcWeakEquivalenceGraph().reportWeakEquivalence(array1Rep, array2Rep,
+				edgeLabel, omitSanityChecks);
 
 		if (!reportedNewWeq) {
 			// nothing to propagate

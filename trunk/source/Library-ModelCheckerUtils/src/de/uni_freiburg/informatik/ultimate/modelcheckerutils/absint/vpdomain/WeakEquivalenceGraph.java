@@ -672,6 +672,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel =
 				mWeqCcManager.meetEdgeLabels(oldLabelCopy, labelToStrengthenWith, false);
 
+
 		// inconsistency check
 		if (strengthenedEdgeLabel.isInconsistent()) {
 			addArrayEquality(sourceAndTarget.getOneElement(), sourceAndTarget.getOtherElement());
@@ -782,8 +783,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		}
 
 		// TODO not doing it inplace because inplace is buggy (can be seen via smtSolverCheck)
+		//   EDIT: !inplace freezes (now) --> _do_ it inplace as the next lines will change it
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet =
-				mWeqCcManager.meetEdgeLabels(copy, qEqualsI, false);
+				mWeqCcManager.meetEdgeLabels(copy, qEqualsI, true);
 //				copy.meetRec(Collections.singleton(qEqualsI));
 
 		meet.setExternalRemInfo(mWeqCc.getElementCurrentlyBeingRemoved());

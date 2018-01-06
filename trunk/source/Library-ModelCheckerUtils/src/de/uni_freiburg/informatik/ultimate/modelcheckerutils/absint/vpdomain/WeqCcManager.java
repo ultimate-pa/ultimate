@@ -78,7 +78,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
 	final boolean mDebug = true;
-	final boolean mSkipSolverChecks = true;
+	final boolean mSkipSolverChecks = false;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
@@ -815,11 +815,29 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return res;
 	}
 
+	/**
+	 * like isStrongerThan(..Term..) but used for assertions
+	 * @param script
+	 * @param ante
+	 * @param succ
+	 * @return
+	 */
 	private boolean checkImplicationHolds(final Script script, final Term ante, final Term succ) {
-
 		if (mSkipSolverChecks) {
 			return true;
 		}
+		return isStrongerThan(script, ante, succ);
+	}
+
+	/**
+	 * like checkImplicationHolds(..Term..) but can be used outside assertions (no breakout-flag)
+	 *
+	 * @param script
+	 * @param ante
+	 * @param succ
+	 * @return
+	 */
+	private boolean isStrongerThan(final Script script, final Term ante, final Term succ) {
 
 		assert mMgdScript.isLockOwner(this);
 
@@ -853,7 +871,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mMgdScript.pop(this, 1);
 
-		assert satResult == LBool.UNSAT;
+//		assert satResult == LBool.UNSAT;
 		return satResult == LBool.UNSAT;
 	}
 
@@ -1074,6 +1092,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		assert !inplace || result == l1 : "if inplace is set, we must return the original object";
 
 //		assert checkMeetWeqLabels(originalL1, l2, result);
+		assert inplace || isStrongerThanPrecise(result, l1);
+		assert inplace || isStrongerThanPrecise(result, l2);
 
 		return result;
 	}
@@ -1133,7 +1153,61 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThan(
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2) {
-		return isStrongerThan(label1, label2, this::isStrongerThan);
+		final boolean result;
+		if (WeqSettings.PRECISE_WEQ_LABEL_COMPARISON) {
+			result = isStrongerThanPrecise(label1, label2);
+		} else {
+			result = isStrongerThan(label1, label2, this::isStrongerThan);
+		}
+		assert checkIsStrongerThanResult(label1, label2, result);
+		return result;
+	}
+
+	<DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThanPrecise(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2) {
+		final Script script = mMgdScript.getScript();
+
+		mMgdScript.lock(this);
+
+		final Term label1Term = SmtUtils.or(script, label1.toDnf(script));
+		final Term label2Term = SmtUtils.or(script, label2.toDnf(script));
+
+		final boolean implicationHolds = isStrongerThan(script, label1Term, label2Term);
+
+		mMgdScript.unlock(this);
+		return implicationHolds;
+	}
+
+	private <DISJUNCT extends ICongruenceClosure<NODE>> boolean checkIsStrongerThanResult(
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2, final boolean impCheckResult) {
+
+		final Script script = mMgdScript.getScript();
+
+		mMgdScript.lock(this);
+
+		final Term label1Term = SmtUtils.or(script, label1.toDnf(script));
+		final Term label2Term = SmtUtils.or(script, label2.toDnf(script));
+
+		final boolean implicationHolds = checkImplicationHolds(script, label1Term, label2Term);
+
+		final boolean result;
+		if (label2.getDisjuncts().size() <= 1) {
+			// special case where our implication check is conceptually precise
+			result = implicationHolds == impCheckResult;
+			assert result;
+		} else {
+			/*
+			 * in general our implication check approximates: If its says the implication holds, it holds, but it may
+			 *  not detect a valid implication  in all cases.
+			 */
+			result = !impCheckResult || implicationHolds;
+			assert result;
+		}
+
+		mMgdScript.unlock(this);
+		return result;
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> boolean isStrongerThan(

@@ -37,7 +37,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -514,30 +513,42 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			}
 		}
 
+		final Set<DISJUNCT> newLabelContentsFiltered = mWeqCcManager.filterRedundantICcs(newLabelContent);
+		assert newLabelContentsFiltered.stream().allMatch(l -> l.sanityCheckOnlyCc());
+
 		// need to do this before the project operation, as the projectToElements may violate the equivalence property
 		assert mWeqCcManager.checkMeetWeqLabels(originalThis, otherLabel,
 				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(mWeakEquivalenceGraph, newLabelContent, true));
 
-		final Set<DISJUNCT> newLabelContentsFiltered = mWeqCcManager.filterRedundantICcs(newLabelContent);
-		assert newLabelContentsFiltered.stream().allMatch(l -> l.sanityCheckOnlyCc());
 
-		final Set<DISJUNCT> newLabelProjected = newLabelContentsFiltered.stream()
-				.map(l -> mWeqCcManager.projectToElements(l, mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes(),
-						mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved(),
-						// perhaps/old: align frozen status with weq graph? (consequences a bit unclear..)
-//						!mWeakEquivalenceGraph.isFrozen()))
-						// freezing-paradigm "inside out" --> projectToElements naturally freezes/does not work inplace
-						true))
-				.collect(Collectors.toSet());
-		assert newLabelProjected.stream().allMatch(l -> l.sanityCheckOnlyCc(
-				mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved()));
+//		final Set<DISJUNCT> newLabelProjected = newLabelContentsFiltered.stream()
+//				.map(l -> mWeqCcManager.projectToElements(l, mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes(),
+//						mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved(),
+//						// perhaps/old: align frozen status with weq graph? (consequences a bit unclear..)
+////						!mWeakEquivalenceGraph.isFrozen()))
+//						// freezing-paradigm "inside out" --> projectToElements naturally freezes/does not work inplace
+//						true))
+//				.collect(Collectors.toSet());
+//		assert newLabelProjected.stream().allMatch(l -> l.sanityCheckOnlyCc(
+//				mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved()));
+
+//		if (!inplace) {
+//			for (final DISJUNCT disjunct : newLabelContentsFiltered) {
+//				disjunct.freezeIfNecessary();
+//			}
+//		}
 
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result;
 		if (inplace) {
-			setNewLabelContents(newLabelProjected);
+//			setNewLabelContents(newLabelProjected);
+			setNewLabelContents(newLabelContentsFiltered);
 			result = this;
 		} else {
-			result = new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(mWeakEquivalenceGraph, newLabelProjected);
+//			result = new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(mWeakEquivalenceGraph, newLabelProjected);
+			result = new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(mWeakEquivalenceGraph, newLabelContentsFiltered);
+		}
+		if (!inplace) {
+			result.freeze();
 		}
 		assert result.sanityCheck();
 		return result;
@@ -682,12 +693,14 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			}
 		}
 
-		if (baseWeqCc != null && baseWeqCc.mDiet == Diet.THIN) {
-			// in THIN-mode: check that labels are free of constraints that don't contain weq nodes
-			for (final DISJUNCT lab : getDisjuncts()) {
-				assert ((CongruenceClosure<NODE>) lab).assertHasOnlyWeqVarConstraints(mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes());
-			}
-		}
+		// note 6.1.2018: commented this out when removing projectToElements from meet operation on weq labels
+		//  project can be done by operations using the meet afterwards...
+//		if (baseWeqCc != null && baseWeqCc.mDiet == Diet.THIN) {
+//			// in THIN-mode: check that labels are free of constraints that don't contain weq nodes
+//			for (final DISJUNCT lab : getDisjuncts()) {
+//				assert ((CongruenceClosure<NODE>) lab).assertHasOnlyWeqVarConstraints(mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes());
+//			}
+//		}
 
 		return sanityCheckDontEnforceProjectToWeqVars(mWeakEquivalenceGraph.mWeqCc);
 	}
@@ -887,7 +900,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 	public void freeze() {
 		for (final DISJUNCT disjunct : getDisjuncts()) {
-			disjunct.freeze();
+			disjunct.freezeIfNecessary();
 		}
 		mIsFrozen = true;
 	}

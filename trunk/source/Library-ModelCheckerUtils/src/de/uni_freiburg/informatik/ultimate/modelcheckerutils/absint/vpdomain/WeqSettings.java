@@ -59,4 +59,11 @@ public class WeqSettings {
 	 * (observation, 02.01.2018: does seem to impact precision on regression tests, negatively if false)
 	 */
 	public static final boolean MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL = true;
+
+	/**
+	 * if weq labels are compared via an SMT query (right now: the standard solver, probably doing it via SMTInterpol
+	 * would be better) or via our imprecise disjunct-by-disjunct check
+	 * (performance on regressions: slightly worse for "true", ~5-10%)
+	 */
+	public static final boolean PRECISE_WEQ_LABEL_COMPARISON = false;
 }
