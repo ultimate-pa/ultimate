@@ -679,13 +679,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		/* (Dec 17) no/optional thinning */
 //		// meet with gpa (done before) and project afterwards
-		if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
-			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
-		} else {
-			// (not totally clear, see also WeakEquivalenceEdgeLabel.[projectToPoint|shift])
+//		if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+//			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+//		} else {
+//			// (not totally clear, see also WeakEquivalenceEdgeLabel.[projectToPoint|shift])
+//			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
+//		}
+		if (mWeqCc.mDiet == Diet.THIN) {
 			strengthenedEdgeLabel = strengthenedEdgeLabel.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
 		}
-
 
 		assert strengthenedEdgeLabel.sanityCheck();
 		// replace the edge label by the strengthened version
@@ -796,17 +798,24 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		assert meet.sanityCheckDontEnforceProjectToWeqVars(mWeqCc);
 
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result;
-		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+//		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+//			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
+//		} else {
+//			/* we need to project here any way, to keep to the paradigm "edge labels that do not refer to a weq var
+//			 * are either false or stored as true"
+//			 * also, not doing the meetWGpa might be a bad idea anyway..
+//			 */
+//			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
+//		}
+		if (mWeqCc.mDiet == Diet.THIN) {
 			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
 		} else {
-			/* we need to project here any way, to keep to the paradigm "edge labels that do not refer to a weq var
-			 * are either false or stored as true"
-			 * also, not doing the meetWGpa might be a bad idea anyway..
-			 */
-			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
+//			assert !meet.getDisjuncts().stream().anyMatch(l ->
+//				DataStructureUtils.intersection(meet.getAllElements(), mWeqCcManager.getAllWeqNodes()).isEmpty());
+			result = meet;
 		}
 
-		assert result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));
+		assert mWeqCc.mDiet != Diet.THIN || result.assertHasOnlyWeqVarConstraints(new HashSet<>(weqVarsForThisEdge));
 
 		assert result.sanityCheck();
 		return result;
@@ -837,12 +846,15 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		meet.projectWeqVarNode(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() - 1));
 
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToShiftAndAdd = meet;
-		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
-			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
-		} else {
-			/*
-			 * probably we need to project anyway (see projectEdgeLabelToPoint..)
-			 */
+//		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+//			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
+//		} else {
+//			/*
+//			 * probably we need to project anyway (see projectEdgeLabelToPoint..)
+//			 */
+//			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
+//		}
+		if (mWeqCc.mDiet == Diet.THIN) {
 			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
 		}
 

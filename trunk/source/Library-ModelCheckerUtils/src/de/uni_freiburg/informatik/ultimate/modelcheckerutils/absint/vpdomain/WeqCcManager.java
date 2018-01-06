@@ -302,11 +302,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> reportWeakEquivalence(final WeqCongruenceClosure<NODE> origWeqCc,
 			final NODE array1, final NODE array2, final NODE storeIndex, final boolean inplace) {
 		if (inplace) {
-			origWeqCc.reportWeakEquivalence(array1, array2, storeIndex);
+			origWeqCc.reportWeakEquivalence(array1, array2, storeIndex, false);
 			return origWeqCc;
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
-			unfrozen.reportWeakEquivalence(array1, array2, storeIndex);
+			unfrozen.reportWeakEquivalence(array1, array2, storeIndex, false);
 			unfrozen.freeze();
 			assert checkReportWeakEquivalenceResult(origWeqCc, array1, array2, storeIndex, unfrozen);
 			return unfrozen;
