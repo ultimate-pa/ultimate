@@ -534,7 +534,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return true;
 		}
 
-		doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData);
+		doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData, true);
 
 		if (isInconsistent()) {
 			return true;
@@ -566,9 +566,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @param node1OldRep
 	 * @param node2OldRep
 	 * @param oldAuxData
+	 * @param b
 	 */
 	private void doRoweqPropagationsOnMerge(final NODE node1, final NODE node2, final NODE node1OldRep,
-			final NODE node2OldRep, final CcAuxData<NODE> oldAuxData) {
+			final NODE node2OldRep, final CcAuxData<NODE> oldAuxData, final boolean omitSanityChecks) {
 		if (isInconsistent()) {
 			return;
 		}
@@ -618,7 +619,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				final CongruenceClosure<NODE> qUnequalI = mManager.getSingleDisequalityCc(firstWeqVar, ccc1ArgReplaced,
 						true);
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1AfReplaced, ccc2AfReplaced,
-						mManager.getSingletonEdgeLabel(getWeakEquivalenceGraph(), qUnequalI), false);
+						mManager.getSingletonEdgeLabel(getWeakEquivalenceGraph(), qUnequalI), omitSanityChecks);
 			}
 		}
 
@@ -648,7 +649,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 						getCcWeakEquivalenceGraph().projectEdgeLabelToPoint(aToBLabel, ccp1.getArgument(),
 								mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
 				// recursive call
-				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel, false);
+				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1, ccp2, projectedLabel, omitSanityChecks);
 
 				/*
 				 * roweq-1, explicit trigger, i.e.,
@@ -662,7 +663,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 								mManager.getAllWeqVarsNodeForFunction(ccp1.getAppliedFunction()));
 				// recursive call
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(),
-						ccp2.getAppliedFunction(), shiftedLabelWithException, false);
+						ccp2.getAppliedFunction(), shiftedLabelWithException, omitSanityChecks);
 
 				/*
 				 * roweqMerge
@@ -682,7 +683,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 							ccp1.getArgument(), true);
 
 					reportWeakEquivalenceDoOnlyRoweqPropagations(ccp1.getAppliedFunction(), ccp2.getAppliedFunction(),
-							mManager.getSingletonEdgeLabel(getWeakEquivalenceGraph(), qUnequalI), false);
+							mManager.getSingletonEdgeLabel(getWeakEquivalenceGraph(), qUnequalI), omitSanityChecks);
 				}
 			}
 
@@ -698,15 +699,16 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		 * the added equality may trigger the pattern matching on the weak equivalence
 		 * condition of the roweq-1 rule
 		 */
-		otherRoweqPropOnMerge(node1OldRep, oldAuxData);
-		otherRoweqPropOnMerge(node2OldRep, oldAuxData);
+		otherRoweqPropOnMerge(node1OldRep, oldAuxData, omitSanityChecks);
+		otherRoweqPropOnMerge(node2OldRep, oldAuxData, omitSanityChecks);
 	}
 
 	public EqualityStatus getEqualityStatus(final NODE node1, final NODE node2) {
 		return mCongruenceClosure.getEqualityStatus(node1, node2);
 	}
 
-	private boolean otherRoweqPropOnMerge(final NODE nodeOldRep, final CcAuxData<NODE> oldAuxData) {
+	private boolean otherRoweqPropOnMerge(final NODE nodeOldRep, final CcAuxData<NODE> oldAuxData,
+			final boolean omitSanityChecks) {
 		boolean madeChanges = false;
 		for (final Entry<NODE, NODE> ccc : oldAuxData.getCcChildren(nodeOldRep)) {
 			// ccc = (b,j) , as in b[j]
@@ -733,7 +735,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 									mManager.getAllWeqVarsNodeForFunction(ccc.getKey()));
 					// recursive call
 					madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(ccc.getKey(), aj.getKey(),
-							shiftedLabelWithException, false);
+							shiftedLabelWithException, omitSanityChecks);
 				}
 			}
 

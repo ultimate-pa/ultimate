@@ -77,15 +77,16 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
-	final boolean mDebug = true;
+	final boolean mDebug;
 	final boolean mSkipSolverChecks = false;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
-			final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory) {
+			final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory, final boolean debugMode) {
 		mCcManager = new CcManager<>(logger, ccComparator);
 		mMgdScript = mgdScript;
 		mLogger = logger;
+		mDebug = debugMode;
 
 		mWeqCcComparator = weqCcComparator;
 

@@ -285,9 +285,6 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		assert mWeakEquivalenceGraph.mWeqCc.mDiet == Diet.THIN
 				// we allow thin-to fat here for the case when during fatten, a weq is reported during meetWWeqGpa
 				|| mWeakEquivalenceGraph.mWeqCc.mDiet == Diet.TRANSITORY_THIN_TO_WEQCCFAT;
-//				/* CCFAT can happen: extAndTriangleClosure->fatten(false)->reportEqualityFromWeqGraph
-//				 *   ->reportEquality->roweqPropsOnMerge->shiftLabel EDIT: maybe we should not project there.. */
-//				|| mWeakEquivalenceGraph.mWeqCc.mDiet == Diet.CCFAT;
 		if (isInconsistent()) {
 			return this;
 		}
