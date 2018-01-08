@@ -385,7 +385,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 //			final CongruenceClosure<NODE> meetWgpa;
 			final DISJUNCT meetWgpa;
-			if (WeqSettings.MEET_WITH_GPA_ON_REPORTCHANGE) {
+			if (mWeqCcManager.getSettings().isMeetWithGpaOnReportchange()) {
 				meetWgpa =  mWeqCcManager.meet(disjunct,
 					(DISJUNCT) mWeakEquivalenceGraph.mWeqCc.getCongruenceClosure(),
 					mWeakEquivalenceGraph.mWeqCc.getElementCurrentlyBeingRemoved(),
@@ -413,7 +413,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 				continue;
 			}
 
-			if (WeqSettings.MEET_WITH_GPA_ON_REPORTCHANGE) {
+			if (mWeqCcManager.getSettings().isMeetWithGpaOnReportchange()) {
 				// add the strengthened version as the new label element
 				final DISJUNCT projected = mWeqCcManager.projectToElements(meetWgpa,
 						mWeakEquivalenceGraph.getWeqCcManager().getAllWeqNodes(),
@@ -627,7 +627,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 	@Override
 	public String toString() {
-		if (getNumberOfDisjuncts() < WeqSettings.MAX_NO_EDGELABELDISJUNCTS_FOR_VERBOSE_TO_STRING) {
+		if (getNumberOfDisjuncts() < mWeqCcManager.getSettings().getMaxNoEdgelabeldisjunctsForVerboseToString()) {
 			return toLogString();
 		}
 		return "weq edge label, size: " + mDisjuncts.size();

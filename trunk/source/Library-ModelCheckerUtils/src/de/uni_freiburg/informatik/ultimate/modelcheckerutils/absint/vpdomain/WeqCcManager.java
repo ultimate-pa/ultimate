@@ -77,16 +77,21 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
+	private final WeqSettings mSettings;
+
 	final boolean mDebug;
-	final boolean mSkipSolverChecks = false;
+	final boolean mSkipSolverChecks = true;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
-			final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory, final boolean debugMode) {
+			final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory, final WeqSettings settings,
+			final boolean debugMode) {
 		mCcManager = new CcManager<>(logger, ccComparator);
 		mMgdScript = mgdScript;
 		mLogger = logger;
 		mDebug = debugMode;
+
+		mSettings = settings;
 
 		mWeqCcComparator = weqCcComparator;
 
@@ -347,13 +352,13 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> makeCopyForWeqMeet(final WeqCongruenceClosure<NODE> originalPa,
 			final boolean modifiable) {
-		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+		if (mSettings.isSanitycheckFineGrained()) {
 			assert originalPa.sanityCheck();
 		}
 
 		// note that we use the old WeqCc here as parameter, the field in WeqGraph will be reset by getWeqCongruenceCl..
 		final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> newWeqGraph =
-				WeqSettings.FLATTEN_WEQ_EDGES_BEFORE_JOIN ?
+				mSettings.isFlattenWeqEdgesBeforeJoin() ?
 				flattenWeqLabels(originalPa.getWeakEquivalenceGraph(), originalPa) :
 					copy(originalPa.getWeakEquivalenceGraph());
 
@@ -827,7 +832,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (mSkipSolverChecks) {
 			return true;
 		}
-		return isStrongerThan(script, ante, succ);
+		return LBool.SAT != isStrongerThan(script, ante, succ);
 	}
 
 	/**
@@ -838,7 +843,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	 * @param succ
 	 * @return
 	 */
-	private boolean isStrongerThan(final Script script, final Term ante, final Term succ) {
+	private LBool isStrongerThan(final Script script, final Term ante, final Term succ) {
 
 		assert mMgdScript.isLockOwner(this);
 
@@ -873,7 +878,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mMgdScript.pop(this, 1);
 
 //		assert satResult == LBool.UNSAT;
-		return satResult == LBool.UNSAT;
+//		assert satResult != LBool.UNKNOWN;
+//		return satResult == LBool.UNSAT;
+		return satResult;
 	}
 
 	private <DISJUNCT extends ICongruenceClosure<NODE>> boolean checkFilterDisjunctionResult(final Set<DISJUNCT> ccs1,
@@ -882,12 +889,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mMgdScript.echo(this, new QuotedObject("WeqCcManager.checkFilterDisjunctionResult (begin)"));
 		final Term term1 = disjunctionToTerm(mMgdScript.getScript(), ccs1);
 		final Term term2 = disjunctionToTerm(mMgdScript.getScript(), ccs2);
-		final boolean res = checkImplicationHolds(mMgdScript.getScript(), term1, term2)
-				&& checkImplicationHolds(mMgdScript.getScript(), term2, term1);
+		final boolean oneImpliesTwo = checkImplicationHolds(mMgdScript.getScript(), term1, term2);
+		assert oneImpliesTwo;
+		final boolean twoImpliesOne = checkImplicationHolds(mMgdScript.getScript(), term2, term1);
+		assert twoImpliesOne;
 
 		mMgdScript.echo(this, new QuotedObject("WeqCcManager.checkFilterDisjunctionResult (end)"));
 		mMgdScript.unlock(this);
-		return res;
+		return oneImpliesTwo && twoImpliesOne;
 
 	}
 
@@ -1155,7 +1164,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2) {
 		final boolean result;
-		if (WeqSettings.PRECISE_WEQ_LABEL_COMPARISON) {
+		if (mSettings.isPreciseWeqLabelComparison()) {
 			result = isStrongerThanPrecise(label1, label2);
 		} else {
 			result = isStrongerThan(label1, label2, this::isStrongerThan);
@@ -1174,7 +1183,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final Term label1Term = SmtUtils.or(script, label1.toDnf(script));
 		final Term label2Term = SmtUtils.or(script, label2.toDnf(script));
 
-		final boolean implicationHolds = isStrongerThan(script, label1Term, label2Term);
+		final LBool satResult = isStrongerThan(script, label1Term, label2Term);
+		assert satResult != LBool.UNKNOWN : "TODO: solve this problem.. implement a fallback??";
+		final boolean implicationHolds = satResult == LBool.UNSAT;
 
 		mMgdScript.unlock(this);
 		return implicationHolds;
@@ -1184,6 +1195,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2, final boolean impCheckResult) {
 
+		if (mSkipSolverChecks) {
+			return true;
+		}
+
 		final Script script = mMgdScript.getScript();
 
 		mMgdScript.lock(this);
@@ -1191,7 +1206,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final Term label1Term = SmtUtils.or(script, label1.toDnf(script));
 		final Term label2Term = SmtUtils.or(script, label2.toDnf(script));
 
-		final boolean implicationHolds = checkImplicationHolds(script, label1Term, label2Term);
+		final LBool satResult = isStrongerThan(script, label1Term, label2Term);
+
+		mMgdScript.unlock(this);
+
+		if (satResult == LBool.UNKNOWN) {
+			return true;
+		}
+
+		final boolean implicationHolds = satResult == LBool.UNSAT;
 
 		final boolean result;
 		if (label2.getDisjuncts().size() <= 1) {
@@ -1207,7 +1230,6 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			assert result;
 		}
 
-		mMgdScript.unlock(this);
 		return result;
 	}
 
@@ -1422,5 +1444,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mMgdScript.unlock(this);
 
 		return oneImpliesTwo && twoImpliesOne;
+	}
+
+	public WeqSettings getSettings() {
+		return mSettings;
 	}
 }

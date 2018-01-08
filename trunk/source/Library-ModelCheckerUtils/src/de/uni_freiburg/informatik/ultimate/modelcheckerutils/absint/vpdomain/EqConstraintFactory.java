@@ -84,13 +84,14 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	private final BenchmarkWithCounters mBenchmark;
 
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, Term> eqNodeAndFunctionFactory,
-			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean debugMode) {
+			final IUltimateServiceProvider services,  final ManagedScript mgdScript,
+			final WeqSettings settings, final boolean debugMode) {
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
 		mMgdScript = mgdScript;
 
 		mWeqCcManager = new WeqCcManager<>(mLogger, new WeqCongruenceClosureComparator<NODE>(),
-				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory, debugMode);
+				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory, settings, debugMode);
 
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();

@@ -1,10 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class BenchmarkWithCounters extends Benchmark {
 
-	Map<String, Integer> mCounters;
+	Map<String, Integer> mCounters = new HashMap<>();
 
 	public void registerCounter(final String counterName) {
 		if (mCounters.containsKey(counterName)) {

@@ -1,69 +1,137 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 public class WeqSettings {
-//	public static final boolean FREEZE_ALL_IN_MANAGER = true;
+//	public final boolean FREEZE_ALL_IN_MANAGER = true;
 
-//	static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = true;
+//	final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = true;
 	// TOOD: is this a good name? was it "before join", not before meetWGpa/fattenWeq/project??
-	static final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = false;
+	private final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = false;
 
-	static final boolean REPORT_EQ_DEQ_INPLACE = true;
+	private final boolean REPORT_EQ_DEQ_INPLACE = true;
 
-	public static final boolean REMOVE_ELEMENT_INPLACE = false;
-	public static final boolean ADD_NODE_INPLACE = false;
-	public static final boolean PROJECTTOELEMENTS_INPLACE = false;
+	private final boolean REMOVE_ELEMENT_INPLACE = false;
+	private final boolean ADD_NODE_INPLACE = false;
+	private final boolean PROJECTTOELEMENTS_INPLACE = false;
 
-	public static final boolean USE_FULL_WEQCC_DURING_PROJECTAWAY = true;
+	private boolean USE_FULL_WEQCC_DURING_PROJECTAWAY = true;
 
 	// setting would not work -- weq-prime architecture would need rework
-// 	public static final boolean USE_FULL_WEQCC_DURING_CLOSURE = true;
+// 	private final boolean USE_FULL_WEQCC_DURING_CLOSURE = true;
 
 	/**
 	 * if reportChangeToGpa should be called during every report(Dis)Equality
 	 */
-	public static final boolean ALWAYS_REPORT_CHANGE_TO_GPA = false;
+	private final boolean ALWAYS_REPORT_CHANGE_TO_GPA = false;
 
 	/**
 	 * the rules pi^#-roweq and pi^
 	 */
-	public static final boolean INTRODUCE_AT_MOST_ONE_NODE_FOR_EACH_REMOVED_NODE = false;
-
-	/**
-	 *
-	 */
+	private final boolean INTRODUCE_AT_MOST_ONE_NODE_FOR_EACH_REMOVED_NODE = false;
 
 	/*
 	 * toString settings
 	 */
-	public static final int MAX_NO_ELEMENTS_FOR_VERBOSE_TO_STRING = 20;
-	public static final int MAX_NO_EDGELABELDISJUNCTS_FOR_VERBOSE_TO_STRING = 3;
-	public static final int MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING = 4;
+	private final int MAX_NO_ELEMENTS_FOR_VERBOSE_TO_STRING = 20;
+	private final int MAX_NO_EDGELABELDISJUNCTS_FOR_VERBOSE_TO_STRING = 3;
+	private final int MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING = 4;
 
 
 	/* flags to switch sanity checks on/off */
 
-//	public static final boolean SANITYCHECK_AFTER_ADD_NODE = false;
+//	private final boolean SANITYCHECK_AFTER_ADD_NODE = false;
 
 	// general flag to capture e.g. sanity checks that are done for intermediate steps of a methods and similar ones
-	public static final boolean SANITYCHECK_FINE_GRAINED = true;
+	private final boolean SANITYCHECK_FINE_GRAINED = false;
 
 	/**
 	 * if reportChangeInGpa should perform a meet and project of the label
 	 */
-	static final boolean MEET_WITH_GPA_ON_REPORTCHANGE = false;
+	private final boolean MEET_WITH_GPA_ON_REPORTCHANGE = false;
 
-	static final boolean MEET_WITH_GPA_ON_REPORT_WEQ = false;
+	private final boolean MEET_WITH_GPA_ON_REPORT_WEQ = false;
 
 	/**
 	 * TODO Should we always do meetWGpa during the label operations done in the roweq-rules?? Does it commute???
 	 * (observation, 02.01.2018: does seem to impact precision on regression tests, negatively if false)
 	 */
-	public static final boolean MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL = true;
+	private final boolean MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL = true;
 
 	/**
 	 * if weq labels are compared via an SMT query (right now: the standard solver, probably doing it via SMTInterpol
 	 * would be better) or via our imprecise disjunct-by-disjunct check
 	 * (performance on regressions: slightly worse for "true", ~5-10%)
 	 */
-	public static final boolean PRECISE_WEQ_LABEL_COMPARISON = false;
+	private final boolean PRECISE_WEQ_LABEL_COMPARISON = false;
+
+	public WeqSettings() {
+
+	}
+
+	public boolean isFlattenWeqEdgesBeforeJoin() {
+		return FLATTEN_WEQ_EDGES_BEFORE_JOIN;
+	}
+
+	public boolean isReportEqDeqInplace() {
+		return REPORT_EQ_DEQ_INPLACE;
+	}
+
+	public boolean isRemoveElementInplace() {
+		return REMOVE_ELEMENT_INPLACE;
+	}
+
+	public boolean isAddNodeInplace() {
+		return ADD_NODE_INPLACE;
+	}
+
+	public boolean isProjecttoelementsInplace() {
+		return PROJECTTOELEMENTS_INPLACE;
+	}
+
+	public boolean isUseFullWeqccDuringProjectaway() {
+		return USE_FULL_WEQCC_DURING_PROJECTAWAY;
+	}
+
+	public boolean isAlwaysReportChangeToGpa() {
+		return ALWAYS_REPORT_CHANGE_TO_GPA;
+	}
+
+	public boolean isIntroduceAtMostOneNodeForEachRemovedNode() {
+		return INTRODUCE_AT_MOST_ONE_NODE_FOR_EACH_REMOVED_NODE;
+	}
+
+	public int getMaxNoElementsForVerboseToString() {
+		return MAX_NO_ELEMENTS_FOR_VERBOSE_TO_STRING;
+	}
+
+	public int getMaxNoEdgelabeldisjunctsForVerboseToString() {
+		return MAX_NO_EDGELABELDISJUNCTS_FOR_VERBOSE_TO_STRING;
+	}
+
+	public int getMaxNoWeqEdgesForVerboseToString() {
+		return MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING;
+	}
+
+	public boolean isSanitycheckFineGrained() {
+		return SANITYCHECK_FINE_GRAINED;
+	}
+
+	public boolean isMeetWithGpaOnReportchange() {
+		return MEET_WITH_GPA_ON_REPORTCHANGE;
+	}
+
+	public boolean isMeetWithGpaOnReportWeq() {
+		return MEET_WITH_GPA_ON_REPORT_WEQ;
+	}
+
+	public boolean isMeetWithGpaProjectOrShiftLabel() {
+		return MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL;
+	}
+
+	public boolean isPreciseWeqLabelComparison() {
+		return PRECISE_WEQ_LABEL_COMPARISON;
+	}
+
+	public void setUseFullWeqccDuringProjectaway(final boolean b) {
+		USE_FULL_WEQCC_DURING_PROJECTAWAY = b;
+	}
 }

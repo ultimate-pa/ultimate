@@ -270,7 +270,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 	 */
 	public static <NODE extends IEqNodeIdentifier<NODE>> void removeSimpleElement(
 			final WeqCongruenceClosure<NODE> cc, final NODE elem) {
-		removeSimpleElement(cc, elem, true, WeqSettings.USE_FULL_WEQCC_DURING_PROJECTAWAY);
+		removeSimpleElement(cc, elem, true, cc.getManager().getSettings().isUseFullWeqccDuringProjectaway());
 	}
 
 	private static <NODE extends IEqNodeIdentifier<NODE>> RemoveWeqCcElement<NODE> removeSimpleElement(
@@ -297,7 +297,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		re.doRemoval();
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
-		if (WeqSettings.SANITYCHECK_FINE_GRAINED) {
+		if (cc.getManager().getSettings().isSanitycheckFineGrained()) {
 			assert cc.sanityCheck();
 		}
 

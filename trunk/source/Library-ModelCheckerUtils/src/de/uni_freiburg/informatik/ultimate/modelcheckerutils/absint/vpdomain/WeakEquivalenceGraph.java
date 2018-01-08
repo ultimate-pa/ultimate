@@ -631,7 +631,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		if (oldLabel == null || oldLabel.isTautological()) {
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> newLabel;
-			if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+			if (mWeqCcManager.getSettings().isMeetWithGpaOnReportWeq()) {
 				inputLabelCopy.meetWithCcGpa();
 				newLabel = inputLabelCopy.projectToElements(mWeqCcManager.getAllWeqNodes(), false);
 			} else if (mWeqCc.getDiet() == Diet.THIN) {
@@ -657,7 +657,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		/*  (Dec 17) note that we are not (always) fattening/thinning here, as we did before, because that is delayed
 		 * for performance reasons
 		  */
-		if (WeqSettings.MEET_WITH_GPA_ON_REPORT_WEQ) {
+		if (mWeqCcManager.getSettings().isMeetWithGpaOnReportWeq()) {
 			// we need to do it on both for the following isStrongerThan to be (more) precise
 			labelToStrengthenWith.meetWithCcGpa();
 			oldLabelCopy.meetWithCcGpa();
@@ -778,7 +778,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 //				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, originalEdgeLabel);
 		assert !copy.isFrozen();
 
-		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+		if (mWeqCcManager.getSettings().isMeetWithGpaProjectOrShiftLabel()) {
 			copy.meetWithCcGpa();
 		}
 
@@ -840,7 +840,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> meet = mWeqCcManager.copy(labelContents, true);
 //				new WeakEquivalenceEdgeLabel<NODE, DISJUNCT>(this, labelContents);
 
-		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
+		if (mWeqCcManager.getSettings().isMeetWithGpaProjectOrShiftLabel()) {
 			meet.meetWithCcGpa();
 		}
 
@@ -1057,7 +1057,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		if (isEmpty()) {
 			return "Empty";
 		}
-		if (mWeakEquivalenceEdges.size() < WeqSettings.MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING) {
+		if (mWeakEquivalenceEdges.size() < mWeqCcManager.getSettings().getMaxNoWeqEdgesForVerboseToString()) {
 			return toLogString();
 		}
 

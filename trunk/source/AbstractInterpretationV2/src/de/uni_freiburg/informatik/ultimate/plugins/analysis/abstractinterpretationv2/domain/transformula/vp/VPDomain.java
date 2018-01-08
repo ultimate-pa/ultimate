@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeqSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -65,7 +67,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mSymboltable;
-	private boolean mDebugMode;
+	private final boolean mDebugMode = true;
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
@@ -83,9 +85,12 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mCsToolkit = csToolkit;
 		mServices = services;
 
+
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript,
-				mDebugMode);
+				prepareWeqSettings(ups), mDebugMode);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
 				mManagedScript);
 
@@ -93,6 +98,12 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 				mEqStateFactory);
 
 		mBenchmark = new VPDomainBenchmark();
+	}
+
+	private WeqSettings prepareWeqSettings(final IPreferenceProvider ups) {
+		final WeqSettings settings = new WeqSettings();
+		settings.setUseFullWeqccDuringProjectaway(ups.getBoolean(VPDomainPreferences.LABEL_USE_WEQ_IN_PROJECT));
+		return settings;
 	}
 
 	@Override
