@@ -171,17 +171,15 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 				continue;
 			}
 			loopCounter += 1;
-			mLogger.debug("Loop-Path to accelerate: " + loop.mLoopTransFormula);
 			// create the matrix
 			final MatrixBB matrix = new LoopAccelerationMatrix<>(mLogger, loop.mLoopTransFormula, mMgScript).getResult();
 			// calculate the alphas
 			final AlphaSolver<INLOC> alphaSolver =
 					new AlphaSolver<>(mLogger, loop.mLoopTransFormula, mMgScript, matrix.getMatrix(), matrix.getLGS(), mServices, loopCounter);
-			mLogger.debug("Accelerated-Loop: " + alphaSolver.getResult());
 			// add guard and final icfg
 			final LoopInsertion<INLOC, OUTLOC> loopInsertion = new LoopInsertion<>(mLogger, originalIcfgCoppy,
 					mOutLocationClass, mFunLocFac, mNewIcfgIdentifier, mTransformer, mBacktranslationTracker, mServices);
-			originalIcfgCoppy = (IIcfg<INLOC>) loopInsertion.rejoin(loop, alphaSolver.getResult(), alphaSolver.getValues(), alphaSolver.getN());
+			originalIcfgCoppy = (IIcfg<INLOC>) loopInsertion.rejoin2(loop, alphaSolver.getResult(), alphaSolver.getValues(), alphaSolver.getN());
 		}
 		return (IIcfg<OUTLOC>) originalIcfgCoppy;
 	}

@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 /*
  * test for loop detection
  * 
@@ -10,9 +10,9 @@ procedure main()
 {
   var x: int;
   x := 0;
-  while (x < 20){
+  while (x < 2000){
     x := x + 1;
-    assert (x < 25);
+    assert (x < 1500);
   }
 }
 

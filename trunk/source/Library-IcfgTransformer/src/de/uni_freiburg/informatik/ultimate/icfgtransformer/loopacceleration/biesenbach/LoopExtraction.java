@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.bie
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +16,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -25,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -80,8 +85,8 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 					if(!exitPath.isEmpty()){
 						Deque<IcfgEdge> exit = Tools.cloneDeque(exitPath);
 						UnmodifiableTransFormula pathFormula = pathToTransformula(exit);
-						UnmodifiableTransFormula exitPathFormula = joinTransFormula(pathFormula, 
-								Tools.negateUnmodifiableTransFormula(mMgScript, outgoingEdge.getTransformula()));
+						UnmodifiableTransFormula exitPathFormula = instertFormula(Tools.negateUnmodifiableTransFormula(mMgScript, outgoingEdge.getTransformula()), pathFormula);
+						//UnmodifiableTransFormula exitPathFormula = joinTransFormula(pathFormula, Tools.negateUnmodifiableTransFormula(mMgScript, outgoingEdge.getTransformula()));
 						entry = new AbstractMap.SimpleEntry<>(exitPathFormula, outgoingEdge.getTarget());
 					}else{
 						entry = new AbstractMap.SimpleEntry<>( Tools.negateUnmodifiableTransFormula(
@@ -94,6 +99,37 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 			}
 		}
 		return exitEdges;
+	}
+	
+	private UnmodifiableTransFormula instertFormula(final UnmodifiableTransFormula mainFormula,
+			final UnmodifiableTransFormula substituteFormula){
+		Script script = mMgScript.getScript();
+		Map<Term, Term> substitute = new HashMap<>();
+		for (final IProgramVar var : mainFormula.getInVars().keySet()) {
+			if (substituteFormula.getOutVars().containsKey(var)) {
+				Term value = script.term("+", 
+						substituteFormula.getInVars().values().iterator().next(), 
+						Rational.ONE.toTerm(script.sort("Int")));
+				substitute.put(mainFormula.getInVars().get(var), value);
+			}
+		}
+		Substitution sub = new Substitution(mMgScript, substitute);
+		final Term transformedExitFormula = sub.transform(mainFormula.getFormula());
+		
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(substituteFormula.getInVars(), substituteFormula.getInVars(),
+				false, mainFormula.getNonTheoryConsts(), true, mainFormula.getBranchEncoders(), true);
+		tfb.setFormula(transformedExitFormula);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);			
+		tfb.finishConstruction(mMgScript);
+		final UnmodifiableTransFormula finalFormula = tfb.finishConstruction(mMgScript);
+		
+		mLogger.debug("-------------------------");
+		mLogger.debug("mainFormula : " + mainFormula);
+		mLogger.debug("substituteFormula : " + substituteFormula);
+		mLogger.debug("subsitute : " + substitute);
+		mLogger.debug("finalFormula : " + finalFormula);
+		mLogger.debug("-------------------------");
+		return finalFormula;
 	}
 
 	public Deque<SimpleLoop> getLoopTransFormulas() {

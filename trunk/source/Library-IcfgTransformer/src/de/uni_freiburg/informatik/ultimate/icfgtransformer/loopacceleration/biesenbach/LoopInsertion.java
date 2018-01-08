@@ -157,8 +157,6 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 			// Quantifier - End
-			mLogger.info("J : " + jointTerm.toStringDirect());
-			
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(originalLoopTransFormula.getInVars(), outVars,
 					false, originalLoopTransFormula.getNonTheoryConsts(), true, originalLoopTransFormula.getBranchEncoders(), true);
 			tfb.setFormula(simplified);
@@ -276,7 +274,6 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 					//new Overapprox("loop acceleration: ... ", null).annotate(newTransition);
 					//mBacktranslationTracker.rememberRelation(oldTransition, newTransition);
-					mLogger.debug("Final: " + newTransition.getTransformula().getFormula().toStringDirect());
 				}
 			} else {
 				final OUTLOC newSource = lst.createNewLocation(oldSource);
