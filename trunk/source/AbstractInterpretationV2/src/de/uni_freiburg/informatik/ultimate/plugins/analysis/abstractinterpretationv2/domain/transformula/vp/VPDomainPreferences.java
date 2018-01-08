@@ -23,13 +23,13 @@ public class VPDomainPreferences {
 	public static List<BaseUltimatePreferenceItem> getPreferences() {
 		final List<BaseUltimatePreferenceItem> returnList = new ArrayList<>();
 
-		final UltimatePreferenceItemContainer compoundContainer =
-				new UltimatePreferenceItemContainer("Compound Domain");
+		final UltimatePreferenceItemContainer container =
+				new UltimatePreferenceItemContainer("VP Domain (map equality domain)");
 
-		compoundContainer.addItem(new UltimatePreferenceItem<>(LABEL_USE_WEQ_IN_PROJECT, DEF_USE_WEQ_IN_PROJECT,
+		container.addItem(new UltimatePreferenceItem<>(LABEL_USE_WEQ_IN_PROJECT, DEF_USE_WEQ_IN_PROJECT,
 				PreferenceType.Boolean));
 
-		returnList.add(compoundContainer);
+		returnList.add(container);
 		return returnList;
 	}
 }
