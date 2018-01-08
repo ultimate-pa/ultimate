@@ -289,7 +289,8 @@ public class CcAuxData<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// there was no equal element to elem, we already removed elem from the keys in the above step
 			assert elemWasRepresentative;
 		} else {
-			if (elem.isFunctionApplication()) {
+//			if (elem.isFunctionApplication()) {
+			if (elem.isFunctionApplication() && mCcChildren.get(newRep) != null) {
 				mCcChildren.get(newRep).removePair(elem.getAppliedFunction(), elem.getArgument());
 			}
 		}
