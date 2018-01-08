@@ -32,7 +32,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
@@ -45,18 +44,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * Subclass of {@link BasicCegarLoop} in which we initially subtract from the
@@ -65,17 +57,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends ReuseCegarLoop<LETTER> {
 
 	private enum MinimizeInitially {
 		NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END
 	};
-	private final boolean ENHANCE = true; //whether reused automata should be extended to "new" letters
-
 	private final MinimizeInitially mMinimize = MinimizeInitially.AFTER_EACH_DIFFERENCE;
-
-	private final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromOtherErrorLocations;
-	private final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 
 	/**
 	 * The following can be costly. Enable only for debugging or analyzing our
@@ -83,6 +70,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 	 */
 	private static final boolean IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA = false;
 
+	//TODO can this method be removed?
 	public EagerReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
@@ -91,68 +79,33 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 			final List<AbstractInterpolantAutomaton<LETTER>> floydHoareAutomataFromOtherLocations,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, storage);
-		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
-		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
+				services, storage, floydHoareAutomataFromOtherLocations,rawFloydHoareAutomataFromFile);
 	}
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
-
-		//final List<IPredicateUnifier> predicateUnifiersForAutomata = new ArrayList<>();
-		//for (int i = 0; i < mRawFloydHoareAutomataFromFile.size(); i++) {
-		//	predicateUnifiersForAutomata.add(new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-		//			mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-		//			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
-		//}
-		PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = AutomataReuseUtils.interpretAutomata(
-				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
-				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger, mCsToolkit, pu);
-		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata from previous error locations.");
-		mLogger.info("Reusing " + floydHoareAutomataFromFiles.size() + " Floyd-Hoare automata from ats files.");
 		
-		//Add capability for on-demand extension of automata from files
-		final List<AbstractInterpolantAutomaton<LETTER>> ondemandFloydHoareAutomataFromFiles = new ArrayList<>();
-		if (ENHANCE) {
-			for (NestedWordAutomaton<LETTER, IPredicate> automaton : floydHoareAutomataFromFiles) {
-				IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit); //TODO super is needed??
-				//IPredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-				//		mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-				//		XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-				ondemandFloydHoareAutomataFromFiles.add(constructInterpolantAutomatonForOnDemandEnhancement(
-						automaton, pu, htc, InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION));
-			}
-		}
-
-		final List<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> reuseAutomata = new ArrayList<>();
+		final List<AbstractInterpolantAutomaton<LETTER>> reuseAutomata = new ArrayList<>();
 		reuseAutomata.addAll(mFloydHoareAutomataFromOtherErrorLocations);
-		if (ENHANCE) {
-			reuseAutomata.addAll(ondemandFloydHoareAutomataFromFiles);
-		} else {
-			reuseAutomata.addAll(floydHoareAutomataFromFiles);
-		}
-				
+		reuseAutomata.addAll(mFloydHoareAutomataFromFile);
+
 		for (int i = 0; i < reuseAutomata.size(); i++) {
 			final int oneBasedi = i+1;
 			int internalTransitionsBeforeDifference = 0;
 			int internalTransitionsAfterDifference = 0;
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> ai = reuseAutomata.get(i);
-			if (ai instanceof AbstractInterpolantAutomaton<?>) {
-				AbstractInterpolantAutomaton<LETTER> convertedAi = (AbstractInterpolantAutomaton<LETTER>)ai;
-				internalTransitionsBeforeDifference = convertedAi.computeNumberOfInternalTransitions();
-				//if  (convertedAi.)
-				//((AbstractInterpolantAutomaton<LETTER>)ai).switchToOnDemandConstructionMode();
-				//if (mPref.dumpAutomata()) {
-				//	writeAutomatonToFile(ai, "ReusedAutomataFromErrorLocation"+oneBasedi);
-				//}
+			
+			final AbstractInterpolantAutomaton<LETTER> ai = reuseAutomata.get(i);
+			
+			if (mPref.dumpAutomata()) {
+				writeAutomatonToFile(ai, "ReusedAutomata"+oneBasedi);
+			}
+			
+			if (ENHANCE) {
+				//TODO: assert: ai should already be in on-demand mode 
+				internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
 			} else {
-				//if (mPref.dumpAutomata()) {
-				//	writeAutomatonToFile(ai, "ReusedAutomataFromFile"+oneBasedi);
-				//}
+				ai.switchToReadonlyMode();
 			}
 			final PowersetDeterminizer<LETTER, IPredicate> psd = new PowersetDeterminizer<>(ai, true,
 					mPredicateFactoryInterpolantAutomata);
@@ -166,13 +119,14 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 				final String filename = "DiffAfterEagerReuse" + oneBasedi;
 				writeAutomatonToFile(diff.getResult(), filename);
 			}
-			if (ai instanceof AbstractInterpolantAutomaton<?>) {
-				((AbstractInterpolantAutomaton<LETTER>)ai).switchToReadonlyMode();
-				internalTransitionsAfterDifference = ((AbstractInterpolantAutomaton<LETTER>)ai).computeNumberOfInternalTransitions();
-				mLogger.info("Floyd-Hoare automaton" + i + " had " + internalTransitionsAfterDifference
+			if (ENHANCE) {
+				ai.switchToReadonlyMode();
+				internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
+				mLogger.info("Floyd-Hoare automaton" + oneBasedi + " had " + internalTransitionsAfterDifference
 					+ " internal transitions before reuse, on-demand computation of difference added "
 					+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
 			}
+			
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
 					final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
@@ -183,6 +137,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 					mHaf.addDeadEndDoubleDeckers(diff);
 				}
 			}
+			
 			if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
 				final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
 				final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
@@ -197,8 +152,9 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 				}
 
 			}
+			
 			mAbstraction = diff.getResult();
-
+			
 			if (mAbstraction.size() == 0) {
 				// stop to compute differences if abstraction is already empty
 				break;
