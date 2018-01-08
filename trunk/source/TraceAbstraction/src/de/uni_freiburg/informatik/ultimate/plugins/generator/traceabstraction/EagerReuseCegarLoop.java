@@ -122,7 +122,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 			if (ENHANCE) {
 				ai.switchToReadonlyMode();
 				internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
-				mLogger.info("Floyd-Hoare automaton" + oneBasedi + " had " + internalTransitionsAfterDifference
+				mLogger.info("Floyd-Hoare automaton" + oneBasedi + " had " + internalTransitionsBeforeDifference
 					+ " internal transitions before reuse, on-demand computation of difference added "
 					+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
 			}
