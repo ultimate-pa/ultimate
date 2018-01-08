@@ -48,15 +48,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * TODO:
@@ -64,17 +60,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends ReuseCegarLoop<LETTER> {
 
-	private final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromOtherErrorLocations;
-	private final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFiles;
-	private List<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> mReuseAutomata;
+	private List<AbstractInterpolantAutomaton<LETTER>> mReuseAutomata;
 
 	private Boolean mIsCounterexampleAccepted = false; 
-	private final Boolean ACCEPTS_WITH_ON_THE_FLY = true; 
-
 	// Should be dereferenced only if mIsCounterexampleAccepted is true
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mAutomatonAcceptingCounterexample;
+	private AbstractInterpolantAutomaton<LETTER> mAutomatonAcceptingCounterexample;
 
 	public LazyReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -84,56 +76,46 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basic
 			final List<AbstractInterpolantAutomaton<LETTER>> floydHoareAutomataFromOtherLocations,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFiles) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, storage);
-		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
-		mRawFloydHoareAutomataFromFiles = rawFloydHoareAutomataFromFiles;
+				services, storage, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFiles);
 	}
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
-		
-		//final List<IPredicateUnifier> predicateUnifiersForAutomata = new ArrayList<>();
-		//for (int i = 0; i < mRawFloydHoareAutomataFromFiles.size(); i++) {
-		//	predicateUnifiersForAutomata.add(new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-		//			mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-		//			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
-		//}
-		PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = AutomataReuseUtils.interpretAutomata(
-				mRawFloydHoareAutomataFromFiles, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
-				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger, mCsToolkit, pu);
-
-		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata from previous error locations.");
-		mLogger.info("Reusing " + floydHoareAutomataFromFiles.size() + " Floyd-Hoare automata from ats files.");
-
 		mReuseAutomata = new ArrayList<>();
 		mReuseAutomata.addAll(mFloydHoareAutomataFromOtherErrorLocations);
-		mReuseAutomata.addAll(floydHoareAutomataFromFiles);
+		mReuseAutomata.addAll(mFloydHoareAutomataFromFile);
 	}
 	
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException{
 		mIsCounterexampleAccepted = false;
 		for (int i=0; i<mReuseAutomata.size(); i++) {
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> ai = mReuseAutomata.get(i);
+			final AbstractInterpolantAutomaton<LETTER> ai = mReuseAutomata.get(i);
 			boolean cexAccepted;
+			int internalTransitionsBeforeAcceptance = 0;
+			int internalTransitionsAfterAcceptance = 0;
 			try {
-				if (ACCEPTS_WITH_ON_THE_FLY && ai instanceof AbstractInterpolantAutomaton<?>) {
-					((AbstractInterpolantAutomaton<LETTER>)ai).switchToOnDemandConstructionMode();
+				if (ENHANCE) {
+					//TODO: assert: ai should already be in on-demand mode 
+					internalTransitionsBeforeAcceptance = ai.computeNumberOfInternalTransitions();
+				} else {
+					ai.switchToReadonlyMode();
 				}
 				cexAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) ai,
 						(NestedWord<LETTER>) mCounterexample.getWord(),true,true).getResult();
-				if (ACCEPTS_WITH_ON_THE_FLY && ai instanceof AbstractInterpolantAutomaton<?>) {
-					((AbstractInterpolantAutomaton<LETTER>)ai).switchToReadonlyMode();
+				if (ENHANCE) {
+					ai.switchToReadonlyMode();
+					internalTransitionsAfterAcceptance = ai.computeNumberOfInternalTransitions();
+					mLogger.info("Floyd-Hoare automaton" + (i+1) + " had " + internalTransitionsBeforeAcceptance
+						+ " internal transitions before reuse, acceptance check of counterexample added "
+						+ (internalTransitionsAfterAcceptance - internalTransitionsBeforeAcceptance) + " more.");
 				}
 				if (cexAccepted) {
 					mIsCounterexampleAccepted = true;
 					mAutomatonAcceptingCounterexample = ai;
-					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> removed = mReuseAutomata.remove(i);
+					final AbstractInterpolantAutomaton<LETTER> removed = mReuseAutomata.remove(i);
 					assert (removed.equals(ai));
 					mLogger.info("Cex is accepted by automaton number " + i + " in the current list.");
 					return LBool.UNSAT;
@@ -157,11 +139,11 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basic
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		if (mIsCounterexampleAccepted) {
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> ai = mAutomatonAcceptingCounterexample;
+			final AbstractInterpolantAutomaton<LETTER> ai = mAutomatonAcceptingCounterexample;
 			int internalTransitionsBeforeDifference = 0;
-			if (ai instanceof AbstractInterpolantAutomaton<?>) {
-				internalTransitionsBeforeDifference = ((AbstractInterpolantAutomaton<LETTER>)ai).computeNumberOfInternalTransitions();
-				((AbstractInterpolantAutomaton<LETTER>)ai).switchToOnDemandConstructionMode();
+			if (ENHANCE) {
+				ai.switchToOnDemandConstructionMode();
+				internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
 			}
 			final PowersetDeterminizer<LETTER, IPredicate> psd = new PowersetDeterminizer<>(ai, true,
 					mPredicateFactoryInterpolantAutomata);
@@ -171,13 +153,14 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basic
 					mStateFactoryForRefinement,
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
 					explointSigmaStarConcatOfIA);
-			if (ai instanceof AbstractInterpolantAutomaton<?>) {
-				((AbstractInterpolantAutomaton<LETTER>)ai).switchToReadonlyMode();
-				final int internalTransitionsAfterDifference = ((AbstractInterpolantAutomaton<LETTER>)ai).computeNumberOfInternalTransitions();
-				mLogger.info("Floyd-Hoare automaton that acceptes counterexample had " + internalTransitionsAfterDifference
-						+ " internal transitions before reuse, on-demand computation of difference added "
-						+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
+			if (ENHANCE) {
+				ai.switchToReadonlyMode();
+				int internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
+				mLogger.info("Floyd-Hoare automaton excepting counterexample had " + internalTransitionsBeforeDifference
+					+ " internal transitions before reuse, on-demand computation of difference added "
+					+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
 			}
+			
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
 					final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
@@ -188,6 +171,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basic
 					mHaf.addDeadEndDoubleDeckers(diff);
 				}
 			}
+			
 			mAbstraction = diff.getResult();
 			minimizeAbstractionIfEnabled();
 			
