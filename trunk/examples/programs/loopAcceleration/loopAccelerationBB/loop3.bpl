@@ -10,11 +10,11 @@ procedure main()
 {
   var x: int;
   var y: int;
-  x := 15;
-  y := 0;
-  while (x > 10){
-    x := x - y;
+  x := 0;
+  y := 1;
+  while (x < 100000){
+    x := x + 1;
     y := y + 1;
   }
-  assume y == x;
+  assert (y == 100001);
 }
