@@ -672,6 +672,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> strengthenedEdgeLabel =
 				mWeqCcManager.meetEdgeLabels(oldLabelCopy, labelToStrengthenWith, false);
 
+		if (mWeqCcManager.isStrongerThan(oldLabel, strengthenedEdgeLabel)) {
+			// nothing to do
+			return false;
+		}
+
 
 		// inconsistency check
 		if (strengthenedEdgeLabel.isInconsistent()) {
