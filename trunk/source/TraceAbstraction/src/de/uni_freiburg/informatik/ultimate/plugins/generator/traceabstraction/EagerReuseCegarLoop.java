@@ -70,6 +70,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 	private enum MinimizeInitially {
 		NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END
 	};
+	private final boolean ENHANCE = true; //whether reused automata should be extended to "new" letters
 
 	private final MinimizeInitially mMinimize = MinimizeInitially.AFTER_EACH_DIFFERENCE;
 
@@ -99,16 +100,41 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
+		//final List<IPredicateUnifier> predicateUnifiersForAutomata = new ArrayList<>();
+		//for (int i = 0; i < mRawFloydHoareAutomataFromFile.size(); i++) {
+		//	predicateUnifiersForAutomata.add(new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+		//			mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+		//			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+		//}
+		PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+				mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFiles = AutomataReuseUtils.interpretAutomata(
 				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
-				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger, mCsToolkit);
-
+				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger, mCsToolkit, pu);
 		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata from previous error locations.");
 		mLogger.info("Reusing " + floydHoareAutomataFromFiles.size() + " Floyd-Hoare automata from ats files.");
+		
+		//Add capability for on-demand extension of automata from files
+		final List<AbstractInterpolantAutomaton<LETTER>> ondemandFloydHoareAutomataFromFiles = new ArrayList<>();
+		if (ENHANCE) {
+			for (NestedWordAutomaton<LETTER, IPredicate> automaton : floydHoareAutomataFromFiles) {
+				IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit); //TODO super is needed??
+				//IPredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+				//		mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+				//		XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				ondemandFloydHoareAutomataFromFiles.add(constructInterpolantAutomatonForOnDemandEnhancement(
+						automaton, pu, htc, InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION));
+			}
+		}
 
 		final List<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> reuseAutomata = new ArrayList<>();
 		reuseAutomata.addAll(mFloydHoareAutomataFromOtherErrorLocations);
-		reuseAutomata.addAll(floydHoareAutomataFromFiles);
+		if (ENHANCE) {
+			reuseAutomata.addAll(ondemandFloydHoareAutomataFromFiles);
+		} else {
+			reuseAutomata.addAll(floydHoareAutomataFromFiles);
+		}
 				
 		for (int i = 0; i < reuseAutomata.size(); i++) {
 			final int oneBasedi = i+1;
@@ -116,15 +142,17 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Basi
 			int internalTransitionsAfterDifference = 0;
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> ai = reuseAutomata.get(i);
 			if (ai instanceof AbstractInterpolantAutomaton<?>) {
-				internalTransitionsBeforeDifference = ((AbstractInterpolantAutomaton<LETTER>)ai).computeNumberOfInternalTransitions();
-				((AbstractInterpolantAutomaton<LETTER>)ai).switchToOnDemandConstructionMode();
-				if (mPref.dumpAutomata()) {
-					writeAutomatonToFile(ai, "ReusedAutomataFromErrorLocation"+oneBasedi);
-				}
+				AbstractInterpolantAutomaton<LETTER> convertedAi = (AbstractInterpolantAutomaton<LETTER>)ai;
+				internalTransitionsBeforeDifference = convertedAi.computeNumberOfInternalTransitions();
+				//if  (convertedAi.)
+				//((AbstractInterpolantAutomaton<LETTER>)ai).switchToOnDemandConstructionMode();
+				//if (mPref.dumpAutomata()) {
+				//	writeAutomatonToFile(ai, "ReusedAutomataFromErrorLocation"+oneBasedi);
+				//}
 			} else {
-				if (mPref.dumpAutomata()) {
-					writeAutomatonToFile(ai, "ReusedAutomataFromFile"+oneBasedi);
-				}
+				//if (mPref.dumpAutomata()) {
+				//	writeAutomatonToFile(ai, "ReusedAutomataFromFile"+oneBasedi);
+				//}
 			}
 			final PowersetDeterminizer<LETTER, IPredicate> psd = new PowersetDeterminizer<>(ai, true,
 					mPredicateFactoryInterpolantAutomata);

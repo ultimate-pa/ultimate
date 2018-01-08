@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
@@ -42,7 +43,7 @@ public class AutomataReuseUtils {
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory, final ILogger logger,
-			final CfgSmtToolkit csToolkit) {
+			final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier) {
 	
 		final Boolean debugOn = true;
 		final List<NestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<NestedWordAutomaton<LETTER, IPredicate>>();
@@ -71,7 +72,8 @@ public class AutomataReuseUtils {
 			int removedStates = 0;
 			for (final String stringState : statesOfRawAutomaton) {
 				AtomicBoolean parsingResult = new AtomicBoolean(false);
-				final IPredicate predicateState = getPredicateFromString(predicateFactory, stringState, csToolkit, services, parsingResult, logger);
+				final IPredicate predicateState = getPredicateFromString(predicateFactory, stringState, csToolkit, 
+						services, parsingResult, logger, predicateUnifier);
 				if (parsingResult.get()) {
 					reusedStates++;
 				} else {
@@ -99,11 +101,8 @@ public class AutomataReuseUtils {
 
 	private static final IPredicate getPredicateFromString(final PredicateFactory predicateFactory, final String str,
 			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services, AtomicBoolean parsingSuccesful,
-			ILogger logger) {
+			ILogger logger, final PredicateUnifier pu) {
 		final PredicateParsingWrapperScript ppws = new PredicateParsingWrapperScript(csToolkit);
-		final PredicateUnifier pu = new PredicateUnifier(services, csToolkit.getManagedScript(), predicateFactory,
-				csToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		IPredicate res = null;
 		try {
 			res = parsePredicate(ppws, pu, str, logger);
@@ -113,7 +112,6 @@ public class AutomataReuseUtils {
 			parsingSuccesful.set(false);
 		}
 		return res;
-		//return predicateFactory.newDebugPredicate(str);
 	}
 
 	private static final <LETTER> void addLettersToStringMap(HashMap<String, Set<LETTER>> map,
