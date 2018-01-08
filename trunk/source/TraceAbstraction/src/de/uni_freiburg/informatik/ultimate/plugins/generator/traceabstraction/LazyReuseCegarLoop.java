@@ -99,6 +99,11 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 				if (ENHANCE) {
 					//TODO: assert: ai should already be in on-demand mode 
 					internalTransitionsBeforeAcceptance = ai.computeNumberOfInternalTransitions();
+					if (mPref.dumpAutomata()) {
+						ai.switchToReadonlyMode();
+						writeAutomatonToFile(ai, "LazyBeforeAcceptence"+(i+1) + "Iteration"+mIteration);
+						ai.switchToOnDemandConstructionMode();
+					}
 				} else {
 					ai.switchToReadonlyMode();
 				}
@@ -108,6 +113,9 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 				if (ENHANCE) {
 					ai.switchToReadonlyMode();
 					internalTransitionsAfterAcceptance = ai.computeNumberOfInternalTransitions();
+					if (mPref.dumpAutomata()) {
+						writeAutomatonToFile(ai, "LazyAfterAcceptence"+(i+1) + "Iteration"+mIteration);
+					}
 					mLogger.info("Floyd-Hoare automaton" + (i+1) + " had " + internalTransitionsBeforeAcceptance
 						+ " internal transitions before reuse, acceptance check of counterexample added "
 						+ (internalTransitionsAfterAcceptance - internalTransitionsBeforeAcceptance) + " more.");
