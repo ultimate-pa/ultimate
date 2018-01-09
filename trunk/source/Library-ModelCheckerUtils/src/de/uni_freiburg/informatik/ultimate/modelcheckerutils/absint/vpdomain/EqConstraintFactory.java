@@ -156,13 +156,13 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	private void debugStart(final BmNames name) {
 		if (mIsDebugMode) {
 			mBenchmark.incrementCounter(name.name());
-			mBenchmark.start(name.name());
+			mBenchmark.startWatch(name.name());
 		}
 	}
 
 	private void debugEnd(final BmNames name) {
 		if (mIsDebugMode) {
-			mBenchmark.stop(name.name());
+			mBenchmark.stopWatch(name.name());
 		}
 	}
 

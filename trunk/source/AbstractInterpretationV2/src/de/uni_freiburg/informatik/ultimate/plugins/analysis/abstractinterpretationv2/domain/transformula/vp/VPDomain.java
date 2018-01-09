@@ -162,6 +162,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public <LOC> void afterFixpointComputation(
 			final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
 
+		/*
+		 * report VPDomainBenchmark
+		 */
 		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
 		for (final Entry<LOC, EqState> l2s : result.getLoc2SingleStates().entrySet()) {
 			mBenchmark.reportStatsForLocation(l2s.getValue().getConstraint()::getStatistics);
@@ -175,6 +178,13 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));
+
+		/*
+		 * report EqConstraintFactory's Benchmark
+		 */
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "EqConstraintFactoryStatistics",
+						mEqConstraintFactory.getBenchmark()));
 	}
 
 
