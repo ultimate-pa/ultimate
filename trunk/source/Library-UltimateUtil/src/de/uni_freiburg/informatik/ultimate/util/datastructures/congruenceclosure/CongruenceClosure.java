@@ -557,6 +557,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 			updateElementTverAndAuxDataOnRemoveElement(etr, nodeToReplacementNode.get(etr));
 		}
+
+		assert sanityCheck();
 	}
 
 	/**
@@ -705,6 +707,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final boolean elemWasRepresentative = mElementTVER.isRepresentative(elem);
 
 		final ELEM newRep = mElementTVER.removeElement(elem, newRepChoice);
+		assert mElementTVER.getRepresentative(newRep) == newRep;
 		assert !elemWasRepresentative || newRepChoice == null || newRep == newRepChoice;
 
 		getAuxData().removeElement(elem, elemWasRepresentative, newRep);
@@ -712,6 +715,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
 			mFaAuxData.removeArgParent(elem.getArgument(), elem);
 		}
+
 		return newRep;
 	}
 

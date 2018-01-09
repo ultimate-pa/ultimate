@@ -141,6 +141,10 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		mWeqCc.thin();
 
+		if (mWeqCc.getManager().getSettings().isSanitycheckFineGrained()) {
+			assert mWeqCc.getCongruenceClosure().sanityCheck();
+		}
+
 		// the edge labels may have added nodes when projecting something --> add them to the gpa
 		for (final NODE nail : nodesAddedInLabels) {
 			mWeqCc.addElementRec(nail);

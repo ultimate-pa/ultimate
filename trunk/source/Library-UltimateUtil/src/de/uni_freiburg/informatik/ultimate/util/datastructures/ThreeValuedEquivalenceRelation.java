@@ -108,13 +108,14 @@ public class ThreeValuedEquivalenceRelation<E> {
 		assert newRepChoice == null || getRepresentative(elem) == getRepresentative(newRepChoice);
 		final E rep = mUnionFind.find(elem);
 		final Set<E> equivalenceClassCopy = new HashSet<>(mUnionFind.getEquivalenceClassMembers(elem));
-		mUnionFind.remove(elem);
+		mUnionFind.remove(elem, newRepChoice);
 
 		/*
 		 * update mDistinctElements
 		 */
 		if (rep != elem) {
 			// elem was not the representative of its equivalence class --> nothing to do for disequalities
+			assert getRepresentative(rep) == rep;
 			return rep;
 		}
 		// elem was the representative of its equivalence class --> we need to update mDistinctElements
@@ -139,6 +140,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 		mDisequalities.replaceDomainElement(elem, newRep);
 		mDisequalities.replaceRangeElement(elem, newRep);
 		assert sanityCheck();
+		assert getRepresentative(newRep) == newRep : "the returned element must be a representative, "
+				+ newRep + " is its own rep, but " +  getRepresentative(newRep) + " is.";
 		return newRep;
 	}
 
