@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -34,13 +33,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
-	
+
 	private final ILogger mLogger;
 	private final IIcfg<INLOC> mOriginalIcfg;
 	private final Class<OUTLOC> mOutLocationClass;
@@ -56,25 +55,24 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final String newIcfgIdentifier,
 			final ITransformulaTransformer transformer, final IBacktranslationTracker backtranslationTracker,
 			final IUltimateServiceProvider services) {
-		
-		//Setup
-				mLogger = logger;
-				mOriginalIcfg = originalIcfg;
-				mOutLocationClass = outLocationClass;
-				mFunLocFac = funLocFac;
-				mNewIcfgIdentifier = newIcfgIdentifier;
-				mTransformer = transformer;
-				mBacktranslationTracker = backtranslationTracker;
-				mServices = services;
-				final CfgSmtToolkit mCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
-				mMgScript = mCfgSmtToolkit.getManagedScript();
-				mScript = mMgScript.getScript();
+
+		// Setup
+		mLogger = logger;
+		mOriginalIcfg = originalIcfg;
+		mOutLocationClass = outLocationClass;
+		mFunLocFac = funLocFac;
+		mNewIcfgIdentifier = newIcfgIdentifier;
+		mTransformer = transformer;
+		mBacktranslationTracker = backtranslationTracker;
+		mServices = services;
+		final CfgSmtToolkit mCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
+		mMgScript = mCfgSmtToolkit.getManagedScript();
+		mScript = mMgScript.getScript();
 	}
-	
 
 	public IIcfg<OUTLOC> rejoin2(final SimpleLoop originalLoop, final Term result, final Map<IProgramVar, Term> values,
 			final TermVariable n) {
-				
+
 		final Script script = mMgScript.getScript();
 		final Term zero = Rational.ZERO.toTerm(script.sort("Int"));
 		final UnmodifiableTransFormula originalLoopTransFormula = originalLoop.mLoopTransFormula;
@@ -110,11 +108,11 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			substituteJ.put(n, j);
 			final Substitution subJ = new Substitution(mMgScript, substituteJ);
 			final Term transformedExitFormulaJ = subJ.transform(transformedExitFormula);
-			
+
 			final Term conditions = script.term("xor", script.term(">=", j, n),
 					script.term("or", script.term("<", j, zero), transformedExitFormulaJ));
 			final Term quantifiedFormula = script.quantifier(Script.FORALL, new TermVariable[] { j }, conditions);
-			
+
 			final List<Term> remainingExitFormulas = new ArrayList<>();
 			final TermVariable k = script.variable("k", script.sort("Int"));
 			for (final Entry<UnmodifiableTransFormula, IcfgLocation> remainingExitEdge : originalLoop.mExitEdges) {
@@ -124,7 +122,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				for (final IProgramVar var : originalLoopTransFormula.getOutVars().keySet()) {
 					if (remainingExitTransformula.getInVars().containsKey(var)) {
 						substitute.put(remainingExitTransformula.getInVars().get(var), values.get(var));
-						if (remainingExitTransformula.getInVars().get(var).equals(remainingExitTransformula.getOutVars().get(var))) {
+						if (remainingExitTransformula.getInVars().get(var)
+								.equals(remainingExitTransformula.getOutVars().get(var))) {
 							outVars.remove(var);
 							outVars.put(var, originalLoopTransFormula.getOutVars().get(var));
 						}
@@ -134,8 +133,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				}
 
 				sub = new Substitution(mMgScript, substitute);
-				Term remainingTransformedExitFormula = sub.transform(remainingExitTransformula.getFormula());
-				
+				final Term remainingTransformedExitFormula = sub.transform(remainingExitTransformula.getFormula());
+
 				// replace n with k
 				final Map<Term, Term> substituteK = new HashMap<>();
 				substituteK.put(n, k);
@@ -144,8 +143,9 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				remainingExitFormulas.add(transformedExitFormulaK);
 			}
 			Term quantifiedFormulaK = TransFormulaBuilder.getTrivialTransFormula(mMgScript).getFormula();
-			if(remainingExitFormulas.size() > 1){
-				Term additionalCondition = script.term("and", remainingExitFormulas.toArray(new Term[remainingExitFormulas.size()]));
+			if (remainingExitFormulas.size() > 1) {
+				final Term additionalCondition =
+						script.term("and", remainingExitFormulas.toArray(new Term[remainingExitFormulas.size()]));
 				final Term conditionsK = script.term("xor", script.term(">=", k, n),
 						script.term("or", script.term("<", k, zero), additionalCondition));
 				quantifiedFormulaK = script.quantifier(Script.FORALL, new TermVariable[] { k }, conditionsK);
@@ -158,17 +158,20 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 			// Quantifier - End
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(originalLoopTransFormula.getInVars(), outVars,
-					false, originalLoopTransFormula.getNonTheoryConsts(), true, originalLoopTransFormula.getBranchEncoders(), true);
+					originalLoopTransFormula.getNonTheoryConsts().isEmpty(),
+					originalLoopTransFormula.getNonTheoryConsts(),
+					originalLoopTransFormula.getBranchEncoders().isEmpty(),
+					originalLoopTransFormula.getBranchEncoders(), true);
 			tfb.setFormula(simplified);
-			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);			
+			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 			tfb.finishConstruction(mMgScript);
 			final UnmodifiableTransFormula loop = tfb.finishConstruction(mMgScript);
 			loopExits.put(exitEdge, loop);
 		}
-		
+
 		// create icfg
 		mOriginalIcfg.getIdentifier();
-		
+
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mFunLocFac,
@@ -177,7 +180,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 		lst.finish();
 		return resultIcfg;
 	}
-	
+
 	public IIcfg<OUTLOC> rejoin(final SimpleLoop originalLoop, final Term result, final Map<IProgramVar, Term> values,
 			final TermVariable n) {
 		final Script script = mMgScript.getScript();
@@ -216,7 +219,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final Term transformedExitFormulaJ = subJ.transform(transformedExitFormula);
 
 			final Term zero = Rational.ZERO.toTerm(script.sort("Int"));
-			
+
 			final Term conditions = script.term("xor", script.term(">=", j, n),
 					script.term("or", script.term("<", j, zero), transformedExitFormulaJ));
 			final Term quantifiedFormula = script.quantifier(Script.FORALL, new TermVariable[] { j }, conditions);
@@ -229,9 +232,10 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			// Quantifier - End
 
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(originalLoopTransFormula.getInVars(), outVars,
-					false, originalLoopTransFormula.getNonTheoryConsts(), true, originalLoopTransFormula.getBranchEncoders(), true);
+					false, originalLoopTransFormula.getNonTheoryConsts(), true,
+					originalLoopTransFormula.getBranchEncoders(), true);
 			tfb.setFormula(simplified);
-			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);			
+			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 			tfb.finishConstruction(mMgScript);
 			final UnmodifiableTransFormula loop = tfb.finishConstruction(mMgScript);
 			loopExits.put(exitEdge, loop);
@@ -239,7 +243,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 		// create icfg
 		mOriginalIcfg.getIdentifier();
-		
+
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mFunLocFac,
@@ -248,9 +252,10 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 		lst.finish();
 		return resultIcfg;
 	}
-	
+
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst,
-			final IcfgLocation loopHead, final Map<Entry<UnmodifiableTransFormula, IcfgLocation>, UnmodifiableTransFormula> loopExits) {
+			final IcfgLocation loopHead,
+			final Map<Entry<UnmodifiableTransFormula, IcfgLocation>, UnmodifiableTransFormula> loopExits) {
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 		final Set<INLOC> closed = new HashSet<>();
 
@@ -268,12 +273,11 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 					final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 
 					// TODO when is it an over-approximation
-					final IcfgInternalTransition newTransition =
-							(IcfgInternalTransition) lst.createNewInternalTransition(newSource, newTarget,
-									loopExits.get(oldTransition), null, false);
+					final IcfgInternalTransition newTransition = lst.createNewInternalTransition(newSource, newTarget,
+							loopExits.get(oldTransition), null, false);
 
-					//new Overapprox("loop acceleration: ... ", null).annotate(newTransition);
-					//mBacktranslationTracker.rememberRelation(oldTransition, newTransition);
+					// new Overapprox("loop acceleration: ... ", null).annotate(newTransition);
+					// mBacktranslationTracker.rememberRelation(oldTransition, newTransition);
 				}
 			} else {
 				final OUTLOC newSource = lst.createNewLocation(oldSource);

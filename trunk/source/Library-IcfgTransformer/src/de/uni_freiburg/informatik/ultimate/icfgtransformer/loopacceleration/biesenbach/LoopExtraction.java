@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.bie
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,23 +12,19 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -42,93 +37,108 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 	private final List<INLOC> mLoopHeads;
 
 	public LoopExtraction(final ILogger logger, final IIcfg<INLOC> originalIcfg) {
-		
-		//Setup
+
+		// Setup
 		mLogger = logger;
 		mOriginalIcfg = originalIcfg;
 		final CfgSmtToolkit mCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
 		mMgScript = mCfgSmtToolkit.getManagedScript();
 		mLoops = new ArrayDeque<>();
 		mLoopHeads = getLoopHeads();
-		
+
 		for (final INLOC loopHead : mLoopHeads) {
 			final Deque<IcfgEdge> path = getLoopPath(loopHead);
-			if(path.isEmpty()){
+			if (path.isEmpty()) {
 				continue;
 			}
 			final List<Entry<UnmodifiableTransFormula, IcfgLocation>> exitEdges = findAllExits(loopHead, path);
-			UnmodifiableTransFormula pathTransformula = pathToTransformula(path);
-			//check if loop has values to accelerate
-			if(!pathTransformula.getAssignedVars().isEmpty()){
+			final UnmodifiableTransFormula pathTransformula = pathToTransformula(path);
+			// check if loop has values to accelerate
+			if (!pathTransformula.getAssignedVars().isEmpty()) {
 				mLoops.addLast(new SimpleLoop(pathTransformula, loopHead, exitEdges));
 			}
 		}
 	}
-	
-	private List<Entry<UnmodifiableTransFormula, IcfgLocation>> findAllExits(INLOC loopHead, Deque<IcfgEdge> path){
-		List<Entry<UnmodifiableTransFormula, IcfgLocation>> exitEdges = new ArrayList<>();
-		for(IcfgEdge edge : loopHead.getOutgoingEdges()){
-			if(!edge.getTransformula().equals(path.getFirst().getTransformula())){
-				Entry<UnmodifiableTransFormula, IcfgLocation> entry = 
-						new AbstractMap.SimpleEntry<>(Tools.negateUnmodifiableTransFormula(mMgScript, edge.getTransformula()), edge.getTarget());
-				exitEdges.add(entry); 
+
+	private List<Entry<UnmodifiableTransFormula, IcfgLocation>> findAllExits(final INLOC loopHead,
+			final Deque<IcfgEdge> path) {
+		final List<Entry<UnmodifiableTransFormula, IcfgLocation>> exitEdges = new ArrayList<>();
+		for (final IcfgEdge edge : loopHead.getOutgoingEdges()) {
+			if (!edge.getTransformula().equals(path.getFirst().getTransformula())) {
+				final Entry<UnmodifiableTransFormula, IcfgLocation> entry = new AbstractMap.SimpleEntry<>(
+						Tools.negateUnmodifiableTransFormula(mMgScript, edge.getTransformula()), edge.getTarget());
+				exitEdges.add(entry);
 			}
 		}
-		Deque<IcfgEdge> pathCopy = Tools.cloneDeque(path);
+		final Deque<IcfgEdge> pathCopy = Tools.cloneDeque(path);
 		pathCopy.removeLast();
-		Deque<IcfgEdge> exitPath = new ArrayDeque<>();
-		while(!pathCopy.isEmpty()){
-			IcfgEdge nextEdge = pathCopy.pop();
-			for(IcfgEdge outgoingEdge : nextEdge.getTarget().getOutgoingEdges()){
-				if(!path.contains(outgoingEdge)){
+		final Deque<IcfgEdge> exitPath = new ArrayDeque<>();
+		while (!pathCopy.isEmpty()) {
+			final IcfgEdge nextEdge = pathCopy.pop();
+			for (final IcfgEdge outgoingEdge : nextEdge.getTarget().getOutgoingEdges()) {
+				if (!path.contains(outgoingEdge)) {
 					Entry<UnmodifiableTransFormula, IcfgLocation> entry;
-					if(!exitPath.isEmpty()){
-						Deque<IcfgEdge> exit = Tools.cloneDeque(exitPath);
-						UnmodifiableTransFormula pathFormula = pathToTransformula(exit);
-						UnmodifiableTransFormula exitPathFormula = instertFormula(Tools.negateUnmodifiableTransFormula(mMgScript, outgoingEdge.getTransformula()), pathFormula);
-						//UnmodifiableTransFormula exitPathFormula = joinTransFormula(pathFormula, Tools.negateUnmodifiableTransFormula(mMgScript, outgoingEdge.getTransformula()));
+					if (!exitPath.isEmpty()) {
+						final Deque<IcfgEdge> exit = Tools.cloneDeque(exitPath);
+						final UnmodifiableTransFormula pathFormula = pathToTransformula(exit);
+						final UnmodifiableTransFormula exitPathFormula = instertFormula(
+								Tools.negateUnmodifiableTransFormula(mMgScript, outgoingEdge.getTransformula()),
+								pathFormula);
+						// UnmodifiableTransFormula exitPathFormula = joinTransFormula(pathFormula,
+						// Tools.negateUnmodifiableTransFormula(mMgScript, outgoingEdge.getTransformula()));
 						entry = new AbstractMap.SimpleEntry<>(exitPathFormula, outgoingEdge.getTarget());
-					}else{
-						entry = new AbstractMap.SimpleEntry<>( Tools.negateUnmodifiableTransFormula(
-								mMgScript, outgoingEdge.getTransformula()), outgoingEdge.getTarget());
+					} else {
+						entry = new AbstractMap.SimpleEntry<>(
+								Tools.negateUnmodifiableTransFormula(mMgScript, outgoingEdge.getTransformula()),
+								outgoingEdge.getTarget());
 					}
 					exitEdges.add(entry);
-				}else{
+				} else {
 					exitPath.add(outgoingEdge);
 				}
 			}
 		}
 		return exitEdges;
 	}
-	
+
 	private UnmodifiableTransFormula instertFormula(final UnmodifiableTransFormula mainFormula,
-			final UnmodifiableTransFormula substituteFormula){
-		Script script = mMgScript.getScript();
-		Map<Term, Term> substitute = new HashMap<>();
+			final UnmodifiableTransFormula substituteFormula) {
+		final Script script = mMgScript.getScript();
+		final Map<Term, Term> substitute = new HashMap<>();
 		for (final IProgramVar var : mainFormula.getInVars().keySet()) {
 			if (substituteFormula.getOutVars().containsKey(var)) {
-				Term value = script.term("+", 
-						substituteFormula.getInVars().values().iterator().next(), 
+				final Term value = script.term("+", substituteFormula.getInVars().values().iterator().next(),
 						Rational.ONE.toTerm(script.sort("Int")));
 				substitute.put(mainFormula.getInVars().get(var), value);
 			}
 		}
-		Substitution sub = new Substitution(mMgScript, substitute);
+		final Substitution sub = new Substitution(mMgScript, substitute);
 		final Term transformedExitFormula = sub.transform(mainFormula.getFormula());
-		
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(substituteFormula.getInVars(), substituteFormula.getInVars(),
-				false, mainFormula.getNonTheoryConsts(), true, mainFormula.getBranchEncoders(), true);
+
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(substituteFormula.getInVars(), substituteFormula.getInVars(), false,
+						mainFormula.getNonTheoryConsts(), true, mainFormula.getBranchEncoders(), true);
 		tfb.setFormula(transformedExitFormula);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);			
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		tfb.finishConstruction(mMgScript);
 		final UnmodifiableTransFormula finalFormula = tfb.finishConstruction(mMgScript);
-		
-		mLogger.debug("-------------------------");
-		mLogger.debug("mainFormula : " + mainFormula);
-		mLogger.debug("substituteFormula : " + substituteFormula);
-		mLogger.debug("subsitute : " + substitute);
-		mLogger.debug("finalFormula : " + finalFormula);
-		mLogger.debug("-------------------------");
+
+		// produce sequential composition
+		// final List<UnmodifiableTransFormula> transFormulas = null;
+		// final IUltimateServiceProvider services = null;
+		// final UnmodifiableTransFormula seqComp = TransFormulaUtils.sequentialComposition(mLogger, services,
+		// mMgScript,
+		// true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+		// SimplificationTechnique.SIMPLIFY_DDA, transFormulas);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("-------------------------");
+			mLogger.debug("mainFormula : " + mainFormula);
+			mLogger.debug("substituteFormula : " + substituteFormula);
+			mLogger.debug("subsitute : " + substitute);
+			mLogger.debug("finalFormula : " + finalFormula);
+			mLogger.debug("-------------------------");
+		}
 		return finalFormula;
 	}
 
@@ -149,19 +159,19 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 		// remember the path
 		final Map<IcfgLocation, Deque<IcfgEdge>> paths = new HashMap<>();
 		paths.put(loopHead, new ArrayDeque<>());
-		//while there are open locations
+		// while there are open locations
 		while (!openLocations.isEmpty()) {
 			final INLOC location = openLocations.removeFirst();
 			// go throw every edge
 			for (final IcfgEdge edge : location.getOutgoingEdges()) {
-				IcfgLocation target = edge.getTarget();
+				final IcfgLocation target = edge.getTarget();
 				// first loop-path found
-				if(mLoopHeads.contains(target) && !target.equals(loopHead)){
+				if (mLoopHeads.contains(target) && !target.equals(loopHead)) {
 					continue;
-				}else if(target.equals(loopHead)  && loopPath.isEmpty()) {
+				} else if (target.equals(loopHead) && loopPath.isEmpty()) {
 					paths.get(location).addLast(edge);
 					loopPath = paths.get(location);
-				} else if (target.equals(loopHead) && markedLocations.contains(target)){
+				} else if (target.equals(loopHead) && markedLocations.contains(target)) {
 					return new ArrayDeque<>();
 				} else {
 					markedLocations.add((INLOC) target);
@@ -206,7 +216,7 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 		for (final IProgramVar var : first.getOutVars().keySet()) {
 			if (second.getInVars().containsKey(var)) {
 				substitute.put(second.getInVars().get(var), first.getOutVars().get(var));
-				if(second.getInVars().get(var).equals(second.getOutVars().get(var))){
+				if (second.getInVars().get(var).equals(second.getOutVars().get(var))) {
 					outVars.put(var, first.getOutVars().get(var));
 				}
 			}
@@ -216,8 +226,8 @@ public class LoopExtraction<INLOC extends IcfgLocation, OUTLOC extends IcfgLocat
 		nonTheoryConsts.addAll(second.getNonTheoryConsts());
 		final Substitution sub = new Substitution(mMgScript, substitute);
 		final Term transformedSecond = sub.transform(second.getFormula());
-		Term jointFormula = mMgScript.getScript().term("and", first.getFormula(), transformedSecond);
-		
+		final Term jointFormula = mMgScript.getScript().term("and", first.getFormula(), transformedSecond);
+
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(inVars, outVars, false, nonTheoryConsts, true, null, false);
 		tfb.setFormula(jointFormula);
