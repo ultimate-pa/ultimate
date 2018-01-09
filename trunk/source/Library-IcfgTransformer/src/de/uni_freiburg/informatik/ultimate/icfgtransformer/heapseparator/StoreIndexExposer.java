@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -26,38 +25,39 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class StoreIndexExposer implements ITransformulaTransformer {
-	
+
 	private final Map<ArrayIndex, List<IProgramNonOldVar>> mStoreIndexToFreezeIndex = new HashMap<>();
+	private final Map<Term, IProgramNonOldVar> mIndexTermToFrozenVar = new HashMap();
 	private final ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mNewSymbolTable;
-	
-	public StoreIndexExposer(CfgSmtToolkit csToolkit) {
+
+	public StoreIndexExposer(final CfgSmtToolkit csToolkit) {
 		mMgdScript = csToolkit.getManagedScript();
 		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 	}
 
 	@Override
-	public void preprocessIcfg(IIcfg<?> icfg) {
+	public void preprocessIcfg(final IIcfg<?> icfg) {
 		// do nothing
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(UnmodifiableTransFormula tf) {
+	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
-		
+
 		final List<Term> indexUpdateFormula = new ArrayList<>();
-		
+
 		mMgdScript.lock(this);
-		
+
 		final Set<ArrayIndex> storeIndices = MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula()).stream()
 			.map(mds -> mds.getIndex()).collect(Collectors.toSet());
-		
-		for (ArrayIndex storeIndex : storeIndices) {
+
+		for (final ArrayIndex storeIndex : storeIndices) {
 			final List<Term> indexUpdates = new ArrayList<>();
-			
+
 			final List<IProgramNonOldVar> freezeIndex = getFreezeIndex(storeIndex);
-			
+
 			for (int i = 0; i < freezeIndex.size(); i++) {
 				final TermVariable inputFreezeIndexTv;
 				final TermVariable updatedFreezeIndexTv;
@@ -78,7 +78,7 @@ public class StoreIndexExposer implements ITransformulaTransformer {
 				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
 				 */
 				indexUpdates.add(
-						SmtUtils.or(mMgdScript.getScript(), 
+						SmtUtils.or(mMgdScript.getScript(),
 //								mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv),
 								mMgdScript.term(this, "=", updatedFreezeIndexTv,storeIndex.get(i)))
 								);
@@ -93,31 +93,40 @@ public class StoreIndexExposer implements ITransformulaTransformer {
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 		newOutVars.putAll(extraOutVars);
 
-		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(newInVars, newOutVars, 
-				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(), 
+		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(newInVars, newOutVars,
+				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(),
 				tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
-				
+
 		final List<Term> newFormulaConjuncts = new ArrayList<>();
 		newFormulaConjuncts.add(tf.getFormula());
 		newFormulaConjuncts.addAll(indexUpdateFormula);
-				
+
 		tfBuilder.setFormula(SmtUtils.and(mMgdScript.getScript(), newFormulaConjuncts));
-		
+
 		tfBuilder.setInfeasibility(tf.isInfeasible());
-		
+
 		return new TransforumlaTransformationResult(tfBuilder.finishConstruction(mMgdScript));
 	}
-	
-	private List<IProgramNonOldVar> getFreezeIndex(ArrayIndex storeIndex) {
+
+	private List<IProgramNonOldVar> getFreezeIndex(final ArrayIndex storeIndex) {
 		List<IProgramNonOldVar> result = mStoreIndexToFreezeIndex.get(storeIndex);
 		if (result == null) {
 			result = new ArrayList<>();
-			for (Term indEl : storeIndex) {
-				final BoogieNonOldVar freshPv = ProgramVarUtils.constructGlobalProgramVarPair(
-						indEl.toString().replace("|", "") + "_frz", indEl.getSort(), 
+			for (final Term indEl : storeIndex) {
+
+				final IProgramNonOldVar alreadyCreatedPv = mIndexTermToFrozenVar.get(indEl);
+
+				final IProgramNonOldVar freezePv;
+				if (alreadyCreatedPv == null) {
+					freezePv = ProgramVarUtils.constructGlobalProgramVarPair(
+						indEl.toString().replace("|", "") + "_frz", indEl.getSort(),
 						mMgdScript, this);
-				result.add(freshPv);
-				mNewSymbolTable.add(freshPv);
+					mIndexTermToFrozenVar.put(indEl, freezePv);
+				} else {
+					freezePv = alreadyCreatedPv;
+				}
+				result.add(freezePv);
+				mNewSymbolTable.add(freezePv);
 			}
 			mStoreIndexToFreezeIndex.put(storeIndex, result);
 		}
