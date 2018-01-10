@@ -80,7 +80,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		final Term normalizedTerm = normalizeTerm(term);
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-			result = getBaseElement(normalizedTerm);
+			result = getBaseElement(normalizedTerm, false);
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqNonAtomicBaseNode;
@@ -106,7 +106,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-			result = getBaseElement(normalizedTerm);
+			result = getBaseElement(normalizedTerm, isTermALiteral(normalizedTerm));
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
@@ -205,11 +205,13 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	@Override
-	protected EqNode newBaseElement(final Term term) {
+	protected EqNode newBaseElement(final Term term, final boolean isLiteral) {
 		if (isAtomic(term)) {
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
-			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
+//			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
+			return new EqAtomicBaseNode(term, isLiteral, this);
 		} else {
+			assert !isLiteral;
 			assert term.getFreeVars().length > 0;
 			final Set<EqNode> supportingNodes = new HashSet<>();
 			for (final TermVariable fv : term.getFreeVars()) {

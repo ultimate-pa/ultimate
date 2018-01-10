@@ -388,6 +388,10 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return new ThreeValuedEquivalenceRelation<>(newPartition, xJoinDisequalities(this, other, newPartition, false));
 	}
 
+	public UnionFind<E> joinPartitions(final ThreeValuedEquivalenceRelation<E> other) {
+		return UnionFind.intersectPartitionBlocks(this.mUnionFind, other.mUnionFind);
+	}
+
 	/**
 	 * Conjoin or disjoin two disequality relations.
 	 *

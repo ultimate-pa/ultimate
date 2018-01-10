@@ -10,20 +10,17 @@ public abstract class AbstractCCElementFactory<ELEM extends ICongruenceClosureEl
 	final Map<CONTENT, ELEM> mContentToBaseElem = new HashMap<>();
 	final NestedMap2<ELEM, ELEM, ELEM> mFunctionToArgToFuncAppElem = new NestedMap2<>();
 
-	protected abstract ELEM newBaseElement(CONTENT c);
+	protected abstract ELEM newBaseElement(CONTENT c, boolean isLiteral);
 	protected abstract ELEM newFuncAppElement(ELEM f, ELEM arg);
 
 	public ELEM getBaseElement(final CONTENT content) {
 		return getBaseElement(content, false);
 	}
 
-	public ELEM getBaseElement(final CONTENT content, final boolean forceExisting) {
+	public ELEM getBaseElement(final CONTENT content, final boolean isLiteral) {
 		ELEM be = mContentToBaseElem.get(content);
 		if (be == null) {
-			if (forceExisting) {
-				throw new IllegalStateException();
-			}
-			be = newBaseElement(content);
+			be = newBaseElement(content, isLiteral);
 			mContentToBaseElem.put(content, be);
 		}
 		return be;
