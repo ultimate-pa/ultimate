@@ -21,7 +21,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 
 public class CongruenceClosureTest {
 
-	private static final boolean mInPlace = false;
+	// TODO: make it work with this flag set to false, too
+	private static final boolean mInPlace = true;
 
 	/**
 	 * Test about basic congruence closure operations.
@@ -703,8 +704,6 @@ public class CongruenceClosureTest {
 
 
 		// cc1 and cc2 should be incomparable
-//		assertFalse(cc1.isStrongerThan(cc2));
-//		assertFalse(cc2.isStrongerThan(cc1));
 		assertFalse(manager.isStrongerThan(cc1, cc2));
 		assertFalse(manager.isStrongerThan(cc2, cc1));
 
@@ -724,13 +723,9 @@ public class CongruenceClosureTest {
 		assertTrue(cc3.getEqualityStatus(f_f_a, a) == EqualityStatus.UNKNOWN);
 
 		// cc3 should be strictly weaker than both cc1 and cc2
-//		assertTrue(cc1.isStrongerThan(cc3));
 		assertTrue(manager.isStrongerThan(cc1, cc3));
-//		assertFalse(cc3.isStrongerThan(cc1));
 		assertFalse(manager.isStrongerThan(cc3, cc1));
-//		assertTrue(cc2.isStrongerThan(cc3));
 		assertTrue(manager.isStrongerThan(cc2, cc3));
-//		assertFalse(cc3.isStrongerThan(cc2));
 		assertFalse(manager.isStrongerThan(cc3, cc2));
 
 		final CongruenceClosure<StringCcElement> cc4 = manager.meet(
@@ -750,16 +745,47 @@ public class CongruenceClosureTest {
 		assertTrue(cc4.getEqualityStatus(b, f_b) == EqualityStatus.NOT_EQUAL);
 
 		// cc3 should be strictly stronger than both cc1 and cc2
-//		assertTrue(cc4.isStrongerThan(cc1));
 		assertTrue(manager.isStrongerThan(cc4, cc1));
-//		assertFalse(cc1.isStrongerThan(cc4));
 		assertFalse(manager.isStrongerThan(cc1, cc4));
-//		assertTrue(cc4.isStrongerThan(cc2));
 		assertTrue(manager.isStrongerThan(cc4, cc2));
-//		assertFalse(cc2.isStrongerThan(cc4));
 		assertFalse(manager.isStrongerThan(cc2, cc4));
 
 	}
+
+
+	/**
+	 * test to check how the join operator cooperates with the literals-feature of CongruenceClosure.
+	 * (expressions can be marked as literals, and all literals are implicitly pairwise distinct)
+	 */
+	@Test
+	public void testOperators3() {
+		final ILogger logger = new ConsoleLogger();
+		final CongruenceClosureComparator<StringCcElement> ccComparator =
+				new CongruenceClosureComparator<StringCcElement>();
+		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
+
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement x = factory.getBaseElement("x");
+		// get zero, one as literals
+		final StringCcElement zero = factory.getBaseElement("0", true);
+		final StringCcElement one = factory.getBaseElement("1", true);
+
+		// "x = 0"
+		final CongruenceClosure<StringCcElement> cc1 = manager.getSingleEqualityCc(x, zero, false);
+//		assertTrue(cc1.getEqualityStatus(x, one) == EqualityStatus.NOT_EQUAL);
+
+		// "x != 1"
+		final CongruenceClosure<StringCcElement> cc2 = manager.getSingleDisequalityCc(x, one, false);
+
+		// expected join: x != 1 (because x = 0 implies that x != 1)
+		final CongruenceClosure<StringCcElement> join = manager.join(cc1, cc2, false);
+		assertTrue(join.getEqualityStatus(x, one) == EqualityStatus.NOT_EQUAL);
+
+	}
+
+
 
 
 	@Test
@@ -894,10 +920,13 @@ public class CongruenceClosureTest {
 class StringElementFactory extends AbstractCCElementFactory<StringCcElement, String> {
 
 	@Override
-//	protected StringCcElement newBaseElement(final String c, final boolean isFunction) {
-	protected StringCcElement newBaseElement(final String c) {
-		return new StringCcElement(c);
+	protected StringCcElement newBaseElement(final String c, final boolean isLiteral) {
+		return new StringCcElement(c, isLiteral);
 	}
+
+//	protected StringCcElement newLiteral(final String c) {
+//		return new StringCcElement(c, true);
+//	}
 
 	public StringCcElement getFuncAppElement(final StringCcElement f, final StringCcElement... args) {
 		return StringCcElement.buildStringCcElement(this, f, args);
@@ -907,13 +936,6 @@ class StringElementFactory extends AbstractCCElementFactory<StringCcElement, Str
 	protected StringCcElement newFuncAppElement(final StringCcElement f, final StringCcElement arg) {
 		return new StringCcElement(f, arg, this);
 	}
-
-//	@Override
-//	public StringCcElement getFuncAppElementDetermineIsFunctionYourself(final StringCcElement func,
-//			final List<StringCcElement> arguments) {
-//		throw new UnsupportedOperationException();
-//	}
-
 }
 
 class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
@@ -922,10 +944,10 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	private final String mName;
 	private final StringCcElement mAppliedFunction;
 	private final StringCcElement mArgument;
-//	private final int mHeight;
 	private final Set<StringCcElement> mAfParents;
 	private final Set<StringCcElement> mArgParents;
 	private final StringElementFactory mFactory;
+	private final boolean mIsLiteral;
 
 	/**
 	 * base element
@@ -933,15 +955,15 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 	 * @param name
 	 * @param isFunction
 	 */
-	public StringCcElement(final String name) {
+	public StringCcElement(final String name, final boolean isLiteral) {
 		mIsFunctionApplication = false;
 		mName = name;
 		mAppliedFunction = null;
 		mArgument = null;
-//		mHeight = 0;
 		mAfParents = new HashSet<>();
 		mArgParents = new HashSet<>();
 		mFactory = null;
+		mIsLiteral = isLiteral;
 	}
 
 	/**
@@ -956,13 +978,11 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 		mIsFunctionApplication = true;
 		mName = null;
 		mAppliedFunction = appliedFunction;
-//		assert mAppliedFunction.isFunction();
 		mArgument = argument;
-//		assert !argument.isFunction();
-//		mHeight = appliedFunction.getHeight() + 1;
 		mAfParents = new HashSet<>();
 		mArgParents = new HashSet<>();
 		mFactory = factory;
+		mIsLiteral = false;
 	}
 
 	public static StringCcElement buildStringCcElement(final StringElementFactory factory,
@@ -1018,43 +1038,22 @@ class StringCcElement implements ICongruenceClosureElement<StringCcElement>{
 
 	@Override
 	public boolean isLiteral() {
-		// TODO Auto-generated method stub
-		return false;
+		return mIsLiteral;
 	}
 
 	@Override
 	public StringCcElement replaceSubNode(final Map<StringCcElement, StringCcElement> replacementMapping) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("implement this if needed");
 	}
 
 	@Override
 	public boolean isDependentNonFunctionApplication() {
-		// TODO Auto-generated method stub
+		// TODO edit when we need dependent nodes here
 		return false;
 	}
 
 	@Override
 	public Set<StringCcElement> getSupportingNodes() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("implement this if needed");
 	}
-
-
-
-
-//	@Override
-//	public StringCcElement[] getArguments() {
-//		final StringCcElement[] result = new StringCcElement[mHeight + 1];
-//		StringCcElement af = this;
-//		for (int i = mHeight; i > 0; i--) {
-//			result[i] = af.getArgument();
-//			assert !result[i].isFunction();
-//			af = af.getAppliedFunction();
-//		}
-//		result[0] = af.getAppliedFunction();
-//		assert result[0].isFunction();
-//		return result;
-//	}
-
 }
