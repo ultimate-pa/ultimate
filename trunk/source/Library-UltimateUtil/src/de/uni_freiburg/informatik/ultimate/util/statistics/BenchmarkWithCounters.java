@@ -72,7 +72,7 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 		if (mAlreadyGeneratedColumnTitlesAndResults) {
 			return;
 		}
-		final TimeUnit timeUnit = TimeUnit.SECONDS;
+		final TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 		for (final String watchName : mWatchBenchmark.getTitles()) {
 			mColumnTitles.add(watchName + "(" + timeUnit + ")");
 			mResults.add(mWatchBenchmark.getElapsedTime(watchName, timeUnit));
