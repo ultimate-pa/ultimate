@@ -12,7 +12,7 @@ procedure main() {
 	while (x < 1000) {
 		x := x + 2;
 	}
-	assert (x >= 1001 || x < 1002);
+	assert (x == 1001);
 }
 
 /*
