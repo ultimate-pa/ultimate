@@ -225,7 +225,7 @@ public class WitnessManager {
 		timeoutInS++;
 		mLogger.info(StringUtils.join(cmdArray, " "));
 		final MonitoredProcess cpaCheckerProcess =
-				MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage, mLogger);
+				MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
 		final BufferedInputStream errorStream = new BufferedInputStream(cpaCheckerProcess.getErrorStream());
 		final BufferedInputStream outputStream = new BufferedInputStream(cpaCheckerProcess.getInputStream());
 		final String error = convertStreamToString(errorStream);

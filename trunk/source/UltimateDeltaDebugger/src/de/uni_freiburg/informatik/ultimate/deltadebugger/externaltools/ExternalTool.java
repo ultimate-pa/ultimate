@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.preferences.DeltaDebugg
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -61,7 +61,6 @@ public abstract class ExternalTool implements IExternalTool {
 
 	@Override
 	public ExternalToolResult runExternalTool(final File inputFile) {
-
 		if (!checkAndSetupTool()) {
 			return ExternalToolResult.INVALID;
 		}
@@ -74,7 +73,7 @@ public abstract class ExternalTool implements IExternalTool {
 				Arrays.toString(cmd), workingDir, exitCommand));
 		MonitoredProcess extProcess;
 		try {
-			extProcess = MonitoredProcess.exec(cmd, workingDir, exitCommand, mServices, mStorage, mLogger);
+			extProcess = MonitoredProcess.exec(cmd, workingDir, exitCommand, mServices, mStorage);
 		} catch (final IOException e) {
 			mLogger.fatal("External tool could not be run. Reason:", e);
 			return ExternalToolResult.INVALID;

@@ -181,8 +181,7 @@ public class SyntaxChecker implements IAnalysis {
 	private String callSytaxCheckerAndReturnStderrOutput(final String toolCommand, final String filename)
 			throws IOException {
 		final String syntaxCheckerCommand = toolCommand + " " + filename;
-		final MonitoredProcess mProcess =
-				MonitoredProcess.exec(syntaxCheckerCommand, null, mServices, mStorage, mLogger);
+		final MonitoredProcess mProcess = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices, mStorage);
 
 		if (mProcess == null) {
 			final String errorMsg = " Could not create process, terminating... ";

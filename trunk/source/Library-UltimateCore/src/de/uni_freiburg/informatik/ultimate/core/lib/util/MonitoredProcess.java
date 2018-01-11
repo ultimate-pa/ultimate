@@ -147,11 +147,10 @@ public final class MonitoredProcess implements IStorable {
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
 	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
-			final IUltimateServiceProvider services, final IToolchainStorage storage, final ILogger logger)
-			throws IOException {
+			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
 		final MonitoredProcess newMonitoredProcess;
 		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).get();
-
+		final ILogger logger = services.getLoggingService().getControllerLogger();
 		if (workingDir == null) {
 			if (command.length > 0) {
 				File f = new File(command[0]);
@@ -207,9 +206,8 @@ public final class MonitoredProcess implements IStorable {
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
 	public static MonitoredProcess exec(final String command, final String exitCommand,
-			final IUltimateServiceProvider services, final IToolchainStorage storage, final ILogger logger)
-			throws IOException {
-		return exec(command.split(" "), null, exitCommand, services, storage, logger);
+			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
+		return exec(command.split(" "), null, exitCommand, services, storage);
 	}
 
 	private void start(final String workingDir, final IToolchainStorage storage, final String oneLineCmd) {
