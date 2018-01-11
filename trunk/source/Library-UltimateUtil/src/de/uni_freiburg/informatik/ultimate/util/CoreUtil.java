@@ -78,6 +78,64 @@ public class CoreUtil {
 		return df.format(new Date());
 	}
 
+	/**
+	 * Traverses the OS' PATH and searches for a file that fulfills the following conditions.
+	 * <ul>
+	 * <li>It is named <name>,
+	 * <li>the current process is allowed to execute it,
+	 * <li>it looks like some known executable binary.
+	 * </ul>
+	 */
+	public static File findExecutableBinaryOnPath(final String name) {
+		final Predicate<File> funLooksLikeExectuable;
+		if (CoreUtil.OS_IS_WINDOWS) {
+			// Check for Windows executable:
+			// Windows uses the Portable Executable format, which should always start with the magic number 4d5a
+			// (ASCII characters MZ)
+			funLooksLikeExectuable = f -> {
+				final byte[] firstBytes = new byte[4];
+				try {
+					final FileInputStream input = new FileInputStream(f);
+					input.read(firstBytes);
+					input.close();
+
+					if (firstBytes[0] == 0x4d && firstBytes[1] == 0x5a) {
+						return true;
+					}
+					return false;
+				} catch (final Exception e) {
+					return false;
+				}
+			};
+		} else {
+			// just assume linux: ELF format executable used by Linux start with 7f454c46
+			funLooksLikeExectuable = f -> {
+				final byte[] firstBytes = new byte[8];
+				try {
+					final FileInputStream input = new FileInputStream(f);
+					input.read(firstBytes);
+					input.close();
+					if (firstBytes[0] == 0x7f && firstBytes[1] == 0x45 && firstBytes[1] == 0x4c
+							&& firstBytes[1] == 0x46) {
+						return true;
+					}
+					return false;
+				} catch (final Exception e) {
+					return false;
+				}
+			};
+		}
+
+		for (final String dirname : System.getenv("PATH").split(File.pathSeparator)) {
+			for (final File file : new File(dirname).listFiles(f -> f.getName().startsWith(name))) {
+				if (file.isFile() && file.canExecute() && funLooksLikeExectuable.test(file)) {
+					return file;
+				}
+			}
+		}
+		return null;
+	}
+
 	public static File writeFile(final String filename, final String content) throws IOException {
 		return writeFile(filename, content, false);
 	}
