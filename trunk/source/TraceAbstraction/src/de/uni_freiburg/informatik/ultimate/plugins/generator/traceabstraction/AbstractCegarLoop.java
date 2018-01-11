@@ -476,7 +476,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		return reportResult(Result.TIMEOUT);
 	}
 
-	private Result reportResult(final Result result) {
+	protected Result reportResult(final Result result) {
 		mCegarLoopBenchmark.setResult(result);
 		
 		if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {

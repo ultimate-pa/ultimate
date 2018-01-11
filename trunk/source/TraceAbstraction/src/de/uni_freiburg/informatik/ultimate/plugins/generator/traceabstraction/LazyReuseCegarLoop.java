@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -63,7 +64,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends ReuseCegarLoop<LETTER> {
 
 	private List<AbstractInterpolantAutomaton<LETTER>> mReuseAutomata;
-
+	private int mNonReuseIterations;
+	
 	private Boolean mIsCounterexampleAccepted = false; 
 	// Should be dereferenced only if mIsCounterexampleAccepted is true
 	private AbstractInterpolantAutomaton<LETTER> mAutomatonAcceptingCounterexample;
@@ -77,6 +79,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFiles) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, storage, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFiles);
+		mNonReuseIterations =0;
 	}
 
 	@Override
@@ -129,11 +132,13 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 					return LBool.UNSAT;
 				}
 			} catch (AutomataLibraryException e) {
+				mNonReuseIterations++;
 				mLogger.warn("Acceptance check of counterexample in automaton " + i + " failed. Proceeding with a non-reuse iteration");
 				break;
 			}
 		}
 		// None of the preexisting automata accepts the counterexample - make a non-reuse iteration
+		mNonReuseIterations++;
 		return super.isCounterexampleFeasible();
 	}
 
@@ -191,6 +196,12 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 		} else {
 			return super.refineAbstraction();
 		}
+	}
+	
+	@Override
+	protected Result reportResult(final Result result) {
+		mLogger.info("The number of non-reuse iterations is: " + mNonReuseIterations);
+		return super.reportResult(result);
 	}
 
 }
