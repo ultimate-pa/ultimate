@@ -1,3 +1,8 @@
+/*
+ * if the map equality domain works precisely, (and has no special measures to 
+ * ensure termination,) this example should not terminate.
+ * (still may have to double check..)
+ */
 procedure main() {
   var a : [int] int;
   var v : [int] int;
