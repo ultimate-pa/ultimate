@@ -335,6 +335,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	private boolean reportWeakEquivalenceDoOnlyRoweqPropagations(final NODE array1, final NODE array2,
 			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel, final boolean omitSanityChecks) {
 		assert !isFrozen();
+		assert !mManager.getSettings().isDeactivateWeakEquivalences();
 //		assert edgeLabel.assertIsSlim();
 
 		if (isInconsistent()) {
@@ -534,7 +535,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return true;
 		}
 
-		doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData, true);
+		if (!mManager.getSettings().isDeactivateWeakEquivalences()) {
+			doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData, true);
+		}
 
 		if (isInconsistent()) {
 			return true;
@@ -1111,6 +1114,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		boolean madeChanges = false;
 
+
+		if (mManager.getSettings().isDeactivateWeakEquivalences()) {
+			return;
+		}
+
 		/*
 		 * roweq
 		 *
@@ -1306,6 +1314,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			assert result.sanityCheck();
 			assert other.getWeakEquivalenceGraph().sanityCheck();
 			assert other.sanityCheck();
+		}
+
+		if (mManager.getSettings().isDeactivateWeakEquivalences()) {
+			if (!inplace) {
+				assert mManager.checkMeetResult(this, other, result);
+				result.freeze();
+			}
+			assert inplace != result.isFrozen();
+			return result;
 		}
 
 		// report all weq edges from other

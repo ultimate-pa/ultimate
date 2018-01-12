@@ -9,11 +9,16 @@ public class WeqSettings {
 
 	private final boolean REPORT_EQ_DEQ_INPLACE = true;
 
+
 	private final boolean REMOVE_ELEMENT_INPLACE = false;
 	private final boolean ADD_NODE_INPLACE = false;
 	private final boolean PROJECTTOELEMENTS_INPLACE = false;
 
+
+
 	private boolean USE_FULL_WEQCC_DURING_PROJECTAWAY = true;
+
+	private boolean DEACTIVATE_WEAK_EQUIVALENCES = false;
 
 	// setting would not work -- weq-prime architecture would need rework
 // 	private final boolean USE_FULL_WEQCC_DURING_CLOSURE = true;
@@ -131,7 +136,15 @@ public class WeqSettings {
 		return PRECISE_WEQ_LABEL_COMPARISON;
 	}
 
+	public boolean isDeactivateWeakEquivalences() {
+		return DEACTIVATE_WEAK_EQUIVALENCES;
+	}
+
 	public void setUseFullWeqccDuringProjectaway(final boolean b) {
 		USE_FULL_WEQCC_DURING_PROJECTAWAY = b;
+	}
+
+	public void setDeactivateWeakEquivalences(final boolean b) {
+		DEACTIVATE_WEAK_EQUIVALENCES = b;
 	}
 }

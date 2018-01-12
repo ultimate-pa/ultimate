@@ -307,6 +307,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> reportWeakEquivalence(final WeqCongruenceClosure<NODE> origWeqCc,
 			final NODE array1, final NODE array2, final NODE storeIndex, final boolean inplace) {
+		if (mSettings.isDeactivateWeakEquivalences()) {
+			assert origWeqCc.getWeakEquivalenceGraph().getNumberOfEdgesStatistic() == 0;
+			return origWeqCc;
+		}
 		if (inplace) {
 			origWeqCc.reportWeakEquivalence(array1, array2, storeIndex, false);
 			return origWeqCc;

@@ -103,6 +103,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private WeqSettings prepareWeqSettings(final IPreferenceProvider ups) {
 		final WeqSettings settings = new WeqSettings();
 		settings.setUseFullWeqccDuringProjectaway(ups.getBoolean(VPDomainPreferences.LABEL_USE_WEQ_IN_PROJECT));
+		settings.setDeactivateWeakEquivalences(ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES));
 		return settings;
 	}
 
