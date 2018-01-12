@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class StoreIndexExposer implements ITransformulaTransformer {
 
 	private final Map<ArrayIndex, List<IProgramNonOldVar>> mStoreIndexToFreezeIndex = new HashMap<>();
-	private final Map<Term, IProgramNonOldVar> mIndexTermToFrozenVar = new HashMap();
+	private final Map<Term, IProgramNonOldVar> mIndexTermToFrozenVar = new HashMap<>();
 	private final ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
@@ -77,11 +77,8 @@ public class StoreIndexExposer implements ITransformulaTransformer {
 				/*
 				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
 				 */
-				indexUpdates.add(
-						SmtUtils.or(mMgdScript.getScript(),
-//								mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv),
-								mMgdScript.term(this, "=", updatedFreezeIndexTv,storeIndex.get(i)))
-								);
+				indexUpdates.add(SmtUtils.or(mMgdScript.getScript(),
+								mMgdScript.term(this, "=", updatedFreezeIndexTv, storeIndex.get(i))));
 			}
 			indexUpdateFormula.add(SmtUtils.and(mMgdScript.getScript(), indexUpdates));
 		}

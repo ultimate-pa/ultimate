@@ -76,8 +76,10 @@ public class HeapSepPreAnalysis {
 
 	/**
 	 * The HeapSepPreAnalysisVisitor computes and provides the following
-	 * information: - which arrays (base arrays, not store terms) are equated in the
-	 * program - for each array at which locations in the CFG it is accessed
+	 * information:
+	 *  <li> which arrays (base arrays, not store terms) are equated in the
+	 * program
+	 *  <li> for each array at which locations in the CFG it is accessed
 	 *
 	 * @param logger
 	 * @param equalityProvider
