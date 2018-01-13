@@ -26,10 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
+import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
@@ -41,6 +43,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 
 	EqualityAnalysisResult getAnalysisResult(LOC location, Set<Doubleton<Term>> doubletons);
+
+	/**
+	 * Announce to the analysis that all the given constants are pairwise distinct (like literals are).
+	 *
+	 * @param collection constants to announce as literals.
+	 */
+	void announceAdditionalLiterals(Collection<IProgramConst> collection);
 
 	void preprocess(CFG cfg);
 

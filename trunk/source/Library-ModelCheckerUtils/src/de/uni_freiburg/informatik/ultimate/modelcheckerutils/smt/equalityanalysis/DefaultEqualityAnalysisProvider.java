@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
+import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
@@ -28,7 +30,12 @@ public class DefaultEqualityAnalysisProvider<LOC, CFG> implements IEqualityAnaly
 	 */
 	@Override
 	public IEqualityProvidingState getEqualityProvidingStateForLocationSet(
-			Set<IcfgLocation> arrayGroupAccessLocations) {
+			final Set<IcfgLocation> arrayGroupAccessLocations) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void announceAdditionalLiterals(final Collection<IProgramConst> collection) {
+		throw new UnsupportedOperationException("do we need to implement this?");
 	}
 }

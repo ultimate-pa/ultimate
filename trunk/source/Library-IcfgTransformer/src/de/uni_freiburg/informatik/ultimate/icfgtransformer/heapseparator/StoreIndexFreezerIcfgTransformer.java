@@ -13,8 +13,6 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -31,43 +29,66 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
+/**
+ * Applies the "freeze-variables transformation"
+ * Performs the following steps:
+ *  <li> for each index term that is used in an array update, this introduces a fresh global ProgramVariable, called
+ *   the freeze variable, adds a conjunct to the transformula, that nondeterministically assigns the freeze variable the
+ *   index term or not.
+ *  <li> adds initialization code for all newly introduced freeze variables to the beginning(s) of the program. The
+ *   initialization code ensures that initially, a freeze variable is distinct from all other expressions in the program
+ *   .. furthermore the valid-array at each freeze variable is set to "1" (this is somewhat hacky, as it is the only
+ *   place where the Hoenicke-Lindenmann memory model comes into play..)
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <INLOC>
+ * @param <OUTLOC>
+ */
 public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
-//	private final Map<ArrayIndex, List<IProgramNonOldVar>> mStoreIndexToFreezeIndex = new HashMap<>();
-
-
 	private final NestedMap2<Term, TfInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
 			new NestedMap2<>();
-	private final DefaultIcfgSymbolTable mNewSymbolTable;
+//	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
-	public StoreIndexFreezerIcfgTransformer(final ILogger logger, final CfgSmtToolkit csToolkit, final String resultName,
+	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
+//			final CfgSmtToolkit csToolkit,
+			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker) {
-		super(logger, csToolkit, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
-		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
+		super(logger, //csToolkit,
+				resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+//		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 	}
 
 	@Override
 	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
-
-		if (oldTransition instanceof IcfgInternalTransition) {
-			final UnmodifiableTransFormula newTransformula = transform(oldTransition.getTransformula(),
+		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
 				new TfInfo(oldTransition));
 
+		if (oldTransition instanceof IcfgInternalTransition) {
 			// TODO: is this the right payload?
 			return mEdgeFactory.createInternalTransition(newSource, newTarget, oldTransition.getPayload(),
 					newTransformula);
 		} else if (oldTransition instanceof IcfgCallTransition) {
-			throw new AssertionError("TODO");
+			final IcfgCallTransition newCallTransition = mEdgeFactory.createCallTransition(newSource, newTarget,
+					oldTransition.getPayload(), newTransformula);
+			mOldCallToNewCall.put((IcfgCallTransition) oldTransition, newCallTransition);
+			return newCallTransition;
 		} else if (oldTransition instanceof IcfgReturnTransition) {
-			throw new AssertionError("TODO");
+			final IcfgCallTransition correspondingNewCall =
+					mOldCallToNewCall.get(((IcfgReturnTransition) oldTransition).getCorrespondingCall());
+			assert correspondingNewCall != null;
+			return mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
+					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
 		} else {
 			throw new IllegalArgumentException("unknown transition type");
 		}
 	}
 //
-	public final UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf, final TfInfo tfInfo) {
+	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
+			final TfInfo tfInfo) {
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
 
@@ -75,10 +96,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		mMgdScript.lock(this);
 
-//		final Set<ArrayIndex> storeIndices = MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula()).stream()
-//			.map(mds -> mds.getIndex()).collect(Collectors.toSet());
 		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
-
 
 		// collect all terms that are used as an index in an array update
 		final Set<Term> indexTerms = new HashSet<>();
@@ -86,11 +104,9 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			indexTerms.addAll(au.getIndex());
 		}
 
-
 		final List<Term> indexUpdates = new ArrayList<>();
 
 		for (final Term indexTerm : indexTerms) {
-		//			final List<IProgramNonOldVar> freezeIndex = getFreezeVariables(storeIndex, tfInfo);
 			final IProgramNonOldVar freezeVar = getFreezeVariable(indexTerm, tfInfo);
 
 			final TermVariable inputFreezeIndexTv;
@@ -115,42 +131,6 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 					mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm)));
 		}
 
-
-
-//		for (final ArrayIndex storeIndex : storeIndices) {
-//		for (final ArrayUpdate au : aus) {
-//			final ArrayIndex storeIndex = au.getIndex();
-//
-//			final List<Term> indexUpdates = new ArrayList<>();
-//		for (final Term indexTerm : indexTerms) {
-//
-////			final List<IProgramNonOldVar> freezeIndex = getFreezeVariables(storeIndex, tfInfo);
-//			final IProgramNonOldVar freezeVar = getFreezeVariable(indexTerm, tfInfo);
-//
-//			for (int i = 0; i < freezeIndex.size(); i++) {
-//				final TermVariable inputFreezeIndexTv;
-//				final TermVariable updatedFreezeIndexTv;
-//				if (!extraInVars.containsKey(freezeIndex.get(i))) {
-//					assert !extraOutVars.containsKey(freezeIndex.get(i));
-//					inputFreezeIndexTv = mMgdScript.constructFreshCopy(freezeIndex.get(i).getTermVariable());
-//					updatedFreezeIndexTv = mMgdScript.constructFreshCopy(freezeIndex.get(i).getTermVariable());
-//					extraInVars.put(freezeIndex.get(i), inputFreezeIndexTv);
-//					extraOutVars.put(freezeIndex.get(i), updatedFreezeIndexTv);
-//				} else {
-//					assert extraOutVars.containsKey(freezeIndex.get(i));
-//					inputFreezeIndexTv = extraInVars.get(freezeIndex.get(i));
-//					updatedFreezeIndexTv = extraOutVars.get(freezeIndex.get(i));
-//				}
-//				assert extraInVars.containsKey(freezeIndex.get(i)) && extraOutVars.containsKey(freezeIndex.get(i));
-//
-//				/*
-//				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
-//				 */
-//				indexUpdates.add(SmtUtils.or(mMgdScript.getScript(),
-//								mMgdScript.term(this, "=", updatedFreezeIndexTv, storeIndex.get(i))));
-//			}
-//			indexUpdateFormula.add(SmtUtils.and(mMgdScript.getScript(), indexUpdates));
-//		}
 		mMgdScript.unlock(this);
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
@@ -171,8 +151,6 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		tfBuilder.setInfeasibility(tf.isInfeasible());
 
-		final UnmodifiableTransFormula newTf = tfBuilder.finishConstruction(mMgdScript);
-
 		return tfBuilder.finishConstruction(mMgdScript);
 	}
 
@@ -182,37 +160,19 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			result = ProgramVarUtils.constructGlobalProgramVarPair(
 						indexTerm.toString().replace("|", "") + "_frz", indexTerm.getSort(),
 						mMgdScript, this);
-			mNewSymbolTable.add(result);
+			/*
+			 *  we don't need to do anything for the symbol table here it seems, because the TransformedIcfgBuilder
+			 *  recognizes new variables in the Transformula
+			 */
+//			mNewSymbolTable.add(result);
 			mWriteIndexToTfInfoToFreezeVar.put(indexTerm, tfInfo, result);
 		}
 		return result;
 	}
 
-//	private final List<IProgramNonOldVar> getFreezeVariables(final ArrayIndex storeIndex, final TfInfo tfInfo) {
-//		List<IProgramNonOldVar> result = mStoreIndexToFreezeIndex.get(storeIndex);
-//		if (result == null) {
-//			result = new ArrayList<>();
-//			for (final Term indEl : storeIndex) {
-//
-//				final IProgramNonOldVar alreadyCreatedPv = mIndexTermToFrozenVar.get(indEl);
-//
-//				final IProgramNonOldVar freezePv;
-//				if (alreadyCreatedPv == null) {
-//					freezePv = ProgramVarUtils.constructGlobalProgramVarPair(
-//						indEl.toString().replace("|", "") + "_frz", indEl.getSort(),
-//						mMgdScript, this);
-//					mIndexTermToFrozenVar.put(indEl, freezePv);
-//				} else {
-//					freezePv = alreadyCreatedPv;
-//				}
-//				result.add(freezePv);
-//				mNewSymbolTable.add(freezePv);
-//			}
-//			mStoreIndexToFreezeIndex.put(storeIndex, result);
-//		}
-//		return result;
-//	}
-
+	public NestedMap2<Term, TfInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
+		return mWriteIndexToTfInfoToFreezeVar;
+	}
 }
 
 class TfInfo {

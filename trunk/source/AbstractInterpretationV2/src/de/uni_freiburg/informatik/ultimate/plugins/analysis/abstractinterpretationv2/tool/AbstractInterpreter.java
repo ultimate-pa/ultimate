@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
@@ -195,15 +196,16 @@ public final class AbstractInterpreter {
 	 * settings but hardcoded
 	 *
 	 * @param logger
+	 * @param additionalLiterals
 	 *
 	 */
 	public static IAbstractInterpretationResult<EqState, IcfgEdge, IcfgLocation> runFutureEqualityDomain(
 			final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
-			final boolean isSilent, final ILogger logger) {
+			final boolean isSilent, final ILogger logger, final Set<IProgramConst> additionalLiterals) {
 		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,
-				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(logger, root, services))
+				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(logger, root, services, additionalLiterals))
 						.setTimer(timer),
 				p -> new FixpointEngine<>(p));
 	}

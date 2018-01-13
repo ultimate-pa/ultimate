@@ -72,6 +72,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * The {@link TransformedIcfgBuilder} constructs and adds locations and transitions to a {@link BasicIcfg} based on some
  * input {@link IIcfg}.
  *
+ * (Alexander Nutz:) Note that the symbol table is updated automatically according to new program variables or constants
+ *  that occur in the newly created TransFormulas.
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <INLOC>
