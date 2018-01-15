@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends ReuseCegarLoop<LETTER> {
 
 	private List<AbstractInterpolantAutomaton<LETTER>> mReuseAutomata;
-	private int mNonReuseIterations;
 
 	private Boolean mIsCounterexampleAccepted = false;
 	// Should be dereferenced only if mIsCounterexampleAccepted is true
@@ -77,7 +76,6 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFiles) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, storage, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFiles);
-		mNonReuseIterations = 0;
 	}
 
 	@Override
@@ -129,17 +127,17 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 					assert (removed.equals(ai));
 					mLogger.info("Cex is accepted by automaton number " + i + " in the current list.");
 					mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
+
 					return LBool.UNSAT;
 				}
 			} catch (final AutomataLibraryException e) {
-				mNonReuseIterations++;
 				mLogger.warn("Acceptance check of counterexample in automaton " + i
 						+ " failed. Proceeding with a non-reuse iteration");
 				break;
 			}
 		}
+		mCegarLoopBenchmark.announceNextNonreuseIteration();
 		// None of the preexisting automata accepts the counterexample - make a non-reuse iteration
-		mNonReuseIterations++;
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
 		return super.isCounterexampleFeasible();
 	}
@@ -199,11 +197,4 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 		}
 		return super.refineAbstraction();
 	}
-
-	@Override
-	protected Result reportResult(final Result result) {
-		mLogger.info("The number of non-reuse iterations is: " + mNonReuseIterations);
-		return super.reportResult(result);
-	}
-
 }

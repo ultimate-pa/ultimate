@@ -50,6 +50,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
 	private int mIterations = 0;
 	private int mAbsIntIterations = 0;
+	private int mNonReuseIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
 	private int mAbsIntStrong = 0;
@@ -101,6 +102,11 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public int announceNextAbsIntIteration() {
 		mAbsIntIterations++;
 		return mAbsIntIterations;
+	}
+
+	public int announceNextNonreuseIteration() {
+		mNonReuseIterations++;
+		return mNonReuseIterations;
 	}
 
 	public void announceStrongAbsInt() {
@@ -198,6 +204,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mTraceHistogramMaximum;
 		case AbstIntIterations:
 			return mAbsIntIterations;
+		case NonReuseIterations:
+			return mNonReuseIterations;
 		case AbstIntStrong:
 			return mAbsIntStrong;
 		case BiggestAbstraction:

@@ -86,6 +86,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	AbstIntIterations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
+	NonReuseIterations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+
 	AbstIntStrong(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 
 	AbsIntWeakeningRatio(Double.class, AStatisticsType.sDoubleAddition, AStatisticsType.sDataBeforeKey),
