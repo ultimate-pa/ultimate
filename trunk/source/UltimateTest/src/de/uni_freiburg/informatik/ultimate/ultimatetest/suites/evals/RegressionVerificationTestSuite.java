@@ -70,9 +70,9 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	private final File TOOLCHAIN = UltimateRunDefinitionGenerator.getFileFromToolchainDir("AutomizerC.xml");
 
 	private final File SETTINGS_FIRST_REV = UltimateRunDefinitionGenerator
-			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_dumpats.epf");
+			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_NoReuse_DumpAts.epf");
 	private final File SETTINGS_REST_REV = UltimateRunDefinitionGenerator
-			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default.epf");
+			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_EagerReuse.epf");
 	private final File ATS_DUMP_DIR = new File("./automata-dump");
 	private final boolean ONLY_FIRST = true;
 	private final boolean ONLY_REST = false;
@@ -99,32 +99,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 		for (final Entry<String, TreeSet<File>> entry : program2ListOfRevisions.entrySet()) {
 			final Iterator<File> revIter = entry.getValue().iterator();
-
-			// do first revision without input automaton
-			final File atsFileForLaterRevisions;
-			if (revIter.hasNext()) {
-				final File firstRevFile = revIter.next();
-				final String firstRevPrefix = firstRevFile.getName().substring(0, 3);
-				final File atsFile = new File(ATS_DUMP_DIR, firstRevPrefix + "AutomataForReuse.ats");
-				atsFileForLaterRevisions = getTargetFile(firstRevFile);
-				if (!ONLY_REST) {
-					final AfterTest funAfterTest = () -> renameAndMove(firstRevFile, atsFile);
-					urds.add(new UltimateRunDefinition(firstRevFile, SETTINGS_FIRST_REV, TOOLCHAIN, getTimeout(),
-							funAfterTest));
-				}
-			} else {
-				continue;
-			}
-
-			if (ONLY_FIRST) {
-				continue;
-			}
-
-			while (revIter.hasNext()) {
-				final File currentRev = revIter.next();
-				urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions },
-						SETTINGS_REST_REV, TOOLCHAIN, getTimeout()));
-			}
+			runAllWithFirstRevAts(revIter, urds);
 		}
 
 		// call addTestCase
@@ -132,14 +107,74 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 		return super.createTestCases();
 	}
 
-	private static File getTargetFile(final File inputFile) {
+	/**
+	 * Generate test cases where we generate an .ats file from the first revision and use it for all the following
+	 * revisions.
+	 */
+	private void runAllAndGenerateFirstRevAts(final Iterator<File> revIter,
+			final Collection<UltimateRunDefinition> urds) {
+		// do first revision without input automaton
+		final File atsFileForLaterRevisions;
+		if (revIter.hasNext()) {
+			final File firstRevFile = revIter.next();
+			final String firstRevPrefix = firstRevFile.getName().substring(0, 3);
+			final File atsFile = new File(ATS_DUMP_DIR, firstRevPrefix + "AutomataForReuse.ats");
+			atsFileForLaterRevisions = getFirstRevAtsFile(firstRevFile);
+			if (!ONLY_REST) {
+				final AfterTest funAfterTest = () -> renameAndMove(firstRevFile, atsFile);
+				urds.add(new UltimateRunDefinition(firstRevFile, SETTINGS_FIRST_REV, TOOLCHAIN, getTimeout(),
+						funAfterTest));
+			}
+		} else {
+			return;
+		}
+
+		if (ONLY_FIRST) {
+			return;
+		}
+
+		while (revIter.hasNext()) {
+			final File currentRev = revIter.next();
+			urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions }, SETTINGS_REST_REV,
+					TOOLCHAIN, getTimeout()));
+		}
+	}
+
+	/**
+	 * Generate test cases where we use the .ats file from the first revision for all the revisions.
+	 */
+	private void runAllWithFirstRevAts(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds) {
+		final File atsFileForLaterRevisions;
+		if (revIter.hasNext()) {
+			final File firstRevFile = revIter.next();
+			atsFileForLaterRevisions = getFirstRevAtsFile(firstRevFile);
+			if (!ONLY_REST) {
+				urds.add(new UltimateRunDefinition(new File[] { firstRevFile, atsFileForLaterRevisions },
+						SETTINGS_REST_REV, TOOLCHAIN, getTimeout()));
+			}
+		} else {
+			return;
+		}
+
+		if (ONLY_FIRST) {
+			return;
+		}
+
+		while (revIter.hasNext()) {
+			final File currentRev = revIter.next();
+			urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions }, SETTINGS_REST_REV,
+					TOOLCHAIN, getTimeout()));
+		}
+	}
+
+	private static File getFirstRevAtsFile(final File inputFile) {
 		final Path target = Paths.get(inputFile.getParent(), inputFile.getName() + "-firstRev.ats");
 		return target.toFile();
 	}
 
 	private static void renameAndMove(final File inputFile, final File atsFile) {
 		if (atsFile.exists()) {
-			final Path target = getTargetFile(inputFile).toPath();
+			final Path target = getFirstRevAtsFile(inputFile).toPath();
 			try {
 				Files.move(atsFile.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
 			} catch (final IOException e) {
