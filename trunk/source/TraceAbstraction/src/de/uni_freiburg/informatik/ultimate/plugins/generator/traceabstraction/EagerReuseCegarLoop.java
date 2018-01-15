@@ -86,6 +86,8 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ReuseTime);
+
 		final List<AbstractInterpolantAutomaton<LETTER>> reuseAutomata = new ArrayList<>();
 		reuseAutomata.addAll(mFloydHoareAutomataFromOtherErrorLocations);
 		reuseAutomata.addAll(mFloydHoareAutomataFromFile);
@@ -166,6 +168,8 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 		if (mMinimize == MinimizeInitially.ONCE_AT_END) {
 			minimizeAbstractionIfEnabled();
 		}
+
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
 	}
 
 }

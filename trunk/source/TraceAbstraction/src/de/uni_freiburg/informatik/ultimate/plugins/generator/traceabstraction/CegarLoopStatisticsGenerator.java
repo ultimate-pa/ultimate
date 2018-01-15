@@ -159,6 +159,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case HoareAnnotationTime:
 		case BasicInterpolantAutomatonTime:
 		case AbstIntTime:
+		case ReuseTime:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
@@ -226,6 +227,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.AutomataDifference.toString(),
 				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
-				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString() };
+				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
+				CegarLoopStatisticsDefinitions.ReuseTime.toString() };
 	}
 }

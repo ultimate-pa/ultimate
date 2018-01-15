@@ -90,6 +90,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ReuseTime);
 		mIsCounterexampleAccepted = false;
 		for (int i = 0; i < mReuseAutomata.size(); i++) {
 			final AbstractInterpolantAutomaton<LETTER> ai = mReuseAutomata.get(i);
@@ -127,6 +128,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 					final AbstractInterpolantAutomaton<LETTER> removed = mReuseAutomata.remove(i);
 					assert (removed.equals(ai));
 					mLogger.info("Cex is accepted by automaton number " + i + " in the current list.");
+					mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
 					return LBool.UNSAT;
 				}
 			} catch (final AutomataLibraryException e) {
@@ -138,6 +140,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 		}
 		// None of the preexisting automata accepts the counterexample - make a non-reuse iteration
 		mNonReuseIterations++;
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
 		return super.isCounterexampleFeasible();
 	}
 
@@ -151,6 +154,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		if (mIsCounterexampleAccepted) {
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ReuseTime);
 			final AbstractInterpolantAutomaton<LETTER> ai = mAutomatonAcceptingCounterexample;
 			int internalTransitionsBeforeDifference = 0;
 			if (ENHANCE) {
@@ -161,8 +165,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 					new PowersetDeterminizer<>(ai, true, mPredicateFactoryInterpolantAutomata);
 			final boolean explointSigmaStarConcatOfIA = true;
 			IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
-			diff = new Difference<>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement,
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
 					explointSigmaStarConcatOfIA);
 			if (ENHANCE) {
@@ -190,11 +193,11 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 			final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
 					(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
 			return !stillAccepted;
 
-		} else {
-			return super.refineAbstraction();
 		}
+		return super.refineAbstraction();
 	}
 
 	@Override
