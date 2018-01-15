@@ -55,6 +55,7 @@ public class CLTLAutomizerTC extends WebToolchain {
 		rtr.add(new Tool(PrefStrings.TRACE_ABSTRACTION));
 		rtr.add(new Tool(PrefStrings.LTL2AUT));
 		rtr.add(new Tool(PrefStrings.BUCHIPROGRAMPRODUCT));
+		rtr.add(new Tool(PrefStrings.BLOCKENCODING));
 		rtr.add(new Tool(PrefStrings.BUCHIAUTOMIZER));
 
 		return rtr;
