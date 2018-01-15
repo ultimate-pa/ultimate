@@ -86,6 +86,8 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
 
+	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
@@ -391,12 +393,17 @@ public class TraceAbstractionStarter {
 		for (final Entry<String, Map<String, IcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
 			for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
 				final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
-				if (hoare == null) {
-					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
-							+ "  no Hoare annotation was computed.");
-				} else {
+				if (hoare != null && !hoare.getFormula().toString().equals("true")) {
 					mLogger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
 							+ hoare.getFormula());
+				} else if (EXTENDED_HOARE_ANNOTATION_LOGGING) {
+					if (hoare == null) {
+						mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
+								+ "  no Hoare annotation was computed.");
+					} else {
+						mLogger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
+								+ hoare.getFormula());
+					}
 				}
 			}
 		}
