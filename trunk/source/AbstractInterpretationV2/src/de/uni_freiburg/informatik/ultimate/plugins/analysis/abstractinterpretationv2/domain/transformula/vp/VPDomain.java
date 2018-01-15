@@ -79,6 +79,15 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final VPDomainBenchmark mBenchmark;
 
+	/**
+	 *
+	 * @param logger
+	 * @param services
+	 * @param csToolkit
+	 * @param additionalLiterals
+	 * 			This set of program constants will be viewed as "literals" by the analysis. Literals are constants that
+	 *          are unequal from all other constants.
+	 */
 	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final Set<IProgramConst> additionalLiterals) {
 		mLogger = logger;
@@ -91,7 +100,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript);
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, additionalLiterals);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript,
 				prepareWeqSettings(ups), mDebugMode);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,

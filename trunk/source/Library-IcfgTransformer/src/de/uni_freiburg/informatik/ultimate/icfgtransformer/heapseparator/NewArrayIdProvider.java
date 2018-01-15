@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -77,7 +78,9 @@ public class NewArrayIdProvider {
 
 	public NewArrayIdProvider(final CfgSmtToolkit csToolkit,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
-			final HeapSepPreAnalysis hspav, final HeapSeparatorBenchmark statistics) {
+			final HeapSepPreAnalysis hspav,
+			final NestedMap2<Term, TfInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar,
+			final HeapSeparatorBenchmark statistics) {
 		mManagedScript = csToolkit.getManagedScript();
 		mOldSymbolTable = csToolkit.getSymbolTable();
 		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());

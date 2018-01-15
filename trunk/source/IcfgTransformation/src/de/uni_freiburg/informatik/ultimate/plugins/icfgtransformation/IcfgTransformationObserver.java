@@ -198,8 +198,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
 		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
-				new HeapSepIcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "heap_separated_icfg",
-						equalityProvider);
+				new HeapSepIcfgTransformer<>(icfg, locFac, fac, backtranslationTracker, outlocClass,
+						"heap_separated_icfg", equalityProvider);
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
 				"HeapSeparationSummary", icfgTransformer.getHeapSeparationSummary(), Severity.INFO));

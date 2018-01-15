@@ -30,12 +30,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
@@ -51,13 +53,18 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
+	private final Set<Term> mAdditionalLiteralTerms;
 
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 	private final Map<Term, Term> mNormalizationCache = new HashMap<>();
 
-	public EqNodeAndFunctionFactory(final IUltimateServiceProvider services, final ManagedScript script) {
+
+
+	public EqNodeAndFunctionFactory(final IUltimateServiceProvider services, final ManagedScript script,
+			final Set<IProgramConst> additionalLiterals) {
 		mServices = services;
 		mMgdScript = script;
+		mAdditionalLiteralTerms = additionalLiterals.stream().map(pc -> pc.getTerm()).collect(Collectors.toSet());
 	}
 
 	public ManagedScript getScript() {
@@ -158,8 +165,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	 * Examples of literals (sometimes called constants, but we have other uses for that word) are:
 	 *  1, 2, -1, true, false, 1bv16 (bitvector constant/literal)
 	 *
-	 * The defining trait of literals for our purposes is that two different literals always have a different value,
-	 * too.
+	 * The defining trait of literals for our purposes is that two different literals always have a different value.
 	 *
 	 * @param term
 	 * @return
@@ -172,6 +178,10 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			return true;
 		}
 		if (term instanceof ConstantTerm) {
+			return true;
+		}
+
+		if (mAdditionalLiteralTerms.contains(term)) {
 			return true;
 		}
 

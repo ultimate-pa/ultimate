@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,31 +45,43 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
-			final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit) {
+			final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit, final IProgramVar validArray) {
 		super(logger, //csToolkit,
 				resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
-		computeInitializingTerm(freezeVarTofreezeVarLit);
-
-//		inputCfg.getCfgSmtToolkit().getSymbolTable().
+		computeInitializingTerm(freezeVarTofreezeVarLit, validArray);
 	}
 
-	private void computeInitializingTerm(final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit) {
-		// (we could get rid of this field it seems..)
-		mFreezeVarInVars = Collections.emptyMap();
-
+	private void computeInitializingTerm(final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit,
+			final IProgramVar validArray) {
+		mFreezeVarInVars = new HashMap<>();
 		mFreezeVarOutVars = new HashMap<>();
 
-
-		// is this locking necessary?
+		// is this locking necessary? the script is used for creating Terms only
 		mMgdScript.lock(this);
 
 		final List<Term> initializingEquations = new ArrayList<>();
 		for (final Entry<IProgramNonOldVar, IProgramConst> en : freezeVarTofreezeVarLit.entrySet()) {
+			// "frz_l_x"
+			final TermVariable frzVar = en.getKey().getTermVariable();
+			// "lit_frz_l_x"
+			final Term frzLit = en.getValue().getTerm();
+
 			// "frz_l_x = lit_frz_l_x"
-			initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), en.getKey().getTermVariable(),
-					en.getValue().getTerm()));
-			mFreezeVarOutVars.put(en.getKey(), en.getKey().getTermVariable());
+			initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), frzVar,
+					frzLit));
+			mFreezeVarOutVars.put(en.getKey(), frzVar);
+
+			// "valid[lit_frz_l_x] = 1"
+			final Term select = SmtUtils.select(mMgdScript.getScript(), validArray.getTermVariable(), frzLit);
+			final Term one = mMgdScript.getScript().term("1");
+			initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), select, one));
 		}
+
+		if (!freezeVarTofreezeVarLit.isEmpty()) {
+			mFreezeVarInVars.put(validArray, validArray.getTermVariable());
+			mFreezeVarOutVars.put(validArray, validArray.getTermVariable());
+		}
+
 		mInitializingTerm = SmtUtils.and(mMgdScript.getScript(), initializingEquations);
 
 		mMgdScript.unlock(this);

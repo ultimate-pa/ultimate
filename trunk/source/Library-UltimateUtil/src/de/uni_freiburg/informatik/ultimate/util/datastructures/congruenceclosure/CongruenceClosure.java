@@ -701,7 +701,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final CongruenceClosure<ELEM> otherAligned = mManager.addAllElements(other, this.getAllElements(), null, false);
 
 		final UnionFind<ELEM> newPartition = thisAligned.mElementTVER.joinPartitions(otherAligned.mElementTVER);
-		final HashRelation<ELEM, ELEM> newDisequalities = xJoinDisequalities(thisAligned, otherAligned, newPartition,
+		final HashRelation<ELEM, ELEM> newDisequalities = intersectOrUnionDisequalities(thisAligned, otherAligned, newPartition,
 				true);
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = new ThreeValuedEquivalenceRelation<>(newPartition,
 				newDisequalities);
@@ -716,13 +716,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param tver1
 	 * @param tver2
 	 * @param newElemPartition
-	 * @param conjoin
+	 * @param intersect
 	 *            conjoin or disjoin?
 	 * @return
 	 */
-	private static <E extends ICongruenceClosureElement<E>> HashRelation<E, E> xJoinDisequalities(
+	private static <E extends ICongruenceClosureElement<E>> HashRelation<E, E> intersectOrUnionDisequalities(
 			final CongruenceClosure<E> tver1, final CongruenceClosure<E> tver2, final UnionFind<E> newElemPartition,
-			final boolean conjoin) {
+			final boolean intersect) {
 		final HashRelation<E, E> result = new HashRelation<>();
 		for (final Entry<E, E> pair : CrossProducts
 				.binarySelectiveCrossProduct(newElemPartition.getAllRepresentatives(), false,
@@ -731,7 +731,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					+ "implicit, the selective cross product should have filtered these cases";
 
 			final boolean addDisequality;
-			if (conjoin) {
+			if (intersect) {
 				addDisequality = tver1.getEqualityStatus(pair.getKey(), pair.getValue()) == EqualityStatus.NOT_EQUAL
 						&& tver2.getEqualityStatus(pair.getKey(), pair.getValue()) == EqualityStatus.NOT_EQUAL;
 			} else {

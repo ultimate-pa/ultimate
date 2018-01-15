@@ -521,8 +521,9 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		 * compute the partitioning from the above results, in particular compute which array will translate to which
 		 *  new array for which accessing expression
 		 */
-		mNewArrayIdProvider =
-				new NewArrayIdProvider(mCsToolkit, mEqualityProvider, heapSepPreanalysis, mStatistics);
+
+//		mNewArrayIdProvider =
+//				new NewArrayIdProvider(mCsToolkit, mEqualityProvider, heapSepPreanalysis, mStatistics);
 		mNewSymbolTable = mNewArrayIdProvider.getNewSymbolTable();
 
 		mLogger.info("IcfgTransformer_HeapSeparator: Computed the following array partitioning from the given"

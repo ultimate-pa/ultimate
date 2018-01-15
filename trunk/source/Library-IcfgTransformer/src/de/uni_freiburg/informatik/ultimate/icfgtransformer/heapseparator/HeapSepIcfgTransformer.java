@@ -8,21 +8,26 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
@@ -35,6 +40,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	private ILogger mLogger;
 
 	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
+
+	private final HeapSeparatorBenchmark mStatistics;
 
 	/**
 	 * Default constructor.
@@ -49,15 +56,20 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 *            The class object of the type of locations of the output {@link IIcfg}.
 	 * @param newIcfgIdentifier
 	 *            The identifier of the new {@link IIcfg}
+	 * @param statistics
 	 * @param transformer
 	 *            The transformer that should be applied to each transformula of each transition of the input
 	 *            {@link IIcfg} to create a new {@link IIcfg}.
 	 */
 	public HeapSepIcfgTransformer(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
-			final String newIcfgIdentifier, final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
+			final ReplacementVarFactory replacementVarFactory, final IBacktranslationTracker backtranslationTracker,
+			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
+			final HeapSeparatorBenchmark statistics) {
 		mEqualityProvider = equalityProvider;
-		computeResult(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier);
+		mStatistics = statistics;
+		computeResult(originalIcfg, funLocFac, replacementVarFactory, backtranslationTracker, outLocationClass,
+				newIcfgIdentifier);
 	}
 
 	/**
@@ -75,21 +87,26 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 *
 	 * @param originalIcfg
 	 * @param funLocFac
+	 * @param replacementVarFactory
 	 * @param backtranslationTracker
 	 * @param outLocationClass
 	 * @param newIcfgIdentifier
 	 * @return
 	 */
 	private void computeResult(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
-			final String newIcfgIdentifier) {
+			final ReplacementVarFactory replacementVarFactory, final IBacktranslationTracker backtranslationTracker,
+			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier) {
 
 
-		final CfgSmtToolkit oldCsToolkit = originalIcfg.getCfgSmtToolkit();
-		final IUltimateServiceProvider services;
+//		final CfgSmtToolkit oldCsToolkit = originalIcfg.getCfgSmtToolkit();
+//		final IUltimateServiceProvider services;
 		// TOOD
 		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac = null;
 
+		// TODO : where do we get this variable from?
+		final IProgramVar validArray = null;
+
+		final NestedMap2<Term, TfInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar;
 
 		/*
 		 * 1. Execute the preprocessing
@@ -103,6 +120,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					new StoreIndexFreezerIcfgTransformer<>(mLogger, "icfg_with_uninitialized_freeze_vars",
 							outLocationClass, originalIcfg, funLocFac, backtranslationTracker);
 			final IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
+			writeIndexTermToTfInfoToFreezeVar = sifit.getWriteIndexToTfInfoToFreezeVar();
 
 			/*
 			 * Create a fresh literal/constant for each freeze variable that was introduced, we call them freeze
@@ -110,22 +128,23 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 * Announce them to the equality analysis as special literals, which are, by axiom, pairwise disjoint.
 			 */
 			final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit = new HashMap<>();
-			for (final IProgramNonOldVar freezeVar :
-				sifit.getWriteIndexToTfInfoToFreezeVar().values().collect(Collectors.toList())) {
-				// TODO
-//				oldCsToolkit.ge
-			}
 
+			for (final IProgramNonOldVar freezeVar : writeIndexTermToTfInfoToFreezeVar.values()
+					.collect(Collectors.toList())) {
+				// FIXME: how to construct a fresh IProgramConst???
+				freezeVarTofreezeVarLit.put(freezeVar,
+						(IProgramConst) replacementVarFactory.getOrConstuctReplacementVar(null, false));
+			}
 			mEqualityProvider.announceAdditionalLiterals(freezeVarTofreezeVarLit.values());
 
 			/*
-			 * Add initialization code for each of the newly introduce freeze variables.
+			 * Add initialization code for each of the newly introduced freeze variables.
 			 * Each freeze variable is initialized to its corresponding freeze literal.
 			 * Furthermore the valid-array (of the memory model) is assumed to be 1 at each freeze literal.
 			 */
 			final FreezeVarInitializer<OUTLOC, OUTLOC> fvi = new FreezeVarInitializer<>(mLogger,
 					"icfg_with_initialized_freeze_vars", outLocationClass, icfgWFreezeVarsUninitialized, outToOutLocFac,
-					backtranslationTracker, freezeVarTofreezeVarLit);
+					backtranslationTracker, freezeVarTofreezeVarLit, validArray);
 			final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = fvi.getResult();
 
 			preprocessedIcfg = icfgWFreezeVarsInitialized;
@@ -133,6 +152,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			assert mPreprocessing == Preprocessing.MEMLOC_ARRAY;
 			// TODO implement..
 			preprocessedIcfg = null;
+
+			writeIndexTermToTfInfoToFreezeVar = null;
 		}
 
 
@@ -145,13 +166,17 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 * 3. compute an array partitioning
 		 */
 
+		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger,
+				originalIcfg.getCfgSmtToolkit().getManagedScript());
+		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
 
-//		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger,
-//				csToolkit.getManagedScript());
-//		new IcfgEdgeIterator(icfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
-
-
-//		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(csToolkit, equalityProvider, hspav, statistics);
+		final NewArrayIdProvider newArrayIdProvider;
+		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
+			newArrayIdProvider = new NewArrayIdProvider(originalIcfg.getCfgSmtToolkit(),
+					mEqualityProvider, heapSepPreanalysis, writeIndexTermToTfInfoToFreezeVar, mStatistics);
+		} else {
+			newArrayIdProvider = null;
+		}
 
 		/*
 		 * 4. Execute the transformer that splits up the arrays according to the result from the equality analysis.
@@ -162,12 +187,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 //				equalityProvider);
 //
 //		hstftf.preprocessIcfg(originalIcfg);
-//		final BasicIcfg<OUTLOC> resultIcfg =
-//				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-//		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-//				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
-//		processLocations(originalIcfg.getInitialNodes(), lst);
-//		lst.finish();
+		final BasicIcfg<OUTLOC> resultIcfg =
+				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+		final ITransformulaTransformer transformer = null;
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		processLocations(originalIcfg.getInitialNodes(), lst);
+		lst.finish();
+		mResultIcfg = resultIcfg;
 //		return resultIcfg;
 //		final BasicIcfg<OUTLOC> resultIcfg =
 //				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);

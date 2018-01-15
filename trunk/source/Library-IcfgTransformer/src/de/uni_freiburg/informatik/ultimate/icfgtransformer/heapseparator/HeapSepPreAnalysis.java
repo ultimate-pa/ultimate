@@ -56,10 +56,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Symmetri
 /**
  * Does a preanalysis on the program before the actual heap separation is done
  * (using the abstract interpretation result from the equality domain).
- * Computes: - which arrays are equated, anywhere in the program (occur left and
- * right each of an equality in a TransFormula) - for each array in the program
- * the locations where it is accessed (question: does this mean that large block
- * encoding is detrimental to heapseparation?)
+ * Computes:
+ *  <li> which arrays are equated, anywhere in the program (occur left and right each of an equality in a TransFormula)
+ *  <li> for each array in the program the locations where it is accessed (this functionality is deprecated as of
+ *   Jan '18)
  *
  * @author Alexander Nutz
  *
