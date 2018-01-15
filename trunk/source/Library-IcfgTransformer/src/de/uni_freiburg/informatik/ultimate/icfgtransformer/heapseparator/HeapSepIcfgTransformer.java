@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -64,10 +63,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	public HeapSepIcfgTransformer(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final ReplacementVarFactory replacementVarFactory, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
-			final HeapSeparatorBenchmark statistics) {
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 		mEqualityProvider = equalityProvider;
-		mStatistics = statistics;
+		mStatistics = new HeapSeparatorBenchmark();
 		computeResult(originalIcfg, funLocFac, replacementVarFactory, backtranslationTracker, outLocationClass,
 				newIcfgIdentifier);
 	}
@@ -240,8 +238,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		return null;
 	}
 
-	public ICsvProviderProvider<Number> getStatistics() {
-		// TODO Auto-generated method stub
-		return null;
+	public HeapSeparatorBenchmark getStatistics() {
+		return mStatistics;
 	}
 }
