@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -600,13 +599,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = diff.getResult();
 
 			dumpAutomatonIfEnabled(subtrahendBeforeEnhancement, "Enhanced", automatonType);
-			
-			if (mIteration==1) {
+
+			if (mIteration == 1) {
 				dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, false);
 			} else {
 				dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, true);
 			}
-			
+
 		} finally {
 			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
@@ -645,20 +644,21 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			super.writeAutomatonToFile(subtrahend, filename);
 		}
 	}
-	
-	private void dumpOrAppendAutomatonForReuseIfEnabled(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, boolean append) {
+
+	private void dumpOrAppendAutomatonForReuseIfEnabled(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, final boolean append) {
 		if (mPref.dumpAutomata()) {
-			String[] splitRes = mTaskIdentifier.toString().split("\\.", 2);
+			final String[] splitRes = mTaskIdentifier.toString().split("\\.", 2);
 			String programName = "";
-			if (splitRes.length==2) {
-				programName=splitRes[0];
+			if (splitRes.length == 2) {
+				programName = splitRes[0];
 			}
-			String filename = programName+"AutomataForReuse";
-			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa"+mIteration ,
-					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "",append, automaton);
+			final String filename = programName + "AutomataForReuse";
+			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa" + mIteration,
+					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", append, automaton);
 		}
 	}
-	
+
 	private void checkEnhancement(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> inputInterpolantAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton)
@@ -741,14 +741,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private DeterministicInterpolantAutomaton<LETTER>
 			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
 					final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc, 
+					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 					final InterpolantAutomatonEnhancement enhanceMode) {
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 		return new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-				predicateUnifier, conservativeSuccessorCandidateSelection,
-				cannibalize);
+				predicateUnifier, conservativeSuccessorCandidateSelection, cannibalize);
 	}
 
 	protected void minimizeAbstractionIfEnabled()

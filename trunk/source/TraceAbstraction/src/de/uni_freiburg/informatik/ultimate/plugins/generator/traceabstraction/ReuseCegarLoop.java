@@ -37,13 +37,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -62,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -72,20 +66,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 
 /**
- * Subclass of {@link BasicCegarLoop} in which we initially subtract from the
- * abstraction a set of given Floyd-Hoare automata.
- * 
+ * Subclass of {@link BasicCegarLoop} in which we initially subtract from the abstraction a set of given Floyd-Hoare
+ * automata.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
-	protected final boolean ENHANCE = true; //whether reused automata should be extended to "new" letters
+	// whether reused automata should be extended to "new" letters
+	protected static final boolean ENHANCE = true;
 
 	protected final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromOtherErrorLocations;
 	protected final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 	protected List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromFile;
-	
+
 	public ReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
@@ -104,51 +99,46 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
-		//final List<IPredicateUnifier> predicateUnifiersForAutomata = new ArrayList<>();
-		//for (int i = 0; i < mRawFloydHoareAutomataFromFile.size(); i++) {
-		//	predicateUnifiersForAutomata.add(new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-		//			mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-		//			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
-		//}
-		PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+		final PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
+				mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFile = interpretAutomata(
 				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
 				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger, mCsToolkit, pu);
-		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size() + " Floyd-Hoare automata from previous error locations.");
+		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size()
+				+ " Floyd-Hoare automata from previous error locations.");
 		mLogger.info("Reusing " + floydHoareAutomataFromFile.size() + " Floyd-Hoare automata from ats files.");
-		
-		for (NestedWordAutomaton<LETTER, IPredicate> automaton : floydHoareAutomataFromFile) {
-			//Add capability for on-demand extension to automata from file.
-			IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit); //TODO super is needed??
-			mFloydHoareAutomataFromFile.add(constructInterpolantAutomatonForOnDemandEnhancement(
-					automaton, pu, htc, InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION));
+
+		for (final NestedWordAutomaton<LETTER, IPredicate> automaton : floydHoareAutomataFromFile) {
+			// Add capability for on-demand extension to automata from file.
+			final IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit);
+			// TODO super is needed??
+			mFloydHoareAutomataFromFile.add(constructInterpolantAutomatonForOnDemandEnhancement(automaton, pu, htc,
+					InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION));
 		}
 	}
-	
-	private static final <LETTER extends IIcfgTransition<?>> List<NestedWordAutomaton<LETTER, IPredicate>> interpretAutomata(
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-			final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final IUltimateServiceProvider services, final PredicateFactory predicateFactory, final ILogger logger,
-			final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier) {
-	
-		final Boolean debugOn = true;
-		final List<NestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<NestedWordAutomaton<LETTER, IPredicate>>();
+
+	private static final <LETTER extends IIcfgTransition<?>> List<NestedWordAutomaton<LETTER, IPredicate>>
+			interpretAutomata(final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+					final INestedWordAutomaton<LETTER, IPredicate> abstraction,
+					final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
+					final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
+					final ILogger logger, final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier) {
+
+		final boolean debugOn = true;
+		final List<NestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<>();
 
 		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : rawFloydHoareAutomataFromFile) {
-			
+
 			// Create map from strings to all equivalent "new" letters (abstraction letters)
-			final HashMap<String, Set<LETTER>> mapStringToLetter = new HashMap<String, Set<LETTER>>();
+			final HashMap<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
 			final VpAlphabet<LETTER> abstractionAlphabet = abstraction.getVpAlphabet();
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getInternalAlphabet());
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getReturnAlphabet());
-			//Print debug information for letters
+			// Print debug information for letters
 			if (debugOn) {
-				countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(),
-						mapStringToLetter, logger);
+				countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter, logger);
 			}
 			// Create empty automaton with same alphabet
 			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
@@ -160,8 +150,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			int reusedStates = 0;
 			int removedStates = 0;
 			for (final String stringState : statesOfRawAutomaton) {
-				AtomicBoolean parsingResult = new AtomicBoolean(false);
-				final IPredicate predicateState = getPredicateFromString(predicateFactory, stringState, csToolkit, 
+				final AtomicBoolean parsingResult = new AtomicBoolean(false);
+				final IPredicate predicateState = getPredicateFromString(predicateFactory, stringState, csToolkit,
 						services, parsingResult, logger, predicateUnifier);
 				if (parsingResult.get()) {
 					reusedStates++;
@@ -174,12 +164,12 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 				final boolean isFinal = rawAutomatonFromFile.isFinal(stringState);
 				resAutomaton.addState(isInitial, isFinal, predicateState);
 			}
-			int totalStates = removedStates + reusedStates;
-			assert(totalStates==resAutomaton.size());
+			final int totalStates = removedStates + reusedStates;
+			assert (totalStates == resAutomaton.size());
 			logger.info(
 					"Reusing " + reusedStates + "/" + totalStates + " states when constructing automaton from file.");
 			// Add transitions
-			addTransitionsFromRawAutomaton(resAutomaton, rawAutomatonFromFile, mapStringToLetter, mapStringToState, 
+			addTransitionsFromRawAutomaton(resAutomaton, rawAutomatonFromFile, mapStringToLetter, mapStringToState,
 					mapStateToString, debugOn, logger);
 			// Add new automaton to list
 			res.add(resAutomaton);
@@ -189,8 +179,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	}
 
 	private static final IPredicate getPredicateFromString(final PredicateFactory predicateFactory, final String str,
-			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services, AtomicBoolean parsingSuccesful,
-			ILogger logger, final PredicateUnifier pu) {
+			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+			final AtomicBoolean parsingSuccesful, final ILogger logger, final PredicateUnifier pu) {
 		final PredicateParsingWrapperScript ppws = new PredicateParsingWrapperScript(csToolkit);
 		IPredicate res = null;
 		try {
@@ -203,89 +193,94 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		return res;
 	}
 
-	private static final <LETTER> void addLettersToStringMap(HashMap<String, Set<LETTER>> map,
+	private static final <LETTER> void addLettersToStringMap(final HashMap<String, Set<LETTER>> map,
 			final Set<LETTER> letters) {
-		for (LETTER letter : letters) {
+		for (final LETTER letter : letters) {
 			if (!map.containsKey(letter.toString())) {
-				Set<LETTER> equivalentLetters = new HashSet<LETTER>();
+				final Set<LETTER> equivalentLetters = new HashSet<>();
 				equivalentLetters.add(letter);
 				map.put(letter.toString(), equivalentLetters);
 			} else {
-				Set<LETTER> equivalentLetters = map.get(letter.toString());
+				final Set<LETTER> equivalentLetters = map.get(letter.toString());
 				equivalentLetters.add(letter);
-				map.put(letter.toString(), equivalentLetters); // needed? Will through exception?
+				map.put(letter.toString(), equivalentLetters);
+				// needed? Will through exception?
 			}
 		}
 	}
 
-	/*
-	 * Counts the number of letters of the original alphabet (of type String) that were matched to objects of type 
+	/**
+	 * Counts the number of letters of the original alphabet (of type String) that were matched to objects of type
 	 * LETTER in the new alphabet (reused letters), and those that were not matched to any object (removed letters).
-	 * These two numbers are printed to the provided log.
-	 * This function should only be used for debugging purposes.
+	 * These two numbers are printed to the provided log. This function should only be used for debugging purposes.
 	 */
 	private static final <LETTER> void countReusedAndRemovedLetters(final VpAlphabet<String> orgAlphabet,
 			final HashMap<String, Set<LETTER>> map, final ILogger logger) {
 		int removedLetters = 0;
 		int reusedLetters = 0;
-		Set<String> letters = new HashSet<String>();
+		final Set<String> letters = new HashSet<>();
 		letters.addAll(orgAlphabet.getInternalAlphabet());
 		letters.addAll(orgAlphabet.getReturnAlphabet());
 		letters.addAll(orgAlphabet.getCallAlphabet());
-		for (String strLetter : letters) {
+		for (final String strLetter : letters) {
 			if (!map.containsKey(strLetter)) {
 				removedLetters++;
 			} else {
 				reusedLetters++;
 			}
 		}
-		int totalLetters = removedLetters + reusedLetters;
+		final int totalLetters = removedLetters + reusedLetters;
 		logger.info(
 				"Reusing " + reusedLetters + "/" + totalLetters + " letters when constructing automaton from file.");
 	}
 
-	private static final <LETTER> void addTransitionsFromRawAutomaton(NestedWordAutomaton<LETTER, IPredicate> resAutomaton,
-			final NestedWordAutomaton<String, String> rawAutomatonFromFile, 
-			final HashMap<String, Set<LETTER>> mapStringToLetter,
-			final HashMap<String, IPredicate> mapStringToState, final HashMap<IPredicate, String> mapStateToString,
-			final Boolean debugOn, final ILogger logger) {
-		int[] reusedAndRemoved = {0,0}; //Index 0 is for Reused, index 1 is for removed
+	private static final <LETTER> void addTransitionsFromRawAutomaton(
+			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton,
+			final NestedWordAutomaton<String, String> rawAutomatonFromFile,
+			final HashMap<String, Set<LETTER>> mapStringToLetter, final HashMap<String, IPredicate> mapStringToState,
+			final HashMap<IPredicate, String> mapStateToString, final Boolean debugOn, final ILogger logger) {
+		final int[] reusedAndRemoved = { 0, 0 };
+		// Index 0 is for Reused, index 1 is for removed
 		for (final IPredicate predicateState : resAutomaton.getStates()) {
-			String stringState = mapStateToString.get(predicateState);
-			addTransitionsFromState(rawAutomatonFromFile.callSuccessors(stringState), mapStringToLetter, mapStringToState, resAutomaton, predicateState, reusedAndRemoved);
-			addTransitionsFromState(rawAutomatonFromFile.internalSuccessors(stringState), mapStringToLetter, mapStringToState, resAutomaton, predicateState, reusedAndRemoved);
-			addTransitionsFromState(rawAutomatonFromFile.returnSuccessors(stringState), mapStringToLetter, mapStringToState, resAutomaton, predicateState, reusedAndRemoved);
+			final String stringState = mapStateToString.get(predicateState);
+			addTransitionsFromState(rawAutomatonFromFile.callSuccessors(stringState), mapStringToLetter,
+					mapStringToState, resAutomaton, predicateState, reusedAndRemoved);
+			addTransitionsFromState(rawAutomatonFromFile.internalSuccessors(stringState), mapStringToLetter,
+					mapStringToState, resAutomaton, predicateState, reusedAndRemoved);
+			addTransitionsFromState(rawAutomatonFromFile.returnSuccessors(stringState), mapStringToLetter,
+					mapStringToState, resAutomaton, predicateState, reusedAndRemoved);
 		}
-		int totalTransitions = reusedAndRemoved[0]+reusedAndRemoved[1];
+		final int totalTransitions = reusedAndRemoved[0] + reusedAndRemoved[1];
 		if (debugOn) {
 			logger.info("Reusing " + reusedAndRemoved[0] + "/" + totalTransitions
 					+ " transitions when constructing automaton from file.");
 		}
 	}
-	
+
 	private static final <LETTER, E extends IOutgoingTransitionlet<String, String>> void addTransitionsFromState(
 			final Iterable<E> transitionsIterator, final HashMap<String, Set<LETTER>> mapStringToLetter,
-			final HashMap<String, IPredicate> mapStringToFreshState, NestedWordAutomaton<LETTER, IPredicate> resAutomaton, 
-			final IPredicate predicateState, int[] reusedAndRemovedTransitions) {
-		for (E transition : transitionsIterator) {
-			String transitionLetter = transition.getLetter();
-			String transitionSuccString = transition.getSucc();
+			final HashMap<String, IPredicate> mapStringToFreshState,
+			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton, final IPredicate predicateState,
+			final int[] reusedAndRemovedTransitions) {
+		for (final E transition : transitionsIterator) {
+			final String transitionLetter = transition.getLetter();
+			final String transitionSuccString = transition.getSucc();
 			String transitionHeirPredString = "";
-			if (transition instanceof OutgoingReturnTransition<?,?>) {
-				transitionHeirPredString = ((OutgoingReturnTransition<String,String>)transition).getHierPred();
+			if (transition instanceof OutgoingReturnTransition<?, ?>) {
+				transitionHeirPredString = ((OutgoingReturnTransition<String, String>) transition).getHierPred();
 			}
 			if (mapStringToLetter.containsKey(transitionLetter)) {
-				IPredicate succState = mapStringToFreshState.get(transitionSuccString);
+				final IPredicate succState = mapStringToFreshState.get(transitionSuccString);
 				IPredicate heirPredState = null;
-				if (transition instanceof OutgoingReturnTransition<?,?>) {
+				if (transition instanceof OutgoingReturnTransition<?, ?>) {
 					heirPredState = mapStringToFreshState.get(transitionHeirPredString);
 				}
-				for (LETTER letter : mapStringToLetter.get(transitionLetter)) {
-					if (transition instanceof OutgoingReturnTransition<?,?>) {
+				for (final LETTER letter : mapStringToLetter.get(transitionLetter)) {
+					if (transition instanceof OutgoingReturnTransition<?, ?>) {
 						resAutomaton.addReturnTransition(predicateState, heirPredState, letter, succState);
-					} else if (transition instanceof OutgoingCallTransition<?,?>) {
+					} else if (transition instanceof OutgoingCallTransition<?, ?>) {
 						resAutomaton.addCallTransition(predicateState, letter, succState);
-					} else if (transition instanceof OutgoingInternalTransition<?,?>) {
+					} else if (transition instanceof OutgoingInternalTransition<?, ?>) {
 						resAutomaton.addInternalTransition(predicateState, letter, succState);
 					}
 				}
@@ -296,15 +291,16 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		}
 	}
 
-	private static IPredicate parsePredicate(final PredicateParsingWrapperScript ppws, final PredicateUnifier pu, 
+	private static IPredicate parsePredicate(final PredicateParsingWrapperScript ppws, final PredicateUnifier pu,
 			final String rawString, final ILogger logger) {
-		final String termString = removeSerialNumber(rawString,logger);
+		final String termString = removeSerialNumber(rawString, logger);
 		final Term term;
 		try {
 			term = TermParseUtils.parseTerm(ppws, termString);
 		} catch (final SMTLIBException ex) {
 			if (ex.getMessage().startsWith("Undeclared function symbol (")) {
-				throw new UnsupportedOperationException("Automaton probably uses unknown variables. We should think how we can continue in this case.");
+				throw new UnsupportedOperationException(
+						"Automaton probably uses unknown variables. We should think how we can continue in this case.");
 			}
 			throw ex;
 		}
@@ -312,17 +308,17 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	}
 
 	private static String removeSerialNumber(final String rawString, final ILogger logger) {
-		String[] res = rawString.split("#",2);
-		if (res.length == 1){
-			logger.warn("String "+rawString+" doesn't have a # symbol in it. Kepping entire string.");
+		final String[] res = rawString.split("#", 2);
+		if (res.length == 1) {
+			logger.warn("String " + rawString + " doesn't have a # symbol in it. Kepping entire string.");
 			return res[0];
-		} else if (res.length == 2) { //res[0] is the serial number, res[1] is the string
+		} else if (res.length == 2) {
+			// res[0] is the serial number, res[1] is the string
 			return res[1];
 		} else {
 			logger.warn("Unexpected result from String's split function. String parsing failed.");
 			return null;
 		}
 	}
-	
 
 }

@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 /**
- * Subclass of {@link BasicCegarLoop} in which we initially subtract from the
- * abstraction a set of given Floyd-Hoare automata.
- * 
+ * Subclass of {@link BasicCegarLoop} in which we initially subtract from the abstraction a set of given Floyd-Hoare
+ * automata.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -61,16 +61,16 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 
 	private enum MinimizeInitially {
 		NEVER, AFTER_EACH_DIFFERENCE, ONCE_AT_END
-	};
-	private final MinimizeInitially mMinimize = MinimizeInitially.AFTER_EACH_DIFFERENCE;
+	}
+
+	private static final MinimizeInitially mMinimize = MinimizeInitially.AFTER_EACH_DIFFERENCE;
 
 	/**
-	 * The following can be costly. Enable only for debugging or analyzing our
-	 * algorithm
+	 * The following can be costly. Enable only for debugging or analyzing our algorithm
 	 */
 	private static final boolean IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA = false;
 
-	//TODO can this method be removed?
+	// TODO can this method be removed?
 	public EagerReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
@@ -79,40 +79,39 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 			final List<AbstractInterpolantAutomaton<LETTER>> floydHoareAutomataFromOtherLocations,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
-				services, storage, floydHoareAutomataFromOtherLocations,rawFloydHoareAutomataFromFile);
+				services, storage, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFile);
 	}
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
-		
+
 		final List<AbstractInterpolantAutomaton<LETTER>> reuseAutomata = new ArrayList<>();
 		reuseAutomata.addAll(mFloydHoareAutomataFromOtherErrorLocations);
 		reuseAutomata.addAll(mFloydHoareAutomataFromFile);
 
 		for (int i = 0; i < reuseAutomata.size(); i++) {
-			final int oneBasedi = i+1;
+			final int oneBasedi = i + 1;
 			int internalTransitionsBeforeDifference = 0;
 			int internalTransitionsAfterDifference = 0;
-			
+
 			final AbstractInterpolantAutomaton<LETTER> ai = reuseAutomata.get(i);
-			
+
 			if (mPref.dumpAutomata()) {
-				writeAutomatonToFile(ai, "ReusedAutomata"+oneBasedi);
+				writeAutomatonToFile(ai, "ReusedAutomata" + oneBasedi);
 			}
-			
+
 			if (ENHANCE) {
-				//TODO: assert: ai should already be in on-demand mode 
+				// TODO: assert: ai should already be in on-demand mode
 				internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
 			} else {
 				ai.switchToReadonlyMode();
 			}
-			final PowersetDeterminizer<LETTER, IPredicate> psd = new PowersetDeterminizer<>(ai, true,
-					mPredicateFactoryInterpolantAutomata);
+			final PowersetDeterminizer<LETTER, IPredicate> psd =
+					new PowersetDeterminizer<>(ai, true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
 			final boolean explointSigmaStarConcatOfIA = true;
-			diff = new Difference<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
-					mStateFactoryForRefinement,
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
 					explointSigmaStarConcatOfIA);
 			if (mPref.dumpAutomata()) {
@@ -123,10 +122,10 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 				ai.switchToReadonlyMode();
 				internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
 				mLogger.info("Floyd-Hoare automaton" + oneBasedi + " had " + internalTransitionsBeforeDifference
-					+ " internal transitions before reuse, on-demand computation of difference added "
-					+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
+						+ " internal transitions before reuse, on-demand computation of difference added "
+						+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
 			}
-			
+
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
 					final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
@@ -137,7 +136,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 					mHaf.addDeadEndDoubleDeckers(diff);
 				}
 			}
-			
+
 			if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
 				final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
 				final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
@@ -152,9 +151,9 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 				}
 
 			}
-			
+
 			mAbstraction = diff.getResult();
-			
+
 			if (mAbstraction.size() == 0) {
 				// stop to compute differences if abstraction is already empty
 				break;
@@ -168,8 +167,5 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 			minimizeAbstractionIfEnabled();
 		}
 	}
-	
-	
-
 
 }
