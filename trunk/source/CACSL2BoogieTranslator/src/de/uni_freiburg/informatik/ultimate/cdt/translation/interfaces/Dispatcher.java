@@ -50,7 +50,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -135,7 +137,8 @@ public abstract class Dispatcher {
 	private final TranslationSettings mTranslationSettings;
 
 	private LocationFactory mLocationFactory;
-	
+
+	protected final FlatSymbolTable mFlatTable;
 	protected final MultiparseSymbolTable mMultiparseTable;
 
 	private final boolean mUseSvcompSettings;
@@ -155,6 +158,8 @@ public abstract class Dispatcher {
 		mTranslationSettings = new TranslationSettings(mPreferences);
 		mLocationFactory = locFac;
 		mMultiparseTable = mst;
+		mNameHandler = new NameHandler(mBacktranslator);
+		mFlatTable = new FlatSymbolTable(mst, this, mNameHandler);
 		mFunctionTable = functionTable;
 
 		mUseSvcompSettings = getSvcompMode();

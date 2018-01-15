@@ -334,6 +334,9 @@ public class MainDispatcher extends Dispatcher {
 		super.preRun(nodes);
 		mVariablesOnHeap = new LinkedHashSet<>();
 		
+		// Collect all type definitions
+		executePreRun(new TypedefCollector(mFlatTable), nodes, tdc -> {});
+		
 		// Build the function table
 		executePreRun(new FunctionTableBuilder(), nodes, ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
 
@@ -379,9 +382,8 @@ public class MainDispatcher extends Dispatcher {
 		mSideEffectHandler = new SideEffectHandler();
 		mTypeHandler = new TypeHandler(mBitvectorTranslation);
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
-		mNameHandler = new NameHandler(mBacktranslator);
 		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,
-				mOverapproximateFloatingPointOperations, mNameHandler, mMultiparseTable);
+				mOverapproximateFloatingPointOperations, mNameHandler, mFlatTable);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new PreprocessorHandler(isSvcomp());
 		mReportWarnings = true;

@@ -169,10 +169,9 @@ public class PRDispatcher extends Dispatcher {
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		final boolean overapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
-		mNameHandler = new NameHandler(mBacktranslator);
 		mTypeHandler = new TypeHandler(bitvectorTranslation);
 		mCHandler = new CHandler(this, mBacktranslator, false, mLogger, mTypeHandler, bitvectorTranslation,
-				overapproximateFloatingPointOperations, mNameHandler, mMultiparseTable);
+				overapproximateFloatingPointOperations, mNameHandler, mFlatTable);
 	}
 
 	@Override

@@ -539,7 +539,7 @@ public class CHandler implements ICHandler {
 	public CHandler(final Dispatcher main, final CACSL2BoogieBacktranslator backtranslator,
 			final boolean errorLabelWarning, final ILogger logger, final ITypeHandler typeHandler,
 			final boolean bitvectorTranslation, final boolean overapproximateFloatingPointOperations,
-			final INameHandler nameHandler, final MultiparseSymbolTable mst) {
+			final INameHandler nameHandler, final FlatSymbolTable ftab) {
 		final IPreferenceProvider prefs = main.getPreferences();
 		mLogger = logger;
 		mTypeHandler = typeHandler;
@@ -553,7 +553,7 @@ public class CHandler implements ICHandler {
 		mArrayHandler = new ArrayHandler(prefs);
 		mStaticObjectsHandler = new StaticObjectsHandler();
 
-		mSymbolTable = new FlatSymbolTable(mst, main, nameHandler);
+		mSymbolTable = ftab;
 
 		mDeclarationsGlobalInBoogie = new LinkedHashMap<>();
 		mAxioms = new LinkedHashSet<>();

@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -96,6 +97,10 @@ public class FlatSymbolTable {
 	 * Maps C Declarations to Boogie Declarations
 	 */
 	private final Map<CDeclaration, Declaration> mCDeclToBoogieDecl;
+	/**
+	 * The name handler.
+	 */
+	private final INameHandler mNameHandler;
 	
 	public FlatSymbolTable(final MultiparseSymbolTable mst, final Dispatcher disp, final INameHandler nameHandler) {
 		mGlobalScope = new LinkedHashMap<>();
@@ -117,7 +122,8 @@ public class FlatSymbolTable {
 		mBoogieIdToCId = new HashMap<>();
 		mCDeclToBoogieDecl = new HashMap<>();
 		
-		importAllGlobals(nameHandler);
+		mNameHandler = nameHandler;
+		// importAllGlobals(nameHandler);
 	}
 	
 	/**
@@ -251,7 +257,7 @@ public class FlatSymbolTable {
 	 * @see FlatSymbolTable#tableFind(IASTNode, String, boolean)
 	 */
 	private void tableStore(final IASTNode hook, final String id, final SymbolTableValue val) {
-		if (!mDispatcher.mTypeHandler.isStructDeclaration()) {
+		if (mDispatcher.mTypeHandler == null || !mDispatcher.mTypeHandler.isStructDeclaration()) {
 			IASTNode cursor = mCHookSkip.apply(hook);
 			while (cursor != null) {
 				if (cursor instanceof IASTTranslationUnit) {
@@ -395,5 +401,25 @@ public class FlatSymbolTable {
 	 */
 	public ASTType getTypeOfVariable(final IASTNode hook, final String cId, final ILocation loc) {
 		return mDispatcher.mTypeHandler.cType2AstType(loc, findCSymbol(hook, cId).getCVariable());
+	}
+	
+	/**
+	 * Creates a boogie identifier.
+	 * 
+	 * @param scope
+	 *            where the identifier is used
+	 * @param scopeHook
+	 *            where the identifier belongs to
+	 * @param type
+	 *            the type of the thing
+	 * @param onHeap
+	 *            whether the thing is on the heap
+	 * @param cName
+	 *            the original identifier in C
+	 * @return the identifier
+	 */
+	public String createBoogieId(final IASTNode scope, final IASTNode scopeHook, final CType type, 
+			final boolean onHeap, final String cName) {
+		return mNameHandler.getUniqueIdentifier(scope, cName, getCScopeId(scopeHook), onHeap, type);
 	}
 }
