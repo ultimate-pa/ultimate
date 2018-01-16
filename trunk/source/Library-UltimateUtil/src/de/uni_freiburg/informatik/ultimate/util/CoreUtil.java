@@ -127,7 +127,11 @@ public class CoreUtil {
 		}
 
 		for (final String dirname : System.getenv("PATH").split(File.pathSeparator)) {
-			for (final File file : new File(dirname).listFiles(f -> f.getName().startsWith(name))) {
+			final File[] files = new File(dirname).listFiles(f -> f.getName().startsWith(name));
+			if (files == null) {
+				continue;
+			}
+			for (final File file : files) {
 				if (file.isFile() && file.canExecute() && funLooksLikeExectuable.test(file)) {
 					return file;
 				}
