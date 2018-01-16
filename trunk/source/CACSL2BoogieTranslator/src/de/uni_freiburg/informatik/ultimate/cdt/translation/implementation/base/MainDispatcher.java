@@ -334,9 +334,6 @@ public class MainDispatcher extends Dispatcher {
 		super.preRun(nodes);
 		mVariablesOnHeap = new LinkedHashSet<>();
 		
-		// Collect all type definitions
-		executePreRun(new TypedefCollector(mFlatTable), nodes, tdc -> {});
-		
 		// Build the function table
 		executePreRun(new FunctionTableBuilder(), nodes, ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
 
@@ -358,6 +355,7 @@ public class MainDispatcher extends Dispatcher {
 
 		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
 				mReachableDeclarations, getLocationFactory(), mFunctionTable, mMultiparseTable);
+		prd.preRun(nodes);
 		prd.init();
 		prd.dispatch(nodes);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());
@@ -367,14 +365,6 @@ public class MainDispatcher extends Dispatcher {
 			mIndexToFunction.put(en.getValue(), en.getKey());
 		}
 
-	}
-	
-	private <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,
-			final Consumer<T> callback) {
-		for (DecoratedUnit unit : units) {
-			unit.getRootNode().getCNode().accept(preRun);
-		}
-		callback.accept(preRun);
 	}
 
 	@Override

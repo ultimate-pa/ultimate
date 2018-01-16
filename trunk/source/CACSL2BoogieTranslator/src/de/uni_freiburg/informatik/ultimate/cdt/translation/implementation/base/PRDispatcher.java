@@ -162,6 +162,11 @@ public class PRDispatcher extends Dispatcher {
 	public Set<IASTNode> getVariablesOnHeap() {
 		return mVariablesOnHeap;
 	}
+	
+	@Override
+	protected void preRun(Collection<DecoratedUnit> nodes) {
+		super.preRun(nodes);
+	}
 
 	@Override
 	protected void init() {

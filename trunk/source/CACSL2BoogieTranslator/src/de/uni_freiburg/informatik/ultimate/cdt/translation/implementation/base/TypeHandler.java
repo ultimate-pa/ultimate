@@ -269,7 +269,9 @@ public class TypeHandler implements ITypeHandler {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.VOID))));
 			} else {
-				final String bId = main.mCHandler.getSymbolTable().findCSymbol(node, cId).getBoogieName();
+				final String modifiedName = 
+						main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
+				final String bId = main.mCHandler.getSymbolTable().findCSymbol(node, modifiedName).getBoogieName();
 				return new TypesResult(new NamedType(loc, bId, null), false, false, // TODO: replace constants
 						new CNamed(bId, mDefinedTypes.get(bId).cType));
 			}

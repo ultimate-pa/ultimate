@@ -39,7 +39,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.function.Consumer;
 
+import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
@@ -52,8 +54,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.GlobalVariableCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypedefCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -273,6 +277,20 @@ public abstract class Dispatcher {
 		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
 		mLocationFactory = new LocationFactory(lineDirectiveMapping);
 		mBacktranslator.setLocationFactory(mLocationFactory);
+		
+		// Collect all type definitions
+		executePreRun(new TypedefCollector(mFlatTable), nodes, tdc -> {});
+		
+		// Collect all global variables
+		executePreRun(new GlobalVariableCollector(mFlatTable), nodes, gvc -> {});
+	}
+	
+	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,
+			final Consumer<T> callback) {
+		for (DecoratedUnit unit : units) {
+			unit.getRootNode().getCNode().accept(preRun);
+		}
+		callback.accept(preRun);
 	}
 
 	/**

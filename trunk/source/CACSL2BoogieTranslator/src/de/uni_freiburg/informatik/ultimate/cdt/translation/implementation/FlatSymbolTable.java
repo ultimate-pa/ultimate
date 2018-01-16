@@ -132,13 +132,13 @@ public class FlatSymbolTable {
 	private void importAllGlobals(final INameHandler nameHandler) {
 		Map<Pair<String, String>, IASTDeclarator> globals = mMultiparseInformation.getGlobalScope();
 		for (Map.Entry<Pair<String, String>, IASTDeclarator> entry : globals.entrySet()) {
-			String uId = mMultiparseInformation.getNameMappingIfExists(entry.getKey().getFirst(), 
+			final String uId = mMultiparseInformation.getNameMappingIfExists(entry.getKey().getFirst(), 
 					entry.getKey().getSecond());
 			
 			// This entry is minimal, as some of the information is not available yet.
 			// Need to somehow get a real SymbolTableValue here... at least the CDeclaration is required.
 			final String bId = nameHandler.getUniqueIdentifier(null, uId, getCScopeId(entry.getValue()), false, null);
-			SymbolTableValue stv = new SymbolTableValue(bId, null, null, true, entry.getValue(), false);
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, null, true, entry.getValue(), false);
 			mGlobalScope.put(uId, stv);
 		}
 	}
