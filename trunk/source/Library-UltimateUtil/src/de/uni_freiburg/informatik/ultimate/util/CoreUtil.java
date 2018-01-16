@@ -47,6 +47,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -202,26 +203,34 @@ public class CoreUtil {
 		return file;
 	}
 
-	public static String readFile(final String filename) throws IOException {
+	public static List<String> readFileLineByLine(final String filename) throws IOException {
 		final BufferedReader br =
 				new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
+		final List<String> rtr = new ArrayList<>();
 		try {
-
-			final StringBuilder sb = new StringBuilder();
 			String line = br.readLine();
 			while (line != null) {
-				sb.append(line);
-				sb.append(PLATFORM_LINE_SEPARATOR);
+				rtr.add(line);
 				line = br.readLine();
 			}
-			return sb.toString();
+			return rtr;
 		} finally {
 			br.close();
 		}
 	}
 
+	public static String readFile(final String filename) throws IOException {
+		final StringBuilder sb = new StringBuilder();
+		readFileLineByLine(filename).stream().forEach(line -> sb.append(line).append(PLATFORM_LINE_SEPARATOR));
+		return sb.toString();
+	}
+
 	public static String readFile(final File file) throws IOException {
 		return readFile(file.getAbsolutePath());
+	}
+
+	public static List<String> readFileLineByLine(final File file) throws IOException {
+		return readFileLineByLine(file.getAbsolutePath());
 	}
 
 	/**

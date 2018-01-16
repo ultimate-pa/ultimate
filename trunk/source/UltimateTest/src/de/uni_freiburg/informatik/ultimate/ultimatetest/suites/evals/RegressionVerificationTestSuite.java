@@ -36,10 +36,13 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -53,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDec
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Test suite that allows regression verification for different revisions of programs.
@@ -65,21 +69,22 @@ import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestS
  */
 public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
-	private final String BENCHMARK_DIR = "examples/regression-verif";
+	private static final String BENCHMARK_DIR = "examples/regression-verif";
+	private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
 
-	private final File TOOLCHAIN = UltimateRunDefinitionGenerator.getFileFromToolchainDir("AutomizerC.xml");
+	private static final File TOOLCHAIN = UltimateRunDefinitionGenerator.getFileFromToolchainDir("AutomizerC.xml");
 
-	private final File SETTINGS_NO_REUSE_DUMP = UltimateRunDefinitionGenerator
+	private static final File SETTINGS_NO_REUSE_DUMP = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_NoReuse_DumpAts.epf");
-	private final File SETTINGS_EAGER_REUSE = UltimateRunDefinitionGenerator
+	private static final File SETTINGS_EAGER_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_EagerReuse.epf");
-	private final File SETTINGS_VANILLA = UltimateRunDefinitionGenerator
+	private static final File SETTINGS_VANILLA = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default.epf");
-	private final File SETTINGS_LAZY_REUSE = UltimateRunDefinitionGenerator
+	private static final File SETTINGS_LAZY_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_LazyReuse.epf");
-	private final File ATS_DUMP_DIR = new File("./automata-dump");
-	private final boolean ONLY_FIRST = false;
-	private final boolean ONLY_REST = false;
+	private static final File ATS_DUMP_DIR = new File("./automata-dump");
+	private static final boolean ONLY_FIRST = false;
+	private static final boolean ONLY_REST = false;
 
 	@Override
 	protected long getTimeout() {
@@ -98,10 +103,16 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 		final Collection<UltimateRunDefinition> urds = new ArrayList<>();
 		// list all example programs with their first revision
+		final String allowedProgramsPath = TestUtil.getPathFromTrunk(ALLOWED_PROGS);
+		final Set<String> allowedPrograms = getAllowedPrograms(allowedProgramsPath);
 		final String fullPath = TestUtil.getPathFromTrunk(BENCHMARK_DIR);
 		final Map<String, TreeSet<File>> program2ListOfRevisions = getProgram2Revisions(fullPath);
 
 		for (final Entry<String, TreeSet<File>> entry : program2ListOfRevisions.entrySet()) {
+			if (!isAllowed(allowedPrograms, entry.getValue())) {
+				System.err.println(entry.getKey() + " is not allowed");
+				continue;
+			}
 			runAllAndGenerateEagerReuseFirstSequence(entry.getValue().iterator(), urds);
 			runAllReuseFirstSequence(entry.getValue().iterator(), urds, SETTINGS_EAGER_REUSE);
 			runAllReuseFirstSequence(entry.getValue().iterator(), urds, SETTINGS_LAZY_REUSE);
@@ -211,7 +222,29 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 				e.printStackTrace();
 			}
 		}
+	}
 
+	private static boolean isAllowed(final Set<String> allowedPrograms, final Set<File> programRevisions) {
+		if (allowedPrograms.isEmpty()) {
+			return true;
+		}
+		for (final File programRevision : programRevisions) {
+			final String parentDirAndName =
+					programRevision.getParentFile().getName() + "\\" + programRevision.getName();
+			if (allowedPrograms.contains(parentDirAndName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static Set<String> getAllowedPrograms(final String fullpath) {
+		try {
+			return new HashSet<>(CoreUtil.readFileLineByLine(fullpath));
+		} catch (final IOException ex) {
+			System.err.println("Could not get list of allowed programs, allowing all");
+			return Collections.emptySet();
+		}
 	}
 
 	/**
@@ -222,9 +255,8 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	 * @return A map from program name to ordered set of files (ascending by revisions).
 	 */
 	private static Map<String, TreeSet<File>> getProgram2Revisions(final String fullPath) {
-		final File rootDir = new File(fullPath);
-		final Comparator<File> numericComparator = new Comparator<File>() {
 
+		final Comparator<File> numericComparator = new Comparator<File>() {
 			@Override
 			public int compare(final File o1, final File o2) {
 				final String revStr1 = o1.getName().substring(0, 3);
@@ -233,6 +265,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			}
 		};
 		final Map<String, TreeSet<File>> program2ListOfRevisions = new TreeMap<>();
+		final File rootDir = new File(fullPath);
 		final Iterator<File> dirIter = Arrays.stream(rootDir.list((file, name) -> file.isDirectory()))
 				.map(a -> new File(rootDir, a)).iterator();
 		while (dirIter.hasNext()) {
@@ -240,7 +273,11 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			// the dir name is the name of the program
 			// the files there are named <revnumber>.<hash>.<file/kernel>.cil_<expectedresult>.<fileext>
 
-			for (final File file : currentDir.listFiles()) {
+			final File[] dirContent = currentDir.listFiles();
+			if (dirContent == null) {
+				continue;
+			}
+			for (final File file : dirContent) {
 				final String[] filenameparts = file.getName().split("\\.");
 				if (filenameparts.length < 3) {
 					System.err.println("Unknown naming for " + file.getName());
@@ -262,9 +299,4 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	public void removeDumpedAts() {
 		TestUtil.deleteDirectory(ATS_DUMP_DIR);
 	}
-
-	// @Override
-	// protected IPreTestLog[] constructPreTestLogs() {
-	// return new IPreTestLog[] { new BenchexecRundefinitionGeneratorPreLog(getClass()) };
-	// }
 }
