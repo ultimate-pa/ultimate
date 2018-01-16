@@ -69,12 +69,16 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	private final File TOOLCHAIN = UltimateRunDefinitionGenerator.getFileFromToolchainDir("AutomizerC.xml");
 
-	private final File SETTINGS_FIRST_REV = UltimateRunDefinitionGenerator
+	private final File SETTINGS_NO_REUSE_DUMP = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_NoReuse_DumpAts.epf");
-	private final File SETTINGS_REST_REV = UltimateRunDefinitionGenerator
+	private final File SETTINGS_EAGER_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_EagerReuse.epf");
+	private final File SETTINGS_VANILLA = UltimateRunDefinitionGenerator
+			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default.epf");
+	private final File SETTINGS_LAZY_REUSE = UltimateRunDefinitionGenerator
+			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_LazyReuse.epf");
 	private final File ATS_DUMP_DIR = new File("./automata-dump");
-	private final boolean ONLY_FIRST = true;
+	private final boolean ONLY_FIRST = false;
 	private final boolean ONLY_REST = false;
 
 	@Override
@@ -98,8 +102,10 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 		final Map<String, TreeSet<File>> program2ListOfRevisions = getProgram2Revisions(fullPath);
 
 		for (final Entry<String, TreeSet<File>> entry : program2ListOfRevisions.entrySet()) {
-			final Iterator<File> revIter = entry.getValue().iterator();
-			runAllWithFirstRevAts(revIter, urds);
+			runAllAndGenerateEagerReuseFirstSequence(entry.getValue().iterator(), urds);
+			runAllReuseFirstSequence(entry.getValue().iterator(), urds, SETTINGS_EAGER_REUSE);
+			runAllReuseFirstSequence(entry.getValue().iterator(), urds, SETTINGS_LAZY_REUSE);
+			runAllVanilla(entry.getValue().iterator(), urds);
 		}
 
 		// call addTestCase
@@ -111,7 +117,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	 * Generate test cases where we generate an .ats file from the first revision and use it for all the following
 	 * revisions.
 	 */
-	private void runAllAndGenerateFirstRevAts(final Iterator<File> revIter,
+	private void runAllAndGenerateEagerReuseFirstSequence(final Iterator<File> revIter,
 			final Collection<UltimateRunDefinition> urds) {
 		// do first revision without input automaton
 		final File atsFileForLaterRevisions;
@@ -122,7 +128,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			atsFileForLaterRevisions = getFirstRevAtsFile(firstRevFile);
 			if (!ONLY_REST) {
 				final AfterTest funAfterTest = () -> renameAndMove(firstRevFile, atsFile);
-				urds.add(new UltimateRunDefinition(firstRevFile, SETTINGS_FIRST_REV, TOOLCHAIN, getTimeout(),
+				urds.add(new UltimateRunDefinition(firstRevFile, SETTINGS_NO_REUSE_DUMP, TOOLCHAIN, getTimeout(),
 						funAfterTest));
 			}
 		} else {
@@ -135,22 +141,23 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 		while (revIter.hasNext()) {
 			final File currentRev = revIter.next();
-			urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions }, SETTINGS_REST_REV,
-					TOOLCHAIN, getTimeout()));
+			urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions },
+					SETTINGS_EAGER_REUSE, TOOLCHAIN, getTimeout()));
 		}
 	}
 
 	/**
 	 * Generate test cases where we use the .ats file from the first revision for all the revisions.
 	 */
-	private void runAllWithFirstRevAts(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds) {
+	private void runAllReuseFirstSequence(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds,
+			final File settings) {
 		final File atsFileForLaterRevisions;
 		if (revIter.hasNext()) {
 			final File firstRevFile = revIter.next();
 			atsFileForLaterRevisions = getFirstRevAtsFile(firstRevFile);
 			if (!ONLY_REST) {
-				urds.add(new UltimateRunDefinition(new File[] { firstRevFile, atsFileForLaterRevisions },
-						SETTINGS_REST_REV, TOOLCHAIN, getTimeout()));
+				urds.add(new UltimateRunDefinition(new File[] { firstRevFile, atsFileForLaterRevisions }, settings,
+						TOOLCHAIN, getTimeout()));
 			}
 		} else {
 			return;
@@ -162,8 +169,31 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 		while (revIter.hasNext()) {
 			final File currentRev = revIter.next();
-			urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions }, SETTINGS_REST_REV,
-					TOOLCHAIN, getTimeout()));
+			urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions }, settings, TOOLCHAIN,
+					getTimeout()));
+		}
+	}
+
+	/**
+	 * Generate test cases where we do not use .ats files and just use the vanilla Automizer.
+	 */
+	private void runAllVanilla(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds) {
+		if (!revIter.hasNext()) {
+			return;
+		}
+
+		final File firstRevFile = revIter.next();
+		if (!ONLY_REST) {
+			urds.add(new UltimateRunDefinition(firstRevFile, SETTINGS_VANILLA, TOOLCHAIN, getTimeout()));
+		}
+
+		if (ONLY_FIRST) {
+			return;
+		}
+
+		while (revIter.hasNext()) {
+			final File currentRev = revIter.next();
+			urds.add(new UltimateRunDefinition(currentRev, SETTINGS_VANILLA, TOOLCHAIN, getTimeout()));
 		}
 	}
 
