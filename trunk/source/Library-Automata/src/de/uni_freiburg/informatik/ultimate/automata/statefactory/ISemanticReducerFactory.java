@@ -19,7 +19,10 @@ public interface ISemanticReducerFactory<STATE, LETTER> extends IStateFactory<ST
 	Iterable<STATE> filter(final Iterable<STATE> states);
 
 
-	STATE getOptimalDestination(final List<STATE> src, final LETTER letter, final Set<STATE> dest);
+	// STATE getOptimalDestination(final List<STATE> src, final LETTER letter, final Set<STATE> dest);
+
+	Iterable<STATE> getOptimalDestination(final Iterable<STATE> states,
+			final List<STATE> src, final LETTER letter, final Set<STATE> dest);
 
 	/***
 	 * Reduce a set of rules using the provided filtering states method.
@@ -44,4 +47,5 @@ public interface ISemanticReducerFactory<STATE, LETTER> extends IStateFactory<ST
 		}
 		return newRules;
 	}
+	
 }

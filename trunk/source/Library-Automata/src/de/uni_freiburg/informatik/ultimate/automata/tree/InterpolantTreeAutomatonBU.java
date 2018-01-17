@@ -1,6 +1,9 @@
+
 package de.uni_freiburg.informatik.ultimate.automata.tree;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 
@@ -21,8 +24,12 @@ public class InterpolantTreeAutomatonBU<LETTER extends IRankedLetter, STATE> ext
 
 	@Override
 	public Iterable<STATE> getSuccessors(final List<STATE> source, final LETTER letter) {
-	//	return mReducer.getOptimalDestination(null, letter, null);
-		return mReducer.filter(super.getSuccessors(source, letter));
+		final Set<STATE> dest = new HashSet<>();
+		for (final STATE s : super.getSuccessors(source, letter)) {
+			dest.add(s);
+		}
+		return mReducer.getOptimalDestination(getStates(), source, letter, dest);
+	//	return mReducer.filter(super.getSuccessors(source, letter));
 	}
 
 	@Override

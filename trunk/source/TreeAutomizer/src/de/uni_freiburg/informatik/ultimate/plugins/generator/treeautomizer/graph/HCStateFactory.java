@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,13 +42,18 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCOutVar;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -74,6 +80,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 	private final HCPredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
+	
+	private final HCHoareTripleChecker mHoareTripleChecker;
 
 	private int mSer;
 
@@ -88,7 +96,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	 * @param symbolTable
 	 */
 	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
-			final ILogger logger, final PredicateUnifier predicateUnifier) {
+			final ILogger logger, final PredicateUnifier predicateUnifier,
+			final HCHoareTripleChecker hoareChecker) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
 
 		mLogger = logger;
@@ -96,6 +105,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript.getScript());
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
+		mHoareTripleChecker = hoareChecker;
 		mSer = 0;
 	}
 
@@ -161,13 +171,19 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		return createSinkStateContent();
 	}
 
+	private Term implicationStatement(final IPredicate predA, final IPredicate predB) {
+
+		return SmtUtils.and(mBackendSmtSolverScript.getScript(), predA.getClosedFormula(),
+				SmtUtils.not(mBackendSmtSolverScript.getScript(), predB.getClosedFormula()));
+
+	}
+	
 	private boolean implies(final IPredicate predA, final IPredicate predB) {
 
 		mBackendSmtSolverScript.lock(this);
 		mBackendSmtSolverScript.push(this, 1);
 
-		final Term statement = SmtUtils.and(mBackendSmtSolverScript.getScript(), predA.getClosedFormula(),
-				SmtUtils.not(mBackendSmtSolverScript.getScript(), predB.getClosedFormula()));
+		final Term statement = implicationStatement(predA, predB);
 
 		mBackendSmtSolverScript.assertTerm(this, statement);
 		final LBool res = mBackendSmtSolverScript.checkSat(this);
@@ -181,9 +197,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		return mPredicateUnifier.getCoverageRelation().getCoveredPredicates(predB).contains(predA);
 	}
 
-	@Override
-	public Iterable<IPredicate> filter(final Iterable<IPredicate> states) {
-		//return states;
+	
+	private Map<IPredicate, Set<IPredicate>> constructBaseGraph(final Iterable<IPredicate> states) {
 
 		final IPredicate[] preds = CombinatoricsUtils.iterateAll(states.iterator()).toArray(new IPredicate[]{});
 		final Map<IPredicate, Set<IPredicate>> implication = new HashMap<>();
@@ -197,6 +212,18 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				}
 			}
 		}
+ 		return implication;
+	}
+	
+
+	public SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> getImplicationGraph(
+			final Iterable<IPredicate> states) {
+		return getImplicationGraph(constructBaseGraph(states));
+	}
+	
+	public SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> getImplicationGraph(
+			final Map<IPredicate, Set<IPredicate>> implication) {
+		
 
 		final ISuccessorProvider<IPredicate> successors = new ISuccessorProvider<IPredicate>() {
 			@Override
@@ -206,8 +233,16 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		};
 
 		final SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = new SccComputation<>(mLogger,
-				successors,	new DefaultStronglyConnectedComponentFactory<>(), preds.length, implication.keySet());
+				successors,	new DefaultStronglyConnectedComponentFactory<>(), implication.size(), implication.keySet());
 
+		return sccComputer;
+	}
+	
+	@Override
+	public Iterable<IPredicate> filter(final Iterable<IPredicate> states) {
+		//return states;
+
+		final SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = getImplicationGraph(states);
 		final Set<IPredicate> res = new HashSet<>();
 		for (final StronglyConnectedComponent<IPredicate> leaf : sccComputer.getLeafComponents()) {
 			res.add(leaf.getRootNode());
@@ -217,10 +252,43 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 	}
 
+
 	@Override
-	public IPredicate getOptimalDestination(final List<IPredicate> src, final HornClause letter, final Set<IPredicate> dest) {
-		// TODO Auto-generated method stub
-		return null;
+	public Iterable<IPredicate> getOptimalDestination(final Iterable<IPredicate> states, 
+			final List<IPredicate> src, final HornClause letter,
+			final Set<IPredicate> dest) {
+		
+		final Set<IPredicate> potential = new HashSet<>();
+		for (final IPredicate state : states) {
+			// preCond ^ state ==> state
+			if (mHoareTripleChecker.check(src, letter, state) == Validity.VALID) {
+				potential.add(state);
+			}
+		}
+		for (final IPredicate state : dest) {
+
+			// preCond ^ state ==> dest
+			if (mHoareTripleChecker.check(src, letter, state) == Validity.VALID) {
+				potential.add(state);
+			}
+		}
+		
+		final Map<IPredicate, Set<IPredicate>> baseGraph = new HashMap<>();
+		final IPredicate[] preds = potential.toArray(new IPredicate[]{});
+		for (int i = 0; i < preds.length; ++i) {
+			
+			baseGraph.put(preds[i], new HashSet<>());
+			for (int j = 0; j < preds.length; ++j) {
+				if (i != j) {
+					if (mHoareTripleChecker.check(src, letter,
+							mPredicateFactory.newPredicate(implicationStatement(preds[i], preds[j]))) == Validity.VALID) {
+						baseGraph.get(preds[i]).add(preds[j]);
+					}
+				}
+			}
+		}
+		// preCond ^ state ==> x1  ^ (x1 ==> x2) ^ (x2 ==> x3)    implies preCond ^ state ==> x3
+		return getImplicationGraph(baseGraph).getLeafNodes(dest);
 	}
 
 }
