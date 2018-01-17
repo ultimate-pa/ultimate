@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -99,50 +98,30 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
-		final PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-				mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFile = interpretAutomata(
-				mRawFloydHoareAutomataFromFile, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
-				mPredicateFactoryInterpolantAutomata, mServices, mPredicateFactory, mLogger, mCsToolkit, pu);
-		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size()
-				+ " Floyd-Hoare automata from previous error locations.");
-		mLogger.info("Reusing " + floydHoareAutomataFromFile.size() + " Floyd-Hoare automata from ats files.");
-
-		for (final NestedWordAutomaton<LETTER, IPredicate> automaton : floydHoareAutomataFromFile) {
-			// Add capability for on-demand extension to automata from file.
-			final IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit);
-			// TODO super is needed??
-			mFloydHoareAutomataFromFile.add(constructInterpolantAutomatonForOnDemandEnhancement(automaton, pu, htc,
-					InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION));
-		}
-	}
-
-	private static final <LETTER extends IIcfgTransition<?>> List<NestedWordAutomaton<LETTER, IPredicate>>
-			interpretAutomata(final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
-					final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-					final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-					final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
-					final ILogger logger, final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier) {
-
 		final boolean debugOn = true;
-		final List<NestedWordAutomaton<LETTER, IPredicate>> res = new ArrayList<>();
+		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFile = new ArrayList<>();
 
-		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : rawFloydHoareAutomataFromFile) {
+		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
+
+			// create a fresh predicate unifier for each automaton (much better performance)
+			final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
+			mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 			// Create map from strings to all equivalent "new" letters (abstraction letters)
 			final HashMap<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
-			final VpAlphabet<LETTER> abstractionAlphabet = abstraction.getVpAlphabet();
+			final VpAlphabet<LETTER> abstractionAlphabet =
+					((INestedWordAutomaton<LETTER, IPredicate>) mAbstraction).getVpAlphabet();
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getInternalAlphabet());
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getReturnAlphabet());
 			// Print debug information for letters
 			if (debugOn) {
-				countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter, logger);
+				countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter, mLogger);
 			}
 			// Create empty automaton with same alphabet
 			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
-					new AutomataLibraryServices(services), abstractionAlphabet, predicateFactoryInterpolantAutomata);
+					new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
 			// Add states
 			final Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
 			final HashMap<String, IPredicate> mapStringToState = new HashMap<>();
@@ -151,8 +130,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			int removedStates = 0;
 			for (final String stringState : statesOfRawAutomaton) {
 				final AtomicBoolean parsingResult = new AtomicBoolean(false);
-				final IPredicate predicateState = getPredicateFromString(predicateFactory, stringState, csToolkit,
-						services, parsingResult, logger, predicateUnifier);
+				final IPredicate predicateState = getPredicateFromString(mPredicateFactory, stringState, mCsToolkit,
+						mServices, parsingResult, mLogger, predicateUnifier);
 				if (parsingResult.get()) {
 					reusedStates++;
 				} else {
@@ -166,16 +145,27 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			}
 			final int totalStates = removedStates + reusedStates;
 			assert (totalStates == resAutomaton.size());
-			logger.info(
+			mLogger.info(
 					"Reusing " + reusedStates + "/" + totalStates + " states when constructing automaton from file.");
 			// Add transitions
 			addTransitionsFromRawAutomaton(resAutomaton, rawAutomatonFromFile, mapStringToLetter, mapStringToState,
-					mapStateToString, debugOn, logger);
-			// Add new automaton to list
-			res.add(resAutomaton);
-		}
+					mapStateToString, debugOn, mLogger);
 
-		return res;
+			// Add capability for on-demand extension to automata from file.
+			final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(
+					mServices, mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
+			mFloydHoareAutomataFromFile.add(constructInterpolantAutomatonForOnDemandEnhancement(resAutomaton,
+					predicateUnifier, htc, InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION));
+			floydHoareAutomataFromFile.add(resAutomaton);
+
+			// save various stats
+			mCegarLoopBenchmark.addReusePredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
+			mCegarLoopBenchmark.addReuseEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+
+		}
+		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size()
+				+ " Floyd-Hoare automata from previous error locations.");
+		mLogger.info("Reusing " + floydHoareAutomataFromFile.size() + " Floyd-Hoare automata from ats files.");
 	}
 
 	private static final IPredicate getPredicateFromString(final PredicateFactory predicateFactory, final String str,

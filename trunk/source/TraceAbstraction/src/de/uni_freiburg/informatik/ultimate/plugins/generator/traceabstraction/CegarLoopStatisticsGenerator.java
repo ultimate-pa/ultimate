@@ -71,6 +71,14 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mResult = result;
 	}
 
+	public void addReusePredicateUnifierData(final IStatisticsDataProvider pubd) {
+		mPuData.aggregateBenchmarkData(pubd);
+	}
+
+	public void addReuseEdgeCheckerData(final IStatisticsDataProvider ecbd) {
+		mEcData.aggregateBenchmarkData(ecbd);
+	}
+
 	public void addEdgeCheckerData(final IStatisticsDataProvider ecbd) {
 		mEcData.aggregateBenchmarkData(ecbd);
 	}
