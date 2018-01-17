@@ -970,14 +970,19 @@ public class Interpolator extends NonRecursive {
 
 	HashSet<Term> getSubTerms(final Term literal) {
 		final HashSet<Term> subTerms = new HashSet<>();
-		final Term term = literal;
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			for (final Term sub : appTerm.getParameters()) {
-				subTerms.addAll(getSubTerms(sub));
+		final ArrayDeque<Term> todo = new ArrayDeque<Term>();
+		todo.addLast(literal);
+		while (!todo.isEmpty()) {
+			final Term term = todo.removeLast();
+			if (subTerms.add(term)) {
+				if (term instanceof ApplicationTerm) {
+					final ApplicationTerm appTerm = (ApplicationTerm) term;
+					for (final Term sub : appTerm.getParameters()) {
+						todo.addLast(sub);
+					}
+				}
 			}
 		}
-		subTerms.add(term);
 		return subTerms;
 	}
 
@@ -1076,16 +1081,13 @@ public class Interpolator extends NonRecursive {
 
 	private LitInfo computeMixedOccurrence(final ArrayList<Term> subterms) {
 		LitInfo info;
-		BitSet inA = null, inB = null;
+		final BitSet inA = new BitSet(mNumInterpolants + 1);
+		inA.set(0, mNumInterpolants + 1);
+		final BitSet inB = (BitSet) inA.clone();
 		for (final Term st : subterms) {
 			final Occurrence occInfo = getOccurrence(st, null);
-			if (inA == null) {
-				inA = (BitSet) occInfo.mInA.clone();
-				inB = (BitSet) occInfo.mInB.clone();
-			} else {
-				inA.and(occInfo.mInA);
-				inB.and(occInfo.mInB);
-			}
+			inA.and(occInfo.mInA);
+			inB.and(occInfo.mInB);
 		}
 		info = new LitInfo(inA, inB);
 		return info;
