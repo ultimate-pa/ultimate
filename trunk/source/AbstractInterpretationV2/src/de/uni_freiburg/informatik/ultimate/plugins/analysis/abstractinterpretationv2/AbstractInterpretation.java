@@ -50,8 +50,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class AbstractInterpretation implements IAnalysis {
 
 
-	this is a test for jenkins! it's going to be resolved later
-
 	protected ILogger mLogger;
 	private IUltimateServiceProvider mServices;
 	private List<IObserver> mObserver;
