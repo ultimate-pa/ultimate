@@ -21,6 +21,18 @@ public interface ISemanticReducerFactory<STATE, LETTER> extends IStateFactory<ST
 
 	// STATE getOptimalDestination(final List<STATE> src, final LETTER letter, final Set<STATE> dest);
 
+	/**
+	 *
+	 * @param states
+	 * @param src
+	 * @param letter
+	 * @param dest
+	 * 			FIXME: looks like dest parameter might be redundant, as it always is a subset of states, in our
+	 *   			applications (Mostafa, Alex, 17.1.2018)
+	 *     			possible reason to keep the parameter: if a future implementation needs the original set of
+	 *     			successors/destinations
+	 * @return
+	 */
 	Iterable<STATE> getOptimalDestination(final Iterable<STATE> states,
 			final List<STATE> src, final LETTER letter, final Set<STATE> dest);
 
@@ -47,5 +59,5 @@ public interface ISemanticReducerFactory<STATE, LETTER> extends IStateFactory<ST
 		}
 		return newRules;
 	}
-	
+
 }
