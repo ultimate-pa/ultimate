@@ -362,7 +362,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		// note that we use the old WeqCc here as parameter, the field in WeqGraph will be reset by getWeqCongruenceCl..
 		final WeakEquivalenceGraph<NODE, CongruenceClosure<NODE>> newWeqGraph =
-				mSettings.isFlattenWeqEdgesBeforeJoin() ?
+				mSettings.isFlattenWeqEdgesBeforeMeetWWeqGpa() ?
 				flattenWeqLabels(originalPa.getWeakEquivalenceGraph(), originalPa) :
 					copy(originalPa.getWeakEquivalenceGraph());
 

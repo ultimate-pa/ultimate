@@ -5,7 +5,7 @@ public class WeqSettings {
 
 //	final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = true;
 	// TOOD: is this a good name? was it "before join", not before meetWGpa/fattenWeq/project??
-	private final boolean FLATTEN_WEQ_EDGES_BEFORE_JOIN = false;
+	private boolean FLATTEN_WEQ_EDGES_BEFORE_WEQ_FATTEN = false;
 
 	private final boolean REPORT_EQ_DEQ_INPLACE = true;
 
@@ -66,14 +66,14 @@ public class WeqSettings {
 	 * would be better) or via our imprecise disjunct-by-disjunct check
 	 * (performance on regressions: slightly worse for "true", ~5-10%)
 	 */
-	private final boolean PRECISE_WEQ_LABEL_COMPARISON = false;
+	private boolean PRECISE_WEQ_LABEL_COMPARISON = false;
 
 	public WeqSettings() {
 
 	}
 
-	public boolean isFlattenWeqEdgesBeforeJoin() {
-		return FLATTEN_WEQ_EDGES_BEFORE_JOIN;
+	public boolean isFlattenWeqEdgesBeforeMeetWWeqGpa() {
+		return FLATTEN_WEQ_EDGES_BEFORE_WEQ_FATTEN;
 	}
 
 	public boolean isReportEqDeqInplace() {
@@ -146,5 +146,13 @@ public class WeqSettings {
 
 	public void setDeactivateWeakEquivalences(final boolean b) {
 		DEACTIVATE_WEAK_EQUIVALENCES = b;
+	}
+
+	public void setFlattenWeqEdgesBeforeMeetWWeqGpa(final boolean b) {
+		FLATTEN_WEQ_EDGES_BEFORE_WEQ_FATTEN = b;
+	}
+
+	public void setPreciseWeqLabelComparison(final boolean b) {
+		PRECISE_WEQ_LABEL_COMPARISON = b;
 	}
 }
