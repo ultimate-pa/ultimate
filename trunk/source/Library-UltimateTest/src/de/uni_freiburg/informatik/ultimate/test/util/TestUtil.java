@@ -749,6 +749,14 @@ public final class TestUtil {
 	 * Recursively delete the specified folder and all of its contents.
 	 */
 	public static void deleteDirectory(final File folder) {
+		deleteDirectoryContents(folder);
+		folder.delete();
+	}
+
+	/**
+	 * Recursively delete the contents of the specified folder.
+	 */
+	public static void deleteDirectoryContents(final File folder) {
 		final File[] files = folder.listFiles();
 		if (files != null) {
 			// some JVMs return null for empty dirs
@@ -760,7 +768,6 @@ public final class TestUtil {
 				}
 			}
 		}
-		folder.delete();
 	}
 
 	private interface ILogWriter {

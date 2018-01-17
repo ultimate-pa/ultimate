@@ -70,7 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	private static final String BENCHMARK_DIR = "examples/regression-verif";
-	private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
+	// private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
+	private static final String ALLOWED_PROGS = null;
 
 	private static final File TOOLCHAIN = UltimateRunDefinitionGenerator.getFileFromToolchainDir("AutomizerC.xml");
 
@@ -83,12 +84,16 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	private static final File SETTINGS_LAZY_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_LazyReuse.epf");
 	private static final File ATS_DUMP_DIR = new File("./automata-dump");
-	private static final boolean ONLY_FIRST = false;
-	private static final boolean ONLY_REST = false;
+	private static final boolean ONLY_FIRST = true;
+
+	public RegressionVerificationTestSuite() {
+		super();
+		mSortTestcases = false;
+	}
 
 	@Override
 	protected long getTimeout() {
-		return 90 * 1000;
+		return 900 * 1000;
 	}
 
 	@Override
@@ -103,20 +108,33 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 		final Collection<UltimateRunDefinition> urds = new ArrayList<>();
 		// list all example programs with their first revision
-		final String allowedProgramsPath = TestUtil.getPathFromTrunk(ALLOWED_PROGS);
-		final Set<String> allowedPrograms = getAllowedPrograms(allowedProgramsPath);
+		final Set<String> allowedPrograms;
+		if (ALLOWED_PROGS != null) {
+			final String allowedProgramsPath = TestUtil.getPathFromTrunk(ALLOWED_PROGS);
+			allowedPrograms = getAllowedPrograms(allowedProgramsPath);
+		} else {
+			allowedPrograms = Collections.emptySet();
+		}
 		final String fullPath = TestUtil.getPathFromTrunk(BENCHMARK_DIR);
 		final Map<String, TreeSet<File>> program2ListOfRevisions = getProgram2Revisions(fullPath);
 
 		for (final Entry<String, TreeSet<File>> entry : program2ListOfRevisions.entrySet()) {
-			if (!isAllowed(allowedPrograms, entry.getValue())) {
+			final TreeSet<File> revisions = prune(entry.getValue());
+
+			if (!isAllowed(allowedPrograms, revisions)) {
 				System.err.println(entry.getKey() + " is not allowed");
 				continue;
 			}
-			runAllAndGenerateEagerReuseFirstSequence(entry.getValue().iterator(), urds);
-			runAllReuseFirstSequence(entry.getValue().iterator(), urds, SETTINGS_EAGER_REUSE);
-			runAllReuseFirstSequence(entry.getValue().iterator(), urds, SETTINGS_LAZY_REUSE);
-			runAllVanilla(entry.getValue().iterator(), urds);
+			// dump .ats for the first/all (depending on last param) revision(s) of the program
+			runDumpNoReuse(revisions.iterator(), urds, SETTINGS_NO_REUSE_DUMP, true);
+
+			// run reuse with first revision for all enabled revisions (see prune(...) and ONLY_FIRST)
+			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE, 0);
+			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_LAZY_REUSE, 0);
+
+			// run vanilla for comparison
+			runNoDumpNoReuse(revisions.iterator(), urds, SETTINGS_VANILLA);
+			// break;
 		}
 
 		// call addTestCase
@@ -125,99 +143,86 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	}
 
 	/**
-	 * Generate test cases where we generate an .ats file from the first revision and use it for all the following
-	 * revisions.
+	 * If we want to analyse only the first revision of all programs (ONLY_FIRST), remove all other revisions from the
+	 * {@link TreeSet}.
 	 */
-	private void runAllAndGenerateEagerReuseFirstSequence(final Iterator<File> revIter,
-			final Collection<UltimateRunDefinition> urds) {
-		// do first revision without input automaton
-		final File atsFileForLaterRevisions;
-		if (revIter.hasNext()) {
-			final File firstRevFile = revIter.next();
-			final String firstRevPrefix = firstRevFile.getName().substring(0, 3);
-			final File atsFile = new File(ATS_DUMP_DIR, firstRevPrefix + "AutomataForReuse.ats");
-			atsFileForLaterRevisions = getFirstRevAtsFile(firstRevFile);
-			if (!ONLY_REST) {
-				final AfterTest funAfterTest = () -> renameAndMove(firstRevFile, atsFile);
-				urds.add(new UltimateRunDefinition(firstRevFile, SETTINGS_NO_REUSE_DUMP, TOOLCHAIN, getTimeout(),
-						funAfterTest));
-			}
-		} else {
-			return;
+	private TreeSet<File> prune(final TreeSet<File> value) {
+		if (!ONLY_FIRST || value.isEmpty()) {
+			return value;
 		}
+		return new TreeSet<>(Collections.singleton(value.first()));
+	}
 
-		if (ONLY_FIRST) {
-			return;
-		}
-
+	/**
+	 * Generate test cases where we generate .ats files for all revisions but do not use .ats files as input
+	 */
+	private void runDumpNoReuse(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds,
+			final File settings, final boolean onlyFirstRevision) {
+		int internalRevision = 0;
 		while (revIter.hasNext()) {
-			final File currentRev = revIter.next();
-			urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions },
-					SETTINGS_EAGER_REUSE, TOOLCHAIN, getTimeout()));
+			final File currentProgram = revIter.next();
+			if (onlyFirstRevision && internalRevision > 0) {
+				break;
+			}
+			final String programRevPrefix = currentProgram.getName().substring(0, 3);
+			final File dumpedAtsFile = new File(ATS_DUMP_DIR, programRevPrefix + "AutomataForReuse.ats");
+
+			final int funAfterTestRevision = internalRevision;
+			final AfterTest funAfterTest = () -> renameAndMove(currentProgram, dumpedAtsFile, funAfterTestRevision);
+			urds.add(new UltimateRunDefinition(currentProgram, settings, TOOLCHAIN, getTimeout(), funAfterTest));
+
+			internalRevision++;
 		}
 	}
 
 	/**
-	 * Generate test cases where we use the .ats file from the first revision for all the revisions.
+	 * Generate test cases where we use the .ats file from some revision for all the revisions of a program. Expects
+	 * that the .ats file exists when the test case is executed.
 	 */
-	private void runAllReuseFirstSequence(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds,
-			final File settings) {
-		final File atsFileForLaterRevisions;
-		if (revIter.hasNext()) {
-			final File firstRevFile = revIter.next();
-			atsFileForLaterRevisions = getFirstRevAtsFile(firstRevFile);
-			if (!ONLY_REST) {
-				urds.add(new UltimateRunDefinition(new File[] { firstRevFile, atsFileForLaterRevisions }, settings,
-						TOOLCHAIN, getTimeout()));
-			}
-		} else {
-			return;
-		}
-
-		if (ONLY_FIRST) {
-			return;
-		}
+	private void runNoDumpReuseSpecificRevision(final Iterator<File> revIter,
+			final Collection<UltimateRunDefinition> urds, final File settings, final int reuseRevision) {
 
 		while (revIter.hasNext()) {
-			final File currentRev = revIter.next();
-			urds.add(new UltimateRunDefinition(new File[] { currentRev, atsFileForLaterRevisions }, settings, TOOLCHAIN,
+			final File currentProgram = revIter.next();
+			final File targetAtsFile = getAtsFile(currentProgram, reuseRevision);
+			urds.add(new UltimateRunDefinition(new File[] { currentProgram, targetAtsFile }, settings, TOOLCHAIN,
 					getTimeout()));
 		}
 	}
 
 	/**
-	 * Generate test cases where we do not use .ats files and just use the vanilla Automizer.
+	 * Generate test cases where we just use program revisions as input and neither dump nor use .ats files.
 	 */
-	private void runAllVanilla(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds) {
-		if (!revIter.hasNext()) {
-			return;
-		}
-
-		final File firstRevFile = revIter.next();
-		if (!ONLY_REST) {
-			urds.add(new UltimateRunDefinition(firstRevFile, SETTINGS_VANILLA, TOOLCHAIN, getTimeout()));
-		}
-
-		if (ONLY_FIRST) {
-			return;
-		}
-
+	private void runNoDumpNoReuse(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds,
+			final File settings) {
 		while (revIter.hasNext()) {
-			final File currentRev = revIter.next();
-			urds.add(new UltimateRunDefinition(currentRev, SETTINGS_VANILLA, TOOLCHAIN, getTimeout()));
+			final File currentProgram = revIter.next();
+			urds.add(new UltimateRunDefinition(currentProgram, settings, TOOLCHAIN, getTimeout()));
 		}
 	}
 
-	private static File getFirstRevAtsFile(final File inputFile) {
-		final Path target = Paths.get(inputFile.getParent(), inputFile.getName() + "-firstRev.ats");
+	/**
+	 * Get the name of the .ats file for the given revision (we start counting revisions with 0 up to n and ignore any
+	 * pre-existing revision counts)
+	 *
+	 * @param inputFile
+	 *            The actual test file
+	 * @param internalRevision
+	 *            The revision of the file
+	 * @return A file object that points to the .ats file (the file may not yet exist)
+	 */
+	private static File getAtsFile(final File inputFile, final int internalRevision) {
+		final Path target = Paths.get(inputFile.getParent(),
+				inputFile.getName() + "-rev" + String.valueOf(internalRevision) + ".ats");
 		return target.toFile();
 	}
 
-	private static void renameAndMove(final File inputFile, final File atsFile) {
+	private static void renameAndMove(final File currentProgram, final File atsFile, final int internalRevision) {
 		if (atsFile.exists()) {
-			final Path target = getFirstRevAtsFile(inputFile).toPath();
+			final Path target = getAtsFile(currentProgram, internalRevision).toPath();
 			try {
 				Files.move(atsFile.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
+				TestUtil.deleteDirectoryContents(ATS_DUMP_DIR);
 			} catch (final IOException e) {
 				e.printStackTrace();
 			}
