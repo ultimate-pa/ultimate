@@ -204,6 +204,14 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	}
 	
 
+	public Collection<NODE> getLeafNodes() {
+		final Set<NODE> res = new HashSet<>();
+		for (final COMP comp : getLeafComponents()) {
+			res.add(comp.getRootNode());
+		}
+		return res;
+	}
+
 	
 	public Collection<NODE> getLeafNodes(final NODE root) {
 		final Set<NODE> res = new HashSet<>();

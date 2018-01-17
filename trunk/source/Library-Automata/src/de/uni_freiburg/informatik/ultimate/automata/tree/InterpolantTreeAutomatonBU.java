@@ -32,9 +32,11 @@ public class InterpolantTreeAutomatonBU<LETTER extends IRankedLetter, STATE> ext
 	//	return mReducer.filter(super.getSuccessors(source, letter));
 	}
 
+	/*
 	@Override
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final LETTER letter) {
 		return mReducer.reduceRules(super.getSuccessors(letter));
 	}
+	*/
 
 }

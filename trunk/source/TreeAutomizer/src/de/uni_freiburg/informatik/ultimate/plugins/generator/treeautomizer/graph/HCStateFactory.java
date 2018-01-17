@@ -272,7 +272,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				potential.add(state);
 			}
 		}
-		
+		return getImplicationGraph(constructBaseGraph(potential)).getLeafNodes();
+		/*
 		final Map<IPredicate, Set<IPredicate>> baseGraph = new HashMap<>();
 		final IPredicate[] preds = potential.toArray(new IPredicate[]{});
 		for (int i = 0; i < preds.length; ++i) {
@@ -288,7 +289,9 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 			}
 		}
 		// preCond ^ state ==> x1  ^ (x1 ==> x2) ^ (x2 ==> x3)    implies preCond ^ state ==> x3
-		return getImplicationGraph(baseGraph).getLeafNodes(dest);
+		//return getImplicationGraph(baseGraph).getLeafNodes(dest);
+		return getImplicationGraph(baseGraph).getLeafNodes();
+		*/
 	}
 
 }

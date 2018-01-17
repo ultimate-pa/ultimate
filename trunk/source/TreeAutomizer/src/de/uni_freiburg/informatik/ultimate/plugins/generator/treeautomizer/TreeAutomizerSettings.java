@@ -12,7 +12,7 @@ public class TreeAutomizerSettings {
 	/**
 	 * Introduce edges to the interpolant automaton during or before the difference operation (in refineAbstraction)?
 	 */
-	public static final boolean GENERALIZE_INTERPOLANT_AUTOMATON_UPFRONT = true;
+	public static final boolean GENERALIZE_INTERPOLANT_AUTOMATON_UPFRONT = false;
 
 	/**
 	 *
@@ -29,6 +29,6 @@ public class TreeAutomizerSettings {
 	/**
 	 * Apply minimization to current abstraction at the end of every CEGAR iteration?
 	 */
-	public static final TaMinimization MINIMIZATION = TaMinimization.HOPCROFT;
+	public static final TaMinimization MINIMIZATION = TaMinimization.NAIVE;
 
 }
