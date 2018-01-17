@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxCheckerSyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
@@ -64,9 +65,9 @@ public final class DeltaDebuggerPreferences extends UltimatePreferenceInitialize
 			"Specify the name of a type that represents an Ultimate result "
 					+ "(i.e., some class implementing IResult with this name). "
 					+ "The delta debugger searchs for the presence of this result.";
-	private static final Class<?>[] RESULT_TYPE_CLASSES =
-			new Class<?>[] { ExceptionOrErrorResult.class, SyntaxErrorResult.class, UnsupportedSyntaxResult.class,
-					TypeErrorResult.class, CounterExampleResult.class, AllSpecificationsHoldResult.class };
+	private static final Class<?>[] RESULT_TYPE_CLASSES = new Class<?>[] { ExceptionOrErrorResult.class,
+			SyntaxErrorResult.class, UnsupportedSyntaxResult.class, TypeErrorResult.class, CounterExampleResult.class,
+			AllSpecificationsHoldResult.class, SyntaxCheckerSyntaxErrorResult.class };
 
 	private static final String[] VALUES_RESULT_TYPES = Arrays.stream(RESULT_TYPE_CLASSES).map(a -> a.getSimpleName())
 			.collect(Collectors.toList()).toArray(new String[RESULT_TYPE_CLASSES.length]);
