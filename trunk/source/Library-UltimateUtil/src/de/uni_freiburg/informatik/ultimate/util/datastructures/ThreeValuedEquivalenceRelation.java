@@ -571,4 +571,9 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 		return false;
 	}
+
+	public void removeDisequality(final E elem1, final E elem2) {
+		mDisequalities.removePair(elem1, elem2);
+		mDisequalities.removePair(elem2, elem1);
+	}
 }

@@ -297,6 +297,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 	}
 
+	/**
+	 * Merge the equivalence classes of the given elements and report all equality and disequality propagations that
+	 * directly follow from that merge (according to fwcc and bwcc rules).
+	 *
+	 * @param elem1
+	 * @param elem2
+	 * @return
+	 */
 	public Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> doMergeAndComputePropagations(final ELEM elem1,
 			final ELEM elem2) {
 		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
@@ -313,6 +321,26 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mElementTVER.reportEquality(elem1, elem2);
 		if (mElementTVER.isInconsistent()) {
 			return null;
+		}
+
+		/*
+		 * It can happen we had a disequality between an element and a literal that becomes a disequality between two
+		 * literals through the merge.
+		 * Example:
+		 *  before: {{x} {1} {3}}, x != 3
+		 *    merge x, 1, new representative 1
+		 *   -->  {{x, 1}, {3}}, 1 != 3
+		 * We have to filter this out because we leave disequalities between literals implicit.
+		 */
+		if (elem1.isLiteral() || elem2.isLiteral()) {
+			final ELEM newRep = getRepresentativeElement(elem1);
+			assert newRep.isLiteral() : "if one element of an equivalence class is a literal, then it must be the "
+					+ "representative";
+			for (final ELEM unequalToMerged : mElementTVER.getRepresentativesUnequalTo(newRep)) {
+				if (unequalToMerged.isLiteral()) {
+					mElementTVER.removeDisequality(newRep, unequalToMerged);
+				}
+			}
 		}
 
 		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
