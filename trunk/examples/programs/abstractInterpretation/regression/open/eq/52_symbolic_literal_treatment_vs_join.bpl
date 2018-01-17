@@ -9,6 +9,9 @@
  *  Now if we join such a stat with, say x equals 2, then there is no equality
  *  constraint about x we can keep, but all the disequalities from literals
  *  other than 1 or 2 still hold.
+ *
+ * Note that this is especially hard for us because the literal 3 is not known
+ * to the analysis at the time of the join.
  */
 procedure main() {
   var x : int;
