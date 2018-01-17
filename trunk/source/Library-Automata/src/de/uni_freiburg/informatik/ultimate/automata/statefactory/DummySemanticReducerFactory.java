@@ -11,9 +11,9 @@ public class DummySemanticReducerFactory<STATE, LETTER> implements ISemanticRedu
 	}
 
 	@Override
-	public Iterable<STATE> getOptimalDestination(Iterable<STATE> states, List<STATE> src, LETTER letter,
-			Set<STATE> dest) {
-		return null;
+	public Iterable<STATE> getOptimalDestination(final Iterable<STATE> states, final List<STATE> src,
+			final LETTER letter, final Iterable<STATE> dest) {
+		return dest;
 	}
 
 }

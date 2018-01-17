@@ -31,10 +31,11 @@ public interface ISemanticReducerFactory<STATE, LETTER> extends IStateFactory<ST
 	 *   			applications (Mostafa, Alex, 17.1.2018)
 	 *     			possible reason to keep the parameter: if a future implementation needs the original set of
 	 *     			successors/destinations
+	 *     		Mostafa: DummySemanticReducer is using the destination states, so we can keep it in the interface
 	 * @return
 	 */
 	Iterable<STATE> getOptimalDestination(final Iterable<STATE> states,
-			final List<STATE> src, final LETTER letter, final Set<STATE> dest);
+			final List<STATE> src, final LETTER letter, final Iterable<STATE> dest);
 
 	/***
 	 * Reduce a set of rules using the provided filtering states method.

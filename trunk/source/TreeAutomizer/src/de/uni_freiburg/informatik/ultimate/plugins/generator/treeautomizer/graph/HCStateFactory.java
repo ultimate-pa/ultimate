@@ -86,6 +86,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	private int mSer;
 
 	private final ILogger mLogger;
+	
+	private final boolean mDummySemanticReduction;
 
 	/***
 	 * HornClause State factory constructor.
@@ -98,6 +100,21 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
 			final ILogger logger, final PredicateUnifier predicateUnifier,
 			final HCHoareTripleChecker hoareChecker) {
+		this(backendSmtSolverScript, predicateFactory, logger, predicateUnifier, hoareChecker, false);
+	}
+
+
+	/***
+	 * HornClause State factory constructor.
+	 *
+	 * @param backendSmtSolverScript
+	 * @param predicateFactory
+	 * @param predicateUnifier
+	 * @param symbolTable
+	 */
+	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
+			final ILogger logger, final PredicateUnifier predicateUnifier,
+			final HCHoareTripleChecker hoareChecker, final boolean dummySemanticReduction) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
 
 		mLogger = logger;
@@ -106,6 +123,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mHoareTripleChecker = hoareChecker;
+		mDummySemanticReduction = dummySemanticReduction;
 		mSer = 0;
 	}
 
@@ -238,25 +256,28 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		return sccComputer;
 	}
 	
-	@Override
-	public Iterable<IPredicate> filter(final Iterable<IPredicate> states) {
-		//return states;
-
+	public Iterable<IPredicate> filterUnconditonally(final Iterable<IPredicate> states) {
 		final SccComputation<IPredicate, StronglyConnectedComponent<IPredicate>> sccComputer = getImplicationGraph(states);
 		final Set<IPredicate> res = new HashSet<>();
 		for (final StronglyConnectedComponent<IPredicate> leaf : sccComputer.getLeafComponents()) {
 			res.add(leaf.getRootNode());
 		}
-
 		return res;
-
 	}
-
+	
+	@Override
+	public Iterable<IPredicate> filter(final Iterable<IPredicate> states) {
+		if (mDummySemanticReduction) {
+			return states;
+		}
+		return filterUnconditonally(states);
+	}
 
 	@Override
 	public Iterable<IPredicate> getOptimalDestination(final Iterable<IPredicate> states, 
 			final List<IPredicate> src, final HornClause letter,
-			final Set<IPredicate> dest) {
+			final Iterable<IPredicate> dest) {
+		
 		
 		final Set<IPredicate> potential = new HashSet<>();
 		for (final IPredicate state : states) {
@@ -265,33 +286,18 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				potential.add(state);
 			}
 		}
+		
+		/*
+		 * assert that all destination states are in the set of states
 		for (final IPredicate state : dest) {
-
 			// preCond ^ state ==> dest
 			if (mHoareTripleChecker.check(src, letter, state) == Validity.VALID) {
 				potential.add(state);
 			}
 		}
-		return getImplicationGraph(constructBaseGraph(potential)).getLeafNodes();
-		/*
-		final Map<IPredicate, Set<IPredicate>> baseGraph = new HashMap<>();
-		final IPredicate[] preds = potential.toArray(new IPredicate[]{});
-		for (int i = 0; i < preds.length; ++i) {
-			
-			baseGraph.put(preds[i], new HashSet<>());
-			for (int j = 0; j < preds.length; ++j) {
-				if (i != j) {
-					if (mHoareTripleChecker.check(src, letter,
-							mPredicateFactory.newPredicate(implicationStatement(preds[i], preds[j]))) == Validity.VALID) {
-						baseGraph.get(preds[i]).add(preds[j]);
-					}
-				}
-			}
-		}
-		// preCond ^ state ==> x1  ^ (x1 ==> x2) ^ (x2 ==> x3)    implies preCond ^ state ==> x3
-		//return getImplicationGraph(baseGraph).getLeafNodes(dest);
-		return getImplicationGraph(baseGraph).getLeafNodes();
 		*/
+		
+		return filterUnconditonally(potential);
 	}
 
 }
