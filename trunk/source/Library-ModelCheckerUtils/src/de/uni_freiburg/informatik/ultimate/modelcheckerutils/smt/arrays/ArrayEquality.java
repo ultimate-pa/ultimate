@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -55,20 +55,20 @@ public class ArrayEquality {
 		this(term, false, false);
 	}
 
-	public ArrayEquality(final Term term, final boolean allowDisequalities, final boolean allowConstants) 
+	public ArrayEquality(final Term term, final boolean allowDisequalities, final boolean allowConstants)
 					throws ArrayEqualityException {
 
 		if (!(term instanceof ApplicationTerm)) {
 			throw new ArrayEqualityException("no ApplicationTerm");
 		}
-		
+
 		final ApplicationTerm appTerm = (ApplicationTerm) term;
-		
-		
-		boolean isNotEqualsAppTerm = (appTerm.getFunction().getName().equals("not") 
+
+
+		final boolean isNotEqualsAppTerm = (appTerm.getFunction().getName().equals("not")
 				&& appTerm.getParameters()[0] instanceof ApplicationTerm
 				&& ((ApplicationTerm) appTerm.getParameters()[0]).getFunction().getName().equals("="));
-		boolean isDisEquality = appTerm.getFunction().getName().equals("distinct")
+		final boolean isDisEquality = appTerm.getFunction().getName().equals("distinct")
 				|| isNotEqualsAppTerm;
 
 		mIsNegated = isDisEquality;
@@ -131,33 +131,33 @@ public class ArrayEquality {
 	public TermVariable getRhsTermVariable() {
 		return (TermVariable) mRhs;
 	}
-	
+
 	public boolean isNegated() {
 		return mIsNegated;
 	}
-	
-	public static List<ArrayEquality> extractArrayEqualities(Term term) {
-		HashSet<String> functionSymbolNames = new HashSet<>(3);
+
+	public static List<ArrayEquality> extractArrayEqualities(final Term term) {
+		final HashSet<String> functionSymbolNames = new HashSet<>(3);
 		functionSymbolNames.add("=");
 		functionSymbolNames.add("distinct");
 		functionSymbolNames.add("not");
 
-		List<ArrayEquality> result = new ArrayList<>();
+		final List<ArrayEquality> result = new ArrayList<>();
 
-		ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
-		for (ApplicationTerm subterm : atf.findMatchingSubterms(term)) {
+		final ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
+		for (final ApplicationTerm subterm : atf.findMatchingSubterms(term)) {
 			ArrayEquality arrayEquality = null;
 			try {
 				arrayEquality = new ArrayEquality(subterm, true, true);
-			} catch (ArrayEqualityException e) {
+			} catch (final ArrayEqualityException e) {
 				continue;
 			}
 			result.add(arrayEquality);
 		}
 		return result;
 	}
-	
-	private static boolean isTermVarOrConst(Term t) {
+
+	private static boolean isTermVarOrConst(final Term t) {
 		if (t instanceof TermVariable) {
 			return true;
 		} else if (t instanceof ConstantTerm) {
@@ -173,8 +173,8 @@ public class ArrayEquality {
 	public String toString() {
 		return mOriginalTerm.toString();
 	}
-	
-	private class ArrayEqualityException extends Exception {
+
+	public class ArrayEqualityException extends Exception {
 
 		private static final long serialVersionUID = -5344050289008681972L;
 
@@ -182,7 +182,7 @@ public class ArrayEquality {
 			super(message);
 		}
 	}
-	
+
 	/**
 	 * Given an array of terms, partition them into terms that are array
 	 * equalities and terms that are not array equalities.
