@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2016-2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE HeapSeparator plug-in.
  *
@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,68 +44,92 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
 /**
  * Does a preanalysis on the program before the actual heap separation is done
- * (using the abstract interpretation result from the equality domain).
- * Computes:
- *  <li> which arrays are equated, anywhere in the program (occur left and right each of an equality in a TransFormula)
- *  <li> for each array in the program the locations where it is accessed (this functionality is deprecated as of
- *   Jan '18)
+ *
+ * Computes of each icfg edge the subterms of the edge's TransFormula that are subject to transformation by the heap
+ * separator.
+ * These are divided into:
+ * <li> cell updates (array updates where the lhs and rhs array refer to the same program variable)
+ * <li> array relations (equalities where the lhs and rhs have array type -stores are allowed- and which are not cell
+ *  updates )
+ * <li> cell accesses (essentially select terms)
+ *
+ * Furthermore from the result of this preanalysis we can compute the groups of arrays whose partitioning has to be
+ * aligned because they are assigned to each other.
  *
  * @author Alexander Nutz
  *
  */
 public class HeapSepPreAnalysis {
 
-	private final HashRelation<Term, IcfgLocation> mArrayToAccessLocations;
 
-	private final HashRelation<Term, ArrayIndex> mArrayToAccessingIndices;
+	// unclear if ArrayUpdate is the right choice here -- what about store chains?, also it uses MultiDimensionalStore..
+	private final HashRelation<EdgeInfo, ArrayUpdate> mEdgeToCellUpdates;
 
-	private final SymmetricHashRelation<Term> mArrayEqualities;
+	private final HashRelation<EdgeInfo, ArrayEqualityAllowStores> mEdgeToArrayRelations;
 
-	private final ManagedScript mScript;
+	private final HashRelation<EdgeInfo, ArrayCellAccess> mEdgeToArrayCellAccesses;
+
+	private final ManagedScript mMgdScript;
 
 	/**
-	 * The HeapSepPreAnalysisVisitor computes and provides the following
-	 * information:
-	 *  <li> which arrays (base arrays, not store terms) are equated in the
-	 * program
-	 *  <li> for each array at which locations in the CFG it is accessed
 	 *
 	 * @param logger
 	 * @param equalityProvider
 	 */
-	public HeapSepPreAnalysis(final ILogger logger, final ManagedScript script) {
-		mArrayToAccessLocations = new HashRelation<>();
-		mArrayToAccessingIndices = new HashRelation<>();
-		mScript = script;
-		mArrayEqualities = new SymmetricHashRelation<>();
+	public HeapSepPreAnalysis(final ILogger logger, final ManagedScript mgdScript) {
+		mMgdScript = mgdScript;
+
+		mEdgeToCellUpdates = new HashRelation<>();
+		mEdgeToArrayCellAccesses = new HashRelation<>();
+		mEdgeToArrayRelations = new HashRelation<>();
 	}
 
 	public void processEdge(final IcfgEdge edge) {
 		final UnmodifiableTransFormula tf = edge.getTransformula();
 
-		final List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
-		for (final ArrayEquality aeq : aeqs) {
-			final Term first = VPDomainHelpers.normalizeTerm(aeq.getLhs(), tf, mScript);
-			final Term second = VPDomainHelpers.normalizeTerm(aeq.getRhs(), tf, mScript);
+		final EdgeInfo edgeInfo = new EdgeInfo(edge);
 
-			mArrayEqualities.addPair(first, second);
+		/*
+		 * subterms that have already been put into one of the maps
+		 */
+		final Set<Term> visitedSubTerms = new HashSet<>();
+
+		for (final ArrayUpdate au : ArrayUpdate.extractArrayUpdates(tf.getFormula())) {
+			final IProgramVar newArrayPv = getVarForTerm(au.getNewArray(), tf.getOutVars()) ;
+			final IProgramVar oldArrayPv = getVarForTerm((TermVariable) au.getOldArray(), tf.getInVars()) ;
+
+			assert au.getNewArray() != au.getOldArray() : "that would be a strange case, no?..";
+			assert !au.isNegatedEquality() : "strange case";
+
+			if (newArrayPv.equals(oldArrayPv)) {
+				mEdgeToCellUpdates.addPair(edgeInfo, au);
+				visitedSubTerms.add(au.getArrayUpdateTerm());
+			}
 		}
 
-		mArrayToAccessLocations.addAll(findArrayAccesses(edge));
+		for (final ArrayEqualityAllowStores aeas
+				: ArrayEqualityAllowStores.extractArrayEqualityAllowStores(tf.getFormula())) {
+			if (visitedSubTerms.contains(aeas.getTerm(mMgdScript.getScript()))) {
+				// term is already stored as a cell update
+				continue;
+			}
+			mEdgeToArrayRelations.addPair(edgeInfo, aeas);
+		}
 
-		mArrayToAccessingIndices.addAll(findAccessingIndices(edge));
+		for (final ArrayCellAccess aca : ArrayCellAccess.extractArrayCellAccesses(tf.getFormula())) {
+			mEdgeToArrayCellAccesses.addPair(edgeInfo, aca);
+		}
 	}
 
 	private HashRelation<Term, ArrayIndex> findAccessingIndices(final IcfgEdge edge) {
@@ -121,8 +146,8 @@ public class HeapSepPreAnalysis {
 		final List<MultiDimensionalSelect> mdSelectsFiltered = mdSelectsAll.stream()
 				.filter(mds -> isArrayTracked(mds.getArray(), tf)).collect(Collectors.toList());
 		for (final MultiDimensionalSelect mds : mdSelectsFiltered) {
-			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
-			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript);
+			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mMgdScript);
+			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mMgdScript);
 			assert index.size() == new MultiDimensionalSort(mds.getArray().getSort()).getDimension();
 			result.addPair(array, index);
 		}
@@ -140,8 +165,8 @@ public class HeapSepPreAnalysis {
 		// mScript),
 		// VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript)));
 		for (final MultiDimensionalStore mds : mdStoresFiltered) {
-			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
-			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript);
+			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mMgdScript);
+			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mMgdScript);
 			// assert index.size() == mds.getArray().getSort().getArguments().length - 1;
 			assert index.size() == new MultiDimensionalSort(mds.getArray().getSort()).getDimension();
 			result.addPair(array, index);
@@ -183,17 +208,29 @@ public class HeapSepPreAnalysis {
 		return result;
 	}
 
-	SymmetricHashRelation<Term> getArrayEqualities() {
-		return mArrayEqualities;
+//	SymmetricHashRelation<Term> getArrayEqualities() {
+//		return mArrayEqualities;
+//	}
+
+	Set<Term> getArraysAsTerms() {
+		// TODO
+		assert false;
+		return null;
 	}
 
-	HashRelation<Term, IcfgLocation> getArrayToAccessLocations() {
-		return mArrayToAccessLocations;
+	Set<IProgramVar> getArraysAsProgramVars() {
+		// TODO
+		assert false;
+		return null;
 	}
 
-	public HashRelation<Term, ArrayIndex> getArrayToAccessingIndices() {
-		return mArrayToAccessingIndices;
-	}
+//	HashRelation<Term, IcfgLocation> getArrayToAccessLocations() {
+//		return mArrayToAccessLocations;
+//	}
+//
+//	public HashRelation<Term, ArrayIndex> getArrayToAccessingIndices() {
+//		return mArrayToAccessingIndices;
+//	}
 
 	public Term getInnerMostArray(final Term arrayTerm) {
 		assert arrayTerm.getSort().isArraySort();
@@ -216,11 +253,11 @@ public class HeapSepPreAnalysis {
 		return innerArray;
 	}
 
-	public Set<ArrayIndex> getAccessingIndicesForArrays(final Set<Term> arrayGroup) {
-		final Set<ArrayIndex> result = new HashSet<>();
-		arrayGroup.forEach(array -> result.addAll(getArrayToAccessingIndices().getImage(array)));
-		return result;
-	}
+//	public Set<ArrayIndex> getAccessingIndicesForArrays(final Set<Term> arrayGroup) {
+//		final Set<ArrayIndex> result = new HashSet<>();
+//		arrayGroup.forEach(array -> result.addAll(getArrayToAccessingIndices().getImage(array)));
+//		return result;
+//	}
 
 	private boolean isArrayTracked(final IProgramVarOrConst array) {
 		return true;
@@ -228,5 +265,14 @@ public class HeapSepPreAnalysis {
 
 	private boolean isArrayTracked(final Term array, final UnmodifiableTransFormula tf) {
 		return true;
+	}
+
+	IProgramVar getVarForTerm(final TermVariable tv, final Map<IProgramVar, TermVariable> map) {
+		for (final Entry<IProgramVar, TermVariable> en: map.entrySet()) {
+			if (en.getValue() == tv) {
+				return en.getKey();
+			}
+		}
+		throw new IllegalArgumentException();
 	}
 }

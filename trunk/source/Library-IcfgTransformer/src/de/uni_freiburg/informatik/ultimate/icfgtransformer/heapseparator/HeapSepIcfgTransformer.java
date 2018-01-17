@@ -104,7 +104,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		// TODO : where do we get this variable from?
 		final IProgramVar validArray = null;
 
-		final NestedMap2<Term, TfInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar;
+		final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar;
 
 		/*
 		 * 1. Execute the preprocessing
@@ -161,12 +161,17 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mEqualityProvider.preprocess(preprocessedIcfg);
 
 		/*
-		 * 3. compute an array partitioning
+		 * 3a. look up all locations where
+		 *  <li> an array cell is accessed
+		 *  <li> two arrays are related
 		 */
-
 		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger,
 				originalIcfg.getCfgSmtToolkit().getManagedScript());
 		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
+
+		/*
+		 * 3b. compute an array partitioning
+		 */
 
 		final NewArrayIdProvider newArrayIdProvider;
 		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
@@ -181,22 +186,15 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 *  Note that this transformation is done on the original input Icfg, not on the output of the
 		 *  ArrayIndexExposer, which we ran the equality analysis on.
 		 */
-//		final HeapSepTransFormulaTransformer hstftf = new HeapSepTransFormulaTransformer(csToolkit, services,
-//				equalityProvider);
-//
-//		hstftf.preprocessIcfg(originalIcfg);
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final ITransformulaTransformer transformer = null;
+		final ITransformulaTransformer transformer = new HeapSepTransFormulaTransformer(originalIcfg.getCfgSmtToolkit(),
+				mLogger, newArrayIdProvider);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
 				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 		mResultIcfg = resultIcfg;
-//		return resultIcfg;
-//		final BasicIcfg<OUTLOC> resultIcfg =
-//				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-//		mResultIcfg = null;
 	}
 
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {

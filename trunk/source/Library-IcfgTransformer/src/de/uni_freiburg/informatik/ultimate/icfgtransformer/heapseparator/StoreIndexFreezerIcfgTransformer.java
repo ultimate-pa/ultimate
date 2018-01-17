@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
-	private final NestedMap2<Term, TfInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
+	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
 			new NestedMap2<>();
 //	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
@@ -65,7 +65,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	@Override
 	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
 		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
-				new TfInfo(oldTransition));
+				new EdgeInfo(oldTransition));
 
 		if (oldTransition instanceof IcfgInternalTransition) {
 			// TODO: is this the right payload?
@@ -88,7 +88,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	}
 //
 	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
-			final TfInfo tfInfo) {
+			final EdgeInfo tfInfo) {
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
 
@@ -154,7 +154,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		return tfBuilder.finishConstruction(mMgdScript);
 	}
 
-	private IProgramNonOldVar getFreezeVariable(final Term indexTerm, final TfInfo tfInfo) {
+	private IProgramNonOldVar getFreezeVariable(final Term indexTerm, final EdgeInfo tfInfo) {
 		IProgramNonOldVar result = mWriteIndexToTfInfoToFreezeVar.get(indexTerm, tfInfo);
 		if (result == null) {
 			result = ProgramVarUtils.constructGlobalProgramVarPair(
@@ -162,7 +162,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 						mMgdScript, this);
 			/*
 			 *  we don't need to do anything for the symbol table here it seems, because the TransformedIcfgBuilder
-			 *  recognizes new variables in the Transformula
+			 *  recognizes new variables in the TransFormula
 			 */
 //			mNewSymbolTable.add(result);
 			mWriteIndexToTfInfoToFreezeVar.put(indexTerm, tfInfo, result);
@@ -170,15 +170,21 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		return result;
 	}
 
-	public NestedMap2<Term, TfInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
+	public NestedMap2<Term, EdgeInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
 		return mWriteIndexToTfInfoToFreezeVar;
 	}
 }
 
-class TfInfo {
+/**
+ * Wrapper for an IcfgEdge that carries information about the edge that we are interested in in the heap separator.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
+class EdgeInfo {
 	IcfgEdge mEdge;
 
-	TfInfo(final IcfgEdge edge) {
+	EdgeInfo(final IcfgEdge edge) {
 		mEdge = edge;
 	}
 

@@ -37,9 +37,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -47,8 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPD
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -61,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -79,24 +74,24 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	 * arrayId before separation --> arrayId after separation--> Set of pointerIds
 	 */
 	private final ManagedScript mMgdScript;
-	private NewArrayIdProvider mNewArrayIdProvider;
+	private final NewArrayIdProvider mNewArrayIdProvider;
 
 	private final IIcfgSymbolTable mOldSymbolTable;
 	private IIcfgSymbolTable mNewSymbolTable;
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
-	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
+//	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
 	private final HeapSeparatorBenchmark mStatistics;
 
-	public HeapSepTransFormulaTransformer(final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
-			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
+	public HeapSepTransFormulaTransformer(final CfgSmtToolkit csToolkit, final ILogger logger,
+			final NewArrayIdProvider newArrayIdProvider) {
+//			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 		mMgdScript = csToolkit.getManagedScript();
 		mOldSymbolTable = csToolkit.getSymbolTable();
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(IcfgTransformer.class);
+		mLogger = logger;
 		mCsToolkit = csToolkit;
-		mEqualityProvider = equalityProvider;
+//		mEqualityProvider = equalityProvider;
+		mNewArrayIdProvider = newArrayIdProvider;
 		mStatistics = new HeapSeparatorBenchmark();
 	}
 
@@ -510,12 +505,12 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 		 *  <li> which arrays are equated in the program
 		 *  <li> at which indices each array is accessed
 		 */
-		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger,
-				icfg.getCfgSmtToolkit().getManagedScript());
-		new IcfgEdgeIterator(icfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
-
-
-		mEqualityProvider.preprocess(icfg);
+//		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger,
+//				icfg.getCfgSmtToolkit().getManagedScript());
+//		new IcfgEdgeIterator(icfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
+//
+//
+//		mEqualityProvider.preprocess(icfg);
 
 		/*
 		 * compute the partitioning from the above results, in particular compute which array will translate to which
@@ -524,11 +519,11 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 
 //		mNewArrayIdProvider =
 //				new NewArrayIdProvider(mCsToolkit, mEqualityProvider, heapSepPreanalysis, mStatistics);
-		mNewSymbolTable = mNewArrayIdProvider.getNewSymbolTable();
+//		mNewSymbolTable = mNewArrayIdProvider.getNewSymbolTable();
 
-		mLogger.info("IcfgTransformer_HeapSeparator: Computed the following array partitioning from the given"
-				+ "equality information:");
-		mLogger.info(mNewArrayIdProvider.toString());
+//		mLogger.info("IcfgTransformer_HeapSeparator: Computed the following array partitioning from the given"
+//				+ "equality information:");
+//		mLogger.info(mNewArrayIdProvider.toString());
 	}
 
 

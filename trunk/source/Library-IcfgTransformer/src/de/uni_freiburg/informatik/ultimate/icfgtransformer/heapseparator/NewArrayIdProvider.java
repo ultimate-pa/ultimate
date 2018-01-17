@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -79,7 +78,7 @@ public class NewArrayIdProvider {
 	public NewArrayIdProvider(final CfgSmtToolkit csToolkit,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final HeapSepPreAnalysis hspav,
-			final NestedMap2<Term, TfInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar,
+			final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar,
 			final HeapSeparatorBenchmark statistics) {
 		mManagedScript = csToolkit.getManagedScript();
 		mOldSymbolTable = csToolkit.getSymbolTable();
@@ -105,37 +104,37 @@ public class NewArrayIdProvider {
 				equalityProvider, hspav, arrayGroupingUf);
 
 
-		/*
-		 * Compute the actual partitioning for each array.
-		 */
-		for (final Entry<Set<Term>, IEqualityProvidingState> en : arrayGroupToVPState.entrySet()) {
-			final Set<Term> arrayGroup = en.getKey();
-			final IEqualityProvidingState state = en.getValue();
-
-			final UnionFind<ArrayIndex> uf = new UnionFind<>();
-			for (final ArrayIndex accessingTerm : hspav.getAccessingIndicesForArrays(arrayGroup)) {
-				uf.findAndConstructEquivalenceClassIfNeeded(accessingTerm);
-			}
-			// TODO: optimization: compute partitioning on the equivalence class representatives instead
-			// of all nodes
-			for (final ArrayIndex accessingNode1 : hspav.getAccessingIndicesForArrays(arrayGroup)) {
-				for (final ArrayIndex accessingNode2 : hspav.getAccessingIndicesForArrays(arrayGroup)) {
-					assert accessingNode1.size() == accessingNode2.size();
-					boolean anyUnequal = false;
-					for (int i = 0; i < accessingNode1.size(); i++) {
-						anyUnequal |= state.areUnequal(accessingNode1.get(i), accessingNode2.get(i));
-					}
-
-					if (!anyUnequal) {
-						uf.union(accessingNode1, accessingNode2);
-					}
-				}
-			}
-			for (final Set<ArrayIndex> ec : uf.getAllEquivalenceClasses()) {
-				registerEquivalenceClass(arrayGroup, ec);
-				mStatistics.incrementEquivalenceClassCounter();
-			}
-		}
+//		/*
+//		 * Compute the actual partitioning for each array.
+//		 */
+//		for (final Entry<Set<Term>, IEqualityProvidingState> en : arrayGroupToVPState.entrySet()) {
+//			final Set<Term> arrayGroup = en.getKey();
+//			final IEqualityProvidingState state = en.getValue();
+//
+//			final UnionFind<ArrayIndex> uf = new UnionFind<>();
+//			for (final ArrayIndex accessingTerm : hspav.getAccessingIndicesForArrays(arrayGroup)) {
+//				uf.findAndConstructEquivalenceClassIfNeeded(accessingTerm);
+//			}
+//			// TODO: optimization: compute partitioning on the equivalence class representatives instead
+//			// of all nodes
+//			for (final ArrayIndex accessingNode1 : hspav.getAccessingIndicesForArrays(arrayGroup)) {
+//				for (final ArrayIndex accessingNode2 : hspav.getAccessingIndicesForArrays(arrayGroup)) {
+//					assert accessingNode1.size() == accessingNode2.size();
+//					boolean anyUnequal = false;
+//					for (int i = 0; i < accessingNode1.size(); i++) {
+//						anyUnequal |= state.areUnequal(accessingNode1.get(i), accessingNode2.get(i));
+//					}
+//
+//					if (!anyUnequal) {
+//						uf.union(accessingNode1, accessingNode2);
+//					}
+//				}
+//			}
+//			for (final Set<ArrayIndex> ec : uf.getAllEquivalenceClasses()) {
+//				registerEquivalenceClass(arrayGroup, ec);
+//				mStatistics.incrementEquivalenceClassCounter();
+//			}
+//		}
 
 	}
 
@@ -154,13 +153,13 @@ public class NewArrayIdProvider {
 			final HeapSepPreAnalysis hspav, final UnionFind<Term> arrayGroupingUf) {
 		final HashRelation<Set<Term>, IcfgLocation> arrayGroupToAccessLocations = new HashRelation<>();
 
-		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
-			for (final Term array : ec) {
-				for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
-					arrayGroupToAccessLocations.addPair(ec, loc);
-				}
-			}
-		}
+//		for (final Set<Term> ec : arrayGroupingUf.getAllEquivalenceClasses()) {
+//			for (final Term array : ec) {
+//				for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
+//					arrayGroupToAccessLocations.addPair(ec, loc);
+//				}
+//			}
+//		}
 
 		final Map<Set<Term>, IEqualityProvidingState> arrayGroupToVPState = new HashMap<>();
 		for (final Set<Term> arrayGroup : arrayGroupingUf.getAllEquivalenceClasses()) {
@@ -178,21 +177,21 @@ public class NewArrayIdProvider {
 	 */
 	protected UnionFind<Term> computeArrayGroups(final HeapSepPreAnalysis hspav) {
 		final UnionFind<Term> arrayGroupingUf = new UnionFind<>();
-		for (final Term array : hspav.getArrayToAccessLocations().getDomain()) {
-			arrayGroupingUf.findAndConstructEquivalenceClassIfNeeded(array);
-		}
-		for (final Entry<Term, Term> pair : hspav.getArrayEqualities()) {
-			if (arrayGroupingUf.find(pair.getKey()) == null) {
-				continue;
-			}
-			if (arrayGroupingUf.find(pair.getValue()) == null) {
-				continue;
-			}
-			arrayGroupingUf.union(pair.getKey(), pair.getValue());
-		}
-		arrayGroupingUf.getAllEquivalenceClasses();
-
-		mStatistics.setNoArrays(hspav.getArrayToAccessLocations().getDomain().size());
+//		for (final Term array : hspav.getArrayToAccessLocations().getDomain()) {
+//			arrayGroupingUf.findAndConstructEquivalenceClassIfNeeded(array);
+//		}
+//		for (final Entry<Term, Term> pair : hspav.getArrayEqualities()) {
+//			if (arrayGroupingUf.find(pair.getKey()) == null) {
+//				continue;
+//			}
+//			if (arrayGroupingUf.find(pair.getValue()) == null) {
+//				continue;
+//			}
+//			arrayGroupingUf.union(pair.getKey(), pair.getValue());
+//		}
+//		arrayGroupingUf.getAllEquivalenceClasses();
+//
+//		mStatistics.setNoArrays(hspav.getArrayToAccessLocations().getDomain().size());
 		mStatistics.setNoArrayGroups(arrayGroupingUf.getAllEquivalenceClasses().size());
 		return arrayGroupingUf;
 	}
