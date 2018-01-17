@@ -98,6 +98,9 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
+		// fill mRawFloydHoareAutomataFromFile
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ReuseTime);
+
 		final boolean debugOn = false;
 		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFile = new ArrayList<>();
 
@@ -166,6 +169,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size()
 				+ " Floyd-Hoare automata from previous error locations.");
 		mLogger.info("Reusing " + floydHoareAutomataFromFile.size() + " Floyd-Hoare automata from ats files.");
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
 	}
 
 	private static final IPredicate getPredicateFromString(final PredicateFactory predicateFactory, final String str,
