@@ -98,15 +98,15 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
-		final boolean debugOn = true;
+		final boolean debugOn = false;
 		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFile = new ArrayList<>();
 
 		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
 
 			// create a fresh predicate unifier for each automaton (much better performance)
-			final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-			mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+					mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 			// Create map from strings to all equivalent "new" letters (abstraction letters)
 			final HashMap<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
