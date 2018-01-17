@@ -27,10 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 
 /**
  * @author Yannick Bühler
@@ -38,9 +41,16 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  */
 public class TypeHelper {
 
-	public static CType typeFromSpecifier(final IASTDeclSpecifier ds) {
+	public static CType typeFromSpecifier(final FlatSymbolTable fs, final IASTDeclSpecifier ds) {
 		if (ds instanceof IASTSimpleDeclSpecifier) {
 			return new CPrimitive(ds);
+		} else if (ds instanceof IASTNamedTypeSpecifier) {
+			final IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) ds;
+			final String rslvName = fs.applyMultiparseRenaming(ds.getContainingFilename(), nts.getName().toString());
+			if (!fs.containsCSymbol(ds, rslvName)) {
+				throw new UnsupportedSyntaxException(null, "Typedef used before collected");
+			}
+			return fs.findCSymbol(ds, rslvName).getCDecl().getType();
 		}
 		throw new UnsupportedOperationException("only simple decl specifiers are currently supported");
 	}

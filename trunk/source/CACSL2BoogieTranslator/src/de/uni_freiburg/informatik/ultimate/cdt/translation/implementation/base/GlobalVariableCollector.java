@@ -62,7 +62,7 @@ public class GlobalVariableCollector extends ASTVisitor {
 			return super.visit(raw);
 		}
 		final IASTSimpleDeclaration sd = (IASTSimpleDeclaration) raw;
-		final CType type = TypeHelper.typeFromSpecifier(sd.getDeclSpecifier());
+		final CType type = TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier());
 		for (IASTDeclarator decl : sd.getDeclarators()) {
 			final String cId = mSymTab.applyMultiparseRenaming(raw.getContainingFilename(), decl.getName().toString());
 			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, type, false, cId);

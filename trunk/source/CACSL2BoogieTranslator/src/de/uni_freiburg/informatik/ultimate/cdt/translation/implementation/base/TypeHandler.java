@@ -284,6 +284,8 @@ public class TypeHandler implements ITypeHandler {
 	public Result visit(final Dispatcher main, final IASTEnumerationSpecifier node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final String cId = node.getName().toString();
+		final String rslvName = 
+				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String enumId = main.mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
@@ -311,7 +313,7 @@ public class TypeHandler implements ITypeHandler {
 		final String incompleteTypeName = "ENUM~" + cId;
 		if (mIncompleteType.contains(incompleteTypeName)) {
 			mIncompleteType.remove(incompleteTypeName);
-			final TypesResult incompleteType = mDefinedTypes.get(cId);
+			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
 			final CEnum incompleteEnum = (CEnum) incompleteType.cType;
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
@@ -321,7 +323,7 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		if (!enumId.equals(SFO.EMPTY)) {
-			mDefinedTypes.put(cId, result);
+			mDefinedTypes.put(rslvName, result);
 		}
 
 		return result;
@@ -334,9 +336,11 @@ public class TypeHandler implements ITypeHandler {
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
 			final String type = node.getName().toString();
+			final String rslvName = 
+					main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), type);
 
 			// if (mDefinedTypes.containsKey(type)) {
-			final TypesResult originalType = mDefinedTypes.get(type);
+			final TypesResult originalType = mDefinedTypes.get(rslvName);
 			// if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
 			// // --> we have an incomplete enum --> do nothing
 			// //(i cannot think of an effect of an incomplete enum declaration right now..)
@@ -372,7 +376,7 @@ public class TypeHandler implements ITypeHandler {
 			final TypesResult r =
 					new TypesResult(new NamedType(loc, incompleteTypeName, new ASTType[0]), false, false, ctype);
 
-			mDefinedTypes.put(type, r);
+			mDefinedTypes.put(rslvName, r);
 
 			return r;
 		}
@@ -416,6 +420,8 @@ public class TypeHandler implements ITypeHandler {
 		structCounter--;
 
 		final String cId = node.getName().toString();
+		final String rslvName = 
+				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 
 		CStruct cvar;
 		String name = null;
@@ -437,7 +443,7 @@ public class TypeHandler implements ITypeHandler {
 
 		if (mIncompleteType.contains(name)) {
 			mIncompleteType.remove(name);
-			final TypesResult incompleteType = mDefinedTypes.get(cId);
+			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
 			final CStruct incompleteStruct = (CStruct) incompleteType.cType;
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
@@ -447,7 +453,7 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		if (!cId.equals(SFO.EMPTY)) {
-			mDefinedTypes.put(cId, result);
+			mDefinedTypes.put(rslvName, result);
 		}
 		return result;
 	}

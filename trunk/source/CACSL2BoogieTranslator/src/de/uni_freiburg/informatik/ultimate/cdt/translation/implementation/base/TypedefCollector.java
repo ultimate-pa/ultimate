@@ -61,7 +61,7 @@ public class TypedefCollector extends ASTVisitor {
 			assert sd.getDeclarators().length == 1 : "unexpected length of decltr array";
 			final String name = sd.getDeclarators()[0].getName().toString();
 			final String explName = mSymTab.applyMultiparseRenaming(sd.getContainingFilename(), name);
-			final CNamed container = new CNamed(explName, TypeHelper.typeFromSpecifier(sd.getDeclSpecifier()));
+			final CNamed container = new CNamed(explName, TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier()));
 			final CDeclaration tdCdecl = new CDeclaration(container, explName);
 			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, tdCdecl.getType(), false, explName);
 			final SymbolTableValue stv = new SymbolTableValue(bId, null, tdCdecl, true, raw, false);
