@@ -39,6 +39,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		implements IStatisticsDataProvider {
 
 	private Object mResult;
+	private final StatisticsData mReuseStats = new StatisticsData();
 	private final StatisticsData mEcData = new StatisticsData();
 	private final StatisticsData mPuData = new StatisticsData();
 	private final StatisticsData mTcData = new StatisticsData();
@@ -50,7 +51,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
 	private int mIterations = 0;
 	private int mAbsIntIterations = 0;
-	private int mNonReuseIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
 	private BackwardCoveringInformation mBCI = new BackwardCoveringInformation(0, 0);
 	private int mAbsIntStrong = 0;
@@ -71,12 +71,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mResult = result;
 	}
 
-	public void addReusePredicateUnifierData(final IStatisticsDataProvider pubd) {
-		mPuData.aggregateBenchmarkData(pubd);
-	}
-
-	public void addReuseEdgeCheckerData(final IStatisticsDataProvider ecbd) {
-		mEcData.aggregateBenchmarkData(ecbd);
+	public void addReuseStats(final IStatisticsDataProvider reuseStats) {
+		mReuseStats.aggregateBenchmarkData(reuseStats);
 	}
 
 	public void addEdgeCheckerData(final IStatisticsDataProvider ecbd) {
@@ -110,11 +106,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public int announceNextAbsIntIteration() {
 		mAbsIntIterations++;
 		return mAbsIntIterations;
-	}
-
-	public int announceNextNonreuseIteration() {
-		mNonReuseIterations++;
-		return mNonReuseIterations;
 	}
 
 	public void announceStrongAbsInt() {
@@ -196,6 +187,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return (double) mAiWeakeningConjunctReductionSum / (double) mAiWeakeningConjunctReductionNum;
 		case HoareTripleCheckerStatistics:
 			return mEcData;
+		case REUSE_STATISTICS:
+			return mReuseStats;
 		case PredicateUnifierStatistics:
 			return mPuData;
 		case traceCheckStatistics:
@@ -212,8 +205,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mTraceHistogramMaximum;
 		case AbstIntIterations:
 			return mAbsIntIterations;
-		case NonReuseIterations:
-			return mNonReuseIterations;
 		case AbstIntStrong:
 			return mAbsIntStrong;
 		case BiggestAbstraction:

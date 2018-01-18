@@ -31,8 +31,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -63,6 +66,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  * Subclass of {@link BasicCegarLoop} in which we initially subtract from the abstraction a set of given Floyd-Hoare
@@ -80,6 +89,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	protected final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 	protected List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromFile;
 
+	protected final ReuseStatisticsGenerator mReuseStats;
+
+	private boolean mStatsAlreadyAggregated = false;
+
 	public ReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
@@ -92,6 +105,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
 		mRawFloydHoareAutomataFromFile = rawFloydHoareAutomataFromFile;
 		mFloydHoareAutomataFromFile = new ArrayList<>();
+		mReuseStats = new ReuseStatisticsGenerator();
 	}
 
 	@Override
@@ -99,9 +113,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		super.getInitialAbstraction();
 
 		// fill mRawFloydHoareAutomataFromFile
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ReuseTime);
+		mReuseStats.continueTime();
 
-		final boolean debugOn = false;
 		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFile = new ArrayList<>();
 
 		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
@@ -118,10 +131,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getInternalAlphabet());
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getReturnAlphabet());
-			// Print debug information for letters
-			if (debugOn) {
-				countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter, mLogger);
-			}
+			// compute stats for letters
+			countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter, mLogger);
 			// Create empty automaton with same alphabet
 			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 					new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
@@ -148,11 +159,11 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			}
 			final int totalStates = removedStates + reusedStates;
 			assert (totalStates == resAutomaton.size());
-			mLogger.info(
-					"Reusing " + reusedStates + "/" + totalStates + " states when constructing automaton from file.");
+			mReuseStats.addReusedStates(reusedStates);
+			mReuseStats.addTotalStates(totalStates);
 			// Add transitions
 			addTransitionsFromRawAutomaton(resAutomaton, rawAutomatonFromFile, mapStringToLetter, mapStringToState,
-					mapStateToString, debugOn, mLogger);
+					mapStateToString, mLogger);
 
 			// Add capability for on-demand extension to automata from file.
 			final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(
@@ -162,14 +173,22 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			floydHoareAutomataFromFile.add(resAutomaton);
 
 			// save various stats
-			mCegarLoopBenchmark.addReusePredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
-			mCegarLoopBenchmark.addReuseEdgeCheckerData(htc.getEdgeCheckerBenchmark());
-
+			mReuseStats.reportPredicateUnifierStats(predicateUnifier.getPredicateUnifierBenchmark());
+			mReuseStats.reportHtcStats(htc.getEdgeCheckerBenchmark());
 		}
-		mLogger.info("Reusing " + mFloydHoareAutomataFromOtherErrorLocations.size()
-				+ " Floyd-Hoare automata from previous error locations.");
-		mLogger.info("Reusing " + floydHoareAutomataFromFile.size() + " Floyd-Hoare automata from ats files.");
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
+		mReuseStats.addAutomataFromFile(floydHoareAutomataFromFile.size());
+		mReuseStats.addAutomataFromPreviousErrorLocation(mFloydHoareAutomataFromOtherErrorLocations.size());
+		mReuseStats.stopTime();
+	}
+
+	@Override
+	public CegarLoopStatisticsGenerator getCegarLoopBenchmark() {
+		// hacky: I know that this is only called during iterate, so we aggregate our benchmark in the cegar loop
+		// benchmark right before that.
+		assert !mStatsAlreadyAggregated;
+		mStatsAlreadyAggregated = true;
+		mCegarLoopBenchmark.addReuseStats(mReuseStats);
+		return super.getCegarLoopBenchmark();
 	}
 
 	private static final IPredicate getPredicateFromString(final PredicateFactory predicateFactory, final String str,
@@ -208,8 +227,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	 * LETTER in the new alphabet (reused letters), and those that were not matched to any object (removed letters).
 	 * These two numbers are printed to the provided log. This function should only be used for debugging purposes.
 	 */
-	private static final <LETTER> void countReusedAndRemovedLetters(final VpAlphabet<String> orgAlphabet,
-			final HashMap<String, Set<LETTER>> map, final ILogger logger) {
+	private final void countReusedAndRemovedLetters(final VpAlphabet<String> orgAlphabet,
+			final Map<String, Set<LETTER>> map, final ILogger logger) {
 		int removedLetters = 0;
 		int reusedLetters = 0;
 		final Set<String> letters = new HashSet<>();
@@ -224,15 +243,14 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			}
 		}
 		final int totalLetters = removedLetters + reusedLetters;
-		logger.info(
-				"Reusing " + reusedLetters + "/" + totalLetters + " letters when constructing automaton from file.");
+		mReuseStats.addReusedLetters(reusedLetters);
+		mReuseStats.addTotalLetters(totalLetters);
 	}
 
-	private static final <LETTER> void addTransitionsFromRawAutomaton(
-			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton,
+	private final void addTransitionsFromRawAutomaton(final NestedWordAutomaton<LETTER, IPredicate> resAutomaton,
 			final NestedWordAutomaton<String, String> rawAutomatonFromFile,
-			final HashMap<String, Set<LETTER>> mapStringToLetter, final HashMap<String, IPredicate> mapStringToState,
-			final HashMap<IPredicate, String> mapStateToString, final Boolean debugOn, final ILogger logger) {
+			final Map<String, Set<LETTER>> mapStringToLetter, final Map<String, IPredicate> mapStringToState,
+			final Map<IPredicate, String> mapStateToString, final ILogger logger) {
 		final int[] reusedAndRemoved = { 0, 0 };
 		// Index 0 is for Reused, index 1 is for removed
 		for (final IPredicate predicateState : resAutomaton.getStates()) {
@@ -245,15 +263,13 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 					mapStringToState, resAutomaton, predicateState, reusedAndRemoved);
 		}
 		final int totalTransitions = reusedAndRemoved[0] + reusedAndRemoved[1];
-		if (debugOn) {
-			logger.info("Reusing " + reusedAndRemoved[0] + "/" + totalTransitions
-					+ " transitions when constructing automaton from file.");
-		}
+		mReuseStats.addReusedTransitions(reusedAndRemoved[0]);
+		mReuseStats.addTotalTransitions(totalTransitions);
 	}
 
-	private static final <LETTER, E extends IOutgoingTransitionlet<String, String>> void addTransitionsFromState(
-			final Iterable<E> transitionsIterator, final HashMap<String, Set<LETTER>> mapStringToLetter,
-			final HashMap<String, IPredicate> mapStringToFreshState,
+	private final <E extends IOutgoingTransitionlet<String, String>> void addTransitionsFromState(
+			final Iterable<E> transitionsIterator, final Map<String, Set<LETTER>> mapStringToLetter,
+			final Map<String, IPredicate> mapStringToFreshState,
 			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton, final IPredicate predicateState,
 			final int[] reusedAndRemovedTransitions) {
 		for (final E transition : transitionsIterator) {
@@ -312,6 +328,212 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		} else {
 			logger.warn("Unexpected result from String's split function. String parsing failed.");
 			return null;
+		}
+	}
+
+	public static enum ReuseStatisticsDefinitions implements IStatisticsElement {
+
+		REUSED_STATES(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		TOTAL_STATES(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		REUSED_LETTERS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		TOTAL_LETTERS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		REUSED_TRANSITIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		TOTAL_TRANSITIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		NONREUSE_ITERATIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		AUTOMATA_FROM_FILE(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		AUTOMATA_FROM_PREV_ERROR_LOC(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		REUSE_PREDICATE_UNIFIER(IStatisticsDataProvider.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+				StatisticsType.KEY_BEFORE_DATA),
+
+		REUSE_HTC(IStatisticsDataProvider.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+				StatisticsType.KEY_BEFORE_DATA),
+
+		REUSE_TIME(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_TIME),;
+
+		private final Class<?> mClazz;
+		private final Function<Object, Function<Object, Object>> mAggr;
+		private final Function<String, Function<Object, String>> mPrettyprinter;
+
+		ReuseStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
+				final Function<String, Function<Object, String>> prettyprinter) {
+			mClazz = clazz;
+			mAggr = aggr;
+			mPrettyprinter = prettyprinter;
+		}
+
+		@Override
+		public Object aggregate(final Object o1, final Object o2) {
+			return mAggr.apply(o1).apply(o2);
+		}
+
+		@Override
+		public String prettyprint(final Object o) {
+			return mPrettyprinter.apply(name()).apply(o);
+		}
+
+		@Override
+		public Class<?> getDataType() {
+			return mClazz;
+		}
+	}
+
+	public static final class ReuseStatisticsType extends StatisticsType<ReuseStatisticsDefinitions> {
+
+		private static final ReuseStatisticsType INSTANCE = new ReuseStatisticsType();
+
+		public ReuseStatisticsType() {
+			super(ReuseStatisticsDefinitions.class);
+		}
+
+		public static ReuseStatisticsType getInstance() {
+			return INSTANCE;
+		}
+	}
+
+	public static final class ReuseStatisticsGenerator implements IStatisticsDataProvider {
+
+		private final StatisticsData mPredicateUnifierStats;
+		private final Benchmark mTime;
+		private final StatisticsData mHtcStats;
+
+		private boolean mRunning = false;
+		private int mAutomataFromFile;
+		private int mAutomataFromPreviousErrorLocation;
+		private int mReusedStates;
+		private int mTotalStates;
+		private int mReusedLetters;
+		private int mTotalLetters;
+		private int mReusedTransitions;
+		private int mTotalTransitions;
+		private int mNonReuseIterations;
+
+		public ReuseStatisticsGenerator() {
+			mPredicateUnifierStats = new StatisticsData();
+			mHtcStats = new StatisticsData();
+			mTime = new Benchmark();
+			mTime.register(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME));
+			mAutomataFromFile = 0;
+			mAutomataFromPreviousErrorLocation = 0;
+			mReusedStates = 0;
+			mTotalStates = 0;
+			mReusedLetters = 0;
+			mTotalLetters = 0;
+			mReusedTransitions = 0;
+			mTotalTransitions = 0;
+			mNonReuseIterations = 0;
+		}
+
+		public void reportPredicateUnifierStats(final IStatisticsDataProvider stats) {
+			mPredicateUnifierStats.aggregateBenchmarkData(stats);
+		}
+
+		public void reportHtcStats(final IStatisticsDataProvider stats) {
+			mHtcStats.aggregateBenchmarkData(stats);
+		}
+
+		public void addAutomataFromFile(final int value) {
+			mAutomataFromFile = mAutomataFromFile + value;
+		}
+
+		public void addAutomataFromPreviousErrorLocation(final int value) {
+			mAutomataFromPreviousErrorLocation = mAutomataFromPreviousErrorLocation + value;
+		}
+
+		public void addTotalStates(final int value) {
+			mTotalStates = mTotalStates + value;
+		}
+
+		public void addReusedStates(final int value) {
+			mReusedStates = mReusedStates + value;
+		}
+
+		public void addTotalLetters(final int value) {
+			mTotalLetters = mTotalLetters + value;
+		}
+
+		public void addReusedLetters(final int value) {
+			mReusedLetters = mReusedLetters + value;
+		}
+
+		public void addTotalTransitions(final int value) {
+			mTotalTransitions = mTotalTransitions + value;
+		}
+
+		public void addReusedTransitions(final int value) {
+			mReusedTransitions = mReusedTransitions + value;
+		}
+
+		public void announceNextNonreuseIteration() {
+			mNonReuseIterations++;
+		}
+
+		public long getTime() {
+			return (long) mTime.getElapsedTime(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME),
+					TimeUnit.NANOSECONDS);
+		}
+
+		public void continueTime() {
+			assert !mRunning : "Timing already running";
+			mRunning = true;
+			mTime.unpause(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME));
+		}
+
+		public void stopTime() {
+			assert mRunning : "Timing not running";
+			mRunning = false;
+			mTime.pause(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME));
+		}
+
+		@Override
+		public Collection<String> getKeys() {
+			return ReuseStatisticsType.getInstance().getKeys();
+		}
+
+		@Override
+		public Object getValue(final String key) {
+			final ReuseStatisticsDefinitions keyEnum = Enum.valueOf(ReuseStatisticsDefinitions.class, key);
+			switch (keyEnum) {
+			case REUSE_PREDICATE_UNIFIER:
+				return mPredicateUnifierStats;
+			case REUSE_TIME:
+				return getTime();
+			case NONREUSE_ITERATIONS:
+				return mNonReuseIterations;
+			case REUSE_HTC:
+				return mHtcStats;
+			case AUTOMATA_FROM_FILE:
+				return mAutomataFromFile;
+			case AUTOMATA_FROM_PREV_ERROR_LOC:
+				return mAutomataFromPreviousErrorLocation;
+			case REUSED_STATES:
+				return mReusedStates;
+			case TOTAL_STATES:
+				return mTotalStates;
+			case REUSED_LETTERS:
+				return mReusedLetters;
+			case REUSED_TRANSITIONS:
+				return mReusedTransitions;
+			case TOTAL_LETTERS:
+				return mTotalLetters;
+			case TOTAL_TRANSITIONS:
+				return mTotalTransitions;
+			default:
+				throw new UnsupportedOperationException("Unknown key: " + keyEnum);
+			}
+		}
+
+		@Override
+		public IStatisticsType getBenchmarkType() {
+			return ReuseStatisticsType.getInstance();
 		}
 	}
 

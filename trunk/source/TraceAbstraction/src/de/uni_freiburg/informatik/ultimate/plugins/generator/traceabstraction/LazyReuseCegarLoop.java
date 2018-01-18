@@ -88,7 +88,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ReuseTime);
+		mReuseStats.continueTime();
 		mIsCounterexampleAccepted = false;
 		for (int i = 0; i < mReuseAutomata.size(); i++) {
 			final AbstractInterpolantAutomaton<LETTER> ai = mReuseAutomata.get(i);
@@ -126,7 +126,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 					final AbstractInterpolantAutomaton<LETTER> removed = mReuseAutomata.remove(i);
 					assert (removed.equals(ai));
 					mLogger.info("Cex is accepted by automaton number " + i + " in the current list.");
-					mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
+					mReuseStats.stopTime();
 
 					return LBool.UNSAT;
 				}
@@ -136,9 +136,9 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 				break;
 			}
 		}
-		mCegarLoopBenchmark.announceNextNonreuseIteration();
+		mReuseStats.stopTime();
+		mReuseStats.announceNextNonreuseIteration();
 		// None of the preexisting automata accepts the counterexample - make a non-reuse iteration
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
 		return super.isCounterexampleFeasible();
 	}
 
@@ -152,7 +152,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		if (mIsCounterexampleAccepted) {
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.ReuseTime);
+			mReuseStats.continueTime();
 			final AbstractInterpolantAutomaton<LETTER> ai = mAutomatonAcceptingCounterexample;
 			int internalTransitionsBeforeDifference = 0;
 			if (ENHANCE) {
@@ -191,7 +191,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 			final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
 					(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.ReuseTime);
+			mReuseStats.stopTime();
 			return !stillAccepted;
 
 		}

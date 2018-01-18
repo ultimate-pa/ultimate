@@ -33,9 +33,9 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
@@ -86,8 +86,6 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	AbstIntIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	NonReuseIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
-
 	AbstIntStrong(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	AbsIntWeakeningRatio(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
@@ -103,7 +101,9 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 			StatisticsType.KEY_BEFORE_DATA),
 
 	RefinementEngineStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
-			StatisticsType.KEY_BEFORE_DATA),;
+			StatisticsType.KEY_BEFORE_DATA),
+
+	REUSE_STATISTICS(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
