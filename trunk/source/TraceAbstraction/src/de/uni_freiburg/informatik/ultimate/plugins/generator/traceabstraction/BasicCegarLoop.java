@@ -649,7 +649,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	private void dumpOrAppendAutomatonForReuseIfEnabled(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, final boolean append) {
-		if (mPref.dumpAutomata()) {
+		if (mPref.dumpOnlyReuseAutomata()) {
 			final String[] splitRes = mTaskIdentifier.toString().split("\\.", 2);
 			String programName = "";
 			if (splitRes.length == 2) {

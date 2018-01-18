@@ -76,6 +76,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
 	public static final String LABEL_AUTOMATAFORMAT = "Output format of dumped automata";
 	public static final String LABEL_DUMPPATH = "Dump automata to the following directory";
+	public static final String LABEL_DUMP_ONLY_REUSE = "Dump only reuse-automata";
 	public static final String LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT = "Interpolant automaton enhancement";
 	public static final String LABEL_HOARE_TRIPLE_CHECKS = "Hoare triple checks";
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
@@ -164,6 +165,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private static final Boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
+	private static final boolean DEF_ONLY_REUSE = false;
+
+	public static final String DESC_DUMP_ONLY_REUSE =
+			"When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it exists s.t. it can be reused by later verification runs.";
 
 	/**
 	 * Constructor.
@@ -226,6 +231,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo,
 						Format.values()),
 				new UltimatePreferenceItem<>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_DUMP_ONLY_REUSE, DEF_ONLY_REUSE, DESC_DUMP_ONLY_REUSE,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo,
 						InterpolantAutomatonEnhancement.values()),

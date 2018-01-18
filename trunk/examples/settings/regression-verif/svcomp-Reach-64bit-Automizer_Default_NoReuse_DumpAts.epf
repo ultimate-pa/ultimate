@@ -46,6 +46,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopsAndPotentialCycles
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ only\ reuse-automata=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ the\ following\ directory=./automata-dump
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Output\ format\ of\ dumped\ automata=ATS
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Reuse\ of\ Floyd-Hoare\ automata=NONE
