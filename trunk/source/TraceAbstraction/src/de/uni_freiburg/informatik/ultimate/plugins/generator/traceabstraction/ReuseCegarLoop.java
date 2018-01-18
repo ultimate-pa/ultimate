@@ -40,6 +40,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
@@ -81,9 +82,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  *
  */
 public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
-
-	// whether reused automata should be extended to "new" letters
-	protected static final boolean ENHANCE = true;
 
 	protected final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromOtherErrorLocations;
 	protected final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
@@ -128,7 +126,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			// Create empty automaton with same alphabet
 			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 					new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-			final ReuseCegarLoop<LETTER>.ReuseAutomaton reuseAutomaton = new ReuseAutomaton(resAutomaton);
+			final ReuseAutomaton reuseAutomaton = new ReuseAutomaton(resAutomaton);
 
 			// Add states
 			final Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
@@ -325,9 +323,12 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	}
 
 	public final class ReuseAutomaton {
+		private static final boolean ENHANCE = true;
+
 		private final PredicateUnifier mPredicateUnifier;
 		private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
 		private final IHoareTripleChecker mHtc;
+		private AbstractInterpolantAutomaton<LETTER> mEnhancedAutomaton;
 
 		private ReuseAutomaton(final NestedWordAutomaton<LETTER, IPredicate> automaton) {
 			mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
@@ -338,7 +339,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			mAutomaton = automaton;
 		}
 
-		public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
+		public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getAutomaton() {
+			if (ENHANCE) {
+				return getEnhancedInterpolantAutomaton();
+			}
 			return mAutomaton;
 		}
 
@@ -350,11 +354,13 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			return mPredicateUnifier;
 		}
 
-		public AbstractInterpolantAutomaton<LETTER> constructAbstractInterpolantAutomaton() {
-			return constructInterpolantAutomatonForOnDemandEnhancement(mAutomaton, mPredicateUnifier, mHtc,
-					InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);
+		public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getEnhancedInterpolantAutomaton() {
+			if (mEnhancedAutomaton == null) {
+				mEnhancedAutomaton = constructInterpolantAutomatonForOnDemandEnhancement(mAutomaton, mPredicateUnifier,
+						mHtc, InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);
+			}
+			return mEnhancedAutomaton;
 		}
-
 	}
 
 	public static enum ReuseStatisticsDefinitions implements IStatisticsElement {
