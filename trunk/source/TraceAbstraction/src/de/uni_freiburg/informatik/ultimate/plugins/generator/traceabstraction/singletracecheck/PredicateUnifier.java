@@ -728,24 +728,24 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 	public enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
 
-		DeclaredPredicates(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+		DeclaredPredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		GetRequests(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+		GetRequests(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SyntacticMatches(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+		SyntacticMatches(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SemanticMatches(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+		SemanticMatches(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		ConstructedPredicates(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+		ConstructedPredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		IntricatePredicates(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+		IntricatePredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		DeprecatedPredicates(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+		DeprecatedPredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		ImplicationChecksByTransitivity(Integer.class, StatisticsType.sIntegerAddition,
-				StatisticsType.sDataBeforeKey),
+		ImplicationChecksByTransitivity(Integer.class, StatisticsType.INTEGER_ADDITION,
+				StatisticsType.DATA_BEFORE_KEY),
 
-		Time(Integer.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),;
+		Time(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),;
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

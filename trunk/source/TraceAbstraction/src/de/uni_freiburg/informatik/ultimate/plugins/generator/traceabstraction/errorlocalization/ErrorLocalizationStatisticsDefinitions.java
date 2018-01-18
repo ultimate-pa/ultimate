@@ -36,20 +36,20 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement {
 
-	SuccesfullyFinished(Result.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+	SuccesfullyFinished(Result.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	ErrorLocalizationTime(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
+	ErrorLocalizationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	IcfgEdges(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+	IcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	ErrorEnforcingIcfgEdges(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+	ErrorEnforcingIcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 	
-	ErrorAdmittingIcfgEdges(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+	ErrorAdmittingIcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 	
-	ErrorIrrelevantIcfgEdges(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+	ErrorIrrelevantIcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.sStatisticsDataAggregation,
-			StatisticsType.sKeyBeforeData),
+	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 	;
 
 	private final Class<?> mClazz;

@@ -105,23 +105,23 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 
 	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
 
-		SDtfs(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
+		SDtfs(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SDslu(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
+		SDslu(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SDs(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
+		SDs(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SdLazy(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
+		SdLazy(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SolverSat(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
+		SolverSat(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SolverUnsat(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
+		SolverUnsat(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SolverUnknown(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
+		SolverUnknown(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		SolverNotchecked(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
+		SolverNotchecked(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		Time(Integer.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),;
+		Time(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),;
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

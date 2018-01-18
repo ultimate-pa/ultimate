@@ -37,13 +37,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
  */
 public enum AutomataMinimizationStatisticsDefinitions implements IStatisticsElement {
 
-	AutomataMinimizationTime(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
+	AutomataMinimizationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 	
-	MinimizatonAttempts(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
+	MinimizatonAttempts(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	StatesRemovedByMinimization(Long.class, StatisticsType.sLongAddition, StatisticsType.sDataBeforeKey),
+	StatesRemovedByMinimization(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 	
-	NontrivialMinimizations(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey);
+	NontrivialMinimizations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;

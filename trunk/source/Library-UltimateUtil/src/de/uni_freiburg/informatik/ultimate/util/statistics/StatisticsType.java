@@ -9,23 +9,24 @@ import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 public abstract class StatisticsType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
 
-	public static Function<Object, Function<Object, Object>> sIntegerAddition = x -> y -> (Integer) x + (Integer) y;
-	public static Function<Object, Function<Object, Object>> sLongAddition = x -> y -> (Long) x + (Long) y;
-	public static Function<Object, Function<Object, Object>> sIncareAddition = x -> y -> {
+	public static final Function<Object, Function<Object, Object>> INTEGER_ADDITION =
+			x -> y -> (Integer) x + (Integer) y;
+	public static final Function<Object, Function<Object, Object>> LONG_ADDITION = x -> y -> (Long) x + (Long) y;
+	public static final Function<Object, Function<Object, Object>> IN_CA_RE_ADDITION = x -> y -> {
 		((InCaReCounter) x).add((InCaReCounter) y);
 		return x;
 	};
-	public static Function<Object, Function<Object, Object>> sDoubleAddition = x -> y -> (Double) x + (Double) y;
-	public static Function<Object, Function<Object, Object>> sStatisticsDataAggregation = x -> y -> {
+	public static final Function<Object, Function<Object, Object>> DOUBLE_ADDITION = x -> y -> (Double) x + (Double) y;
+	public static final Function<Object, Function<Object, Object>> STATISTICS_DATA_AGGREGATION = x -> y -> {
 		((StatisticsData) x).aggregateBenchmarkData((StatisticsData) y);
 		return x;
 	};
-	public static Function<String, Function<Object, String>> sKeyBeforeData = key -> data -> key + ": " + data;
-	public static Function<String, Function<Object, String>> sDataBeforeKey =
+	public static final Function<String, Function<Object, String>> KEY_BEFORE_DATA = key -> data -> key + ": " + data;
+	public static final Function<String, Function<Object, String>> DATA_BEFORE_KEY =
 			key -> data -> String.valueOf(data) + ' ' + key;
-	public static final Function<String, Function<Object, String>> FUN_TIME_BEFORE_KEY =
+	public static final Function<String, Function<Object, String>> TIME_BEFORE_KEY =
 			key -> time -> prettyprintNanoseconds((Long) time) + " " + key;
-	public static Function<Object, Function<Object, Object>> sIntegerMaximum =
+	public static final Function<Object, Function<Object, Object>> INTEGER_MAX =
 			x -> y -> Math.max((Integer) x, (Integer) y);
 
 	private final Class<T> mKeyType;
@@ -47,8 +48,7 @@ public abstract class StatisticsType<T extends Enum<T> & IStatisticsElement> imp
 	@Override
 	public Object aggregate(final String key, final Object value1, final Object value2) {
 		final T keyEnum = Enum.valueOf(mKeyType, key);
-		final Object result = keyEnum.aggregate(value1, value2);
-		return result;
+		return keyEnum.aggregate(value1, value2);
 	}
 
 	@Override

@@ -35,14 +35,14 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 public enum RefinementEngineStatisticsDefinitions implements IStatisticsElement {
 	
 	
-	TraceCheckStatistics(StatisticsData.class, StatisticsType.sStatisticsDataAggregation,
-			StatisticsType.sKeyBeforeData),
+	TraceCheckStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 	
-	InvariantSynthesisStatistics(StatisticsData.class, StatisticsType.sStatisticsDataAggregation,
-			StatisticsType.sKeyBeforeData),
+	InvariantSynthesisStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 	
-	InterpolantConsolidationStatistics(StatisticsData.class, StatisticsType.sStatisticsDataAggregation,
-			StatisticsType.sKeyBeforeData),
+	InterpolantConsolidationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 	
 	;
 	

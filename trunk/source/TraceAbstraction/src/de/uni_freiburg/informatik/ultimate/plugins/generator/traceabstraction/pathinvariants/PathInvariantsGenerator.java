@@ -249,56 +249,56 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
 		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall
 		// iteration
-		ProgramSizeConjuncts(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
-		ProgramSizeDisjuncts(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		ProgramSizeConjuncts(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+		ProgramSizeDisjuncts(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of path program locations for each overall iteration
-		ProgramLocs(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		ProgramLocs(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of path program locations for each overall iteration after Lbe has been applied
-		ProgramLocsLbe(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		ProgramLocsLbe(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of path program variables for each overall iteration
-		ProgramVars(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		ProgramVars(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of template inequalities per location per round per iteration
-		SumOfTemplateInequalities(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		SumOfTemplateInequalities(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the minimum size of all templates occurring in the most recent round
-		SizeOfLargestTemplate(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
+		SizeOfLargestTemplate(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 		// the minimum size of all templates occurring in the most recent round
-		SizeOfSmallestTemplate(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
+		SizeOfSmallestTemplate(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 		// the maximum of the sum of template inequalities per round
-		MaxNumOfInequalities(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
+		MaxNumOfInequalities(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 		// the maximum number of rounds
-		MaxRound(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
+		MaxRound(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of variables per location per round
-		SumVarsPerLoc(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		SumVarsPerLoc(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of the difference of all variables and the live variables per location per round
-		SumNonLiveVarsPerLoc(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		SumNonLiveVarsPerLoc(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		SumNonUnsatCoreLocs(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		SumNonUnsatCoreLocs(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		SumNonUnsatCoreVars(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		SumNonUnsatCoreVars(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the maximum DAG-size of (the sum of template inequalities per location per round) for normal constraints
-		TreeSizeNormalConstr(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
+		TreeSizeNormalConstr(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 		// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under-
 		// and/or Overapproximations
-		TreeSizeApproxConstr(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
+		TreeSizeApproxConstr(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.KEY_BEFORE_DATA),
 		// Number of Motzkin Transformations for normal constraints
-		MotzkinTransformationsNormalConstr(Integer.class, StatisticsType.sIntegerAddition,
-				StatisticsType.sKeyBeforeData),
+		MotzkinTransformationsNormalConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
+				StatisticsType.KEY_BEFORE_DATA),
 		// Number of Motzkin Transformations for constraints of Under- and/or Overapproximations
-		MotzkinTransformationsApproxConstr(Integer.class, StatisticsType.sIntegerAddition,
-				StatisticsType.sKeyBeforeData),
+		MotzkinTransformationsApproxConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
+				StatisticsType.KEY_BEFORE_DATA),
 		// Number of Motzkin Coefficients needed for normal constraints
-		MotzkinCoefficientsNormalConstr(Integer.class, StatisticsType.sIntegerAddition,
-				StatisticsType.sKeyBeforeData),
+		MotzkinCoefficientsNormalConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
+				StatisticsType.KEY_BEFORE_DATA),
 		// Number of Motzkin Coefficients needed for constraints of Under- and/or Overapproximations
-		MotzkinCoefficientsApproxConstr(Integer.class, StatisticsType.sIntegerAddition,
-				StatisticsType.sKeyBeforeData),
+		MotzkinCoefficientsApproxConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
+				StatisticsType.KEY_BEFORE_DATA),
 		// the sum of the time needed per round to solve the constraints
-		ConstraintsSolvingTime(Long.class, StatisticsType.sLongAddition, StatisticsType.sKeyBeforeData),
+		ConstraintsSolvingTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of the time needed per round to construct the constraints
-		ConstraintsConstructionTime(Long.class, StatisticsType.sLongAddition, StatisticsType.sKeyBeforeData),
+		ConstraintsConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// Sat status
 		SatStatus(String.class, s1 -> s2 -> new String((String) s1 + "; " + (String) s2),
-				StatisticsType.sKeyBeforeData);
+				StatisticsType.KEY_BEFORE_DATA);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

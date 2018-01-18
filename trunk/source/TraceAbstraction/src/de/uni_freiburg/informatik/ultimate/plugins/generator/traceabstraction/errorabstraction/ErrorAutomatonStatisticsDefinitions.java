@@ -34,19 +34,19 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
 public enum ErrorAutomatonStatisticsDefinitions implements IStatisticsElement {
-	NumberErrorTraces(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
-	NumberStatementsAllTraces(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
-	NumberRelevantStatements(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
-	ErrorAutomatonConstructionTimeTotal(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
-	FaulLocalizationTime(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
-	NumberStatementsFirstTrace(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
-	TraceLengthAvg(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
-	ErrorAutomatonConstructionTimeAvg(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
-	ErrorAutomatonDifferenceTimeAvg(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
-	ErrorAutomatonDifferenceTimeTotal(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
-	NumberOfNoEnhancement(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
-	NumberOfFiniteEnhancement(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
-	NumberOfInfiniteEnhancement(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData);
+	NumberErrorTraces(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	NumberStatementsAllTraces(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	NumberRelevantStatements(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	ErrorAutomatonConstructionTimeTotal(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	FaulLocalizationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	NumberStatementsFirstTrace(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	TraceLengthAvg(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	ErrorAutomatonConstructionTimeAvg(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	ErrorAutomatonDifferenceTimeAvg(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	ErrorAutomatonDifferenceTimeTotal(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	NumberOfNoEnhancement(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	NumberOfFiniteEnhancement(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+	NumberOfInfiniteEnhancement(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
