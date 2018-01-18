@@ -70,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	private static final String BENCHMARK_DIR = "examples/regression-verif";
-	private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
-	// private static final String ALLOWED_PROGS = null;
+	// private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
+	private static final String ALLOWED_PROGS = null;
 
 	private static final File TOOLCHAIN = UltimateRunDefinitionGenerator.getFileFromToolchainDir("AutomizerC.xml");
 
@@ -84,7 +84,9 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	private static final File SETTINGS_LAZY_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_LazyReuse.epf");
 	private static final File ATS_DUMP_DIR = new File("./automata-dump");
-	private static final boolean ONLY_FIRST = false;
+
+	private static final int FIRST_N_PROGRAMS = 2;
+	private static final int FIRST_N_REVISIONS_PER_PROGRAM = 2;
 
 	public RegressionVerificationTestSuite() {
 		super();
@@ -93,7 +95,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 90 * 1000;
+		return 900 * 1000;
 	}
 
 	@Override
@@ -118,7 +120,12 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 		final String fullPath = TestUtil.getPathFromTrunk(BENCHMARK_DIR);
 		final Map<String, TreeSet<File>> program2ListOfRevisions = getProgram2Revisions(fullPath);
 
+		int programCount = 0;
 		for (final Entry<String, TreeSet<File>> entry : program2ListOfRevisions.entrySet()) {
+			if (FIRST_N_PROGRAMS < programCount) {
+				break;
+			}
+
 			final TreeSet<File> revisions = prune(entry.getValue());
 
 			if (!isAllowed(allowedPrograms, revisions)) {
@@ -138,7 +145,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 			// run vanilla for comparison
 			runNoDumpNoReuse(revisions.iterator(), urds, SETTINGS_VANILLA);
-			break;
+			programCount++;
 		}
 
 		// call addTestCase
@@ -147,14 +154,20 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	}
 
 	/**
-	 * If we want to analyse only the first revision of all programs (ONLY_FIRST), remove all other revisions from the
+	 * If we want to analyse only the first revisions of all programs, remove all other revisions from the
 	 * {@link TreeSet}.
 	 */
 	private TreeSet<File> prune(final TreeSet<File> value) {
-		if (!ONLY_FIRST || value.isEmpty()) {
+		if (value.isEmpty()) {
 			return value;
 		}
-		return new TreeSet<>(Collections.singleton(value.first()));
+		final TreeSet<File> rtr = new TreeSet<>();
+		final Iterator<File> iter = value.iterator();
+		for (int i = 0; i < FIRST_N_REVISIONS_PER_PROGRAM && iter.hasNext(); ++i) {
+			rtr.add(iter.next());
+		}
+
+		return rtr;
 	}
 
 	/**
@@ -283,9 +296,14 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 				continue;
 			}
 			for (final File file : dirContent) {
-				final String[] filenameparts = file.getName().split("\\.");
+				final String filename = file.getName();
+				if (!filename.endsWith(".i") && !filename.endsWith(".c")) {
+					continue;
+				}
+
+				final String[] filenameparts = filename.split("\\.");
 				if (filenameparts.length < 3) {
-					System.err.println("Unknown naming for " + file.getName());
+					System.err.println("Unknown naming for " + filename);
 					continue;
 				}
 				final String fileId = currentDir.getName() + "-" + filenameparts[2];
