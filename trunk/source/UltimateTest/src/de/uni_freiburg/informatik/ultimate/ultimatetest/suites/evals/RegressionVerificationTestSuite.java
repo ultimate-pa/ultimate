@@ -70,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	private static final String BENCHMARK_DIR = "examples/regression-verif";
-	// private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
-	private static final String ALLOWED_PROGS = null;
+	private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
+	// private static final String ALLOWED_PROGS = null;
 
 	private static final File TOOLCHAIN = UltimateRunDefinitionGenerator.getFileFromToolchainDir("AutomizerC.xml");
 
@@ -84,7 +84,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	private static final File SETTINGS_LAZY_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_LazyReuse.epf");
 	private static final File ATS_DUMP_DIR = new File("./automata-dump");
-	private static final boolean ONLY_FIRST = true;
+	private static final boolean ONLY_FIRST = false;
 
 	public RegressionVerificationTestSuite() {
 		super();
@@ -93,7 +93,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 900 * 1000;
+		return 90 * 1000;
 	}
 
 	@Override
@@ -125,16 +125,20 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 				System.err.println(entry.getKey() + " is not allowed");
 				continue;
 			}
-			// dump .ats for the first/all (depending on last param) revision(s) of the program
-			runDumpNoReuse(revisions.iterator(), urds, SETTINGS_NO_REUSE_DUMP, true);
 
-			// run reuse with first revision for all enabled revisions (see prune(...) and ONLY_FIRST)
-			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE, 0);
-			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_LAZY_REUSE, 0);
+			final String marker = "noReuse";
+			final File targetAtsFile = getAtsFile(revisions.first(), marker);
+
+			// dump .ats for the first/all (depending on last param) revision(s) of the program
+			runDumpNoReuse(revisions.iterator(), urds, SETTINGS_NO_REUSE_DUMP, marker, true);
+
+			// run reuse with specific revision for all enabled revisions (see prune(...) and ONLY_FIRST)
+			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE, targetAtsFile);
+			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_LAZY_REUSE, targetAtsFile);
 
 			// run vanilla for comparison
 			runNoDumpNoReuse(revisions.iterator(), urds, SETTINGS_VANILLA);
-			// break;
+			break;
 		}
 
 		// call addTestCase
@@ -157,7 +161,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	 * Generate test cases where we generate .ats files for all revisions but do not use .ats files as input
 	 */
 	private void runDumpNoReuse(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds,
-			final File settings, final boolean onlyFirstRevision) {
+			final File settings, final String marker, final boolean onlyFirstRevision) {
 		int internalRevision = 0;
 		while (revIter.hasNext()) {
 			final File currentProgram = revIter.next();
@@ -167,8 +171,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			final String programRevPrefix = currentProgram.getName().substring(0, 3);
 			final File dumpedAtsFile = new File(ATS_DUMP_DIR, programRevPrefix + "AutomataForReuse.ats");
 
-			final int funAfterTestRevision = internalRevision;
-			final AfterTest funAfterTest = () -> renameAndMove(currentProgram, dumpedAtsFile, funAfterTestRevision);
+			final AfterTest funAfterTest = () -> renameAndMove(currentProgram, dumpedAtsFile, marker);
 			urds.add(new UltimateRunDefinition(currentProgram, settings, TOOLCHAIN, getTimeout(), funAfterTest));
 
 			internalRevision++;
@@ -180,11 +183,10 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	 * that the .ats file exists when the test case is executed.
 	 */
 	private void runNoDumpReuseSpecificRevision(final Iterator<File> revIter,
-			final Collection<UltimateRunDefinition> urds, final File settings, final int reuseRevision) {
+			final Collection<UltimateRunDefinition> urds, final File settings, final File targetAtsFile) {
 
 		while (revIter.hasNext()) {
 			final File currentProgram = revIter.next();
-			final File targetAtsFile = getAtsFile(currentProgram, reuseRevision);
 			urds.add(new UltimateRunDefinition(new File[] { currentProgram, targetAtsFile }, settings, TOOLCHAIN,
 					getTimeout()));
 		}
@@ -202,24 +204,22 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	}
 
 	/**
-	 * Get the name of the .ats file for the given revision (we start counting revisions with 0 up to n and ignore any
-	 * pre-existing revision counts)
+	 * Get the name of the .ats file produced from the given input file with the given settings.
 	 *
 	 * @param inputFile
-	 *            The actual test file
-	 * @param internalRevision
-	 *            The revision of the file
+	 *            The input file for which the .ats file was dumped
+	 * @param dumpSettings
+	 *            A marker string that describes whether the file was created by running without reuse or with reuse.
 	 * @return A file object that points to the .ats file (the file may not yet exist)
 	 */
-	private static File getAtsFile(final File inputFile, final int internalRevision) {
-		final Path target = Paths.get(inputFile.getParent(),
-				inputFile.getName() + "-rev" + String.valueOf(internalRevision) + ".ats");
+	private static File getAtsFile(final File inputFile, final String dumpSettings) {
+		final Path target = Paths.get(inputFile.getParent(), inputFile.getName() + "-reuse.ats");
 		return target.toFile();
 	}
 
-	private static void renameAndMove(final File currentProgram, final File atsFile, final int internalRevision) {
+	private static void renameAndMove(final File currentProgram, final File atsFile, final String marker) {
 		if (atsFile.exists()) {
-			final Path target = getAtsFile(currentProgram, internalRevision).toPath();
+			final Path target = getAtsFile(currentProgram, marker).toPath();
 			try {
 				Files.move(atsFile.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
 				TestUtil.deleteDirectoryContents(ATS_DUMP_DIR);
