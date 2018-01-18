@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
-public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
+public abstract class StatisticsType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
 
 	public static Function<Object, Function<Object, Object>> sIntegerAddition = x -> y -> (Integer) x + (Integer) y;
 	public static Function<Object, Function<Object, Object>> sLongAddition = x -> y -> (Long) x + (Long) y;
@@ -23,14 +23,14 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 	public static Function<String, Function<Object, String>> sKeyBeforeData = key -> data -> key + ": " + data;
 	public static Function<String, Function<Object, String>> sDataBeforeKey =
 			key -> data -> String.valueOf(data) + ' ' + key;
-	public static Function<String, Function<Object, String>> sTimeBeforeKey =
+	public static final Function<String, Function<Object, String>> FUN_TIME_BEFORE_KEY =
 			key -> time -> prettyprintNanoseconds((Long) time) + " " + key;
 	public static Function<Object, Function<Object, Object>> sIntegerMaximum =
 			x -> y -> Math.max((Integer) x, (Integer) y);
 
 	private final Class<T> mKeyType;
 
-	public AStatisticsType(final Class<T> keyType) {
+	public StatisticsType(final Class<T> keyType) {
 		super();
 		mKeyType = keyType;
 	}
@@ -55,7 +55,7 @@ public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> im
 	public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 		return prettyprintBenchmarkData(getKeys(), mKeyType, benchmarkData);
 	}
-	
+
 	public static <T extends Enum<T> & IStatisticsElement> String prettyprintBenchmarkData(
 			final Collection<String> keys, final Class<T> keyType, final IStatisticsDataProvider benchmarkData) {
 		final StringBuilder sb = new StringBuilder();

@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
@@ -728,24 +728,24 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 	public enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
 
-		DeclaredPredicates(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+		DeclaredPredicates(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-		GetRequests(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+		GetRequests(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-		SyntacticMatches(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+		SyntacticMatches(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-		SemanticMatches(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+		SemanticMatches(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-		ConstructedPredicates(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+		ConstructedPredicates(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-		IntricatePredicates(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+		IntricatePredicates(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-		DeprecatedPredicates(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+		DeprecatedPredicates(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-		ImplicationChecksByTransitivity(Integer.class, AStatisticsType.sIntegerAddition,
-				AStatisticsType.sDataBeforeKey),
+		ImplicationChecksByTransitivity(Integer.class, StatisticsType.sIntegerAddition,
+				StatisticsType.sDataBeforeKey),
 
-		Time(Integer.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),;
+		Time(Integer.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),;
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
@@ -775,7 +775,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 	}
 
-	public static class PredicateUnifierStatisticsType extends AStatisticsType<PredicateUniferStatisticsDefinitions> {
+	public static class PredicateUnifierStatisticsType extends StatisticsType<PredicateUniferStatisticsDefinitions> {
 
 		private static final PredicateUnifierStatisticsType INSTANCE = new PredicateUnifierStatisticsType();
 

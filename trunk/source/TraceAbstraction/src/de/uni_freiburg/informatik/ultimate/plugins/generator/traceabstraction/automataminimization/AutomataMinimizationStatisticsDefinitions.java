@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.a
 
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
 /**
@@ -37,13 +37,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
  */
 public enum AutomataMinimizationStatisticsDefinitions implements IStatisticsElement {
 
-	AutomataMinimizationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	AutomataMinimizationTime(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
 	
-	MinimizatonAttempts(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	MinimizatonAttempts(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-	StatesRemovedByMinimization(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sDataBeforeKey),
+	StatesRemovedByMinimization(Long.class, StatisticsType.sLongAddition, StatisticsType.sDataBeforeKey),
 	
-	NontrivialMinimizations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey);
+	NontrivialMinimizations(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;

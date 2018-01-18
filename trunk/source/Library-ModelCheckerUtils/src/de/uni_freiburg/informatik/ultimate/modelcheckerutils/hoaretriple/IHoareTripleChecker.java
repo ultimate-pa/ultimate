@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInte
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
 /**
@@ -105,23 +105,23 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 
 	public enum HoareTripleCheckerStatisticsDefinitions implements IStatisticsElement {
 
-		SDtfs(Integer.class, AStatisticsType.sIncareAddition, AStatisticsType.sDataBeforeKey),
+		SDtfs(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
 
-		SDslu(Integer.class, AStatisticsType.sIncareAddition, AStatisticsType.sDataBeforeKey),
+		SDslu(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
 
-		SDs(Integer.class, AStatisticsType.sIncareAddition, AStatisticsType.sDataBeforeKey),
+		SDs(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
 
-		SdLazy(Integer.class, AStatisticsType.sIncareAddition, AStatisticsType.sDataBeforeKey),
+		SdLazy(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
 
-		SolverSat(Integer.class, AStatisticsType.sIncareAddition, AStatisticsType.sDataBeforeKey),
+		SolverSat(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
 
-		SolverUnsat(Integer.class, AStatisticsType.sIncareAddition, AStatisticsType.sDataBeforeKey),
+		SolverUnsat(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
 
-		SolverUnknown(Integer.class, AStatisticsType.sIncareAddition, AStatisticsType.sDataBeforeKey),
+		SolverUnknown(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
 
-		SolverNotchecked(Integer.class, AStatisticsType.sIncareAddition, AStatisticsType.sDataBeforeKey),
+		SolverNotchecked(Integer.class, StatisticsType.sIncareAddition, StatisticsType.sDataBeforeKey),
 
-		Time(Integer.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),;
+		Time(Integer.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),;
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

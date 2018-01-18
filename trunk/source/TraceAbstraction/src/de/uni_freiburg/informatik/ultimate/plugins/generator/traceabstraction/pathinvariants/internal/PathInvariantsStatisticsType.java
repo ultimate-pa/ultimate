@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator.PathInvariantsStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class PathInvariantsStatisticsType extends AStatisticsType<PathInvariantsStatisticsDefinitions> {
+public class PathInvariantsStatisticsType extends StatisticsType<PathInvariantsStatisticsDefinitions> {
 
 	public PathInvariantsStatisticsType() {
 		super(PathInvariantsStatisticsDefinitions.class);

@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
 /**
@@ -37,27 +37,27 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
  */
 public enum HoareAnnotationStatisticsDefinitions implements IStatisticsElement {
 
-	HoareAnnotationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	HoareAnnotationTime(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
 	
-	LocationsWithAnnotation(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	LocationsWithAnnotation(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 	
-	PreInvPairs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	PreInvPairs(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 	
-	NumberOfFragments(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	NumberOfFragments(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 	
-	HoareAnnotationTreeSize(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sDataBeforeKey),
+	HoareAnnotationTreeSize(Long.class, StatisticsType.sLongAddition, StatisticsType.sDataBeforeKey),
 	
-	FomulaSimplifications(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	FomulaSimplifications(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-	FormulaSimplificationTreeSizeReduction(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sDataBeforeKey),
+	FormulaSimplificationTreeSizeReduction(Long.class, StatisticsType.sLongAddition, StatisticsType.sDataBeforeKey),
 	
-	HoareSimplificationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	HoareSimplificationTime(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
 	
-	FomulaSimplificationsInter(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	FomulaSimplificationsInter(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-	FormulaSimplificationTreeSizeReductionInter(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sDataBeforeKey),
+	FormulaSimplificationTreeSizeReductionInter(Long.class, StatisticsType.sLongAddition, StatisticsType.sDataBeforeKey),
 	
-	HoareSimplificationTimeInter(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	HoareSimplificationTimeInter(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
 
 	
 	;

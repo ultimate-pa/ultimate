@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
 /**
@@ -249,56 +249,56 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
 		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall
 		// iteration
-		ProgramSizeConjuncts(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
-		ProgramSizeDisjuncts(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramSizeConjuncts(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
+		ProgramSizeDisjuncts(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration
-		ProgramLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramLocs(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration after Lbe has been applied
-		ProgramLocsLbe(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramLocsLbe(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the sum of path program variables for each overall iteration
-		ProgramVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramVars(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the sum of template inequalities per location per round per iteration
-		SumOfTemplateInequalities(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumOfTemplateInequalities(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the minimum size of all templates occurring in the most recent round
-		SizeOfLargestTemplate(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		SizeOfLargestTemplate(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
 		// the minimum size of all templates occurring in the most recent round
-		SizeOfSmallestTemplate(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		SizeOfSmallestTemplate(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
 		// the maximum of the sum of template inequalities per round
-		MaxNumOfInequalities(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		MaxNumOfInequalities(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
 		// the maximum number of rounds
-		MaxRound(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		MaxRound(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
 		// the sum of variables per location per round
-		SumVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumVarsPerLoc(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the live variables per location per round
-		SumNonLiveVarsPerLoc(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumNonLiveVarsPerLoc(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		SumNonUnsatCoreLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumNonUnsatCoreLocs(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the sum of the difference of all variables and the variables from the unsat core per location per round
-		SumNonUnsatCoreVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		SumNonUnsatCoreVars(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sKeyBeforeData),
 		// the maximum DAG-size of (the sum of template inequalities per location per round) for normal constraints
-		TreeSizeNormalConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		TreeSizeNormalConstr(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
 		// the maximum DAG-size of (the sum of template inequalities per location per round) for constraints of Under-
 		// and/or Overapproximations
-		TreeSizeApproxConstr(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
+		TreeSizeApproxConstr(Integer.class, StatisticsType.sIntegerMaximum, StatisticsType.sKeyBeforeData),
 		// Number of Motzkin Transformations for normal constraints
-		MotzkinTransformationsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition,
-				AStatisticsType.sKeyBeforeData),
+		MotzkinTransformationsNormalConstr(Integer.class, StatisticsType.sIntegerAddition,
+				StatisticsType.sKeyBeforeData),
 		// Number of Motzkin Transformations for constraints of Under- and/or Overapproximations
-		MotzkinTransformationsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition,
-				AStatisticsType.sKeyBeforeData),
+		MotzkinTransformationsApproxConstr(Integer.class, StatisticsType.sIntegerAddition,
+				StatisticsType.sKeyBeforeData),
 		// Number of Motzkin Coefficients needed for normal constraints
-		MotzkinCoefficientsNormalConstr(Integer.class, AStatisticsType.sIntegerAddition,
-				AStatisticsType.sKeyBeforeData),
+		MotzkinCoefficientsNormalConstr(Integer.class, StatisticsType.sIntegerAddition,
+				StatisticsType.sKeyBeforeData),
 		// Number of Motzkin Coefficients needed for constraints of Under- and/or Overapproximations
-		MotzkinCoefficientsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition,
-				AStatisticsType.sKeyBeforeData),
+		MotzkinCoefficientsApproxConstr(Integer.class, StatisticsType.sIntegerAddition,
+				StatisticsType.sKeyBeforeData),
 		// the sum of the time needed per round to solve the constraints
-		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sKeyBeforeData),
+		ConstraintsSolvingTime(Long.class, StatisticsType.sLongAddition, StatisticsType.sKeyBeforeData),
 		// the sum of the time needed per round to construct the constraints
-		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sKeyBeforeData),
+		ConstraintsConstructionTime(Long.class, StatisticsType.sLongAddition, StatisticsType.sKeyBeforeData),
 		// Sat status
 		SatStatus(String.class, s1 -> s2 -> new String((String) s1 + "; " + (String) s2),
-				AStatisticsType.sKeyBeforeData);
+				StatisticsType.sKeyBeforeData);
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;

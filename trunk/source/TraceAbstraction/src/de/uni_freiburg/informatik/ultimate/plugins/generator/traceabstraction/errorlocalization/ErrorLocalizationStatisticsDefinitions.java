@@ -30,26 +30,26 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement {
 
-	SuccesfullyFinished(Result.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	SuccesfullyFinished(Result.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-	ErrorLocalizationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	ErrorLocalizationTime(Long.class, StatisticsType.sLongAddition, StatisticsType.FUN_TIME_BEFORE_KEY),
 
-	IcfgEdges(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	IcfgEdges(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-	ErrorEnforcingIcfgEdges(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	ErrorEnforcingIcfgEdges(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 	
-	ErrorAdmittingIcfgEdges(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	ErrorAdmittingIcfgEdges(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 	
-	ErrorIrrelevantIcfgEdges(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	ErrorIrrelevantIcfgEdges(Integer.class, StatisticsType.sIntegerAddition, StatisticsType.sDataBeforeKey),
 
-	HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.sStatisticsDataAggregation,
+			StatisticsType.sKeyBeforeData),
 	;
 
 	private final Class<?> mClazz;

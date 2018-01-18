@@ -27,9 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class ErrorAutomatonStatisticsType extends AStatisticsType<ErrorAutomatonStatisticsDefinitions> {
+public class ErrorAutomatonStatisticsType extends StatisticsType<ErrorAutomatonStatisticsDefinitions> {
 	public ErrorAutomatonStatisticsType() {
 		super(ErrorAutomatonStatisticsDefinitions.class);
 	}

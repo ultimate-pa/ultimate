@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class HoareAnnotationStatisticsType extends AStatisticsType<HoareAnnotationStatisticsDefinitions> {
+public class HoareAnnotationStatisticsType extends StatisticsType<HoareAnnotationStatisticsDefinitions> {
 	
 	public HoareAnnotationStatisticsType() {
 		super(HoareAnnotationStatisticsDefinitions.class);
