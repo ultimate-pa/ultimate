@@ -1,33 +1,23 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
@@ -186,39 +176,43 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 *  Note that this transformation is done on the original input Icfg, not on the output of the
 		 *  ArrayIndexExposer, which we ran the equality analysis on.
 		 */
-		final BasicIcfg<OUTLOC> resultIcfg =
-				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final ITransformulaTransformer transformer = new HeapSepTransFormulaTransformer(originalIcfg.getCfgSmtToolkit(),
-				mLogger, newArrayIdProvider);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
-		processLocations(originalIcfg.getInitialNodes(), lst);
-		lst.finish();
-		mResultIcfg = resultIcfg;
+//		final BasicIcfg<OUTLOC> resultIcfg =
+//				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+//		final ITransformulaTransformer transformer = new HeapSepTransFormulaTransformer(originalIcfg.getCfgSmtToolkit(),
+//				mLogger, newArrayIdProvider);
+//		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+//				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+//		processLocations(originalIcfg.getInitialNodes(), lst);
+//		lst.finish();
+//		mResultIcfg = resultIcfg;
+		final PartitionProjectionTransitionTransformer<INLOC, OUTLOC> heapSeparatingTransformer =
+				new PartitionProjectionTransitionTransformer<>(mLogger, "HeapSeparatedIcfg", outLocationClass,
+						originalIcfg, funLocFac, backtranslationTracker);
+		mResultIcfg = heapSeparatingTransformer.getResult();
 	}
 
-	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
-		final IcfgLocationIterator<INLOC> iter = new IcfgLocationIterator<>(init);
-
-		// we need to create new return transitions after new call transitions have been created
-		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
-
-		while (iter.hasNext()) {
-			final INLOC oldSource = iter.next();
-			final OUTLOC newSource = lst.createNewLocation(oldSource);
-			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
-				@SuppressWarnings("unchecked")
-				final OUTLOC newTarget = lst.createNewLocation((INLOC) oldTransition.getTarget());
-				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
-					rtrTransitions.add(new Triple<>(newSource, newTarget, oldTransition));
-				} else {
-					lst.createNewTransition(newSource, newTarget, oldTransition);
-				}
-			}
-		}
-
-		rtrTransitions.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
-	}
+//	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+//		final IcfgLocationIterator<INLOC> iter = new IcfgLocationIterator<>(init);
+//
+//		// we need to create new return transitions after new call transitions have been created
+//		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
+//
+//		while (iter.hasNext()) {
+//			final INLOC oldSource = iter.next();
+//			final OUTLOC newSource = lst.createNewLocation(oldSource);
+//			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
+//				@SuppressWarnings("unchecked")
+//				final OUTLOC newTarget = lst.createNewLocation((INLOC) oldTransition.getTarget());
+//				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
+//					rtrTransitions.add(new Triple<>(newSource, newTarget, oldTransition));
+//				} else {
+//					lst.createNewTransition(newSource, newTarget, oldTransition);
+//				}
+//			}
+//		}
+//
+//		rtrTransitions.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
+//	}
 
 	@Override
 	public IIcfg<OUTLOC> getResult() {

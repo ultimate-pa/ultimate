@@ -24,13 +24,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 /**
  *
- * TODO: problably we need to add some  recognition for meaningless equations in order to drop them
+ * TODO: probably we need to add some  recognition for meaningless equations in order to drop them
  *   (a' = a where a, a' belong to the the same ProgramVariable)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class PartitionProjection extends TermTransformer {
+public class PartitionProjectionTermTransformer extends TermTransformer {
 
 	Stack<List<LocationBlock>> mProjectLists;
 	private Script mScript;
@@ -53,6 +53,8 @@ public class PartitionProjection extends TermTransformer {
 					&& at.getFunction().getParameterSorts().length == 2
 					&& at.getParameters()[0].getSort().isArraySort()) {
 				// equation of two array terms
+
+				assert projectList.isEmpty() : "We should not have an active projection on the Boolean level.";
 
 				// TODO: determine the array group, act accordingly...
 				final ArrayGroup arrayGroup = getArrayGroup(at.getParameters()[0]);
@@ -227,84 +229,6 @@ public class PartitionProjection extends TermTransformer {
 		}
 	}
 
-//	protected Term[] getConverted2(final Term[] oldArgs) {
-//		return super.getConverted(oldArgs);
-//	}
-//
-//	void beginScope2() {
-//		super.beginScope();
-//	}
-
-//	void preAppTerm(final List<LocationBlock> projectList) {
-//	void preAppTerm() {
-//		super.beginScope();
-////		mProjectLists.push(projectList);
-//	}
-//
-//	void postAppTerm() {
-//		super.endScope();
-//		mProjectLists.pop();
-//	}
-
-//	private static class ConvertProj implements Walker {
-//		private final Term mTerm;
-//
-//		public ConvertProj(final Term term) {
-//			mTerm = term;
-//		}
-//
-//		@Override
-//		public String toString() {
-//			return "Convert " + mTerm.toStringDirect();
-//		}
-//
-//		@Override
-//		public void walk(final NonRecursive walker) {
-//			((ProjectArrayTermTransformer) walker).cacheConvert(mTerm);
-//		}
-//	}
-
-
-
-//	/**
-//	 * Collect the arguments of an application term from the converted stack
-//	 * and finish the conversion of appTerm.  This is called after the arguments
-//	 * of appTerm have been converted.  It will put the converted term on
-//	 * the converted stack and store it in the cache.
-//	 */
-//	protected static class BuildApplicationTermWithProjectList implements Walker {
-//		/** the application term to convert. */
-//		private final ApplicationTerm mAppTerm;
-////		private final List<LocationBlock> mProjectList;
-//
-////		public BuildApplicationTermWithProjectList(final ApplicationTerm term, final List<LocationBlock> projectList) {
-//		public BuildApplicationTermWithProjectList(final ApplicationTerm term) {
-//			mAppTerm = term;
-////			mProjectList = projectList;
-//		}
-//
-//		@Override
-//		public void walk(final NonRecursive engine) {
-//			final ProjectArrayTermTransformer transformer = (ProjectArrayTermTransformer) engine;
-//
-////			transformer.preAppTerm(mProjectList);
-//			transformer.preAppTerm();
-//
-////			/* collect args and check if they have been changed */
-//			final Term[] oldArgs = mAppTerm.getParameters();
-//			final Term[] newArgs = transformer.getConverted(oldArgs);
-//			transformer.convertApplicationTerm(mAppTerm, newArgs);
-//
-////			mProjectLists.p
-//			transformer.postAppTerm();
-//		}
-//
-//		@Override
-//		public String toString() {
-//			return mAppTerm.getFunction().getApplicationString();
-//		}
-//	}
-
 	protected static class BuildConjunction implements Walker {
 
 		// how many terms to pop from the converted stack and put into the result conjunction
@@ -320,7 +244,7 @@ public class PartitionProjection extends TermTransformer {
 
 		@Override
 		public void walk(final NonRecursive engine) {
-			final PartitionProjection transformer = (PartitionProjection) engine;
+			final PartitionProjectionTermTransformer transformer = (PartitionProjectionTermTransformer) engine;
 
 			final Term[] conjuncts = new Term[mNumberOfConjuncts];
 
@@ -328,15 +252,7 @@ public class PartitionProjection extends TermTransformer {
 				conjuncts[i] = transformer.getConverted();
 			}
 
-//			final Theory theory = conjuncts[0].getTheory();
-
 			transformer.setResult(SmtUtils.and(mScript, conjuncts));
-
-//			/* collect args and check if they have been changed */
-//			final Term[] oldArgs = mAppTerm.getParameters();
-//			final Term conjunct = transformer.getConverted();
-//			transformer.convertApplicationTerm(mAppTerm, newArgs);
-
 		}
 
 		@Override
@@ -362,7 +278,7 @@ public class PartitionProjection extends TermTransformer {
 
 		@Override
 		public void walk(final NonRecursive engine) {
-			final PartitionProjection ttf = (PartitionProjection) engine;
+			final PartitionProjectionTermTransformer ttf = (PartitionProjectionTermTransformer) engine;
 			ttf.beginScope();
 			ttf.pushLocationBlockList(mLocBlockList);
 		}
@@ -371,7 +287,7 @@ public class PartitionProjection extends TermTransformer {
 	protected static class EndScope implements Walker {
 		@Override
 		public void walk(final NonRecursive engine) {
-			final PartitionProjection ttf = (PartitionProjection) engine;
+			final PartitionProjectionTermTransformer ttf = (PartitionProjectionTermTransformer) engine;
 			ttf.endScope();
 			ttf.popLocationBlockList();
 		}

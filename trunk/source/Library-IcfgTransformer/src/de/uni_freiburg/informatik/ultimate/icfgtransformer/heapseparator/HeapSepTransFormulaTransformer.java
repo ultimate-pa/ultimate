@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
+@Deprecated
 public class HeapSepTransFormulaTransformer implements ITransformulaTransformer {
 
 	/**
