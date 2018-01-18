@@ -61,8 +61,6 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	BasicInterpolantAutomatonTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	ReuseTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
-
 	BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation,
 			StatisticsType.KEY_BEFORE_DATA),
 

@@ -87,10 +87,9 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 	protected final List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromOtherErrorLocations;
 	protected final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
-	protected List<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomataFromFile;
+	protected List<ReuseAutomaton> mFloydHoareAutomataFromFile;
 
 	protected final ReuseStatisticsGenerator mReuseStats;
-
 	private boolean mStatsAlreadyAggregated = false;
 
 	public ReuseCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
@@ -115,17 +114,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		// fill mRawFloydHoareAutomataFromFile
 		mReuseStats.continueTime();
 
-		final List<NestedWordAutomaton<LETTER, IPredicate>> floydHoareAutomataFromFile = new ArrayList<>();
-
 		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
 
-			// create a fresh predicate unifier for each automaton (much better performance)
-			final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-					mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
 			// Create map from strings to all equivalent "new" letters (abstraction letters)
-			final HashMap<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
+			final Map<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
 			final VpAlphabet<LETTER> abstractionAlphabet =
 					((INestedWordAutomaton<LETTER, IPredicate>) mAbstraction).getVpAlphabet();
 			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
@@ -136,6 +128,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			// Create empty automaton with same alphabet
 			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 					new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
+			final ReuseCegarLoop<LETTER>.ReuseAutomaton reuseAutomaton = new ReuseAutomaton(resAutomaton);
+
 			// Add states
 			final Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
 			final HashMap<String, IPredicate> mapStringToState = new HashMap<>();
@@ -145,7 +139,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			for (final String stringState : statesOfRawAutomaton) {
 				final AtomicBoolean parsingResult = new AtomicBoolean(false);
 				final IPredicate predicateState = getPredicateFromString(mPredicateFactory, stringState, mCsToolkit,
-						mServices, parsingResult, mLogger, predicateUnifier);
+						mServices, parsingResult, mLogger, reuseAutomaton.getPredicateUnifier());
 				if (parsingResult.get()) {
 					reusedStates++;
 				} else {
@@ -166,17 +160,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 					mapStateToString, mLogger);
 
 			// Add capability for on-demand extension to automata from file.
-			final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(
-					mServices, mPref.getHoareTripleChecks(), mCsToolkit, predicateUnifier);
-			mFloydHoareAutomataFromFile.add(constructInterpolantAutomatonForOnDemandEnhancement(resAutomaton,
-					predicateUnifier, htc, InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION));
-			floydHoareAutomataFromFile.add(resAutomaton);
-
-			// save various stats
-			mReuseStats.reportPredicateUnifierStats(predicateUnifier.getPredicateUnifierBenchmark());
-			mReuseStats.reportHtcStats(htc.getEdgeCheckerBenchmark());
+			mFloydHoareAutomataFromFile.add(reuseAutomaton);
+			mReuseStats.addAutomataFromFile(1);
 		}
-		mReuseStats.addAutomataFromFile(floydHoareAutomataFromFile.size());
+
 		mReuseStats.addAutomataFromPreviousErrorLocation(mFloydHoareAutomataFromOtherErrorLocations.size());
 		mReuseStats.stopTime();
 	}
@@ -187,6 +174,12 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		// benchmark right before that.
 		assert !mStatsAlreadyAggregated;
 		mStatsAlreadyAggregated = true;
+
+		mFloydHoareAutomataFromFile.forEach(a -> {
+			mReuseStats.reportHtcStats(a.getHtc().getEdgeCheckerBenchmark());
+			mReuseStats.reportPredicateUnifierStats(a.getPredicateUnifier().getPredicateUnifierBenchmark());
+		});
+
 		mCegarLoopBenchmark.addReuseStats(mReuseStats);
 		return super.getCegarLoopBenchmark();
 	}
@@ -206,7 +199,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		return res;
 	}
 
-	private static final <LETTER> void addLettersToStringMap(final HashMap<String, Set<LETTER>> map,
+	private static final <LETTER> void addLettersToStringMap(final Map<String, Set<LETTER>> map,
 			final Set<LETTER> letters) {
 		for (final LETTER letter : letters) {
 			if (!map.containsKey(letter.toString())) {
@@ -329,6 +322,39 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			logger.warn("Unexpected result from String's split function. String parsing failed.");
 			return null;
 		}
+	}
+
+	public final class ReuseAutomaton {
+		private final PredicateUnifier mPredicateUnifier;
+		private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
+		private final IHoareTripleChecker mHtc;
+
+		private ReuseAutomaton(final NestedWordAutomaton<LETTER, IPredicate> automaton) {
+			mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
+					mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			mHtc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+					mPref.getHoareTripleChecks(), mCsToolkit, mPredicateUnifier);
+			mAutomaton = automaton;
+		}
+
+		public NestedWordAutomaton<LETTER, IPredicate> getAutomaton() {
+			return mAutomaton;
+		}
+
+		public IHoareTripleChecker getHtc() {
+			return mHtc;
+		}
+
+		public PredicateUnifier getPredicateUnifier() {
+			return mPredicateUnifier;
+		}
+
+		public AbstractInterpolantAutomaton<LETTER> constructAbstractInterpolantAutomaton() {
+			return constructInterpolantAutomatonForOnDemandEnhancement(mAutomaton, mPredicateUnifier, mHtc,
+					InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);
+		}
+
 	}
 
 	public static enum ReuseStatisticsDefinitions implements IStatisticsElement {

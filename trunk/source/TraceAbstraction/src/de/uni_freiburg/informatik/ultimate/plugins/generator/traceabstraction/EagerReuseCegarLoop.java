@@ -26,12 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
@@ -88,88 +88,96 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 
 		mReuseStats.continueTime();
 
-		final List<AbstractInterpolantAutomaton<LETTER>> reuseAutomata = new ArrayList<>();
-		reuseAutomata.addAll(mFloydHoareAutomataFromOtherErrorLocations);
-		reuseAutomata.addAll(mFloydHoareAutomataFromFile);
-
-		for (int i = 0; i < reuseAutomata.size(); i++) {
-			final int oneBasedi = i + 1;
-			int internalTransitionsBeforeDifference = 0;
-			int internalTransitionsAfterDifference = 0;
-
-			final AbstractInterpolantAutomaton<LETTER> ai = reuseAutomata.get(i);
-
-			if (mPref.dumpAutomata()) {
-				writeAutomatonToFile(ai, "ReusedAutomata" + oneBasedi);
-			}
-
-			if (ENHANCE) {
-				// TODO: assert: ai should already be in on-demand mode
-				internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
-			} else {
-				ai.switchToReadonlyMode();
-			}
-			final PowersetDeterminizer<LETTER, IPredicate> psd =
-					new PowersetDeterminizer<>(ai, true, mPredicateFactoryInterpolantAutomata);
-			IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
-			final boolean explointSigmaStarConcatOfIA = true;
-			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
-					explointSigmaStarConcatOfIA);
-			if (mPref.dumpAutomata()) {
-				final String filename = "DiffAfterEagerReuse" + oneBasedi;
-				writeAutomatonToFile(diff.getResult(), filename);
-			}
-			if (ENHANCE) {
-				ai.switchToReadonlyMode();
-				internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
-				mLogger.info("Floyd-Hoare automaton" + oneBasedi + " had " + internalTransitionsBeforeDifference
-						+ " internal transitions before reuse, on-demand computation of difference added "
-						+ (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
-			}
-
-			if (REMOVE_DEAD_ENDS) {
-				if (mComputeHoareAnnotation) {
-					final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
-					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
-				}
-				diff.removeDeadEnds();
-				if (mComputeHoareAnnotation) {
-					mHaf.addDeadEndDoubleDeckers(diff);
-				}
-			}
-
-			if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
-				final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
-				final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
-						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, diff.getResult())
-								.getResult();
-				if (noTraceExcluded) {
-					mLogger.warn("Floyd-Hoare automaton" + i
-							+ " did not remove an error trace from abstraction and was hence useless for this error location.");
-				} else {
-					mLogger.info(
-							"Floyd-Hoare automaton" + i + " removed at least one error trace from the abstraction.");
-				}
-
-			}
-
-			mAbstraction = diff.getResult();
-
-			if (mAbstraction.size() == 0) {
-				// stop to compute differences if abstraction is already empty
-				break;
-			}
-
-			if (mMinimize == MinimizeInitially.AFTER_EACH_DIFFERENCE) {
-				minimizeAbstractionIfEnabled();
-			}
+		int autIdx = 0;
+		for (final AbstractInterpolantAutomaton<LETTER> aut : mFloydHoareAutomataFromOtherErrorLocations) {
+			computeDifferenceForReuseAutomaton(autIdx, aut);
+			++autIdx;
 		}
+
+		for (final ReuseAutomaton aut : mFloydHoareAutomataFromFile) {
+			computeDifferenceForReuseAutomaton(autIdx, aut.getAutomaton());
+			++autIdx;
+		}
+
 		if (mMinimize == MinimizeInitially.ONCE_AT_END) {
 			minimizeAbstractionIfEnabled();
 		}
 
 		mReuseStats.stopTime();
+	}
+
+	private void computeDifferenceForReuseAutomaton(final int iteration,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> ai)
+			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
+		final int oneBasedi = iteration + 1;
+		// final int internalTransitionsBeforeDifference = 0;
+		// final int internalTransitionsAfterDifference = 0;
+
+		if (mPref.dumpAutomata()) {
+			writeAutomatonToFile(ai, "ReusedAutomata" + oneBasedi);
+		}
+
+		// if (ENHANCE) {
+		// // TODO: assert: ai should already be in on-demand mode
+		// internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
+		// } else {
+		// ai.switchToReadonlyMode();
+		// }
+		final PowersetDeterminizer<LETTER, IPredicate> psd =
+				new PowersetDeterminizer<>(ai, true, mPredicateFactoryInterpolantAutomata);
+		final boolean explointSigmaStarConcatOfIA = true;
+		final IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff =
+				new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
+						explointSigmaStarConcatOfIA);
+		if (mPref.dumpAutomata()) {
+			final String filename = "DiffAfterEagerReuse" + oneBasedi;
+			writeAutomatonToFile(diff.getResult(), filename);
+		}
+		// if (ENHANCE) {
+		// ai.switchToReadonlyMode();
+		// internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
+		// mLogger.info("Floyd-Hoare automaton" + oneBasedi + " had " + internalTransitionsBeforeDifference
+		// + " internal transitions before reuse, on-demand computation of difference added "
+		// + (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
+		// }
+
+		if (REMOVE_DEAD_ENDS) {
+			if (mComputeHoareAnnotation) {
+				final Difference<LETTER, IPredicate> difference = (Difference<LETTER, IPredicate>) diff;
+				mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+			}
+			diff.removeDeadEnds();
+			if (mComputeHoareAnnotation) {
+				mHaf.addDeadEndDoubleDeckers(diff);
+			}
+		}
+
+		if (IDENTIFY_USELESS_FLOYDHOARE_AUTOMATA) {
+			final AutomataLibraryServices als = new AutomataLibraryServices(mServices);
+			final Boolean noTraceExcluded = new IsIncluded<>(als, mPredicateFactoryResultChecking,
+					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, diff.getResult())
+							.getResult();
+			if (noTraceExcluded) {
+				mLogger.warn("Floyd-Hoare automaton" + iteration
+						+ " did not remove an error trace from abstraction and was hence useless for this error location.");
+			} else {
+				mLogger.info("Floyd-Hoare automaton" + iteration
+						+ " removed at least one error trace from the abstraction.");
+			}
+
+		}
+
+		mAbstraction = diff.getResult();
+
+		if (mAbstraction.size() == 0) {
+			// stop to compute differences if abstraction is already empty
+			return;
+		}
+
+		if (mMinimize == MinimizeInitially.AFTER_EACH_DIFFERENCE) {
+			minimizeAbstractionIfEnabled();
+		}
 	}
 
 }
