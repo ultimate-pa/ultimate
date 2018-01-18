@@ -282,4 +282,13 @@ public final class CrossProducts {
 //		}
 //		return result;
 	}
+
+	public static <E> List<List<E>> crossProductNTimes(final int n, final Set<E> baseSet) {
+		final List<Set<E>> nTimesBaseSet = new ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			nTimesBaseSet.add(baseSet);
+		}
+		return crossProductOfSets(nTimesBaseSet);
+
+	}
 }
