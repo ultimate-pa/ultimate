@@ -23,5 +23,8 @@ public class LocationBlock {
 		mAssociatedArrayGroup = associatedArrayGroup;
 	}
 
+	public boolean contains(final StoreIndexInfo sii) {
+		return mLocations.contains(sii);
+	}
 
 }

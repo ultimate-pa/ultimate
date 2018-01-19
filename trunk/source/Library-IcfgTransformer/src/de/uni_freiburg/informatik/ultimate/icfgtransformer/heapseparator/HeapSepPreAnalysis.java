@@ -27,30 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -132,86 +120,6 @@ public class HeapSepPreAnalysis {
 		}
 	}
 
-	private HashRelation<Term, ArrayIndex> findAccessingIndices(final IcfgEdge edge) {
-
-		final UnmodifiableTransFormula tf = edge.getTransformula();
-		final HashRelation<Term, ArrayIndex> result = new HashRelation<>();
-
-		/*
-		 * handle selects in the formula
-		 */
-		final List<MultiDimensionalSelect> mdSelectsAll = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(),
-				false);
-		// MultiDimensionalSelect.extractSelectDeep(tf.getFormula(), false);
-		final List<MultiDimensionalSelect> mdSelectsFiltered = mdSelectsAll.stream()
-				.filter(mds -> isArrayTracked(mds.getArray(), tf)).collect(Collectors.toList());
-		for (final MultiDimensionalSelect mds : mdSelectsFiltered) {
-			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mMgdScript);
-			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mMgdScript);
-			assert index.size() == new MultiDimensionalSort(mds.getArray().getSort()).getDimension();
-			result.addPair(array, index);
-		}
-
-		/*
-		 * handle stores in the formula
-		 */
-		final List<MultiDimensionalStore> mdStoresAll = MultiDimensionalStore
-				.extractArrayStoresShallow(tf.getFormula());
-//				.extractArrayStoresDeep(tf.getFormula());
-		final List<MultiDimensionalStore> mdStoresFiltered = mdStoresAll.stream()
-				.filter(mds -> isArrayTracked(mds.getArray(), tf)).collect(Collectors.toList());
-		// mdStoresFiltered.forEach(mds -> result.addPair(
-		// VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf,
-		// mScript),
-		// VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript)));
-		for (final MultiDimensionalStore mds : mdStoresFiltered) {
-			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mMgdScript);
-			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mMgdScript);
-			// assert index.size() == mds.getArray().getSort().getArguments().length - 1;
-			assert index.size() == new MultiDimensionalSort(mds.getArray().getSort()).getDimension();
-			result.addPair(array, index);
-		}
-
-		return result;
-	}
-
-	private HashRelation<Term, IcfgLocation> findArrayAccesses(final IcfgEdge edge) {
-		final HashRelation<Term, IcfgLocation> result = new HashRelation<>();
-		if (edge instanceof Summary && ((Summary) edge).calledProcedureHasImplementation()) {
-			return result;
-		}
-
-		for (final Entry<IProgramVar, TermVariable> en : edge.getTransformula().getInVars().entrySet()) {
-			final IProgramVar pv = en.getKey();
-			if (!pv.getTermVariable().getSort().isArraySort()) {
-				continue;
-			}
-			if (!isArrayTracked(pv)) {
-				continue;
-			}
-			// we have an array variable --> store that it occurs after the source location
-			// of the edge
-			result.addPair(pv.getTerm(), edge.getSource());
-		}
-		for (final Entry<IProgramVar, TermVariable> en : edge.getTransformula().getOutVars().entrySet()) {
-			final IProgramVar pv = en.getKey();
-			if (!pv.getTermVariable().getSort().isArraySort()) {
-				continue;
-			}
-			if (!isArrayTracked(pv)) {
-				continue;
-			}
-			// we have an array variable --> store that it occurs after the source location
-			// of the edge
-			result.addPair(pv.getTerm(), edge.getSource());
-		}
-		return result;
-	}
-
-//	SymmetricHashRelation<Term> getArrayEqualities() {
-//		return mArrayEqualities;
-//	}
-
 	Set<Term> getArraysAsTerms() {
 		// TODO
 		assert false;
@@ -222,49 +130,6 @@ public class HeapSepPreAnalysis {
 		// TODO
 		assert false;
 		return null;
-	}
-
-//	HashRelation<Term, IcfgLocation> getArrayToAccessLocations() {
-//		return mArrayToAccessLocations;
-//	}
-//
-//	public HashRelation<Term, ArrayIndex> getArrayToAccessingIndices() {
-//		return mArrayToAccessingIndices;
-//	}
-
-	public Term getInnerMostArray(final Term arrayTerm) {
-		assert arrayTerm.getSort().isArraySort();
-		Term innerArray = arrayTerm;
-		// while (SmtUtils.containsFunctionApplication(innerArray, "store")) {
-		while (true) {
-			boolean madeChange = false;
-			if (SmtUtils.isFunctionApplication(innerArray, "store")) {
-				innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
-				madeChange = true;
-			} else if (SmtUtils.isFunctionApplication(innerArray, "select")) {
-				innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
-				madeChange = true;
-			}
-			if (!madeChange) {
-				break;
-			}
-		}
-		assert innerArray instanceof TermVariable;
-		return innerArray;
-	}
-
-//	public Set<ArrayIndex> getAccessingIndicesForArrays(final Set<Term> arrayGroup) {
-//		final Set<ArrayIndex> result = new HashSet<>();
-//		arrayGroup.forEach(array -> result.addAll(getArrayToAccessingIndices().getImage(array)));
-//		return result;
-//	}
-
-	private boolean isArrayTracked(final IProgramVarOrConst array) {
-		return true;
-	}
-
-	private boolean isArrayTracked(final Term array, final UnmodifiableTransFormula tf) {
-		return true;
 	}
 
 	IProgramVar getVarForTerm(final TermVariable tv, final Map<IProgramVar, TermVariable> map) {
@@ -278,11 +143,13 @@ public class HeapSepPreAnalysis {
 
 	public Set<SelectInfo> getSelectInfos() {
 		// TODO Auto-generated method stub
+		assert false;
 		return null;
 	}
 
 	public Set<ArrayGroup> getArrayGroups() {
 		// TODO Auto-generated method stub
+		assert false;
 		return null;
 	}
 

@@ -24,10 +24,24 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 	NestedMap2<EdgeInfo, Term, LocationBlock> mEdgeInfoToTermVariableToPartitionBlock;
 
+	/**
+	 *
+	 * @param logger
+	 * @param resultName
+	 * @param outLocClazz
+	 * @param inputCfg
+	 * @param funLocFac
+	 * @param backtranslationTracker
+	 * @param selectInfoToLocationBlock
+	 * 			Maps each array read in the program to its LocationBlock (i.e. set of all array writes that may impact
+	 *           the value of the array at the read cell).
+	 * 			This is the processed result of our alias analysis.
+	 */
 	public PartitionProjectionTransitionTransformer(final ILogger logger, final String resultName,
 			final Class<OUTLOC> outLocClazz,
 			final IIcfg<INLOC> inputCfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker) {
+			final IBacktranslationTracker backtranslationTracker,
+			final Map<SelectInfo, LocationBlock> selectInfoToLocationBlock) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		// TODO Auto-generated constructor stub
 	}
