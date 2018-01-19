@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -18,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
@@ -34,6 +36,15 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 	Stack<List<LocationBlock>> mProjectLists;
 	private Script mScript;
+
+	private final Map<Term, LocationBlock> mTermToLocationBlock;
+	private final NewArrayIdProvider mNewArrayIdProvider;
+
+	public PartitionProjectionTermTransformer(final NewArrayIdProvider newArrayIdProvider,
+			final Map<Term, LocationBlock> tvToLocationBlock) {
+		mNewArrayIdProvider = newArrayIdProvider;
+		mTermToLocationBlock = tvToLocationBlock;
+	}
 
 	@Override
 	protected void convert(final Term term) {
@@ -209,8 +220,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	}
 
 	private LocationBlock getLocationBlockForIndex(final Term indexSubterm) {
-		// TODO Auto-generated method stub
-		return null;
+		return mTermToLocationBlock.get(indexSubterm);
 	}
 
 	private void pushLocationBlockList(final List<LocationBlock> newList) {
@@ -219,6 +229,10 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	}
 
 	private Term getProjectedSimpleTerm(final Term termToProject, final List<LocationBlock> projectList) {
+		return mNewArrayIdProvider.getSubArray(getProgramVar(termToProject), projectList);
+	}
+
+	private IProgramVarOrConst getProgramVar(final Term termToProject) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -293,14 +307,5 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		}
 	}
 
-
-}
-
-/**
- * dummy class right now..
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- */
-class ArrayGroup {
 
 }

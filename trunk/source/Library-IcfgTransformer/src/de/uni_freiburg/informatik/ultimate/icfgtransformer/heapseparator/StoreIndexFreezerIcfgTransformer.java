@@ -14,11 +14,8 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransfo
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -50,6 +47,9 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
 			new NestedMap2<>();
+
+	private final Map<StoreIndexInfo, IProgramNonOldVar> mArrayAccessInfoToFreezeVar = new HashMap<>();
+
 //	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
@@ -66,25 +66,26 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
 		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
 				new EdgeInfo(oldTransition));
+		return super.transform(oldTransition, newSource, newTarget, newTransformula);
 
-		if (oldTransition instanceof IcfgInternalTransition) {
-			// TODO: is this the right payload?
-			return mEdgeFactory.createInternalTransition(newSource, newTarget, oldTransition.getPayload(),
-					newTransformula);
-		} else if (oldTransition instanceof IcfgCallTransition) {
-			final IcfgCallTransition newCallTransition = mEdgeFactory.createCallTransition(newSource, newTarget,
-					oldTransition.getPayload(), newTransformula);
-			mOldCallToNewCall.put((IcfgCallTransition) oldTransition, newCallTransition);
-			return newCallTransition;
-		} else if (oldTransition instanceof IcfgReturnTransition) {
-			final IcfgCallTransition correspondingNewCall =
-					mOldCallToNewCall.get(((IcfgReturnTransition) oldTransition).getCorrespondingCall());
-			assert correspondingNewCall != null;
-			return mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
-					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
-		} else {
-			throw new IllegalArgumentException("unknown transition type");
-		}
+//		if (oldTransition instanceof IcfgInternalTransition) {
+//			// TODO: is this the right payload?
+//			return mEdgeFactory.createInternalTransition(newSource, newTarget, oldTransition.getPayload(),
+//					newTransformula);
+//		} else if (oldTransition instanceof IcfgCallTransition) {
+//			final IcfgCallTransition newCallTransition = mEdgeFactory.createCallTransition(newSource, newTarget,
+//					oldTransition.getPayload(), newTransformula);
+//			mOldCallToNewCall.put((IcfgCallTransition) oldTransition, newCallTransition);
+//			return newCallTransition;
+//		} else if (oldTransition instanceof IcfgReturnTransition) {
+//			final IcfgCallTransition correspondingNewCall =
+//					mOldCallToNewCall.get(((IcfgReturnTransition) oldTransition).getCorrespondingCall());
+//			assert correspondingNewCall != null;
+//			return mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
+//					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
+//		} else {
+//			throw new IllegalArgumentException("unknown transition type");
+//		}
 	}
 //
 	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
@@ -155,7 +156,11 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	}
 
 	private IProgramNonOldVar getFreezeVariable(final Term indexTerm, final EdgeInfo tfInfo) {
-		IProgramNonOldVar result = mWriteIndexToTfInfoToFreezeVar.get(indexTerm, tfInfo);
+//		IProgramNonOldVar result = mWriteIndexToTfInfoToFreezeVar.get(indexTerm, tfInfo);
+
+		final StoreIndexInfo aai = new StoreIndexInfo(tfInfo, indexTerm);
+		IProgramNonOldVar result = mArrayAccessInfoToFreezeVar.get(aai);
+
 		if (result == null) {
 			result = ProgramVarUtils.constructGlobalProgramVarPair(
 						indexTerm.toString().replace("|", "") + "_frz", indexTerm.getSort(),
@@ -165,27 +170,18 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			 *  recognizes new variables in the TransFormula
 			 */
 //			mNewSymbolTable.add(result);
-			mWriteIndexToTfInfoToFreezeVar.put(indexTerm, tfInfo, result);
+//			mWriteIndexToTfInfoToFreezeVar.put(indexTerm, tfInfo, result);
+			mArrayAccessInfoToFreezeVar.put(aai, result);
 		}
 		return result;
 	}
 
-	public NestedMap2<Term, EdgeInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
-		return mWriteIndexToTfInfoToFreezeVar;
-	}
-}
+//	public NestedMap2<Term, EdgeInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
+//		return mWriteIndexToTfInfoToFreezeVar;
+//	}
 
-/**
- * Wrapper for an IcfgEdge that carries information about the edge that we are interested in in the heap separator.
- *
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- */
-class EdgeInfo {
-	IcfgEdge mEdge;
-
-	EdgeInfo(final IcfgEdge edge) {
-		mEdge = edge;
+	public Map<StoreIndexInfo, IProgramNonOldVar> getArrayAccessInfoToFreezeVar() {
+		return mArrayAccessInfoToFreezeVar;
 	}
 
 }

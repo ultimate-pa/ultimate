@@ -275,4 +275,16 @@ public class HeapSepPreAnalysis {
 		}
 		throw new IllegalArgumentException();
 	}
+
+	public Set<SelectInfo> getSelectInfos() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Set<ArrayGroup> getArrayGroups() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
 }

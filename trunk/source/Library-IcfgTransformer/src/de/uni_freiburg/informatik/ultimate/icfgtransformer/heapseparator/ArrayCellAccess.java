@@ -51,6 +51,17 @@ public class ArrayCellAccess {
 		return result;
 	}
 
+	public Term getArray() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Term getIndex() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
 //	Term getTerm() {
 //		if (mArraySelect != null) {
 //			return SMT

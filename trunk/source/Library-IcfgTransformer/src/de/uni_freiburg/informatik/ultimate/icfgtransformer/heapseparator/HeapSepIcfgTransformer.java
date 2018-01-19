@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -16,8 +18,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
@@ -94,7 +98,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		// TODO : where do we get this variable from?
 		final IProgramVar validArray = null;
 
-		final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar;
+//		final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar;
+		final Map<StoreIndexInfo, IProgramNonOldVar> arrayAccessInfoToFreezeVar;
 
 		/*
 		 * 1. Execute the preprocessing
@@ -108,7 +113,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					new StoreIndexFreezerIcfgTransformer<>(mLogger, "icfg_with_uninitialized_freeze_vars",
 							outLocationClass, originalIcfg, funLocFac, backtranslationTracker);
 			final IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
-			writeIndexTermToTfInfoToFreezeVar = sifit.getWriteIndexToTfInfoToFreezeVar();
+//			writeIndexTermToTfInfoToFreezeVar = sifit.getWriteIndexToTfInfoToFreezeVar();
+			arrayAccessInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
 
 			/*
 			 * Create a fresh literal/constant for each freeze variable that was introduced, we call them freeze
@@ -117,8 +123,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 */
 			final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit = new HashMap<>();
 
-			for (final IProgramNonOldVar freezeVar : writeIndexTermToTfInfoToFreezeVar.values()
-					.collect(Collectors.toList())) {
+//			for (final IProgramNonOldVar freezeVar : writeIndexTermToTfInfoToFreezeVar.values()
+			for (final IProgramNonOldVar freezeVar : arrayAccessInfoToFreezeVar.values()) {
+//					.collect(Collectors.toList())) {
 				// FIXME: how to construct a fresh IProgramConst???
 				freezeVarTofreezeVarLit.put(freezeVar,
 						(IProgramConst) replacementVarFactory.getOrConstuctReplacementVar(null, false));
@@ -141,7 +148,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			// TODO implement..
 			preprocessedIcfg = null;
 
-			writeIndexTermToTfInfoToFreezeVar = null;
+//			writeIndexTermToTfInfoToFreezeVar = null;
+			arrayAccessInfoToFreezeVar = null;
 		}
 
 
@@ -159,14 +167,29 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 				originalIcfg.getCfgSmtToolkit().getManagedScript());
 		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
 
+
+		final Set<ArrayGroup> arrayGroups = heapSepPreanalysis.getArrayGroups();
+
+		final PartitionManager partitionManager = new PartitionManager(arrayGroups, arrayAccessInfoToFreezeVar);
+
 		/*
 		 * 3b. compute an array partitioning
 		 */
-
 		final NewArrayIdProvider newArrayIdProvider;
 		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
+
+//			Map<ArrayGroup, UnionFind<StoreIndexInfo>>
+//			UnionFind<StoreIndexInfo> partition = new UnionFind<>();
+
+
+			for (final SelectInfo si : heapSepPreanalysis.getSelectInfos()) {
+				partitionManager.processSelect(si, getEqualityProvidingState(si.getEdgeInfo()));
+			}
+
+
 			newArrayIdProvider = new NewArrayIdProvider(originalIcfg.getCfgSmtToolkit(),
-					mEqualityProvider, heapSepPreanalysis, writeIndexTermToTfInfoToFreezeVar, mStatistics);
+//					mEqualityProvider, heapSepPreanalysis, writeIndexTermToTfInfoToFreezeVar, mStatistics);
+					mEqualityProvider, heapSepPreanalysis, arrayAccessInfoToFreezeVar, mStatistics);
 		} else {
 			newArrayIdProvider = null;
 		}
@@ -189,6 +212,19 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 				new PartitionProjectionTransitionTransformer<>(mLogger, "HeapSeparatedIcfg", outLocationClass,
 						originalIcfg, funLocFac, backtranslationTracker);
 		mResultIcfg = heapSeparatingTransformer.getResult();
+	}
+
+	/**
+	 * For the moment this will return the EqState of the source location of edgeInfo, but in order to be able to
+	 *  deal with select indices that are aux vars, we need to have something different here TODO (the interface
+	 *  IEqualityProvidingState can remain unchanged for this)
+	 *
+	 * @param edgeInfo
+	 * @return
+	 */
+	private IEqualityProvidingState getEqualityProvidingState(final EdgeInfo edgeInfo) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 //	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
@@ -232,5 +268,143 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 	public HeapSeparatorBenchmark getStatistics() {
 		return mStatistics;
+	}
+}
+
+class PartitionManager {
+
+	// input
+	Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
+
+	// input
+	Map<IProgramVar, StoreIndexInfo> mFreezeVarToStoreIndexInfo;
+
+	// output
+	Map<SelectInfo, LocationBlock> mSelectInfoToLocationBlock;
+
+	Map<ArrayGroup, UnionFind<StoreIndexInfo>> mArrayGroupToStoreIndexInfoPartition;
+
+//	Set<SelectInfo> mAllSelectInfos;
+
+	/**
+	 * maps a selectInfo to any one of the StoreIndexInfos that may be equal to the selectInfo
+	 */
+	Map<SelectInfo, StoreIndexInfo> mSelectInfoToToSampleStoreIndexInfo;
+
+	public PartitionManager(final Set<ArrayGroup> arrayGroups,
+			final Map<StoreIndexInfo, IProgramNonOldVar> arrayAccessInfoToFreezeVar) {
+
+		mArrayToArrayGroup = new HashMap<>();
+		for (final ArrayGroup ag : arrayGroups) {
+			for (final IProgramVarOrConst a : ag.getArrays()) {
+				mArrayToArrayGroup.put(a, ag);
+			}
+		}
+
+		mFreezeVarToStoreIndexInfo = new HashMap<>();
+		for (final Entry<StoreIndexInfo, IProgramNonOldVar> en : arrayAccessInfoToFreezeVar.entrySet()) {
+			mFreezeVarToStoreIndexInfo.put(en.getValue(), en.getKey());
+		}
+
+		mArrayGroupToStoreIndexInfoPartition = new HashMap<>();
+		mSelectInfoToLocationBlock = new HashMap<>();
+
+		mSelectInfoToToSampleStoreIndexInfo = new HashMap<>();
+	}
+
+	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingState eps) {
+
+//		final Set<Term> mayEqualFreezeVars = new HashSet<>();
+//		final Set<IProgramVar> mayEqualFreezeVars = new HashSet<>();
+		final Set<StoreIndexInfo> mayEqualStoreIndexInfos = new HashSet<>();
+
+		final Term selectIndex = selectInfo.getArrayCellAccess().getIndex();
+
+		final IProgramVarOrConst selectArrayPvoc = selectInfo.getEdgeInfo()
+				.getProgramVarOrConstForTerm(selectInfo.getArrayCellAccess().getArray());
+
+		for (final Entry<IProgramVar, StoreIndexInfo> en : mFreezeVarToStoreIndexInfo.entrySet()) {
+			final IProgramVar freezeVar = en.getKey();
+			final StoreIndexInfo sii = en.getValue();
+
+			if (eps.areUnequal(selectIndex, freezeVar.getTerm())) {
+				// nothing to do
+			} else {
+				// select index and freezeVar may be equal at this location
+//				mayEqualFreezeVars.add(freezeVar.getTerm());
+//				mayEqualFreezeVars.add(freezeVar);
+				mayEqualStoreIndexInfos.add(sii);
+			}
+		}
+
+
+//		if (mayEqualFreezeVars.isEmpty()) {
+//		if (mayEqualFreezeVars.size() <= 1) {
+		if (mayEqualStoreIndexInfos.size() <= 1) {
+			// nothing to do
+		} else {
+//			final IProgramVar sample = mayEqualFreezeVars.iterator().next();
+			final StoreIndexInfo sample = mayEqualStoreIndexInfos.iterator().next();
+
+			mSelectInfoToToSampleStoreIndexInfo.put(selectInfo, sample);
+
+//			for (final IProgramVar mefv : mayEqualFreezeVars) {
+			for (final StoreIndexInfo sii : mayEqualStoreIndexInfos) {
+//				mergeBlocks(selectArrayPvoc, sii, sample);
+				mergeBlocks(selectInfo, sii, sample);
+			}
+
+		}
+
+		//		final EdgeInfo location = selectInfo.getEdgeInfo();
+//		final IProgramVarOrConst array = location.getProgramVarOrConstForTerm(
+//				selectInfo.getArrayCellAccess().getArray());
+//		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
+
+//		selectInfo.getArrayCellAccess().getIndex()
+	}
+
+	public void finish() {
+//		for (final Entry<ArrayGroup, UnionFind<StoreIndexInfo>> en : mArrayGroupToStoreIndexInfoPartition.entrySet()) {
+//			mSelectInfoToLocationBlock.put()
+//		}
+
+		/*
+		 * rewrite the collected information into our output format
+		 */
+		for (final Entry<SelectInfo, StoreIndexInfo> en : mSelectInfoToToSampleStoreIndexInfo.entrySet()) {
+
+			final StoreIndexInfo sampleSii = en.getValue();
+
+			final SelectInfo selectInfo = en.getKey();
+			final ArrayGroup arrayGroup = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
+			final UnionFind<StoreIndexInfo> partition = mArrayGroupToStoreIndexInfoPartition.get(arrayGroup);
+
+			final Set<StoreIndexInfo> eqc = partition.getEquivalenceClassMembers(sampleSii);
+
+			mSelectInfoToLocationBlock.put(selectInfo, new LocationBlock(eqc, arrayGroup));
+		}
+	}
+
+//	private void mergeBlocks(final IProgramVarOrConst array, final StoreIndexInfo sii1, final StoreIndexInfo sii2) {
+	private void mergeBlocks(final SelectInfo selectInfo, final StoreIndexInfo sii1, final StoreIndexInfo sii2) {
+		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
+		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
+
+		UnionFind<StoreIndexInfo> partition = mArrayGroupToStoreIndexInfoPartition.get(arrayGroup);
+		if (partition == null) {
+			partition = new UnionFind<>();
+			mArrayGroupToStoreIndexInfoPartition.put(arrayGroup, partition);
+		}
+
+		partition.findAndConstructEquivalenceClassIfNeeded(sii1);
+		partition.findAndConstructEquivalenceClassIfNeeded(sii2);
+		partition.union(sii1, sii2);
+
+//		mSelectInfoToLocationBlock.put(selectInfo, value)
+	}
+
+	LocationBlock getLocationBlock(final SelectInfo selectInfo) {
+		return mSelectInfoToLocationBlock.get(selectInfo);
 	}
 }

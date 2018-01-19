@@ -15,11 +15,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
 	private ManagedScript mMgdScript;
+
+	NestedMap2<EdgeInfo, Term, LocationBlock> mEdgeInfoToTermVariableToPartitionBlock;
 
 	public PartitionProjectionTransitionTransformer(final ILogger logger, final String resultName,
 			final Class<OUTLOC> outLocClazz,
@@ -30,12 +33,16 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	}
 
 	@Override
-	public IcfgEdge transform(final IcfgEdge edge, final OUTLOC newSource,
-			final OUTLOC newTarget) {
+	public IcfgEdge transform(final IcfgEdge edge, final OUTLOC newSource, final OUTLOC newTarget) {
 
 		final UnmodifiableTransFormula tf = edge.getTransformula();
 
-		final Term transformedFormula = new PartitionProjectionTermTransformer().transform(tf.getFormula());
+
+		final Map<Term, LocationBlock> tvToLocationBlock =
+				mEdgeInfoToTermVariableToPartitionBlock.get(new EdgeInfo(edge));
+
+		final Term transformedFormula =
+				new PartitionProjectionTermTransformer(null, tvToLocationBlock).transform(tf.getFormula());
 
 		final Map<IProgramVar, TermVariable> inVars = null;
 		final Map<IProgramVar, TermVariable> outVars = null;
