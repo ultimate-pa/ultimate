@@ -41,7 +41,7 @@ function checkFiles {
     done
 }
 
-function updateWebsite {
+function backupWebsite {
     local backup="$BACKUP_DIR-$DATE"
     mkdir -p "$backup"
     for (( i = 0 ; i < ${#WARS[@]} ; i=$i+1 ));
@@ -58,6 +58,15 @@ function updateWebsite {
         fi
         eoutdent
         eend 0
+    done
+}
+
+function updateWebsite {
+    for (( i = 0 ; i < ${#WARS[@]} ; i=$i+1 ));
+    do
+        local war="${WARS[${i}]}"
+        local oldwar="$TOMCAT_WEBAPP_DIR"`basename "${war}"`
+        local olddir="${oldwar%.war}"
         
         ebegin "Removing $olddir"
         eindent
@@ -77,8 +86,71 @@ function updateWebsite {
     done
 }
 
-checkFiles
-exitOnFail $TOMCAT_INIT_SCRIPT stop
-updateWebsite
-exitOnFail $TOMCAT_INIT_SCRIPT start
+function getRestoreDir {
+    declare -n ret=$1
+    number=1
+    for file in "$BACKUP_DIR"*; do
+        fnames+=("$file")
+        echo "$number)" ${fnames[$(($number-1))]}
+        let "number += 1"
+    done
+    read -p "Select a directory to restore: " fid
+    fid=$(($fid-1)) # reduce user input by 1 since array starts counting from zero
+    ret="${fnames[${fid}]}"
+}
 
+function runUpdate {
+    checkFiles
+    exitOnFail $TOMCAT_INIT_SCRIPT stop
+    backupWebsite
+    updateWebsite
+    exitOnFail $TOMCAT_INIT_SCRIPT start
+}
+
+function revertFromLastBackup {
+    getRestoreDir restoreDir
+    WARS=("$restoreDir"/*)
+    exitOnFail $TOMCAT_INIT_SCRIPT stop
+    updateWebsite
+    exitOnFail $TOMCAT_INIT_SCRIPT start
+}
+
+ARG_UPDATE=false
+ARG_REVERT=false
+
+while [[ $# -gt 0 ]]
+do
+    key="$1"
+    case $key in
+            -r|--revert)
+            ARG_REVERT=true
+            ;;
+            -u|--update)
+            ARG_UPDATE=true
+            ;;
+            *)
+            # ignore unknown option
+            echo "Unknown option $key"
+            exit 1
+            ;;
+    esac
+    shift # shift past argument or value
+done
+
+if [ "$ARG_UPDATE" = true ] && [ "$ARG_REVERT" = true ]; then 
+    echo "You cannot combine update and revert"
+    echo ""
+elif [ "$ARG_UPDATE" = true ]; then 
+    runUpdate
+    exit 0
+elif [ "$ARG_REVERT" = true ]; then 
+    revertFromLastBackup
+    exit 0
+else
+    echo "No arguments given"
+fi 
+
+echo "Usage:"
+echo " -u|--update      updates the website"
+echo " -r|--revert      reverts a backup from $BACKUP_DIR-*"
+exit 1
