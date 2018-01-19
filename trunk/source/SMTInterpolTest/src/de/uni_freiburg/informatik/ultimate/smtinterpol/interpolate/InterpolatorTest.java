@@ -116,12 +116,12 @@ public class InterpolatorTest {
 		final HashSet<Term> asubTerms = mInterpolator.getSubTerms(aSmt);
 		for (final Term sub : asubTerms) {
 			if (!(sub instanceof ConstantTerm)) {
-				mInterpolator.addOccurrence(sub, null, abswap ? 1 : 0);
+				mInterpolator.addOccurrence(sub, abswap ? 1 : 0);
 			}
 		}
 		for (final Term sub : bsubTerms) {
 			if (!(sub instanceof ConstantTerm)) {
-				mInterpolator.addOccurrence(sub, null, abswap ? 0 : 1);
+				mInterpolator.addOccurrence(sub, abswap ? 0 : 1);
 			}
 		}
 		final Interpolant[] interpolants = mInterpolator.interpolate(lemma);
