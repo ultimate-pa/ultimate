@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
@@ -874,11 +875,11 @@ public final class TransFormulaUtils {
 		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
-	
-	
+
+
 	/**
 	 * The "guarded havoc" is the transition relation in which we keep the
-	 * guard (for all inVars) but havoc all variables that are updated. 
+	 * guard (for all inVars) but havoc all variables that are updated.
 	 */
 	public static UnmodifiableTransFormula computeGuardedHavoc(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger,
@@ -921,8 +922,8 @@ public final class TransFormulaUtils {
 		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
-	
-	
+
+
 
 	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
 			final IUltimateServiceProvider services, final ILogger logger,
@@ -1073,5 +1074,50 @@ public final class TransFormulaUtils {
 		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		builder.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
 		return builder.finishConstruction(mgdScript);
+	}
+
+	/**
+	 * Attempts to find the IProgramVarOrConst that corresponds to the given term in the given TransFormula.
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 * @param tf
+	 * @param term
+	 * @return The IProgramVarOrConst that corresponds to term in tf. Null if there is none.
+	 */
+	public static IProgramVarOrConst getProgramVarOrConstForTerm(final TransFormula tf, final Term term) {
+		if (term instanceof TermVariable) {
+			return getProgramVarForTerm(tf, (TermVariable) term);
+		} else if (term instanceof ApplicationTerm) {
+			for (final IProgramConst ntc : tf.getNonTheoryConsts()) {
+				if (ntc.getDefaultConstant().equals(term)) {
+					return ntc;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Attempts to find the IProgramVar that corresponds to the given term in the given TransFormula.
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 * @param tf
+	 * @param tv
+	 * @return The IProgramVar that corresponds to tv in tf. Null if there is none.
+	 */
+	public static IProgramVarOrConst getProgramVarForTerm(final TransFormula tf, final TermVariable tv) {
+		for (final Entry<IProgramVar, TermVariable> en : tf.getInVars().entrySet()) {
+			if (en.getValue().equals(tv)) {
+				return en.getKey();
+			}
+		}
+		for (final Entry<IProgramVar, TermVariable> en : tf.getOutVars().entrySet()) {
+			if (en.getValue().equals(tv)) {
+				return en.getKey();
+			}
+		}
+		return null;
 	}
 }
