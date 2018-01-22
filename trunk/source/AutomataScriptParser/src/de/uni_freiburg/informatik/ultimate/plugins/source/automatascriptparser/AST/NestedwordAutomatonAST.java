@@ -29,8 +29,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,127 +37,112 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 
 /**
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author musab@informatik.uni-freiburg.de
  */
 public class NestedwordAutomatonAST extends AutomatonAST {
 	private static final long serialVersionUID = 2260897609736623517L;
-	
-	private List<String> mCallAlphabet;
-	private List<String> mInternalAlphabet;
-	private List<String> mReturnAlphabet;
-	
-	private List<String> mStates;
-	private List<String> mInitialStates;
-	private List<String> mFinalStates;
-	
-	private Map<Pair<String, String>, Set<String>> mInternalTransitions;
-	private Map<Pair<String, String>, Set<String>> mCallTransitions;
-	private Map<String, Map<String, Map<String, Set<String>>>> mReturnTransitions;
-	
-	public NestedwordAutomatonAST(final ILocation loc, final String name) {
+
+	private final List<String> mCallAlphabet;
+	private final List<String> mInternalAlphabet;
+	private final List<String> mReturnAlphabet;
+
+	private final List<String> mStates;
+	private final List<String> mInitialStates;
+	private final List<String> mFinalStates;
+
+	private final Map<Pair<String, String>, Set<String>> mInternalTransitions;
+	private final Map<Pair<String, String>, Set<String>> mCallTransitions;
+	private final Map<String, Map<String, Map<String, Set<String>>>> mReturnTransitions;
+
+	public NestedwordAutomatonAST(final ILocation loc, final String name, final List<String> callAlphabet,
+			final List<String> internalAlphabet, final List<String> returnAlphabet, final List<String> states,
+			final List<String> initStates, final List<String> finStates, final TransitionListAST internalTransitions,
+			final TransitionListAST callTransitions, final TransitionListAST returnTransitions) {
 		super(loc, name);
-		mCallAlphabet = new ArrayList<>();
-		mInternalAlphabet = new ArrayList<>();
-		mReturnAlphabet = new ArrayList<>();
-		mStates = new ArrayList<>();
-		mInitialStates = new ArrayList<>();
-		mFinalStates = new ArrayList<>();
-		mInternalTransitions = new HashMap<>();
-		mCallTransitions = new HashMap<>();
-		mReturnTransitions = new HashMap<>();
-//		mName = name;
+		if (callAlphabet != null) {
+			mCallAlphabet = callAlphabet;
+		} else {
+			mCallAlphabet = null;
+		}
+		if (internalAlphabet != null) {
+			mInternalAlphabet = internalAlphabet;
+		} else {
+			mInternalAlphabet = null;
+		}
+		if (returnAlphabet != null) {
+			mReturnAlphabet = returnAlphabet;
+		} else {
+			mReturnAlphabet = null;
+		}
+		if (states != null) {
+			mStates = states;
+		} else {
+			mStates = null;
+		}
+		if (initStates != null) {
+			mInitialStates = initStates;
+		} else {
+			mInitialStates = null;
+		}
+		if (finStates != null) {
+			mFinalStates = finStates;
+		} else {
+			mFinalStates = null;
+		}
+		if (internalTransitions != null) {
+			mInternalTransitions = internalTransitions.getTransitions();
+		} else {
+			mInternalTransitions = null;
+		}
+		if (callTransitions != null) {
+			mCallTransitions = callTransitions.getTransitions();
+		} else {
+			mCallTransitions = null;
+		}
+		if (returnTransitions != null) {
+			mReturnTransitions = returnTransitions.getReturnTransitions();
+		} else {
+			mReturnTransitions = null;
+		}
 	}
-	
+
 	public List<String> getCallAlphabet() {
 		return mCallAlphabet;
 	}
-	
-	public void setCallAlphabet(final List<String> callAlphabet) {
-		if (callAlphabet != null) {
-			mCallAlphabet = callAlphabet;
-		}
-	}
-	
+
 	public List<String> getInternalAlphabet() {
 		return mInternalAlphabet;
 	}
-	
-	public void setInternalAlphabet(final List<String> internalAlphabet) {
-		if (internalAlphabet != null) {
-			mInternalAlphabet = internalAlphabet;
-		}
-	}
-	
+
 	public List<String> getReturnAlphabet() {
 		return mReturnAlphabet;
 	}
-	
-	public void setReturnAlphabet(final List<String> returnAlphabet) {
-		if (returnAlphabet != null) {
-			mReturnAlphabet = returnAlphabet;
-		}
-	}
-	
-	public void setStates(final List<String> states) {
-		if (states != null) {
-			mStates = states;
-		}
-	}
-	
-	public void setInitialStates(final List<String> initStates) {
-		if (initStates != null) {
-			mInitialStates = initStates;
-		}
-	}
-	
-	public void setFinalStates(final List<String> finStates) {
-		if (finStates != null) {
-			mFinalStates = finStates;
-		}
-	}
-	
+
 	public List<String> getStates() {
 		return mStates;
 	}
-	
+
 	public List<String> getInitialStates() {
 		return mInitialStates;
 	}
-	
+
 	public List<String> getFinalStates() {
 		return mFinalStates;
 	}
-	
+
 	public Map<Pair<String, String>, Set<String>> getInternalTransitions() {
 		return mInternalTransitions;
 	}
-	
-	public void setInternalTransitions(final TransitionListAST internalTransitions) {
-		if (internalTransitions != null) {
-			mInternalTransitions = internalTransitions.getTransitions();
-		}
-	}
-	
+
 	public Map<Pair<String, String>, Set<String>> getCallTransitions() {
 		return mCallTransitions;
 	}
-	
-	public void setCallTransitions(final TransitionListAST callTransitions) {
-		if (callTransitions != null) {
-			mCallTransitions = callTransitions.getTransitions();
-		}
-	}
-	
+
 	public Map<String, Map<String, Map<String, Set<String>>>> getReturnTransitions() {
 		return mReturnTransitions;
 	}
-	
-	public void setReturnTransitions(final TransitionListAST returnTransitions) {
-		if (returnTransitions != null) {
-			mReturnTransitions = returnTransitions.getReturnTransitions();
-		}
-	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();

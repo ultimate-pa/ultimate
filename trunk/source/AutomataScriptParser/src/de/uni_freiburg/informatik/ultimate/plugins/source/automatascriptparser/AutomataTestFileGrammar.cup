@@ -1045,16 +1045,16 @@ nwa_definition ::=      variable_identifier:id EQ
                                internal_transitions:int_trans COMMA
                                return_transitions:ret_trans
                         RPAREN:r
-                        {: NestedwordAutomatonAST nwa = new NestedwordAutomatonAST(getLocation(l$, r$), id);
-                          nwa.setCallAlphabet(call.getIdentifierList());
-                          nwa.setInternalAlphabet(intern.getIdentifierList());
-                          nwa.setReturnAlphabet(ret.getIdentifierList());
-                          nwa.setStates(states.getIdentifierList());
-                          nwa.setInitialStates(init_states.getIdentifierList());
-                          nwa.setFinalStates(fin_states.getIdentifierList());
-                          nwa.setInternalTransitions(int_trans);
-                          nwa.setCallTransitions(call_trans);
-                          nwa.setReturnTransitions(ret_trans);
+                        {: NestedwordAutomatonAST nwa = new NestedwordAutomatonAST(getLocation(l$, r$), id,
+                          call.getIdentifierList(),
+                          intern.getIdentifierList(),
+                          ret.getIdentifierList(),
+                          states.getIdentifierList(),
+                          init_states.getIdentifierList(),
+                          fin_states.getIdentifierList(),
+                          int_trans,
+                          call_trans,
+                          ret_trans);
                           m_varDeclarations.put(id, NestedwordAutomatonAST.class);
                           RESULT = nwa; :} ;
 
@@ -1065,12 +1065,16 @@ fa_definition ::=      variable_identifier:id EQ
                                final_states:fin_states COMMA
                                transitions:int_trans
                         RPAREN:r
-                        {: NestedwordAutomatonAST nwa = new NestedwordAutomatonAST(getLocation(l$, r$), id);
-                          nwa.setInternalAlphabet(intern.getIdentifierList());
-                          nwa.setStates(states.getIdentifierList());
-                          nwa.setInitialStates(init_states.getIdentifierList());
-                          nwa.setFinalStates(fin_states.getIdentifierList());
-                          nwa.setInternalTransitions(int_trans);
+                        {: NestedwordAutomatonAST nwa = new NestedwordAutomatonAST(getLocation(l$, r$), id,
+                          null,
+                          intern.getIdentifierList(),
+                          null,
+                          states.getIdentifierList(),
+                          init_states.getIdentifierList(),
+                          fin_states.getIdentifierList(),
+                          int_trans,
+                          null,
+                          null);
                           m_varDeclarations.put(id, NestedwordAutomatonAST.class);
                           RESULT = nwa; :} ;
 
