@@ -30,14 +30,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -68,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.DefaultEqualityAnalysisProvider;
@@ -197,12 +196,24 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IUltimateServiceProvider services,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
-		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
-				new HeapSepIcfgTransformer<>(icfg, locFac, fac, backtranslationTracker, outlocClass,
-						"heap_separated_icfg", equalityProvider);
+		// TODO: hacky
+		IProgramNonOldVar validArray = null;
+		for (final IProgramNonOldVar global : icfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
+			if (global.getGloballyUniqueId().equals("#valid")) {
+				validArray = global;
+				break;
+			}
+		}
+		if (validArray == null) {
+			throw new AssertionError("TODO: what should we do in this case? maybe return the input icfg?");
+		}
 
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
-				"HeapSeparationSummary", icfgTransformer.getHeapSeparationSummary(), Severity.INFO));
+		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
+				new HeapSepIcfgTransformer<>(mLogger, icfg, locFac, fac, backtranslationTracker, outlocClass,
+						"heap_separated_icfg", equalityProvider, validArray);
+
+//		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
+//				"HeapSeparationSummary", icfgTransformer.getHeapSeparationSummary(), Severity.INFO));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics",
 						icfgTransformer.getStatistics()));

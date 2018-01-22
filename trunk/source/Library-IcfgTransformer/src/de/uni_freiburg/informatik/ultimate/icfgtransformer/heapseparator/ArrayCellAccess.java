@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -52,19 +53,32 @@ public class ArrayCellAccess {
 	}
 
 	public Term getArray() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mArraySelect != null) {
+			return mArraySelect.getArray();
+		}
+		if (mArraySelectOverStore != null) {
+			return mArraySelectOverStore.getArrayStore().getArray();
+		}
+		throw new AssertionError();
 	}
 
 	public Term getIndex() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mArraySelect != null) {
+			return mArraySelect.getIndex();
+		}
+		if (mArraySelectOverStore != null) {
+			return mArraySelectOverStore.getIndex();
+		}
+		throw new AssertionError();
 	}
 
-
-//	Term getTerm() {
-//		if (mArraySelect != null) {
-//			return SMT
-//		}
-//	}
+	public Term getTerm(final Script script) {
+		if (mArraySelect != null) {
+			return mArraySelect.toTerm(script);
+		}
+		if (mArraySelectOverStore != null) {
+			return mArraySelectOverStore.toTerm(script);
+		}
+		throw new AssertionError();
+	}
 }

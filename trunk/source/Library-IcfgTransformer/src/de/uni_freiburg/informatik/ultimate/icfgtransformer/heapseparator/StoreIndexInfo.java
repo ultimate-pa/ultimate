@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
@@ -42,14 +44,16 @@ class EdgeInfo {
 		mEdge = edge;
 	}
 
-	public IProgramVarOrConst getProgramVarOrConstForTerm(final Term array) {
-		// TODO Auto-generated method stub
-		return null;
+	public IProgramVarOrConst getProgramVarOrConstForTerm(final Term term) {
+		return TransFormulaUtils.getProgramVarOrConstForTerm(mEdge.getTransformula(), term);
 	}
 
-//	public IProgramVarOrConst getPvoc(final Term array) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+	public IcfgLocation getSourceLocation() {
+		return mEdge.getSource();
+	}
+
+	public IcfgEdge getEdge() {
+		return mEdge;
+	}
 
 }

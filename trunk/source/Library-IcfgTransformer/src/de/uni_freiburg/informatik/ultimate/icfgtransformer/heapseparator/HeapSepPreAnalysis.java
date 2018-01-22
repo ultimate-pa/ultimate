@@ -27,18 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -70,6 +70,10 @@ public class HeapSepPreAnalysis {
 
 	private final ManagedScript mMgdScript;
 
+	private Set<SelectInfo> mSelectInfos;
+
+	private Set<ArrayGroup> mArrayGroups;
+
 	/**
 	 *
 	 * @param logger
@@ -94,12 +98,13 @@ public class HeapSepPreAnalysis {
 		final Set<Term> visitedSubTerms = new HashSet<>();
 
 		for (final ArrayUpdate au : ArrayUpdate.extractArrayUpdates(tf.getFormula())) {
-			final IProgramVar newArrayPv = getVarForTerm(au.getNewArray(), tf.getOutVars()) ;
-			final IProgramVar oldArrayPv = getVarForTerm((TermVariable) au.getOldArray(), tf.getInVars()) ;
+			final IProgramVarOrConst newArrayPv = edgeInfo.getProgramVarOrConstForTerm(au.getNewArray());
+			final IProgramVarOrConst oldArrayPv = edgeInfo.getProgramVarOrConstForTerm(au.getOldArray());
 
 			assert au.getNewArray() != au.getOldArray() : "that would be a strange case, no?..";
 			assert !au.isNegatedEquality() : "strange case";
 
+			// we only keep array updates that have the same ProgramVar lhs und rhs
 			if (newArrayPv.equals(oldArrayPv)) {
 				mEdgeToCellUpdates.addPair(edgeInfo, au);
 				visitedSubTerms.add(au.getArrayUpdateTerm());
@@ -113,44 +118,98 @@ public class HeapSepPreAnalysis {
 				continue;
 			}
 			mEdgeToArrayRelations.addPair(edgeInfo, aeas);
+//			visitedSubTerms.add(aeas.getTerm(mMgdScript.getScript()));
 		}
 
 		for (final ArrayCellAccess aca : ArrayCellAccess.extractArrayCellAccesses(tf.getFormula())) {
+//			assert !visitedSubTerms.contains(aca.getTerm(mMgdScript.getScript()));
 			mEdgeToArrayCellAccesses.addPair(edgeInfo, aca);
 		}
 	}
 
+	// not used right now --> remove?
+	@Deprecated
 	Set<Term> getArraysAsTerms() {
-		// TODO
 		assert false;
 		return null;
 	}
 
+	// not used right now --> remove?
+	@Deprecated
 	Set<IProgramVar> getArraysAsProgramVars() {
-		// TODO
 		assert false;
 		return null;
 	}
 
-	IProgramVar getVarForTerm(final TermVariable tv, final Map<IProgramVar, TermVariable> map) {
-		for (final Entry<IProgramVar, TermVariable> en: map.entrySet()) {
-			if (en.getValue() == tv) {
-				return en.getKey();
-			}
-		}
-		throw new IllegalArgumentException();
-	}
+//	/**
+//	 * Helper to get a IProgramVar from a TermVariable via the In/OutVarsMapping
+//	 *
+//	 * @param tv
+//	 * @param map
+//	 * @return
+//	 */
+//	private static IProgramVar getVarForTerm(final TermVariable tv, final Map<IProgramVar, TermVariable> map) {
+//		for (final Entry<IProgramVar, TermVariable> en: map.entrySet()) {
+//			if (en.getValue() == tv) {
+//				return en.getKey();
+//			}
+//		}
+//		throw new IllegalArgumentException();
+//	}
+
+//	private static IProgramVarOrConst getVarOrConstForTerm(final TermVariable tv, final Map<IProgramVar, TermVariable> map) {
+//		final IProgramVar var = getVarForTerm(tv, map);
+//		if (var != null) {
+//			return var;
+//		}
+//
+//		throw new AssertionError();
+//
+//	}
 
 	public Set<SelectInfo> getSelectInfos() {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		if (mSelectInfos == null) {
+			throw new IllegalStateException("call finish first");
+		}
+		return mSelectInfos;
 	}
 
 	public Set<ArrayGroup> getArrayGroups() {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+		if (mArrayGroups == null) {
+			throw new IllegalStateException("call finish first");
+		}
+		return mArrayGroups;
+	}
+
+	public void finish() {
+		mSelectInfos = new HashSet<>();
+		for (final Entry<EdgeInfo, ArrayCellAccess> en : mEdgeToArrayCellAccesses) {
+			final SelectInfo selectInfo = new SelectInfo(en.getValue(), en.getKey());
+			mSelectInfos.add(selectInfo);
+		}
+
+		/*
+		 * Compute the array groups. Rule: Whenever two arrays are related via "=" in any formula in the program, they
+		 *  must be in the same array group.
+		 */
+		final UnionFind<IProgramVarOrConst> arrayPartition = new UnionFind<>();
+		for (final Entry<EdgeInfo, ArrayEqualityAllowStores> en : mEdgeToArrayRelations) {
+			final EdgeInfo edgeInfo = en.getKey();
+			final ArrayEqualityAllowStores aeas = en.getValue();
+
+
+			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getLhsArray());
+			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getRhsArray());
+
+			arrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsPvoc);
+			arrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsPvoc);
+			arrayPartition.union(lhsPvoc, rhsPvoc);
+		}
+		mArrayGroups = new HashSet<>();
+		for (final Set<IProgramVarOrConst> block : arrayPartition.getAllEquivalenceClasses()) {
+			mArrayGroups.add(new ArrayGroup(block));
+		}
+
 	}
 
 

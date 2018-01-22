@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqN
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 
 /**
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqState implements IAbstractState<EqState>, IEqualityProvidingState {
+public class EqState implements IAbstractState<EqState>, IEqualityProvidingState, IEqualityProvidingIntermediateState {
 
 	/**
 	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState". Note
@@ -291,7 +292,17 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	}
 
 	@Override
-	public IEqualityProvidingState union(final IEqualityProvidingState other) {
+	public IEqualityProvidingState join(final IEqualityProvidingState other) {
+		return union((EqState) other);
+	}
+
+	/**
+	 * Note that an EqState is a bad IEqualityProvidingIntermediateState because it does not contain information on any
+	 * auxVar.
+	 * TODO
+	 */
+	@Override
+	public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
 		return union((EqState) other);
 	}
 

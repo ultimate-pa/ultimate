@@ -7,11 +7,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -21,7 +25,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
@@ -31,11 +37,13 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private final Preprocessing mPreprocessing = Preprocessing.FREEZE_VARIABLES;
 
-	private ILogger mLogger;
+	private final ILogger mLogger;
 
-	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
+//	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
 
 	private final HeapSeparatorBenchmark mStatistics;
+
+	private final ManagedScript mManagedScript;
 
 	/**
 	 * Default constructor.
@@ -50,19 +58,25 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 *            The class object of the type of locations of the output {@link IIcfg}.
 	 * @param newIcfgIdentifier
 	 *            The identifier of the new {@link IIcfg}
+	 * @param validArray
 	 * @param statistics
 	 * @param transformer
 	 *            The transformer that should be applied to each transformula of each transition of the input
 	 *            {@link IIcfg} to create a new {@link IIcfg}.
 	 */
-	public HeapSepIcfgTransformer(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+	public HeapSepIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+			final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final ReplacementVarFactory replacementVarFactory, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
-		mEqualityProvider = equalityProvider;
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
+			final IProgramNonOldVar validArray) {
+		assert logger != null;
 		mStatistics = new HeapSeparatorBenchmark();
+		mManagedScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
+		mLogger = logger;
+
 		computeResult(originalIcfg, funLocFac, replacementVarFactory, backtranslationTracker, outLocationClass,
-				newIcfgIdentifier);
+				newIcfgIdentifier, equalityProvider, validArray);
 	}
 
 	/**
@@ -84,28 +98,30 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @param backtranslationTracker
 	 * @param outLocationClass
 	 * @param newIcfgIdentifier
+	 * @param equalityProvider
+	 * @param validArray
 	 * @return
 	 */
 	private void computeResult(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final ReplacementVarFactory replacementVarFactory, final IBacktranslationTracker backtranslationTracker,
-			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier) {
+			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
+			final IProgramNonOldVar validArray) {
 
 
-//		final CfgSmtToolkit oldCsToolkit = originalIcfg.getCfgSmtToolkit();
-//		final IUltimateServiceProvider services;
-		// TOOD
-		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac = null;
+		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac =
+				(ILocationFactory<OUTLOC, OUTLOC>) createIcfgLocationToIcfgLocationFactory();
 
 		// TODO : where do we get this variable from?
-		final IProgramVar validArray = null;
-
-//		final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar;
-		final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar;
+//		final IProgramVar validArray = originalIcfg.getCfgSmtToolkit().getSymbolTable().getProgramVar(
+//		final IProgramVar validArray = originalIcfg.getCfgSmtToolkit().getSymbolTable().getProgramVar(
+//				mManagedScript.variable(validArrayName, null));
 
 		/*
 		 * 1. Execute the preprocessing
 		 */
 		final IIcfg<OUTLOC> preprocessedIcfg;
+		final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar;
 		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
 			/*
 			 * add the freeze var updates to each transition with an array update
@@ -124,12 +140,18 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 */
 			final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit = new HashMap<>();
 
+			mManagedScript.lock(this);
 			for (final IProgramNonOldVar freezeVar : storeIndexInfoToFreezeVar.values()) {
-				// FIXME: how to construct a fresh IProgramConst???
-				freezeVarTofreezeVarLit.put(freezeVar,
-						(IProgramConst) replacementVarFactory.getOrConstuctReplacementVar(null, false));
+
+				final String freezeVarLitName = getFreezeVarLitName(freezeVar);
+				mManagedScript.declareFun(this, freezeVarLitName, new Sort[0], freezeVar.getSort());
+				final ApplicationTerm freezeVarLitTerm = (ApplicationTerm) mManagedScript.term(this, freezeVarLitName);
+
+				freezeVarTofreezeVarLit.put(freezeVar, new HeapSepProgramConst(freezeVarLitTerm));
+//						(IProgramConst) replacementVarFactory.getOrConstuctReplacementVar(null, false));
 			}
-			mEqualityProvider.announceAdditionalLiterals(freezeVarTofreezeVarLit.values());
+			mManagedScript.unlock(this);
+			equalityProvider.announceAdditionalLiterals(freezeVarTofreezeVarLit.values());
 
 			/*
 			 * Add initialization code for each of the newly introduced freeze variables.
@@ -151,22 +173,19 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			storeIndexInfoToFreezeVar = null;
 		}
 
-
 		/*
 		 * 2. run the equality analysis
 		 */
-		mEqualityProvider.preprocess(preprocessedIcfg);
+		equalityProvider.preprocess(preprocessedIcfg);
 
 		/*
 		 * 3a. look up all locations where
 		 *  <li> an array cell is accessed
 		 *  <li> two arrays are related
 		 */
-		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger,
-				originalIcfg.getCfgSmtToolkit().getManagedScript());
+		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, mManagedScript);
 		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
-
-
+		heapSepPreanalysis.finish();
 		final Set<ArrayGroup> arrayGroups = heapSepPreanalysis.getArrayGroups();
 
 		final PartitionManager partitionManager = new PartitionManager(arrayGroups, storeIndexInfoToFreezeVar);
@@ -176,7 +195,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 */
 		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
 			for (final SelectInfo si : heapSepPreanalysis.getSelectInfos()) {
-				partitionManager.processSelect(si, getEqualityProvidingState(si.getEdgeInfo()));
+				partitionManager.processSelect(si, getEqualityProvidingIntermediateState(si.getEdgeInfo(),
+						equalityProvider));
 			}
 			partitionManager.finish();
 		} else {
@@ -196,18 +216,21 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mResultIcfg = heapSeparatingTransformer.getResult();
 	}
 
+	private String getFreezeVarLitName(final IProgramNonOldVar freezeVar) {
+		// TODO make _really_ sure that the new id is unique
+		return freezeVar.getGloballyUniqueId() + "_lit";
+	}
+
 	/**
 	 * For the moment this will return the EqState of the source location of edgeInfo, but in order to be able to
-	 *  deal with select indices that are aux vars, we need to have something different here TODO (the interface
-	 *  IEqualityProvidingState can remain unchanged for this)
-	 *
+	 *  deal with select indices that are aux vars, we need to have something different here
 	 * @param edgeInfo
+	 * @param equalityProvider
 	 * @return
 	 */
-	private IEqualityProvidingState getEqualityProvidingState(final EdgeInfo edgeInfo) {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
+	private IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(final EdgeInfo edgeInfo,
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
+		return equalityProvider.getEqualityProvidingIntermediateState(edgeInfo.getEdge());
 	}
 
 	@Override
@@ -221,15 +244,53 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 
 
-	public String getHeapSeparationSummary() {
-		// TODO Auto-generated method stub
-		assert false;
-		return null;
-	}
+//	public String getHeapSeparationSummary() {
+//		return null;
+//	}
 
 	public HeapSeparatorBenchmark getStatistics() {
 		return mStatistics;
 	}
+
+	/**
+	 * (almost) a copy from IcfgTranformationObserver
+	 *  --> should probably replace this with a less ad-hoc solution some time
+	 *
+	 * @return
+	 */
+//	private static ILocationFactory<IcfgLocation, IcfgLocation> createIcfgLocationToIcfgLocationFactory() {
+	private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createIcfgLocationToIcfgLocationFactory() {
+		return (oldLocation, debugIdentifier, procedure) -> {
+				final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier, procedure,
+					oldLocation.isErrorLocation(), oldLocation.getBoogieASTNode());
+			ModelUtils.copyAnnotations(oldLocation, rtr);
+			return rtr;
+		};
+
+//		return (oldLocation, debugIdentifier, procedure) -> {
+//			final IcfgLocation rtr = new IcfgLocation(debugIdentifier, procedure);
+//			ModelUtils.copyAnnotations(oldLocation, rtr);
+//			return rtr;
+//		};
+	}
+
+
+//		private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createBoogieLocationFactory() {
+//		return (oldLocation, debugIdentifier, procedure) -> {
+//			final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier, procedure,
+//					oldLocation.isErrorLocation(), oldLocation.getBoogieASTNode());
+//			ModelUtils.copyAnnotations(oldLocation, rtr);
+//			return rtr;
+//		};
+//	}
+//
+//	private static <INLOC extends IcfgLocation> ILocationFactory<INLOC, IcfgLocation> createIcfgLocationFactory() {
+//		return (oldLocation, debugIdentifier, procedure) -> {
+//			final IcfgLocation rtr = new IcfgLocation(debugIdentifier, procedure);
+//			ModelUtils.copyAnnotations(oldLocation, rtr);
+//			return rtr;
+//		};
+//	}
 }
 
 class PartitionManager {
@@ -273,7 +334,7 @@ class PartitionManager {
 		mSelectInfoToToSampleStoreIndexInfo = new HashMap<>();
 	}
 
-	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingState eps) {
+	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingIntermediateState eps) {
 		final Set<StoreIndexInfo> mayEqualStoreIndexInfos = new HashSet<>();
 
 		final Term selectIndex = selectInfo.getArrayCellAccess().getIndex();
@@ -352,6 +413,4 @@ class PartitionManager {
 		}
 		return mSelectInfoToLocationBlock.get(si);
 	}
-
-
 }

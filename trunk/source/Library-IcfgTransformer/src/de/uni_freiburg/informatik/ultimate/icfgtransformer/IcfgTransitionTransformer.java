@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -9,14 +10,13 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.Exam
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -41,23 +41,28 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 	/**
 	 * TODO: it is important that any override of transform updates this map! (not nice, as it is now..)
 	 */
-	protected Map<IcfgCallTransition, IcfgCallTransition> mOldCallToNewCall;
+	protected final Map<IIcfgCallTransition<INLOC>, IIcfgCallTransition<OUTLOC>> mOldCallToNewCall;
 
 	protected final IIcfg<INLOC> mInputIcfg;
 
 	private final TransformedIcfgBuilder<INLOC, OUTLOC> mTransformedIcfgBuilder;
 	private final BasicIcfg<OUTLOC> mResult;
 
+	private boolean mProcessed;
+
 	public IcfgTransitionTransformer(final ILogger logger, final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker) {
+		assert logger != null;
 		mInputCfgCsToolkit = inputCfg.getCfgSmtToolkit();
 		mLogger = logger;
 		mInputIcfg = inputCfg;
 
 		mMgdScript = mInputCfgCsToolkit.getManagedScript();
 		mEdgeFactory = mInputCfgCsToolkit.getIcfgEdgeFactory();
+
+		mOldCallToNewCall = new HashMap<>();
 
 		/*
 		 * the csToolkit will be replaced in mResult by mTransformedIcfgBuilder.finish() (not a fan of this solution..)
@@ -70,8 +75,14 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 						mInputCfgCsToolkit.getSymbolTable(), new ReplacementVarFactory(mInputCfgCsToolkit, false));
 		mTransformedIcfgBuilder = new TransformedIcfgBuilder<>(funLocFac,
 				backtranslationTracker, noopTransformer, mInputIcfg, mResult);
+	}
+
+
+	private void process() {
+		assert !mProcessed : "only call this once!";
 		processGraph();
 		mTransformedIcfgBuilder.finish();
+		mProcessed = true;
 	}
 
 	private void processGraph() {
@@ -123,18 +134,19 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 	 */
 	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget,
 			final UnmodifiableTransFormula newTransformula) {
-		if (oldTransition instanceof IcfgInternalTransition) {
+		if (oldTransition instanceof IIcfgInternalTransition) {
 			// TODO: is this the right payload?
 			return mEdgeFactory.createInternalTransition(newSource, newTarget, oldTransition.getPayload(),
 					newTransformula);
-		} else if (oldTransition instanceof IcfgCallTransition) {
-			final IcfgCallTransition newCallTransition = mEdgeFactory.createCallTransition(newSource, newTarget,
-					oldTransition.getPayload(), newTransformula);
-			mOldCallToNewCall.put((IcfgCallTransition) oldTransition, newCallTransition);
-			return newCallTransition;
-		} else if (oldTransition instanceof IcfgReturnTransition) {
-			final IcfgCallTransition correspondingNewCall =
-					mOldCallToNewCall.get(((IcfgReturnTransition) oldTransition).getCorrespondingCall());
+		} else if (oldTransition instanceof IIcfgCallTransition) {
+			// TODO: this casting business is ugly like this
+			final IIcfgCallTransition<OUTLOC> newCallTransition = (IIcfgCallTransition<OUTLOC>)
+					mEdgeFactory.createCallTransition(newSource, newTarget, oldTransition.getPayload(), newTransformula);
+			mOldCallToNewCall.put((IIcfgCallTransition<INLOC>) oldTransition, newCallTransition);
+			return (IcfgEdge) newCallTransition;
+		} else if (oldTransition instanceof IIcfgReturnTransition) {
+			final IIcfgCallTransition<IcfgLocation> correspondingNewCall =
+					(IIcfgCallTransition<IcfgLocation>) mOldCallToNewCall.get(((IIcfgReturnTransition) oldTransition).getCorrespondingCall());
 			assert correspondingNewCall != null;
 			return mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
 					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
@@ -143,8 +155,14 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 		}
 	}
 
+	/**
+	 * Triggers the necessary computations (once per instance) and returns the result
+	 */
 	@Override
 	public final IIcfg<OUTLOC> getResult() {
+		if (!mProcessed) {
+			process();
+		}
 		return mResult;
 	}
 }

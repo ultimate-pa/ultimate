@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -54,5 +55,7 @@ public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 	void preprocess(CFG cfg);
 
 	IEqualityProvidingState getEqualityProvidingStateForLocationSet(Set<IcfgLocation> arrayGroupAccessLocations);
+
+	IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(IcfgEdge edge);
 
 }

@@ -131,4 +131,30 @@ public class ArrayEqualityAllowStores {
 		return result;
 
 	}
+
+	public Term getLhsArray() {
+		if (mArrayUpdate != null) {
+			return mArrayUpdate.getNewArray();
+		}
+		if (mArrayEquality != null) {
+			return mArrayEquality.getLhs();
+		}
+		if (mOther != null) {
+			throw new UnsupportedOperationException("implement this, when it occurs..");
+		}
+		throw new AssertionError();
+	}
+
+	public Term getRhsArray() {
+		if (mArrayUpdate != null) {
+			return mArrayUpdate.getOldArray();
+		}
+		if (mArrayEquality != null) {
+			return mArrayEquality.getRhs();
+		}
+		if (mOther != null) {
+			throw new UnsupportedOperationException("implement this, when it occurs..");
+		}
+		throw new AssertionError();
+	}
 }

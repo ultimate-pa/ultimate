@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public interface IEqualityProvidingState {
+public interface IEqualityProvidingIntermediateState {
 
 	/**
 	 * Determine if the given two terms must be equal in this state.
@@ -60,5 +60,5 @@ public interface IEqualityProvidingState {
 	 * @param other
 	 * @return
 	 */
-	IEqualityProvidingState join(IEqualityProvidingState other);
+	IEqualityProvidingIntermediateState join(IEqualityProvidingIntermediateState other);
 }

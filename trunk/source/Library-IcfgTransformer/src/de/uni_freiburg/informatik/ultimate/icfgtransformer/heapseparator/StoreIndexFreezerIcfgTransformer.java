@@ -57,9 +57,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker) {
-		super(logger, //csToolkit,
-				resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
-//		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
+		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 	}
 
 	@Override

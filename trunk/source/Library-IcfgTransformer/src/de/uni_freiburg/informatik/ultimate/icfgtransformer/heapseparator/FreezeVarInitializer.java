@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -71,15 +72,15 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 					frzLit));
 			mFreezeVarOutVars.put(en.getKey(), frzVar);
 
-			// "valid[lit_frz_l_x] = 1"
+			/*
+			 *  "valid[lit_frz_l_x] = 1"
+			 */
+			// TODO have to get the valid Termvariable from the Transformula or make a new one!
 			final Term select = SmtUtils.select(mMgdScript.getScript(), validArray.getTermVariable(), frzLit);
-			final Term one = mMgdScript.getScript().term("1");
-			initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), select, one));
-		}
+			// TODO -- is this the right way to get a constant?
+			final Term one = Rational.ONE.toTerm(mMgdScript.getScript().sort("Real"));
 
-		if (!freezeVarTofreezeVarLit.isEmpty()) {
-			mFreezeVarInVars.put(validArray, validArray.getTermVariable());
-			mFreezeVarOutVars.put(validArray, validArray.getTermVariable());
+			initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), select, one));
 		}
 
 		mInitializingTerm = SmtUtils.and(mMgdScript.getScript(), initializingEquations);
@@ -105,8 +106,14 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 			 */
 			final UnmodifiableTransFormula oldTransformula = oldTransition.getTransformula();
 
+//					if (!freezeVarTofreezeVarLit.isEmpty()) {
+//			mFreezeVarInVars.put(validArray, validArray.getTermVariable());
+//			mFreezeVarOutVars.put(validArray, validArray.getTermVariable());
+//		}
+
 			final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(oldTransformula.getInVars());
 			newInVars.putAll(mFreezeVarInVars);
+
 			final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(oldTransformula.getOutVars());
 			newOutVars.putAll(mFreezeVarOutVars);
 
