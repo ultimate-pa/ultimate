@@ -71,31 +71,26 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 			mInternalAlphabet = internalAlphabet;
 		} else {
 			mInternalAlphabet = new ArrayList<String>();
-			;
 		}
 		if (returnAlphabet != null) {
 			mReturnAlphabet = returnAlphabet;
 		} else {
 			mReturnAlphabet = new ArrayList<String>();
-			;
 		}
 		if (states != null) {
 			mStates = states;
 		} else {
 			mStates = new ArrayList<String>();
-			;
 		}
 		if (initStates != null) {
 			mInitialStates = initStates;
 		} else {
 			mInitialStates = new ArrayList<String>();
-			;
 		}
 		if (finStates != null) {
 			mFinalStates = finStates;
 		} else {
 			mFinalStates = new ArrayList<String>();
-			;
 		}
 		if (internalTransitions != null) {
 			mInternalTransitions = internalTransitions.getTransitions();
@@ -106,7 +101,6 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 			mCallTransitions = callTransitions.getTransitions();
 		} else {
 			mCallTransitions = new HashMap<>();
-			;
 		}
 		if (returnTransitions != null) {
 			mReturnTransitions = returnTransitions.getReturnTransitions();
