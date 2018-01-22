@@ -29,6 +29,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,47 +65,53 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 		if (callAlphabet != null) {
 			mCallAlphabet = callAlphabet;
 		} else {
-			mCallAlphabet = null;
+			mCallAlphabet = new ArrayList<String>();
 		}
 		if (internalAlphabet != null) {
 			mInternalAlphabet = internalAlphabet;
 		} else {
-			mInternalAlphabet = null;
+			mInternalAlphabet = new ArrayList<String>();
+			;
 		}
 		if (returnAlphabet != null) {
 			mReturnAlphabet = returnAlphabet;
 		} else {
-			mReturnAlphabet = null;
+			mReturnAlphabet = new ArrayList<String>();
+			;
 		}
 		if (states != null) {
 			mStates = states;
 		} else {
-			mStates = null;
+			mStates = new ArrayList<String>();
+			;
 		}
 		if (initStates != null) {
 			mInitialStates = initStates;
 		} else {
-			mInitialStates = null;
+			mInitialStates = new ArrayList<String>();
+			;
 		}
 		if (finStates != null) {
 			mFinalStates = finStates;
 		} else {
-			mFinalStates = null;
+			mFinalStates = new ArrayList<String>();
+			;
 		}
 		if (internalTransitions != null) {
 			mInternalTransitions = internalTransitions.getTransitions();
 		} else {
-			mInternalTransitions = null;
+			mInternalTransitions = new HashMap<>();
 		}
 		if (callTransitions != null) {
 			mCallTransitions = callTransitions.getTransitions();
 		} else {
-			mCallTransitions = null;
+			mCallTransitions = new HashMap<>();
+			;
 		}
 		if (returnTransitions != null) {
 			mReturnTransitions = returnTransitions.getReturnTransitions();
 		} else {
-			mReturnTransitions = null;
+			mReturnTransitions = new HashMap<>();
 		}
 	}
 
