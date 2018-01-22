@@ -272,8 +272,10 @@ public class TypeHandler implements ITypeHandler {
 				final String modifiedName = 
 						main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 				final String bId = main.mCHandler.getSymbolTable().findCSymbol(node, modifiedName).getBoogieName();
-				return new TypesResult(new NamedType(loc, bId, null), false, false, // TODO: replace constants
-						new CNamed(bId, mDefinedTypes.get(bId).cType));
+				return new TypesResult(new NamedType(loc, bId, null), false, false, 
+						main.mCHandler.getSymbolTable().findCSymbol(node, modifiedName).getCDecl().getType());
+				// return new TypesResult(new NamedType(loc, bId, null), false, false, // TODO: replace constants
+				//  		new CNamed(bId, mDefinedTypes.get(bId).cType));
 			}
 		}
 		final String msg = "Unknown or unsupported type! " + node.toString();
