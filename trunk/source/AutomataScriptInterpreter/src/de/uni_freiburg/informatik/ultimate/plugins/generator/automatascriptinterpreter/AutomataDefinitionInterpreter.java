@@ -66,11 +66,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RankedAlphabetEntryAST;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonRankedAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonTransitionAST;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Responsible for interpretation of automata definitions.
@@ -176,7 +176,7 @@ public class AutomataDefinitionInterpreter {
 			final LinkedList<BooleanExpression> booleanExpressions =
 					parseBooleanExpressions(alternatingAutomaton, expression);
 			for (final BooleanExpression booleanExpression : booleanExpressions) {
-				alternatingAutomaton.addTransition(entry.getKey().right, entry.getKey().left, booleanExpression);
+				alternatingAutomaton.addTransition(entry.getKey().getSecond(), entry.getKey().getFirst(), booleanExpression);
 			}
 		}
 		//Accepting Function
@@ -383,10 +383,10 @@ public class AutomataDefinitionInterpreter {
 
 		// add the transitions
 		for (final Entry<Pair<String, String>, Set<String>> entry : nwa.getInternalTransitions().entrySet()) {
-			final String pred = unifyIfNeeded(entry.getKey().left, mUnifyStates);
+			final String pred = unifyIfNeeded(entry.getKey().getFirst(), mUnifyStates);
 			for (final String succRaw : entry.getValue()) {
 				final String succ = unifyIfNeeded(succRaw, mUnifyStates);
-				final String letter = unifyIfNeeded(entry.getKey().right, mUnifyLettersInternal);
+				final String letter = unifyIfNeeded(entry.getKey().getSecond(), mUnifyLettersInternal);
 				if (!internalAlphabet.contains(letter)) {
 					throw new IllegalArgumentException("Letter " + letter + " not in internal alphabet");
 				}
@@ -395,10 +395,10 @@ public class AutomataDefinitionInterpreter {
 		}
 
 		for (final Entry<Pair<String, String>, Set<String>> entry : nwa.getCallTransitions().entrySet()) {
-			final String pred = unifyIfNeeded(entry.getKey().left, mUnifyStates);
+			final String pred = unifyIfNeeded(entry.getKey().getFirst(), mUnifyStates);
 			for (final String succRaw : entry.getValue()) {
 				final String succ = unifyIfNeeded(succRaw, mUnifyStates);
-				final String letter = unifyIfNeeded(entry.getKey().right, mUnifyLettersCall);
+				final String letter = unifyIfNeeded(entry.getKey().getSecond(), mUnifyLettersCall);
 				if (!callAlphabet.contains(letter)) {
 					throw new IllegalArgumentException("Letter " + letter + " not in call alphabet");
 				}

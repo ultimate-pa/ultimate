@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class AlternatingAutomatonAST extends AutomatonAST{
 
@@ -43,12 +43,12 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	private String acceptingFunction;
 	private boolean isReversed;
 	
-	public AlternatingAutomatonAST(ILocation loc, String name){
+	public AlternatingAutomatonAST(final ILocation loc, final String name){
 		super(loc, name);
 //		mName = name;
 	}
 	
-	public void setAlphabet(List<String> alphabet){
+	public void setAlphabet(final List<String> alphabet){
 		this.alphabet = alphabet;
 	}
 
@@ -56,7 +56,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 		return alphabet;
 	}
 	
-	public void setStates(List<String> states){
+	public void setStates(final List<String> states){
 		this.states = states;
 	}
 	
@@ -64,7 +64,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 		return states;
 	}
 	
-	public void setFinalStates(List<String> finalStates){
+	public void setFinalStates(final List<String> finalStates){
 		this.finalStates = finalStates;
 	}
 
@@ -72,7 +72,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 		return finalStates;
 	}
 	
-	public void setTransitions(Map<Pair<String, String>, Set<String>> transitions){
+	public void setTransitions(final Map<Pair<String, String>, Set<String>> transitions){
 		this.transitions = transitions;
 	}
 	
@@ -80,7 +80,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 		return transitions;
 	}
 	
-	public void setAcceptingFunction(String acceptingFunction){
+	public void setAcceptingFunction(final String acceptingFunction){
 		this.acceptingFunction = acceptingFunction;
 	}
 	
@@ -88,7 +88,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 		return acceptingFunction;
 	}
 	
-	public void setReversed(boolean isReversed){
+	public void setReversed(final boolean isReversed){
 		this.isReversed = isReversed;
 	}
 	
