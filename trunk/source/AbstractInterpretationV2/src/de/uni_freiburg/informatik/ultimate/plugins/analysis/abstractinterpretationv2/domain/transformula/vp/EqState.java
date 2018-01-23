@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqN
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
@@ -99,8 +100,13 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	@Override
 	public EqState removeVariables(final Collection<IProgramVarOrConst> variables) {
+
+		final Set<IProgramVarOrConst> variablesFiltered = variables.stream().filter(var -> var instanceof IProgramVar)
+				.collect(Collectors.toSet());
+
 		final Set<Term> termsFromPvocs =
-				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
+				variablesFiltered.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
+//				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<EqNode> projectedConstraint =
 				mFactory.getEqConstraintFactory().projectExistentially(termsFromPvocs, mConstraint, false);
 
