@@ -805,20 +805,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		assert meet.sanityCheckDontEnforceProjectToWeqVars(mWeqCc);
 
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result;
-//		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
-//			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
-//		} else {
-//			/* we need to project here any way, to keep to the paradigm "edge labels that do not refer to a weq var
-//			 * are either false or stored as true"
-//			 * also, not doing the meetWGpa might be a bad idea anyway..
-//			 */
-//			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
-//		}
+
 		if (mWeqCc.mDiet == Diet.THIN) {
 			result = meet.projectToElements(new HashSet<>(weqVarsForThisEdge), false);
 		} else {
-//			assert !meet.getDisjuncts().stream().anyMatch(l ->
-//				DataStructureUtils.intersection(meet.getAllElements(), mWeqCcManager.getAllWeqNodes()).isEmpty());
 			result = meet;
 		}
 
@@ -853,14 +843,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		meet.projectWeqVarNode(weqVarsForResolventEdge.get(weqVarsForResolventEdge.size() - 1));
 
 		WeakEquivalenceEdgeLabel<NODE, DISJUNCT> labelToShiftAndAdd = meet;
-//		if (WeqSettings.MEET_WITH_GPA_PROJECT_OR_SHIFT_LABEL) {
-//			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
-//		} else {
-//			/*
-//			 * probably we need to project anyway (see projectEdgeLabelToPoint..)
-//			 */
-//			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
-//		}
+
 		if (mWeqCc.mDiet == Diet.THIN) {
 			labelToShiftAndAdd = labelToShiftAndAdd.projectToElements(new HashSet<>(weqVarsForResolventEdge), true);
 		}
@@ -868,7 +851,9 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 		labelToShiftAndAdd.inOrDecreaseWeqVarIndices(1, weqVarsForResolventEdge);
 
 		final NODE firstWeqVar = weqVarsForResolventEdge.get(0);
-		assert !labelToShiftAndAdd.getAppearingNodes().contains(firstWeqVar);
+		assert labelToShiftAndAdd.isTautological()
+	 		|| labelToShiftAndAdd.isInconsistent()
+			|| !labelToShiftAndAdd.getAppearingNodes().contains(firstWeqVar);
 
 		final Set<DISJUNCT> shiftedLabelContents = new HashSet<>(labelToShiftAndAdd.getDisjuncts());
 
