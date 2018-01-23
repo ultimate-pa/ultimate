@@ -28,6 +28,11 @@ package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBException;
 
@@ -56,6 +61,7 @@ public class ParsedParameter {
 	private final ICore<RunDefinition> mCore;
 	private final ILogger mLogger;
 	private final OptionBuilder mOptionFactory;
+	private String mCsvPrefix;
 
 	ParsedParameter(final ICore<RunDefinition> core, final CommandLine cli, final OptionBuilder optionFactory) {
 		mCore = core;
@@ -117,8 +123,15 @@ public class ParsedParameter {
 		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_GENERATE_CSV);
 	}
 
-	public boolean hasCsvDirectory() {
+	private boolean hasCsvDirectory() {
 		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_CSV_DIR);
+	}
+
+	public String getCsvPrefix() throws ParseException, InvalidFileArgumentException {
+		if (generateCsvs() && mCsvPrefix == null) {
+			mCsvPrefix = generateCsvPrefix();
+		}
+		return mCsvPrefix;
 	}
 
 	public File getCsvDirectory() throws ParseException, InvalidFileArgumentException {
@@ -151,11 +164,25 @@ public class ParsedParameter {
 		if (inputFilesArgument == null || inputFilesArgument.length == 0) {
 			throw new InvalidFileArgumentException("No input file specified");
 		}
-
-		// for (final File file : inputFilesArgument) {
-		// checkFileExists(file, CommandLineOptions.OPTION_LONG_NAME_INPUTFILES);
-		// }
 		return inputFilesArgument;
+	}
+
+	private String generateCsvPrefix() throws ParseException, InvalidFileArgumentException {
+		String dir;
+		if (hasCsvDirectory()) {
+			dir = getCsvDirectory().getAbsolutePath();
+		} else {
+			dir = new File(".").getAbsolutePath();
+		}
+
+		final List<File> files = new ArrayList<>();
+		files.addAll(Arrays.asList(getInputFiles()));
+		if (hasSettings()) {
+			files.add(new File(getSettingsFile()));
+		}
+		files.add(getToolchainFile());
+		final String joinednames = files.stream().map(a -> a.getName()).collect(Collectors.joining("_"));
+		return Paths.get(dir, joinednames).toString();
 	}
 
 	private File[] getInputFileArgument() {

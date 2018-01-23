@@ -76,14 +76,18 @@ public final class CommandLineOptions {
 		final List<Option> rtr = new ArrayList<>();
 		rtr.add(Option.builder(OPTION_NAME_TOOLCHAIN).longOpt(OPTION_LONG_NAME_TOOLCHAIN).type(File.class).hasArg()
 				.required(requireToolchain).argName("FILE")
-				.desc("Specify the path to an Ultimate toolchain file. Depending on the toolchain, you may have more options.")
+				.desc("Specify the path to an Ultimate toolchain file. Depending on the toolchain, you may have more "
+						+ "options.")
 				.build());
 		rtr.add(Option.builder(OPTION_NAME_INPUTFILES).longOpt(OPTION_LONG_NAME_INPUTFILES).hasArgs()
 				.required(requireInputFile).argName("FILE").build());
 		rtr.add(Option.builder(OPTION_NAME_SETTINGS).longOpt(OPTION_LONG_NAME_SETTINGS).type(File.class).hasArg()
 				.argName("FILE").build());
-		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_GENERATE_CSV).type(Boolean.class).desc(
-				"Generate .csv files from Statistics results (the filenames are chosen based on the filenames of input, toolchain and settings.")
+		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_GENERATE_CSV).type(Boolean.class)
+				.desc("Generate .csv files from Statistics results and dump them to a directory (the directory name is "
+						+ "chosen based on the filenames of input, toolchain and settings). The .csv files will also "
+						+ "contain four additional columns in the beginning for Toolchainfile, Settingsfile, "
+						+ "Inputfile, Result")
 				.build());
 		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_CSV_DIR).type(File.class)
 				.desc("Specify the path to a directory where the generated .csv files should be stored.").hasArg()

@@ -249,4 +249,9 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		}
 		return false;
 	}
+
+	@Override
+	public int getRowCount() {
+		return mTable.size();
+	}
 }
