@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
@@ -409,7 +410,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 		@Override
 		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(name()).apply(o);
+			return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
 		}
 
 		@Override
