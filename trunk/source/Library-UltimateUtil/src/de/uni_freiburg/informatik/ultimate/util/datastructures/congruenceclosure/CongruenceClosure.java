@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -752,9 +753,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			final CongruenceClosure<E> tver1, final CongruenceClosure<E> tver2, final UnionFind<E> newElemPartition,
 			final boolean intersect) {
 		final HashRelation<E, E> result = new HashRelation<>();
+
+		final BiPredicate<E, E> filterForCrossProduct = (e1, e2)
+				-> (e1 != e2
+					&& (!e1.isLiteral() || !e2.isLiteral())
+					&& e1.hasSameTypeAs(e2));
+
 		for (final Entry<E, E> pair : CrossProducts
-				.binarySelectiveCrossProduct(newElemPartition.getAllRepresentatives(), false,
-						(e1, e2) -> (e1 != e2 && (!e1.isLiteral() || !e2.isLiteral())))) {
+				.binarySelectiveCrossProduct(newElemPartition.getAllRepresentatives(), false, filterForCrossProduct)) {
 			assert !(pair.getKey().isLiteral() && pair.getValue().isLiteral()) : "disequalities between literals are "
 					+ "implicit, the selective cross product should have filtered these cases";
 
