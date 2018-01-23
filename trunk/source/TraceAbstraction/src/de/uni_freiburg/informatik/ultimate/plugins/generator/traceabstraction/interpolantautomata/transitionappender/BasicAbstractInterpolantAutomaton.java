@@ -78,12 +78,12 @@ public abstract class BasicAbstractInterpolantAutomaton<LETTER extends IAction>
 		constructSuccessorsAndTransitions(resPred, resHier, letter, sch, inputSuccs);
 	}
 
-	private void addTransitionToFalse(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+	protected void addTransitionToFalse(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch) {
 		sch.addTransition(resPred, resHier, letter, mIaFalseState);
 		sch.reportSuccsComputed(resPred, resHier, letter);
 	}
-	
+
 	protected boolean chooseFalseSuccessor1(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final AbstractInterpolantAutomaton<LETTER>.SuccessorComputationHelper sch) {
 		// if (linear) predecessor is false, the successor is false

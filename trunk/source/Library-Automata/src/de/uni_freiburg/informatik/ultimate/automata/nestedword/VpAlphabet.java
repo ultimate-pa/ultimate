@@ -32,10 +32,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 
 /**
- * Visibly pushdown Alphabet.
- * Alphabet consisting of three not necessarily disjoint sets. For visibly pushdown automata a (disjoint) partition into
- * internal, call, and return alphabets is necessary. For our NestedWordAutomata this segmentation can increase the
- * performance of operations but is not necessary.
+ * Visibly pushdown Alphabet. Alphabet consisting of three not necessarily disjoint sets. For visibly pushdown automata
+ * a (disjoint) partition into internal, call, and return alphabets is necessary. For our NestedWordAutomata this
+ * segmentation can increase the performance of operations but is not necessary.
  * 
  * @author Matthias Heizmann
  * @param <LETTER>
@@ -62,7 +61,7 @@ public class VpAlphabet<LETTER> {
 		mCallAlphabet = callAlphabet;
 		mReturnAlphabet = returnAlphabet;
 	}
-	
+
 	public VpAlphabet(final Set<LETTER> internalAlphabet) {
 		mInternalAlphabet = internalAlphabet;
 		mCallAlphabet = Collections.emptySet();
@@ -77,7 +76,8 @@ public class VpAlphabet<LETTER> {
 	 */
 	public VpAlphabet(final IAutomaton<LETTER, ?> automaton) {
 		if (automaton instanceof INwaOutgoingLetterAndTransitionProvider) {
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, ?> nwa = (INwaOutgoingLetterAndTransitionProvider<LETTER, ?>) automaton;
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, ?> nwa =
+					(INwaOutgoingLetterAndTransitionProvider<LETTER, ?>) automaton;
 			mInternalAlphabet = nwa.getVpAlphabet().getInternalAlphabet();
 			mCallAlphabet = nwa.getVpAlphabet().getCallAlphabet();
 			mReturnAlphabet = nwa.getVpAlphabet().getReturnAlphabet();
@@ -100,7 +100,6 @@ public class VpAlphabet<LETTER> {
 		return mInternalAlphabet;
 	}
 
-	
 	/**
 	 * @return Set of all letters that can occur as label of a call transition.
 	 * @see #getInternalAlphabet()
@@ -109,7 +108,6 @@ public class VpAlphabet<LETTER> {
 		return mCallAlphabet;
 	}
 
-	
 	/**
 	 * @return Set of all letters that can occur as label of a return transition.
 	 * @see #getInternalAlphabet()
@@ -118,42 +116,57 @@ public class VpAlphabet<LETTER> {
 		return mReturnAlphabet;
 	}
 
+	/**
+	 * @return true iff <code>letter</code> is the label for any transition.
+	 */
+	public boolean containsAny(final LETTER letter) {
+		return mInternalAlphabet.contains(letter) || mCallAlphabet.contains(letter) || mReturnAlphabet.contains(letter);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mCallAlphabet == null) ? 0 : mCallAlphabet.hashCode());
-		result = prime * result + ((mInternalAlphabet == null) ? 0 : mInternalAlphabet.hashCode());
-		result = prime * result + ((mReturnAlphabet == null) ? 0 : mReturnAlphabet.hashCode());
+		result = prime * result + (mCallAlphabet == null ? 0 : mCallAlphabet.hashCode());
+		result = prime * result + (mInternalAlphabet == null ? 0 : mInternalAlphabet.hashCode());
+		result = prime * result + (mReturnAlphabet == null ? 0 : mReturnAlphabet.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final VpAlphabet other = (VpAlphabet) obj;
 		if (mCallAlphabet == null) {
-			if (other.mCallAlphabet != null)
+			if (other.mCallAlphabet != null) {
 				return false;
-		} else if (!mCallAlphabet.equals(other.mCallAlphabet))
+			}
+		} else if (!mCallAlphabet.equals(other.mCallAlphabet)) {
 			return false;
+		}
 		if (mInternalAlphabet == null) {
-			if (other.mInternalAlphabet != null)
+			if (other.mInternalAlphabet != null) {
 				return false;
-		} else if (!mInternalAlphabet.equals(other.mInternalAlphabet))
+			}
+		} else if (!mInternalAlphabet.equals(other.mInternalAlphabet)) {
 			return false;
+		}
 		if (mReturnAlphabet == null) {
-			if (other.mReturnAlphabet != null)
+			if (other.mReturnAlphabet != null) {
 				return false;
-		} else if (!mReturnAlphabet.equals(other.mReturnAlphabet))
+			}
+		} else if (!mReturnAlphabet.equals(other.mReturnAlphabet)) {
 			return false;
+		}
 		return true;
 	}
-	
-	
+
 }

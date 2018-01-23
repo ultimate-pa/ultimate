@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -52,27 +53,40 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public abstract class CachingHoareTripleChecker implements IHoareTripleChecker {
 
+	protected static final boolean UNKNOWN_IF_SOME_EXTENDED_CHECK_IS_UNKNOWN = true;
+
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	protected final IHoareTripleChecker mComputingHoareTripleChecker;
 	protected final IPredicateUnifier mPredicateUnifer;
-	protected final boolean mUnknownIfSomeExtendedCacheCheckIsUnknown = true;
 
 	private final InCaReCounter mResultFromSolver = new InCaReCounter();
 	private final InCaReCounter mResultFromCache = new InCaReCounter();
 	private final InCaReCounter mResultFromExtendedCacheCheck = new InCaReCounter();
 
-	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mInternalCache = new NestedMap3<>();
-	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mCallCache = new NestedMap3<>();
-	private final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> mReturnCache = new HashMap<>();
+	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mInternalCache;
+	private final NestedMap3<IAction, IPredicate, IPredicate, Validity> mCallCache;
+	private final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> mReturnCache;
 
 	public CachingHoareTripleChecker(final IUltimateServiceProvider services,
 			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer) {
+		this(services, protectedHoareTripleChecker, predicateUnifer, new NestedMap3<>(), new NestedMap3<>(),
+				new HashMap<>());
+	}
+
+	public CachingHoareTripleChecker(final IUltimateServiceProvider services,
+			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer,
+			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialInternalCache,
+			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialCallCache,
+			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> initialReturnCache) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mComputingHoareTripleChecker = protectedHoareTripleChecker;
-		mPredicateUnifer = predicateUnifer;
+		mComputingHoareTripleChecker = Objects.requireNonNull(protectedHoareTripleChecker);
+		mPredicateUnifer = Objects.requireNonNull(predicateUnifer);
+		mInternalCache = Objects.requireNonNull(initialInternalCache);
+		mCallCache = Objects.requireNonNull(initialCallCache);
+		mReturnCache = Objects.requireNonNull(initialReturnCache);
 	}
 
 	@Override

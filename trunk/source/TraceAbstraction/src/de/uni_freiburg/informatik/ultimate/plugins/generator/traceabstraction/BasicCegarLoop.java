@@ -209,7 +209,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			mHoareAnnotationLocations = Collections.emptySet();
 		}
-		mStoreFloydHoareAutomata = (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE);
+		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),

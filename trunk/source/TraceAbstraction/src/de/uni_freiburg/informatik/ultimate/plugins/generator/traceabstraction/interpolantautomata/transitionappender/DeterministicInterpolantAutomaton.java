@@ -134,8 +134,8 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 	}
 
 	/**
-	 * Add add input states that are 1. implied by resPred 2. contained in mInterpolantAutomaton 3. different from
-	 * "true" to the mResPred2InputPreds Map
+	 * Add input states that are 1. implied by resPred 2. contained in mInterpolantAutomaton 3. different from "true" to
+	 * the mResPred2InputPreds Map
 	 */
 	private void processResPredInputPredsMapping(final IPredicate resPred) {
 		final Set<IPredicate> impliedPredicates =

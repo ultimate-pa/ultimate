@@ -109,7 +109,7 @@ public class CachingHoareTripleCheckerIterative extends CachingHoareTripleChecke
 				}
 			}
 		}
-		if (mUnknownIfSomeExtendedCacheCheckIsUnknown && someResultWasUnknown) {
+		if (UNKNOWN_IF_SOME_EXTENDED_CHECK_IS_UNKNOWN && someResultWasUnknown) {
 			return Validity.UNKNOWN;
 		}
 		return null;
