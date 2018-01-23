@@ -378,6 +378,14 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 		TOTAL_TRANSITIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
+		BEFORE_DIFF_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		AFTER_DIFF_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		BEFORE_ACCEPT_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
+		AFTER_ACCEPT_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
 		NONREUSE_ITERATIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 		AUTOMATA_FROM_FILE(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
@@ -448,6 +456,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		private int mReusedTransitions;
 		private int mTotalTransitions;
 		private int mNonReuseIterations;
+		private int mBeforeDiffTransitions;
+		private int mAfterDiffTransitions;
+		private int mBeforeAcceptanceTransitions;
+		private int mAfterAcceptanceTransitions;
 
 		public ReuseStatisticsGenerator() {
 			mPredicateUnifierStats = new StatisticsData();
@@ -463,6 +475,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			mReusedTransitions = 0;
 			mTotalTransitions = 0;
 			mNonReuseIterations = 0;
+			mBeforeDiffTransitions = 0;
+			mAfterDiffTransitions = 0;
+			mBeforeAcceptanceTransitions = 0;
+			mAfterAcceptanceTransitions = 0;
 		}
 
 		public void reportPredicateUnifierStats(final IStatisticsDataProvider stats) {
@@ -503,6 +519,22 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 		public void addReusedTransitions(final int value) {
 			mReusedTransitions = mReusedTransitions + value;
+		}
+
+		public void addBeforeDiffTransitions(final int value) {
+			mBeforeDiffTransitions = mBeforeDiffTransitions + value;
+		}
+
+		public void addAfterDiffTransitions(final int value) {
+			mAfterDiffTransitions = mAfterDiffTransitions + value;
+		}
+
+		public void addBeforeAcceptanceTransitions(final int value) {
+			mBeforeAcceptanceTransitions = mBeforeAcceptanceTransitions + value;
+		}
+
+		public void addAfterAcceptanceTransitions(final int value) {
+			mAfterAcceptanceTransitions = mAfterAcceptanceTransitions + value;
 		}
 
 		public void announceNextNonreuseIteration() {
@@ -559,6 +591,14 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 				return mTotalLetters;
 			case TOTAL_TRANSITIONS:
 				return mTotalTransitions;
+			case AFTER_DIFF_TRANS:
+				return mAfterDiffTransitions;
+			case BEFORE_DIFF_TRANS:
+				return mBeforeDiffTransitions;
+			case AFTER_ACCEPT_TRANS:
+				return mAfterAcceptanceTransitions;
+			case BEFORE_ACCEPT_TRANS:
+				return mBeforeAcceptanceTransitions;
 			default:
 				throw new UnsupportedOperationException("Unknown key: " + keyEnum);
 			}

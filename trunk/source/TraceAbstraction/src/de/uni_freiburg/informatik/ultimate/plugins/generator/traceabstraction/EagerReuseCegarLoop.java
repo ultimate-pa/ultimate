@@ -107,40 +107,36 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 	}
 
 	private void computeDifferenceForReuseAutomaton(final int iteration,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> ai)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> reuseAut)
 			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
 		final int oneBasedi = iteration + 1;
-		// final int internalTransitionsBeforeDifference = 0;
-		// final int internalTransitionsAfterDifference = 0;
 
 		if (mPref.dumpAutomata()) {
-			writeAutomatonToFile(ai, "ReusedAutomata" + oneBasedi);
+			writeAutomatonToFile(reuseAut, "ReusedAutomata" + oneBasedi);
 		}
 
-		// if (ENHANCE) {
-		// // TODO: assert: ai should already be in on-demand mode
-		// internalTransitionsBeforeDifference = ai.computeNumberOfInternalTransitions();
-		// } else {
-		// ai.switchToReadonlyMode();
-		// }
+		if (reuseAut instanceof AbstractInterpolantAutomaton) {
+			final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
+			mReuseStats.addBeforeDiffTransitions(aiReuseAut.computeNumberOfInternalTransitions());
+		}
+
 		final PowersetDeterminizer<LETTER, IPredicate> psd =
-				new PowersetDeterminizer<>(ai, true, mPredicateFactoryInterpolantAutomata);
+				new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
 		final boolean explointSigmaStarConcatOfIA = true;
 		final IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff =
 				new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, ai, psd,
+						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, reuseAut, psd,
 						explointSigmaStarConcatOfIA);
 		if (mPref.dumpAutomata()) {
 			final String filename = "DiffAfterEagerReuse" + oneBasedi;
 			writeAutomatonToFile(diff.getResult(), filename);
 		}
-		// if (ENHANCE) {
-		// ai.switchToReadonlyMode();
-		// internalTransitionsAfterDifference = ai.computeNumberOfInternalTransitions();
-		// mLogger.info("Floyd-Hoare automaton" + oneBasedi + " had " + internalTransitionsBeforeDifference
-		// + " internal transitions before reuse, on-demand computation of difference added "
-		// + (internalTransitionsAfterDifference - internalTransitionsBeforeDifference) + " more.");
-		// }
+
+		if (reuseAut instanceof AbstractInterpolantAutomaton) {
+			final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
+			aiReuseAut.switchToReadonlyMode();
+			mReuseStats.addAfterDiffTransitions(aiReuseAut.computeNumberOfInternalTransitions());
+		}
 
 		if (REMOVE_DEAD_ENDS) {
 			if (mComputeHoareAnnotation) {
