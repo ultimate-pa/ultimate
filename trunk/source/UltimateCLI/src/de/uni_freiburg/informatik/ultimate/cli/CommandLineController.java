@@ -392,9 +392,18 @@ public class CommandLineController implements IController<RunDefinition> {
 	}
 
 	private static List<Object> repeatValue(final int rowCount, final Object value) {
+		Object actualValue;
+		if (value instanceof Object[]) {
+			actualValue = Arrays.stream((Object[]) value).map(a -> String.valueOf(a)).collect(Collectors.joining(";"));
+		} else if (value instanceof Collection) {
+			actualValue = ((Collection<?>) value).stream().map(a -> String.valueOf(a)).collect(Collectors.joining(";"));
+		} else {
+			actualValue = String.valueOf(value);
+		}
+
 		final List<Object> rtr = new ArrayList<>(rowCount);
 		for (int i = 0; i < rowCount; ++i) {
-			rtr.add(value);
+			rtr.add(actualValue);
 		}
 		return rtr;
 	}
