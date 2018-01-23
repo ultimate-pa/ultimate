@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
@@ -286,8 +287,9 @@ public class Interpolator extends NonRecursive {
 			} else if (leafTermInfo.getLemmaType().equals(":LA") || leafTermInfo.getLemmaType().equals(":trichotomy")) {
 				final LAInterpolator ipolator = new LAInterpolator(this);
 				interpolants = ipolator.computeInterpolants(leaf);
-			} else if (leafTermInfo.getLemmaType().equals(":read-over-weakeq")
-					|| leafTermInfo.getLemmaType().equals(":weakeq-ext")) {
+			} else if ((Boolean) mSmtSolver.getOption(SolverOptions.ARRAY_INTERPOLATION)
+					&& (leafTermInfo.getLemmaType().equals(":read-over-weakeq")
+							|| leafTermInfo.getLemmaType().equals(":weakeq-ext"))) {
 				final ArrayInterpolator ipolator = new ArrayInterpolator(this);
 				final Term[] interpolantTerms = ipolator.computeInterpolants(leaf);
 				for (int j = 0; j < mNumInterpolants; j++) {
