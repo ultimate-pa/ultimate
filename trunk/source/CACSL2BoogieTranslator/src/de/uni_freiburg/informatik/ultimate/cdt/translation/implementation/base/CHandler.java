@@ -617,6 +617,14 @@ public class CHandler implements ICHandler {
 			// ACSL?
 		}
 
+		// this needs to be here because it needs to know all functions!
+		// have to block this in prerun, because there, Memorymodel is not declared which may make probelms with the
+		// callgraph computation
+		if (!(main instanceof PRDispatcher)) {
+			// handle proc. declaration & resolve their transitive modified globals
+			mDeclarations.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
+		}
+
 		// TODO Need to get a CLocation from somewhere
 		final Unit boogieUnit = new Unit(null, mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		final IASTTranslationUnit hook = units.stream().findAny().get().getSourceTranslationUnit();
@@ -2164,13 +2172,6 @@ public class CHandler implements ICHandler {
 		// add type declarations introduced by the translation, e.g., $Pointer$
 		mDeclarations.addAll(
 				((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
-
-		// have to block this in prerun, because there, Memorymodel is not declared which may make probelms with the
-		// callgraph computation
-		if (!(main instanceof PRDispatcher)) {
-			// handle proc. declaration & resolve their transitive modified globals
-			mDeclarations.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
-		}
 
 		final Collection<FunctionDeclaration> declaredFunctions =
 				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
