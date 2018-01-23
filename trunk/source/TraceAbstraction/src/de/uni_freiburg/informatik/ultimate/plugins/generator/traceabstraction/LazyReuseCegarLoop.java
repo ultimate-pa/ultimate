@@ -106,7 +106,6 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 				if (reuseAut instanceof AbstractInterpolantAutomaton) {
 					final AbstractInterpolantAutomaton<LETTER> aiReuseAut =
 							(AbstractInterpolantAutomaton<LETTER>) reuseAut;
-					aiReuseAut.switchToReadonlyMode();
 					mReuseStats.addAfterAcceptanceTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 				}
 
@@ -115,7 +114,7 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 					mAutomatonAcceptingCounterexample = reuseAut;
 					final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> removed =
 							mReuseAutomata.remove(i);
-					assert (removed.equals(reuseAut));
+					assert removed.equals(reuseAut);
 					mLogger.info("Cex is accepted by automaton number " + i + " in the current list.");
 					mReuseStats.stopTime();
 
@@ -148,7 +147,6 @@ public class LazyReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reuse
 					mAutomatonAcceptingCounterexample;
 			if (reuseAut instanceof AbstractInterpolantAutomaton) {
 				final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
-				aiReuseAut.switchToOnDemandConstructionMode();
 				mReuseStats.addBeforeDiffTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 			}
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
