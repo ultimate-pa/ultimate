@@ -45,7 +45,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mTcData = new StatisticsData();
 	private final StatisticsData mTiData = new StatisticsData();
 	private final StatisticsData mAmData = new StatisticsData();
-	private final StatisticsData mHaData = new StatisticsData();
+	private final StatisticsData mHoareAnnotationData = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
@@ -117,7 +117,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	}
 
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
-		mHaData.aggregateBenchmarkData(hasp);
+		mHoareAnnotationData.aggregateBenchmarkData(hasp);
 	}
 
 	public void addAiWeakeningRatio(final double ratio) {
@@ -213,7 +213,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case AutomataMinimizationStatistics:
 			return mAmData;
 		case HoareAnnotationStatistics:
-			return mHaData;
+			return mHoareAnnotationData;
 		case RefinementEngineStatistics:
 			return mRefinementEngineStatistics;
 		default:
