@@ -102,13 +102,14 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
 					rtrTransitions.add(new Triple<>(newSource, newTarget, transformedTransition));
 				} else {
-					mTransformedIcfgBuilder.createNewTransition(newSource, newTarget, transformedTransition);
+					mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(newSource, newTarget,
+							transformedTransition);
 				}
 			}
 		}
 
 		rtrTransitions.forEach(
-				a -> mTransformedIcfgBuilder.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
+				a -> mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(a.getFirst(), a.getSecond(), a.getThird()));
 	}
 
 	/**
