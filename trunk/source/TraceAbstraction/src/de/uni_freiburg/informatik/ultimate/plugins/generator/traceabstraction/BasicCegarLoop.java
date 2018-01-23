@@ -583,6 +583,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 
 			dumpAutomatonIfEnabled(subtrahend, "", automatonType);
+			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, mIteration != 1);
 
 			if (!useErrorAutomaton) {
 				checkEnhancement(subtrahendBeforeEnhancement, subtrahend);
@@ -602,13 +603,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 			dumpAutomatonIfEnabled(subtrahendBeforeEnhancement, "Enhanced", automatonType);
 
-			if (mIteration == 1) {
-				dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, false);
-			} else {
-				dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, true);
-			}
+		} finally
 
-		} finally {
+		{
 			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
