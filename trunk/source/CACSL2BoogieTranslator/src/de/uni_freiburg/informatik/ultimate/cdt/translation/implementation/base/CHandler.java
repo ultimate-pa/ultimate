@@ -3545,6 +3545,9 @@ public class CHandler implements ICHandler {
 			if (childRes instanceof SkipResult) {
 				return;
 			}
+			if (childRes.node == null) {
+				return;
+			}
 			assert childRes.getClass() == Result.class;
 			assert childRes.node != null;
 			decl.add((Declaration) childRes.node);

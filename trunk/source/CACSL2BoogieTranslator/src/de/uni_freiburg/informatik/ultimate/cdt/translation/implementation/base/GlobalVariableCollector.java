@@ -32,6 +32,7 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -61,9 +62,16 @@ public class GlobalVariableCollector extends ASTVisitor {
 		if (!(raw.getParent() instanceof IASTTranslationUnit)) {
 			return super.visit(raw);
 		}
+		if (!raw.isPartOfTranslationUnitFile()) {
+			// This is handled by some other visit.
+			return super.visit(raw);
+		}
 		final IASTSimpleDeclaration sd = (IASTSimpleDeclaration) raw;
 		final CType type = TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier());
 		for (IASTDeclarator decl : sd.getDeclarators()) {
+			if (decl instanceof CASTFunctionDeclarator) {
+				continue; // functions are handled elsewhere.
+			}
 			final String cId = mSymTab.applyMultiparseRenaming(raw.getContainingFilename(), decl.getName().toString());
 			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, type, false, cId);
 			final CDeclaration cDecl = new CDeclaration(type, cId);
