@@ -864,7 +864,7 @@ public class Interpolator extends NonRecursive {
 							iat.negate();
 						}
 						final Term sharedTerm = iat.toSMTLib(mTheory, isInt);
-						final Term divisor = mixedFactor.toTerm(mixed.getSort());
+						final Term divisor = mixedFactor.abs().toTerm(mixed.getSort());
 						// We need to divide sharedTerm by mixedFactor and check that it doesn't produce a remainder.
 						//
 						// Interpolant is: (and (= mixed (div sharedTerm mixedFactor))
@@ -939,10 +939,10 @@ public class Interpolator extends NonRecursive {
 		if (term instanceof ConstantTerm) {
 			return mFullOccurrence;
 		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()) {
-			Term[] subTerms = ((ApplicationTerm) term).getParameters();
+			final Term[] subTerms = ((ApplicationTerm) term).getParameters();
 			Occurrence result = mFullOccurrence;
 			for (final Term p : subTerms) {
-				Occurrence occ = getOccurrence(p);
+				final Occurrence occ = getOccurrence(p);
 				result = result.intersect(occ);
 			}
 			return result;
@@ -1090,7 +1090,8 @@ public class Interpolator extends NonRecursive {
 		LitInfo info;
 		final BitSet inA = new BitSet(mNumInterpolants + 1);
 		inA.set(0, mNumInterpolants + 1);
-		final BitSet inB = (BitSet) inA.clone();
+		final BitSet inB = new BitSet(mNumInterpolants + 1);
+		inB.set(0, mNumInterpolants);
 		for (final Term st : subterms) {
 			final Occurrence occInfo = getOccurrence(st);
 			inA.and(occInfo.mInA);
