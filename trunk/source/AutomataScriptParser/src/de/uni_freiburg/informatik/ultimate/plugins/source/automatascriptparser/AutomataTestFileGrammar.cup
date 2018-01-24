@@ -4,7 +4,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.*;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation; 
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IEpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
@@ -270,26 +271,26 @@ non terminal TreeSymbolAST tree_symbol;
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
  /* -------------------- Specification of terminals   -----------------------*/
  // 1. Automata Types
- terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON, TREE_AUTOMATON, FINITE_AUTOMATON;
+ terminal Object NESTEDWORD_AUTOMATA, EPSILON_NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON, TREE_AUTOMATON, FINITE_AUTOMATON;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET, RANKED_ALPHABET;
 // 3. States & Places
 terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, TRANSITION_TABLE, ACCEPTING_FUNCTION, EXPR_STATE_NEGATE, EXPR_STATE_AND, EXPR_STATE_OR, IS_REVERSED;
 // 4. Transitions
-terminal Object TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
+terminal Object TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS, EPSILON_TRANSITIONS;
 // 5. 
 terminal Object INITIAL_MARKINGS, ACCEPTING_PLACES;
  /* -------------------- Specification of non-terminals   -----------------------*/
 non terminal IdentifierListAST identifier_list_opt, identifier_list;
 // Automata types
-non terminal AutomatonAST nwa_definition, petrinetJulian_definition, aa_definition, ta_definition, fa_definition;
+non terminal AutomatonAST nwa_definition, epsilon_nwa_definition, petrinetJulian_definition, aa_definition, ta_definition, fa_definition;
 // Alphabets
 non terminal IdentifierListAST alphabet, call_alphabet, return_alphabet, internal_alphabet;
 // States & Places
 non terminal IdentifierListAST states, initial_states, final_states;  
 non terminal IdentifierListAST places, accepting_places;
 // Transitions & Markings
-non terminal TransitionListAST call_transitions, internal_transitions, transitions; 
+non terminal TransitionListAST call_transitions, internal_transitions, transitions, epsilon_transitions; 
 non terminal TransitionListAST return_transitions, transition_list, transition_list_opt;
 non terminal IdentifierListAST transition;
 non terminal TransitionListAST net_transitions, net_transition_list_opt, net_transition_list; 
@@ -424,6 +425,8 @@ type	::=     INT
         		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.tree.Tree.class; :}
         |       NESTEDWORD_AUTOMATA
                 {: RESULT = INestedWordAutomaton.class; :}
+        |       EPSILON_NESTEDWORD_AUTOMATA
+                {: RESULT = IEpsilonNestedWordAutomaton.class; :}
         |       FINITE_AUTOMATON
                 {: RESULT = INestedWordAutomaton.class; :}
         |       PETRINET_AUTOMATA         
@@ -451,6 +454,12 @@ variable_declaration ::=
                 { nwa.setType(t);
                   m_automataDefinitions.addAutomaton(nwa);}
              else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"INestedWordAutomaton\""); }
+             RESULT = null;:}
+        | type:t epsilon_nwa_definition:nwa
+          {: if (t.equals(IEpsilonNestedWordAutomaton.class))
+                { nwa.setType(t);
+                  m_automataDefinitions.addAutomaton(nwa);}
+             else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"IEpsilonNestedWordAutomaton\""); }
              RESULT = null;:}
         | type:t fa_definition:nwa
           {: if (t.equals(INestedWordAutomaton.class))
@@ -1058,6 +1067,32 @@ nwa_definition ::=      variable_identifier:id EQ
                           m_varDeclarations.put(id, NestedwordAutomatonAST.class);
                           RESULT = nwa; :} ;
 
+epsilon_nwa_definition ::=      variable_identifier:id EQ
+                        LPAREN:l call_alphabet:call COMMA
+                               internal_alphabet:intern COMMA
+                               return_alphabet:ret COMMA
+                               states:states COMMA
+                               initial_states:init_states COMMA
+                               final_states:fin_states COMMA
+                               call_transitions:call_trans COMMA
+                               internal_transitions:int_trans COMMA
+                               return_transitions:ret_trans COMMA
+                               epsilon_transitions:eps_trans
+                        RPAREN:r
+                        {: EpsilonNestedwordAutomatonAST nwa = new EpsilonNestedwordAutomatonAST(getLocation(l$, r$), id,
+                          call.getIdentifierList(),
+                          intern.getIdentifierList(),
+                          ret.getIdentifierList(),
+                          states.getIdentifierList(),
+                          init_states.getIdentifierList(),
+                          fin_states.getIdentifierList(),
+                          int_trans,
+                          call_trans,
+                          ret_trans,
+                          eps_trans);
+                          m_varDeclarations.put(id, EpsilonNestedwordAutomatonAST.class);
+                          RESULT = nwa; :} ;
+
 fa_definition ::=      variable_identifier:id EQ
                         LPAREN:l alphabet:intern COMMA
                                states:states COMMA
@@ -1120,6 +1155,9 @@ internal_transitions ::= INTERNAL_TRANSITIONS EQ LBRACE:l transition_list_opt:tL
 						{:RESULT = tList; :};
 
 return_transitions ::= RETURN_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
+						{:RESULT = tList; :};
+						
+epsilon_transitions ::= EPSILON_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 						{:RESULT = tList; :};
 						  
 transition_list_opt ::= transition_list:tList {: RESULT = tList; :} | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new TransitionListAST(getLocation(symb,symb)); :} ;						  

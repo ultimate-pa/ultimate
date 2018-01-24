@@ -102,10 +102,11 @@ StringCharacter = [^\r\n\"\\]
 
   /* keywords for AutomataDefinitionFile */
   /* NestedWordAutomaton */
-  "NestedWordAutomaton"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
-  "FiniteAutomaton"          { m_LastToken = m_CurToken; m_CurToken = "FiniteAutomaton"; return symbol(sym.FINITE_AUTOMATON); }
-  "PetriNet"   { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.PETRINET_AUTOMATA); }
-  "BranchingProcess"   { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.BRANCHINGPROCESS_AUTOMATA); }
+  "NestedWordAutomaton"         { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
+  "EpsilonNestedWordAutomaton"  { m_LastToken = m_CurToken; m_CurToken = "EpsilonNestedWordAutomaton"; return symbol(sym.EPSILON_NESTEDWORD_AUTOMATA); }
+  "FiniteAutomaton"             { m_LastToken = m_CurToken; m_CurToken = "FiniteAutomaton"; return symbol(sym.FINITE_AUTOMATON); }
+  "PetriNet"                    { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.PETRINET_AUTOMATA); }
+  "BranchingProcess"            { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.BRANCHINGPROCESS_AUTOMATA); }
   "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
   "callAlphabet"                { m_LastToken = m_CurToken; m_CurToken = "callAlphabet"; return symbol(sym.CALL_ALPHABET); }
   "internalAlphabet"            { m_LastToken = m_CurToken; m_CurToken = "internalAlphabet"; return symbol(sym.INTERNAL_ALPHABET); }
@@ -117,6 +118,7 @@ StringCharacter = [^\r\n\"\\]
   "callTransitions"             { m_LastToken = m_CurToken; m_CurToken = "callTransitions"; return symbol(sym.CALL_TRANSITIONS); }
   "internalTransitions"         { m_LastToken = m_CurToken; m_CurToken = "internalTransitions"; return symbol(sym.INTERNAL_TRANSITIONS); }
   "returnTransitions"           { m_LastToken = m_CurToken; m_CurToken = "returnTransitions"; return symbol(sym.RETURN_TRANSITIONS); }
+  "epsilonTransitions"          { m_LastToken = m_CurToken; m_CurToken = "epsilonTransitions"; return symbol(sym.EPSILON_TRANSITIONS); }
   "places"                      { m_LastToken = m_CurToken; m_CurToken = "places"; return symbol(sym.PLACES); }
 
 
