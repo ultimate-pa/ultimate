@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.GlobalVariableCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
@@ -283,6 +284,9 @@ public abstract class Dispatcher {
 		
 		// Collect all global variables
 		executePreRun(new GlobalVariableCollector(mFlatTable), nodes, gvc -> {});
+		
+		// Collect all functions
+		executePreRun(new FunctionCollector(mFlatTable), nodes, fc -> {});
 	}
 	
 	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,
