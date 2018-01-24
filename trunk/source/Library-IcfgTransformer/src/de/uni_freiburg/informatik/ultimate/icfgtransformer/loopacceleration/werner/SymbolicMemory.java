@@ -116,6 +116,10 @@ public class SymbolicMemory {
 			final Term t = entry.getValue();
 			final Map<Term, Term> substitution = new HashMap<>();
 
+			if (t instanceof TermVariable) {
+				int i = 1;
+			}
+			
 			if (t instanceof TermVariable && mMemoryMapping.containsKey(entry.getKey())) {
 				substitution.put(t, mMemoryMapping.get(entry.getKey()));
 			}
@@ -124,10 +128,11 @@ public class SymbolicMemory {
 				mMemoryMapping.put(entry.getKey(), entry.getValue());
 				continue;
 			}
+			
 
 			if (t instanceof ConstantTerm) {
 				substitution.put(mMemoryMapping.get(entry.getKey()), t);
-			} else {
+			} else if (substitution.isEmpty()) {
 				final ApplicationTerm appTerm = (ApplicationTerm) t;
 				substitution.putAll(termUnravel(appTerm));
 			}

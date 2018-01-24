@@ -40,10 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -60,14 +57,12 @@ public class Loop {
 	private final IcfgLocation mLoopHead;
 	private final ManagedScript mScript;
 	private Term mCondition;
-	private Deque<IcfgEdge> mPath;
+	private Set<IcfgEdge> mPath;
+	private final Set<IcfgLocation> mNodes;
 	private Deque<Backbone> mBackbones;
 	private IteratedSymbolicMemory mIteratedMemory;
 	private List<TermVariable> mAuxVars;
 	private Map<IcfgLocation, Backbone> mErrorPaths;
-	private Set<IcfgEdge> mBreakPaths;
-	private Set<UnmodifiableTransFormula> mBreakFormulas;
-	private Boolean mHasNestedLoops;
 	private Deque<Loop> mNestedLoops;
 	private Map<IProgramVar, TermVariable> mInVars;
 	private Map<IProgramVar, TermVariable> mOutVars;
@@ -84,6 +79,7 @@ public class Loop {
 	 */
 	public Loop(final IcfgLocation loopHead, final ManagedScript script) {
 		mPath = null;
+		mNodes = new HashSet<>();
 		mLoopHead = loopHead;
 		mScript = script;
 		mBackbones = new ArrayDeque<>();
@@ -91,16 +87,12 @@ public class Loop {
 		mIteratedMemory = null;
 		mAuxVars = new ArrayList<>();
 		mErrorPaths = new HashMap<>();
-		mHasNestedLoops = false;
 		mNestedLoops = new ArrayDeque<>();
 		mInVars = new HashMap<>();
 		mOutVars = new HashMap<>();
 		mLoopExit = null;
 		mExitConditions = new ArrayList<>();
 		mExitTransitions = new ArrayList<>();
-		mBreakPaths = new HashSet<>();
-		mBreakFormulas = new HashSet<>();
-
 		mFormula = null;
 	}
 
@@ -109,54 +101,58 @@ public class Loop {
 	 * 
 	 * @param tf
 	 * @param inVars
+	 *            of the tf
 	 * @param outVars
+	 *            of the tf
 	 * @return Transformula with unified var names
 	 */
-	public TransFormula updateVars(final TransFormula tf, final Map<IProgramVar, TermVariable> inVars,
+	public Term updateVars(final Term tf, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
-		if (SmtUtils.isFalse(tf.getFormula())) {
+		if (SmtUtils.isFalse(tf)) {
 			return tf;
 		}
 
-		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(inVars);
-		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(outVars);
+		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(mInVars);
+		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(mOutVars);
 
 		final Map<Term, Term> subMapping = new HashMap<>();
 
-		for (final Entry<IProgramVar, TermVariable> oldVar : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> oldVar : inVars.entrySet()) {
 
-			if (inVars.containsKey(oldVar.getKey()) && inVars.get(oldVar.getKey()).equals(outVars.get(oldVar.getKey()))
-					&& !tf.getOutVars().get(oldVar.getKey()).equals(tf.getInVars().get(oldVar.getKey()))) {
+			if (mInVars.containsKey(oldVar.getKey())
+					&& mInVars.get(oldVar.getKey()).equals(mOutVars.get(oldVar.getKey()))
+					&& !outVars.get(oldVar.getKey()).equals(inVars.get(oldVar.getKey()))) {
 
-				newInVars.put(oldVar.getKey(), inVars.get(oldVar.getKey()));
-				newOutVars.put(oldVar.getKey(), tf.getOutVars().get(oldVar.getKey()));
+				newInVars.put(oldVar.getKey(), mInVars.get(oldVar.getKey()));
+				newOutVars.put(oldVar.getKey(), outVars.get(oldVar.getKey()));
 
-				subMapping.put(oldVar.getValue(), inVars.get(oldVar.getKey()));
+				subMapping.put(oldVar.getValue(), mInVars.get(oldVar.getKey()));
 				continue;
 			}
 
-			if (!inVars.containsKey(oldVar.getKey())) {
+			if (!mInVars.containsKey(oldVar.getKey())) {
 				newInVars.put(oldVar.getKey(), oldVar.getValue());
 				subMapping.put(oldVar.getValue(), oldVar.getValue());
 			} else {
-				newInVars.put(oldVar.getKey(), inVars.get(oldVar.getKey()));
-				subMapping.put(oldVar.getValue(), inVars.get(oldVar.getKey()));
+				newInVars.put(oldVar.getKey(), mInVars.get(oldVar.getKey()));
+				subMapping.put(oldVar.getValue(), mInVars.get(oldVar.getKey()));
 			}
 		}
 
-		for (final Entry<IProgramVar, TermVariable> oldVar : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> oldVar : outVars.entrySet()) {
 
-			if (inVars.containsKey(oldVar.getKey()) && inVars.get(oldVar.getKey()).equals(outVars.get(oldVar.getKey()))
-					&& !tf.getOutVars().get(oldVar.getKey()).equals(tf.getInVars().get(oldVar.getKey()))) {
+			if (mInVars.containsKey(oldVar.getKey())
+					&& mInVars.get(oldVar.getKey()).equals(mOutVars.get(oldVar.getKey()))
+					&& !outVars.get(oldVar.getKey()).equals(inVars.get(oldVar.getKey()))) {
 				continue;
 			}
 
-			if (!outVars.containsKey(oldVar.getKey())) {
+			if (!mOutVars.containsKey(oldVar.getKey())) {
 				newOutVars.put(oldVar.getKey(), oldVar.getValue());
 				subMapping.put(oldVar.getValue(), oldVar.getValue());
 			} else {
-				newOutVars.put(oldVar.getKey(), outVars.get(oldVar.getKey()));
-				subMapping.put(oldVar.getValue(), outVars.get(oldVar.getKey()));
+				newOutVars.put(oldVar.getKey(), mOutVars.get(oldVar.getKey()));
+				subMapping.put(oldVar.getValue(), mOutVars.get(oldVar.getKey()));
 			}
 		}
 
@@ -164,11 +160,7 @@ public class Loop {
 		setOutVars(newOutVars);
 
 		final Substitution sub = new Substitution(mScript, subMapping);
-		final Term updatedTerm = sub.transform(tf.getFormula());
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, newOutVars, true, null, true, null, true);
-		tfb.setFormula(updatedTerm);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(mScript);
+		return sub.transform(tf);
 	}
 
 	/**
@@ -177,14 +169,14 @@ public class Loop {
 	 * @param backbone
 	 *            The backbone to be assigned to the loop.
 	 */
-	public void addBackbone(final Backbone backbone) {
-		mBackbones.addLast(backbone);
+	public void setBackbones(final Deque<Backbone> backbones) {
+		mBackbones = backbones;
 	}
 
 	/**
 	 * Get loop path as IcfgEdges
 	 */
-	public Deque<IcfgEdge> getPath() {
+	public Set<IcfgEdge> getPath() {
 		return mPath;
 	}
 
@@ -230,14 +222,6 @@ public class Loop {
 		return mLoopExit;
 	}
 
-	public Set<UnmodifiableTransFormula> getBreakFormulas() {
-		return mBreakFormulas;
-	}
-
-	public Set<IcfgEdge> getBreakPaths() {
-		return mBreakPaths;
-	}
-
 	public List<UnmodifiableTransFormula> getExitConditions() {
 		return mExitConditions;
 	}
@@ -257,32 +241,20 @@ public class Loop {
 		return mNestedLoops;
 	}
 
-	public void setPath(final Deque<IcfgEdge> path) {
+	public void setPath(final Set<IcfgEdge> path) {
 		mPath = path;
-	}
-
-	public void setLoopExit(final IcfgLocation icfgLocation) {
-		mLoopExit = icfgLocation;
-		for (final IcfgEdge trans : icfgLocation.getIncomingEdges()) {
-			final IcfgLocation source = trans.getSource();
-			for (final IcfgEdge out : source.getOutgoingEdges()) {
-				if (mPath.contains(out) && source.equals(mLoopHead)) {
-					mExitTransitions.add(trans);
-					break;
-				}
-			}
-
+		for (final IcfgEdge edge : path) {
+			mNodes.add(edge.getSource());
 		}
 	}
 
-	/**
-	 * add a new breakformula
-	 * 
-	 * @param tf
-	 *            the formula
-	 */
-	public void addBreakFormula(final UnmodifiableTransFormula tf) {
-		mBreakFormulas.add(tf);
+	public void setLoopExit(final IcfgLocation icfgLocation) {
+		for (final IcfgEdge edge : icfgLocation.getIncomingEdges()) {
+			if (mNodes.contains(edge.getSource())) {
+				mExitTransitions.add(edge);
+			}
+		}
+		mLoopExit = icfgLocation;
 	}
 
 	/**
@@ -327,7 +299,9 @@ public class Loop {
 	 *            the nested loop
 	 */
 	public void addNestedLoop(final Loop loop) {
-		mNestedLoops.addLast(loop);
+		if (!mNestedLoops.contains(loop)) {
+			mNestedLoops.addLast(loop);
+		}
 	}
 
 	public void setFormula(final UnmodifiableTransFormula tf) {
@@ -350,17 +324,6 @@ public class Loop {
 		mIteratedMemory = memory;
 	}
 
-	public Boolean isNested() {
-		return mHasNestedLoops;
-	}
-
-	/**
-	 * The Loop has nested Loops
-	 */
-	public void setNested() {
-		mHasNestedLoops = true;
-	}
-
 	/**
 	 * add a var
 	 * 
@@ -369,16 +332,6 @@ public class Loop {
 	 */
 	public void addVar(final List<TermVariable> vars) {
 		mAuxVars.addAll(vars);
-	}
-
-	/**
-	 * Add a new breakpath
-	 * 
-	 * @param icfgEdge
-	 *            the breakpath
-	 */
-	public void addBreakPath(final IcfgEdge icfgEdge) {
-		mBreakPaths.add(icfgEdge);
 	}
 
 	@Override
