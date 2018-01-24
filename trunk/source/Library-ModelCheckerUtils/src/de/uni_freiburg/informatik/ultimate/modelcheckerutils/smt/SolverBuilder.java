@@ -65,6 +65,8 @@ public class SolverBuilder {
 	public enum SolverMode {
 		Internal_SMTInterpol,
 
+		Internal_SMTInterpol_NoArrayInterpol,
+
 		External_PrincessInterpolationMode,
 
 		External_SMTInterpolInterpolationMode,
@@ -319,38 +321,34 @@ public class SolverBuilder {
 		switch (solverMode) {
 		case External_DefaultMode:
 		case External_ModelsMode:
-		case External_ModelsAndUnsatCoreMode: {
+		case External_ModelsAndUnsatCoreMode:
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = null;
 			useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
-		}
 			break;
-		case External_PrincessInterpolationMode: {
+		case External_PrincessInterpolationMode:
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.PRINCESS;
 			useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
-		}
 			break;
-		case External_SMTInterpolInterpolationMode: {
+		case External_SMTInterpolInterpolationMode:
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.SMTINTERPOL;
-		}
 			break;
-		case External_Z3InterpolationMode: {
+		case External_Z3InterpolationMode:
 			useExternalSolver = true;
 			timeoutSmtInterpol = -1;
 			externalInterpolator = ExternalInterpolator.IZ3;
 			useDiffWrapper = USE_DIFF_WRAPPER_SCRIPT;
-		}
 			break;
-		case Internal_SMTInterpol: {
+		case Internal_SMTInterpol_NoArrayInterpol:
+		case Internal_SMTInterpol:
 			useExternalSolver = false;
-			timeoutSmtInterpol = 900 * 1000;
+			timeoutSmtInterpol = -1;
 			externalInterpolator = null;
-		}
 			break;
 		default:
 			throw new AssertionError("unknown solver mode");
@@ -397,9 +395,14 @@ public class SolverBuilder {
 			}
 			break;
 		case External_PrincessInterpolationMode:
+			result.setOption(":produce-models", true);
+			result.setOption(":produce-interpolants", true);
+			result.setLogic(logicForExternalSolver);
+			break;
 		case External_SMTInterpolInterpolationMode:
 			result.setOption(":produce-models", true);
 			result.setOption(":produce-interpolants", true);
+			result.setOption(":array-interpolation", true);
 			result.setLogic(logicForExternalSolver);
 			break;
 		case External_Z3InterpolationMode:
@@ -426,6 +429,20 @@ public class SolverBuilder {
 			result.setOption(":produce-interpolants", true);
 			result.setOption(":interpolant-check-mode", true);
 			result.setOption(":proof-transformation", "LU");
+			result.setOption(":array-interpolation", true);
+			// mScript.setOption(":proof-transformation", "RPI");
+			// mScript.setOption(":proof-transformation", "LURPI");
+			// mScript.setOption(":proof-transformation", "RPILU");
+			// mScript.setOption(":verbosity", 0);
+			result.setLogic("QF_AUFLIRA");
+			break;
+		case Internal_SMTInterpol_NoArrayInterpol:
+			result.setOption(":produce-models", true);
+			result.setOption(":produce-unsat-cores", true);
+			result.setOption(":produce-interpolants", true);
+			result.setOption(":interpolant-check-mode", true);
+			result.setOption(":proof-transformation", "LU");
+			result.setOption(":array-interpolation", false);
 			// mScript.setOption(":proof-transformation", "RPI");
 			// mScript.setOption(":proof-transformation", "LURPI");
 			// mScript.setOption(":proof-transformation", "RPILU");
