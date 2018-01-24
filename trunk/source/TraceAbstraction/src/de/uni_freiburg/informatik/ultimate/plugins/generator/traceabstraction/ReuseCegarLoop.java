@@ -146,8 +146,6 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 				final IPredicate predicateState =
 						parsePredicate(ppws, reuseAutomaton.getPredicateUnifier(), stringState);
 				if (predicateState == null) {
-					// we use debug predicates when the parsing of a state does not yield a valid predicate in the
-					// current context. this seems rather hacky to me ...
 					removedStates++;
 					continue;
 				}
@@ -160,6 +158,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			}
 			final int totalStates = removedStates + reusedStates;
 			mReuseStats.addReusedStates(reusedStates);
+			mReuseStats.addUselessPredicates(removedStates);
 			mReuseStats.addTotalStates(totalStates);
 			// Add transitions
 			addTransitionsFromRawAutomaton(resAutomaton, rawAutomatonFromFile, mapStringToLetter, mapStringToState,
@@ -505,6 +504,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 		AFTER_ACCEPT_TRANS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
+		USELESS_PREDICATES(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
+
 		NONREUSE_ITERATIONS(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 
 		AUTOMATA_FROM_FILE(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
@@ -579,6 +580,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		private int mAfterDiffTransitions;
 		private int mBeforeAcceptanceTransitions;
 		private int mAfterAcceptanceTransitions;
+		private int mUselessPredicates;
 
 		public ReuseStatisticsGenerator() {
 			mPredicateUnifierStats = new StatisticsData();
@@ -598,6 +600,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			mAfterDiffTransitions = 0;
 			mBeforeAcceptanceTransitions = 0;
 			mAfterAcceptanceTransitions = 0;
+			mUselessPredicates = 0;
 		}
 
 		public void reportPredicateUnifierStats(final IStatisticsDataProvider stats) {
@@ -654,6 +657,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 		public void addAfterAcceptanceTransitions(final int value) {
 			mAfterAcceptanceTransitions = mAfterAcceptanceTransitions + value;
+		}
+
+		public void addUselessPredicates(final int value) {
+			mUselessPredicates = mUselessPredicates + value;
 		}
 
 		public void announceNextNonreuseIteration() {
@@ -718,6 +725,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 				return mAfterAcceptanceTransitions;
 			case BEFORE_ACCEPT_TRANS:
 				return mBeforeAcceptanceTransitions;
+			case USELESS_PREDICATES:
+				return mUselessPredicates;
 			default:
 				throw new UnsupportedOperationException("Unknown key: " + keyEnum);
 			}
