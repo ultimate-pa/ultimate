@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -110,6 +111,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier.CoverageRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
@@ -120,6 +122,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -583,7 +586,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 
 			dumpAutomatonIfEnabled(subtrahend, "", automatonType);
-			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, mIteration != 1);
+			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, mIteration != 1, predicateUnifier);
 
 			if (!useErrorAutomaton) {
 				checkEnhancement(subtrahendBeforeEnhancement, subtrahend);
@@ -645,7 +648,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private void dumpOrAppendAutomatonForReuseIfEnabled(
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, final boolean append) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, final boolean append,
+			final IPredicateUnifier predicateUnifier) {
 		if (mPref.dumpOnlyReuseAutomata()) {
 			final String[] splitRes = mTaskIdentifier.toString().split("\\.", 2);
 			String programName = "";
@@ -653,8 +657,24 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				programName = splitRes[0];
 			}
 			final String filename = programName + "AutomataForReuse";
-			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa" + mIteration,
-					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", append, automaton);
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> printedAutomaton;
+			final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
+			final boolean addPredicateImplicationInformation = false;
+			if (addPredicateImplicationInformation) {
+				final HashRelation<IPredicate, IPredicate> outgoingEpsilonTransitions = ((CoverageRelation) predicateUnifier
+						.getCoverageRelation()).getCopyOfImplicationRelation();
+				INestedWordAutomaton<LETTER, IPredicate> backingNestedWordAutomaton;
+				try {
+					backingNestedWordAutomaton = new RemoveUnreachable<LETTER, IPredicate>(services, automaton).getResult();
+				} catch (final AutomataOperationCanceledException e) {
+					throw new AssertionError(e);
+				}
+				printedAutomaton = new EpsilonNestedWordAutomaton<LETTER, IPredicate, INestedWordAutomaton<LETTER,IPredicate>>(backingNestedWordAutomaton, outgoingEpsilonTransitions);
+			} else {
+				printedAutomaton = automaton;
+			}
+			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + mIteration,
+					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", append, printedAutomaton);
 		}
 	}
 
