@@ -45,9 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Consumer;
 
-import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
@@ -333,7 +331,7 @@ public class MainDispatcher extends Dispatcher {
 	protected void preRun(final Collection<DecoratedUnit> nodes) {
 		super.preRun(nodes);
 		mVariablesOnHeap = new LinkedHashSet<>();
-		
+
 		// Build the function table
 		executePreRun(new FunctionTableBuilder(), nodes, ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
 
@@ -345,10 +343,8 @@ public class MainDispatcher extends Dispatcher {
 
 		if (DETERMINIZE_NECESSARY_DECLARATIONS) {
 			executePreRun(
-					new DetermineNecessaryDeclarations(getCheckedMethod(), this, mFunctionTable, mFunctionToIndex), 
-					nodes, 
-					dnd -> mReachableDeclarations = dnd.getReachableDeclarationsOrDeclarators()
-			);
+					new DetermineNecessaryDeclarations(getCheckedMethod(), this, mFunctionTable, mFunctionToIndex),
+					nodes, dnd -> mReachableDeclarations = dnd.getReachableDeclarationsOrDeclarators());
 		} else {
 			mReachableDeclarations = null;
 		}
@@ -603,8 +599,8 @@ public class MainDispatcher extends Dispatcher {
 
 	private List<AssertStatement> translateWitnessInvariant(final ILocation loc,
 			final ExtractedWitnessInvariant invariant,
-			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition,
-			final IASTNode hook) throws AssertionError {
+			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition, final IASTNode hook)
+			throws AssertionError {
 		if (invariant != null) {
 			if (!funHasCorrectPosition.test(invariant)) {
 				return Collections.emptyList();
