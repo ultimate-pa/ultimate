@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqN
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
@@ -68,7 +67,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 			final Set<IProgramVarOrConst> variables) {
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
-		mPvocs = new HashSet<>(variables);
+		mPvocs = Collections.unmodifiableSet(new HashSet<>(variables));
 		assert assertPvocsAreComplete(constraint);
 	}
 
@@ -76,7 +75,11 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 		final Set<IProgramVarOrConst> set = constraint.getPvocs(mFactory.getSymbolTable()).stream()
 				.filter(pvoc -> !(pvoc instanceof IProgramOldVar)).filter(pvoc -> !(pvoc instanceof BoogieConst))
 				.collect(Collectors.toSet());
-		return mPvocs.containsAll(set);
+		if (!mPvocs.containsAll(set)) {
+			assert false;
+			return false;
+		}
+		return true;
 	}
 
 	@Override
@@ -101,12 +104,12 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	@Override
 	public EqState removeVariables(final Collection<IProgramVarOrConst> variables) {
 
-		final Set<IProgramVarOrConst> variablesFiltered = variables.stream().filter(var -> var instanceof IProgramVar)
-				.collect(Collectors.toSet());
+//		final Set<IProgramVarOrConst> variablesFiltered = variables.stream().filter(var -> var instanceof IProgramVar)
+//				.collect(Collectors.toSet());
 
 		final Set<Term> termsFromPvocs =
-				variablesFiltered.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
-//				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
+//				variablesFiltered.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
+				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<EqNode> projectedConstraint =
 				mFactory.getEqConstraintFactory().projectExistentially(termsFromPvocs, mConstraint, false);
 

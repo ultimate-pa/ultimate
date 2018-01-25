@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 
 /**
  * Represents a select term somewhere in the program.
@@ -12,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class SelectInfo {
 
 	private final ArrayCellAccess mArrayCellAccess;
+
 	private final EdgeInfo mEdgeInfo;
 
 	public SelectInfo(final ArrayCellAccess arrayCellAccess, final EdgeInfo edgeInfo) {
@@ -20,17 +22,24 @@ public class SelectInfo {
 		mEdgeInfo = edgeInfo;
 	}
 
-	public ArrayCellAccess getArrayCellAccess() {
-		return mArrayCellAccess;
-	}
+//	public ArrayCellAccess getArrayCellAccess() {
+//		return mArrayCellAccess;
+//	}
 
 	public EdgeInfo getEdgeInfo() {
 		return mEdgeInfo;
 	}
 
 	public IProgramVarOrConst getArrayPvoc() {
-		return getEdgeInfo().getProgramVarOrConstForTerm(getArrayCellAccess().getArray());
+		return getEdgeInfo().getProgramVarOrConstForTerm(mArrayCellAccess.getArray());
 	}
 
+	@Override
+	public String toString() {
+		return "(" + mArrayCellAccess + ", at " + mEdgeInfo + ")";
+	}
 
+	public ArrayIndex getIndex() {
+		return mArrayCellAccess.getIndex();
+	}
 }

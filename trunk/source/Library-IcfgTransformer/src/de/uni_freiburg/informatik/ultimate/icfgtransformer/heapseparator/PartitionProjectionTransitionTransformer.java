@@ -1,6 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -14,15 +19,32 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
-	private ManagedScript mMgdScript;
+//	NestedMap2<EdgeInfo, Term, LocationBlock> mEdgeInfoToTermVariableToPartitionBlock;
+	/**
+	 * Map holding the partitioning information.
+	 */
+	private final NestedMap2<IcfgEdge, Term, LocationBlock> mEdgeToTermVariableToPartitionBlock;
 
-	NestedMap2<EdgeInfo, Term, LocationBlock> mEdgeInfoToTermVariableToPartitionBlock;
+
+	/**
+	 * Manager for the separated subarrays.
+	 */
+	final SubArrayManager mSubArrayManager;
+
+
+	private final Map<ArrayGroup, List<Set<LocationBlock>>> mArrayGroupToDimensionToLocationBlocks;
+
+
+	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
+
+
+	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
 
 	/**
 	 *
@@ -41,9 +63,38 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 			final Class<OUTLOC> outLocClazz,
 			final IIcfg<INLOC> inputCfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker,
-			final Map<SelectInfo, LocationBlock> selectInfoToLocationBlock) {
+			final Map<SelectInfo, LocationBlock> selectInfoToLocationBlock,
+			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo,
+			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
-		// TODO Auto-generated constructor stub
+
+		mEdgeToTermVariableToPartitionBlock = new NestedMap2<>();
+		for (final Entry<SelectInfo, LocationBlock> en : selectInfoToLocationBlock.entrySet()) {
+			mEdgeToTermVariableToPartitionBlock.put(
+					en.getKey().getEdgeInfo().getEdge(),
+					en.getKey().getArrayCellAccess().getIndex(),
+					en.getValue());
+		}
+
+		mArrayToArrayGroup = arrayToArrayGroup;
+
+		mArrayGroupToDimensionToLocationBlocks = computeArrayGroupToDimensionToLocationBlocks(
+				selectInfoToLocationBlock.values());
+
+		mSubArrayManager = new SubArrayManager(mInputCfgCsToolkit, null);
+
+		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
+	}
+
+	private Map<ArrayGroup, List<Set<LocationBlock>>> computeArrayGroupToDimensionToLocationBlocks(
+			final Collection<LocationBlock> values) {
+		final Map<ArrayGroup, List<Set<LocationBlock>>> result = new HashMap<>();
+
+		for (final LocationBlock locationBlock : values) {
+//			locationBlock.
+		}
+
+		return result;
 	}
 
 	@Override
@@ -52,14 +103,16 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		final UnmodifiableTransFormula tf = edge.getTransformula();
 
 
-		final Map<Term, LocationBlock> tvToLocationBlock =
-				mEdgeInfoToTermVariableToPartitionBlock.get(new EdgeInfo(edge));
+		final Map<Term, LocationBlock> termToLocationBlock = mEdgeToTermVariableToPartitionBlock.get(edge);
+//				mEdgeInfoToTermVariableToPartitionBlock.get(new EdgeInfo(edge));
 
-		final Term transformedFormula =
-				new PartitionProjectionTermTransformer(null, tvToLocationBlock).transform(tf.getFormula());
+		final PartitionProjectionTermTransformer ppttf =
+				new PartitionProjectionTermTransformer(mSubArrayManager, termToLocationBlock, new EdgeInfo(edge),
+						mArrayGroupToDimensionToLocationBlocks, mArrayToArrayGroup, mEdgeToIndexToStoreIndexInfo);
+		final Term transformedFormula = ppttf.transform(tf.getFormula());
 
-		final Map<IProgramVar, TermVariable> inVars = null;
-		final Map<IProgramVar, TermVariable> outVars = null;
+		final Map<IProgramVar, TermVariable> inVars = ppttf.getNewInVars();
+		final Map<IProgramVar, TermVariable> outVars = ppttf.getNewOutVars();
 
 		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(inVars, outVars,
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(),

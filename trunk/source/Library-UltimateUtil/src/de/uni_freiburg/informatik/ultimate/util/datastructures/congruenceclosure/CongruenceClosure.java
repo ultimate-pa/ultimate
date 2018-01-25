@@ -333,7 +333,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *   -->  {{x, 1}, {3}}, 1 != 3
 		 * We have to filter this out because we leave disequalities between literals implicit.
 		 */
-		if (elem1.isLiteral() || elem2.isLiteral()) {
+		if (e1OldRep.isLiteral() || e2OldRep.isLiteral()) {
 			final ELEM newRep = getRepresentativeElement(elem1);
 			assert newRep.isLiteral() : "if one element of an equivalence class is a literal, then it must be the "
 					+ "representative";
@@ -343,6 +343,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				}
 			}
 		}
+		assert assertNoExplicitLiteralDisequalities();
 
 		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
 				getAuxData().updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep,
@@ -1171,6 +1172,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		}
 
+		if (!assertNoExplicitLiteralDisequalities()) {
+			assert false;
+			return false;
+		}
+
+		return true;
+	}
+
+	private boolean assertNoExplicitLiteralDisequalities() {
 		/*
 		 * disequalities between literals must remain implicit
 		 */
@@ -1180,7 +1190,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				return false;
 			}
 		}
-
 		return true;
 	}
 

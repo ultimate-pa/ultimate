@@ -26,7 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -174,11 +177,24 @@ public class HeapSepPreAnalysis {
 		return mSelectInfos;
 	}
 
-	public Set<ArrayGroup> getArrayGroups() {
+//	public Set<ArrayGroup> getArrayGroups() {
+//		if (mArrayGroups == null) {
+//			throw new IllegalStateException("call finish first");
+//		}
+//		return mArrayGroups;
+//	}
+
+	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
 		if (mArrayGroups == null) {
 			throw new IllegalStateException("call finish first");
 		}
-		return mArrayGroups;
+		final Map<IProgramVarOrConst, ArrayGroup> result = new HashMap<>();
+		for (final ArrayGroup ag : mArrayGroups) {
+			for (final IProgramVarOrConst a : ag.getArrays()) {
+				result.put(a, ag);
+			}
+		}
+		return Collections.unmodifiableMap(result);
 	}
 
 	public void finish() {

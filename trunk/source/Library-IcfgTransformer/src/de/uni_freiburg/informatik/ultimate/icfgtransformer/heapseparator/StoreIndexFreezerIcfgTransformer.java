@@ -2,10 +2,8 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -20,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
@@ -48,7 +47,9 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
 			new NestedMap2<>();
 
-	private final Map<StoreIndexInfo, IProgramNonOldVar> mArrayAccessInfoToFreezeVar = new HashMap<>();
+	private final Map<StoreIndexInfo, IProgramNonOldVar> mStoreIndexInfoToFreezeVar = new HashMap<>();
+
+	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
 
 //	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
@@ -58,6 +59,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+		mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
 	}
 
 	@Override
@@ -65,69 +67,61 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
 				new EdgeInfo(oldTransition));
 		return super.transform(oldTransition, newSource, newTarget, newTransformula);
-
-//		if (oldTransition instanceof IcfgInternalTransition) {
-//			// TODO: is this the right payload?
-//			return mEdgeFactory.createInternalTransition(newSource, newTarget, oldTransition.getPayload(),
-//					newTransformula);
-//		} else if (oldTransition instanceof IcfgCallTransition) {
-//			final IcfgCallTransition newCallTransition = mEdgeFactory.createCallTransition(newSource, newTarget,
-//					oldTransition.getPayload(), newTransformula);
-//			mOldCallToNewCall.put((IcfgCallTransition) oldTransition, newCallTransition);
-//			return newCallTransition;
-//		} else if (oldTransition instanceof IcfgReturnTransition) {
-//			final IcfgCallTransition correspondingNewCall =
-//					mOldCallToNewCall.get(((IcfgReturnTransition) oldTransition).getCorrespondingCall());
-//			assert correspondingNewCall != null;
-//			return mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
-//					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
-//		} else {
-//			throw new IllegalArgumentException("unknown transition type");
-//		}
 	}
 //
 	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
-			final EdgeInfo tfInfo) {
+			final EdgeInfo edgeInfo) {
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
 
-		final List<Term> indexUpdateFormula = new ArrayList<>();
+//		final List<Term> indexUpdateFormula = new ArrayList<>();
 
 		mMgdScript.lock(this);
 
 		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
 
-		// collect all terms that are used as an index in an array update
-		final Set<Term> indexTerms = new HashSet<>();
+		final List<Term> freezeVarUpdates = new ArrayList<>();
+
 		for (final ArrayUpdate au : aus) {
-			indexTerms.addAll(au.getIndex());
-		}
 
-		final List<Term> indexUpdates = new ArrayList<>();
-
-		for (final Term indexTerm : indexTerms) {
-			final IProgramNonOldVar freezeVar = getFreezeVariable(indexTerm, tfInfo);
-
-			final TermVariable inputFreezeIndexTv;
-			final TermVariable updatedFreezeIndexTv;
-			if (!extraInVars.containsKey(freezeVar)) {
-				assert !extraOutVars.containsKey(freezeVar);
-				inputFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
-				updatedFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
-				extraInVars.put(freezeVar, inputFreezeIndexTv);
-				extraOutVars.put(freezeVar, updatedFreezeIndexTv);
-			} else {
-				assert extraOutVars.containsKey(freezeVar);
-				inputFreezeIndexTv = extraInVars.get(freezeVar);
-				updatedFreezeIndexTv = extraOutVars.get(freezeVar);
+			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getNewArray());
+			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getOldArray());
+			if (!lhsPvoc.equals(rhsPvoc)){
+				/*
+				 *  we are only interested in array updates that update one cell here, i.e., the lhs and rhs array must
+				 *  refer to the same program variable
+				 */
+				continue;
 			}
-			assert extraInVars.containsKey(freezeVar) && extraOutVars.containsKey(freezeVar);
 
-			/*
-			 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
-			 */
-			indexUpdates.add(SmtUtils.or(mMgdScript.getScript(),
-					mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm)));
+			for (int dim = 0; dim < au.getIndex().size(); dim++) {
+				final Term indexTerm = au.getIndex().get(dim);
+
+				final StoreIndexInfo storeIndexInfo = getStoreIndexInfo(edgeInfo, indexTerm);
+				final IProgramNonOldVar freezeVar = getOrConstructFreezeVariable(storeIndexInfo);
+				storeIndexInfo.addArrayAccessDimension(lhsPvoc, dim);
+
+				final TermVariable inputFreezeIndexTv;
+				final TermVariable updatedFreezeIndexTv;
+				if (!extraInVars.containsKey(freezeVar)) {
+					assert !extraOutVars.containsKey(freezeVar);
+					inputFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
+					updatedFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
+					extraInVars.put(freezeVar, inputFreezeIndexTv);
+					extraOutVars.put(freezeVar, updatedFreezeIndexTv);
+				} else {
+					assert extraOutVars.containsKey(freezeVar);
+					inputFreezeIndexTv = extraInVars.get(freezeVar);
+					updatedFreezeIndexTv = extraOutVars.get(freezeVar);
+				}
+				assert extraInVars.containsKey(freezeVar) && extraOutVars.containsKey(freezeVar);
+
+				/*
+				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
+				 */
+				freezeVarUpdates.add(SmtUtils.or(mMgdScript.getScript(),
+						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm)));
+			}
 		}
 
 		mMgdScript.unlock(this);
@@ -144,7 +138,8 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		final List<Term> newFormulaConjuncts = new ArrayList<>();
 		newFormulaConjuncts.add(tf.getFormula());
-		newFormulaConjuncts.addAll(indexUpdateFormula);
+//		newFormulaConjuncts.addAll(indexUpdateFormula);
+		newFormulaConjuncts.addAll(freezeVarUpdates);
 
 		tfBuilder.setFormula(SmtUtils.and(mMgdScript.getScript(), newFormulaConjuncts));
 
@@ -153,11 +148,10 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		return tfBuilder.finishConstruction(mMgdScript);
 	}
 
-	private IProgramNonOldVar getFreezeVariable(final Term indexTerm, final EdgeInfo tfInfo) {
-//		IProgramNonOldVar result = mWriteIndexToTfInfoToFreezeVar.get(indexTerm, tfInfo);
+	private IProgramNonOldVar getOrConstructFreezeVariable(final StoreIndexInfo storeIndexInfo) {
+		final Term indexTerm = storeIndexInfo.getIndexTerm();
 
-		final StoreIndexInfo aai = new StoreIndexInfo(tfInfo, indexTerm);
-		IProgramNonOldVar result = mArrayAccessInfoToFreezeVar.get(aai);
+		IProgramNonOldVar result = mStoreIndexInfoToFreezeVar.get(storeIndexInfo);
 
 		if (result == null) {
 			result = ProgramVarUtils.constructGlobalProgramVarPair(
@@ -169,9 +163,18 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			 */
 //			mNewSymbolTable.add(result);
 //			mWriteIndexToTfInfoToFreezeVar.put(indexTerm, tfInfo, result);
-			mArrayAccessInfoToFreezeVar.put(aai, result);
+			mStoreIndexInfoToFreezeVar.put(storeIndexInfo, result);
 		}
 		return result;
+	}
+
+	private StoreIndexInfo getStoreIndexInfo(final EdgeInfo tfInfo, final Term indexTerm) {
+		StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(tfInfo, indexTerm);
+		if (sii == null) {
+			sii = new StoreIndexInfo(tfInfo, indexTerm);
+			mEdgeToIndexToStoreIndexInfo.put(tfInfo, indexTerm, sii);
+		}
+		return sii;
 	}
 
 //	public NestedMap2<Term, EdgeInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
@@ -179,7 +182,11 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 //	}
 
 	public Map<StoreIndexInfo, IProgramNonOldVar> getArrayAccessInfoToFreezeVar() {
-		return mArrayAccessInfoToFreezeVar;
+		return mStoreIndexInfoToFreezeVar;
+	}
+
+	public NestedMap2<EdgeInfo, Term, StoreIndexInfo> getEdgeToIndexToStoreIndexInfo() {
+		return mEdgeToIndexToStoreIndexInfo;
 	}
 
 }

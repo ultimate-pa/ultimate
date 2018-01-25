@@ -766,7 +766,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			originalProjected = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
 					Collections.singleton((TermVariable) projectedVar), original);
 		} else {
-			throw new AssertionError("this actually occurs?.. just omit quantification then?");
+			// do nothing??
+//			throw new AssertionError("this actually occurs?.. just omit quantification then?");
+			originalProjected = original;
 		}
 
 		final boolean res = checkImplicationHolds(script, originalProjected, result);

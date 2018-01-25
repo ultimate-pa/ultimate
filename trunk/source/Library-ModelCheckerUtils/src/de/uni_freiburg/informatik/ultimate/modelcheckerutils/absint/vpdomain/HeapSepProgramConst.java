@@ -54,4 +54,8 @@ public class HeapSepProgramConst implements IProgramConst {
 		return mDefaultConstant;
 	}
 
+	@Override
+	public String toString() {
+		return getGloballyUniqueId();
+	}
 }

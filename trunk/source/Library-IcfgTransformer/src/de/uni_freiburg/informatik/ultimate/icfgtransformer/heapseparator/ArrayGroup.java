@@ -15,4 +15,9 @@ public class ArrayGroup {
 	Set<IProgramVarOrConst> getArrays() {
 		return mArraysInThisGroup;
 	}
+
+	@Override
+	public String toString() {
+		return mArraysInThisGroup.toString();
+	}
 }

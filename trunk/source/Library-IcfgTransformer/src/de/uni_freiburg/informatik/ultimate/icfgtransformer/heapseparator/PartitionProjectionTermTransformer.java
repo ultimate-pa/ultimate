@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,12 +20,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
+ * Note: This TermTransformer is built with respect to a specific TransFormula whose term it should transform. (which is
+ *  somewhat against the architecture of TermTransformers)
  *
  * TODO: probably we need to add some  recognition for meaningless equations in order to drop them
  *   (a' = a where a, a' belong to the the same ProgramVariable)
@@ -37,13 +42,64 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	Stack<List<LocationBlock>> mProjectLists;
 	private Script mScript;
 
+	/**
+	 * Maps each Term in the formula that is used to access an array cell (i.e. that corresponds to a SelectInfo) in the
+	 * TransFormula that this TermTransformer will be used to transform to an LocationBlock, i.e., a set of locations
+	 * where a cell of that array may have been written to.
+	 *
+	 * input field (or computed from input)
+	 */
 	private final Map<Term, LocationBlock> mTermToLocationBlock;
-	private final NewArrayIdProvider mNewArrayIdProvider;
+	/**
+	 * All the location blocks that belong to one array group, divided by dimension they belong to..
+	 */
+	private final Map<ArrayGroup, List<Set<LocationBlock>>> mArrayGroupToDimensionToLocationBlocks;
 
-	public PartitionProjectionTermTransformer(final NewArrayIdProvider newArrayIdProvider,
-			final Map<Term, LocationBlock> tvToLocationBlock) {
-		mNewArrayIdProvider = newArrayIdProvider;
-		mTermToLocationBlock = tvToLocationBlock;
+	private final SubArrayManager mSubArrayManager;
+
+	private final HashMap<IProgramVar, TermVariable> mNewInVars;
+	private final HashMap<IProgramVar, TermVariable> mNewOutVars;
+
+	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
+
+	private final EdgeInfo mEdgeInfo;
+
+	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
+
+	/**
+	 *
+	 * @param subArrayManager
+	 * @param termToLocationBlock
+	 * @param transformula
+	 * 			the TransFormula whose formula will be transformed by this TermTransformer
+	 * @param arrayGroupToDimensionToLocationBlocks
+	 */
+	public PartitionProjectionTermTransformer(final SubArrayManager subArrayManager,
+			final Map<Term, LocationBlock> termToLocationBlock,
+//			final UnmodifiableTransFormula transformula,
+			final EdgeInfo edgeInfo,
+			final Map<ArrayGroup, List<Set<LocationBlock>>> arrayGroupToDimensionToLocationBlocks,
+			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
+			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
+//			final Map<IProgramVar, TermVariable> oldInVars,
+//			final Map<IProgramVar, TermVariable> oldOutVars) {
+		mSubArrayManager = subArrayManager;
+
+		mArrayToArrayGroup = arrayToArrayGroup;
+
+		mTermToLocationBlock = termToLocationBlock;
+
+		mArrayGroupToDimensionToLocationBlocks = arrayGroupToDimensionToLocationBlocks;
+
+		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
+
+		mEdgeInfo = edgeInfo;
+
+		mNewInVars = new HashMap<>(edgeInfo.getEdge().getTransformula().getInVars());
+		mNewOutVars = new HashMap<>(edgeInfo.getEdge().getTransformula().getOutVars());
+
+		mProjectLists = new Stack<>();
+		mProjectLists.push(Collections.emptyList());
 	}
 
 	@Override
@@ -51,8 +107,11 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		final List<LocationBlock> projectList = mProjectLists.peek();
 		if (term instanceof ConstantTerm
 				|| term instanceof TermVariable) {
-			if (term.getSort().isArraySort()) {
-				setResult(getProjectedSimpleTerm(term, projectList));
+			if (isPartitionedArray(term)) {
+				final IProgramVarOrConst pv = getProjectedArray(term, projectList);
+
+				assert false;
+				setResult(null);
 			} else {
 				// leave term unchanged (projection does not apply to it)
 				setResult(term);
@@ -71,14 +130,16 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				final ArrayGroup arrayGroup = getArrayGroup(at.getParameters()[0]);
 				assert arrayGroup.equals(getArrayGroup(at.getParameters()[1]));
 
-				final Set<LocationBlock> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
+//				final Set<LocationBlock> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
+				final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
 
 				final Sort arraySort = at.getParameters()[0].getSort();
 				final MultiDimensionalSort mdSort = new MultiDimensionalSort(arraySort);
 
 				// holds the combinations of L1i .. Lni we will build a conjunct for each
 				final List<List<LocationBlock>> locationBlockTuples =
-						CrossProducts.crossProductNTimes(mdSort.getDimension(), locationBlocks);
+						CrossProducts.crossProductOfSets(locationBlocks);
+//						CrossProducts.crossProductNTimes(mdSort.getDimension(), locationBlocks);
 
 
 				enqueueWalker(new BuildConjunction(locationBlockTuples.size(), mScript));
@@ -188,15 +249,22 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		}
 	}
 
-	private Set<LocationBlock> getLocationBlocksForArrayGroup(final ArrayGroup arrayGroup) {
-		// TODO Auto-generated method stub
-		return null;
+	private boolean isPartitionedArray(final Term term) {
+		if (!term.getSort().isArraySort()) {
+			return false;
+		}
+		// TODO: restrict to mem, or some parametrized array set?..
+
+		return true;
+	}
+
+	private List<Set<LocationBlock>> getLocationBlocksForArrayGroup(final ArrayGroup arrayGroup) {
+		return mArrayGroupToDimensionToLocationBlocks.get(arrayGroup);
 	}
 
 	private ArrayGroup getArrayGroup(final Term term) {
-		assert term.getSort().isArraySort();
-		// TODO Auto-generated method stub
-		return null;
+		assert isPartitionedArray(term);
+		return mArrayToArrayGroup.get(mEdgeInfo.getProgramVarOrConstForTerm(term));
 	}
 
 	private static <E> List<E>
@@ -214,9 +282,17 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	}
 
 
+	/**
+	 *
+	 * @param indexSubterm
+	 * 			index in a store term
+	 * @param locationBlock
+	 * @return
+	 */
 	private boolean fallsInto(final Term indexSubterm, final LocationBlock locationBlock) {
-		// TODO Auto-generated method stub
-		return false;
+		// look up the StoreIndexInfo for the given term and mEdgeInfo
+		final StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(mEdgeInfo, indexSubterm);
+		return locationBlock.contains(sii);
 	}
 
 	private LocationBlock getLocationBlockForIndex(final Term indexSubterm) {
@@ -224,23 +300,26 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	}
 
 	private void pushLocationBlockList(final List<LocationBlock> newList) {
-		// TODO Auto-generated method stub
 		mProjectLists.push(Collections.unmodifiableList(newList));
 	}
 
-	private Term getProjectedSimpleTerm(final Term termToProject, final List<LocationBlock> projectList) {
-		return mNewArrayIdProvider.getSubArray(getProgramVar(termToProject), projectList);
+private void popLocationBlockList() {
+		mProjectLists.pop();
+	}
+
+	//	private Term getProjectedSimpleTerm(final Term termToProject, final List<LocationBlock> projectList) {
+	private IProgramVarOrConst getProjectedArray(final Term termToProject, final List<LocationBlock> projectList) {
+		final IProgramVarOrConst subArrayPv = mSubArrayManager.getSubArray(getProgramVar(termToProject),
+				projectList);
+		return subArrayPv;
+//		final Term subArrayTerm;
+//
+//		return subArrayTerm;
 	}
 
 	private IProgramVarOrConst getProgramVar(final Term termToProject) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	private void pushNLocationBlockLists(final int n, final List<LocationBlock> lbl) {
-		for (int i = 0; i < n; i++) {
-			mProjectLists.push(lbl);
-		}
 	}
 
 	protected static class BuildConjunction implements Walker {
@@ -277,10 +356,6 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 
 
-	private void popLocationBlockList() {
-		mProjectLists.pop();
-	}
-
 	protected static class BeginScope implements Walker {
 
 
@@ -307,5 +382,11 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		}
 	}
 
+	public Map<IProgramVar, TermVariable> getNewInVars() {
+		return mNewInVars;
+	}
 
+	public Map<IProgramVar, TermVariable> getNewOutVars() {
+		return mNewOutVars;
+	}
 }
