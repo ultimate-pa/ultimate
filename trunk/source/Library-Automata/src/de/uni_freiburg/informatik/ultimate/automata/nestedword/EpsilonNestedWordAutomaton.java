@@ -49,24 +49,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAutomaton<LETTER, STATE>>
 		implements IEpsilonNestedWordAutomaton<LETTER, STATE> {
-	
+
 	private final A mBackingNestedWordAutomaton;
 	private final HashRelation<STATE, STATE> mOutgoingEpsilonTransitions;
-	
-	
-	public EpsilonNestedWordAutomaton(final A backingNestedWordAutomaton) {
+
+	public EpsilonNestedWordAutomaton(final A backingNestedWordAutomaton,
+			final HashRelation<STATE, STATE> outgoingEpsilonTransitions) {
 		super();
 		mBackingNestedWordAutomaton = backingNestedWordAutomaton;
-		mOutgoingEpsilonTransitions = new HashRelation<>();
+		mOutgoingEpsilonTransitions = outgoingEpsilonTransitions;
 	}
 
 	@Override
 	public Iterable<STATE> epsilonSuccessors(final STATE state) {
 		return mOutgoingEpsilonTransitions.getImage(state);
-	}
-	
-	public boolean addEpsilonSuccessor(final STATE source, final STATE target) {
-		return mOutgoingEpsilonTransitions.addPair(source, target);
 	}
 
 	@Override
@@ -110,7 +106,8 @@ public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAuto
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state, final LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		return mBackingNestedWordAutomaton.internalSuccessors(state, letter);
 	}
 
@@ -125,7 +122,8 @@ public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAuto
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		return mBackingNestedWordAutomaton.returnSuccessors(state, hier, letter);
 	}
 
@@ -133,7 +131,7 @@ public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAuto
 	public Collection<STATE> getFinalStates() {
 		return mBackingNestedWordAutomaton.getFinalStates();
 	}
-	
+
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mBackingNestedWordAutomaton.getStateFactory();
@@ -165,7 +163,8 @@ public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAuto
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ, final LETTER letter) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
+			final LETTER letter) {
 		return mBackingNestedWordAutomaton.internalPredecessors(succ, letter);
 	}
 
@@ -185,7 +184,8 @@ public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAuto
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier, final LETTER letter) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
+			final LETTER letter) {
 		return mBackingNestedWordAutomaton.returnPredecessors(succ, hier, letter);
 	}
 
@@ -214,6 +214,4 @@ public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAuto
 		return mBackingNestedWordAutomaton.summarySuccessors(hier);
 	}
 
-	
-	
 }
