@@ -142,9 +142,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		} catch (final Throwable e) {
 			th = e;
 			result = mDecider.getTestResult(mStarter.getServices(), e);
-			final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
-			logger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
-					CoreUtil.getStackTrace(e)));
+			logWithFreshLogger(e, "There was an exception during the execution of Ultimate");
 		} finally {
 			boolean success = false;
 
@@ -195,7 +193,12 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 	}
 
 	private void logWithFreshLogger(final Throwable ex, final String message) {
-		final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+		final ILogger logger;
+		if (mStarter.getServices() == null) {
+			logger = new ConsoleLogger();
+		} else {
+			logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+		}
 		logger.fatal(String.format(message + ": %s%n%s", ex, CoreUtil.getStackTrace(ex)));
 	}
 
