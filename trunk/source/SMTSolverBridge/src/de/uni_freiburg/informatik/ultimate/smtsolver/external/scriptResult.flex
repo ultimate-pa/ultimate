@@ -106,6 +106,7 @@ Keyword = ":" {SMTLetterDigit}+
   "immediate-exit"       { return symbol(LexerSymbols.IMMEDIATEEXIT, yytext()); }
   "include"              { return symbol(LexerSymbols.INCLUDE, yytext()); }
   "incomplete"           { return symbol(LexerSymbols.INCOMPLETE, yytext()); }
+  "interpolants" 		 { return symbol(LexerSymbols.INTERPOLANTS, yytext()); }
   "let"                  { return symbol(LexerSymbols.LET, yytext()); }
   "logic"                { return symbol(LexerSymbols.LOGIC, yytext()); }
   "none"                 { return symbol(LexerSymbols.NONE, yytext()); }

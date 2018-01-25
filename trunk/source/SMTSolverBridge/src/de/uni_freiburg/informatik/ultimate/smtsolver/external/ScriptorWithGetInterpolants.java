@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SMTSolverBridge.
- * 
+ *
  * The ULTIMATE SMTSolverBridge is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SMTSolverBridge is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SMTSolverBridge. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SMTSolverBridge, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SMTSolverBridge grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SMTSolverBridge grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * Subclass of Scriptor that has support for the not yet standardized get-interpolants command. Supports iZ3 and
  * Princess.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -46,18 +46,19 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 
 	public enum ExternalInterpolator {
 		IZ3, PRINCESS, SMTINTERPOL
-	};
+	}
 
 	private final ExternalInterpolator mExternalInterpolator;
 
-	public ScriptorWithGetInterpolants(String command, ILogger logger, IUltimateServiceProvider services,
-			IToolchainStorage storage, ExternalInterpolator externalInterpolator, String name) throws IOException {
+	public ScriptorWithGetInterpolants(final String command, final ILogger logger,
+			final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final ExternalInterpolator externalInterpolator, final String name) throws IOException {
 		super(command, logger, services, storage, name);
 		mExternalInterpolator = externalInterpolator;
 	}
 
 	@Override
-	public Term[] getInterpolants(Term[] partition) throws SMTLIBException, UnsupportedOperationException {
+	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
 		sendInterpolationCommand(partition);
 
 		final Term[] interpolants = readInterpolants(partition.length - 1);
@@ -65,7 +66,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 	}
 
 	@Override
-	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree)
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
 			throws SMTLIBException, UnsupportedOperationException {
 		sendInterpolationCommand(partition, startOfSubtree);
 
@@ -73,7 +74,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		return interpolants;
 	}
 
-	private void sendInterpolationCommand(Term[] partition) throws AssertionError {
+	private void sendInterpolationCommand(final Term[] partition) throws AssertionError {
 		final StringBuilder command = new StringBuilder();
 		final PrintTerm pt = new PrintTerm();
 		switch (mExternalInterpolator) {
@@ -97,7 +98,7 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		super.mExecutor.input(command.toString());
 	}
 
-	private void sendInterpolationCommand(Term[] partition, int[] startOfSubtree) throws AssertionError {
+	private void sendInterpolationCommand(final Term[] partition, final int[] startOfSubtree) throws AssertionError {
 		final StringBuilder command = new StringBuilder();
 		final PrintTerm pt = new PrintTerm();
 		switch (mExternalInterpolator) {
@@ -128,14 +129,11 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		super.mExecutor.input(command.toString());
 	}
 
-	private Term[] readInterpolants(int numberOfInterpolants) throws AssertionError {
+	private Term[] readInterpolants(final int numberOfInterpolants) throws AssertionError {
 		Term[] interpolants;
 		switch (mExternalInterpolator) {
 		case IZ3:
-			interpolants = new Term[numberOfInterpolants];
-			for (int i = 0; i < interpolants.length; i++) {
-				interpolants[i] = super.mExecutor.parseTerm();
-			}
+			interpolants = super.mExecutor.parseInterpolants();
 			break;
 		case PRINCESS:
 		case SMTINTERPOL:

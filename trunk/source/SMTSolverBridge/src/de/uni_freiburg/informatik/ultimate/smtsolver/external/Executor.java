@@ -251,6 +251,10 @@ class Executor {
 		return parse(LexerSymbols.GETOPTION).value;
 	}
 
+	public Term[] parseInterpolants() {
+		return (Term[]) parse(LexerSymbols.GETINTERPOLANTS).value;
+	}
+
 	public Term parseTerm() {
 		return (Term) parse(LexerSymbols.GETTERM).value;
 	}
@@ -262,9 +266,8 @@ class Executor {
 	private static String generateStderrMessage(final String stderr) {
 		if (stderr.isEmpty()) {
 			return "No stderr output.";
-		} else {
-			return "stderr output: " + stderr;
 		}
+		return "stderr output: " + stderr;
 	}
 
 }
