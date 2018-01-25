@@ -81,11 +81,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  * Data structure that stores for each term a unique predicate. Initially a predicate unifier constructs a "true"
@@ -678,6 +678,10 @@ public class PredicateUnifier implements IPredicateUnifier {
 						"PredicateUnifier does not know the following predicate " + String.valueOf(o2));
 			}
 			throw new AssertionError("PredicateUnifier is in inconsistent state");
+		}
+		
+		public HashRelation<IPredicate, IPredicate> getCopyOfImplicationRelation() {
+			return new HashRelation(mImpliedPredicates);
 		}
 	}
 
