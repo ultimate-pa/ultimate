@@ -3,7 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: SMTInterpol - an Interpolating SMT Solver
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.smtinterpol
 Bundle-Version: 2.0.0
-Export-Package: de.uni_freiburg.informatik.ultimate.smtinterpol, 
+Export-Package: de.uni_freiburg.informatik.ultimate.smtinterpol,
+ de.uni_freiburg.informatik.ultimate.smtinterpol.model,
  de.uni_freiburg.informatik.ultimate.smtinterpol.option,
  de.uni_freiburg.informatik.ultimate.smtinterpol.proof,
  de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib,
