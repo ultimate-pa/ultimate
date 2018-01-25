@@ -30,18 +30,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class EpsilonNestedwordAutomatonAST extends AbstractNestedwordAutomatonAST {
 
-	private final Map<Pair<String, String>, Set<String>> mEpsilonTransitions;
+	private final HashRelation<String,String> mEpsilonTransitions;
 
 	public EpsilonNestedwordAutomatonAST(final ILocation loc, final String name, final List<String> callAlphabet, final List<String> internalAlphabet,
 			final List<String> returnAlphabet, final List<String> states, final List<String> initStates, final List<String> finStates,
@@ -49,10 +47,10 @@ public class EpsilonNestedwordAutomatonAST extends AbstractNestedwordAutomatonAS
 			final TransitionListAST returnTransitions, final TransitionListAST epsilonTransitions) {
 		super(loc, name, callAlphabet, internalAlphabet, returnAlphabet, states, initStates, finStates, internalTransitions,
 				callTransitions, returnTransitions);
-		mEpsilonTransitions = epsilonTransitions.getTransitions();
+		mEpsilonTransitions = epsilonTransitions.convertToEpsilonTransitions();
 	}
 	
-	public Map<Pair<String, String>, Set<String>> getEpsilonTransitions() {
+	public HashRelation<String,String> getEpsilonTransitions() {
 		return mEpsilonTransitions;
 	}
 
