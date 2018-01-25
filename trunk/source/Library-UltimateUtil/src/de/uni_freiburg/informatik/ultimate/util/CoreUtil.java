@@ -50,6 +50,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TimeZone;
@@ -88,6 +89,30 @@ public class CoreUtil {
 			}
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * @param cl
+	 *            A classloader that has access to version.properties (i.e., the one the core uses)
+	 * @return a string describing the state of the current git repository or null iff version.properties does not
+	 *         exist.
+	 */
+	public static String readGitVersion(final ClassLoader cl) {
+		final Properties properties = new Properties();
+		try {
+			final InputStream prop = cl.getResourceAsStream("version.properties");
+			if (prop == null) {
+				return "?-m";
+			}
+			properties.load(prop);
+		} catch (final IOException e) {
+			return null;
+		}
+
+		final String hash = properties.getProperty("git.commit.id.abbrev", "UNKNOWN");
+		final String dirty = properties.getProperty("git.dirty", "UNKNOWN");
+
+		return hash + ("UNKNOWN".equals(dirty) ? "" : "true".equals(dirty) ? "-m" : "");
 	}
 
 	/**

@@ -29,13 +29,10 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.xml.bind.JAXBException;
@@ -64,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * This class controls all aspects of the application's execution.
@@ -361,22 +359,11 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 		}
 
 		final String major = headers.get("Bundle-Version");
-
-		final Properties properties = new Properties();
-		try {
-			final InputStream prop = getClass().getClassLoader().getResourceAsStream("version.properties");
-			if (prop == null) {
-				return major + "-?-m";
-			}
-			properties.load(prop);
-		} catch (final IOException e) {
+		final String gitVersion = CoreUtil.readGitVersion(getClass().getClassLoader());
+		if (gitVersion == null) {
 			return major;
 		}
-
-		final String hash = properties.getProperty("git.commit.id.abbrev", "UNKNOWN");
-		final String dirty = properties.getProperty("git.dirty", "UNKNOWN");
-
-		return major + "-" + hash + ("UNKNOWN".equals(dirty) ? "" : "true".equals(dirty) ? "-m" : "");
+		return major + "-" + gitVersion;
 	}
 
 }
