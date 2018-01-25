@@ -149,7 +149,7 @@ public abstract class Dispatcher {
 	private final boolean mUseSvcompSettings;
 
 	protected final Map<String, IASTNode> mFunctionTable;
-	
+
 	protected IASTNode mAcslHook;
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
@@ -242,7 +242,7 @@ public abstract class Dispatcher {
 	 * @param node
 	 *            the node to dispatch
 	 * @param cHook
-	 * 			  the C AST node where this ACSL node has scope access
+	 *            the C AST node where this ACSL node has scope access
 	 * @return the result for the given node
 	 */
 	public abstract Result dispatch(ACSLNode node, IASTNode cHook);
@@ -268,9 +268,9 @@ public abstract class Dispatcher {
 	 */
 	protected void preRun(final Collection<DecoratedUnit> nodes) {
 		assert !nodes.isEmpty();
-		
+
 		// Line Directive mapping doesn't work with multiple TUs right now
-		DecoratorNode ldmNode = nodes.stream().findFirst().get().getRootNode();
+		final DecoratorNode ldmNode = nodes.stream().findFirst().get().getRootNode();
 		assert ldmNode.getCNode() != null;
 		assert ldmNode.getCNode() instanceof IASTTranslationUnit;
 
@@ -278,23 +278,29 @@ public abstract class Dispatcher {
 		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
 		mLocationFactory = new LocationFactory(lineDirectiveMapping);
 		mBacktranslator.setLocationFactory(mLocationFactory);
-		
+
 		// Collect all type definitions
-		executePreRun(new TypedefCollector(mFlatTable), nodes, tdc -> {});
-		
+		executePreRun(new TypedefCollector(mFlatTable), nodes);
+
 		// Collect all global variables
-		executePreRun(new GlobalVariableCollector(mFlatTable), nodes, gvc -> {});
-		
+		executePreRun(new GlobalVariableCollector(mFlatTable), nodes);
+
 		// Collect all functions
-		executePreRun(new FunctionCollector(mFlatTable), nodes, fc -> {});
+		executePreRun(new FunctionCollector(mFlatTable), nodes);
 	}
-	
+
 	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,
 			final Consumer<T> callback) {
-		for (DecoratedUnit unit : units) {
+		for (final DecoratedUnit unit : units) {
 			unit.getRootNode().getCNode().accept(preRun);
 		}
 		callback.accept(preRun);
+	}
+
+	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units) {
+		for (final DecoratedUnit unit : units) {
+			unit.getRootNode().getCNode().accept(preRun);
+		}
 	}
 
 	/**
@@ -443,7 +449,7 @@ public abstract class Dispatcher {
 			return mDivisionByZeroOfFloatingTypes;
 		}
 	}
-	
+
 	public IASTNode getAcslHook() {
 		return mAcslHook;
 	}
