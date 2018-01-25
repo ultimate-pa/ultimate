@@ -18,7 +18,7 @@ This archive also contains binaries for different theorem provers:
    - Linux
      master 4520fafa
    - Windows
-     master 870017e2ceb5da85f5c7314bd7b35ca865af9a97
+     master 450f3c9b459d128135abb5bbd4fa0508fe26bfae (13.01.2018) 
  * CVC4 (http://cvc4.cs.nyu.edu/)
    04-Aug-2016 05:31
  * MathSAT5 (http://mathsat.fbk.eu)  
