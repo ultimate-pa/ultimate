@@ -47,11 +47,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Subclass of {@link BasicCegarLoop} in which we initially subtract from the abstraction a set of given Floyd-Hoare
@@ -79,7 +81,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 			final Collection<? extends IcfgLocation> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
-			final List<AbstractInterpolantAutomaton<LETTER>> floydHoareAutomataFromOtherLocations,
+			final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, storage, floydHoareAutomataFromOtherLocations, rawFloydHoareAutomataFromFile);
@@ -92,13 +94,13 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 		mReuseStats.continueTime();
 
 		int autIdx = 0;
-		for (final AbstractInterpolantAutomaton<LETTER> aut : mFloydHoareAutomataFromOtherErrorLocations) {
-			computeDifferenceForReuseAutomaton(autIdx, aut);
+		for (final Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier> aut : mFloydHoareAutomataFromOtherErrorLocations) {
+			computeDifferenceForReuseAutomaton(autIdx, aut.getFirst(), aut.getSecond());
 			++autIdx;
 		}
 
 		for (final ReuseAutomaton aut : mFloydHoareAutomataFromFile) {
-			computeDifferenceForReuseAutomaton(autIdx, aut.getAutomaton());
+			computeDifferenceForReuseAutomaton(autIdx, aut.getAutomaton(), aut.getPredicateUnifier());
 			++autIdx;
 		}
 
@@ -110,7 +112,8 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 	}
 
 	private void computeDifferenceForReuseAutomaton(final int iteration,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> reuseAut)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> reuseAut,
+			final IPredicateUnifier predicateUnifier)
 			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
 		final int oneBasedi = iteration + 1;
 
@@ -130,10 +133,6 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 				new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, reuseAut, psd,
 						explointSigmaStarConcatOfIA);
-		if (mPref.dumpAutomata()) {
-			final String filename = "DiffAfterEagerReuse" + oneBasedi;
-			writeAutomatonToFile(diff.getResult(), filename);
-		}
 
 		if (reuseAut instanceof AbstractInterpolantAutomaton) {
 			final AbstractInterpolantAutomaton<LETTER> aiReuseAut = (AbstractInterpolantAutomaton<LETTER>) reuseAut;
@@ -145,6 +144,13 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 		assert new InductivityCheck<>(mServices,
 				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(),
 				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+
+		if (mPref.dumpAutomata()) {
+			final String filename = "DiffAfterEagerReuse" + oneBasedi;
+			writeAutomatonToFile(diff.getResult(), filename);
+		}
+
+		dumpOrAppendAutomatonForReuseIfEnabled(reuseAut, predicateUnifier);
 
 		if (REMOVE_DEAD_ENDS) {
 			if (mComputeHoareAnnotation) {

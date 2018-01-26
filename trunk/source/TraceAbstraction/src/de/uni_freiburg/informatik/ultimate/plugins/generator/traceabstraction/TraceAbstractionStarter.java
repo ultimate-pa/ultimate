@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
@@ -81,12 +82,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
 
-	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
+	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = false;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -100,7 +102,7 @@ public class TraceAbstractionStarter {
 	private Result mOverallResult;
 	private IElement mArtifact;
 
-	private final List<AbstractInterpolantAutomaton<IIcfgTransition<?>>> mFloydHoareAutomataFromOtherErrorLocations =
+	private final List<Pair<AbstractInterpolantAutomaton<IIcfgTransition<?>>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations =
 			new ArrayList<>();
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
@@ -295,8 +297,8 @@ public class TraceAbstractionStarter {
 		basicCegarLoop.finish();
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 			final LinkedHashSet<?> fhs = basicCegarLoop.getFloydHoareAutomata();
-			mFloydHoareAutomataFromOtherErrorLocations
-					.addAll((LinkedHashSet<AbstractInterpolantAutomaton<IIcfgTransition<?>>>) fhs);
+			mFloydHoareAutomataFromOtherErrorLocations.addAll(
+					(LinkedHashSet<Pair<AbstractInterpolantAutomaton<IIcfgTransition<?>>, IPredicateUnifier>>) fhs);
 		}
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);

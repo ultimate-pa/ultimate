@@ -123,6 +123,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.wi
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -176,8 +177,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	private final ErrorGeneralizationEngine<LETTER> mErrorGeneralizationEngine;
 	private final boolean mStoreFloydHoareAutomata;
-	private final LinkedHashSet<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomata = new LinkedHashSet<>();
+	private final LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomata =
+			new LinkedHashSet<>();
 	protected final TaskIdentifier mTaskIdentifier;
+	private boolean mFirstReuseDump = true;
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -517,7 +520,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						subtrahendBeforeEnhancement, predicateUnifier, htc, enhanceMode);
 				subtrahend = ia;
 				if (mStoreFloydHoareAutomata) {
-					mFloydHoareAutomata.add(ia);
+					mFloydHoareAutomata.add(new Pair<>(ia, predicateUnifier));
 				}
 			}
 		}
@@ -588,7 +591,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 
 			dumpAutomatonIfEnabled(subtrahend, "", automatonType);
-			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, mIteration != 1, predicateUnifier);
+			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
 
 			if (!useErrorAutomaton) {
 				checkEnhancement(subtrahendBeforeEnhancement, subtrahend);
@@ -649,10 +652,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 	}
 
-	private void dumpOrAppendAutomatonForReuseIfEnabled(
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, final boolean append,
+	protected void dumpOrAppendAutomatonForReuseIfEnabled(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton,
 			final IPredicateUnifier predicateUnifier) {
 		if (mPref.dumpOnlyReuseAutomata()) {
+
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString() + " " + automaton.getClass());
 			final String filename = mTaskIdentifier + "-reuse";
@@ -674,7 +678,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				printedAutomaton = automaton;
 			}
 			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + mIteration,
-					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", append, printedAutomaton);
+					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", !mFirstReuseDump,
+					printedAutomaton);
+			mFirstReuseDump = true;
 			mLogger.info("Finished dumping");
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		}
@@ -952,7 +958,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 	}
 
-	public LinkedHashSet<AbstractInterpolantAutomaton<LETTER>> getFloydHoareAutomata() {
+	public LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> getFloydHoareAutomata() {
 		if (mStoreFloydHoareAutomata) {
 			return mFloydHoareAutomata;
 		}
