@@ -655,12 +655,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mPref.dumpOnlyReuseAutomata()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString() + " " + automaton.getClass());
-			final String[] splitRes = mTaskIdentifier.toString().split("\\.", 2);
-			String programName = "";
-			if (splitRes.length == 2) {
-				programName = splitRes[0];
-			}
-			final String filename = programName + "AutomataForReuse";
+			final String filename = mTaskIdentifier + "-reuse";
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> printedAutomaton;
 			final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
 			final boolean addPredicateImplicationInformation = false;
