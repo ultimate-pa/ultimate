@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -59,10 +61,9 @@ public class DataStructureUtils {
 		return smaller.stream().filter(larger::contains).collect(Collectors.toSet());
 	}
 
-
 	/**
-	 * @return an Optional<T> that contains an element that is contained in
-	 * set1 and contained in set2 and that does not contain en element otherwise.
+	 * @return an Optional<T> that contains an element that is contained in set1 and contained in set2 and that does not
+	 *         contain en element otherwise.
 	 */
 	public static <T> Optional<T> getSomeCommonElement(final Set<T> set1, final Set<T> set2) {
 		final Set<T> larger;
@@ -93,6 +94,19 @@ public class DataStructureUtils {
 		return rtr;
 	}
 
+	@SafeVarargs
+	public static <T> Set<T> union(final Set<T>... a) {
+		if (a.length == 0) {
+			return Collections.emptySet();
+		}
+
+		final int size = Arrays.stream(a).mapToInt(set -> set.size()).sum();
+
+		final Set<T> rtr = DataStructureUtils.getFreshSet(a[0], size);
+		Arrays.stream(a).forEach(rtr::addAll);
+		return rtr;
+	}
+
 	/**
 	 * Construct a {@link Set} that contains all elements of oldSet and has the capacity of oldSet.
 	 */
@@ -112,9 +126,8 @@ public class DataStructureUtils {
 	/**
 	 * Returns true, if the given sets have at least one common element.
 	 *
-	 * Should be quicker than first computing the intersection and the calling isEmpty() on it.
-	 * Optimized for HashSets, iterates over smaller set (second argument) and does lookups in the larger set (first
-	 * argument).
+	 * Should be quicker than first computing the intersection and the calling isEmpty() on it. Optimized for HashSets,
+	 * iterates over smaller set (second argument) and does lookups in the larger set (first argument).
 	 *
 	 * @param largerSet
 	 * @param smallerSet
