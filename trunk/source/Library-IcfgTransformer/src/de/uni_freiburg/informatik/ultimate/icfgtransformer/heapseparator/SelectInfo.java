@@ -31,7 +31,7 @@ public class SelectInfo {
 	}
 
 	public IProgramVarOrConst getArrayPvoc() {
-		return getEdgeInfo().getProgramVarOrConstForTerm(mArrayCellAccess.getArray());
+		return getEdgeInfo().getProgramVarOrConstForTerm(mArrayCellAccess.getSimpleArray());
 	}
 
 	@Override

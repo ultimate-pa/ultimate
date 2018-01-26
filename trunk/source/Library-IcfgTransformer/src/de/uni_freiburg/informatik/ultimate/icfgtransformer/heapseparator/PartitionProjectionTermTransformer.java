@@ -23,7 +23,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
@@ -77,33 +78,53 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	private final NestedMap2<Term, IProgramVarOrConst, Term> mOriginalTermToSubArrayToReplacementTerm;
 
 
+//	/*
+//	 *  maps a term that occurs in one of this's edge's select terms as index to its ArrayCellAccess
+//	 */
+//	private final Map<Term, ArrayCellAccess> mSelectIndexTermToArrayCellAccess;
+
+//	/**
+//	 * The map StoreIndexInfo -> LocationBlock, projected down to mEdgeInfo
+//	 *
+//	 */
+//	private final Map<Term, LocationBlock> mSelectIndexTermToLocationBlock;
+
 	/**
 	 *
+	 * @param mgdScript
 	 * @param subArrayManager
-	 * @param termToLocationBlock
-	 * @param transformula
-	 * 			the TransFormula whose formula will be transformed by this TermTransformer
+	 * @param arrayCellAccessToDimensionToLocationBlock
+	 * 			maps an ArrayCellAccess (essentially a MultiDimensionalSelect(over store) in the edge this ttf belongs
+	 *          to (via edgeInfo parameter), and an access dimension, to a LocationBlocck... TODO
+	 * @param edgeInfo
 	 * @param arrayGroupToDimensionToLocationBlocks
+	 * @param arrayToArrayGroup
+	 * @param edgeToIndexToStoreIndexInfo
+	 * 			enables us to find all StoreIndexInfos by their key members
+	 * @param selectIndexTermToLocationBlock
+	 *
+//	 * 			The map StoreIndexInfo -> LocationBlock, projected down to mEdgeInfo
 	 */
 	public PartitionProjectionTermTransformer(final ManagedScript mgdScript, final SubArrayManager subArrayManager,
-//			final Map<Term, LocationBlock> termToLocationBlock,
-			final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToIntegerToLocationBlock,
-//			final UnmodifiableTransFormula transformula,
+			final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToDimensionToLocationBlock,
 			final EdgeInfo edgeInfo,
-//			final Map<ArrayGroup, List<Set<LocationBlock>>> arrayGroupToDimensionToLocationBlocks,
 			final HashRelation3<ArrayGroup, Integer, LocationBlock> arrayGroupToDimensionToLocationBlocks,
 			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
-//			final Map<IProgramVar, TermVariable> oldInVars,
-//			final Map<IProgramVar, TermVariable> oldOutVars) {
+//			final Map<Term, ArrayCellAccess> selectIndexTermToArrayCellAccess) {
+//			final Map<Term, LocationBlock> selectIndexTermToLocationBlock) {
 		mMgdScript = mgdScript;
 
 		mSubArrayManager = subArrayManager;
 
+
+//		mSelectIndexTermToArrayCellAccess = selectIndexTermToArrayCellAccess;
+
 		mArrayToArrayGroup = arrayToArrayGroup;
 
-//		mTermToLocationBlock = termToLocationBlock;
-		mArrayCellAccessToIntegerToLocationBlock = arrayCellAccessToIntegerToLocationBlock;
+//		mSelectIndexTermToLocationBlock = selectIndexTermToLocationBlock;
+
+		mArrayCellAccessToIntegerToLocationBlock = arrayCellAccessToDimensionToLocationBlock;
 
 		mArrayGroupToDimensionToLocationBlocks = arrayGroupToDimensionToLocationBlocks;
 
@@ -144,21 +165,20 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 				assert projectList.isEmpty() : "We should not have an active projection on the Boolean level.";
 
-				// TODO: determine the array group, act accordingly...
-				final ArrayGroup arrayGroup = getArrayGroup(at.getParameters()[0]);
-				assert arrayGroup.equals(getArrayGroup(at.getParameters()[1]));
+				final Term lhs = at.getParameters()[0];
+				final Term rhs = at.getParameters()[1];
 
-//				final Set<LocationBlock> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
+				final ArrayGroup arrayGroup = getArrayGroup(extractSimpleArrayTerm(lhs));
+				assert arrayGroup.equals(getArrayGroup(extractSimpleArrayTerm(rhs)));
+
 				final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
 
 				final Sort arraySort = at.getParameters()[0].getSort();
-				final MultiDimensionalSort mdSort = new MultiDimensionalSort(arraySort);
+//				final MultiDimensionalSort mdSort = new MultiDimensionalSort(arraySort);
 
 				// holds the combinations of L1i .. Lni we will build a conjunct for each
 				final List<List<LocationBlock>> locationBlockTuples =
 						CrossProducts.crossProductOfSets(locationBlocks);
-//						CrossProducts.crossProductNTimes(mdSort.getDimension(), locationBlocks);
-
 
 				enqueueWalker(new BuildConjunction(locationBlockTuples.size(), mMgdScript.getScript()));
 
@@ -172,27 +192,55 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				}
 
 			} else if (functionName.equals("select")) {
-				final Term arraySubterm = at.getParameters()[0];
-				final Term indexSubterm = at.getParameters()[1];
-
-				enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term));
+//				final Term arraySubterm = at.getParameters()[0];
+//				final Term indexSubterm = at.getParameters()[1];
+//
+//				enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term));
+//
+//				/*
+//				 * deal with index
+//				 */
+//				enqueueWalker(new EndScope());
+//				pushTerm(indexSubterm);
+//				enqueueWalker(new BeginScope(Collections.emptyList()));
+//
+//				/*
+//				 * deal with array
+//				 */
+//				// build list Li L1 ... Ln
+//
+//				final int dim = -1;
+//
+//				enqueueWalker(new EndScope());
+//				pushTerm(arraySubterm);
+//				enqueueWalker(new BeginScope(addToFront(getLocationBlockForIndex(indexSubterm, dim), projectList)));
 
 				/*
-				 * deal with index
+				 * (new) plan:
+				 *  as soon as we see a select, we consume it fully as a ArrayCellAccess (MultiDimensionalSelect)
 				 */
+
+				final ArrayCellAccess aca = new ArrayCellAccess(new MultiDimensionalSelect(term));
+
+				enqueueWalker(new BuildArrayCellAccessTerm(aca, mMgdScript.getScript()));
+
+				// convert the index terms under an empty scope
 				enqueueWalker(new EndScope());
-				pushTerm(indexSubterm);
+				pushTerms(aca.getIndex().toArray(new Term[aca.getIndex().size()]));
 				enqueueWalker(new BeginScope(Collections.emptyList()));
 
-				/*
-				 * deal with array
-				 */
-				// build list Li L1 ... Ln
+				// construct a list of location blocks according to the indices
+				final List<LocationBlock> locationBlockList = new ArrayList<>();
+				for (int dim = 0; dim < aca.getIndex().size(); dim++) {
+					/*
+					 * TODO: indeed for this field it might be nicer to use Map<ArrayCellAccess, List<LocationBlock>>
+					 *   instead of a NestedMap2...
+					 */
+					locationBlockList.add(mArrayCellAccessToIntegerToLocationBlock.get(aca, dim));
+				}
 				enqueueWalker(new EndScope());
-				pushTerm(arraySubterm);
-				enqueueWalker(new BeginScope(addToFront(getLocationBlockForIndex(indexSubterm), projectList)));
-
-
+				pushTerm(aca.getArray());
+				enqueueWalker(new BeginScope(locationBlockList));
 
 			} else if (functionName.equals("store")) {
 
@@ -265,6 +313,17 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		} else {
 			throw new AssertionError("Unknown Term: " + term.toStringDirect());
 		}
+	}
+
+	private Term extractSimpleArrayTerm(final Term term) {
+		if (!term.getSort().isArraySort()) {
+			throw new IllegalArgumentException();
+		}
+		Term currentTerm = term;
+		while (SmtUtils.isFunctionApplication(currentTerm, "store")) {
+			currentTerm = ((ApplicationTerm) currentTerm).getParameters()[0];
+		}
+		return currentTerm;
 	}
 
 	private Term getSubArrayReplacementTerm(final Term originalTerm, final List<LocationBlock> projectList) {
@@ -367,9 +426,18 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		return locationBlock.contains(sii);
 	}
 
-	private LocationBlock getLocationBlockForIndex(final Term indexSubterm) {
-		return mTermToLocationBlock.get(indexSubterm);
-	}
+//	/**
+//	 *
+//	 * @param indexSubterm
+//	 * @param dim
+//	 * @return
+//	 */
+//	private LocationBlock getLocationBlockForIndex(final Term indexSubterm, final int dim) {
+////		return mSelectIndexTermToLocationBlock.get(indexSubterm);
+//		final ArrayCellAccess aca = mSelectIndexTermToArrayCellAccess.get(indexSubterm);
+//		assert aca.getDimensionsOfIndexTerm(indexSubterm).contains(dim);
+//		return mArrayCellAccessToIntegerToLocationBlock.get(aca, dim);
+//	}
 
 	private void pushLocationBlockList(final List<LocationBlock> newList) {
 		mProjectLists.push(Collections.unmodifiableList(newList));
@@ -388,6 +456,39 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 ////
 ////		return subArrayTerm;
 //	}
+	protected static class BuildArrayCellAccessTerm implements Walker {
+
+
+		// a script to construct the fresh term
+		private final Script mScript;
+
+		private final ArrayCellAccess mArrayCellAccess;
+
+		BuildArrayCellAccessTerm(final ArrayCellAccess aca, final Script script) {
+			mArrayCellAccess = aca;
+			mScript = script;
+		}
+
+		@Override
+		public void walk(final NonRecursive engine) {
+			final PartitionProjectionTermTransformer transformer = (PartitionProjectionTermTransformer) engine;
+
+			final List<Term> indexEntries = new ArrayList<>(mArrayCellAccess.getIndex().size());
+
+			// TODO check order
+
+			final Term array = transformer.getConverted();
+
+			for (int i = 0; i < mArrayCellAccess.getIndex().size(); i++) {
+				indexEntries.add(transformer.getConverted());
+			}
+			final ArrayIndex index = new ArrayIndex(indexEntries);
+
+			final Term mdsTerm = new MultiDimensionalSelect(array, index, mScript).getSelectTerm();
+			transformer.setResult(mdsTerm);
+		}
+
+	}
 
 	protected static class BuildConjunction implements Walker {
 

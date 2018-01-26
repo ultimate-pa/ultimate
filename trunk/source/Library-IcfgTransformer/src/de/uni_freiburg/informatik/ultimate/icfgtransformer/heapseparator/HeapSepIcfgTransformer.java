@@ -41,8 +41,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private final ILogger mLogger;
 
-//	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
-
 	private final HeapSeparatorBenchmark mStatistics;
 
 	private final ManagedScript mManagedScript;
@@ -113,11 +111,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac =
 				(ILocationFactory<OUTLOC, OUTLOC>) createIcfgLocationToIcfgLocationFactory();
-
-		// TODO : where do we get this variable from?
-//		final IProgramVar validArray = originalIcfg.getCfgSmtToolkit().getSymbolTable().getProgramVar(
-//		final IProgramVar validArray = originalIcfg.getCfgSmtToolkit().getSymbolTable().getProgramVar(
-//				mManagedScript.variable(validArrayName, null));
 
 		/*
 		 * 1. Execute the preprocessing

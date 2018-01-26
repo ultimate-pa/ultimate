@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -72,7 +74,19 @@ public class ArrayCellAccess {
 		return result;
 	}
 
+	/**
+	 * get the array of the underlying mdSelect (can be a store term)
+	 * @return
+	 */
 	public Term getArray() {
+		return mMdSelect.getArray();
+	}
+
+	/**
+	 * get the array variable/constant (look inside store terms)
+	 * @return
+	 */
+	public Term getSimpleArray() {
 		return mSimpleArrayTerm;
 //		if (mArraySelect != null) {
 //			return mArraySelect.getArray();
@@ -121,6 +135,47 @@ public class ArrayCellAccess {
 //
 //		return "(array " + getArray() + " at " + getIndex() + ")";
 	}
+
+	public Set<Integer> getDimensionsOfIndexTerm(final Term indexSubterm) {
+		final Set<Integer> result = new HashSet<>();
+		for (int dim = 0; dim < mMdSelect.getIndex().size(); dim++) {
+			if (indexSubterm.equals(mMdSelect.getIndex().get(dim))) {
+				result.add(dim);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mMdSelect == null) ? 0 : mMdSelect.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final ArrayCellAccess other = (ArrayCellAccess) obj;
+		if (mMdSelect == null) {
+			if (other.mMdSelect != null) {
+				return false;
+			}
+		} else if (!mMdSelect.equals(other.mMdSelect)) {
+			return false;
+		}
+		return true;
+	}
+
 
 
 }
