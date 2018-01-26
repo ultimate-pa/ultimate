@@ -81,9 +81,9 @@ public class InductivityCheck<LETTER extends IAction> {
 
 	private boolean checkInductivity(final INestedWordAutomaton<LETTER, IPredicate> nwa) {
 		if (mAntiInductivity) {
-			mLogger.debug("Start checking anti-inductivity of automaton");
+			mLogger.info("Starting anti-indutivity check of a Floyd-Hoare automaton with " + nwa.sizeInformation());
 		} else {
-			mLogger.debug("Start checking inductivity of automaton");
+			mLogger.info("Starting indutivity check of a Floyd-Hoare automaton with " + nwa.sizeInformation());
 		}
 
 		final boolean result = true;
@@ -116,7 +116,7 @@ public class InductivityCheck<LETTER extends IAction> {
 		if (mHoareTripleChecker instanceof IncrementalHoareTripleChecker) {
 			((IncrementalHoareTripleChecker) mHoareTripleChecker).clearAssertionStack();
 		}
-		mLogger.info("Interpolant automaton has " + (mYield[0] + mYield[1] + mYield[2]) + " edges. " + mYield[0]
+		mLogger.info("Floyd-Hoare automaton has " + (mYield[0] + mYield[1] + mYield[2]) + " edges. " + mYield[0]
 				+ " inductive. " + mYield[1] + " not inductive. " + mYield[2] + " times theorem prover too"
 				+ " weak to decide inductivity. ");
 		return result;
