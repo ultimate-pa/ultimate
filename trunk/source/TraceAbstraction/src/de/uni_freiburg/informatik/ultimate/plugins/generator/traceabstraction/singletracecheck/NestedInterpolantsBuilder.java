@@ -577,7 +577,7 @@ public class NestedInterpolantsBuilder {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
 					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
-					final Term lessQuantifiers;
+					Term lessQuantifiers;
 					try {
 						lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScriptCfg,
 								withoutIndicesNormalized, mSimplificationTechnique, mXnfConversionTechnique);
