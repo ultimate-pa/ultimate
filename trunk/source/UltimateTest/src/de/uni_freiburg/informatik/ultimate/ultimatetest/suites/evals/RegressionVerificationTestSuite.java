@@ -79,14 +79,21 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_NoReuse_DumpAts.epf");
 	private static final File SETTINGS_EAGER_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_EagerReuse.epf");
+	private static final File SETTINGS_EAGER_REUSE_ONLY_NEW_LETTERS =
+			UltimateRunDefinitionGenerator.getFileFromSettingsDir(
+					"regression-verif/svcomp-Reach-64bit-Automizer_Default_EagerReuse_OnlyNewLetters.epf");
+	private static final File SETTINGS_EAGER_REUSE_ONLY_NEW_LETTERS_SOLVER =
+			UltimateRunDefinitionGenerator.getFileFromSettingsDir(
+					"regression-verif/svcomp-Reach-64bit-Automizer_Default_EagerReuse_OnlyNewLettersSolver.epf");
 	private static final File SETTINGS_VANILLA = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default.epf");
 	private static final File SETTINGS_LAZY_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_LazyReuse.epf");
 	private static final File ATS_DUMP_DIR = new File("./automata-dump");
 
-	private static final int FIRST_N_PROGRAMS = 2;
-	private static final int FIRST_N_REVISIONS_PER_PROGRAM = 2;
+	// start with 0 for both params
+	private static final int FIRST_N_PROGRAMS = 0;
+	private static final int FIRST_N_REVISIONS_PER_PROGRAM = Integer.MAX_VALUE;
 
 	public RegressionVerificationTestSuite() {
 		super();
@@ -95,7 +102,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 900 * 1000;
+		return 90 * 1000;
 	}
 
 	@Override
@@ -141,6 +148,10 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 			// run reuse with specific revision for all enabled revisions (see prune(...) and ONLY_FIRST)
 			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE, targetAtsFile);
+			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE_ONLY_NEW_LETTERS,
+					targetAtsFile);
+			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE_ONLY_NEW_LETTERS_SOLVER,
+					targetAtsFile);
 			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_LAZY_REUSE, targetAtsFile);
 
 			// run vanilla for comparison
@@ -181,8 +192,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			if (onlyFirstRevision && internalRevision > 0) {
 				break;
 			}
-			final String programRevPrefix = currentProgram.getName().substring(0, 3);
-			final File dumpedAtsFile = new File(ATS_DUMP_DIR, programRevPrefix + "AutomataForReuse.ats");
+			final File dumpedAtsFile = new File(ATS_DUMP_DIR, currentProgram.getName() + "-reuse.ats");
 
 			final AfterTest funAfterTest = () -> renameAndMove(currentProgram, dumpedAtsFile, marker);
 			urds.add(new UltimateRunDefinition(currentProgram, settings, TOOLCHAIN, getTimeout(), funAfterTest));
