@@ -24,7 +24,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -39,8 +41,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class PartitionProjectionTermTransformer extends TermTransformer {
 
-	Stack<List<LocationBlock>> mProjectLists;
-	private Script mScript;
+	/**
+	 * keeps track of the LocationBlocks that guide the projection in each scope.
+	 */
+	private final Stack<List<LocationBlock>> mProjectLists;
+
+	private final ManagedScript mMgdScript;
 
 	/**
 	 * Maps each Term in the formula that is used to access an array cell (i.e. that corresponds to a SelectInfo) in the
@@ -49,11 +55,14 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	 *
 	 * input field (or computed from input)
 	 */
-	private final Map<Term, LocationBlock> mTermToLocationBlock;
+//	private final Map<Term, LocationBlock> mTermToLocationBlock;
+	private final NestedMap2<ArrayCellAccess, Integer, LocationBlock> mArrayCellAccessToIntegerToLocationBlock;
+
 	/**
 	 * All the location blocks that belong to one array group, divided by dimension they belong to..
 	 */
-	private final Map<ArrayGroup, List<Set<LocationBlock>>> mArrayGroupToDimensionToLocationBlocks;
+	private final HashRelation3<ArrayGroup, Integer, LocationBlock> mArrayGroupToDimensionToLocationBlocks;
+//	private final Map<ArrayGroup, List<Set<LocationBlock>>> mArrayGroupToDimensionToLocationBlocks;
 
 	private final SubArrayManager mSubArrayManager;
 
@@ -65,6 +74,8 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	private final EdgeInfo mEdgeInfo;
 
 	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
+	private final NestedMap2<Term, IProgramVarOrConst, Term> mOriginalTermToSubArrayToReplacementTerm;
+
 
 	/**
 	 *
@@ -74,20 +85,25 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	 * 			the TransFormula whose formula will be transformed by this TermTransformer
 	 * @param arrayGroupToDimensionToLocationBlocks
 	 */
-	public PartitionProjectionTermTransformer(final SubArrayManager subArrayManager,
-			final Map<Term, LocationBlock> termToLocationBlock,
+	public PartitionProjectionTermTransformer(final ManagedScript mgdScript, final SubArrayManager subArrayManager,
+//			final Map<Term, LocationBlock> termToLocationBlock,
+			final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToIntegerToLocationBlock,
 //			final UnmodifiableTransFormula transformula,
 			final EdgeInfo edgeInfo,
-			final Map<ArrayGroup, List<Set<LocationBlock>>> arrayGroupToDimensionToLocationBlocks,
+//			final Map<ArrayGroup, List<Set<LocationBlock>>> arrayGroupToDimensionToLocationBlocks,
+			final HashRelation3<ArrayGroup, Integer, LocationBlock> arrayGroupToDimensionToLocationBlocks,
 			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
 //			final Map<IProgramVar, TermVariable> oldInVars,
 //			final Map<IProgramVar, TermVariable> oldOutVars) {
+		mMgdScript = mgdScript;
+
 		mSubArrayManager = subArrayManager;
 
 		mArrayToArrayGroup = arrayToArrayGroup;
 
-		mTermToLocationBlock = termToLocationBlock;
+//		mTermToLocationBlock = termToLocationBlock;
+		mArrayCellAccessToIntegerToLocationBlock = arrayCellAccessToIntegerToLocationBlock;
 
 		mArrayGroupToDimensionToLocationBlocks = arrayGroupToDimensionToLocationBlocks;
 
@@ -100,6 +116,8 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 		mProjectLists = new Stack<>();
 		mProjectLists.push(Collections.emptyList());
+
+		mOriginalTermToSubArrayToReplacementTerm = new NestedMap2<>();
 	}
 
 	@Override
@@ -108,10 +126,10 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		if (term instanceof ConstantTerm
 				|| term instanceof TermVariable) {
 			if (isPartitionedArray(term)) {
-				final IProgramVarOrConst pv = getProjectedArray(term, projectList);
+				final Term subArrayTerm = getSubArrayReplacementTerm(term, projectList);
 
 				assert false;
-				setResult(null);
+				setResult(subArrayTerm);
 			} else {
 				// leave term unchanged (projection does not apply to it)
 				setResult(term);
@@ -142,7 +160,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 //						CrossProducts.crossProductNTimes(mdSort.getDimension(), locationBlocks);
 
 
-				enqueueWalker(new BuildConjunction(locationBlockTuples.size(), mScript));
+				enqueueWalker(new BuildConjunction(locationBlockTuples.size(), mMgdScript.getScript()));
 
 				for (final List<LocationBlock> lbt : locationBlockTuples) {
 					enqueueWalker(new EndScope());
@@ -249,6 +267,48 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		}
 	}
 
+	private Term getSubArrayReplacementTerm(final Term originalTerm, final List<LocationBlock> projectList) {
+
+		final IProgramVarOrConst originalTermPvoc = mEdgeInfo.getProgramVarOrConstForTerm(originalTerm);
+
+		final IProgramVarOrConst subArrayPv = mSubArrayManager.getSubArray(originalTermPvoc, projectList);
+
+		return getOrConstructSubArrayTermAndUpdateInOutVarMappings(originalTerm, originalTermPvoc, subArrayPv);
+	}
+
+	private Term getOrConstructSubArrayTermAndUpdateInOutVarMappings(final Term originalTerm,
+			final IProgramVarOrConst originalTermPvoc, final IProgramVarOrConst subArrayPvoc) {
+		Term result = mOriginalTermToSubArrayToReplacementTerm.get(originalTerm, subArrayPvoc);
+
+		if (result == null) {
+			assert originalTerm instanceof TermVariable : "TODO: if this occurs, extend below code to replace a "
+					+ "constant term by a constant term";
+
+			result = mMgdScript.constructFreshTermVariable(subArrayPvoc.getGloballyUniqueId(), subArrayPvoc.getSort());
+
+			mOriginalTermToSubArrayToReplacementTerm.put(originalTerm, subArrayPvoc, result);
+
+			// update the in/out var mappings if necessary
+			if (subArrayPvoc instanceof IProgramVar) {
+				assert originalTermPvoc instanceof IProgramVar;
+
+				final IProgramVar subArrayPv = (IProgramVar) subArrayPvoc;
+
+				final Term origInVarTerm = mEdgeInfo.getEdge().getTransformula().getInVars().get(originalTermPvoc);
+				if (origInVarTerm == originalTerm) {
+					// original term was invar
+					mNewInVars.put(subArrayPv, (TermVariable) result);
+				}
+				final Term origOutVarTerm = mEdgeInfo.getEdge().getTransformula().getOutVars().get(originalTermPvoc);
+				if (origOutVarTerm == originalTerm) {
+					// original term was outvar
+					mNewOutVars.put(subArrayPv, (TermVariable) result);
+				}
+			}
+		}
+		return result;
+	}
+
 	private boolean isPartitionedArray(final Term term) {
 		if (!term.getSort().isArraySort()) {
 			return false;
@@ -258,8 +318,20 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		return true;
 	}
 
+	/**
+	 * TODO maybe make the field more convenient for our purposes rather than doing this translation each time?..
+	 *
+	 * @param arrayGroup
+	 * @return
+	 */
 	private List<Set<LocationBlock>> getLocationBlocksForArrayGroup(final ArrayGroup arrayGroup) {
-		return mArrayGroupToDimensionToLocationBlocks.get(arrayGroup);
+//	private Set<LocationBlock> getLocationBlocksForArrayGroup(final ArrayGroup arrayGroup, final int dim) {
+		final List<Set<LocationBlock>> result = new ArrayList<>();
+		for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
+			result.add(mArrayGroupToDimensionToLocationBlocks.projectToTrd(arrayGroup, dim));
+		}
+		//		return mArrayGroupToDimensionToLocationBlocks.projectToTrd(arrayGroup, dim);
+		return result;
 	}
 
 	private ArrayGroup getArrayGroup(final Term term) {
@@ -303,24 +375,19 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		mProjectLists.push(Collections.unmodifiableList(newList));
 	}
 
-private void popLocationBlockList() {
+	private void popLocationBlockList() {
 		mProjectLists.pop();
 	}
 
 	//	private Term getProjectedSimpleTerm(final Term termToProject, final List<LocationBlock> projectList) {
-	private IProgramVarOrConst getProjectedArray(final Term termToProject, final List<LocationBlock> projectList) {
-		final IProgramVarOrConst subArrayPv = mSubArrayManager.getSubArray(getProgramVar(termToProject),
-				projectList);
-		return subArrayPv;
-//		final Term subArrayTerm;
-//
-//		return subArrayTerm;
-	}
-
-	private IProgramVarOrConst getProgramVar(final Term termToProject) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	private IProgramVarOrConst getProjectedArray(final Term termToProject, final List<LocationBlock> projectList) {
+//		final IProgramVarOrConst subArrayPv = mSubArrayManager.getSubArray(getProgramVar(termToProject),
+//				projectList);
+//		return subArrayPv;
+////		final Term subArrayTerm;
+////
+////		return subArrayTerm;
+//	}
 
 	protected static class BuildConjunction implements Walker {
 

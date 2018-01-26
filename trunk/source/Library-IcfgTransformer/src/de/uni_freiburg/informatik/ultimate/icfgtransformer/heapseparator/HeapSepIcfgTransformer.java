@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -219,7 +218,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final PartitionProjectionTransitionTransformer<INLOC, OUTLOC> heapSeparatingTransformer =
 				new PartitionProjectionTransitionTransformer<>(mLogger, "HeapSeparatedIcfg", outLocationClass,
 						originalIcfg, funLocFac, backtranslationTracker,
-						partitionManager.getSelectInfoToLocationBlock(), edgeToIndexToStoreIndexInfo,
+						partitionManager.getSelectInfoToDimensionToLocationBlock(),
+						edgeToIndexToStoreIndexInfo,
 						arrayToArrayGroup);
 		mResultIcfg = heapSeparatingTransformer.getResult();
 	}
@@ -311,7 +311,7 @@ class PartitionManager {
 
 	// output
 //	private final Map<SelectInfo, LocationBlock> mSelectInfoToLocationBlock;
-	private final Map<SelectInfo, LocationBlock> mSelectInfoToDimensionToLocationBlock;
+	private final NestedMap2<SelectInfo, Integer, LocationBlock> mSelectInfoToDimensionToLocationBlock;
 
 //	private final Map<ArrayGroup, UnionFind<StoreIndexInfo>> mArrayGroupToStoreIndexInfoPartition;
 	private final NestedMap2<ArrayGroup, Integer, UnionFind<StoreIndexInfo>>
@@ -342,7 +342,7 @@ class PartitionManager {
 		}
 
 		mArrayGroupToDimensionToStoreIndexInfoPartition = new NestedMap2<>();
-		mSelectInfoToDimensionToLocationBlock = new HashMap<>();
+		mSelectInfoToDimensionToLocationBlock = new NestedMap2<>();
 
 		mSelectInfoToDimensionToToSampleStoreIndexInfo = new NestedMap2<>();
 	}
@@ -459,7 +459,7 @@ class PartitionManager {
 
 //			assert assertWritesAreToReadArray(eqc, selectInfo);
 
-			mSelectInfoToDimensionToLocationBlock.put(selectInfo, new LocationBlock(eqc, arrayGroup, dim));
+			mSelectInfoToDimensionToLocationBlock.put(selectInfo, dim, new LocationBlock(eqc, arrayGroup, dim));
 		}
 		mIsFinished = true;
 
@@ -482,8 +482,15 @@ class PartitionManager {
 		 *  array
 		 * (a write cannot influence a read if it is to a different array)
 		 */
-		for (final Entry<SelectInfo, LocationBlock> en : mSelectInfoToDimensionToLocationBlock.entrySet()) {
-			assert assertWritesAreToReadArray(en.getValue().getLocations(), en.getKey());
+//		for (final Entry<SelectInfo, LocationBlock> en : mSelectInfoToDimensionToLocationBlock.entrySet()) {
+		for (final Triple<SelectInfo, Integer, LocationBlock> en : mSelectInfoToDimensionToLocationBlock.entrySet()) {
+//			assert assertWritesAreToReadArray(en.getValue().getLocations(), en.getKey());
+			assert assertWritesAreToReadArray(en.getThird().getLocations(), en.getFirst());
+
+			if (!en.getSecond().equals(en.getThird().getDimension())) {
+				assert false;
+				return false;
+			}
 //			for (final StoreIndexInfo sii : en.getValue().getLocations()) {
 //				if (!sii.getArrays().contains(en.getKey().getArrayPvoc())) {
 //					assert false;
@@ -512,17 +519,21 @@ class PartitionManager {
 		partition.union(sii1, sii2);
 	}
 
-	public Map<SelectInfo, LocationBlock> getSelectInfoToLocationBlock() {
+//	public Map<SelectInfo, LocationBlock> getSelectInfoToLocationBlock() {
+	public NestedMap2<SelectInfo, Integer, LocationBlock> getSelectInfoToDimensionToLocationBlock() {
 		if (!mIsFinished) {
 			throw new AssertionError();
 		}
-		return Collections.unmodifiableMap(mSelectInfoToDimensionToLocationBlock);
+		return mSelectInfoToDimensionToLocationBlock;
+//		return Collections.unmodifiableMap(mSelectInfoToDimensionToLocationBlock);
 	}
 
-	public LocationBlock getLocationBlock(final SelectInfo si) {
+//	public LocationBlock getLocationBlock(final SelectInfo si) {
+	public LocationBlock getLocationBlock(final SelectInfo si, final Integer dim) {
 		if (!mIsFinished) {
 			throw new AssertionError();
 		}
-		return mSelectInfoToDimensionToLocationBlock.get(si);
+//		return mSelectInfoToDimensionToLocationBlock.get(si);
+		return mSelectInfoToDimensionToLocationBlock.get(si, dim);
 	}
 }

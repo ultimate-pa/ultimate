@@ -42,4 +42,8 @@ public class SelectInfo {
 	public ArrayIndex getIndex() {
 		return mArrayCellAccess.getIndex();
 	}
+
+	public ArrayCellAccess getArrayCellAccess() {
+		return mArrayCellAccess;
+	}
 }
