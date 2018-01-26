@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -46,6 +47,10 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	private final NestedMap3<EdgeInfo, ArrayCellAccess, Integer, LocationBlock>
 		mEdgeInfoToArrayCellAccessToDimensionToLocationBlock;
 
+	private final List<IProgramVarOrConst> mHeapArrays;
+
+	private final HeapSeparatorBenchmark mStatistics;
+
 //	private final Map<StoreIndexInfo, LocationBlock> mStoreIndexInfoToLocationBlock;
 
 	/**
@@ -64,6 +69,8 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	 * 			enables us to find all StoreIndexInfos by their key members
 	 * @param arrayToArrayGroup
 	 * 			enables us to find all array groups by their elements
+	 * @param heapArrays
+	 * @param statistics
 	 */
 	public PartitionProjectionTransitionTransformer(final ILogger logger, final String resultName,
 			final Class<OUTLOC> outLocClazz,
@@ -71,9 +78,14 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 			final IBacktranslationTracker backtranslationTracker,
 			final NestedMap2<SelectInfo, Integer, LocationBlock> selectInfoToDimensionToLocationBlock,
 			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo,
-			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup) {
+			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
+			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics) {
 //			final Map<StoreIndexInfo, LocationBlock> storeIndexInfoToLocationBlock) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+
+		mHeapArrays = heapArrays;
+
+		mStatistics = statistics;
 
 		/*
 		 * We build two maps each a different view on the input map selectInfoToDimensionToLocationBlock
@@ -100,7 +112,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		mArrayToArrayGroup = arrayToArrayGroup;
 
-		mSubArrayManager = new SubArrayManager(mInputCfgCsToolkit, null);
+		mSubArrayManager = new SubArrayManager(mInputCfgCsToolkit, mStatistics, arrayToArrayGroup);
 
 		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 	}
@@ -125,7 +137,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 				new PartitionProjectionTermTransformer(mMgdScript, mSubArrayManager,
 						arrayCellAccessToDimensionToLocationBlock,
 						edgeInfo, mArrayGroupToDimensionToLocationBlocks, mArrayToArrayGroup,
-						mEdgeToIndexToStoreIndexInfo);//,
+						mEdgeToIndexToStoreIndexInfo, mHeapArrays);//,
 						//indexTermToLocationBlock);
 		final Term transformedFormula = ppttf.transform(tf.getFormula());
 

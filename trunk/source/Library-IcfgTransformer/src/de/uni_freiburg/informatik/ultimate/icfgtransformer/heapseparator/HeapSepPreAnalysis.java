@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -37,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -69,25 +69,33 @@ public class HeapSepPreAnalysis {
 
 	private final HashRelation<EdgeInfo, ArrayEqualityAllowStores> mEdgeToArrayRelations;
 
-	private final HashRelation<EdgeInfo, ArrayCellAccess> mEdgeToArrayCellAccesses;
+//	private final HashRelation<EdgeInfo, ArrayCellAccess> mEdgeToArrayCellAccesses;
 
 	private final ManagedScript mMgdScript;
 
-	private Set<SelectInfo> mSelectInfos;
+	private final Set<SelectInfo> mSelectInfos;
 
 	private Set<ArrayGroup> mArrayGroups;
+
+	private final List<IProgramVarOrConst> mHeapArrays;
 
 	/**
 	 *
 	 * @param logger
+	 * @param heapArrays
 	 * @param equalityProvider
 	 */
-	public HeapSepPreAnalysis(final ILogger logger, final ManagedScript mgdScript) {
+	public HeapSepPreAnalysis(final ILogger logger, final ManagedScript mgdScript,
+			final List<IProgramVarOrConst> heapArrays) {
 		mMgdScript = mgdScript;
 
+		mHeapArrays = heapArrays;
+
 		mEdgeToCellUpdates = new HashRelation<>();
-		mEdgeToArrayCellAccesses = new HashRelation<>();
+//		mEdgeToArrayCellAccesses = new HashRelation<>();
 		mEdgeToArrayRelations = new HashRelation<>();
+
+		mSelectInfos = new HashSet<>();
 	}
 
 	public void processEdge(final IcfgEdge edge) {
@@ -107,7 +115,16 @@ public class HeapSepPreAnalysis {
 			assert au.getNewArray() != au.getOldArray() : "that would be a strange case, no?..";
 			assert !au.isNegatedEquality() : "strange case";
 
-			// we only keep array updates that have the same ProgramVar lhs und rhs
+			/*
+			 * only track updates to one of the heap arrays
+			 */
+			if (!mHeapArrays.contains(newArrayPv)) {
+				continue;
+			}
+
+			/* we only keep array updates that have the same ProgramVar lhs und rhs
+			 * (the others are processed as ArrayEqualityAllowStores')
+			 */
 			if (newArrayPv.equals(oldArrayPv)) {
 				mEdgeToCellUpdates.addPair(edgeInfo, au);
 				visitedSubTerms.add(au.getArrayUpdateTerm());
@@ -120,55 +137,29 @@ public class HeapSepPreAnalysis {
 				// term is already stored as a cell update
 				continue;
 			}
+
+			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getLhsArray());
+			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getRhsArray());
+			// filter out aeas that do not relate to a heap array
+			if (!mHeapArrays.contains(lhsPvoc) && !mHeapArrays.contains(rhsPvoc)) {
+				continue;
+			}
+
 			mEdgeToArrayRelations.addPair(edgeInfo, aeas);
 //			visitedSubTerms.add(aeas.getTerm(mMgdScript.getScript()));
 		}
 
 		for (final ArrayCellAccess aca : ArrayCellAccess.extractArrayCellAccesses(tf.getFormula())) {
 //			assert !visitedSubTerms.contains(aca.getTerm(mMgdScript.getScript()));
-			mEdgeToArrayCellAccesses.addPair(edgeInfo, aca);
+
+			final SelectInfo selectInfo = new SelectInfo(aca, edgeInfo);
+			if (mHeapArrays.contains(selectInfo.getArrayPvoc())) {
+				mSelectInfos.add(selectInfo);
+			}
+
+//			mEdgeToArrayCellAccesses.addPair(edgeInfo, aca);
 		}
 	}
-
-	// not used right now --> remove?
-	@Deprecated
-	Set<Term> getArraysAsTerms() {
-		assert false;
-		return null;
-	}
-
-	// not used right now --> remove?
-	@Deprecated
-	Set<IProgramVar> getArraysAsProgramVars() {
-		assert false;
-		return null;
-	}
-
-//	/**
-//	 * Helper to get a IProgramVar from a TermVariable via the In/OutVarsMapping
-//	 *
-//	 * @param tv
-//	 * @param map
-//	 * @return
-//	 */
-//	private static IProgramVar getVarForTerm(final TermVariable tv, final Map<IProgramVar, TermVariable> map) {
-//		for (final Entry<IProgramVar, TermVariable> en: map.entrySet()) {
-//			if (en.getValue() == tv) {
-//				return en.getKey();
-//			}
-//		}
-//		throw new IllegalArgumentException();
-//	}
-
-//	private static IProgramVarOrConst getVarOrConstForTerm(final TermVariable tv, final Map<IProgramVar, TermVariable> map) {
-//		final IProgramVar var = getVarForTerm(tv, map);
-//		if (var != null) {
-//			return var;
-//		}
-//
-//		throw new AssertionError();
-//
-//	}
 
 	public Set<SelectInfo> getSelectInfos() {
 		if (mSelectInfos == null) {
@@ -176,13 +167,6 @@ public class HeapSepPreAnalysis {
 		}
 		return mSelectInfos;
 	}
-
-//	public Set<ArrayGroup> getArrayGroups() {
-//		if (mArrayGroups == null) {
-//			throw new IllegalStateException("call finish first");
-//		}
-//		return mArrayGroups;
-//	}
 
 	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
 		if (mArrayGroups == null) {
@@ -198,17 +182,21 @@ public class HeapSepPreAnalysis {
 	}
 
 	public void finish() {
-		mSelectInfos = new HashSet<>();
-		for (final Entry<EdgeInfo, ArrayCellAccess> en : mEdgeToArrayCellAccesses) {
-			final SelectInfo selectInfo = new SelectInfo(en.getValue(), en.getKey());
-			mSelectInfos.add(selectInfo);
-		}
+//		mSelectInfos = new HashSet<>();
+//		for (final Entry<EdgeInfo, ArrayCellAccess> en : mEdgeToArrayCellAccesses) {
+//			final SelectInfo selectInfo = new SelectInfo(en.getValue(), en.getKey());
+//			mSelectInfos.add(selectInfo);
+//		}
 
 		/*
 		 * Compute the array groups. Rule: Whenever two arrays are related via "=" in any formula in the program, they
 		 *  must be in the same array group.
 		 */
 		final UnionFind<IProgramVarOrConst> arrayPartition = new UnionFind<>();
+
+		// base line for the array groups: the heap arrays
+		mHeapArrays.forEach(arrayPartition::findAndConstructEquivalenceClassIfNeeded);
+
 		for (final Entry<EdgeInfo, ArrayEqualityAllowStores> en : mEdgeToArrayRelations) {
 			final EdgeInfo edgeInfo = en.getKey();
 			final ArrayEqualityAllowStores aeas = en.getValue();

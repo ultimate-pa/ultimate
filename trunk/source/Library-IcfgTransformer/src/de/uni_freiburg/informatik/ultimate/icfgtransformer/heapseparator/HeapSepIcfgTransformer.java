@@ -1,9 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -38,6 +41,11 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	private IIcfg<OUTLOC> mResultIcfg;
 
 	private final Preprocessing mPreprocessing = Preprocessing.FREEZE_VARIABLES;
+
+	/**
+	 * The IProgramVarOrConsts that model the heap in our memory model.
+	 */
+	private final List<IProgramVarOrConst> mHeapArrays;
 
 	private final ILogger mLogger;
 
@@ -74,6 +82,12 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mStatistics = new HeapSeparatorBenchmark();
 		mManagedScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
+
+		// TODO: complete, make nicer..
+		final List<String> heapArrayNames = Arrays.asList("#memory_int", "memory_$Pointer$");
+
+		mHeapArrays = originalIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals().stream()
+				.filter(pvoc -> heapArrayNames.contains(pvoc.getGloballyUniqueId())).collect(Collectors.toList());
 
 		computeResult(originalIcfg, funLocFac, replacementVarFactory, backtranslationTracker, outLocationClass,
 				newIcfgIdentifier, equalityProvider, validArray);
@@ -181,13 +195,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 *  <li> an array cell is accessed
 		 *  <li> two arrays are related
 		 */
-		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, mManagedScript);
+		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, mManagedScript, mHeapArrays);
 		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
 		heapSepPreanalysis.finish();
 
 		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup = heapSepPreanalysis.getArrayToArrayGroup();
 
-		final PartitionManager partitionManager = new PartitionManager(arrayToArrayGroup, storeIndexInfoToFreezeVar);
+		final PartitionManager partitionManager = new PartitionManager(arrayToArrayGroup, storeIndexInfoToFreezeVar,
+				mHeapArrays);
 
 		/*
 		 * 3b. compute an array partitioning
@@ -213,7 +228,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 						originalIcfg, funLocFac, backtranslationTracker,
 						partitionManager.getSelectInfoToDimensionToLocationBlock(),
 						edgeToIndexToStoreIndexInfo,
-						arrayToArrayGroup);
+						arrayToArrayGroup,
+						mHeapArrays,
+						mStatistics);
 		mResultIcfg = heapSeparatingTransformer.getResult();
 	}
 
@@ -318,8 +335,11 @@ class PartitionManager {
 
 	private boolean mIsFinished = false;
 
+	private final List<IProgramVarOrConst> mHeapArrays;
+
 	public PartitionManager(final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
-			final Map<StoreIndexInfo, IProgramNonOldVar> arrayAccessInfoToFreezeVar) {
+			final Map<StoreIndexInfo, IProgramNonOldVar> arrayAccessInfoToFreezeVar,
+			final List<IProgramVarOrConst> heapArrays) {
 
 //		mArrayToArrayGroup = new HashMap<>();
 //		for (final ArrayGroup ag : arrayGroups) {
@@ -338,6 +358,8 @@ class PartitionManager {
 		mSelectInfoToDimensionToLocationBlock = new NestedMap2<>();
 
 		mSelectInfoToDimensionToToSampleStoreIndexInfo = new NestedMap2<>();
+
+		mHeapArrays = heapArrays;
 	}
 
 	/**

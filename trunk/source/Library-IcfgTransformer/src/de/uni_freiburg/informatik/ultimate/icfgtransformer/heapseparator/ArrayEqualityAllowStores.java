@@ -132,6 +132,11 @@ public class ArrayEqualityAllowStores {
 
 	}
 
+	/**
+	 * get the simple array on the left hand side of the equation
+	 *
+	 * @return
+	 */
 	public Term getLhsArray() {
 		if (mArrayUpdate != null) {
 			return mArrayUpdate.getNewArray();
@@ -145,6 +150,12 @@ public class ArrayEqualityAllowStores {
 		throw new AssertionError();
 	}
 
+	/**
+	 *
+	 * get the simple array on the left hand side of the equation
+	 *
+	 * @return
+	 */
 	public Term getRhsArray() {
 		if (mArrayUpdate != null) {
 			return mArrayUpdate.getOldArray();

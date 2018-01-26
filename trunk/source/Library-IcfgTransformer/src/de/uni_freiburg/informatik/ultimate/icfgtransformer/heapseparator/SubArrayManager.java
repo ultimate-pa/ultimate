@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,30 +51,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class SubArrayManager {
 
-//	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
-	private final Map<IProgramVarOrConst, ArrayGroup> mArrayIdToArrayGroup = new HashMap<>();
+	/**
+	 * used for caching the sub arrays that this class manages
+	 */
+	private final NestedMap2<IProgramVarOrConst, List<LocationBlock>, IProgramVarOrConst>
+		mArrayToLocationBlockListToSubArray;
 
-//	private final ManagedScript mManagedScript;
-//	private final IIcfgSymbolTable mOldSymbolTable;
-//	private final HeapSeparatorBenchmark mStatistics;
+	private final Map<IProgramVarOrConst, ArrayGroup> mArrayIdToArrayGroup;
 
-//	private final Map<StoreIndexInfo, IProgramNonOldVar> mArrayAccessInfoToFreezeVar;
+	private final ManagedScript mManagedScript;
 
-	NestedMap2<IProgramVarOrConst, List<LocationBlock>, IProgramVarOrConst> mArrayToLocationBlockListToSubArray;
+	private final HeapSeparatorBenchmark mStatistics;
 
-	private ManagedScript mManagedScript;
+	public SubArrayManager(final CfgSmtToolkit csToolkit, final HeapSeparatorBenchmark statistics,
+			final Map<IProgramVarOrConst, ArrayGroup> arrayIdToArrayGroup) {
 
-	public SubArrayManager(final CfgSmtToolkit csToolkit,
-//			final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> writeIndexTermToTfInfoToFreezeVar,
-//			final Map<StoreIndexInfo, IProgramNonOldVar> arrayAccessInfoToFreezeVar,
-			final HeapSeparatorBenchmark statistics) {
-//		mManagedScript = csToolkit.getManagedScript();
-//		mOldSymbolTable = csToolkit.getSymbolTable();
-//		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
-//		mStatistics = statistics;
-//		mArrayAccessInfoToFreezeVar = arrayAccessInfoToFreezeVar;
+		mManagedScript = csToolkit.getManagedScript();
 
+		mStatistics = statistics;
+
+		mArrayIdToArrayGroup = arrayIdToArrayGroup;
+
+		mArrayToLocationBlockListToSubArray = new NestedMap2<>();
 	}
 
 

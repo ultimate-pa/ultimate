@@ -66,4 +66,48 @@ public class LocationBlock {
 	public int getDimension() {
 		return mDimension;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mArrayGroup == null) ? 0 : mArrayGroup.hashCode());
+		result = prime * result + mDimension;
+		result = prime * result + ((mStoreIndexInfos == null) ? 0 : mStoreIndexInfos.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final LocationBlock other = (LocationBlock) obj;
+		if (mArrayGroup == null) {
+			if (other.mArrayGroup != null) {
+				return false;
+			}
+		} else if (!mArrayGroup.equals(other.mArrayGroup)) {
+			return false;
+		}
+		if (mDimension != other.mDimension) {
+			return false;
+		}
+		if (mStoreIndexInfos == null) {
+			if (other.mStoreIndexInfos != null) {
+				return false;
+			}
+		} else if (!mStoreIndexInfos.equals(other.mStoreIndexInfos)) {
+			return false;
+		}
+		return true;
+	}
+
+
 }
