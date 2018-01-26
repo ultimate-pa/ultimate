@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	private static final String MSG_VERIFICATION_CANCELED = "Verification canceled";
-	
+
 	private static final boolean CONTINUE_AFTER_ERROR_TRACE_FOUND = false;
 
 	/**
@@ -252,7 +252,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * </ul>
 	 */
 	protected abstract void constructErrorAutomaton() throws AutomataOperationCanceledException;
-	
+
 	/**
 	 * Reports statistics for error automaton construction.
 	 */
@@ -276,9 +276,9 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * In case error traces are not reported immediately, the analysis may terminate with an empty abstraction or may
 	 * run into termination issues, but it has already found out that the program contains errors. This method can be
 	 * used to ask for such results whenever the analysis terminates.
-	 * 
+	 *
 	 * @param errorGeneralizationEnabled
-	 * 	          {@code true} iff error generalization is enabled
+	 *            {@code true} iff error generalization is enabled
 	 * @param abstractResult
 	 *            result that would be reported by {@link AbstractCegarLoop}
 	 * @return {@code true} if at least one feasible counterexample was detected
@@ -478,11 +478,11 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 	protected Result reportResult(final Result result) {
 		mCegarLoopBenchmark.setResult(result);
-		
+
 		if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
 			reportErrorAutomatonBenchmarks();
 		}
-		
+
 		return result;
 	}
 
@@ -496,8 +496,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	}
 
 	protected void writeAutomatonToFile(final IAutomaton<LETTER, IPredicate> automaton, final String filename) {
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
 				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", automaton);
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 	}
 
 	public static String addIndentation(final int indentation, final String s) {

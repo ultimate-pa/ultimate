@@ -33,6 +33,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
@@ -92,6 +93,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	AbsIntAvgWeakenedConjuncts(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
+	DUMP_TIME(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+
 	AutomataMinimizationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),
 
@@ -121,7 +124,7 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	@Override
 	public String prettyprint(final Object o) {
-		return mPrettyprinter.apply(name()).apply(o);
+		return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
 	}
 
 	@Override

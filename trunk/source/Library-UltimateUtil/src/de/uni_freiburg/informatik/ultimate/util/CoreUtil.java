@@ -80,7 +80,22 @@ public class CoreUtil {
 		return df.format(new Date());
 	}
 
+	/**
+	 * Converts Strings in upper case, e.g. THIS_IS_A_NAME, to CamelCase, e.g., ThisIsAName. If the string already
+	 * contains some lower-case characters, no conversion is performed.
+	 *
+	 * @param value
+	 *            The string that should be converted.
+	 * @return The name in Camel Case.
+	 */
 	public static String getUpperToCamelCase(final String value) {
+		if (value == null) {
+			return value;
+		}
+		if (!value.toUpperCase().equals(value)) {
+			// string has lower-case, ignore
+			return value;
+		}
 		final StringBuilder sb = new StringBuilder();
 		for (final String s : value.split("_")) {
 			sb.append(Character.toUpperCase(s.charAt(0)));

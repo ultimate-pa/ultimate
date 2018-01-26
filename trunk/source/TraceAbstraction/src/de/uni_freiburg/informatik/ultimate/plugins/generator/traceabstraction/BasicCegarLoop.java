@@ -312,7 +312,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		if (mPref.dumpAutomata()) {
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
 			mDumper.dumpNestedRun(mCounterexample);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		}
 		mLogger.info("Found error trace");
 
@@ -651,6 +653,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton, final boolean append,
 			final IPredicateUnifier predicateUnifier) {
 		if (mPref.dumpOnlyReuseAutomata()) {
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
+			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString() + " " + automaton.getClass());
 			final String[] splitRes = mTaskIdentifier.toString().split("\\.", 2);
 			String programName = "";
 			if (splitRes.length == 2) {
@@ -661,20 +665,23 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
 			final boolean addPredicateImplicationInformation = false;
 			if (addPredicateImplicationInformation) {
-				final HashRelation<IPredicate, IPredicate> outgoingEpsilonTransitions = ((CoverageRelation) predicateUnifier
-						.getCoverageRelation()).getCopyOfImplicationRelation();
+				final HashRelation<IPredicate, IPredicate> outgoingEpsilonTransitions =
+						((CoverageRelation) predicateUnifier.getCoverageRelation()).getCopyOfImplicationRelation();
 				INestedWordAutomaton<LETTER, IPredicate> backingNestedWordAutomaton;
 				try {
-					backingNestedWordAutomaton = new RemoveUnreachable<LETTER, IPredicate>(services, automaton).getResult();
+					backingNestedWordAutomaton = new RemoveUnreachable<>(services, automaton).getResult();
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError(e);
 				}
-				printedAutomaton = new EpsilonNestedWordAutomaton<LETTER, IPredicate, INestedWordAutomaton<LETTER,IPredicate>>(backingNestedWordAutomaton, outgoingEpsilonTransitions);
+				printedAutomaton =
+						new EpsilonNestedWordAutomaton<>(backingNestedWordAutomaton, outgoingEpsilonTransitions);
 			} else {
 				printedAutomaton = automaton;
 			}
 			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + mIteration,
 					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", append, printedAutomaton);
+			mLogger.info("Finished dumping");
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		}
 	}
 
