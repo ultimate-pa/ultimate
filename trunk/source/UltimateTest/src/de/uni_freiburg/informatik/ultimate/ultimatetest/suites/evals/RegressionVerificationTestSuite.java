@@ -70,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	private static final String BENCHMARK_DIR = "examples/regression-verif";
-	// private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
-	private static final String ALLOWED_PROGS = null;
+	private static final String ALLOWED_PROGS = "examples/regression-verif/successful_programs";
+	// private static final String ALLOWED_PROGS = null;
 
 	private static final File TOOLCHAIN = UltimateRunDefinitionGenerator.getFileFromToolchainDir("AutomizerC.xml");
 
@@ -89,10 +89,15 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default.epf");
 	private static final File SETTINGS_LAZY_REUSE = UltimateRunDefinitionGenerator
 			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_LazyReuse.epf");
+	private static final File SETTINGS_EAGER_REUSE_DUMP = UltimateRunDefinitionGenerator
+			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_EagerReuse_DumpAts.epf");
+	private static final File SETTINGS_LAZY_REUSE_DUMP = UltimateRunDefinitionGenerator
+			.getFileFromSettingsDir("regression-verif/svcomp-Reach-64bit-Automizer_Default_LazyReuse_DumpAts.epf");
+
 	private static final File ATS_DUMP_DIR = new File("./automata-dump");
 
 	// start with 0 for both params
-	private static final int FIRST_N_PROGRAMS = 0;
+	private static final int FIRST_N_PROGRAMS = Integer.MAX_VALUE;
 	private static final int FIRST_N_REVISIONS_PER_PROGRAM = Integer.MAX_VALUE;
 
 	public RegressionVerificationTestSuite() {
@@ -144,15 +149,20 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			final File targetAtsFile = getAtsFile(revisions.first(), marker);
 
 			// dump .ats for the first/all (depending on last param) revision(s) of the program
-			runDumpNoReuse(revisions.iterator(), urds, SETTINGS_NO_REUSE_DUMP, marker, true);
+			// runDumpNoReuse(revisions.iterator(), urds, SETTINGS_NO_REUSE_DUMP, marker, true);
 
-			// run reuse with specific revision for all enabled revisions (see prune(...) and ONLY_FIRST)
-			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE, targetAtsFile);
-			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE_ONLY_NEW_LETTERS,
-					targetAtsFile);
-			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE_ONLY_NEW_LETTERS_SOLVER,
-					targetAtsFile);
-			runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_LAZY_REUSE, targetAtsFile);
+			// run reuse with the .ats from the first revision of the program
+			// runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE, targetAtsFile);
+			// runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE_ONLY_NEW_LETTERS,
+			// targetAtsFile);
+			// runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_EAGER_REUSE_ONLY_NEW_LETTERS_SOLVER,
+			// targetAtsFile);
+			// runNoDumpReuseSpecificRevision(revisions.iterator(), urds, SETTINGS_LAZY_REUSE, targetAtsFile);
+			//
+
+			// run reuse on the whole sequence (dump from rev i is input for rev i+1, rev 0 has no input)
+			runDumpReusePreviousRevision(revisions, urds, SETTINGS_EAGER_REUSE_DUMP);
+			runDumpReusePreviousRevision(revisions, urds, SETTINGS_LAZY_REUSE_DUMP);
 
 			// run vanilla for comparison
 			runNoDumpNoReuse(revisions.iterator(), urds, SETTINGS_VANILLA);
@@ -216,6 +226,33 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	}
 
 	/**
+	 * Generate test cases where we use the .ats file from some revision for all the revisions of a program. Expects
+	 * that the .ats file exists when the test case is executed.
+	 */
+	private void runDumpReusePreviousRevision(final TreeSet<File> revisions,
+			final Collection<UltimateRunDefinition> urds, final File settings) {
+		final String marker = "reuse";
+
+		File previousRev = null;
+		File currentRev = null;
+		final Iterator<File> revIter = revisions.iterator();
+		while (revIter.hasNext()) {
+			previousRev = currentRev;
+			currentRev = revIter.next();
+			final File currentAtsFile = new File(ATS_DUMP_DIR, currentRev.getName() + "-reuse.ats");
+			final File finalCurrentRev = currentRev;
+			final AfterTest funAfterTest = () -> renameAndMove(finalCurrentRev, currentAtsFile, marker);
+			if (previousRev == null) {
+				urds.add(new UltimateRunDefinition(currentRev, settings, TOOLCHAIN, getTimeout(), funAfterTest));
+			} else {
+				final File previousAtsFile = getAtsFile(previousRev, marker);
+				urds.add(new UltimateRunDefinition(new File[] { currentRev, previousAtsFile }, settings, TOOLCHAIN,
+						getTimeout(), funAfterTest));
+			}
+		}
+	}
+
+	/**
 	 * Generate test cases where we just use program revisions as input and neither dump nor use .ats files.
 	 */
 	private void runNoDumpNoReuse(final Iterator<File> revIter, final Collection<UltimateRunDefinition> urds,
@@ -231,11 +268,11 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	 *
 	 * @param inputFile
 	 *            The input file for which the .ats file was dumped
-	 * @param dumpSettings
+	 * @param marker
 	 *            A marker string that describes whether the file was created by running without reuse or with reuse.
 	 * @return A file object that points to the .ats file (the file may not yet exist)
 	 */
-	private static File getAtsFile(final File inputFile, final String dumpSettings) {
+	private static File getAtsFile(final File inputFile, final String marker) {
 		final Path target = Paths.get(inputFile.getParent(), inputFile.getName() + "-reuse.ats");
 		return target.toFile();
 	}
@@ -331,5 +368,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	@AfterClass
 	public void removeDumpedAts() {
 		TestUtil.deleteDirectory(ATS_DUMP_DIR);
+		TestUtil.deleteDirectoryContentsIf(new File(TestUtil.getPathFromTrunk(BENCHMARK_DIR)),
+				file -> !file.isDirectory() && file.getName().endsWith(".ats"));
 	}
 }

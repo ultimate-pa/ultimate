@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test.util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -764,6 +765,28 @@ public final class TestUtil {
 				if (f.isDirectory()) {
 					deleteDirectory(f);
 				} else {
+					f.delete();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Recursively delete the contents of the specified folder if the filter accepts them.
+	 */
+	public static void deleteDirectoryContentsIf(final File folder, final FileFilter filter) {
+		final File[] files = folder.listFiles();
+		if (files != null) {
+			// some JVMs return null for empty dirs
+			for (final File f : files) {
+				final boolean shouldDelete = filter.accept(f);
+				if (f.isDirectory()) {
+					if (shouldDelete) {
+						deleteDirectory(f);
+					} else {
+						deleteDirectoryContentsIf(f, filter);
+					}
+				} else if (shouldDelete) {
 					f.delete();
 				}
 			}
