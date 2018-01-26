@@ -114,6 +114,12 @@ public class TraceAbstractionUtils {
 	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
 			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
 			final IPredicateUnifier predicateUnifier) throws AssertionError {
+		final IHoareTripleChecker solverHtc = constructSmtHoareTripleChecker(hoareTripleChecks, csToolkit);
+		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
+	}
+
+	public static IHoareTripleChecker constructSmtHoareTripleChecker(final HoareTripleChecks hoareTripleChecks,
+			final CfgSmtToolkit csToolkit) throws AssertionError {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
@@ -125,7 +131,7 @@ public class TraceAbstractionUtils {
 		default:
 			throw new AssertionError("unknown value");
 		}
-		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
+		return solverHtc;
 	}
 
 	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(

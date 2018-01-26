@@ -50,27 +50,26 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.ReusingDeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientIgnoringHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -114,63 +113,67 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		super.getInitialAbstraction();
 
-		// fill mRawFloydHoareAutomataFromFile
+		mLogger.info(
+				"Constructing FH automata from " + mRawFloydHoareAutomataFromFile.size() + " parsed reuse automata");
 		mReuseStats.continueTime();
 
 		final PredicateParsingWrapperScript ppws = new PredicateParsingWrapperScript(mCsToolkit);
 
 		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
-
-			// Create map from strings to all equivalent "new" letters (abstraction letters)
-			final Map<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
-			final VpAlphabet<LETTER> abstractionAlphabet =
-					((INestedWordAutomaton<LETTER, IPredicate>) mAbstraction).getVpAlphabet();
-			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
-			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getInternalAlphabet());
-			addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getReturnAlphabet());
-			// compute stats for letters
-			countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter);
-			// Create empty automaton with same alphabet
-			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
-					new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-			final ReuseAutomaton reuseAutomaton = new ReuseAutomaton(resAutomaton, abstractionAlphabet);
-
-			// Add states
-			final Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
-			final HashMap<String, IPredicate> mapStringToState = new HashMap<>();
-			final HashMap<IPredicate, String> mapStateToString = new HashMap<>();
-			int reusedStates = 0;
-			int removedStates = 0;
-			for (final String stringState : statesOfRawAutomaton) {
-
-				final IPredicate predicateState =
-						parsePredicate(ppws, reuseAutomaton.getPredicateUnifier(), stringState);
-				if (predicateState == null) {
-					removedStates++;
-					continue;
-				}
-				reusedStates++;
-				mapStringToState.put(stringState, predicateState);
-				mapStateToString.put(predicateState, stringState);
-				final boolean isInitial = rawAutomatonFromFile.isInitial(stringState);
-				final boolean isFinal = rawAutomatonFromFile.isFinal(stringState);
-				resAutomaton.addState(isInitial, isFinal, predicateState);
-			}
-			final int totalStates = removedStates + reusedStates;
-			mReuseStats.addReusedStates(reusedStates);
-			mReuseStats.addUselessPredicates(removedStates);
-			mReuseStats.addTotalStates(totalStates);
-			// Add transitions
-			addTransitionsFromRawAutomaton(resAutomaton, rawAutomatonFromFile, mapStringToLetter, mapStringToState,
-					mapStateToString);
-
-			// Add capability for on-demand extension to automata from file.
-			mFloydHoareAutomataFromFile.add(reuseAutomaton);
-			mReuseStats.addAutomataFromFile(1);
+			buildFloydHoareAutomaton(ppws, rawAutomatonFromFile);
 		}
 
 		mReuseStats.addAutomataFromPreviousErrorLocation(mFloydHoareAutomataFromOtherErrorLocations.size());
 		mReuseStats.stopTime();
+	}
+
+	private void buildFloydHoareAutomaton(final PredicateParsingWrapperScript ppws,
+			final NestedWordAutomaton<String, String> rawAutomatonFromFile) {
+		// Create map from strings to all equivalent "new" letters (abstraction letters)
+		final Map<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
+		final VpAlphabet<LETTER> abstractionAlphabet =
+				((INestedWordAutomaton<LETTER, IPredicate>) mAbstraction).getVpAlphabet();
+		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getCallAlphabet());
+		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getInternalAlphabet());
+		addLettersToStringMap(mapStringToLetter, abstractionAlphabet.getReturnAlphabet());
+		// compute stats for letters
+		countReusedAndRemovedLetters(rawAutomatonFromFile.getVpAlphabet(), mapStringToLetter);
+		// Create empty automaton with same alphabet
+		final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
+		final ReuseAutomaton reuseAutomaton = new ReuseAutomaton(resAutomaton, abstractionAlphabet);
+
+		// Add states
+		final Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
+		final HashMap<String, IPredicate> mapStringToState = new HashMap<>();
+		final HashMap<IPredicate, String> mapStateToString = new HashMap<>();
+		int reusedStates = 0;
+		int removedStates = 0;
+		for (final String stringState : statesOfRawAutomaton) {
+
+			final IPredicate predicateState = parsePredicate(ppws, reuseAutomaton.getPredicateUnifier(), stringState);
+			if (predicateState == null) {
+				removedStates++;
+				continue;
+			}
+			reusedStates++;
+			mapStringToState.put(stringState, predicateState);
+			mapStateToString.put(predicateState, stringState);
+			final boolean isInitial = rawAutomatonFromFile.isInitial(stringState);
+			final boolean isFinal = rawAutomatonFromFile.isFinal(stringState);
+			resAutomaton.addState(isInitial, isFinal, predicateState);
+		}
+		final int totalStates = removedStates + reusedStates;
+		mReuseStats.addReusedStates(reusedStates);
+		mReuseStats.addUselessPredicates(removedStates);
+		mReuseStats.addTotalStates(totalStates);
+		// Add transitions
+		addTransitionsFromRawAutomaton(resAutomaton, rawAutomatonFromFile, mapStringToLetter, mapStringToState,
+				mapStateToString);
+
+		// Add capability for on-demand extension to automata from file.
+		mFloydHoareAutomataFromFile.add(reuseAutomaton);
+		mReuseStats.addAutomataFromFile(1);
 	}
 
 	@Override
@@ -345,17 +348,6 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		}
 	}
 
-	private static void addToReturnCache(final IPredicate preLin, final IPredicate preHier, final IAction act,
-			final IPredicate succ, final Validity result,
-			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> returnCache) {
-		NestedMap3<IAction, IPredicate, IPredicate, Validity> map = returnCache.get(preHier);
-		if (map == null) {
-			map = new NestedMap3<>();
-			returnCache.put(preHier, map);
-		}
-		map.put(act, preLin, succ, result);
-	}
-
 	/**
 	 * Container class that keeps predicate unifier, hoare triple checker and NWA together.
 	 *
@@ -363,8 +355,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	 *
 	 */
 	public final class ReuseAutomaton {
-		private static final boolean ENHANCE = true;
-		private static final boolean USE_EAGER_CACHING_HTC = false;
+		private final boolean mUseEnhancement;
 
 		private final PredicateUnifier mPredicateUnifier;
 		private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
@@ -380,74 +371,56 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			mAutomaton = automaton;
 			mAbstractionAlphabet = abstractionAlphabet;
+			mUseEnhancement = mPref.getFloydHoareAutomataReuseEnhancement() != FloydHoareAutomataReuseEnhancement.NONE;
 		}
 
 		public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getAutomaton() {
-			if (ENHANCE) {
+			if (mUseEnhancement) {
 				return getEnhancedInterpolantAutomaton();
 			}
 			return mAutomaton;
 		}
 
 		public IHoareTripleChecker getHtc() {
+			if (!mUseEnhancement) {
+				throw new UnsupportedOperationException("You should not need a Hoare Triple Checker in this mode");
+			}
 			if (mHtc == null) {
-				if (USE_EAGER_CACHING_HTC) {
-					mHtc = constructHtcWithEagerCache(constructOldAlphabet());
-				} else {
-					mHtc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-							mPref.getHoareTripleChecks(), mCsToolkit, mPredicateUnifier);
-				}
+				mHtc = constructHtc();
 			}
 			return mHtc;
 		}
 
-		private IHoareTripleChecker constructHtcWithEagerCache(final VpAlphabet<LETTER> oldAlphabet)
-				throws AssertionError {
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialInternalCache = new NestedMap3<>();
-			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialCallCache = new NestedMap3<>();
-			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> initialReturnCache =
-					new HashMap<>();
-
-			int cachedHoareTriples = 0;
-			final Set<IPredicate> states = mAutomaton.getStates();
-			for (final IPredicate state : states) {
-				final Set<LETTER> unknownInternalSuccessors = DataStructureUtils
-						.difference(oldAlphabet.getInternalAlphabet(), mAutomaton.lettersInternal(state));
-				for (final LETTER succ : unknownInternalSuccessors) {
-					for (final IPredicate succState : states) {
-						initialInternalCache.put(succ, state, succState, Validity.UNKNOWN);
-						cachedHoareTriples++;
-					}
-				}
-
-				final Set<LETTER> unknownCallSuccessors =
-						DataStructureUtils.difference(oldAlphabet.getCallAlphabet(), mAutomaton.lettersCall(state));
-				for (final LETTER succ : unknownCallSuccessors) {
-					for (final IPredicate succState : states) {
-						initialCallCache.put(succ, state, succState, Validity.UNKNOWN);
-						cachedHoareTriples++;
-					}
-				}
-				final Set<LETTER> unknownReturnSuccessors =
-						DataStructureUtils.difference(oldAlphabet.getReturnAlphabet(), mAutomaton.lettersReturn(state));
-				for (final IPredicate hierState : states) {
-					for (final LETTER succ : unknownReturnSuccessors) {
-						for (final IPredicate succState : states) {
-							addToReturnCache(state, hierState, succ, succState, Validity.UNKNOWN, initialReturnCache);
-							cachedHoareTriples++;
-						}
-					}
-				}
+		private IHoareTripleChecker constructHtc() {
+			final FloydHoareAutomataReuseEnhancement mode = mPref.getFloydHoareAutomataReuseEnhancement();
+			switch (mode) {
+			case AS_USUAL:
+				// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
+				// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
+				return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+						mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
+			case ONLY_NEW_LETTERS:
+				return constructEfficientIgnoringHtc(false);
+			case ONLY_NEW_LETTERS_SOLVER:
+				return constructEfficientIgnoringHtc(true);
+			case NONE:
+			default:
+				throw new UnsupportedOperationException("Unknown / illegal mode: " + mode);
 
 			}
-			mLogger.warn("Cached " + cachedHoareTriples + " hoare triples");
-			return TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-					mPref.getHoareTripleChecks(), mCsToolkit, mPredicateUnifier, initialInternalCache, initialCallCache,
-					initialReturnCache);
 		}
 
-		private VpAlphabet<LETTER> constructOldAlphabet() {
-			return new VpAlphabet<>(
+		private IHoareTripleChecker constructEfficientIgnoringHtc(final boolean allowSdForProtectedActions)
+				throws AssertionError {
+			final IHoareTripleChecker smtHtc =
+					TraceAbstractionUtils.constructSmtHoareTripleChecker(mPref.getHoareTripleChecks(), mCsToolkit);
+			final EfficientIgnoringHoareTripleChecker eiHtc = new EfficientIgnoringHoareTripleChecker(smtHtc,
+					mCsToolkit, getPredicateUnifier(), constructOldAlphabet(), allowSdForProtectedActions);
+			return new CachingHoareTripleCheckerMap(mServices, eiHtc, getPredicateUnifier());
+		}
+
+		private Set<LETTER> constructOldAlphabet() {
+			return DataStructureUtils.union(
 					DataStructureUtils.intersection(mAbstractionAlphabet.getInternalAlphabet(),
 							mAutomaton.getVpAlphabet().getInternalAlphabet()),
 					DataStructureUtils.intersection(mAbstractionAlphabet.getCallAlphabet(),
@@ -467,16 +440,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			return mPredicateUnifier;
 		}
 
-		public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getEnhancedInterpolantAutomaton() {
+		private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getEnhancedInterpolantAutomaton() {
 			if (mEnhancedAutomaton == null) {
-				if (USE_EAGER_CACHING_HTC) {
-					mEnhancedAutomaton = constructInterpolantAutomatonForOnDemandEnhancement(mAutomaton,
-							getPredicateUnifier(), getHtc(), InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);
-				} else {
-					final VpAlphabet<LETTER> oldAlphabet = constructOldAlphabet();
-					mEnhancedAutomaton = new ReusingDeterministicInterpolantAutomaton<>(mServices, mCsToolkit, getHtc(),
-							mAutomaton, getPredicateUnifier(), false, false, oldAlphabet);
-				}
+				mEnhancedAutomaton = constructInterpolantAutomatonForOnDemandEnhancement(mAutomaton,
+						getPredicateUnifier(), getHtc(), InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION);
 			}
 			return mEnhancedAutomaton;
 		}

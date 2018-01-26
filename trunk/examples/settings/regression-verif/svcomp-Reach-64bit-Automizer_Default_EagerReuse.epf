@@ -47,6 +47,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Reuse\ of\ Floyd-Hoare\ automata=EAGER
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Enhance\ during\ reuse\ of\ Floyd-Hoare\ automata=AS_USUAL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=false
 
 
