@@ -244,7 +244,9 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 					 * TODO: indeed for this field it might be nicer to use Map<ArrayCellAccess, List<LocationBlock>>
 					 *   instead of a NestedMap2...
 					 */
-					locationBlockList.add(mArrayCellAccessToIntegerToLocationBlock.get(aca, dim));
+					final LocationBlock locationBlock = mArrayCellAccessToIntegerToLocationBlock.get(aca, dim);
+					assert locationBlock != null;
+					locationBlockList.add(locationBlock);
 				}
 				enqueueWalker(new EndScope());
 				pushTerm(aca.getArray());
@@ -336,9 +338,11 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 			throw new IllegalArgumentException();
 		}
 		Term currentTerm = term;
-		while (SmtUtils.isFunctionApplication(currentTerm, "store")) {
+		while (SmtUtils.isFunctionApplication(currentTerm, "store")
+				|| SmtUtils.isFunctionApplication(currentTerm, "select")) {
 			currentTerm = ((ApplicationTerm) currentTerm).getParameters()[0];
 		}
+		assert !(currentTerm instanceof ApplicationTerm) || ((ApplicationTerm) currentTerm).getParameters().length == 0;
 		return currentTerm;
 	}
 
@@ -426,7 +430,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 	private static <E> List<E> dropFirst(final List<E> projectList) {
 		final List<E> newList = new ArrayList<>();
-		newList.addAll(projectList.subList(1, projectList.size() - 1));
+		newList.addAll(projectList.subList(1, projectList.size()));
 		return Collections.unmodifiableList(newList);
 	}
 
