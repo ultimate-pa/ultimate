@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 /**
  * TODO: comment
- * 
+ *
  * @author Matthias Heizmann
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
@@ -50,7 +50,7 @@ import java.util.stream.Stream;
  */
 public class NestedMap3<K1, K2, K3, V> {
 
-	private final Map<K1, NestedMap2<K2, K3, V>> mK1ToK2ToK3V = new HashMap<>();
+	private final Map<K1, NestedMap2<K2, K3, V>> mK1ToK2ToK3ToV = new HashMap<>();
 
 	/**
 	 * Construct an empty NestedMap3
@@ -61,11 +61,11 @@ public class NestedMap3<K1, K2, K3, V> {
 	/**
 	 * Returns a stream to all values of the nested map. The values are backed by
 	 * the map.
-	 * 
+	 *
 	 * @return A backed stream to all values of the nested map
 	 */
 	public Stream<V> values() {
-		return this.mK1ToK2ToK3V.values().stream().flatMap(NestedMap2::values);
+		return this.mK1ToK2ToK3ToV.values().stream().flatMap(NestedMap2::values);
 	}
 
 	/**
@@ -75,21 +75,21 @@ public class NestedMap3<K1, K2, K3, V> {
 	 */
 	public NestedMap3(final NestedMap3<K1, K2, K3, V> original) {
 		for (final K1 k1 : original.keySet()) {
-			mK1ToK2ToK3V.put(k1, new NestedMap2<>(original.get(k1)));
+			mK1ToK2ToK3ToV.put(k1, new NestedMap2<>(original.get(k1)));
 		}
 	}
 
 	public V put(final K1 key1, final K2 key2, final K3 key3, final V value) {
-		NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
+		NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3ToV.get(key1);
 		if (k2tok3toV == null) {
 			k2tok3toV = new NestedMap2<>();
-			mK1ToK2ToK3V.put(key1, k2tok3toV);
+			mK1ToK2ToK3ToV.put(key1, k2tok3toV);
 		}
 		return k2tok3toV.put(key2, key3, value);
 	}
 
 	public V get(final K1 key1, final K2 key2, final K3 key3) {
-		final NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
+		final NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3ToV.get(key1);
 		if (k2tok3toV == null) {
 			return null;
 		} else {
@@ -98,7 +98,7 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 
 	public Map<K3, V> get(final K1 key1, final K2 key2) {
-		final NestedMap2<K2, K3, V> k2toV = mK1ToK2ToK3V.get(key1);
+		final NestedMap2<K2, K3, V> k2toV = mK1ToK2ToK3ToV.get(key1);
 		if (k2toV == null) {
 			return null;
 		} else {
@@ -107,19 +107,19 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 
 	public NestedMap2<K2, K3, V> get(final K1 key1) {
-		return mK1ToK2ToK3V.get(key1);
+		return mK1ToK2ToK3ToV.get(key1);
 	}
 
 	public Set<K1> keySet() {
-		return mK1ToK2ToK3V.keySet();
+		return mK1ToK2ToK3ToV.keySet();
 	}
 
 	public void clear() {
-		mK1ToK2ToK3V.clear();
+		mK1ToK2ToK3ToV.clear();
 	}
 
 	public Iterable<Triple<K1, K2, K3>> keys3() {
-		final Iterator<Entry<K1, NestedMap2<K2, K3, V>>> innerIterator = mK1ToK2ToK3V.entrySet().iterator();
+		final Iterator<Entry<K1, NestedMap2<K2, K3, V>>> innerIterator = mK1ToK2ToK3ToV.entrySet().iterator();
 		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Iterator<Pair<K2, K3>>> nextOuterIteratorProvider = (x -> x
 				.getValue().keys2().iterator());
 		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Function<Pair<K2, K3>, Triple<K1, K2, K3>>> resultProvider = (x -> (y -> new Triple<K1, K2, K3>(
@@ -129,7 +129,7 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 
 	public Iterable<Quad<K1, K2, K3, V>> entrySet() {
-		final Iterator<Entry<K1, NestedMap2<K2, K3, V>>> innerIterator = mK1ToK2ToK3V.entrySet().iterator();
+		final Iterator<Entry<K1, NestedMap2<K2, K3, V>>> innerIterator = mK1ToK2ToK3ToV.entrySet().iterator();
 		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Iterator<Triple<K2, K3, V>>> nextOuterIteratorProvider = (x -> x
 				.getValue().entrySet().iterator());
 		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Function<Triple<K2, K3, V>, Quad<K1, K2, K3, V>>> resultProvider = (x -> (y -> new Quad<K1, K2, K3, V>(
@@ -169,11 +169,11 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 
 	public NestedMap2<K2, K3, V> remove(final K1 k1) {
-		return mK1ToK2ToK3V.remove(k1);
+		return mK1ToK2ToK3ToV.remove(k1);
 	}
 
 	public Map<K3, V> remove(final K1 k1, final K2 k2) {
-		final NestedMap2<K2, K3, V> k1Tok2ToV = mK1ToK2ToK3V.get(k1);
+		final NestedMap2<K2, K3, V> k1Tok2ToV = mK1ToK2ToK3ToV.get(k1);
 		if (k1Tok2ToV == null) {
 			return null;
 		}
@@ -181,7 +181,7 @@ public class NestedMap3<K1, K2, K3, V> {
 	}
 
 	public V remove(final K1 k1, final K2 k2, final K3 k3) {
-		final NestedMap2<K2, K3, V> k1Tok2ToV = mK1ToK2ToK3V.get(k1);
+		final NestedMap2<K2, K3, V> k1Tok2ToV = mK1ToK2ToK3ToV.get(k1);
 		if (k1Tok2ToV == null) {
 			return null;
 		}
@@ -190,32 +190,23 @@ public class NestedMap3<K1, K2, K3, V> {
 
 	public int size() {
 		int result = 0;
-		for (final Entry<K1, NestedMap2<K2, K3, V>> entry : mK1ToK2ToK3V.entrySet()) {
+		for (final Entry<K1, NestedMap2<K2, K3, V>> entry : mK1ToK2ToK3ToV.entrySet()) {
 			result += entry.getValue().size();
 		}
 		return result;
 	}
 
-	// /**
-	// * Makes a deep copy of this NestedMap3.
-	// * (but not the objects it holds)
-	// * (added by Alexander Nutz)
-	// * @deprecated replace by constructor
-	// */
-	// @Deprecated
-	// public NestedMap3<K1, K2, K3, V> copy() {
-	// final NestedMap3<K1, K2, K3, V> result = new NestedMap3<>();
-	// for (final K1 k1 : this.keySet()) {
-	// result.mK1ToK2ToK3V.put(k1, this.get(k1).copy());
-	// }
-	// return result;
-	// }
-
 	public Set<K2> projektTo2() {
 		final Set<K2> result = new HashSet<>();
-		for (final Entry<K1, NestedMap2<K2, K3, V>> entry : mK1ToK2ToK3V.entrySet()) {
+		for (final Entry<K1, NestedMap2<K2, K3, V>> entry : mK1ToK2ToK3ToV.entrySet()) {
 			result.addAll(entry.getValue().keySet());
 		}
 		return result;
 	}
+
+	@Override
+	public String toString() {
+		return mK1ToK2ToK3ToV.toString();
+	}
+
 }
