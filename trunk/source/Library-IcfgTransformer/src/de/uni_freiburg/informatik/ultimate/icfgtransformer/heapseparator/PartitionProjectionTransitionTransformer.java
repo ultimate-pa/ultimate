@@ -83,6 +83,8 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 //			final Map<StoreIndexInfo, LocationBlock> storeIndexInfoToLocationBlock) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 
+		logger.info("executing heap partitioning transformation");
+
 		mHeapArrays = heapArrays;
 
 		mStatistics = statistics;

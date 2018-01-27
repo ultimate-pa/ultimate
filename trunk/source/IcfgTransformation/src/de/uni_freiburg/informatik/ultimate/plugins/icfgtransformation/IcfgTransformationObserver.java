@@ -202,7 +202,6 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		 */
 		final String VALID = "#valid";
 
-		// TODO: hacky
 		IProgramNonOldVar validArray = null;
 		for (final IProgramNonOldVar global : icfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
 			if (global.getGloballyUniqueId().equals(VALID)) {

@@ -85,6 +85,45 @@ public class StoreIndexInfo {
 		return "(Store at" + mEdgeInfo + " with " + mTerm + ")";
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mEdgeInfo == null) ? 0 : mEdgeInfo.hashCode());
+		result = prime * result + ((mTerm == null) ? 0 : mTerm.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final StoreIndexInfo other = (StoreIndexInfo) obj;
+		if (mEdgeInfo == null) {
+			if (other.mEdgeInfo != null) {
+				return false;
+			}
+		} else if (!mEdgeInfo.equals(other.mEdgeInfo)) {
+			return false;
+		}
+		if (mTerm == null) {
+			if (other.mTerm != null) {
+				return false;
+			}
+		} else if (!mTerm.equals(other.mTerm)) {
+			return false;
+		}
+		return true;
+	}
+
+
 }
 
 /**

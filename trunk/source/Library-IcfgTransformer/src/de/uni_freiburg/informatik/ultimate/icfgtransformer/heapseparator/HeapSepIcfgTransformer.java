@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,9 +30,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
@@ -95,6 +98,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 				.filter(pvoc -> pvoc.getGloballyUniqueId().startsWith(MEMORY)).collect(Collectors.toList());
 //				.filter(pvoc -> heapArrayNames.contains(pvoc.getGloballyUniqueId())).collect(Collectors.toList());
 
+		mLogger.info("HeapSepIcfgTransformer: Starting heap partitioning");
 		mLogger.info("To be partitioned heap arrays found " + mHeapArrays);
 
 		computeResult(originalIcfg, funLocFac, replacementVarFactory, backtranslationTracker, outLocationClass,
@@ -141,7 +145,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo;
 		final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar;
 		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
-			mLogger.info("Heap separator: starting freeze-var-style preprocessing");
+			mLogger.info("starting freeze-var-style preprocessing");
 			/*
 			 * add the freeze var updates to each transition with an array update
 			 */
@@ -194,14 +198,16 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			edgeToIndexToStoreIndexInfo = null;
 			throw new AssertionError();
 		}
-		mLogger.info("Heap separator: finished preprocessing for the equality analysis");
-		mLogger.debug("storeIndexInfoToFreezeVar: " + storeIndexInfoToFreezeVar);
-		mLogger.debug("edgeToIndexToStoreIndexInfo: " + edgeToIndexToStoreIndexInfo);
+		mLogger.info("finished preprocessing for the equality analysis");
+		mLogger.debug("storeIndexInfoToFreezeVar: " + DataStructureUtils.prettyPrint(storeIndexInfoToFreezeVar));
+		mLogger.debug("edgeToIndexToStoreIndexInfo: " + DataStructureUtils.prettyPrint(edgeToIndexToStoreIndexInfo));
 
 		/*
 		 * 2. run the equality analysis
 		 */
 		equalityProvider.preprocess(preprocessedIcfg);
+		mLogger.info("finished equality analysis");
+
 
 		/*
 		 * 3a. look up all locations where
@@ -211,6 +217,10 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, mManagedScript, mHeapArrays);
 		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
 		heapSepPreanalysis.finish();
+		mLogger.info("Finished pre analysis before partitioning");
+		mLogger.info("  array groups: " + DataStructureUtils.prettyPrint(
+				new HashSet<>(heapSepPreanalysis.getArrayToArrayGroup().values())));
+		mLogger.info("  select infos: " + DataStructureUtils.prettyPrint(heapSepPreanalysis.getSelectInfos()));
 
 		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup = heapSepPreanalysis.getArrayToArrayGroup();
 
@@ -319,6 +329,12 @@ class PartitionManager {
 
 	private final ILogger mLogger;
 
+	/**
+	 * map for caching/unifying LocationBlocks
+	 */
+	private final NestedMap3<Set<StoreIndexInfo>, ArrayGroup, Integer, LocationBlock>
+		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock;
+
 	public PartitionManager(final ILogger logger, final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final Map<StoreIndexInfo, IProgramNonOldVar> arrayAccessInfoToFreezeVar,
 			final List<IProgramVarOrConst> heapArrays) {
@@ -336,6 +352,8 @@ class PartitionManager {
 		mSelectInfoToDimensionToLocationBlock = new NestedMap2<>();
 
 		mSelectInfoToDimensionToToSampleStoreIndexInfo = new NestedMap2<>();
+
+		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock = new NestedMap3<>();
 
 		mHeapArrays = heapArrays;
 	}
@@ -396,9 +414,14 @@ class PartitionManager {
 				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, i, sample);
 
 				for (final StoreIndexInfo sii : mayEqualStoreIndexInfos) {
+					mLogger.debug("merging partition blocks for array " + selectInfo.getArrayPvoc() + " :");
+					mLogger.debug("\t" + sii);
+					mLogger.debug("\t and");
+					mLogger.debug("\t" + sample);
+					mLogger.debug("\t because of possible aliasing at dimension " + i);
+					mLogger.debug("\t at array read " + selectInfo + ".");
 					mergeBlocks(selectInfo, i, sii, sample);
 				}
-
 			}
 		}
 	}
@@ -421,11 +444,29 @@ class PartitionManager {
 					mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 			final Set<StoreIndexInfo> eqc = partition.getEquivalenceClassMembers(sampleSii);
 
-			mSelectInfoToDimensionToLocationBlock.put(selectInfo, dim, new LocationBlock(eqc, arrayGroup, dim));
+			final LocationBlock locationBlock = getOrConstructLocationBlock(eqc, arrayGroup, dim);
+			mSelectInfoToDimensionToLocationBlock.put(selectInfo, dim, locationBlock);
+			mLogger.debug("adding LocationBlock " + locationBlock);
+			mLogger.debug("\t at dimension " + dim + " for " + selectInfo);
+
 		}
 		mIsFinished = true;
 
 		assert sanityCheck();
+	}
+
+	private LocationBlock getOrConstructLocationBlock(final Set<StoreIndexInfo> eqc, final ArrayGroup arrayGroup,
+			final Integer dim) {
+		LocationBlock result = mStoreIndexInfosToArrayGroupToDimensionToLocationBlock.get(eqc, arrayGroup, dim);
+		if (result == null) {
+			result = new LocationBlock(eqc, arrayGroup, dim);
+			mStoreIndexInfosToArrayGroupToDimensionToLocationBlock.put(eqc, arrayGroup, dim, result);
+
+			mLogger.debug("creating LocationBlock " + result);
+			mLogger.debug("\t with contents " + result.getLocations());
+
+		}
+		return result;
 	}
 
 	private boolean assertWritesAreToReadArray(final Set<StoreIndexInfo> eqc, final SelectInfo selectInfo) {

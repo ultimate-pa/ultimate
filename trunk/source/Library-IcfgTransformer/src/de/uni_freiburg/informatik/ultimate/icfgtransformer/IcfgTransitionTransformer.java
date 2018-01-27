@@ -15,8 +15,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -137,24 +139,34 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 			final UnmodifiableTransFormula newTransformula) {
 		if (oldTransition instanceof IIcfgInternalTransition) {
 			// TODO: is this the right payload?
-			return mEdgeFactory.createInternalTransition(newSource, newTarget, oldTransition.getPayload(),
+			final IcfgInternalTransition result = mEdgeFactory.createInternalTransition(newSource, newTarget, oldTransition.getPayload(),
 					newTransformula);
+			log(oldTransition, result);
+			return result;
 		} else if (oldTransition instanceof IIcfgCallTransition) {
 			// TODO: this casting business is ugly like this
 			final IIcfgCallTransition<OUTLOC> newCallTransition = (IIcfgCallTransition<OUTLOC>)
 					mEdgeFactory.createCallTransition(newSource, newTarget, oldTransition.getPayload(), newTransformula);
 			mOldCallToNewCall.put((IIcfgCallTransition<INLOC>) oldTransition, newCallTransition);
-			return (IcfgEdge) newCallTransition;
+			final IcfgEdge result = (IcfgEdge) newCallTransition;
+			return result;
 		} else if (oldTransition instanceof IIcfgReturnTransition) {
 			final IIcfgCallTransition<IcfgLocation> correspondingNewCall =
 					(IIcfgCallTransition<IcfgLocation>) mOldCallToNewCall.get(((IIcfgReturnTransition) oldTransition).getCorrespondingCall());
 			assert correspondingNewCall != null;
-			return mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
+			final IcfgReturnTransition result = mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
 					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
+			return result;
 		} else {
 			throw new IllegalArgumentException("unknown transition type");
 		}
 	}
+
+	private void log(final IcfgEdge oldTransition, final IcfgEdge newTransition) {
+		mLogger.debug("transformed oldTransition " + oldTransition);
+		mLogger.debug("\t  to : " + newTransition);
+	}
+
 
 	/**
 	 * Triggers the necessary computations (once per instance) and returns the result
