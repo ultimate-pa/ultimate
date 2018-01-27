@@ -427,16 +427,18 @@ public class ArrayInterpolator {
 		final LitInfo indexEqInfo = mInterpolator.getLiteralInfo(mIndexEquality);
 		final InterpolatorLiteralTermInfo diseqInfo = mInterpolator.getLiteralTermInfo(mDiseq);
 		final ApplicationTerm mainDiseqApp = diseqInfo.getEquality();
-		final Term otherSelect = getIndexFromSelect(mainDiseqApp.getParameters()[0]).equals(mStorePath.getIndex())
-				? mainDiseqApp.getParameters()[1]
-				: mainDiseqApp.getParameters()[0];
-		final Occurrence otherSelectOccur = mInterpolator.getOccurrence(otherSelect);
+		final Term otherIndex = getIndexFromSelect(mainDiseqApp.getParameters()[0]).equals(mStorePath.getIndex())
+				? getIndexFromSelect(mainDiseqApp.getParameters()[1])
+				: getIndexFromSelect(mainDiseqApp.getParameters()[0]);
+		final Occurrence otherIndexOccur = mInterpolator.getOccurrence(otherIndex);
 		for (int color = 0; color < mNumInterpolants; color++) {
 			if (mainPath.mSharedIndex[color] != null && mainPath.mSharedIndex[color] == mStorePath.getIndex()) {
-				if (indexEqInfo.isALocal(color) && otherSelectOccur.isBorShared(color)) {
-					mInterpolants[color].add(mInterpolator.unquote(mIndexEquality));
-				} else if (indexEqInfo.isBLocal(color) && mDiseqInfo.isALocal(color)) {
+				if (mDiseqInfo.isALocal(color) && indexEqInfo.isBLocal(color)) {
 					mInterpolants[color].add(mTheory.not(mInterpolator.unquote(mIndexEquality)));
+				} else if (!mDiseqInfo.isALocal(color) && indexEqInfo.isALocal(color)) {
+					if (otherIndexOccur.isAB(color)) {
+						mInterpolants[color].add(mInterpolator.unquote(mIndexEquality));
+					}
 				}
 			}
 		}
