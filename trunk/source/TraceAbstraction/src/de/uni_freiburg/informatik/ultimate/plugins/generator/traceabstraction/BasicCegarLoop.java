@@ -680,7 +680,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + mIteration,
 					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", !mFirstReuseDump,
 					printedAutomaton);
-			mFirstReuseDump = true;
+			mFirstReuseDump = false;
 			mLogger.info("Finished dumping");
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		}
