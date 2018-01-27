@@ -12,6 +12,12 @@ int main() {
   *s = 0;
   *t = 0;
 
+  int x = *p;
+  int y = *q;
+  int z = *r;
+  int i = *s;
+  int j = *t;
+
   free(p);
   free(q);
   free(r);
