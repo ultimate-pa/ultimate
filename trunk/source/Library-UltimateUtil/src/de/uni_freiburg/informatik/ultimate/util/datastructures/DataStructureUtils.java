@@ -30,9 +30,14 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -140,6 +145,43 @@ public class DataStructureUtils {
 			}
 		}
 		return false;
+	}
+
+	public static <E> String prettyPrint(final Set<E> set) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Set: \n");
+		String sep = "";
+		for (final E e : set) {
+			sb.append(sep);
+			sb.append(String.format("\t%s", e));
+			sep = "\n";
+		}
+		return sb.toString();
+	}
+
+	public static <K, V> String prettyPrint(final Map<K, V> map) {
+		// TODO: implement a width check for the keys, adapt column with, and/or cut their size at some length
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Map: \n");
+		String sep = "";
+		for (final Entry<K, V> en : map.entrySet()) {
+			sb.append(sep);
+			sb.append(String.format("\t%-80s : \t %s", en.getKey(), en.getValue()));
+			sep = "\n";
+		}
+		return sb.toString();
+	}
+
+	public static <K1, K2, V> String prettyPrint(final NestedMap2<K1, K2, V> map) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("NestedMap2: \n");
+		String sep = "";
+		for (final Triple<K1, K2, V> en : map.entrySet()) {
+			sb.append(sep);
+			sb.append(String.format("\t%-80s : \t %-40s : \t %s", en.getFirst(), en.getSecond(), en.getThird()));
+			sep = "\n";
+		}
+		return sb.toString();
 	}
 
 }
