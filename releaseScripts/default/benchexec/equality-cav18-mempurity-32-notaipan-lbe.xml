@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="90" hardtimelimit="112" cpuCores="2">
+
+    <option name="--generate-csv" />
+    <option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
+
+    <rundefinition name="AutomizerCamel_Seq">
+        <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_Seq">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_imprecise_Seq">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_imprecise.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_Seq_Inl">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_imprecise_Seq_Inl">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_imprecise.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_SS">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_SS.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_imprecise_SS">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_imprecise_SS.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_LFB">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_LFB.epf</option>
+    </rundefinition>
+    
+    <rundefinition name="AbsInt_imprecise_LFB">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_imprecise_LFB.epf</option>
+    </rundefinition>
+        
+    <tasks name="32bitMem">
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Arrays.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Heap.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-LinkedLists.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Other.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
+    </tasks>
+    
+</benchmark>
