@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +52,12 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private final ManagedScript mManagedScript;
 
+
+	/**
+	 * prefix of heap arrays (copied from class "SFO" in C to Boogie translation)
+	 */
+	public static final String MEMORY = "#memory";
+
 	/**
 	 * Default constructor.
 	 *
@@ -84,10 +89,13 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mLogger = logger;
 
 		// TODO: complete, make nicer..
-		final List<String> heapArrayNames = Arrays.asList("#memory_int", "memory_$Pointer$");
+//		final List<String> heapArrayNames = Arrays.asList("#memory_int", "memory_$Pointer$");
 
 		mHeapArrays = originalIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals().stream()
-				.filter(pvoc -> heapArrayNames.contains(pvoc.getGloballyUniqueId())).collect(Collectors.toList());
+				.filter(pvoc -> pvoc.getGloballyUniqueId().startsWith(MEMORY)).collect(Collectors.toList());
+//				.filter(pvoc -> heapArrayNames.contains(pvoc.getGloballyUniqueId())).collect(Collectors.toList());
+
+		mLogger.info("To be partitioned heap arrays found " + mHeapArrays);
 
 		computeResult(originalIcfg, funLocFac, replacementVarFactory, backtranslationTracker, outLocationClass,
 				newIcfgIdentifier, equalityProvider, validArray);
@@ -133,6 +141,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo;
 		final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar;
 		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
+			mLogger.info("Heap separator: starting freeze-var-style preprocessing");
 			/*
 			 * add the freeze var updates to each transition with an array update
 			 */
@@ -175,15 +184,19 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = fvi.getResult();
 
 			preprocessedIcfg = icfgWFreezeVarsInitialized;
+
 		} else {
 			assert mPreprocessing == Preprocessing.MEMLOC_ARRAY;
+			mLogger.info("Heap separator: starting memloc-array-style preprocessing");
 			// TODO implement..
 			preprocessedIcfg = null;
-
-//			writeIndexTermToTfInfoToFreezeVar = null;
 			storeIndexInfoToFreezeVar = null;
 			edgeToIndexToStoreIndexInfo = null;
+			throw new AssertionError();
 		}
+		mLogger.info("Heap separator: finished preprocessing for the equality analysis");
+		mLogger.debug("storeIndexInfoToFreezeVar: " + storeIndexInfoToFreezeVar);
+		mLogger.debug("edgeToIndexToStoreIndexInfo: " + edgeToIndexToStoreIndexInfo);
 
 		/*
 		 * 2. run the equality analysis
@@ -201,8 +214,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup = heapSepPreanalysis.getArrayToArrayGroup();
 
-		final PartitionManager partitionManager = new PartitionManager(arrayToArrayGroup, storeIndexInfoToFreezeVar,
-				mHeapArrays);
+		final PartitionManager partitionManager = new PartitionManager(mLogger, arrayToArrayGroup,
+				storeIndexInfoToFreezeVar, mHeapArrays);
 
 		/*
 		 * 3b. compute an array partitioning
@@ -215,7 +228,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			partitionManager.finish();
 		} else {
 			// TODO
-			assert false;
+			throw new AssertionError();
 		}
 
 		/*
@@ -261,11 +274,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		FREEZE_VARIABLES, MEMLOC_ARRAY;
 	}
 
-
-//	public String getHeapSeparationSummary() {
-//		return null;
-//	}
-
 	public HeapSeparatorBenchmark getStatistics() {
 		return mStatistics;
 	}
@@ -276,7 +284,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 *
 	 * @return
 	 */
-//	private static ILocationFactory<IcfgLocation, IcfgLocation> createIcfgLocationToIcfgLocationFactory() {
 	private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createIcfgLocationToIcfgLocationFactory() {
 		return (oldLocation, debugIdentifier, procedure) -> {
 				final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier, procedure,
@@ -284,31 +291,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			ModelUtils.copyAnnotations(oldLocation, rtr);
 			return rtr;
 		};
-
-//		return (oldLocation, debugIdentifier, procedure) -> {
-//			final IcfgLocation rtr = new IcfgLocation(debugIdentifier, procedure);
-//			ModelUtils.copyAnnotations(oldLocation, rtr);
-//			return rtr;
-//		};
 	}
-
-
-//		private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createBoogieLocationFactory() {
-//		return (oldLocation, debugIdentifier, procedure) -> {
-//			final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier, procedure,
-//					oldLocation.isErrorLocation(), oldLocation.getBoogieASTNode());
-//			ModelUtils.copyAnnotations(oldLocation, rtr);
-//			return rtr;
-//		};
-//	}
-//
-//	private static <INLOC extends IcfgLocation> ILocationFactory<INLOC, IcfgLocation> createIcfgLocationFactory() {
-//		return (oldLocation, debugIdentifier, procedure) -> {
-//			final IcfgLocation rtr = new IcfgLocation(debugIdentifier, procedure);
-//			ModelUtils.copyAnnotations(oldLocation, rtr);
-//			return rtr;
-//		};
-//	}
 }
 
 class PartitionManager {
@@ -320,33 +303,28 @@ class PartitionManager {
 	private final Map<IProgramVar, StoreIndexInfo> mFreezeVarToStoreIndexInfo;
 
 	// output
-//	private final Map<SelectInfo, LocationBlock> mSelectInfoToLocationBlock;
 	private final NestedMap2<SelectInfo, Integer, LocationBlock> mSelectInfoToDimensionToLocationBlock;
 
-//	private final Map<ArrayGroup, UnionFind<StoreIndexInfo>> mArrayGroupToStoreIndexInfoPartition;
 	private final NestedMap2<ArrayGroup, Integer, UnionFind<StoreIndexInfo>>
 		mArrayGroupToDimensionToStoreIndexInfoPartition;
 
 	/**
 	 * maps a selectInfo to any one of the StoreIndexInfos that may be equal to the selectInfo
 	 */
-//	Map<SelectInfo, StoreIndexInfo> mSelectInfoToToSampleStoreIndexInfo;
 	NestedMap2<SelectInfo, Integer, StoreIndexInfo> mSelectInfoToDimensionToToSampleStoreIndexInfo;
 
 	private boolean mIsFinished = false;
 
 	private final List<IProgramVarOrConst> mHeapArrays;
 
-	public PartitionManager(final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
+	private final ILogger mLogger;
+
+	public PartitionManager(final ILogger logger, final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final Map<StoreIndexInfo, IProgramNonOldVar> arrayAccessInfoToFreezeVar,
 			final List<IProgramVarOrConst> heapArrays) {
 
-//		mArrayToArrayGroup = new HashMap<>();
-//		for (final ArrayGroup ag : arrayGroups) {
-//			for (final IProgramVarOrConst a : ag.getArrays()) {
-//				mArrayToArrayGroup.put(a, ag);
-//			}
-//		}
+		mLogger = logger;
+
 		mArrayToArrayGroup = arrayToArrayGroup;
 
 		mFreezeVarToStoreIndexInfo = new HashMap<>();
@@ -374,7 +352,6 @@ class PartitionManager {
 	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingIntermediateState eps) {
 		final HashRelation<Integer, StoreIndexInfo> dimensionToMayEqualStoreIndexInfos = new HashRelation<>();
 
-//		final Term selectIndex = selectInfo.getArrayCellAccess().getIndex();
 		final ArrayIndex selectIndex = selectInfo.getIndex();
 
 		for (final Entry<IProgramVar, StoreIndexInfo> en : mFreezeVarToStoreIndexInfo.entrySet()) {
@@ -385,10 +362,6 @@ class PartitionManager {
 				// arrays don't match (coarse check failed..)
 				continue;
 			}
-//			// finer grained check: do the access dimensions match -- EDIT: may be nonsense..
-//			if (!storeAndSelectMayInteract(sii, selectInfo)) {
-//
-//			}
 
 			for (int dim = 0; dim < selectIndex.size(); dim++) {
 
@@ -406,15 +379,12 @@ class PartitionManager {
 					// nothing to do
 				} else {
 					// select index and freezeVar may be equal at this location
-
-//					mayEqualStoreIndexInfos.add(sii);
 					dimensionToMayEqualStoreIndexInfos.addPair(dim, sii);
 				}
 			}
 		}
 
 
-//		if (mayEqualStoreIndexInfos.size() <= 1) {
 		for (int i = 0; i < selectIndex.size(); i++) {
 			final Set<StoreIndexInfo> mayEqualStoreIndexInfos = dimensionToMayEqualStoreIndexInfos.getImage(i);
 
@@ -433,46 +403,23 @@ class PartitionManager {
 		}
 	}
 
-//	/**
-//	 * Check for two cases where an StoreIndexInfo does definitively not interact with an array read (SelectInfo).
-//	 *  <li> the StoreIndexInfo is about a write to a different array than the read
-//	 *  <li> the StoreIndexInfo is about a write to a different dimension than the array read
-//	 *
-//	 * @param sii
-//	 * @param selectInfo
-//	 * @return
-//	 */
-//	private static boolean storeAndSelectMayInteract(final StoreIndexInfo sii, final SelectInfo selectInfo) {
-//		for (final Entry<IProgramVarOrConst, Integer> en : sii.getArrayToAccessDimensions()) {
-//			if ()
-//
-//		}
-//		return false;
-//	}
-
 	public void finish() {
 		/*
 		 * rewrite the collected information into our output format
 		 */
-//		for (final Entry<SelectInfo, StoreIndexInfo> en : mSelectInfoToToSampleStoreIndexInfo.entrySet()) {
 		for (final Triple<SelectInfo, Integer, StoreIndexInfo> en :
 				mSelectInfoToDimensionToToSampleStoreIndexInfo.entrySet()) {
 
-//			final StoreIndexInfo sampleSii = en.getValue();
 			final StoreIndexInfo sampleSii = en.getThird();
 
-//			final SelectInfo selectInfo = en.getKey();
 			final SelectInfo selectInfo = en.getFirst();
 			final Integer dim = en.getSecond();
 
 			final ArrayGroup arrayGroup = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
 
-//			final UnionFind<StoreIndexInfo> partition = mArrayGroupToStoreIndexInfoPartition.get(arrayGroup);
 			final UnionFind<StoreIndexInfo> partition =
 					mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 			final Set<StoreIndexInfo> eqc = partition.getEquivalenceClassMembers(sampleSii);
-
-//			assert assertWritesAreToReadArray(eqc, selectInfo);
 
 			mSelectInfoToDimensionToLocationBlock.put(selectInfo, dim, new LocationBlock(eqc, arrayGroup, dim));
 		}
@@ -497,32 +444,22 @@ class PartitionManager {
 		 *  array
 		 * (a write cannot influence a read if it is to a different array)
 		 */
-//		for (final Entry<SelectInfo, LocationBlock> en : mSelectInfoToDimensionToLocationBlock.entrySet()) {
 		for (final Triple<SelectInfo, Integer, LocationBlock> en : mSelectInfoToDimensionToLocationBlock.entrySet()) {
-//			assert assertWritesAreToReadArray(en.getValue().getLocations(), en.getKey());
 			assert assertWritesAreToReadArray(en.getThird().getLocations(), en.getFirst());
 
 			if (!en.getSecond().equals(en.getThird().getDimension())) {
 				assert false;
 				return false;
 			}
-//			for (final StoreIndexInfo sii : en.getValue().getLocations()) {
-//				if (!sii.getArrays().contains(en.getKey().getArrayPvoc())) {
-//					assert false;
-//					return false;
-//				}
-//			}
 		}
 		return true;
 	}
 
 	private void mergeBlocks(final SelectInfo selectInfo, final int dim, final StoreIndexInfo sii1,
 			final StoreIndexInfo sii2) {
-//	private void mergeBlocks(final SelectInfo selectInfo, final StoreIndexInfo sii1, final StoreIndexInfo sii2) {
 		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
 		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
 
-//		UnionFind<StoreIndexInfo> partition = mArrayGroupToStoreIndexInfoPartition.get(arrayGroup);
 		UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 		if (partition == null) {
 			partition = new UnionFind<>();
@@ -534,21 +471,17 @@ class PartitionManager {
 		partition.union(sii1, sii2);
 	}
 
-//	public Map<SelectInfo, LocationBlock> getSelectInfoToLocationBlock() {
 	public NestedMap2<SelectInfo, Integer, LocationBlock> getSelectInfoToDimensionToLocationBlock() {
 		if (!mIsFinished) {
 			throw new AssertionError();
 		}
 		return mSelectInfoToDimensionToLocationBlock;
-//		return Collections.unmodifiableMap(mSelectInfoToDimensionToLocationBlock);
 	}
 
-//	public LocationBlock getLocationBlock(final SelectInfo si) {
 	public LocationBlock getLocationBlock(final SelectInfo si, final Integer dim) {
 		if (!mIsFinished) {
 			throw new AssertionError();
 		}
-//		return mSelectInfoToDimensionToLocationBlock.get(si);
 		return mSelectInfoToDimensionToLocationBlock.get(si, dim);
 	}
 }

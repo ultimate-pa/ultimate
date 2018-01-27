@@ -420,8 +420,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		return mArrayToArrayGroup.get(mEdgeInfo.getProgramVarOrConstForTerm(term));
 	}
 
-	private static <E> List<E>
-			addToFront(final E locationBlockForIndex, final List<E> projectList) {
+	private static <E> List<E> addToFront(final E locationBlockForIndex, final List<E> projectList) {
 		final List<E> newList = new ArrayList<>();
 		newList.add(locationBlockForIndex);
 		newList.addAll(projectList);

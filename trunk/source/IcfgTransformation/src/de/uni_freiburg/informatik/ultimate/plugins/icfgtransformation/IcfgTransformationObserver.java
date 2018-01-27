@@ -196,16 +196,27 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IUltimateServiceProvider services,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
+
+		/**
+		 * name of the valid array, copied from class "SFO" in C to Boogie translation
+		 */
+		final String VALID = "#valid";
+
 		// TODO: hacky
 		IProgramNonOldVar validArray = null;
 		for (final IProgramNonOldVar global : icfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
-			if (global.getGloballyUniqueId().equals("#valid")) {
+			if (global.getGloballyUniqueId().equals(VALID)) {
 				validArray = global;
 				break;
 			}
 		}
 		if (validArray == null) {
-			throw new AssertionError("TODO: what should we do in this case? maybe return the input icfg?");
+			mLogger.warn("HeapSeparator: input icfg has no '#valid' array -- returning unchanged Icfg!");
+			return new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass,
+					icfg.getIdentifier() + "left_unchanged_by_heapseparator",
+					new ExampleLoopAccelerationTransformulaTransformer(
+							mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
+							icfg.getCfgSmtToolkit().getSymbolTable(), fac)).getResult();
 		}
 
 		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
