@@ -186,3 +186,17 @@ class EdgeInfo {
 		return true;
 	}
 }
+
+/**
+ * special dummy store index info that stands for the absence of any relevant array writes at some read location
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
+class NoStoreIndexInfo extends StoreIndexInfo {
+
+	public NoStoreIndexInfo() {
+		super(null, null);
+	}
+
+}

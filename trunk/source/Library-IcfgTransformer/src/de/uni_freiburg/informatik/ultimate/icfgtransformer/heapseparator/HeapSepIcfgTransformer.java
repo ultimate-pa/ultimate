@@ -413,8 +413,9 @@ class PartitionManager {
 				 *  --> this is a special case, we can replace the array that is read here with an uninitialized array
 				 *    of the correct sort
 				 */
-				//TODO
-				assert false;
+				final NoStoreIndexInfo nsii = new NoStoreIndexInfo();
+				createPartitionAndBlockIfNecessary(selectInfo, dim, nsii);
+				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, nsii);
 				continue;
 			}
 //			} else if (mayEqualStoreIndexInfos.size() <= 1) {
@@ -503,12 +504,10 @@ class PartitionManager {
 			mLogger.info("\t location blocks for array group + " + arrayGroup);
 			for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
 				mLogger.info("\t at dimension " + dim);
-				mLogger.info("\t # array writes :" +
+				mLogger.info("\t # array writes (possibly including 1 dummy write/NoStoreIndexInfo) : " +
 						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size());
 				mLogger.info("\t # location blocks :" +
 						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses().size());
-//				mLogger.info("\t the location blocks are :" +
-//						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses().size());
 			}
 
 
@@ -533,6 +532,9 @@ class PartitionManager {
 
 	private boolean assertWritesAreToReadArray(final Set<StoreIndexInfo> eqc, final SelectInfo selectInfo) {
 		for (final StoreIndexInfo sii : eqc) {
+			if (sii instanceof NoStoreIndexInfo) {
+				continue;
+			}
 			if (!sii.getArrays().contains(selectInfo.getArrayPvoc())) {
 				assert false;
 				return false;
