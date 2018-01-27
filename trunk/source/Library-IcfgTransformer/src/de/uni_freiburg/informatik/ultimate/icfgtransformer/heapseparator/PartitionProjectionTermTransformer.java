@@ -133,7 +133,10 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 //		mSelectIndexTermToLocationBlock = selectIndexTermToLocationBlock;
 
-//		assert Objects.nonNull(arrayCellAccessToDimensionToLocationBlock);
+		assert Objects.nonNull(arrayCellAccessToDimensionToLocationBlock)
+			|| !ArrayCellAccess.extractArrayCellAccesses(edgeInfo.getEdge().getTransformula().getFormula()).stream()
+				.anyMatch(aca -> mHeapArrays.contains(edgeInfo.getProgramVarOrConstForTerm(aca.getSimpleArray())))
+				: "this input map must be non-null if we have a select on a heap array inside the edge";
 		mArrayCellAccessToIntegerToLocationBlock = arrayCellAccessToDimensionToLocationBlock;
 
 		mArrayGroupToDimensionToLocationBlocks = arrayGroupToDimensionToLocationBlocks;

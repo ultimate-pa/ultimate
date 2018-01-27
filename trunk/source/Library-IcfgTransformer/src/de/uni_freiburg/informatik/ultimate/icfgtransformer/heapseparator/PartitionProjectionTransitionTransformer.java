@@ -129,18 +129,11 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToDimensionToLocationBlock =
 				mEdgeInfoToArrayCellAccessToDimensionToLocationBlock.get(edgeInfo);
 
-		// maps each term in a storeindexInfo sii of the current edge to the locationBlock that sii occurs in
-//		final Map<Term, LocationBlock> indexTermToLocationBlock = new HashMap<>();
-//		for (final Entry<Term, StoreIndexInfo> en : mEdgeToIndexToStoreIndexInfo.get(edgeInfo).entrySet()) {
-//			indexTermToLocationBlock.put(en.getKey(), mStoreIndexInfoToLocationBlock.get(en.getValue()));
-//		}
-
 		final PartitionProjectionTermTransformer ppttf =
 				new PartitionProjectionTermTransformer(mMgdScript, mSubArrayManager,
 						arrayCellAccessToDimensionToLocationBlock,
 						edgeInfo, mArrayGroupToDimensionToLocationBlocks, mArrayToArrayGroup,
 						mEdgeToIndexToStoreIndexInfo, mHeapArrays);//,
-						//indexTermToLocationBlock);
 		final Term transformedFormula = ppttf.transform(tf.getFormula());
 
 		final Map<IProgramVar, TermVariable> inVars = ppttf.getNewInVars();

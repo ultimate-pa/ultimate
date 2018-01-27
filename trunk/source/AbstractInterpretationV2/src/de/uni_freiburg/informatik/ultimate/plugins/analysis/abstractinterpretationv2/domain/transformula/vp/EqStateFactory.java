@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
@@ -57,6 +58,7 @@ public class EqStateFactory {
 	private final IIcfgSymbolTable mSymbolTable;
 	private EqState mTopStateWithEmptyPvocs;
 	private final ManagedScript mMgdScript;
+	private final ILogger mLogger;
 
 	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<EqNode> eqConstraintFactory,
@@ -65,6 +67,7 @@ public class EqStateFactory {
 		mEqConstraintFactory = eqConstraintFactory;
 		mSymbolTable = symbolTable;
 		mMgdScript = mgdScript;
+		mLogger = mEqConstraintFactory.getLogger();
 	}
 
 	public EqState disjoinAll(final Set<EqState> statesForCurrentEc) {
@@ -143,6 +146,10 @@ public class EqStateFactory {
 
 	public EqState getBottomState() {
 		return getEqState(mEqConstraintFactory.getBottomConstraint(), Collections.emptySet());
+	}
+
+	public ILogger getLogger() {
+		return mLogger;
 	}
 
 }

@@ -289,7 +289,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 
 	/**
-	 * (almost) a copy from IcfgTranformationObserver
+	 * (almost) a copy from IcfgTransformationObserver
 	 *  --> should probably replace this with a less ad-hoc solution some time
 	 *
 	 * @return
@@ -392,8 +392,9 @@ class PartitionManager {
 					 */
 					continue;
 				}
-
-				if (eps.areUnequal(selectIndex.get(dim), freezeVar.getTerm())) {
+				final Term selectIndexNormalized =
+						selectInfo.getEdgeInfo().getProgramVarOrConstForTerm(selectIndex.get(dim)).getTerm();
+				if (eps.areUnequal(selectIndexNormalized, freezeVar.getTerm())) {
 					// nothing to do
 				} else {
 					// select index and freezeVar may be equal at this location
@@ -403,27 +404,72 @@ class PartitionManager {
 		}
 
 
-		for (int i = 0; i < selectIndex.size(); i++) {
-			final Set<StoreIndexInfo> mayEqualStoreIndexInfos = dimensionToMayEqualStoreIndexInfos.getImage(i);
+		for (int dim = 0; dim < selectIndex.size(); dim++) {
+			final Set<StoreIndexInfo> mayEqualStoreIndexInfos = dimensionToMayEqualStoreIndexInfos.getImage(dim);
 
-			if (mayEqualStoreIndexInfos.size() <= 1) {
-				// nothing to do
-			} else {
-				final StoreIndexInfo sample = mayEqualStoreIndexInfos.iterator().next();
 
-				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, i, sample);
-
-				for (final StoreIndexInfo sii : mayEqualStoreIndexInfos) {
-					mLogger.debug("merging partition blocks for array " + selectInfo.getArrayPvoc() + " :");
-					mLogger.debug("\t" + sii);
-					mLogger.debug("\t and");
-					mLogger.debug("\t" + sample);
-					mLogger.debug("\t because of possible aliasing at dimension " + i);
-					mLogger.debug("\t at array read " + selectInfo + ".");
-					mergeBlocks(selectInfo, i, sii, sample);
-				}
+			if (mayEqualStoreIndexInfos.size() == 0) {
+				/* there is no array write/StoreIndexInfo that has a data flow to this array read/SelectInfo
+				 *  --> this is a special case, we can replace the array that is read here with an uninitialized array
+				 *    of the correct sort
+				 */
+				//TODO
+				assert false;
+				continue;
 			}
+//			} else if (mayEqualStoreIndexInfos.size() <= 1) {
+//				// nothing to do
+//				final StoreIndexInfo sample = mayEqualStoreIndexInfos.iterator().next();
+//				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, i, sample);
+//			} else {
+			final StoreIndexInfo sample = mayEqualStoreIndexInfos.iterator().next();
+
+			mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, sample);
+
+			createPartitionAndBlockIfNecessary(selectInfo, dim, sample);
+
+			for (final StoreIndexInfo sii : mayEqualStoreIndexInfos) {
+				if (sii == sample) {
+					// no need to merge sii with itself
+					continue;
+				}
+				mLogger.debug("merging partition blocks for array " + selectInfo.getArrayPvoc() + " :");
+				mLogger.debug("\t" + sii);
+				mLogger.debug("\t and");
+				mLogger.debug("\t" + sample);
+				mLogger.debug("\t because of possible aliasing at dimension " + dim);
+				mLogger.debug("\t at array read " + selectInfo + ".");
+				mergeBlocks(selectInfo, dim, sii, sample);
+			}
+//			}
 		}
+	}
+
+	private void createPartitionAndBlockIfNecessary(final SelectInfo selectInfo, final int dim, final StoreIndexInfo sample) {
+		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
+		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
+
+		UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
+		if (partition == null) {
+			partition = new UnionFind<>();
+			mArrayGroupToDimensionToStoreIndexInfoPartition.put(arrayGroup, dim, partition);
+		}
+		partition.findAndConstructEquivalenceClassIfNeeded(sample);
+	}
+
+	private void mergeBlocks(final SelectInfo selectInfo, final int dim, final StoreIndexInfo sii1,
+			final StoreIndexInfo sii2) {
+		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
+		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
+
+		final UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
+		if (partition == null) {
+			throw new AssertionError("should have been created in createBlockIfNecessary");
+		}
+
+		partition.findAndConstructEquivalenceClassIfNeeded(sii1);
+		partition.findAndConstructEquivalenceClassIfNeeded(sii2);
+		partition.union(sii1, sii2);
 	}
 
 	public void finish() {
@@ -451,6 +497,22 @@ class PartitionManager {
 
 		}
 		mIsFinished = true;
+
+		mLogger.info("partitioning result:");
+		for (final ArrayGroup arrayGroup : mArrayToArrayGroup.values()) {
+			mLogger.info("\t location blocks for array group + " + arrayGroup);
+			for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
+				mLogger.info("\t at dimension " + dim);
+				mLogger.info("\t # array writes :" +
+						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size());
+				mLogger.info("\t # location blocks :" +
+						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses().size());
+//				mLogger.info("\t the location blocks are :" +
+//						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses().size());
+			}
+
+
+		}
 
 		assert sanityCheck();
 	}
@@ -494,22 +556,6 @@ class PartitionManager {
 			}
 		}
 		return true;
-	}
-
-	private void mergeBlocks(final SelectInfo selectInfo, final int dim, final StoreIndexInfo sii1,
-			final StoreIndexInfo sii2) {
-		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
-		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
-
-		UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
-		if (partition == null) {
-			partition = new UnionFind<>();
-			mArrayGroupToDimensionToStoreIndexInfoPartition.put(arrayGroup, dim, partition);
-		}
-
-		partition.findAndConstructEquivalenceClassIfNeeded(sii1);
-		partition.findAndConstructEquivalenceClassIfNeeded(sii2);
-		partition.union(sii1, sii2);
 	}
 
 	public NestedMap2<SelectInfo, Integer, LocationBlock> getSelectInfoToDimensionToLocationBlock() {
