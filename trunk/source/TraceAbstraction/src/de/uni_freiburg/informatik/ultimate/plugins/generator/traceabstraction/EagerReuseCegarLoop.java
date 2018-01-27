@@ -94,10 +94,12 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 		mReuseStats.continueTime();
 
 		int autIdx = 0;
-		for (final Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier> aut : mFloydHoareAutomataFromOtherErrorLocations) {
-			computeDifferenceForReuseAutomaton(autIdx, aut.getFirst(), aut.getSecond());
-			++autIdx;
-		}
+		// TODO: just ignore reuse automat from other error locs for now
+		// for (final Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier> aut :
+		// mFloydHoareAutomataFromOtherErrorLocations) {
+		// computeDifferenceForReuseAutomaton(autIdx, aut.getFirst(), aut.getSecond());
+		// ++autIdx;
+		// }
 
 		for (final ReuseAutomaton aut : mFloydHoareAutomataFromFile) {
 			computeDifferenceForReuseAutomaton(autIdx, aut.getAutomaton(), aut.getPredicateUnifier());
@@ -139,11 +141,11 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 			aiReuseAut.switchToReadonlyMode();
 			mReuseStats.addAfterDiffTransitions(aiReuseAut.computeNumberOfInternalTransitions());
 		}
-		
+
 		// Check if all edges of the Floyd-Hoare automaton are indeed inductive.
 		assert new InductivityCheck<>(mServices,
-				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(),
-				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(), false, true,
+				new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
 
 		if (mPref.dumpAutomata()) {
 			final String filename = "DiffAfterEagerReuse" + oneBasedi;

@@ -48,7 +48,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Reuse\ of\ Floyd-Hoare\ automata=EAGER
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Enhance\ during\ reuse\ of\ Floyd-Hoare\ automata=ONLY_NEW_LETTERS
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=true
 
 
 #Thu Oct 29 23:01:13 CET 2015

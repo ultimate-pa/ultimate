@@ -51,6 +51,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Output\ format\ of\ dumped\ automata=ATS
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Reuse\ of\ Floyd-Hoare\ automata=NONE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Enhance\ during\ reuse\ of\ Floyd-Hoare\ automata=AS_USUAL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=true
+
 
 #Thu Oct 29 23:01:13 CET 2015
 file_export_version=3.0

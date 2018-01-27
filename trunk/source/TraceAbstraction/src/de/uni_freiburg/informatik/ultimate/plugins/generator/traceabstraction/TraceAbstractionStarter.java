@@ -88,7 +88,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
 
-	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = false;
+	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -119,10 +119,6 @@ public class TraceAbstractionStarter {
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
 			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
-		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE && taPrefs.allErrorLocsAtOnce()) {
-			throw new IllegalStateException(
-					"Incompatible settings: no reuse possible if you check all error locations at once.");
-		}
 
 		String settings = "Automizer settings:";
 		settings += " Hoare:" + taPrefs.computeHoareAnnotation();
