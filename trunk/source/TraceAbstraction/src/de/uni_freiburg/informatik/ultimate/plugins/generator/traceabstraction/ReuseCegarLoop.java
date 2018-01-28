@@ -89,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
 	protected final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations;
-	protected final List<NestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
+	protected final List<INestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 	protected List<ReuseAutomaton> mFloydHoareAutomataFromFile;
 
 	protected final ReuseStatisticsGenerator mReuseStats;
@@ -101,7 +101,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> floydHoareAutomataFromOtherLocations,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation,
 				services, storage);
 		mFloydHoareAutomataFromOtherErrorLocations = floydHoareAutomataFromOtherLocations;
@@ -120,7 +120,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 		final PredicateParsingWrapperScript ppws = new PredicateParsingWrapperScript(mCsToolkit);
 
-		for (final NestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
+		for (final INestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
 			buildFloydHoareAutomaton(ppws, rawAutomatonFromFile);
 		}
 
@@ -129,7 +129,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	}
 
 	private void buildFloydHoareAutomaton(final PredicateParsingWrapperScript ppws,
-			final NestedWordAutomaton<String, String> rawAutomatonFromFile) {
+			final INestedWordAutomaton<String, String> rawAutomatonFromFile) {
 		// Create map from strings to all equivalent "new" letters (abstraction letters)
 		final Map<String, Set<LETTER>> mapStringToLetter = new HashMap<>();
 		final VpAlphabet<LETTER> abstractionAlphabet =
@@ -234,7 +234,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 	}
 
 	private final void addTransitionsFromRawAutomaton(final NestedWordAutomaton<LETTER, IPredicate> resAutomaton,
-			final NestedWordAutomaton<String, String> rawAutomatonFromFile,
+			final INestedWordAutomaton<String, String> rawAutomatonFromFile,
 			final Map<String, Set<LETTER>> mapStringToLetter, final Map<String, IPredicate> mapStringToState,
 			final Map<IPredicate, String> mapStateToString) {
 

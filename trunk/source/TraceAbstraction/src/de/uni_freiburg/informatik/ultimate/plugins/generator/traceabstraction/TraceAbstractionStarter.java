@@ -35,8 +35,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -108,7 +108,7 @@ public class TraceAbstractionStarter {
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> rcfgRootNode,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -117,7 +117,7 @@ public class TraceAbstractionStarter {
 
 	private void runCegarLoops(final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		String settings = "Automizer settings:";
@@ -284,7 +284,7 @@ public class TraceAbstractionStarter {
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop = constructCegarLoop(name, root, taPrefs,
 				csToolkit, predicateFactory, taBenchmark, errorLocs, rawFloydHoareAutomataFromFile);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
@@ -325,7 +325,7 @@ public class TraceAbstractionStarter {
 	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 
