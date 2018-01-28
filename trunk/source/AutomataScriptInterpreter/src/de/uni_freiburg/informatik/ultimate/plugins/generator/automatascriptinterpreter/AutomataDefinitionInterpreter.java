@@ -326,19 +326,26 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final NestedwordAutomatonAST nwa) {
 		mErrorLocation = nwa.getLocation();
 
-		final NestedWordAutomaton<String, String> nw = constructNestedWordAutomaton(nwa, mServices);
+		final NestedWordAutomaton<String, String> result = constructNestedWordAutomaton(nwa, mServices);
 
-		mAutomata.put(nwa.getName(), nw);
+		mAutomata.put(nwa.getName(), result);
 	}
 
 	public void interpret(final EpsilonNestedwordAutomatonAST nwa) {
 		mErrorLocation = nwa.getLocation();
 
-		final NestedWordAutomaton<String, String> nw = constructNestedWordAutomaton(nwa, mServices);
-		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result = new EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>>(
-				nw, nwa.getEpsilonTransitions());
+		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result = constructEpsilonNestedWordAutomaton(
+				nwa, mServices);
 
 		mAutomata.put(nwa.getName(), result);
+	}
+
+	public static EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> constructEpsilonNestedWordAutomaton(
+			final EpsilonNestedwordAutomatonAST enwa, final IUltimateServiceProvider services) {
+		final NestedWordAutomaton<String, String> nwa = constructNestedWordAutomaton(enwa, services);
+		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result = new EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>>(
+				nwa, enwa.getEpsilonTransitions());
+		return result;
 	}
 
 	public static NestedWordAutomaton<String, String> constructNestedWordAutomaton(
