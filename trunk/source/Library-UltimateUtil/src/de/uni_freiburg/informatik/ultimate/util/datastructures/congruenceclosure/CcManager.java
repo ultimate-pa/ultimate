@@ -243,6 +243,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			unfrozen.reportDisequality(node1, node2);
 			unfrozen.freeze();
 
+			assert unfrozen.isInconsistent()
+				|| unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
 			return resultPp;
 		}

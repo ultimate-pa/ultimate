@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
-	private final Set<Term> mAdditionalLiteralTerms;
+	private final Set<Term> mNonTheoryLiteralTerms;
 
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 	private final Map<Term, Term> mNormalizationCache = new HashMap<>();
@@ -64,7 +65,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			final Set<IProgramConst> additionalLiterals) {
 		mServices = services;
 		mMgdScript = script;
-		mAdditionalLiteralTerms = additionalLiterals.stream().map(pc -> pc.getTerm()).collect(Collectors.toSet());
+		mNonTheoryLiteralTerms = additionalLiterals.stream().map(pc -> pc.getTerm()).collect(Collectors.toSet());
 	}
 
 	public ManagedScript getScript() {
@@ -181,7 +182,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			return true;
 		}
 
-		if (mAdditionalLiteralTerms.contains(term)) {
+		if (mNonTheoryLiteralTerms.contains(term)) {
 			return true;
 		}
 
@@ -252,5 +253,15 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	 */
 	boolean isFunction(final Term term) {
 		return term.getSort().isArraySort();
+	}
+
+	public Set<Term> getNonTheoryLiterals() {
+		return Collections.unmodifiableSet(mNonTheoryLiteralTerms);
+	}
+
+	public Term getNonTheoryLiteralDisequalities() {
+		return SmtUtils.and(mMgdScript.getScript(),
+				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
+						getNonTheoryLiterals()));
 	}
 }

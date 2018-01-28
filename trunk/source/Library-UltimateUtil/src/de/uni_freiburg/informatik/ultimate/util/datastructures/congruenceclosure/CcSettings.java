@@ -25,4 +25,11 @@ public class CcSettings {
 	// if we want to use unification, we have to forbid in place computations (copy-on-write)
 	public static final boolean FORBID_INPLACE = UNIFY_CCS;
 
+	public static final boolean IMPLICIT_LITERAL_DISEQUALITIES = true;
+
+	/**
+	 * depends on the HeapSepSettings.ASSERT_FREEZE_VAR_LIT_DISEQUALITIES_INTO_SCRIPT
+	 */
+	public static final boolean ADD_NON_THEORYlITERAL_DISEQUALITIES_FOR_CHECKS = false;
+
 }

@@ -1318,7 +1318,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		if (mManager.getSettings().isDeactivateWeakEquivalences()) {
 			if (!inplace) {
-				assert mManager.checkMeetResult(this, other, result);
+				assert mManager.checkMeetResult(this, other, result,
+						mManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
 				result.freeze();
 			}
 			assert inplace != result.isFrozen();
@@ -1345,7 +1346,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		if (!inplace) {
-			assert mManager.checkMeetResult(this, other, result);
+			assert mManager.checkMeetResult(this, other, result,
+					mManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
 			result.freeze();
 		}
 
@@ -1686,6 +1688,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public WeqCcManager<NODE> getManager() {
 		return mManager;
+	}
+
+	public Set<NODE> getAllLiterals() {
+		return mCongruenceClosure.getAllLiterals();
 	}
 }
 

@@ -79,7 +79,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	protected final CongruenceClosure<ELEM>.FuncAppTreeAuxData mFaAuxData;
 
-	protected final Collection<ELEM> mAllLiterals;
+	protected final Set<ELEM> mAllLiterals;
 
 	protected boolean mIsFrozen = false;
 
@@ -391,10 +391,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return false;
 		}
 
+		if (elem1.isLiteral() && elem2.isLiteral()) {
 
-		mElementTVER.reportDisequality(elem1, elem2);
-		if (mElementTVER.isInconsistent()) {
-			return true;
+			assert getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL;
+			// special case: don't add a literal disequality explicitly
+		} else {
+			// normal case
+			mElementTVER.reportDisequality(elem1, elem2);
+
+			if (mElementTVER.isInconsistent()) {
+				return true;
+			}
 		}
 
 		final HashRelation<ELEM, ELEM> propDeqs = getAuxData().getPropagationsOnReportDisequality(elem1, elem2);
@@ -835,6 +842,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	public EqualityStatus getEqualityStatus(final ELEM elem1, final ELEM elem2) {
 		assert hasElement(elem1) && hasElement(elem2);
+		assert !isInconsistent() : "catch this outside!";
 
 		final ELEM rep1 = getRepresentativeElement(elem1);
 		final ELEM rep2 = getRepresentativeElement(elem2);
@@ -951,9 +959,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 
 			for (final Set<ELEM> eqc : mElementTVER.getAllEquivalenceClasses()) {
-				if (eqc.size() == 1 &&
-						(!mFaAuxData.getAfParents(eqc.iterator().next()).isEmpty() ||
-								!mFaAuxData.getArgParents(eqc.iterator().next()).isEmpty())) {
+				if (eqc.size() == 1) {// &&
+//						(!mFaAuxData.getAfParents(eqc.iterator().next()).isEmpty() ||
+//								!mFaAuxData.getArgParents(eqc.iterator().next()).isEmpty())) {
 					continue;
 				}
 
@@ -1642,5 +1650,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	public Set<ELEM> getEquivalenceClass(final ELEM elem) {
 		return Collections.unmodifiableSet(mElementTVER.getEquivalenceClass(elem));
+	}
+
+	public Set<ELEM> getAllLiterals() {
+		return Collections.unmodifiableSet(mAllLiterals);
+	}
+
+	public CcManager<ELEM> getManager() {
+		return mManager;
 	}
 }

@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -79,18 +80,12 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 			final ComputeInitializingTerm cit =
 				new ComputeInitializingTerm(mFreezeVarTofreezeVarLit, mValidArray, oldTransformula);
 
-//					if (!freezeVarTofreezeVarLit.isEmpty()) {
-//			mFreezeVarInVars.put(validArray, validArray.getTermVariable());
-//			mFreezeVarOutVars.put(validArray, validArray.getTermVariable());
-//		}
 
 			final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(oldTransformula.getInVars());
 			newInVars.putAll(cit.getFreezeVarInVars());
-//			newInVars.putAll(mFreezeVarInVars);
 
 			final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(oldTransformula.getOutVars());
 			newOutVars.putAll(cit.getFreezeVarOutVars());
-//			newOutVars.putAll(mFreezeVarOutVars);
 
 			/*
 			 * Note that the symbol table will be automatically updated with the new constants by the
@@ -105,6 +100,9 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 					oldTransformula.getAuxVars().isEmpty());
 
 			// TODO: do we need to lock the mgdscript here??
+			/*
+			 * conjoin the original transformula with the initializing term
+			 */
 			final Term newFormula = SmtUtils.and(script, oldTransformula.getFormula(), cit.getInitializingTerm());
 
 			newTfBuilder.setFormula(newFormula);
@@ -173,20 +171,28 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 				 */
 				// TODO have to get the valid Termvariable from the Transformula or make a new one!
 				final Term select = SmtUtils.select(mMgdScript.getScript(), validArrayTv, frzLit);
-				// TODO -- is this the right way to get a constant?
-//				final Term one = Rational.ONE.toTerm(mMgdScript.getScript().sort("Real"));
-//				final Term trueTerm = mMgdScript.term(this, "true");
-//				final Term one = mMgdScript.getScript().numeral(BigInteger.ONE);
-//				final AffineTerm at = new AffineTerm(select.getSort(), Rational.ONE);
-//				final Term one = at.toTerm(mMgdScript.getScript());
 				final Term one = SmtUtils.constructIntValue(mMgdScript.getScript(), BigInteger.ONE);
 
-
-//				initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), select, trueTerm));
 				initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), select, one));
 			}
 
-			mInitializingTerm = SmtUtils.and(mMgdScript.getScript(), initializingEquations);
+
+			/*
+			 * furthermore add disequalities between all freeze var literals
+			 */
+			final List<Term> freezeLitDisequalities = new ArrayList<>();
+			if (HeapSepSettings.ASSUME_FREEZE_VAR_LIT_DISEQUALITIES_AT_INIT_EDGES) {
+				for (final Entry<IProgramConst, IProgramConst> en : CrossProducts.binarySelectiveCrossProduct(
+						new HashSet<>(freezeVarTofreezeVarLit.values()), false, false)) {
+					freezeLitDisequalities.add(
+							mMgdScript.getScript().term("not",
+									mMgdScript.term(this, "=", en.getKey().getTerm(), en.getValue().getTerm())));
+				}
+			}
+
+			mInitializingTerm = SmtUtils.and(mMgdScript.getScript(),
+					SmtUtils.and(mMgdScript.getScript(), initializingEquations),
+					SmtUtils.and(mMgdScript.getScript(), freezeLitDisequalities));
 
 			mMgdScript.unlock(this);
 

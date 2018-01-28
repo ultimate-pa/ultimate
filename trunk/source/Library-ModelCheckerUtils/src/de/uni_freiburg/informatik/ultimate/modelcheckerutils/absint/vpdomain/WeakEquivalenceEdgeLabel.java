@@ -441,7 +441,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		final List<Term> result = new ArrayList<>();
 		for (final DISJUNCT d : getDisjuncts()) {
 			final CongruenceClosure<NODE> cc = (CongruenceClosure<NODE>) d;
-			final List<Term> cube = CongruenceClosureSmtUtils.congruenceClosureToCube(script, cc);
+			final List<Term> cube = CongruenceClosureSmtUtils.congruenceClosureToCube(script, cc,
+					mWeqCcManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
 			final Term cubeTerm = SmtUtils.and(script, cube);
 			result.add(cubeTerm);
 		}

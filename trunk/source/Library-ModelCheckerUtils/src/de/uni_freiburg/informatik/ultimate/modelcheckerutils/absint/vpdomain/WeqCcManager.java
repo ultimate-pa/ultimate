@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcManager;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcSettings;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
@@ -239,7 +240,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			result = (Set<DISJUNCT>) filterRedundantWeqCcs((Set<WeqCongruenceClosure<NODE>>) ccs);
 		}
-		assert checkFilterDisjunctionResult(ccs, result);
+		assert checkFilterDisjunctionResult(ccs, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 		return result;
 	}
 
@@ -279,7 +280,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportEquality(node1, node2, false);
 			unfrozen.freeze();
-			assert checkReportEqualityResult(origWeqCc, node1, node2, unfrozen);
+			assert checkReportEqualityResult(origWeqCc, node1, node2, unfrozen,
+					getNonTheoryLiteralDisequalitiesIfNecessary());
 			return unfrozen;
 		}
 	}
@@ -287,7 +289,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private CongruenceClosure<NODE> reportEquality(final CongruenceClosure<NODE> origCc, final NODE node1,
 			final NODE node2, final boolean inplace) {
 		final CongruenceClosure<NODE> result = mCcManager.reportEquality(node1, node2, origCc, inplace);
-		assert checkReportEqualityResult(origCc, node1, node2, result);
+		assert checkReportEqualityResult(origCc, node1, node2, result,
+					getNonTheoryLiteralDisequalitiesIfNecessary());
 		return result;
 	}
 
@@ -300,7 +303,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 			unfrozen.reportDisequality(node1, node2);
 			unfrozen.freeze();
-			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen);
+			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
+					getNonTheoryLiteralDisequalitiesIfNecessary());
 			return unfrozen;
 		}
 	}
@@ -330,7 +334,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
 		RemoveWeqCcElement.removeSimpleElement(unfrozen, node);
 		unfrozen.freeze();
-		assert checkProjectAwayResult(origWeqCc, node, unfrozen);
+		assert checkProjectAwayResult(origWeqCc, node, unfrozen,
+					getNonTheoryLiteralDisequalitiesIfNecessary());
 		return unfrozen;
 	}
 
@@ -448,7 +453,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			}
 			weqcc1.meet(weqcc2, true);
 			if (mDebug) {
-				assert checkMeetResult(weqcc1_old, weqcc2, weqcc1);
+				assert checkMeetResult(weqcc1_old, weqcc2, weqcc1,
+						getNonTheoryLiteralDisequalitiesIfNecessary());
 			}
 			return weqcc1;
 		} else {
@@ -457,7 +463,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 			freezeIfNecessary(result);
 
-			assert checkMeetResult(weqcc1, weqcc2, result);
+			assert checkMeetResult(weqcc1, weqcc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 			return result;
 		}
 	}
@@ -481,7 +487,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final CongruenceClosure<NODE> result = mCcManager.meet(cc1, cc2, elementCurrentlyBeingRemoved, inplace);
 
 		if (mDebug) {
-				assert checkMeetResult(cc1_old, cc2, result);
+			assert checkMeetResult(cc1_old, cc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 		}
 
 		return result;
@@ -502,7 +508,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final boolean modifiable) {
 		// (just passing it through to CcManager)
 		final CongruenceClosure<NODE> result = mCcManager.join(cc1, cc2, modifiable);
-		assert checkJoinResult(cc1, cc2, result);
+		assert checkJoinResult(cc1, cc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 		return result;
 	}
 
@@ -526,7 +532,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (!modifiable) {
 			result.freeze();
 		}
-		assert checkJoinResult(weqcc1, weqcc2, result);
+		assert checkJoinResult(weqcc1, weqcc2, result, getNonTheoryLiteralDisequalitiesIfNecessary());
 		return result;
 	}
 
@@ -696,16 +702,18 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private boolean checkReportEqualityResult(final CongruenceClosure<NODE> origCc, final NODE node1, final NODE node2,
-			final CongruenceClosure<NODE> result) {
+			final CongruenceClosure<NODE> result, final Term literalDisequalities) {
 		return checkReportEqualityResult(
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), origCc), node1.getTerm(),
-				node2.getTerm(), CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result));
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), origCc, literalDisequalities),
+				node1.getTerm(), node2.getTerm(),
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result,
+						literalDisequalities));
 	}
 
 	private boolean checkReportEqualityResult(final WeqCongruenceClosure<NODE> origCc, final NODE node1,
-			final NODE node2, final WeqCongruenceClosure<NODE> result) {
-		return checkReportEqualityResult(weqCcToTerm(mMgdScript.getScript(), origCc), node1.getTerm(), node2.getTerm(),
-				weqCcToTerm(mMgdScript.getScript(), result));
+			final NODE node2, final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
+		return checkReportEqualityResult(weqCcToTerm(mMgdScript.getScript(), origCc, literalDisequalities),
+				node1.getTerm(), node2.getTerm(), weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkReportEqualityResult(final Term original, final Term node1, final Term node2,
@@ -723,16 +731,21 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private boolean checkReportDisequalityResult(final CongruenceClosure<NODE> origCc, final NODE node1,
-			final NODE node2, final CongruenceClosure<NODE> result) {
+			final NODE node2, final CongruenceClosure<NODE> result, final Term literalDisequalities) {
 		return checkReportDisequalityResult(
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), origCc), node1.getTerm(),
-				node2.getTerm(), CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result));
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), origCc, literalDisequalities),
+				node1.getTerm(),
+				node2.getTerm(),
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkReportDisequalityResult(final WeqCongruenceClosure<NODE> origCc, final NODE node1,
-			final NODE node2, final WeqCongruenceClosure<NODE> result) {
-		return checkReportDisequalityResult(weqCcToTerm(mMgdScript.getScript(), origCc), node1.getTerm(),
-				node2.getTerm(), weqCcToTerm(mMgdScript.getScript(), result));
+			final NODE node2, final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
+		return checkReportDisequalityResult(
+				weqCcToTerm(mMgdScript.getScript(), origCc, literalDisequalities),
+				node1.getTerm(),
+				node2.getTerm(),
+				weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkReportDisequalityResult(final Term original, final Term node1, final Term node2,
@@ -751,9 +764,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private boolean checkProjectAwayResult(final WeqCongruenceClosure<NODE> original, final NODE nodeToProjectAway,
-			final WeqCongruenceClosure<NODE> result) {
-		return checkProjectAwayResult(weqCcToTerm(mMgdScript.getScript(), original), nodeToProjectAway.getTerm(),
-				weqCcToTerm(mMgdScript.getScript(), result));
+			final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
+		return checkProjectAwayResult(
+				weqCcToTerm(mMgdScript.getScript(), original, literalDisequalities),
+				nodeToProjectAway.getTerm(),
+				weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkProjectAwayResult(final Term original, final Term projectedVar, final Term result) {
@@ -777,16 +792,20 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private boolean checkMeetResult(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
-			final CongruenceClosure<NODE> result) {
-		return checkMeetResult(CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc1),
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc2),
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result));
+			final CongruenceClosure<NODE> result, final Term literalDisequalities) {
+		return checkMeetResult(
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc1, literalDisequalities),
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc2, literalDisequalities),
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result, literalDisequalities)
+				);
 	}
 
 	boolean checkMeetResult(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2,
-			final WeqCongruenceClosure<NODE> result) {
-		return checkMeetResult(weqCcToTerm(mMgdScript.getScript(), weqcc1), weqCcToTerm(mMgdScript.getScript(), weqcc2),
-				weqCcToTerm(mMgdScript.getScript(), result));
+			final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
+		return checkMeetResult(
+				weqCcToTerm(mMgdScript.getScript(), weqcc1, literalDisequalities),
+				weqCcToTerm(mMgdScript.getScript(), weqcc2, literalDisequalities),
+				weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkMeetResult(final Term cc1, final Term cc2, final Term resultTerm) {
@@ -801,16 +820,20 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private boolean checkJoinResult(final CongruenceClosure<NODE> cc1, final CongruenceClosure<NODE> cc2,
-			final CongruenceClosure<NODE> result) {
-		return checkJoinResult(CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc1),
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc2),
-				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result));
+			final CongruenceClosure<NODE> result, final Term literalDisequalities) {
+		return checkJoinResult(
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc1, literalDisequalities),
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), cc2, literalDisequalities),
+				CongruenceClosureSmtUtils.congruenceClosureToTerm(mMgdScript.getScript(), result, literalDisequalities)
+				);
 	}
 
 	private boolean checkJoinResult(final WeqCongruenceClosure<NODE> weqcc1, final WeqCongruenceClosure<NODE> weqcc2,
-			final WeqCongruenceClosure<NODE> result) {
-		return checkJoinResult(weqCcToTerm(mMgdScript.getScript(), weqcc1), weqCcToTerm(mMgdScript.getScript(), weqcc2),
-				weqCcToTerm(mMgdScript.getScript(), result));
+			final WeqCongruenceClosure<NODE> result, final Term literalDisequalities) {
+		return checkJoinResult(
+				weqCcToTerm(mMgdScript.getScript(), weqcc1, literalDisequalities),
+				weqCcToTerm(mMgdScript.getScript(), weqcc2, literalDisequalities),
+				weqCcToTerm(mMgdScript.getScript(), result, literalDisequalities));
 	}
 
 	private boolean checkJoinResult(final Term cc1, final Term cc2, final Term resultTerm) {
@@ -890,11 +913,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private <DISJUNCT extends ICongruenceClosure<NODE>> boolean checkFilterDisjunctionResult(final Set<DISJUNCT> ccs1,
-			final Set<DISJUNCT> ccs2) {
+			final Set<DISJUNCT> ccs2, final Term literalDisequalities) {
 		mMgdScript.lock(this);
 		mMgdScript.echo(this, new QuotedObject("WeqCcManager.checkFilterDisjunctionResult (begin)"));
-		final Term term1 = disjunctionToTerm(mMgdScript.getScript(), ccs1);
-		final Term term2 = disjunctionToTerm(mMgdScript.getScript(), ccs2);
+		final Term term1 = disjunctionToTerm(mMgdScript.getScript(), ccs1, literalDisequalities);
+		final Term term2 = disjunctionToTerm(mMgdScript.getScript(), ccs2, literalDisequalities);
 		final boolean oneImpliesTwo = checkImplicationHolds(mMgdScript.getScript(), term1, term2);
 		assert oneImpliesTwo;
 		final boolean twoImpliesOne = checkImplicationHolds(mMgdScript.getScript(), term2, term1);
@@ -907,7 +930,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 	private static <NODE extends IEqNodeIdentifier<NODE> , DISJUNCT extends ICongruenceClosure<NODE>>
-			Term disjunctionToTerm(final Script script, final Set<DISJUNCT> ccs) {
+			Term disjunctionToTerm(final Script script, final Set<DISJUNCT> ccs, final Term literalDisequalities) {
 		if (ccs.isEmpty()) {
 			return script.term("false");
 		}
@@ -916,25 +939,26 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (sample instanceof CongruenceClosure<?>) {
 			for (final DISJUNCT cc : ccs) {
 				disjunctTerms.add(CongruenceClosureSmtUtils.congruenceClosureToTerm(script,
-						(CongruenceClosure<NODE>) cc));
+						(CongruenceClosure<NODE>) cc, literalDisequalities));
 			}
 		} else {
 			for (final DISJUNCT weqcc : ccs) {
-				disjunctTerms.add(weqCcToTerm(script, (WeqCongruenceClosure<NODE>) weqcc));
+				disjunctTerms.add(weqCcToTerm(script, (WeqCongruenceClosure<NODE>) weqcc, literalDisequalities));
 			}
 		}
 		return SmtUtils.or(script, disjunctTerms);
 	}
 
 	public static <NODE extends IEqNodeIdentifier<NODE>> Term weqCcToTerm(final Script script,
-			final WeqCongruenceClosure<NODE> weqCc) {
+			final WeqCongruenceClosure<NODE> weqCc, final Term literalDisequalities) {
 		if (weqCc.isInconsistent()) {
 			return script.term("false");
 		}
 
 		final List<Term> allConjuncts = new ArrayList<>();
 		// allConjuncts.addAll(EqConstraint.partialArrangementToCube(script, this));
-		allConjuncts.addAll(CongruenceClosureSmtUtils.congruenceClosureToCube(script, weqCc.getCongruenceClosure()));
+		allConjuncts.addAll(CongruenceClosureSmtUtils.congruenceClosureToCube(script, weqCc.getCongruenceClosure(),
+				literalDisequalities));
 
 		final List<Term> weakEqConstraints = weqCc.getWeakEquivalenceGraph()
 				.getWeakEquivalenceConstraintsAsTerms(script);
@@ -1186,7 +1210,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mMgdScript.lock(this);
 
-		final Term label1Term = SmtUtils.or(script, label1.toDnf(script));
+		Term label1Term = SmtUtils.or(script, label1.toDnf(script));
+		if (CcSettings.IMPLICIT_LITERAL_DISEQUALITIES) {
+			label1Term = SmtUtils.and(script, label1Term, getNonTheoryLiteralDisequalitiesIfNecessary());
+		}
 		final Term label2Term = SmtUtils.or(script, label2.toDnf(script));
 
 		final LBool satResult = isStrongerThan(script, label1Term, label2Term);
@@ -1438,8 +1465,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mMgdScript.lock(this);
 
-		final Term term1 = weqCcToTerm(mMgdScript.getScript(), weqcc1);
-		final Term term2 = weqCcToTerm(mMgdScript.getScript(), weqcc2);
+		final Term term1 = weqCcToTerm(mMgdScript.getScript(), weqcc1,
+				getNonTheoryLiteralDisequalitiesIfNecessary());
+		final Term term2 = weqCcToTerm(mMgdScript.getScript(), weqcc2,
+				getNonTheoryLiteralDisequalitiesIfNecessary());
 
 		final boolean oneImpliesTwo = checkImplicationHolds(mMgdScript.getScript(), term1, term2);
 		assert oneImpliesTwo;
@@ -1450,6 +1479,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mMgdScript.unlock(this);
 
 		return oneImpliesTwo && twoImpliesOne;
+	}
+
+	private Term getNonTheoryLiteralDisequalitiesIfNecessary() {
+		if (CcSettings.ADD_NON_THEORYlITERAL_DISEQUALITIES_FOR_CHECKS) {
+			return mNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
+		} else {
+			return mMgdScript.getScript().term("true");
+		}
 	}
 
 	public WeqSettings getSettings() {

@@ -3,21 +3,27 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcSettings;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 
 public class CongruenceClosureSmtUtils {
 	public static <NODE extends IEqNodeIdentifier<NODE>> Term congruenceClosureToTerm(final Script script,
-			final CongruenceClosure<NODE> pa) {
-		return SmtUtils.and(script, congruenceClosureToCube(script, pa));
+			final CongruenceClosure<NODE> pa, final Term literalDisequalities) {
+		return SmtUtils.and(script, congruenceClosureToCube(script, pa, literalDisequalities));
 	}
 
 	public static <NODE extends IEqNodeIdentifier<NODE>> List<Term> congruenceClosureToCube(final Script script,
-			final CongruenceClosure<NODE> pa) {
+			final CongruenceClosure<NODE> pa, final Term literalDisequalities) {
 		if (pa.isInconsistent()) {
 			return Collections.singletonList(script.term("false"));
 		}
@@ -29,10 +35,42 @@ public class CongruenceClosureSmtUtils {
 				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
 				.collect(Collectors.toList());
 
+//		final Set<Term> literalTerms =
+//				pa.getAllLiterals().stream().map(node -> node.getTerm()).collect(Collectors.toSet());
+
+//		final List<Term> nonTheoryLiteralDisequalities = createDisequalityTermsForNonTheoryLiterals(script,
+//				literalTerms);
+
 		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
 		result.addAll(elementEqualities);
 		result.addAll(elementDisequalities);
+//		result.addAll(nonTheoryLiteralDisequalities);
+//		result.add(pa.getManager())
+		if (CcSettings.IMPLICIT_LITERAL_DISEQUALITIES) {
+//			result.add(eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities());
+			result.add(literalDisequalities);
+		}
 		return result;
+	}
+
+	/**
+	 *
+	 * @param script
+	 * @param literalTerms
+	 * 			the set of all literals relevant in the current context (including theory literals)
+	 * @return a set of (distinct l1 l2) terms where l1 and l2 are not both theory literals and not identical
+	 */
+	public static List<Term> createDisequalityTermsForNonTheoryLiterals(final Script script,
+			final Set<Term> literalTerms) {
+		final List<Term> nonTheoryLiteralDisequalities = new ArrayList<>();
+		// the theory knows that normal constants are different from each other --> don't add those disequalities
+		final BiPredicate<Term, Term> pairSelector = (l1, l2) -> l1 != l2
+				&& (!(l1 instanceof ConstantTerm) || !(l2 instanceof ConstantTerm));
+		for (final Entry<Term, Term> en :
+				CrossProducts.binarySelectiveCrossProduct(literalTerms, false, pairSelector)) {
+			nonTheoryLiteralDisequalities.add(script.term("not", script.term("=", en.getKey(), en.getValue())));
+		}
+		return nonTheoryLiteralDisequalities;
 	}
 
 }

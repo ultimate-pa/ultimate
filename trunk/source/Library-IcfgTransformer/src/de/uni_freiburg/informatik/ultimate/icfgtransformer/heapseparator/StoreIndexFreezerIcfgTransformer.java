@@ -2,13 +2,17 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -21,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -51,6 +56,8 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
 
+	private final Set<ConstantTerm> mAllConstantTerms;
+
 //	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
@@ -60,6 +67,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
+		mAllConstantTerms = new HashSet<>();
 	}
 
 	@Override
@@ -71,6 +79,18 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 //
 	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
 			final EdgeInfo edgeInfo) {
+
+		/*
+		 * update the all constants tracking
+		 */
+		mAllConstantTerms.addAll(new SubTermFinder(t -> t instanceof ConstantTerm)
+				.findMatchingSubterms(tf.getFormula()).stream().map(t -> (ConstantTerm) t)
+				.collect(Collectors.toList()));
+
+		/*
+		 * core business from here on..
+		 */
+
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
 
@@ -187,6 +207,14 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	public NestedMap2<EdgeInfo, Term, StoreIndexInfo> getEdgeToIndexToStoreIndexInfo() {
 		return mEdgeToIndexToStoreIndexInfo;
+	}
+
+	/**
+	 * Not this class's core concern but it also picks up all ConstantTerms in the program.
+	 * @return
+	 */
+	public Set<ConstantTerm> getAllConstantTerms() {
+		return mAllConstantTerms;
 	}
 
 }

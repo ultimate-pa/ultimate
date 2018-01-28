@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeqCcManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeqSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -61,15 +62,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractDomain<EqState, ACTION> {
 
-	public static final boolean DEBUG = true;
-
 	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
 
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mSymboltable;
-	private final boolean mDebugMode = true;
+	private final boolean mDebugMode;
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
@@ -84,12 +83,12 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	 * @param logger
 	 * @param services
 	 * @param csToolkit
-	 * @param additionalLiterals
+	 * @param nonTheoryLiterals
 	 * 			This set of program constants will be viewed as "literals" by the analysis. Literals are constants that
 	 *          are unequal from all other constants.
 	 */
 	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final Set<IProgramConst> additionalLiterals) {
+			final Set<IProgramConst> nonTheoryLiterals) {
 		mLogger = logger;
 		mManagedScript = csToolkit.getManagedScript();
 		mMerge = new VPMergeOperator();
@@ -97,10 +96,12 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mCsToolkit = csToolkit;
 		mServices = services;
 
+		mDebugMode = WeqCcManager.areAssertsEnabled();
+
 
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, additionalLiterals);
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript,
 				prepareWeqSettings(ups), mDebugMode);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,

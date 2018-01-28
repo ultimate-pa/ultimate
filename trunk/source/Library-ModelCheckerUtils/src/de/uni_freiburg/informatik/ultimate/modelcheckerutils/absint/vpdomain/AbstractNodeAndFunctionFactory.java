@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.AbstractCCElementFactory;
 
 public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentifier<NODE>, CONTENT>
@@ -36,5 +37,7 @@ public abstract class AbstractNodeAndFunctionFactory<NODE extends IEqNodeIdentif
 	public abstract NODE getExistingNode(CONTENT term);
 
 	public abstract boolean hasNode(CONTENT term);
+
+	public abstract Term getNonTheoryLiteralDisequalities();
 }
 

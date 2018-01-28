@@ -152,7 +152,7 @@ public class HeapSepPreAnalysis {
 		for (final ArrayCellAccess aca : ArrayCellAccess.extractArrayCellAccesses(tf.getFormula())) {
 //			assert !visitedSubTerms.contains(aca.getTerm(mMgdScript.getScript()));
 
-			final SelectInfo selectInfo = new SelectInfo(aca, edgeInfo);
+			final SelectInfo selectInfo = new SelectInfo(aca, edgeInfo, mMgdScript);
 			if (mHeapArrays.contains(selectInfo.getArrayPvoc())) {
 				mSelectInfos.add(selectInfo);
 			}

@@ -89,7 +89,8 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 
 	private void processGraph() {
 		// we need to create new return transitions after new call transitions have been created
-		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
+//		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
+		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> oldReturnTransitions = new ArrayList<>();
 
 		final IcfgLocationIterator<INLOC> iter = new IcfgLocationIterator<>(mInputIcfg.getInitialNodes());
 		while (iter.hasNext()) {
@@ -99,19 +100,29 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 				@SuppressWarnings("unchecked")
 				final OUTLOC newTarget = mTransformedIcfgBuilder.createNewLocation((INLOC) oldTransition.getTarget());
 
+				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
+					oldReturnTransitions.add(new Triple<>(newSource, newTarget, oldTransition));
+					continue;
+				}
+
 				final IcfgEdge transformedTransition = transform(oldTransition, newSource, newTarget);
 
-				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
-					rtrTransitions.add(new Triple<>(newSource, newTarget, transformedTransition));
-				} else {
+//				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
+//					rtrTransitions.add(new Triple<>(newSource, newTarget, transformedTransition));
+//				} else {
 					mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(newSource, newTarget,
 							transformedTransition);
-				}
+//				}
 			}
 		}
 
-		rtrTransitions.forEach(
-				a -> mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(a.getFirst(), a.getSecond(), a.getThird()));
+		for (final Triple<OUTLOC, OUTLOC, IcfgEdge> returnTrans : oldReturnTransitions) {
+			final IcfgEdge transformedTransition = transform(returnTrans.getThird(), returnTrans.getFirst(), returnTrans.getSecond());
+			mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(returnTrans.getFirst(),
+					returnTrans.getSecond(), transformedTransition);
+		}
+//		rtrTransitions.forEach(
+//				a -> mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(a.getFirst(), a.getSecond(), a.getThird()));
 	}
 
 	/**

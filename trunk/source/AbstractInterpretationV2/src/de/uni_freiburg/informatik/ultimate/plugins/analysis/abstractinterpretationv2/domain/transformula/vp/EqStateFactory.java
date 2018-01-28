@@ -112,12 +112,14 @@ public class EqStateFactory {
 	}
 
 	public EqPredicate stateToPredicate(final EqState state) {
+		// TODO: what procedures does the predicate need?
 		return new EqPredicate(
 				getEqConstraintFactory().getDisjunctiveConstraint(Collections.singleton(state.getConstraint())),
 				state.getConstraint().getVariables(getSymbolTable()),
 				null,
 				getSymbolTable(),
-				getManagedScript()); // TODO: what procedures does the predicate need?
+				getManagedScript(),
+				mEqNodeAndFunctionFactory);
 	}
 
 	public EqPredicate statesToPredicate(final List<EqState> states) {
@@ -129,18 +131,20 @@ public class EqStateFactory {
 			constraints.add(state.getConstraint());
 		}
 
+		// TODO: what procedures does the predicate need?
 		return new EqPredicate(
 				getEqConstraintFactory().getDisjunctiveConstraint(constraints),
 				variables,
 				null,
 				getSymbolTable(),
-				getManagedScript()); // TODO: what procedures does the predicate need?
+				getManagedScript(),
+				mEqNodeAndFunctionFactory);
 	}
 
 	public EqPredicate termToPredicate(final Term spPrecise,
 			final IPredicate postConstraint) {
 		return new EqPredicate(spPrecise, postConstraint.getVars(), postConstraint.getProcedures(), mSymbolTable,
-				mMgdScript);
+				mMgdScript, mEqNodeAndFunctionFactory);
 
 	}
 

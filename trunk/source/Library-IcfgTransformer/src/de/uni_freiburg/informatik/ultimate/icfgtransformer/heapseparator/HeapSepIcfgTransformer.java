@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.CongruenceClosureSmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
@@ -25,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
@@ -176,6 +178,21 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			}
 			mManagedScript.unlock(this);
 			equalityProvider.announceAdditionalLiterals(freezeVarTofreezeVarLit.values());
+			if (HeapSepSettings.ASSERT_FREEZE_VAR_LIT_DISEQUALITIES_INTO_SCRIPT) {
+				mManagedScript.lock(this);
+
+				final Set<Term> literalTerms = new HashSet<>();
+				literalTerms.addAll(freezeVarTofreezeVarLit.values().stream()
+						.map(pvoc -> pvoc.getTerm())
+						.collect(Collectors.toList()));
+				literalTerms.addAll(sifit.getAllConstantTerms());
+
+				final Term allLiteralDisequalities = SmtUtils.and(mManagedScript.getScript(),
+						CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(
+								mManagedScript.getScript(), literalTerms));
+				mManagedScript.assertTerm(this, allLiteralDisequalities);
+				mManagedScript.unlock(this);
+			}
 
 			/*
 			 * Add initialization code for each of the newly introduced freeze variables.
@@ -392,8 +409,9 @@ class PartitionManager {
 					 */
 					continue;
 				}
-				final Term selectIndexNormalized =
-						selectInfo.getEdgeInfo().getProgramVarOrConstForTerm(selectIndex.get(dim)).getTerm();
+				final Term selectIndexNormalized = selectInfo.getNormalizedArrayIndex(dim);
+//					VPDomainHelpers.normalizeArrayIndex(selectIndex, selectInfo.getEdgeInfo(), script)
+//						selectInfo.getEdgeInfo().getNormalizedIndexTerm(dim);
 				if (eps.areUnequal(selectIndexNormalized, freezeVar.getTerm())) {
 					// nothing to do
 				} else {
@@ -576,4 +594,16 @@ class PartitionManager {
 		}
 		return mSelectInfoToDimensionToLocationBlock.get(si, dim);
 	}
+}
+
+class HeapSepSettings {
+	/**
+	 *
+	 * not clear:
+	 *  <li> how much of a slowdown this causes
+	 *  <li> if it is only necessary for assertions or not
+	 */
+	public static final boolean ASSUME_FREEZE_VAR_LIT_DISEQUALITIES_AT_INIT_EDGES = false;
+
+	public static final boolean ASSERT_FREEZE_VAR_LIT_DISEQUALITIES_INTO_SCRIPT = true;
 }

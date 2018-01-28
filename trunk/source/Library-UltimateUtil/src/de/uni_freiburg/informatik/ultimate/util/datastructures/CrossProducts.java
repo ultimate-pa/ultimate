@@ -228,6 +228,14 @@ public final class CrossProducts {
 	}
 
 
+	/**
+	 *
+	 * @param set
+	 * @param returnSymmetricPairs
+	 * @param pairSelector
+	 * 			we add a pair to our cross product only if test evaluates to true on it
+	 * @return
+	 */
 	public static <E> HashRelation<E, E> binarySelectiveCrossProduct(final Collection<E> set,
 			final boolean returnSymmetricPairs, final BiPredicate<E, E> pairSelector) {
 		final HashRelation<E, E> result = new HashRelation<>();

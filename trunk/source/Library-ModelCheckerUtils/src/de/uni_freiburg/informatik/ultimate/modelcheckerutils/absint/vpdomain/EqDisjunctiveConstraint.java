@@ -280,4 +280,12 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 			disjunct.freezeIfNecessary();
 		}
 	}
+
+	public Set<NODE> getAllLiteralNodes() {
+		final Set<NODE> result = new HashSet<>();
+		for (final EqConstraint<NODE> c : mConstraints) {
+			result.addAll(c.getAllLiteralNodes());
+		}
+		return result;
+	}
 }
