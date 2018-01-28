@@ -199,4 +199,27 @@ class NoStoreIndexInfo extends StoreIndexInfo {
 		super(null, null);
 	}
 
+	@Override
+	public int hashCode() {
+		return 0;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "NoStoreIndexInfo";
+	}
 }

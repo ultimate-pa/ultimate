@@ -418,11 +418,7 @@ class PartitionManager {
 				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, nsii);
 				continue;
 			}
-//			} else if (mayEqualStoreIndexInfos.size() <= 1) {
-//				// nothing to do
-//				final StoreIndexInfo sample = mayEqualStoreIndexInfos.iterator().next();
-//				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, i, sample);
-//			} else {
+
 			final StoreIndexInfo sample = mayEqualStoreIndexInfos.iterator().next();
 
 			mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, sample);
@@ -495,6 +491,7 @@ class PartitionManager {
 			mSelectInfoToDimensionToLocationBlock.put(selectInfo, dim, locationBlock);
 			mLogger.debug("adding LocationBlock " + locationBlock);
 			mLogger.debug("\t at dimension " + dim + " for " + selectInfo);
+			mLogger.debug("\t write locations: " + locationBlock.getLocations());
 
 		}
 		mIsFinished = true;
@@ -508,6 +505,14 @@ class PartitionManager {
 						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size());
 				mLogger.info("\t # location blocks :" +
 						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses().size());
+
+				mLogger.debug("\t location block contents:");
+				if (mLogger.isDebugEnabled()) {
+					for (final Set<StoreIndexInfo> eqc
+							: mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses()) {
+						mLogger.debug("\t\t " + eqc);
+					}
+				}
 			}
 		}
 

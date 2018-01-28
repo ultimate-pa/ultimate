@@ -46,4 +46,44 @@ public class SelectInfo {
 	public ArrayCellAccess getArrayCellAccess() {
 		return mArrayCellAccess;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mArrayCellAccess == null) ? 0 : mArrayCellAccess.hashCode());
+		result = prime * result + ((mEdgeInfo == null) ? 0 : mEdgeInfo.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final SelectInfo other = (SelectInfo) obj;
+		if (mArrayCellAccess == null) {
+			if (other.mArrayCellAccess != null) {
+				return false;
+			}
+		} else if (!mArrayCellAccess.equals(other.mArrayCellAccess)) {
+			return false;
+		}
+		if (mEdgeInfo == null) {
+			if (other.mEdgeInfo != null) {
+				return false;
+			}
+		} else if (!mEdgeInfo.equals(other.mEdgeInfo)) {
+			return false;
+		}
+		return true;
+	}
+
+
 }

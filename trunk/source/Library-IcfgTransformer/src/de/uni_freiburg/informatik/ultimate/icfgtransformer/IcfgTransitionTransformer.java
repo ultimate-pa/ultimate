@@ -165,6 +165,7 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 	private void log(final IcfgEdge oldTransition, final IcfgEdge newTransition) {
 		mLogger.debug("transformed oldTransition " + oldTransition);
 		mLogger.debug("\t  to : " + newTransition);
+		mLogger.debug("");
 	}
 
 
