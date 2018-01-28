@@ -19,6 +19,11 @@ int main() {
   int *p = malloc(sizeof(int));
   int *q = malloc(sizeof(int));
 
+  // initialize memory at p, q
+  *p = 0;
+  *q = 0;
+
+
   int *r = q;
   int z = *r;
   r = nondet();

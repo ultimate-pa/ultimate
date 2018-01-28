@@ -13,7 +13,7 @@ int main() {
   int x = *p;
   int y = *q;
   int z = *r;
-  int i = *r;
+  int i = *s;
 
   free(p);
   free(q);
