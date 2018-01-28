@@ -83,9 +83,13 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			printInitialStates(mNwa.getInitialStates());
 			printFinalStates(mNwa.getStates());
 			printCallTransitions(mNwa.getStates());
+			printTransitionListSeparator();
 			printInternalTransitions(mNwa.getStates());
+			printTransitionListSeparator();
 			printReturnTransitions(mNwa.getStates());
+			printTransitionListSeparator();
 			printEpsilonTransitions(mNwa.getStates());
+			printLastTransitionLineSeparator();
 			printAutomatonSuffix();
 		} else {
 			final boolean isFiniteAutomaton = mCallAlphabet.isEmpty() && mReturnAlphabet.isEmpty();
@@ -99,6 +103,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				printInitialStates(mNwa.getInitialStates());
 				printFinalStates(mNwa.getStates());
 				printTransitionsOfFiniteAutomaton(mNwa.getStates());
+				printLastTransitionLineSeparator();
 				printAutomatonSuffix();
 			} else {
 				// automata script format for NestedWordAutomaton
@@ -110,8 +115,11 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				printInitialStates(mNwa.getInitialStates());
 				printFinalStates(mNwa.getStates());
 				printCallTransitions(mNwa.getStates());
+				printTransitionListSeparator();
 				printInternalTransitions(mNwa.getStates());
+				printTransitionListSeparator();
 				printReturnTransitions(mNwa.getStates());
+				printLastTransitionLineSeparator();
 				printAutomatonSuffix();
 			}
 		}
@@ -136,10 +144,6 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	 * @return new states
 	 */
 	protected abstract Map<STATE, String> getStateMapping(final Collection<STATE> states);
-
-	private void printLastTransitionSuffix() {
-		println("\t}");
-	}
 
 	private void printAlphabets() {
 		printCollectionPrefix("callAlphabet");
@@ -198,7 +202,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				printOneTransitionSuffix();
 			}
 		}
-		printLastTransitionSuffix();
+		printTransitionsSuffix();
 	}
 
 	private void printCallTransitions(final Collection<STATE> allStates) {
@@ -248,7 +252,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				printOneTransitionSuffix();
 			}
 		}
-		printLastTransitionSuffix();
+		printTransitionsSuffix();
 	}
 	
 	private void printEpsilonTransitions(final Collection<STATE> allStates) {
@@ -262,6 +266,6 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				printOneTransitionSuffix();
 			}
 		}
-		printLastTransitionSuffix();
+		printTransitionsSuffix();
 	}
 }

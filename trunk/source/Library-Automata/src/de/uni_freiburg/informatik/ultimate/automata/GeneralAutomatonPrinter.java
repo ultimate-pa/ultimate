@@ -129,6 +129,15 @@ public abstract class GeneralAutomatonPrinter {
 	}
 
 	protected final void printTransitionsSuffix() {
-		println("\t},");
+		print("\t}");
 	}
+	
+	protected final void printTransitionListSeparator() {
+		println(",");
+	}
+	
+	protected final void printLastTransitionLineSeparator() {
+		println("");
+	}
+
 }
