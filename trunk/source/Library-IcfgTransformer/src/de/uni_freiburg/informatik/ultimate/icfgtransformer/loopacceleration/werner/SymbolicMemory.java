@@ -69,6 +69,9 @@ public class SymbolicMemory {
 	 *            A {@link ManagedScript} instance that can be used to perform
 	 *            SMT operations.
 	 * 
+	 * @param services
+	 *            an {@link IUltimateServiceProvider}
+	 * 
 	 * @param logger
 	 *            A {@link ILogger} instance that is used for debug logging.
 	 * 
@@ -79,8 +82,8 @@ public class SymbolicMemory {
 	 *            {@link TermVariable} to an {@link IProgramVar} for changing in
 	 *            the memory.
 	 */
-	public SymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services,
-			final TransFormula tf, final IIcfgSymbolTable oldSymbolTable) {
+	public SymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services, final TransFormula tf,
+			final IIcfgSymbolTable oldSymbolTable) {
 
 		mScript = script;
 		mServices = services;
@@ -113,6 +116,10 @@ public class SymbolicMemory {
 			final Term t = entry.getValue();
 			final Map<Term, Term> substitution = new HashMap<>();
 
+			if (t instanceof TermVariable) {
+				int i = 1;
+			}
+			
 			if (t instanceof TermVariable && mMemoryMapping.containsKey(entry.getKey())) {
 				substitution.put(t, mMemoryMapping.get(entry.getKey()));
 			}
@@ -121,10 +128,11 @@ public class SymbolicMemory {
 				mMemoryMapping.put(entry.getKey(), entry.getValue());
 				continue;
 			}
+			
 
 			if (t instanceof ConstantTerm) {
 				substitution.put(mMemoryMapping.get(entry.getKey()), t);
-			} else {
+			} else if (substitution.isEmpty()) {
 				final ApplicationTerm appTerm = (ApplicationTerm) t;
 				substitution.putAll(termUnravel(appTerm));
 			}
@@ -141,7 +149,7 @@ public class SymbolicMemory {
 	 * 
 	 * @param tf
 	 *            {@link TransFormula}
-	 * @return
+	 * @return 	a symbolic memory compatible {@link TransFormula}
 	 */
 	public UnmodifiableTransFormula updateCondition(final UnmodifiableTransFormula tf) {
 

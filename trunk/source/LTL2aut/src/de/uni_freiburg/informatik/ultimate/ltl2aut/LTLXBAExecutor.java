@@ -53,17 +53,17 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  */
 
 public class LTLXBAExecutor {
-	
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
-	
+
 	public LTLXBAExecutor(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-	
+
 	/**
 	 * Returns the AST of the Promela never claim description of the Büchi automaton returned by the ltl2büchi tool.
 	 *
@@ -85,7 +85,7 @@ public class LTLXBAExecutor {
 			throw ex;
 		}
 	}
-	
+
 	/**
 	 * Returns a Büchi automaton for the ltl formula as a promela never claim.
 	 *
@@ -97,12 +97,12 @@ public class LTLXBAExecutor {
 	 */
 	private String execLTLXBA(final String ltlFormula) throws IOException, InterruptedException {
 		final String[] command = getCommand(ltlFormula);
-		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices, mStorage, mLogger);
+		final MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices, mStorage);
 		final String rtr = convertStreamToString(process.getInputStream());
 		process.waitfor();
 		return rtr;
 	}
-	
+
 	private static String convertStreamToString(final InputStream is) {
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 		final StringBuilder out = new StringBuilder();
@@ -116,7 +116,7 @@ public class LTLXBAExecutor {
 		}
 		return out.toString();
 	}
-	
+
 	private String[] getCommand(String ltlFormula) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		ltlFormula = prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula);
@@ -129,5 +129,5 @@ public class LTLXBAExecutor {
 		rtr.add(ltlFormula);
 		return rtr.toArray(new String[rtr.size()]);
 	}
-	
+
 }

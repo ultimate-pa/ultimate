@@ -1,10 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
-public class DummySemanticReducerFactory<STATE> implements ISemanticReducerFactory<STATE> {
+import java.util.List;
+import java.util.Set;
+
+public class DummySemanticReducerFactory<STATE, LETTER> implements ISemanticReducerFactory<STATE, LETTER> {
 
 	@Override
 	public Iterable<STATE> filter(final Iterable<STATE> states) {
 		return states;
+	}
+
+	@Override
+	public Iterable<STATE> getOptimalDestination(final Iterable<STATE> states, final List<STATE> src,
+			final LETTER letter, final Iterable<STATE> dest) {
+		return dest;
 	}
 
 }

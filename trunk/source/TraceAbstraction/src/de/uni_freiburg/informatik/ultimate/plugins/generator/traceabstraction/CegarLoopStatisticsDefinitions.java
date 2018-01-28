@@ -33,73 +33,78 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
-	Result(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, AStatisticsType.sDataBeforeKey),
+	Result(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, StatisticsType.DATA_BEFORE_KEY),
 
-	OverallTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	OverallTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	OverallIterations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	OverallIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	TraceHistogramMax(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sDataBeforeKey),
+	TraceHistogramMax(Integer.class, StatisticsType.INTEGER_MAX, StatisticsType.DATA_BEFORE_KEY),
 
-	AutomataDifference(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	AutomataDifference(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	DeadEndRemovalTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	DeadEndRemovalTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	HoareAnnotationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	HoareAnnotationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 
-	PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	PredicateUnifierStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 
-	BasicInterpolantAutomatonTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	BasicInterpolantAutomatonTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
 	BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+			StatisticsType.KEY_BEFORE_DATA),
 
-	traceCheckStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	traceCheckStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 
 	InterpolantConsolidationStatistics(StatisticsData.class,
 
-			AStatisticsType.sStatisticsDataAggregation, AStatisticsType.sKeyBeforeData),
+			StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 	PathInvariantsStatistics(StatisticsData.class,
 
-			AStatisticsType.sStatisticsDataAggregation, AStatisticsType.sKeyBeforeData),
+			StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
 	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.DEFAULT_AGGREGATION,
-			AStatisticsType.sDataBeforeKey),
+			StatisticsType.DATA_BEFORE_KEY),
 
-	TotalInterpolationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	TotalInterpolationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 
-	AbstIntTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	AbstIntTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	AbstIntIterations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	AbstIntIterations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	AbstIntStrong(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	AbstIntStrong(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	AbsIntWeakeningRatio(Double.class, AStatisticsType.sDoubleAddition, AStatisticsType.sDataBeforeKey),
+	AbsIntWeakeningRatio(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	AbsIntAvgWeakeningVarsNumRemoved(Double.class, AStatisticsType.sDoubleAddition, AStatisticsType.sDataBeforeKey),
+	AbsIntAvgWeakeningVarsNumRemoved(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	AbsIntAvgWeakenedConjuncts(Double.class, AStatisticsType.sDoubleAddition, AStatisticsType.sDataBeforeKey),
+	AbsIntAvgWeakenedConjuncts(Double.class, StatisticsType.DOUBLE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	AutomataMinimizationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	DUMP_TIME(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	HoareAnnotationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	AutomataMinimizationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 
-	RefinementEngineStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),;
+	HoareAnnotationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
+
+	RefinementEngineStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
+
+	REUSE_STATISTICS(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
@@ -119,7 +124,7 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	@Override
 	public String prettyprint(final Object o) {
-		return mPrettyprinter.apply(name()).apply(o);
+		return mPrettyprinter.apply(CoreUtil.getUpperToCamelCase(name())).apply(o);
 	}
 
 	@Override

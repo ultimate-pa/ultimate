@@ -38,6 +38,7 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -179,7 +180,7 @@ public abstract class ExpressionTranslation {
 			final boolean writeValues = charArray.length < STRING_OVERAPPROXIMATION_THRESHOLD;
 
 			final List<Statement> statements =
-					main.mCHandler.getMemoryHandler().writeStringToHeap(loc, tId, charArray, writeValues);
+					main.mCHandler.getMemoryHandler().writeStringToHeap(loc, tId, charArray, writeValues, node);
 //			main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(statements);
 //			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(tId);
 //			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
@@ -225,13 +226,14 @@ public abstract class ExpressionTranslation {
 	}
 
 	public final Expression constructBinaryBitwiseExpression(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
+			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2,
+			final IASTNode hook) {
 		// TODO: Check that types coincide
 		if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE
 				|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 		}
-		return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2, hook);
 	}
 
 	public final Expression constructUnaryExpression(final ILocation loc, final int nodeOperator, final Expression exp,
@@ -256,7 +258,7 @@ public abstract class ExpressionTranslation {
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
 	public abstract Expression constructBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
-			CPrimitive type1, Expression exp2, CPrimitive type2);
+			CPrimitive type1, Expression exp2, CPrimitive type2, IASTNode hook);
 
 	public abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp,
 			CPrimitive type);
@@ -481,11 +483,11 @@ public abstract class ExpressionTranslation {
 	 * @param expr
 	 * @return
 	 */
-	public BigInteger extractIntegerValue(final RValue rval) {
-		return extractIntegerValue(rval.getValue(), rval.getCType());
+	public BigInteger extractIntegerValue(final RValue rval, final IASTNode hook) {
+		return extractIntegerValue(rval.getValue(), rval.getCType(), hook);
 	}
 
-	public abstract BigInteger extractIntegerValue(Expression expr, CType cType);
+	public abstract BigInteger extractIntegerValue(Expression expr, CType cType, IASTNode hook);
 
 	private CPrimitive determineResultOfIntegerPromotion(final CPrimitive cPrimitive) {
 		final int sizeOfArgument = mTypeSizes.getSize(cPrimitive.getType());
@@ -663,7 +665,8 @@ public abstract class ExpressionTranslation {
 	 * low-1, low-2, ..., 0
 	 * If inputWidth and remainingWith are different the result is always positive.
 	 */
-	public abstract Expression erazeBits(ILocation loc, Expression value, CPrimitive cType, int remainingWith);
+	public abstract Expression erazeBits(ILocation loc, Expression value, CPrimitive cType, int remainingWith,
+			IASTNode hook);
 
 	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
 

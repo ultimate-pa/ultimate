@@ -30,14 +30,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -47,8 +45,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequence;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepTransFormulaTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.StoreIndexExposer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration;
@@ -69,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.DefaultEqualityAnalysisProvider;
@@ -192,37 +190,45 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyHeapSeparator(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac,
 			final IUltimateServiceProvider services,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
-		final List<ITransformulaTransformer> transformers = new ArrayList<>();
 
-		final StoreIndexExposer sie = new StoreIndexExposer(icfg.getCfgSmtToolkit());
-		transformers.add(sie);
+		/**
+		 * name of the valid array, copied from class "SFO" in C to Boogie translation
+		 */
+		final String VALID = "#valid";
 
-		final HeapSepTransFormulaTransformer hstftf =
-				new HeapSepTransFormulaTransformer(icfg.getCfgSmtToolkit(), mServices, equalityProvider);
-		transformers.add(hstftf);
+		IProgramNonOldVar validArray = null;
+		for (final IProgramNonOldVar global : icfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
+			if (global.getGloballyUniqueId().equals(VALID)) {
+				validArray = global;
+				break;
+			}
+		}
+		if (validArray == null) {
+			mLogger.warn("HeapSeparator: input icfg has no '#valid' array -- returning unchanged Icfg!");
+			return new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass,
+					icfg.getIdentifier() + "left_unchanged_by_heapseparator",
+					new ExampleLoopAccelerationTransformulaTransformer(
+							mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
+							icfg.getCfgSmtToolkit().getSymbolTable(), fac)).getResult();
+		}
 
-		final IcfgTransformerSequence<INLOC, OUTLOC> transformerSequence = new IcfgTransformerSequence<>(icfg, locFac,
-				(ILocationFactory<OUTLOC, OUTLOC>) locFac, backtranslationTracker, outlocClass,
-				icfg.getIdentifier() + "HeapSeparatorResult", transformers);
+		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
+				new HeapSepIcfgTransformer<>(mLogger, icfg, locFac, fac, backtranslationTracker, outlocClass,
+						"heap_separated_icfg", equalityProvider, validArray);
 
-		// final IcfgTransformer<INLOC, OUTLOC> icfgTransformer =
-		// new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "IcfgWithHeapSeparation",
-		// tftf);
-
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
-				"HeapSeparationSummary", hstftf.getHeapSeparationSummary(), Severity.INFO));
+//		mServices.getResultService().reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
+//				"HeapSeparationSummary", icfgTransformer.getHeapSeparationSummary(), Severity.INFO));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics", hstftf.getStatistics()));
+				new StatisticsResult<>(Activator.PLUGIN_ID, "HeapSeparatorStatistics",
+						icfgTransformer.getStatistics()));
 
-		// return icfgTransformer.getResult();
-		return transformerSequence.getResult();
+		return icfgTransformer.getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationAhmed(

@@ -56,6 +56,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
+	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
+			"Enhance during reuse of Floyd-Hoare automata";
 	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
@@ -76,6 +78,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
 	public static final String LABEL_AUTOMATAFORMAT = "Output format of dumped automata";
 	public static final String LABEL_DUMPPATH = "Dump automata to the following directory";
+	public static final String LABEL_DUMP_ONLY_REUSE = "Dump only reuse-automata";
 	public static final String LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT = "Interpolant automaton enhancement";
 	public static final String LABEL_HOARE_TRIPLE_CHECKS = "Hoare triple checks";
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
@@ -124,7 +127,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * default values for the different preferences
 	 */
 	public static final boolean DEF_INTERPROCEDUTAL = true;
-	public static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
+	private static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
+	private static final FloydHoareAutomataReuseEnhancement DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
+			FloydHoareAutomataReuseEnhancement.NONE;
 	public static final int DEF_ITERATIONS = 1_000_000;
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1_000_000;
@@ -164,6 +169,25 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private static final Boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
+	private static final boolean DEF_ONLY_REUSE = false;
+
+	private static final String DESC_DUMP_ONLY_REUSE =
+			"When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it "
+					+ "exists s.t. it can be reused by later verification runs.";
+	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE =
+			"Try to re-use interpolant automata from input files and/or previous runs. " + FloydHoareAutomataReuse.NONE
+					+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
+					+ " input and the containing NWAs will be treated as additional interpolant automata. When "
+					+ LABEL_ALL_ERRORS_AT_ONCE + " is false, this setting will additionally try to re-use the automata "
+					+ "from previous runs. " + FloydHoareAutomataReuse.EAGER
+					+ " will compute the difference with the initial abstraction and "
+					+ "all additional interpolant automatas before the first iteration of a run. "
+					+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
+					+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
+					+ "If this is the case, this automaton is substracted from the current abstraction and removed from "
+					+ "the set of reusable interpolant automata.";
+	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
+			"Specifies how to compute successors on-demand for re-use interpolant automata.";
 
 	/**
 	 * Constructor.
@@ -179,7 +203,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
-						PreferenceType.Combo, FloydHoareAutomataReuse.values()),
+						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
+				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
+						DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT, DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
+						PreferenceType.Combo, FloydHoareAutomataReuseEnhancement.values()),
 
 				new UltimatePreferenceItem<>(LABEL_ITERATIONS, DEF_ITERATIONS, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
@@ -226,6 +253,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo,
 						Format.values()),
 				new UltimatePreferenceItem<>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_DUMP_ONLY_REUSE, DEF_ONLY_REUSE, DESC_DUMP_ONLY_REUSE,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo,
 						InterpolantAutomatonEnhancement.values()),
@@ -413,6 +442,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		LAZY_TAIPAN,
 		/**
+		 * Taipan with abstract interpretation only (no SMT solver)
+		 */
+		TOOTHLESS_TAIPAN,
+		/**
 		 * Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
 		 */
 		PENGUIN,
@@ -461,7 +494,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	/**
 	 * Reuse Floyd-Hoare that were built for one error location for succeeding error locations.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 *
 	 */
@@ -479,5 +512,35 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Not yet defined...
 		 */
 		LAZY_IN_ORDER,
+	}
+
+	/**
+	 * How should on-demand enhancement of reuse-automata behave? Has only an impact if {@link FloydHoareAutomataReuse}
+	 * is not {@link FloydHoareAutomataReuse#NONE}.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum FloydHoareAutomataReuseEnhancement {
+		/**
+		 * Do not use any enhancement. Usually means none of the automata can be used during verifiation.
+		 */
+		NONE,
+		/**
+		 * Try to enhance the reuse automata "as usual", i.e., compute on-demand successors for all letters of the
+		 * alphabet and with solver support. May be more expensive than other options, but guarantees best re-use.
+		 */
+		AS_USUAL,
+		/**
+		 * Only compute on-demand successors for letters that are in the alphabet of the current program but are not in
+		 * the alphabet of the re-use automaton.
+		 */
+		ONLY_NEW_LETTERS,
+		/**
+		 * Compute on-demand successors for all letters, but do not try to use an SMT solver for Hoare triple checks
+		 * involving letters that are in the alphabet of the current program but are not in the alphabet of the re-use
+		 * automaton.
+		 */
+		ONLY_NEW_LETTERS_SOLVER,
 	}
 }

@@ -28,21 +28,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public enum RefinementEngineStatisticsDefinitions implements IStatisticsElement {
 	
 	
-	TraceCheckStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	TraceCheckStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 	
-	InvariantSynthesisStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	InvariantSynthesisStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 	
-	InterpolantConsolidationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
-			AStatisticsType.sKeyBeforeData),
+	InterpolantConsolidationStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
+			StatisticsType.KEY_BEFORE_DATA),
 	
 	;
 	

@@ -154,8 +154,10 @@ public class CfgBuilder {
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
-		final boolean simplePartialSkolemization = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
-		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, bitvectorInsteadInt, mServices, simplePartialSkolemization);
+		final boolean simplePartialSkolemization =
+				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
+		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
+				simplePartialSkolemization);
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
@@ -168,31 +170,25 @@ public class CfgBuilder {
 	 */
 	private Script constructAndInitializeSolver(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final String filename) {
-		
+
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		
-		final SolverMode solverMode = prefs
-				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
-		final boolean fakeNonIncrementalScript = prefs
-				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
+		final SolverMode solverMode = prefs.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
-		final boolean dumpSmtScriptToFile = prefs
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		final String pathOfDumpedScript =
-				prefs.getString(RcfgPreferenceInitializer.LABEL_Path);
+		final boolean fakeNonIncrementalScript =
+				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
 
-		final String commandExternalSolver = prefs
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+		final boolean dumpSmtScriptToFile = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+		final String pathOfDumpedScript = prefs.getString(RcfgPreferenceInitializer.LABEL_Path);
 
-		final boolean dumpUsatCoreTrackBenchmark = prefs
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
+		final String commandExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 
-		final boolean dumpMainTrackBenchmark = prefs
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+		final boolean dumpUsatCoreTrackBenchmark =
+				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
 
-		final String logicForExternalSolver = prefs
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		final boolean dumpMainTrackBenchmark = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+
+		final String logicForExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
@@ -387,6 +383,8 @@ public class CfgBuilder {
 		 */
 		Set<CodeBlock> mEdges;
 
+		UniqueNameCache mNameCache;
+
 		/**
 		 * Builds the control flow graph of a single procedure according to a given implementation.
 		 *
@@ -398,6 +396,7 @@ public class CfgBuilder {
 			mEdges = new HashSet<>();
 			mGotoEdges = new LinkedList<>();
 			mLabels = new HashSet<>();
+			mNameCache = new UniqueNameCache("'");
 
 			final Statement[] statements =
 					mBoogieDeclarations.getProcImplementation().get(procName).getBody().getBlock();
@@ -823,15 +822,8 @@ public class CfgBuilder {
 			if (location.isLoop()) {
 				unprimedName += "loopEntry";
 			}
-			final String result = getUniqueName(unprimedName);
+			final String result = mNameCache.getUniqueName(unprimedName);
 			return result;
-		}
-
-		private String getUniqueName(final String name) {
-			if (mProcLocNodes.containsKey(name)) {
-				return getUniqueName(name + "'");
-			}
-			return name;
 		}
 
 		/**

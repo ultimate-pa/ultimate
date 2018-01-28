@@ -85,7 +85,7 @@ public class ArrayHandler {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
-		subscript = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc, node);
+		subscript = subscript.switchToRValueIfNecessary(main, loc, node);
 		subscript.rexBoolToIntIfNecessary(loc, ((CHandler) main.mCHandler).getExpressionTranslation());
 		assert subscript.mLrVal.getCType().isIntegerType();
 
@@ -95,13 +95,13 @@ public class ArrayHandler {
 		final CType cTypeLeft = leftExpRes.mLrVal.getCType();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
-			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc, node);
+			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, loc, node);
 			assert cTypeLeft.equals(leftExpRes.mLrVal.getCType());
 			final Expression oldAddress = leftExpRes.mLrVal.getValue();
 			final RValue integer = (RValue) subscript.mLrVal;
 			final CType valueType = ((CPointer) cTypeLeft).pointsToType;
 			final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(main,
-					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType);
+					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType, node);
 			final Expression newAddress = newAddress_ER.mLrVal.getValue();
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 			final HeapLValue lValue = new HeapLValue(newAddress, valueType, false, null);
@@ -134,7 +134,7 @@ public class ArrayHandler {
 				final Expression oldAddress = ((HeapLValue) leftExpRes.mLrVal).getAddress();
 				final RValue index = (RValue) subscript.mLrVal;
 				final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(
-						main, IASTBinaryExpression.op_plus, loc, oldAddress, index, resultCType);
+						main, IASTBinaryExpression.op_plus, loc, oldAddress, index, resultCType, node);
 				final Expression newAddress = newAddress_ER.mLrVal.getValue();
 				final HeapLValue lValue = new HeapLValue(newAddress, resultCType, false, null);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);

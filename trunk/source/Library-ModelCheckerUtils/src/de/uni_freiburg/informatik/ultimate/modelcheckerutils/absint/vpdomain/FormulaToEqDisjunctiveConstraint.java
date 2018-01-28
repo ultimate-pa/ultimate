@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.Collections;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -16,12 +18,14 @@ public class FormulaToEqDisjunctiveConstraint {
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 
-	public FormulaToEqDisjunctiveConstraint(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
+	public FormulaToEqDisjunctiveConstraint(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final WeqSettings settings) {
 		mServices = services;
 		mMgdScript = mgdScript;
 
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(mServices, mMgdScript);
-		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, services, mMgdScript);
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(mServices, mMgdScript, Collections.emptySet());
+		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, services, mMgdScript, settings,
+				false);
 	}
 
 	/**

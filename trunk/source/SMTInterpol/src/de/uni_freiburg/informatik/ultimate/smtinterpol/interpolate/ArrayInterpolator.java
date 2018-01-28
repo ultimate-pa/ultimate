@@ -311,7 +311,7 @@ public class ArrayInterpolator {
 			color = 0;
 			while (!mDiseqInfo.isALocal(color)) {
 				if (mDiseqInfo.isMixed(color)) {
-					final Occurrence recursionInfo = mInterpolator.getOccurrence(mRecursionSide[color], null);
+					final Occurrence recursionInfo = mInterpolator.getOccurrence(mRecursionSide[color]);
 					if (recursionInfo.isALocal(color)) {
 						color++;
 					} else {
@@ -342,14 +342,14 @@ public class ArrayInterpolator {
 			// Check if the weakpath index is shared
 			final Term index = mStorePath.getIndex();
 			for (int color = 0; color < mNumInterpolants; color++) {
-				if (mInterpolator.getOccurrence(index, null).isAB(color)) {
+				if (mInterpolator.getOccurrence(index).isAB(color)) {
 					sharedIndices[color] = index;
 				}
 			}
 		} else {
 			for (int color = 0; color < mNumInterpolants; color++) {
 				// Check if the weakpath index is shared
-				if (mInterpolator.getOccurrence(mStorePath.getIndex(), null).isAB(color)) {
+				if (mInterpolator.getOccurrence(mStorePath.getIndex()).isAB(color)) {
 					sharedIndices[color] = mStorePath.getIndex();
 				} else {
 					final LitInfo info = mInterpolator.getLiteralInfo(mIndexEquality);
@@ -362,7 +362,7 @@ public class ArrayInterpolator {
 						Term otherIndex = termInfo.getEquality().getParameters()[0];
 						otherIndex = otherIndex == mStorePath.getIndex() ? termInfo.getEquality().getParameters()[1]
 								: otherIndex;
-						if (mInterpolator.getOccurrence(otherIndex, null).isAB(color)) {
+						if (mInterpolator.getOccurrence(otherIndex).isAB(color)) {
 							sharedIndices[color] = otherIndex;
 						}
 					}
@@ -382,7 +382,7 @@ public class ArrayInterpolator {
 	 */
 	private Term[] findSharedTerms(final Term term) {
 		Term[] sharedTerms = new Term[mNumInterpolants];
-		final Occurrence termOccur = mInterpolator.getOccurrence(term, null);
+		final Occurrence termOccur = mInterpolator.getOccurrence(term);
 		// First check for all partitions if the term itself is shared
 		int sharedTermCounter = 0;
 		for (int color = 0; color < mNumInterpolants; color++) {
@@ -407,7 +407,7 @@ public class ArrayInterpolator {
 						sharedTerms[color] = eqInfo.getMixedVar();
 					} else if (sharedTerms[color] == null) { // term itself wasn't shared
 						final Term otherTerm = eq.getFirst().equals(term) ? eq.getSecond() : eq.getFirst();
-						final Occurrence otherOccur = mInterpolator.getOccurrence(otherTerm, null);
+						final Occurrence otherOccur = mInterpolator.getOccurrence(otherTerm);
 						if (otherOccur.isAB(color)) {
 							sharedTerms[color] = otherTerm;
 						}
@@ -427,16 +427,18 @@ public class ArrayInterpolator {
 		final LitInfo indexEqInfo = mInterpolator.getLiteralInfo(mIndexEquality);
 		final InterpolatorLiteralTermInfo diseqInfo = mInterpolator.getLiteralTermInfo(mDiseq);
 		final ApplicationTerm mainDiseqApp = diseqInfo.getEquality();
-		final Term otherSelect = getIndexFromSelect(mainDiseqApp.getParameters()[0]).equals(mStorePath.getIndex())
-				? mainDiseqApp.getParameters()[1]
-				: mainDiseqApp.getParameters()[0];
-		final Occurrence otherSelectOccur = mInterpolator.getOccurrence(otherSelect, null);
+		final Term otherIndex = getIndexFromSelect(mainDiseqApp.getParameters()[0]).equals(mStorePath.getIndex())
+				? getIndexFromSelect(mainDiseqApp.getParameters()[1])
+				: getIndexFromSelect(mainDiseqApp.getParameters()[0]);
+		final Occurrence otherIndexOccur = mInterpolator.getOccurrence(otherIndex);
 		for (int color = 0; color < mNumInterpolants; color++) {
 			if (mainPath.mSharedIndex[color] != null && mainPath.mSharedIndex[color] == mStorePath.getIndex()) {
-				if (indexEqInfo.isALocal(color) && otherSelectOccur.isBorShared(color)) {
-					mInterpolants[color].add(mInterpolator.unquote(mIndexEquality));
-				} else if (indexEqInfo.isBLocal(color) && mDiseqInfo.isALocal(color)) {
+				if (mDiseqInfo.isALocal(color) && indexEqInfo.isBLocal(color)) {
 					mInterpolants[color].add(mTheory.not(mInterpolator.unquote(mIndexEquality)));
+				} else if (!mDiseqInfo.isALocal(color) && indexEqInfo.isALocal(color)) {
+					if (otherIndexOccur.isAB(color)) {
+						mInterpolants[color].add(mInterpolator.unquote(mIndexEquality));
+					}
 				}
 			}
 		}
@@ -696,8 +698,8 @@ public class ArrayInterpolator {
 				headTerm = mPath[0];
 				tailTerm = mPath[mPath.length - 1];
 			}
-			final Occurrence headOccur = mInterpolator.getOccurrence(headTerm, null);
-			final Occurrence tailOccur = mInterpolator.getOccurrence(tailTerm, null);
+			final Occurrence headOccur = mInterpolator.getOccurrence(headTerm);
+			final Occurrence tailOccur = mInterpolator.getOccurrence(tailTerm);
 
 			mTail.closeAPath(mHead, null, headOccur);
 			mTail.openAPath(mHead, null, headOccur);
@@ -734,7 +736,7 @@ public class ArrayInterpolator {
 							// If the equality is mixed in some partition, we open or close the path at the mixed
 							// variable, storing the mixed equality as boundary term.
 							if (stepInfo.getMixedVar() != null) {
-								final Occurrence rightOcc = mInterpolator.getOccurrence(rightSelect, null);
+								final Occurrence rightOcc = mInterpolator.getOccurrence(rightSelect);
 								boundaryTerm = selectEq;
 								mTail.closeAPath(mHead, boundaryTerm, rightOcc);
 								mTail.openAPath(mHead, boundaryTerm, rightOcc);
@@ -756,7 +758,7 @@ public class ArrayInterpolator {
 						arrayTerm = left;
 					}
 					assert getArrayFromStore(storeTerm).equals(arrayTerm);
-					final Occurrence stepOcc = mInterpolator.getOccurrence(storeTerm, null);
+					final Occurrence stepOcc = mInterpolator.getOccurrence(storeTerm);
 					final Term storeIndex = getIndexFromStore(storeTerm);
 					final AnnotatedTerm indexDiseq =
 							mDisequalities.get(new SymmetricPair<Term>(storeIndex, mPathIndex));
@@ -781,7 +783,7 @@ public class ArrayInterpolator {
 					mTail.openAPath(mHead, boundaryTerm, stepInfo);
 					// If the equality is mixed in some partition, we open or close the path at the mixed variable.
 					if (stepInfo.getMixedVar() != null) {
-						final Occurrence occ = mInterpolator.getOccurrence(right, null);
+						final Occurrence occ = mInterpolator.getOccurrence(right);
 						boundaryTerm = stepInfo.getMixedVar();
 						mTail.closeAPath(mHead, boundaryTerm, occ);
 						mTail.openAPath(mHead, boundaryTerm, occ);
@@ -819,8 +821,8 @@ public class ArrayInterpolator {
 			// Determine whether to start (and end) with A or B or AB and open A paths accordingly.
 			final Term headArray = mPath[0];
 			final Term tailArray = mPath[mPath.length - 1];
-			final Occurrence headOccur = mInterpolator.getOccurrence(headArray, null);
-			final Occurrence tailOccur = mInterpolator.getOccurrence(tailArray, null);
+			final Occurrence headOccur = mInterpolator.getOccurrence(headArray);
+			final Occurrence tailOccur = mInterpolator.getOccurrence(tailArray);
 
 			mTail.closeAPath(mHead, null, headOccur);
 			mTail.openAPath(mHead, null, headOccur);
@@ -845,7 +847,7 @@ public class ArrayInterpolator {
 					}
 					assert getArrayFromStore(storeTerm).equals(arrayTerm);
 					final Term storeIndex = getIndexFromStore(storeTerm);
-					final Occurrence stepOcc = mInterpolator.getOccurrence(storeTerm, null);
+					final Occurrence stepOcc = mInterpolator.getOccurrence(storeTerm);
 					mTail.closeAPath(mHead, boundaryTerm, stepOcc);
 					mTail.openAPath(mHead, boundaryTerm, stepOcc);
 					mTail.addStoreIndex(mHead, storeIndex);
@@ -856,7 +858,7 @@ public class ArrayInterpolator {
 					mTail.openAPath(mHead, boundaryTerm, stepInfo);
 					// If the equality is mixed in some partition, we open or close the path at the mixed variable.
 					if (stepInfo.getMixedVar() != null) {
-						final Occurrence occ = mInterpolator.getOccurrence(right, null);
+						final Occurrence occ = mInterpolator.getOccurrence(right);
 						boundaryTerm = stepInfo.getMixedVar();
 						mTail.closeAPath(mHead, boundaryTerm, occ);
 						mTail.openAPath(mHead, boundaryTerm, occ);
@@ -892,7 +894,7 @@ public class ArrayInterpolator {
 			// Now we build all subinterpolants
 			for (int i = 0; i < mStores.size(); i++) {
 				final Term index = mStores.get(i);
-				final Occurrence indexInfo = mInterpolator.getOccurrence(index, null);
+				final Occurrence indexInfo = mInterpolator.getOccurrence(index);
 				if (!mIndexPathInfos.containsKey(index)) {
 					WeakPathInfo indexPath = new WeakPathInfo(mIndexPaths.get(index));
 					final Term[] sharedIndex = findSharedTerms(index);
@@ -1416,7 +1418,7 @@ public class ArrayInterpolator {
 				addIndexDiseqAllColors(other, diseqInfo, diseq, diseqInfo);
 				if (diseqInfo.getMixedVar() != null) {
 					// Additionally go up and down with weakpathindexoccur
-					final Occurrence occur = mInterpolator.getOccurrence(mPathIndex, null);
+					final Occurrence occur = mInterpolator.getOccurrence(mPathIndex);
 					addIndexDiseqAllColors(other, occur, diseq, diseqInfo);
 				}
 			}
@@ -1496,7 +1498,7 @@ public class ArrayInterpolator {
 					final LitInfo eqInfo = mInterpolator.getLiteralInfo(indexEq);
 					addSelectIndexEqAllColors(other, eqInfo, indexEq, eqInfo);
 					if (eqInfo.getMixedVar() != null) {
-						final Occurrence occur = mInterpolator.getOccurrence(mPathIndex, null);
+						final Occurrence occur = mInterpolator.getOccurrence(mPathIndex);
 						addSelectIndexEqAllColors(other, occur, indexEq, eqInfo);
 					}
 				}
@@ -1959,7 +1961,7 @@ public class ArrayInterpolator {
 									.or(recPathInterpolantTerms.toArray(new Term[recPathInterpolantTerms.size()]));
 							final Term lastSharedOnIndexPath = this.equals(mHead) ? indexPath.mTail.mLastChange[color]
 									: indexPath.mHead.mLastChange[color];
-							assert !(lastSharedOnIndexPath instanceof ApplicationTerm
+							assert !(lastSharedOnIndexPath instanceof AnnotatedTerm
 									&& mEqualities.containsValue(lastSharedOnIndexPath));
 							rewriteToArray = lastSharedOnIndexPath;
 							rewriteWithElement = mTheory.term("select", rewriteToArray, rewriteAtIndex);
@@ -1971,11 +1973,13 @@ public class ArrayInterpolator {
 						if (this.equals(mHead)) { // The right outer path is the B path
 							final Map<AnnotatedTerm, LitInfo> indexDiseqs = indexPath.mTail.mIndexDiseqs[color];
 							fPiBOrderForRecursion = indexDiseqs == null ? 0 : indexDiseqs.size();
-							fPiB = buildFPiBTerm(color, rewriteAtIndex, indexDiseqs, indexPath.mTail.mIndexEqs[color]);
+							fPiB = indexPath.buildFPiBTerm(color, rewriteAtIndex, indexDiseqs,
+									indexPath.mTail.mIndexEqs[color]);
 						} else { // The left outer path is the B path
 							final Map<AnnotatedTerm, LitInfo> indexDiseqs = indexPath.mHead.mIndexDiseqs[color];
 							fPiBOrderForRecursion = indexDiseqs == null ? 0 : indexDiseqs.size();
-							fPiB = buildFPiBTerm(color, rewriteAtIndex, indexDiseqs, indexPath.mHead.mIndexEqs[color]);
+							fPiB = indexPath.buildFPiBTerm(color, rewriteAtIndex, indexDiseqs,
+									indexPath.mHead.mIndexEqs[color]);
 						}
 						// Insert the rewritten term into the inner interpolant term
 						final Term rewriteRecVar =
@@ -2076,7 +2080,7 @@ public class ArrayInterpolator {
 									.and(recPathInterpolantTerms.toArray(new Term[recPathInterpolantTerms.size()]));
 							final Term lastSharedOnIndexPath = this.equals(mHead) ? indexPath.mTail.mLastChange[color]
 									: indexPath.mHead.mLastChange[color];
-							if (lastSharedOnIndexPath instanceof ApplicationTerm
+							if (lastSharedOnIndexPath instanceof AnnotatedTerm
 									&& mEqualities.containsValue(lastSharedOnIndexPath)) {
 								rewriteToArray = null;
 								// Last change was at a mixed select equality
@@ -2093,7 +2097,7 @@ public class ArrayInterpolator {
 									.and(recPathInterpolantTerms.toArray(new Term[recPathInterpolantTerms.size()]));
 							final Term lastSharedOnIndexPath = this.equals(mHead) ? indexPath.mTail.mLastChange[color]
 									: indexPath.mHead.mLastChange[color];
-							assert !(lastSharedOnIndexPath instanceof ApplicationTerm
+							assert !(lastSharedOnIndexPath instanceof AnnotatedTerm
 									&& mEqualities.containsValue(lastSharedOnIndexPath));
 							rewriteToArray = lastSharedOnIndexPath;
 							rewriteWithElement = mTheory.term("select", rewriteToArray, rewriteAtIndex);
@@ -2105,11 +2109,13 @@ public class ArrayInterpolator {
 						if (this.equals(mHead)) { // The right outer path is the B path
 							final Map<AnnotatedTerm, LitInfo> indexDiseqs = indexPath.mTail.mIndexDiseqs[color];
 							fPiAOrderForRecursion = indexDiseqs == null ? 0 : indexDiseqs.size();
-							fPiA = buildFPiATerm(color, rewriteAtIndex, indexDiseqs, indexPath.mTail.mIndexEqs[color]);
+							fPiA = indexPath.buildFPiATerm(color, rewriteAtIndex, indexDiseqs,
+									indexPath.mTail.mIndexEqs[color]);
 						} else { // The left outer path is the B path
 							final Map<AnnotatedTerm, LitInfo> indexDiseqs = indexPath.mHead.mIndexDiseqs[color];
 							fPiAOrderForRecursion = indexDiseqs == null ? 0 : indexDiseqs.size();
-							fPiA = buildFPiATerm(color, rewriteAtIndex, indexDiseqs, indexPath.mHead.mIndexEqs[color]);
+							fPiA = indexPath.buildFPiATerm(color, rewriteAtIndex, indexDiseqs,
+									indexPath.mHead.mIndexEqs[color]);
 						}
 						// Insert the rewritten term into the inner interpolant term
 						final Term rewriteRecVar =

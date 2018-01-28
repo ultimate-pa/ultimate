@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class TraceCheckStatisticsType extends AStatisticsType<TraceCheckStatisticsDefinitions> {
+public class TraceCheckStatisticsType extends StatisticsType<TraceCheckStatisticsDefinitions> {
 
 	private static TraceCheckStatisticsType INSTANCE = new TraceCheckStatisticsType();
 

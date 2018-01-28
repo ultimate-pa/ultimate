@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -171,6 +172,59 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 			if (!componentsSuccessors.getSuccessors(comp).hasNext()) {
 				res.add(comp);
 			}
+		}
+		return res;
+	}
+	
+	public Collection<COMP> getLeafComponents(final Iterable<NODE> root) {
+		final ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
+		final Set<COMP> res = new HashSet<>();
+		final Stack<COMP> stk = new Stack();
+		for (final NODE r : root) {
+			stk.add(getNodeToComponents().get(r));
+		}
+		final Set<COMP> visited = new HashSet<>();
+	
+		while (!stk.isEmpty()) {
+			final COMP top = stk.pop();
+			boolean hasNext = false;
+			for (final Iterator<COMP> it = componentsSuccessors.getSuccessors(top); it.hasNext(); ) {
+				final COMP nxt = it.next();
+				if (!visited.contains(nxt)) {
+					visited.add(nxt);
+					stk.add(nxt);
+				}
+				hasNext = true;
+			}
+			if (!hasNext) {
+				res.add(top);
+			}
+		}
+		return res;
+	}
+	
+
+	public Collection<NODE> getLeafNodes() {
+		final Set<NODE> res = new HashSet<>();
+		for (final COMP comp : getLeafComponents()) {
+			res.add(comp.getRootNode());
+		}
+		return res;
+	}
+
+	
+	public Collection<NODE> getLeafNodes(final NODE root) {
+		final Set<NODE> res = new HashSet<>();
+		res.add(root);
+		return getLeafNodes(res);
+	}
+
+	
+	public Collection<NODE> getLeafNodes(final Iterable<NODE> root) {
+		final Collection<COMP> comps = getLeafComponents(root);
+		final Set<NODE> res = new HashSet<>();
+		for (final COMP comp : comps) {
+			res.add(comp.getRootNode());
 		}
 		return res;
 	}

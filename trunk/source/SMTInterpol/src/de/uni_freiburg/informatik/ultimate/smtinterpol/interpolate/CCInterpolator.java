@@ -240,7 +240,7 @@ public class CCInterpolator {
 
 			private void mergeCongPath(final PathEnd other, final ApplicationTerm start, final ApplicationTerm end) {
 				final FunctionSymbol func = start.getFunction();
-				final int rightColor = mInterpolator.getOccurrence(end, null).getALocalColor();
+				final int rightColor = mInterpolator.getOccurrence(end).getALocalColor();
 				final Occurrence rightOccur = mInterpolator.new Occurrence();
 				rightOccur.occursIn(rightColor);
 				final Occurrence leftOccur = mInterpolator.new Occurrence();
@@ -361,7 +361,7 @@ public class CCInterpolator {
 			if (mComputed) {
 				return;
 			}
-			final Occurrence headOccur = mInterpolator.getOccurrence(mPath[0], null);
+			final Occurrence headOccur = mInterpolator.getOccurrence(mPath[0]);
 
 			mHead = new PathEnd();
 			mTail = new PathEnd();
@@ -384,7 +384,7 @@ public class CCInterpolator {
 					} else {
 						mTail.closeAPath(mHead, boundaryTerm, info);
 						mTail.openAPath(mHead, boundaryTerm, info);
-						final Occurrence occ = mInterpolator.getOccurrence(mPath[i + 1], null);
+						final Occurrence occ = mInterpolator.getOccurrence(mPath[i + 1]);
 						boundaryTerm = info.getMixedVar();
 						mTail.closeAPath(mHead, boundaryTerm, occ);
 						mTail.openAPath(mHead, boundaryTerm, occ);
@@ -429,10 +429,10 @@ public class CCInterpolator {
 				mHead.closeAPath(mTail, boundaryHeadTerm, info);
 				mHead.openAPath(mTail, boundaryHeadTerm, info);
 			} else {
-				final Occurrence occHead = mInterpolator.getOccurrence(mPath[0], null);
+				final Occurrence occHead = mInterpolator.getOccurrence(mPath[0]);
 				mHead.closeAPath(mTail, boundaryHeadTerm, info);
 				mHead.openAPath(mTail, boundaryHeadTerm, info);
-				final Occurrence occTail = mInterpolator.getOccurrence(mPath[mPath.length - 1], null);
+				final Occurrence occTail = mInterpolator.getOccurrence(mPath[mPath.length - 1]);
 				mTail.closeAPath(mHead, boundaryTailTerm, info);
 				mTail.openAPath(mHead, boundaryTailTerm, info);
 

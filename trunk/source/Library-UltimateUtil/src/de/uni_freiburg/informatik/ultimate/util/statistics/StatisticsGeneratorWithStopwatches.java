@@ -38,39 +38,47 @@ import java.util.concurrent.TimeUnit;
  * @author Matthias Heizmann
  */
 public abstract class StatisticsGeneratorWithStopwatches {
-	
+
 	private final Map<String, Boolean> mRunningStopwatches;
 	private final Benchmark mBenchmark;
-	
+
 	public abstract String[] getStopwatches();
-	
+
 	public StatisticsGeneratorWithStopwatches() {
-		mRunningStopwatches = new HashMap<String, Boolean>(getStopwatches().length);
+		mRunningStopwatches = new HashMap<>(getStopwatches().length);
 		mBenchmark = new Benchmark();
 		for (final String name : getStopwatches()) {
 			mRunningStopwatches.put(name, false);
 			mBenchmark.register(name);
 		}
 	}
-	
+
+	public void start(final Object stopwatchName) {
+		start(stopwatchName.toString());
+	}
+
 	public void start(final String stopwatchName) {
 		assert mRunningStopwatches.containsKey(stopwatchName) : "no such stopwatch " + stopwatchName;
 		assert !mRunningStopwatches.get(stopwatchName).booleanValue() : "already started " + stopwatchName;
 		mRunningStopwatches.put(stopwatchName, true);
 		mBenchmark.unpause(stopwatchName);
 	}
-	
+
+	public void stop(final Object stopwatchName) {
+		stop(stopwatchName.toString());
+	}
+
 	public void stop(final String stopwatchName) {
 		assert mRunningStopwatches.containsKey(stopwatchName) : "no such stopwatch " + stopwatchName;
 		assert mRunningStopwatches.get(stopwatchName).booleanValue() : "not running " + stopwatchName;
 		mRunningStopwatches.put(stopwatchName, false);
 		mBenchmark.pause(stopwatchName);
 	}
-	
+
 	public void stopAllStopwatches() {
 		mRunningStopwatches.entrySet().stream().filter(a -> a.getValue()).map(a -> a.getKey()).forEach(a -> stop(a));
 	}
-	
+
 	protected long getElapsedTime(final String stopwatchName) throws StopwatchStillRunningException {
 		assert mRunningStopwatches.containsKey(stopwatchName) : "no such stopwatch " + stopwatchName;
 		if (mRunningStopwatches.get(stopwatchName)) {
@@ -78,7 +86,7 @@ public abstract class StatisticsGeneratorWithStopwatches {
 		}
 		return (long) mBenchmark.getElapsedTime(stopwatchName, TimeUnit.NANOSECONDS);
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -97,17 +105,17 @@ public abstract class StatisticsGeneratorWithStopwatches {
 		}
 		return sb.toString();
 	}
-	
+
 	public static String prettyprintNanoseconds(final long time) {
 		final long seconds = time / 1000000000;
 		final long tenthDigit = time / 100000000 % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
-	
+
 	public class StopwatchStillRunningException extends Exception {
-		
+
 		private static final long serialVersionUID = 47519007262609785L;
-		
+
 	}
-	
+
 }

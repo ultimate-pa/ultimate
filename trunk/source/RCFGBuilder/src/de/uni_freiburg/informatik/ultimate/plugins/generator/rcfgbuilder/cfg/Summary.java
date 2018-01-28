@@ -75,6 +75,6 @@ public class Summary extends CodeBlock implements IIcfgInternalTransition<IcfgLo
 
 	@Override
 	public String toString() {
-		return "SUMMARY";
+		return "SUMMARY for " + mPrettyPrintedStatements + " srcloc: " + mSource;
 	}
 }

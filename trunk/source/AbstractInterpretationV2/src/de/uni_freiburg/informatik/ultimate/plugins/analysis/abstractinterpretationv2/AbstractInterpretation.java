@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class AbstractInterpretation implements IAnalysis {
 
+
 	protected ILogger mLogger;
 	private IUltimateServiceProvider mServices;
 	private List<IObserver> mObserver;

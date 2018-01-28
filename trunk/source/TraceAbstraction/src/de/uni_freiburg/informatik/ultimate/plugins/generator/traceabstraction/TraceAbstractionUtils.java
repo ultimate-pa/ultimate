@@ -47,12 +47,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -73,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
  * Provides static auxiliary methods for trace abstraction.
@@ -111,6 +114,12 @@ public class TraceAbstractionUtils {
 	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
 			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
 			final IPredicateUnifier predicateUnifier) throws AssertionError {
+		final IHoareTripleChecker solverHtc = constructSmtHoareTripleChecker(hoareTripleChecks, csToolkit);
+		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
+	}
+
+	public static IHoareTripleChecker constructSmtHoareTripleChecker(final HoareTripleChecks hoareTripleChecks,
+			final CfgSmtToolkit csToolkit) throws AssertionError {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
@@ -122,7 +131,7 @@ public class TraceAbstractionUtils {
 		default:
 			throw new AssertionError("unknown value");
 		}
-		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
+		return solverHtc;
 	}
 
 	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
@@ -131,6 +140,19 @@ public class TraceAbstractionUtils {
 		final IHoareTripleChecker ehtc =
 				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
 		return new CachingHoareTripleCheckerMap(services, ehtc, predicateUnifier);
+	}
+
+	public static IHoareTripleChecker constructEfficientHoareTripleCheckerWithCaching(
+			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
+			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier,
+			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialInternalCache,
+			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialCallCache,
+			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> initialReturnCache)
+			throws AssertionError {
+		final IHoareTripleChecker ehtc =
+				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
+		return new CachingHoareTripleCheckerMap(services, ehtc, predicateUnifier, initialInternalCache,
+				initialCallCache, initialReturnCache);
 	}
 
 	/**

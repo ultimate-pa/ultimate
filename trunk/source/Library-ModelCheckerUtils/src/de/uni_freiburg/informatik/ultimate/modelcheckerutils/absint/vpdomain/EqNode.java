@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosureElement;
 
 /**
@@ -49,27 +48,27 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 	protected final EqNodeAndFunctionFactory mEqNodeFactory;
 
-	protected boolean mIsConstant;
+//	protected boolean mIsConstant;
 
-	protected Term mTerm;
+	protected final Term mTerm;
 
-	private final MultiDimensionalSort mMdSort;
+//	private final MultiDimensionalSort mMdSort;
 
 	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory) {
 		assert term != null;
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
 
-		mMdSort = mEqNodeFactory.isFunction(term) ? new MultiDimensionalSort(mTerm.getSort()) : null;
+//		mMdSort = mEqNodeFactory.isFunction(term) ? new MultiDimensionalSort(mTerm.getSort()) : null;
 	}
 
 	@Override
 	public abstract boolean isLiteral();
 
-	public boolean isConstant() {
-		return mIsConstant;
-	}
-
+//	public boolean isConstant() {
+//		return mIsConstant;
+//	}
+//
 	public Collection<TermVariable> getFreeVariables() {
 		return Arrays.asList(mTerm.getFreeVars());
 	}
@@ -87,7 +86,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	}
 
 	@Override
-	public boolean isDependent() {
+	public boolean isDependentNonFunctionApplication() {
 		// this is the default case NonAtomicBaseNode must override this
 		return false;
 	}

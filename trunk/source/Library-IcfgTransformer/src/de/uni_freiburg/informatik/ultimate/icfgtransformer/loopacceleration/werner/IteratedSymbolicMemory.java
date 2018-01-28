@@ -80,26 +80,23 @@ public class IteratedSymbolicMemory {
 	private final ILogger mLogger;
 	private Term mAbstractPathCondition;
 	private UnmodifiableTransFormula mAbstractFormula;
+	private boolean mOverapprox;
+
+	private List<Term> mTerms;
 
 	private enum caseType {
 		NOT_CHANGED, ADDITION, SUBTRACTION, MULTIPLICATION, CONSTANT_ASSIGNMENT, CONSTANT_ASSIGNMENT_PATHCOUNTER
 	}
 
 	/**
-	 * Construct new Iterated symbolic memory of a loop
-	 *
+	 * Construct a new iterated symbolic memory for a loop.
+	 * 
 	 * @param script
-	 *            a {@link ManagedScript}
+	 * @param services
 	 * @param logger
-	 *            a {@link ILogger}
-	 * @param tf
-	 * @param oldSymbolTable
 	 * @param loop
-	 *            {@link Loop} whose iterated memory is computed
 	 * @param pathCounters
-	 *            list of pathcounters of the loops backbones
 	 * @param newPathCounter
-	 *            mapping of {@link TermVariable} to new Path Counter Tau
 	 */
 	public IteratedSymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services,
 			final ILogger logger, final Loop loop, final List<TermVariable> pathCounters,
@@ -117,6 +114,13 @@ public class IteratedSymbolicMemory {
 		mOutVars = mLoop.getOutVars();
 
 		mAbstractFormula = null;
+
+		mOverapprox = false;
+		mTerms = new ArrayList<>();
+
+		if (pathCounters.size() > 1) {
+			mOverapprox = true;
+		}
 
 		mMemoryMapping = new HashMap<>();
 
@@ -164,78 +168,81 @@ public class IteratedSymbolicMemory {
 				final TransFormula backboneTf = backbone.getFormula();
 
 				// Case 1: variable not changed in backbone
-				if (memory == null || memory.equals(symbol) || memory instanceof TermVariable
-					) {
+				if (memory == null || memory.equals(symbol) || memory instanceof TermVariable) {
 					continue;
 				}
 
 				// Case 3:
 				// in each backbone the variable is either not changed or set to
 				// an expression,
-				if (memory instanceof ConstantTerm 	|| !backboneTf.getAssignedVars().contains(entry.getKey())) {
+				if (memory instanceof ConstantTerm || !backboneTf.getAssignedVars().contains(entry.getKey())) {
 
 					update = memory;
 					prevCase = currentType;
 					currentType = caseType.CONSTANT_ASSIGNMENT;
 
+					mOverapprox = true;
+
 					mLogger.debug("Assignment");
-				} else {
+					continue;
+				}
 
-					// Case 2.1: if the variable is changed from its symbol by
-					// adding
-					// a constant for each backbone.
-					if ("+".equals(((ApplicationTerm) memory).getFunction().getName())) {
+				// Case 2.1: if the variable is changed from its symbol by
+				// adding
+				// a constant for each backbone.
+				if ("+".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
-						mLogger.debug("Addition");
+					mLogger.debug("Addition");
 
-						update = mScript.getScript().term("+", update, mScript.getScript().term("*",
-								((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
+					update = mScript.getScript().term("+", update, mScript.getScript().term("*",
+							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
 
-						prevCase = currentType;
-						currentType = caseType.ADDITION;
+					prevCase = currentType;
+					currentType = caseType.ADDITION;
 
-					}
+				}
 
-					// Case 2.2: if the variable is changed from its symbol by
-					// multiplicating
-					if ("*".equals(((ApplicationTerm) memory).getFunction().getName())) {
+				// Case 2.2: if the variable is changed from its symbol by
+				// multiplicating
+				if ("*".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
-						mLogger.debug("Multiplication");
-						update = mScript.getScript().term("*", update, mScript.getScript().term("*",
-								((ApplicationTerm) memory).getParameters()[0], backbone.getPathCounter()));
+					mLogger.debug("Multiplication");
+					update = mScript.getScript().term("*", update, mScript.getScript().term("*",
+							((ApplicationTerm) memory).getParameters()[0], backbone.getPathCounter()));
 
-						prevCase = currentType;
-						currentType = caseType.MULTIPLICATION;
+					prevCase = currentType;
+					currentType = caseType.MULTIPLICATION;
 
-					}
+				}
 
-					// Case 2.3: if the variable is changed from its symbol by
-					// subtracting
-					// a constant for each backbone.
-					if ("-".equals(((ApplicationTerm) memory).getFunction().getName())) {
+				// Case 2.3: if the variable is changed from its symbol by
+				// subtracting
+				// a constant for each backbone.
+				if ("-".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
-						mLogger.debug("Subtraction");
+					mLogger.debug("Subtraction");
 
-						update = mScript.getScript().term("-", update, mScript.getScript().term("*",
-								((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
+					update = mScript.getScript().term("-", update, mScript.getScript().term("*",
+							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
 
-						prevCase = currentType;
-						currentType = caseType.SUBTRACTION;
+					prevCase = currentType;
+					currentType = caseType.SUBTRACTION;
 
-					}
+				}
 
-					if (!Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol) && Arrays
-							.asList(((ApplicationTerm) memory).getParameters()).contains(backbone.getPathCounter())) {
+				if (!Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol) && Arrays
+						.asList(((ApplicationTerm) memory).getParameters()).contains(backbone.getPathCounter())) {
 
-						final Map<Term, Term> mapping = new HashMap<>();
+					mLogger.debug("Constant assignment");
 
-						final Term newMapping = mScript.getScript().term("-", backbone.getPathCounter(),
-								Rational.ONE.toTerm(SmtSortUtils.getIntSort(mScript)));
-						mapping.put(backbone.getPathCounter(), newMapping);
+					final Map<Term, Term> mapping = new HashMap<>();
 
-						final Substitution sub = new Substitution(mScript, mapping);
-						update = sub.transform(memory);
-					}
+					final Term newMapping = mScript.getScript().term("-", backbone.getPathCounter(),
+							Rational.ONE.toTerm(SmtSortUtils.getIntSort(mScript)));
+					mapping.put(backbone.getPathCounter(), newMapping);
+
+					final Substitution sub = new Substitution(mScript, mapping);
+					update = sub.transform(memory);
 				}
 			}
 
@@ -252,9 +259,8 @@ public class IteratedSymbolicMemory {
 			final List<TermVariable> freeVars = new ArrayList<>();
 			final List<Term> terms = new ArrayList<>();
 
-			final UnmodifiableTransFormula backboneTf = (UnmodifiableTransFormula) mLoop
-					.updateVars(backbone.getCondition(), mLoop.getInVars(), mLoop.getOutVars());
-			Term condition = backboneTf.getFormula();
+			Term condition = mLoop.updateVars(backbone.getCondition().getFormula(), backbone.getCondition().getInVars(),
+					backbone.getCondition().getOutVars());
 
 			for (final TermVariable var : condition.getFreeVars()) {
 				if (mPathCounters.contains(var)) {
@@ -331,17 +337,17 @@ public class IteratedSymbolicMemory {
 			final TermVariable[] vars = { mNewPathCounters.get(backbone.getPathCounter()) };
 			final Term necessaryCondition = mScript.getScript().quantifier(QuantifiedFormula.FORALL, vars, tFirstPart);
 
-			mAbstractPathCondition = SmtUtils.and(mScript.getScript(),
-					Arrays.asList(mAbstractPathCondition, necessaryCondition));
+			/*
+			 * Problem here
+			 */
+			mTerms.add(PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, necessaryCondition,
+					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 		}
+
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(mInVars, mOutVars, true, null, true, null, false);
 		final List<Term> terms = new ArrayList<>();
 
 		terms.add(mAbstractPathCondition);
-
-		/**
-		 * @TODO Problem: Pathcounters are duplicated
-		 */
 
 		for (final Entry<IProgramVar, TermVariable> outvar : mOutVars.entrySet()) {
 			if (!checkIfVarContained(outvar.getValue(), mAbstractPathCondition)) {
@@ -353,11 +359,10 @@ public class IteratedSymbolicMemory {
 					pathCounter));
 		}
 
-		mAbstractPathCondition = SmtUtils.and(mScript.getScript(), terms.toArray(new Term[terms.size()]));
-		mAbstractPathCondition = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript,
-				mAbstractPathCondition, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mAbstractPathCondition = SmtUtils.or(mScript.getScript(), mTerms.toArray(new Term[mTerms.size()]));
 
+		terms.add(mAbstractPathCondition);
+		mAbstractPathCondition = SmtUtils.and(mScript.getScript(), terms.toArray(new Term[terms.size()]));
 		tfb.setFormula(mAbstractPathCondition);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
@@ -462,7 +467,7 @@ public class IteratedSymbolicMemory {
 			for (Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 				if (Arrays.asList(((ApplicationTerm) subTerm).getParameters()).contains(entry.getValue())
 						&& !(mIteratedMemory.get(entry.getKey()) instanceof ConstantTerm)) {
-					
+
 					final Sort sort = subTerm.getSort();
 					if (sort.equals(mScript.getScript().sort(SmtSortUtils.INT_SORT))) {
 						result.put(subTerm, mIteratedMemory.get(entry.getKey()));
@@ -519,5 +524,9 @@ public class IteratedSymbolicMemory {
 
 	public UnmodifiableTransFormula getAbstractFormula() {
 		return mAbstractFormula;
+	}
+
+	public boolean isOverapprox() {
+		return mOverapprox;
 	}
 }

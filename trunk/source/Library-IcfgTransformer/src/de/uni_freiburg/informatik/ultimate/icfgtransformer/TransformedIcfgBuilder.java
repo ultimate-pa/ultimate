@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgR
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -71,6 +72,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  *
  * The {@link TransformedIcfgBuilder} constructs and adds locations and transitions to a {@link BasicIcfg} based on some
  * input {@link IIcfg}.
+ *
+ * (Alexander Nutz:) Note that the symbol table is updated automatically according to new program variables or constants
+ *  that occur in the newly created TransFormulas.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -158,6 +162,24 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	}
 
 	/**
+	 * Just like {@link createNewTransition} but in addition scans the new TransFormula for program variables that do
+	 * not yet have an entry in the symbol table. Schedules those program variables for adding them to the result icfg's
+	 * symbol table.
+	 *
+	 * @param newSource
+	 * @param newTarget
+	 * @param oldTransition
+	 * @return
+	 */
+	public IcfgEdge createNewTransitionWithNewProgramVars(final OUTLOC newSource, final OUTLOC newTarget,
+			final IcfgEdge oldTransition) {
+		final IcfgEdge newTransition = createNewTransition(newSource, newTarget, oldTransition);
+		rememberNewVariables(newTransition.getTransformula());
+		return newTransition;
+	}
+
+
+	/**
 	 * @return true if the corresponding call was already created and one can safely create a new transition for this
 	 *         return transition.
 	 */
@@ -198,8 +220,17 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private void rememberNewVariables(final UnmodifiableTransFormula transformula) {
 		final IIcfgSymbolTable symbolTable = mOriginalIcfg.getCfgSmtToolkit().getSymbolTable();
 
+		/**
+		 * Checks if a given IProgramVar is already present in the symbolTable.
+		 */
 		final Predicate<Entry<IProgramVar, TermVariable>> checkVar = a -> {
 			final IProgramVar invar = a.getKey();
+
+			if (invar instanceof IProgramOldVar) {
+				// oldvars are not added to the symbol table
+				return true;
+			}
+
 			if (invar.getProcedure() == null) {
 				// should be a global
 				if (symbolTable.getGlobals().contains(invar)) {

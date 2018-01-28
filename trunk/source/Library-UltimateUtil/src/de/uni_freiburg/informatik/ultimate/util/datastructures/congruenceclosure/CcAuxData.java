@@ -236,8 +236,7 @@ public class CcAuxData<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	public void removeElement(final CongruenceClosure<ELEM> mCongruenceClosure,
-			final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
+	public void removeElement(final ELEM elem, final boolean elemWasRepresentative, final ELEM newRep) {
 		/*
 		 * ccpar and ccchild only have representatives in their keySets
 		 *  --> move the information to the new representative from elem, if necessary
@@ -290,7 +289,8 @@ public class CcAuxData<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// there was no equal element to elem, we already removed elem from the keys in the above step
 			assert elemWasRepresentative;
 		} else {
-			if (elem.isFunctionApplication()) {
+//			if (elem.isFunctionApplication()) {
+			if (elem.isFunctionApplication() && mCcChildren.get(newRep) != null) {
 				mCcChildren.get(newRep).removePair(elem.getAppliedFunction(), elem.getArgument());
 			}
 		}

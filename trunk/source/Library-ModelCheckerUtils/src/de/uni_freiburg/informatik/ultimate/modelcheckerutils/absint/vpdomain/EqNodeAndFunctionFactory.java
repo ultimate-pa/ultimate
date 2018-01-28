@@ -26,16 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
@@ -51,13 +54,18 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
+	private final Set<Term> mNonTheoryLiteralTerms;
 
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 	private final Map<Term, Term> mNormalizationCache = new HashMap<>();
 
-	public EqNodeAndFunctionFactory(final IUltimateServiceProvider services, final ManagedScript script) {
+
+
+	public EqNodeAndFunctionFactory(final IUltimateServiceProvider services, final ManagedScript script,
+			final Set<IProgramConst> additionalLiterals) {
 		mServices = services;
 		mMgdScript = script;
+		mNonTheoryLiteralTerms = additionalLiterals.stream().map(pc -> pc.getTerm()).collect(Collectors.toSet());
 	}
 
 	public ManagedScript getScript() {
@@ -80,7 +88,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		final Term normalizedTerm = normalizeTerm(term);
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-			result = getBaseElement(normalizedTerm);
+			result = getBaseElement(normalizedTerm, false);
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqNonAtomicBaseNode;
@@ -106,7 +114,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 		EqNode result = mTermToEqNode.get(normalizedTerm);
 		if (result == null) {
-			result = getBaseElement(normalizedTerm);
+			result = getBaseElement(normalizedTerm, isTermALiteral(normalizedTerm));
 			mTermToEqNode.put(normalizedTerm, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
@@ -158,8 +166,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	 * Examples of literals (sometimes called constants, but we have other uses for that word) are:
 	 *  1, 2, -1, true, false, 1bv16 (bitvector constant/literal)
 	 *
-	 * The defining trait of literals for our purposes is that two different literals always have a different value,
-	 * too.
+	 * The defining trait of literals for our purposes is that two different literals always have a different value.
 	 *
 	 * @param term
 	 * @return
@@ -172,6 +179,10 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			return true;
 		}
 		if (term instanceof ConstantTerm) {
+			return true;
+		}
+
+		if (mNonTheoryLiteralTerms.contains(term)) {
 			return true;
 		}
 
@@ -205,11 +216,13 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	@Override
-	protected EqNode newBaseElement(final Term term) {
+	protected EqNode newBaseElement(final Term term, final boolean isLiteral) {
 		if (isAtomic(term)) {
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
-			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
+//			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
+			return new EqAtomicBaseNode(term, isLiteral, this);
 		} else {
+			assert !isLiteral;
 			assert term.getFreeVars().length > 0;
 			final Set<EqNode> supportingNodes = new HashSet<>();
 			for (final TermVariable fv : term.getFreeVars()) {
@@ -240,5 +253,15 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	 */
 	boolean isFunction(final Term term) {
 		return term.getSort().isArraySort();
+	}
+
+	public Set<Term> getNonTheoryLiterals() {
+		return Collections.unmodifiableSet(mNonTheoryLiteralTerms);
+	}
+
+	public Term getNonTheoryLiteralDisequalities() {
+		return SmtUtils.and(mMgdScript.getScript(),
+				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
+						getNonTheoryLiterals()));
 	}
 }

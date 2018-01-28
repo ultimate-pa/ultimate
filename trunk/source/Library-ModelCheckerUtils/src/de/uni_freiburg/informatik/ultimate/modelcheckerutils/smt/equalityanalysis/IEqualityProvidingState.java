@@ -29,15 +29,36 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalys
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public interface IEqualityProvidingState {
 
+	/**
+	 * Determine if the given two terms must be equal in this state.
+	 *
+	 * @param t1
+	 * @param t2
+	 * @return
+	 */
 	boolean areEqual(Term t1, Term t2);
-		
+
+	/**
+	 * Determine if the given two terms must be unequal in this state.
+	 *
+	 * @param t1
+	 * @param t2
+	 * @return
+	 */
 	boolean areUnequal(Term t1, Term t2);
-	
-	IEqualityProvidingState union(IEqualityProvidingState other);
+
+	/**
+	 * Compute the join of two states, i.e., compute a state which only contains constraints that are implied by this
+	 *  and the given other state
+	 *
+	 * @param other
+	 * @return
+	 */
+	IEqualityProvidingState join(IEqualityProvidingState other);
 }

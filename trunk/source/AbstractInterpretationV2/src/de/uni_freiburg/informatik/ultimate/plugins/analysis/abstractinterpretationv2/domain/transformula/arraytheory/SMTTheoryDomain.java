@@ -32,18 +32,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class SMTTheoryDomain implements IAbstractDomain<SMTTheoryState, IcfgEdge> {
-	
+
 	private final SMTTheoryPostOperator mPostOperator;
 
-	public SMTTheoryDomain(IUltimateServiceProvider services, CfgSmtToolkit csToolkit) {
+	public SMTTheoryDomain(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
 		mPostOperator = new SMTTheoryPostOperator(services, csToolkit);
 	}
 
@@ -61,7 +60,7 @@ public class SMTTheoryDomain implements IAbstractDomain<SMTTheoryState, IcfgEdge
 	public IAbstractStateBinaryOperator<SMTTheoryState> getWideningOperator() {
 		return new IAbstractStateBinaryOperator<SMTTheoryState>() {
 			@Override
-			public SMTTheoryState apply(SMTTheoryState first, SMTTheoryState second) {
+			public SMTTheoryState apply(final SMTTheoryState first, final SMTTheoryState second) {
 				return mPostOperator.getStateFactory().widen(first, second);
 			}
 		};
@@ -76,7 +75,5 @@ public class SMTTheoryDomain implements IAbstractDomain<SMTTheoryState, IcfgEdge
 	public boolean useHierachicalPre() {
 		return true;
 	}
-	
-	
 
 }

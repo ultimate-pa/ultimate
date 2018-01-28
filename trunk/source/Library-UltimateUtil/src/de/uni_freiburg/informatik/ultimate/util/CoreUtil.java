@@ -47,8 +47,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TimeZone;
@@ -76,6 +78,118 @@ public class CoreUtil {
 		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 		df.setTimeZone(tz);
 		return df.format(new Date());
+	}
+
+	/**
+	 * Converts Strings in upper case, e.g. THIS_IS_A_NAME, to CamelCase, e.g., ThisIsAName. If the string already
+	 * contains some lower-case characters, no conversion is performed.
+	 *
+	 * @param value
+	 *            The string that should be converted.
+	 * @return The name in Camel Case.
+	 */
+	public static String getUpperToCamelCase(final String value) {
+		if (value == null) {
+			return value;
+		}
+		if (!value.toUpperCase().equals(value)) {
+			// string has lower-case, ignore
+			return value;
+		}
+		final StringBuilder sb = new StringBuilder();
+		for (final String s : value.split("_")) {
+			sb.append(Character.toUpperCase(s.charAt(0)));
+			if (s.length() > 1) {
+				sb.append(s.substring(1).toLowerCase());
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * @param cl
+	 *            A classloader that has access to version.properties (i.e., the one the core uses)
+	 * @return a string describing the state of the current git repository or null iff version.properties does not
+	 *         exist.
+	 */
+	public static String readGitVersion(final ClassLoader cl) {
+		final Properties properties = new Properties();
+		try {
+			final InputStream prop = cl.getResourceAsStream("version.properties");
+			if (prop == null) {
+				return "?-m";
+			}
+			properties.load(prop);
+		} catch (final IOException e) {
+			return null;
+		}
+
+		final String hash = properties.getProperty("git.commit.id.abbrev", "UNKNOWN");
+		final String dirty = properties.getProperty("git.dirty", "UNKNOWN");
+
+		return hash + ("UNKNOWN".equals(dirty) ? "" : "true".equals(dirty) ? "-m" : "");
+	}
+
+	/**
+	 * Traverses the OS' PATH and searches for a file that fulfills the following conditions.
+	 * <ul>
+	 * <li>It is named <name>,
+	 * <li>the current process is allowed to execute it,
+	 * <li>it looks like some known executable binary.
+	 * </ul>
+	 */
+	public static File findExecutableBinaryOnPath(final String name) {
+		final Predicate<File> funLooksLikeExectuable;
+		if (CoreUtil.OS_IS_WINDOWS) {
+			// Check for Windows executable:
+			// Windows uses the Portable Executable format, which should always start with the magic number 4d5a
+			// (ASCII characters MZ)
+			funLooksLikeExectuable = f -> {
+				final byte[] firstBytes = new byte[4];
+				try {
+					final FileInputStream input = new FileInputStream(f);
+					input.read(firstBytes);
+					input.close();
+
+					if (firstBytes[0] == 0x4d && firstBytes[1] == 0x5a) {
+						return true;
+					}
+					return false;
+				} catch (final Exception e) {
+					return false;
+				}
+			};
+		} else {
+			// just assume linux: ELF format executable used by Linux start with 7f454c46
+			funLooksLikeExectuable = f -> {
+				final byte[] firstBytes = new byte[8];
+				try {
+					final FileInputStream input = new FileInputStream(f);
+					input.read(firstBytes);
+					input.close();
+					if (firstBytes[0] == 0x7f && firstBytes[1] == 0x45 && firstBytes[1] == 0x4c
+							&& firstBytes[1] == 0x46) {
+						return true;
+					}
+					return false;
+				} catch (final Exception e) {
+					return false;
+				}
+			};
+		}
+
+		for (final String dirname : System.getenv("PATH").split(File.pathSeparator)) {
+			final File[] files = new File(dirname).listFiles(f -> f.getName().startsWith(name));
+			if (files == null) {
+				continue;
+			}
+			for (final File file : files) {
+				if (file.isFile() && file.canExecute() && funLooksLikeExectuable.test(file)) {
+					return file;
+				}
+			}
+		}
+		return null;
 	}
 
 	public static File writeFile(final String filename, final String content) throws IOException {
@@ -140,26 +254,34 @@ public class CoreUtil {
 		return file;
 	}
 
-	public static String readFile(final String filename) throws IOException {
+	public static List<String> readFileLineByLine(final String filename) throws IOException {
 		final BufferedReader br =
 				new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
+		final List<String> rtr = new ArrayList<>();
 		try {
-
-			final StringBuilder sb = new StringBuilder();
 			String line = br.readLine();
 			while (line != null) {
-				sb.append(line);
-				sb.append(PLATFORM_LINE_SEPARATOR);
+				rtr.add(line);
 				line = br.readLine();
 			}
-			return sb.toString();
+			return rtr;
 		} finally {
 			br.close();
 		}
 	}
 
+	public static String readFile(final String filename) throws IOException {
+		final StringBuilder sb = new StringBuilder();
+		readFileLineByLine(filename).stream().forEach(line -> sb.append(line).append(PLATFORM_LINE_SEPARATOR));
+		return sb.toString();
+	}
+
 	public static String readFile(final File file) throws IOException {
 		return readFile(file.getAbsolutePath());
+	}
+
+	public static List<String> readFileLineByLine(final File file) throws IOException {
+		return readFileLineByLine(file.getAbsolutePath());
 	}
 
 	/**

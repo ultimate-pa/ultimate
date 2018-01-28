@@ -248,6 +248,18 @@ public abstract class Dispatcher {
 	public abstract Result dispatch(ACSLNode node, IASTNode cHook);
 
 	/**
+	 * Dispatch a given ACSL node to the specific handler.
+	 * Shortcut for methods where the hook does not change.
+	 *
+	 * @param node
+	 *            the node to dispatch
+	 * @param cHook
+	 *            the C AST node where this ACSL node has scope access
+	 * @return the result for the given node
+	 */
+	public abstract Result dispatch(ACSLNode node);
+
+	/**
 	 * Entry point for a translation.
 	 *
 	 * @param nodes

@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SolverOptions;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
@@ -64,6 +65,9 @@ public class Interpolator extends NonRecursive {
 	LogProxy mLogger;
 	Theory mTheory;
 	int mNumInterpolants;
+
+	Occurrence mFullOccurrence;
+
 	/**
 	 * Array encoding the tree-structure for tree interpolants. The interpolants are always required to be in post-order
 	 * tree traversal. The i-th element of this array contains the lowest index occuring in the sub-tree with the i-th
@@ -181,6 +185,8 @@ public class Interpolator extends NonRecursive {
 		mCheckingSolver = checkingSolver;
 		mTheory = theory;
 		mNumInterpolants = partitions.length - 1;
+		mFullOccurrence = new Occurrence();
+		mFullOccurrence.occursIn(-1);
 
 		mStartOfSubtrees = startOfSubTrees;
 		mSymbolPartition = new HashMap<>();
@@ -281,8 +287,9 @@ public class Interpolator extends NonRecursive {
 			} else if (leafTermInfo.getLemmaType().equals(":LA") || leafTermInfo.getLemmaType().equals(":trichotomy")) {
 				final LAInterpolator ipolator = new LAInterpolator(this);
 				interpolants = ipolator.computeInterpolants(leaf);
-			} else if (leafTermInfo.getLemmaType().equals(":read-over-weakeq")
-					|| leafTermInfo.getLemmaType().equals(":weakeq-ext")) {
+			} else if ((Boolean) mSmtSolver.getOption(SolverOptions.ARRAY_INTERPOLATION)
+					&& (leafTermInfo.getLemmaType().equals(":read-over-weakeq")
+							|| leafTermInfo.getLemmaType().equals(":weakeq-ext"))) {
 				final ArrayInterpolator ipolator = new ArrayInterpolator(this);
 				final Term[] interpolantTerms = ipolator.computeInterpolants(leaf);
 				for (int j = 0; j < mNumInterpolants; j++) {
@@ -857,7 +864,7 @@ public class Interpolator extends NonRecursive {
 							iat.negate();
 						}
 						final Term sharedTerm = iat.toSMTLib(mTheory, isInt);
-						final Term divisor = mixedFactor.toTerm(mixed.getSort());
+						final Term divisor = mixedFactor.abs().toTerm(mixed.getSort());
 						// We need to divide sharedTerm by mixedFactor and check that it doesn't produce a remainder.
 						//
 						// Interpolant is: (and (= mixed (div sharedTerm mixedFactor))
@@ -921,39 +928,39 @@ public class Interpolator extends NonRecursive {
 					}
 					final HashSet<Term> subTerms = getSubTerms(unquoted);
 					for (final Term sub : subTerms) {
-						addOccurrence(sub, source, partition);
+						addOccurrence(sub, partition);
 					}
 				}
 			}
 		}
 	}
 
-	Occurrence getOccurrence(final Term term, final String source) {
+	Occurrence getOccurrence(final Term term) {
+		if (term instanceof ConstantTerm) {
+			return mFullOccurrence;
+		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()) {
+			final Term[] subTerms = ((ApplicationTerm) term).getParameters();
+			Occurrence result = mFullOccurrence;
+			for (final Term p : subTerms) {
+				final Occurrence occ = getOccurrence(p);
+				result = result.intersect(occ);
+			}
+			return result;
+		}
 		Occurrence result = mSymbolPartition.get(term);
 		if (result == null) {
 			result = new Occurrence();
-			// TODO Here we need to change something if we have quantifiers.
-			if (source != null) {
-				final Integer partition = mPartitions.get(source);
-				if (partition == null) {
-					for (int p = 0; p < mNumInterpolants; p++) {
-						result.occursIn(p);
-					}
-				} else {
-					result.occursIn(partition);
-				}
-			}
 			mSymbolPartition.put(term, result);
 		}
 		return result;
 	}
 
-	void addOccurrence(final Term term, final String source, int part) {
+	void addOccurrence(final Term term, final int part) {
 		if (term instanceof ConstantTerm) {
-			/* Constant terms should be colored shared. */
-			part = -1;
+			/* Constant terms are always implicitly shared. */
+			return;
 		}
-		final Occurrence occ = getOccurrence(term, source);
+		final Occurrence occ = getOccurrence(term);
 		if (occ.contains(part)) {
 			/* Already colored correctly */
 			return;
@@ -963,21 +970,26 @@ public class Interpolator extends NonRecursive {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm at = (ApplicationTerm) term;
 			for (final Term p : at.getParameters()) {
-				addOccurrence(p, source, part);
+				addOccurrence(p, part);
 			}
 		}
 	}
 
 	HashSet<Term> getSubTerms(final Term literal) {
 		final HashSet<Term> subTerms = new HashSet<>();
-		final Term term = literal;
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			for (final Term sub : appTerm.getParameters()) {
-				subTerms.addAll(getSubTerms(sub));
+		final ArrayDeque<Term> todo = new ArrayDeque<Term>();
+		todo.addLast(literal);
+		while (!todo.isEmpty()) {
+			final Term term = todo.removeLast();
+			if (subTerms.add(term)) {
+				if (term instanceof ApplicationTerm) {
+					final ApplicationTerm appTerm = (ApplicationTerm) term;
+					for (final Term sub : appTerm.getParameters()) {
+						todo.addLast(sub);
+					}
+				}
 			}
 		}
-		subTerms.add(term);
 		return subTerms;
 	}
 
@@ -1047,7 +1059,7 @@ public class Interpolator extends NonRecursive {
 
 		if (atomInfo.isCCEquality()) {
 			final ApplicationTerm eq = atomInfo.getEquality();
-			info.mLhsOccur = getOccurrence(eq.getParameters()[0], null);
+			info.mLhsOccur = getOccurrence(eq.getParameters()[0]);
 		} else if (atomInfo.isBoundConstraint() || atomInfo.isLAEquality()) {
 			final InterpolatorAffineTerm lv = atomInfo.getLinVar();
 			assert lv.getSummands().size() > 1 : "Not initially basic: " + lv + " atom: " + atom;
@@ -1061,7 +1073,7 @@ public class Interpolator extends NonRecursive {
 				final InterpolatorAffineTerm sumApart = new InterpolatorAffineTerm();
 				for (final Entry<Term, Rational> en : lv.getSummands().entrySet()) {
 					final Term var = en.getKey();
-					final Occurrence occ = getOccurrence(var, null);
+					final Occurrence occ = getOccurrence(var);
 					if (occ.isALocal(part)) {
 						final Rational coeff = en.getValue();
 						sumApart.add(coeff, var);
@@ -1076,16 +1088,14 @@ public class Interpolator extends NonRecursive {
 
 	private LitInfo computeMixedOccurrence(final ArrayList<Term> subterms) {
 		LitInfo info;
-		BitSet inA = null, inB = null;
+		final BitSet inA = new BitSet(mNumInterpolants + 1);
+		inA.set(0, mNumInterpolants + 1);
+		final BitSet inB = new BitSet(mNumInterpolants + 1);
+		inB.set(0, mNumInterpolants);
 		for (final Term st : subterms) {
-			final Occurrence occInfo = getOccurrence(st, null);
-			if (inA == null) {
-				inA = (BitSet) occInfo.mInA.clone();
-				inB = (BitSet) occInfo.mInB.clone();
-			} else {
-				inA.and(occInfo.mInA);
-				inB.and(occInfo.mInB);
-			}
+			final Occurrence occInfo = getOccurrence(st);
+			inA.and(occInfo.mInA);
+			inB.and(occInfo.mInB);
 		}
 		info = new LitInfo(inA, inB);
 		return info;

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2016-2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2016-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE HeapSeparator plug-in.
  *
@@ -26,205 +26,195 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.SymmetricHashRelation;
 
 /**
  * Does a preanalysis on the program before the actual heap separation is done
- * (using the abstract interpretation result from the equality domain).
- * Computes: - which arrays are equated, anywhere in the program (occur left and
- * right each of an equality in a TransFormula) - for each array in the program
- * the locations where it is accessed (question: does this mean that large block
- * encoding is detrimental to heapseparation?)
+ *
+ * Computes of each icfg edge the subterms of the edge's TransFormula that are subject to transformation by the heap
+ * separator.
+ * These are divided into:
+ * <li> cell updates (array updates where the lhs and rhs array refer to the same program variable)
+ * <li> array relations (equalities where the lhs and rhs have array type -stores are allowed- and which are not cell
+ *  updates )
+ * <li> cell accesses (essentially select terms)
+ *
+ * Furthermore from the result of this preanalysis we can compute the groups of arrays whose partitioning has to be
+ * aligned because they are assigned to each other.
  *
  * @author Alexander Nutz
  *
  */
 public class HeapSepPreAnalysis {
 
-	private final HashRelation<Term, IcfgLocation> mArrayToAccessLocations;
 
-	private final HashRelation<Term, ArrayIndex> mArrayToAccessingIndices;
+	// unclear if ArrayUpdate is the right choice here -- what about store chains?, also it uses MultiDimensionalStore..
+	private final HashRelation<EdgeInfo, ArrayUpdate> mEdgeToCellUpdates;
 
-	private final SymmetricHashRelation<Term> mArrayEqualities;
+	private final HashRelation<EdgeInfo, ArrayEqualityAllowStores> mEdgeToArrayRelations;
 
-	private final ManagedScript mScript;
+//	private final HashRelation<EdgeInfo, ArrayCellAccess> mEdgeToArrayCellAccesses;
+
+	private final ManagedScript mMgdScript;
+
+	private final Set<SelectInfo> mSelectInfos;
+
+	private Set<ArrayGroup> mArrayGroups;
+
+	private final List<IProgramVarOrConst> mHeapArrays;
 
 	/**
-	 * The HeapSepPreAnalysisVisitor computes and provides the following
-	 * information: - which arrays (base arrays, not store terms) are equated in the
-	 * program - for each array at which locations in the CFG it is accessed
 	 *
 	 * @param logger
+	 * @param heapArrays
 	 * @param equalityProvider
 	 */
-	public HeapSepPreAnalysis(final ILogger logger, final ManagedScript script) {
-		mArrayToAccessLocations = new HashRelation<>();
-		mArrayToAccessingIndices = new HashRelation<>();
-		mScript = script;
-		mArrayEqualities = new SymmetricHashRelation<>();
+	public HeapSepPreAnalysis(final ILogger logger, final ManagedScript mgdScript,
+			final List<IProgramVarOrConst> heapArrays) {
+		mMgdScript = mgdScript;
+
+		mHeapArrays = heapArrays;
+
+		mEdgeToCellUpdates = new HashRelation<>();
+//		mEdgeToArrayCellAccesses = new HashRelation<>();
+		mEdgeToArrayRelations = new HashRelation<>();
+
+		mSelectInfos = new HashSet<>();
 	}
 
 	public void processEdge(final IcfgEdge edge) {
 		final UnmodifiableTransFormula tf = edge.getTransformula();
 
-		final List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
-		for (final ArrayEquality aeq : aeqs) {
-			final Term first = VPDomainHelpers.normalizeTerm(aeq.getLhs(), tf, mScript);
-			final Term second = VPDomainHelpers.normalizeTerm(aeq.getRhs(), tf, mScript);
-
-			mArrayEqualities.addPair(first, second);
-		}
-
-		mArrayToAccessLocations.addAll(findArrayAccesses(edge));
-
-		mArrayToAccessingIndices.addAll(findAccessingIndices(edge));
-	}
-
-	private HashRelation<Term, ArrayIndex> findAccessingIndices(final IcfgEdge edge) {
-
-		final UnmodifiableTransFormula tf = edge.getTransformula();
-		final HashRelation<Term, ArrayIndex> result = new HashRelation<>();
+		final EdgeInfo edgeInfo = new EdgeInfo(edge);
 
 		/*
-		 * handle selects in the formula
+		 * subterms that have already been put into one of the maps
 		 */
-		final List<MultiDimensionalSelect> mdSelectsAll = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(),
-				false);
-		// MultiDimensionalSelect.extractSelectDeep(tf.getFormula(), false);
-		final List<MultiDimensionalSelect> mdSelectsFiltered = mdSelectsAll.stream()
-				.filter(mds -> isArrayTracked(mds.getArray(), tf)).collect(Collectors.toList());
-		for (final MultiDimensionalSelect mds : mdSelectsFiltered) {
-			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
-			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript);
-			assert index.size() == new MultiDimensionalSort(mds.getArray().getSort()).getDimension();
-			result.addPair(array, index);
+		final Set<Term> visitedSubTerms = new HashSet<>();
+
+		for (final ArrayUpdate au : ArrayUpdate.extractArrayUpdates(tf.getFormula())) {
+			final IProgramVarOrConst newArrayPv = edgeInfo.getProgramVarOrConstForTerm(au.getNewArray());
+			final IProgramVarOrConst oldArrayPv = edgeInfo.getProgramVarOrConstForTerm(au.getOldArray());
+
+			assert au.getNewArray() != au.getOldArray() : "that would be a strange case, no?..";
+			assert !au.isNegatedEquality() : "strange case";
+
+			/*
+			 * only track updates to one of the heap arrays
+			 */
+			if (!mHeapArrays.contains(newArrayPv)) {
+				continue;
+			}
+
+			/* we only keep array updates that have the same ProgramVar lhs und rhs
+			 * (the others are processed as ArrayEqualityAllowStores')
+			 */
+			if (newArrayPv.equals(oldArrayPv)) {
+				mEdgeToCellUpdates.addPair(edgeInfo, au);
+				visitedSubTerms.add(au.getArrayUpdateTerm());
+			}
 		}
+
+		for (final ArrayEqualityAllowStores aeas
+				: ArrayEqualityAllowStores.extractArrayEqualityAllowStores(tf.getFormula())) {
+			if (visitedSubTerms.contains(aeas.getTerm(mMgdScript.getScript()))) {
+				// term is already stored as a cell update
+				continue;
+			}
+
+			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getLhsArray());
+			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getRhsArray());
+			// filter out aeas that do not relate to a heap array
+			if (!mHeapArrays.contains(lhsPvoc) && !mHeapArrays.contains(rhsPvoc)) {
+				continue;
+			}
+
+			mEdgeToArrayRelations.addPair(edgeInfo, aeas);
+//			visitedSubTerms.add(aeas.getTerm(mMgdScript.getScript()));
+		}
+
+		for (final ArrayCellAccess aca : ArrayCellAccess.extractArrayCellAccesses(tf.getFormula())) {
+//			assert !visitedSubTerms.contains(aca.getTerm(mMgdScript.getScript()));
+
+			final SelectInfo selectInfo = new SelectInfo(aca, edgeInfo, mMgdScript);
+			if (mHeapArrays.contains(selectInfo.getArrayPvoc())) {
+				mSelectInfos.add(selectInfo);
+			}
+
+//			mEdgeToArrayCellAccesses.addPair(edgeInfo, aca);
+		}
+	}
+
+	public Set<SelectInfo> getSelectInfos() {
+		if (mSelectInfos == null) {
+			throw new IllegalStateException("call finish first");
+		}
+		return mSelectInfos;
+	}
+
+	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
+		if (mArrayGroups == null) {
+			throw new IllegalStateException("call finish first");
+		}
+		final Map<IProgramVarOrConst, ArrayGroup> result = new HashMap<>();
+		for (final ArrayGroup ag : mArrayGroups) {
+			for (final IProgramVarOrConst a : ag.getArrays()) {
+				result.put(a, ag);
+			}
+		}
+		return Collections.unmodifiableMap(result);
+	}
+
+	public void finish() {
+//		mSelectInfos = new HashSet<>();
+//		for (final Entry<EdgeInfo, ArrayCellAccess> en : mEdgeToArrayCellAccesses) {
+//			final SelectInfo selectInfo = new SelectInfo(en.getValue(), en.getKey());
+//			mSelectInfos.add(selectInfo);
+//		}
 
 		/*
-		 * handle stores in the formula
+		 * Compute the array groups. Rule: Whenever two arrays are related via "=" in any formula in the program, they
+		 *  must be in the same array group.
 		 */
-		final List<MultiDimensionalStore> mdStoresAll = MultiDimensionalStore
-				.extractArrayStoresShallow(tf.getFormula());
-//				.extractArrayStoresDeep(tf.getFormula());
-		final List<MultiDimensionalStore> mdStoresFiltered = mdStoresAll.stream()
-				.filter(mds -> isArrayTracked(mds.getArray(), tf)).collect(Collectors.toList());
-		// mdStoresFiltered.forEach(mds -> result.addPair(
-		// VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf,
-		// mScript),
-		// VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript)));
-		for (final MultiDimensionalStore mds : mdStoresFiltered) {
-			final Term array = VPDomainHelpers.normalizeTerm(getInnerMostArray(mds.getArray()), tf, mScript);
-			final ArrayIndex index = VPDomainHelpers.normalizeArrayIndex(mds.getIndex(), tf, mScript);
-			// assert index.size() == mds.getArray().getSort().getArguments().length - 1;
-			assert index.size() == new MultiDimensionalSort(mds.getArray().getSort()).getDimension();
-			result.addPair(array, index);
+		final UnionFind<IProgramVarOrConst> arrayPartition = new UnionFind<>();
+
+		// base line for the array groups: the heap arrays
+		mHeapArrays.forEach(arrayPartition::findAndConstructEquivalenceClassIfNeeded);
+
+		for (final Entry<EdgeInfo, ArrayEqualityAllowStores> en : mEdgeToArrayRelations) {
+			final EdgeInfo edgeInfo = en.getKey();
+			final ArrayEqualityAllowStores aeas = en.getValue();
+
+
+			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getLhsArray());
+			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getRhsArray());
+
+			arrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsPvoc);
+			arrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsPvoc);
+			arrayPartition.union(lhsPvoc, rhsPvoc);
+		}
+		mArrayGroups = new HashSet<>();
+		for (final Set<IProgramVarOrConst> block : arrayPartition.getAllEquivalenceClasses()) {
+			mArrayGroups.add(new ArrayGroup(block));
 		}
 
-		return result;
 	}
 
-	private HashRelation<Term, IcfgLocation> findArrayAccesses(final IcfgEdge edge) {
-		final HashRelation<Term, IcfgLocation> result = new HashRelation<>();
-		if (edge instanceof Summary && ((Summary) edge).calledProcedureHasImplementation()) {
-			return result;
-		}
 
-		for (final Entry<IProgramVar, TermVariable> en : edge.getTransformula().getInVars().entrySet()) {
-			final IProgramVar pv = en.getKey();
-			if (!pv.getTermVariable().getSort().isArraySort()) {
-				continue;
-			}
-			if (!isArrayTracked(pv)) {
-				continue;
-			}
-			// we have an array variable --> store that it occurs after the source location
-			// of the edge
-			result.addPair(pv.getTerm(), edge.getSource());
-		}
-		for (final Entry<IProgramVar, TermVariable> en : edge.getTransformula().getOutVars().entrySet()) {
-			final IProgramVar pv = en.getKey();
-			if (!pv.getTermVariable().getSort().isArraySort()) {
-				continue;
-			}
-			if (!isArrayTracked(pv)) {
-				continue;
-			}
-			// we have an array variable --> store that it occurs after the source location
-			// of the edge
-			result.addPair(pv.getTerm(), edge.getSource());
-		}
-		return result;
-	}
-
-	SymmetricHashRelation<Term> getArrayEqualities() {
-		return mArrayEqualities;
-	}
-
-	HashRelation<Term, IcfgLocation> getArrayToAccessLocations() {
-		return mArrayToAccessLocations;
-	}
-
-	public HashRelation<Term, ArrayIndex> getArrayToAccessingIndices() {
-		return mArrayToAccessingIndices;
-	}
-
-	public Term getInnerMostArray(final Term arrayTerm) {
-		assert arrayTerm.getSort().isArraySort();
-		Term innerArray = arrayTerm;
-		// while (SmtUtils.containsFunctionApplication(innerArray, "store")) {
-		while (true) {
-			boolean madeChange = false;
-			if (SmtUtils.isFunctionApplication(innerArray, "store")) {
-				innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
-				madeChange = true;
-			} else if (SmtUtils.isFunctionApplication(innerArray, "select")) {
-				innerArray = ((ApplicationTerm) innerArray).getParameters()[0];
-				madeChange = true;
-			}
-			if (!madeChange) {
-				break;
-			}
-		}
-		assert innerArray instanceof TermVariable;
-		return innerArray;
-	}
-
-	public Set<ArrayIndex> getAccessingIndicesForArrays(final Set<Term> arrayGroup) {
-		final Set<ArrayIndex> result = new HashSet<>();
-		arrayGroup.forEach(array -> result.addAll(getArrayToAccessingIndices().getImage(array)));
-		return result;
-	}
-
-	private boolean isArrayTracked(final IProgramVarOrConst array) {
-		return true;
-	}
-
-	private boolean isArrayTracked(final Term array, final UnmodifiableTransFormula tf) {
-		return true;
-	}
 }

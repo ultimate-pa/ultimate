@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -226,6 +227,36 @@ public final class CrossProducts {
 		return result;
 	}
 
+
+	/**
+	 *
+	 * @param set
+	 * @param returnSymmetricPairs
+	 * @param pairSelector
+	 * 			we add a pair to our cross product only if test evaluates to true on it
+	 * @return
+	 */
+	public static <E> HashRelation<E, E> binarySelectiveCrossProduct(final Collection<E> set,
+			final boolean returnSymmetricPairs, final BiPredicate<E, E> pairSelector) {
+		final HashRelation<E, E> result = new HashRelation<>();
+
+		final Iterator<E> it1 = set.iterator();
+		for (int i = 0; i < set.size(); i++) {
+			final E el1 = it1.next();
+			final Iterator<E> it2 = set.iterator();
+			final int bound = returnSymmetricPairs ? set.size() : i + 1;
+			for (int j = 0; j < bound; j++) {
+				final E el2Next = it2.next();
+				if (!pairSelector.test(el1, el2Next)) {
+					continue;
+				}
+				final E el2 = el2Next;
+				result.addPair(el1, el2);
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Example:
 	 *  input: [2, 2, 3]
@@ -258,5 +289,14 @@ public final class CrossProducts {
 //			result = newResult;
 //		}
 //		return result;
+	}
+
+	public static <E> List<List<E>> crossProductNTimes(final int n, final Set<E> baseSet) {
+		final List<Set<E>> nTimesBaseSet = new ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			nTimesBaseSet.add(baseSet);
+		}
+		return crossProductOfSets(nTimesBaseSet);
+
 	}
 }

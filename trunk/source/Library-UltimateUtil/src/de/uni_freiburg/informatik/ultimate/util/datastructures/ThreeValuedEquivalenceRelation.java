@@ -92,21 +92,30 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	/**
+	 * Remove the given element (first argument) from this Tver.
+	 *
+	 * If elem is not the only element in its equivalence class and is the representative before removal,
+	 *  we need to choose another representative, the second argument allows the caller to participate in that choice.
 	 *
 	 * @param elem
+	 * @param newRepChoice if newRepChoice is non-null, and elem was representative before removal, newRepChoice will
+	 *  be picked as new representative, otherwise this method picks some candidate (nondeterministically, depending on
+	 *  the hashing order)
 	 * @return the representative of elem's equivalence class after removal of elem, null if it was the only element of
 	 *         its equivalence class
 	 */
-	public E removeElement(final E elem) {
+	public E removeElement(final E elem, final E newRepChoice) {
+		assert newRepChoice == null || getRepresentative(elem) == getRepresentative(newRepChoice);
 		final E rep = mUnionFind.find(elem);
 		final Set<E> equivalenceClassCopy = new HashSet<>(mUnionFind.getEquivalenceClassMembers(elem));
-		mUnionFind.remove(elem);
+		mUnionFind.remove(elem, newRepChoice);
 
 		/*
 		 * update mDistinctElements
 		 */
 		if (rep != elem) {
 			// elem was not the representative of its equivalence class --> nothing to do for disequalities
+			assert getRepresentative(rep) == rep;
 			return rep;
 		}
 		// elem was the representative of its equivalence class --> we need to update mDistinctElements
@@ -121,11 +130,18 @@ public class ThreeValuedEquivalenceRelation<E> {
 		assert rep == elem;
 		// elem was the representative of its equivalence class, but not the only element
 		// --> replace it by the new representative in mDistinctElements
-		final E newRep = mUnionFind.find(equivalenceClassCopy.iterator().next());
-		assert newRep != null;
+		final E newRep;
+		if (newRepChoice == null) {
+			newRep = mUnionFind.find(equivalenceClassCopy.iterator().next());
+		} else {
+			newRep = newRepChoice;
+		}
+		assert newRep!= null;
 		mDisequalities.replaceDomainElement(elem, newRep);
 		mDisequalities.replaceRangeElement(elem, newRep);
 		assert sanityCheck();
+		assert getRepresentative(newRep) == newRep : "the returned element must be a representative, "
+				+ newRep + " is its own rep, but " +  getRepresentative(newRep) + " is.";
 		return newRep;
 	}
 
@@ -269,12 +285,19 @@ public class ThreeValuedEquivalenceRelation<E> {
 
 	/**
 	 *
-	 * TODO: note that this sanity check currently forbids null entries for the relation -- if we want null entries, we
+	 * Note that this sanity check currently forbids null entries for the relation -- if we want null entries, we
 	 * have to revise this.
 	 *
 	 * @return true iff sanity check is passed
 	 */
-	private boolean sanityCheck() {
+	public boolean sanityCheck() {
+
+		// call the sanityCheck of the underlying Unionfind
+		if (!mUnionFind.sanityCheck()) {
+			return false;
+		}
+
+
 		// mDisequalities may not contain null entries
 		for (final Entry<E, E> en : mDisequalities.entrySet()) {
 			if (en.getKey() == null) {
@@ -363,6 +386,10 @@ public class ThreeValuedEquivalenceRelation<E> {
 	public ThreeValuedEquivalenceRelation<E> meet(final ThreeValuedEquivalenceRelation<E> other) {
 		final UnionFind<E> newPartition = UnionFind.unionPartitionBlocks(this.mUnionFind, other.mUnionFind);
 		return new ThreeValuedEquivalenceRelation<>(newPartition, xJoinDisequalities(this, other, newPartition, false));
+	}
+
+	public UnionFind<E> joinPartitions(final ThreeValuedEquivalenceRelation<E> other) {
+		return UnionFind.intersectPartitionBlocks(this.mUnionFind, other.mUnionFind);
 	}
 
 	/**
@@ -543,5 +570,10 @@ public class ThreeValuedEquivalenceRelation<E> {
 			}
 		}
 		return false;
+	}
+
+	public void removeDisequality(final E elem1, final E elem2) {
+		mDisequalities.removePair(elem1, elem2);
+		mDisequalities.removePair(elem2, elem1);
 	}
 }

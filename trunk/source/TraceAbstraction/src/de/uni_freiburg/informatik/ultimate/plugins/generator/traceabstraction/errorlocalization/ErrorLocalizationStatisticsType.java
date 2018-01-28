@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class ErrorLocalizationStatisticsType extends AStatisticsType<ErrorLocalizationStatisticsDefinitions> {
+public class ErrorLocalizationStatisticsType extends StatisticsType<ErrorLocalizationStatisticsDefinitions> {
 	
 	public ErrorLocalizationStatisticsType() {
 		super(ErrorLocalizationStatisticsDefinitions.class);

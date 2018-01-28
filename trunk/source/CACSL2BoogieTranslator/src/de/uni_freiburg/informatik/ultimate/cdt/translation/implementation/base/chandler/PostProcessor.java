@@ -359,7 +359,7 @@ public class PostProcessor {
 					if (main.mCHandler.isHeapVar(id)) {
 						final LocalLValue llVal =
 								new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), null);
-						initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc));
+						initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc, hook));
 					}
 
 					final ExpressionResult initRex = main.mCHandler.getInitHandler().initialize(currentDeclsLoc, main,

@@ -46,6 +46,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
@@ -60,17 +61,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AbstractNestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AlternatingAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.EpsilonNestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.RankedAlphabetEntryAST;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonRankedAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TreeAutomatonTransitionAST;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Responsible for interpretation of automata definitions.
@@ -86,18 +89,19 @@ public class AutomataDefinitionInterpreter {
 	/**
 	 * Enable/disable unification of objects in the automata.
 	 * <p>
-	 * The parser creates fresh objects every time it reads a string, even if two strings are identical. With
-	 * unification activated we make sure that there is only one object per string in the automaton (e.g., all
+	 * The parser creates fresh objects every time it reads a string, even if
+	 * two strings are identical. With unification activated we make sure that
+	 * there is only one object per string in the automaton (e.g., all
 	 * transitions to some state {@code q} point to the same object).
 	 * <p>
-	 * TODO Christian 2017-03-19 Currently only nested word automata are unified.
+	 * TODO Christian 2017-03-19 Currently only nested word automata are
+	 * unified.
 	 */
 	private static final boolean UNIFY_OBJECTS = false;
 
 	/**
-	 * A map from automaton name to automaton object, which contains for each automaton, that was defined in the
-	 * automata
-	 * definitions an entry.
+	 * A map from automaton name to automaton object, which contains for each
+	 * automaton, that was defined in the automata definitions an entry.
 	 */
 	private final Map<String, Object> mAutomata;
 	/**
@@ -136,6 +140,8 @@ public class AutomataDefinitionInterpreter {
 			try {
 				if (n instanceof NestedwordAutomatonAST) {
 					interpret((NestedwordAutomatonAST) n);
+				} else if (n instanceof EpsilonNestedwordAutomatonAST) {
+					interpret((EpsilonNestedwordAutomatonAST) n);
 				} else if (n instanceof PetriNetAutomatonAST) {
 					interpret((PetriNetAutomatonAST) n);
 				} else if (n instanceof AlternatingAutomatonAST) {
@@ -144,6 +150,8 @@ public class AutomataDefinitionInterpreter {
 					interpret((TreeAutomatonAST) n);
 				} else if (n instanceof TreeAutomatonRankedAST) {
 					interpret((TreeAutomatonRankedAST) n);
+				} else {
+					throw new AssertionError("unsupported kind of automaton " + n);
 				}
 			} catch (final Exception e) {
 				mMessagePrinter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG,
@@ -159,9 +167,9 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final AlternatingAutomatonAST astNode) {
 		mErrorLocation = astNode.getLocation();
 		final HashSet<String> alphabet = new HashSet<>(astNode.getAlphabet());
-		final AlternatingAutomaton<String, String> alternatingAutomaton =
-				new AlternatingAutomaton<>(alphabet, new StringFactory());
-		//States
+		final AlternatingAutomaton<String, String> alternatingAutomaton = new AlternatingAutomaton<>(alphabet,
+				new StringFactory());
+		// States
 		final List<String> states = astNode.getStates();
 		final List<String> finalStates = astNode.getFinalStates();
 		for (final String state : states) {
@@ -170,18 +178,19 @@ public class AutomataDefinitionInterpreter {
 				alternatingAutomaton.setStateFinal(state);
 			}
 		}
-		//Transitions
+		// Transitions
 		for (final Entry<Pair<String, String>, Set<String>> entry : astNode.getTransitions().entrySet()) {
 			final String expression = entry.getValue().iterator().next();
-			final LinkedList<BooleanExpression> booleanExpressions =
-					parseBooleanExpressions(alternatingAutomaton, expression);
+			final LinkedList<BooleanExpression> booleanExpressions = parseBooleanExpressions(alternatingAutomaton,
+					expression);
 			for (final BooleanExpression booleanExpression : booleanExpressions) {
-				alternatingAutomaton.addTransition(entry.getKey().right, entry.getKey().left, booleanExpression);
+				alternatingAutomaton.addTransition(entry.getKey().getSecond(), entry.getKey().getFirst(),
+						booleanExpression);
 			}
 		}
-		//Accepting Function
-		final LinkedList<BooleanExpression> acceptingBooleanExpressions =
-				parseBooleanExpressions(alternatingAutomaton, astNode.getAcceptingFunction());
+		// Accepting Function
+		final LinkedList<BooleanExpression> acceptingBooleanExpressions = parseBooleanExpressions(alternatingAutomaton,
+				astNode.getAcceptingFunction());
 		for (final BooleanExpression booleanExpression : acceptingBooleanExpressions) {
 			alternatingAutomaton.addAcceptingConjunction(booleanExpression);
 		}
@@ -198,38 +207,40 @@ public class AutomataDefinitionInterpreter {
 
 		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>(new StringFactory());
 
-
 		for (final String s : astNode.getStates()) {
 			treeAutomaton.addState(s);
 		}
 
-//		for (final String is : astNode.getInitialStates()) {
-//			treeAutomaton.addInitialState(is);
-//		}
+		// for (final String is : astNode.getInitialStates()) {
+		// treeAutomaton.addInitialState(is);
+		// }
 
 		for (final String fs : astNode.getFinalStates()) {
 			treeAutomaton.addFinalState(fs);
 		}
 
 		for (final TreeAutomatonTransitionAST trans : astNode.getTransitions()) {
-//			if (trans.getSourceStates().isEmpty()) {
-//				throw new UnsupportedOperationException("The TreeAutomaton format with initial states "
-//						+ "(and implicit symbol ranks) does not allow nullary rules, i.e.,"
-//						+ "rules where the source state list is empty");
-//			}
+			// if (trans.getSourceStates().isEmpty()) {
+			// throw new UnsupportedOperationException("The TreeAutomaton format
+			// with initial states "
+			// + "(and implicit symbol ranks) does not allow nullary rules,
+			// i.e.,"
+			// + "rules where the source state list is empty");
+			// }
 
-			// determine the rank of the letter according to the rule's source states
-			final StringRankedLetter letter =
-					getOrConstructStringRankedLetter(trans.getSymbol(), trans.getSourceStates().size());
+			// determine the rank of the letter according to the rule's source
+			// states
+			final StringRankedLetter letter = getOrConstructStringRankedLetter(trans.getSymbol(),
+					trans.getSourceStates().size());
 
-			treeAutomaton.addRule(
-					new TreeAutomatonRule<>(letter, trans.getSourceStates(), trans.getTargetState()));
+			treeAutomaton.addRule(new TreeAutomatonRule<>(letter, trans.getSourceStates(), trans.getTargetState()));
 		}
 
 		for (final String ltr : astNode.getAlphabet()) {
 			final Map<Integer, StringRankedLetter> letters = mLetterToRank.get(ltr);
 			if (letters == null || letters.isEmpty()) {
-				// letter occurs only in the alphabet, not in any rule -- assigning it rank -1
+				// letter occurs only in the alphabet, not in any rule --
+				// assigning it rank -1
 				treeAutomaton.addLetter(new StringRankedLetter(ltr, -1));
 			} else {
 				for (final Entry<Integer, StringRankedLetter> en : letters.entrySet()) {
@@ -248,9 +259,10 @@ public class AutomataDefinitionInterpreter {
 
 	private StringRankedLetter getOrConstructStringRankedLetter(final String symbol, final int letterRank) {
 		final String letterString = symbol;
-//		assert mLetterToRank.get(letterString) == null ||
-//				mLetterToRank.get(letterString).getRank() == letterRank : "we don't allow letter with more than one"
-//						+ "rank, right?";
+		// assert mLetterToRank.get(letterString) == null ||
+		// mLetterToRank.get(letterString).getRank() == letterRank : "we don't
+		// allow letter with more than one"
+		// + "rank, right?";
 		StringRankedLetter letter = mLetterToRank.get(letterString, letterRank);
 		if (letter == null) {
 			letter = new StringRankedLetter(letterString, letterRank);
@@ -273,14 +285,15 @@ public class AutomataDefinitionInterpreter {
 		for (final RankedAlphabetEntryAST rae : ra) {
 			for (final String ltr : rae.getAlphabet()) {
 				treeAutomaton.addLetter(getOrConstructStringRankedLetter(ltr, Integer.parseInt(rae.getRank())));
-//				if (Integer.parseInt(rae.getRank()) == 0) {
-//					// our tree automata don't have 0-ary symbols right now
-//					// (they use 1-ary, initial states, and adapted rules instead)
-//					// this converts 0-ary symbols accordingly
-//					final String inState = nullaryString + ltr;
-//					treeAutomaton.addState(inState);
-//					treeAutomaton.addInitialState(inState);
-//				}
+				// if (Integer.parseInt(rae.getRank()) == 0) {
+				// // our tree automata don't have 0-ary symbols right now
+				// // (they use 1-ary, initial states, and adapted rules
+				// instead)
+				// // this converts 0-ary symbols accordingly
+				// final String inState = nullaryString + ltr;
+				// treeAutomaton.addState(inState);
+				// treeAutomaton.addInitialState(inState);
+				// }
 			}
 		}
 
@@ -298,11 +311,9 @@ public class AutomataDefinitionInterpreter {
 						getStringRankedLetter(trans.getSymbol(), trans.getSourceStates().size()),
 						Collections.singletonList(nullaryString + trans.getSymbol()), trans.getTargetState()));
 			} else {
-				treeAutomaton.addRule(
-						new TreeAutomatonRule<>(
-								getStringRankedLetter(trans.getSymbol(), trans.getSourceStates().size()),
-								trans.getSourceStates(),
-								trans.getTargetState()));
+				treeAutomaton.addRule(new TreeAutomatonRule<>(
+						getStringRankedLetter(trans.getSymbol(), trans.getSourceStates().size()),
+						trans.getSourceStates(), trans.getTargetState()));
 			}
 		}
 		mAutomata.put(astNode.getName(), treeAutomaton);
@@ -315,13 +326,30 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final NestedwordAutomatonAST nwa) {
 		mErrorLocation = nwa.getLocation();
 
-		final NestedWordAutomaton<String, String> nw = constructNestedWordAutomaton(nwa, mServices);
+		final NestedWordAutomaton<String, String> result = constructNestedWordAutomaton(nwa, mServices);
 
-		mAutomata.put(nwa.getName(), nw);
+		mAutomata.put(nwa.getName(), result);
 	}
 
-	public static NestedWordAutomaton<String, String> constructNestedWordAutomaton(final NestedwordAutomatonAST nwa,
-			final IUltimateServiceProvider services) {
+	public void interpret(final EpsilonNestedwordAutomatonAST nwa) {
+		mErrorLocation = nwa.getLocation();
+
+		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result = constructEpsilonNestedWordAutomaton(
+				nwa, mServices);
+
+		mAutomata.put(nwa.getName(), result);
+	}
+
+	public static EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> constructEpsilonNestedWordAutomaton(
+			final EpsilonNestedwordAutomatonAST enwa, final IUltimateServiceProvider services) {
+		final NestedWordAutomaton<String, String> nwa = constructNestedWordAutomaton(enwa, services);
+		final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> result = new EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>>(
+				nwa, enwa.getEpsilonTransitions());
+		return result;
+	}
+
+	public static NestedWordAutomaton<String, String> constructNestedWordAutomaton(
+			final AbstractNestedwordAutomatonAST nwa, final IUltimateServiceProvider services) {
 		// check that the initial/final states exist
 		final Set<String> allStates = new HashSet<>(nwa.getStates());
 		final List<String> initStates = nwa.getInitialStates();
@@ -383,10 +411,10 @@ public class AutomataDefinitionInterpreter {
 
 		// add the transitions
 		for (final Entry<Pair<String, String>, Set<String>> entry : nwa.getInternalTransitions().entrySet()) {
-			final String pred = unifyIfNeeded(entry.getKey().left, mUnifyStates);
+			final String pred = unifyIfNeeded(entry.getKey().getFirst(), mUnifyStates);
 			for (final String succRaw : entry.getValue()) {
 				final String succ = unifyIfNeeded(succRaw, mUnifyStates);
-				final String letter = unifyIfNeeded(entry.getKey().right, mUnifyLettersInternal);
+				final String letter = unifyIfNeeded(entry.getKey().getSecond(), mUnifyLettersInternal);
 				if (!internalAlphabet.contains(letter)) {
 					throw new IllegalArgumentException("Letter " + letter + " not in internal alphabet");
 				}
@@ -395,10 +423,10 @@ public class AutomataDefinitionInterpreter {
 		}
 
 		for (final Entry<Pair<String, String>, Set<String>> entry : nwa.getCallTransitions().entrySet()) {
-			final String pred = unifyIfNeeded(entry.getKey().left, mUnifyStates);
+			final String pred = unifyIfNeeded(entry.getKey().getFirst(), mUnifyStates);
 			for (final String succRaw : entry.getValue()) {
 				final String succ = unifyIfNeeded(succRaw, mUnifyStates);
-				final String letter = unifyIfNeeded(entry.getKey().right, mUnifyLettersCall);
+				final String letter = unifyIfNeeded(entry.getKey().getSecond(), mUnifyLettersCall);
 				if (!callAlphabet.contains(letter)) {
 					throw new IllegalArgumentException("Letter " + letter + " not in call alphabet");
 				}
@@ -438,8 +466,8 @@ public class AutomataDefinitionInterpreter {
 
 		// add the places
 		for (final String p : pna.getPlaces()) {
-			final Place<String, String> place =
-					net.addPlace(p, pna.getInitialMarkings().containsPlace(p), pna.getAcceptingPlaces().contains(p));
+			final Place<String, String> place = net.addPlace(p, pna.getInitialMarkings().containsPlace(p),
+					pna.getAcceptingPlaces().contains(p));
 			name2places.put(p, place);
 		}
 
@@ -478,7 +506,7 @@ public class AutomataDefinitionInterpreter {
 		if ("true".equals(expression)) {
 			booleanExpressions.add(new BooleanExpression(new BitSet(), new BitSet()));
 		} else if ("false".equals(expression)) {
-			//Not supported yet
+			// Not supported yet
 		} else {
 			final String[] disjunctiveExpressions = expression.split("\\|");
 			for (final String disjunctiveExpression : disjunctiveExpressions) {

@@ -39,12 +39,13 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		implements IStatisticsDataProvider {
 
 	private Object mResult;
+	private final StatisticsData mReuseStats = new StatisticsData();
 	private final StatisticsData mEcData = new StatisticsData();
 	private final StatisticsData mPuData = new StatisticsData();
 	private final StatisticsData mTcData = new StatisticsData();
 	private final StatisticsData mTiData = new StatisticsData();
 	private final StatisticsData mAmData = new StatisticsData();
-	private final StatisticsData mHaData = new StatisticsData();
+	private final StatisticsData mHoareAnnotationData = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private final StatisticsData mPathInvariantsStatistics = new StatisticsData();
 	private final StatisticsData mRefinementEngineStatistics = new StatisticsData();
@@ -68,6 +69,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 
 	public void setResult(final Object result) {
 		mResult = result;
+	}
+
+	public void addReuseStats(final IStatisticsDataProvider reuseStats) {
+		mReuseStats.aggregateBenchmarkData(reuseStats);
 	}
 
 	public void addEdgeCheckerData(final IStatisticsDataProvider ecbd) {
@@ -112,7 +117,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	}
 
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
-		mHaData.aggregateBenchmarkData(hasp);
+		mHoareAnnotationData.aggregateBenchmarkData(hasp);
 	}
 
 	public void addAiWeakeningRatio(final double ratio) {
@@ -159,6 +164,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case HoareAnnotationTime:
 		case BasicInterpolantAutomatonTime:
 		case AbstIntTime:
+		case DUMP_TIME:
 			try {
 				return getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
@@ -181,6 +187,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return (double) mAiWeakeningConjunctReductionSum / (double) mAiWeakeningConjunctReductionNum;
 		case HoareTripleCheckerStatistics:
 			return mEcData;
+		case REUSE_STATISTICS:
+			return mReuseStats;
 		case PredicateUnifierStatistics:
 			return mPuData;
 		case traceCheckStatistics:
@@ -206,7 +214,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case AutomataMinimizationStatistics:
 			return mAmData;
 		case HoareAnnotationStatistics:
-			return mHaData;
+			return mHoareAnnotationData;
 		case RefinementEngineStatistics:
 			return mRefinementEngineStatistics;
 		default:
@@ -226,6 +234,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.AutomataDifference.toString(),
 				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
-				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString() };
+				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString(),
+				CegarLoopStatisticsDefinitions.DUMP_TIME.toString() };
 	}
 }

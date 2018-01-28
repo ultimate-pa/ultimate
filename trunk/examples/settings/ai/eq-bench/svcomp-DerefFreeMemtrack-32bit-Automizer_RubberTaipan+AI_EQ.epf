@@ -25,6 +25,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=External_DefaultMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=./dump/
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=false
 
 
 #Thu Nov 06 16:26:23 CET 2014
@@ -37,14 +38,17 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopsAndPotentialCycles
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=RUBBER_TAIPAN
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=true
 
 
 #Thu Oct 29 23:01:13 CET 2015
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=true
 
 
 #Thu Oct 29 17:01:28 CET 2015
@@ -53,6 +57,10 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain\ for\ RCFG-of-the-future=VPDomain
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Use\ the\ RCFG-of-the-future\ interface=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Deactivate\ Weak\ Equivalences=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Weq\ Fattening=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Flatten\ before\ fatten=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Precise\ comparison\ operator=false
 
 
 #Tue Oct 17 08:38:02 CEST 2017

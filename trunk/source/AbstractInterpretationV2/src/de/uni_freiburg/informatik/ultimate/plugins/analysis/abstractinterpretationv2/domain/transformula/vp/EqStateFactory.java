@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
@@ -57,6 +58,7 @@ public class EqStateFactory {
 	private final IIcfgSymbolTable mSymbolTable;
 	private EqState mTopStateWithEmptyPvocs;
 	private final ManagedScript mMgdScript;
+	private final ILogger mLogger;
 
 	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<EqNode> eqConstraintFactory,
@@ -65,6 +67,7 @@ public class EqStateFactory {
 		mEqConstraintFactory = eqConstraintFactory;
 		mSymbolTable = symbolTable;
 		mMgdScript = mgdScript;
+		mLogger = mEqConstraintFactory.getLogger();
 	}
 
 	public EqState disjoinAll(final Set<EqState> statesForCurrentEc) {
@@ -79,7 +82,8 @@ public class EqStateFactory {
 
 	public EqState getTopState() {
 		if (mTopStateWithEmptyPvocs == null) {
-			mTopStateWithEmptyPvocs = getEqState(mEqConstraintFactory.getEmptyConstraint(), Collections.emptySet());
+			mTopStateWithEmptyPvocs = getEqState(mEqConstraintFactory.getEmptyConstraint(false),
+					Collections.emptySet());
 		}
 		return mTopStateWithEmptyPvocs;
 	}
@@ -90,6 +94,7 @@ public class EqStateFactory {
 
 	public <NODE extends IEqNodeIdentifier<NODE>> EqState getEqState(final EqConstraint<NODE> constraint,
 				final Set<IProgramVarOrConst> variables) {
+		constraint.freezeIfNecessary();
 		// TODO manage EqStates smarter?
 		return new EqState((EqConstraint<EqNode>) constraint, mEqNodeAndFunctionFactory, this, variables);
 	}
@@ -107,12 +112,14 @@ public class EqStateFactory {
 	}
 
 	public EqPredicate stateToPredicate(final EqState state) {
+		// TODO: what procedures does the predicate need?
 		return new EqPredicate(
 				getEqConstraintFactory().getDisjunctiveConstraint(Collections.singleton(state.getConstraint())),
 				state.getConstraint().getVariables(getSymbolTable()),
 				null,
 				getSymbolTable(),
-				getManagedScript()); // TODO: what procedures does the predicate need?
+				getManagedScript(),
+				mEqNodeAndFunctionFactory);
 	}
 
 	public EqPredicate statesToPredicate(final List<EqState> states) {
@@ -124,23 +131,29 @@ public class EqStateFactory {
 			constraints.add(state.getConstraint());
 		}
 
+		// TODO: what procedures does the predicate need?
 		return new EqPredicate(
 				getEqConstraintFactory().getDisjunctiveConstraint(constraints),
 				variables,
 				null,
 				getSymbolTable(),
-				getManagedScript()); // TODO: what procedures does the predicate need?
+				getManagedScript(),
+				mEqNodeAndFunctionFactory);
 	}
 
 	public EqPredicate termToPredicate(final Term spPrecise,
 			final IPredicate postConstraint) {
 		return new EqPredicate(spPrecise, postConstraint.getVars(), postConstraint.getProcedures(), mSymbolTable,
-				mMgdScript);
+				mMgdScript, mEqNodeAndFunctionFactory);
 
 	}
 
 	public EqState getBottomState() {
 		return getEqState(mEqConstraintFactory.getBottomConstraint(), Collections.emptySet());
+	}
+
+	public ILogger getLogger() {
+		return mLogger;
 	}
 
 }

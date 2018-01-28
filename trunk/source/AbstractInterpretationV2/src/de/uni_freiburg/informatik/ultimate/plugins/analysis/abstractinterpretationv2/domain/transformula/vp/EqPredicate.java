@@ -26,13 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -49,35 +56,74 @@ public class EqPredicate implements IPredicate {
 	private final Set<IProgramVar> mVars;
 	private final Term mClosedFormula;
 	private final Term mFormula;
+	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 
 	public EqPredicate(final EqDisjunctiveConstraint<EqNode> constraint, final Set<IProgramVar> vars,
-			final String[] procedures, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
+			final String[] procedures, final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		assert vars != null;
+		assert vars.stream().allMatch(Objects::nonNull);
 		mConstraint = constraint;
 		mVars = vars;
 		mProcedures = procedures;
 
-
 		final Term constraintFormula = constraint.getTerm(mgdScript.getScript());
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(constraintFormula, mgdScript.getScript(),
 				symbolTable);
-		mClosedFormula = tvp.getClosedFormula();
-		mFormula = tvp.getFormula();
+
+//		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
+		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();;
+
+		mClosedFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getClosedFormula());
+		mFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getFormula());
 	}
 
+
+
 	public EqPredicate(final Term formula, final Set<IProgramVar> vars, final String[] procedures,
-			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
+			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		mConstraint = null;
+		assert vars.stream().allMatch(Objects::nonNull);
 		mVars = vars;
 		mProcedures = procedures;
+
+		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
 
 		final Term acc = formula;
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mgdScript.getScript(), symbolTable);
-		mClosedFormula = tvp.getClosedFormula();
-		mFormula = tvp.getFormula();
+
+//		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
+
+//		final Term literalDisequalities = SmtUtils.and(mgdScript.getScript(),
+//				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mgdScript.getScript(),
+//						collectLiteralsInFormula(formula)));
+		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();;
+
+		mClosedFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getClosedFormula());
+		mFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getFormula());
+//		mClosedFormula = tvp.getClosedFormula();
+//		mFormula = tvp.getFormula();
 
 	}
+
+	private Set<Term> collectLiteralsInFormula(final Term formula) {
+		final Predicate<Term> pred = term -> term instanceof ConstantTerm
+				|| mEqNodeAndFunctionFactory.getNonTheoryLiterals().contains(term);
+		return new SubTermFinder(pred).findMatchingSubterms(formula);
+	}
+
+//	@Deprecated
+//	private Term getLiteralDisequalities(final EqDisjunctiveConstraint<EqNode> constraint,
+//			final ManagedScript mgdScript) {
+//		final Term literalDisequalities = SmtUtils.and(mgdScript.getScript(),
+//				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(
+//						mgdScript.getScript(),
+//						constraint.getAllLiteralNodes().stream()
+//							.map(node -> node.getTerm()).collect(Collectors.toSet())));
+//		return literalDisequalities;
+//	}
 
 
 	@Override
@@ -87,7 +133,7 @@ public class EqPredicate implements IPredicate {
 
 	@Override
 	public Set<IProgramVar> getVars() {
-		return mVars;
+		return Collections.unmodifiableSet(mVars);
 	}
 
 	public EqDisjunctiveConstraint<EqNode> getEqConstraint() {

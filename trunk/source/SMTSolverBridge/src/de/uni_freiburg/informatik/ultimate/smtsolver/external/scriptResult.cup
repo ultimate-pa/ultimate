@@ -252,7 +252,7 @@ terminal String UNDERSCORE, BANG,
          THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
          INCLUDE, RESET, SIMPLIFY, TIMED, TERM,
          /* Oday (not in standard) */ TIMEOUT, ASSERTED, STDOUT, STDERR, GETTERM,
-         CANCELED;
+         CANCELED, INTERPOLANTS;
 
 /* Predefined Keywords */
 terminal String /* attribute */
@@ -323,6 +323,7 @@ non terminal Object proof;
 non terminal Object gpResponse;
 non terminal Object goResponse;
 non terminal Term[] gucResponse;
+non terminal Term[] ginterpolResponse;
 non terminal HashMap valuationPair;
 non terminal Map<Term,Term> gvResponse;
 non terminal HashMap tValuationPair;
@@ -336,6 +337,7 @@ goal ::= SUCCESS genResponse {: RESULT = null; :}
        | GETVALUE gvResponse:v {: RESULT = v; :}
        | GETASSIGNMENT gtaResponse:a {: RESULT = a; :}
        | GETOPTION goResponse:o {: RESULT = o; :}
+       | GETINTERPOLANTS ginterpolResponse:o {: RESULT = o; :}
        | GETTERM term:t {: if (t == null) System.err.println(getError());
        							RESULT = t; :};
 
@@ -452,7 +454,7 @@ term ::= constantTerm
 symbol ::= SYMBOL | CONTINUEDEXECUTION | ERRORSYM | FALSE | IMMEDIATEEXIT |
            INCOMPLETE | LOGIC | NONE | MEMOUT | SAT | SUCCESS | THEORY | TRUE |
            UNKNOWN | UNSUPPORTED | UNSAT | INCLUDE | RESET |
-           SIMPLIFY | /* Oday: Added Symbols */ TIMEOUT | ASSERTED;
+           SIMPLIFY | /* Oday: Added Symbols */ TIMEOUT | ASSERTED | INTERPOLANTS;
          
 /* The following are reserved words
          PAR | NUMERALSYM | DECIMALSYM | STRINGSYM |
@@ -564,6 +566,10 @@ gtaResponse ::= LPAR tValuationPair*:a RPAR
 :}
 			 | errorResponse;
 
+ginterpolResponse ::= LPAR INTERPOLANTS term*:t RPAR {: RESULT = t; :}
+					| errorResponse;
+					
+					
 /* get option response */
 goResponse ::= TRUE {: RESULT = true; :}
 			 | FALSE {: RESULT = false; :}

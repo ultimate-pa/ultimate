@@ -34,6 +34,7 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
@@ -137,7 +138,8 @@ public class StructHandler {
 				newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 				newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			}
-			final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
+			final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field,
+					node);
 			final Expression sumOffset =
 					mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 							newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset,
@@ -149,7 +151,7 @@ public class StructHandler {
 
 			if (cStructType instanceof CUnion) {
 				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType,
-						(CUnion) cStructType, fieldOwnerHlv));
+						(CUnion) cStructType, fieldOwnerHlv, node));
 			}
 		} else if (fieldOwner.mLrVal instanceof RValue) {
 			final RValue rVal = (RValue) fieldOwner.mLrVal;
@@ -163,7 +165,8 @@ public class StructHandler {
 
 			if (cStructType instanceof CUnion) {
 				unionFieldToCType.addAll(
-						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, (CUnion) cStructType, lVal));
+						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, (CUnion) cStructType, lVal,
+								node));
 			}
 		}
 
@@ -179,7 +182,8 @@ public class StructHandler {
 	}
 
 	private List<ExpressionResult> computeNeighbourFieldsOfUnionField(final ILocation loc, final String field,
-			final List<ExpressionResult> unionFieldToCType, final CUnion foType, final LRValue fieldOwner) {
+			final List<ExpressionResult> unionFieldToCType, final CUnion foType, final LRValue fieldOwner,
+			final IASTNode hook) {
 
 		List<ExpressionResult> result;
 		if (unionFieldToCType == null) {
@@ -200,7 +204,7 @@ public class StructHandler {
 			} else {
 				assert fieldOwner instanceof HeapLValue;
 				final Expression fieldOffset =
-						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
+						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField, hook);
 				final Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
 				final Expression summedOffset = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
 						IASTBinaryExpression.op_plus, MemoryHandler.getPointerOffset(unionAddress, loc),
@@ -220,7 +224,7 @@ public class StructHandler {
 	}
 
 	public Result readFieldInTheStructAtAddress(final Dispatcher main, final ILocation loc, final int fieldIndex,
-			final Expression structAddress, final CStruct structType) {
+			final Expression structAddress, final CStruct structType, final IASTNode hook) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
 
@@ -228,14 +232,14 @@ public class StructHandler {
 		addressOffsetOfFieldOwner = new StructAccessExpression(loc, structAddress, SFO.POINTER_OFFSET);
 
 		final Expression newOffset =
-				computeStructFieldOffset(mMemoryHandler, loc, fieldIndex, addressOffsetOfFieldOwner, structType);
+				computeStructFieldOffset(mMemoryHandler, loc, fieldIndex, addressOffsetOfFieldOwner, structType, hook);
 
 		final StructConstructor newPointer =
 				MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
 
 		final CType resultType = structType.getFieldTypes()[fieldIndex];
 
-		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType);
+		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType, hook);
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
@@ -250,11 +254,12 @@ public class StructHandler {
 	}
 
 	Expression computeStructFieldOffset(final MemoryHandler memoryHandler, final ILocation loc, final int fieldIndex,
-			final Expression addressOffsetOfFieldOwner, final CStruct structType) {
+			final Expression addressOffsetOfFieldOwner, final CStruct structType, final IASTNode hook) {
 		if (structType == null) {
 			throw new IncorrectSyntaxException(loc, "Incorrect or unexpected field owner!");
 		}
-		final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, fieldIndex);
+		final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, fieldIndex,
+				hook);
 		final Expression result = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, mTypeSizeAndOffsetComputer.getSizeT(),
 				fieldOffset, mTypeSizeAndOffsetComputer.getSizeT());

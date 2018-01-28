@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,8 +40,10 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -108,9 +111,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier.CoverageRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
@@ -118,6 +122,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -171,8 +177,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	private final ErrorGeneralizationEngine<LETTER> mErrorGeneralizationEngine;
 	private final boolean mStoreFloydHoareAutomata;
-	private final LinkedHashSet<AbstractInterpolantAutomaton<LETTER>> mFloydHoareAutomata = new LinkedHashSet<>();
+	private final LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomata =
+			new LinkedHashSet<>();
 	protected final TaskIdentifier mTaskIdentifier;
+	private boolean mFirstReuseDump = true;
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -207,7 +215,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			mHoareAnnotationLocations = Collections.emptySet();
 		}
-		mStoreFloydHoareAutomata = (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE);
+		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
@@ -234,7 +242,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		final PathProgramCache<LETTER> pathProgramCache = new PathProgramCache<>(mLogger);
 		final CegarAbsIntRunner<LETTER> absIntRunner = new CegarAbsIntRunner<>(services, mCegarLoopBenchmark, rootNode,
-				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit, pathProgramCache);
+				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit, pathProgramCache, taPrefs);
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory<>(mServices, mCsToolkit,
 				mPredicateFactoryInterpolantAutomata, mIcfg, absIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
@@ -307,7 +315,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		if (mPref.dumpAutomata()) {
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
 			mDumper.dumpNestedRun(mCounterexample);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		}
 		mLogger.info("Found error trace");
 
@@ -359,11 +369,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
-		final IRefinementStrategy<LETTER> strategy =
+		final BaseRefinementStrategy<LETTER> strategy =
 				mRefinementStrategyFactory.createStrategy(mPref.getRefinementStrategy(), mCounterexample, mAbstraction,
 						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()));
 		try {
-			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
+			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
@@ -510,11 +520,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						subtrahendBeforeEnhancement, predicateUnifier, htc, enhanceMode);
 				subtrahend = ia;
 				if (mStoreFloydHoareAutomata) {
-					mFloydHoareAutomata.add(ia);
+					mFloydHoareAutomata.add(new Pair<>(ia, predicateUnifier));
 				}
 			}
 		}
 
+		// TODO: HTC and predicateunifier statistics are saved in the following method, but it seems better to save them
+		// at the end of the htc livecycle instead of there
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
 				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
@@ -579,6 +591,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 
 			dumpAutomatonIfEnabled(subtrahend, "", automatonType);
+			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
 
 			if (!useErrorAutomaton) {
 				checkEnhancement(subtrahendBeforeEnhancement, subtrahend);
@@ -597,7 +610,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = diff.getResult();
 
 			dumpAutomatonIfEnabled(subtrahendBeforeEnhancement, "Enhanced", automatonType);
-		} finally {
+
+		} finally
+
+		{
 			mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -633,6 +649,40 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final String type = Character.toUpperCase(automatonType.charAt(0)) + automatonType.substring(1);
 			final String filename = prefix + type + "Automaton_Iteration" + mIteration;
 			super.writeAutomatonToFile(subtrahend, filename);
+		}
+	}
+
+	protected void dumpOrAppendAutomatonForReuseIfEnabled(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton,
+			final IPredicateUnifier predicateUnifier) {
+		if (mPref.dumpOnlyReuseAutomata()) {
+
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
+			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString() + " " + automaton.getClass());
+			final String filename = mTaskIdentifier + "-reuse";
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> printedAutomaton;
+			final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
+			final boolean addPredicateImplicationInformation = false;
+			if (addPredicateImplicationInformation) {
+				final HashRelation<IPredicate, IPredicate> outgoingEpsilonTransitions =
+						((CoverageRelation) predicateUnifier.getCoverageRelation()).getCopyOfImplicationRelation();
+				INestedWordAutomaton<LETTER, IPredicate> backingNestedWordAutomaton;
+				try {
+					backingNestedWordAutomaton = new RemoveUnreachable<>(services, automaton).getResult();
+				} catch (final AutomataOperationCanceledException e) {
+					throw new AssertionError(e);
+				}
+				printedAutomaton =
+						new EpsilonNestedWordAutomaton<>(backingNestedWordAutomaton, outgoingEpsilonTransitions);
+			} else {
+				printedAutomaton = automaton;
+			}
+			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + mIteration,
+					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", !mFirstReuseDump,
+					printedAutomaton);
+			mFirstReuseDump = false;
+			mLogger.info("Finished dumping");
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		}
 	}
 
@@ -678,7 +728,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mLogger.fatal("--");
 	}
 
-	private AbstractInterpolantAutomaton<LETTER> constructInterpolantAutomatonForOnDemandEnhancement(
+	protected AbstractInterpolantAutomaton<LETTER> constructInterpolantAutomatonForOnDemandEnhancement(
 			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
@@ -690,7 +740,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		case PREDICATE_ABSTRACTION_CONSERVATIVE:
 		case PREDICATE_ABSTRACTION_CANNIBALIZE:
 			result = constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(inputInterpolantAutomaton,
-					htc, enhanceMode);
+					predicateUnifier, htc, enhanceMode);
 			break;
 		case EAGER:
 		case NO_SECOND_CHANCE:
@@ -718,13 +768,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private DeterministicInterpolantAutomaton<LETTER>
 			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
 					final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-					final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode) {
+					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+					final InterpolantAutomatonEnhancement enhanceMode) {
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 		return new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-				mTraceCheckAndRefinementEngine.getPredicateUnifier(), conservativeSuccessorCandidateSelection,
-				cannibalize);
+				predicateUnifier, conservativeSuccessorCandidateSelection, cannibalize);
 	}
 
 	protected void minimizeAbstractionIfEnabled()
@@ -908,7 +958,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 	}
 
-	public LinkedHashSet<AbstractInterpolantAutomaton<LETTER>> getFloydHoareAutomata() {
+	public LinkedHashSet<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> getFloydHoareAutomata() {
 		if (mStoreFloydHoareAutomata) {
 			return mFloydHoareAutomata;
 		}

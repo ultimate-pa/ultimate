@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LpSolverPreferences;
 
 /**
@@ -147,6 +148,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 		// Array Domain
 		abstractDomainContainer.addAbstractItems(ArrayDomainPreferences.getPreferences());
+
+		// VP Domain
+		abstractDomainContainer.addAbstractItems(VPDomainPreferences.getPreferences());
 
 		rtr.add(abstractDomainContainer);
 

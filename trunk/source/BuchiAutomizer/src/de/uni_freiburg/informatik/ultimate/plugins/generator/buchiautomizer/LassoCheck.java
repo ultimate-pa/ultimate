@@ -93,7 +93,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
@@ -111,7 +111,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	enum SynthesisResult {
 		TERMINATING, NONTERMINATING, UNKNOWN, UNCHECKED
 	}
-	
+
 	enum LassoPart {
 		STEM, LOOP, CONCAT
 	}
@@ -259,12 +259,12 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicate axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<LETTER, IPredicate> counterexample,
-			final String lassoCheckIdentifier, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, 
-			final RefinementStrategyFactory<LETTER> refinementStrategyFactory, 
+			final String lassoCheckIdentifier, final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final RefinementStrategyFactory<LETTER> refinementStrategyFactory,
 			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final RefinementStrategy refinementStrategy,
-			final TaskIdentifier taskIdentifier, final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
+			final TaskIdentifier taskIdentifier, final BuchiCegarLoopBenchmarkGenerator cegarStatistics)
+			throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
@@ -272,8 +272,10 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSymbolTable = symbolTable;
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mRankAnalysisType = baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
-		mGntaAnalysisType = baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.class);
+		mRankAnalysisType =
+				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
+		mGntaAnalysisType =
+				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.class);
 		mGntaDirections = baPref.getInt(BuchiAutomizerPreferenceInitializer.LABEL_GNTA_DIRECTIONS);
 
 		mTemplateBenchmarkMode = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TEMPLATE_BENCHMARK_MODE);
@@ -295,8 +297,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
 		mCegarStatistics = cegarStatistics;
-		
-		
+
 		mLassoCheckResult = new LassoCheckResult();
 		assert mLassoCheckResult.getStemFeasibility() != TraceCheckResult.UNCHECKED;
 		assert (mLassoCheckResult.getLoopFeasibility() != TraceCheckResult.UNCHECKED)
@@ -471,17 +472,17 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		private TraceAbstractionRefinementEngine checkFeasibilityAndComputeInterpolants(
 				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
 
-			final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(mRefinementStrategy,
-					run, mAbstraction, taskIdentifier);
+			final BaseRefinementStrategy<LETTER> strategy =
+					mRefinementStrategyFactory.createStrategy(mRefinementStrategy, run, mAbstraction, taskIdentifier);
 
 			final TraceAbstractionRefinementEngine result;
 			try {
-				result = new TraceAbstractionRefinementEngine<>(mLogger, strategy, null);
+				result = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 				mCegarStatistics.addRefinementEngineStatistics(strategy.getRefinementEngineStatistics());
 			} catch (final ToolchainCanceledException tce) {
 				final int traceHistogramMax = new HistogramOfIterable<>(run.getWord()).getMax();
-				final String taskDescription = "analyzing trace of length " + run.getLength() + " with TraceHistMax "
-						+ traceHistogramMax;
+				final String taskDescription =
+						"analyzing trace of length " + run.getLength() + " with TraceHistMax " + traceHistogramMax;
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 				throw tce;
 			}
@@ -658,8 +659,8 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 			@Override
 			public boolean isMapElimOnlyTrivialImplicationsArrayWrite() {
-				return baPref
-						.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
+				return baPref.getBoolean(
+						BuchiAutomizerPreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
 			}
 
 			@Override
@@ -670,7 +671,8 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 			@Override
 			public boolean isMapElimOnlyIndicesInFormula() {
-				return baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
+				return baPref
+						.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
 			}
 
 			@Override
@@ -917,8 +919,8 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 				mTerminationAnalysisBenchmarks.addAll(benchs);
 				if (mTemplateBenchmarkMode) {
 					for (final TerminationAnalysisBenchmark bench : benchs) {
-						final IResult benchmarkResult =
-								new StatisticsResult<>(Activator.PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", bench);
+						final IResult benchmarkResult = new StatisticsResult<>(Activator.PLUGIN_ID,
+								"LassoTerminationAnalysisBenchmarks", bench);
 						mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 					}
 				}
@@ -989,9 +991,9 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	// return mPreferences;
 	// }
 	// }
-	
+
 	private class SubtaskLassoCheckIdentifier extends TaskIdentifier {
-		
+
 		private final LassoPart mLassoPart;
 
 		public SubtaskLassoCheckIdentifier(final TaskIdentifier parentTaskIdentifier, final LassoPart lassoPart) {
@@ -1003,11 +1005,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		protected String getSubtaskIdentifier() {
 			return mLassoPart.toString();
 		}
-		
-		
 
-
-		
 	}
 
 }

@@ -19,10 +19,12 @@ struct the_struct {
 };
 
 extern struct the_struct my_struct[SECOND];
-struct the_struct my_struct[SECOND];
+struct the_struct my_struct[SECOND] = {2, 4};
 
 int main(){
-  my_struct[0] = {2, 4};
-  //@assert my_struct[0].a == 2;
+  my_struct[0];
+  if (my_struct[0].a != 2) {
+    //@ assert \false;
+  }
   return my_struct[0].a;
 }

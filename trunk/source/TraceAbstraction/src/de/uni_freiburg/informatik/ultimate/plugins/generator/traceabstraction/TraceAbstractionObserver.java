@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.EpsilonNestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -111,7 +113,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 						"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
 				witnessAutomaton = new WitnessModelToAutomatonTransformer(mWitnessNode, mServices).getResult();
 			}
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile = constructRawNestedWordAutomata(mAutomataTestFileAsts);
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile = constructRawNestedWordAutomata(mAutomataTestFileAsts);
 			
 			final TraceAbstractionStarter tas =
 					new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile);
@@ -119,15 +121,19 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private List<NestedWordAutomaton<String, String>> constructRawNestedWordAutomata(
+	private List<INestedWordAutomaton<String, String>> constructRawNestedWordAutomata(
 			final List<AutomataTestFileAST> automataTestFileAsts) {
-		final List<NestedWordAutomaton<String, String>> result = new ArrayList<>();
+		final List<INestedWordAutomaton<String, String>> result = new ArrayList<>();
 		for (final AutomataTestFileAST automataTestFileAst : automataTestFileAsts) {
 			final List<AutomatonAST> automataDefinitions = automataTestFileAst.getAutomataDefinitions().getListOfAutomataDefinitions();
 			for (final AutomatonAST automatonDefinition : automataDefinitions) {
 				if (automatonDefinition instanceof NestedwordAutomatonAST) {
 					final NestedWordAutomaton<String, String> nwa = AutomataDefinitionInterpreter
 							.constructNestedWordAutomaton((NestedwordAutomatonAST) automatonDefinition, mServices);
+					result.add(nwa);
+				} else if (automatonDefinition instanceof EpsilonNestedwordAutomatonAST) {
+					final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> nwa = AutomataDefinitionInterpreter
+							.constructEpsilonNestedWordAutomaton((EpsilonNestedwordAutomatonAST) automatonDefinition, mServices);
 					result.add(nwa);
 				} else {
 					throw new UnsupportedOperationException(

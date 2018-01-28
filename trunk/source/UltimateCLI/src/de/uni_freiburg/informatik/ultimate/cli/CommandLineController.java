@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
@@ -80,7 +81,9 @@ public class CommandLineController implements IController<RunDefinition> {
 
 	private ILogger mLogger;
 	private IToolchainData<RunDefinition> mToolchain;
-	private String mCsvPathPrefix;
+
+	private ParsedParameter mCliParams;
+	private String mCsvPrefix;
 
 	@Override
 	public int init(final ICore<RunDefinition> core) {
@@ -161,11 +164,12 @@ public class CommandLineController implements IController<RunDefinition> {
 				return -1;
 			}
 
-			if (fullParams.generateCsvs()) {
-				mCsvPathPrefix = generateCsvPrefix(fullParams);
-			}
-
+			mCliParams = fullParams;
 			mLogger.info("This is Ultimate " + core.getUltimateVersionString());
+			if (fullParams.generateCsvs()) {
+				// generate prefix early to fail fast and handle exceptions
+				mCsvPrefix = mCliParams.getCsvPrefix();
+			}
 			final IToolchainData<RunDefinition> currentToolchain = prepareToolchain(core, fullParams);
 			assert currentToolchain == mToolchain;
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
@@ -205,25 +209,6 @@ public class CommandLineController implements IController<RunDefinition> {
 			mLogger.info("Value of " + sysProp + " is " + value);
 		}
 
-	}
-
-	private static String generateCsvPrefix(final ParsedParameter fullParams)
-			throws ParseException, InvalidFileArgumentException {
-		String dir;
-		if (fullParams.hasCsvDirectory()) {
-			dir = fullParams.getCsvDirectory().getAbsolutePath();
-		} else {
-			dir = new File(".").getAbsolutePath();
-		}
-
-		final List<File> files = new ArrayList<>();
-		files.addAll(Arrays.asList(fullParams.getInputFiles()));
-		if (fullParams.hasSettings()) {
-			files.add(new File(fullParams.getSettingsFile()));
-		}
-		files.add(fullParams.getToolchainFile());
-		final String joinednames = files.stream().map(a -> a.getName()).collect(Collectors.joining("_"));
-		return Paths.get(dir, joinednames).toString();
 	}
 
 	/**
@@ -335,28 +320,34 @@ public class CommandLineController implements IController<RunDefinition> {
 
 		// TODO: Add option to control the writing of .csv files
 
-		if (mCsvPathPrefix != null) {
+		if (mCliParams.generateCsvs()) {
 			final List<ICsvProviderProvider<?>> csvProviders = ResultUtil.filterResults(results, StatisticsResult.class)
 					.stream().map(a -> a.getStatistics()).collect(Collectors.toList());
-			writeCsvLogs(csvProviders);
+			writeCsvLogs(csvProviders, summarizer);
 		}
 	}
 
-	private void writeCsvLogs(final List<ICsvProviderProvider<?>> csvProviders) {
+	private void writeCsvLogs(final List<ICsvProviderProvider<?>> csvProviders, final ResultSummarizer summarizer) {
 
 		if (csvProviders == null || csvProviders.isEmpty()) {
 			return;
 		}
 		final String timestamp = CoreUtil.getCurrentDateTimeAsString();
 		final Map<String, Integer> alreadySeenProviders = new HashMap<>();
+
 		for (final ICsvProviderProvider<?> provider : csvProviders) {
 			if (provider == null) {
 				continue;
 			}
-			final ICsvProvider<?> csvProvider = provider.createCsvProvider();
-			if (csvProvider.isEmpty()) {
+
+			final ICsvProvider<?> origCsvProvider = provider.createCsvProvider();
+			if (origCsvProvider.isEmpty()) {
 				continue;
 			}
+
+			@SuppressWarnings("unchecked")
+			final ICsvProvider<?> csvProvider =
+					getEnrichedProvider((ICsvProvider<Object>) origCsvProvider, summarizer, mCliParams);
 
 			final String providerName = provider.getClass().getSimpleName();
 			Integer counter = alreadySeenProviders.get(providerName);
@@ -368,7 +359,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			alreadySeenProviders.put(providerName, counter);
 
 			final String filename = Paths
-					.get(mCsvPathPrefix,
+					.get(mCsvPrefix,
 							"Csv-" + provider.getClass().getSimpleName() + "-" + counter + "-" + timestamp + ".csv")
 					.toString();
 			try {
@@ -380,6 +371,41 @@ public class CommandLineController implements IController<RunDefinition> {
 				mLogger.error("Could not write .csv log for " + filename + ":", e);
 			}
 		}
+	}
+
+	private static ICsvProvider<Object> getEnrichedProvider(ICsvProvider<Object> csvProvider,
+			final ResultSummarizer summarizer, final ParsedParameter cliParams) {
+		final int rowCount = csvProvider.getRowCount();
+		try {
+			csvProvider = CsvUtils.addColumn(csvProvider, "AnalysisResult", 0,
+					repeatValue(rowCount, summarizer.getResultSummary()));
+			csvProvider =
+					CsvUtils.addColumn(csvProvider, "Inputfiles", 0, repeatValue(rowCount, cliParams.getInputFiles()));
+			csvProvider = CsvUtils.addColumn(csvProvider, "Settingsfile", 0,
+					repeatValue(rowCount, cliParams.getSettingsFile()));
+			csvProvider = CsvUtils.addColumn(csvProvider, "Toolchainfile", 0,
+					repeatValue(rowCount, cliParams.getToolchainFile()));
+		} catch (InvalidFileArgumentException | ParseException e) {
+			throw new RuntimeException(e);
+		}
+		return csvProvider;
+	}
+
+	private static List<Object> repeatValue(final int rowCount, final Object value) {
+		Object actualValue;
+		if (value instanceof Object[]) {
+			actualValue = Arrays.stream((Object[]) value).map(a -> String.valueOf(a)).collect(Collectors.joining(";"));
+		} else if (value instanceof Collection) {
+			actualValue = ((Collection<?>) value).stream().map(a -> String.valueOf(a)).collect(Collectors.joining(";"));
+		} else {
+			actualValue = String.valueOf(value);
+		}
+
+		final List<Object> rtr = new ArrayList<>(rowCount);
+		for (int i = 0; i < rowCount; ++i) {
+			rtr.add(actualValue);
+		}
+		return rtr;
 	}
 
 	@Override

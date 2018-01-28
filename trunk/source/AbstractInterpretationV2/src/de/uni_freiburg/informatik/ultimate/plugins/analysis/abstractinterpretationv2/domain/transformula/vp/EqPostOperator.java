@@ -205,7 +205,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final Set<Term> ovTvs =
 					oldVars.stream().map(ov -> ov.getTermVariable()).collect(Collectors.toSet());
 			final EqConstraint<EqNode> projectedCons =
-					mEqConstraintFactory.projectExistentially(ovTvs, hierarchicalPrestate.getConstraint());
+					mEqConstraintFactory.projectExistentially(ovTvs, hierarchicalPrestate.getConstraint(), false);
 			final EqState hier = mEqStateFactory.getEqState(projectedCons, hierarchicalPrestate.getVariables());
 
 			final EqPredicate callPred = hier.toEqPredicate();

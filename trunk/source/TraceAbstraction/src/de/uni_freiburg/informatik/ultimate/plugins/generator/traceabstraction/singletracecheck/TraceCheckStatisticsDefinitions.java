@@ -30,41 +30,41 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
 public enum TraceCheckStatisticsDefinitions implements IStatisticsElement {
 
-	SsaConstructionTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	SsaConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	SatisfiabilityAnalysisTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	SatisfiabilityAnalysisTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	InterpolantComputationTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	InterpolantComputationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
 
-	NumberOfCodeBlocks(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	NumberOfCodeBlocks(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	NumberOfCodeBlocksAsserted(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	NumberOfCodeBlocksAsserted(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	NumberOfCheckSat(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	NumberOfCheckSat(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	ConstructedInterpolants(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	ConstructedInterpolants(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	QuantifiedInterpolants(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	QuantifiedInterpolants(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	SizeOfPredicates(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sDataBeforeKey),
+	SizeOfPredicates(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	NumberOfNonLiveVariables(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	NumberOfNonLiveVariables(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	ConjunctsInSsa(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	ConjunctsInSsa(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	ConjunctsInUnsatCore(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	ConjunctsInUnsatCore(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	InterpolantComputations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	InterpolantComputations(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	PerfectInterpolantSequences(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
+	PerfectInterpolantSequences(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.DEFAULT_AGGREGATION,
-			AStatisticsType.sDataBeforeKey),;
+			StatisticsType.DATA_BEFORE_KEY),;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;

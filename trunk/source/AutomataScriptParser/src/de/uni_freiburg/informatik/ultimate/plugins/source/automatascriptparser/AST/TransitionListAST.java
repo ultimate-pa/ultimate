@@ -29,7 +29,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +38,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Is used to hold transitions for nestedword automata (internal-, call-, and
@@ -49,96 +50,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  *
  */
 public class TransitionListAST extends AtsASTNode {
-	
-	public class Pair<L, R> {
-		public final L left;
-		public final R right;
-		
-		public Pair(L left, R right) {
-			this.left = left;
-			this.right = right;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 7;
-			result = prime * result + getOuterType().hashCode();
-			result = prime * result + ((left == null) ? 0 : left.hashCode());
-			result = prime * result + ((right == null) ? 0 : right.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			@SuppressWarnings("unchecked")
-			final
-			Pair<L, R> other = (Pair<L, R>) obj;
-			if (!getOuterType().equals(other.getOuterType())) {
-				return false;
-			}
-			if (left == null) {
-				if (other.left != null) {
-					return false;
-				}
-			} else if (!left.equals(other.left)) {
-				return false;
-			}
-			if (right == null) {
-				if (other.right != null) {
-					return false;
-				}
-			} else if (!right.equals(other.right)) {
-				return false;
-			}
-			return true;
-		}
-
-		private TransitionListAST getOuterType() {
-			return TransitionListAST.this;
-		}
-		
-		@Override
-		public String toString() {
-			return "(" + this.left + "," + this.right + ")";
-		}
-		
-		
-	}
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 4468320445354864058L;
-	private final Map<Pair<String, String> , Set<String>> mTransitions;
+	private final Map<Pair<String, String>, Set<String>> mTransitions;
 	private final Map<String, Map<String, Map<String, Set<String>>>> mReturnTransitions;
 	private final List<PetriNetTransitionAST> mnetTransitions;
-	
-	
-	public TransitionListAST(ILocation loc) {
+	private final ArrayList<IdentifierListAST> mIdLists = new ArrayList<IdentifierListAST>();
+
+	public TransitionListAST(final ILocation loc) {
 		super(loc);
-		mTransitions = new HashMap<Pair<String,String>, Set<String>>();
+		mTransitions = new HashMap<Pair<String, String>, Set<String>>();
 		mReturnTransitions = new HashMap<String, Map<String, Map<String, Set<String>>>>();
 		mnetTransitions = new ArrayList<PetriNetTransitionAST>();
 	}
-	
-	
+
 	/**
 	 * Method to add an internal or call transition for nested word automaton.
+	 * 
 	 * @param fromState
 	 * @param label
 	 * @param toState
 	 */
-	public void addTransition(String fromState, String label, String toState) {
+	private void addTransition(final String fromState, final String label, final String toState) {
 		final Pair<String, String> stateSymbolPair = new Pair<String, String>(fromState, label);
 		if (mTransitions.containsKey(stateSymbolPair)) {
 			final Set<String> succs = mTransitions.get(stateSymbolPair);
@@ -150,15 +86,17 @@ public class TransitionListAST extends AtsASTNode {
 			mTransitions.put(stateSymbolPair, succs);
 		}
 	}
-	
+
 	/**
 	 * Method to add a return transition for a nested word automaton.
+	 * 
 	 * @param fromState
 	 * @param returnState
 	 * @param label
 	 * @param toState
 	 */
-	public void addTransition(String fromState, String returnState, String label, String toState) {
+	private void addTransition(final String fromState, final String returnState, final String label,
+			final String toState) {
 		Map<String, Map<String, Set<String>>> hier2letter2succs = mReturnTransitions.get(fromState);
 		if (hier2letter2succs == null) {
 			hier2letter2succs = new HashMap<String, Map<String, Set<String>>>();
@@ -176,8 +114,9 @@ public class TransitionListAST extends AtsASTNode {
 		}
 		succs.add(toState);
 	}
-	
-	public void addTransition(IdentifierListAST idList) {
+
+	public void addTransition(final IdentifierListAST idList) {
+		mIdLists.add(idList);
 		final List<String> ids = idList.getIdentifierList();
 		if (ids.size() == 3) {
 			addTransition(ids.get(0), ids.get(1), ids.get(2));
@@ -186,19 +125,31 @@ public class TransitionListAST extends AtsASTNode {
 		}
 	}
 
+	@Deprecated
+	/**
+	 * 20180125 Matthias: Deprecated, implement analogously to
+	 * convertToEpsilonTransitions()
+	 */
 	public Map<Pair<String, String>, Set<String>> getTransitions() {
 		return mTransitions;
 	}
-	
+
+	@Deprecated
+	/**
+	 * 20180125 Matthias: Deprecated, implement analogously to
+	 * convertToEpsilonTransitions()
+	 */
 	public Map<String, Map<String, Map<String, Set<String>>>> getReturnTransitions() {
 		return mReturnTransitions;
 	}
-	
+
 	/**
 	 * Method to add a transition for Petri nets.
-	 * @param nt the transition of a Petri net
+	 * 
+	 * @param nt
+	 *            the transition of a Petri net
 	 */
-	public void addNetTransition(PetriNetTransitionAST nt) {
+	public void addNetTransition(final PetriNetTransitionAST nt) {
 		mnetTransitions.add(nt);
 	}
 
@@ -206,5 +157,17 @@ public class TransitionListAST extends AtsASTNode {
 		return mnetTransitions;
 	}
 
-	
+	public HashRelation<String, String> convertToEpsilonTransitions() {
+		final HashRelation<String, String> result = new HashRelation<>();
+		for (final IdentifierListAST idList : mIdLists) {
+			if (idList.getIdentifierList().size() != 2) {
+				throw new IllegalArgumentException(
+						"List of epsilon transitions contains element that is not a pair: " + idList);
+			} else {
+				result.addPair(idList.getIdentifierList().get(0), idList.getIdentifierList().get(1));
+			}
+		}
+		return result;
+	}
+
 }

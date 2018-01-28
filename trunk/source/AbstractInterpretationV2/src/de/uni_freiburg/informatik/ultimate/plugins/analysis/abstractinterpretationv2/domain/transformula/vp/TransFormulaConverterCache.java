@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -98,6 +99,7 @@ public class TransFormulaConverterCache {
 
 	protected Pair<Term, Term> makeShiftVariableSubstitution(final ManagedScript mgdScript, final TransFormula tf,
 			final EqDisjunctiveConstraint<EqNode> resultConstraint) {
+
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 
 		for (final Entry<IProgramVar, TermVariable> iv : tf.getOutVars().entrySet()) {
@@ -107,9 +109,6 @@ public class TransFormulaConverterCache {
 			substitutionMapping.put(iv.getValue(), iv.getKey().getDefaultConstant());
 		}
 		for (final TermVariable auxVar : tf.getAuxVars()) {
-//			final String constName = "tf2EqTR_" + auxVar.getName();
-//			mgdScript.declareFun(this, constName, new Sort[0], auxVar.getSort());
-//			substitutionMapping.put(auxVar, mgdScript.term(this, constName));
 			final Term auxVarConst = ProgramVarUtils.getAuxVarConstant(mgdScript, auxVar);
 			substitutionMapping.put(auxVar, auxVarConst);
 		}
@@ -120,7 +119,21 @@ public class TransFormulaConverterCache {
 		assert rcClosed.getFreeVars().length == 0;
 
 		final Term tfClosed = ((UnmodifiableTransFormula) tf).getClosedFormula();
-		return new Pair<>(tfClosed, rcClosed);
+
+
+//		final Set<Term> literalTerms = resultConstraint.getAllLiteralNodes().stream()
+//				.map(node -> node.getTerm())
+//				.collect(Collectors.toSet());
+//		final List<Term> nontheoryLiteralDisequalities =
+//				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mgdScript.getScript(),
+//						literalTerms);
+
+		// we have to stregthen the transFormula with the disequalities between the "literals" we introduced ourselves
+		final Term ante = SmtUtils.and(mgdScript.getScript(), tfClosed,
+//				SmtUtils.and(mgdScript.getScript(), nontheoryLiteralDisequalities));
+				SmtUtils.and(mgdScript.getScript(), mEqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities()));
+
+		return new Pair<>(ante, rcClosed);
 	}
 
 	private boolean transformulaImpliesResultConstraint(final TransFormula tf,

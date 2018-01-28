@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDec
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogCsv;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.HTMLSummary;
@@ -112,6 +114,9 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 	 * Describe which columns should be present in the generated LaTeX table, based on the available
 	 * {@link ICsvProviderProvider} instances during the test. Look in {@link InterpolationTestSuite} for an example.
 	 */
-	protected abstract ColumnDefinition[] getColumnDefinitions();
+	protected ColumnDefinition[] getColumnDefinitions() {
+		return new ColumnDefinition[] { new ColumnDefinition("Runtime (ns)", "Avg. runtime",
+				ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
+	}
 
 }

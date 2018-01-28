@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -123,7 +124,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			return true;
 		}
 		if (mPref.dumpAutomata()) {
+			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DUMP_TIME);
 			mDumper.dumpNestedRun(mCounterexample);
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
 		}
 		return false;
 	}
@@ -136,7 +139,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		// Determinize the interpolant automaton
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> dia =
+				determinizeInterpolantAutomaton(mInterpolAutomaton);
 
 		// Complement the interpolant automaton
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia =
@@ -149,8 +153,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			mArtifactAutomaton = nia;
 		}
 		mAbstraction = new DifferenceBlackAndWhite<>(new AutomataLibraryServices(mServices),
-				mPredicateFactoryInterpolantAutomata, abstraction,
-				(NestedWordAutomaton<LETTER, IPredicate>) dia).getResult();
+				mPredicateFactoryInterpolantAutomata, abstraction, (NestedWordAutomaton<LETTER, IPredicate>) dia)
+						.getResult();
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
@@ -220,8 +224,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		final NestedWord<LETTER> nw = NestedWord.nestedWord(word);
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> petriNetAsFA =
 				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services),
-						mPredicateFactoryInterpolantAutomata,
-						(IPetriNet<LETTER, IPredicate>) automaton).getResult();
+						mPredicateFactoryInterpolantAutomata, (IPetriNet<LETTER, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw);
 
 	}

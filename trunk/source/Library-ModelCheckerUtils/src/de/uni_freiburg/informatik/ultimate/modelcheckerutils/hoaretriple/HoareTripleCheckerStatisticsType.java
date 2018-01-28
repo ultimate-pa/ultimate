@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.HoareTripleCheckerStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class HoareTripleCheckerStatisticsType extends AStatisticsType<HoareTripleCheckerStatisticsDefinitions> {
+public class HoareTripleCheckerStatisticsType extends StatisticsType<HoareTripleCheckerStatisticsDefinitions> {
 	
 	public HoareTripleCheckerStatisticsType() {
 		super(HoareTripleCheckerStatisticsDefinitions.class);

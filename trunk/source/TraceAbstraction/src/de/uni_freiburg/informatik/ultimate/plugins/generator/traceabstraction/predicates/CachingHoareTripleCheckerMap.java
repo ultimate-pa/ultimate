@@ -45,11 +45,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker implements IHoareTripleChecker {
+public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker {
 
 	public CachingHoareTripleCheckerMap(final IUltimateServiceProvider services,
 			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer) {
 		super(services, protectedHoareTripleChecker, predicateUnifer);
+	}
+
+	public CachingHoareTripleCheckerMap(final IUltimateServiceProvider services,
+			final IHoareTripleChecker protectedHoareTripleChecker, final IPredicateUnifier predicateUnifer,
+			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialInternalCache,
+			final NestedMap3<IAction, IPredicate, IPredicate, Validity> initialCallCache,
+			final Map<IPredicate, NestedMap3<IAction, IPredicate, IPredicate, Validity>> initialReturnCache) {
+		super(services, protectedHoareTripleChecker, predicateUnifer, initialInternalCache, initialCallCache,
+				initialReturnCache);
 	}
 
 	@Override
@@ -104,7 +113,7 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker impl
 				}
 			}
 		}
-		if (mUnknownIfSomeExtendedCacheCheckIsUnknown && someResultWasUnknown) {
+		if (UNKNOWN_IF_SOME_EXTENDED_CHECK_IS_UNKNOWN && someResultWasUnknown) {
 			// we pass this result as a warning that the corresponding check might be expensive
 			return Validity.UNKNOWN;
 		}
@@ -131,7 +140,7 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker impl
 					new SuccIterator(mWeakerThenSucc, mPre2Succ2Validity.get(strengthenedPre), mResultEvaluator)
 							.iterate();
 			mResult = mResultEvaluator.evaluateResult(validity);
-			return (mResult != null && mResult != Validity.UNKNOWN);
+			return mResult != null && mResult != Validity.UNKNOWN;
 		}
 
 	}
@@ -196,7 +205,7 @@ public class CachingHoareTripleCheckerMap extends CachingHoareTripleChecker impl
 		protected boolean doOneIterationStep(final IPredicate weakerThanSucc) {
 			final Validity validity = mSucc2Validity.get(weakerThanSucc);
 			mResult = mResultEvaluator.evaluateResult(validity);
-			return (mResult != null && mResult != Validity.UNKNOWN);
+			return mResult != null && mResult != Validity.UNKNOWN;
 
 		}
 

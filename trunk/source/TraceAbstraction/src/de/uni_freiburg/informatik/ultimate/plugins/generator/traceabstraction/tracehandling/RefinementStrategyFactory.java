@@ -119,7 +119,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            benchmark
 	 * @return refinement strategy
 	 */
-	public IRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
+	public BaseRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
@@ -162,6 +162,10 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 					abstraction, taskIdentifier);
 		case LAZY_TAIPAN:
 			return new LazyTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					abstraction, taskIdentifier);
+		case TOOTHLESS_TAIPAN:
+			return new ToothlessTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
 					abstraction, taskIdentifier);
 		default:

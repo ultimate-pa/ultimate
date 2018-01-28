@@ -450,6 +450,12 @@ public class PRDispatcher extends Dispatcher {
 		}
 		return mTypeHandler.visit(this, type);
 	}
+	
+	@Override
+	public Result dispatch(ACSLNode node) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	@Override
 	public Result dispatch(final ACSLNode node, final IASTNode cHook) {

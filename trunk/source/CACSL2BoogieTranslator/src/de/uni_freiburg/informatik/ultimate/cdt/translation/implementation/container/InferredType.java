@@ -3,22 +3,22 @@
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,179 +45,142 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
  * @date 16.06.2012
  */
 public class InferredType implements IBoogieType {
-    /**
-     * The serial version UID.
-     */
-    private static final long serialVersionUID = 4825293857474339818L;
-    /**
-     * The held type.
-     */
-    private Type type;
+	/**
+	 * The serial version UID.
+	 */
+	private static final long serialVersionUID = 4825293857474339818L;
+	/**
+	 * The held type.
+	 */
+	private Type mType;
 
-    /**
-     * @author Markus Lindenmann
-     * @date 16.06.2012
-     */
-    public enum Type {
-        /**
-         * Integer.
-         */
-        Integer,
-        /**
-         * Boolean.
-         */
-        Boolean,
-        /**
-         * Reals.
-         */
-        Real,
-        /**
-         * Strings.
-         */
-        String,
-        /**
-         * Cannot be inferred or not yet inferred.
-         */
-        Unknown,
-        /**
-         * Void type!
-         */
-        Void,
-        /**
-         * Struct type.
-         */
-        Struct,
-        /**
-         * Pointer type.
-         */
-        Pointer
-    }
+	/**
+	 * @author Markus Lindenmann
+	 * @date 16.06.2012
+	 */
+	public enum Type {
+		/**
+		 * Integer.
+		 */
+		Integer,
+		/**
+		 * Boolean.
+		 */
+		Boolean,
+		/**
+		 * Reals.
+		 */
+		Real,
+		/**
+		 * Strings.
+		 */
+		String,
+		/**
+		 * Cannot be inferred or not yet inferred.
+		 */
+		Unknown,
+		/**
+		 * Void type!
+		 */
+		Void,
+		/**
+		 * Struct type.
+		 */
+		Struct,
+		/**
+		 * Pointer type.
+		 */
+		Pointer
+	}
 
-    /**
-     * Constructor.
-     * 
-     * @param type
-     *            the type.
-     */
-    public InferredType(final Type type) {
-        this.type = type;
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param type
+	 *            the type.
+	 */
+	public InferredType(final Type type) {
+		mType = type;
+	}
 
-    /**
-     * Constructor.
-     * 
-     * @param at
-     *            the primitive type to convert.
-     */
-    public InferredType(final ASTType at) {
-        if (isPointerType(at)) {
-            type = Type.Pointer;
-        } else if (at instanceof ArrayType) {
-            final InferredType it = new InferredType(((ArrayType) at).getValueType());
-            type = it.getType();
-        } else if (at instanceof StructType) {
-            type = Type.Struct;
-        } else { // Primitive Type
-            if (at == null) {
-                type = Type.Unknown;
-            } else {
-                String s = at.toString();
-                s = s.replaceFirst(at.getClass().getSimpleName(), SFO.EMPTY);
-                s = s.replace("[", SFO.EMPTY);
-                s = s.replace("]", SFO.EMPTY);
-                if (s.equals(SFO.BOOL)) {
-                    type = Type.Boolean;
-                } else if (s.equals(SFO.INT)) {
-                    type = Type.Integer;
-                } else if (s.equals(SFO.REAL)) {
-                    type = Type.Real;
-                } else {
-                    type = Type.Unknown;
-                }
-            }
-        }
-    }
-    
-    public static boolean isPointerType(final ASTType at) {
-    	if (at instanceof NamedType) {
-    		return ((NamedType) at).getName().equals(SFO.POINTER);
-    	} else {
-    		return false;
-    	}
-    }
-    
-//    public InferredType(CType cType) {
-//    	CType underlyingType = cType;
-//    	if (underlyingType instanceof CNamed)
-//    		underlyingType = ((CNamed) cType).getUnderlyingType();
-//
-//		if (underlyingType instanceof CPrimitive) {
-//			CPrimitive cp = (CPrimitive) underlyingType;
-//			switch (cp.getType()) {
-//			case INT:
-//				type = Type.Integer;
-//				break;
-//			case FLOAT:
-//			case DOUBLE:
-//				type = Type.Real;
-//				break;
-//			case CHAR:
-//				type = Type.String;
-//				break;
-//			default:
-//				throw new UnsupportedSyntaxException(null , "..");
-//			}
-//		} else if (underlyingType instanceof CPointer) {
-//			type = Type.Pointer;
-//		} else if (underlyingType instanceof CArray) {
-//			type = Type.Pointer;
-//		} else if (underlyingType instanceof CEnum) {
-//			type = Type.Integer;
-//		} else if (underlyingType instanceof CStruct) {
-//			type = Type.Struct;
-//		} else if (underlyingType instanceof CNamed) {
-//			assert false : "This should not be the case as we took the underlying type.";
-//		} else {
-//			throw new UnsupportedSyntaxException(null, "..");
-//		}
-//    }
+	/**
+	 * Constructor.
+	 *
+	 * @param at
+	 *            the primitive type to convert.
+	 */
+	public InferredType(final ASTType at) {
+		if (isPointerType(at)) {
+			mType = Type.Pointer;
+		} else if (at instanceof ArrayType) {
+			final InferredType it = new InferredType(((ArrayType) at).getValueType());
+			mType = it.getType();
+		} else if (at instanceof StructType) {
+			mType = Type.Struct;
+		} else { // Primitive Type
+			if (at == null) {
+				mType = Type.Unknown;
+			} else {
+				String s = at.toString();
+				s = s.replaceFirst(at.getClass().getSimpleName(), SFO.EMPTY);
+				s = s.replace("[", SFO.EMPTY);
+				s = s.replace("]", SFO.EMPTY);
+				if (s.equals(SFO.BOOL)) {
+					mType = Type.Boolean;
+				} else if (s.equals(SFO.INT)) {
+					mType = Type.Integer;
+				} else if (s.equals(SFO.REAL)) {
+					mType = Type.Real;
+				} else {
+					mType = Type.Unknown;
+				}
+			}
+		}
+	}
 
-    /**
-     * Returns the type.
-     * 
-     * @return the type.
-     */
-    public Type getType() {
-        return type;
-    }
+	public static boolean isPointerType(final ASTType at) {
+		if (at instanceof NamedType) {
+			return ((NamedType) at).getName().equals(SFO.POINTER);
+		}
+		return false;
+	}
 
-    @Override
-    public String toString() {
-        switch (getType()) {
-            case Boolean:
-                return SFO.BOOL;
-            case Integer:
-                return SFO.INT;
-            case Real:
-                return SFO.REAL;
-            case String:
-                return SFO.STRING;
-            case Pointer:
-                return SFO.POINTER;
-            case Struct:
-            	return Type.Struct.toString();
-            case Unknown:
-            default:
-                break;
-        }
-        return SFO.UNKNOWN;
-    }
+	/**
+	 * Returns the type.
+	 *
+	 * @return the type.
+	 */
+	public Type getType() {
+		return mType;
+	}
+
+	@Override
+	public String toString() {
+		switch (getType()) {
+		case Boolean:
+			return SFO.BOOL;
+		case Integer:
+			return SFO.INT;
+		case Real:
+			return SFO.REAL;
+		case String:
+			return SFO.STRING;
+		case Pointer:
+			return SFO.POINTER;
+		case Struct:
+			return Type.Struct.toString();
+		case Unknown:
+		default:
+			break;
+		}
+		return SFO.UNKNOWN;
+	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((mType == null) ? 0 : mType.hashCode());
 		return result;
 	}
 
@@ -233,8 +196,7 @@ public class InferredType implements IBoogieType {
 			return false;
 		}
 		final InferredType other = (InferredType) obj;
-		return type == other.type;
+		return mType == other.mType;
 	}
-    
-    
+
 }

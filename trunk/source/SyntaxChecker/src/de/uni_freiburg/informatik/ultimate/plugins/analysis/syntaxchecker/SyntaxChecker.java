@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxCheckerSyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
@@ -136,7 +137,7 @@ public class SyntaxChecker implements IAnalysis {
 		} else {
 			final String longMessage = generateLongDescription(toolCommandError, outputError, filename, removeFilename);
 			final ILocation loc = new DummyLocation();
-			final SyntaxErrorResult res = new SyntaxErrorResult(Activator.PLUGIN_ID, loc, longMessage);
+			final SyntaxErrorResult res = new SyntaxCheckerSyntaxErrorResult(Activator.PLUGIN_ID, loc, longMessage);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 			mServices.getProgressMonitorService().cancelToolchain();
 		}
@@ -181,8 +182,7 @@ public class SyntaxChecker implements IAnalysis {
 	private String callSytaxCheckerAndReturnStderrOutput(final String toolCommand, final String filename)
 			throws IOException {
 		final String syntaxCheckerCommand = toolCommand + " " + filename;
-		final MonitoredProcess mProcess =
-				MonitoredProcess.exec(syntaxCheckerCommand, null, mServices, mStorage, mLogger);
+		final MonitoredProcess mProcess = MonitoredProcess.exec(syntaxCheckerCommand, null, mServices, mStorage);
 
 		if (mProcess == null) {
 			final String errorMsg = " Could not create process, terminating... ";

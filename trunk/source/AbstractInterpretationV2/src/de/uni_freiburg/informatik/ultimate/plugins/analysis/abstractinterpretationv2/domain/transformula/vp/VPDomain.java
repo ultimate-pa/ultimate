@@ -29,8 +29,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
@@ -40,10 +42,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeqCcManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeqSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 
@@ -57,15 +62,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractDomain<EqState, ACTION> {
 
-	public static final boolean DEBUG = true;
-
 	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
 
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mSymboltable;
-	private boolean mDebugMode;
+	private final boolean mDebugMode;
 
 	private final EqConstraintFactory<EqNode> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
@@ -75,7 +78,17 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final VPDomainBenchmark mBenchmark;
 
-	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit) {
+	/**
+	 *
+	 * @param logger
+	 * @param services
+	 * @param csToolkit
+	 * @param nonTheoryLiterals
+	 * 			This set of program constants will be viewed as "literals" by the analysis. Literals are constants that
+	 *          are unequal from all other constants.
+	 */
+	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final Set<IProgramConst> nonTheoryLiterals) {
 		mLogger = logger;
 		mManagedScript = csToolkit.getManagedScript();
 		mMerge = new VPMergeOperator();
@@ -83,8 +96,14 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mCsToolkit = csToolkit;
 		mServices = services;
 
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript);
-		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript);
+		mDebugMode = WeqCcManager.areAssertsEnabled();
+
+
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals);
+		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript,
+				prepareWeqSettings(ups), mDebugMode);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
 				mManagedScript);
 
@@ -92,6 +111,13 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 				mEqStateFactory);
 
 		mBenchmark = new VPDomainBenchmark();
+	}
+
+	private WeqSettings prepareWeqSettings(final IPreferenceProvider ups) {
+		final WeqSettings settings = new WeqSettings();
+		settings.setUseFullWeqccDuringProjectaway(ups.getBoolean(VPDomainPreferences.LABEL_USE_WEQ_IN_PROJECT));
+		settings.setDeactivateWeakEquivalences(ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES));
+		return settings;
 	}
 
 	@Override
@@ -150,6 +176,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public <LOC> void afterFixpointComputation(
 			final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
 
+		/*
+		 * report VPDomainBenchmark
+		 */
 		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
 		for (final Entry<LOC, EqState> l2s : result.getLoc2SingleStates().entrySet()) {
 			mBenchmark.reportStatsForLocation(l2s.getValue().getConstraint()::getStatistics);
@@ -163,6 +192,13 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "ArrayEqualityDomainStatistics", mBenchmark));
+
+		/*
+		 * report EqConstraintFactory's Benchmark
+		 */
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "EqConstraintFactoryStatistics",
+						mEqConstraintFactory.getBenchmark()));
 	}
 
 

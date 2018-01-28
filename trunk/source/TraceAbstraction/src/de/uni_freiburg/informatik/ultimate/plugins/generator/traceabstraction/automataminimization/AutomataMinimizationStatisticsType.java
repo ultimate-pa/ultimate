@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class AutomataMinimizationStatisticsType extends AStatisticsType<AutomataMinimizationStatisticsDefinitions> {
+public class AutomataMinimizationStatisticsType extends StatisticsType<AutomataMinimizationStatisticsDefinitions> {
 	
 	public AutomataMinimizationStatisticsType() {
 		super(AutomataMinimizationStatisticsDefinitions.class);

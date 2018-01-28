@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,7 +40,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -95,6 +95,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private final List<TermVariable> mPathCounter;
 	private final Map<TermVariable, TermVariable> mNewPathCounter;
 	private final Map<IcfgLocation, Boolean> mOverApproximation;
+	private final DealingWithArraysTypes mDealingWithArrays;
+	private Set<INLOC> mLoopHeads;
+	private Set<Loop> mAcceleratedLoops;
 
 	private final IBacktranslationTracker mBackTranslationTracker;
 
@@ -108,8 +111,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	public enum DealingWithArraysTypes {
 		EXCEPTION, SKIP_LOOP;
 	}
-
-	private final DealingWithArraysTypes mDealingWithArrays;
 
 	/**
 	 * Construct a new Loop Accelerator
@@ -140,16 +141,16 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = Objects.requireNonNull(logger);
 		mServices = services;
-		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mScript, mServices, backboneLimit);
+		mLoopHeads = new HashSet<>(originalIcfg.getLoopLocations());
+		mDealingWithArrays = options;
+		preprocessIcfg(originalIcfg.getInitialNodes());
 		mOldSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
-
 		mPathCounter = new ArrayList<>();
 		mNewPathCounter = new HashMap<>();
 		mOverApproximation = new HashMap<>();
+		mAcceleratedLoops = new HashSet<>();
 
-		// How to deal with Arrays in the loop:
-		mDealingWithArrays = options;
-
+		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mLoopHeads, mScript, mServices, backboneLimit);
 		mLoopBodies = mLoopDetector.getLoopBodies();
 
 		mResult = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier,
@@ -184,26 +185,12 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mPathCounter.clear();
 		mNewPathCounter.clear();
 
-		if (loop.isSummarized() || SmtUtils.isTrue(loop.getFormula().getFormula())
+		if (mAcceleratedLoops.contains(loop) || SmtUtils.isTrue(loop.getFormula().getFormula())
 				|| SmtUtils.isFalse(loop.getFormula().getFormula())) {
 			return;
 		}
-		final TermClassifier classifier = new TermClassifier();
-		classifier.checkTerm(loop.getFormula().getClosedFormula());
 
-		/**
-		 * Dealing with arrays, decided by mDealingWithArrays
-		 */
-		if (classifier.hasArrays() && mDealingWithArrays.equals(DealingWithArraysTypes.EXCEPTION)) {
-			mLogger.debug("LOOP HAS ARRAYS");
-			throw new IllegalArgumentException("Cannot deal with Arrays");
-		}
-		if (classifier.hasArrays() && mDealingWithArrays.equals(DealingWithArraysTypes.SKIP_LOOP)) {
-			mLogger.debug("LOOP HAS ARRAYS");
-			return;
-		}
-
-		if (loop.isNested()) {
+		if (!loop.getNestedLoops().isEmpty()) {
 			for (final Loop nestedLoop : loop.getNestedLoops()) {
 				mOverApproximation.put(nestedLoop.getLoophead(), true);
 				summarizeLoop(nestedLoop);
@@ -215,45 +202,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		 * Go through each backbone and calculate an iterated value
 		 */
 		for (final Backbone backbone : loop.getBackbones()) {
-
-			final SimultaneousUpdate update = new SimultaneousUpdate(backbone.getFormula(), mScript);
-
-			if (!update.getHavocedVars().isEmpty() || loop.isNested()) {
-				mOverApproximation.put(loop.getLoophead(), true);
-			}
-
-			backbone.setFormula(loop.updateVars(backbone.getFormula(), loop.getInVars(), loop.getOutVars()));
-			final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
-
-			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mServices, tf, mOldSymbolTable);
-			symbolicMemory.updateVars(update.getUpdatedVars());
-
-			final UnmodifiableTransFormula condition = symbolicMemory
-					.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
-
-			final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
-					mScript.getScript().sort(SmtSortUtils.INT_SORT));
-
-			mPathCounter.add(backbonePathCounter);
-			backbone.setPathCounter(backbonePathCounter);
-			backbone.setCondition(condition);
-
-			/**
-			 * First accelerate each nested loop
-			 */
-			if (backbone.isNested()) {
-				for (final Loop nestedLoop : backbone.getNestedLoops()) {
-					if (nestedLoop.getPath().isEmpty() || nestedLoop.getExitConditions().isEmpty()) {
-						continue;
-					}
-					symbolicMemory.updateVars(nestedLoop.getIteratedMemory().getIteratedMemory());
-					loop.addVar(nestedLoop.getVars());
-					final Map<IProgramVar, TermVariable> oldInvars = loop.getInVars();
-					oldInvars.putAll(nestedLoop.getInVars());
-					loop.setInVars(oldInvars);
-				}
-			}
-			backbone.setSymbolicMemory(symbolicMemory);
+			calculateSymbolicMemory(backbone, loop);
 		}
 
 		for (int i = 0; i < mPathCounter.size(); i++) {
@@ -274,19 +223,27 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 		Term loopSummary = iteratedSymbolicMemory.getAbstractCondition();
 
+		mOverApproximation.putIfAbsent(loop.getLoophead(), iteratedSymbolicMemory.isOverapprox());
+
 		/**
 		 * Dealing with nested loops
 		 */
-		if (loop.isNested()) {
+		if (!loop.getNestedLoops().isEmpty()) {
 			for (final Loop nestedLoop : loop.getNestedLoops()) {
-				loopSummary = SmtUtils.or(mScript.getScript(),
-						Arrays.asList(loopSummary, nestedLoop.getExitConditions().get(0).getFormula()));
-				final ArrayList<TermVariable> newAuxVars = new ArrayList<>(
-						nestedLoop.getExitConditions().get(0).getAuxVars());
-				loop.addVar(newAuxVars);
+
+				for (final UnmodifiableTransFormula exitTerm : nestedLoop.getExitConditions()) {
+					loopSummary = SmtUtils.or(mScript.getScript(), Arrays.asList(loopSummary, exitTerm.getFormula()));
+					final ArrayList<TermVariable> newAuxVars = new ArrayList<>(exitTerm.getAuxVars());
+					loop.addVar(newAuxVars);
+
+					loopSummary = loop.updateVars(loopSummary, exitTerm.getInVars(), exitTerm.getOutVars());
+				}
 				final Map<IProgramVar, TermVariable> oldOutVars = loop.getOutVars();
+
 				for (final Entry<IProgramVar, TermVariable> outVarNested : nestedLoop.getOutVars().entrySet()) {
-					oldOutVars.replace(outVarNested.getKey(), outVarNested.getValue());
+					if (!oldOutVars.containsKey(outVarNested.getKey())) {
+						oldOutVars.put(outVarNested.getKey(), outVarNested.getValue());
+					}
 				}
 			}
 		}
@@ -295,78 +252,158 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		loop.setIteratedSymbolicMemory(iteratedSymbolicMemory);
 
 		/**
-		 * compute the main accelerated loop exit, by combining an exit transition with the loop summary
+		 * compute the main accelerated loop exit, by combining an exit
+		 * transition with the loop summary
 		 */
-		final IcfgEdge exitTransition = loop.getExitTransitions().get(0);
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(loop.getInVars(), loop.getOutVars(), true, null, true,
-				null, false);
+		for (int i = 0; i < loop.getExitTransitions().size(); i++) {
+			final IcfgEdge exitTransition = loop.getExitTransitions().get(i);
 
-		final TransFormula exit = loop.updateVars(exitTransition.getTransformula(), loop.getInVars(),
-				loop.getOutVars());
+			final Set<TermVariable> aux = new HashSet<>(loop.getVars());
+			final TransFormula exit = buildFormula(mScript,
+					loop.updateVars(exitTransition.getTransformula().getFormula(),
+							exitTransition.getTransformula().getInVars(),
+							exitTransition.getTransformula().getOutVars()),
+					loop.getInVars(), loop.getOutVars(), aux);
 
-		final Term exitTerm = SmtUtils.and(mScript.getScript(), Arrays.asList(loopSummary, exit.getFormula()));
-		tfb.setFormula(exitTerm);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final Set<TermVariable> auxVars = new HashSet<>(loop.getVars());
-		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
-		final UnmodifiableTransFormula exitFormula = tfb.finishConstruction(mScript);
+			final Term exitTerm = SmtUtils.and(mScript.getScript(), Arrays.asList(loopSummary, exit.getFormula()));
+			final Set<TermVariable> auxVars = new HashSet<>(loop.getVars());
+			final UnmodifiableTransFormula exitFormula = buildFormula(mScript, exitTerm, loop.getInVars(),
+					loop.getOutVars(), auxVars);
 
-		/**
-		 * accelerated loop
-		 */
-		loop.addExitCondition(exitFormula);
-
-		/**
-		 * Dealing with breaks
-		 */
-		for (final UnmodifiableTransFormula breakTf : loop.getBreakFormulas()) {
-
-			final TransFormulaBuilder builder = new TransFormulaBuilder(loop.getInVars(), loop.getOutVars(), true, null,
-					true, null, false);
-
-			final TransFormula breakFormula = loop.updateVars(breakTf, loop.getInVars(), loop.getOutVars());
-
-			final Term breakTerm = SmtUtils.and(mScript.getScript(),
-					Arrays.asList(loopSummary, breakFormula.getFormula()));
-			builder.setFormula(breakTerm);
-			builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-			final Set<TermVariable> breakVars = new HashSet<>(loop.getVars());
-			builder.addAuxVarsButRenameToFreshCopies(breakVars, mScript);
-			final UnmodifiableTransFormula breakFormulaDone = builder.finishConstruction(mScript);
-			loop.addExitCondition(breakFormulaDone);
-
+			/**
+			 * accelerated loop
+			 */
+			loop.addExitCondition(exitFormula);
 		}
 
 		/**
 		 * Dealing with Errorpaths in loop
 		 */
+		dealWithErrorPaths(loop, loopSummary);
+
+		mLogger.debug("LOOP SUMMARY: " + loop.getExitConditions() + System.lineSeparator());
+		mAcceleratedLoops.add(loop);
+
+	}
+
+	private void calculateSymbolicMemory(final Backbone backbone, final Loop loop) {
+		final SimultaneousUpdate update = new SimultaneousUpdate(backbone.getFormula(), mScript);
+
+		if (!update.getHavocedVars().isEmpty() || !loop.getNestedLoops().isEmpty()) {
+			mOverApproximation.put(loop.getLoophead(), true);
+		}
+
+		final Set<TermVariable> aux = new HashSet<>(loop.getVars());
+		final TransFormula tf = buildFormula(mScript, loop.updateVars(backbone.getFormula().getFormula(),
+				backbone.getFormula().getInVars(), backbone.getFormula().getOutVars()), loop.getInVars(),
+				loop.getOutVars(), aux);
+
+		backbone.setFormula(tf);
+
+		final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mServices, tf, mOldSymbolTable);
+		symbolicMemory.updateVars(update.getUpdatedVars());
+
+		final UnmodifiableTransFormula condition = symbolicMemory.updateCondition(
+				TransFormulaUtils.computeGuard((UnmodifiableTransFormula) tf, mScript, mServices, mLogger));
+
+		final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
+				mScript.getScript().sort(SmtSortUtils.INT_SORT));
+
+		mPathCounter.add(backbonePathCounter);
+		backbone.setPathCounter(backbonePathCounter);
+		backbone.setCondition(condition);
+
+		/**
+		 * First accelerate each nested loop
+		 */
+		if (backbone.isNested()) {
+			for (final IcfgLocation nestedLoopHead : backbone.getNestedLoops()) {
+				final Loop nestedLoop = mLoopBodies.get(nestedLoopHead);
+				if (nestedLoop.getPath().isEmpty() || nestedLoop.getExitConditions().isEmpty()) {
+					continue;
+				}
+				symbolicMemory.updateVars(nestedLoop.getIteratedMemory().getIteratedMemory());
+				loop.addVar(nestedLoop.getVars());
+				final Map<IProgramVar, TermVariable> oldInvars = loop.getInVars();
+				oldInvars.putAll(nestedLoop.getInVars());
+				loop.setInVars(oldInvars);
+			}
+		}
+		backbone.setSymbolicMemory(symbolicMemory);
+	}
+
+	private void dealWithErrorPaths(final Loop loop, final Term loopSummary) {
+
 		for (final Entry<IcfgLocation, Backbone> errorPath : loop.getErrorPaths().entrySet()) {
 
-			final TransFormulaBuilder builder = new TransFormulaBuilder(loop.getInVars(), loop.getOutVars(), true, null,
-					true, null, false);
+			final Backbone errorPathBack = errorPath.getValue();
+			final Set<TermVariable> aux = new HashSet<>(loop.getVars());
+			final TransFormula tf = buildFormula(
+					mScript, loop.updateVars(errorPathBack.getFormula().getFormula(),
+							errorPathBack.getFormula().getInVars(), errorPathBack.getFormula().getOutVars()),
+					loop.getInVars(), loop.getOutVars(), aux);
 
-			final TransFormula errorFormula = loop.updateVars(errorPath.getValue().getFormula(), loop.getInVars(),
-					loop.getOutVars());
+			final TransFormula errorFormula = tf;
 
 			final Term errorTerm = SmtUtils.or(mScript.getScript(),
 					Arrays.asList(loopSummary, errorFormula.getFormula()));
-			builder.setFormula(errorTerm);
-			builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 			final Set<TermVariable> errorVars = new HashSet<>(loop.getVars());
-			builder.addAuxVarsButRenameToFreshCopies(errorVars, mScript);
-			final UnmodifiableTransFormula errorFormulaDone = builder.finishConstruction(mScript);
-			final Backbone newErrorPath = new Backbone(errorPath.getValue().getPath(), errorFormulaDone, false, null);
-			loop.replaceErrorPath(errorPath.getKey(), newErrorPath);
-
+			final UnmodifiableTransFormula errorFormulaDone = buildFormula(mScript, errorTerm, loop.getInVars(),
+					loop.getOutVars(), errorVars);
+			errorPath.getValue().setFormula(errorFormulaDone);
 		}
+	}
 
-		if (!mOverApproximation.containsKey(loop.getLoophead())) {
-			mOverApproximation.put(loop.getLoophead(), false);
+	/**
+	 * return a {@link UnmodifiableTransFormula} of the given term.
+	 * 
+	 * @param script
+	 * @param term
+	 * @param inVars
+	 * @param outVars
+	 * @param auxVars
+	 * @return
+	 */
+	public static UnmodifiableTransFormula buildFormula(final ManagedScript script, final Term term,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
+			final Set<TermVariable> auxVars) {
+		final Boolean emptyAux = auxVars.isEmpty();
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, emptyAux);
+		tfb.setFormula(term);
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(script);
+	}
+
+	private void preprocessIcfg(Set<INLOC> init) {
+		final Deque<INLOC> open = new ArrayDeque<>(init);
+		final Set<INLOC> closed = new HashSet<>();
+
+		while (!open.isEmpty()) {
+			final INLOC node = open.removeFirst();
+			final TermClassifier classifier = new TermClassifier();
+
+			if (!closed.add(node)) {
+				continue;
+			}
+			for (final IcfgEdge edge : node.getOutgoingEdges()) {
+				classifier.checkTerm(edge.getTransformula().getClosedFormula());
+
+				/**
+				 * Dealing with arrays, decided by mDealingWithArrays
+				 */
+				if (classifier.hasArrays() && mDealingWithArrays.equals(DealingWithArraysTypes.EXCEPTION)) {
+					throw new IllegalArgumentException("Cannot deal with Arrays");
+				}
+
+				if (classifier.hasArrays() && mDealingWithArrays.equals(DealingWithArraysTypes.SKIP_LOOP)) {
+					mLoopHeads = Collections.emptySet();
+				}
+			}
+			for (final IcfgLocation location : node.getOutgoingNodes()) {
+				open.addLast((INLOC) location);
+			}
 		}
-
-		mLogger.debug("LOOP SUMMARY: " + loop.getExitConditions());
-		loop.setSummarized();
-
 	}
 
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
@@ -414,7 +451,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 						for (UnmodifiableTransFormula exitTransition : loop.getExitConditions()) {
 							final IcfgEdge newTransition = lst.createNewInternalTransition(newSource, loopExit,
 									exitTransition, mOverApproximation.get(newSource));
-							new Overapprox("loop acceleration", null).annotate(newTransition);
 							mBackTranslationTracker.rememberRelation(oldTransition, newTransition);
 						}
 

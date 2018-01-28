@@ -658,6 +658,11 @@ public class MainDispatcher extends Dispatcher {
 		}
 
 	}
+	
+	@Override
+	public Result dispatch(final ACSLNode n) {
+		return dispatch(n, mAcslHook);
+	}
 
 	@Override
 	public Result dispatch(final ACSLNode n, final IASTNode cHook) {

@@ -10,6 +10,11 @@ int main() {
   *r = 0;
   *s = 0;
 
+  int x = *p;
+  int y = *q;
+  int z = *r;
+  int i = *s;
+
   free(p);
   free(q);
   free(r);

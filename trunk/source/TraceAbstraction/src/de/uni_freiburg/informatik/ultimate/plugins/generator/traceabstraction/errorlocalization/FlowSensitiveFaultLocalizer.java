@@ -135,7 +135,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			}
 
 			if (doFlowSensitiveAnalysis) {
-				doFlowSensitiveAnalysis(counterexample, cfg, modifiableGlobalsTable, csToolkit);
+				doFlowSensitiveAnalysis(counterexample, predicateUnifier.getTruePredicate(), cfg, modifiableGlobalsTable, csToolkit);
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
@@ -484,15 +484,20 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
 			final UnmodifiableTransFormula markhor, final IPredicate weakestPreconditionLeft,
 			final IPredicate weakestPreconditionRight, final NestedWord<LETTER> counterexampleWord,
-			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable) {
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable, 
+			TracePredicates strongestPostconditionSequence) {
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(mServices, csToolkit);
 		final IPredicate pre = mPredicateFactory.not(weakestPreconditionLeft);
+		final IPredicate sp = strongestPostconditionSequence.getPredicate(startPosition);
+		// Intersection of pre and sp.
+		final IPredicate intersection = mPredicateFactory.and(SimplificationTechnique.SIMPLIFY_QUICK, pre,sp);
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
 		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor);
+		// Use the pre SP intersection.
 		final ERelevanceStatus relevance =
-				rc.relevanceInternal(pre, basic, mPredicateFactory.not(weakestPreconditionRight));
+				rc.relevanceInternal(intersection, basic, mPredicateFactory.not(weakestPreconditionRight));
 
 		return relevance == ERelevanceStatus.InUnsatCore || relevance == ERelevanceStatus.Sat;
 	}
@@ -521,10 +526,11 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * Computes the Statements relevant to the flow sensitive analysis in the trace.
 	 */
-	private void computeRelevantStatements_FlowSensitive(final NestedWord<LETTER> counterexampleWord,
+	private IPredicate computeRelevantStatements_FlowSensitive(final NestedWord<LETTER> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer pt, final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit csToolkit,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final Map<Integer, List<Integer>> informationFromCfg) {
+			final ModifiableGlobalsTable modifiableGlobalsTable, final Map<Integer, List<Integer>> informationFromCfg,
+			TracePredicates strongestPostconditionSequence) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--) {
 			final LETTER statement = counterexampleWord.getSymbol(position);
@@ -537,7 +543,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			} else {
 				branchOutPosition = null;
 			}
-			final IPredicate weakestPreconditionRight = weakestPreconditionLeft;
+			IPredicate weakestPreconditionRight = weakestPreconditionLeft;
 			if (branchOutPosition != null) {
 				final int positionBranchIn = position;
 				position = branchOutPosition;
@@ -550,11 +556,15 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				// Check the relevance of the branch.
 				final boolean isRelevant =
 						checkBranchRelevance(branchOutPosition, positionBranchIn, markhor, weakestPreconditionLeft,
-								weakestPreconditionRight, counterexampleWord, csToolkit, modifiableGlobalsTable);
+								weakestPreconditionRight, counterexampleWord, csToolkit, modifiableGlobalsTable, 
+								strongestPostconditionSequence);
 				if (isRelevant) {
 					// If the branch is Relevant. Recursion
-					computeRelevantStatements_FlowSensitive(counterexampleWord, branchOutPosition, positionBranchIn,
-							weakestPreconditionRight, pt, rc, csToolkit, modifiableGlobalsTable, informationFromCfg);
+					weakestPreconditionLeft = computeRelevantStatements_FlowSensitive(counterexampleWord, branchOutPosition, positionBranchIn,
+							weakestPreconditionRight, pt, rc, csToolkit, modifiableGlobalsTable, informationFromCfg, 
+							strongestPostconditionSequence);
+					// If the branch is relevant, then the wp should come from inside the branch.
+					// That is why weakestPreconditionLeft is coming from inside the branch now.
 				} else {
 					// Don't do anything.
 					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:" + markhor + " ]");
@@ -568,15 +578,20 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 						csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
 				final IPredicate pre = mPredicateFactory.not(weakestPreconditionLeft);
+				final IPredicate sp = strongestPostconditionSequence.getPredicate(position);
+				// use pre sp intersection.
+				final IPredicate intersection = mPredicateFactory.and(SimplificationTechnique.SIMPLIFY_QUICK, pre,sp);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(" ");
 					mLogger.debug("WP -- > " + weakestPreconditionRight);
 					mLogger.debug(" Statement -- > " + statement);
 					mLogger.debug("Pre --> " + pre);
+					mLogger.debug("Sp -- >" + sp);
+					mLogger.debug("intersection -- >" + intersection);
 					mLogger.debug(" ");
 				}
 				final IAction action = counterexampleWord.getSymbolAt(position);
-				final ERelevanceStatus relevance = computeRelevance(position, action, pre, weakestPreconditionRight,
+				final ERelevanceStatus relevance = computeRelevance(position, action, intersection, weakestPreconditionRight,
 						weakestPreconditionLeft, null, counterexampleWord, rc, csToolkit);
 				final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance, false);
 				final boolean relevanceCriterion2uc = relevanceCriterionVariables[0];
@@ -588,6 +603,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				mRelevanceOfTrace[position] = ri;
 			}
 		}
+		return weakestPreconditionLeft;
 	}
 
 	/**
@@ -643,7 +659,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		return result;
 	}
 
-	private void doFlowSensitiveAnalysis(final NestedRun<LETTER, IPredicate> counterexample,
+	private void doFlowSensitiveAnalysis(final NestedRun<LETTER, IPredicate> counterexample, final IPredicate truePredicate,
 			final INestedWordAutomaton<LETTER, IPredicate> cfg, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
@@ -657,9 +673,32 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		final int endLocation = counterexample.getWord().length() - 1;
 		final IPredicate falsePredicate =
 				mPredicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false"));
+		
+		// Calculating the SP List
+		final IterativePredicateTransformer iptSp = new IterativePredicateTransformer(mPredicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexample.getWord(),
+				truePredicate, null, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
+				mXnfConversionTechnique, mSymbolTable);
+
+		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexample.getWord(), truePredicate, falsePredicate,
+				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
+
+		final List<IPredicatePostprocessor> postprocessors;
+		if (mApplyQuantifierElimination) {
+			final QuantifierEliminationPostprocessor qePostproc =
+					new QuantifierEliminationPostprocessor(mServices, mLogger, csToolkit.getManagedScript(),
+							mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
+			postprocessors = Collections.singletonList(qePostproc);
+		} else {
+			postprocessors = Collections.emptyList();
+		}
+		TracePredicates strongestPostconditionSequence;
+		strongestPostconditionSequence = iptSp.computeStrongestPostconditionSequence(dtf, postprocessors);
+
+		// End of the calculation
 
 		computeRelevantStatements_FlowSensitive(counterexample.getWord(), startLocation, endLocation, falsePredicate,
-				pt, rc, csToolkit, modifiableGlobalsTable, informationFromCfg);
+				pt, rc, csToolkit, modifiableGlobalsTable, informationFromCfg, strongestPostconditionSequence);
 	}
 
 	/**

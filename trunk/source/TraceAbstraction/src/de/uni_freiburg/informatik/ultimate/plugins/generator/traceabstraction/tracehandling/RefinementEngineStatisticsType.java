@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class RefinementEngineStatisticsType extends AStatisticsType<RefinementEngineStatisticsDefinitions> {
+public class RefinementEngineStatisticsType extends StatisticsType<RefinementEngineStatisticsDefinitions> {
 	
 	public RefinementEngineStatisticsType() {
 		super(RefinementEngineStatisticsDefinitions.class);

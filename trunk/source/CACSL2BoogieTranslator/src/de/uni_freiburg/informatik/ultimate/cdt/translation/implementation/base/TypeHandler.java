@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -117,7 +118,7 @@ public class TypeHandler implements ITypeHandler {
 	/**
 	 * counting levels of struct declaration.
 	 */
-	private int structCounter;
+	private int mStructCounter;
 
 	/**
 	 * Contains all primitive types that occurred in program.
@@ -139,6 +140,7 @@ public class TypeHandler implements ITypeHandler {
 	 * Is true iff we yet processed a floating type. (And hence floating types have to be added to Boogie).
 	 */
 	private boolean mFloatingTypesNeeded = false;
+	private ICHandler mCHandler;
 
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
@@ -161,15 +163,8 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public boolean isStructDeclaration() {
-		assert structCounter >= 0;
-		return structCounter != 0;
-	}
-
-	/**
-	 * for svcomp2014 hack
-	 */
-	public int getStructCounter() {
-		return structCounter;
+		assert mStructCounter >= 0;
+		return mStructCounter != 0;
 	}
 
 	@Override
@@ -395,7 +390,7 @@ public class TypeHandler implements ITypeHandler {
 		final ArrayList<String> fNames = new ArrayList<>();
 		final ArrayList<CType> fTypes = new ArrayList<>();
 		final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
-		structCounter++;
+		mStructCounter++;
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
 			final Result r = main.dispatch(dec);
 			if (r instanceof DeclarationResult) {
@@ -419,7 +414,7 @@ public class TypeHandler implements ITypeHandler {
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
-		structCounter--;
+		mStructCounter--;
 
 		final String cId = node.getName().toString();
 		final String rslvName = 
@@ -625,16 +620,14 @@ public class TypeHandler implements ITypeHandler {
 		case INTTYPE:
 			if (mBitvectorTranslation) {
 				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
-			} else {
-				return new PrimitiveType(loc, SFO.INT);
 			}
+			return new PrimitiveType(loc, SFO.INT);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mBitvectorTranslation) {
 				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
-			} else {
-				return new PrimitiveType(loc, SFO.REAL);
 			}
+			return new PrimitiveType(loc, SFO.REAL);
 		default:
 			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 		}
@@ -651,9 +644,8 @@ public class TypeHandler implements ITypeHandler {
 				final String name = "bv" + bitsize;
 				final ASTType astType = new PrimitiveType(loc, name);
 				return astType;
-			} else {
-				return new PrimitiveType(loc, SFO.INT);
 			}
+			return new PrimitiveType(loc, SFO.INT);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mBitvectorTranslation) {
@@ -661,9 +653,8 @@ public class TypeHandler implements ITypeHandler {
 				final String name = "bv" + bitsize;
 				final ASTType astType = new PrimitiveType(loc, name);
 				return astType;
-			} else {
-				return new PrimitiveType(loc, SFO.REAL);
 			}
+			return new PrimitiveType(loc, SFO.REAL);
 		default:
 			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 		}
@@ -911,7 +902,7 @@ public class TypeHandler implements ITypeHandler {
 	public static boolean isCompatibleType(final CType type1, final CType type2) {
 		// TODO: check the notion of compatibility with the standard
 		if (isCharArray(type1) && isCharArray(type2)) {
-				return true;
+			return true;
 		}
 		if (type1 instanceof CStruct && type2 instanceof CStruct) {
 			return areMatchingTypes(type1, type2);
@@ -929,11 +920,24 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 		final CPrimitive primitiveValueType = (CPrimitive) cArrayType.getValueType().getUnderlyingType();
-		if (primitiveValueType.getType() != CPrimitives.CHAR
-				&& primitiveValueType.getType() != CPrimitives.UCHAR
+		if (primitiveValueType.getType() != CPrimitives.CHAR && primitiveValueType.getType() != CPrimitives.UCHAR
 				&& primitiveValueType.getType() != CPrimitives.SCHAR) {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public ICHandler getCHandler() {
+		assert mCHandler != null : "plan is to call setCHandler in the CHandler constructor (the CHandler constructor "
+				+ "takes a typeHandler as argument)";
+		return mCHandler;
+	}
+
+	@Override
+	public void setCHandler(final CHandler cHandler) {
+		assert cHandler != null;
+		assert mCHandler == null : "don't call this twice";
+		mCHandler = cHandler;
 	}
 }

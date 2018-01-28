@@ -34,19 +34,21 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalFormUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class AlphaSolver<INLOC extends IcfgLocation> {
@@ -68,7 +70,7 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 
 	public AlphaSolver(final ILogger logger, final UnmodifiableTransFormula loopTransFormula, final ManagedScript script,
 			final Map<Integer, Map<Term, Term>> matrix, final Map<Integer, Map<Term, Term>> lgs,
-			final IUltimateServiceProvider service) {
+			final IUltimateServiceProvider service, int loopCounter) {
 		mMgScript = script;
 		mScript = mMgScript.getScript();
 
@@ -81,7 +83,7 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 
 		mMgScript.lock(this);
 
-		initAlphas();
+		initAlphas(loopCounter);
 
 		final List<Term> finalTerms = new ArrayList<>();
 		for (final IProgramVar pVar : mProgramVar) {
@@ -94,13 +96,12 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 			finalTerms.add(pVarTerm);
 		}
 		if (finalTerms.isEmpty()) {
-			mFinalTerm = mScript.term("true");
+			mFinalTerm = null;
 		} else if (finalTerms.size() == 1) {
 			mFinalTerm = finalTerms.get(0);
 		} else {
 			mFinalTerm = mScript.term("and", finalTerms.toArray(new Term[finalTerms.size()]));
 		}
-
 		mMgScript.unlock(this);
 	}
 
@@ -110,6 +111,7 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 		mScript.push(1);
 		final LBool result = checkSat(mScript, transformedTerm);
 		Term finalTerm = null;
+		
 		try {
 			if (result == LBool.SAT) {
 				final Collection<Term> terms = mAlphaDefaultConstant.values();
@@ -121,12 +123,12 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 				for (final IProgramVar pV : mProgramVar) {
 					if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0])).equals(zero)) {
 						multiplication.add(
-								mScript.term("*", toInt(termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0]))),
+								mScript.term("*", mScript.term("to_int", termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[0]))),
 										mOriginalTransFormula.getInVars().get(pV)));
 					}
 					if (!termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1])).equals(zero)) {
 						multiplication.add(
-								mScript.term("*", toInt(termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1]))),
+								mScript.term("*", mScript.term("to_int", termvar2value.get(mAlphaDefaultConstant.get(mAlphaMap.get(pV)[1]))),
 										mOriginalTransFormula.getInVars().get(pV), mNVar));
 					}
 				}
@@ -163,17 +165,6 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 		return finalTerm;
 	}
 	
-	private Term toInt(Term real){
-		String r = real.toString();
-		if(r.endsWith(".0")){
-			return mScript.numeral(r.substring(0, r.length() -2));
-		}else if(r.endsWith(".0)")){
-			return mScript.term("-", mScript.numeral(r.substring(3, r.length() -3)));
-		}else{
-			throw new IllegalArgumentException();
-		}
-	}
-	
 	public Map<IProgramVar, Term> getValues(){
 		return mValues;
 	}
@@ -206,27 +197,27 @@ public class AlphaSolver<INLOC extends IcfgLocation> {
 		return script.term(name);
 	}
 
-	private void initAlphas() {
+	private void initAlphas(int loopCounter) {
 		mAlphaMap = new HashMap<>();
 		mNVar = mScript.variable("n", mScript.sort("Int"));
 		for (final IProgramVar var : mProgramVar) {
-			final TermVariable alphaVar = mScript.variable("alpha" + var.toString().substring(4), mScript.sort("Real"));
+			final TermVariable alphaVar = mScript.variable("alpha" + var.toString(), mScript.sort("Real"));
 			final TermVariable alphaVarN =
-					mScript.variable("alpha" + var.toString().substring(4) + "n", mScript.sort("Real"));
+					mScript.variable("alpha" + var.toString() + "n", mScript.sort("Real"));
 			final TermVariable[] alphas = { alphaVar, alphaVarN };
 			mAlphaMap.put(var, alphas);
 
 			mAlphaDefaultConstant.put(alphaVar,
-					ProgramVarUtils.constructDefaultConstant(mMgScript, this, alphaVar.getSort(), alphaVar.getName()));
+					ProgramVarUtils.constructDefaultConstant(mMgScript, this, alphaVar.getSort(), alphaVar.getName() + loopCounter));
 			mAlphaDefaultConstant.put(alphaVarN, ProgramVarUtils.constructDefaultConstant(mMgScript, this,
-					alphaVarN.getSort(), alphaVarN.getName()));
+					alphaVarN.getSort(), alphaVarN.getName() + loopCounter));
 		}
 		mAlphaN[0] = mScript.variable("alpha_n", mScript.sort("Real"));
 		mAlphaN[1] = mScript.variable("alpha_nn", mScript.sort("Real"));
 		mAlphaDefaultConstant.put(mAlphaN[0],
-				ProgramVarUtils.constructDefaultConstant(mMgScript, this, mAlphaN[0].getSort(), mAlphaN[0].getName()));
+				ProgramVarUtils.constructDefaultConstant(mMgScript, this, mAlphaN[0].getSort(), mAlphaN[0].getName() + loopCounter));
 		mAlphaDefaultConstant.put(mAlphaN[1],
-				ProgramVarUtils.constructDefaultConstant(mMgScript, this, mAlphaN[1].getSort(), mAlphaN[1].getName()));
+				ProgramVarUtils.constructDefaultConstant(mMgScript, this, mAlphaN[1].getSort(), mAlphaN[1].getName() + loopCounter));
 	}
 
 	private void lgsTermN0(final IProgramVar var) {

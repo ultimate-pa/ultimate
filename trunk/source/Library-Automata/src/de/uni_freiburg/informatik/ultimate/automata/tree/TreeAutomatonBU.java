@@ -276,10 +276,19 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	 * @param letter
 	 * @return
 	 */
+	
 	@Override
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final LETTER letter) {
-		return mLettersMap.get(letter);
+		final Set<TreeAutomatonRule<LETTER, STATE>> res = new HashSet<>();
+		for (final List<STATE> src : getSourceCombinations()) {
+			for (final STATE dest : getSuccessors(src, letter)) {
+				res.add(new TreeAutomatonRule<LETTER, STATE>(letter, src, dest));
+			}
+		}
+		return res;
+		//return mLettersMap.get(letter);
 	}
+	
 
 	/***
 	 * Get rules by source.

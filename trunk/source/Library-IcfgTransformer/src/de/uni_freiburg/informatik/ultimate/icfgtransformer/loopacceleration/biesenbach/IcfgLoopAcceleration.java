@@ -25,17 +25,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -51,6 +54,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
+	
+	final ILogger mLogger;
+	final IIcfg<INLOC> mOriginalIcfg;
+	final Class<OUTLOC> mOutLocationClass;
+	final ILocationFactory<INLOC, OUTLOC> mFunLocFac;
+	final String mNewIcfgIdentifier;
+	final ITransformulaTransformer mTransformer;
+	final IBacktranslationTracker mBacktranslationTracker;
+	final IUltimateServiceProvider mServices;
+	final LoopAccelerationOptions mOption;
 
 	/**
 	 * Different options for the loop acceleration
@@ -99,39 +112,76 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
 			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services,
 			final LoopAccelerationOptions option) {
-
+		
+		//Setup
+		mLogger = logger;
+		mOriginalIcfg = originalIcfg;
+		mOutLocationClass = outLocationClass;
+		mFunLocFac = funLocFac;
+		mNewIcfgIdentifier = newIcfgIdentifier;
+		mTransformer = transformer;
+		mBacktranslationTracker = backtranslationTracker;
+		mServices = services;
+		mOption = option;
+		
+		//printDetailedGraph(originalIcfg.getInitialNodes());
+		
 		if(option.equals(LoopAccelerationOptions.MARK_AS_OVERAPPROX)){
-			mResultIcfg = accelerat(logger, originalIcfg, outLocationClass, funLocFac, newIcfgIdentifier, transformer, backtranslationTracker, services, option);
+			mResultIcfg = accelerat();
+			//printDetailedGraph(mResultIcfg.getInitialNodes());
 		}else{
 			mResultIcfg =  (IIcfg<OUTLOC>) originalIcfg;
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
-	private IIcfg<OUTLOC> accelerat(final ILogger logger, final IIcfg<INLOC> originalIcfg,
-			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
-			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services,
-			final LoopAccelerationOptions option) {
-		
-		ManagedScript mMgScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
-		
-		// get the loops
-		final LoopExtraction<INLOC, OUTLOC> loopExtraction = new LoopExtraction<>(logger, originalIcfg,
-				outLocationClass, funLocFac, newIcfgIdentifier, transformer, backtranslationTracker, services);
-		if(loopExtraction.getLoopTransFormulas().isEmpty()){
-			//no loop found
-			return (IIcfg<OUTLOC>) originalIcfg;
+	
+	public <T> void printDetailedGraph(final Set<T> init){
+		Deque<IcfgLocation> open = new ArrayDeque<>();
+		Deque<IcfgLocation> marked = new ArrayDeque<>();
+		for(T i : init){
+			open.add((IcfgLocation) i);
 		}
-		final SimpleLoop loop = loopExtraction.getLoopTransFormulas().getFirst();
-		// create the matrix
-		final MatrixBB matrix = new LoopAccelerationMatrix<>(logger, loop.mLoopTransFormula, mMgScript).getResult();
-		// calculate the alphas
-		final AlphaSolver<INLOC> alphaSolver =
-				new AlphaSolver<>(logger, loop.mLoopTransFormula, mMgScript, matrix.getMatrix(), matrix.getLGS(), services);
-		logger.debug("Accelerated-Loop: " + alphaSolver.getResult());
-		// add guard and final icfg
-		return  loopExtraction.rejoin(loop, alphaSolver.getResult(), alphaSolver.getValues(), alphaSolver.getN());
+		while(!open.isEmpty()){
+			IcfgLocation node = open.pop();
+			mLogger.info("node: " + node);
+			for(IcfgEdge edge : node.getOutgoingEdges()){
+				 IcfgLocation target = edge.getTarget();
+				 mLogger.info(edge.getTransformula().getFormula().toStringDirect() + " -> " + target);
+				 if(!marked.contains(target)){
+					 open.add(target);
+					 marked.add(target);
+				 }
+			 }
+		 }
+	}
+	
+	@SuppressWarnings("unchecked")
+	private IIcfg<OUTLOC> accelerat() {
+		IIcfg<INLOC> originalIcfgCoppy = mOriginalIcfg;
+		ManagedScript mMgScript = originalIcfgCoppy.getCfgSmtToolkit().getManagedScript();
+		int loopCounter = 0;
+		
+		// get the loops to accelerate
+		LoopExtraction<INLOC, OUTLOC> loopExtraction = new LoopExtraction<>(mLogger, mOriginalIcfg);
+		for(SimpleLoop loop : loopExtraction.getLoopTransFormulas()){
+			boolean out = (loop.mLoopTransFormula.getAssignedVars().size() == loop.mLoopTransFormula.getOutVars().size());
+			boolean in = (loop.mLoopTransFormula.getAssignedVars().size() == loop.mLoopTransFormula.getInVars().size());
+			if(!(in && out)){
+				mLogger.info(loop.mLoopTransFormula.getAssignedVars() + "in != out!" + loop.mLoopTransFormula.getOutVars());
+				continue;
+			}
+			loopCounter += 1;
+			// create the matrix
+			final MatrixBB matrix = new LoopAccelerationMatrix<>(mLogger, loop.mLoopTransFormula, mMgScript).getResult();
+			// calculate the alphas
+			final AlphaSolver<INLOC> alphaSolver =
+					new AlphaSolver<>(mLogger, loop.mLoopTransFormula, mMgScript, matrix.getMatrix(), matrix.getLGS(), mServices, loopCounter);
+			// add guard and final icfg
+			final LoopInsertion<INLOC, OUTLOC> loopInsertion = new LoopInsertion<>(mLogger, originalIcfgCoppy,
+					mOutLocationClass, mFunLocFac, mNewIcfgIdentifier, mTransformer, mBacktranslationTracker, mServices);
+			originalIcfgCoppy = (IIcfg<INLOC>) loopInsertion.rejoin2(loop, alphaSolver.getResult(), alphaSolver.getValues(), alphaSolver.getN());
+		}
+		return (IIcfg<OUTLOC>) originalIcfgCoppy;
 	}
 
 	@Override

@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase.AfterTest;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -58,6 +59,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	private final File mSettings;
 	private final File mToolchain;
 	private final long mTimeout;
+	private final AfterTest mFunAfterTest;
 
 	private String mInputFilenames;
 
@@ -65,7 +67,17 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		this(new File[] { input }, settings, toolchain, timeout);
 	}
 
+	public UltimateRunDefinition(final File input, final File settings, final File toolchain, final long timeout,
+			final AfterTest funAfterTest) {
+		this(new File[] { input }, settings, toolchain, timeout, funAfterTest);
+	}
+
 	public UltimateRunDefinition(final File[] input, final File settings, final File toolchain, final long timeout) {
+		this(input, settings, toolchain, timeout, null);
+	}
+
+	public UltimateRunDefinition(final File[] input, final File settings, final File toolchain, final long timeout,
+			final AfterTest funAfterTest) {
 		if (input == null || toolchain == null) {
 			throw new IllegalArgumentException("Toolchain and Input may not be null");
 		}
@@ -76,6 +88,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		mSettings = settings;
 		mToolchain = toolchain;
 		mTimeout = timeout;
+		mFunAfterTest = funAfterTest;
 	}
 
 	public File[] getInput() {
@@ -92,6 +105,10 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	public long getTimeout() {
 		return mTimeout;
+	}
+
+	public AfterTest getAfterTestMethod() {
+		return mFunAfterTest;
 	}
 
 	public String getSettingsName() {

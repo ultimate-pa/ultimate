@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuseEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
@@ -62,14 +63,15 @@ public final class TAPreferences {
 	private final HoareTripleChecks mHoareTripleChecks;
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
+	private final boolean mDumpOnlyReuseAutomata;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
 	}
 
 	public enum InterpolantAutomatonEnhancement {
-		NONE, EAGER, EAGER_CONSERVATIVE, NO_SECOND_CHANCE,
-		PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE, PREDICATE_ABSTRACTION_CANNIBALIZE,
+		NONE, EAGER, EAGER_CONSERVATIVE, NO_SECOND_CHANCE, PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE,
+		PREDICATE_ABSTRACTION_CANNIBALIZE,
 	}
 
 	public enum Concurrency {
@@ -104,12 +106,13 @@ public final class TAPreferences {
 		mAutomataFormat = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_AUTOMATAFORMAT, Format.class);
 
 		mDumpPath = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
+		mDumpOnlyReuseAutomata = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_ONLY_REUSE);
 
 		mDeterminiation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 				InterpolantAutomatonEnhancement.class);
 
-		mHoareTripleChecks =
-				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_TRIPLE_CHECKS, HoareTripleChecks.class);
+		mHoareTripleChecks = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_TRIPLE_CHECKS,
+				HoareTripleChecks.class);
 
 		mMinimize = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE, Minimization.class);
 
@@ -137,9 +140,15 @@ public final class TAPreferences {
 	public boolean allErrorLocsAtOnce() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
 	}
-	
+
 	public FloydHoareAutomataReuse getFloydHoareAutomataReuse() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_FLOYD_HOARE_AUTOMATA_REUSE, FloydHoareAutomataReuse.class);
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_FLOYD_HOARE_AUTOMATA_REUSE,
+				FloydHoareAutomataReuse.class);
+	}
+
+	public FloydHoareAutomataReuseEnhancement getFloydHoareAutomataReuseEnhancement() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
+				FloydHoareAutomataReuseEnhancement.class);
 	}
 
 	public SolverMode solverMode() {
@@ -205,7 +214,7 @@ public final class TAPreferences {
 	 * @return The dump automata flag.
 	 */
 	public boolean dumpAutomata() {
-		return mDumpAutomata;
+		return mDumpAutomata && !mDumpOnlyReuseAutomata;
 	}
 
 	public Format getAutomataFormat() {
@@ -217,6 +226,10 @@ public final class TAPreferences {
 	 */
 	public String dumpPath() {
 		return mDumpPath;
+	}
+
+	public boolean dumpOnlyReuseAutomata() {
+		return mDumpAutomata && mDumpOnlyReuseAutomata;
 	}
 
 	/**
@@ -285,12 +298,12 @@ public final class TAPreferences {
 	public boolean fakeNonIncrementalSolver() {
 		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
 	}
-	
+
 	public RefinementStrategy getRefinementStrategy() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY,
 				RefinementStrategy.class);
 	}
-	
+
 	public RefinementStrategyExceptionBlacklist getRefinementStrategyExceptionSpecification() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 				RefinementStrategyExceptionBlacklist.class);

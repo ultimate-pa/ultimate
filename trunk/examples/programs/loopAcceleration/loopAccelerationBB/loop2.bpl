@@ -5,16 +5,11 @@
  * Author: ben.biesenbach@gmx.de
  *
  */
-
-procedure main()
-{
-  var x: int;
-  var y: int;
-  x := 15;
-  y := 0;
-  while (x > 10){
-    x := x - 1;
-    y := y + 2;
-  }
-  x := x + 7;
+var x,y : int;
+procedure main() returns () modifies x,y;{
+	x := 10;
+	while (x < 100) {
+		x := x + 2;
+	}
+	assert (x == 100 || x == 101);
 }

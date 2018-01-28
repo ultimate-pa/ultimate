@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariablePro
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
@@ -111,7 +113,8 @@ public class FixpointEngineFutureParameterFactory {
 					final ILoopDetector<IcfgEdge> loopDetector) {
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IAbstractDomain<STATE, IcfgEdge> domain =
-				(IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger, mRoot, mServices);
+				(IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger, mRoot, mServices,
+						Collections.emptySet());
 		final IAbstractStateStorage<STATE, IcfgEdge, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge> variableProvider =
@@ -140,7 +143,8 @@ public class FixpointEngineFutureParameterFactory {
 		} else if (DataflowDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) new DataflowDomain<IcfgEdge>(logger);
 		} else if (VPDomain.class.getSimpleName().equals(domainName)) {
-			return (IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger, root, services);
+			return (IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger, root, services,
+					Collections.emptySet());
 		} else if (SMTTheoryDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) new SMTTheoryDomain(services, root.getCfgSmtToolkit());
 		} else if (LiveVariableDomain.class.getSimpleName().equals(domainName)) {
@@ -161,10 +165,10 @@ public class FixpointEngineFutureParameterFactory {
 	}
 
 	public static VPDomain<IcfgEdge> createEqualityDomain(final ILogger logger, final IIcfg<?> root,
-			final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services, final Set<IProgramConst> additionalLiterals) {
 		// final VPTfStateBuilderPreparer tfPreparer =
 		// new VPTfStateBuilderPreparer(preAnalysis, root, logger);
-		return new VPDomain<>(logger, services, root.getCfgSmtToolkit());
+		return new VPDomain<>(logger, services, root.getCfgSmtToolkit(), additionalLiterals);
 	}
 
 	private static String getFailureString(final String selectedDomain) {

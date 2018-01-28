@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -38,9 +40,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInt
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
@@ -58,9 +63,18 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 
 	private boolean mPreprocessed;
 
+	private final Set<IProgramConst> mAdditionalLiterals;
+
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+
+		mAdditionalLiterals = new HashSet<>();
+	}
+
+	@Override
+	public void announceAdditionalLiterals(final Collection<IProgramConst> literals) {
+		mAdditionalLiterals.addAll(literals);
 	}
 
 	@Override
@@ -69,7 +83,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 
 		final IAbstractInterpretationResult<? extends IEqualityProvidingState, IcfgEdge, IcfgLocation> absIntResult =
 				// AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
-				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger);
+				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger, mAdditionalLiterals);
 		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
 		mTopState = absIntResult.getUsedDomain().createTopState();
 		mLoc2States = (Map<IcfgLocation, Set<IEqualityProvidingState>>) loc2states;
@@ -114,14 +128,22 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 				continue;
 			}
 			final IEqualityProvidingState unionStateForCurrentLoc =
-					mLoc2States.get(loc).stream().reduce((s1, s2) -> s1.union(s2)).get();
-			result = result == null ? unionStateForCurrentLoc : result.union(unionStateForCurrentLoc);
+					mLoc2States.get(loc).stream().reduce((s1, s2) -> s1.join(s2)).get();
+			result = result == null ? unionStateForCurrentLoc : result.join(unionStateForCurrentLoc);
 		}
 		if (result == null) {
 			result = mTopState;
 		}
 		assert result != null;
 		return result;
+	}
+
+	/**
+	 * TODO: implement intermediate states that contain auxVar information
+	 */
+	@Override
+	public IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(final IcfgEdge edge) {
+		return (EqState) getEqualityProvidingStateForLocationSet(Collections.singleton(edge.getSource()));
 	}
 
 }

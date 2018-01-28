@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.er
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -432,7 +432,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			}
 			builder.append("Fault localization was applied ").append(faultLocalizerStatistics.size())
 					.append(" times and altogether took ")
-					.append(AStatisticsType.prettyprintNanoseconds(totalFaultLocalizationTimeNano)).append(" seconds.");
+					.append(StatisticsType.prettyprintNanoseconds(totalFaultLocalizationTimeNano)).append(" seconds.");
 
 			mLogger.warn(builder);
 		}

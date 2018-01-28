@@ -102,12 +102,12 @@ public final class MonitoredProcess implements IStorable {
 	private volatile int mReturnCode;
 
 	private MonitoredProcess(final Process process, final String command, final String exitCommand,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) {
+			final IUltimateServiceProvider services, final IToolchainStorage storage, final ILogger logger) {
 		assert storage != null;
 		assert services != null;
 		mStorage = storage;
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(getClass().getName());
+		mLogger = logger;
 		mProcess = process;
 		assert mProcess != null;
 		mProcessCompleted = false;
@@ -147,29 +147,37 @@ public final class MonitoredProcess implements IStorable {
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
 	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
-			final IUltimateServiceProvider services, final IToolchainStorage storage, final ILogger logger)
-			throws IOException {
+			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
 		final MonitoredProcess newMonitoredProcess;
 		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).get();
-
+		final ILogger logger = services.getLoggingService().getControllerLogger();
 		if (workingDir == null) {
 			if (command.length > 0) {
 				File f = new File(command[0]);
-				if (!f.exists()) {
-					f = new File(Paths.get(System.getProperty("user.dir"), command[0]).toString());
-					if (f.exists()) {
-						command[0] = f.getAbsolutePath();
-					}
-				} else {
+				if (f.exists()) {
 					command[0] = f.getAbsolutePath();
+				} else {
+					f = new File(Paths.get(System.getProperty("user.dir"), command[0]).toString());
+					if (f.exists() && f.canExecute()) {
+						command[0] = f.getAbsolutePath();
+					} else {
+						final File absolutePath = CoreUtil.findExecutableBinaryOnPath(command[0]);
+						if (absolutePath == null) {
+							logger.error(
+									"Could not determine absolute path of external process, hoping that OS will resolve "
+											+ command[0]);
+						} else {
+							command[0] = absolutePath.getAbsolutePath();
+						}
+					}
 				}
 			}
-			logger.info("No working directory specified, using " + System.getProperty("user.dir"));
+			logger.info("No working directory specified, using " + command[0]);
 			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand,
-					services, storage);
+					services, storage, logger);
 		} else {
 			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command, null, new File(workingDir)),
-					oneLineCmd, exitCommand, services, storage);
+					oneLineCmd, exitCommand, services, storage, logger);
 		}
 
 		newMonitoredProcess.start(workingDir, storage, oneLineCmd);
@@ -198,9 +206,8 @@ public final class MonitoredProcess implements IStorable {
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
 	public static MonitoredProcess exec(final String command, final String exitCommand,
-			final IUltimateServiceProvider services, final IToolchainStorage storage, final ILogger logger)
-			throws IOException {
-		return exec(command.split(" "), null, exitCommand, services, storage, logger);
+			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
+		return exec(command.split(" "), null, exitCommand, services, storage);
 	}
 
 	private void start(final String workingDir, final IToolchainStorage storage, final String oneLineCmd) {

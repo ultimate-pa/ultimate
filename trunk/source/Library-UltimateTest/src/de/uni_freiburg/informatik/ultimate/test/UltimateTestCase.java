@@ -48,6 +48,13 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  */
 public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 
+	private static final AfterTest NOOP = new AfterTest() {
+		@Override
+		public void afterTest() {
+			// do nothing
+		}
+	};
+
 	private final String mName;
 	private final UltimateRunDefinition mUltimateRunDefinition;
 	private final ConsoleLogger mTestLogger;
@@ -56,12 +63,14 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 	private List<ITestLogfile> mLogs;
 	private UltimateStarter mStarter;
 	private ITestResultDecider mDecider;
+	private AfterTest mFunAfterTest;
 
 	public UltimateTestCase(final String name, final ITestResultDecider decider, final UltimateStarter starter,
 			final UltimateRunDefinition ultimateRunDefinition, final List<ITestLogfile> logs) {
 		if (ultimateRunDefinition == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");
 		}
+
 		mStarter = starter;
 		mDecider = decider;
 		mLogs = logs;
@@ -70,6 +79,11 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		mUltimateRunDefinition = ultimateRunDefinition;
 		mTestLogger = new ConsoleLogger();
 		mHasStarted = false;
+		if (ultimateRunDefinition.getAfterTestMethod() == null) {
+			mFunAfterTest = NOOP;
+		} else {
+			mFunAfterTest = ultimateRunDefinition.getAfterTestMethod();
+		}
 	}
 
 	@FactoryTestMethod
@@ -128,9 +142,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		} catch (final Throwable e) {
 			th = e;
 			result = mDecider.getTestResult(mStarter.getServices(), e);
-			final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
-			logger.fatal(String.format("There was an exception during the execution of Ultimate: %s%n%s", e,
-					CoreUtil.getStackTrace(e)));
+			logWithFreshLogger(e, "There was an exception during the execution of Ultimate");
 		} finally {
 			boolean success = false;
 
@@ -144,10 +156,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			try {
 				updateLogsPost(result, resultCategory, resultMessage);
 			} catch (final Throwable ex) {
-				final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
-				logger.fatal(
-						String.format("There was an exception during the writing of summary or log information: %s%n%s",
-								ex, CoreUtil.getStackTrace(ex)));
+				logWithFreshLogger(ex, "There was an exception during the writing of summary or log information");
 			}
 
 			mStarter.complete();
@@ -173,7 +182,24 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 					failTest(message);
 				}
 			}
+
+			try {
+				mFunAfterTest.afterTest();
+			} catch (final Throwable ex) {
+				logWithFreshLogger(ex, "There was an exception during execution of after-test method");
+			}
+			mFunAfterTest = null;
 		}
+	}
+
+	private void logWithFreshLogger(final Throwable ex, final String message) {
+		final ILogger logger;
+		if (mStarter.getServices() == null) {
+			logger = new ConsoleLogger();
+		} else {
+			logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+		}
+		logger.fatal(String.format(message + ": %s%n%s", ex, CoreUtil.getStackTrace(ex)));
 	}
 
 	private void updateLogsPre() {
@@ -235,5 +261,17 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 	@Override
 	public int compareTo(final UltimateTestCase o) {
 		return mUltimateRunDefinition.compareTo(o.mUltimateRunDefinition);
+	}
+
+	/**
+	 * A method that can be executed after a test.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	@FunctionalInterface
+	public interface AfterTest {
+
+		public void afterTest();
 	}
 }

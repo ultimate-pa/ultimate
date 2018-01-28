@@ -25,6 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
@@ -32,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
@@ -44,7 +47,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 public class Backbone {
 
 	private final Deque<IcfgEdge> mPath;
-	private final List<Loop> mNestedLoops;
+	private final Deque<IcfgLocation> mNodes;
+	private final List<IcfgLocation> mNestedLoops;
 	private TransFormula mFormula;
 	private TermVariable mPathCounter;
 	private UnmodifiableTransFormula mCondition;
@@ -67,15 +71,49 @@ public class Backbone {
 	 *            Nested loops in the backbone
 	 * 
 	 */
-	public Backbone(final Deque<IcfgEdge> path, final TransFormula tf, final Boolean isNested,
-			final List<Loop> nestedLoops) {
-		mPath = path;
-		mFormula = tf;
+
+	/**
+	 * Construct a new backbone
+	 * 
+	 * @param trans
+	 *            entry transition.
+	 */
+	public Backbone(final IcfgEdge trans) {
+		mPath = new ArrayDeque<>();
+		mPath.addLast(trans);
+		mNodes = new ArrayDeque<>();
+		mNodes.add(trans.getSource());
+
+		mFormula = null;
 		mPathCounter = null;
 		mCondition = null;
 		mSymbolicMemory = null;
-		mNestedLoops = nestedLoops;
-		mIsNested = isNested;
+		mNestedLoops = new ArrayList<>();
+
+		mIsNested = false;
+
+		mAbstractPathCondition = null;
+	}
+
+	/**
+	 * Copy a backbone
+	 * 
+	 * @param source
+	 *            the original backbone.s
+	 */
+	public Backbone(final Backbone source) {
+		mPath = new ArrayDeque<>(source.getPath());
+
+		mNodes = new ArrayDeque<>(source.getNodes());
+
+		mFormula = null;
+		mPathCounter = null;
+		mCondition = null;
+		mSymbolicMemory = null;
+		mNestedLoops = new ArrayList<>();
+
+		mIsNested = false;
+
 		mAbstractPathCondition = null;
 	}
 
@@ -106,12 +144,38 @@ public class Backbone {
 	}
 
 	/**
+	 * Assign a new nested {@link Loop} tot the backbone
+	 * 
+	 * @param loopHead
+	 *            the loophead {@link IcfgLocation} of the nested loop
+	 */
+	public void addNestedLoop(final IcfgLocation loopHead) {
+		mNestedLoops.add(loopHead);
+		mIsNested = true;
+	}
+
+	/**
+	 * add a new Transition in form of an {@link IcfgEdge} to the backbone.
+	 * 
+	 * @param transition
+	 *            the new transition.
+	 */
+	public void addTransition(final IcfgEdge transition) {
+		mPath.addLast(transition);
+		mNodes.addLast(transition.getSource());
+	}
+
+	/**
 	 * Returns the path of the backbone.
 	 *
 	 * @return the path of the backbone
 	 */
 	public Deque<IcfgEdge> getPath() {
 		return mPath;
+	}
+
+	public Deque<IcfgLocation> getNodes() {
+		return mNodes;
 	}
 
 	public TermVariable getPathCounter() {
@@ -134,7 +198,7 @@ public class Backbone {
 		return mCondition;
 	}
 
-	public List<Loop> getNestedLoops() {
+	public List<IcfgLocation> getNestedLoops() {
 		return mNestedLoops;
 	}
 
@@ -152,7 +216,13 @@ public class Backbone {
 
 	@Override
 	public String toString() {
-		return mPath.toString();
+		final StringBuilder b = new StringBuilder();
+		b.append(" { ");
+		for (final IcfgLocation node : mNodes) {
+			b.append(node + " -> ");
+		}
+		b.append(mPath.getLast().getTarget() + " } ");
+		return b.toString();
 	}
 
 }

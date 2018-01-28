@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqN
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingState;
 
 /**
@@ -49,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqState implements IAbstractState<EqState>, IEqualityProvidingState {
+public class EqState implements IAbstractState<EqState>, IEqualityProvidingState, IEqualityProvidingIntermediateState {
 
 	/**
 	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState". Note
@@ -60,16 +62,27 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	private final EqConstraint<EqNode> mConstraint;
 
 	private final EqStateFactory mFactory;
+	private final ILogger mLogger;
 
 	public EqState(final EqConstraint<EqNode> constraint,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory eqStateFactory,
 			final Set<IProgramVarOrConst> variables) {
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
-		mPvocs = new HashSet<>(variables);
-		assert mPvocs.containsAll(constraint.getPvocs(mFactory.getSymbolTable()).stream()
+		mPvocs = Collections.unmodifiableSet(new HashSet<>(variables));
+		mLogger = mFactory.getLogger();
+		assert assertPvocsAreComplete(constraint);
+	}
+
+	private boolean assertPvocsAreComplete(final EqConstraint<EqNode> constraint) {
+		final Set<IProgramVarOrConst> set = constraint.getPvocs(mFactory.getSymbolTable()).stream()
 				.filter(pvoc -> !(pvoc instanceof IProgramOldVar)).filter(pvoc -> !(pvoc instanceof BoogieConst))
-				.collect(Collectors.toSet()));
+				.collect(Collectors.toSet());
+		if (!mPvocs.containsAll(set)) {
+			assert false;
+			return false;
+		}
+		return true;
 	}
 
 	@Override
@@ -93,10 +106,15 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	@Override
 	public EqState removeVariables(final Collection<IProgramVarOrConst> variables) {
+
+//		final Set<IProgramVarOrConst> variablesFiltered = variables.stream().filter(var -> var instanceof IProgramVar)
+//				.collect(Collectors.toSet());
+
 		final Set<Term> termsFromPvocs =
+//				variablesFiltered.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<EqNode> projectedConstraint =
-				mFactory.getEqConstraintFactory().projectExistentially(termsFromPvocs, mConstraint);
+				mFactory.getEqConstraintFactory().projectExistentially(termsFromPvocs, mConstraint, false);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
 		newVariables.removeAll(variables);
@@ -128,7 +146,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	@Override
 	public EqState intersect(final EqState other) {
 		final EqConstraint<EqNode> newConstraint =
-				mFactory.getEqConstraintFactory().conjoin(this.getConstraint(), other.getConstraint());
+				mFactory.getEqConstraintFactory().conjoin(this.getConstraint(), other.getConstraint(), false);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
 		newVariables.addAll(this.getVariables());
@@ -229,8 +247,12 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	public boolean areEqual(final Term term1, final Term term2) {
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
-		if (node1 == null || node2 == null) {
-			// we did not track at least one of the nodes
+		if (node1 == null) {
+			mLogger.debug("areEqual request: Term " + term1 + " is not known to this EqState, returning false");
+			return false;
+		}
+		if (node2 == null) {
+			mLogger.debug("areEqual request: Term " + term2 + " is not known to this EqState, returning false");
 			return false;
 		}
 		return mConstraint.areEqual(node1, node2);
@@ -240,8 +262,12 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	public boolean areUnequal(final Term term1, final Term term2) {
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
-		if (node1 == null || node2 == null) {
-			// we did not track at least one of the nodes
+		if (node1 == null) {
+			mLogger.debug("areUnequal request: Term " + term1 + " is not known to this EqState, returning false");
+			return false;
+		}
+		if (node2 == null) {
+			mLogger.debug("areUnequal request: Term " + term2 + " is not known to this EqState, returning false");
 			return false;
 		}
 		return mConstraint.areUnequal(node1, node2);
@@ -286,7 +312,17 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	}
 
 	@Override
-	public IEqualityProvidingState union(final IEqualityProvidingState other) {
+	public IEqualityProvidingState join(final IEqualityProvidingState other) {
+		return union((EqState) other);
+	}
+
+	/**
+	 * Note that an EqState is a bad IEqualityProvidingIntermediateState because it does not contain information on any
+	 * auxVar.
+	 * TODO
+	 */
+	@Override
+	public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
 		return union((EqState) other);
 	}
 

@@ -62,6 +62,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
  */
 public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
+	/**
+	 * Does all conjunctive operations on EqConstraints in place, i.e., on the same object if possible.
+	 * The constraint remains unfrozen (and must be frozen in order to make all possible propagations at some point..).
+	 */
+	public static final boolean INPLACE_CONJUNCTIONS = true;
+
 	private final Term mFormula;
 
 	private EqDisjunctiveConstraint<EqNode> mResultConstraint;
@@ -114,6 +120,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 		assert mResultStack.size() == 1;
 		final EqDisjunctiveConstraint<EqNode> processedTf = mResultStack.pop();
+		processedTf.freezeDisjunctsIfNecessary();
 		mResultConstraint = processedTf.projectExistentially(scs.getReplacementTermVariables());
 	}
 
@@ -170,48 +177,45 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 			} else if ("false".equals(term.getFunction().getName())) {
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.emptySet()));
 			} else if ("true".equals(term.getFunction().getName())) {
-				mResultStack.push(mEqConstraintFactory
-						.getDisjunctiveConstraint(Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
+				mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 			} else {
 				// we don't recognize this function symbol -- overapproximating its effects by
 				// "top"
 				// TODO: perhaps we could make some checks here if it is trivially bottom or
 				// something like that..
-				mResultStack.push(mEqConstraintFactory
-						.getDisjunctiveConstraint(Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
+				mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 			}
 
 		}
 
 		private void handleBooleanTerm(final Term term, final boolean polarity) {
 			assert "Bool".equals(term.getSort().getName());
-			final EqConstraint<EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
 			final EqNode tvNode = mEqNodeAndFunctionFactory.getOrConstructNode(term);
 			if (polarity) {
 				final EqNode trueNode = mEqNodeAndFunctionFactory.getOrConstructNode(mTrueTerm);
 				final EqConstraint<EqNode> tvEqualsTrue = mEqConstraintFactory.addEquality(tvNode, trueNode,
-						emptyConstraint);
+						mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsTrue)));
 			} else {
 				final EqNode falseNode = mEqNodeAndFunctionFactory.getOrConstructNode(mFalseTerm);
 				final EqConstraint<EqNode> tvEqualsFalse = mEqConstraintFactory.addEquality(tvNode,
-						falseNode, emptyConstraint);
+						falseNode, mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(tvEqualsFalse)));
 			}
 		}
 
 		private void handleXquality(final Term arg1, final Term arg2, final boolean polarity) {
 
-			final EqConstraint<EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
-			final EqDisjunctiveConstraint<EqNode> emptyDisjunctiveConstraint = mEqConstraintFactory
-					.getDisjunctiveConstraint(Collections.singleton(emptyConstraint));
+//			final EqConstraint<EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
+//			final EqDisjunctiveConstraint<EqNode> emptyDisjunctiveConstraint = mEqConstraintFactory
+//					.getDisjunctiveConstraint(Collections.singleton(emptyConstraint));
 
 			if (arg1.getSort().isArraySort()) {
 				// we have an array equality
 
 				if (!isFunctionTracked(arg1) || !isFunctionTracked(arg2)) {
-					// we don't track both sides of the equation --> return an empty constraint
-					mResultStack.push(emptyDisjunctiveConstraint);
+					// we don't track either side of the equation --> return an empty constraint
+					mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 					return;
 				}
 
@@ -241,7 +245,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 					if (storeTerm == null) {
 						// we have a strong equivalence
 						newConstraint = mEqConstraintFactory.addEquality(simpleArray, otherSimpleArray,
-								emptyConstraint);
+								mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 					} else {
 						final EqNode storeIndex = mEqNodeAndFunctionFactory
 								.getOrConstructNode(storeTerm.getParameters()[1]);
@@ -250,7 +254,9 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 						// we have a weak equivalence ..
 						final EqConstraint<EqNode> intermediateConstraint = mEqConstraintFactory
-								.addWeakEquivalence(simpleArray, otherSimpleArray, storeIndex, emptyConstraint);
+								.addWeakEquivalence(simpleArray, otherSimpleArray, storeIndex,
+										mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS),
+										INPLACE_CONJUNCTIONS);
 						// .. and an equality on the stored position
 						mMgdScript.lock(this);
 						final Term selectTerm = mMgdScript.term(this, "select", simpleArray.getTerm(),
@@ -258,12 +264,12 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 						mMgdScript.unlock(this);
 						final EqNode selectEqNode = mEqNodeAndFunctionFactory.getOrConstructNode(selectTerm);
 						newConstraint = mEqConstraintFactory.addEquality(selectEqNode, storeValue,
-								intermediateConstraint);
+								intermediateConstraint, INPLACE_CONJUNCTIONS);
 					}
 				} else {
 					if (storeTerm == null) {
 						newConstraint = mEqConstraintFactory.addDisequality(simpleArray, otherSimpleArray,
-								emptyConstraint);
+								mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 					} else {
 						/*
 						 * the best approximation for the negation of a weak equivalence that we can express is a
@@ -274,7 +280,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 						 *  a -- i -- b /\ a[i] = x, thus we would need to return two EqConstraints
 						 *  --> TODO postponing this, overapproximating to "true"..
 						 */
-						newConstraint = emptyConstraint;
+						newConstraint = mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS);
 					}
 				}
 
@@ -285,7 +291,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 				if (!isElementTracked(arg1) || !isElementTracked(arg2)) {
 					// we don't track both sides of the equation --> return an empty constraint
-					mResultStack.push(emptyDisjunctiveConstraint);
+					mResultStack.push(mEqConstraintFactory.getEmptyDisjunctiveConstraint(INPLACE_CONJUNCTIONS));
 					return;
 				}
 
@@ -294,9 +300,11 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 
 				final EqConstraint<EqNode> newConstraint;
 				if (polarity) {
-					newConstraint = mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
+					newConstraint = mEqConstraintFactory.addEquality(node1, node2,
+							mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 				} else {
-					newConstraint = mEqConstraintFactory.addDisequality(node1, node2, emptyConstraint);
+					newConstraint = mEqConstraintFactory.addDisequality(node1, node2,
+							mEqConstraintFactory.getEmptyConstraint(INPLACE_CONJUNCTIONS), INPLACE_CONJUNCTIONS);
 				}
 				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
@@ -522,6 +530,9 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 		 * removes store chains
 		 */
 		class SquishStoreWalker implements Walker {
+
+			private static final int NO_STORE_ARGS = 3;
+
 			/** the application term to convert. */
 			private final ApplicationTerm mAppTerm;
 
@@ -535,7 +546,7 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 				/* collect args and check if they have been changed */
 				final Term[] oldArgs = mAppTerm.getParameters();
 				final Term[] newArgs = transformer.getConvertedArray(oldArgs);
-				assert newArgs.length == 3;
+				assert newArgs.length == NO_STORE_ARGS;
 
 				final Term replacedArray;
 				if (SmtUtils.isFunctionApplication(newArgs[0], "store")) {

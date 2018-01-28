@@ -136,7 +136,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Returns the {@link IntervalDomainValue} of the given variable. If the variable does not have a value, an
-	 * {@link UnsupportedOperationException} is thrown.
+	 * {@link AssertionError} is thrown.
 	 *
 	 * @param variableName
 	 *            The name of the variable to get the {@link IntervalDomainValue} for.
@@ -153,7 +153,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	/**
 	 * Returns the {@link BooleanValue} of the given variable. If the variable is not a boolean variable, an
-	 * {@link UnsupportedOperationException} is thrown.
+	 * {@link AssertionError} is thrown.
 	 *
 	 * @param variableName
 	 *            The name of the boolean variable to get the {@link BooleanValue} for.

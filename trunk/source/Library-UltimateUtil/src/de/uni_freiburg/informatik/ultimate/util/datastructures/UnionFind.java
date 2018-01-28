@@ -357,13 +357,35 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 *            element to be removed
 	 */
 	public void remove(final E element) {
+		remove(element, null);
+	}
+
+	/**
+	 * Variant of remove(E) that allows the user to give a preference for which element should be the new representative
+	 * of the equivalence class, if the removed element was the representative before.
+	 *
+	 * @param element
+	 * 			the element to be removed
+	 * @param newRepChoice
+	 * 			must be in the same equivalence class as element; if the representative of element's equivalence class
+	 *          is changed by this method, newRepChoice will be the new representative. If newRepChoice is given as
+	 *          null, an arbitrary new representative will be chosen from the remaining members of element's equivalence
+	 *          class.
+	 */
+	public void remove(final E element, final E newRepChoice) {
+		assert newRepChoice == null || find(newRepChoice) == find(element);
+
 		final CachedHashSet<E> eqc = mEquivalenceClass.get(element);
 		final CachedHashSet<E> newEqc = new CachedHashSet<>(eqc);
 		newEqc.remove(element);
 
+		/*
+		 *  if eqc is non-empty after the remove, make sure it gets another representative
+		 *  (keeps the old eqc, for now, will replace it with newEqc in next step)
+		 */
 		if (mRepresentative.get(mEquivalenceClass.get(element)).equals(element)) {
 			// element is the representative of its equivalence class
-			// final Set<E> eqc = mEquivalenceClass.get(element);
+
 			if (eqc.size() == 1) {
 				// element was alone in its equivalence class
 				mEquivalenceClass.remove(element);
@@ -372,20 +394,33 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 				return;
 			}
 
-			// pick another element from the equivalence class, and make it the
-			// representative
+			// pick another element from the equivalence class, and make it the  representative
+			E newRep;
 			if (mElementComparator == null) {
-				final Iterator<E> it = eqc.iterator();
-				E other = it.next();
-				if (other.equals(element)) {
-					other = it.next();
+				if (newRepChoice == null) {
+					newRep = newEqc.iterator().next();
+				} else {
+					assert newEqc.contains(newRepChoice);
+					newRep = newRepChoice;
 				}
-				mRepresentative.put(eqc, other);
 			} else {
-				mRepresentative.put(eqc, findMinimalElement(newEqc));
+				final E minimum = findMinimalElement(newEqc);
+				if (newRepChoice == null) {
+					newRep = minimum;
+				} else {
+					if (mElementComparator.compare(newRepChoice, minimum) != 0) {
+						throw new IllegalArgumentException("newRepChoice must be compatible with the element "
+								+ "comparator!");
+					}
+					newRep = newRepChoice;
+				}
 			}
+			mRepresentative.put(eqc, newRep);
 		}
 
+		/*
+		 * Replace the old eqc by newEqc
+		 */
 		for (final E eqcEl : newEqc) {
 			mEquivalenceClass.put(eqcEl, newEqc);
 		}
@@ -434,9 +469,6 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			mRepresentative.remove(entry.getKey());
 
 			final E newRep = elemTransformer.apply(entry.getValue());
-
-			// assert mElementComparator == null || mElementComparator.compare(newRep,
-			// entry.getValue()) == 0;
 
 			final CachedHashSet<E> newEqClass = entry.getKey().stream().map(elemTransformer)
 					.collect(Collectors.toCollection(CachedHashSet::new));
@@ -542,6 +574,26 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			for (final E member : en.getKey()) {
 				assert mElementComparator.compare(rep, member) <= 0;
 			}
+		}
+		return true;
+	}
+
+	boolean sanityCheck() {
+		assert assertRepresentativeMapIsInjective();
+		return true;
+	}
+
+	/**
+	 * Asserts a class invariant:
+	 *  mRepresentatives must be injective, i.e., a representative cannot represent two equivalence classes
+	 *
+	 * @return
+	 */
+	private boolean assertRepresentativeMapIsInjective() {
+		final Set<E> alreadySeenRepresentatives = new HashSet<>();
+		for (final E rep : mRepresentative.values()) {
+			assert !alreadySeenRepresentatives.contains(rep);
+			alreadySeenRepresentatives.add(rep);
 		}
 		return true;
 	}

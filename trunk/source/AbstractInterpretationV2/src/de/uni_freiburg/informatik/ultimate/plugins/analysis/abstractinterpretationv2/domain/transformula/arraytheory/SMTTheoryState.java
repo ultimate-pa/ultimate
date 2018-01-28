@@ -212,7 +212,7 @@ public class SMTTheoryState implements IAbstractState<SMTTheoryState>, IEquality
 	}
 
 	@Override
-	public IEqualityProvidingState union(final IEqualityProvidingState other) {
+	public IEqualityProvidingState join(final IEqualityProvidingState other) {
 		return union((SMTTheoryState) other);
 	}
 

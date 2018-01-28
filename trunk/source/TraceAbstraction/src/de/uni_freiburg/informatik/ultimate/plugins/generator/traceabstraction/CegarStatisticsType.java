@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
-public class CegarStatisticsType extends AStatisticsType<CegarLoopStatisticsDefinitions> {
+public class CegarStatisticsType extends StatisticsType<CegarLoopStatisticsDefinitions> {
 	
 	public static Function<Object, Function<Object,Object>> s_SizeIterationPairDataAggregation = 
 			x -> y -> { return ((SizeIterationPair) x).getSize() >= ((SizeIterationPair) y).getSize() ? x : y; };

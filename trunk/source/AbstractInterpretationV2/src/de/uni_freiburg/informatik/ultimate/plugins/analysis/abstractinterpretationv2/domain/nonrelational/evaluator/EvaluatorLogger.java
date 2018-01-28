@@ -89,12 +89,14 @@ public class EvaluatorLogger {
 		mLogger.warn(POSSIBLE_LOSS_OF_PRECISION + op + " is not implemented.");
 	}
 
+	@SuppressWarnings("unused")
 	public void logInverseEvaluation(final Object op, final Object result, final Object... args) {
 		if (MORE_LOGGING && mLogger.isDebugEnabled()) {
 			logEvaluation("I", op, result, args);
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public void logEvaluation(final Object op, final Object result, final Object... args) {
 		if (MORE_LOGGING && mLogger.isDebugEnabled()) {
 			logEvaluation("E", op, result, args);

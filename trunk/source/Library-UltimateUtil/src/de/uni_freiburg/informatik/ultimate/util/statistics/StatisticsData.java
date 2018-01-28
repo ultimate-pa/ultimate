@@ -122,25 +122,26 @@ public class StatisticsData implements IStatisticsDataProvider, ICsvProviderProv
 	 * v_n)} where (v_1,k_1), ..., (v_n,k_n) are the key value pairs of IBenchmarkDataProvider v. This modification is
 	 * applied recursively. This method does not modify the original data.
 	 */
-	public LinkedHashMap<String, Object> getFlattenedKeyValueMap() {
+	public Map<String, Object> getFlattenedKeyValueMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		for (final String key : getKeys()) {
 			final Object value = getValue(key);
 			if (value instanceof IStatisticsDataProvider) {
 				if (value instanceof StatisticsData) {
-					if (((StatisticsData) value).isEmpty()) {
+					final StatisticsData statData = (StatisticsData) value;
+					if (statData.isEmpty()) {
 						// do nothing
 					} else {
-						final LinkedHashMap<String, Object> FlattenedKeyValueMap =
-								((StatisticsData) value).getFlattenedKeyValueMap();
-						for (final Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
+						final Map<String, Object> flattenedKeyValueMap = statData.getFlattenedKeyValueMap();
+						for (final Entry<String, Object> entry : flattenedKeyValueMap.entrySet()) {
 							final String composedKey = key + "_" + entry.getKey();
 							result.put(composedKey, entry.getValue());
 						}
 					}
 				} else {
-					for (final String subKey : ((IStatisticsDataProvider) value).getKeys()) {
-						final Object subValue = ((IStatisticsDataProvider) value).getValue(subKey);
+					IStatisticsDataProvider sdProvider = (IStatisticsDataProvider) value;
+					for (final String subKey : sdProvider.getKeys()) {
+						final Object subValue = sdProvider.getValue(subKey);
 						final String composedKey = key + "_" + subKey;
 						result.put(composedKey, subValue);
 					}
@@ -154,7 +155,7 @@ public class StatisticsData implements IStatisticsDataProvider, ICsvProviderProv
 
 	@Override
 	public ICsvProvider<Object> createCsvProvider() {
-		final LinkedHashMap<String, Object> flatKeyValueMap = getFlattenedKeyValueMap();
+		final Map<String, Object> flatKeyValueMap = getFlattenedKeyValueMap();
 		return CsvUtils.constructCvsProviderFromMap(flatKeyValueMap);
 	}
 }

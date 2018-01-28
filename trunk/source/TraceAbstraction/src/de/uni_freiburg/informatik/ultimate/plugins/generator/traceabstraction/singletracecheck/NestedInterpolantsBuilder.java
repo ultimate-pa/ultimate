@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck.TraceCheckLock;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ConstantTermNormalizer;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class NestedInterpolantsBuilder {
@@ -81,6 +82,7 @@ public class NestedInterpolantsBuilder {
 	// probably has to become a parameter for this class.
 	private static final boolean ALLOW_AT_DIFF = SolverBuilder.USE_DIFF_WRAPPER_SCRIPT;
 	public static final String DIFF_IS_UNSUPPORTED = "@diff is unsupported";
+	private static final boolean IGNORE_PQE_ERROR = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -128,7 +130,7 @@ public class NestedInterpolantsBuilder {
 	private final boolean mInstantiateArrayExt;
 
 	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckLock scriptLockOwner,
-			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> mconstants2BoogieVar,
+			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> constants2BoogieVar,
 			final IPredicateUnifier predicateBuilder, final PredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
 			final IUltimateServiceProvider services, final TraceCheck traceCheck, final ManagedScript mgdScriptCfg,
@@ -150,7 +152,7 @@ public class NestedInterpolantsBuilder {
 		mTrace = annotatdSsa.getTrace();
 		mInstantiateArrayExt = instantiateArrayExt;
 		final HashMap<Term, Term> const2RepTv = new HashMap<>();
-		for (final Entry<Term, IProgramVar> entry : mconstants2BoogieVar.entrySet()) {
+		for (final Entry<Term, IProgramVar> entry : constants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mMgdScriptTc != mgdScriptCfg) {
@@ -244,8 +246,8 @@ public class NestedInterpolantsBuilder {
 					throw new AssertionError();
 				}
 			}
-			startNewFormula = isInterpolatedPositio(i);
-			if (isInterpolatedPositio(i)) {
+			startNewFormula = isInterpolatedPosition(i);
+			if (isInterpolatedPosition(i)) {
 				mStackHeightAtLastInterpolatedPosition = mStartOfSubtreeStack.size();
 				mCraigInt2interpolantIndex.add(i);
 			}
@@ -296,11 +298,11 @@ public class NestedInterpolantsBuilder {
 			// everything ok
 		} else {
 			if (mStackHeightAtLastInterpolatedPosition + 1 == mStartOfSubtreeStack.size() && mTrace.isCallPosition(i)
-					&& (i == 0 || isInterpolatedPositio(i - 1))) {
+					&& (i == 0 || isInterpolatedPosition(i - 1))) {
 				// everything ok
 			} else {
 				if (mStackHeightAtLastInterpolatedPosition - 1 == mStartOfSubtreeStack.size()
-						&& mTrace.isReturnPosition(i) && isInterpolatedPositio(i - 1)) {
+						&& mTrace.isReturnPosition(i) && isInterpolatedPosition(i - 1)) {
 					// everything ok
 				} else {
 					throw new IllegalArgumentException(
@@ -329,7 +331,7 @@ public class NestedInterpolantsBuilder {
 		mInterpolInput.set(lastPosition, newFormula);
 	}
 
-	public boolean isInterpolatedPositio(final int i) {
+	public boolean isInterpolatedPosition(final int i) {
 		assert i >= 0;
 		assert i < mTrace.length();
 		if (i == mTrace.length() - 1) {
@@ -555,7 +557,7 @@ public class NestedInterpolantsBuilder {
 				positionOfThisCraigInterpolant = mCraigInt2interpolantIndex.get(craigInterpolPos);
 			}
 			assert positionOfThisCraigInterpolant >= resultPos;
-			if (isInterpolatedPositio(resultPos)) {
+			if (isInterpolatedPosition(resultPos)) {
 				Term withIndices = mCraigInterpolants[craigInterpolPos];
 				assert resultPos == mCraigInt2interpolantIndex.get(craigInterpolPos);
 				craigInterpolPos++;
@@ -574,8 +576,18 @@ public class NestedInterpolantsBuilder {
 							&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isPropertySatisfied(withoutIndices)) {
 						throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 					}
-					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger,
-							mMgdScriptCfg, withoutIndices, mSimplificationTechnique, mXnfConversionTechnique);
+					final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
+					Term lessQuantifiers;
+					try {
+						lessQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mMgdScriptCfg,
+								withoutIndicesNormalized, mSimplificationTechnique, mXnfConversionTechnique);
+					} catch (final AssertionError ae) {
+						if (IGNORE_PQE_ERROR) {
+							lessQuantifiers = withoutIndicesNormalized;
+						} else {
+							throw ae;
+						}
+					}
 					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}

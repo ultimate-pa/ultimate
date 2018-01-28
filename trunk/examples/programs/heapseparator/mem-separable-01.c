@@ -8,6 +8,10 @@ int main() {
   *q = 0;
   *r = 0;
 
+  int x = *p;
+  int y = *q;
+  int z = *r;
+
   free(p);
   free(q);
   free(r);

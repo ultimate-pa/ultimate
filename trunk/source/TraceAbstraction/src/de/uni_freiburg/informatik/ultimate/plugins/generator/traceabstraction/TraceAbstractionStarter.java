@@ -35,8 +35,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
@@ -81,10 +82,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
+
+	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -98,13 +102,13 @@ public class TraceAbstractionStarter {
 	private Result mOverallResult;
 	private IElement mArtifact;
 
-	private final List<AbstractInterpolantAutomaton<IIcfgTransition<?>>> mFloydHoareAutomataFromOtherErrorLocations =
+	private final List<Pair<AbstractInterpolantAutomaton<IIcfgTransition<?>>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations =
 			new ArrayList<>();
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> rcfgRootNode,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -113,12 +117,8 @@ public class TraceAbstractionStarter {
 
 	private void runCegarLoops(final IIcfg<IcfgLocation> icfg,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
-		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE && taPrefs.allErrorLocsAtOnce()) {
-			throw new IllegalStateException(
-					"Incompatible settings: no reuse possible if you check all error locations at once.");
-		}
 
 		String settings = "Automizer settings:";
 		settings += " Hoare:" + taPrefs.computeHoareAnnotation();
@@ -284,7 +284,7 @@ public class TraceAbstractionStarter {
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop = constructCegarLoop(name, root, taPrefs,
 				csToolkit, predicateFactory, taBenchmark, errorLocs, rawFloydHoareAutomataFromFile);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
@@ -293,8 +293,8 @@ public class TraceAbstractionStarter {
 		basicCegarLoop.finish();
 		if (taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 			final LinkedHashSet<?> fhs = basicCegarLoop.getFloydHoareAutomata();
-			mFloydHoareAutomataFromOtherErrorLocations
-					.addAll((LinkedHashSet<AbstractInterpolantAutomaton<IIcfgTransition<?>>>) fhs);
+			mFloydHoareAutomataFromOtherErrorLocations.addAll(
+					(LinkedHashSet<Pair<AbstractInterpolantAutomaton<IIcfgTransition<?>>, IPredicateUnifier>>) fhs);
 		}
 
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
@@ -325,7 +325,7 @@ public class TraceAbstractionStarter {
 	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
-			final List<NestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
+			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 
@@ -391,12 +391,17 @@ public class TraceAbstractionStarter {
 		for (final Entry<String, Map<String, IcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
 			for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
 				final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
-				if (hoare == null) {
-					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
-							+ "  no Hoare annotation was computed.");
-				} else {
+				if (hoare != null && !hoare.getFormula().toString().equals("true")) {
 					mLogger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
 							+ hoare.getFormula());
+				} else if (EXTENDED_HOARE_ANNOTATION_LOGGING) {
+					if (hoare == null) {
+						mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
+								+ "  no Hoare annotation was computed.");
+					} else {
+						mLogger.info("At program point  " + prettyPrintProgramPoint(pp) + "  the Hoare annotation is:  "
+								+ hoare.getFormula());
+					}
 				}
 			}
 		}

@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IEpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -71,21 +72,10 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		mReturnAlphabet = getAlphabetMapping(mNwa.getVpAlphabet().getReturnAlphabet(), 'r');
 		mStateMapping = getStateMapping(mNwa.getStates());
 
-		final boolean isFiniteAutomaton = mCallAlphabet.isEmpty() && mReturnAlphabet.isEmpty();
-		if (isFiniteAutomaton) {
-			// automata script format for FiniteAutomaton
-			print("FiniteAutomaton ");
-			print(name);
-			printAutomatonPrefix();
-			printAlphabetOfFiniteAutomaton();
-			printStates();
-			printInitialStates(mNwa.getInitialStates());
-			printFinalStates(mNwa.getStates());
-			printTransitionsOfFiniteAutomaton(mNwa.getStates());
-			printAutomatonSuffix();
-		} else {
+		final boolean hasEpsilonTransitions = (mNwa instanceof IEpsilonNestedWordAutomaton);
+		if (hasEpsilonTransitions) {
 			// automata script format for NestedWordAutomaton
-			print("NestedWordAutomaton ");
+			print("EpsilonNestedWordAutomaton ");
 			print(name);
 			printAutomatonPrefix();
 			printAlphabets();
@@ -93,9 +83,45 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			printInitialStates(mNwa.getInitialStates());
 			printFinalStates(mNwa.getStates());
 			printCallTransitions(mNwa.getStates());
+			printTransitionListSeparator();
 			printInternalTransitions(mNwa.getStates());
+			printTransitionListSeparator();
 			printReturnTransitions(mNwa.getStates());
+			printTransitionListSeparator();
+			printEpsilonTransitions(mNwa.getStates());
+			printLastTransitionLineSeparator();
 			printAutomatonSuffix();
+		} else {
+			final boolean isFiniteAutomaton = mCallAlphabet.isEmpty() && mReturnAlphabet.isEmpty();
+			if (isFiniteAutomaton) {
+				// automata script format for FiniteAutomaton
+				print("FiniteAutomaton ");
+				print(name);
+				printAutomatonPrefix();
+				printAlphabetOfFiniteAutomaton();
+				printStates();
+				printInitialStates(mNwa.getInitialStates());
+				printFinalStates(mNwa.getStates());
+				printTransitionsOfFiniteAutomaton(mNwa.getStates());
+				printLastTransitionLineSeparator();
+				printAutomatonSuffix();
+			} else {
+				// automata script format for NestedWordAutomaton
+				print("NestedWordAutomaton ");
+				print(name);
+				printAutomatonPrefix();
+				printAlphabets();
+				printStates();
+				printInitialStates(mNwa.getInitialStates());
+				printFinalStates(mNwa.getStates());
+				printCallTransitions(mNwa.getStates());
+				printTransitionListSeparator();
+				printInternalTransitions(mNwa.getStates());
+				printTransitionListSeparator();
+				printReturnTransitions(mNwa.getStates());
+				printLastTransitionLineSeparator();
+				printAutomatonSuffix();
+			}
 		}
 	}
 
@@ -118,10 +144,6 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	 * @return new states
 	 */
 	protected abstract Map<STATE, String> getStateMapping(final Collection<STATE> states);
-
-	private void printLastTransitionSuffix() {
-		println("\t}");
-	}
 
 	private void printAlphabets() {
 		printCollectionPrefix("callAlphabet");
@@ -180,7 +202,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				printOneTransitionSuffix();
 			}
 		}
-		printLastTransitionSuffix();
+		printTransitionsSuffix();
 	}
 
 	private void printCallTransitions(final Collection<STATE> allStates) {
@@ -230,6 +252,20 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				printOneTransitionSuffix();
 			}
 		}
-		printLastTransitionSuffix();
+		printTransitionsSuffix();
+	}
+	
+	private void printEpsilonTransitions(final Collection<STATE> allStates) {
+		printlnCollectionPrefix("epsilonTransitions");
+		for (final STATE state : allStates) {
+			for (final STATE succ : ((IEpsilonNestedWordAutomaton<LETTER, STATE>) mNwa).epsilonSuccessors(state)) {
+				printOneTransitionPrefix();
+				print(mStateMapping.get(state));
+				print(' ');
+				print(mStateMapping.get(succ));
+				printOneTransitionSuffix();
+			}
+		}
+		printTransitionsSuffix();
 	}
 }

@@ -21,7 +21,7 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 
 	boolean isLiteral();
 
-	boolean isDependent();
+	boolean isDependentNonFunctionApplication();
 
 	/**
 	 * Should only be called if this id is a dependent id. Returns all supporters of this id.

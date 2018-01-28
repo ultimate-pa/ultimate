@@ -27,10 +27,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -58,11 +65,10 @@ public class DataStructureUtils {
 		}
 		return smaller.stream().filter(larger::contains).collect(Collectors.toSet());
 	}
-	
-	
+
 	/**
-	 * @return an Optional<T> that contains an element that is contained in 
-	 * set1 and contained in set2 and that does not contain en element otherwise. 
+	 * @return an Optional<T> that contains an element that is contained in set1 and contained in set2 and that does not
+	 *         contain en element otherwise.
 	 */
 	public static <T> Optional<T> getSomeCommonElement(final Set<T> set1, final Set<T> set2) {
 		final Set<T> larger;
@@ -93,6 +99,19 @@ public class DataStructureUtils {
 		return rtr;
 	}
 
+	@SafeVarargs
+	public static <T> Set<T> union(final Set<T>... a) {
+		if (a.length == 0) {
+			return Collections.emptySet();
+		}
+
+		final int size = Arrays.stream(a).mapToInt(set -> set.size()).sum();
+
+		final Set<T> rtr = DataStructureUtils.getFreshSet(a[0], size);
+		Arrays.stream(a).forEach(rtr::addAll);
+		return rtr;
+	}
+
 	/**
 	 * Construct a {@link Set} that contains all elements of oldSet and has the capacity of oldSet.
 	 */
@@ -107,6 +126,62 @@ public class DataStructureUtils {
 		final Set<T> rtr = new HashSet<>(capacity);
 		rtr.addAll(oldSet);
 		return rtr;
+	}
+
+	/**
+	 * Returns true, if the given sets have at least one common element.
+	 *
+	 * Should be quicker than first computing the intersection and the calling isEmpty() on it. Optimized for HashSets,
+	 * iterates over smaller set (second argument) and does lookups in the larger set (first argument).
+	 *
+	 * @param largerSet
+	 * @param smallerSet
+	 * @return
+	 */
+	public static <T> boolean haveNonEmptyIntersection(final Set<T> largerSet, final Set<T> smallerSet) {
+		for (final T t : smallerSet) {
+			if (largerSet.contains(t)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static <E> String prettyPrint(final Set<E> set) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Set: \n");
+		String sep = "";
+		for (final E e : set) {
+			sb.append(sep);
+			sb.append(String.format("\t%s", e));
+			sep = "\n";
+		}
+		return sb.toString();
+	}
+
+	public static <K, V> String prettyPrint(final Map<K, V> map) {
+		// TODO: implement a width check for the keys, adapt column with, and/or cut their size at some length
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Map: \n");
+		String sep = "";
+		for (final Entry<K, V> en : map.entrySet()) {
+			sb.append(sep);
+			sb.append(String.format("\t%-80s : \t %s", en.getKey(), en.getValue()));
+			sep = "\n";
+		}
+		return sb.toString();
+	}
+
+	public static <K1, K2, V> String prettyPrint(final NestedMap2<K1, K2, V> map) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("NestedMap2: \n");
+		String sep = "";
+		for (final Triple<K1, K2, V> en : map.entrySet()) {
+			sb.append(sep);
+			sb.append(String.format("\t%-80s : \t %-40s : \t %s", en.getFirst(), en.getSecond(), en.getThird()));
+			sep = "\n";
+		}
+		return sb.toString();
 	}
 
 }
