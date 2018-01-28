@@ -50,10 +50,6 @@
     </rundefinition>
         
     <tasks name="32bitMem">
-        <includesfile>../../../trunk/examples/svcomp/MemSafety-Arrays.set</includesfile>
-        <includesfile>../../../trunk/examples/svcomp/MemSafety-Heap.set</includesfile>
-        <includesfile>../../../trunk/examples/svcomp/MemSafety-LinkedLists.set</includesfile>
-        <includesfile>../../../trunk/examples/svcomp/MemSafety-Other.set</includesfile>
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-Arrays.set</includesfile>
         <includesfile>../../../trunk/examples/svcomp/ReachSafety-ControlFlow.set</includesfile>
     </tasks>
