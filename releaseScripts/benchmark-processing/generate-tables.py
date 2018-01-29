@@ -8,9 +8,32 @@ import codecs
 import itertools
 import collections
 
+
+def toTimeInNanosToX(value,x):
+    if value != None and value != 'null':
+        return float(value) / x
+    return None    
+
+def toTimeInNanosToSeconds(value):
+    return toTimeInNanosToX(value,1000000000.0)
+
+def toTimeInNanosToMillis(value):
+    return toTimeInNanosToX(value,1000000.0)
+    
 def toPercent(row, a, b):
     part = row[a]
     total = row[b]
+    
+    if part != None and total != None and part != 'null' and total != 'null':
+        totalF = float(total);
+        if totalF == 0:
+            return 0.0
+        return 100.0 * (float(part) / float(total)) 
+    return None
+    
+def toPercentTimeInNanos(row, a, b):
+    part = toTimeInNanosToSeconds(row[a])
+    total = toTimeInNanosToSeconds(row[b])
     
     if part != None and total != None and part != 'null' and total != 'null':
         totalF = float(total);
@@ -24,12 +47,13 @@ def toDiff(row, a, b):
     total = row[b]
     
     if part != None and total != None and part != 'null' and total != 'null':
-        totalF = float(total);
-        if totalF == 0:
-            return 0.0
         return (float(part) - float(total)) 
     return None
 
+def toDiffTimeInNanos(row, a, b):
+    return toTimeInNanosToSeconds(toDiff(row,a,b))
+
+    
 def toInt(row, a):
     value = row[a]
     if value != None and value != 'null':
@@ -37,10 +61,7 @@ def toInt(row, a):
     return None 
 
 def timeInNanosToSeconds(row, a):
-    value = row[a]
-    if value != None and value != 'null':
-        return float(value) / 1000000000.0
-    return None 
+    return toTimeInNanosToSeconds(row[a])
 
 def toFloat(row, a):
     value = row[a]
@@ -48,6 +69,13 @@ def toFloat(row, a):
         return float(value)
     return None 
 
+def toValue(row,column):
+    value = row[a]
+    if value != None and value != 'null':
+        return value
+    return None 
+
+    
 # Mappings for TACAS Taipan Paper 
 # mLatexSettingsMappings = {
 # 'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf' : '\\setComp',
@@ -100,10 +128,12 @@ mLatexSettingsMappings = {
 'LazyTaipan_Default.epf'                            : '\\lstaipan',
 'noTransform.epf'                                   : '\\autvanilla',
 'LE.epf'                                            : '\\autlale',
-'_EagerReuse_DumpAts.epf' : 'Eager',
-'_LazyReuse_DumpAts.epf' : 'Lazy',
-'.epf' : 'Default',
 'EE.epf'                                            : '\\autlaee',
+'_EagerReuse_OnlyNewLettersSolver_DumpAts.epf'  : 'EagerOnlyNewSolver',
+'_LazyReuse_DumpAts.epf'                        : 'Lazy',
+'_EagerReuse_DumpAts.epf'                       : 'Eager',
+'_EagerReuse_OnlyNewLetters_DumpAts.epf'        : 'EagerOnlyNew',
+'.epf'                                          : 'Default',
  }
 
 # Those are the dvips colors of xcolor 
@@ -120,7 +150,7 @@ mLatexSettingsMappings = {
 mLatexColors = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 'black', 'OliveGreen']
 
 mLatexPlotMarks = ['star', 'triangle', 'diamond', 'x', '|', '10-pointed-star', 'pentagon', 'o']
-mLatexPlotMarkRepeat = 10
+mLatexPlotMarkRepeat = 50
 mLatexPlotLines = ['solid', 'dotted', 'dashed' , 'dashdotted']
 
 mUltimateHeaders = []
@@ -136,6 +166,12 @@ mPlotdefinitions = [
     ('ReusedLetters' , lambda r : toInt(r, 'REUSE_STATISTICS_REUSED_LETTERS'), 'axis', 'Samples', 'Letters'),
     ('TotalLetters' , lambda r : toInt(r, 'REUSE_STATISTICS_TOTAL_LETTERS'), 'axis', 'Samples', 'Letters'),
     ('UnusedLetters' , lambda r : toDiff(r, 'REUSE_STATISTICS_TOTAL_LETTERS','REUSE_STATISTICS_REUSED_LETTERS'), 'axis', 'Samples', 'Letters'),
+    ('DumpOverhead' , lambda r : toPercentTimeInNanos(r, 'DUMP_TIME', 'OverallTime'), 'axis', 'Samples', 'Percent'),
+    ('DumpTime' , lambda r : timeInNanosToSeconds(r, 'DUMP_TIME'), 'semilogyaxis', 'Samples', 'log(s)'),
+    ('AnalysisTime' , lambda r : toDiffTimeInNanos(r, 'OverallTime','DUMP_TIME'), 'semilogyaxis', 'Samples', 'log(s)'),
+    ('ReusedAutomata' , lambda r : toInt(r, 'REUSE_STATISTICS_AUTOMATA_FROM_FILE'), 'axis', 'Samples', 'Automata'),
+    ('PUTime' , lambda r : timeInNanosToSeconds(r, 'REUSE_STATISTICS_REUSE_PREDICATE_UNIFIER_Time'), 'semilogyaxis', 'Samples', 'log(s)'),
+    
     
 #    ('AccLoops' , lambda r : toInt(r, 'AcceleratedLoops'), 'axis', 'Samples', 'Iterations'),
     
@@ -569,23 +605,26 @@ def getArgs():
         
     return file, output, name              
 
-def isInt(s):
+def isLong(s):
     try: 
-        int(s)
+        long(s)
         return True
     except ValueError:
+        print 'is no long'+s
         return False
     except TypeError:
+        print 'is no long'+s
         return False
 
 
 def getStats(rows, title):
-    sortedByIter = sorted(map(lambda row : int(row[title]), filter(lambda row: isInt(row[title]), rows)))
+    sortedByIter = sorted(map(lambda row : long(row[title]), filter(lambda row: isLong(row[title]), rows)))
     lenSorted = len(sortedByIter)
     if lenSorted > 0:
         if len(rows) > lenSorted:
             print 'Lost', len(rows) - lenSorted, 'rows for stats because there was no value'
-        avg = reduceWithArgs(sortedByIter, lambda iter, acc : iter + acc, 0) / lenSorted
+        avg = float(reduceWithArgs(sortedByIter, lambda iter, acc : iter + acc, 0)) / float(lenSorted)
+        sum = reduceWithArgs(sortedByIter, lambda iter, acc : iter + acc, 0)
         min = sortedByIter[0]
         max = sortedByIter[lenSorted - 1]
         if len(rows) % 2 == 0:
@@ -598,15 +637,17 @@ def getStats(rows, title):
         min = 'N/A'
         max = 'N/A'
         iterMed = 'N/A'
-    return avg, min, max, iterMed
+        sum = 'N/A'
+    return avg, min, max, iterMed, sum
 
 def printStats(type, rowsEveryoneCouldSolve, setting, column):
     rowsEveryoneCouldSolve = filter(lambda x : x['Settings'] == setting, rowsEveryoneCouldSolve)
-    iterAvg, iterMin, iterMax, iterMed = getStats(rowsEveryoneCouldSolve, column)
+    iterAvg, iterMin, iterMax, iterMed, iterSum = getStats(rowsEveryoneCouldSolve, column)
     print type, column, 'Avg:', iterAvg
     print type, column, 'Min:', iterMin
     print type, column, 'Max:', iterMax
     print type, column, 'Med:', iterMed
+    print type, column, 'Sum:', iterSum
 
 def checkCsv(rows):
     headers = rows[0];
@@ -638,8 +679,8 @@ def main():
         uniqueSettings = mapCsv(rows, lambda x, y : getUniqueSet('Settings', x, y))
         uniqueFiles = mapCsv(rows, lambda x, y : getUniqueSet('File', x, y))
         
-        #crashed = getCrashedInputs(rows, uniqueSettings)
-        #rows = addRowsForCrashedInputs(rows, crashed, next(iter(uniqueToolchains)))
+        crashed = getCrashedInputs(rows, uniqueSettings)
+        rows = addRowsForCrashedInputs(rows, crashed, next(iter(uniqueToolchains)))
     
     
         commonSettingsPrefix = os.path.commonprefix(uniqueSettings)
@@ -647,7 +688,7 @@ def main():
         renameSettings = lambda x : mLatexSettingsMappings[x[len(commonSettingsPrefix):]] if x[len(commonSettingsPrefix):] in mLatexSettingsMappings else x[len(commonSettingsPrefix):]
         for setting in uniqueSettings:
             renamedSetting = renameSettings(setting)
-
+            print setting + ' renamed to ' +renamedSetting
             mFriendlySettingNames[setting] = renamedSetting
         
         solversOnlySettings = filter(lambda x: not re.match('.*FP.*|.*BP.*', os.path.basename(x)), uniqueSettings)
@@ -675,7 +716,7 @@ def main():
     
         print 'Settings:                   ', len(uniqueSettings), ':', remPathS(uniqueSettings)
         print 'Total inputs:               ', total
-        #print 'Crashed inputs #:           ', len(crashed)
+        print 'Crashed inputs #:           ', len(crashed)
         #print 'Crashed inputs:             ', crashed
         print 'Success:                    ', remPathD(success)
         print 'Timeout:                    ', remPathD(timeout)
@@ -697,19 +738,18 @@ def main():
         
         successrows = filter(lambda x : x['Result'] in successResults , rows)
         ecs = [i for i in uniqueSettings ]
-        
         print 'Everyone', remPathS(ecs)
         print 'Everyone could solve (ECS):', len(rowsEveryoneCouldSolve) / len(uniqueSettings)
         
         # Use this if you want to print specific settings for the ECS set
-#        for s in ecs:
- #           print '## Setting', mFriendlySettingNames[s], '##'
-            # printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntIterations')
-            # printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntStrong')
-            # printStats('ALL', successrows, s, 'AbstIntIterations')
-            # printStats('ALL', successrows, s, 'AbstIntStrong')
-            # printStats(rowsEveryoneCouldSolve, s, 'Overall time')
-        # print 
+        for s in ecs:
+            print '## Setting', mFriendlySettingNames[s], '##'
+            #printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntIterations')
+            #printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntStrong')
+            #printStats('ALL', successrows, s, 'AbstIntIterations')
+            printStats('', successrows, s, 'DUMP_TIME')
+            printStats('', successrows, s, 'OverallTime')
+            print 
         
         # # gnuplot and stuff 
         writePlots(successrows, toolchain, uniqueSettings, output, name)
