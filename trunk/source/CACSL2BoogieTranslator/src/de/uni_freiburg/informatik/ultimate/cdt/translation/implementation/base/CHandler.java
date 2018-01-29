@@ -114,6 +114,8 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
 
+import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory.Location;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
@@ -609,12 +611,63 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final Collection<DecoratedUnit> units) {
+		IASTNode globalHook = null;
 		for (final DecoratedUnit du : units) {
 			if (du.getRootNode().getCNode() != null) {
 				visit(main, (IASTTranslationUnit) du.getRootNode().getCNode());
+				globalHook = du.getRootNode().getCNode();
 			}
 			// ACSL?
 		}
+		
+		// Generate additional boogie translation that is collected for all files.
+		final ILocation loc = LocationFactory.createIgnoreCLocation();
+		// (alex:) new function pointers
+		final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
+		for (final Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
+			final String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
+			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
+			// would unique make sense here?? -- would potentially add lots of axioms
+			mDeclarations.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
+
+			final BigInteger offsetValue = BigInteger.valueOf(en.getValue());
+			mDeclarations.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc,
+					BinaryExpression.Operator.COMPEQ, new IdentifierExpression(loc, funcId), mExpressionTranslation
+							.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
+		}
+
+		for (final Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
+			assert d instanceof ConstDeclaration || d instanceof VariableDeclaration || d instanceof TypeDeclaration;
+			mDeclarations.add(d);
+		}
+		mDeclarations.addAll(mAxioms);
+
+		mDeclarations.addAll(0,
+				mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler,
+						(TypeHandler) mTypeHandler, mTypeHandler.getUndefinedTypes(), mDeclarationsGlobalInBoogie,
+						mExpressionTranslation, globalHook));
+
+		/*
+		 * this must come after the post processor because the post processor might add declarations when dispatching
+		 * initializers of static variables
+		 */
+		mDeclarations.addAll(getStaticObjectsHandler().getGlobalDeclarations());
+
+		// this has to happen after postprocessing as pping may add sizeof
+		// constants for initializations
+		mDeclarations.addAll(mTypeSizeComputer.getConstants());
+		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
+		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(main, loc, globalHook));
+		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
+
+		// add type declarations introduced by the translation, e.g., $Pointer$
+		mDeclarations.addAll(
+				((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
+
+		final Collection<FunctionDeclaration> declaredFunctions =
+				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
+		mDeclarations.addAll(declaredFunctions);
+		
 
 		// this needs to be here because it needs to know all functions!
 		// have to block this in prerun, because there, Memorymodel is not declared which may make probelms with the
@@ -2108,52 +2161,6 @@ public class CHandler implements ICHandler {
 		for (final IASTNode funcDef : complexNodes) {
 			processTUchild(main, mDeclarations, funcDef);
 		}
-
-		// (alex:) new function pointers
-		final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
-		for (final Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
-			final String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
-			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
-			// would unique make sense here?? -- would potentially add lots of axioms
-			mDeclarations.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
-
-			final BigInteger offsetValue = BigInteger.valueOf(en.getValue());
-			mDeclarations.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc,
-					BinaryExpression.Operator.COMPEQ, new IdentifierExpression(loc, funcId), mExpressionTranslation
-							.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
-		}
-
-		for (final Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
-			assert d instanceof ConstDeclaration || d instanceof VariableDeclaration || d instanceof TypeDeclaration;
-			mDeclarations.add(d);
-		}
-		mDeclarations.addAll(mAxioms);
-
-		mDeclarations.addAll(0,
-				mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler,
-						(TypeHandler) mTypeHandler, mTypeHandler.getUndefinedTypes(), mDeclarationsGlobalInBoogie,
-						mExpressionTranslation, node));
-
-		/*
-		 * this must come after the post processor because the post processor might add declarations when dispatching
-		 * initializers of static variables
-		 */
-		mDeclarations.addAll(getStaticObjectsHandler().getGlobalDeclarations());
-
-		// this has to happen after postprocessing as pping may add sizeof
-		// constants for initializations
-		mDeclarations.addAll(mTypeSizeComputer.getConstants());
-		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
-		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(main, loc, node));
-		mDeclarations.addAll(mInitHandler.declareInitializationInfrastructure(main, loc));
-
-		// add type declarations introduced by the translation, e.g., $Pointer$
-		mDeclarations.addAll(
-				((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
-
-		final Collection<FunctionDeclaration> declaredFunctions =
-				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
-		mDeclarations.addAll(declaredFunctions);
 
 		// handle global ACSL stuff
 		// TODO: do it!
