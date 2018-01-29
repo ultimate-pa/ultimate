@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -253,7 +254,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				}
 				enqueueWalker(new EndScope());
 				pushTerm(aca.getArray());
-				enqueueWalker(new BeginScope(locationBlockList));
+				enqueueWalker(new BeginScope(append(locationBlockList, projectList)));
 
 			} else if (functionName.equals("store")) {
 
@@ -334,6 +335,20 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		} else {
 			throw new AssertionError("Unknown Term: " + term.toStringDirect());
 		}
+	}
+
+	private List<LocationBlock> append(final List<LocationBlock> locationBlockList, final List<LocationBlock> projectList) {
+		final List<LocationBlock> result = new ArrayList<>();
+		result.addAll(locationBlockList);
+		result.addAll(projectList);
+		assert assertIsSortedByDimensions(result);
+		return result;
+	}
+
+	static boolean isSorted(final List<Integer> collect) {
+		final List<Integer> copy = new ArrayList<>(collect);
+		Collections.sort(copy);
+		return collect.equals(copy);
 	}
 
 	private Term extractSimpleArrayTerm(final Term term) {
@@ -549,6 +564,9 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		}
 	}
 
+	static boolean assertIsSortedByDimensions(final List<LocationBlock> list) {
+		return isSorted(list.stream().map(lb -> lb.getDimension()).collect(Collectors.toList()));
+	}
 
 
 	protected static class BeginScope implements Walker {
@@ -559,8 +577,10 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		public BeginScope(final List<LocationBlock> locBlockList) {
 			assert Objects.nonNull(locBlockList);
 			assert locBlockList.stream().allMatch(Objects::nonNull);
+			assert assertIsSortedByDimensions(locBlockList);
 			mLocBlockList = locBlockList;
 		}
+
 
 		@Override
 		public void walk(final NonRecursive engine) {
