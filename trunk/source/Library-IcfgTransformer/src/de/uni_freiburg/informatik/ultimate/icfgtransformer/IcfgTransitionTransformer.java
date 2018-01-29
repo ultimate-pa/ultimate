@@ -164,7 +164,9 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 		} else if (oldTransition instanceof IIcfgReturnTransition) {
 			final IIcfgCallTransition<IcfgLocation> correspondingNewCall =
 					(IIcfgCallTransition<IcfgLocation>) mOldCallToNewCall.get(((IIcfgReturnTransition) oldTransition).getCorrespondingCall());
-			assert correspondingNewCall != null;
+			if (correspondingNewCall == null) {
+				throw new AssertionError("attempting to trans form a return that we do not know the call for");
+			}
 			final IcfgReturnTransition result = mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
 					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
 			return result;

@@ -96,6 +96,8 @@ public class SubArrayManager {
 //			subArray = constructNewPvoc(programVar, projectList);
 			subArray = constructFreshProgramVarsForIndexPartition(programVar, projectList);
 			mArrayToLocationBlockListToSubArray.put(programVar, projectList, subArray);
+
+			mStatistics.incrementNewArrayVarCounter(arrayGroup);
 		}
 
 		return subArray;

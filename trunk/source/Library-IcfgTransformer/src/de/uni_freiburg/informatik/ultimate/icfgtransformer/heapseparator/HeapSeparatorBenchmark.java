@@ -1,17 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
-public class HeapSeparatorBenchmark implements ICsvProviderProvider<Number> {
+public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
+	//implements ICsvProviderProvider<Number> {
 
 //	private int mTransformulaCounter;
 //	private int mArrayUpdateCounter;
@@ -20,10 +17,10 @@ public class HeapSeparatorBenchmark implements ICsvProviderProvider<Number> {
 //	private int mNoArrays;
 //	private int mNoEquivalenceClasses;
 
-	final private List<String> mColumnTitles = new ArrayList<>();
-	final private List<Number> mResults = new ArrayList<>();
+//	final private List<String> mColumnTitles = new ArrayList<>();
+//	final private List<Number> mResults = new ArrayList<>();
 
-	private boolean mAlreadyGeneratedColumnTitlesAndResults;
+//	private boolean mAlreadyGeneratedColumnTitlesAndResults;
 
 	private final Set<ArrayGroup> mHeapArrayGroups = new HashSet<>();
 
@@ -33,77 +30,66 @@ public class HeapSeparatorBenchmark implements ICsvProviderProvider<Number> {
 	private final NestedMap2<ArrayGroup, HeapSeparatorStatistics, Number> mPerArrayInfo = new NestedMap2<>();
 
 
+//	@Override
+//	public ICsvProvider<Number> createCsvProvider() {
+//
+////		final List<String> columnTitles = new ArrayList<>();
+////		final List<Integer> results = new ArrayList<>();
+//
+//		generateColumnTitlesAndResults();
+//
+////		final ICsvProvider<Number> result = new SimpleCsvProvider<>(mColumnTitles);
+////		result.addRow(mResults);
+//
+//		return result;
+//	}
+
 	@Override
-	public ICsvProvider<Number> createCsvProvider() {
-
-//		final List<String> columnTitles = new ArrayList<>();
-//		final List<Integer> results = new ArrayList<>();
-
-		generateColumnTitlesAndResults();
-
-		final ICsvProvider<Number> result = new SimpleCsvProvider<>(mColumnTitles);
-		result.addRow(mResults);
-
-		return result;
-	}
-
 	protected void generateColumnTitlesAndResults() {
 		if (mAlreadyGeneratedColumnTitlesAndResults) {
 			return;
 		}
-//		mColumnTitles.add("#Transformulas");
-//		mResults.add(mTransformulaCounter);
-//
-//		mColumnTitles.add("#ArrayUpdatesInInput");
-//		mResults.add(mArrayUpdateCounter);
-//
-//		mColumnTitles.add("#ArrayUpdatesInResult");
-//		mResults.add(mNewlyIntroducedArrayUpdateCounter);
-//
-//		mColumnTitles.add("#ArraysInInput");
-//		mResults.add(mNoArrays);
-//
-//		mColumnTitles.add("#ArrayGroups");
-//		mResults.add(mNoArrayGroups);
-//
-//		mColumnTitles.add("#EquivalenceClasses");
-//		mResults.add(mNoEquivalenceClasses);
+
+		super.generateColumnTitlesAndResults();
 
 		for (final ArrayGroup heapArrayGroup : mHeapArrayGroups) {
 			for (int dim = 0; dim < heapArrayGroup.getDimensionality(); dim++) {
 				for (final HeapSeparatorStatistics v : HeapSeparatorStatistics.values()) {
-					if (v == HeapSeparatorStatistics.COUNT_ARRAY_READS) {
-						// TODO group enum members..
-						continue;
+					// TODO group enum members..
+					if (v == HeapSeparatorStatistics.COUNT_BLOCKS || v == HeapSeparatorStatistics.COUNT_ARRAY_WRITES) {
+						mColumnTitles.add(v.name() + "_for_" + heapArrayGroup + "_at_dim_" + dim);
+						//					mColumnTitles.add(String.format("%40s for %15 at %4s", v.name(), heapArrayGroup, "t"));
+						//					mColumnTitles.add(String.format("%40s for %15s at %d", v.name(), heapArrayGroup,
+						//							Integer.valueOf(dim)));
+						//							Integer.toString(dim)));
+						mResults.add(mPerArrayAndDimensionInfo.get(heapArrayGroup, dim, v));
 					}
-					mColumnTitles.add(v.name() + "_for_" + heapArrayGroup + "_at_dim_" + dim);
-//					mColumnTitles.add(String.format("%40s for %15 at %4s", v.name(), heapArrayGroup, "t"));
-//					mColumnTitles.add(String.format("%40s for %15s at %d", v.name(), heapArrayGroup,
-//							Integer.valueOf(dim)));
-//							Integer.toString(dim)));
-					mResults.add(mPerArrayAndDimensionInfo.get(heapArrayGroup, dim, v));
 				}
 			}
 		}
 
 		for (final ArrayGroup heapArrayGroup : mHeapArrayGroups) {
 			for (final HeapSeparatorStatistics v : HeapSeparatorStatistics.values()) {
-				if (v != HeapSeparatorStatistics.COUNT_ARRAY_READS) {
-						// TODO group enum members..
-						continue;
+				if (v == HeapSeparatorStatistics.COUNT_ARRAY_READS) {
+					mColumnTitles.add(v.name() + " for " + heapArrayGroup);
+					mResults.add(mPerArrayInfo.get(heapArrayGroup, v));
 				}
-				mColumnTitles.add(v.name() + " for " + heapArrayGroup);
-				mResults.add(mPerArrayInfo.get(heapArrayGroup, v));
-
 			}
 		}
 
-		mAlreadyGeneratedColumnTitlesAndResults = true;
+//		mAlreadyGeneratedColumnTitlesAndResults = true; // done by super
 
 	}
 
 	void registerArrayGroup(final ArrayGroup ag) {
-		mHeapArrayGroups.add(ag);
+		final boolean newlyAdded = mHeapArrayGroups.add(ag);
+		if (newlyAdded) {
+			registerCounter(getNewArrayVarCounterName(ag));
+		}
+	}
+
+	private String getNewArrayVarCounterName(final ArrayGroup ag) {
+		return HeapSeparatorStatistics.COUNT_NEW_ARRAY_VARS.name() + "_" + ag;
 	}
 
 	void registerPerArrayInfo(final ArrayGroup ag, final HeapSeparatorStatistics hss, final Number value) {
@@ -140,6 +126,10 @@ public class HeapSeparatorBenchmark implements ICsvProviderProvider<Number> {
 			sb.append(String.format("%-80s : %7d %n", mColumnTitles.get(i), mResults.get(i)));
 		}
 		return sb.toString();
+	}
+
+	public void incrementNewArrayVarCounter(final ArrayGroup arrayGroup) {
+		super.incrementCounter(getNewArrayVarCounterName(arrayGroup));
 	}
 
 //	/**
