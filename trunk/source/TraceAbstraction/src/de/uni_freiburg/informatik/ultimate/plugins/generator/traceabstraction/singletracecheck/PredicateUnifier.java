@@ -142,12 +142,12 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 		}
 		if (truePredicate == null) {
-			mTruePredicate = newPredicate(mScript.term("true"), null);
+			mTruePredicate = constructNewPredicate(mScript.term("true"), null);
 		} else {
 			mTruePredicate = truePredicate;
 		}
 		if (falsePredicate == null) {
-			mFalsePredicate = newPredicate(mScript.term("false"), null);
+			mFalsePredicate = constructNewPredicate(mScript.term("false"), null);
 		} else {
 			mFalsePredicate = falsePredicate;
 		}
@@ -374,7 +374,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				throw tce;
 			}
 		}
-		result = newPredicate(simplifiedTerm, originalPredicate);
+		result = constructNewPredicate(simplifiedTerm, originalPredicate);
 		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
 			mDeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
 			mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
@@ -387,7 +387,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		return result;
 	}
 
-	protected IPredicate newPredicate(final Term term, final IPredicate originalPredicate) {
+	protected IPredicate constructNewPredicate(final Term term, final IPredicate originalPredicate) {
 		return mPredicateFactory.newPredicate(term);
 	}
 
@@ -1177,6 +1177,36 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 			return result;
 		}
+	}
+
+	
+	/**
+	 * Construct a new predicate for the given term.
+	 * @param term Term for which new predicate is constructed. This term has to
+	 * be simplified (resp. will not be further simplified) and has to be
+	 * different (not semantically equivalent) from all predicates known by
+	 * this predicate unifier.
+	 * @param impliedPredicates Result of the implication (term ==> p) for each
+	 * known predicate p. 
+	 * @param expliedPredicates Result of the implication (p ==> term) for each
+	 * known predicate p. 
+	 * @return The predicate that was constructed for the term p.
+	 */
+	public IPredicate constructNewPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
+			final HashMap<IPredicate, Validity> expliedPredicates) {
+		if (mTerm2Predicates.get(term) != null) {
+			throw new AssertionError("PredicateUnifier already knows a predicate for " + term);
+		}
+		if (impliedPredicates.size() != mKnownPredicates.size()) {
+			throw new AssertionError("Inconsistent number of IPredicates known by PredicateUnifier and number of provided implications");
+		}
+		if (expliedPredicates.size() != mKnownPredicates.size()) {
+			throw new AssertionError("Inconsistent number of IPredicates known by PredicateUnifier and number of provided explications");
+		}
+		final IPredicate predicate = constructNewPredicate(term, null);
+		addNewPredicate(predicate, term, term, impliedPredicates, expliedPredicates);
+		mPredicateUnifierBenchmarkGenerator.incrementDeclaredPredicates();
+		return predicate;
 	}
 
 }
