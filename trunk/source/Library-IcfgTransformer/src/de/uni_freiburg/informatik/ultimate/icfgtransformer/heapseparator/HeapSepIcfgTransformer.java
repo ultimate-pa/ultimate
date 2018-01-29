@@ -159,6 +159,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
 			edgeToIndexToStoreIndexInfo = sifit.getEdgeToIndexToStoreIndexInfo();
 
+			mLogger.info("finished StoreIndexFreezer, created " + storeIndexInfoToFreezeVar.size() + " freeze vars and "
+					+ "freeze var literals (each corresponds to one heap write)");
+
 			/*
 			 * Create a fresh literal/constant for each freeze variable that was introduced, we call them freeze
 			 * literals.

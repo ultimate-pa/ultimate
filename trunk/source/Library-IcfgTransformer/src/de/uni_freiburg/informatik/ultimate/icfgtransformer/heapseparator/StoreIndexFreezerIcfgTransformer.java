@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.Progr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -101,7 +100,8 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		mMgdScript.lock(this);
 
-		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
+//		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
+		final List<ArrayUpdate> aus = ArrayUpdate.extractArrayUpdates(tf.getFormula(), true);
 
 		final List<Term> freezeVarUpdates = new ArrayList<>();
 
