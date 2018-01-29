@@ -662,7 +662,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final String filename = mTaskIdentifier + "-reuse";
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> printedAutomaton;
 			final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
-			final boolean addPredicateImplicationInformation = false;
+			final boolean addPredicateImplicationInformation = true;
 			if (addPredicateImplicationInformation) {
 				final HashRelation<IPredicate, IPredicate> outgoingEpsilonTransitions =
 						((CoverageRelation) predicateUnifier.getCoverageRelation()).getCopyOfImplicationRelation();

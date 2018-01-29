@@ -22,10 +22,10 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 	private final Benchmark mWatchBenchmark = new Benchmark();
 	private final Map<String, Integer> mCounters = new HashMap<>();
 
-	final private List<String> mColumnTitles = new ArrayList<>();
-	final private List<Number> mResults = new ArrayList<>();
+	final protected List<String> mColumnTitles = new ArrayList<>();
+	final protected List<Number> mResults = new ArrayList<>();
 
-	private boolean mAlreadyGeneratedColumnTitlesAndResults = false;
+	protected boolean mAlreadyGeneratedColumnTitlesAndResults = false;
 
 	public void registerWatch(final String watchName) {
 		mWatchBenchmark.register(watchName);

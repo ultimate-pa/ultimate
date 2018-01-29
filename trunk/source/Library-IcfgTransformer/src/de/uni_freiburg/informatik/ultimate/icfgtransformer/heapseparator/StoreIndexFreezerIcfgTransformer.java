@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.Progr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -58,6 +57,8 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	private final Set<ConstantTerm> mAllConstantTerms;
 
+	private int mStoreIndexInfoCounter;
+
 //	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
@@ -68,6 +69,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
 		mAllConstantTerms = new HashSet<>();
+		mStoreIndexInfoCounter = 0;
 	}
 
 	@Override
@@ -98,7 +100,8 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		mMgdScript.lock(this);
 
-		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
+//		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
+		final List<ArrayUpdate> aus = ArrayUpdate.extractArrayUpdates(tf.getFormula(), true);
 
 		final List<Term> freezeVarUpdates = new ArrayList<>();
 
@@ -156,6 +159,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(),
 				tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
 
+
 		final List<Term> newFormulaConjuncts = new ArrayList<>();
 		newFormulaConjuncts.add(tf.getFormula());
 //		newFormulaConjuncts.addAll(indexUpdateFormula);
@@ -164,6 +168,10 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		tfBuilder.setFormula(SmtUtils.and(mMgdScript.getScript(), newFormulaConjuncts));
 
 		tfBuilder.setInfeasibility(tf.isInfeasible());
+
+//		tf.getAuxVars().forEach(tfBuilder::addAuxVar);
+		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
+
 
 		return tfBuilder.finishConstruction(mMgdScript);
 	}
@@ -175,8 +183,8 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		if (result == null) {
 			result = ProgramVarUtils.constructGlobalProgramVarPair(
-						indexTerm.toString().replace("|", "") + "_frz", indexTerm.getSort(),
-						mMgdScript, this);
+						indexTerm.toString().replace("|", "").replace("v_", "") + "_" + storeIndexInfo.getId() + "_frz",
+						indexTerm.getSort(), mMgdScript, this);
 			/*
 			 *  we don't need to do anything for the symbol table here it seems, because the TransformedIcfgBuilder
 			 *  recognizes new variables in the TransFormula
@@ -191,7 +199,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	private StoreIndexInfo getStoreIndexInfo(final EdgeInfo tfInfo, final Term indexTerm) {
 		StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(tfInfo, indexTerm);
 		if (sii == null) {
-			sii = new StoreIndexInfo(tfInfo, indexTerm);
+			sii = new StoreIndexInfo(tfInfo, indexTerm, mStoreIndexInfoCounter++);
 			mEdgeToIndexToStoreIndexInfo.put(tfInfo, indexTerm, sii);
 		}
 		return sii;

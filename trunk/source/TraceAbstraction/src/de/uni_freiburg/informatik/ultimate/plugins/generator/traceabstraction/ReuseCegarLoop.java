@@ -32,12 +32,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IEpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -55,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -71,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -142,27 +146,70 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		// Create empty automaton with same alphabet
 		final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-		final ReuseAutomaton reuseAutomaton = new ReuseAutomaton(resAutomaton, abstractionAlphabet);
+		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
+				mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		
+		final boolean implicationInformationProvided = false && (rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton);
+		final Pair<HashRelation<String, String>, HashRelation<String, String>> impliesExpliesStringRelations;
+		if (implicationInformationProvided) {
+			final IEpsilonNestedWordAutomaton<String, String> rawEpsilon = (IEpsilonNestedWordAutomaton<String, String>) rawAutomatonFromFile;
+			impliesExpliesStringRelations = constructImpliesExpliesStrings(rawEpsilon);
+		} else {
+			impliesExpliesStringRelations = null;
+		}
+		
 
 		// Add states
 		final Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
+		final HashMap<String, Term> mapStringToTerm = new HashMap<>();
+		final HashMap<Term, String> mapTermToString = new HashMap<>();
+		for (final String stringState : statesOfRawAutomaton) {
+			final Term term = parseTerm(ppws, stringState);
+			if (term != null) {
+				mapStringToTerm.put(stringState, term);
+				mapTermToString.put(term, stringState);
+			}
+		}
+		final int reusedStates = mapTermToString.size();
+		final int removedStates = statesOfRawAutomaton.size() - reusedStates;
+		
+		
 		final HashMap<String, IPredicate> mapStringToState = new HashMap<>();
 		final HashMap<IPredicate, String> mapStateToString = new HashMap<>();
-		int reusedStates = 0;
-		int removedStates = 0;
-		for (final String stringState : statesOfRawAutomaton) {
+		{   
+			// add 'true' predicate 
+			final IPredicate predicate = predicateUnifier.getTruePredicate();
+			final String string = mapTermToString.get(predicate.getFormula());
+			addState(rawAutomatonFromFile, resAutomaton, mapStringToState, mapStateToString, predicate, string);
+		}
+		{   
+			// add 'false' predicate 
+			final IPredicate predicate = predicateUnifier.getFalsePredicate();
+			final String string = mapTermToString.get(predicate.getFormula());
+			addState(rawAutomatonFromFile, resAutomaton, mapStringToState, mapStateToString, predicate, string);
+		}
 
-			final IPredicate predicateState = parsePredicate(ppws, reuseAutomaton.getPredicateUnifier(), stringState);
-			if (predicateState == null) {
-				removedStates++;
+		// add other predicates
+		for (final Entry<Term, String> entry : mapTermToString.entrySet()) {
+			final String string = entry.getValue();
+			final Term term = entry.getKey();
+			if (term == predicateUnifier.getTruePredicate().getFormula()
+					|| term == predicateUnifier.getFalsePredicate().getFormula()) {
 				continue;
 			}
-			reusedStates++;
-			mapStringToState.put(stringState, predicateState);
-			mapStateToString.put(predicateState, stringState);
-			final boolean isInitial = rawAutomatonFromFile.isInitial(stringState);
-			final boolean isFinal = rawAutomatonFromFile.isFinal(stringState);
-			resAutomaton.addState(isInitial, isFinal, predicateState);
+
+			final IPredicate predicate;
+			if (implicationInformationProvided) {
+				final Pair<HashMap<IPredicate, Validity>, HashMap<IPredicate, Validity>> impliesExpliesRelations = constructImpliesExpliesRelations(
+						resAutomaton.getStates(), string, mapStateToString, impliesExpliesStringRelations);
+				predicate = predicateUnifier.constructNewPredicate(term, impliesExpliesRelations.getFirst(),
+						impliesExpliesRelations.getSecond());
+			} else {
+				predicate = predicateUnifier.getOrConstructPredicate(term);
+			}
+
+			addState(rawAutomatonFromFile, resAutomaton, mapStringToState, mapStateToString, predicate, string);
 		}
 		final int totalStates = removedStates + reusedStates;
 		mReuseStats.addReusedStates(reusedStates);
@@ -172,9 +219,61 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		addTransitionsFromRawAutomaton(resAutomaton, rawAutomatonFromFile, mapStringToLetter, mapStringToState,
 				mapStateToString);
 
+		final ReuseAutomaton reuseAutomaton = new ReuseAutomaton(resAutomaton, abstractionAlphabet, predicateUnifier);
 		// Add capability for on-demand extension to automata from file.
 		mFloydHoareAutomataFromFile.add(reuseAutomaton);
 		mReuseStats.addAutomataFromFile(1);
+	}
+
+	private void addState(final INestedWordAutomaton<String, String> rawAutomatonFromFile,
+			final NestedWordAutomaton<LETTER, IPredicate> resAutomaton,
+			final HashMap<String, IPredicate> mapStringToState, final HashMap<IPredicate, String> mapStateToString,
+			final IPredicate predicate, final String string) {
+		mapStringToState.put(string, predicate);
+		mapStateToString.put(predicate, string);
+		final boolean isInitial = rawAutomatonFromFile.isInitial(string);
+		final boolean isFinal = rawAutomatonFromFile.isFinal(string);
+		resAutomaton.addState(isInitial, isFinal, predicate);
+	}
+
+	private Pair<HashMap<IPredicate, Validity>, HashMap<IPredicate, Validity>> constructImpliesExpliesRelations(
+			final Set<IPredicate> states, final String newStateString,
+			final HashMap<IPredicate, String> mapStateToString,
+			final Pair<HashRelation<String, String>, HashRelation<String, String>> result) {
+		final HashRelation<String, String> impliedStrings = result.getFirst();
+		final HashRelation<String, String> expliedStrings = result.getSecond();
+		final HashMap<IPredicate, Validity> impliedPredicates = new HashMap<>();
+		final HashMap<IPredicate, Validity> expliedPredicates = new HashMap<>();
+		for (final IPredicate existingState : states) {
+			final String existingStateString = mapStateToString.get(existingState);
+			if (impliedStrings.containsPair(newStateString, existingStateString)) {
+				impliedPredicates.put(existingState, Validity.VALID);
+			} else {
+				impliedPredicates.put(existingState, Validity.INVALID);
+			}
+			if (expliedStrings.containsPair(newStateString, existingStateString)) {
+				expliedPredicates.put(existingState, Validity.VALID);
+			} else {
+				expliedPredicates.put(existingState, Validity.INVALID);
+			}
+		}
+		return new Pair<HashMap<IPredicate, Validity>, HashMap<IPredicate, Validity>>(impliedPredicates,
+				expliedPredicates);
+	}
+
+	private Pair<HashRelation<String, String>, HashRelation<String, String>> constructImpliesExpliesStrings(
+			final IEpsilonNestedWordAutomaton<String, String> rawEpsilon) {
+		final HashRelation<String, String> implies = new HashRelation<>();
+		final HashRelation<String, String> explies = new HashRelation<>();
+		for (final String stringState : rawEpsilon.getStates()) {
+			for (final String stringSucc : rawEpsilon.epsilonSuccessors(stringState)) {
+				implies.addPair(stringState, stringSucc);
+				explies.addPair(stringSucc, stringState);
+			}
+		}
+		final Pair<HashRelation<String, String>, HashRelation<String, String>> result = new Pair<HashRelation<String, String>, HashRelation<String, String>>(
+				implies, explies);
+		return result;
 	}
 
 	@Override
@@ -322,8 +421,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		return new Pair<>(letters, succState);
 	}
 
-	private IPredicate parsePredicate(final PredicateParsingWrapperScript ppws, final PredicateUnifier pu,
-			final String rawString) {
+	private Term parseTerm(final PredicateParsingWrapperScript ppws, final String rawString) {
 		final Term term;
 		try {
 			final String termString = removeSerialNumber(rawString);
@@ -332,7 +430,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			mLogger.warn("Exception during parsing of " + rawString + ": " + ex.getMessage());
 			return null;
 		}
-		return pu.getOrConstructPredicate(term);
+		return term;
 	}
 
 	private String removeSerialNumber(final String rawString) {
@@ -366,10 +464,9 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		private IHoareTripleChecker mHtc;
 
 		private ReuseAutomaton(final NestedWordAutomaton<LETTER, IPredicate> automaton,
-				final VpAlphabet<LETTER> abstractionAlphabet) {
-			mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-					mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				final VpAlphabet<LETTER> abstractionAlphabet, final PredicateUnifier predicateUnifier) {
+
+			mPredicateUnifier = predicateUnifier;
 			mAutomaton = automaton;
 			mAbstractionAlphabet = abstractionAlphabet;
 			mUseEnhancement = mPref.getFloydHoareAutomataReuseEnhancement() != FloydHoareAutomataReuseEnhancement.NONE;

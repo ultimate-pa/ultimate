@@ -159,6 +159,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
 			edgeToIndexToStoreIndexInfo = sifit.getEdgeToIndexToStoreIndexInfo();
 
+			mLogger.info("finished StoreIndexFreezer, created " + storeIndexInfoToFreezeVar.size() + " freeze vars and "
+					+ "freeze var literals (each corresponds to one heap write)");
+
 			/*
 			 * Create a fresh literal/constant for each freeze variable that was introduced, we call them freeze
 			 * literals.
@@ -231,7 +234,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 *  <li> an array cell is accessed
 		 *  <li> two arrays are related
 		 */
-		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, mManagedScript, mHeapArrays);
+		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, mManagedScript, mHeapArrays,
+				mStatistics);
 		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
 		heapSepPreanalysis.finish();
 		mLogger.info("Finished pre analysis before partitioning");
@@ -242,7 +246,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup = heapSepPreanalysis.getArrayToArrayGroup();
 
 		final PartitionManager partitionManager = new PartitionManager(mLogger, arrayToArrayGroup,
-				storeIndexInfoToFreezeVar, mHeapArrays);
+				storeIndexInfoToFreezeVar, mHeapArrays, mStatistics);
 
 		/*
 		 * 3b. compute an array partitioning
@@ -253,10 +257,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 						equalityProvider));
 			}
 			partitionManager.finish();
+
 		} else {
 			// TODO
 			throw new AssertionError();
 		}
+
+
+
 
 		/*
 		 * 4. Execute the transformer that splits up the arrays according to the result from the equality analysis.
@@ -352,9 +360,11 @@ class PartitionManager {
 	private final NestedMap3<Set<StoreIndexInfo>, ArrayGroup, Integer, LocationBlock>
 		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock;
 
+	private final HeapSeparatorBenchmark mStatistics;
+
 	public PartitionManager(final ILogger logger, final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final Map<StoreIndexInfo, IProgramNonOldVar> arrayAccessInfoToFreezeVar,
-			final List<IProgramVarOrConst> heapArrays) {
+			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics) {
 
 		mLogger = logger;
 
@@ -373,6 +383,8 @@ class PartitionManager {
 		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock = new NestedMap3<>();
 
 		mHeapArrays = heapArrays;
+
+		mStatistics = statistics;
 	}
 
 	/**
@@ -488,6 +500,24 @@ class PartitionManager {
 	}
 
 	public void finish() {
+
+//		final Map<ArrayGroup, Integer> heapArrayGroupToReadCount = new HashMap<>();
+//		for (final SelectInfo selectInfo : mSelectInfoToDimensionToLocationBlock.keySet()) {
+//
+//			final ArrayGroup ag = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
+//
+//			Integer oldCount = heapArrayGroupToReadCount.get(ag);
+//			if (oldCount == null) {
+//				oldCount = 0;
+//				heapArrayGroupToReadCount.put(ag, oldCount);
+//			}
+//			heapArrayGroupToReadCount.put(ag, oldCount + 1);
+//		}
+//		for (final Entry<ArrayGroup, Integer> en : heapArrayGroupToReadCount.entrySet()) {
+//			mLogger.info("Number of read from array group " + en.getKey() + " : " + en.getValue());
+//			mStatistics.registerPerArrayInfo(en.getKey(), HeapSeparatorStatistics.COUNT_ARRAY_READS, en.getValue());
+//		}
+
 		/*
 		 * rewrite the collected information into our output format
 		 */
@@ -512,17 +542,30 @@ class PartitionManager {
 			mLogger.debug("\t write locations: " + locationBlock.getLocations());
 
 		}
-		mIsFinished = true;
+
 
 		mLogger.info("partitioning result:");
 		for (final ArrayGroup arrayGroup : mArrayToArrayGroup.values()) {
+
+			mStatistics.registerArrayGroup(arrayGroup);
+
 			mLogger.info("\t location blocks for array group " + arrayGroup);
+
 			for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
+				final int noWrites =
+						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size();
+
+				final int noBlocks =
+						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses()
+						.size();
 				mLogger.info("\t at dimension " + dim);
-				mLogger.info("\t # array writes (possibly including 1 dummy write/NoStoreIndexInfo) : " +
-						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size());
-				mLogger.info("\t # location blocks :" +
-						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses().size());
+				mLogger.info("\t # array writes (possibly including 1 dummy write/NoStoreIndexInfo) : " + noWrites);
+				mLogger.info("\t # location blocks :" + noBlocks);
+
+				mStatistics.registerPerArrayAndDimensionInfo(arrayGroup, dim,
+						HeapSeparatorStatistics.COUNT_ARRAY_WRITES, noWrites);
+				mStatistics.registerPerArrayAndDimensionInfo(arrayGroup, dim,
+						HeapSeparatorStatistics.COUNT_BLOCKS, noBlocks);
 
 				mLogger.debug("\t location block contents:");
 				if (mLogger.isDebugEnabled()) {
@@ -534,6 +577,7 @@ class PartitionManager {
 			}
 		}
 
+		mIsFinished = true;
 		assert sanityCheck();
 	}
 

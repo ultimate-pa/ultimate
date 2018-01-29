@@ -5,9 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -32,16 +29,24 @@ public class StoreIndexInfo {
 	private final Set<Integer> mAccessDimensions;
 
 	/**
+	 * StoreIndexInfos are unified by a map in {@link StoreIndexFreezerIcfgTransformer}.
+	 * They are given an id at construction, we use this for equals and hashcode, too.
+	 */
+	private final int mId;
+
+	/**
 	 *
 	 * @param edgeInfo
 	 * @param term
+	 * @param storeIndexInfoCounter
 	 */
-	public StoreIndexInfo(final EdgeInfo edgeInfo, final Term term) {
+	public StoreIndexInfo(final EdgeInfo edgeInfo, final Term term, final int storeIndexInfoCounter) {
 		super();
 		mEdgeInfo = edgeInfo;
 		mTerm = term;
 		mArrayToAccessDimensions = new HashRelation<>();// = computeArrayToAccessDimensions(edgeInfo, term);
 		mAccessDimensions = new HashSet<>();
+		mId = storeIndexInfoCounter;
 	}
 
 //	private HashRelation<IProgramVarOrConst, Integer> computeArrayToAccessDimensions(final EdgeInfo edgeInfo, final Term term) {
@@ -82,15 +87,14 @@ public class StoreIndexInfo {
 
 	@Override
 	public String toString() {
-		return "(Store at" + mEdgeInfo + " with " + mTerm + ")";
+		return "(Store [" + mId + "] at" + mEdgeInfo + " with " + mTerm + ")";
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mEdgeInfo == null) ? 0 : mEdgeInfo.hashCode());
-		result = prime * result + ((mTerm == null) ? 0 : mTerm.hashCode());
+		result = prime * result + mId;
 		return result;
 	}
 
@@ -106,85 +110,57 @@ public class StoreIndexInfo {
 			return false;
 		}
 		final StoreIndexInfo other = (StoreIndexInfo) obj;
-		if (mEdgeInfo == null) {
-			if (other.mEdgeInfo != null) {
-				return false;
-			}
-		} else if (!mEdgeInfo.equals(other.mEdgeInfo)) {
-			return false;
-		}
-		if (mTerm == null) {
-			if (other.mTerm != null) {
-				return false;
-			}
-		} else if (!mTerm.equals(other.mTerm)) {
+		if (mId != other.mId) {
 			return false;
 		}
 		return true;
 	}
 
-
-}
-
-/**
- * Wrapper for an IcfgEdge that carries information about the edge that we are interested in in the heap separator.
- *
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- */
-class EdgeInfo {
-	IcfgEdge mEdge;
-
-	EdgeInfo(final IcfgEdge edge) {
-		mEdge = edge;
+	public int getId() {
+		return mId;
 	}
 
-	public IProgramVarOrConst getProgramVarOrConstForTerm(final Term term) {
-		return TransFormulaUtils.getProgramVarOrConstForTerm(mEdge.getTransformula(), term);
-	}
+//	@Override
+//	public int hashCode() {
+//		final int prime = 31;
+//		int result = 1;
+//		result = prime * result + ((mEdgeInfo == null) ? 0 : mEdgeInfo.hashCode());
+//		result = prime * result + ((mTerm == null) ? 0 : mTerm.hashCode());
+//		return result;
+//	}
+//
+//	@Override
+//	public boolean equals(final Object obj) {
+//		if (this == obj) {
+//			return true;
+//		}
+//		if (obj == null) {
+//			return false;
+//		}
+//		if (getClass() != obj.getClass()) {
+//			return false;
+//		}
+//		final StoreIndexInfo other = (StoreIndexInfo) obj;
+//		if (mEdgeInfo == null) {
+//			if (other.mEdgeInfo != null) {
+//				return false;
+//			}
+//		} else if (!mEdgeInfo.equals(other.mEdgeInfo)) {
+//			return false;
+//		}
+//		if (mTerm == null) {
+//			if (other.mTerm != null) {
+//				return false;
+//			}
+//		} else if (!mTerm.equals(other.mTerm)) {
+//			return false;
+//		}
+//		return true;
+//	}
+//
 
-	public IcfgLocation getSourceLocation() {
-		return mEdge.getSource();
-	}
 
-	public IcfgEdge getEdge() {
-		return mEdge;
-	}
 
-	@Override
-	public String toString() {
-		return "(" + mEdge + ")";
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mEdge == null) ? 0 : mEdge.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final EdgeInfo other = (EdgeInfo) obj;
-		if (mEdge == null) {
-			if (other.mEdge != null) {
-				return false;
-			}
-		} else if (!mEdge.equals(other.mEdge)) {
-			return false;
-		}
-		return true;
-	}
 }
 
 /**
@@ -196,27 +172,27 @@ class EdgeInfo {
 class NoStoreIndexInfo extends StoreIndexInfo {
 
 	public NoStoreIndexInfo() {
-		super(null, null);
+		super(null, null, -1);
 	}
 
-	@Override
-	public int hashCode() {
-		return 0;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		return true;
-	}
+//	@Override
+//	public int hashCode() {
+//		return 0;
+//	}
+//
+//	@Override
+//	public boolean equals(final Object obj) {
+//		if (this == obj) {
+//			return true;
+//		}
+//		if (obj == null) {
+//			return false;
+//		}
+//		if (getClass() != obj.getClass()) {
+//			return false;
+//		}
+//		return true;
+//	}
 
 	@Override
 	public String toString() {

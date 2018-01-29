@@ -648,8 +648,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		@Override
-		protected IPredicate newPredicate(final Term term, final IPredicate originalPredicate) {
-			final IPredicate unifiedPred = super.newPredicate(term, originalPredicate);
+		protected IPredicate constructNewPredicate(final Term term, final IPredicate originalPredicate) {
+			final IPredicate unifiedPred = super.constructNewPredicate(term, originalPredicate);
 			if (unifiedPred instanceof AbsIntPredicate<?>) {
 				assert assertValidPredicate((AbsIntPredicate<?>) unifiedPred) : "Created invalid predicate";
 				return unifiedPred;

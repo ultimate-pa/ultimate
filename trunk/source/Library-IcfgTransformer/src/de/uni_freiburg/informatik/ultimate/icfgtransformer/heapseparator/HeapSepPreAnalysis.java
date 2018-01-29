@@ -79,15 +79,26 @@ public class HeapSepPreAnalysis {
 
 	private final List<IProgramVarOrConst> mHeapArrays;
 
+	private final Map <IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
+
+	private final ILogger mLogger;
+
+	private final HeapSeparatorBenchmark mStatistics;
+
 	/**
 	 *
 	 * @param logger
 	 * @param heapArrays
+	 * @param statistics
 	 * @param equalityProvider
 	 */
 	public HeapSepPreAnalysis(final ILogger logger, final ManagedScript mgdScript,
-			final List<IProgramVarOrConst> heapArrays) {
+			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics) {
 		mMgdScript = mgdScript;
+
+		mLogger = logger;
+
+		mStatistics = statistics;
 
 		mHeapArrays = heapArrays;
 
@@ -96,6 +107,8 @@ public class HeapSepPreAnalysis {
 		mEdgeToArrayRelations = new HashRelation<>();
 
 		mSelectInfos = new HashSet<>();
+
+		mArrayToArrayGroup = new HashMap<>();
 	}
 
 	public void processEdge(final IcfgEdge edge) {
@@ -169,16 +182,8 @@ public class HeapSepPreAnalysis {
 	}
 
 	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
-		if (mArrayGroups == null) {
-			throw new IllegalStateException("call finish first");
-		}
-		final Map<IProgramVarOrConst, ArrayGroup> result = new HashMap<>();
-		for (final ArrayGroup ag : mArrayGroups) {
-			for (final IProgramVarOrConst a : ag.getArrays()) {
-				result.put(a, ag);
-			}
-		}
-		return Collections.unmodifiableMap(result);
+
+		return Collections.unmodifiableMap(mArrayToArrayGroup);
 	}
 
 	public void finish() {
@@ -212,6 +217,32 @@ public class HeapSepPreAnalysis {
 		mArrayGroups = new HashSet<>();
 		for (final Set<IProgramVarOrConst> block : arrayPartition.getAllEquivalenceClasses()) {
 			mArrayGroups.add(new ArrayGroup(block));
+		}
+
+		for (final ArrayGroup ag : mArrayGroups) {
+			for (final IProgramVarOrConst a : ag.getArrays()) {
+				mArrayToArrayGroup.put(a, ag);
+			}
+		}
+
+		/*
+		 * compute array read statistics
+		 */
+		final Map<ArrayGroup, Integer> heapArrayGroupToReadCount = new HashMap<>();
+		for (final SelectInfo selectInfo : mSelectInfos) {
+
+			final ArrayGroup ag = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
+
+			Integer oldCount = heapArrayGroupToReadCount.get(ag);
+			if (oldCount == null) {
+				oldCount = 0;
+				heapArrayGroupToReadCount.put(ag, oldCount);
+			}
+			heapArrayGroupToReadCount.put(ag, oldCount + 1);
+		}
+		for (final Entry<ArrayGroup, Integer> en : heapArrayGroupToReadCount.entrySet()) {
+			mLogger.info("Number of read from array group " + en.getKey() + " : " + en.getValue());
+			mStatistics.registerPerArrayInfo(en.getKey(), HeapSeparatorStatistics.COUNT_ARRAY_READS, en.getValue());
 		}
 
 	}
