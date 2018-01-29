@@ -19,6 +19,17 @@ def toPercent(row, a, b):
         return 100.0 * (float(part) / float(total)) 
     return None
 
+def toDiff(row, a, b):
+    part = row[a]
+    total = row[b]
+    
+    if part != None and total != None and part != 'null' and total != 'null':
+        totalF = float(total);
+        if totalF == 0:
+            return 0.0
+        return (float(part) - float(total)) 
+    return None
+
 def toInt(row, a):
     value = row[a]
     if value != None and value != 'null':
@@ -89,6 +100,9 @@ mLatexSettingsMappings = {
 'LazyTaipan_Default.epf'                            : '\\lstaipan',
 'noTransform.epf'                                   : '\\autvanilla',
 'LE.epf'                                            : '\\autlale',
+'_EagerReuse_DumpAts.epf' : 'Eager',
+'_LazyReuse_DumpAts.epf' : 'Lazy',
+'.epf' : 'Default',
 'EE.epf'                                            : '\\autlaee',
  }
 
@@ -117,14 +131,19 @@ mNecessaryHeaders = ['Settings', 'Toolchain', 'Result', 'File']
 mPlotdefinitions = [ 
     ('Time' , lambda r : timeInNanosToSeconds(r, 'OverallTime'), 'semilogyaxis', 'Samples', 'log(s)'),
 #    ('AbsIntTime' , lambda r : timeInNanosToSeconds(r, 'AbstIntTime'), 'semilogyaxis', 'Samples', 'log(s)'),
-    ('Iter' , lambda r : toInt(r, 'OverallIterations'), 'axis', 'Samples', 'Iterations'),
+    ('OverallIter' , lambda r : toInt(r, 'OverallIterations'), 'axis', 'Samples', 'Iterations'),
+    ('NonReuseIter' , lambda r : toInt(r, 'REUSE_STATISTICS_NONREUSE_ITERATIONS'), 'axis', 'Samples', 'Iterations'),
+    ('ReusedLetters' , lambda r : toInt(r, 'REUSE_STATISTICS_REUSED_LETTERS'), 'axis', 'Samples', 'Letters'),
+    ('TotalLetters' , lambda r : toInt(r, 'REUSE_STATISTICS_TOTAL_LETTERS'), 'axis', 'Samples', 'Letters'),
+    ('UnusedLetters' , lambda r : toDiff(r, 'REUSE_STATISTICS_TOTAL_LETTERS','REUSE_STATISTICS_REUSED_LETTERS'), 'axis', 'Samples', 'Letters'),
+    
 #    ('AccLoops' , lambda r : toInt(r, 'AcceleratedLoops'), 'axis', 'Samples', 'Iterations'),
     
 #    ('RelTime' , lambda r : toPercent(r, 'AbstIntTime', 'OverallTime'), 'axis', 'Samples', '\\% abstract interpretation runtime'),
-    ('InterTime' , lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'), 'semilogyaxis', 'Samples', 'log(s)'),
-    ('UnsatSize' , lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'), 'semilogyaxis', 'Samples', 'log(\\%)'),
-    ('QuantPreds' , lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'), 'axis', 'Samples', '\\% quantified interpolants'),
-    ('PerfInter' , lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'), 'axis', 'Samples', '\\% perfect interpolants'),
+#    ('InterTime' , lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'), 'semilogyaxis', 'Samples', 'log(s)'),
+#    ('UnsatSize' , lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'), 'semilogyaxis', 'Samples', 'log(\\%)'),
+#   ('QuantPreds' , lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'), 'axis', 'Samples', '\\% quantified interpolants'),
+#    ('PerfInter' , lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'), 'axis', 'Samples', '\\% perfect interpolants'),
 #    ('AbsIntIter' , lambda r : toInt(r, 'AbstIntIterations'), 'axis', 'Samples', 'Iterations with AbsInt'),
 #    ('AbsIntStrong' , lambda r : toInt(r, 'AbstIntStrong'), 'axis', 'Samples', 'Iterations wit useful AbsInt'),
 ]
@@ -619,15 +638,17 @@ def main():
         uniqueSettings = mapCsv(rows, lambda x, y : getUniqueSet('Settings', x, y))
         uniqueFiles = mapCsv(rows, lambda x, y : getUniqueSet('File', x, y))
         
-        crashed = getCrashedInputs(rows, uniqueSettings)
-        rows = addRowsForCrashedInputs(rows, crashed, next(iter(uniqueToolchains)))
+        #crashed = getCrashedInputs(rows, uniqueSettings)
+        #rows = addRowsForCrashedInputs(rows, crashed, next(iter(uniqueToolchains)))
     
     
         commonSettingsPrefix = os.path.commonprefix(uniqueSettings)
         
         renameSettings = lambda x : mLatexSettingsMappings[x[len(commonSettingsPrefix):]] if x[len(commonSettingsPrefix):] in mLatexSettingsMappings else x[len(commonSettingsPrefix):]
         for setting in uniqueSettings:
-            mFriendlySettingNames[setting] = renameSettings(setting)
+            renamedSetting = renameSettings(setting)
+
+            mFriendlySettingNames[setting] = renamedSetting
         
         solversOnlySettings = filter(lambda x: not re.match('.*FP.*|.*BP.*', os.path.basename(x)), uniqueSettings)
         championsSettings = filter(lambda x: re.match('.*FP-UC-LV.*', os.path.basename(x)), uniqueSettings)
@@ -654,8 +675,8 @@ def main():
     
         print 'Settings:                   ', len(uniqueSettings), ':', remPathS(uniqueSettings)
         print 'Total inputs:               ', total
-        print 'Crashed inputs #:           ', len(crashed)
-        print 'Crashed inputs:             ', crashed
+        #print 'Crashed inputs #:           ', len(crashed)
+        #print 'Crashed inputs:             ', crashed
         print 'Success:                    ', remPathD(success)
         print 'Timeout:                    ', remPathD(timeout)
         print 'Error:                      ', remPathD(fail)
