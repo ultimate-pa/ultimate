@@ -89,7 +89,6 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 
 	private void processGraph() {
 		// we need to create new return transitions after new call transitions have been created
-//		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> rtrTransitions = new ArrayList<>();
 		final List<Triple<OUTLOC, OUTLOC, IcfgEdge>> oldReturnTransitions = new ArrayList<>();
 
 		final IcfgLocationIterator<INLOC> iter = new IcfgLocationIterator<>(mInputIcfg.getInitialNodes());
@@ -107,12 +106,8 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 
 				final IcfgEdge transformedTransition = transform(oldTransition, newSource, newTarget);
 
-//				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
-//					rtrTransitions.add(new Triple<>(newSource, newTarget, transformedTransition));
-//				} else {
-					mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(newSource, newTarget,
+				mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(newSource, newTarget,
 							transformedTransition);
-//				}
 			}
 		}
 
@@ -121,8 +116,6 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 			mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(returnTrans.getFirst(),
 					returnTrans.getSecond(), transformedTransition);
 		}
-//		rtrTransitions.forEach(
-//				a -> mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(a.getFirst(), a.getSecond(), a.getThird()));
 	}
 
 	/**
@@ -165,7 +158,7 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 			final IIcfgCallTransition<IcfgLocation> correspondingNewCall =
 					(IIcfgCallTransition<IcfgLocation>) mOldCallToNewCall.get(((IIcfgReturnTransition) oldTransition).getCorrespondingCall());
 			if (correspondingNewCall == null) {
-				throw new AssertionError("attempting to trans form a return that we do not know the call for");
+				throw new AssertionError("attempting to transform a return that we do not know the call for");
 			}
 			final IcfgReturnTransition result = mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
 					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());

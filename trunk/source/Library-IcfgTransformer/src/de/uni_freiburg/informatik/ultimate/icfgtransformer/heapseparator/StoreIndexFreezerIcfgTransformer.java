@@ -159,6 +159,8 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(),
 				tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
 
+		tf.getAuxVars().forEach(tfBuilder::addAuxVar);
+
 		final List<Term> newFormulaConjuncts = new ArrayList<>();
 		newFormulaConjuncts.add(tf.getFormula());
 //		newFormulaConjuncts.addAll(indexUpdateFormula);
