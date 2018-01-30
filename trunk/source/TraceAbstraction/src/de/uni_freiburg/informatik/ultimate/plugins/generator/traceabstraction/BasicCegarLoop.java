@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
@@ -688,7 +689,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						((CoverageRelation) predicateUnifier.getCoverageRelation()).getCopyOfImplicationRelation();
 				INestedWordAutomaton<LETTER, IPredicate> backingNestedWordAutomaton;
 				try {
-					backingNestedWordAutomaton = new RemoveUnreachable<>(services, automaton).getResult();
+					backingNestedWordAutomaton = new RemoveDeadEnds<LETTER, IPredicate>(services, automaton).getResult();
+					if (backingNestedWordAutomaton.getStates().isEmpty()) {
+						mLogger.warn("Automaton with emtpy language -- ommited dump");
+						mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+						return;
+					}
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError(e);
 				}
