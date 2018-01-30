@@ -273,7 +273,7 @@ public class CCInterpolator {
 					final Term[] boundaryParams = new Term[numArgs];
 					for (int i = 0; i < numArgs; i++) {
 						boundaryParams[i] = head[i].getBoundTerm(mColor);
-						addAllPre(mColor, tail[i]);
+						addAllPre(mColor, head[i]);
 					}
 					final Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
 					closeSingleAPath(other, boundaryTerm);
