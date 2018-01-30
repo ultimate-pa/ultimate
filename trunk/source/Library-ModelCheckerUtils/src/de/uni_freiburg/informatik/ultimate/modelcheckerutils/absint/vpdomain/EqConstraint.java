@@ -183,7 +183,8 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 
 //		final Term result = mPartialArrangement.getTerm(script);
 		final Term result = WeqCcManager.weqCcToTerm(script, mWeqCc,
-				mFactory.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
+				mFactory.getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary());
+//				mFactory.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
 		if (mIsFrozen) {
 			mTerm = result;
 		}

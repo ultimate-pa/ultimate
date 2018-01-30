@@ -288,4 +288,8 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		}
 		return result;
 	}
+
+	public EqConstraintFactory<NODE> getFactory() {
+		return mFactory;
+	}
 }

@@ -81,7 +81,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final WeqSettings mSettings;
 
 	final boolean mDebug;
-	final boolean mSkipSolverChecks = true;
+	final boolean mSkipSolverChecks = false;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
@@ -1481,7 +1481,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return oneImpliesTwo && twoImpliesOne;
 	}
 
-	private Term getNonTheoryLiteralDisequalitiesIfNecessary() {
+	public Term getNonTheoryLiteralDisequalitiesIfNecessary() {
 		if (CcSettings.ADD_NON_THEORYlITERAL_DISEQUALITIES_FOR_CHECKS) {
 			return mNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
 		} else {

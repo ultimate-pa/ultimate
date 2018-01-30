@@ -1319,7 +1319,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (mManager.getSettings().isDeactivateWeakEquivalences()) {
 			if (!inplace) {
 				assert mManager.checkMeetResult(this, other, result,
-						mManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
+						mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
 				result.freeze();
 			}
 			assert inplace != result.isFrozen();
@@ -1347,7 +1347,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		if (!inplace) {
 			assert mManager.checkMeetResult(this, other, result,
-					mManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
+					mManager.getNonTheoryLiteralDisequalitiesIfNecessary());
+//					mManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
 			result.freeze();
 		}
 

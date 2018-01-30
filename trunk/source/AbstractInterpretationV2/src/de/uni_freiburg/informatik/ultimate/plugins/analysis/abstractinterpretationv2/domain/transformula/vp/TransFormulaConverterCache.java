@@ -129,9 +129,13 @@ public class TransFormulaConverterCache {
 //						literalTerms);
 
 		// we have to stregthen the transFormula with the disequalities between the "literals" we introduced ourselves
+//		Term literalDisequalities = mEqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
+		final Term literalDisequalities =
+				mEqConstraintFactory.getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary();
 		final Term ante = SmtUtils.and(mgdScript.getScript(), tfClosed,
 //				SmtUtils.and(mgdScript.getScript(), nontheoryLiteralDisequalities));
-				SmtUtils.and(mgdScript.getScript(), mEqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities()));
+//				SmtUtils.and(mgdScript.getScript(), literalDisequalities));
+				literalDisequalities);
 
 		return new Pair<>(ante, rcClosed);
 	}

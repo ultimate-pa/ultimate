@@ -144,7 +144,7 @@ public class EqStateFactory {
 	public EqPredicate termToPredicate(final Term spPrecise,
 			final IPredicate postConstraint) {
 		return new EqPredicate(spPrecise, postConstraint.getVars(), postConstraint.getProcedures(), mSymbolTable,
-				mMgdScript, mEqNodeAndFunctionFactory);
+				mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory);
 
 	}
 

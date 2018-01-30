@@ -613,7 +613,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		/*
 		 * We check if each disequality that holds in "other" also holds in "this".
 		 */
-		if (!areDisequalitiesStrongerThan(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
+//		if (!areDisequalitiesStrongerThan(thisAligned.mElementTVER, otherAligned.mElementTVER)) {
+		if (!areDisequalitiesStrongerThan(thisAligned, otherAligned)) {
 			return false;
 		}
 		return true;
@@ -640,11 +641,14 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
 	}
 
-	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,
-			final ThreeValuedEquivalenceRelation<E> otherTVER) {
-		for (final E rep : otherTVER.getAllRepresentatives()) {
-			for (final E disequalRep : otherTVER.getRepresentativesUnequalTo(rep)) {
-				if (thisTVER.getEqualityStatus(rep, disequalRep) != EqualityStatus.NOT_EQUAL) {
+//	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,
+//			final ThreeValuedEquivalenceRelation<E> otherTVER) {
+	private static <E extends ICongruenceClosureElement<E>>
+			boolean areDisequalitiesStrongerThan(final CongruenceClosure<E> left,
+					final CongruenceClosure<E> right) {
+		for (final E rep : right.getAllElementRepresentatives()) {
+			for (final E disequalRep : right.getRepresentativesUnequalTo(rep)) {
+				if (left.getEqualityStatus(rep, disequalRep) != EqualityStatus.NOT_EQUAL) {
 					return false;
 				}
 			}

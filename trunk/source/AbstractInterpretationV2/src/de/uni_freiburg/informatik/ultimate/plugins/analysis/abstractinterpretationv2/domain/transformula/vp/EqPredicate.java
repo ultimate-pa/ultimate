@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
@@ -72,7 +73,9 @@ public class EqPredicate implements IPredicate {
 				symbolTable);
 
 //		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
-		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();;
+//		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
+		final Term literalDisequalities = mConstraint.getFactory()
+				.getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary();
 
 		mClosedFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getClosedFormula());
 		mFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getFormula());
@@ -82,7 +85,7 @@ public class EqPredicate implements IPredicate {
 
 	public EqPredicate(final Term formula, final Set<IProgramVar> vars, final String[] procedures,
 			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqConstraintFactory<EqNode> eqConstraintFactory) {
 		mConstraint = null;
 		assert vars.stream().allMatch(Objects::nonNull);
 		mVars = vars;
@@ -99,7 +102,9 @@ public class EqPredicate implements IPredicate {
 //		final Term literalDisequalities = SmtUtils.and(mgdScript.getScript(),
 //				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mgdScript.getScript(),
 //						collectLiteralsInFormula(formula)));
-		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();;
+//		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();;
+		final Term literalDisequalities =
+				eqConstraintFactory.getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary();
 
 		mClosedFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getClosedFormula());
 		mFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getFormula());
