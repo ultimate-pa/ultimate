@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 
 /**
  * <tt>BA</tt> format writer.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -57,6 +57,7 @@ public final class BaFormatWriter<LETTER, STATE> extends CommonExternalFormatWri
 	public BaFormatWriter(final PrintWriter writer, final INestedWordAutomaton<LETTER, STATE> nwa) {
 		super(writer, nwa);
 		doPrint();
+		finish();
 	}
 
 	private void doPrint() {

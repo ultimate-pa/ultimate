@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 
 /**
  * {@code Hanoi} format writer.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -60,6 +60,7 @@ public final class HanoiFormatWriter<LETTER, STATE> extends CommonExternalFormat
 		super(writer, nwa);
 		mLetterConverter = USE_LABELS ? new ToStringConverter<>() : new MapBasedConverter<>(mAlphabetMapping);
 		doPrint();
+		finish();
 	}
 
 	private void doPrint() {
