@@ -91,6 +91,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  *
  */
 public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
+	
+	public static boolean USE_AUTOMATA_WITH_UNMATCHED_PREDICATES = false;
 
 	protected final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations;
 	protected final List<INestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
@@ -125,6 +127,9 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		final PredicateParsingWrapperScript ppws = new PredicateParsingWrapperScript(mCsToolkit);
 
 		for (final INestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
+			if (rawAutomatonFromFile.getFinalStates().isEmpty()) {
+				throw new AssertionError("A Floyd-Hoare automaton without accepting states is useless.");
+			}
 			buildFloydHoareAutomaton(ppws, rawAutomatonFromFile);
 		}
 
@@ -212,6 +217,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			addState(rawAutomatonFromFile, resAutomaton, mapStringToState, mapStateToString, predicate, string);
 		}
 		final int totalStates = removedStates + reusedStates;
+		
+		if (!USE_AUTOMATA_WITH_UNMATCHED_PREDICATES && removedStates > 0) {
+			return;
+		}
 		mReuseStats.addReusedStates(reusedStates);
 		mReuseStats.addUselessPredicates(removedStates);
 		mReuseStats.addTotalStates(totalStates);
