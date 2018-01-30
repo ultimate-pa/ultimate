@@ -311,7 +311,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> reportWeakEquivalence(final WeqCongruenceClosure<NODE> origWeqCc,
 			final NODE array1, final NODE array2, final NODE storeIndex, final boolean inplace) {
-		if (mSettings.isDeactivateWeakEquivalences()) {
+		if (mSettings.isDeactivateWeakEquivalences() || array1.isUntrackedArray() || array2.isUntrackedArray()) {
 			assert origWeqCc.getWeakEquivalenceGraph().getNumberOfEdgesStatistic() == 0;
 			return origWeqCc;
 		}
@@ -1250,18 +1250,18 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final boolean implicationHolds = satResult == LBool.UNSAT;
 
 		final boolean result;
-		if (label2.getDisjuncts().size() <= 1) {
-			// special case where our implication check is conceptually precise
-			result = implicationHolds == impCheckResult;
-			assert result;
-		} else {
+//		if (label2.getDisjuncts().size() <= 1) {
+//			// special case where our implication check is conceptually precise
+//			result = implicationHolds == impCheckResult;
+//			assert result;
+//		} else {
 			/*
 			 * in general our implication check approximates: If its says the implication holds, it holds, but it may
 			 *  not detect a valid implication  in all cases.
 			 */
 			result = !impCheckResult || implicationHolds;
 			assert result;
-		}
+//		}
 
 		return result;
 	}

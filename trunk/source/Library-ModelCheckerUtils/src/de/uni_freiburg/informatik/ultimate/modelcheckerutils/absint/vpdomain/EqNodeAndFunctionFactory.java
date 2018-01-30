@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,20 +59,19 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 	private final Map<Term, Term> mNormalizationCache = new HashMap<>();
-
-
+	private final List<String> mTrackedArraySubstrings;
 
 	public EqNodeAndFunctionFactory(final IUltimateServiceProvider services, final ManagedScript script,
-			final Set<IProgramConst> additionalLiterals) {
+			final Set<IProgramConst> additionalLiterals, final List<String> trackedArraySubstrings) {
 		mServices = services;
 		mMgdScript = script;
 		mNonTheoryLiteralTerms = additionalLiterals.stream().map(pc -> pc.getTerm()).collect(Collectors.toSet());
+		mTrackedArraySubstrings = trackedArraySubstrings;
 	}
 
 	public ManagedScript getScript() {
 		return mMgdScript;
 	}
-
 
 	@Override
 	public EqNode getOrConstructNode(final Term term) {
@@ -162,11 +162,12 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	/**
-	 * Checks if the given term is a literal.
-	 * Examples of literals (sometimes called constants, but we have other uses for that word) are:
-	 *  1, 2, -1, true, false, 1bv16 (bitvector constant/literal)
+	 * Checks if the given term is a literal. Examples of literals (sometimes called
+	 * constants, but we have other uses for that word) are: 1, 2, -1, true, false,
+	 * 1bv16 (bitvector constant/literal)
 	 *
-	 * The defining trait of literals for our purposes is that two different literals always have a different value.
+	 * The defining trait of literals for our purposes is that two different
+	 * literals always have a different value.
 	 *
 	 * @param term
 	 * @return
@@ -201,12 +202,12 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	/**
-	 * We call a Term atomic here if it is either a TermVariable, or does not contain any TermVariables.
-	 * (this has nothing to do with Boolean atoms)
+	 * We call a Term atomic here if it is either a TermVariable, or does not
+	 * contain any TermVariables. (this has nothing to do with Boolean atoms)
 	 *
-	 * Explanation:
-	 * Atomic in this sense means dependency-free.
-	 * I.e.: if we havoc some other term (a TermVariable), can we guarantee that this term is not concerned by that.
+	 * Explanation: Atomic in this sense means dependency-free. I.e.: if we havoc
+	 * some other term (a TermVariable), can we guarantee that this term is not
+	 * concerned by that.
 	 *
 	 * @param term
 	 * @return
@@ -219,8 +220,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	protected EqNode newBaseElement(final Term term, final boolean isLiteral) {
 		if (isAtomic(term)) {
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
-//			return new EqAtomicBaseNode(term, isTermALiteral(term), this);
-			return new EqAtomicBaseNode(term, isLiteral, this);
+			// return new EqAtomicBaseNode(term, isTermALiteral(term), this);
+			return new EqAtomicBaseNode(term, isLiteral, this, isUntrackedArray(term));
 		} else {
 			assert !isLiteral;
 			assert term.getFreeVars().length > 0;
@@ -228,14 +229,35 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			for (final TermVariable fv : term.getFreeVars()) {
 				supportingNodes.add(getOrConstructNode(fv));
 			}
-			return new EqNonAtomicBaseNode(term, supportingNodes, this);
+			return new EqNonAtomicBaseNode(term, supportingNodes, this, isUntrackedArray(term));
 		}
+	}
+
+	private boolean isUntrackedArray(final Term term) {
+		if (mTrackedArraySubstrings == null) {
+			return false;
+		}
+		if (!term.getSort().isArraySort()) {
+			return false;
+		}
+		if (SmtUtils.isFunctionApplication(term, "select")) {
+			return isUntrackedArray(((ApplicationTerm) term).getParameters()[0]);
+		}
+		if (SmtUtils.isConstant(term) || term instanceof TermVariable) {
+			for (final String s : mTrackedArraySubstrings) {
+				if (term.toString().contains(s)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	protected EqNode newFuncAppElement(final EqNode func, final EqNode arg) {
 		final Term selectTerm = buildSelectTerm(func, arg);
-		return new EqFunctionApplicationNode(func, arg, selectTerm, this);
+		return new EqFunctionApplicationNode(func, arg, selectTerm, this, isUntrackedArray(selectTerm));
 	}
 
 	private Term buildSelectTerm(final EqNode func, final EqNode arg) {
@@ -246,7 +268,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	}
 
 	/**
-	 * Determines if a given term should get a node with or without the isFunction flag set.
+	 * Determines if a given term should get a node with or without the isFunction
+	 * flag set.
 	 *
 	 * @param term
 	 * @return
@@ -259,9 +282,9 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		return Collections.unmodifiableSet(mNonTheoryLiteralTerms);
 	}
 
+	@Override
 	public Term getNonTheoryLiteralDisequalities() {
-		return SmtUtils.and(mMgdScript.getScript(),
-				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
-						getNonTheoryLiterals()));
+		return SmtUtils.and(mMgdScript.getScript(), CongruenceClosureSmtUtils
+				.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(), getNonTheoryLiterals()));
 	}
 }

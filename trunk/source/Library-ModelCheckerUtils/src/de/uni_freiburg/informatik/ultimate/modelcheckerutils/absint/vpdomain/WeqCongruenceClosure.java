@@ -336,6 +336,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			final WeakEquivalenceEdgeLabel<NODE, CongruenceClosure<NODE>> edgeLabel, final boolean omitSanityChecks) {
 		assert !isFrozen();
 		assert !mManager.getSettings().isDeactivateWeakEquivalences();
+		assert !array1.isUntrackedArray();
+		assert !array2.isUntrackedArray();
 //		assert edgeLabel.assertIsSlim();
 
 		if (isInconsistent()) {
@@ -535,7 +537,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return true;
 		}
 
-		if (!mManager.getSettings().isDeactivateWeakEquivalences()) {
+		if (!mManager.getSettings().isDeactivateWeakEquivalences() || node1.isUntrackedArray()
+				|| node2.isUntrackedArray()) {
 			doRoweqPropagationsOnMerge(node1, node2, node1OldRep, node2OldRep, oldAuxData, true);
 		}
 
@@ -1115,7 +1118,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		boolean madeChanges = false;
 
 
-		if (mManager.getSettings().isDeactivateWeakEquivalences()) {
+		if (mManager.getSettings().isDeactivateWeakEquivalences() || elem.isUntrackedArray()) {
 			return;
 		}
 

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,6 +65,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	private boolean mPreprocessed;
 
 	private final Set<IProgramConst> mAdditionalLiterals;
+	private List<String> mTrackedArrays;
 
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -78,12 +80,18 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	}
 
 	@Override
+	public void setTrackedArrays(final List<String> trackedArrays) {
+		mTrackedArrays = trackedArrays;
+	}
+
+	@Override
 	public void preprocess(final IIcfg<?> icfg) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
 
 		final IAbstractInterpretationResult<? extends IEqualityProvidingState, IcfgEdge, IcfgLocation> absIntResult =
 				// AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
-				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger, mAdditionalLiterals);
+				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger, mAdditionalLiterals,
+						mTrackedArrays);
 		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
 		mTopState = absIntResult.getUsedDomain().createTopState();
 		mLoc2States = (Map<IcfgLocation, Set<IEqualityProvidingState>>) loc2states;

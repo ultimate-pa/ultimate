@@ -202,6 +202,11 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		 */
 		final String VALID = "#valid";
 
+		final String MEMORY = "#memory";
+
+//		equalityProvider.setTrackedArrays(Arrays.asList(new String[]{ VALID, MEMORY } ));
+
+
 		IProgramNonOldVar validArray = null;
 		for (final IProgramNonOldVar global : icfg.getCfgSmtToolkit().getSymbolTable().getGlobals()) {
 			if (global.getGloballyUniqueId().equals(VALID)) {

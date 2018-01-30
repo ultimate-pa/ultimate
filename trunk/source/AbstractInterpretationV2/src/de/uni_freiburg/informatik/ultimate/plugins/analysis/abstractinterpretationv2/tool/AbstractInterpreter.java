@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -201,11 +202,13 @@ public final class AbstractInterpreter {
 	 */
 	public static IAbstractInterpretationResult<EqState, IcfgEdge, IcfgLocation> runFutureEqualityDomain(
 			final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
-			final boolean isSilent, final ILogger logger, final Set<IProgramConst> additionalLiterals) {
+			final boolean isSilent, final ILogger logger, final Set<IProgramConst> additionalLiterals,
+			final List<String> trackedArrays) {
 		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,
-				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(logger, root, services, additionalLiterals))
+				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(
+						logger, root, services, additionalLiterals, trackedArrays))
 						.setTimer(timer),
 				p -> new FixpointEngine<>(p));
 	}

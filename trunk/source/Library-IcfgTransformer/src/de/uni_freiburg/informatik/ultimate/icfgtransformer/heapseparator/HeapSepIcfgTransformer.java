@@ -552,12 +552,13 @@ class PartitionManager {
 			mLogger.info("\t location blocks for array group " + arrayGroup);
 
 			for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
-				final int noWrites =
-						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size();
+				final UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
+				final int noWrites = partition == null ? 0 : partition.getAllElements().size();
+//						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size();
 
-				final int noBlocks =
-						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses()
-						.size();
+				final int noBlocks = partition == null ? 0 : partition.getAllEquivalenceClasses().size();
+//						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses()
+//						.size();
 				mLogger.info("\t at dimension " + dim);
 				mLogger.info("\t # array writes (possibly including 1 dummy write/NoStoreIndexInfo) : " + noWrites);
 				mLogger.info("\t # location blocks :" + noBlocks);
@@ -568,9 +569,8 @@ class PartitionManager {
 						HeapSeparatorStatistics.COUNT_BLOCKS, noBlocks);
 
 				mLogger.debug("\t location block contents:");
-				if (mLogger.isDebugEnabled()) {
-					for (final Set<StoreIndexInfo> eqc
-							: mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses()) {
+				if (mLogger.isDebugEnabled() && partition != null) {
+					for (final Set<StoreIndexInfo> eqc : partition.getAllEquivalenceClasses()) {
 						mLogger.debug("\t\t " + eqc);
 					}
 				}

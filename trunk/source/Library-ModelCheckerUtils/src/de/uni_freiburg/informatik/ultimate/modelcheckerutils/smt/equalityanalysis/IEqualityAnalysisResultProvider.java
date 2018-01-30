@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -57,5 +58,11 @@ public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 	IEqualityProvidingState getEqualityProvidingStateForLocationSet(Set<IcfgLocation> arrayGroupAccessLocations);
 
 	IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(IcfgEdge edge);
+
+	/**
+	 * only these arrays are tracked "intensively" i.e. using weak equivalences
+	 * @param trackedArrays
+	 */
+	void setTrackedArrays(List<String> trackedArrays);
 
 }
