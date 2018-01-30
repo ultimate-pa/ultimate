@@ -426,8 +426,13 @@ public abstract class Dispatcher {
 	public TranslationSettings getTranslationSettings() {
 		return mTranslationSettings;
 	}
-
-	public abstract LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators();
+	
+	/**
+	 * Checks whether a declaration is reachable.
+	 * @param decl The declaration
+	 * @return Whether it is reachable
+	 */
+	public abstract boolean isReachable(IASTDeclaration decl);
 
 	public IPreferenceProvider getPreferences() {
 		return mPreferences;

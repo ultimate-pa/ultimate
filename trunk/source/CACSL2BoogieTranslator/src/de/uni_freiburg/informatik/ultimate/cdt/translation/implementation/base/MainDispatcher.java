@@ -37,6 +37,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -253,8 +254,8 @@ public class MainDispatcher extends Dispatcher {
 	 * point.
 	 */
 	private boolean mThereAreDereferencedPointerVariables;
-
-	private LinkedHashSet<IASTDeclaration> mReachableDeclarations;
+	
+	private Set<IASTDeclaration> mReachableDeclarations;
 	/**
 	 * Variables that need some special memory handling.
 	 */
@@ -314,8 +315,29 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
-		return mReachableDeclarations;
+	public boolean isReachable(IASTDeclaration decl) {
+		// Just mimic the main dispatcher.
+		if (mReachableDeclarations == null) {
+			return true;
+		}
+		return mReachableDeclarations.contains(decl);
+		/*if (!mReachableDeclarations.containsKey(decl.getContainingFilename())) {
+			// Nothing is reachable in this file.
+			return false;
+		}
+		if (decl instanceof IASTSimpleDeclaration) {
+			// Rule of thumb: If any of the declarators is reachable, return true for all.
+			final Set<String> reachableNames = mReachableDeclarations.get(decl.getContainingFilename());
+			final IASTDeclarator[] decls = ((IASTSimpleDeclaration) decl).getDeclarators();
+			return java.util.Arrays.stream(decls).map(x -> x.getName().toString()).filter(reachableNames::contains)
+					.findAny().isPresent();
+		} else if (decl instanceof IASTFunctionDefinition) {
+			// Check if the function is reachable.
+			return mReachableDeclarations.get(decl.getContainingFilename())
+					.contains(((IASTFunctionDefinition) decl).getDeclarator().getName().toString());
+		} else {
+			throw new UnsupportedSyntaxException(null, "Invalid declaration type!");
+		}*/
 	}
 
 	/**
@@ -342,9 +364,51 @@ public class MainDispatcher extends Dispatcher {
 		});
 
 		if (DETERMINIZE_NECESSARY_DECLARATIONS) {
-			executePreRun(
-					new DetermineNecessaryDeclarations(getCheckedMethod(), this, mFunctionTable, mFunctionToIndex),
-					nodes, dnd -> mReachableDeclarations = dnd.getReachableDeclarationsOrDeclarators());
+			// executePreRun can't be used here, as it visits all translation units after each other while the DND
+			// visitor expects exactly one TU.
+			mReachableDeclarations = new HashSet<>();
+			final Map<String, Map<String, IASTDeclaration>> reverseSourceMap = new HashMap<>();
+			for (final DecoratedUnit du : nodes) {
+				final String key = du.getRootNode().getCNode().getContainingFilename();
+				reverseSourceMap.put(key, new HashMap<>());
+				for (final IASTDeclaration decl : 
+						((IASTTranslationUnit) du.getRootNode().getCNode()).getDeclarations()) {
+					if (decl instanceof IASTSimpleDeclaration) {
+						final IASTSimpleDeclaration cd = (IASTSimpleDeclaration) decl;
+						for (final IASTDeclarator d : cd.getDeclarators()) {
+							reverseSourceMap.get(key).put(d.getName().toString(), cd);
+						}
+					} else if (decl instanceof IASTFunctionDefinition) {
+						final IASTFunctionDefinition cd = (IASTFunctionDefinition) decl;
+						reverseSourceMap.get(key).put(cd.getDeclarator().getName().toString(), cd);
+					} else {
+						// DND is only used for the two above so this is ok.
+					}
+				}
+			}
+			for (final DecoratedUnit du : nodes) {
+				final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(), this,
+						mFunctionTable, mFunctionToIndex);
+				du.getRootNode().getCNode().accept(dnd);
+				final Set<IASTDeclaration> decl = dnd.getReachableDeclarationsOrDeclarators();
+				for (final IASTDeclaration d : decl) {
+					if (!d.isPartOfTranslationUnitFile()) {
+						// This is not the correct declaration to store. Find the correct one!
+						if (d instanceof IASTSimpleDeclaration) {
+							final String name = ((IASTSimpleDeclaration) d).getDeclarators()[0].getName().toString();
+							mReachableDeclarations.add(reverseSourceMap.get(d.getContainingFilename()).get(name));
+						} else if (d instanceof IASTFunctionDefinition) {
+							final String name = ((IASTFunctionDefinition) d).getDeclarator().getName().toString();
+							mReachableDeclarations.add(reverseSourceMap.get(d.getContainingFilename()).get(name));
+						} else {
+							// Those are not regarded by DND.
+						}
+						
+					} else {
+						mReachableDeclarations.add(d);
+					}
+				}
+			}
 		} else {
 			mReachableDeclarations = null;
 		}

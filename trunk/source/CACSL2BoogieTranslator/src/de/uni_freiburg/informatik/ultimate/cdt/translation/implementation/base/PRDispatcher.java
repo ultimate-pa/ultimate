@@ -114,6 +114,7 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
+import cern.colt.Arrays;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -142,12 +143,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public class PRDispatcher extends Dispatcher {
 
-	private final LinkedHashSet<IASTDeclaration> mReachableDeclarations;
+	private final Set<IASTDeclaration> mReachableDeclarations;
 	private final LinkedHashSet<IASTNode> mVariablesOnHeap;
 
 	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
-			final LinkedHashSet<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
+			final Set<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
 			final Map<String, IASTNode> functionTable, final MultiparseSymbolTable mst) {
 		super(backtranslator, services, logger, locFac, functionTable, mst);
 		mFunctionToIndex = functionToIndex;
@@ -476,8 +477,12 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
-		return mReachableDeclarations;
+	public boolean isReachable(IASTDeclaration decl) {
+		// Just mimic the main dispatcher.
+		if (mReachableDeclarations == null) {
+			return true;
+		}
+		return mReachableDeclarations.contains(decl);
 	}
 
 	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr,

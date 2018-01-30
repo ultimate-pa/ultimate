@@ -1362,9 +1362,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTFunctionDefinition node) {
-		final LinkedHashSet<IASTDeclaration> reachableDecs = main.getReachableDeclarationsOrDeclarators();
-		// TODO hack skip defunct reachable check
-		if (false && reachableDecs != null && !reachableDecs.contains(node)) {
+		if (!main.isReachable(node)) {
 			return new SkipResult();
 		}
 
@@ -1716,11 +1714,7 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTSimpleDeclaration node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-
-		final LinkedHashSet<IASTDeclaration> reachableDecs = main.getReachableDeclarationsOrDeclarators();
-		if (false && reachableDecs != null && node.getParent() instanceof IASTTranslationUnit 
-				&& !reachableDecs.contains(node)) {
-			// skip this declaration if we have inferred that it is not reachable and if we are in the global scope
+		if (!main.isReachable(node)) {
 			return new SkipResult();
 		}
 
