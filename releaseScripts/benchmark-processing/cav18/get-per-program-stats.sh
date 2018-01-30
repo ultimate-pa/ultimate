@@ -15,7 +15,7 @@ specs=($(csvcut -c File "$csv" | tail -n +2 | sort | uniq | grep -oP "\d\d\d\...
 folders=($(csvcut -c Folder "$csv" | tail -n +2 |sort | uniq))
 settings=($(csvcut -c Settings "$csv" | tail -n +2 |sort | uniq)) 
 
-header="Driver, Spec, Tasks, "
+header="Driver,Spec,Tasks,"
 for setting in "${settings[@]}"; do 
     header+="Overall-$setting,Analysis-$setting,"
 done
@@ -71,5 +71,10 @@ for folder in "${folders[@]}"; do
     let i=$i+1 
 done 
 
-csvsort -r -c "Speedup Analysis" "$outcsv" > "tmp-$outcsv"
-mv "tmp-$outcsv" "$outcsv"
+# sort by analysis speedup and shorten driver names
+csvsort -r -c "Speedup Analysis" "$outcsv" | sed "s/--/#/g" | sed "s/.*#\(.*\)/\1/g" | sed "s/\.ko//g" > "tmp-$outcsv"
+sed -i "s/-svcomp-Reach-64bit-Automizer_Default_EagerReuse_DumpAts.epf/Eager/g" "tmp-$outcsv"
+sed -i "s/-svcomp-Reach-64bit-Automizer_Default.epf/Default/g" "tmp-$outcsv"
+sed -i "s/-svcomp-Reach-64bit-Automizer_Default_LazyReuse_DumpAts.epf/Lazy/g" "tmp-$outcsv"
+csvcut -c 1,2,3,6,7,4,5,8,9,10,11 "tmp-$outcsv" > "$outcsv"
+rm "tmp-$outcsv"
