@@ -610,10 +610,8 @@ def isLong(s):
         long(s)
         return True
     except ValueError:
-        print 'is no long'+s
         return False
     except TypeError:
-        print 'is no long'+s
         return False
 
 
@@ -749,6 +747,9 @@ def main():
             #printStats('ALL', successrows, s, 'AbstIntIterations')
             printStats('', successrows, s, 'DUMP_TIME')
             printStats('', successrows, s, 'OverallTime')
+            printStats('', successrows, s, 'REUSE_STATISTICS_REUSE_PREDICATE_UNIFIER_Time')
+            printStats('', successrows, s, 'PredicateUnifierStatistics_Time')
+            printStats('', successrows, s, 'REUSE_STATISTICS_REUSE_TIME')
             print 
         
         # # gnuplot and stuff 
