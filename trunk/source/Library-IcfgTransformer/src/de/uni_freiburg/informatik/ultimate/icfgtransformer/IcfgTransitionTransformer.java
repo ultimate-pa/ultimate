@@ -169,9 +169,57 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 	}
 
 	private void log(final IcfgEdge oldTransition, final IcfgEdge newTransition) {
-		mLogger.debug("transformed oldTransition " + oldTransition);
-		mLogger.debug("\t  to : " + newTransition);
+		if (!mLogger.isDebugEnabled()) {
+			return;
+		}
+
+		final UnmodifiableTransFormula oldTf = oldTransition.getTransformula();
+		final UnmodifiableTransFormula newTf = newTransition.getTransformula();
+		final boolean formulaHasChanged = !oldTf.getFormula().equals(newTf.getFormula());
+		final boolean inVarsHaveChanged = !oldTf.getInVars().equals(newTf.getInVars());
+		final boolean outVarsHaveChanged = !oldTf.getOutVars().equals(newTf.getOutVars());
+
+		mLogger.debug("transformed transition");
+		mLogger.debug("\t " + newTf);
+
+		if (!formulaHasChanged && !inVarsHaveChanged && !outVarsHaveChanged) {
+			mLogger.debug("\t transformula unchanged");
+		}
+
+		if (formulaHasChanged) {
+			mLogger.debug("\t formula has changed");
+			mLogger.debug("\t old formula:");
+			mLogger.debug(oldTf.getFormula());
+			mLogger.debug("\t new formula:");
+			mLogger.debug(newTf.getFormula());
+		}
+
+		if (inVarsHaveChanged) {
+			mLogger.debug("\t invars have changed");
+			mLogger.debug("\t old invars:");
+			mLogger.debug(oldTf.getInVars());
+			mLogger.debug("\t new invars:");
+			mLogger.debug(newTf.getInVars());
+		}
+
+		if (outVarsHaveChanged) {
+			mLogger.debug("\t outvars have changed");
+			mLogger.debug("\t old outvars:");
+			mLogger.debug(oldTf.getOutVars());
+			mLogger.debug("\t new outvars:");
+			mLogger.debug(newTf.getOutVars());
+		}
 		mLogger.debug("");
+
+
+//		mLogger.debug(String.format("\t tf has changed: %5s", tfHasChanged));
+//		mLogger.debug(String.format("\t invars have changed: %5s", inVarsHaveChanged));
+//		mLogger.debug(String.format("\t outvars have changed: %5s", outVarsHaveChanged));
+
+
+//		mLogger.debug("transformed oldTransition " + oldTransition.hashCode() + " :: " + oldTransition.getTransformula());
+//		mLogger.debug("\t  to : " + newTransition.hashCode() + " :: " +  newTransition.getTransformula());
+//		mLogger.debug("");
 	}
 
 
