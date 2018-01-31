@@ -88,7 +88,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mDiet = Diet.THIN;
 
 //		mMeetWithGpaCase = false;
-		assert sanityCheck();
+		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 	}
 
 	/**
@@ -136,7 +136,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		mWeakEquivalenceGraphThin = new WeakEquivalenceGraph<>(this, weqGraph); //, false);
 		mDiet = Diet.THIN;
 
-		assert sanityCheck();
+		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 	}
 
 //	public WeqCongruenceClosure(final WeqCongruenceClosure<NODE> original) {
@@ -176,7 +176,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //		mWeakEquivalenceGraphThin = new WeakEquivalenceGraph<>(this, original.mWeakEquivalenceGraphThin,
 //				meetWGpaCase && WeqSettings.FLATTEN_WEQ_EDGES_BEFORE_JOIN); //TODO simplify
 
-		assert sanityCheck();
+		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 //		assert !mCongruenceClosure.isFrozen();
 		assert !mIsFrozen;
 //		assert getWeakEquivalenceGraph().assertLabelsAreUnfrozen();
@@ -185,7 +185,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public void addElement(final NODE elem, final boolean omitSanityChecks) {
 		assert !isFrozen();
 		addElementRec(elem);
-		if (mManager.getSettings().isSanitycheckFineGrained()) {
+		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 			assert omitSanityChecks || sanityCheck();
 //			assert mCongruenceClosure.sanityCheck();
 		}
@@ -253,13 +253,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 //		mManager.addNode(storeIndex, mCongruenceClosure, true, true);
 		mManager.addNode(storeIndex, this, true, true);
-		if (mManager.getSettings().isSanitycheckFineGrained()) {
+		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 			assert sanityCheck();
 		}
 
 		reportWeakEquivalence(array1, array2, mManager.getEdgeLabelForIndex(getWeakEquivalenceGraph(), storeIndex),
 				omitSanityChecks);
-		assert sanityCheck();
+		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 	}
 
 	/**
@@ -301,7 +301,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //		 * ext propagations
 //		 */
 //		reportAllArrayEqualitiesFromWeqGraph();
-		assert sanityCheck();
+		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 	}
 
 	boolean executeFloydWarshallAndReportResultToWeqCc(final boolean omitSanityChecks) {
@@ -322,7 +322,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			fwmc |= reportWeakEquivalenceDoOnlyRoweqPropagations(fwEdge.getKey().getOneElement(),
 					fwEdge.getKey().getOtherElement(), fwEdge.getValue(), omitSanityChecks);
 
-			if (mManager.getSettings().isSanitycheckFineGrained()) {
+			if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 				assert omitSanityChecks || sanityCheck();
 			}
 		}
@@ -453,7 +453,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 */
 	public boolean reportEquality(final NODE node1, final NODE node2, final boolean omitSanityChecks) {
 		assert !isFrozen();
-		if (mManager.getSettings().isSanitycheckFineGrained()) {
+		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 			assert omitSanityChecks || sanityCheck();
 		}
 
@@ -461,7 +461,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (!CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
 			executeFloydWarshallAndReportResultToWeqCc(omitSanityChecks);
 		}
-		assert omitSanityChecks || sanityCheck();
+		assert mManager.getSettings().omitSanitycheckFineGrained2() || omitSanityChecks || sanityCheck();
 		return madeChanges;
 	}
 
@@ -759,7 +759,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	 * @return true iff any constraints were added
 	 */
 	boolean reportAllArrayEqualitiesFromWeqGraph(final boolean omitSanityChecks) {
-		if (mManager.getSettings().isSanitycheckFineGrained()) {
+		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 				assert omitSanityChecks || sanityCheck();
 		}
 
@@ -772,7 +772,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert madeChanges;
 				return true;
 			}
-			if (mManager.getSettings().isSanitycheckFineGrained()) {
+			if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 				assert omitSanityChecks || sanityCheck();
 			}
 		}
@@ -785,7 +785,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public boolean reportDisequality(final NODE node1, final NODE node2) {
 		assert !isFrozen();
 		final boolean result = reportDisequalityRec(node1, node2);
-		assert sanityCheck();
+		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 		return result;
 	}
 
@@ -906,7 +906,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			mWeakEquivalenceGraphThin = null;
 			mDiet = Diet.CCFAT;
 		}
-		assert sanityCheck();
+		assert mManager.getSettings().omitSanitycheckFineGrained2() || sanityCheck();
 	}
 
 	public void extAndTriangleClosure(final boolean omitSanityChecks) {
@@ -1274,7 +1274,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public WeqCongruenceClosure<NODE> meetRec(final CongruenceClosure<NODE> other, final boolean inplace) {
 		final WeqCongruenceClosure<NODE> gPaMeet = meetWeqWithCc(other, inplace);
 
-		if (mManager.getSettings().isSanitycheckFineGrained()) {
+		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 			assert gPaMeet.sanityCheck();
 		}
 
@@ -1295,7 +1295,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		final WeqCongruenceClosure<NODE> result = thisUnfrozenIfNec.meetWeqWithCc(other.mCongruenceClosure, true);
 
-		if (mManager.getSettings().isSanitycheckFineGrained()) {
+		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 			assert result.sanityCheck();
 		}
 
@@ -1313,7 +1313,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		/*
 		 * strategy: conjoin all weq edges of otherCC to a copy of this's weq graph
 		 */
-		if (mManager.getSettings().isSanitycheckFineGrained()) {
+		if (!mManager.getSettings().omitSanitycheckFineGrained1()) {
 			assert result.sanityCheck();
 			assert other.getWeakEquivalenceGraph().sanityCheck();
 			assert other.sanityCheck();

@@ -101,7 +101,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			freezeIfNecessary(cc2);
 		}
 		assert inplace != cc1.isFrozen();
-		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 			assert cc1.sanityCheck();
 			assert cc2.sanityCheck();
 		}
@@ -128,7 +128,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			result = cc1.meetRec(cc2, remInfo, inplace);
 		}
 
-		assert result.sanityCheck();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || result.sanityCheck();
 
 		final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
 		return resultPp;

@@ -124,13 +124,13 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 //		// (for instance:) prepare weq graph by conjoining edge labels with the current gpa
 //		mElementContainer.prepareForRemove(mUseWeqGpa);
 
-		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 			assert mElementContainer.sanityCheck();
 		}
 
 		mElementContainer.removeElements(mElementsToRemove, nodeToReplacementNode);
 
-		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 			assert mElementContainer.sanityCheck();
 		}
 
@@ -142,7 +142,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 		}
 
 		mDidRemoval = true;
-		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 			assert mElementContainer.sanityCheck();
 		}
 
@@ -183,7 +183,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 
 			assert nodesToAdd.stream().allMatch(e -> !CongruenceClosure.dependsOnAny(e, Collections.singleton(mElem)));
 			assert nodesToAdd.stream().allMatch(n -> !mElementContainer.hasElement(n));
-			if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+			if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 				assert mElementContainer.sanityCheck();
 			}
 
@@ -213,7 +213,7 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 					return true;
 				}
 
-				if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+				if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 					assert mElementContainer.sanityCheck();
 				}
 			}
@@ -291,14 +291,14 @@ public class RemoveCcElement<ELEM extends ICongruenceClosureElement<ELEM>> imple
 		re.doRemoval();
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
 
-		if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 			assert cc.sanityCheck();
 		}
 
 		cc.setElementCurrentlyBeingRemoved(null);
 
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
-		assert cc.sanityCheck();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || cc.sanityCheck();
 		return re;
 	}
 

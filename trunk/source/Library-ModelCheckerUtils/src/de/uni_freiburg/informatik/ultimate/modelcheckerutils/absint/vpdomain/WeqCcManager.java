@@ -81,7 +81,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final WeqSettings mSettings;
 
 	final boolean mDebug;
-	final boolean mSkipSolverChecks = false;
+	final boolean mSkipSolverChecks = true;
 
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
@@ -361,7 +361,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> makeCopyForWeqMeet(final WeqCongruenceClosure<NODE> originalPa,
 			final boolean modifiable) {
-		if (mSettings.isSanitycheckFineGrained()) {
+		if (!mSettings.omitSanitycheckFineGrained1()) {
 			assert originalPa.sanityCheck();
 		}
 
@@ -379,7 +379,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (!modifiable) {
 			result.freeze();
 		}
-		assert result.sanityCheck();
+		assert getSettings().omitSanitycheckFineGrained2() || result.sanityCheck();
 		return result;
 	}
 

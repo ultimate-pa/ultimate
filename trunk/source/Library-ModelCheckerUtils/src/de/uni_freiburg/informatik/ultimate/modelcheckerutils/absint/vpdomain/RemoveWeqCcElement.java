@@ -141,7 +141,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		mWeqCc.thin();
 
-		if (mWeqCc.getManager().getSettings().isSanitycheckFineGrained()) {
+		if (!mWeqCc.getManager().getSettings().omitSanitycheckFineGrained1()) {
 			assert mWeqCc.getCongruenceClosure().sanityCheck();
 		}
 
@@ -301,7 +301,7 @@ public class RemoveWeqCcElement<NODE extends IEqNodeIdentifier<NODE>> implements
 
 		re.doRemoval();
 		assert cc.assertSimpleElementIsFullyRemoved(elem);
-		if (cc.getManager().getSettings().isSanitycheckFineGrained()) {
+		if (!cc.getManager().getSettings().omitSanitycheckFineGrained1()) {
 			assert cc.sanityCheck();
 		}
 

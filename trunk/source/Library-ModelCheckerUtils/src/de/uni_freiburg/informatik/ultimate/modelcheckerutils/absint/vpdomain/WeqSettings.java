@@ -46,7 +46,12 @@ public class WeqSettings {
 //	private final boolean SANITYCHECK_AFTER_ADD_NODE = false;
 
 	// general flag to capture e.g. sanity checks that are done for intermediate steps of a methods and similar ones
-	private final boolean SANITYCHECK_FINE_GRAINED = false;
+
+	// very fine grained checks
+	private final boolean OMIT_SANITYCHECK_FINE_GRAINED_1 = true;
+
+	// still fine grained checks but less
+	private final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = true;
 
 	/**
 	 * if reportChangeInGpa should perform a meet and project of the label
@@ -116,8 +121,12 @@ public class WeqSettings {
 		return MAX_NO_WEQ_EDGES_FOR_VERBOSE_TO_STRING;
 	}
 
-	public boolean isSanitycheckFineGrained() {
-		return SANITYCHECK_FINE_GRAINED;
+	public boolean omitSanitycheckFineGrained1() {
+		return OMIT_SANITYCHECK_FINE_GRAINED_1;
+	}
+
+	public boolean omitSanitycheckFineGrained2() {
+		return OMIT_SANITYCHECK_FINE_GRAINED_2;
 	}
 
 	public boolean isMeetWithGpaOnReportchange() {

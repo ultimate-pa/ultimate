@@ -228,7 +228,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	boolean reportEquality(final ELEM elem1, final ELEM elem2) {
 		final boolean result = reportEqualityRec(elem1, elem2);
-		assert sanityCheck();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || sanityCheck();
 		return result;
 	}
 
@@ -242,7 +242,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		boolean freshElem = false;
 		freshElem |= mManager.addElementReportChange(this, elem1, true);
 		freshElem |= mManager.addElementReportChange(this, elem2, true);
-		assert assertAtMostOneLiteralPerEquivalenceClass();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || assertAtMostOneLiteralPerEquivalenceClass();
 
 		if (getEqualityStatus(elem1, elem2) == EqualityStatus.EQUAL) {
 			// nothing to do
@@ -369,7 +369,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	boolean reportDisequality(final ELEM elem1, final ELEM elem2) {
 		final boolean result = reportDisequalityRec(elem1, elem2);
-		assert sanityCheck();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || sanityCheck();
 		return result;
 	}
 
@@ -433,7 +433,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public boolean addElement(final ELEM elem, final ICongruenceClosure<ELEM> newEqualityTarget,
 			final boolean omitSanityCheck) {
 		final boolean result = addElementRec(elem, newEqualityTarget, null);
-		assert omitSanityCheck || sanityCheck();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || omitSanityCheck || sanityCheck();
 		return result;
 	}
 
@@ -1414,7 +1414,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		while (!worklist.isEmpty()) {
 //			assert copy.sanityCheck(removeElementInfo);
-			if (CcSettings.SANITYCHECK_FINE_GRAINED) {
+			if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1) {
 				assert copy.sanityCheck();
 			}
 
