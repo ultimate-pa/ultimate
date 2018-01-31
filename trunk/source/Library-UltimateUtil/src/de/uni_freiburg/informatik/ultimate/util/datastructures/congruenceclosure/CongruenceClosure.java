@@ -269,7 +269,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		doFwccAndBwccPropagationsFromMerge(propInfo, this);
 
 //		assert sanityCheck();
-		assert assertAtMostOneLiteralPerEquivalenceClass();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || assertAtMostOneLiteralPerEquivalenceClass();
 		return true;
 	}
 
@@ -343,7 +343,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				}
 			}
 		}
-		assert assertNoExplicitLiteralDisequalities();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || assertNoExplicitLiteralDisequalities();
 
 		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
 				getAuxData().updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep,
@@ -584,7 +584,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			updateElementTverAndAuxDataOnRemoveElement(etr, nodeToReplacementNode.get(etr));
 		}
 
-		assert sanityCheck();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || sanityCheck();
 	}
 
 	/**
