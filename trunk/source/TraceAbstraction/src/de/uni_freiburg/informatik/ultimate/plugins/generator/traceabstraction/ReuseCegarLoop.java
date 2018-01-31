@@ -155,7 +155,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 				mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		
-		final boolean implicationInformationProvided = false && (rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton);
+		final boolean implicationInformationProvided = (rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton);
 		final Pair<HashRelation<String, String>, HashRelation<String, String>> impliesExpliesStringRelations;
 		if (implicationInformationProvided) {
 			final IEpsilonNestedWordAutomaton<String, String> rawEpsilon = (IEpsilonNestedWordAutomaton<String, String>) rawAutomatonFromFile;
