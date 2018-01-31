@@ -394,7 +394,11 @@ public class FunctionHandler {
 				functionName.getContainingFilename(), rawName);
 
 		if (main.mCHandler.getSymbolTable().containsCSymbol(functionName, methodName)) {
-			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
+			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
+			final SymbolTableValue nd = main.mCHandler.getSymbolTable().findCSymbol(functionName, methodName);
+			if (!(nd.getDeclarationNode().getParent() instanceof IASTFunctionDefinition)) {
+				return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
+			}
 		}
 
 		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, methodName, arguments,
