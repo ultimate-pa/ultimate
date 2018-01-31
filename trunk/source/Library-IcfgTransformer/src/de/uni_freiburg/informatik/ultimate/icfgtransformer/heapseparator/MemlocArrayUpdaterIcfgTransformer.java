@@ -12,18 +12,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
@@ -45,31 +48,39 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <INLOC>
  * @param <OUTLOC>
  */
-public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
+public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
 	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
 			new NestedMap2<>();
 
-	private final Map<StoreIndexInfo, IProgramNonOldVar> mStoreIndexInfoToFreezeVar = new HashMap<>();
+	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral = new HashMap<>();
 
 	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
 
+	private final static boolean TRACK_CONSTANTS = false;
 	private final Set<ConstantTerm> mAllConstantTerms;
 
 	private int mStoreIndexInfoCounter;
 
-//	private final DefaultIcfgSymbolTable mNewSymbolTable;
+	private final IProgramVar mMemlocArrayInt;
 
-	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
-//			final CfgSmtToolkit csToolkit,
+	private final Sort mMemLocSort;
+
+	private int mMemLocLitCounter = 0;
+
+	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger,
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker) {
+			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
+			final IProgramVar memlocArrayInt,
+			final Sort memLocSort) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
-		mAllConstantTerms = new HashSet<>();
+		mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
 		mStoreIndexInfoCounter = 0;
+		mMemlocArrayInt = memlocArrayInt;
+		mMemLocSort = memLocSort;
 	}
 
 	@Override
@@ -82,12 +93,13 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
 			final EdgeInfo edgeInfo) {
 
-		/*
-		 * update the all constants tracking
-		 */
-		mAllConstantTerms.addAll(new SubTermFinder(t -> t instanceof ConstantTerm)
-				.findMatchingSubterms(tf.getFormula()).stream().map(t -> (ConstantTerm) t)
-				.collect(Collectors.toList()));
+		if (TRACK_CONSTANTS) {
+			/* update the all constants tracking */
+			mAllConstantTerms.addAll(new SubTermFinder(t -> t instanceof ConstantTerm)
+					.findMatchingSubterms(tf.getFormula())
+					.stream().map(t -> (ConstantTerm) t)
+					.collect(Collectors.toList()));
+		}
 
 		/*
 		 * core business from here on..
@@ -96,14 +108,11 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
 
-//		final List<Term> indexUpdateFormula = new ArrayList<>();
-
 		mMgdScript.lock(this);
 
-//		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
 		final List<ArrayUpdate> aus = ArrayUpdate.extractArrayUpdates(tf.getFormula(), true);
 
-		final List<Term> freezeVarUpdates = new ArrayList<>();
+		final List<Term> memlocUpdates = new ArrayList<>();
 
 		for (final ArrayUpdate au : aus) {
 
@@ -121,31 +130,33 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				final Term indexTerm = au.getIndex().get(dim);
 
 				final StoreIndexInfo storeIndexInfo = getStoreIndexInfo(edgeInfo, indexTerm);
-				final IProgramNonOldVar freezeVar = getOrConstructFreezeVariable(storeIndexInfo);
 				storeIndexInfo.addArrayAccessDimension(lhsPvoc, dim);
 
-				final TermVariable inputFreezeIndexTv;
-				final TermVariable updatedFreezeIndexTv;
-				if (!extraInVars.containsKey(freezeVar)) {
-					assert !extraOutVars.containsKey(freezeVar);
-					inputFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
-					updatedFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
-					extraInVars.put(freezeVar, inputFreezeIndexTv);
-					extraOutVars.put(freezeVar, updatedFreezeIndexTv);
-				} else {
-					assert extraOutVars.containsKey(freezeVar);
-					inputFreezeIndexTv = extraInVars.get(freezeVar);
-					updatedFreezeIndexTv = extraOutVars.get(freezeVar);
-				}
-				assert extraInVars.containsKey(freezeVar) && extraOutVars.containsKey(freezeVar);
+				final IProgramConst locLit = getLocationLiteral(storeIndexInfo);
 
-				/*
-				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
-				 */
-				freezeVarUpdates.add(SmtUtils.or(mMgdScript.getScript(),
-						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm)
-						, mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv)
-						));
+				final TermVariable memlocIntInVar;
+				final TermVariable memlocIntOutVar;
+
+				if (!extraInVars.containsKey(mMemlocArrayInt)) {
+					assert !extraOutVars.containsKey(mMemlocArrayInt);
+					memlocIntInVar = mMgdScript.constructFreshCopy(mMemlocArrayInt.getTermVariable());
+					memlocIntOutVar = mMgdScript.constructFreshCopy(mMemlocArrayInt.getTermVariable());
+					extraInVars.put(mMemlocArrayInt, memlocIntInVar);
+					extraOutVars.put(mMemlocArrayInt, memlocIntOutVar);
+				} else {
+					assert extraOutVars.containsKey(mMemlocArrayInt);
+					memlocIntInVar = extraInVars.get(mMemlocArrayInt);
+					memlocIntOutVar = extraOutVars.get(mMemlocArrayInt);
+				}
+				assert extraInVars.containsKey(mMemlocArrayInt) && extraOutVars.containsKey(mMemlocArrayInt);
+
+
+				/* memloc_int[indexTerm] := locLit */
+				final Term arrayUpdateTerm = SmtUtils.binaryEquality(mMgdScript.getScript(),
+						memlocIntOutVar,
+						SmtUtils.store(mMgdScript.getScript(), memlocIntInVar, indexTerm, locLit.getTerm()));
+
+				memlocUpdates.add(arrayUpdateTerm);
 			}
 		}
 
@@ -164,38 +175,30 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		final List<Term> newFormulaConjuncts = new ArrayList<>();
 		newFormulaConjuncts.add(tf.getFormula());
-//		newFormulaConjuncts.addAll(indexUpdateFormula);
-		newFormulaConjuncts.addAll(freezeVarUpdates);
+		newFormulaConjuncts.addAll(memlocUpdates);
 
 		tfBuilder.setFormula(SmtUtils.and(mMgdScript.getScript(), newFormulaConjuncts));
-
 		tfBuilder.setInfeasibility(tf.isInfeasible());
-
-//		tf.getAuxVars().forEach(tfBuilder::addAuxVar);
 		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
-
 
 		return tfBuilder.finishConstruction(mMgdScript);
 	}
 
-	private IProgramNonOldVar getOrConstructFreezeVariable(final StoreIndexInfo storeIndexInfo) {
-		final Term indexTerm = storeIndexInfo.getIndexTerm();
-
-		IProgramNonOldVar result = mStoreIndexInfoToFreezeVar.get(storeIndexInfo);
-
+	private IProgramConst getLocationLiteral(final StoreIndexInfo storeIndexInfo) {
+		IProgramConst result = mStoreIndexInfoToLocLiteral.get(storeIndexInfo);
 		if (result == null) {
-			result = ProgramVarUtils.constructGlobalProgramVarPair(
-						indexTerm.toString().replace("|", "").replace("v_", "") + "_" + storeIndexInfo.getId() + "_frz",
-						indexTerm.getSort(), mMgdScript, this);
-			/*
-			 *  we don't need to do anything for the symbol table here it seems, because the TransformedIcfgBuilder
-			 *  recognizes new variables in the TransFormula
-			 */
-//			mNewSymbolTable.add(result);
-//			mWriteIndexToTfInfoToFreezeVar.put(indexTerm, tfInfo, result);
-			mStoreIndexInfoToFreezeVar.put(storeIndexInfo, result);
+			mMgdScript.lock(this);
+			final String locLitName = getLocationLitName(storeIndexInfo);
+			mMgdScript.declareFun(this, locLitName, new Sort[0], mMemLocSort);
+			final ApplicationTerm locLitTerm = (ApplicationTerm) mMgdScript.term(this, locLitName);
+			result = new HeapSepProgramConst(locLitTerm);
+			mMgdScript.unlock(this);
 		}
 		return result;
+	}
+
+	private String getLocationLitName(final StoreIndexInfo storeIndexInfo) {
+		return "mll_" + storeIndexInfo.getEdgeInfo().getSourceLocation() + "_" + mMemLocLitCounter ++;
 	}
 
 	private StoreIndexInfo getStoreIndexInfo(final EdgeInfo tfInfo, final Term indexTerm) {
@@ -207,14 +210,6 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		return sii;
 	}
 
-//	public NestedMap2<Term, EdgeInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
-//		return mWriteIndexToTfInfoToFreezeVar;
-//	}
-
-	public Map<StoreIndexInfo, IProgramNonOldVar> getArrayAccessInfoToFreezeVar() {
-		return mStoreIndexInfoToFreezeVar;
-	}
-
 	public NestedMap2<EdgeInfo, Term, StoreIndexInfo> getEdgeToIndexToStoreIndexInfo() {
 		return mEdgeToIndexToStoreIndexInfo;
 	}
@@ -224,7 +219,18 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	 * @return
 	 */
 	public Set<ConstantTerm> getAllConstantTerms() {
+		if (!TRACK_CONSTANTS) {
+			throw new IllegalStateException();
+		}
 		return mAllConstantTerms;
+	}
+
+	public Set<IProgramConst> getLocationLiterals() {
+		return new HashSet<>(mStoreIndexInfoToLocLiteral.values());
+	}
+
+	public Map<StoreIndexInfo, IProgramConst> getStoreIndexInfoToLocLiteral() {
+		return mStoreIndexInfoToLocLiteral;
 	}
 
 }
