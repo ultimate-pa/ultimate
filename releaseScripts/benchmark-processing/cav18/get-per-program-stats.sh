@@ -41,12 +41,14 @@ function makeFile(){
     row="$folder,$spec,$lcount,"
     for setting in "${settings[@]}"; do 
         overall=$(csvgrep -c Settings -m "$setting" "$out" | csvcut -c OverallTime | csvstat --sum | sed 's/,//g')
+        overall=$(echo "scale=3; ($overall) / 1000000000" | bc -lq)
         row+="$overall,"
         dump=$(csvgrep -c Settings -m "$setting" "$out" | csvcut -c DUMP_TIME | csvstat --sum | sed 's/,//g')
         if [ "$dump" != "None" ]; then 
-            ana=$(echo "scale=3; ($overall - $dump) / 1000000000" | bc -lq)
+            dump=$(echo "scale=3; ($dump) / 1000000000" | bc -lq)
+            ana=$(echo "scale=3; ($overall - $dump)" | bc -lq)
         else 
-            ana=$(echo "scale=3; ($overall) / 1000000000" | bc -lq)
+            ana=$(echo "scale=3; ($overall)" | bc -lq)
             defaultana="$ana"
             defaultoverall="$overall"
         fi 
