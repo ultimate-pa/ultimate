@@ -135,6 +135,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 						edgeInfo, mArrayGroupToDimensionToLocationBlocks, mArrayToArrayGroup,
 						mEdgeToIndexToStoreIndexInfo, mHeapArrays);//,
 		final Term transformedFormula = ppttf.transform(tf.getFormula());
+		ppttf.finish();
 
 		final Map<IProgramVar, TermVariable> inVars = ppttf.getNewInVars();
 		final Map<IProgramVar, TermVariable> outVars = ppttf.getNewOutVars();
@@ -145,6 +146,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		tfBuilder.setFormula(transformedFormula);
 		tfBuilder.setInfeasibility(tf.isInfeasible());
+		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
 
 		final UnmodifiableTransFormula newTransformula = tfBuilder.finishConstruction(mMgdScript);
 
