@@ -143,7 +143,9 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
 				 */
 				freezeVarUpdates.add(SmtUtils.or(mMgdScript.getScript(),
-						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm)));
+						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm),
+						mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv)
+						));
 			}
 		}
 
