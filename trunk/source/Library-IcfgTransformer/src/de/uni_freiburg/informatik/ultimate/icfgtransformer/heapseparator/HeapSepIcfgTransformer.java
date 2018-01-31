@@ -47,7 +47,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private IIcfg<OUTLOC> mResultIcfg;
 
-	private final Preprocessing mPreprocessing = Preprocessing.FREEZE_VARIABLES;
+	private final Preprocessing mPreprocessing = Preprocessing.MEMLOC_ARRAY;
+//	private final Preprocessing mPreprocessing = Preprocessing.FREEZE_VARIABLES;
 
 	/**
 	 * The IProgramVarOrConsts that model the heap in our memory model.
@@ -164,7 +165,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 */
 			final StoreIndexFreezerIcfgTransformer<INLOC, OUTLOC> sifit =
 					new StoreIndexFreezerIcfgTransformer<>(mLogger, "icfg_with_uninitialized_freeze_vars",
-							outLocationClass, originalIcfg, funLocFac, backtranslationTracker);
+							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, mHeapArrays);
 			final IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
 
 			storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
@@ -252,7 +253,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
 					new MemlocArrayUpdaterIcfgTransformer<>(mLogger, "icfg_with_uninitialized_freeze_vars",
 							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, memlocArrayInt,
-							memLocSort);
+							memLocSort, mHeapArrays);
 			final IIcfg<OUTLOC> icfgWithMemlocUpdates = mauit.getResult();
 
 			edgeToIndexToStoreIndexInfo = mauit.getEdgeToIndexToStoreIndexInfo();
@@ -316,10 +317,10 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final PartitionManager partitionManager;
 		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
 			partitionManager = new PartitionManager(mLogger, arrayToArrayGroup, storeIndexInfoToFreezeVar, mHeapArrays,
-					mStatistics);
+					mStatistics, mMgdScript);
 		} else {
 			assert mPreprocessing == Preprocessing.MEMLOC_ARRAY;
-			partitionManager = new PartitionManager(mLogger, arrayToArrayGroup,
+			partitionManager = new PartitionManager(mLogger, mMgdScript, arrayToArrayGroup,
 //					edgeToIndexToStoreIndexInfo.values().collect(Collectors.toSet()),
 					mHeapArrays, mStatistics, memlocArrayInt,
 					storeIndexInfoToLocLiteral);
@@ -444,7 +445,7 @@ class PartitionManager {
 
 	private final Preprocessing mPreprocessing;
 
-	private ManagedScript mMgdScript;
+	private final ManagedScript mMgdScript;
 
 	private final TermVariable mMemLocArrayTv;
 
@@ -457,11 +458,14 @@ class PartitionManager {
 	 * @param storeIndexInfoToFreezeVar
 	 * @param heapArrays
 	 * @param statistics
+	 * @param mgdScript
 	 */
 	public PartitionManager(final ILogger logger, final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar,
-			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics) {
+			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
+			final ManagedScript mgdScript) {
 		mLogger = logger;
+		mMgdScript = mgdScript;
 		mArrayToArrayGroup = arrayToArrayGroup;
 		mStoreIndexInfos = storeIndexInfoToFreezeVar.keySet();
 		mStoreIndexInfoToFreezeVar = storeIndexInfoToFreezeVar;
@@ -488,10 +492,12 @@ class PartitionManager {
 	 * @param memLocArray
 	 * @param storeIndexInfoToLocLiteral
 	 */
-	public PartitionManager(final ILogger logger, final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
+	public PartitionManager(final ILogger logger, final ManagedScript mgdScript,
+			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
 			final IProgramVar memLocArray, final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral) {
 		mPreprocessing = Preprocessing.MEMLOC_ARRAY;
+		mMgdScript = mgdScript;
 
 		mLogger = logger;
 		mArrayToArrayGroup = arrayToArrayGroup;

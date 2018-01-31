@@ -24,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -51,10 +50,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
-	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
-			new NestedMap2<>();
 
-	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral = new HashMap<>();
+	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
 
 	private final NestedMap2<EdgeInfo, Term, StoreIndexInfo> mEdgeToIndexToStoreIndexInfo;
 
@@ -69,18 +66,22 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	private int mMemLocLitCounter = 0;
 
+	private final List<IProgramVarOrConst> mHeapArrays;
+
 	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger,
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final IProgramVar memlocArrayInt,
-			final Sort memLocSort) {
+			final Sort memLocSort, final List<IProgramVarOrConst> heapArrays) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
 		mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
 		mStoreIndexInfoCounter = 0;
 		mMemlocArrayInt = memlocArrayInt;
 		mMemLocSort = memLocSort;
+		mStoreIndexInfoToLocLiteral = new HashMap<>();
+		mHeapArrays = heapArrays;
 	}
 
 	@Override
@@ -107,6 +108,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
+		final Set<IProgramConst> extraConstants = new HashSet<>();
 
 		mMgdScript.lock(this);
 
@@ -126,6 +128,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 				continue;
 			}
 
+			if (!mHeapArrays.contains(lhsPvoc)) {
+				/* we are only interested in writes to heap arrays */
+				continue;
+			}
+
 			for (int dim = 0; dim < au.getIndex().size(); dim++) {
 				final Term indexTerm = au.getIndex().get(dim);
 
@@ -133,6 +140,7 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 				storeIndexInfo.addArrayAccessDimension(lhsPvoc, dim);
 
 				final IProgramConst locLit = getLocationLiteral(storeIndexInfo);
+				extraConstants.add(locLit);
 
 				final TermVariable memlocIntInVar;
 				final TermVariable memlocIntOutVar;
@@ -168,8 +176,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 		newOutVars.putAll(extraOutVars);
 
+		final Set<IProgramConst> newNonTheoryConsts = new HashSet<>(tf.getNonTheoryConsts());
+		newNonTheoryConsts.addAll(extraConstants);
+
 		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(newInVars, newOutVars,
-				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(),
+				newNonTheoryConsts.isEmpty(), newNonTheoryConsts, tf.getBranchEncoders().isEmpty(),
 				tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
 
 
@@ -187,12 +198,12 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	private IProgramConst getLocationLiteral(final StoreIndexInfo storeIndexInfo) {
 		IProgramConst result = mStoreIndexInfoToLocLiteral.get(storeIndexInfo);
 		if (result == null) {
-			mMgdScript.lock(this);
+			assert mMgdScript.isLocked();
 			final String locLitName = getLocationLitName(storeIndexInfo);
 			mMgdScript.declareFun(this, locLitName, new Sort[0], mMemLocSort);
 			final ApplicationTerm locLitTerm = (ApplicationTerm) mMgdScript.term(this, locLitName);
 			result = new HeapSepProgramConst(locLitTerm);
-			mMgdScript.unlock(this);
+			mStoreIndexInfoToLocLiteral.put(storeIndexInfo, result);
 		}
 		return result;
 	}

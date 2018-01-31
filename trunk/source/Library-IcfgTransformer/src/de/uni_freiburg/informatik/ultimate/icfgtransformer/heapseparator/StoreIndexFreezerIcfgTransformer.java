@@ -59,17 +59,21 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	private int mStoreIndexInfoCounter;
 
+	private final List<IProgramVarOrConst> mHeapArrays;
+
 //	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
 //			final CfgSmtToolkit csToolkit,
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker) {
+			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
+			final List<IProgramVarOrConst> heapArrays) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
 		mAllConstantTerms = new HashSet<>();
 		mStoreIndexInfoCounter = 0;
+		mHeapArrays = heapArrays;
 	}
 
 	@Override
@@ -114,6 +118,11 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				 *  we are only interested in array updates that update one cell here, i.e., the lhs and rhs array must
 				 *  refer to the same program variable
 				 */
+				continue;
+			}
+
+			if (!mHeapArrays.contains(lhsPvoc)) {
+				/* we are only interested in writes to heap arrays */
 				continue;
 			}
 

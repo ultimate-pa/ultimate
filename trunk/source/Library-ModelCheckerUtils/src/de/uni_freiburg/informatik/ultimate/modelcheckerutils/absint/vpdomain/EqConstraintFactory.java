@@ -84,6 +84,8 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final BenchmarkWithCounters mBenchmark;
 
+	private final Set<IProgramConst> mNonTheoryLiterals;
+
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, Term> eqNodeAndFunctionFactory,
 			final IUltimateServiceProvider services,  final ManagedScript mgdScript,
 			final WeqSettings settings, final boolean debugMode, final Set<IProgramConst> nonTheoryLiterals) {
@@ -91,10 +93,11 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mMgdScript = mgdScript;
 
+		mNonTheoryLiterals = nonTheoryLiterals;
+
 		final Set<NODE> nonTheoryLiteralNodes =
 				nonTheoryLiterals.stream()
 				.map(pc -> eqNodeAndFunctionFactory.getOrConstructNode(pc.getTerm())).collect(Collectors.toSet());
-
 		mWeqCcManager = new WeqCcManager<>(mLogger, new WeqCongruenceClosureComparator<NODE>(),
 				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory, settings, debugMode,
 				nonTheoryLiteralNodes);
@@ -564,6 +567,10 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public boolean isDebugMode() {
 		return mIsDebugMode;
+	}
+
+	public Set<IProgramConst> getNonTheoryLiterals() {
+		return mNonTheoryLiterals;
 	}
 
 	/**

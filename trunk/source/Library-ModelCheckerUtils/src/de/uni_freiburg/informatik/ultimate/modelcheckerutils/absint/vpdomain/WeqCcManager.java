@@ -110,24 +110,23 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mWeqCcComparator = weqCcComparator;
 
+		mDimensionToWeqVariableNode = new NestedMap2<>();
+		mWeqVarsToWeqPrimedVars = new BidirectionalMap<>();
+
+		mNodeAndFunctionFactory = nodeAndFunctionFactory;
+		mNonTheoryLiteralNodes = nonTheoryLiteralNodes;
+
 		mTautologicalWeqCc = new WeqCongruenceClosure<>(this);
 		nonTheoryLiteralNodes.forEach(mTautologicalWeqCc::addElementRec);
 		mTautologicalWeqCc.freeze();
 
 		mInconsistentWeqCc = new WeqCongruenceClosure<>(true);
-
-		mDimensionToWeqVariableNode = new NestedMap2<>();
-		mWeqVarsToWeqPrimedVars = new BidirectionalMap<>();
-
-		mNodeAndFunctionFactory = nodeAndFunctionFactory;
-
-		mNonTheoryLiteralNodes = nonTheoryLiteralNodes;
 	}
 
 	public WeqCongruenceClosure<NODE> getEmptyWeqCc(final boolean modifiable) {
 		if (modifiable) {
 			final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(this);
-			mNonTheoryLiteralNodes.forEach(n -> mTautologicalWeqCc.addElement(n, false));
+			mNonTheoryLiteralNodes.forEach(n -> result.addElement(n, false));
 			return result;
 		} else {
 			return mTautologicalWeqCc;
