@@ -1,0 +1,1782 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+ <key attr.name="isViolationNode" attr.type="boolean" for="node" id="violation">
+  <default>false</default>
+ </key>
+ <key attr.name="isEntryNode" attr.type="boolean" for="node" id="entry">
+  <default>false</default>
+ </key>
+ <key attr.name="isSinkNode" attr.type="boolean" for="node" id="sink">
+  <default>false</default>
+ </key>
+ <key attr.name="violatedProperty" attr.type="string" for="node" id="violatedProperty"/>
+ <key attr.name="sourcecodeLanguage" attr.type="string" for="graph" id="sourcecodelang"/>
+ <key attr.name="programFile" attr.type="string" for="graph" id="programfile"/>
+ <key attr.name="programHash" attr.type="string" for="graph" id="programhash"/>
+ <key attr.name="specification" attr.type="string" for="graph" id="specification"/>
+ <key attr.name="architecture" attr.type="string" for="graph" id="architecture"/>
+ <key attr.name="producer" attr.type="string" for="graph" id="producer"/>
+ <key attr.name="creationTime" attr.type="string" for="graph" id="creationtime"/>
+ <key attr.name="sourcecode" attr.type="string" for="edge" id="sourcecode"/>
+ <key attr.name="startline" attr.type="int" for="edge" id="startline"/>
+ <key attr.name="endline" attr.type="int" for="edge" id="endline"/>
+ <key attr.name="startoffset" attr.type="int" for="edge" id="startoffset"/>
+ <key attr.name="endoffset" attr.type="int" for="edge" id="endoffset"/>
+ <key attr.name="originFileName" attr.type="string" for="edge" id="originfile">
+  <default>/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/avtg/drivers/input/keyboard/omap4-keypad.ko/generic:memory/weaver/.tmp_omap4-keypad.c.aux</default>
+ </key>
+ <key attr.name="control" attr.type="string" for="edge" id="control"/>
+ <key attr.name="assumption" attr.type="string" for="edge" id="assumption"/>
+ <key attr.name="assumption.scope" attr.type="string" for="edge" id="assumption.scope"/>
+ <key attr.name="enterFunction" attr.type="string" for="edge" id="enterFunction"/>
+ <key attr.name="returnFromFunction" attr.type="string" for="edge" id="returnFrom"/>
+ <key attr.name="witness-type" attr.type="string" for="graph" id="witness-type"/>
+ <key attr.name="inputWitnessHash" attr.type="string" for="graph" id="inputwitnesshash"/>
+ <graph edgedefault="directed">
+  <data key="witness-type">violation_witness</data>
+  <data key="sourcecodelang">C</data>
+  <data key="producer">CPAchecker 1.7-svn</data>
+  <data key="specification">CHECK( init(main()), LTL(G valid-deref) )</data>
+  <data key="specification">CHECK( init(main()), LTL(G valid-free) )</data>
+  <data key="specification">CHECK( init(main()), LTL(G valid-memtrack) )</data>
+  <data key="programfile">/work/temp/cil.i</data>
+  <data key="programhash">c7cd7e4fd76844ce7e2415bd55cea30a5c9dff18d99bc984571d851c5ef9ced1</data>
+  <data key="architecture">32bit</data>
+  <data key="creationtime">2018-01-31T15:58:17+03:00</data>
+  <node id="A0">
+   <data key="entry">true</data>
+  </node>
+  <node id="A826"/>
+  <edge source="A0" target="A826">
+   <data key="startline">1011</data>
+   <data key="endline">1011</data>
+   <data key="startoffset">257813</data>
+   <data key="endoffset">257823</data>
+   <data key="enterFunction">main</data>
+  </edge>
+  <node id="A827"/>
+  <edge source="A826" target="A827">
+   <data key="sourcecode">ldv_main_10((void *)0);</data>
+   <data key="startline">1146</data>
+   <data key="endline">1146</data>
+   <data key="startoffset">257855</data>
+   <data key="endoffset">257875</data>
+   <data key="enterFunction">ldv_main_10</data>
+  </edge>
+  <node id="A830"/>
+  <edge source="A827" target="A830">
+   <data key="sourcecode">ldv_dispatch_insmod_register_10_3();</data>
+   <data key="startline">493</data>
+   <data key="endline">493</data>
+   <data key="startoffset">236309</data>
+   <data key="endoffset">236344</data>
+   <data key="enterFunction">ldv_dispatch_insmod_register_10_3</data>
+  </edge>
+  <node id="A834"/>
+  <edge source="A830" target="A834">
+   <data key="sourcecode">tmp = ldv_xmalloc(16UL);</data>
+   <data key="startline">161</data>
+   <data key="endline">161</data>
+   <data key="startoffset">224645</data>
+   <data key="endoffset">224661</data>
+   <data key="enterFunction">ldv_xmalloc</data>
+  </edge>
+  <node id="A836"/>
+  <edge source="A834" target="A836">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">70</data>
+   <data key="endline">70</data>
+   <data key="startoffset">271897</data>
+   <data key="endoffset">271905</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (16UL);</data>
+   <data key="assumption.scope">ldv_xmalloc</data>
+  </edge>
+  <node id="A842"/>
+  <edge source="A836" target="A842">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">77</data>
+   <data key="endline">77</data>
+   <data key="startoffset">272105</data>
+   <data key="endoffset">272135</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A844"/>
+  <edge source="A842" target="A844">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">29</data>
+   <data key="endline">29</data>
+   <data key="startoffset">265400</data>
+   <data key="endoffset">265441</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A848"/>
+  <edge source="A844" target="A848">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">82</data>
+   <data key="endline">82</data>
+   <data key="startoffset">272198</data>
+   <data key="endoffset">272208</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_xmalloc</data>
+  </edge>
+  <node id="A851"/>
+  <edge source="A848" target="A851">
+   <data key="sourcecode">ldv_insmod_5((void *)cf_arg_5);</data>
+   <data key="startline">165</data>
+   <data key="endline">165</data>
+   <data key="startoffset">224745</data>
+   <data key="endoffset">224773</data>
+   <data key="enterFunction">ldv_insmod_5</data>
+  </edge>
+  <node id="A863"/>
+  <edge source="A851" target="A863">
+   <data key="sourcecode">ldv_free(arg0);</data>
+   <data key="startline">350</data>
+   <data key="endline">350</data>
+   <data key="startoffset">231678</data>
+   <data key="endoffset">231690</data>
+   <data key="enterFunction">ldv_free</data>
+  </edge>
+  <node id="A866"/>
+  <edge source="A863" target="A866">
+   <data key="sourcecode">return;</data>
+   <data key="startline">74</data>
+   <data key="endline">74</data>
+   <data key="startoffset">271689</data>
+   <data key="endoffset">271695</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_free</data>
+  </edge>
+  <node id="A868"/>
+  <edge source="A866" target="A868">
+   <data key="sourcecode">ldv_5_ret_default = ldv_insmod_omap4_keypad_driver_init_5_6(ldv_5_omap4_keypad_driver_init_default);</data>
+   <data key="startline">352</data>
+   <data key="endline">352</data>
+   <data key="startoffset">231726</data>
+   <data key="endoffset">231804</data>
+   <data key="enterFunction">ldv_insmod_omap4_keypad_driver_init_5_6</data>
+  </edge>
+  <node id="A871"/>
+  <edge source="A868" target="A871">
+   <data key="sourcecode">tmp = omap4_keypad_driver_init();</data>
+   <data key="startline">398</data>
+   <data key="endline">398</data>
+   <data key="startoffset">232963</data>
+   <data key="endoffset">232988</data>
+   <data key="enterFunction">omap4_keypad_driver_init</data>
+  </edge>
+  <node id="A874"/>
+  <edge source="A871" target="A874">
+   <data key="sourcecode">tmp = ldv___platform_driver_register_26(&amp; omap4_keypad_driver, &amp; __this_module);</data>
+   <data key="startline">469</data>
+   <data key="endline">469</data>
+   <data key="startoffset">217172</data>
+   <data key="endoffset">217244</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">ldv___platform_driver_register_26</data>
+  </edge>
+  <node id="A876"/>
+  <edge source="A874" target="A876">
+   <data key="sourcecode">int tmp ;</data>
+   <data key="startline">1230</data>
+   <data key="endline">1230</data>
+   <data key="startoffset">262462</data>
+   <data key="endoffset">262468</data>
+   <data key="assumption">(ldv_func_arg1-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(ldv_func_arg1-&gt;driver.probe_type)) == (0LL); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[0]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[1]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[2]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[3]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[4]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[5]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[6]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[7]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[8]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[9]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[10]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[11]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[12]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[13]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[14]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[15]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[16]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[17]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[18]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[19]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[20]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[21]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[22]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[23]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[24]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[25]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[26]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[27]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[28]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[29]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[30]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;name)[31]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[0]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[1]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[2]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[3]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[4]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[5]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[6]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[7]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[8]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[9]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[10]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[11]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[12]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[13]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[14]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[15]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[16]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[17]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[18]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[19]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[20]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[21]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[22]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[23]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[24]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[25]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[26]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[27]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[28]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[29]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[30]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;type)[31]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[0]) == (116); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[1]) == (105); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[2]) == (44); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[3]) == (111); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[4]) == (109); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[5]) == (97); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[6]) == (112); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[7]) == (52); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[8]) == (45); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[9]) == (107); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[10]) == (101); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[11]) == (121); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[12]) == (112); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[13]) == (97); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[14]) == (100); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[15]) == (0); ((ldv_func_arg1-&gt;driver.of_match_table-&gt;compatible)[16]) == (0); (ldv_func_arg1-&gt;prevent_deferred_probe) == (0);</data>
+   <data key="assumption.scope">ldv___platform_driver_register_26</data>
+  </edge>
+  <node id="A877"/>
+  <edge source="A876" target="A877">
+   <data key="sourcecode">tmp = ldv_emg___platform_driver_register(ldv_func_arg1, ldv_func_arg2);</data>
+   <data key="startline">1235</data>
+   <data key="endline">1235</data>
+   <data key="startoffset">262500</data>
+   <data key="endoffset">262563</data>
+   <data key="enterFunction">ldv_emg___platform_driver_register</data>
+  </edge>
+  <node id="A879"/>
+  <edge source="A877" target="A879">
+   <data key="sourcecode">struct platform_driver *ldv_6_platform_driver_platform_driver ;</data>
+   <data key="startline">212</data>
+   <data key="endline">212</data>
+   <data key="startoffset">227645</data>
+   <data key="endoffset">227705</data>
+   <data key="assumption">(arg0-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(arg0-&gt;driver.probe_type)) == (0LL); ((arg0-&gt;driver.of_match_table-&gt;name)[0]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[1]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[2]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[3]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[4]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[5]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[6]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[7]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[8]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[9]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[10]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[11]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[12]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[13]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[14]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[15]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[16]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[17]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[18]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[19]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[20]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[21]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[22]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[23]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[24]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[25]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[26]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[27]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[28]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[29]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[30]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[31]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[0]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[1]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[2]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[3]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[4]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[5]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[6]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[7]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[8]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[9]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[10]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[11]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[12]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[13]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[14]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[15]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[16]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[17]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[18]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[19]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[20]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[21]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[22]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[23]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[24]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[25]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[26]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[27]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[28]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[29]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[30]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[31]) == (0); ((arg0-&gt;driver.of_match_table-&gt;compatible)[0]) == (116); ((arg0-&gt;driver.of_match_table-&gt;compatible)[1]) == (105); ((arg0-&gt;driver.of_match_table-&gt;compatible)[2]) == (44); ((arg0-&gt;driver.of_match_table-&gt;compatible)[3]) == (111); ((arg0-&gt;driver.of_match_table-&gt;compatible)[4]) == (109); ((arg0-&gt;driver.of_match_table-&gt;compatible)[5]) == (97); ((arg0-&gt;driver.of_match_table-&gt;compatible)[6]) == (112); ((arg0-&gt;driver.of_match_table-&gt;compatible)[7]) == (52); ((arg0-&gt;driver.of_match_table-&gt;compatible)[8]) == (45); ((arg0-&gt;driver.of_match_table-&gt;compatible)[9]) == (107); ((arg0-&gt;driver.of_match_table-&gt;compatible)[10]) == (101); ((arg0-&gt;driver.of_match_table-&gt;compatible)[11]) == (121); ((arg0-&gt;driver.of_match_table-&gt;compatible)[12]) == (112); ((arg0-&gt;driver.of_match_table-&gt;compatible)[13]) == (97); ((arg0-&gt;driver.of_match_table-&gt;compatible)[14]) == (100); ((arg0-&gt;driver.of_match_table-&gt;compatible)[15]) == (0); ((arg0-&gt;driver.of_match_table-&gt;compatible)[16]) == (0); (arg0-&gt;prevent_deferred_probe) == (0);</data>
+   <data key="assumption.scope">ldv_emg___platform_driver_register</data>
+  </edge>
+  <node id="A885"/>
+  <edge source="A879" target="A885">
+   <data key="sourcecode">tmp___1 = ldv_undef_int();</data>
+   <data key="startline">223</data>
+   <data key="endline">223</data>
+   <data key="startoffset">227914</data>
+   <data key="endoffset">227928</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A889"/>
+  <edge source="A885" target="A889">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">46</data>
+   <data key="endline">46</data>
+   <data key="startoffset">275816</data>
+   <data key="endoffset">275826</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A891"/>
+  <edge source="A889" target="A891">
+   <data key="sourcecode">[tmp___1 != 0]</data>
+   <data key="startline">229</data>
+   <data key="endline">229</data>
+   <data key="startoffset">227951</data>
+   <data key="endoffset">227962</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="sink">
+   <data key="sink">true</data>
+  </node>
+  <edge source="A889" target="sink">
+   <data key="sourcecode">[!(tmp___1 != 0)]</data>
+   <data key="startline">229</data>
+   <data key="endline">229</data>
+   <data key="startoffset">227951</data>
+   <data key="endoffset">227962</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A893"/>
+  <edge source="A891" target="A893">
+   <data key="sourcecode">ldv_6_platform_driver_platform_driver = arg0;</data>
+   <data key="startline">229</data>
+   <data key="endline">229</data>
+   <data key="startoffset">227987</data>
+   <data key="endoffset">228030</data>
+   <data key="assumption">(ldv_6_platform_driver_platform_driver-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(ldv_6_platform_driver_platform_driver-&gt;driver.probe_type)) == (0LL); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[0]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[1]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[2]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[3]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[4]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[5]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[6]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[7]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[8]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[9]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[10]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[11]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[12]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[13]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[14]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[15]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[16]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[17]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[18]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[19]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[20]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[21]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[22]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[23]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[24]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[25]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[26]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[27]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[28]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[29]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[30]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;name)[31]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[0]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[1]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[2]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[3]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[4]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[5]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[6]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[7]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[8]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[9]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[10]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[11]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[12]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[13]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[14]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[15]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[16]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[17]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[18]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[19]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[20]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[21]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[22]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[23]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[24]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[25]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[26]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[27]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[28]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[29]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[30]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;type)[31]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[0]) == (116); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[1]) == (105); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[2]) == (44); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[3]) == (111); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[4]) == (109); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[5]) == (97); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[6]) == (112); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[7]) == (52); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[8]) == (45); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[9]) == (107); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[10]) == (101); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[11]) == (121); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[12]) == (112); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[13]) == (97); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[14]) == (100); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[15]) == (0); ((ldv_6_platform_driver_platform_driver-&gt;driver.of_match_table-&gt;compatible)[16]) == (0); (ldv_6_platform_driver_platform_driver-&gt;prevent_deferred_probe) == (0);</data>
+   <data key="assumption.scope">ldv_emg___platform_driver_register</data>
+  </edge>
+  <node id="A895"/>
+  <edge source="A893" target="A895">
+   <data key="sourcecode">ldv_dispatch_register_6_3(ldv_6_platform_driver_platform_driver);</data>
+   <data key="startline">231</data>
+   <data key="endline">231</data>
+   <data key="startoffset">228047</data>
+   <data key="endoffset">228109</data>
+   <data key="enterFunction">ldv_dispatch_register_6_3</data>
+  </edge>
+  <node id="A899"/>
+  <edge source="A895" target="A899">
+   <data key="sourcecode">struct ldv_struct_platform_instance_3 *cf_arg_3 ;</data>
+   <data key="startline">198</data>
+   <data key="endline">198</data>
+   <data key="startoffset">227028</data>
+   <data key="endoffset">227074</data>
+   <data key="assumption">(arg0-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(arg0-&gt;driver.probe_type)) == (0LL); ((arg0-&gt;driver.of_match_table-&gt;name)[0]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[1]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[2]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[3]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[4]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[5]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[6]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[7]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[8]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[9]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[10]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[11]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[12]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[13]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[14]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[15]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[16]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[17]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[18]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[19]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[20]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[21]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[22]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[23]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[24]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[25]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[26]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[27]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[28]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[29]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[30]) == (0); ((arg0-&gt;driver.of_match_table-&gt;name)[31]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[0]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[1]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[2]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[3]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[4]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[5]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[6]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[7]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[8]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[9]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[10]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[11]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[12]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[13]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[14]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[15]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[16]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[17]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[18]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[19]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[20]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[21]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[22]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[23]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[24]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[25]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[26]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[27]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[28]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[29]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[30]) == (0); ((arg0-&gt;driver.of_match_table-&gt;type)[31]) == (0); ((arg0-&gt;driver.of_match_table-&gt;compatible)[0]) == (116); ((arg0-&gt;driver.of_match_table-&gt;compatible)[1]) == (105); ((arg0-&gt;driver.of_match_table-&gt;compatible)[2]) == (44); ((arg0-&gt;driver.of_match_table-&gt;compatible)[3]) == (111); ((arg0-&gt;driver.of_match_table-&gt;compatible)[4]) == (109); ((arg0-&gt;driver.of_match_table-&gt;compatible)[5]) == (97); ((arg0-&gt;driver.of_match_table-&gt;compatible)[6]) == (112); ((arg0-&gt;driver.of_match_table-&gt;compatible)[7]) == (52); ((arg0-&gt;driver.of_match_table-&gt;compatible)[8]) == (45); ((arg0-&gt;driver.of_match_table-&gt;compatible)[9]) == (107); ((arg0-&gt;driver.of_match_table-&gt;compatible)[10]) == (101); ((arg0-&gt;driver.of_match_table-&gt;compatible)[11]) == (121); ((arg0-&gt;driver.of_match_table-&gt;compatible)[12]) == (112); ((arg0-&gt;driver.of_match_table-&gt;compatible)[13]) == (97); ((arg0-&gt;driver.of_match_table-&gt;compatible)[14]) == (100); ((arg0-&gt;driver.of_match_table-&gt;compatible)[15]) == (0); ((arg0-&gt;driver.of_match_table-&gt;compatible)[16]) == (0); (arg0-&gt;prevent_deferred_probe) == (0);</data>
+   <data key="assumption.scope">ldv_dispatch_register_6_3</data>
+  </edge>
+  <node id="A903"/>
+  <edge source="A899" target="A903">
+   <data key="sourcecode">tmp = ldv_xmalloc(16UL);</data>
+   <data key="startline">202</data>
+   <data key="endline">202</data>
+   <data key="startoffset">227119</data>
+   <data key="endoffset">227135</data>
+   <data key="enterFunction">ldv_xmalloc</data>
+  </edge>
+  <node id="A907"/>
+  <edge source="A903" target="A907">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">70</data>
+   <data key="endline">70</data>
+   <data key="startoffset">271897</data>
+   <data key="endoffset">271905</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (16UL);</data>
+   <data key="assumption.scope">ldv_xmalloc</data>
+  </edge>
+  <node id="A920"/>
+  <edge source="A907" target="A920">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">77</data>
+   <data key="endline">77</data>
+   <data key="startoffset">272105</data>
+   <data key="endoffset">272135</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A924"/>
+  <edge source="A920" target="A924">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">29</data>
+   <data key="endline">29</data>
+   <data key="startoffset">265400</data>
+   <data key="endoffset">265441</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A931"/>
+  <edge source="A924" target="A931">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">82</data>
+   <data key="endline">82</data>
+   <data key="startoffset">272198</data>
+   <data key="endoffset">272208</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_xmalloc</data>
+  </edge>
+  <node id="A937"/>
+  <edge source="A931" target="A937">
+   <data key="sourcecode">cf_arg_3-&gt;arg0 = arg0;</data>
+   <data key="startline">206</data>
+   <data key="endline">206</data>
+   <data key="startoffset">227219</data>
+   <data key="endoffset">227239</data>
+   <data key="assumption">(cf_arg_3-&gt;arg0-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(cf_arg_3-&gt;arg0-&gt;driver.probe_type)) == (0LL); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[0]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[1]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[2]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[3]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[4]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[5]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[6]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[7]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[8]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[9]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[10]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[11]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[12]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[13]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[14]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[15]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[16]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[17]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[18]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[19]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[20]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[21]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[22]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[23]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[24]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[25]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[26]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[27]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[28]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[29]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[30]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;name)[31]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[0]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[1]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[2]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[3]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[4]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[5]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[6]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[7]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[8]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[9]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[10]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[11]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[12]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[13]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[14]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[15]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[16]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[17]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[18]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[19]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[20]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[21]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[22]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[23]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[24]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[25]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[26]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[27]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[28]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[29]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[30]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;type)[31]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[0]) == (116); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[1]) == (105); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[2]) == (44); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[3]) == (111); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[4]) == (109); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[5]) == (97); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[6]) == (112); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[7]) == (52); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[8]) == (45); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[9]) == (107); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[10]) == (101); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[11]) == (121); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[12]) == (112); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[13]) == (97); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[14]) == (100); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[15]) == (0); ((cf_arg_3-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[16]) == (0); (cf_arg_3-&gt;arg0-&gt;prevent_deferred_probe) == (0);</data>
+   <data key="assumption.scope">ldv_dispatch_register_6_3</data>
+  </edge>
+  <node id="A939"/>
+  <edge source="A937" target="A939">
+   <data key="sourcecode">ldv_platform_instance_3((void *)cf_arg_3);</data>
+   <data key="startline">208</data>
+   <data key="endline">208</data>
+   <data key="startoffset">227254</data>
+   <data key="endoffset">227293</data>
+   <data key="enterFunction">ldv_platform_instance_3</data>
+  </edge>
+  <node id="A943"/>
+  <edge source="A939" target="A943">
+   <data key="sourcecode">struct platform_driver *ldv_3_container_platform_driver ;</data>
+   <data key="startline">511</data>
+   <data key="endline">511</data>
+   <data key="startoffset">236786</data>
+   <data key="endoffset">236840</data>
+   <data key="assumption">(*((signed long long int *)arg0)) == (162879LL);</data>
+   <data key="assumption.scope">ldv_platform_instance_3</data>
+  </edge>
+  <node id="A963"/>
+  <edge source="A943" target="A963">
+   <data key="sourcecode">data = (struct ldv_struct_platform_instance_3 *)arg0;</data>
+   <data key="startline">512</data>
+   <data key="endline">512</data>
+   <data key="startoffset">237099</data>
+   <data key="endoffset">237150</data>
+   <data key="assumption">(data-&gt;arg0-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(data-&gt;arg0-&gt;driver.probe_type)) == (0LL); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[0]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[1]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[2]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[3]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[4]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[5]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[6]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[7]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[8]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[9]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[10]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[11]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[12]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[13]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[14]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[15]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[16]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[17]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[18]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[19]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[20]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[21]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[22]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[23]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[24]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[25]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[26]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[27]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[28]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[29]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[30]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;name)[31]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[0]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[1]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[2]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[3]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[4]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[5]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[6]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[7]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[8]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[9]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[10]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[11]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[12]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[13]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[14]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[15]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[16]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[17]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[18]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[19]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[20]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[21]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[22]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[23]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[24]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[25]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[26]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[27]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[28]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[29]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[30]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;type)[31]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[0]) == (116); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[1]) == (105); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[2]) == (44); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[3]) == (111); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[4]) == (109); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[5]) == (97); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[6]) == (112); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[7]) == (52); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[8]) == (45); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[9]) == (107); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[10]) == (101); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[11]) == (121); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[12]) == (112); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[13]) == (97); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[14]) == (100); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[15]) == (0); ((data-&gt;arg0-&gt;driver.of_match_table-&gt;compatible)[16]) == (0); (data-&gt;arg0-&gt;prevent_deferred_probe) == (0);</data>
+   <data key="assumption.scope">ldv_platform_instance_3</data>
+  </edge>
+  <node id="A969"/>
+  <edge source="A963" target="A969">
+   <data key="sourcecode">ldv_3_probed_default = 1;</data>
+   <data key="startline">515</data>
+   <data key="endline">515</data>
+   <data key="startoffset">237287</data>
+   <data key="endoffset">237310</data>
+   <data key="assumption">ldv_3_probed_default == (1);</data>
+   <data key="assumption.scope">ldv_platform_instance_3</data>
+  </edge>
+  <node id="A977"/>
+  <edge source="A969" target="A977">
+   <data key="sourcecode">[((unsigned long)data) != ((unsigned long)((struct ldv_struct_platform_instance_3 *)0))]</data>
+   <data key="startline">520</data>
+   <data key="endline">520</data>
+   <data key="startoffset">237462</data>
+   <data key="endoffset">237545</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A969" target="sink">
+   <data key="sourcecode">[!(((unsigned long)data) != ((unsigned long)((struct ldv_struct_platform_instance_3 *)0)))]</data>
+   <data key="startline">520</data>
+   <data key="endline">520</data>
+   <data key="startoffset">237462</data>
+   <data key="endoffset">237545</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A979"/>
+  <edge source="A977" target="A979">
+   <data key="sourcecode">ldv_3_container_platform_driver = data-&gt;arg0;</data>
+   <data key="startline">521</data>
+   <data key="endline">521</data>
+   <data key="startoffset">237570</data>
+   <data key="endoffset">237613</data>
+   <data key="assumption">(ldv_3_container_platform_driver-&gt;driver.suppress_bind_attrs) == (0); ((signed long long int)(ldv_3_container_platform_driver-&gt;driver.probe_type)) == (0LL); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[0]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[1]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[2]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[3]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[4]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[5]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[6]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[7]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[8]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[9]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[10]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[11]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[12]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[13]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[14]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[15]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[16]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[17]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[18]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[19]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[20]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[21]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[22]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[23]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[24]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[25]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[26]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[27]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[28]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[29]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[30]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;name)[31]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[0]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[1]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[2]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[3]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[4]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[5]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[6]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[7]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[8]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[9]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[10]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[11]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[12]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[13]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[14]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[15]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[16]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[17]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[18]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[19]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[20]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[21]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[22]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[23]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[24]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[25]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[26]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[27]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[28]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[29]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[30]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;type)[31]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[0]) == (116); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[1]) == (105); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[2]) == (44); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[3]) == (111); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[4]) == (109); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[5]) == (97); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[6]) == (112); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[7]) == (52); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[8]) == (45); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[9]) == (107); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[10]) == (101); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[11]) == (121); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[12]) == (112); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[13]) == (97); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[14]) == (100); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[15]) == (0); ((ldv_3_container_platform_driver-&gt;driver.of_match_table-&gt;compatible)[16]) == (0); (ldv_3_container_platform_driver-&gt;prevent_deferred_probe) == (0);</data>
+   <data key="assumption.scope">ldv_platform_instance_3</data>
+  </edge>
+  <node id="A981"/>
+  <edge source="A979" target="A981">
+   <data key="sourcecode">ldv_free((void *)data);</data>
+   <data key="startline">527</data>
+   <data key="endline">527</data>
+   <data key="startoffset">237630</data>
+   <data key="endoffset">237650</data>
+   <data key="enterFunction">ldv_free</data>
+  </edge>
+  <node id="A987"/>
+  <edge source="A981" target="A987">
+   <data key="sourcecode">return;</data>
+   <data key="startline">74</data>
+   <data key="endline">74</data>
+   <data key="startoffset">271689</data>
+   <data key="endoffset">271695</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_free</data>
+  </edge>
+  <node id="A993"/>
+  <edge source="A987" target="A993">
+   <data key="sourcecode">tmp___1 = ldv_xmalloc(1480UL);</data>
+   <data key="startline">536</data>
+   <data key="endline">536</data>
+   <data key="startoffset">237702</data>
+   <data key="endoffset">237720</data>
+   <data key="enterFunction">ldv_xmalloc</data>
+  </edge>
+  <node id="A997"/>
+  <edge source="A993" target="A997">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">70</data>
+   <data key="endline">70</data>
+   <data key="startoffset">271897</data>
+   <data key="endoffset">271905</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (1480UL);</data>
+   <data key="assumption.scope">ldv_xmalloc</data>
+  </edge>
+  <node id="A1003"/>
+  <edge source="A997" target="A1003">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">77</data>
+   <data key="endline">77</data>
+   <data key="startoffset">272105</data>
+   <data key="endoffset">272135</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A1005"/>
+  <edge source="A1003" target="A1005">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">29</data>
+   <data key="endline">29</data>
+   <data key="startoffset">265400</data>
+   <data key="endoffset">265441</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A1009"/>
+  <edge source="A1005" target="A1009">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">82</data>
+   <data key="endline">82</data>
+   <data key="startoffset">272198</data>
+   <data key="endoffset">272208</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_xmalloc</data>
+  </edge>
+  <node id="A1014"/>
+  <edge source="A1009" target="A1014">
+   <data key="sourcecode">tmp___3 = ldv_undef_int();</data>
+   <data key="startline">543</data>
+   <data key="endline">543</data>
+   <data key="startoffset">237897</data>
+   <data key="endoffset">237911</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A1018"/>
+  <edge source="A1014" target="A1018">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">46</data>
+   <data key="endline">46</data>
+   <data key="startoffset">275816</data>
+   <data key="endoffset">275826</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A1020"/>
+  <edge source="A1018" target="A1020">
+   <data key="sourcecode">[tmp___3 != 0]</data>
+   <data key="startline">547</data>
+   <data key="endline">547</data>
+   <data key="startoffset">237934</data>
+   <data key="endoffset">237945</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1018" target="sink">
+   <data key="sourcecode">[!(tmp___3 != 0)]</data>
+   <data key="startline">547</data>
+   <data key="endline">547</data>
+   <data key="startoffset">237934</data>
+   <data key="endoffset">237945</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1024"/>
+  <edge source="A1020" target="A1024">
+   <data key="sourcecode">ldv_3_probed_default = ldv_platform_instance_probe_3_14(ldv_3_container_platform_driver-&gt;probe,
+                                                            ldv_3_resource_platform_device);</data>
+   <data key="startline">548</data>
+   <data key="endline">549</data>
+   <data key="startoffset">238024</data>
+   <data key="endoffset">238187</data>
+   <data key="enterFunction">ldv_platform_instance_probe_3_14</data>
+  </edge>
+  <node id="A1030"/>
+  <edge source="A1024" target="A1030">
+   <data key="sourcecode">tmp = omap4_keypad_probe(arg1);</data>
+   <data key="startline">651</data>
+   <data key="endline">651</data>
+   <data key="startoffset">239990</data>
+   <data key="endoffset">240013</data>
+   <data key="enterFunction">omap4_keypad_probe</data>
+  </edge>
+  <node id="A1064"/>
+  <edge source="A1030" target="A1064">
+   <data key="sourcecode">[!(((unsigned long)res) == ((unsigned long)((struct resource *)0)))]</data>
+   <data key="startline">253</data>
+   <data key="endline">253</data>
+   <data key="startoffset">204457</data>
+   <data key="endoffset">204517</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1030" target="sink">
+   <data key="sourcecode">[((unsigned long)res) == ((unsigned long)((struct resource *)0))]</data>
+   <data key="startline">253</data>
+   <data key="endline">253</data>
+   <data key="startoffset">204457</data>
+   <data key="endoffset">204517</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1064" target="sink">
+   <data key="sourcecode">[irq == 0]</data>
+   <data key="startline">259</data>
+   <data key="endline">259</data>
+   <data key="startoffset">204742</data>
+   <data key="endoffset">204749</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1071"/>
+  <edge source="A1064" target="A1071">
+   <data key="sourcecode">[!(irq == 0)]</data>
+   <data key="startline">259</data>
+   <data key="endline">259</data>
+   <data key="startoffset">204742</data>
+   <data key="endoffset">204749</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1077"/>
+  <edge source="A1071" target="A1077">
+   <data key="sourcecode">tmp = kzalloc(64UL, 20971712U);</data>
+   <data key="startline">263</data>
+   <data key="endline">263</data>
+   <data key="startoffset">204925</data>
+   <data key="endoffset">204948</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">kzalloc</data>
+  </edge>
+  <node id="A1083"/>
+  <edge source="A1077" target="A1083">
+   <data key="sourcecode">void *tmp ;</data>
+   <data key="startline">1159</data>
+   <data key="endline">1159</data>
+   <data key="startoffset">258199</data>
+   <data key="endoffset">258207</data>
+   <data key="assumption">size == (64UL); flags == (20971712U);</data>
+   <data key="assumption.scope">kzalloc</data>
+  </edge>
+  <node id="A1086"/>
+  <edge source="A1083" target="A1086">
+   <data key="sourcecode">tmp = ldv_kzalloc(size, flags);</data>
+   <data key="startline">1164</data>
+   <data key="endline">1164</data>
+   <data key="startoffset">258239</data>
+   <data key="endoffset">258262</data>
+   <data key="enterFunction">ldv_kzalloc</data>
+  </edge>
+  <node id="A1092"/>
+  <edge source="A1086" target="A1092">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">32</data>
+   <data key="endline">32</data>
+   <data key="startoffset">268140</data>
+   <data key="endoffset">268148</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/mm/kzalloc.c</data>
+   <data key="assumption">size == (64UL); flags == (20971712U);</data>
+   <data key="assumption.scope">ldv_kzalloc</data>
+  </edge>
+  <node id="A1098"/>
+  <edge source="A1092" target="A1098">
+   <data key="sourcecode">res = ldv_zalloc(size);</data>
+   <data key="startline">28</data>
+   <data key="endline">28</data>
+   <data key="startoffset">268219</data>
+   <data key="endoffset">268234</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/common.h</data>
+   <data key="enterFunction">ldv_zalloc</data>
+  </edge>
+  <node id="A1106"/>
+  <edge source="A1098" target="A1106">
+   <data key="sourcecode">void *tmp ;</data>
+   <data key="startline">61</data>
+   <data key="endline">61</data>
+   <data key="startoffset">271364</data>
+   <data key="endoffset">271372</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">size == (64UL);</data>
+   <data key="assumption.scope">ldv_zalloc</data>
+  </edge>
+  <node id="A1109"/>
+  <edge source="A1106" target="A1109">
+   <data key="sourcecode">tmp = ldv_calloc(1UL, size);</data>
+   <data key="startline">66</data>
+   <data key="endline">66</data>
+   <data key="startoffset">271402</data>
+   <data key="endoffset">271422</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_calloc</data>
+  </edge>
+  <node id="A1115"/>
+  <edge source="A1109" target="A1115">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">46</data>
+   <data key="endline">46</data>
+   <data key="startoffset">270686</data>
+   <data key="endoffset">270694</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">nmemb == (1UL); size == (64UL);</data>
+   <data key="assumption.scope">ldv_calloc</data>
+  </edge>
+  <node id="A1127"/>
+  <edge source="A1115" target="A1127">
+   <data key="sourcecode">tmp___1 = ldv_undef_int();</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">270775</data>
+   <data key="endoffset">270789</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A1140"/>
+  <edge source="A1127" target="A1140">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">46</data>
+   <data key="endline">46</data>
+   <data key="startoffset">275816</data>
+   <data key="endoffset">275826</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A1147"/>
+  <edge source="A1140" target="A1147">
+   <data key="sourcecode">[tmp___1 != 0]</data>
+   <data key="startline">49</data>
+   <data key="endline">49</data>
+   <data key="startoffset">270811</data>
+   <data key="endoffset">270822</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1140" target="sink">
+   <data key="sourcecode">[!(tmp___1 != 0)]</data>
+   <data key="startline">49</data>
+   <data key="endline">49</data>
+   <data key="startoffset">270811</data>
+   <data key="endoffset">270822</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1151"/>
+  <edge source="A1147" target="A1151">
+   <data key="sourcecode">tmp = calloc(nmemb, size);</data>
+   <data key="startline">50</data>
+   <data key="endline">50</data>
+   <data key="startoffset">270846</data>
+   <data key="endoffset">270870</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">(*((signed long long int *)tmp)) == (0LL);</data>
+   <data key="assumption.scope">ldv_calloc</data>
+  </edge>
+  <node id="A1155"/>
+  <edge source="A1151" target="A1155">
+   <data key="sourcecode">res = tmp;</data>
+   <data key="startline">52</data>
+   <data key="endline">52</data>
+   <data key="startoffset">270886</data>
+   <data key="endoffset">270894</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">(*((signed long long int *)res)) == (0LL);</data>
+   <data key="assumption.scope">ldv_calloc</data>
+  </edge>
+  <node id="A1163"/>
+  <edge source="A1155" target="A1163">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">56</data>
+   <data key="endline">56</data>
+   <data key="startoffset">271004</data>
+   <data key="endoffset">271034</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A1171"/>
+  <edge source="A1163" target="A1171">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">29</data>
+   <data key="endline">29</data>
+   <data key="startoffset">265400</data>
+   <data key="endoffset">265441</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="assumption">(*((signed long long int *)ptr)) == (0LL);</data>
+   <data key="assumption.scope">ldv_is_err</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A1186"/>
+  <edge source="A1171" target="A1186">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">60</data>
+   <data key="endline">60</data>
+   <data key="startoffset">271103</data>
+   <data key="endoffset">271113</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_calloc</data>
+  </edge>
+  <node id="A1196"/>
+  <edge source="A1186" target="A1196">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">64</data>
+   <data key="endline">64</data>
+   <data key="startoffset">271440</data>
+   <data key="endoffset">271450</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_zalloc</data>
+  </edge>
+  <node id="A1206"/>
+  <edge source="A1196" target="A1206">
+   <data key="sourcecode">ldv_after_alloc(res);</data>
+   <data key="startline">25</data>
+   <data key="endline">25</data>
+   <data key="startoffset">268248</data>
+   <data key="endoffset">268266</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/gcc.c</data>
+   <data key="enterFunction">ldv_after_alloc</data>
+  </edge>
+  <node id="A1215"/>
+  <edge source="A1206" target="A1215">
+   <data key="sourcecode">return;</data>
+   <data key="startline">28</data>
+   <data key="endline">28</data>
+   <data key="startoffset">263226</data>
+   <data key="endoffset">263232</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/drivers/base/dd.c</data>
+   <data key="assumption">(*((signed long long int *)res)) == (0LL);</data>
+   <data key="assumption.scope">ldv_after_alloc</data>
+   <data key="returnFrom">ldv_after_alloc</data>
+  </edge>
+  <node id="A1221"/>
+  <edge source="A1215" target="A1221">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">28</data>
+   <data key="endline">28</data>
+   <data key="startoffset">268285</data>
+   <data key="endoffset">268295</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/gcc.c</data>
+   <data key="returnFrom">ldv_kzalloc</data>
+  </edge>
+  <node id="A1227"/>
+  <edge source="A1221" target="A1227">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">1163</data>
+   <data key="endline">1163</data>
+   <data key="startoffset">258282</data>
+   <data key="endoffset">258292</data>
+   <data key="returnFrom">kzalloc</data>
+  </edge>
+  <node id="A1236"/>
+  <edge source="A1227" target="A1236">
+   <data key="sourcecode">[!(((unsigned long)keypad_data) == ((unsigned long)((struct omap4_keypad *)0)))]</data>
+   <data key="startline">265</data>
+   <data key="endline">265</data>
+   <data key="startoffset">205025</data>
+   <data key="endoffset">205097</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1227" target="sink">
+   <data key="sourcecode">[((unsigned long)keypad_data) == ((unsigned long)((struct omap4_keypad *)0))]</data>
+   <data key="startline">265</data>
+   <data key="endline">265</data>
+   <data key="startoffset">205025</data>
+   <data key="endoffset">205097</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1245"/>
+  <edge source="A1236" target="A1245">
+   <data key="sourcecode">error = omap4_keypad_parse_dt(&amp; pdev-&gt;dev, keypad_data);</data>
+   <data key="startline">272</data>
+   <data key="endline">272</data>
+   <data key="startoffset">205338</data>
+   <data key="endoffset">205384</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">omap4_keypad_parse_dt</data>
+  </edge>
+  <node id="A1251"/>
+  <edge source="A1245" target="A1251">
+   <data key="sourcecode">struct device_node *np ;</data>
+   <data key="startline">228</data>
+   <data key="endline">228</data>
+   <data key="startoffset">203235</data>
+   <data key="endoffset">203256</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(keypad_data-&gt;rows) == (0U);</data>
+   <data key="assumption.scope">omap4_keypad_parse_dt</data>
+  </edge>
+  <edge source="A1251" target="sink">
+   <data key="sourcecode">[err != 0]</data>
+   <data key="startline">231</data>
+   <data key="endline">231</data>
+   <data key="startoffset">203451</data>
+   <data key="endoffset">203458</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1267"/>
+  <edge source="A1251" target="A1267">
+   <data key="sourcecode">[!(err != 0)]</data>
+   <data key="startline">231</data>
+   <data key="endline">231</data>
+   <data key="startoffset">203451</data>
+   <data key="endoffset">203458</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1282"/>
+  <edge source="A1267" target="A1282">
+   <data key="sourcecode">[((unsigned long)tmp) != ((unsigned long)((const void *)0))]</data>
+   <data key="startline">238</data>
+   <data key="endline">238</data>
+   <data key="startoffset">203663</data>
+   <data key="endoffset">203720</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1267" target="sink">
+   <data key="sourcecode">[!(((unsigned long)tmp) != ((unsigned long)((const void *)0)))]</data>
+   <data key="startline">238</data>
+   <data key="endline">238</data>
+   <data key="startoffset">203663</data>
+   <data key="endoffset">203720</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1287"/>
+  <edge source="A1282" target="A1287">
+   <data key="sourcecode">keypad_data-&gt;no_autorepeat = 1;</data>
+   <data key="startline">240</data>
+   <data key="endline">240</data>
+   <data key="startoffset">203739</data>
+   <data key="endoffset">203768</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(keypad_data-&gt;no_autorepeat) == (1);</data>
+   <data key="assumption.scope">omap4_keypad_parse_dt</data>
+  </edge>
+  <node id="A1299"/>
+  <edge source="A1287" target="A1299">
+   <data key="sourcecode">return (0);</data>
+   <data key="startline">245</data>
+   <data key="endline">245</data>
+   <data key="startoffset">203799</data>
+   <data key="endoffset">203807</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="returnFrom">omap4_keypad_parse_dt</data>
+  </edge>
+  <node id="A1307"/>
+  <edge source="A1299" target="A1307">
+   <data key="sourcecode">[!(error != 0)]</data>
+   <data key="startline">273</data>
+   <data key="endline">273</data>
+   <data key="startoffset">205407</data>
+   <data key="endoffset">205416</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1299" target="sink">
+   <data key="sourcecode">[error != 0]</data>
+   <data key="startline">273</data>
+   <data key="endline">273</data>
+   <data key="startoffset">205407</data>
+   <data key="endoffset">205416</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1315"/>
+  <edge source="A1307" target="A1315">
+   <data key="sourcecode">tmp___0 = resource_size((struct resource  const  *)res);</data>
+   <data key="startline">276</data>
+   <data key="endline">276</data>
+   <data key="startoffset">205499</data>
+   <data key="endoffset">205543</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">resource_size</data>
+  </edge>
+  <node id="A1331"/>
+  <edge source="A1315" target="A1331">
+   <data key="sourcecode">return (((unsigned long long )res-&gt;end - (unsigned long long )res-&gt;start) + 1ULL);</data>
+   <data key="startline">95</data>
+   <data key="endline">95</data>
+   <data key="startoffset">184432</data>
+   <data key="endoffset">184511</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/arch/x86/include/asm/bitops.h</data>
+   <data key="returnFrom">resource_size</data>
+  </edge>
+  <node id="A1346"/>
+  <edge source="A1331" target="A1346">
+   <data key="sourcecode">[!(((unsigned long)res) == ((unsigned long)((struct resource *)0)))]</data>
+   <data key="startline">279</data>
+   <data key="endline">279</data>
+   <data key="startoffset">205656</data>
+   <data key="endoffset">205716</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1331" target="sink">
+   <data key="sourcecode">[((unsigned long)res) == ((unsigned long)((struct resource *)0))]</data>
+   <data key="startline">279</data>
+   <data key="endline">279</data>
+   <data key="startoffset">205656</data>
+   <data key="endoffset">205716</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1356"/>
+  <edge source="A1346" target="A1356">
+   <data key="sourcecode">tmp___1 = resource_size((struct resource  const  *)res);</data>
+   <data key="startline">283</data>
+   <data key="endline">283</data>
+   <data key="startoffset">205932</data>
+   <data key="endoffset">205976</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">resource_size</data>
+  </edge>
+  <node id="A1376"/>
+  <edge source="A1356" target="A1376">
+   <data key="sourcecode">return (((unsigned long long )res-&gt;end - (unsigned long long )res-&gt;start) + 1ULL);</data>
+   <data key="startline">95</data>
+   <data key="endline">95</data>
+   <data key="startoffset">184432</data>
+   <data key="endoffset">184511</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/arch/x86/include/asm/bitops.h</data>
+   <data key="returnFrom">resource_size</data>
+  </edge>
+  <node id="A1385"/>
+  <edge source="A1376" target="A1385">
+   <data key="sourcecode">keypad_data-&gt;base = ioremap(res-&gt;start, (unsigned long )tmp___1);</data>
+   <data key="startline">283</data>
+   <data key="endline">283</data>
+   <data key="startoffset">206011</data>
+   <data key="endoffset">206054</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">ioremap</data>
+  </edge>
+  <node id="A1405"/>
+  <edge source="A1385" target="A1405">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">88</data>
+   <data key="endline">88</data>
+   <data key="startoffset">187623</data>
+   <data key="endoffset">187633</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/pm_wakeup.h</data>
+   <data key="returnFrom">ioremap</data>
+  </edge>
+  <node id="A1420"/>
+  <edge source="A1405" target="A1420">
+   <data key="sourcecode">[!(__CPAchecker_TMP_0 == ((unsigned long)((void *)0)))]</data>
+   <data key="startline">286</data>
+   <data key="endline">286</data>
+   <data key="startoffset">206077</data>
+   <data key="endoffset">206140</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1405" target="sink">
+   <data key="sourcecode">[__CPAchecker_TMP_0 == ((unsigned long)((void *)0))]</data>
+   <data key="startline">286</data>
+   <data key="endline">286</data>
+   <data key="startoffset">206077</data>
+   <data key="endoffset">206140</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1438"/>
+  <edge source="A1420" target="A1438">
+   <data key="sourcecode">error = pm_runtime_get_sync(&amp; pdev-&gt;dev);</data>
+   <data key="startline">297</data>
+   <data key="endline">297</data>
+   <data key="startoffset">206400</data>
+   <data key="endoffset">206431</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">pm_runtime_get_sync</data>
+  </edge>
+  <node id="A1458"/>
+  <edge source="A1438" target="A1458">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">254</data>
+   <data key="endline">254</data>
+   <data key="startoffset">196092</data>
+   <data key="endoffset">196102</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/pm_runtime.h</data>
+   <data key="returnFrom">pm_runtime_get_sync</data>
+  </edge>
+  <edge source="A1458" target="sink">
+   <data key="sourcecode">[error != 0]</data>
+   <data key="startline">296</data>
+   <data key="endline">296</data>
+   <data key="startoffset">206454</data>
+   <data key="endoffset">206463</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1471"/>
+  <edge source="A1458" target="A1471">
+   <data key="sourcecode">[!(error != 0)]</data>
+   <data key="startline">296</data>
+   <data key="endline">296</data>
+   <data key="startoffset">206454</data>
+   <data key="endoffset">206463</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1493"/>
+  <edge source="A1471" target="A1493">
+   <data key="sourcecode">tmp___2 = __readl((void const volatile   *)keypad_data-&gt;base);</data>
+   <data key="startline">300</data>
+   <data key="endline">300</data>
+   <data key="startoffset">206649</data>
+   <data key="endoffset">206699</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">__readl</data>
+  </edge>
+  <node id="A1518"/>
+  <edge source="A1493" target="A1518">
+   <data key="sourcecode">return (ret);</data>
+   <data key="startline">71</data>
+   <data key="endline">71</data>
+   <data key="startoffset">186825</data>
+   <data key="endoffset">186835</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/arch/x86/include/asm/io.h</data>
+   <data key="returnFrom">__readl</data>
+  </edge>
+  <node id="A1546"/>
+  <edge source="A1518" target="A1546">
+   <data key="sourcecode">[rev == 0]</data>
+   <data key="startline">307</data>
+   <data key="endline">307</data>
+   <data key="startoffset">206825</data>
+   <data key="endoffset">206832</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A1518" target="sink">
+   <data key="sourcecode">[!(rev == 0)]</data>
+   <data key="startline">307</data>
+   <data key="endline">307</data>
+   <data key="startoffset">206825</data>
+   <data key="endoffset">206832</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1565"/>
+  <edge source="A1546" target="A1565">
+   <data key="sourcecode">keypad_data-&gt;reg_offset = 0U;</data>
+   <data key="startline">308</data>
+   <data key="endline">308</data>
+   <data key="startoffset">207023</data>
+   <data key="endoffset">207050</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(keypad_data-&gt;reg_offset) == (0U);</data>
+   <data key="assumption.scope">omap4_keypad_probe</data>
+  </edge>
+  <node id="A1573"/>
+  <edge source="A1565" target="A1573">
+   <data key="sourcecode">keypad_data-&gt;irqreg_offset = 0U;</data>
+   <data key="startline">310</data>
+   <data key="endline">310</data>
+   <data key="startoffset">207065</data>
+   <data key="endoffset">207095</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(keypad_data-&gt;irqreg_offset) == (0U);</data>
+   <data key="assumption.scope">omap4_keypad_probe</data>
+  </edge>
+  <node id="A1605"/>
+  <edge source="A1573" target="A1605">
+   <data key="sourcecode">[!(((unsigned long)input_dev) == ((unsigned long)((struct input_dev *)0)))]</data>
+   <data key="startline">323</data>
+   <data key="endline">323</data>
+   <data key="startoffset">207659</data>
+   <data key="endoffset">207726</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1573" target="sink">
+   <data key="sourcecode">[((unsigned long)input_dev) == ((unsigned long)((struct input_dev *)0))]</data>
+   <data key="startline">323</data>
+   <data key="endline">323</data>
+   <data key="startoffset">207659</data>
+   <data key="endoffset">207726</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1621"/>
+  <edge source="A1605" target="A1621">
+   <data key="sourcecode">input_dev-&gt;name = pdev-&gt;name;</data>
+   <data key="startline">329</data>
+   <data key="endline">329</data>
+   <data key="startoffset">207826</data>
+   <data key="endoffset">207853</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(*(input_dev-&gt;name)) == (-7);</data>
+   <data key="assumption.scope">omap4_keypad_probe</data>
+  </edge>
+  <node id="A1639"/>
+  <edge source="A1621" target="A1639">
+   <data key="sourcecode">input_dev-&gt;id.bustype = 25U;</data>
+   <data key="startline">332</data>
+   <data key="endline">332</data>
+   <data key="startoffset">207917</data>
+   <data key="endoffset">207943</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(input_dev-&gt;id.bustype) == (25U);</data>
+   <data key="assumption.scope">omap4_keypad_probe</data>
+  </edge>
+  <node id="A1648"/>
+  <edge source="A1639" target="A1648">
+   <data key="sourcecode">input_dev-&gt;id.vendor = 1U;</data>
+   <data key="startline">334</data>
+   <data key="endline">334</data>
+   <data key="startoffset">207958</data>
+   <data key="endoffset">207982</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(input_dev-&gt;id.vendor) == (1U);</data>
+   <data key="assumption.scope">omap4_keypad_probe</data>
+  </edge>
+  <node id="A1657"/>
+  <edge source="A1648" target="A1657">
+   <data key="sourcecode">input_dev-&gt;id.product = 1U;</data>
+   <data key="startline">334</data>
+   <data key="endline">334</data>
+   <data key="startoffset">207997</data>
+   <data key="endoffset">208022</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(input_dev-&gt;id.product) == (1U);</data>
+   <data key="assumption.scope">omap4_keypad_probe</data>
+  </edge>
+  <node id="A1666"/>
+  <edge source="A1657" target="A1666">
+   <data key="sourcecode">input_dev-&gt;id.version = 1U;</data>
+   <data key="startline">334</data>
+   <data key="endline">334</data>
+   <data key="startoffset">208037</data>
+   <data key="endoffset">208062</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(input_dev-&gt;id.version) == (1U);</data>
+   <data key="assumption.scope">omap4_keypad_probe</data>
+  </edge>
+  <node id="A1707"/>
+  <edge source="A1666" target="A1707">
+   <data key="sourcecode">[!((keypad_data-&gt;no_autorepeat) == 0)]</data>
+   <data key="startline">338</data>
+   <data key="endline">338</data>
+   <data key="startoffset">208244</data>
+   <data key="endoffset">208269</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A1666" target="sink">
+   <data key="sourcecode">[(keypad_data-&gt;no_autorepeat) == 0]</data>
+   <data key="startline">338</data>
+   <data key="endline">338</data>
+   <data key="startoffset">208244</data>
+   <data key="endoffset">208269</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1728"/>
+  <edge source="A1707" target="A1728">
+   <data key="sourcecode">input_set_drvdata(input_dev, (void *)keypad_data);</data>
+   <data key="startline">341</data>
+   <data key="endline">341</data>
+   <data key="startoffset">208398</data>
+   <data key="endoffset">208445</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">input_set_drvdata</data>
+  </edge>
+  <node id="A1744"/>
+  <edge source="A1728" target="A1744">
+   <data key="sourcecode">dev_set_drvdata(&amp; dev-&gt;dev, data);</data>
+   <data key="startline">385</data>
+   <data key="endline">385</data>
+   <data key="startoffset">193277</data>
+   <data key="endoffset">193308</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/input.h</data>
+   <data key="assumption">(dev-&gt;id.bustype) == (25U); (dev-&gt;id.vendor) == (1U); (dev-&gt;id.product) == (1U); (dev-&gt;id.version) == (1U); (*((unsigned long long int *)data)) == (27892577372932274768497084600197082800310ULL);</data>
+   <data key="assumption.scope">input_set_drvdata</data>
+   <data key="enterFunction">dev_set_drvdata</data>
+  </edge>
+  <node id="A1760"/>
+  <edge source="A1744" target="A1760">
+   <data key="sourcecode">dev-&gt;driver_data = data;</data>
+   <data key="startline">55</data>
+   <data key="endline">55</data>
+   <data key="startoffset">188712</data>
+   <data key="endoffset">188734</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/platform_device.h</data>
+   <data key="assumption">(*((unsigned long long int *)(dev-&gt;driver_data))) == (27892577372932274768497084600197082800310ULL); (*((unsigned long long int *)data)) == (27892577372932274768497084600197082800310ULL);</data>
+   <data key="assumption.scope">dev_set_drvdata</data>
+  </edge>
+  <node id="A1768"/>
+  <edge source="A1760" target="A1768">
+   <data key="sourcecode">return;</data>
+   <data key="startline">204</data>
+   <data key="endline">204</data>
+   <data key="startoffset">188750</data>
+   <data key="endoffset">188756</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/platform_device.h</data>
+   <data key="returnFrom">dev_set_drvdata</data>
+  </edge>
+  <node id="A1784"/>
+  <edge source="A1768" target="A1784">
+   <data key="sourcecode">return;</data>
+   <data key="startline">389</data>
+   <data key="endline">389</data>
+   <data key="startoffset">193328</data>
+   <data key="endoffset">193334</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/input.h</data>
+   <data key="returnFrom">input_set_drvdata</data>
+  </edge>
+  <node id="A1800"/>
+  <edge source="A1784" target="A1800">
+   <data key="sourcecode">tmp___3 = get_count_order(keypad_data-&gt;cols);</data>
+   <data key="startline">342</data>
+   <data key="endline">342</data>
+   <data key="startoffset">208471</data>
+   <data key="endoffset">208504</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">get_count_order</data>
+  </edge>
+  <node id="A1816"/>
+  <edge source="A1800" target="A1816">
+   <data key="sourcecode">int order ;</data>
+   <data key="startline">190</data>
+   <data key="endline">190</data>
+   <data key="startoffset">185909</data>
+   <data key="endoffset">185917</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/bitops.h</data>
+   <data key="assumption">count == (327155579U);</data>
+   <data key="assumption.scope">get_count_order</data>
+  </edge>
+  <node id="A1830"/>
+  <edge source="A1816" target="A1830">
+   <data key="sourcecode">tmp = fls((int )count);</data>
+   <data key="startline">191</data>
+   <data key="endline">191</data>
+   <data key="startoffset">185960</data>
+   <data key="endoffset">185975</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/bitops.h</data>
+   <data key="enterFunction">fls</data>
+  </edge>
+  <node id="A1844"/>
+  <edge source="A1830" target="A1844">
+   <data key="sourcecode">int r ;</data>
+   <data key="startline">186</data>
+   <data key="endline">186</data>
+   <data key="startoffset">185573</data>
+   <data key="endoffset">185577</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/bitops.h</data>
+   <data key="assumption">x == (327155579);</data>
+   <data key="assumption.scope">fls</data>
+  </edge>
+  <node id="A1858"/>
+  <edge source="A1844" target="A1858">
+   <data key="sourcecode">return (r + 1);</data>
+   <data key="startline">188</data>
+   <data key="endline">188</data>
+   <data key="startoffset">185665</data>
+   <data key="endoffset">185677</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/bitops.h</data>
+   <data key="returnFrom">fls</data>
+  </edge>
+  <edge source="A1858" target="sink">
+   <data key="sourcecode">[((count - 1U) &amp; count) != 0U]</data>
+   <data key="startline">0</data>
+   <data key="endline">32</data>
+   <data key="startoffset">0</data>
+   <data key="endoffset">186055</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/arch/x86/include/asm/string_64.h</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A1883"/>
+  <edge source="A1858" target="A1883">
+   <data key="sourcecode">[!(((count - 1U) &amp; count) != 0U)]</data>
+   <data key="startline">0</data>
+   <data key="endline">32</data>
+   <data key="startoffset">0</data>
+   <data key="endoffset">186055</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/arch/x86/include/asm/string_64.h</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A1904"/>
+  <edge source="A1883" target="A1904">
+   <data key="sourcecode">return (order);</data>
+   <data key="startline">66</data>
+   <data key="endline">66</data>
+   <data key="startoffset">186121</data>
+   <data key="endoffset">186133</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/arch/x86/include/asm/io.h</data>
+   <data key="returnFrom">get_count_order</data>
+  </edge>
+  <node id="A1966"/>
+  <edge source="A1904" target="A1966">
+   <data key="sourcecode">tmp___4 = kzalloc((unsigned long )max_keys * 2UL, 20971712U);</data>
+   <data key="startline">345</data>
+   <data key="endline">345</data>
+   <data key="startoffset">208664</data>
+   <data key="endoffset">208713</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">kzalloc</data>
+  </edge>
+  <node id="A1988"/>
+  <edge source="A1966" target="A1988">
+   <data key="sourcecode">void *tmp ;</data>
+   <data key="startline">1159</data>
+   <data key="endline">1159</data>
+   <data key="startoffset">258199</data>
+   <data key="endoffset">258207</data>
+   <data key="assumption">flags == (20971712U);</data>
+   <data key="assumption.scope">kzalloc</data>
+  </edge>
+  <node id="A1999"/>
+  <edge source="A1988" target="A1999">
+   <data key="sourcecode">tmp = ldv_kzalloc(size, flags);</data>
+   <data key="startline">1164</data>
+   <data key="endline">1164</data>
+   <data key="startoffset">258239</data>
+   <data key="endoffset">258262</data>
+   <data key="enterFunction">ldv_kzalloc</data>
+  </edge>
+  <node id="A2021"/>
+  <edge source="A1999" target="A2021">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">32</data>
+   <data key="endline">32</data>
+   <data key="startoffset">268140</data>
+   <data key="endoffset">268148</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/mm/kzalloc.c</data>
+   <data key="assumption">flags == (20971712U);</data>
+   <data key="assumption.scope">ldv_kzalloc</data>
+  </edge>
+  <node id="A2043"/>
+  <edge source="A2021" target="A2043">
+   <data key="sourcecode">res = ldv_zalloc(size);</data>
+   <data key="startline">28</data>
+   <data key="endline">28</data>
+   <data key="startoffset">268219</data>
+   <data key="endoffset">268234</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/common.h</data>
+   <data key="enterFunction">ldv_zalloc</data>
+  </edge>
+  <node id="A2080"/>
+  <edge source="A2043" target="A2080">
+   <data key="sourcecode">tmp = ldv_calloc(1UL, size);</data>
+   <data key="startline">66</data>
+   <data key="endline">66</data>
+   <data key="startoffset">271402</data>
+   <data key="endoffset">271422</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_calloc</data>
+  </edge>
+  <node id="A2105"/>
+  <edge source="A2080" target="A2105">
+   <data key="sourcecode">void *res ;</data>
+   <data key="startline">46</data>
+   <data key="endline">46</data>
+   <data key="startoffset">270686</data>
+   <data key="endoffset">270694</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">nmemb == (1UL);</data>
+   <data key="assumption.scope">ldv_calloc</data>
+  </edge>
+  <node id="A2149"/>
+  <edge source="A2105" target="A2149">
+   <data key="sourcecode">tmp___1 = ldv_undef_int();</data>
+   <data key="startline">48</data>
+   <data key="endline">48</data>
+   <data key="startoffset">270775</data>
+   <data key="endoffset">270789</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A2198"/>
+  <edge source="A2149" target="A2198">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">46</data>
+   <data key="endline">46</data>
+   <data key="startoffset">275816</data>
+   <data key="endoffset">275826</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A2224"/>
+  <edge source="A2198" target="A2224">
+   <data key="sourcecode">[tmp___1 != 0]</data>
+   <data key="startline">49</data>
+   <data key="endline">49</data>
+   <data key="startoffset">270811</data>
+   <data key="endoffset">270822</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A2198" target="sink">
+   <data key="sourcecode">[!(tmp___1 != 0)]</data>
+   <data key="startline">49</data>
+   <data key="endline">49</data>
+   <data key="startoffset">270811</data>
+   <data key="endoffset">270822</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A2238"/>
+  <edge source="A2224" target="A2238">
+   <data key="sourcecode">tmp = calloc(nmemb, size);</data>
+   <data key="startline">50</data>
+   <data key="endline">50</data>
+   <data key="startoffset">270846</data>
+   <data key="endoffset">270870</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">(*((signed long long int *)tmp)) == (0LL);</data>
+   <data key="assumption.scope">ldv_calloc</data>
+  </edge>
+  <node id="A2252"/>
+  <edge source="A2238" target="A2252">
+   <data key="sourcecode">res = tmp;</data>
+   <data key="startline">52</data>
+   <data key="endline">52</data>
+   <data key="startoffset">270886</data>
+   <data key="endoffset">270894</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="assumption">(*((signed long long int *)res)) == (0LL);</data>
+   <data key="assumption.scope">ldv_calloc</data>
+  </edge>
+  <node id="A2282"/>
+  <edge source="A2252" target="A2282">
+   <data key="sourcecode">tmp___0 = ldv_is_err((void const   *)res);</data>
+   <data key="startline">56</data>
+   <data key="endline">56</data>
+   <data key="startoffset">271004</data>
+   <data key="endoffset">271034</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="enterFunction">ldv_is_err</data>
+  </edge>
+  <node id="A2312"/>
+  <edge source="A2282" target="A2312">
+   <data key="sourcecode">return ((unsigned long )ptr &gt; 4294967295UL);</data>
+   <data key="startline">29</data>
+   <data key="endline">29</data>
+   <data key="startoffset">265400</data>
+   <data key="endoffset">265441</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/err.c</data>
+   <data key="assumption">(*((signed long long int *)ptr)) == (0LL);</data>
+   <data key="assumption.scope">ldv_is_err</data>
+   <data key="returnFrom">ldv_is_err</data>
+  </edge>
+  <node id="A2355"/>
+  <edge source="A2312" target="A2355">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">60</data>
+   <data key="endline">60</data>
+   <data key="startoffset">271103</data>
+   <data key="endoffset">271113</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_calloc</data>
+  </edge>
+  <node id="A2384"/>
+  <edge source="A2355" target="A2384">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">64</data>
+   <data key="endline">64</data>
+   <data key="startoffset">271440</data>
+   <data key="endoffset">271450</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_zalloc</data>
+  </edge>
+  <node id="A2412"/>
+  <edge source="A2384" target="A2412">
+   <data key="sourcecode">ldv_after_alloc(res);</data>
+   <data key="startline">25</data>
+   <data key="endline">25</data>
+   <data key="startoffset">268248</data>
+   <data key="endoffset">268266</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/gcc.c</data>
+   <data key="enterFunction">ldv_after_alloc</data>
+  </edge>
+  <node id="A2442"/>
+  <edge source="A2412" target="A2442">
+   <data key="sourcecode">return;</data>
+   <data key="startline">28</data>
+   <data key="endline">28</data>
+   <data key="startoffset">263226</data>
+   <data key="endoffset">263232</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/linux/drivers/base/dd.c</data>
+   <data key="assumption">(*((signed long long int *)res)) == (0LL);</data>
+   <data key="assumption.scope">ldv_after_alloc</data>
+   <data key="returnFrom">ldv_after_alloc</data>
+  </edge>
+  <node id="A2472"/>
+  <edge source="A2442" target="A2472">
+   <data key="sourcecode">return (res);</data>
+   <data key="startline">28</data>
+   <data key="endline">28</data>
+   <data key="startoffset">268285</data>
+   <data key="endoffset">268295</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/gcc.c</data>
+   <data key="returnFrom">ldv_kzalloc</data>
+  </edge>
+  <node id="A2504"/>
+  <edge source="A2472" target="A2504">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">1163</data>
+   <data key="endline">1163</data>
+   <data key="startoffset">258282</data>
+   <data key="endoffset">258292</data>
+   <data key="returnFrom">kzalloc</data>
+  </edge>
+  <node id="A2534"/>
+  <edge source="A2504" target="A2534">
+   <data key="sourcecode">keypad_data-&gt;keymap = (unsigned short *)tmp___4;</data>
+   <data key="startline">346</data>
+   <data key="endline">346</data>
+   <data key="startoffset">208779</data>
+   <data key="endoffset">208825</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="assumption">(*(keypad_data-&gt;keymap)) == (0U);</data>
+   <data key="assumption.scope">omap4_keypad_probe</data>
+  </edge>
+  <node id="A2566"/>
+  <edge source="A2534" target="A2566">
+   <data key="sourcecode">[!(__CPAchecker_TMP_3 == ((unsigned long)((unsigned short *)0U)))]</data>
+   <data key="startline">349</data>
+   <data key="endline">349</data>
+   <data key="startoffset">208848</data>
+   <data key="endoffset">208924</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <edge source="A2534" target="sink">
+   <data key="sourcecode">[__CPAchecker_TMP_3 == ((unsigned long)((unsigned short *)0U))]</data>
+   <data key="startline">349</data>
+   <data key="endline">349</data>
+   <data key="startoffset">208848</data>
+   <data key="endoffset">208924</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A2566" target="sink">
+   <data key="sourcecode">[error != 0]</data>
+   <data key="startline">356</data>
+   <data key="endline">356</data>
+   <data key="startoffset">209391</data>
+   <data key="endoffset">209400</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <node id="A2616"/>
+  <edge source="A2566" target="A2616">
+   <data key="sourcecode">[!(error != 0)]</data>
+   <data key="startline">356</data>
+   <data key="endline">356</data>
+   <data key="startoffset">209391</data>
+   <data key="endoffset">209400</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A2653"/>
+  <edge source="A2616" target="A2653">
+   <data key="sourcecode">error = ldv_request_threaded_irq_19(keypad_data-&gt;irq, &amp; omap4_keypad_irq_handler,
+                                      &amp; omap4_keypad_irq_thread_fn, 0UL, "omap4-keypad",
+                                      (void *)keypad_data);</data>
+   <data key="startline">361</data>
+   <data key="endline">363</data>
+   <data key="startoffset">209584</data>
+   <data key="endoffset">209804</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">ldv_request_threaded_irq_19</data>
+  </edge>
+  <node id="A2694"/>
+  <edge source="A2653" target="A2694">
+   <data key="sourcecode">ldv_func_ret_type___0 ldv_func_res ;</data>
+   <data key="startline">1172</data>
+   <data key="endline">1172</data>
+   <data key="startoffset">259386</data>
+   <data key="endoffset">259419</data>
+   <data key="assumption">ldv_func_arg4 == (0UL); (*((unsigned long long int *)ldv_func_arg6)) == (27892577372932274768497084600197082800310ULL);</data>
+   <data key="assumption.scope">ldv_request_threaded_irq_19</data>
+  </edge>
+  <node id="A2793"/>
+  <edge source="A2694" target="A2793">
+   <data key="sourcecode">tmp___0 = ldv_undef_int_nonpositive();</data>
+   <data key="startline">1181</data>
+   <data key="endline">1181</data>
+   <data key="startoffset">259676</data>
+   <data key="endoffset">259702</data>
+   <data key="enterFunction">ldv_undef_int_nonpositive</data>
+  </edge>
+  <node id="A2865"/>
+  <edge source="A2793" target="A2865">
+   <data key="sourcecode">tmp = ldv_undef_int();</data>
+   <data key="startline">35</data>
+   <data key="endline">35</data>
+   <data key="startoffset">277034</data>
+   <data key="endoffset">277048</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/thread.h</data>
+   <data key="enterFunction">ldv_undef_int</data>
+  </edge>
+  <node id="A2933"/>
+  <edge source="A2865" target="A2933">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">46</data>
+   <data key="endline">46</data>
+   <data key="startoffset">275816</data>
+   <data key="endoffset">275826</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/nondet.c</data>
+   <data key="returnFrom">ldv_undef_int</data>
+  </edge>
+  <node id="A3004"/>
+  <edge source="A2933" target="A3004">
+   <data key="sourcecode">return (ret);</data>
+   <data key="startline">43</data>
+   <data key="endline">43</data>
+   <data key="startoffset">277128</data>
+   <data key="endoffset">277138</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/thread.h</data>
+   <data key="returnFrom">ldv_undef_int_nonpositive</data>
+  </edge>
+  <node id="A3041"/>
+  <edge source="A3004" target="A3041">
+   <data key="sourcecode">return (tmp___0);</data>
+   <data key="startline">1184</data>
+   <data key="endline">1184</data>
+   <data key="startoffset">259722</data>
+   <data key="endoffset">259736</data>
+   <data key="returnFrom">ldv_request_threaded_irq_19</data>
+  </edge>
+  <node id="A3077"/>
+  <edge source="A3041" target="A3077">
+   <data key="sourcecode">[error != 0]</data>
+   <data key="startline">366</data>
+   <data key="endline">366</data>
+   <data key="startoffset">209827</data>
+   <data key="endoffset">209836</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-true</data>
+  </edge>
+  <edge source="A3041" target="sink">
+   <data key="sourcecode">[!(error != 0)]</data>
+   <data key="startline">366</data>
+   <data key="endline">366</data>
+   <data key="startoffset">209827</data>
+   <data key="endoffset">209836</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="control">condition-false</data>
+  </edge>
+  <node id="A3184"/>
+  <edge source="A3077" target="A3184">
+   <data key="sourcecode">pm_runtime_put_sync(&amp; pdev-&gt;dev);</data>
+   <data key="startline">388</data>
+   <data key="endline">388</data>
+   <data key="startoffset">210817</data>
+   <data key="endoffset">210847</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">pm_runtime_put_sync</data>
+  </edge>
+  <node id="A3281"/>
+  <edge source="A3184" target="A3281">
+   <data key="sourcecode">return (tmp);</data>
+   <data key="startline">279</data>
+   <data key="endline">279</data>
+   <data key="startoffset">196422</data>
+   <data key="endoffset">196432</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/include/linux/pm_runtime.h</data>
+   <data key="returnFrom">pm_runtime_put_sync</data>
+  </edge>
+  <node id="A3433"/>
+  <edge source="A3281" target="A3433">
+   <data key="sourcecode">tmp___5 = resource_size((struct resource  const  *)res);</data>
+   <data key="startline">392</data>
+   <data key="endline">392</data>
+   <data key="startoffset">210982</data>
+   <data key="endoffset">211026</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">resource_size</data>
+  </edge>
+  <node id="A3541"/>
+  <edge source="A3433" target="A3541">
+   <data key="sourcecode">return (((unsigned long long )res-&gt;end - (unsigned long long )res-&gt;start) + 1ULL);</data>
+   <data key="startline">95</data>
+   <data key="endline">95</data>
+   <data key="startoffset">184432</data>
+   <data key="endoffset">184511</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/arch/x86/include/asm/bitops.h</data>
+   <data key="returnFrom">resource_size</data>
+  </edge>
+  <node id="A3639"/>
+  <edge source="A3541" target="A3639">
+   <data key="sourcecode">ldv_kfree_22((void const   *)keypad_data);</data>
+   <data key="startline">398</data>
+   <data key="endline">398</data>
+   <data key="startoffset">211138</data>
+   <data key="endoffset">211177</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="enterFunction">ldv_kfree_22</data>
+  </edge>
+  <node id="A3684"/>
+  <edge source="A3639" target="A3684">
+   <data key="sourcecode">ldv_free((void *)ldv_func_arg1);</data>
+   <data key="startline">1205</data>
+   <data key="endline">1205</data>
+   <data key="startoffset">260864</data>
+   <data key="endoffset">260893</data>
+   <data key="assumption">(*((unsigned long long int *)ldv_func_arg1)) == (30668213150180791232916723053873150467163444287107742ULL);</data>
+   <data key="assumption.scope">ldv_kfree_22</data>
+   <data key="enterFunction">ldv_free</data>
+  </edge>
+  <node id="A3757"/>
+  <edge source="A3684" target="A3757">
+   <data key="sourcecode">return;</data>
+   <data key="startline">74</data>
+   <data key="endline">74</data>
+   <data key="startoffset">271689</data>
+   <data key="endoffset">271695</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/job/root/verifier/memory.c</data>
+   <data key="returnFrom">ldv_free</data>
+  </edge>
+  <node id="A3807"/>
+  <edge source="A3757" target="A3807">
+   <data key="sourcecode">return;</data>
+   <data key="startline">1205</data>
+   <data key="endline">1205</data>
+   <data key="startoffset">260914</data>
+   <data key="endoffset">260920</data>
+   <data key="returnFrom">ldv_kfree_22</data>
+  </edge>
+  <node id="A3858">
+   <data key="violation">true</data>
+   <data key="violatedProperty">valid-memtrack</data>
+  </node>
+  <edge source="A3807" target="A3858">
+   <data key="sourcecode">return (error);</data>
+   <data key="startline">402</data>
+   <data key="endline">402</data>
+   <data key="startoffset">211258</data>
+   <data key="endoffset">211270</data>
+   <data key="originfile">/home/debian/klever-work/native-scheduler-work-dir/scheduler/jobs/1b8c3a300cb8950b0dcf90b528381400/klever-core-work-dir/lkbce/drivers/input/keyboard/omap4-keypad.c</data>
+   <data key="returnFrom">omap4_keypad_probe</data>
+  </edge>
+ </graph>
+</graphml>
