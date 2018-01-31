@@ -62,6 +62,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -89,6 +90,10 @@ public class PreRunner extends ASTVisitor {
 	 */
 	private final LinkedScopedHashMap<String, IASTNode> mTemporarySymbolTable;
 	/**
+	 * The symbol table used for renaming IDs according to multiparse rules.
+	 */
+	private final FlatSymbolTable mSymTab;
+	/**
 	 * Whether or not the memory model is required.
 	 */
 	private boolean mIsMMRequired;
@@ -107,12 +112,13 @@ public class PreRunner extends ASTVisitor {
 	/**
 	 * Constructor.
 	 */
-	public PreRunner(final Map<String, IASTNode> functionTable) {
+	public PreRunner(final FlatSymbolTable symTab, final Map<String, IASTNode> functionTable) {
 		shouldVisitDeclarations = true;
 		shouldVisitParameterDeclarations = true;
 		shouldVisitExpressions = true;
 		shouldVisitStatements = true;
 		shouldVisitDeclSpecifiers = true;
+		mSymTab = symTab;
 		mIsMMRequired = false;
 		mTemporarySymbolTable = new LinkedScopedHashMap<>();
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -202,9 +208,11 @@ public class PreRunner extends ASTVisitor {
 					final IASTNode function = mFunctionTable.get(id);
 					if (function != null && mTemporarySymbolTable.get(id) == null) { // id is the name of a function and
 																						// not shadowed here
-						updateFunctionPointers(id, function);
+						// Rename the ID according to multiparse rules
+						final String rslvId = mSymTab.applyMultiparseRenaming(function.getContainingFilename(), id);
+						updateFunctionPointers(rslvId, function);
 						// functionPointers.put(id, function);
-						updateFunctionToIndex(id);
+						updateFunctionToIndex(rslvId);
 					} else {
 						mVariablesOnHeap.add(get(id, loc));
 					}
@@ -223,9 +231,10 @@ public class PreRunner extends ASTVisitor {
 					&& !(expression.getParent() instanceof IASTFunctionCallExpression
 							&& ((IASTFunctionCallExpression) expression.getParent()).getFunctionNameExpression()
 									.equals(expression))) {
-				updateFunctionPointers(id, function);
+				final String rslvId = mSymTab.applyMultiparseRenaming(function.getContainingFilename(), id);
+				updateFunctionPointers(rslvId, function);
 				// functionPointers.put(id, function);
-				updateFunctionToIndex(id);
+				updateFunctionToIndex(rslvId);
 			}
 
 			final IASTNode d = mTemporarySymbolTable.get(id);

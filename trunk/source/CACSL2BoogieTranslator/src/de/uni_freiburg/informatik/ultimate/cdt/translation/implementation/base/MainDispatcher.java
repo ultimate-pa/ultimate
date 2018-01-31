@@ -357,7 +357,7 @@ public class MainDispatcher extends Dispatcher {
 		// Build the function table
 		executePreRun(new FunctionTableBuilder(), nodes, ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
 
-		executePreRun(new PreRunner(mFunctionTable), nodes, pr -> {
+		executePreRun(new PreRunner(mFlatTable, mFunctionTable), nodes, pr -> {
 			mVariablesOnHeap.addAll(pr.getVarsForHeap());
 			mFunctionToIndex = pr.getFunctionToIndex();
 			mThereAreDereferencedPointerVariables = pr.isMMRequired();
