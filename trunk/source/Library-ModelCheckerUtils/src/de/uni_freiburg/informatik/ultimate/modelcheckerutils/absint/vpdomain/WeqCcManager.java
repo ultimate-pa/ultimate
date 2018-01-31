@@ -83,10 +83,24 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	final boolean mDebug;
 	final boolean mSkipSolverChecks = true;
 
+	private final Set<NODE> mNonTheoryLiteralNodes;
+
+	/**
+	 *
+	 * @param logger
+	 * @param weqCcComparator
+	 * @param ccComparator
+	 * @param mgdScript
+	 * @param nodeAndFunctionFactory
+	 * @param settings
+	 * @param debugMode
+	 * @param nonTheoryLiteralNodes
+	 * 			must be added to each state upon creation
+	 */
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
 			final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory, final WeqSettings settings,
-			final boolean debugMode) {
+			final boolean debugMode, final Set<NODE> nonTheoryLiteralNodes) {
 		mCcManager = new CcManager<>(logger, ccComparator);
 		mMgdScript = mgdScript;
 		mLogger = logger;
@@ -97,6 +111,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mWeqCcComparator = weqCcComparator;
 
 		mTautologicalWeqCc = new WeqCongruenceClosure<>(this);
+		nonTheoryLiteralNodes.forEach(mTautologicalWeqCc::addElementRec);
 		mTautologicalWeqCc.freeze();
 
 		mInconsistentWeqCc = new WeqCongruenceClosure<>(true);
@@ -105,11 +120,15 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mWeqVarsToWeqPrimedVars = new BidirectionalMap<>();
 
 		mNodeAndFunctionFactory = nodeAndFunctionFactory;
+
+		mNonTheoryLiteralNodes = nonTheoryLiteralNodes;
 	}
 
 	public WeqCongruenceClosure<NODE> getEmptyWeqCc(final boolean modifiable) {
 		if (modifiable) {
-			return new WeqCongruenceClosure<>(this);
+			final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(this);
+			mNonTheoryLiteralNodes.forEach(n -> mTautologicalWeqCc.addElement(n, false));
+			return result;
 		} else {
 			return mTautologicalWeqCc;
 		}
@@ -973,6 +992,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final CongruenceClosure<NODE> ccUnfrozen = mCcManager.unfreezeIfNecessary(cc);
 		addAllElementsCc(ccUnfrozen, weqGraph.getAppearingNonWeqVarNodes(), null, true);
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(ccUnfrozen, weqGraph, this);
+
+		// just to be safe..n
+		mNonTheoryLiteralNodes.forEach(n -> result.addElement(n, false));
 
 		if (!modifiable) {
 			result.freeze();

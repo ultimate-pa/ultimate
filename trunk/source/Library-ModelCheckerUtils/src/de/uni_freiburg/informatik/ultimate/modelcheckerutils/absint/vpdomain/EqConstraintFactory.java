@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosureComparator;
@@ -85,13 +86,18 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, Term> eqNodeAndFunctionFactory,
 			final IUltimateServiceProvider services,  final ManagedScript mgdScript,
-			final WeqSettings settings, final boolean debugMode) {
+			final WeqSettings settings, final boolean debugMode, final Set<IProgramConst> nonTheoryLiterals) {
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
 		mMgdScript = mgdScript;
 
+		final Set<NODE> nonTheoryLiteralNodes =
+				nonTheoryLiterals.stream()
+				.map(pc -> eqNodeAndFunctionFactory.getOrConstructNode(pc.getTerm())).collect(Collectors.toSet());
+
 		mWeqCcManager = new WeqCcManager<>(mLogger, new WeqCongruenceClosureComparator<NODE>(),
-				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory, settings, debugMode);
+				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory, settings, debugMode,
+				nonTheoryLiteralNodes);
 
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
@@ -111,7 +117,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			mBenchmark = null;
 		}
-
 
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 

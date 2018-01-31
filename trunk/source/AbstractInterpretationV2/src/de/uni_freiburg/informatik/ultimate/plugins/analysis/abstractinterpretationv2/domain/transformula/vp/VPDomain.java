@@ -109,7 +109,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals,
 				trackedArrays);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript,
-				prepareWeqSettings(ups), mDebugMode);
+				prepareWeqSettings(ups), mDebugMode, nonTheoryLiterals);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
 				mManagedScript);
 
