@@ -844,6 +844,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		assert hasElement(elem1) && hasElement(elem2);
 		assert !isInconsistent() : "catch this outside!";
 
+		if (!elem1.hasSameTypeAs(elem2)) {
+			return EqualityStatus.NOT_EQUAL;
+		}
+
 		final ELEM rep1 = getRepresentativeElement(elem1);
 		final ELEM rep2 = getRepresentativeElement(elem2);
 
