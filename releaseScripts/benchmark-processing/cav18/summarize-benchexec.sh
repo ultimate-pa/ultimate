@@ -30,7 +30,9 @@ done
 if [ -z ${DIR+x} ]; then echo "No directory specified" && exit 1; fi
 if [ -z ${NAME+x} ]; then echo "No name specified" && exit 1; fi
 
-DBBASENAME="$NAME-sqlcsv.db"
+
+
+DBBASENAME="$NAME""_sqlcsv.db"
 TABLE="$NAME" 
 DB="sqlite:///$DBBASENAME"
 DATE=`date +"%F %T"`

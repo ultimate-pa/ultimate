@@ -171,6 +171,7 @@ mPlotdefinitions = [
     ('AnalysisTime' , lambda r : toDiffTimeInNanos(r, 'OverallTime','DUMP_TIME'), 'semilogyaxis', 'Samples', 'log(s)'),
     ('ReusedAutomata' , lambda r : toInt(r, 'REUSE_STATISTICS_AUTOMATA_FROM_FILE'), 'axis', 'Samples', 'Automata'),
     ('PUTime' , lambda r : timeInNanosToSeconds(r, 'REUSE_STATISTICS_REUSE_PREDICATE_UNIFIER_Time'), 'semilogyaxis', 'Samples', 'log(s)'),
+    ('DroppedAutomata' , lambda r : toInt(r, 'REUSE_STATISTICS_DROPPED_AUTOMATA'), 'axis', 'Samples', 'dropped'),
     
     
 #    ('AccLoops' , lambda r : toInt(r, 'AcceleratedLoops'), 'axis', 'Samples', 'Iterations'),
