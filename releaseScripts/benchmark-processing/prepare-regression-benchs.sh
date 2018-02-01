@@ -23,16 +23,22 @@ if csvcut -c Settings pcsv.csv | grep -q "$3"; test ${PIPESTATUS[0]} -eq 0; then
 fi
 
 # remove crashed inputs 
-# find all individual files 
+# first, remove all unknowns 
+csvgrep -i -c "Category" -m "UNKNOWN (" pcsv.csv | csvgrep -i -c "Category" -m "TIMEOUT (" > cpcsv.csv 
+count=$(wc -l < pcsv.csv)
+count=$(echo "1 + $count - "`wc -l < cpcsv.csv` | bc )
+mv cpcsv.csv pcsv.csv 
+
+
+# then, remove all files for which not every setting produced a csv 
 files=($(grep -oP "\\\[[:digit:]]+\..*?\.i(,|;)" pcsv.csv | sort | uniq))
-count=0
+
 for file in "${files[@]}"; do 
     filename=${file:1:${#file}-2}
     occurences=`grep -cP "${filename}(,|;)" pcsv.csv`
     if ((occurences % "$2")) ; then
         count=$((count+occurences))
         sed -i "/$(echo $file | sed -e 's/\\/\\\\/g; s/\//\\\//g; s/&/\\\&/g')/d" pcsv.csv
-        echo "Removing ${filename}"
     fi
 done 
 echo "removed $count benchmark runs"

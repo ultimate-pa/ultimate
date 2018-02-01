@@ -19,7 +19,7 @@ header="Driver,Spec,Tasks,"
 for setting in "${settings[@]}"; do 
     header+="Overall-$setting,Analysis-$setting,"
 done
-header+="Speedup Overall,Speedup Analysis"
+header+="Speedup Overall,Speedup Analysis,Speedup Dirk,IsSame"
 echo "$header" > "$outcsv"
         
 function makeFile(){
@@ -37,7 +37,8 @@ function makeFile(){
     tasks=$(echo "scale=0; ($lcount / ${#settings[@]}) + 1" | bc -lq)
     echo "$out has $lcount rows, $tasks tasks"
     lcount="$tasks"
-    
+    #shorten driver names
+    folder=$(echo "$folder" | sed "s/--/#/g" | sed "s/.*#\(.*\)/\1/g" | sed "s/\.ko//g")
     row="$folder,$spec,$lcount,"
     for setting in "${settings[@]}"; do 
         overall=$(csvgrep -c Settings -m "$setting" "$out" | csvcut -c OverallTime | csvstat --sum | sed 's/,//g')
@@ -60,7 +61,24 @@ function makeFile(){
     done
     speedupana=$(echo "scale=2;$defaultana / $lazyana" | bc -lq)
     speedupoverall=$(echo "scale=2;$defaultoverall / $lazyoverall" | bc -lq)
-    row+="$speedupoverall,$speedupana"
+    row+="$speedupoverall,$speedupana,"
+    
+    # get dirk speedup from pred.html 
+    #speed=`grep "$folder" pred.html | grep "$spec" | grep -oP '...........................................................\/TR' | grep -oP ">.*</TD> <TD a" | grep -oP "\d.*</" | grep -oP ".* "`
+    tableline=`grep "$folder" pred.html | grep "$spec" | sed "s/<\/TD>/,/g" | sed "s/<TR>//g" | sed "s/<TD>//g" | sed "s/<TD align=\"right\">//g"`
+    task=`echo "$tableline" | cut -d "," -f 3 | tr -d [:blank:]`
+    speed=`echo "$tableline" | cut -d "," -f 14 | tr -d [:blank:]`
+    if [ "$speed" == "" ]; then
+        row+="?,?"
+    else
+        row+="$speed,"
+        if [ "$task" == "$lcount" ]; then 
+            row+="x"
+        else
+            row+="$task"
+        fi
+    fi
+    
     echo "$row" >> "$outcsv"
     rm "$out"
 }
@@ -73,10 +91,11 @@ for folder in "${folders[@]}"; do
     let i=$i+1 
 done 
 
-# sort by analysis speedup and shorten driver names
-csvsort -r -c "Speedup Analysis" "$outcsv" | sed "s/--/#/g" | sed "s/.*#\(.*\)/\1/g" | sed "s/\.ko//g" > "tmp-$outcsv"
+# sort by analysis speedup and 
+csvsort -r -c "Speedup Analysis" "$outcsv" > "tmp-$outcsv"
+# rename settings 
 sed -i "s/-svcomp-Reach-64bit-Automizer_Default_EagerReuse_DumpAts.epf/Eager/g" "tmp-$outcsv"
 sed -i "s/-svcomp-Reach-64bit-Automizer_Default.epf/Default/g" "tmp-$outcsv"
 sed -i "s/-svcomp-Reach-64bit-Automizer_Default_LazyReuse_DumpAts.epf/Lazy/g" "tmp-$outcsv"
-csvcut -c 1,2,3,6,7,4,5,8,9,10,11 "tmp-$outcsv" > "$outcsv"
+csvcut -c 1,2,3,6,7,4,5,8,9,10,11,12,13 "tmp-$outcsv" > "$outcsv"
 rm "tmp-$outcsv"
