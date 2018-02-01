@@ -739,7 +739,7 @@ public class Interpolator extends NonRecursive {
 						at.add(Rational.ONE, info.getAPart(part));
 						at.add(Rational.MONE, auxMaps[part].get(info.mMixedVar));
 					} else {
-						assert !at.isConstant();
+
 						at.add(Rational.ONE, lv);
 						at.add(bound.negate());
 					}
@@ -1438,7 +1438,7 @@ public class Interpolator extends NonRecursive {
 				}
 				newF = mTheory.or(newF, mTheory.and(F1, F2));
 				sPlusOffset = sPlusOffset.add(theC.negate());
-				offset = offset.add(c1c2);
+				offset = offset.add(Rational.ONE);
 			}
 			final LATerm la3 = new LATerm(c1s2c2s1, newK, newF);
 			return la3;
