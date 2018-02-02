@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,29 +56,30 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Relation
 /**
  * This class implements the possibility to partially (and in different order) annotate and assert the statements of a
  * trace in order to get better interpolants.
- * 
+ *
  * Following heuristics are currently implemented: 1. Heuristic ********* General idea: First, assert all statements
  * which don't occur inside of a loop. Then, check for satisfiability. If the result of the satisfiability check is not
  * unsatisfiable, then assert the rest of the statements, and return the result of the unsatisfiability check.
  *********
  * 2. Heuristic ********* General idea: Assert statements in incremental order by their depth, and check after each step
  * for satisfiability. E.g. first assert all statements with depth 0, then assert all statements at depth 1, and so on.
- * 
+ *
  ********* 3. Heuristic ********* General idea: Assert statements in decremental order by their depth, and check after each step
  * for satisfiability. E.g. first assert all statements with depth max_depth, then assert all statements of depth
  * max_depth - 1, and so on.
- * 
+ *
  ********* 4. Heuristic ********* The 4.th heuristic is a mix-up of the 2nd the 3rd heuristic.
- * 
+ *
  ******** 5. Heuristic ************ General idea: Assert statements that with small constants first. Then, check for
  * satisfiability. If the result of the satisfiability check is not unsatisfiable, then assert the rest of the
  * statements, and return the result of the unsatisfiability check.
- * 
+ *
  * @author musab@informatik.uni-freiburg.de
  */
 public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserter {
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
+	private int mCheckSat;
 
 	public AnnotateAndAsserterWithStmtOrderPrioritization(final ManagedScript mgdScriptTc,
 			final NestedFormulas<Term, Term> nestedSSA, final AnnotateAndAssertCodeBlocks aaacb,
@@ -86,6 +87,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			final IUltimateServiceProvider services) {
 		super(mgdScriptTc, nestedSSA, aaacb, tcbg, services);
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
+		mCheckSat = 0;
 	}
 
 	/**
@@ -159,7 +161,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	}
 
 	/**
-	 * 
+	 *
 	 * Partition the statements of the given trace according to their depth.
 	 */
 	private <LOC> Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(
@@ -174,6 +176,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
+		assert mCheckSat == 0 : "You should not call this method twice";
 		final List<IcfgLocation> pps = TraceCheckUtils.getSequenceOfProgramPoints(mTrace);
 		final RelationWithTreeSet<IcfgLocation, Integer> rwt =
 				computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
@@ -197,8 +200,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			// First, annotate and assert the statements, which doesn't occur within a loop
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(mTrace, callPositions, pendingReturnPositions,
 					stmtsOutsideOfLoop);
-			
-			mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
+
+			countCheckSat();
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
 			mTcbg.reportnewCheckSat();
@@ -211,7 +214,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 						stmtsWithinLoop);
 				assert callPositions.containsAll(mTrace.getCallPositions());
 				assert mTrace.getCallPositions().containsAll(callPositions);
-				mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
+				countCheckSat();
 				mSatisfiable = mMgdScriptTc.getScript().checkSat();
 				// Report benchmarks
 				mTcbg.reportnewCheckSat();
@@ -236,7 +239,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		} else {
 			throw new AssertionError("unknown heuristic " + mAssertCodeBlocksOrder);
 		}
+		mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued " + mCheckSat + " check-sat command(s)");
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
+	}
+
+	private void countCheckSat() {
+		mCheckSat++;
 	}
 
 	/**
@@ -251,7 +259,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		for (final Integer key : keysInSortedOrder) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
 					depth2Statements.get(key));
-			mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
+			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
 			mTcbg.reportnewCheckSat();
@@ -275,7 +283,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		for (final Integer key : keysInDescendingOrder) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
 					depth2Statements.get(key));
-			mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
+			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
 			mTcbg.reportnewCheckSat();
@@ -307,7 +315,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			removeFirst = !removeFirst;
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions,
 					depth2Statements.get(currentDepth));
-			mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued a check-sat command");
+			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
 			mTcbg.reportnewCheckSat();
