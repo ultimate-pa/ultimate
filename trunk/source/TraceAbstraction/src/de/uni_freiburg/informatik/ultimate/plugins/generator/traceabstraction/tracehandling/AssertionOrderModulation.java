@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AssertionOrderModulation<LETTER> {
 
-	private static final AssertCodeBlockOrder[] ASSERTION_ORDERS = {
+	private static final AssertCodeBlockOrder[] DEFAULT_ORDER = {
 
 			AssertCodeBlockOrder.NOT_INCREMENTALLY,
 
@@ -56,6 +56,7 @@ public class AssertionOrderModulation<LETTER> {
 
 			AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE, };
 
+	private final AssertCodeBlockOrder[] mOrder;
 	private final ILogger mLogger;
 	private final PathProgramCache<LETTER> mPathProgramCache;
 
@@ -67,9 +68,16 @@ public class AssertionOrderModulation<LETTER> {
 	 * @param logger
 	 */
 	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger) {
+		this(pathProgramCache, logger, DEFAULT_ORDER);
+	}
+
+	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger,
+			final AssertCodeBlockOrder... order) {
+		assert order != null && order.length > 0 : "Order is needed";
 		mPathProgramCache = pathProgramCache;
 		mLogger = logger;
 		mCurrentIndex = 0;
+		mOrder = order;
 	}
 
 	/**
@@ -86,11 +94,11 @@ public class AssertionOrderModulation<LETTER> {
 
 		final int count = mPathProgramCache.getPathProgramCount(counterexample);
 
-		final AssertCodeBlockOrder oldOrder = ASSERTION_ORDERS[mCurrentIndex];
+		final AssertCodeBlockOrder oldOrder = mOrder[mCurrentIndex];
 		if (count == 0) {
 			mCurrentIndex = 0;
 		} else {
-			mCurrentIndex = (count - 1) % ASSERTION_ORDERS.length;
+			mCurrentIndex = (count - 1) % mOrder.length;
 		}
 
 		final AssertCodeBlockOrder newOrder = getOrder(interpolationTechnique);
@@ -121,7 +129,7 @@ public class AssertionOrderModulation<LETTER> {
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 		case PathInvariants:
-			return ASSERTION_ORDERS[mCurrentIndex];
+			return mOrder[mCurrentIndex];
 		default:
 			throw new IllegalArgumentException("Unknown interpolation technique: " + interpolationTechnique);
 		}
