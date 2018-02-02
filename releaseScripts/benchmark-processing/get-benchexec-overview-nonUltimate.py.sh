@@ -21,7 +21,6 @@ known_exceptions=(
 "UnsupportedSyntaxResult"
 "TypeErrorResult"
 "SyntaxErrorResult"
-"Unable to prove that all allocated memory was freed"
 "overapproximation of large string literal"
 "TerminationAnalysisResult: Unable to decide termination"
 "An exception occured during the execution of Ultimate: The toolchain threw an exception"
@@ -29,6 +28,7 @@ known_exceptions=(
 "overapproximation of overflow check for bitwise shift operation"
 "overapproximation of bitwiseAnd"
 "overapproximation of shiftLeft"
+"overapproximation of memtrack"
 "There is insufficient memory for the Java Runtime Environment to continue"
 "ExceptionOrErrorResult"
 )
@@ -219,11 +219,11 @@ function printResults(){
     printArrayCount unknown "unknowns"
     printArrayContent unknown
     
- #   echo ""
- #   echo "Indefinite results"
- #   for i in ${no_result[@]}; do
- #       echo "$i"
- #   done 
+    echo ""
+    echo "Indefinite results"
+    for i in ${no_result[@]}; do
+        echo "$i"
+    done 
 }
 
 function getUnhandledResults(){
