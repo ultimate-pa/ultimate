@@ -16,9 +16,9 @@ Christian Schilling (schillic@informatik.uni-freiburg.de)
 This archive also contains binaries for different theorem provers:
  * Z3 (https://github.com/Z3Prover/z3) 
    - Linux
-     master 4520fafa
+     z3-4.6.0-master-54ba2517 (2018-02-02)
    - Windows
-     master 450f3c9b459d128135abb5bbd4fa0508fe26bfae (13.01.2018) 
+     master 450f3c9b459d128135abb5bbd4fa0508fe26bfae (2018-01-13) 
  * CVC4 (http://cvc4.cs.nyu.edu/)
    04-Aug-2016 05:31
  * MathSAT5 (http://mathsat.fbk.eu)  
