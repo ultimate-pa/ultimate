@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="90" hardtimelimit="112" cpuCores="4">
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="120" hardtimelimit="150" cpuCores="4">
 
     <option name="--generate-csv" />
     <option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
 
     <rundefinition name="Camel">
         <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-        <option name="-s">../../../trunk/examples/settings/cav18-smtinterpol/svcomp-DerefFreeMemtrack-32bit-Automizer_Camel.epf</option>
+        <option name="-s">../../../trunk/examples/settings/cade18-smtinterpol/svcomp-DerefFreeMemtrack-32bit-Automizer_Camel.epf</option>
     </rundefinition>
 
-    <rundefinition name="SmtInterpol">
+    <rundefinition name="SmtInterpolCraig">
         <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-        <option name="-s">../../../trunk/examples/settings/cav18-smtinterpol/svcomp-DerefFreeMemtrack-32bit-Automizer_SmtInterpol_Array.epf</option>
+        <option name="-s">../../../trunk/examples/settings/cade18-smtinterpol/svcomp-DerefFreeMemtrack-32bit-Automizer_SmtInterpol_Array.epf</option>
     </rundefinition>    
 
-    <rundefinition name="SmtInterpol-NoArray">
+    <rundefinition name="SmtInterpolNoArray">
         <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-        <option name="-s">../../../trunk/examples/settings/cav18-smtinterpol/svcomp-DerefFreeMemtrack-32bit-Automizer_SmtInterpol_NoArray.epf</option>
+        <option name="-s">../../../trunk/examples/settings/cade18-smtinterpol/svcomp-DerefFreeMemtrack-32bit-Automizer_SmtInterpol_NoArray.epf</option>
     </rundefinition>
     
     <rundefinition name="z3">
         <option name="-tc">../../../trunk/examples/toolchains/AutomizerC.xml</option>
-        <option name="-s">../../../trunk/examples/settings/cav18-smtinterpol/svcomp-DerefFreeMemtrack-32bit-Automizer_z3.epf</option>
+        <option name="-s">../../../trunk/examples/settings/cade18-smtinterpol/svcomp-DerefFreeMemtrack-32bit-Automizer_z3.epf</option>
     </rundefinition>
     
     <tasks name="32bitMem">

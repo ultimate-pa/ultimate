@@ -82,6 +82,10 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		 */
 		SMTINTERPOL_FP,
 		/**
+		 * SMTInterpol with tree interpolation and disabled array interpolation (it will crash).
+		 */
+		SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY,
+		/**
 		 * Z3 with forward and backward predicates.
 		 */
 		Z3_FPBP,
@@ -307,6 +311,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
 		case SMTINTERPOL_TREE_INTERPOLANTS:
+		case SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY:
 			interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
 			break;
 		case Z3_NESTED_INTERPOLANTS:
@@ -343,11 +348,14 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		switch (mode) {
 		case SMTINTERPOL_TREE_INTERPOLANTS:
 		case SMTINTERPOL_FP:
+		case SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY:
 			final long timeout = useTimeout ? RefinementStrategyUtils.TIMEOUT_SMTINTERPOL
 					: RefinementStrategyUtils.TIMEOUT_NONE_SMTINTERPOL;
 			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
-			solverMode = SolverMode.Internal_SMTInterpol;
+			solverMode = mode == Track.SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY
+					? SolverMode.Internal_SMTInterpol_NoArrayInterpol
+					: SolverMode.Internal_SMTInterpol;
 			logicForExternalSolver = null;
 			break;
 		case Z3_NESTED_INTERPOLANTS:
