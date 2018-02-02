@@ -56,6 +56,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
 			"Check for the main procedure if all allocated memory was freed";
 	public static final String LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE = "SV-COMP memtrack compatibility mode";
+	public static final String DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE = "Report UNKNOWN instead of UNSAFE if not all allocated memory was freed at the end of the main procedure. Rationale: at the SV-COMP we have to check if the program lost track of allocated memory. If this is set to false we are unsound (at SV-COMP) in cases where not all memory is freed but pointers to that memory are live at the end of the main procedure.";
 	public static final String LABEL_MEMORY_MODEL = "Memory model";
 	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
 	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
@@ -143,7 +144,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
+						DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_ALLOCATION_PURITY, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
 						PreferenceType.Combo, MemoryModel.values()),
