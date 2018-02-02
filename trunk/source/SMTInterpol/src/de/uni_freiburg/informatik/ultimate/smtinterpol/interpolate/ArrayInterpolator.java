@@ -996,9 +996,11 @@ public class ArrayInterpolator {
 				mHead.closeAPath(mTail, boundaryHeadTerm, headOcc);
 				mHead.openAPath(mTail, boundaryHeadTerm, headOcc);
 				mHead.closeAPath(mTail, boundaryHeadTerm, mDiseqInfo);
+				mHead.openAPath(mTail, boundaryHeadTerm, mDiseqInfo);
 				mTail.closeAPath(mHead, boundaryTailTerm, tailOcc);
 				mTail.openAPath(mHead, boundaryTailTerm, tailOcc);
 				mTail.closeAPath(mHead, boundaryTailTerm, mDiseqInfo);
+				mTail.openAPath(mHead, boundaryTailTerm, mDiseqInfo);
 
 				if (mLemmaInfo.getLemmaType().equals(":read-over-weakeq")) {
 					if (mIndexEquality != null) {
