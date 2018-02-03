@@ -411,7 +411,7 @@ public class SolverBuilder {
 			result.setLogic(logicForExternalSolver);
 			// add array-ext function
 			final Sort indexSort;
-			if (logicForExternalSolver.endsWith("A") || logicForExternalSolver.equalsIgnoreCase("all")) {
+			if (logicForExternalSolver.endsWith("A")) {
 				indexSort = SmtSortUtils.getIntSort(result);
 				// Sort boolSort = SmtSortUtils.getBoolSort(result);
 				// Sort boolArraySort = SmtSortUtils.getArraySort(result, indexSort, boolSort);
