@@ -18,6 +18,7 @@ no_result=()
 
 known_exceptions=( 
 "we do not support pthread"
+"unable to decide satisfiability of path constraint"
 "UnsupportedSyntaxResult"
 "TypeErrorResult"
 "SyntaxErrorResult"
@@ -57,10 +58,8 @@ function printUsage(){
 function saveUltimateCall(){
     local -n array="$1"
     local line="$2"
-    calls=($(grep -oP "java.*$" "$line"))
-    for call in ${calls[@]}; do 
-        array+=("$call")
-    done 
+    calls=`grep -oP "java.*-jar.*$" "$line"`
+    array+=("$calls")
 }
 
 function scanLog(){
@@ -90,27 +89,27 @@ function scanLog(){
         fi
         exc=`echo "$exc" | sed 's/\\$//g'`
         exceptions["$exc"]=$((exceptions["$exc"]+1))
-        saveUltimateCall no_result $line
+        saveUltimateCall no_result "$line"
         return
     fi
     for i in "${known_exceptions[@]}"; do 
         if echo "$file_content" | grep -q "$i"; then
             exceptions["$i"]=$((exceptions["$i"]+1))
-            saveUltimateCall no_result $line
+            saveUltimateCall no_result "$line"
             return
         fi
     done
 
     if echo "$file_content" | grep -qP 'Timeout.*Result'; then
-        exc=`echo "$file_content" | grep -A1 -P 'Timeout.*Result' | grep -vP 'Timeout.*Result'`
+        exc=`echo "$file_content" | grep -A1 -P 'Timeout.*Result' | grep -vP 'Timeout.*Result' | cut -c 1-120`
         timeouts["$exc"]=$((timeouts["$exc"]+1))
-        saveUltimateCall no_result $line
+        saveUltimateCall no_result "$line"
         return
     fi
     for i in "${known_timeouts[@]}"; do 
         if echo "$file_content" | grep -q "$i"; then
             timeouts["$i"]=$((timeouts["$i"]+1))
-            saveUltimateCall no_result $line
+            saveUltimateCall no_result "$line"
             return
         fi
     done
@@ -137,7 +136,7 @@ function scanLog(){
     #grep -oP "\s+\- \w*Result\w*"
     
     unknown["$line"]=$((unknown["$line"]+1))
-    saveUltimateCall no_result $line
+    saveUltimateCall no_result "$line"
     return
 }
 
@@ -149,7 +148,7 @@ function scanLogs(){
     local dir="$1"
     local iname="$2"
     local log_files=($(find "$dir" -type f -iname "$iname"))
-    local count=0
+    count=0
     local content=()
     
     echo "Processing ${#log_files[@]} files..."
@@ -218,11 +217,10 @@ function printResults(){
     echo ""
     printArrayCount unknown "unknowns"
     printArrayContent unknown
-    
     echo ""
-    echo "Indefinite results"
-    for i in ${no_result[@]}; do
-        echo "$i"
+    echo "${#no_result[@]} no safe/unsafe result"
+    for i in "${no_result[@]}"; do 
+        echo "$i" 
     done 
 }
 
