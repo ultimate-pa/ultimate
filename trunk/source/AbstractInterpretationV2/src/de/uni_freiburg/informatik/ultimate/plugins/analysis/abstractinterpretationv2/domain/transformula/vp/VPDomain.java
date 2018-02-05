@@ -78,6 +78,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final IUltimateServiceProvider mServices;
 
 	private final VPDomainBenchmark mBenchmark;
+	private final VPDomainSettings mSettings;
 
 	/**
 	 *
@@ -104,6 +105,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 
+		mSettings = new VPDomainSettings(ups);
 
 
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals,
@@ -111,10 +113,10 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript,
 				prepareWeqSettings(ups), mDebugMode, nonTheoryLiterals);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
-				mManagedScript);
+				mManagedScript, mSettings);
 
 		mPost = new EqPostOperator<>(mServices, mLogger, mCsToolkit, mEqNodeAndFunctionFactory, mEqConstraintFactory,
-				mEqStateFactory);
+				mEqStateFactory, mSettings);
 
 		mBenchmark = new VPDomainBenchmark();
 	}

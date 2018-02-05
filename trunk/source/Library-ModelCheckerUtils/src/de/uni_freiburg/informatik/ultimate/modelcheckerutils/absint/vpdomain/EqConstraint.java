@@ -153,11 +153,21 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 *
 	 * @param node1
 	 * @param node2
+	 * @param addNodesIfNecessary whether the nodes should be added if not present already before posing the query
 	 * @return true iff this constraint implies that node1 and node2 are equal
 	 */
-	public boolean areEqual(final NODE node1, final NODE node2) {
-		if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
-			return false;
+	public boolean areEqual(final NODE node1, final NODE node2, final boolean addNodesIfNecessary) {
+		if (addNodesIfNecessary) {
+			final WeqCongruenceClosure<NODE> unfrozen = getWeqCcWithAddedNodes(node1, node2);
+			/*
+			 * TODO: would it be a good idea to keep the updated weqcc here? that would mean that the eqconstraint is
+			 *  somewhat mutable..
+			 */
+			return unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL;
+		} else {
+			if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
+				return false;
+			}
 		}
 		return mWeqCc.getEqualityStatus(node1, node2) == EqualityStatus.EQUAL;
 	}
@@ -166,13 +176,34 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 *
 	 * @param node1
 	 * @param node2
+	 * @param addNodesIfNecessary whether the nodes should be added if not present already before posing the query
 	 * @return true iff this constraint implies that node1 and node2 are unequal
 	 */
-	public boolean areUnequal(final NODE node1, final NODE node2) {
-		if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
-			return false;
+	public boolean areUnequal(final NODE node1, final NODE node2, final boolean addNodesIfNecessary) {
+		if (addNodesIfNecessary) {
+			final WeqCongruenceClosure<NODE> unfrozen = getWeqCcWithAddedNodes(node1, node2);
+			/*
+			 * TODO: would it be a good idea to keep the updated weqcc here? that would mean that the eqconstraint is
+			 *  somewhat mutable..
+			 */
+			return unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
+		} else {
+			if (!mWeqCc.hasElement(node1) || !mWeqCc.hasElement(node2)) {
+				return false;
+			}
 		}
 		return mWeqCc.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
+	}
+
+	private WeqCongruenceClosure<NODE> getWeqCcWithAddedNodes(final NODE node1, final NODE node2) {
+		assert mWeqCc.isFrozen() : "right?..";
+		final WeqCcManager<NODE> manager = mWeqCc.getManager();
+
+		final WeqCongruenceClosure<NODE> unfrozen = manager.unfreeze(mWeqCc);
+		manager.addNode(node1, unfrozen, true, false);
+		manager.addNode(node2, unfrozen, true, false);
+		unfrozen.freeze();
+		return unfrozen;
 	}
 
 	public Term getTerm(final Script script) {

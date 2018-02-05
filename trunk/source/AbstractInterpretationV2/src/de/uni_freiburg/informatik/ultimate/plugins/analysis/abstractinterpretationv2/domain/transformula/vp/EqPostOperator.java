@@ -86,22 +86,27 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final EqStateFactory mEqStateFactory;
 
+	private final VPDomainSettings mSettings;
+
 	public EqPostOperator(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<EqNode> eqConstraintFactory,
-			final EqStateFactory eqStateFactory) {
+			final EqStateFactory eqStateFactory, final VPDomainSettings settings) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mCfgSmtToolkit = csToolkit;
 		mMgdScript = csToolkit.getManagedScript();
 		mEqStateFactory = eqStateFactory;
 
+		mSettings = settings;
+
 		mServices = services;
 		mLogger = logger;
 
 		mPredicateTransformer = new PredicateTransformer<>(mMgdScript, new EqOperationProvider(eqConstraintFactory));
 		mTransFormulaConverter =
-				new TransFormulaConverterCache(mServices, mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory);
+				new TransFormulaConverterCache(mServices, mMgdScript, mEqNodeAndFunctionFactory, mEqConstraintFactory,
+						mSettings);
 
 		mDoubleCheckPredicateTransformer =
 				new PredicateTransformer<>(mMgdScript, new TermDomainOperationProvider(mServices, mMgdScript));
@@ -121,7 +126,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				mPredicateTransformer.strongestPostcondition(oldState.toEqPredicate(), transitionRelation);
 		final List<EqState> result = toEqStates(postConstraint, oldState.getVariables());
 		assert result.stream().allMatch(state -> state.getVariables().containsAll(oldState.getVariables()));
-		if (mDebug) {
+		if (mDebug && mSettings.isCheckPostCorrectness()) {
 			mLogger.debug(postConstraint.getDebugInfo());
 			assert preciseStrongestPostImpliesAbstractPost(oldState, transition,
 					mEqStateFactory.statesToPredicate(result)) : "soundness check failed!";
@@ -193,6 +198,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final EqDisjunctiveConstraint<EqNode> postConstraint = mPredicateTransformer.strongestPostconditionCall(
 					stateBeforeLeaving.toEqPredicate(), localVarAssignments, globalVarAssignments, oldVarAssignments,
 					modifiableGlobalsOfCalledProcedure);
+			// TODO implement SMT solver soundness check (like in other apply method)
 			final List<EqState> result = toEqStates(postConstraint, hierarchicalPrestate.getVariables());
 			return result;
 		} else if (transition instanceof IReturnAction) {
@@ -223,6 +229,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			final EqDisjunctiveConstraint<EqNode> postConstraint = mPredicateTransformer.strongestPostconditionReturn(
 					returnPred, callPred, returnTF, callTF, oldVarAssignments, modifiableGlobals);
 
+			// TODO implement SMT solver soundness check (like in other apply method)
 			final List<EqState> result = toEqStates(postConstraint, hierarchicalPrestate.getVariables());
 			return result;
 		} else {

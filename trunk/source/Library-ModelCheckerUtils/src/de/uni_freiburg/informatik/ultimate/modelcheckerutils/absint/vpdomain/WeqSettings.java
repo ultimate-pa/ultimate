@@ -73,6 +73,12 @@ public class WeqSettings {
 	 */
 	private boolean PRECISE_WEQ_LABEL_COMPARISON = false;
 
+	/**
+	 * Whether before answering an equality query (in EqConstraint and the like, not the low-level ones like
+	 * getEqualityStatus) the nodes should be added
+	 */
+	private final boolean mAddNodesBeforeAnsweringQuery = true;
+
 	public WeqSettings() {
 
 	}
@@ -163,5 +169,9 @@ public class WeqSettings {
 
 	public void setPreciseWeqLabelComparison(final boolean b) {
 		PRECISE_WEQ_LABEL_COMPARISON = b;
+	}
+
+	public boolean isAddNodesBeforeAnsweringQuery() {
+		return mAddNodesBeforeAnsweringQuery;
 	}
 }

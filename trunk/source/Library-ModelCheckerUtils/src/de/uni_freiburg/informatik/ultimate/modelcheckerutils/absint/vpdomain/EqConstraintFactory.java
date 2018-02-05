@@ -368,13 +368,13 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			return inputConstraint;
 		}
 
-		if (inputConstraint.areEqual(node1, node2)) {
+		if (inputConstraint.areEqual(node1, node2, false)) {
 			// the given identifiers are already equal in the originalState
 			debugEnd(BmNames.ADD_EQUALITY);
 			return inputConstraint;
 		}
 
-		if (inputConstraint.areUnequal(node1, node2) && !inplace) {
+		if (inputConstraint.areUnequal(node1, node2, false) && !inplace) {
 			debugEnd(BmNames.ADD_EQUALITY);
 			return getBottomConstraint();
 		}
@@ -402,7 +402,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			return inputConstraint;
 		}
 
-		if (inputConstraint.areUnequal(node1, node2)) {
+		if (inputConstraint.areUnequal(node1, node2, false)) {
 			// the given identifiers are already equal in the input constraint -- nothing to do
 			debugEnd(BmNames.ADD_DISEQUALITY);
 			return inputConstraint;
@@ -411,7 +411,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		/*
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
-		if (inputConstraint.areEqual(node1, node2) && !inplace) {
+		if (inputConstraint.areEqual(node1, node2, false) && !inplace) {
 			debugEnd(BmNames.ADD_DISEQUALITY);
 			return getBottomConstraint();
 		}
@@ -627,5 +627,9 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 //			for ()
 //
 //		}
+	}
+
+	public WeqSettings getWeqSettings() {
+		return mWeqCcManager.getSettings();
 	}
 }

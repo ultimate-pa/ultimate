@@ -67,15 +67,18 @@ public class TransFormulaConverterCache {
 
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
+	private final VPDomainSettings mVPDomainSettings;
 
 	public TransFormulaConverterCache(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
-			final EqConstraintFactory<EqNode> eqConstraintFactory) {
+			final EqConstraintFactory<EqNode> eqConstraintFactory,
+			final VPDomainSettings settings) {
 
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mMgdScript = mgdScript;
 		mServices = services;
+		mVPDomainSettings = settings;
 	}
 
 	public EqTransitionRelation getEqTransitionRelationFromTransformula(final TransFormula tf) {
@@ -92,7 +95,8 @@ public class TransFormulaConverterCache {
 				new FormulaToEqDisjunctiveConstraintConverter(mServices, mMgdScript, mEqConstraintFactory,
 						mEqNodeAndFunctionFactory, tf.getFormula()).getResult();
 
-		assert transformulaImpliesResultConstraint(tf, constraint);
+		assert !mVPDomainSettings.isCheckTransitionAbstractionCorrectness()
+			|| transformulaImpliesResultConstraint(tf, constraint);
 
 		return new EqTransitionRelation(constraint, tf);
 	}

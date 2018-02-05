@@ -205,11 +205,6 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 		}
 
 		private void handleXquality(final Term arg1, final Term arg2, final boolean polarity) {
-
-//			final EqConstraint<EqNode> emptyConstraint = mEqConstraintFactory.getEmptyConstraint();
-//			final EqDisjunctiveConstraint<EqNode> emptyDisjunctiveConstraint = mEqConstraintFactory
-//					.getDisjunctiveConstraint(Collections.singleton(emptyConstraint));
-
 			if (arg1.getSort().isArraySort()) {
 				// we have an array equality
 

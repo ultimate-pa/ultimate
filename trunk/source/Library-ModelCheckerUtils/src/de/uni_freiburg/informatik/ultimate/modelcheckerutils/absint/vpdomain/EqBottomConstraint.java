@@ -85,12 +85,12 @@ public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends Eq
 //	}
 
 	@Override
-	public boolean areEqual(final NODE node1, final NODE node2) {
+	public boolean areEqual(final NODE node1, final NODE node2, final boolean addNodesBeforeAnswering) {
 		return true;
 	}
 
 	@Override
-	public boolean areUnequal(final NODE node1, final NODE node2) {
+	public boolean areUnequal(final NODE node1, final NODE node2, final boolean addNodesBeforeAnswering) {
 		return true;
 	}
 

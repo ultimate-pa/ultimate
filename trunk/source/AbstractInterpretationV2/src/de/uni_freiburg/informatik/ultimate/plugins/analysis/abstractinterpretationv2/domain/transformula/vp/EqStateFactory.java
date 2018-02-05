@@ -59,15 +59,18 @@ public class EqStateFactory {
 	private EqState mTopStateWithEmptyPvocs;
 	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
+	private final VPDomainSettings mVpDomainSettings;
 
 	public EqStateFactory(final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
 			final EqConstraintFactory<EqNode> eqConstraintFactory,
-			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript) {
+			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
+			final VPDomainSettings settings) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
 		mSymbolTable = symbolTable;
 		mMgdScript = mgdScript;
 		mLogger = mEqConstraintFactory.getLogger();
+		mVpDomainSettings = settings;
 	}
 
 	public EqState disjoinAll(final Set<EqState> statesForCurrentEc) {
@@ -156,4 +159,7 @@ public class EqStateFactory {
 		return mLogger;
 	}
 
+	public VPDomainSettings getVpDomainSettings() {
+		return mVpDomainSettings;
+	}
 }

@@ -241,38 +241,38 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 
 
-	public boolean areUnequal(final EqNode node1, final EqNode node2) {
-		return mConstraint.areUnequal(node1, node2);
+	public boolean areUnequal(final EqNode node1, final EqNode node2, final boolean addNodesBeforeAnsweringQuery) {
+		return mConstraint.areUnequal(node1, node2, addNodesBeforeAnsweringQuery);
 	}
 
 	@Override
 	public boolean areEqual(final Term term1, final Term term2) {
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
-		if (node1 == null) {
+		if (node1 == null && mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery()) {
 			mLogger.debug("areEqual request: Term " + term1 + " is not known to this EqState, returning false");
 			return false;
 		}
-		if (node2 == null) {
+		if (node2 == null && mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery()) {
 			mLogger.debug("areEqual request: Term " + term2 + " is not known to this EqState, returning false");
 			return false;
 		}
-		return mConstraint.areEqual(node1, node2);
+		return mConstraint.areEqual(node1, node2, mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery());
 	}
 
 	@Override
 	public boolean areUnequal(final Term term1, final Term term2) {
 		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
-		if (node1 == null) {
+		if (node1 == null && !mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery()) {
 			mLogger.debug("areUnequal request: Term " + term1 + " is not known to this EqState, returning false");
 			return false;
 		}
-		if (node2 == null) {
+		if (node2 == null && !mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery()) {
 			mLogger.debug("areUnequal request: Term " + term2 + " is not known to this EqState, returning false");
 			return false;
 		}
-		return mConstraint.areUnequal(node1, node2);
+		return mConstraint.areUnequal(node1, node2, mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery());
 	}
 
 	@Override
