@@ -92,6 +92,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  */
 public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCegarLoop<LETTER> {
 
+	public static boolean USE_AUTOMATA_WITH_UNMATCHED_PREDICATES = false;
+
 	protected final List<Pair<AbstractInterpolantAutomaton<LETTER>, IPredicateUnifier>> mFloydHoareAutomataFromOtherErrorLocations;
 	protected final List<INestedWordAutomaton<String, String>> mRawFloydHoareAutomataFromFile;
 	protected List<ReuseAutomaton> mFloydHoareAutomataFromFile;
@@ -125,6 +127,9 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		final PredicateParsingWrapperScript ppws = new PredicateParsingWrapperScript(mCsToolkit);
 
 		for (final INestedWordAutomaton<String, String> rawAutomatonFromFile : mRawFloydHoareAutomataFromFile) {
+			if (rawAutomatonFromFile.getFinalStates().isEmpty()) {
+				throw new AssertionError("A Floyd-Hoare automaton without accepting states is useless.");
+			}
 			buildFloydHoareAutomaton(ppws, rawAutomatonFromFile);
 		}
 
@@ -146,19 +151,19 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		// Create empty automaton with same alphabet
 		final NestedWordAutomaton<LETTER, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-				mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+				mPredicateFactory, mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		
-		final boolean implicationInformationProvided = false && (rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton);
+		final boolean implicationInformationProvided = (rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton);
 		final Pair<HashRelation<String, String>, HashRelation<String, String>> impliesExpliesStringRelations;
 		if (implicationInformationProvided) {
-			final IEpsilonNestedWordAutomaton<String, String> rawEpsilon = (IEpsilonNestedWordAutomaton<String, String>) rawAutomatonFromFile;
+			final IEpsilonNestedWordAutomaton<String, String> rawEpsilon =
+					(IEpsilonNestedWordAutomaton<String, String>) rawAutomatonFromFile;
 			impliesExpliesStringRelations = constructImpliesExpliesStrings(rawEpsilon);
 		} else {
 			impliesExpliesStringRelations = null;
 		}
-		
 
 		// Add states
 		final Set<String> statesOfRawAutomaton = rawAutomatonFromFile.getStates();
@@ -173,18 +178,17 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		}
 		final int reusedStates = mapTermToString.size();
 		final int removedStates = statesOfRawAutomaton.size() - reusedStates;
-		
-		
+
 		final HashMap<String, IPredicate> mapStringToState = new HashMap<>();
 		final HashMap<IPredicate, String> mapStateToString = new HashMap<>();
-		{   
-			// add 'true' predicate 
+		{
+			// add 'true' predicate
 			final IPredicate predicate = predicateUnifier.getTruePredicate();
 			final String string = mapTermToString.get(predicate.getFormula());
 			addState(rawAutomatonFromFile, resAutomaton, mapStringToState, mapStateToString, predicate, string);
 		}
-		{   
-			// add 'false' predicate 
+		{
+			// add 'false' predicate
 			final IPredicate predicate = predicateUnifier.getFalsePredicate();
 			final String string = mapTermToString.get(predicate.getFormula());
 			addState(rawAutomatonFromFile, resAutomaton, mapStringToState, mapStateToString, predicate, string);
@@ -201,8 +205,9 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 			final IPredicate predicate;
 			if (implicationInformationProvided) {
-				final Pair<HashMap<IPredicate, Validity>, HashMap<IPredicate, Validity>> impliesExpliesRelations = constructImpliesExpliesRelations(
-						resAutomaton.getStates(), string, mapStateToString, impliesExpliesStringRelations);
+				final Pair<HashMap<IPredicate, Validity>, HashMap<IPredicate, Validity>> impliesExpliesRelations =
+						constructImpliesExpliesRelations(resAutomaton.getStates(), string, mapStateToString,
+								impliesExpliesStringRelations);
 				predicate = predicateUnifier.constructNewPredicate(term, impliesExpliesRelations.getFirst(),
 						impliesExpliesRelations.getSecond());
 			} else {
@@ -212,6 +217,11 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			addState(rawAutomatonFromFile, resAutomaton, mapStringToState, mapStateToString, predicate, string);
 		}
 		final int totalStates = removedStates + reusedStates;
+
+		if (!USE_AUTOMATA_WITH_UNMATCHED_PREDICATES && removedStates > 0) {
+			mReuseStats.addDroppedAutomata(1);
+			return;
+		}
 		mReuseStats.addReusedStates(reusedStates);
 		mReuseStats.addUselessPredicates(removedStates);
 		mReuseStats.addTotalStates(totalStates);
@@ -257,12 +267,11 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 				expliedPredicates.put(existingState, Validity.INVALID);
 			}
 		}
-		return new Pair<HashMap<IPredicate, Validity>, HashMap<IPredicate, Validity>>(impliedPredicates,
-				expliedPredicates);
+		return new Pair<>(impliedPredicates, expliedPredicates);
 	}
 
-	private Pair<HashRelation<String, String>, HashRelation<String, String>> constructImpliesExpliesStrings(
-			final IEpsilonNestedWordAutomaton<String, String> rawEpsilon) {
+	private Pair<HashRelation<String, String>, HashRelation<String, String>>
+			constructImpliesExpliesStrings(final IEpsilonNestedWordAutomaton<String, String> rawEpsilon) {
 		final HashRelation<String, String> implies = new HashRelation<>();
 		final HashRelation<String, String> explies = new HashRelation<>();
 		for (final String stringState : rawEpsilon.getStates()) {
@@ -271,8 +280,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 				explies.addPair(stringSucc, stringState);
 			}
 		}
-		final Pair<HashRelation<String, String>, HashRelation<String, String>> result = new Pair<HashRelation<String, String>, HashRelation<String, String>>(
-				implies, explies);
+		final Pair<HashRelation<String, String>, HashRelation<String, String>> result = new Pair<>(implies, explies);
 		return result;
 	}
 
@@ -583,7 +591,9 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		REUSE_HTC(IStatisticsDataProvider.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 				StatisticsType.KEY_BEFORE_DATA),
 
-		REUSE_TIME(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_TIME),;
+		REUSE_TIME(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_TIME),
+
+		DROPPED_AUTOMATA(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),;
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
@@ -646,6 +656,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		private int mBeforeAcceptanceTransitions;
 		private int mAfterAcceptanceTransitions;
 		private int mUselessPredicates;
+		private int mDroppedAutomata;
 
 		public ReuseStatisticsGenerator() {
 			mPredicateUnifierStats = new StatisticsData();
@@ -666,6 +677,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 			mBeforeAcceptanceTransitions = 0;
 			mAfterAcceptanceTransitions = 0;
 			mUselessPredicates = 0;
+			mDroppedAutomata = 0;
 		}
 
 		public void reportPredicateUnifierStats(final IStatisticsDataProvider stats) {
@@ -726,6 +738,10 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 
 		public void addUselessPredicates(final int value) {
 			mUselessPredicates = mUselessPredicates + value;
+		}
+
+		public void addDroppedAutomata(final int value) {
+			mDroppedAutomata = mDroppedAutomata + value;
 		}
 
 		public void announceNextNonreuseIteration() {
@@ -792,6 +808,8 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 				return mBeforeAcceptanceTransitions;
 			case USELESS_PREDICATES:
 				return mUselessPredicates;
+			case DROPPED_AUTOMATA:
+				return mDroppedAutomata;
 			default:
 				throw new UnsupportedOperationException("Unknown key: " + keyEnum);
 			}

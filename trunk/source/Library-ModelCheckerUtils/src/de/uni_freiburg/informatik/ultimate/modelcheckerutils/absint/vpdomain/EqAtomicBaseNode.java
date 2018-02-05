@@ -46,8 +46,8 @@ public class EqAtomicBaseNode extends EqNode {
 	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
 	public EqAtomicBaseNode(final Term term, final boolean isLiteral,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
-		super(term, eqNodeAndFunctionFactory);
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final boolean isUntrackedArray) {
+		super(term, eqNodeAndFunctionFactory, isUntrackedArray);
 		mIsLiteral = isLiteral;
 	}
 

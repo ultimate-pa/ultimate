@@ -83,10 +83,24 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	final boolean mDebug;
 	final boolean mSkipSolverChecks = true;
 
+	private final Set<NODE> mNonTheoryLiteralNodes;
+
+	/**
+	 *
+	 * @param logger
+	 * @param weqCcComparator
+	 * @param ccComparator
+	 * @param mgdScript
+	 * @param nodeAndFunctionFactory
+	 * @param settings
+	 * @param debugMode
+	 * @param nonTheoryLiteralNodes
+	 * 			must be added to each state upon creation
+	 */
 	public WeqCcManager(final ILogger logger, final IPartialComparator<WeqCongruenceClosure<NODE>> weqCcComparator,
 			final IPartialComparator<CongruenceClosure<NODE>> ccComparator, final ManagedScript mgdScript,
 			final AbstractNodeAndFunctionFactory<NODE, Term> nodeAndFunctionFactory, final WeqSettings settings,
-			final boolean debugMode) {
+			final boolean debugMode, final Set<NODE> nonTheoryLiteralNodes) {
 		mCcManager = new CcManager<>(logger, ccComparator);
 		mMgdScript = mgdScript;
 		mLogger = logger;
@@ -96,20 +110,24 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 		mWeqCcComparator = weqCcComparator;
 
-		mTautologicalWeqCc = new WeqCongruenceClosure<>(this);
-		mTautologicalWeqCc.freeze();
-
-		mInconsistentWeqCc = new WeqCongruenceClosure<>(true);
-
 		mDimensionToWeqVariableNode = new NestedMap2<>();
 		mWeqVarsToWeqPrimedVars = new BidirectionalMap<>();
 
 		mNodeAndFunctionFactory = nodeAndFunctionFactory;
+		mNonTheoryLiteralNodes = nonTheoryLiteralNodes;
+
+		mTautologicalWeqCc = new WeqCongruenceClosure<>(this);
+		nonTheoryLiteralNodes.forEach(mTautologicalWeqCc::addElementRec);
+		mTautologicalWeqCc.freeze();
+
+		mInconsistentWeqCc = new WeqCongruenceClosure<>(true);
 	}
 
 	public WeqCongruenceClosure<NODE> getEmptyWeqCc(final boolean modifiable) {
 		if (modifiable) {
-			return new WeqCongruenceClosure<>(this);
+			final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(this);
+			mNonTheoryLiteralNodes.forEach(n -> result.addElement(n, false));
+			return result;
 		} else {
 			return mTautologicalWeqCc;
 		}
@@ -311,7 +329,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> reportWeakEquivalence(final WeqCongruenceClosure<NODE> origWeqCc,
 			final NODE array1, final NODE array2, final NODE storeIndex, final boolean inplace) {
-		if (mSettings.isDeactivateWeakEquivalences()) {
+		if (mSettings.isDeactivateWeakEquivalences() || array1.isUntrackedArray() || array2.isUntrackedArray()) {
 			assert origWeqCc.getWeakEquivalenceGraph().getNumberOfEdgesStatistic() == 0;
 			return origWeqCc;
 		}
@@ -361,7 +379,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqCongruenceClosure<NODE> makeCopyForWeqMeet(final WeqCongruenceClosure<NODE> originalPa,
 			final boolean modifiable) {
-		if (mSettings.isSanitycheckFineGrained()) {
+		if (!mSettings.omitSanitycheckFineGrained1()) {
 			assert originalPa.sanityCheck();
 		}
 
@@ -379,7 +397,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		if (!modifiable) {
 			result.freeze();
 		}
-		assert result.sanityCheck();
+		assert getSettings().omitSanitycheckFineGrained2() || result.sanityCheck();
 		return result;
 	}
 
@@ -974,6 +992,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		addAllElementsCc(ccUnfrozen, weqGraph.getAppearingNonWeqVarNodes(), null, true);
 		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(ccUnfrozen, weqGraph, this);
 
+		// just to be safe..n
+		mNonTheoryLiteralNodes.forEach(n -> result.addElement(n, false));
+
 		if (!modifiable) {
 			result.freeze();
 		}
@@ -1250,18 +1271,18 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		final boolean implicationHolds = satResult == LBool.UNSAT;
 
 		final boolean result;
-		if (label2.getDisjuncts().size() <= 1) {
-			// special case where our implication check is conceptually precise
-			result = implicationHolds == impCheckResult;
-			assert result;
-		} else {
+//		if (label2.getDisjuncts().size() <= 1) {
+//			// special case where our implication check is conceptually precise
+//			result = implicationHolds == impCheckResult;
+//			assert result;
+//		} else {
 			/*
 			 * in general our implication check approximates: If its says the implication holds, it holds, but it may
 			 *  not detect a valid implication  in all cases.
 			 */
 			result = !impCheckResult || implicationHolds;
 			assert result;
-		}
+//		}
 
 		return result;
 	}
@@ -1481,7 +1502,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return oneImpliesTwo && twoImpliesOne;
 	}
 
-	private Term getNonTheoryLiteralDisequalitiesIfNecessary() {
+	public Term getNonTheoryLiteralDisequalitiesIfNecessary() {
 		if (CcSettings.ADD_NON_THEORYlITERAL_DISEQUALITIES_FOR_CHECKS) {
 			return mNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
 		} else {

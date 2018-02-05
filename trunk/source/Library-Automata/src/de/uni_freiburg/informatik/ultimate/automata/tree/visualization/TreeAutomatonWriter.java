@@ -87,6 +87,7 @@ public class TreeAutomatonWriter<LETTER extends IRankedLetter, STATE> extends Ge
 		printFinalStates(mTreeAutomaton.getFinalStates(), stateMapping);
 		printTransitionTable(mTreeAutomaton.getRules(), alphabetMapping, stateMapping);
 		printAutomatonSuffix();
+		finish();
 	}
 
 	private void printTransitionTable(final Iterable<TreeAutomatonRule<LETTER, STATE>> rules,
@@ -195,25 +196,25 @@ public class TreeAutomatonWriter<LETTER extends IRankedLetter, STATE> extends Ge
 	 * private void printExistentialStates(Set<STATE> set) { mprintWriter.print(TAB + "existentialStates = { "); for
 	 * (STATE state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
 	 *
-	 * private void printUniversalStates(Set<STATE> set) { mprintWriter.print(TAB + "universalStates = { "); for
-	 * (STATE state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
+	 * private void printUniversalStates(Set<STATE> set) { mprintWriter.print(TAB + "universalStates = { "); for (STATE
+	 * state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
 	 *
 	 * private void printInitialStates(Set<STATE> set) { mprintWriter.print(TAB + "initialStates = { "); for (STATE
 	 * state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
 	 *
-	 * private void printFinalStates(Set<STATE> set) { mprintWriter.print(TAB + "finalStates = { "); for (STATE
-	 * state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
+	 * private void printFinalStates(Set<STATE> set) { mprintWriter.print(TAB + "finalStates = { "); for (STATE state :
+	 * set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
 	 *
 	 * private void printInternalTransitions(Map<STATE, Map<LETTER, Set<STATE>>> map) { mprintWriter.println(TAB +
 	 * "internalTransitions = {"); for (Entry<STATE, Map<LETTER, Set<STATE>>> entry : map.entrySet()) { STATE pre =
-	 * entry.getKey(); Map<LETTER, Set<STATE>> transitionsMap = entry.getValue(); if (transitionsMap != null) {//
-	 * state has no outgoing transitions, so nothing has to be printed for (Entry<LETTER, Set<STATE>> entry1 :
+	 * entry.getKey(); Map<LETTER, Set<STATE>> transitionsMap = entry.getValue(); if (transitionsMap != null) {// state
+	 * has no outgoing transitions, so nothing has to be printed for (Entry<LETTER, Set<STATE>> entry1 :
 	 * transitionsMap.entrySet()) { LETTER letter = entry1.getKey(); Set<STATE> succStates = entry1.getValue(); for
 	 * (STATE succ : succStates) { printInternalTransition(pre, letter, succ); } } }
 	 *
 	 * } mprintWriter.println("\t},"); }
 	 *
-	 * private void printInternalTransition(STATE pre, LETTER letter, STATE succ) { mprintWriter.println("\t\t (" +
-	 * pre + ' ' + letter + ' ' + succ + ')' ); }
+	 * private void printInternalTransition(STATE pre, LETTER letter, STATE succ) { mprintWriter.println("\t\t (" + pre
+	 * + ' ' + letter + ' ' + succ + ')' ); }
 	 */
 }

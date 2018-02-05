@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -114,7 +115,7 @@ public class FixpointEngineFutureParameterFactory {
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IAbstractDomain<STATE, IcfgEdge> domain =
 				(IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger, mRoot, mServices,
-						Collections.emptySet());
+						Collections.emptySet(), null);
 		final IAbstractStateStorage<STATE, IcfgEdge, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge> variableProvider =
@@ -144,7 +145,7 @@ public class FixpointEngineFutureParameterFactory {
 			return (IAbstractDomain<STATE, IcfgEdge>) new DataflowDomain<IcfgEdge>(logger);
 		} else if (VPDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger, root, services,
-					Collections.emptySet());
+					Collections.emptySet(), null);
 		} else if (SMTTheoryDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) new SMTTheoryDomain(services, root.getCfgSmtToolkit());
 		} else if (LiveVariableDomain.class.getSimpleName().equals(domainName)) {
@@ -165,10 +166,11 @@ public class FixpointEngineFutureParameterFactory {
 	}
 
 	public static VPDomain<IcfgEdge> createEqualityDomain(final ILogger logger, final IIcfg<?> root,
-			final IUltimateServiceProvider services, final Set<IProgramConst> additionalLiterals) {
+			final IUltimateServiceProvider services, final Set<IProgramConst> additionalLiterals,
+			final List<String> trackedArrays) {
 		// final VPTfStateBuilderPreparer tfPreparer =
 		// new VPTfStateBuilderPreparer(preAnalysis, root, logger);
-		return new VPDomain<>(logger, services, root.getCfgSmtToolkit(), additionalLiterals);
+		return new VPDomain<>(logger, services, root.getCfgSmtToolkit(), additionalLiterals, trackedArrays);
 	}
 
 	private static String getFailureString(final String selectedDomain) {

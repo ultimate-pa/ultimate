@@ -442,7 +442,8 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		for (final DISJUNCT d : getDisjuncts()) {
 			final CongruenceClosure<NODE> cc = (CongruenceClosure<NODE>) d;
 			final List<Term> cube = CongruenceClosureSmtUtils.congruenceClosureToCube(script, cc,
-					mWeqCcManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
+					mWeqCcManager.getNonTheoryLiteralDisequalitiesIfNecessary());
+//					mWeqCcManager.getEqNodeAndFunctionFactory().getNonTheoryLiteralDisequalities());
 			final Term cubeTerm = SmtUtils.and(script, cube);
 			result.add(cubeTerm);
 		}
@@ -605,14 +606,14 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		unionList.addAll(this.getDisjuncts());
 		unionList.addAll(other.getDisjuncts());
 
-		final Set<DISJUNCT> filtered = ccPoCache == null
-				? mWeqCcManager.filterRedundantICcs(new HashSet<>(unionList))
-				: mWeqCcManager.filterRedundantICcs(new HashSet<>(unionList), ccPoCache);
+		final Set<DISJUNCT> filtered = ccPoCache == null ?
+				mWeqCcManager.filterRedundantICcs(new HashSet<>(unionList)) :
+					mWeqCcManager.filterRedundantICcs(new HashSet<>(unionList), ccPoCache);
 
-				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = new WeakEquivalenceEdgeLabel<>(
-						mWeakEquivalenceGraph, filtered);
-				assert result.sanityCheck();
-				return result;
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = new WeakEquivalenceEdgeLabel<>(
+					mWeakEquivalenceGraph, filtered);
+		assert result.sanityCheck();
+		return result;
 	}
 
 	boolean isTautological() {

@@ -30,7 +30,9 @@ done
 if [ -z ${DIR+x} ]; then echo "No directory specified" && exit 1; fi
 if [ -z ${NAME+x} ]; then echo "No name specified" && exit 1; fi
 
-DBBASENAME="$NAME-sqlcsv.db"
+
+
+DBBASENAME="$NAME""_sqlcsv.db"
 TABLE="$NAME" 
 DB="sqlite:///$DBBASENAME"
 DATE=`date +"%F %T"`
@@ -90,7 +92,9 @@ function getCombinedCsv {
     for (( i = 0 ; i < ${#csvs[@]} ; i=$i+$chunks )); do
         printf .
         for (( j = $i ; j < ${#csvs[@]} && j < $i+$chunks ; j=$j+1 )); do
-            parentdirs+=("$(basename "$(dirname "${csvs[$j]}")")")
+            csv="${csvs[$j]}"
+            echo `csvcut -n "$csv" | tail -n 1 | cut -d ":" -f1`" $csv"
+            parentdirs+=("$(basename "$(dirname "$csv")")")
         done
         groups=$(join_by , ${parentdirs[@]})
         csvstack -g $groups ${csvs[@]:i:$chunks} > "$NAME-combined-$i.csv"

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutom
 
 /**
  * Constructor takes a AlternatingAutomaton and writes it to a testfile.
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -69,6 +69,7 @@ public class AlternatingAutomatonWriter<LETTER, STATE> extends GeneralAutomatonP
 		// printFinalStates(mAa.getFinalStates());
 		// printInternalTransitions(mAa.getTransitionsMap());
 		printAutomatonSuffix();
+		finish();
 	}
 
 	/*
@@ -78,25 +79,25 @@ public class AlternatingAutomatonWriter<LETTER, STATE> extends GeneralAutomatonP
 	 * private void printExistentialStates(Set<STATE> set) { mprintWriter.print(TAB + "existentialStates = { "); for
 	 * (STATE state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
 	 *
-	 * private void printUniversalStates(Set<STATE> set) { mprintWriter.print(TAB + "universalStates = { "); for
-	 * (STATE state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
+	 * private void printUniversalStates(Set<STATE> set) { mprintWriter.print(TAB + "universalStates = { "); for (STATE
+	 * state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
 	 *
 	 * private void printInitialStates(Set<STATE> set) { mprintWriter.print(TAB + "initialStates = { "); for (STATE
 	 * state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
 	 *
-	 * private void printFinalStates(Set<STATE> set) { mprintWriter.print(TAB + "finalStates = { "); for (STATE
-	 * state : set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
+	 * private void printFinalStates(Set<STATE> set) { mprintWriter.print(TAB + "finalStates = { "); for (STATE state :
+	 * set) { mprintWriter.print(state + ' '); } mprintWriter.print("},\n"); }
 	 *
 	 * private void printInternalTransitions(Map<STATE, Map<LETTER, Set<STATE>>> map) { mprintWriter.println(TAB +
 	 * "internalTransitions = {"); for (Entry<STATE, Map<LETTER, Set<STATE>>> entry : map.entrySet()) { STATE pre =
-	 * entry.getKey(); Map<LETTER, Set<STATE>> transitionsMap = entry.getValue(); if (transitionsMap != null) {//
-	 * state has no outgoing transitions, so nothing has to be printed for (Entry<LETTER, Set<STATE>> entry1 :
+	 * entry.getKey(); Map<LETTER, Set<STATE>> transitionsMap = entry.getValue(); if (transitionsMap != null) {// state
+	 * has no outgoing transitions, so nothing has to be printed for (Entry<LETTER, Set<STATE>> entry1 :
 	 * transitionsMap.entrySet()) { LETTER letter = entry1.getKey(); Set<STATE> succStates = entry1.getValue(); for
 	 * (STATE succ : succStates) { printInternalTransition(pre, letter, succ); } } }
 	 *
 	 * } mprintWriter.println("\t},"); }
 	 *
-	 * private void printInternalTransition(STATE pre, LETTER letter, STATE succ) { mprintWriter.println("\t\t (" +
-	 * pre + ' ' + letter + ' ' + succ + ')' ); }
+	 * private void printInternalTransition(STATE pre, LETTER letter, STATE succ) { mprintWriter.println("\t\t (" + pre
+	 * + ' ' + letter + ' ' + succ + ')' ); }
 	 */
 }

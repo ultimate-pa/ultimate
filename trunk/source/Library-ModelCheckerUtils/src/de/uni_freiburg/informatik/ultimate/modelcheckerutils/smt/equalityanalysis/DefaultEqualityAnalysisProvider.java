@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -43,5 +44,10 @@ public class DefaultEqualityAnalysisProvider<LOC, CFG> implements IEqualityAnaly
 	@Override
 	public IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(final IcfgEdge edge) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setTrackedArrays(final List<String> trackedArrays) {
+		throw new UnsupportedOperationException("do we need to implement this?");
 	}
 }

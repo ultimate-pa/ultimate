@@ -426,7 +426,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public enum RefinementStrategy {
 		/**
-		 * Simple strategy that reads the information from the settings.
+		 * Strategy that reads the information from the settings. It always uses only one trace check and one
+		 * interpolation generator.
 		 */
 		FIXED_PREFERENCES,
 		/**
@@ -446,25 +447,30 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		TOOTHLESS_TAIPAN,
 		/**
-		 * Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
+		 * Strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
 		 */
 		PENGUIN,
 		/**
-		 * Multi track strategy that tries Sp/Wp interpolation with CVC4, Z3 and Mathsat with a high interpolant
-		 * threshold
+		 * Strategy that tries Sp/Wp interpolation with CVC4, Z3 and Mathsat with a high interpolant threshold
 		 */
 		WALRUS,
-
+		/**
+		 * Light-weight strategy that first tries to obtain craig interpolants with SMTInterpol and then Z3 with FP.
+		 */
 		CAMEL,
 		/**
-		 * Multi track strategy that tries Sp/Wp interpolation with CVC4, Z3 and Mathsat with a low interpolant
-		 * threshold
+		 * Strategy that tries Sp/Wp interpolation with CVC4, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WOLF,
 		/**
-		 * Multi track strategy that tries Sp interpolation with CVC4, Z3 and Mathsat with a high interpolant threshold
+		 * Strategy that tries Sp interpolation with CVC4, Z3 and Mathsat with a high interpolant threshold
 		 */
 		WARTHOG,
+		/**
+		 * Strategy for benchmarking purposes only: it first uses SMTInterpol with Craig interpolation and disabled
+		 * array interpolation, then SMTInterpol with FP.
+		 */
+		SMTINTERPOL
 	}
 
 	/**

@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -18,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -83,6 +85,11 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 	private final List<IProgramVarOrConst> mHeapArrays;
 
+	private boolean mIsFinished;
+
+	private final Set<IProgramVar> mInVarsWithATermVar;
+	private final Set<IProgramVar> mOutVarsWithATermVar;
+
 
 //	/*
 //	 *  maps a term that occurs in one of this's edge's select terms as index to its ArrayCellAccess
@@ -145,8 +152,15 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 		mEdgeInfo = edgeInfo;
 
-		mNewInVars = new HashMap<>(edgeInfo.getEdge().getTransformula().getInVars());
-		mNewOutVars = new HashMap<>(edgeInfo.getEdge().getTransformula().getOutVars());
+
+
+//		mNewInVars = new HashMap<>(edgeInfo.getEdge().getTransformula().getInVars());
+//		mNewOutVars = new HashMap<>(edgeInfo.getEdge().getTransformula().getOutVars());
+		mNewInVars = new HashMap<>();
+		mNewOutVars = new HashMap<>();
+
+		mInVarsWithATermVar = new HashSet<>();
+		mOutVarsWithATermVar = new HashSet<>();
 
 		mProjectLists = new Stack<>();
 		mProjectLists.push(Collections.emptyList());
@@ -160,6 +174,15 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		assert projectList.stream().allMatch(Objects::nonNull);
 		if (term instanceof ConstantTerm
 				|| term instanceof TermVariable) {
+			final IProgramVar invar = mEdgeInfo.getInVar(term);
+			if (invar != null) {
+				mInVarsWithATermVar.add(invar);
+			}
+			final IProgramVar outvar = mEdgeInfo.getOutVar(term);
+			if (outvar != null) {
+				mOutVarsWithATermVar.add(outvar);
+			}
+
 			if (isPartitionedArray(term)) {
 				final Term subArrayTerm = getSubArrayReplacementTerm(term, projectList);
 				setResult(subArrayTerm);
@@ -191,17 +214,20 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 					return;
 				}
 
-				final ArrayGroup arrayGroup = getArrayGroup(extractSimpleArrayTerm(lhs));
+				final IProgramVarOrConst lhsArray = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(lhs));
+//				final ArrayGroup arrayGroup = getArrayGroup(extractSimpleArrayTerm(lhs));
+				final ArrayGroup arrayGroup = mArrayToArrayGroup.get(lhsArray);
 				assert arrayGroup.equals(getArrayGroup(extractSimpleArrayTerm(rhs)));
 
-				final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
-
-				final Sort arraySort = at.getParameters()[0].getSort();
-//				final MultiDimensionalSort mdSort = new MultiDimensionalSort(arraySort);
-
-				// holds the combinations of L1i .. Lni we will build a conjunct for each
-				final List<List<LocationBlock>> locationBlockTuples =
-						CrossProducts.crossProductOfSets(locationBlocks);
+//				final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
+//
+//				final Sort arraySort = at.getParameters()[0].getSort();
+////				final MultiDimensionalSort mdSort = new MultiDimensionalSort(arraySort);
+//
+//				// holds the combinations of L1i .. Lni we will build a conjunct for each
+//				final List<List<LocationBlock>> locationBlockTuples =
+//						CrossProducts.crossProductOfSets(locationBlocks);
+				final List<List<LocationBlock>> locationBlockTuples = getAllLocationBlockTuplesForHeapArray(lhsArray);
 
 				enqueueWalker(new BuildConjunction(locationBlockTuples.size(), mMgdScript.getScript()));
 
@@ -253,7 +279,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				}
 				enqueueWalker(new EndScope());
 				pushTerm(aca.getArray());
-				enqueueWalker(new BeginScope(locationBlockList));
+				enqueueWalker(new BeginScope(append(locationBlockList, projectList)));
 
 			} else if (functionName.equals("store")) {
 
@@ -336,6 +362,20 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		}
 	}
 
+	private List<LocationBlock> append(final List<LocationBlock> locationBlockList, final List<LocationBlock> projectList) {
+		final List<LocationBlock> result = new ArrayList<>();
+		result.addAll(locationBlockList);
+		result.addAll(projectList);
+		assert assertIsSortedByDimensions(result);
+		return result;
+	}
+
+	static boolean isSorted(final List<Integer> collect) {
+		final List<Integer> copy = new ArrayList<>(collect);
+		Collections.sort(copy);
+		return collect.equals(copy);
+	}
+
 	private Term extractSimpleArrayTerm(final Term term) {
 		if (!term.getSort().isArraySort()) {
 			throw new IllegalArgumentException();
@@ -363,8 +403,10 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		Term result = mOriginalTermToSubArrayToReplacementTerm.get(originalTerm, subArrayPvoc);
 
 		if (result == null) {
-			assert originalTerm instanceof TermVariable : "TODO: if this occurs, extend below code to replace a "
-					+ "constant term by a constant term";
+			if (!(originalTerm instanceof TermVariable)) {
+				throw new UnsupportedOperationException("TODO: if this occurs, extend below code to replace a "
+						+ "constant term by a constant term");
+			}
 
 			result = mMgdScript.constructFreshTermVariable(subArrayPvoc.getGloballyUniqueId(), subArrayPvoc.getSort());
 
@@ -549,6 +591,9 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		}
 	}
 
+	static boolean assertIsSortedByDimensions(final List<LocationBlock> list) {
+		return isSorted(list.stream().map(lb -> lb.getDimension()).collect(Collectors.toList()));
+	}
 
 
 	protected static class BeginScope implements Walker {
@@ -559,8 +604,10 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		public BeginScope(final List<LocationBlock> locBlockList) {
 			assert Objects.nonNull(locBlockList);
 			assert locBlockList.stream().allMatch(Objects::nonNull);
+			assert assertIsSortedByDimensions(locBlockList);
 			mLocBlockList = locBlockList;
 		}
+
 
 		@Override
 		public void walk(final NonRecursive engine) {
@@ -580,10 +627,129 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	}
 
 	public Map<IProgramVar, TermVariable> getNewInVars() {
+		if (!mIsFinished) {
+			throw new IllegalStateException();
+		}
 		return mNewInVars;
 	}
 
 	public Map<IProgramVar, TermVariable> getNewOutVars() {
+		if (!mIsFinished) {
+			throw new IllegalStateException();
+		}
 		return mNewOutVars;
+	}
+
+	public void finish() {
+		/*
+		 * Compute invars and outvars for the new transformula
+		 *  criteria:
+		 *  <li> invars and outvars that do not have a term in the formula mean a havoc on that variable
+		 *    --> replace them by all subarrays
+		 *  <li> invars/outvars that do have a termVariable in the formula are added on demand:
+		 *    --> an single array read only introduces one subarray
+		 *    --> an array equation (which includes updates) in principle introduces all subarrays, however
+		 *      a subarray that is not updated (stored on) in any location (optimization)
+		 */
+
+//		final HashMap<IProgramVar, TermVariable> newInVars = new HashMap<>();
+//		final HashMap<IProgramVar, TermVariable> newOutVars = new HashMap<>();
+
+//		final Set<ArrayGroup> heapArrayArrayGroups = new HashSet<>();
+//		for (final IProgramVarOrConst ha : mHeapArrays) {
+//			heapArrayArrayGroups.add(mArrayToArrayGroup.get(ha));
+//		}
+
+		/*
+		 * deal with non-heap variables
+		 */
+		for (final Entry<IProgramVar, TermVariable> en : mEdgeInfo.getInVars().entrySet()) {
+			if (mHeapArrays.contains(en.getKey())) {
+				// deal with heap arrays elsewhere
+				continue;
+			}
+			mNewInVars.put(en.getKey(), en.getValue());
+		}
+		for (final Entry<IProgramVar, TermVariable> en : mEdgeInfo.getOutVars().entrySet()) {
+			if (mHeapArrays.contains(en.getKey())) {
+				// deal with heap arrays elsewhere
+				continue;
+			}
+			mNewOutVars.put(en.getKey(), en.getValue());
+		}
+
+		/*
+		 * deal with heap variables that are in invars but do not have a term in the formula
+		 */
+		for (final Entry<IProgramVar, TermVariable> en : mEdgeInfo.getInVars().entrySet()) {
+			if (!mInVarsWithATermVar.contains(en.getKey())) {
+				if (!mHeapArrays.contains(en.getKey())) {
+					continue;
+				}
+				/* heap array invar whose termvariable does not occur in the formula
+				 * --> add invar entries for all subarrays (with fresh Termvars)
+				 */
+				final List<List<LocationBlock>> locationBlockTuples =
+						getAllLocationBlockTuplesForHeapArray(en.getKey());
+				for (final List<LocationBlock> lbt : locationBlockTuples) {
+					final IProgramVar subarray = (IProgramVar) mSubArrayManager.getSubArray(en.getKey(), lbt);
+					final TermVariable freshTv = mMgdScript.constructFreshCopy(subarray.getTermVariable());
+					assert !mNewInVars.containsKey(subarray);
+					mNewInVars.put(subarray, freshTv);
+				}
+			}
+		}
+		for (final Entry<IProgramVar, TermVariable> en : mEdgeInfo.getOutVars().entrySet()) {
+			if (!mOutVarsWithATermVar.contains(en.getKey())) {
+				if (!mHeapArrays.contains(en.getKey())) {
+					continue;
+				}
+				/* heap array outvar whose termvariable does not occur in the formula
+				 * --> add invar entries for all subarrays (with fresh Termvars)
+				 */
+				final List<List<LocationBlock>> locationBlockTuples =
+						getAllLocationBlockTuplesForHeapArray(en.getKey());
+				for (final List<LocationBlock> lbt : locationBlockTuples) {
+					final IProgramVar subarray = (IProgramVar) mSubArrayManager.getSubArray(en.getKey(), lbt);
+					final TermVariable freshTv = mMgdScript.constructFreshCopy(subarray.getTermVariable());
+					assert !mNewOutVars.containsKey(subarray);
+					mNewOutVars.put(subarray, freshTv);
+				}
+			}
+		}
+
+
+//		mNewInVars = newInVars;
+//		mNewOutVars = newInVars;
+
+//		final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
+//		final List<List<LocationBlock>> locationBlockTuples =
+//				CrossProducts.crossProductOfSets(locationBlocks);
+//
+//
+//				for (final List<LocationBlock> lbt : locationBlockTuples) {
+//
+//
+
+		for (final Entry<IProgramVar, TermVariable> en : mNewInVars.entrySet()) {
+			if (mHeapArrays.contains(en.getKey())) {
+				throw new IllegalStateException();
+			}
+		}
+		for (final Entry<IProgramVar, TermVariable> en : mNewOutVars.entrySet()) {
+			if (mHeapArrays.contains(en.getKey())) {
+				throw new IllegalStateException();
+			}
+		}
+
+		mIsFinished = true;
+	}
+
+	private List<List<LocationBlock>> getAllLocationBlockTuplesForHeapArray(final IProgramVarOrConst array) {
+		assert mHeapArrays.contains(array);
+		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
+		final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
+		final List<List<LocationBlock>> locationBlockTuples = CrossProducts.crossProductOfSets(locationBlocks);
+		return locationBlockTuples;
 	}
 }

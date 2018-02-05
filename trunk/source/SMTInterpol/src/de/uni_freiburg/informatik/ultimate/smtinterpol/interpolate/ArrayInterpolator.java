@@ -21,6 +21,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -995,9 +996,11 @@ public class ArrayInterpolator {
 				mHead.closeAPath(mTail, boundaryHeadTerm, headOcc);
 				mHead.openAPath(mTail, boundaryHeadTerm, headOcc);
 				mHead.closeAPath(mTail, boundaryHeadTerm, mDiseqInfo);
+				mHead.openAPath(mTail, boundaryHeadTerm, mDiseqInfo);
 				mTail.closeAPath(mHead, boundaryTailTerm, tailOcc);
 				mTail.openAPath(mHead, boundaryTailTerm, tailOcc);
 				mTail.closeAPath(mHead, boundaryTailTerm, mDiseqInfo);
+				mTail.openAPath(mHead, boundaryTailTerm, mDiseqInfo);
 
 				if (mLemmaInfo.getLemmaType().equals(":read-over-weakeq")) {
 					if (mIndexEquality != null) {
@@ -1628,10 +1631,37 @@ public class ArrayInterpolator {
 				} else { // Case (iii)
 					assert mABSwitchOccur.isBLocal(color);
 					assert mDiseqInfo.isBLocal(color) || mLemmaInfo.getLemmaType().equals(":weakeq-ext");
+					// With shared store indices, we can shorten the weq-term by rewriting left to right at those
+					// indices
+					Set<Term> sharedIndices = new HashSet<Term>();
+					if (mIndexDiseqs[color] != null) {
+						Iterator<AnnotatedTerm> it = mIndexDiseqs[color].keySet().iterator();
+						while (it.hasNext()) {
+							final AnnotatedTerm diseq = it.next();
+							final InterpolatorLiteralTermInfo termInfo = mInterpolator.getLiteralTermInfo(diseq);
+							final LitInfo info = mIndexDiseqs[color].get(diseq);
+							if (!info.isMixed(color)) {
+								final ApplicationTerm diseqApp = termInfo.getEquality();
+								final Term storeIndex =
+										diseqApp.getParameters()[0].equals(mPathIndex) ? diseqApp.getParameters()[1]
+												: diseqApp.getParameters()[0];
+								final Occurrence storeOcc = mInterpolator.getOccurrence(storeIndex);
+								if (storeOcc.isAB(color)) {
+									sharedIndices.add(storeIndex);
+									it.remove();
+								}
+							}
+						}
+					}
 					final int order = mIndexDiseqs[color] == null ? 0 : mIndexDiseqs[color].size();
+					Term rewriteLeftAtShared = left;
+					for (final Term idx : sharedIndices) {
+						rewriteLeftAtShared =
+								mTheory.term("store", rewriteLeftAtShared, idx, mTheory.term("select", right, idx));
+					}
 					final TermVariable cdot = mTheory.createFreshTermVariable("cdot", mPathIndex.getSort());
 					final Term fPiA = buildFPiATerm(color, cdot, mIndexDiseqs[color], mIndexEqs[color]);
-					final Term itpClause = buildWeqTerm(left, right, order, fPiA, cdot);
+					final Term itpClause = buildWeqTerm(rewriteLeftAtShared, right, order, fPiA, cdot);
 					mPathInterpolants[color].add(itpClause);
 					mIndexDiseqs[color] = null;
 					mIndexEqs[color] = null;
@@ -1666,12 +1696,39 @@ public class ArrayInterpolator {
 					}
 				} else if (mABSwitchOccur.isALocal(color)) { // Case (iv)
 					assert mDiseqInfo.isALocal(color) || mLemmaInfo.getLemmaType().equals(":weakeq-ext");
+					// With shared store indices, we can shorten the nweq-term by rewriting left to right at those
+					// indices
+					Set<Term> sharedIndices = new HashSet<Term>();
+					if (mIndexDiseqs[color] != null) {
+						Iterator<AnnotatedTerm> it = mIndexDiseqs[color].keySet().iterator();
+						while (it.hasNext()) {
+							final AnnotatedTerm diseq = it.next();
+							final InterpolatorLiteralTermInfo termInfo = mInterpolator.getLiteralTermInfo(diseq);
+							final LitInfo info = mIndexDiseqs[color].get(diseq);
+							if (!info.isMixed(color)) {
+								final ApplicationTerm diseqApp = termInfo.getEquality();
+								final Term storeIndex =
+										diseqApp.getParameters()[0].equals(mPathIndex) ? diseqApp.getParameters()[1]
+												: diseqApp.getParameters()[0];
+								final Occurrence storeOcc = mInterpolator.getOccurrence(storeIndex);
+								if (storeOcc.isAB(color)) {
+									sharedIndices.add(storeIndex);
+									it.remove();
+								}
+							}
+						}
+					}
 					final int order = mIndexDiseqs[color] == null ? 0 : mIndexDiseqs[color].size();
+					Term rewriteLeftAtShared = left;
+					for (final Term idx : sharedIndices) {
+						rewriteLeftAtShared =
+								mTheory.term("store", rewriteLeftAtShared, idx, mTheory.term("select", right, idx));
+					}
 					final TermVariable cdot = mTheory.createFreshTermVariable("cdot", mPathIndex.getSort());
 					final Term fPiB = buildFPiBTerm(color, cdot, mIndexDiseqs[color], mIndexEqs[color]);
 					mIndexDiseqs[color] = null;
 					mIndexEqs[color] = null;
-					final Term itpClause = buildNweqTerm(left, right, order, fPiB, cdot);
+					final Term itpClause = buildNweqTerm(rewriteLeftAtShared, right, order, fPiB, cdot);
 					mPathInterpolants[color].add(itpClause);
 				} else { // Case (iii)
 					assert mABSwitchOccur.isBLocal(color);

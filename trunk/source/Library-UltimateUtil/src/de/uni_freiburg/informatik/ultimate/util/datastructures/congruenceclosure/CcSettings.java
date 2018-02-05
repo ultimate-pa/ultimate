@@ -14,7 +14,8 @@ public class CcSettings {
 
 	public static final boolean DELAY_EXT_AND_DELTA_CLOSURE = true;
 
-	public static final boolean SANITYCHECK_FINE_GRAINED = false;
+	public static final boolean OMIT_SANITYCHECK_FINE_GRAINED_1 = true;
+	public static final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = true;
 
 	/*
 	 * settings related to caching in CcManager

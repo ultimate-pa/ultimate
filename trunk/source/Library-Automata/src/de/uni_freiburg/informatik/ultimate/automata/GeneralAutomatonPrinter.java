@@ -26,13 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+
 /**
  * Abstract superclass for automaton printers.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 @SuppressWarnings("squid:S1694")
@@ -41,6 +45,7 @@ public abstract class GeneralAutomatonPrinter {
 	public static final String NEW_LINE = System.lineSeparator();
 
 	private final PrintWriter mPrintWriter;
+	private StringBuilder mStringBuilder;
 
 	/**
 	 * @param printWriter
@@ -48,26 +53,42 @@ public abstract class GeneralAutomatonPrinter {
 	 */
 	protected GeneralAutomatonPrinter(final PrintWriter printWriter) {
 		mPrintWriter = printWriter;
+		mStringBuilder = new StringBuilder();
+	}
+
+	protected void finish() {
+		final BufferedWriter bw = new BufferedWriter(mPrintWriter);
+		try {
+			bw.write(mStringBuilder.toString());
+			bw.flush();
+			mStringBuilder = new StringBuilder();
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	protected final void println(final String string) {
-		mPrintWriter.println(string);
+		mStringBuilder.append(string).append(CoreUtil.getPlatformLineSeparator());
 	}
 
 	protected final void println(final char character) {
-		mPrintWriter.println(character);
+		mStringBuilder.append(character).append(CoreUtil.getPlatformLineSeparator());
 	}
 
 	protected final void print(final String string) {
-		mPrintWriter.print(string);
+		mStringBuilder.append(string);
+	}
+
+	protected final void printElement(final String elem) {
+		mStringBuilder.append(elem).append(' ');
 	}
 
 	protected final void print(final char character) {
-		mPrintWriter.print(character);
+		mStringBuilder.append(character);
 	}
 
 	protected final void print(final StringBuilder builder) {
-		mPrintWriter.print(builder);
+		mStringBuilder.append(builder);
 	}
 
 	protected final void printAutomatonPrefix() {
@@ -100,10 +121,6 @@ public abstract class GeneralAutomatonPrinter {
 		println(getCollectionPrefix(string));
 	}
 
-	protected final void printElement(final String elem) {
-		mPrintWriter.print(elem + ' ');
-	}
-
 	private static String replaceBackslashes(final Object input) {
 		return input.toString().replaceAll("\"", "\\\"");
 	}
@@ -131,11 +148,11 @@ public abstract class GeneralAutomatonPrinter {
 	protected final void printTransitionsSuffix() {
 		print("\t}");
 	}
-	
+
 	protected final void printTransitionListSeparator() {
 		println(",");
 	}
-	
+
 	protected final void printLastTransitionLineSeparator() {
 		println("");
 	}

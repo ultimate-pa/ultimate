@@ -29,6 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
@@ -261,6 +264,24 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
 					taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
+		}
+		
+		if (mPref.dumpOnlyReuseAutomata()) {
+			// Construct an empty file. We need this empty file in cases where
+			// the CFG does not have error location and no automaton is dumped.
+			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString());
+			final String filename = mTaskIdentifier + "-reuse";
+			final String fullPath = mPref.dumpPath() + File.separator + filename + "."
+					+ mPrintAutomataLabeling.getFileEnding();
+			final File file = new File(fullPath);
+			try {
+				final FileWriter fw = new FileWriter(file,false);
+				fw.close();
+			} catch (final IOException e) {
+				if (mLogger.isErrorEnabled()) {
+					mLogger.error("Creating FileWriter did not work.", e);
+				}
+			}
 		}
 	}
 
@@ -668,7 +689,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						((CoverageRelation) predicateUnifier.getCoverageRelation()).getCopyOfImplicationRelation();
 				INestedWordAutomaton<LETTER, IPredicate> backingNestedWordAutomaton;
 				try {
-					backingNestedWordAutomaton = new RemoveUnreachable<>(services, automaton).getResult();
+					backingNestedWordAutomaton = new RemoveDeadEnds<LETTER, IPredicate>(services, automaton).getResult();
+					if (backingNestedWordAutomaton.getStates().isEmpty()) {
+						mLogger.warn("Automaton with emtpy language -- ommited dump");
+						mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
+						return;
+					}
 				} catch (final AutomataOperationCanceledException e) {
 					throw new AssertionError(e);
 				}

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 
 /**
  * Common methods for writers of external formats.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -64,14 +64,15 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 		mAlphabetMapping = getAlphabetMapping(nwa.getVpAlphabet().getInternalAlphabet());
 		mStateMapping = getStateMapping(nwa.getStates());
 		mNwa = nwa;
+		finish();
 	}
 
 	private Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 		int counter = 0;
 		final Map<LETTER, String> alphabetMapping = new LinkedHashMap<>();
-		
-		ArrayList<LETTER> alphabetList=new ArrayList<LETTER>(alphabet);
-		
+
+		final ArrayList<LETTER> alphabetList = new ArrayList<>(alphabet);
+
 		Collections.sort(alphabetList, new sortLetter<LETTER>());
 		for (final LETTER letter : alphabetList) {
 			alphabetMapping.put(letter, Integer.toString(counter));

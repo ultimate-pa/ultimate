@@ -107,6 +107,7 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 
 			newTfBuilder.setFormula(newFormula);
 			newTfBuilder.setInfeasibility(oldTransformula.isInfeasible());
+			newTfBuilder.addAuxVarsButRenameToFreshCopies(oldTransformula.getAuxVars(), mMgdScript);
 
 			final UnmodifiableTransFormula newTransformula = newTfBuilder.finishConstruction(mMgdScript);
 

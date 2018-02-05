@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 
 /**
  * Prints an {@link INestedWordAutomaton}.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -123,6 +123,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 				printAutomatonSuffix();
 			}
 		}
+		finish();
 	}
 
 	/**
@@ -254,7 +255,7 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printTransitionsSuffix();
 	}
-	
+
 	private void printEpsilonTransitions(final Collection<STATE> allStates) {
 		printlnCollectionPrefix("epsilonTransitions");
 		for (final STATE state : allStates) {

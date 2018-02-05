@@ -123,7 +123,8 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	}
 
 	public boolean areEqual(final NODE node1, final NODE node2) {
-		return mConstraints.stream().map(cons -> cons.areEqual(node1, node2)).reduce((a, b) -> (a || b)).get();
+		return mConstraints.stream().map(cons -> cons.areEqual(node1, node2,
+				mFactory.getWeqSettings().isAddNodesBeforeAnsweringQuery())).reduce((a, b) -> (a || b)).get();
 	}
 
 	public boolean areEqual(final Term node1, final Term node2) {
@@ -139,7 +140,8 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 	}
 
 	public boolean areUnequal(final NODE node1, final NODE node2) {
-		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2)).reduce((a, b) -> (a || b)).get();
+		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2,
+				mFactory.getWeqSettings().isAddNodesBeforeAnsweringQuery())).reduce((a, b) -> (a || b)).get();
 	}
 
 	public boolean areUnequal(final Term node1, final Term node2) {
@@ -154,8 +156,7 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		return areUnequal(n1, n2);
 	}
 
-	@Deprecated
-	public EqDisjunctiveConstraint<NODE> reportEquality(final NODE node1, final NODE node2) {
+	private EqDisjunctiveConstraint<NODE> reportEquality(final NODE node1, final NODE node2) {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
 			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
@@ -166,15 +167,13 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
-	@Deprecated
 	public EqDisjunctiveConstraint<NODE> reportEquality(final Term node1, final Term node2) {
 		final NODE n1 = mNodeAndFunctionFactory.getOrConstructNode(node1);
 		final NODE n2 = mNodeAndFunctionFactory.getOrConstructNode(node2);
 		return reportEquality(n1, n2);
 	}
 
-	@Deprecated
-	public EqDisjunctiveConstraint<NODE> reportDisequality(final NODE node1, final NODE node2) {
+	private EqDisjunctiveConstraint<NODE> reportDisequality(final NODE node1, final NODE node2) {
 		final Collection<EqConstraint<NODE>> constraintList = new ArrayList<>();
 		for (final EqConstraint<NODE> constraint : mConstraints) {
 			final EqConstraint<NODE> unfrozen = mFactory.unfreeze(constraint);
@@ -185,7 +184,6 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
-	@Deprecated
 	public EqDisjunctiveConstraint<NODE> reportDisequality(final Term node1, final Term node2) {
 		final NODE n1 = mNodeAndFunctionFactory.getOrConstructNode(node1);
 		final NODE n2 = mNodeAndFunctionFactory.getOrConstructNode(node2);
@@ -287,5 +285,9 @@ public class EqDisjunctiveConstraint<NODE extends IEqNodeIdentifier<NODE>>  {
 			result.addAll(c.getAllLiteralNodes());
 		}
 		return result;
+	}
+
+	public EqConstraintFactory<NODE> getFactory() {
+		return mFactory;
 	}
 }

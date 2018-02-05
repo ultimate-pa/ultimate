@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -77,6 +78,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final IUltimateServiceProvider mServices;
 
 	private final VPDomainBenchmark mBenchmark;
+	private final VPDomainSettings mSettings;
 
 	/**
 	 *
@@ -86,9 +88,10 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	 * @param nonTheoryLiterals
 	 * 			This set of program constants will be viewed as "literals" by the analysis. Literals are constants that
 	 *          are unequal from all other constants.
+	 * @param trackedArrays
 	 */
 	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final Set<IProgramConst> nonTheoryLiterals) {
+			final Set<IProgramConst> nonTheoryLiterals, final List<String> trackedArrays) {
 		mLogger = logger;
 		mManagedScript = csToolkit.getManagedScript();
 		mMerge = new VPMergeOperator();
@@ -98,17 +101,19 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mDebugMode = WeqCcManager.areAssertsEnabled();
 
-
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals);
+		mSettings = new VPDomainSettings(ups);
+
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals,
+				trackedArrays);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript,
-				prepareWeqSettings(ups), mDebugMode);
+				prepareWeqSettings(ups), mDebugMode, nonTheoryLiterals);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,
-				mManagedScript);
+				mManagedScript, mSettings);
 
 		mPost = new EqPostOperator<>(mServices, mLogger, mCsToolkit, mEqNodeAndFunctionFactory, mEqConstraintFactory,
-				mEqStateFactory);
+				mEqStateFactory, mSettings);
 
 		mBenchmark = new VPDomainBenchmark();
 	}

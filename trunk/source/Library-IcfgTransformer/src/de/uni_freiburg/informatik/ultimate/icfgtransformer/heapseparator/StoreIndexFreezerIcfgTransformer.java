@@ -59,17 +59,21 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	private int mStoreIndexInfoCounter;
 
+	private final List<IProgramVarOrConst> mHeapArrays;
+
 //	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
 //			final CfgSmtToolkit csToolkit,
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker) {
+			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
+			final List<IProgramVarOrConst> heapArrays) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
 		mAllConstantTerms = new HashSet<>();
 		mStoreIndexInfoCounter = 0;
+		mHeapArrays = heapArrays;
 	}
 
 	@Override
@@ -117,6 +121,11 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				continue;
 			}
 
+			if (!mHeapArrays.contains(lhsPvoc)) {
+				/* we are only interested in writes to heap arrays */
+				continue;
+			}
+
 			for (int dim = 0; dim < au.getIndex().size(); dim++) {
 				final Term indexTerm = au.getIndex().get(dim);
 
@@ -143,7 +152,9 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
 				 */
 				freezeVarUpdates.add(SmtUtils.or(mMgdScript.getScript(),
-						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm)));
+						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm)
+						, mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv)
+						));
 			}
 		}
 

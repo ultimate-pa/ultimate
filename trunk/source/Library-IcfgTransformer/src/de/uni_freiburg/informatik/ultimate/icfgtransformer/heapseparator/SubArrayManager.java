@@ -90,6 +90,9 @@ public class SubArrayManager {
 	public IProgramVarOrConst getSubArray(final IProgramVarOrConst programVar, final List<LocationBlock> projectList) {
 		final ArrayGroup arrayGroup = mArrayIdToArrayGroup.get(programVar);
 		assert Objects.nonNull(arrayGroup);
+		if (projectList.size() != arrayGroup.getDimensionality()) {
+			throw new AssertionError("list of location blocks does not have the right length for the given array!");
+		}
 
 		IProgramVarOrConst subArray = mArrayToLocationBlockListToSubArray.get(programVar, projectList);
 		if (subArray == null) {

@@ -43,8 +43,8 @@ public class EqNonAtomicBaseNode extends EqNode {
 	private final Set<EqNode> mSupportingNodes;
 
 	public EqNonAtomicBaseNode(final Term term, final Set<EqNode> supportingNodes,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
-		super(term, eqNodeAndFunctionFactory);
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final boolean isUntrackedArray) {
+		super(term, eqNodeAndFunctionFactory, isUntrackedArray);
 		assert !supportingNodes.isEmpty();
 		assert supportingNodes.stream().allMatch(n -> n instanceof EqAtomicBaseNode);
 		mSupportingNodes = Collections.unmodifiableSet(supportingNodes);

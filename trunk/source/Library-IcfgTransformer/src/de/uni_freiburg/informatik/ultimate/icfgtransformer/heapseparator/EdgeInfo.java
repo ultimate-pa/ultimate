@@ -1,9 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
@@ -65,4 +70,38 @@ class EdgeInfo {
 		}
 		return true;
 	}
+
+	public IProgramVar getInVar(final Term term) {
+		if (!(term instanceof TermVariable)) {
+			return null;
+		}
+		for (final Entry<IProgramVar, TermVariable> en : mEdge.getTransformula().getInVars().entrySet()) {
+			if (en.getValue().equals(term)) {
+				return en.getKey();
+			}
+		}
+		return null;
+	}
+
+	public IProgramVar getOutVar(final Term term) {
+		if (!(term instanceof TermVariable)) {
+			return null;
+		}
+		for (final Entry<IProgramVar, TermVariable> en : mEdge.getTransformula().getOutVars().entrySet()) {
+			if (en.getValue().equals(term)) {
+				return en.getKey();
+			}
+		}
+		return null;
+	}
+
+	public Map<IProgramVar, TermVariable> getInVars() {
+		return mEdge.getTransformula().getInVars();
+	}
+
+	public Map<IProgramVar, TermVariable> getOutVars() {
+		return mEdge.getTransformula().getOutVars();
+	}
+
+
 }

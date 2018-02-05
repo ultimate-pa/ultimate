@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosureComparator;
@@ -83,15 +84,23 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private final BenchmarkWithCounters mBenchmark;
 
+	private final Set<IProgramConst> mNonTheoryLiterals;
+
 	public EqConstraintFactory(final AbstractNodeAndFunctionFactory<NODE, Term> eqNodeAndFunctionFactory,
 			final IUltimateServiceProvider services,  final ManagedScript mgdScript,
-			final WeqSettings settings, final boolean debugMode) {
+			final WeqSettings settings, final boolean debugMode, final Set<IProgramConst> nonTheoryLiterals) {
 		mLogger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 
 		mMgdScript = mgdScript;
 
+		mNonTheoryLiterals = nonTheoryLiterals;
+
+		final Set<NODE> nonTheoryLiteralNodes =
+				nonTheoryLiterals.stream()
+				.map(pc -> eqNodeAndFunctionFactory.getOrConstructNode(pc.getTerm())).collect(Collectors.toSet());
 		mWeqCcManager = new WeqCcManager<>(mLogger, new WeqCongruenceClosureComparator<NODE>(),
-				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory, settings, debugMode);
+				new CongruenceClosureComparator<NODE>(), mMgdScript, eqNodeAndFunctionFactory, settings, debugMode,
+				nonTheoryLiteralNodes);
 
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
@@ -111,7 +120,6 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			mBenchmark = null;
 		}
-
 
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
@@ -360,13 +368,13 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			return inputConstraint;
 		}
 
-		if (inputConstraint.areEqual(node1, node2)) {
+		if (inputConstraint.areEqual(node1, node2, false)) {
 			// the given identifiers are already equal in the originalState
 			debugEnd(BmNames.ADD_EQUALITY);
 			return inputConstraint;
 		}
 
-		if (inputConstraint.areUnequal(node1, node2) && !inplace) {
+		if (inputConstraint.areUnequal(node1, node2, false) && !inplace) {
 			debugEnd(BmNames.ADD_EQUALITY);
 			return getBottomConstraint();
 		}
@@ -394,7 +402,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 			return inputConstraint;
 		}
 
-		if (inputConstraint.areUnequal(node1, node2)) {
+		if (inputConstraint.areUnequal(node1, node2, false)) {
 			// the given identifiers are already equal in the input constraint -- nothing to do
 			debugEnd(BmNames.ADD_DISEQUALITY);
 			return inputConstraint;
@@ -403,7 +411,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		/*
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
-		if (inputConstraint.areEqual(node1, node2) && !inplace) {
+		if (inputConstraint.areEqual(node1, node2, false) && !inplace) {
 			debugEnd(BmNames.ADD_DISEQUALITY);
 			return getBottomConstraint();
 		}
@@ -561,6 +569,10 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return mIsDebugMode;
 	}
 
+	public Set<IProgramConst> getNonTheoryLiterals() {
+		return mNonTheoryLiterals;
+	}
+
 	/**
 	 *
 	 * @param modifiable return a modifiable, fresh constraint
@@ -615,5 +627,9 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 //			for ()
 //
 //		}
+	}
+
+	public WeqSettings getWeqSettings() {
+		return mWeqCcManager.getSettings();
 	}
 }

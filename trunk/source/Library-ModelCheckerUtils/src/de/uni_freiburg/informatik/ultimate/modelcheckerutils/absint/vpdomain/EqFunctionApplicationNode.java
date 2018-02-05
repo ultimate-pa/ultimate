@@ -43,8 +43,8 @@ public class EqFunctionApplicationNode extends EqNode {
 	private final EqNode mArg;
 
 	public EqFunctionApplicationNode(final EqNode function, final EqNode arg, final Term term,
-			final EqNodeAndFunctionFactory eqNodeFactory) {
-		super(term, eqNodeFactory);
+			final EqNodeAndFunctionFactory eqNodeFactory, final boolean isUntrackedArray) {
+		super(term, eqNodeFactory, isUntrackedArray);
 
 		mFunction = function;
 		mArg = arg;

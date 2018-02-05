@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 
 /**
  * Prints a {@link PetriNetJulian}.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -73,6 +73,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printInitialMarking(net.getInitialMarking());
 		printAcceptingPlaces(net.getAcceptingPlaces());
 		printAutomatonSuffix();
+		finish();
 	}
 
 	protected abstract Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet);

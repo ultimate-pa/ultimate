@@ -178,7 +178,7 @@ public class SolverBuilder {
 			}
 		}
 		if (!settings.useExternalSolver()) {
-			result.setOption(":timeout", String.valueOf(settings.getTimeoutSmtInterpol()));
+			result.setOption(":timeout", settings.getTimeoutSmtInterpol());
 		}
 		if (USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS) {
 			result = new ScriptWithTermConstructionChecks(result);

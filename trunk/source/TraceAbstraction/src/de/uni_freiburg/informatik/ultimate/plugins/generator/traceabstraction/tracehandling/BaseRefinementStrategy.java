@@ -405,22 +405,18 @@ public abstract class BaseRefinementStrategy<LETTER> {
 		if (!status.wasComputationSuccesful()) {
 			final ExceptionHandlingCategory category;
 			switch (status.getStatus()) {
-			case ALGORITHM_FAILED: {
+			case ALGORITHM_FAILED:
 				category = ExceptionHandlingCategory.KNOWN_IGNORE;
 				break;
-			}
-			case OTHER: {
+			case OTHER:
 				category = ExceptionHandlingCategory.UNKNOWN;
 				break;
-			}
-			case SMT_SOLVER_CANNOT_INTERPOLATE_INPUT: {
+			case SMT_SOLVER_CANNOT_INTERPOLATE_INPUT:
 				category = ExceptionHandlingCategory.KNOWN_IGNORE;
 				break;
-			}
-			case SMT_SOLVER_CRASH: {
+			case SMT_SOLVER_CRASH:
 				category = ExceptionHandlingCategory.KNOWN_DEPENDING;
 				break;
-			}
 			case TRACE_FEASIBLE:
 				throw new IllegalStateException("should not try to interpolate");
 			default:
