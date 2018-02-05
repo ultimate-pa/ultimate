@@ -101,12 +101,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		mDebugMode = WeqCcManager.areAssertsEnabled();
 
-
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-
 		mSettings = new VPDomainSettings(ups);
-
 
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals,
 				trackedArrays);

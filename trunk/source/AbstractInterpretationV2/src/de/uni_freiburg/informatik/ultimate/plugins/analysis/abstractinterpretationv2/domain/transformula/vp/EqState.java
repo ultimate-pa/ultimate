@@ -247,32 +247,46 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	@Override
 	public boolean areEqual(final Term term1, final Term term2) {
-		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
-		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
-		if (node1 == null && mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery()) {
+		final boolean addNodesIfNecessary  = mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery();
+
+		EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
+		EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
+
+		if (node1 == null && !addNodesIfNecessary) {
 			mLogger.debug("areEqual request: Term " + term1 + " is not known to this EqState, returning false");
 			return false;
+		} else if (node1 == null && addNodesIfNecessary) {
+			node1 = mFactory.getEqNodeAndFunctionFactory().getOrConstructNode(term1);
 		}
-		if (node2 == null && mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery()) {
+		if (node2 == null && !addNodesIfNecessary) {
 			mLogger.debug("areEqual request: Term " + term2 + " is not known to this EqState, returning false");
 			return false;
+		} else if (node2 == null && addNodesIfNecessary) {
+			node2 = mFactory.getEqNodeAndFunctionFactory().getOrConstructNode(term2);
 		}
-		return mConstraint.areEqual(node1, node2, mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery());
+		return mConstraint.areEqual(node1, node2, addNodesIfNecessary);
 	}
 
 	@Override
 	public boolean areUnequal(final Term term1, final Term term2) {
-		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
-		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
-		if (node1 == null && !mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery()) {
+		final boolean addNodesIfNecessary  = mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery();
+
+		EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
+		EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
+
+		if (node1 == null && !addNodesIfNecessary) {
 			mLogger.debug("areUnequal request: Term " + term1 + " is not known to this EqState, returning false");
 			return false;
+		} else if (node1 == null && addNodesIfNecessary) {
+			node1 = mFactory.getEqNodeAndFunctionFactory().getOrConstructNode(term1);
 		}
-		if (node2 == null && !mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery()) {
+		if (node2 == null && !addNodesIfNecessary) {
 			mLogger.debug("areUnequal request: Term " + term2 + " is not known to this EqState, returning false");
 			return false;
+		} else if (node2 == null && addNodesIfNecessary) {
+			node2 = mFactory.getEqNodeAndFunctionFactory().getOrConstructNode(term2);
 		}
-		return mConstraint.areUnequal(node1, node2, mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery());
+		return mConstraint.areUnequal(node1, node2, addNodesIfNecessary);
 	}
 
 	@Override
