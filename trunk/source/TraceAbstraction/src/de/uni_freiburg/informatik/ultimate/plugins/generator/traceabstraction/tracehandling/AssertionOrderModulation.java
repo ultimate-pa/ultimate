@@ -59,14 +59,8 @@ public class AssertionOrderModulation<LETTER> {
 	private final AssertCodeBlockOrder[] mOrder;
 	private final ILogger mLogger;
 	private final PathProgramCache<LETTER> mPathProgramCache;
-
 	private int mCurrentIndex;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param logger
-	 */
 	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger) {
 		this(pathProgramCache, logger, DEFAULT_ORDER);
 	}

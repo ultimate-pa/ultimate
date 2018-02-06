@@ -66,6 +66,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	protected final PredicateFactory mPredicateFactory;
 	protected final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final PathProgramCache<LETTER> mPathProgramCache;
+	private final RefinementStrategy mStrategy;
 
 	/**
 	 * @param logger
@@ -99,7 +100,14 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
 		mPathProgramCache = pathProgramCache;
-		mAssertionOrderModulation = new AssertionOrderModulation<>(pathProgramCache, logger);
+		mStrategy = mPrefs.getRefinementStrategy();
+		mAssertionOrderModulation = getAssertionOrderModulation(logger, pathProgramCache);
+	}
+
+	private AssertionOrderModulation<LETTER> getAssertionOrderModulation(final ILogger logger,
+			final PathProgramCache<LETTER> pathProgramCache) {
+
+		return new AssertionOrderModulation<>(pathProgramCache, logger);
 	}
 
 	protected PredicateUnifier getNewPredicateUnifier() {
@@ -119,19 +127,17 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            benchmark
 	 * @return refinement strategy
 	 */
-	public BaseRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier) {
+	public BaseRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
 		mPathProgramCache.addRun(counterexample);
 
-		switch (strategy) {
+		switch (mStrategy) {
 		case FIXED_PREFERENCES:
 			final ManagedScript managedScript =
 					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, taskIdentifier, mPrefs);
-			return new FixedRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
-					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation,
-					taskIdentifier);
+			return new FixedRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices, mPredicateFactory,
+					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, taskIdentifier);
 		case PENGUIN:
 			return new PenguinRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
