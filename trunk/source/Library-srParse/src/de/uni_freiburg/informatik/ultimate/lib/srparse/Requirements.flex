@@ -150,6 +150,8 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
   "\u2227"        { return symbol(ReqSymbols.LAND); }
   "||"            { return symbol(ReqSymbols.LOR); }
   "\u2228"        { return symbol(ReqSymbols.LOR); }
+  "==>"           { return symbol(ReqSymbols.LIMPLIES); }
+  "\u21d2"        { return symbol(ReqSymbols.LIMPLIES); }
 
   "\""            { return symbol(ReqSymbols.QUOTE); }
 

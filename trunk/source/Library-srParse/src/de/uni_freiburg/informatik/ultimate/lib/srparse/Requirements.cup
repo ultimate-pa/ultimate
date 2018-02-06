@@ -132,7 +132,7 @@ terminal TIME, UNITS, SEC, USEC, MSEC;
 terminal THERE, ONE, EXECUTION, SEQUENCE, SUCH;
 /* Other Symbols */
 terminal DOT, COMMA, IDSEP;
-terminal LAND, LOR, LNOT;
+terminal LAND, LOR, LNOT, LIMPLIES;
 terminal LPAR, RPAR, QUOTE;
 terminal LE, GREATER, LTEQ, GTEQ, NEQ, EQ, PARTORDER;
 terminal PLUS, MINUS;
@@ -154,7 +154,8 @@ non terminal srParseScope scope;
 non terminal PatternType[] patternset;
 non terminal Integer duration, num;
 non terminal boolean bool;
-non terminal Expression expr3NI, expr5NI; 
+non terminal Expression exprImplies, exprImpliesNI, exprAnd, exprAndNI, exprOr, exprOrNI;
+non terminal Expression expr1NI, expr2NI, expr3NI, expr5NI; 
 non terminal Expression expr6NI, expr7NI, expr9NI;
 
 precedence left LOR;
@@ -306,14 +307,40 @@ realtimepattern ::=
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}
  ;
+
+
+
              
-expr ::= LPAR expr:e RPAR {: RESULT = e; :}
-       | expr:e1 LAND expr:e2 {: RESULT = e1.and(e2); :}
-       | expr:e1 LOR  expr:e2 {: RESULT = e1.or(e2); :}
-       | LNOT expr:e {: RESULT = e.negate(); :}
-       | atom:a {: RESULT = BooleanDecision.create(rename(a)); :}
-       | expr3NI:e {: RESULT = BoogieBooleanExpressionDecision.create(e); :}
+expr ::= atom:a {: RESULT = BooleanDecision.create(rename(a)); :}
+       | expr1NI:e {: RESULT = BoogieBooleanExpressionDecision.create(e); :}       
        ;
+
+expr1NI ::= expr2NI:e1 LIMPLIES exprImpliesNI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+        | expr2NI:e {:RESULT = e;:}
+        ;
+        
+exprImpliesNI ::= expr2NI:e1 LIMPLIES exprImpliesNI:e2
+            {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+          | expr2NI:e {:RESULT = e;:}
+          ;
+          
+expr2NI ::= expr3NI:e1 LAND exprAndNI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICAND, e1, e2);:}
+        | expr3NI:e1 LOR  exprOrNI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICOR, e1, e2);:}
+        | expr3NI:e {:RESULT = e;:}
+        ;
+        
+exprAndNI ::= expr3NI:e1 LAND exprAndNI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICAND, e1, e2);:}
+          | expr3NI:e {:RESULT = e;:}
+          ;
+          
+exprOrNI ::= expr3NI:e1 LOR exprOrNI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICOR, e1, e2);:}
+          | expr3NI:e {:RESULT = e;:}
+		  ;
        
 
 expr3NI ::= expr5NI:e1 LE expr5NI:e2
@@ -346,20 +373,19 @@ expr6NI ::= expr6NI:e1 TIMES expr7NI:e2
            {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMOD, e1, e2);:}
         | expr7NI:e {:RESULT = e;:}
         ;
-expr7NI ::= MINUS expr7NI:e
+expr7NI ::= LNOT expr7NI:e
+           {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.LOGICNEG, e);:} 
+		| MINUS expr7NI:e
            {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.ARITHNEGATIVE, e);:}
         | expr9NI:e {:RESULT = e;:}
         ;
 
-expr9NI ::= REALNUMBER:n
-	  {: RESULT = new RealLiteral(getLocation(n$,n$,false), n); :}
-	| NUMBER:n
-	  {: RESULT = new IntegerLiteral(getLocation(n$,n$,false), n); :}
-	| cid:i
-	  {: RESULT = new IdentifierExpression(getLocation(i$,i$,false), i); :}
-	| bool:b 
-	  {:RESULT = new BooleanLiteral(getLocation(b$,b$,false),b);:}
-	;
+expr9NI ::= REALNUMBER:n {: RESULT = new RealLiteral(getLocation(n$,n$,false), n); :}
+	    | NUMBER:n {: RESULT = new IntegerLiteral(getLocation(n$,n$,false), n); :}
+     	| cid:i {: RESULT = new IdentifierExpression(getLocation(i$,i$,false), i); :}
+	    | bool:b {:RESULT = new BooleanLiteral(getLocation(b$,b$,false),b);:}
+	    | LPAR expr1NI:e RPAR {: RESULT = e; :}
+	    ;
 	
 cid ::= ID
       | cid:c DOT ID:id {: RESULT= c + "." + id; :}
