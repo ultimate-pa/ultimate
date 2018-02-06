@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class WarthogRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
+		extends MultiTrackRefinementStrategy<LETTER> {
 
 	public WarthogRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,

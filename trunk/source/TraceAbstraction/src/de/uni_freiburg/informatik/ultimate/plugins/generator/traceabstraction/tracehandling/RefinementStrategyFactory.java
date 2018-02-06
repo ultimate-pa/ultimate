@@ -129,7 +129,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		case FIXED_PREFERENCES:
 			final ManagedScript managedScript =
 					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, taskIdentifier, mPrefs);
-			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
+			return new FixedRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
 					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation,
 					taskIdentifier);
 		case PENGUIN:

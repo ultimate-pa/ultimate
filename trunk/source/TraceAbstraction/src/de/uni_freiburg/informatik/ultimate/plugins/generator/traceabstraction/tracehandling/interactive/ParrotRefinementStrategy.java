@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.AssertionOrderModulation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 
@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Julian Jarecki (julian.jarecki@neptun.uni-freiburg.de)
  */
 public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
+		extends MultiTrackRefinementStrategy<LETTER> {
 
 	private BaseRefinementStrategy<LETTER> mFallback;
 	private Track mNextTrack;

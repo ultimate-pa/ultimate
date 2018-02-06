@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransition<?>>
+public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends BaseRefinementStrategy<LETTER> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -95,7 +95,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
-	public FixedTraceAbstractionRefinementStrategy(final ILogger logger,
+	public FixedRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,

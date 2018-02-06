@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class SmtInterpolRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
+		extends MultiTrackRefinementStrategy<LETTER> {
 
 	public SmtInterpolRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
