@@ -27,19 +27,25 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
+import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TypeHelper;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Yannick Bühler
@@ -68,15 +74,39 @@ public class GlobalVariableCollector extends ASTVisitor {
 		}
 		final IASTSimpleDeclaration sd = (IASTSimpleDeclaration) raw;
 		final CType type = TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier());
+		final String fileName = raw.getContainingFilename();
 		for (IASTDeclarator decl : sd.getDeclarators()) {
 			if (decl instanceof CASTFunctionDeclarator) {
 				continue; // functions are handled elsewhere.
 			}
-			final String cId = mSymTab.applyMultiparseRenaming(raw.getContainingFilename(), decl.getName().toString());
-			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, type, false, cId);
-			final CDeclaration cDecl = new CDeclaration(type, cId);
+			final CType lType;
+			if (decl instanceof IASTArrayDeclarator) {
+				// Dimension information is not available here...
+				lType = new CArray(new RValue[0], type);
+			} else {
+				lType = type;
+			}
+			final String cId = mSymTab.applyMultiparseRenaming(fileName, decl.getName().toString());
+			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, lType, false, cId);
+			final CDeclaration cDecl = new CDeclaration(lType, cId);
 			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, decl, false);
 			mSymTab.storeCSymbol(decl, cId, stv);
+		}
+		final IASTDeclSpecifier spec = sd.getDeclSpecifier();
+		if (spec instanceof IASTEnumerationSpecifier) {
+			final String cId = mSymTab.applyMultiparseRenaming(fileName, 
+					((IASTEnumerationSpecifier) spec).getName().toString());
+			final String bId = "STRUCT~" + cId;
+			final CDeclaration cDecl = new CDeclaration(type, cId);
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, null, false);
+			mSymTab.storeCSymbol(spec, cId, stv);
+		} else if (spec instanceof IASTCompositeTypeSpecifier) {
+			final String cId = mSymTab.applyMultiparseRenaming(fileName, 
+					((IASTCompositeTypeSpecifier) spec).getName().toString());
+			final String bId = "STRUCT~" + cId;
+			final CDeclaration cDecl = new CDeclaration(type, cId);
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, null, false);
+			mSymTab.storeCSymbol(spec, cId, stv);
 		}
 		return super.visit(sd);
 	}

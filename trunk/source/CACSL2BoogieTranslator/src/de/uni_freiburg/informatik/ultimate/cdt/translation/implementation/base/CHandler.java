@@ -1182,7 +1182,7 @@ public class CHandler implements ICHandler {
 			final CArray arrayType = new CArray(size.toArray(new RValue[size.size()]), newResType.cType);
 			newResType.cType = arrayType;
 
-			declName = node.getName().toString();
+			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
 		} else if (node instanceof IASTStandardFunctionDeclarator) {
 			final IASTStandardFunctionDeclarator funcDecl = (IASTStandardFunctionDeclarator) node;
 
@@ -1793,22 +1793,16 @@ public class CHandler implements ICHandler {
 				// if we are inside a struct declaration however, this does not apply, we proceed as normal, as the
 				// result
 				// is needed to build the struct type
-				if (!mTypeHandler.isStructDeclaration()
-						&& mSymbolTable.containsCSymbolInInnermostScope(d, cDec.getName())) {
-					if (cDec.hasInitializer()) {
-						// undo the effects of the old declaration
-						if (mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) {
-							mDeclarationsGlobalInBoogie
-									.remove(mSymbolTable.findCSymbol(d, cDec.getName()).getBoogieDecl());
+				if (!mTypeHandler.isStructDeclaration()) {
+					final SymbolTableValue stv = mSymbolTable.findCSymbolInInnermostScope(d, cDec.getName());
+					if (stv != null) {
+						if (!stv.getCDecl().hasInitializer() || cDec.hasInitializer()) {
+							// Keep the last STV with an initializer
+							if (mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) {
+								mDeclarationsGlobalInBoogie
+										.remove(mSymbolTable.findCSymbol(d, cDec.getName()).getBoogieDecl());
+							}
 						}
-						// local variable may not be a problem, because symboltable will overwrite at put
-						// .. or are they not allowed in C?... TODO --> should look it up in standard
-						// if that is the case, then this code section may be simplified, probably..
-					} else {
-						// this variable has already been declared, and the current declaration does not have an
-						// initializer
-						// --> skip the current declaration
-						continue;
 					}
 				}
 

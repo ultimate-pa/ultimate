@@ -26,12 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 
@@ -51,6 +57,24 @@ public class TypeHelper {
 				throw new UnsupportedSyntaxException(null, "Typedef used before collected");
 			}
 			return fs.findCSymbol(ds, rslvName).getCDecl().getType();
+		} else if (ds instanceof IASTEnumerationSpecifier) {
+			final IASTEnumerationSpecifier spec = (IASTEnumerationSpecifier) ds;
+			final String rslvName = fs.applyMultiparseRenaming(ds.getContainingFilename(), spec.getName().toString());
+			return new CEnum(rslvName);
+		} else if (ds instanceof IASTCompositeTypeSpecifier) {
+			final IASTCompositeTypeSpecifier comp = (IASTCompositeTypeSpecifier) ds;
+			final String rslvName = fs.applyMultiparseRenaming(ds.getContainingFilename(), comp.getName().toString());
+			return new CStruct(rslvName);
+		} else if (ds instanceof IASTElaboratedTypeSpecifier) {
+			final IASTElaboratedTypeSpecifier elab = (IASTElaboratedTypeSpecifier) ds;
+			if (elab.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
+				final String rslvStructName = 
+						fs.applyMultiparseRenaming(ds.getContainingFilename(), elab.getName().toString());
+				if (!fs.containsCSymbol(ds, rslvStructName)) {
+					throw new UnsupportedSyntaxException(null, "Struct used before collected");
+				}
+				return fs.findCSymbol(ds, rslvStructName).getCDecl().getType();
+			}
 		}
 		throw new UnsupportedOperationException("only simple decl specifiers are currently supported");
 	}

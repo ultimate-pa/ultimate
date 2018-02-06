@@ -125,23 +125,6 @@ public class FlatSymbolTable {
 		mNameHandler = nameHandler;
 		// importAllGlobals(nameHandler);
 	}
-	
-	/**
-	 * Extracts all global variables into the global scope
-	 */
-	private void importAllGlobals(final INameHandler nameHandler) {
-		Map<Pair<String, String>, IASTDeclarator> globals = mMultiparseInformation.getGlobalScope();
-		for (Map.Entry<Pair<String, String>, IASTDeclarator> entry : globals.entrySet()) {
-			final String uId = mMultiparseInformation.getNameMappingIfExists(entry.getKey().getFirst(), 
-					entry.getKey().getSecond());
-			
-			// This entry is minimal, as some of the information is not available yet.
-			// Need to somehow get a real SymbolTableValue here... at least the CDeclaration is required.
-			final String bId = nameHandler.getUniqueIdentifier(null, uId, getCScopeId(entry.getValue()), false, null);
-			final SymbolTableValue stv = new SymbolTableValue(bId, null, null, true, entry.getValue(), false);
-			mGlobalScope.put(uId, stv);
-		}
-	}
 
 	/**
 	 * Implements the generic table lookup
@@ -210,6 +193,15 @@ public class FlatSymbolTable {
 	 */
 	public boolean containsCSymbolInInnermostScope(final IASTNode hook, final String id) {
 		return tableFind(hook, id, true) != null;
+	}
+
+	/**
+	 * Finds an entry in the innermost scope
+	 * 
+	 * @see FlatSymbolTable#findCSymbol(IASTNode, String)
+	 */
+	public SymbolTableValue findCSymbolInInnermostScope(final IASTNode hook, final String id) {
+		return tableFind(hook, id, true);
 	}
 
 	/**

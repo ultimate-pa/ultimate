@@ -35,8 +35,11 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 
@@ -136,6 +139,22 @@ public class MultiparseSymbolTable extends ASTVisitor {
 					visitNonFunctionDeclarator(fileName, (IASTDeclarator) decl);
 				}
 			}
+			if (declaration.isPartOfTranslationUnitFile()) {
+				final IASTDeclSpecifier spec = ((IASTSimpleDeclaration) declaration).getDeclSpecifier();
+				if (spec instanceof IASTEnumerationSpecifier) {
+					final Pair<String, String> entry = new Pair<>(fileName, 
+							((IASTEnumerationSpecifier) spec).getName().toString());
+					final String rId = generatePrefixedIdentifier(fileName, 
+							((IASTEnumerationSpecifier) spec).getName().toString());
+					mNamePrefixMapping.put(entry, rId);
+				} else if (spec instanceof IASTCompositeTypeSpecifier) {
+					final Pair<String, String> entry = new Pair<>(fileName, 
+							((IASTCompositeTypeSpecifier) spec).getName().toString());
+					final String rId = generatePrefixedIdentifier(fileName, 
+							((IASTCompositeTypeSpecifier) spec).getName().toString());
+					mNamePrefixMapping.put(entry, rId);
+				}
+			}
 		}
 		
 		return super.visit(declaration);
@@ -230,13 +249,5 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		// Fallback: Check the defined names in the file itself & if no definition is found, just use the original name,
 		// i.e. no mapping of the name is performed.
 		return mNamePrefixMapping.getOrDefault(key, name);
-	}
-	
-	/**
-	 * Fetches all global variables
-	 * @return all global variables
-	 */
-	public Map<Pair<String, String>, IASTDeclarator> getGlobalScope() {
-		return Collections.unmodifiableMap(mGlobalsMapping);
 	}
 }

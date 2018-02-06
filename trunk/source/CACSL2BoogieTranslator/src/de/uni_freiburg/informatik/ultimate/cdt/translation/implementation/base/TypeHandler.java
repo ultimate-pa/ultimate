@@ -307,7 +307,7 @@ public class TypeHandler implements ITypeHandler {
 		final ASTType at = cPrimitive2AstType(loc, intType);
 		final TypesResult result = new TypesResult(at, false, false, cEnum);
 
-		final String incompleteTypeName = "ENUM~" + cId;
+		final String incompleteTypeName = "ENUM~" + rslvName;
 		if (mIncompleteType.contains(incompleteTypeName)) {
 			mIncompleteType.remove(incompleteTypeName);
 			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
@@ -423,11 +423,11 @@ public class TypeHandler implements ITypeHandler {
 		CStruct cvar;
 		String name = null;
 		if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
-			name = "STRUCT~" + cId;
+			name = "STRUCT~" + rslvName;
 			cvar = new CStruct(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
 					bitFieldWidths);
 		} else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
-			name = "UNION~" + cId;
+			name = "UNION~" + rslvName;
 			cvar = new CUnion(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
 					bitFieldWidths);
 		} else {
