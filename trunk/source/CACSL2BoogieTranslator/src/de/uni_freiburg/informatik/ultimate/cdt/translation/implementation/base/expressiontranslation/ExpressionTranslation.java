@@ -147,8 +147,9 @@ public abstract class ExpressionTranslation {
 						constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),
 								BigInteger.valueOf(arrayLength)),
 						getCTypeOfPointerComponents());
-				final RValue[] dimensions = { dimension };
-				final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
+//				final RValue[] dimensions = { dimension };
+//				final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
+				final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
 				// final CPointer arrayType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 				tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
 				tVarDecl = new VariableDeclaration(loc, new Attribute[0],

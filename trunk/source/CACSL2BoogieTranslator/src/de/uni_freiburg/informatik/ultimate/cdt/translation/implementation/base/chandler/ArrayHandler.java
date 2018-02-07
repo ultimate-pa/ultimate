@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -65,6 +64,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  *
  * @author Markus Lindenmann, Matthias Heizmann
  * @date 12.10.2012
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
  */
 public class ArrayHandler {
 
@@ -114,7 +116,10 @@ public class ArrayHandler {
 			// The result type will be an array where the first dimension is
 			// missing. E.g., if the input is a (int x int -> float) array
 			// the resulting array will be an (int -> float) array.
-			assert cArray.getDimensions().length != 1 || isOutermostSubscriptExpression(node) : "not outermost";
+
+			// TODO: unclear what this check is about..
+//			assert cArray.getDimensions().length != 1 || isOutermostSubscriptExpression(node) : "not outermost";
+			assert cArray.getValueType() instanceof CArray || isOutermostSubscriptExpression(node) : "not outermost";
 
 			final CType resultCType = popOneDimension(cArray);
 
@@ -145,12 +150,16 @@ public class ArrayHandler {
 				// we return a copy of this LocalLValue where we added the
 				// current index.
 				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.mLrVal).getLHS();
-				final RValue currentDimension = cArray.getDimensions()[0];
+
+				final RValue bound = cArray.getBound();
+
 				// The following is not in the standard, since there everything
 				// is defined via pointers. However, we have to make the subscript
 				// compatible to the type of the dimension of the array
 				final ExpressionTranslation et = ((CHandler) main.mCHandler).getExpressionTranslation();
-				et.convertIntToInt(loc, subscript, (CPrimitive) currentDimension.getCType());
+
+				et.convertIntToInt(loc, subscript, (CPrimitive) bound.getCType());
+
 				final RValue index = (RValue) subscript.mLrVal;
 				final ArrayLHS newInnerArrayLHS;
 				if (oldInnerArrayLHS instanceof ArrayLHS) {
@@ -168,7 +177,7 @@ public class ArrayHandler {
 				final LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false, null);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 				result.mLrVal = lValue;
-				addArrayBoundsCheckForCurrentIndex(main, loc, index, currentDimension, result);
+				addArrayBoundsCheckForCurrentIndex(main, loc, index, bound, result);
 			} else {
 				throw new AssertionError("result.lrVal has to be either HeapLValue or LocalLValue");
 			}
@@ -178,16 +187,17 @@ public class ArrayHandler {
 	}
 
 	public static CType popOneDimension(final CArray cArray) {
-		final CType resultCType;
-		if (cArray.getDimensions().length == 1) {
-			resultCType = cArray.getValueType();
-		} else {
-			final RValue[] newDimensions =
-					Arrays.copyOfRange(cArray.getDimensions(), 1, cArray.getDimensions().length);
-			assert newDimensions.length == cArray.getDimensions().length - 1;
-			resultCType = new CArray(newDimensions, cArray.getValueType());
-		}
-		return resultCType;
+		return cArray.getValueType();
+//		final CType resultCType;
+//		if (cArray.getDimensions().length == 1) {
+//			resultCType = cArray.getValueType();
+//		} else {
+//			final RValue[] newDimensions =
+//					Arrays.copyOfRange(cArray.getDimensions(), 1, cArray.getDimensions().length);
+//			assert newDimensions.length == cArray.getDimensions().length - 1;
+//			resultCType = new CArray(newDimensions, cArray.getValueType());
+//		}
+//		return resultCType;
 	}
 
 	/**

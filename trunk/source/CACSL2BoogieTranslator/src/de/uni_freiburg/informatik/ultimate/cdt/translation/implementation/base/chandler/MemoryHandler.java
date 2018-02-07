@@ -1853,9 +1853,8 @@ public class MemoryHandler {
 			Expression arrayEntryAddressOffset = newStartAddressOffset;
 
 			// can we assume here, that we have a boogie array, right??
-			if (arrayType.getDimensions().length == 1) {
-				final BigInteger dimBigInteger =
-						mExpressionTranslation.extractIntegerValue(arrayType.getDimensions()[0]);
+			if (!(arrayType.getValueType().getUnderlyingType() instanceof CArray)) {
+				final BigInteger dimBigInteger = mExpressionTranslation.extractIntegerValue(arrayType.getBound());
 				if (dimBigInteger == null) {
 					throw new UnsupportedSyntaxException(loc,
 							"variable length arrays not yet supported by this method");

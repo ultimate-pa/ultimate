@@ -1014,6 +1014,11 @@ public class CHandler implements ICHandler {
 		if (node instanceof IASTArrayDeclarator) {
 			final IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
+			/*
+			 * the innermost type is the value type..
+			 */
+			CType arrayType = newResType.cType;
+
 			final ArrayList<RValue> size = new ArrayList<>();
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
@@ -1067,14 +1072,15 @@ public class CHandler implements ICHandler {
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-				size.add(sizeFactor);
+//				size.add(sizeFactor);
+				arrayType = new CArray(sizeFactor, arrayType);
 			}
 			final ExpressionResult allResults = ExpressionResult.copyStmtDeclAuxvarOverapprox(
 					expressionResults.toArray(new ExpressionResult[expressionResults.size()]));
 			if (!allResults.mDecl.isEmpty() || !allResults.mStmt.isEmpty() || !allResults.mAuxVars.isEmpty()) {
 				throw new AssertionError("passing these results is not yet implemented");
 			}
-			final CArray arrayType = new CArray(size.toArray(new RValue[size.size()]), newResType.cType);
+//			final CArray arrayType = new CArray(size.toArray(new RValue[size.size()]), newResType.cType);
 			newResType.cType = arrayType;
 
 		} else if (node instanceof IASTStandardFunctionDeclarator) {
@@ -3571,7 +3577,8 @@ public class CHandler implements ICHandler {
 
 		if (lType instanceof CArray && rType.isArithmeticType()) {
 			// arrays decay to pointers in this case
-			assert ((CArray) lType).getDimensions().length == 1 : "TODO: think about this case";
+//			assert ((CArray) lType).getDimensions().length == 1 : "TODO: think about this case";
+			assert !(((CArray) lType).getBound().getCType() instanceof CArray) : "TODO: think about this case";
 			final CType valueType = ((CArray) lType).getValueType().getUnderlyingType();
 			convert(loc, left, new CPointer(valueType));
 			lType = left.mLrVal.getCType().getUnderlyingType();

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -107,13 +108,24 @@ public class CTranslationUtil {
 			final List<Integer> arrayIndex, final ExpressionTranslation expressionTranslation) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
-		assert cArrayType.getDimensions().length == arrayIndex.size();
+//		assert cArrayType.getDimensions().length == arrayIndex.size();
 
 		final Expression[] index = new Expression[arrayIndex.size()];
+
+		CArray currentArrayType = cArrayType;
+
 		for (int i = 0; i < arrayIndex.size(); i++) {
-			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getDimensions()[i].getCType();
+			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType().getUnderlyingType();
+//			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getDimensions()[i].getCType();
 			index[i] = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.get(i).toString()));
+
+			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			if (valueType instanceof CArray) {
+				currentArrayType = (CArray) valueType;
+			} else {
+				assert i == arrayIndex.size() - 1;
+			}
 		}
 
 		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(), index);
@@ -125,7 +137,7 @@ public class CTranslationUtil {
 			final Integer arrayIndex, final ExpressionTranslation expressionTranslation) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
-		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getDimensions()[0].getCType();
+		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType();
 		final Expression index = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.toString()));
 
@@ -236,18 +248,25 @@ public class CTranslationUtil {
 	}
 
 	public static boolean isVarlengthArray(final CArray cArrayType, final ExpressionTranslation expressionTranslation) {
-		for (final RValue dimRVal : cArrayType.getDimensions()) {
-			if (expressionTranslation.extractIntegerValue(dimRVal) == null) {
+		CArray currentArrayType = cArrayType;
+		while (true) {
+			if (expressionTranslation.extractIntegerValue(currentArrayType.getBound()) == null) {
+				// found a variable length bound
 				return true;
 			}
+			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			if (valueType instanceof CArray) {
+				currentArrayType = (CArray) valueType;
+			} else {
+				// reached at non-array type, found no varlength bound
+				return false;
+			}
 		}
-		return false;
 	}
 
 	public static boolean isToplevelVarlengthArray(final CArray cArrayType,
 			final ExpressionTranslation expressionTranslation) {
-		final RValue dimRVal = cArrayType.getDimensions()[0];
-		return expressionTranslation.extractIntegerValue(dimRVal) == null;
+		return expressionTranslation.extractIntegerValue(cArrayType.getBound()) == null;
 	}
 
 	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType,
@@ -255,12 +274,26 @@ public class CTranslationUtil {
 		if (CTranslationUtil.isVarlengthArray(cArrayType, expressionTranslation)) {
 			throw new IllegalArgumentException("only call this for non-varlength array types");
 		}
+		CArray currentArrayType = cArrayType;
+
 		final List<Integer> result = new ArrayList<>();
-		for (final RValue dimRVal : cArrayType.getDimensions()) {
-			final int dimInt = Integer.parseUnsignedInt(expressionTranslation.extractIntegerValue(dimRVal).toString());
-			result.add(dimInt);
+		while (true) {
+			result.add(Integer.parseUnsignedInt(expressionTranslation.extractIntegerValue(currentArrayType.getBound()).toString()));
+
+			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			if (valueType instanceof CArray) {
+				currentArrayType = (CArray) valueType;
+			} else {
+				return Collections.unmodifiableList(result);
+			}
 		}
-		return result;
+
+//		final List<Integer> result = new ArrayList<>();
+//		for (final RValue dimRVal : cArrayType.getDimensions()) {
+//			final int dimInt = Integer.parseUnsignedInt(expressionTranslation.extractIntegerValue(dimRVal).toString());
+//			result.add(dimInt);
+//		}
+//		return result;
 	}
 
 	public static boolean isAggregateType(final CType valueType) {
@@ -269,7 +302,7 @@ public class CTranslationUtil {
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType,
 			final ExpressionTranslation expressionTranslation) {
-		final RValue dimRVal = cArrayType.getDimensions()[0];
+		final RValue dimRVal = cArrayType.getBound();
 
 		final BigInteger extracted = expressionTranslation.extractIntegerValue(dimRVal);
 		if (extracted == null) {

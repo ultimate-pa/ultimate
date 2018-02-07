@@ -53,11 +53,10 @@ public class CArray extends CType {
      * TODO (alex): probably it would be best to have only one "bound" here, and nest array types for multidimensional
      *  stuff.
      */
-    private final RValue[] dimensions;
-    /**
-     * Array type.
-     */
-    private final CType valueType;
+//    private final RValue[] dimensions;
+    private final RValue mBound;
+
+    private final CType mValueType;
 
     /**
      * Constructor.
@@ -69,26 +68,30 @@ public class CArray extends CType {
      * @param cDeclSpec
      *            the C declaration used.
      */
-    public CArray(final RValue[] dimensions,
+//    public CArray(final RValue[] dimensions,
+    public CArray(final RValue bound,
             final CType valueType) {
         super(false, false, false, false); //FIXME: integrate those flags
-        this.dimensions = dimensions;
-        this.valueType = valueType;
+        mBound = bound;
+//        this.dimensions = dimensions;
+        mValueType = valueType;
 //        this.variableLength = false;
     }
 
     /**
      * @return the dimensions
      */
-    public RValue[] getDimensions() {
-        return dimensions.clone();
+//    public RValue[] getDimensions() {
+    public RValue getBound() {
+//        return dimensions.clone();
+        return mBound;
     }
 
     /**
      * @return the valueType
      */
     public CType getValueType() {
-        return valueType;
+        return mValueType;
     }
 
 //    /**
@@ -146,29 +149,52 @@ public class CArray extends CType {
     public String toString() {
         final StringBuilder id = new StringBuilder("ARRAY#");
         final StringBuilder dimString = new StringBuilder("_");
-        for (final RValue rvalueDim : getDimensions()) {
-        	final Expression dim = rvalueDim.getValue();
-            if (dim instanceof BinaryExpression ||
-                    dim instanceof UnaryExpression) {
-            	// 2015-11-08 Matthias: Use C representation or introduce a factory
-            	// for types.
-            	dimString.append(dim.toString());
-//                dim = getArithmeticResultAsIntegerLiteral(dim);
-            }
-            if (dim instanceof IntegerLiteral) {
-                dimString.append(((IntegerLiteral) dim).getValue());
-                dimString.append("_");
-            } else if (dim instanceof IdentifierExpression) {
-            	dimString.append(((IdentifierExpression) dim).getIdentifier());
-                dimString.append("_");
-            } else {
-//                dimString = new StringBuilder("variableLength");
-//                dimString.append("variableLength");
-                dimString.append("unrecognizedDimensions");
-                dimString.append("_");
-                break;
-            }
+
+        final Expression dim = mBound.getValue();
+        if (dim instanceof BinaryExpression ||
+        		dim instanceof UnaryExpression) {
+        	// 2015-11-08 Matthias: Use C representation or introduce a factory
+        	// for types.
+        	dimString.append(dim.toString());
+        	//                dim = getArithmeticResultAsIntegerLiteral(dim);
         }
+        if (dim instanceof IntegerLiteral) {
+        	dimString.append(((IntegerLiteral) dim).getValue());
+        	dimString.append("_");
+        } else if (dim instanceof IdentifierExpression) {
+        	dimString.append(((IdentifierExpression) dim).getIdentifier());
+        	dimString.append("_");
+        } else {
+        	//                dimString = new StringBuilder("variableLength");
+        	//                dimString.append("variableLength");
+        	dimString.append("unrecognizedDimensions");
+        	dimString.append("_");
+//        	break;
+        }
+
+//        for (final RValue rvalueDim : getDimensions()) {
+//        	final Expression dim = rvalueDim.getValue();
+//            if (dim instanceof BinaryExpression ||
+//                    dim instanceof UnaryExpression) {
+//            	// 2015-11-08 Matthias: Use C representation or introduce a factory
+//            	// for types.
+//            	dimString.append(dim.toString());
+////                dim = getArithmeticResultAsIntegerLiteral(dim);
+//            }
+//            if (dim instanceof IntegerLiteral) {
+//                dimString.append(((IntegerLiteral) dim).getValue());
+//                dimString.append("_");
+//            } else if (dim instanceof IdentifierExpression) {
+//            	dimString.append(((IdentifierExpression) dim).getIdentifier());
+//                dimString.append("_");
+//            } else {
+////                dimString = new StringBuilder("variableLength");
+////                dimString.append("variableLength");
+//                dimString.append("unrecognizedDimensions");
+//                dimString.append("_");
+//                break;
+//            }
+//        }
 
 //        if (variableLength) {
 //        if (this.isVariableLength()) {
@@ -177,7 +203,7 @@ public class CArray extends CType {
 //        id.append(getDimensions().length);
         id.append(dimString.toString());
         id.append("~");
-        id.append(valueType.toString());
+        id.append(mValueType.toString());
         id.append("#");
         return id.toString();
     }
@@ -263,17 +289,21 @@ public class CArray extends CType {
         }
 
         final CArray oArr = (CArray)oType;
-        if (!(valueType.equals(oArr.valueType))) {
+        if (!(mValueType.equals(oArr.mValueType))) {
             return false;
         }
-        if (dimensions.length != oArr.dimensions.length) {
+        if (!(mBound.equals(oArr.mBound))) {
             return false;
         }
-        for (int i = dimensions.length - 1; i >= 0; --i) {
-            if (!(dimensions[i].equals(oArr.dimensions[i]))) {
-                return false;
-            }
-        }
+
+//        if (dimensions.length != oArr.dimensions.length) {
+//            return false;
+//        }
+//        for (int i = dimensions.length - 1; i >= 0; --i) {
+//            if (!(dimensions[i].equals(oArr.dimensions[i]))) {
+//                return false;
+//            }
+//        }
         return true;
     }
 
@@ -290,23 +320,28 @@ public class CArray extends CType {
 		}
 
         final CArray oArr = (CArray) oType;
-        if (!(valueType.isCompatibleWith(oArr.valueType))) {
+        if (!(mValueType.isCompatibleWith(oArr.mValueType))) {
             return false;
         }
-        if (dimensions.length != oArr.dimensions.length) {
+        if (!(mBound.equals(oArr.mBound))) {
             return false;
         }
-        for (int i = dimensions.length - 1; i >= 0; --i) {
-            if (!(dimensions[i].equals(oArr.dimensions[i]))) {
-                return false;
-            }
-        }
+
+//        if (dimensions.length != oArr.dimensions.length) {
+//            return false;
+//        }
+//        for (int i = dimensions.length - 1; i >= 0; --i) {
+//            if (!(dimensions[i].equals(oArr.dimensions[i]))) {
+//                return false;
+//            }
+//        }
         return true;
 	}
 
 	@Override
 	public int hashCode() {
 //		return HashUtils.hashJenkins(31, dimensions, valueType, variableLength);
-		return HashUtils.hashJenkins(31, dimensions, valueType);
+//		return HashUtils.hashJenkins(31, dimensions, mValueType);
+		return HashUtils.hashJenkins(31, mBound, mValueType);
 	}
 }
