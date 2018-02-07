@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -1019,11 +1020,13 @@ public class CHandler implements ICHandler {
 			 */
 			CType arrayType = newResType.cType;
 
-			final ArrayList<RValue> size = new ArrayList<>();
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
 
-			for (final IASTArrayModifier am : arrDecl.getArrayModifiers()) {
+			final ListIterator<IASTArrayModifier> it =
+					Arrays.asList(arrDecl.getArrayModifiers()).listIterator(arrDecl.getArrayModifiers().length);
+			while (it.hasPrevious()) {
+				final IASTArrayModifier am = it.previous();
 				final RValue sizeFactor;
 				if (am.getConstantExpression() != null) {
 					// case where we have a number between the brackets,
@@ -1072,7 +1075,6 @@ public class CHandler implements ICHandler {
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-//				size.add(sizeFactor);
 				arrayType = new CArray(sizeFactor, arrayType);
 			}
 			final ExpressionResult allResults = ExpressionResult.copyStmtDeclAuxvarOverapprox(
@@ -1080,9 +1082,7 @@ public class CHandler implements ICHandler {
 			if (!allResults.mDecl.isEmpty() || !allResults.mStmt.isEmpty() || !allResults.mAuxVars.isEmpty()) {
 				throw new AssertionError("passing these results is not yet implemented");
 			}
-//			final CArray arrayType = new CArray(size.toArray(new RValue[size.size()]), newResType.cType);
 			newResType.cType = arrayType;
-
 		} else if (node instanceof IASTStandardFunctionDeclarator) {
 			final IASTStandardFunctionDeclarator funcDecl = (IASTStandardFunctionDeclarator) node;
 
