@@ -764,19 +764,11 @@ public class TypeHandler implements ITypeHandler {
 
 	private static boolean areMatchingTypes(final CPrimitive type1, final CPrimitive type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
-//		if (visitedPairs.containsPair(type1, type2)) {
-//			return true;
-//		}
-//		visitedPairs.addPair(type1, type2);
 		return type1.getType() == type2.getType();
 	}
 
 	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
-//		if (visitedPairs.containsPair(type1, type2)) {
-//			return true;
-//		}
-//		visitedPairs.addPair(type1, type2);
 
 		if (!(type1.getIdentifier().equals(type2.getIdentifier()))) {
 			return false;
@@ -794,10 +786,6 @@ public class TypeHandler implements ITypeHandler {
 
 	private static boolean areMatchingTypes(final CPointer type1, final CPointer type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
-//		if (visitedPairs.containsPair(type1, type2)) {
-//			return true;
-//		}
-//		visitedPairs.addPair(type1, type2);
 		return areMatchingTypes(type1.getTargetType(), type2.getTargetType(), visitedPairs);
 	}
 
@@ -835,7 +823,6 @@ public class TypeHandler implements ITypeHandler {
 		}
 		final SymmetricHashRelation<CType> visitedPairsNew = new SymmetricHashRelation<>(visitedPairs);
 		visitedPairsNew.addPair(type1, type2);
-//		visitedPairs.addPair(type1, type2);
 
 		if (type1.getFieldIds().length != type2.getFieldIds().length) {
 			return false;
@@ -849,7 +836,6 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 		for (int i = 0; i < type1.getFieldTypes().length; i++) {
-//			if (!(type1.getFieldTypes()[i].equals(type2.getFieldTypes()[i]))) {
 			if (!areMatchingTypes(type1.getFieldTypes()[i], type2.getFieldTypes()[i], visitedPairsNew)) {
 				return false;
 			}
@@ -859,32 +845,14 @@ public class TypeHandler implements ITypeHandler {
 
 	private static boolean areMatchingTypes(final CArray type1, final CArray type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
-//		if (visitedPairs.containsPair(type1, type2)) {
-//			return true;
-//		}
-//		visitedPairs.addPair(type1, type2);
 		if (!areMatchingTypes(type1.getValueType(), type2.getValueType(), visitedPairs)) {
 			return false;
 		}
-//		if (!areMatchingTypes(type1.getValueType(), type2.getValueType(), visitedPairs)) {
 		if (!type1.getBound().toString().equals(type2.getBound().toString())) {
 			return false;
 		}
 
-//		if (type1.getDimensions().length != type2.getDimensions().length) {
-//			return false;
-//		}
-//
-//		// if (CTranslationUtil.isVarlengthArray(type1, expressionTranslation))
-//
-//		for (int i = 0; i < type1.getDimensions().length; i++) {
-//			// TODO: this check is a hack (but still better than what we had in CArray.equals)
-//			if (!(type1.getDimensions()[i].toString().equals(type2.getDimensions()[i].toString()))) {
-//				return false;
-//			}
-//		}
 		return true;
-
 	}
 
 	/**

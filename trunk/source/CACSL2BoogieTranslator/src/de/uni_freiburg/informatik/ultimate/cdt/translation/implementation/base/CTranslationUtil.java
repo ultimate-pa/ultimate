@@ -43,9 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -108,15 +106,12 @@ public class CTranslationUtil {
 			final List<Integer> arrayIndex, final ExpressionTranslation expressionTranslation) {
 		final CArray cArrayType = (CArray) arrayLhsToInitialize.getCType().getUnderlyingType();
 
-//		assert cArrayType.getDimensions().length == arrayIndex.size();
-
 		final Expression[] index = new Expression[arrayIndex.size()];
 
 		CArray currentArrayType = cArrayType;
 
 		for (int i = 0; i < arrayIndex.size(); i++) {
 			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType().getUnderlyingType();
-//			final CPrimitive currentIndexType = (CPrimitive) cArrayType.getDimensions()[i].getCType();
 			index[i] = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.get(i).toString()));
 
@@ -143,7 +138,7 @@ public class CTranslationUtil {
 
 		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(), new Expression[] { index });
 
-		final CType cellType = ArrayHandler.popOneDimension(cArrayType);
+		final CType cellType = cArrayType.getValueType();
 
 		return new LocalLValue(alhs, cellType, null);
 	}
@@ -190,14 +185,6 @@ public class CTranslationUtil {
 		return new HeapLValue(newPointer, cArrayType.getValueType(), null);
 	}
 
-//	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
-//			final HeapLValue structBaseAddress, final int fieldNr) {
-//		final CStruct cStructType = (CStruct) structBaseAddress.getCType();
-//		main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, cStructType, fieldNr);
-//		return null;
-//	}
-
-
 	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
 			final HeapLValue arrayBaseAddress, final Integer arrayIndex) {
 		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
@@ -210,7 +197,7 @@ public class CTranslationUtil {
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
 
-		final CType cellType = ArrayHandler.popOneDimension(cArrayType);
+		final CType cellType = cArrayType.getValueType();
 
 		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc,
 				cellType, flatCellNumber, pointerComponentType);
@@ -232,13 +219,9 @@ public class CTranslationUtil {
 
 		final Expression fieldOffset = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(
 						loc, cStructType, fieldIndex);
-//		final HeapLValue fieldPointer = new HeapLValue(fieldAddress, cStructType.getFieldTypes()[i]);
-
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress.getAddress(), loc);
-//		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc,
-//				cArrayType.getValueType(), flatCellNumber, sizeT);
 		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_plus, pointerOffset, sizeT, fieldOffset, sizeT);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
@@ -287,13 +270,6 @@ public class CTranslationUtil {
 				return Collections.unmodifiableList(result);
 			}
 		}
-
-//		final List<Integer> result = new ArrayList<>();
-//		for (final RValue dimRVal : cArrayType.getDimensions()) {
-//			final int dimInt = Integer.parseUnsignedInt(expressionTranslation.extractIntegerValue(dimRVal).toString());
-//			result.add(dimInt);
-//		}
-//		return result;
 	}
 
 	public static boolean isAggregateType(final CType valueType) {
@@ -333,9 +309,6 @@ public class CTranslationUtil {
 		final ExpressionListResult listResult = (ExpressionListResult) dispatch;
 
 		final ExpressionResultBuilder result = new ExpressionResultBuilder();
-
-		final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
-		final StructHandler structHandler = main.mCHandler.getStructHandler();
 
 		for (int i = 0; i < listResult.list.size(); i++) {
 			/*

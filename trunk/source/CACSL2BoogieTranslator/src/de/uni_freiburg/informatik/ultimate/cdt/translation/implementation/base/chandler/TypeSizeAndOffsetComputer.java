@@ -218,17 +218,13 @@ public class TypeSizeAndOffsetComputer {
 		}
 
 		private SizeTValue constructSizeTValue_Array(final ILocation loc, final CArray cArray) {
-//			final List<SizeTValue> factors = new ArrayList<>();
+
 			final SizeTValue valueSize = computeSize(loc, cArray.getValueType());
-//			factors.add(valueSize);
-//			for (final RValue dim : cArray.getDimensions()) {
-//				final SizeTValue dimSize = extractSizeTValue(dim);
-//				factors.add(dimSize);
-//			}
-//			final SizeTValue size = (new SizeTValueAggregator_Multiply()).aggregate(loc, factors);
 			final SizeTValue factor = extractSizeTValue(cArray.getBound());
+
 			final SizeTValue size = (new SizeTValueAggregator_Multiply())
 					.aggregate(loc, Arrays.asList(new SizeTValue[] { valueSize, factor }));
+
 			final SizeTValue result;
 			if (mPreferConstantsOverValues) {
 				final Expression sizeConstant = constructTypeSizeConstant(loc, cArray);

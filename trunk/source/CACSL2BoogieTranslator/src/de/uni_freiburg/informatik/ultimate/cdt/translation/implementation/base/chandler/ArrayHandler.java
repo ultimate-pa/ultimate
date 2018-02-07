@@ -117,11 +117,10 @@ public class ArrayHandler {
 			// missing. E.g., if the input is a (int x int -> float) array
 			// the resulting array will be an (int -> float) array.
 
-			// TODO: unclear what this check is about..
-//			assert cArray.getDimensions().length != 1 || isOutermostSubscriptExpression(node) : "not outermost";
+			// TODO: unclear (to me right now, AN, feb 2018) what this check is about..
 			assert cArray.getValueType() instanceof CArray || isOutermostSubscriptExpression(node) : "not outermost";
 
-			final CType resultCType = popOneDimension(cArray);
+			final CType resultCType = cArray.getValueType();
 
 			if (leftExpRes.mLrVal instanceof HeapLValue) {
 				// If the left hand side is an array represented as HeapLValue
@@ -184,20 +183,6 @@ public class ArrayHandler {
 		}
 
 		return result;
-	}
-
-	public static CType popOneDimension(final CArray cArray) {
-		return cArray.getValueType();
-//		final CType resultCType;
-//		if (cArray.getDimensions().length == 1) {
-//			resultCType = cArray.getValueType();
-//		} else {
-//			final RValue[] newDimensions =
-//					Arrays.copyOfRange(cArray.getDimensions(), 1, cArray.getDimensions().length);
-//			assert newDimensions.length == cArray.getDimensions().length - 1;
-//			resultCType = new CArray(newDimensions, cArray.getValueType());
-//		}
-//		return resultCType;
 	}
 
 	/**

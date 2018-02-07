@@ -394,12 +394,9 @@ public class InitializationHandler {
 				continue;
 			}
 
-//			updateInitializationWithCodeForArrayCell(loc, main, cArrayType, initInfo, onHeap, initialization,
-//					arrayLhsToInitialize, i, arrayIndexInitInfo);
-
 			final int arrayIndex = i;
 
-			final CType cellType = ArrayHandler.popOneDimension(cArrayType);
+			final CType cellType = cArrayType.getValueType();
 
 			final LRValue arrayCellLhs;
 
@@ -423,14 +420,9 @@ public class InitializationHandler {
 			}
 			// generate and add code to initialize the array cell (and possibly its subcells)
 			final ExpressionResult arrayIndexInitialization;
-//			if (arrayIndexInitInfo.isMakeNondeterministicInitialization()) {
-//				arrayIndexInitialization =
-//						makeDefaultOrNondetInitialization(loc, main, arrayCellLhs, cellType, onHeap, true);
-//				initialization.addOverapprox(arrayIndexInitInfo.getOverapprs());
-//			} else {
-				arrayIndexInitialization =
-						initRec(loc, main, cellType, arrayIndexInitInfo, onHeap, arrayCellLhs);
-//			}
+
+			arrayIndexInitialization = initRec(loc, main, cellType, arrayIndexInitInfo, onHeap, arrayCellLhs);
+
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 
 
@@ -1145,7 +1137,7 @@ public class InitializationHandler {
 			CType cellType = null;
 			{
 				if (targetCType instanceof CArray) {
-					cellType = ArrayHandler.popOneDimension((CArray) targetCType);
+					cellType = ((CArray) targetCType).getValueType();
 					bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType,
 							main.mCHandler.getExpressionTranslation());
 					if (CTranslationUtil.isToplevelVarlengthArray((CArray) targetCType,
@@ -1158,8 +1150,6 @@ public class InitializationHandler {
 				}
 			}
 
-
-
 			/*
 			 * The currentCellIndex stands for the "current object" from the standard text.
 			 * Designators may modify that index otherwise it just counts up.
@@ -1167,7 +1157,6 @@ public class InitializationHandler {
 			int currentCellIndex = -1;
 			while (currentCellIndex < (bound - 1)
 					&& !rest.isEmpty()) {
-//			for (int currentCellIndex = 0; currentCellIndex < bound; currentCellIndex++) {
 				if (rest.peekFirst().hasRootDesignator()) {
 					assert targetCType instanceof CStruct : "array designators not yet supported and should not (yet)"
 							+ " show up here";
@@ -1177,16 +1166,9 @@ public class InitializationHandler {
 					currentCellIndex++;
 				}
 
-//				if (rest.isEmpty()) {
-//					// no more values in the current initializer list
-//					break;
-//				}
-
 				if (targetCType instanceof CStruct) {
 					cellType = ((CStruct) targetCType).getFieldTypes()[currentCellIndex];
 				}
-
-
 
 				/*
 				 * C11 6.7.9.13
@@ -1208,7 +1190,6 @@ public class InitializationHandler {
 					 */
 
 					final InitializerResult first = rest.pollFirst();
-//					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first.getList(), cellType);
 					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main, first, cellType);
 
 					indexInitInfos.put(currentCellIndex, cellInitInfo);
