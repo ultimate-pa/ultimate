@@ -24,7 +24,7 @@ public class PatternType {
 	protected PatternToPEA mPeaTransformator;
 	protected CDD mEffect;
 
-	private String mId;
+	protected String mId;
 
 	public PatternType() {
 		this(null);

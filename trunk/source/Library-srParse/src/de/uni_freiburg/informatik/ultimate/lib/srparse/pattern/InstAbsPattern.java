@@ -23,7 +23,7 @@ public class InstAbsPattern extends PatternType {
 			final CDD q_cdd = DEFAULT_Q;
 			final CDD r_cdd = DEFAULT_R;
 
-			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
+			mPea = mPeaTransformator.absencePattern(mId, p_cdd, q_cdd, r_cdd, mScope.toString());
 		}
 		// CASE: BEFORE R
 		else if (mScope instanceof srParseScopeBefore) {
@@ -36,7 +36,7 @@ public class InstAbsPattern extends PatternType {
 			final CDD q_cdd = DEFAULT_Q;
 			final CDD r_cdd = mCdds.get(1);
 
-			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
+			mPea = mPeaTransformator.absencePattern(mId, p_cdd, q_cdd, r_cdd, mScope.toString());
 
 		}
 		// CASE: AFTER Q UNTIL R
@@ -50,7 +50,7 @@ public class InstAbsPattern extends PatternType {
 			final CDD q_cdd = mScope.getCdd1();
 			final CDD r_cdd = mScope.getCdd2();
 
-			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
+			mPea = mPeaTransformator.absencePattern(mId, p_cdd, q_cdd, r_cdd, mScope.toString());
 
 		}
 		// CASE: AFTER Q
@@ -63,7 +63,7 @@ public class InstAbsPattern extends PatternType {
 			final CDD q_cdd = mScope.getCdd1();
 			final CDD r_cdd = DEFAULT_R;
 
-			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
+			mPea = mPeaTransformator.absencePattern(mId, p_cdd, q_cdd, r_cdd, mScope.toString());
 		}
 		// CASE: BETWEEN Q AND R
 		else if (mScope instanceof srParseScopeBetween) {
@@ -76,7 +76,7 @@ public class InstAbsPattern extends PatternType {
 			final CDD q_cdd = mScope.getCdd1();
 			final CDD r_cdd = mScope.getCdd2();
 
-			mPea = mPeaTransformator.absencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
+			mPea = mPeaTransformator.absencePattern(mId, p_cdd, q_cdd, r_cdd, mScope.toString());
 			// return this.getFormulaInLTL();
 		}
 	}
