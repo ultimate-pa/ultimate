@@ -78,9 +78,18 @@ public class ArrayHandler {
 	}
 
 	/**
-	 * Handle array subscript expression according to Sections 6.5.2.1 of C11. For a[i] we will <b>not</b> return the
-	 * object a[i] as an {@link RValue} instead, we return the address of the object a[i] as a {@link HeapLValue} or a
-	 * {@link LocalLValue}.
+	 * Handle array subscript expression according to Sections 6.5.2.1 of C11.
+	 * <p>
+	 * The result must be an LValue (on or off heap) as it might be assigned to.
+	 * <p>
+	 * Essentially there are the following cases that we treat here: <br>
+	 * Let a[i_1]...[i_n] be the subscriptExpression that we want to process ({@link node} parameter)
+	 * <li> a's dimensionality equals n. Then we are at cell level and the result will be of non-array type
+	 * <li> a's dimensionality is lower than n. Then the result will have array-type possibly further subscript must
+	 *  follow in this case because C does not allow array-assignments. (perhaps some decay-to-pointer cases might be
+	 *  exceptions)
+	 * <li> a[i_1]...[i_n-1] is a pointer (so it might not have that array subscript form), then we need to do pointer
+	 *   arithmetic, similar to the on-heap case
 	 */
 	public ExpressionResult handleArraySubscriptExpression(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final IASTArraySubscriptExpression node) {
@@ -93,8 +102,23 @@ public class ArrayHandler {
 
 		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
 
+
+
+		/* note (AN, 2018/02/07): (the "not outermost" assert from the else case below was converted into this, not
+		 * really a special case but leaving it here for remembrance..)
+		 *  because in C, arrays cannot be assigned we expect one of the two to be the case:
+		 *  <li> lhs has array type, we are somewhere between the array identifier and the innermost array cells
+		 *  <li> we have seen all subscripts, therefore arrived at the non-array value type
+		 *  If neither of these is the case, then we view
+		 *   example:
+		 *    int * a[2] = malloc(42 * 2 * sizeof(int));
+		 *    x = a[0][3];
+		 *  when we arrive at translating a[0], we will hit this case. a[0] is a pointer, which means we treat
+		 *   the next subscript as pointer arithmetic (as normal).
+		 */
+
+		final CType cTypeLeft = leftExpRes.mLrVal.getCType().getUnderlyingType();
 		final ExpressionResult result;
-		final CType cTypeLeft = leftExpRes.mLrVal.getCType();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
 			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, loc);
@@ -110,17 +134,14 @@ public class ArrayHandler {
 			result.addAll(newAddress_ER);
 			result.mLrVal = lValue;
 		} else {
-			assert cTypeLeft.getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
-			final CArray cArray = (CArray) cTypeLeft.getUnderlyingType();
+			assert cTypeLeft instanceof CArray : "cType not instanceof CArray";
+			final CArray lhsArrayType = (CArray) cTypeLeft.getUnderlyingType();
 
 			// The result type will be an array where the first dimension is
 			// missing. E.g., if the input is a (int x int -> float) array
 			// the resulting array will be an (int -> float) array.
 
-			// TODO: unclear (to me right now, AN, feb 2018) what this check is about..
-			assert cArray.getValueType() instanceof CArray || isOutermostSubscriptExpression(node) : "not outermost";
-
-			final CType resultCType = cArray.getValueType();
+			final CType resultCType = lhsArrayType.getValueType();
 
 			if (leftExpRes.mLrVal instanceof HeapLValue) {
 				// If the left hand side is an array represented as HeapLValue
@@ -150,7 +171,7 @@ public class ArrayHandler {
 				// current index.
 				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.mLrVal).getLHS();
 
-				final RValue bound = cArray.getBound();
+				final RValue bound = lhsArrayType.getBound();
 
 				// The following is not in the standard, since there everything
 				// is defined via pointers. However, we have to make the subscript
@@ -169,6 +190,7 @@ public class ArrayHandler {
 					newInnerArrayLHS = ExpressionFactory.constructNestedArrayLHS(loc,
 							((ArrayLHS) oldInnerArrayLHS).getArray(), newIndices);
 				} else {
+					// "innermost case", i.e. we arrived at the arrays cell level
 					assert isInnermostSubscriptExpression(node) : "not innermost";
 					newInnerArrayLHS = ExpressionFactory.constructNestedArrayLHS(loc, oldInnerArrayLHS,
 							new Expression[] { index.getValue() });
