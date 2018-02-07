@@ -663,6 +663,11 @@ public class InitializationHandler {
 
 			final LocalLValue arrayLhsToInitialize = lhsToInit;
 
+			CType innerMostValueType  = cArrayType.getValueType().getUnderlyingType();
+			while (innerMostValueType instanceof CArray) {
+				innerMostValueType = ((CArray) innerMostValueType).getValueType().getUnderlyingType();
+			}
+
 			final List<List<Integer>> allIndicesToInitialize =
 					CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
 							CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation));
@@ -672,7 +677,7 @@ public class InitializationHandler {
 						arrayLhsToInitialize, arrayIndex, mExpressionTranslation);
 
 				final ExpressionResult arrayIndexInitialization =
-						makeOffHeapDefaultOrNondetInitializationForType(loc, main, cArrayType.getValueType(), false,
+						makeOffHeapDefaultOrNondetInitializationForType(loc, main, innerMostValueType, false,
 								arrayAccessLhs, nondet);
 				initialization.addAllExceptLrValue(arrayIndexInitialization);
 			}
