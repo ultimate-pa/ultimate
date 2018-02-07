@@ -211,14 +211,11 @@ pattern ::=
       {: RESULT = new InvariantPattern();
          RESULT.mergeCDDs(buildVec(q,p));
       :}
-/* which PatternType should I use for this????
   | expression:p EVENTUALLY HOLDS
       {: 
 	     RESULT = new ResponsePattern();
-         RESULT.setPattern(RESULT.new ());
-         RESULT.mergeCDDs(buildVec(p));
+         RESULT.mergeCDDs(buildVec(BoogieBooleanExpressionDecision.createTrue(),p));
       :}
-*/
   | TRANSITIONS TO STATES IN WHICH expression:p HOLDS OCCUR AT MOST TWICE
       {: RESULT = new BndExistencePattern();
          RESULT.mergeCDDs(buildVec(p));

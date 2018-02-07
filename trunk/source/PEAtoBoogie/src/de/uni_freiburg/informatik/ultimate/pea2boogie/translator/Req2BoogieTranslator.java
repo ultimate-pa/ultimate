@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -219,12 +220,33 @@ public class Req2BoogieTranslator {
 	}
 
 	private List<Declaration> generateGlobalVarsFromInitPattern() {
-		final ILocation loc = null;
 
-		return mInit.stream()
-				.map(a -> new VarList(loc, new String[] { a.getIdent() }, toPrimitiveType(a.getType()).toASTType(loc)))
-				.map(a -> new VariableDeclaration(loc, EMPTY_ATTRIBUTES, new VarList[] { a }))
-				.collect(Collectors.toList());
+		final ILocation loc = null;
+		final List<Declaration> rtr = new ArrayList<>();
+		for (final InitializationPattern init : mInit) {
+			final ASTType type;
+			try {
+				type = toPrimitiveType(init.getType()).toASTType(loc);
+			} catch (final IllegalArgumentException ex) {
+				printAllUnknownTypes();
+				throw ex;
+			}
+
+			rtr.add(new VariableDeclaration(loc, EMPTY_ATTRIBUTES,
+					new VarList[] { new VarList(loc, new String[] { init.getIdent() }, type) }));
+		}
+
+		return rtr;
+	}
+
+	private void printAllUnknownTypes() {
+		for (final InitializationPattern init : mInit) {
+			try {
+				toPrimitiveType(init.getType()).toASTType(null);
+			} catch (final IllegalArgumentException e) {
+				mLogger.fatal(init.getIdent() + " has no type");
+			}
+		}
 	}
 
 	private static de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType toPrimitiveType(final String type) {
