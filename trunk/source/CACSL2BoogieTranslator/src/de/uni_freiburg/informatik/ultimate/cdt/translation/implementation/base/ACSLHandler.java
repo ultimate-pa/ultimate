@@ -208,9 +208,8 @@ public class ACSLHandler implements IACSLHandler {
 			final List<Overapprox> overappr = new ArrayList<>();
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
-			ExpressionResult formula =
-					(ExpressionResult) main.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula(),
-							main.getAcslHook());
+			ExpressionResult formula = (ExpressionResult) main
+					.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula(), main.getAcslHook());
 
 			formula = formula.switchToRValueIfNecessary(main, loc, main.getAcslHook());
 
@@ -544,46 +543,8 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node) {
-		String id = SFO.EMPTY;
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-		switch (mSpecType) {
-		case ASSIGNS:
-			// modifies case in boogie, should be always global!
-			// maybe it is allowed to assign also in parameters?
-			// Global variable
-			id = node.getIdentifier();
-			SymbolTableValue stv = main.mCHandler.getSymbolTable().findCSymbol(main.getAcslHook(), id);
-			if (stv.isBoogieGlobalVar()) {
-				id = stv.getBoogieName();
-			} else {
-				final String msg = "It is not allowed to assign to in parameters! Should be global variables! ["
-						+ node.getIdentifier() + "]";
-				throw new IncorrectSyntaxException(loc, msg);
-			}
-			break;
-		case ENSURES:
-			if ("\result".equalsIgnoreCase(node.getIdentifier())) {
-				id = SFO.RES;
-			} else {
-				id = node.getIdentifier();
-				stv = main.mCHandler.getSymbolTable().findCSymbol(main.getAcslHook(), id);
-				id = stv.getBoogieName();
-			}
-			break;
-		case REQUIRES:
-			id = node.getIdentifier();
-			stv = main.mCHandler.getSymbolTable().findCSymbol(main.getAcslHook(), id);
-			id = stv.getBoogieName();
-			break;
-		case NOT:
-			// We to handle the scope, so that we address here the right
-			// variable
-			id = main.mCHandler.getSymbolTable().findCSymbol(main.getAcslHook(), id).getBoogieName();
-			break;
-		default:
-			final String msg = "The type of specType should be in some type!";
-			throw new IncorrectSyntaxException(loc, msg);
-		}
+		final String id = lookupId(main, node, loc);
 
 		final String cId = main.mCHandler.getSymbolTable().getCIdForBoogieId(id);
 		final CType cType;
@@ -625,6 +586,38 @@ public class ACSLHandler implements IACSLHandler {
 
 		return new ExpressionResult(lrVal);
 		// return new Result(lrVal.getValue());
+	}
+
+	private String lookupId(final Dispatcher main,
+			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node, final ILocation loc) {
+
+		final SymbolTableValue stv =
+				main.mCHandler.getSymbolTable().findCSymbol(main.getAcslHook(), node.getIdentifier());
+		if (stv == null) {
+			throw new IncorrectSyntaxException(loc, "Undeclared variable in ACSL expression: " + node.getIdentifier());
+		}
+		switch (mSpecType) {
+		case ASSIGNS:
+			// modifies case in boogie, should be always global!
+			// maybe it is allowed to assign also in parameters?
+			// Global variable
+			if (stv.isBoogieGlobalVar()) {
+				return stv.getBoogieName();
+			}
+			throw new IncorrectSyntaxException(loc,
+					"It is not allowed to assign to in parameters! Should be global variables! [" + node.getIdentifier()
+							+ "]");
+		case ENSURES:
+			if ("\result".equalsIgnoreCase(node.getIdentifier())) {
+				return SFO.RES;
+			}
+			return stv.getBoogieName();
+		case REQUIRES:
+		case NOT:
+			return stv.getBoogieName();
+		default:
+			throw new IncorrectSyntaxException(loc, "The type of specType should be in some type!");
+		}
 	}
 
 	@Override
@@ -779,8 +772,7 @@ public class ACSLHandler implements IACSLHandler {
 			assert arr instanceof ArrayAccessExpression;
 			assert ((ArrayAccessExpression) arr).getIndices().length == 1;
 			final ExpressionResult arg =
-					(ExpressionResult) main.dispatch(((ArrayAccessExpression) arr).getIndices()[0],
-							main.getAcslHook());
+					(ExpressionResult) main.dispatch(((ArrayAccessExpression) arr).getIndices()[0], main.getAcslHook());
 			assert arg.getClass() == ExpressionResult.class;
 			args.push(arg.mLrVal.getValue());
 			arr = ((ArrayAccessExpression) arr).getArray();
@@ -818,14 +810,14 @@ public class ACSLHandler implements IACSLHandler {
 			final String bId = idEx.getIdentifier();
 			final String cId = main.mCHandler.getSymbolTable().getCIdForBoogieId(bId);
 			assert main.mCHandler.getSymbolTable().containsCSymbol(main.getAcslHook(), cId);
-			final InferredType it = new InferredType(main.mCHandler.getSymbolTable().getTypeOfVariable(
-					main.getAcslHook(), cId, loc));
+			final InferredType it =
+					new InferredType(main.mCHandler.getSymbolTable().getTypeOfVariable(main.getAcslHook(), cId, loc));
 			expr = ExpressionFactory.constructNestedArrayAccessExpression(loc, it, idEx, idx);
 		} else if (subExpr instanceof StructAccessExpression) {
 			final StructAccessExpression sae = (StructAccessExpression) subExpr;
 			final StructLHS lhs = (StructLHS) BoogieASTUtil.getLHSforExpression(sae);
-			final ASTType t = main.mTypeHandler.getTypeOfStructLHS(main.mCHandler.getSymbolTable(), loc, lhs,
-					main.getAcslHook());
+			final ASTType t =
+					main.mTypeHandler.getTypeOfStructLHS(main.mCHandler.getSymbolTable(), loc, lhs, main.getAcslHook());
 			if (!(t instanceof ArrayType)) {
 				final String msg = "Type mismatch - cannot take index on a not-array element!";
 				throw new IncorrectSyntaxException(loc, msg);
@@ -848,9 +840,8 @@ public class ACSLHandler implements IACSLHandler {
 		final List<Overapprox> overappr = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
-		final ExpressionResult r =
-				((ExpressionResult) main.dispatch(node.getStruct())).switchToRValueIfNecessary(main, loc, 
-						main.getAcslHook());
+		final ExpressionResult r = ((ExpressionResult) main.dispatch(node.getStruct())).switchToRValueIfNecessary(main,
+				loc, main.getAcslHook());
 		assert r.getClass() == ExpressionResult.class;
 		final String field = node.getField();
 

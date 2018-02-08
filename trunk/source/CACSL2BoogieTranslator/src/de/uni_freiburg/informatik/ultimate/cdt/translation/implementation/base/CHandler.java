@@ -49,6 +49,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -62,7 +63,6 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
@@ -113,8 +113,6 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
-
-import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory.Location;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
@@ -619,7 +617,7 @@ public class CHandler implements ICHandler {
 			}
 			// ACSL?
 		}
-		
+
 		// Generate additional boogie translation that is collected for all files.
 		final ILocation loc = LocationFactory.createIgnoreCLocation();
 		// (alex:) new function pointers
@@ -667,7 +665,6 @@ public class CHandler implements ICHandler {
 		final Collection<FunctionDeclaration> declaredFunctions =
 				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		mDeclarations.addAll(declaredFunctions);
-		
 
 		// this needs to be here because it needs to know all functions!
 		// have to block this in prerun, because there, Memorymodel is not declared which may make probelms with the
@@ -678,7 +675,10 @@ public class CHandler implements ICHandler {
 		}
 
 		// TODO Need to get a CLocation from somewhere
-		final Unit boogieUnit = new Unit(null, mDeclarations.toArray(new Declaration[mDeclarations.size()]));
+		final Unit boogieUnit = new Unit(
+				main.getLocationFactory().createRootCLocation(
+						units.stream().map(a -> a.getSourceTranslationUnit()).collect(Collectors.toSet())),
+				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		final IASTTranslationUnit hook = units.stream().findAny().get().getSourceTranslationUnit();
 
 		// annotate the Unit with LTLPropertyChecks if applicable
@@ -1956,8 +1956,8 @@ public class CHandler implements ICHandler {
 		// dispatch the controlling expression, convert it to int
 		final Result switchParam = main.dispatch(node.getControllerExpression());
 		assert switchParam instanceof ExpressionResult;
-		final ExpressionResult l = 
-			((ExpressionResult) switchParam).switchToRValueIfNecessary(main, loc, node.getControllerExpression());
+		final ExpressionResult l =
+				((ExpressionResult) switchParam).switchToRValueIfNecessary(main, loc, node.getControllerExpression());
 		// 6.8.4.2-1: "The controlling expression of a switch statement shall have integer type."
 		// note that this does not mean that it has "int" type, it may be long or char, for instance
 		assert l.mLrVal.getCType().isIntegerType();
@@ -2176,8 +2176,9 @@ public class CHandler implements ICHandler {
 			// node.getTypeId().getAbstractDeclarator().getPointerOperators(),
 			// rt, false);
 
-			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType(),
-					node), new CPrimitive(CPrimitives.INT)));
+			return new ExpressionResult(
+					new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType(), node),
+							new CPrimitive(CPrimitives.INT)));
 		}
 		case IASTTypeIdExpression.op_typeof: {
 			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
@@ -2596,9 +2597,9 @@ public class CHandler implements ICHandler {
 			Expression rhsWithBitfieldTreatment;
 			if (lValue.getBitfieldInformation() != null) {
 				final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
-				rhsWithBitfieldTreatment = mExpressionTranslation.erazeBits(loc,
-						rightHandSideWithConversionsApplied.getValue(), (CPrimitive) lValue.getCType(), bitfieldWidth,
-						hook);
+				rhsWithBitfieldTreatment =
+						mExpressionTranslation.erazeBits(loc, rightHandSideWithConversionsApplied.getValue(),
+								(CPrimitive) lValue.getCType(), bitfieldWidth, hook);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideWithConversionsApplied.getValue();
 			}
@@ -2837,9 +2838,8 @@ public class CHandler implements ICHandler {
 							&& er.mLrVal.getCType() instanceof CPrimitive
 							&& ((CPrimitive) rightHandSideWithConversionsApplied.getCType().getUnderlyingType())
 									.getGeneralType().equals(((CPrimitive) er.mLrVal.getCType()).getGeneralType())
-							&& mMemoryHandler.calculateSizeOf(loc,
-									rightHandSideWithConversionsApplied.getCType(), hook) == mMemoryHandler
-											.calculateSizeOf(loc, er.mLrVal.getCType(), hook)) {
+							&& mMemoryHandler.calculateSizeOf(loc, rightHandSideWithConversionsApplied.getCType(),
+									hook) == mMemoryHandler.calculateSizeOf(loc, er.mLrVal.getCType(), hook)) {
 
 				builder = new ExpressionResultBuilder(makeAssignment(main, loc, builder.mStatements, er.mLrVal, rVal,
 						builder.mDeclarations, builder.mAuxVars, builder.mOverappr, hook));
@@ -3433,8 +3433,8 @@ public class CHandler implements ICHandler {
 		}
 
 		// in-/decremented value
-		final Expression valueXcremented = constructXcrementedValue(main, loc, result, oType, op, tmpRValue.getValue(),
-				hook);
+		final Expression valueXcremented =
+				constructXcrementedValue(main, loc, result, oType, op, tmpRValue.getValue(), hook);
 
 		final RValue rhs = new RValue(valueXcremented, oType, false, false);
 		final ExpressionResult assign = makeAssignment(main, loc, result.mStmt, modifiedLValue, rhs, result.mDecl,
@@ -4000,7 +4000,7 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign: {
-			addIntegerBoundsCheck(main, loc, result, typeOfResult, op, hook, left.mLrVal.getValue(), 
+			addIntegerBoundsCheck(main, loc, result, typeOfResult, op, hook, left.mLrVal.getValue(),
 					right.mLrVal.getValue());
 			break;
 		}

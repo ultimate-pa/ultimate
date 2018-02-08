@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePrinter plug-in.
- * 
+ *
  * The ULTIMATE BoogiePrinter plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePrinter plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePrinter plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePrinter plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -81,7 +81,13 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.SAVE_IN_SOURCE_DIRECTORY_LABEL)) {
-			path = new File(ILocation.getAnnotation(root).getFileName()).getParent();
+			final ILocation loc = ILocation.getAnnotation(root);
+			final File inputFile = new File(loc.getFileName());
+			if (inputFile.isDirectory()) {
+				path = inputFile.getPath();
+			} else {
+				path = inputFile.getParent();
+			}
 			if (path == null) {
 				mLogger.warn("Model does not provide a valid source location, falling back to default dump path...");
 				path = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
