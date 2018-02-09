@@ -401,4 +401,8 @@ public abstract class Dispatcher {
 			return mDivisionByZeroOfFloatingTypes;
 		}
 	}
+
+	public ILogger getLogger() {
+		return mLogger;
+	}
 }

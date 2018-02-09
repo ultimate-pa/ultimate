@@ -188,6 +188,11 @@ public final class SFO {
 	public static final String MEMSET = "ULTIMATE.memset";
 
 	/**
+	 * name of C's "main" procedure
+	 */
+	public static final String MAIN = "main";
+
+	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */
 	public enum AUXVAR {

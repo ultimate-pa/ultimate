@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -521,7 +522,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType ctype,
 			final List<Statement> stmt) {
 		// do nothing. not needed for bitvectors
+	}
 
+	@Override
+	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType ctype,
+			final ExpressionResultBuilder expressionResultBuilder) {
+		// do nothing. not needed for bitvectors
 	}
 
 	@Override
@@ -556,7 +562,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName,
 				new Expression[] { operand });
 	}
-	
+
 	@Override
 	public Expression erazeBits(final ILocation loc, final Expression value, final CPrimitive cType, final int remainingWith) {
 			final BigInteger bitmaskNumber = BigInteger.valueOf(2).pow(remainingWith).subtract(BigInteger.ONE);

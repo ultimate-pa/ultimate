@@ -320,7 +320,7 @@ public class CTranslationUtil {
 			result.addAllExceptLrValue(listResult.list.get(i)
 					.switchToRValueIfNecessary(main, loc));
 		}
-		result.setLRVal(listResult.list.get(listResult.list.size() - 1).getLrValue());
+		result.setLrVal(listResult.list.get(listResult.list.size() - 1).getLrValue());
 
 		return result.build();
 	}
