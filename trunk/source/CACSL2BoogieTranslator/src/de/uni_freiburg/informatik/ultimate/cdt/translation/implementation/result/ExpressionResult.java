@@ -110,7 +110,10 @@ public class ExpressionResult extends Result {
 	public final Map<VariableDeclaration, ILocation> mAuxVars;
 
 	/**
-	 * especially for the havocs when writign a union. contains the field that must be havoced if this union is written.
+	 * We store off-heap unions as Boogie structs.
+	 * When we write a field of an off-heap union, we must havoc all the other "neighbour" fields of the union.
+	 * If this ExpressionResult represents a field in an off-heap union then this member contains information about the
+	 * union fields that must be havocced if this union field is written.
 	 */
 	public final List<ExpressionResult> mOtherUnionFields;
 
@@ -183,7 +186,7 @@ public class ExpressionResult extends Result {
 				builder.addNeighbourUnionFields(resExpr.mOtherUnionFields);
 			}
 		}
-		builder.setLRVal(null); // just for being explicit
+		builder.setLrVal(null); // just for being explicit
 		return builder.build();
 	}
 
@@ -409,11 +412,12 @@ public class ExpressionResult extends Result {
 
 	public ExpressionResult readArrayFromHeap(final Dispatcher main, final StructHandler structHandler,
 			final MemoryHandler memoryHandler, final ILocation loc, final Expression address, final CArray arrayType) {
-		HeapLValue xfieldHeapLValue = null;
-		List<Declaration> decl = new ArrayList<>();
-		List<Statement> stmt = new ArrayList<>();
-		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final ArrayList<Overapprox> overApp = new ArrayList<>();
+		final HeapLValue resultValue;
+//		List<Declaration> decl = new ArrayList<>();
+//		List<Statement> stmt = new ArrayList<>();
+//		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//		final ArrayList<Overapprox> overApp = new ArrayList<>();
+		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		if (!(arrayType.getValueType().getUnderlyingType() instanceof CArray)) {
 			final ExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
@@ -429,10 +433,13 @@ public class ExpressionResult extends Result {
 					main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
 			final VariableDeclaration newArrayDec =
 					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
-			xfieldHeapLValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null);
+			resultValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null);
+//			builder.setLrVal(new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null));
 
-			decl.add(newArrayDec);
-			auxVars.put(newArrayDec, loc);
+//			decl.add(newArrayDec);
+//			auxVars.put(newArrayDec, loc);
+			builder.addDeclaration(newArrayDec);
+			builder.putAuxVar(newArrayDec, loc);
 
 			final Expression arrayStartAddress = address;
 			Expression newStartAddressBase = null;
@@ -460,21 +467,26 @@ public class ExpressionResult extends Result {
 				} else {
 					readRex = memoryHandler.getReadCall(readAddress, arrayType.getValueType());
 				}
-				decl.addAll(readRex.mDecl);
-				stmt.addAll(readRex.mStmt);
-				auxVars.putAll(readRex.mAuxVars);
-				overApp.addAll(readRex.mOverappr);
+				builder.addAllExceptLrValue(readRex);
+//				decl.addAll(readRex.mDecl);
+//				stmt.addAll(readRex.mStmt);
+//				auxVars.putAll(readRex.mAuxVars);
+//				overApp.addAll(readRex.mOverappr);
 
 				final ArrayLHS aAcc = ExpressionFactory.constructNestedArrayLHS(loc, new VariableLHS(loc, newArrayId),
 						new Expression[] { exprTrans.constructLiteralForIntegerType(loc,
 								new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) });
-				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc, stmt,
-						new LocalLValue(aAcc, arrayType.getValueType(), null), (RValue) readRex.mLrVal, decl, auxVars,
-						mOverappr);
-				decl = assRex.mDecl;
-				stmt = assRex.mStmt;
-				auxVars = assRex.mAuxVars;
-				overApp.addAll(assRex.mOverappr);
+//				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc, stmt,
+//						new LocalLValue(aAcc, arrayType.getValueType(), null), (RValue) readRex.mLrVal, decl, auxVars,
+//						mOverappr);
+				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc,
+						new LocalLValue(aAcc, arrayType.getValueType(), null), Collections.emptyList(), builder.build()
+						);
+				builder = new ExpressionResultBuilder(assRex);
+//				decl = assRex.mDecl;
+//				stmt = assRex.mStmt;
+//				auxVars = assRex.mAuxVars;
+//				overApp.addAll(assRex.mOverappr);
 
 				arrayEntryAddressOffset = exprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 						arrayEntryAddressOffset, exprTrans.getCTypeOfPointerComponents(), valueTypeSize,
@@ -484,8 +496,10 @@ public class ExpressionResult extends Result {
 			throw new UnsupportedSyntaxException(loc,
 					"we need to generalize this to nested and/or variable length arrays");
 		}
-		final ExpressionResult xres1 = new ExpressionResult(stmt, xfieldHeapLValue, decl, auxVars, overApp);
-		return xres1;
+//		final ExpressionResult xres1 = new ExpressionResult(stmt, xfieldHeapLValue, decl, auxVars, overApp);
+//		return xres1;
+		builder.setLrVal(resultValue);
+		return builder.build();
 	}
 
 	/**

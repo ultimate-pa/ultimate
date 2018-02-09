@@ -210,7 +210,7 @@ public class InitializationHandler {
 
 		init.addAllExceptLrValue(nondetinit);
 		if (nondetinit.getLrValue() != null) {
-			init.setLRVal(nondetinit.getLrValue());
+			init.setLrVal(nondetinit.getLrValue());
 		}
 		init.addOverapprox(initInfo.getOverapprs());
 		return init.build();
@@ -232,7 +232,7 @@ public class InitializationHandler {
 			assigningStatements.forEach(stm -> addOverApprToStatementAnnots(initInfo.getOverapprs(), stm));
 			initializer.addStatements(assigningStatements);
 		} else {
-			initializer.setLRVal(initializationValue);
+			initializer.setLrVal(initializationValue);
 		}
 
 		return initializer.build();
@@ -466,7 +466,7 @@ public class InitializationHandler {
 			initialization.addAllExceptLrValue(defaultInit);
 			if (defaultInit.getLrValue() != null) {
 				assert lhsToInit == null;
-				initialization.setLRVal(defaultInit.getLrValue());
+				initialization.setLrVal(defaultInit.getLrValue());
 			}
 		}
 
@@ -550,7 +550,7 @@ public class InitializationHandler {
 						initializationValue.getValue(), Collections.emptyList());
 				initializer.addStatements(assigningStatements);
 			} else {
-				initializer.setLRVal(initializationValue);
+				initializer.setLrVal(initializationValue);
 			}
 			return initializer.build();
 		} else if (cType instanceof CStruct) {
@@ -602,7 +602,7 @@ public class InitializationHandler {
 				final StructConstructor initializationValue = ExpressionFactory.constructStructConstructor(loc,
 						cStructType.getFieldIds(),
 						fieldValues.toArray(new Expression[fieldValues.size()]));
-				initialization.setLRVal(new RValue(initializationValue, cType));
+				initialization.setLrVal(new RValue(initializationValue, cType));
 			}
 
 			return initialization.build();
@@ -623,7 +623,7 @@ public class InitializationHandler {
 				SFO.AUXVAR.NONDET);
 
 		final ExpressionResult x = new ExpressionResultBuilder()
-				.setLRVal(new RValue(auxVar.getExp(), fieldType))
+				.setLrVal(new RValue(auxVar.getExp(), fieldType))
 				.addDeclaration(auxVar.getVarDec())
 				.putAuxVar(auxVar.getVarDec(), loc)
 				.addOverapprox(new Overapprox("initialize union -- havoccing a field without explictit "
@@ -754,7 +754,7 @@ public class InitializationHandler {
 
 		initialization.addDeclaration(auxVar.getVarDec());
 		initialization.putAuxVar(auxVar.getVarDec(), loc);
-		initialization.setLRVal(arrayLhsToInitialize);
+		initialization.setLrVal(arrayLhsToInitialize);
 		return arrayLhsToInitialize;
 	}
 
@@ -1029,7 +1029,7 @@ public class InitializationHandler {
 									main.mCHandler.getExpressionTranslation().constructLiteralForIntegerType(loc,
 											charCType, BigInteger.valueOf(literalString[i]));
 							final ExpressionResult charResult = new ExpressionResultBuilder()
-									.setLRVal(new RValue(charLitExp, charCType))
+									.setLrVal(new RValue(charLitExp, charCType))
 									.build();
 							indexToInitInfo.put(i, new InitializerInfo(charResult, Collections.emptyList()));
 						}
@@ -1078,7 +1078,7 @@ public class InitializationHandler {
 					}
 
 					final ExpressionResult onlyRValueExprResult = new ExpressionResultBuilder()
-							.setLRVal(exprResult.getLrValue())
+							.setLrVal(exprResult.getLrValue())
 							.addOverapprox(exprResult.getOverapprs())
 							.build();
 

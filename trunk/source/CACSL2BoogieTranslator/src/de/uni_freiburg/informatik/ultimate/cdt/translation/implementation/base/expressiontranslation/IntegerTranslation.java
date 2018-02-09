@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -645,6 +646,18 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (!mTypeSizes.isUnsigned(cPrimitive)) {
 				stmt.add(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
+			}
+		}
+	}
+
+	@Override
+	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
+			final ExpressionResultBuilder expressionResultBuilder) {
+		if (mAssumeThatSignedValuesAreInRange && cType.getUnderlyingType().isIntegerType()) {
+			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
+			if (!mTypeSizes.isUnsigned(cPrimitive)) {
+				expressionResultBuilder.addStatement(
+						constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
 			}
 		}
 	}
