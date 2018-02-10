@@ -645,7 +645,9 @@ public class StandardFunctionHandler {
 		result.mStmt.add(mMemoryHandler.constructUltimateMemsetCall(loc, argS.mLrVal.getValue(), argC.mLrVal.getValue(),
 				argN.mLrVal.getValue(), tId));
 
-		mFunctionHandler.addMemoryModelDeclarations(MemoryModelDeclarations.C_Memset);
+//		mFunctionHandler.addMemoryModelDeclarations(MemoryModelDeclarations.C_Memset);
+		mFunctionHandler.registerCall(MemoryModelDeclarations.C_Memset.getName());
+
 		return result;
 	}
 
@@ -680,8 +682,10 @@ public class StandardFunctionHandler {
 		result.mStmt.add(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.mLrVal.getValue(),
 				size.mLrVal.getValue(), product, new IdentifierExpression(loc, tmpId)));
 
-		mFunctionHandler.addMemoryModelDeclarations(MemoryModelDeclarations.Ultimate_MemInit,
-				MemoryModelDeclarations.Ultimate_Alloc);
+//		mFunctionHandler.addMemoryModelDeclarations(MemoryModelDeclarations.Ultimate_MemInit,
+//				MemoryModelDeclarations.Ultimate_Alloc);
+		mFunctionHandler.registerCall(MemoryModelDeclarations.Ultimate_MemInit.getName(),
+				MemoryModelDeclarations.Ultimate_Alloc.getName());
 		return result;
 	}
 
@@ -705,8 +709,9 @@ public class StandardFunctionHandler {
 		// add required information to function handler.
 		if (mFunctionHandler.getCurrentProcedureID() != null) {
 			mFunctionHandler.addModifiedGlobal(SFO.FREE, SFO.VALID);
-			mFunctionHandler.addCallGraphNode(SFO.FREE);
-			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), SFO.FREE);
+//			mFunctionHandler.addCallGraphNode(SFO.FREE);
+//			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), SFO.FREE);
+			mFunctionHandler.registerCall(SFO.FREE);
 		}
 
 		pRex.mStmt.add(freeCall);
@@ -1045,9 +1050,10 @@ public class StandardFunctionHandler {
 		mMemoryHandler.getRequiredMemoryModelFeatures().require(mmDecl);
 
 		// add required information to function handler.
-		mFunctionHandler.addCallGraphNode(mmDecl.getName());
-		mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), mmDecl.getName());
-		mFunctionHandler.addModifiedGlobalEntry(mmDecl.getName());
+//		mFunctionHandler.addCallGraphNode(mmDecl.getName());
+//		mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), mmDecl.getName());
+//		mFunctionHandler.addModifiedGlobalEntry(mmDecl.getName());
+		mFunctionHandler.registerCall(mmDecl.getName());
 
 		return result;
 	}

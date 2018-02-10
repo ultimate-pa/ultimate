@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 
@@ -55,7 +54,7 @@ public class StaticObjectsHandler {
 	private final Collection<Declaration> mGlobalDeclarations = new ArrayList<>();
 	private final Collection<Statement> mStatementsForUltimateInit = new ArrayList<>();
 	private final Collection<String> mVariablesModifiedByUltimateInit = new HashSet<>();
-	private final Collection<String> mProceduresCalledByUltimateInit = new HashSet<>();
+//	private final Collection<String> mProceduresCalledByUltimateInit = new HashSet<>();
 
 	private boolean mIsFrozen = false;
 
@@ -76,27 +75,26 @@ public class StaticObjectsHandler {
 
 	public void addStatementForUltimateInit(final Statement stmt) {
 		assert !mIsFrozen;
-		if (stmt instanceof CallStatement) {
-			addProcedureCalledByUltimateInit(((CallStatement) stmt).getMethodName());
-		}
+//		if (stmt instanceof CallStatement) {
+//			addProcedureCalledByUltimateInit(((CallStatement) stmt).getMethodName());
+//		}
 		mStatementsForUltimateInit.add(stmt);
 	}
 
 	public void addStatementsForUltimateInit(final Collection<Statement> stmts) {
 		assert !mIsFrozen;
 		for (final Statement stmt : stmts) {
-			if (stmt instanceof CallStatement) {
-				addProcedureCalledByUltimateInit(((CallStatement) stmt).getMethodName());
-			}
+//			if (stmt instanceof CallStatement) {
+//				addProcedureCalledByUltimateInit(((CallStatement) stmt).getMethodName());
+//			}
 			mStatementsForUltimateInit.add(stmt);
 		}
 	}
 
-	private void addProcedureCalledByUltimateInit(final String proc) {
-		assert !mIsFrozen;
-		mProceduresCalledByUltimateInit.add(proc);
-	}
-
+//	private void addProcedureCalledByUltimateInit(final String proc) {
+//		assert !mIsFrozen;
+//		mProceduresCalledByUltimateInit.add(proc);
+//	}
 
 	public Collection<Declaration> getGlobalDeclarations() {
 		assert mIsFrozen;
@@ -113,10 +111,10 @@ public class StaticObjectsHandler {
 		return mVariablesModifiedByUltimateInit;
 	}
 
-	public Collection<String> getProceduresCalledByUltimateInit() {
-		assert mIsFrozen;
-		return mProceduresCalledByUltimateInit;
-	}
+//	public Collection<String> getProceduresCalledByUltimateInit() {
+//		assert mIsFrozen;
+//		return mProceduresCalledByUltimateInit;
+//	}
 
 	public void freeze() {
 		assert !mIsFrozen;
