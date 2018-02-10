@@ -268,7 +268,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta, counterexample.getNestedLassoWord());
 			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
-					new NonterminationBenchmark(nta)));
+					new NonterminationArgumentStatistics(nta)));
 
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
@@ -414,12 +414,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	// return result;
 	// }
 
-	private class NonterminationBenchmark implements ICsvProviderProvider<String> {
+	private class NonterminationArgumentStatistics implements ICsvProviderProvider<String> {
 		private final String mNtar;
 		private final boolean mLambdaZero;
 		private final boolean mGEVZero;
 
-		public NonterminationBenchmark(final NonTerminationArgument nta) {
+		public NonterminationArgumentStatistics(final NonTerminationArgument nta) {
 			if (nta instanceof GeometricNonTerminationArgument) {
 				final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 				boolean lambdaZero = true;
