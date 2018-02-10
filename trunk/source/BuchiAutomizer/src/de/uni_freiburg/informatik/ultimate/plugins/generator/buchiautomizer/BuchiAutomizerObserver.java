@@ -29,13 +29,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -64,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
+import de.uni_freiburg.informatik.ultimate.lassoranker.NonterminationArgumentStatistics;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.InfiniteFixpointRepetition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
@@ -86,9 +84,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -414,61 +409,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	// return result;
 	// }
 
-	private class NonterminationArgumentStatistics implements ICsvProviderProvider<String> {
-		private final String mNtar;
-		private final boolean mLambdaZero;
-		private final boolean mGEVZero;
 
-		public NonterminationArgumentStatistics(final NonTerminationArgument nta) {
-			if (nta instanceof GeometricNonTerminationArgument) {
-				final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
-				boolean lambdaZero = true;
-				boolean gevZero = true;
-				final List<Rational> lambdas = gnta.getLambdas();
-				for (int i = 0; i < gnta.getNumberOfGEVs(); ++i) {
-					lambdaZero &= gnta.getLambdas().get(i).numerator().equals(BigInteger.ZERO);
-					gevZero &= isZero(gnta.getGEVs().get(i));
-				}
-
-				mLambdaZero = lambdaZero;
-				mGEVZero = gevZero;
-				mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " GEVs: "
-						+ (mGEVZero ? "is zero" : "is not zero");
-			} else if (nta instanceof InfiniteFixpointRepetition) {
-				mNtar = "Fixpoint";
-				mLambdaZero = true;
-				mGEVZero = true;
-			} else {
-				throw new IllegalArgumentException("unknown NonTerminationArgument");
-			}
-		}
-
-		private boolean isFixpoint() {
-			return mLambdaZero || mGEVZero;
-		}
-
-		/**
-		 * Return true iff all coefficients of generalized eigenvector are zero.
-		 */
-		private boolean isZero(final Map<IProgramVar, Rational> gev) {
-			for (final Entry<IProgramVar, Rational> entry : gev.entrySet()) {
-				if (!entry.getValue().numerator().equals(BigInteger.ZERO)) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		@Override
-		public ICsvProvider<String> createCsvProvider() {
-			return new SimpleCsvProvider<>(Arrays.asList(new String[] { "nta" }));
-		}
-
-		@Override
-		public String toString() {
-			return mNtar;
-		}
-
-	}
 
 }
