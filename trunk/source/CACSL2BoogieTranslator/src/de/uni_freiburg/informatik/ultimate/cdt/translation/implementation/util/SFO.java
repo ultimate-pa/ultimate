@@ -193,6 +193,17 @@ public final class SFO {
 	public static final String MAIN = "main";
 
 	/**
+	 * Name of the memory allocation procedure used by the memory model.
+	 */
+	public static final String ALLOC = "#Ultimate.alloc";
+
+	public static final String C_MEMCPY = "#Ultimate.C_memcpy";
+
+	public static final String C_MEMMOVE = "#Ultimate.C_memmove";
+
+	public static final String C_MEMSET = "#Ultimate.C_memset";
+
+	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */
 	public enum AUXVAR {

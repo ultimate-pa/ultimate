@@ -239,4 +239,9 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
 		}
 		return result;
 	}
+
+	public SymbolTableValue getEntryForBoogieVar(final String boogieVarId, final ILocation loc) {
+		final String cId = getCID4BoogieID(boogieVarId, loc);
+		return get(cId, loc);
+	}
 }
