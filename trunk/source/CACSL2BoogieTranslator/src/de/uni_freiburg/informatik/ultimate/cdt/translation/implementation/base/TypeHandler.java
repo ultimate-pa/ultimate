@@ -666,6 +666,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public void endScope() {
+		assert !mDefinedTypes.isEmptyScope();
 		mDefinedTypes.endScope();
 	}
 

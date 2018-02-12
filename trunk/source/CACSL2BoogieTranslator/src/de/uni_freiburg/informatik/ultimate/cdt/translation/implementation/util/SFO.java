@@ -111,6 +111,7 @@ public final class SFO {
 	 * String holding "0.0".
 	 */
 	public static final String NR0F = "0.0";
+
 	/**
 	 * Identifier of free procedure.
 	 */
