@@ -60,7 +60,10 @@ public class InitializerResultBuilder {
 	public InitializerResultBuilder(final InitializerResult initializerResult) {
 		mRootDesignator = initializerResult.getRootDesignator();
 		mRootExpressionResult = initializerResult.hasRootExpressionResult() ?
-				new ExpressionResultBuilder(initializerResult.getRootExpressionResult()).build() :
+				new ExpressionResultBuilder()
+				.addAllExceptLrValue(initializerResult.getRootExpressionResult())
+				.setLrVal(initializerResult.getRootExpressionResult().getLrValue())
+				.build() :
 					null;
 		mChildren = initializerResult.isInitializerList() ? new ArrayList<>(initializerResult.getList()) : null;
 	}

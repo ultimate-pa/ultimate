@@ -49,20 +49,34 @@ public class ExpressionResultBuilder {
 	private final List<ExpressionResult> mNeighbourUnionFields = new ArrayList<>();
 
 
-	public ExpressionResultBuilder(final ExpressionResult assignmentExprRes) {
-		mStatements.addAll(assignmentExprRes.mStmt);
-		mDeclarations.addAll(assignmentExprRes.mDecl);
-		mOverappr.addAll(assignmentExprRes.mOverappr);
-		mAuxVars.putAll(assignmentExprRes.mAuxVars);
-		mNeighbourUnionFields.addAll(assignmentExprRes.mOtherUnionFields);
-		mLrVal = assignmentExprRes.mLrVal;
-	}
+//	public ExpressionResultBuilder(final ExpressionResult assignmentExprRes) {
+//		mStatements.addAll(assignmentExprRes.mStmt);
+//		mDeclarations.addAll(assignmentExprRes.mDecl);
+//		mOverappr.addAll(assignmentExprRes.mOverappr);
+//		mAuxVars.putAll(assignmentExprRes.mAuxVars);
+//		mNeighbourUnionFields.addAll(assignmentExprRes.mOtherUnionFields);
+//		mLrVal = assignmentExprRes.mLrVal;
+//	}
 
 	/**
 	 * Creates an ExpressionResultBuidler with empty fields.
 	 */
 	public ExpressionResultBuilder() {
 		// do nothing
+	}
+
+	/**
+	 * copy constructor
+	 *
+	 * @param builderIn
+	 */
+	public ExpressionResultBuilder(final ExpressionResultBuilder original) {
+		mStatements.addAll(original.mStatements);
+		mDeclarations.addAll(original.mDeclarations);
+		mOverappr.addAll(original.mOverappr);
+		mAuxVars.putAll(original.mAuxVars);
+		mNeighbourUnionFields.addAll(original.mNeighbourUnionFields);
+		mLrVal = original.mLrVal;
 	}
 
 	public ExpressionResultBuilder setLrVal(final LRValue val) {
@@ -118,12 +132,13 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
-	public void addAllExceptLrValue(final ExpressionResult currentFieldInitializer) {
+	public ExpressionResultBuilder addAllExceptLrValue(final ExpressionResult currentFieldInitializer) {
 		addDeclarations(currentFieldInitializer.getDeclarations());
 		addStatements(currentFieldInitializer.getStatements());
 		addOverapprox(currentFieldInitializer.getOverapprs());
 		putAuxVars(currentFieldInitializer.getAuxVars());
 		addNeighbourUnionFields(currentFieldInitializer.getNeighbourUnionFields());
+		return this;
 	}
 
 	public ExpressionResult build() {
@@ -152,5 +167,21 @@ public class ExpressionResultBuilder {
 
 	public List<ExpressionResult> getNeighbourUnionFields() {
 		return Collections.unmodifiableList(mNeighbourUnionFields);
+	}
+
+	public void resetLrVal(final LRValue rVal) {
+		if (mLrVal == null) {
+			throw new IllegalStateException("use setLrVal instead");
+		}
+		mLrVal = rVal;
+	}
+
+	public void setOrResetLrVal(final HeapLValue lrVal) {
+		if (mLrVal == null) {
+			setLrVal(lrVal);
+		} else {
+			resetLrVal(lrVal);
+		}
+
 	}
 }
