@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.typechecker;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 

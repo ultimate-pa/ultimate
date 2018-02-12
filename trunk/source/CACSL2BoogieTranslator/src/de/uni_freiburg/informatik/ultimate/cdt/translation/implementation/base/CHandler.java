@@ -250,7 +250,7 @@ public class CHandler implements ICHandler {
 		} else if (lhs instanceof ArrayLHS) {
 			final ArrayLHS alhs = (ArrayLHS) lhs;
 			final Expression array = convertLHSToExpression(alhs.getArray());
-			return ExpressionFactory.constructNestedArrayAccessExpression(alhs.getLocation(), alhs.getType(), array,
+			return ExpressionFactory.constructNestedArrayAccessExpression(alhs.getLocation(), array,
 					alhs.getIndices());
 		} else if (lhs instanceof StructLHS) {
 			final StructLHS slhs = (StructLHS) lhs;

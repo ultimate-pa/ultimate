@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -95,18 +96,23 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieFunctionSignature;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.FunctionInfo;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.ITypeErrorReporter;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.ProcedureInfo;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeManager;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeParameters;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.VariableInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class is a AST-Visitor for creating textual representations of the tree. It creates a String.
@@ -155,13 +161,6 @@ public class TypeChecker extends BaseObserver {
 		mServices = services;
 	}
 
-	private static int getBitVecLength(BoogieType t) {
-		t = t.getUnderlyingType();
-		if (!(t instanceof BoogiePrimitiveType)) {
-			return -1;
-		}
-		return ((BoogiePrimitiveType) t).getTypeCode();
-	}
 
 	private VariableInfo findVariable(final String name) {
 		final VariableInfo rtr = mVarScopes.get(name);
@@ -172,175 +171,38 @@ public class TypeChecker extends BaseObserver {
 	}
 
 	private BoogieType typecheckExpression(final Expression expr) {
+
+		final TypeErrorReporter typeErrorReporter = new TypeErrorReporter(expr);
+
 		BoogieType resultType;
+
 		if (expr instanceof BinaryExpression) {
 			final BinaryExpression binexp = (BinaryExpression) expr;
-			BoogieType left = typecheckExpression(binexp.getLeft());
-			BoogieType right = typecheckExpression(binexp.getRight());
-
-			switch (binexp.getOperator()) {
-			case LOGICIFF:
-			case LOGICIMPLIES:
-			case LOGICAND:
-			case LOGICOR:
-				if (!left.equals(BoogieType.TYPE_ERROR) && !left.equals(BoogieType.TYPE_BOOL)
-						|| !right.equals(BoogieType.TYPE_ERROR) && !right.equals(BoogieType.TYPE_BOOL)) {
-					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
-				}
-				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
-				break;
-			case ARITHDIV:
-			case ARITHMINUS:
-			case ARITHMOD:
-			case ARITHMUL:
-			case ARITHPLUS:
-				/* Try to recover for error types */
-				if (left.equals(BoogieType.TYPE_ERROR)) {
-					left = right;
-				} else if (right.equals(BoogieType.TYPE_ERROR)) {
-					right = left;
-				}
-				if (!left.equals(right) || !left.equals(BoogieType.TYPE_INT) && !left.equals(BoogieType.TYPE_REAL)
-						|| left.equals(BoogieType.TYPE_REAL)
-								&& binexp.getOperator() == BinaryExpression.Operator.ARITHMOD) {
-					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
-					resultType = BoogieType.TYPE_ERROR;
-				} else {
-					resultType = left;
-				}
-				break;
-			case COMPLT:
-			case COMPGT:
-			case COMPLEQ:
-			case COMPGEQ:
-				/* Try to recover for error types */
-				if (left.equals(BoogieType.TYPE_ERROR)) {
-					left = right;
-				} else if (right.equals(BoogieType.TYPE_ERROR)) {
-					right = left;
-				}
-				if (!left.equals(right) || !left.equals(BoogieType.TYPE_INT) && !left.equals(BoogieType.TYPE_REAL)) {
-					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
-				}
-				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
-				break;
-			case COMPNEQ:
-			case COMPEQ:
-				if (!left.isUnifiableTo(right)) {
-					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
-				}
-				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
-				break;
-			case COMPPO:
-				if (!left.equals(right) && !left.equals(BoogieType.TYPE_ERROR)
-						&& !right.equals(BoogieType.TYPE_ERROR)) {
-					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr) + ": "
-							+ left.getUnderlyingType() + " != " + right.getUnderlyingType());
-				}
-				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
-				break;
-			case BITVECCONCAT:
-				int leftLen = getBitVecLength(left);
-				int rightLen = getBitVecLength(right);
-				if (leftLen < 0 || rightLen < 0 || leftLen + rightLen < 0 /*
-																			 * handle overflow
-																			 */) {
-					if (!left.equals(BoogieType.TYPE_ERROR) && !right.equals(BoogieType.TYPE_ERROR)) {
-						typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
-					}
-					leftLen = 0;
-					rightLen = 0; /* recover */
-				}
-				resultType = BoogieType.createBitvectorType(leftLen + rightLen);
-				break;
-			default:
-				internalError("Unknown Binary operator " + binexp.getOperator());
-				resultType = BoogieType.TYPE_ERROR;
-				break;
-			}
+			resultType = TypeCheckHelper.typeCheckBinaryExpression(binexp.getOperator(), typecheckExpression(binexp.getLeft()),
+					typecheckExpression(binexp.getRight()), new TypeErrorReporter(binexp));
 		} else if (expr instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) expr;
-			final BoogieType subtype = typecheckExpression(unexp.getExpr());
-			switch (unexp.getOperator()) {
-			case LOGICNEG:
-				if (!subtype.equals(BoogieType.TYPE_ERROR) && !subtype.equals(BoogieType.TYPE_BOOL)) {
-					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
-				}
-				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
-				break;
-			case ARITHNEGATIVE:
-				if (!subtype.equals(BoogieType.TYPE_ERROR) && !subtype.equals(BoogieType.TYPE_INT)
-						&& !subtype.equals(BoogieType.TYPE_REAL)) {
-					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
-				}
-				resultType = subtype;
-				break;
-			case OLD:
-				resultType = subtype;
-				break;
-			default:
-				internalError("Unknown Unary operator " + unexp.getOperator());
-				resultType = BoogieType.TYPE_ERROR;
-				break;
-			}
+			resultType = TypeCheckHelper.typeCheckUnaryExpression(unexp.getOperator(), typecheckExpression(unexp.getExpr()),
+					new TypeErrorReporter(expr));
 		} else if (expr instanceof BitVectorAccessExpression) {
 			final BitVectorAccessExpression bvaexpr = (BitVectorAccessExpression) expr;
 			final BoogieType bvType = typecheckExpression(bvaexpr.getBitvec());
-			final int bvlen = getBitVecLength(bvType);
-			int end = bvaexpr.getEnd();
-			int start = bvaexpr.getStart();
-			if (start < 0 || end < start || bvlen < end) {
-				if (!bvType.equals(BoogieType.TYPE_ERROR)) {
-					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
-				}
-				start = end = 0;
-			}
-			resultType = BoogieType.createBitvectorType(end - start);
+			resultType = TypeCheckHelper.typeCheckBitVectorAccessExpression(
+					TypeCheckHelper.getBitVecLength(bvType), bvaexpr.getEnd(),
+					bvaexpr.getStart(), bvType, new TypeErrorReporter(expr));
 		} else if (expr instanceof StructAccessExpression) {
 			final StructAccessExpression sae = (StructAccessExpression) expr;
-			final BoogieType e = typecheckExpression(sae.getStruct()).getUnderlyingType();
-			if (!(e instanceof BoogieStructType)) {
-				if (!e.equals(BoogieType.TYPE_ERROR)) {
-					typeError(expr, "Type check failed (not a struct): " + expr);
-				}
-				resultType = BoogieType.TYPE_ERROR;
-			} else {
-				final BoogieStructType str = (BoogieStructType) e;
-				resultType = null;
-				for (int i = 0; i < str.getFieldCount(); i++) {
-					if (str.getFieldIds()[i].equals(sae.getField())) {
-						resultType = str.getFieldType(i);
-					}
-				}
-				if (resultType == null) {
-					typeError(expr, "Type check failed (field " + sae.getField() + " not in struct): " + expr);
-					resultType = BoogieType.TYPE_ERROR;
-				}
-			}
+			resultType = TypeCheckHelper.typeCheckStructAccessExpression(typecheckExpression(sae.getStruct()).getUnderlyingType(),
+					sae.getField(), typeErrorReporter);
 		} else if (expr instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
-			final BoogieType e = typecheckExpression(aaexpr.getArray()).getUnderlyingType();
-			if (!(e instanceof BoogieArrayType)) {
-				if (!e.equals(BoogieType.TYPE_ERROR)) {
-					typeError(expr, "Type check failed (not an array): " + expr);
-				}
-				resultType = BoogieType.TYPE_ERROR;
-			} else {
-				final BoogieArrayType arr = (BoogieArrayType) e;
-				final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
-				final Expression[] indices = aaexpr.getIndices();
-				if (indices.length != arr.getIndexCount()) {
-					typeError(expr, "Type check failed (wrong number of indices): " + expr);
-				} else {
-					for (int i = 0; i < indices.length; i++) {
-						final BoogieType t = typecheckExpression(indices[i]);
-						if (!t.equals(BoogieType.TYPE_ERROR) && !arr.getIndexType(i).unify(t, subst)) {
-							typeError(expr, "Type check failed (index " + i + "): " + expr);
-						}
-					}
-				}
-				resultType = arr.getValueType().substitutePlaceholders(subst);
+			final BoogieType arrayType = typecheckExpression(aaexpr.getArray()).getUnderlyingType();
+			final Expression[] indices = aaexpr.getIndices();
+			final BoogieType[] indicesTypes = new BoogieType[indices.length];
+			for (int i = 0; i < indices.length; i++) {
+				indicesTypes[i] = typecheckExpression(indices[i]);
 			}
+			resultType = TypeCheckHelper.typeCheckArrayAccessExpression(arrayType, indicesTypes, typeErrorReporter);
 		} else if (expr instanceof ArrayStoreExpression) {
 			final ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
 			final BoogieType e = typecheckExpression(asexpr.getArray()).getUnderlyingType();
@@ -437,7 +299,7 @@ public class TypeChecker extends BaseObserver {
 			final BoogieType left = typecheckExpression(ite.getThenPart());
 			final BoogieType right = typecheckExpression(ite.getElsePart());
 			if (!left.isUnifiableTo(right)) {
-				typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
+				typeError(expr, "Type check failed for " + expr);
 				resultType = BoogieType.TYPE_ERROR;
 			} else {
 				resultType = left.equals(BoogieType.TYPE_ERROR) ? right : left;
@@ -484,7 +346,7 @@ public class TypeChecker extends BaseObserver {
 	private static void checkExistingDeclarationInformation(final String id,
 			final DeclarationInformation existingDeclInfo, final DeclarationInformation correctDeclInfo) {
 		if (!existingDeclInfo.equals(correctDeclInfo)) {
-			internalError("Incorrect DeclarationInformation of " + id + ". Expected: " + correctDeclInfo + "   Found: "
+			TypeCheckHelper.internalError("Incorrect DeclarationInformation of " + id + ". Expected: " + correctDeclInfo + "   Found: "
 					+ existingDeclInfo);
 		}
 	}
@@ -552,7 +414,7 @@ public class TypeChecker extends BaseObserver {
 				}
 			}
 		} else {
-			internalError("Unknown LHS: " + lhs);
+			TypeCheckHelper.internalError("Unknown LHS: " + lhs);
 			resultType = BoogieType.TYPE_ERROR;
 		}
 		lhs.setType(resultType);
@@ -782,7 +644,7 @@ public class TypeChecker extends BaseObserver {
 					}
 				}
 			} else {
-				internalError("Unknown Procedure specification: " + s);
+				TypeCheckHelper.internalError("Unknown Procedure specification: " + s);
 			}
 		}
 		mVarScopes.endScope();
@@ -895,7 +757,7 @@ public class TypeChecker extends BaseObserver {
 				if (inv instanceof LoopInvariantSpecification) {
 					typecheckExpression(((LoopInvariantSpecification) inv).getFormula());
 				} else {
-					internalError("Unknown while specification: " + inv);
+					TypeCheckHelper.internalError("Unknown while specification: " + inv);
 				}
 			}
 			outer.push("*");
@@ -956,7 +818,7 @@ public class TypeChecker extends BaseObserver {
 				}
 			}
 		} else {
-			internalError("Not implemented: type checking for " + statement);
+			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
 		}
 	}
 
@@ -1255,8 +1117,36 @@ public class TypeChecker extends BaseObserver {
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
-	private static void internalError(final String message) {
-		throw new AssertionError(message);
+	class TypeErrorReporter implements ITypeErrorReporter<BoogieASTNode, Pair<BoogieASTNode, String>> {
+
+		private final BoogieASTNode mReportNode;
+
+		TypeErrorReporter(final BoogieASTNode reportNode) {
+			mReportNode = reportNode;
+		}
+
+		@Override
+		public void report(final Function<BoogieASTNode, Pair<BoogieASTNode, String>> func) {
+			final Pair<BoogieASTNode, String> res = func.apply(mReportNode);
+			typeError(res.getFirst(), res.getSecond());
+		}
+
 	}
+
+	class InternalErrorReporter implements ITypeErrorReporter<Object, String> {
+
+		private final Object mReportNode;
+
+		InternalErrorReporter(final Object reportNode) {
+			mReportNode = reportNode;
+		}
+
+		@Override
+		public void report(final Function<Object, String> func) {
+			TypeCheckHelper.internalError(func.apply(mReportNode));
+		}
+
+	}
+
 
 }
