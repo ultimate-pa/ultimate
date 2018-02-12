@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -431,6 +432,9 @@ public class ExpressionFactory extends BoogieTransformer {
 
 	public static StructLHS constructStructAccessLhs(final ILocation loc, final LeftHandSide lhs, final String field) {
 		// TODO: infer BoogieType and add to constructor parameters
+
+		final BoogieType lhsType = null;
+
 		return new StructLHS(loc, lhs, field);
 	}
 
@@ -440,6 +444,7 @@ public class ExpressionFactory extends BoogieTransformer {
 			throw new AssertionError("attempting to build array access without indices");
 		}
 		if (indices.length == 1) {
+
 			return new ArrayAccessExpression(loc, array, indices);
 		}
 		final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
@@ -452,12 +457,25 @@ public class ExpressionFactory extends BoogieTransformer {
 		if (indices.length == 0) {
 			throw new AssertionError("attempting to build array access without indices");
 		}
+		assert indices[0].getType() != null;
+		assert array.getType() != null;
+
+//		final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
+//
+//		arrayType.get
+
+		final BoogieType lhsType = null;
+//		final BoogieType lhsType = BoogieType.
+				//	BoogieType.createArrayType(0,
+//				new BoogieType[] { (BoogieType) indices[0].getType() },
+//				(BoogieType) array.getType());
+
 		if (indices.length == 1) {
-			return new ArrayLHS(loc, array, indices);
+			return new ArrayLHS(loc, lhsType, array, indices);
 		}
 		final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
 		final LeftHandSide innerLhs = constructNestedArrayLHS(loc, array, innerIndices);
-		return new ArrayLHS(loc, innerLhs, new Expression[] { indices[indices.length - 1] });
+		return new ArrayLHS(loc, lhsType, innerLhs, new Expression[] { indices[indices.length - 1] });
 	}
 
 	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final IBoogieType type, final LeftHandSide lhs,

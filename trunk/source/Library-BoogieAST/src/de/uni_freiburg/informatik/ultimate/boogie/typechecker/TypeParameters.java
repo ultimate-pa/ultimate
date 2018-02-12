@@ -27,7 +27,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.typechecker;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 

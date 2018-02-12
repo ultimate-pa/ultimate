@@ -8,7 +8,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.boogie,
  de.uni_freiburg.informatik.ultimate.boogie.annotation,
  de.uni_freiburg.informatik.ultimate.boogie.ast,
  de.uni_freiburg.informatik.ultimate.boogie.output,
- de.uni_freiburg.informatik.ultimate.boogie.type
+ de.uni_freiburg.informatik.ultimate.boogie.type,
+ de.uni_freiburg.informatik.ultimate.boogie.typechecker
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.lib.core,
