@@ -120,11 +120,16 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	 * @param originalIcfg
 	 *            The original Icfg
 	 * @param funLocFac
+	 *            {@link ILocationFactory}
 	 * @param backtranslationTracker
+	 *            {@link IBacktranslationTracker}
 	 * @param outLocationClass
 	 * @param newIcfgIdentifier
+	 *            new icfgidentifier
 	 * @param transformer
+	 *            {@link ITransformulaTransformer}
 	 * @param services
+	 *            {@link IUltimateServiceProvider}
 	 * @param options
 	 *            how to deal with Arrays
 	 * @param backboneLimit
@@ -203,6 +208,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		 */
 		for (final Backbone backbone : loop.getBackbones()) {
 			calculateSymbolicMemory(backbone, loop);
+			if (backbone.getCondition() == null) {
+				return;
+			}
 		}
 
 		for (int i = 0; i < mPathCounter.size(); i++) {
@@ -358,11 +366,16 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	 * return a {@link UnmodifiableTransFormula} of the given term.
 	 * 
 	 * @param script
+	 *            {@link ManagedScript}
 	 * @param term
+	 *            term for the new Transformula
 	 * @param inVars
+	 *            map of invars
 	 * @param outVars
+	 *            map of outvars
 	 * @param auxVars
-	 * @return
+	 *            set of auxvars
+	 * @return a constructed {@link UnmodifiableTransFormula}
 	 */
 	public static UnmodifiableTransFormula buildFormula(final ManagedScript script, final Term term,
 			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
@@ -409,6 +422,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 		final Set<INLOC> closed = new HashSet<>();
+
+		final Set<Triple<OUTLOC, OUTLOC, IIcfgReturnTransition<?, ?>>> otherPossibleReturns = new HashSet<>();
 
 		while (!open.isEmpty()) {
 			final INLOC oldSource = open.removeFirst();
@@ -476,9 +491,17 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 					}
 				}
 			}
-			returnTransitions.stream().filter(a -> lst.isCorrespondingCallContained(a.getThird()))
-					.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), (IcfgEdge) a.getThird()));
+
+			for (final Triple<OUTLOC, OUTLOC, IIcfgReturnTransition<?, ?>> t : returnTransitions) {
+				if (!lst.isCorrespondingCallContained(t.getThird())) {
+					otherPossibleReturns.add(t);
+					continue;
+				}
+				lst.createNewTransition(t.getFirst(), t.getSecond(), (IcfgEdge) t.getThird());
+			}
 		}
+		otherPossibleReturns.stream().filter(a -> lst.isCorrespondingCallContained(a.getThird()))
+				.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), (IcfgEdge) a.getThird()));
 	}
 
 	public IIcfg<OUTLOC> getResult() {

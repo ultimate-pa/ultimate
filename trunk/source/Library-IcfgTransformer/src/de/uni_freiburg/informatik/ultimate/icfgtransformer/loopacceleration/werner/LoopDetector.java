@@ -78,14 +78,21 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	private final int mBackboneLimit;
 
 	/**
-	 * Loop Detector for retrieving loops in an {@link IIcfg}.
-	 *
+	 * Loopdetector for finding feasible loops in an Icfg.
+	 * 
 	 * @param logger
+	 *            {@link ILogger}
 	 * @param originalIcfg
-	 * @param services
+	 *            {@link IIcfg}
+	 * @param loopHeads
+	 *            a set of loopentry locations
 	 * @param script
+	 *            {@link ManagedScript}
+	 * @param services
+	 *            {@link IUltimateServiceProvider}
 	 * @param backboneLimit
-	 *            if there are more backbones notify the user
+	 *            a limit for number of backbones. Send notification if there
+	 *            are more backbones than the limit.
 	 */
 	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Set<INLOC> loopHeads,
 			final ManagedScript script, final IUltimateServiceProvider services, final int backboneLimit) {
@@ -141,7 +148,9 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			final IcfgLocation loopHead = loop.getLoophead();
 
 			if (!mLoopExitNodes.containsKey(loopHead)) {
-				findLoopExits(loopHead, Collections.emptySet());
+				final Set<IcfgLocation> forbidden = new HashSet<>();
+				forbidden.add(loopHead);
+				findLoopExits(loopHead, forbidden);
 			}
 
 			if (mIllegalLoopHeads.contains(loopHead) || mBackbones.get(loopHead).isEmpty()
@@ -460,7 +469,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		}
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.NONE,
 				transformulas);
 	}
 
