@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
@@ -224,7 +225,7 @@ public class Req2BoogieTranslator {
 		return mVacuityChecks != null && mVacuityChecks.get(propertyNum);
 	}
 
-	private de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType toPrimitiveType(final String type,
+	private BoogiePrimitiveType toPrimitiveType(final String type,
 			final ILocation loc) {
 		switch (type.toLowerCase()) {
 		case "bool":

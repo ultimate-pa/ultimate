@@ -126,10 +126,6 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdInitializerExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
-import org.eclipse.cdt.core.dom.ast.IArrayType;
-import org.eclipse.cdt.core.dom.ast.IBasicType;
-import org.eclipse.cdt.core.dom.ast.IType;
-import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
@@ -142,7 +138,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
@@ -967,30 +962,30 @@ public class MainDispatcher extends Dispatcher {
 		}
 	}
 
-	@Override
-	public InferredType dispatch(final IType type) {
-		// All Known Subinterfaces:
-		// IArrayType, IBasicType, ICArrayType, ICBasicType, ICompositeType,
-		// ICPointerType, ICPPBasicType, ICPPClassSpecialization,
-		// ICPPClassTemplate, ICPPClassTemplatePartialSpecialization,
-		// ICPPClassTemplatePartialSpecializationSpecialization, ICPPClassType,
-		// ICPPEnumeration, ICPPFunctionType, ICPPParameterPackType,
-		// ICPPPointerToMemberType, ICPPReferenceType,
-		// ICPPTemplateTemplateParameter, ICPPTemplateTypeParameter,
-		// ICQualifierType, IEnumeration, IFunctionType, IGPPBasicType,
-		// IGPPPointerToMemberType, IGPPPointerType, IGPPQualifierType,
-		// IPointerType, IProblemBinding, IProblemType, IQualifierType, ITypedef
-		if (type instanceof IBasicType) {
-			return mTypeHandler.visit(this, (IBasicType) type);
-		}
-		if (type instanceof ITypedef) {
-			return mTypeHandler.visit(this, (ITypedef) type);
-		}
-		if (type instanceof IArrayType) {
-			return mTypeHandler.visit(this, (IArrayType) type);
-		}
-		return mTypeHandler.visit(this, type);
-	}
+//	@Override
+//	public InferredType dispatch(final IType type) {
+//		// All Known Subinterfaces:
+//		// IArrayType, IBasicType, ICArrayType, ICBasicType, ICompositeType,
+//		// ICPointerType, ICPPBasicType, ICPPClassSpecialization,
+//		// ICPPClassTemplate, ICPPClassTemplatePartialSpecialization,
+//		// ICPPClassTemplatePartialSpecializationSpecialization, ICPPClassType,
+//		// ICPPEnumeration, ICPPFunctionType, ICPPParameterPackType,
+//		// ICPPPointerToMemberType, ICPPReferenceType,
+//		// ICPPTemplateTemplateParameter, ICPPTemplateTypeParameter,
+//		// ICQualifierType, IEnumeration, IFunctionType, IGPPBasicType,
+//		// IGPPPointerToMemberType, IGPPPointerType, IGPPQualifierType,
+//		// IPointerType, IProblemBinding, IProblemType, IQualifierType, ITypedef
+//		if (type instanceof IBasicType) {
+//			return mTypeHandler.visit(this, (IBasicType) type);
+//		}
+//		if (type instanceof ITypedef) {
+//			return mTypeHandler.visit(this, (ITypedef) type);
+//		}
+//		if (type instanceof IArrayType) {
+//			return mTypeHandler.visit(this, (IArrayType) type);
+//		}
+//		return mTypeHandler.visit(this, type);
+//	}
 
 	@Override
 	public Result dispatch(final IASTPreprocessorStatement n) {

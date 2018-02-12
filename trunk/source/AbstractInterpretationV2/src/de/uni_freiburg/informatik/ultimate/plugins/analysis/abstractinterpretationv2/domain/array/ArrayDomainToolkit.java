@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -82,8 +82,8 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 				mBoogie2Smt.getBoogie2SmtSymbolTable(), managedScript);
 		mVariableProvider = variableProvider;
 		mCreatedVars = new HashSet<>();
-		mMinBound = createBoundVar(PrimitiveType.TYPE_INT);
-		mMaxBound = createBoundVar(PrimitiveType.TYPE_INT);
+		mMinBound = createBoundVar(BoogiePrimitiveType.TYPE_INT);
+		mMaxBound = createBoundVar(BoogiePrimitiveType.TYPE_INT);
 	}
 
 	public TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {

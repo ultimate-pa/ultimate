@@ -36,7 +36,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PlaceholderType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePlaceholderType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
@@ -92,10 +92,10 @@ public class OctagonCalculatorTest {
 		mLogger.debug("SequentializeTest:");
 		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdScript);
 		final OctConjunction example = new OctConjunction();
-		final BoogieVar x = new LocalBoogieVar("x", "x", new PlaceholderType(0),
+		final BoogieVar x = new LocalBoogieVar("x", "x", new BoogiePlaceholderType(0),
 				mMgdScript.constructFreshTermVariable("c", mScript.sort("Int")),
 				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
-		final BoogieVar y = new LocalBoogieVar("y", "y", new PlaceholderType(0),
+		final BoogieVar y = new LocalBoogieVar("y", "y", new BoogiePlaceholderType(0),
 				mMgdScript.constructFreshTermVariable("d", mScript.sort("Int")),
 				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
@@ -126,10 +126,10 @@ public class OctagonCalculatorTest {
 		mLogger.debug("BinarySequentializeTest:");
 		final OctagonCalculator calc = new OctagonCalculator(new FastUPRUtils(mLogger, false), mMgdScript);
 		final OctConjunction example = new OctConjunction();
-		final BoogieVar x = new LocalBoogieVar("x", "x", new PlaceholderType(0),
+		final BoogieVar x = new LocalBoogieVar("x", "x", new BoogiePlaceholderType(0),
 				mMgdScript.constructFreshTermVariable("c", mScript.sort("Int")),
 				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
-		final BoogieVar y = new LocalBoogieVar("y", "y", new PlaceholderType(0),
+		final BoogieVar y = new LocalBoogieVar("y", "y", new BoogiePlaceholderType(0),
 				mMgdScript.constructFreshTermVariable("d", mScript.sort("Int")),
 				(ApplicationTerm) mScript.term("false"), (ApplicationTerm) mScript.term("false"));
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();

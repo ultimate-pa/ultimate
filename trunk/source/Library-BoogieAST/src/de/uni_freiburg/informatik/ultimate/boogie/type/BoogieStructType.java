@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author Markus Lindenmann
  * @date 11.09.2012
  */
-public class StructType extends BoogieType {
+public class BoogieStructType extends BoogieType {
     /**
      * Serial unique identifier.
      */
@@ -73,7 +73,7 @@ public class StructType extends BoogieType {
      * @param fTypes
      *            a list of type names.
      */
-    public StructType(String[] fNames, BoogieType[] fTypes) {
+    public BoogieStructType(String[] fNames, BoogieType[] fTypes) {
         assert fNames.length == fTypes.length;
         this.fNames = fNames;
         this.fTypes = fTypes;
@@ -144,10 +144,10 @@ public class StructType extends BoogieType {
     @Override
     protected boolean unify(int depth, BoogieType other,
             BoogieType[] substitution) {
-        if (!(other instanceof StructType)) {
+        if (!(other instanceof BoogieStructType)) {
 			return false;
 		}
-        final StructType type = (StructType) other;
+        final BoogieStructType type = (BoogieStructType) other;
         if (isFinite() != type.isFinite()) {
 			return false;
 		}
@@ -176,10 +176,10 @@ public class StructType extends BoogieType {
         if (this == other || other == TYPE_ERROR) {
 			return true;
 		}
-        if (!(other instanceof StructType)) {
+        if (!(other instanceof BoogieStructType)) {
 			return false;
 		}
-        final StructType type = (StructType) other;
+        final BoogieStructType type = (BoogieStructType) other;
         if (isFinite() != type.isFinite()) {
 			return false;
 		}

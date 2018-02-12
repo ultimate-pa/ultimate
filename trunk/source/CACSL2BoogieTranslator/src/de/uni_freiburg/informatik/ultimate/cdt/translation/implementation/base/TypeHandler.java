@@ -46,11 +46,7 @@ import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IArrayType;
-import org.eclipse.cdt.core.dom.ast.IBasicType;
-import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
-import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
@@ -65,8 +61,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -445,52 +439,52 @@ public class TypeHandler implements ITypeHandler {
 		return result;
 	}
 
-	@Override
-	public InferredType visit(final Dispatcher main, final org.eclipse.cdt.core.dom.ast.IType type) {
-		if (type instanceof CPointerType) {
-			return new InferredType(Type.Pointer);
-		}
-		// Handle the generic case of IType, if the specific case is not yet
-		// implemented
-		final String msg = "TypeHandler: Not yet implemented: " + type.getClass().toString();
-		// TODO : no idea what location should be set to ...
-		main.unsupportedSyntax(null, msg);
-		return new InferredType(Type.Unknown);
-	}
-
-	@Override
-	public InferredType visit(final Dispatcher main, final ITypedef type) {
-		assert false : "I don't think this should still be used";
-		if (!mDefinedTypes.containsKey(type.getName())) {
-			final String msg = "Unknown C typedef: " + type.getName();
-			// TODO : no idea what location should be set to ...
-			throw new IncorrectSyntaxException(null, msg);
-		}
-		return new InferredType(mDefinedTypes.get(type.getName()).getType());
-	}
-
-	@Override
-	public InferredType visit(final Dispatcher main, final IBasicType type) {
-		switch (type.getKind()) {
-		case eBoolean:
-			return new InferredType(Type.Boolean);
-		case eChar:
-		case eChar16:
-		case eChar32:
-		case eInt:
-			return new InferredType(Type.Integer);
-		case eDouble:
-		case eFloat:
-			return new InferredType(Type.Real);
-		case eWChar: // TODO : verify! Not sure what WChar means!
-			return new InferredType(Type.String);
-		case eVoid:
-			return new InferredType(Type.Void);
-		case eUnspecified:
-		default:
-			return new InferredType(Type.Unknown);
-		}
-	}
+//	@Override
+//	public InferredType visit(final Dispatcher main, final org.eclipse.cdt.core.dom.ast.IType type) {
+//		if (type instanceof CPointerType) {
+//			return new InferredType(Type.Pointer);
+//		}
+//		// Handle the generic case of IType, if the specific case is not yet
+//		// implemented
+//		final String msg = "TypeHandler: Not yet implemented: " + type.getClass().toString();
+//		// TODO : no idea what location should be set to ...
+//		main.unsupportedSyntax(null, msg);
+//		return new InferredType(Type.Unknown);
+//	}
+//
+//	@Override
+//	public InferredType visit(final Dispatcher main, final ITypedef type) {
+//		assert false : "I don't think this should still be used";
+//		if (!mDefinedTypes.containsKey(type.getName())) {
+//			final String msg = "Unknown C typedef: " + type.getName();
+//			// TODO : no idea what location should be set to ...
+//			throw new IncorrectSyntaxException(null, msg);
+//		}
+//		return new InferredType(mDefinedTypes.get(type.getName()).getType());
+//	}
+//
+//	@Override
+//	public InferredType visit(final Dispatcher main, final IBasicType type) {
+//		switch (type.getKind()) {
+//		case eBoolean:
+//			return new InferredType(Type.Boolean);
+//		case eChar:
+//		case eChar16:
+//		case eChar32:
+//		case eInt:
+//			return new InferredType(Type.Integer);
+//		case eDouble:
+//		case eFloat:
+//			return new InferredType(Type.Real);
+//		case eWChar: // TODO : verify! Not sure what WChar means!
+//			return new InferredType(Type.String);
+//		case eVoid:
+//			return new InferredType(Type.Void);
+//		case eUnspecified:
+//		default:
+//			return new InferredType(Type.Unknown);
+//		}
+//	}
 
 	@Override
 	public ASTType getTypeOfStructLHS(final SymbolTable sT, final ILocation loc, final StructLHS lhs) {
@@ -541,10 +535,10 @@ public class TypeHandler implements ITypeHandler {
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
-	@Override
-	public InferredType visit(final Dispatcher main, final IArrayType type) {
-		return main.dispatch(type.getType());
-	}
+//	@Override
+//	public InferredType visit(final Dispatcher main, final IArrayType type) {
+//		return main.dispatch(type.getType());
+//	}
 
 	@Override
 	public LinkedScopedHashMap<String, TypesResult> getDefinedTypes() {

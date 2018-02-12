@@ -465,9 +465,20 @@ public class ExpressionFactory extends BoogieTransformer {
 		return constructNestedArrayLHS(loc, lhs, indices);
 	}
 
+	/**
+	 * deprecated because type parameter makes no sense: we should be able to derive the type
+	 *
+	 * @param loc
+	 * @param it
+	 * @param array
+	 * @param indices
+	 * @return
+	 */
+	@Deprecated
 	public static Expression constructNestedArrayAccessExpression(final ILocation loc, final IBoogieType it,
 			final Expression array, final Expression[] indices) {
 		// TODO: don't throw away type?
+
 		return constructNestedArrayAccessExpression(loc, array, indices);
 	}
 }

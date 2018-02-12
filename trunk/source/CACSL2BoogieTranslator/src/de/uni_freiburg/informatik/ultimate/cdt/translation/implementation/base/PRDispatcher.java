@@ -104,10 +104,6 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdInitializerExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
-import org.eclipse.cdt.core.dom.ast.IArrayType;
-import org.eclipse.cdt.core.dom.ast.IBasicType;
-import org.eclipse.cdt.core.dom.ast.IType;
-import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
@@ -121,7 +117,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
@@ -430,19 +425,19 @@ public class PRDispatcher extends Dispatcher {
 		return new SkipResult();
 	}
 
-	@Override
-	public InferredType dispatch(final IType type) {
-		if (type instanceof IBasicType) {
-			return mTypeHandler.visit(this, (IBasicType) type);
-		}
-		if (type instanceof ITypedef) {
-			return mTypeHandler.visit(this, (ITypedef) type);
-		}
-		if (type instanceof IArrayType) {
-			return mTypeHandler.visit(this, (IArrayType) type);
-		}
-		return mTypeHandler.visit(this, type);
-	}
+//	@Override
+//	public InferredType dispatch(final IType type) {
+//		if (type instanceof IBasicType) {
+//			return mTypeHandler.visit(this, (IBasicType) type);
+//		}
+//		if (type instanceof ITypedef) {
+//			return mTypeHandler.visit(this, (ITypedef) type);
+//		}
+//		if (type instanceof IArrayType) {
+//			return mTypeHandler.visit(this, (IArrayType) type);
+//		}
+//		return mTypeHandler.visit(this, type);
+//	}
 
 	@Override
 	public Result dispatch(final ACSLNode node) {

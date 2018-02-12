@@ -95,11 +95,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieFunctionSignature;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -155,10 +155,10 @@ public class TypeChecker extends BaseObserver {
 
 	private static int getBitVecLength(BoogieType t) {
 		t = t.getUnderlyingType();
-		if (!(t instanceof PrimitiveType)) {
+		if (!(t instanceof BoogiePrimitiveType)) {
 			return -1;
 		}
-		return ((PrimitiveType) t).getTypeCode();
+		return ((BoogiePrimitiveType) t).getTypeCode();
 	}
 
 	private VariableInfo findVariable(final String name) {
@@ -297,13 +297,13 @@ public class TypeChecker extends BaseObserver {
 		} else if (expr instanceof StructAccessExpression) {
 			final StructAccessExpression sae = (StructAccessExpression) expr;
 			final BoogieType e = typecheckExpression(sae.getStruct()).getUnderlyingType();
-			if (!(e instanceof StructType)) {
+			if (!(e instanceof BoogieStructType)) {
 				if (!e.equals(BoogieType.TYPE_ERROR)) {
 					typeError(expr, "Type check failed (not a struct): " + expr);
 				}
 				resultType = BoogieType.TYPE_ERROR;
 			} else {
-				final StructType str = (StructType) e;
+				final BoogieStructType str = (BoogieStructType) e;
 				resultType = null;
 				for (int i = 0; i < str.getFieldCount(); i++) {
 					if (str.getFieldIds()[i].equals(sae.getField())) {
@@ -318,13 +318,13 @@ public class TypeChecker extends BaseObserver {
 		} else if (expr instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
 			final BoogieType e = typecheckExpression(aaexpr.getArray()).getUnderlyingType();
-			if (!(e instanceof ArrayType)) {
+			if (!(e instanceof BoogieArrayType)) {
 				if (!e.equals(BoogieType.TYPE_ERROR)) {
 					typeError(expr, "Type check failed (not an array): " + expr);
 				}
 				resultType = BoogieType.TYPE_ERROR;
 			} else {
-				final ArrayType arr = (ArrayType) e;
+				final BoogieArrayType arr = (BoogieArrayType) e;
 				final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 				final Expression[] indices = aaexpr.getIndices();
 				if (indices.length != arr.getIndexCount()) {
@@ -342,13 +342,13 @@ public class TypeChecker extends BaseObserver {
 		} else if (expr instanceof ArrayStoreExpression) {
 			final ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
 			final BoogieType e = typecheckExpression(asexpr.getArray()).getUnderlyingType();
-			if (!(e instanceof ArrayType)) {
+			if (!(e instanceof BoogieArrayType)) {
 				if (!e.equals(BoogieType.TYPE_ERROR)) {
 					typeError(expr, "Type check failed (not an array): " + expr);
 				}
 				resultType = BoogieType.TYPE_ERROR;
 			} else {
-				final ArrayType arr = (ArrayType) e;
+				final BoogieArrayType arr = (BoogieArrayType) e;
 				final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 				final Expression[] indices = asexpr.getIndices();
 				if (indices.length != arr.getIndexCount()) {
@@ -411,7 +411,7 @@ public class TypeChecker extends BaseObserver {
 				typeError(expr, "Undeclared function " + name + " in " + expr);
 				resultType = BoogieType.TYPE_ERROR;
 			} else {
-				final FunctionSignature fs = fi.getSignature();
+				final BoogieFunctionSignature fs = fi.getSignature();
 				final BoogieType[] subst = new BoogieType[fs.getTypeArgCount()];
 				final Expression[] appArgs = app.getArguments();
 				if (appArgs.length != fs.getParamCount()) {
@@ -505,13 +505,13 @@ public class TypeChecker extends BaseObserver {
 		} else if (lhs instanceof StructLHS) {
 			final StructLHS slhs = (StructLHS) lhs;
 			final BoogieType type = typecheckLeftHandSide(slhs.getStruct()).getUnderlyingType();
-			if (!(type instanceof StructType)) {
+			if (!(type instanceof BoogieStructType)) {
 				if (!type.equals(BoogieType.TYPE_ERROR)) {
 					typeError(lhs, "Type check failed (not a struct): " + lhs);
 				}
 				resultType = BoogieType.TYPE_ERROR;
 			} else {
-				final StructType str = (StructType) type;
+				final BoogieStructType str = (BoogieStructType) type;
 				resultType = null;
 				for (int i = 0; i < str.getFieldCount(); i++) {
 					if (str.getFieldIds()[i].equals(slhs.getField())) {
@@ -527,13 +527,13 @@ public class TypeChecker extends BaseObserver {
 			final ArrayLHS alhs = (ArrayLHS) lhs;
 			// SFA: Patched to look inside ConstructedType
 			final BoogieType type = typecheckLeftHandSide(alhs.getArray()).getUnderlyingType();
-			if (!(type instanceof ArrayType)) {
+			if (!(type instanceof BoogieArrayType)) {
 				if (!type.equals(BoogieType.TYPE_ERROR)) {
 					typeError(lhs, "Type check failed (not an array): " + lhs);
 				}
 				resultType = BoogieType.TYPE_ERROR;
 			} else {
-				final ArrayType arrType = (ArrayType) type;
+				final BoogieArrayType arrType = (BoogieArrayType) type;
 				final BoogieType[] subst = new BoogieType[arrType.getNumPlaceholders()];
 				final Expression[] indices = alhs.getIndices();
 				if (indices.length != arrType.getIndexCount()) {
@@ -652,8 +652,8 @@ public class TypeChecker extends BaseObserver {
 
 		mTypeManager.popTypeScope();
 
-		final FunctionSignature fs =
-				new FunctionSignature(funcDecl.getTypeParams().length, paramNames, paramTypes, valueName, valueType);
+		final BoogieFunctionSignature fs =
+				new BoogieFunctionSignature(funcDecl.getTypeParams().length, paramNames, paramTypes, valueName, valueType);
 		mDeclaredFunctions.put(name, new FunctionInfo(funcDecl, name, typeParams, fs));
 	}
 
@@ -670,7 +670,7 @@ public class TypeChecker extends BaseObserver {
 
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, name);
 		mTypeManager.pushTypeScope(typeParams);
-		final FunctionSignature fs = fi.getSignature();
+		final BoogieFunctionSignature fs = fi.getSignature();
 		mVarScopes.beginScope();
 		final int paramCount = fs.getParamCount();
 		for (int i = 0; i < paramCount; i++) {

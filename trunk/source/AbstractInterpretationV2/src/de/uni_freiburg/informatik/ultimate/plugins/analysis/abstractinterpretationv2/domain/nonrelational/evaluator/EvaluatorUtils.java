@@ -31,8 +31,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -63,10 +63,10 @@ public final class EvaluatorUtils {
 	}
 
 	/**
-	 * Determines the {@link EvaluatorType} depending on the Boogie {@link PrimitiveType} of an {@link Expression}.
+	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an {@link Expression}.
 	 *
 	 * @param type
-	 *            The {@link PrimitiveType} of an {@link Expression}.
+	 *            The {@link BoogiePrimitiveType} of an {@link Expression}.
 	 * @return The corresponding {@link EvaluatorType}.
 	 */
 	public static EvaluatorType getEvaluatorType(final IProgramVar var) {
@@ -81,10 +81,10 @@ public final class EvaluatorUtils {
 	}
 
 	/**
-	 * Determines the {@link EvaluatorType} depending on the Boogie {@link PrimitiveType} of an {@link Expression}.
+	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an {@link Expression}.
 	 *
 	 * @param type
-	 *            The {@link PrimitiveType} of an {@link Expression}.
+	 *            The {@link BoogiePrimitiveType} of an {@link Expression}.
 	 * @return The corresponding {@link EvaluatorType}.
 	 */
 	public static EvaluatorType getEvaluatorType(final IProgramVarOrConst var) {
@@ -100,10 +100,10 @@ public final class EvaluatorUtils {
 	}
 
 	/**
-	 * Determines the {@link EvaluatorType} depending on the Boogie {@link PrimitiveType} of an {@link Expression}.
+	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an {@link Expression}.
 	 *
 	 * @param type
-	 *            The {@link PrimitiveType} of an {@link Expression}.
+	 *            The {@link BoogiePrimitiveType} of an {@link Expression}.
 	 * @return The corresponding {@link EvaluatorType}.
 	 */
 	public static EvaluatorType getEvaluatorType(final IBoogieType type) {
@@ -140,7 +140,7 @@ public final class EvaluatorUtils {
 
 		@Override
 		public EvaluatorType apply(final IBoogieType t) {
-			final ArrayType arrType = (ArrayType) mType;
+			final BoogieArrayType arrType = (BoogieArrayType) mType;
 			return TypeUtils.applyTypeFunction(mIntFunction, mRealFunction, mBoolFunction,
 					new ArrayFunction(t, mIntFunction, mRealFunction, mBoolFunction), arrType.getValueType());
 		}

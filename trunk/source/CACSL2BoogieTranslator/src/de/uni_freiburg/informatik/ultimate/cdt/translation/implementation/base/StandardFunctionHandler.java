@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
@@ -74,8 +75,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatSupportInUltimate;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -1067,7 +1068,7 @@ public class StandardFunctionHandler {
 			final ILocation loc) {
 		final boolean checkSvcompErrorfunction =
 				main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
-		final Expression falseLiteral = new BooleanLiteral(loc, new InferredType(Type.Boolean), false);
+		final Expression falseLiteral = new BooleanLiteral(loc, BoogieType.TYPE_BOOL, false);
 		Statement st;
 		if (checkSvcompErrorfunction) {
 			final Check check = new Check(Spec.ERROR_FUNCTION);
@@ -1083,7 +1084,7 @@ public class StandardFunctionHandler {
 			final ILocation loc) {
 		final LTLStepAnnotation ltlStep = new LTLStepAnnotation();
 		final AssumeStatement assumeStmt =
-				new AssumeStatement(loc, new BooleanLiteral(loc, new InferredType(Type.Boolean), true));
+				new AssumeStatement(loc, new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true));
 		ltlStep.annotate(assumeStmt);
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
 	}

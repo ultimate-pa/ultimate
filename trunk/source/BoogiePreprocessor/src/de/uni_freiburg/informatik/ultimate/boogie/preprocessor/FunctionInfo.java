@@ -27,19 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieFunctionSignature;
 
 public class FunctionInfo {
 	private final FunctionDeclaration declaration;
 	private final String name;
 	private final TypeParameters typeParams;
-	private final FunctionSignature sig;
+	private final BoogieFunctionSignature sig;
 	
 	public String getName() {
 		return name;
 	}
 
-	public FunctionSignature getSignature() {
+	public BoogieFunctionSignature getSignature() {
 		return sig;
 	}
 	
@@ -52,7 +52,7 @@ public class FunctionInfo {
 	}
 	
 	public FunctionInfo(FunctionDeclaration declaration, String name, 
-			TypeParameters typeParams, FunctionSignature sig) {
+			TypeParameters typeParams, BoogieFunctionSignature sig) {
 		this.declaration = declaration; 
 		this.name = name;
 		this.typeParams = typeParams;

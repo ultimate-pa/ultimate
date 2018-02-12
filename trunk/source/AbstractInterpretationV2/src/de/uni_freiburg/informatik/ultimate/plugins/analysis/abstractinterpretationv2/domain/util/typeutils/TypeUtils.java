@@ -31,10 +31,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieConstructedType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -43,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 public final class TypeUtils {
 
-	private static final Integer ITYPE_INT = PrimitiveType.INT;
-	private static final Integer ITYPE_REAL = PrimitiveType.REAL;
-	private static final Integer ITYPE_BOOL = PrimitiveType.BOOL;
+	private static final Integer ITYPE_INT = BoogiePrimitiveType.INT;
+	private static final Integer ITYPE_REAL = BoogiePrimitiveType.REAL;
+	private static final Integer ITYPE_BOOL = BoogiePrimitiveType.BOOL;
 
 	private TypeUtils() {
 		// do not instantiate utility class
@@ -160,8 +160,8 @@ public final class TypeUtils {
 			final Function<IBoogieType, R> arrayFunction, final IBoogieType type) {
 		assert type != null;
 
-		if (type instanceof PrimitiveType) {
-			final PrimitiveType prim = (PrimitiveType) type;
+		if (type instanceof BoogiePrimitiveType) {
+			final BoogiePrimitiveType prim = (BoogiePrimitiveType) type;
 			if (prim == BoogieType.TYPE_BOOL) {
 				assert boolFunction != null;
 				return boolFunction.apply(type);
@@ -173,14 +173,14 @@ public final class TypeUtils {
 				return realFunction.apply(type);
 			}
 			throw new IllegalArgumentException("Type error: " + prim.getClass().getSimpleName());
-		} else if (type instanceof ConstructedType) {
-			final ConstructedType ctype = (ConstructedType) type;
+		} else if (type instanceof BoogieConstructedType) {
+			final BoogieConstructedType ctype = (BoogieConstructedType) type;
 
-			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+			if (ctype.getUnderlyingType() instanceof BoogieConstructedType) {
 				throw new UnsupportedOperationException("Nested constructed type found. No idea how to solve this.");
 			}
 			return applyTypeFunction(intFunction, realFunction, boolFunction, arrayFunction, ctype.getUnderlyingType());
-		} else if (type instanceof ArrayType) {
+		} else if (type instanceof BoogieArrayType) {
 			assert arrayFunction != null;
 			return arrayFunction.apply(type);
 		}
@@ -206,11 +206,11 @@ public final class TypeUtils {
 	}
 
 	private static Integer primitiveType(final IBoogieType type) {
-		if (type instanceof PrimitiveType) {
-			return ((PrimitiveType) type).getTypeCode();
-		} else if (type instanceof ConstructedType) {
-			final ConstructedType ctype = (ConstructedType) type;
-			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+		if (type instanceof BoogiePrimitiveType) {
+			return ((BoogiePrimitiveType) type).getTypeCode();
+		} else if (type instanceof BoogieConstructedType) {
+			final BoogieConstructedType ctype = (BoogieConstructedType) type;
+			if (ctype.getUnderlyingType() instanceof BoogieConstructedType) {
 				return null;
 			}
 			return primitiveType(ctype.getUnderlyingType());
