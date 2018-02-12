@@ -20,4 +20,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  org.eclipse.core.filesystem,
  org.eclipse.ui.console,
  org.eclipse.ui.navigator,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator

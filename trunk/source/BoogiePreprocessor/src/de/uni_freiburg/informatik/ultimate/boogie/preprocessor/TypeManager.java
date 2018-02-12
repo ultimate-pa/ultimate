@@ -40,14 +40,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class TypeManager {
 
 	private final ILogger mLogger;
 
-	private final HashMap<String, TypeConstructor> typeConstructors = new HashMap<>();
+	private final HashMap<String, BoogieTypeConstructor> typeConstructors = new HashMap<>();
 	private final HashMap<String, TypeDeclaration> declarations = new HashMap<>();
 	private final Stack<String> visiting = new Stack<>();
 	private final Stack<TypeParameters> typeParamScopes = new Stack<>();
@@ -113,7 +113,7 @@ public class TypeManager {
 			}
 			resolve(decl);
 		}
-		final TypeConstructor tc = typeConstructors.get(name);
+		final BoogieTypeConstructor tc = typeConstructors.get(name);
 		if (tc == null) {
 			return BoogieType.TYPE_ERROR;
 		}
@@ -221,7 +221,7 @@ public class TypeManager {
 			}
 		}
 		visiting.pop();
-		typeConstructors.put(name, new TypeConstructor(name, td.isFinite(), typeParams.length, order, synonym));
+		typeConstructors.put(name, new BoogieTypeConstructor(name, td.isFinite(), typeParams.length, order, synonym));
 	}
 
 	public void init() {

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class ArrayType extends BoogieType {
+public class BoogieArrayType extends BoogieType {
 	/**
 	 * long serialVersionUID
 	 */
@@ -41,7 +41,7 @@ public class ArrayType extends BoogieType {
 	private final BoogieType realType;
 	private final boolean isFinite;
 		
-	ArrayType(int numPlaceholders, BoogieType[] indexTypes,
+	BoogieArrayType(int numPlaceholders, BoogieType[] indexTypes,
 			BoogieType valueType) {
 		this.numPlaceholders = numPlaceholders;
 		this.indexTypes = indexTypes;
@@ -165,10 +165,10 @@ public class ArrayType extends BoogieType {
 		if (other == TYPE_ERROR) {
 			return true;
 		}
-		if (!(other instanceof ArrayType)) {
+		if (!(other instanceof BoogieArrayType)) {
 			return false;
 		}
-		final ArrayType type = (ArrayType) other;
+		final BoogieArrayType type = (BoogieArrayType) other;
 		if (type.numPlaceholders != numPlaceholders
 			|| type.indexTypes.length != indexTypes.length) {
 			return false;
@@ -200,13 +200,13 @@ public class ArrayType extends BoogieType {
 		if (this == other || other == TYPE_ERROR) {
 			return true;
 		}
-		if (other instanceof PlaceholderType) {
+		if (other instanceof BoogiePlaceholderType) {
 			return other.isUnifiableTo(depth, this, subst);
 		}
-		if (!(other instanceof ArrayType)) {
+		if (!(other instanceof BoogieArrayType)) {
 			return false;
 		}
-		final ArrayType type = (ArrayType) other;
+		final BoogieArrayType type = (BoogieArrayType) other;
 		if (type.numPlaceholders != numPlaceholders
 			|| type.indexTypes.length != indexTypes.length) {
 			return false;

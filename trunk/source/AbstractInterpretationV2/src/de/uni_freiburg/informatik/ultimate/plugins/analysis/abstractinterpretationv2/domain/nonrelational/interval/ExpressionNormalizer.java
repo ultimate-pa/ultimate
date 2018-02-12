@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
@@ -77,10 +77,10 @@ public class ExpressionNormalizer extends BoogieTransformer {
 		final Expression left = processExpression(expr.getLeft());
 		if (operator == Operator.COMPNEQ) {
 			if (isPrimitive(expr)) {
-				final PrimitiveType prim = (PrimitiveType) expr.getType();
-				final PrimitiveType leftPrim = (PrimitiveType) left.getType();
-				final PrimitiveType rightPrim = (PrimitiveType) right.getType();
-				if (isOfType(PrimitiveType.BOOL, prim, leftPrim, rightPrim)) {
+				final BoogiePrimitiveType prim = (BoogiePrimitiveType) expr.getType();
+				final BoogiePrimitiveType leftPrim = (BoogiePrimitiveType) left.getType();
+				final BoogiePrimitiveType rightPrim = (BoogiePrimitiveType) right.getType();
+				if (isOfType(BoogiePrimitiveType.BOOL, prim, leftPrim, rightPrim)) {
 					final Expression negatedRight = not(expr, right);
 					// x != y ---> x == !y
 					return createBinaryExpr(expr, Operator.COMPEQ, left, negatedRight);
@@ -91,10 +91,10 @@ public class ExpressionNormalizer extends BoogieTransformer {
 			return or(expr, negativeCase, positiveCase);
 		} else if (operator == Operator.COMPGT || operator == Operator.COMPLT) {
 			if (isPrimitive(expr)) {
-				final PrimitiveType primLeft = (PrimitiveType) left.getType();
-				final PrimitiveType primRight = (PrimitiveType) right.getType();
+				final BoogiePrimitiveType primLeft = (BoogiePrimitiveType) left.getType();
+				final BoogiePrimitiveType primRight = (BoogiePrimitiveType) right.getType();
 
-				if (isOfType(PrimitiveType.INT, primLeft, primRight)) {
+				if (isOfType(BoogiePrimitiveType.INT, primLeft, primRight)) {
 					if (operator == Operator.COMPGT) {
 						// x > y ---> x >= y + 1
 						final Expression newRightGt =
@@ -278,11 +278,11 @@ public class ExpressionNormalizer extends BoogieTransformer {
 	}
 
 	private static boolean isPrimitive(final BinaryExpression expr) {
-		return expr.getType() instanceof PrimitiveType && expr.getLeft().getType() instanceof PrimitiveType
-				&& expr.getRight().getType() instanceof PrimitiveType;
+		return expr.getType() instanceof BoogiePrimitiveType && expr.getLeft().getType() instanceof BoogiePrimitiveType
+				&& expr.getRight().getType() instanceof BoogiePrimitiveType;
 	}
 
-	private static boolean isOfType(final int typecode, final PrimitiveType... primitiveTypes) {
+	private static boolean isOfType(final int typecode, final BoogiePrimitiveType... primitiveTypes) {
 		if (primitiveTypes == null || primitiveTypes.length == 0) {
 			return false;
 		}

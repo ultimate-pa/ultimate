@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -109,7 +109,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		case COMPEQ: {
 			if (TypeUtils.isBoolean(left.getType())) {
 				final BinaryExpression logicIff =
-						new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICIFF, left, right);
+						new BinaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, Operator.LOGICIFF, left, right);
 				return processBinaryExpression(logicIff, state, isAssume);
 			}
 			if (left.getType() instanceof ArrayType) {
@@ -127,9 +127,9 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		case COMPNEQ: {
 			if (TypeUtils.isBoolean(left.getType())) {
 				final BinaryExpression logicIff =
-						new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICIFF, left, right);
+						new BinaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, Operator.LOGICIFF, left, right);
 				final UnaryExpression negated =
-						new UnaryExpression(null, PrimitiveType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, logicIff);
+						new UnaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, logicIff);
 				return processUnaryExpression(negated, state, isAssume);
 			}
 			if (left.getType() instanceof ArrayType) {
@@ -139,17 +139,17 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		}
 		case LOGICIFF:
 			final BinaryExpression leftImpl =
-					new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICIMPLIES, left, right);
+					new BinaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, Operator.LOGICIMPLIES, left, right);
 			final BinaryExpression rightImpl =
-					new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICIMPLIES, right, left);
+					new BinaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, Operator.LOGICIMPLIES, right, left);
 			final BinaryExpression conjunction =
-					new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICAND, leftImpl, rightImpl);
+					new BinaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, Operator.LOGICAND, leftImpl, rightImpl);
 			return processBinaryExpression(conjunction, state, isAssume);
 		case LOGICIMPLIES:
 			final Expression leftNegated =
-					new UnaryExpression(null, PrimitiveType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, left);
+					new UnaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, left);
 			final BinaryExpression orExpression =
-					new BinaryExpression(null, PrimitiveType.TYPE_BOOL, Operator.LOGICOR, leftNegated, right);
+					new BinaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, Operator.LOGICOR, leftNegated, right);
 			return processBinaryExpression(orExpression, state, isAssume);
 		case LOGICOR:
 			return unionResults(process(left, state, isAssume), process(right, state, isAssume), operator, type);
@@ -194,7 +194,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				return processQuantifierExpression(quantifier, state, isAssume);
 			}
 			final ExpressionResult<STATE> subResult = process(subExpression, state, isAssume);
-			final Expression newExpr = new UnaryExpression(null, PrimitiveType.TYPE_BOOL, expression.getOperator(),
+			final Expression newExpr = new UnaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, expression.getOperator(),
 					subResult.getExpression());
 			return new ExpressionResult<>(newExpr, subResult.getState());
 		case OLD:
@@ -207,7 +207,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 	private QuantifierExpression negateQuantifierExpression(final QuantifierExpression expression) {
 		final Expression newSubformula =
 				new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, expression.getSubformula());
-		return new QuantifierExpression(null, PrimitiveType.TYPE_BOOL, expression.isUniversal(),
+		return new QuantifierExpression(null, BoogiePrimitiveType.TYPE_BOOL, expression.isUniversal(),
 				expression.getTypeParams(), expression.getParameters(), expression.getAttributes(), newSubformula);
 	}
 

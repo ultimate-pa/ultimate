@@ -36,16 +36,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author hoenicke
  *
  */
-public class ConstructedType extends BoogieType {
+public class BoogieConstructedType extends BoogieType {
 	/**
 	 * long serialVersionUID
 	 */
 	private static final long serialVersionUID = -2227100606701950977L;
-	private final TypeConstructor constr;
+	private final BoogieTypeConstructor constr;
 	private final BoogieType[] parameters;
 	private final BoogieType realType;
 	
-	ConstructedType(TypeConstructor c, BoogieType[] parameters) {
+	BoogieConstructedType(BoogieTypeConstructor c, BoogieType[] parameters) {
 		constr = c;
 		this.parameters = parameters;
 
@@ -112,10 +112,10 @@ public class ConstructedType extends BoogieType {
 	//@Override
 	@Override
 	protected boolean unify(int depth, BoogieType other, BoogieType[] substitution) {
-		if (!(other instanceof ConstructedType)) {
+		if (!(other instanceof BoogieConstructedType)) {
 			return false;
 		}
-		final ConstructedType type = (ConstructedType) other;
+		final BoogieConstructedType type = (BoogieConstructedType) other;
 		if (constr != type.constr) {
 			return false;
 		}
@@ -143,10 +143,10 @@ public class ConstructedType extends BoogieType {
 		if (this == other || other == TYPE_ERROR) {
 			return true;
 		}
-		if (!(other instanceof ConstructedType)) {
+		if (!(other instanceof BoogieConstructedType)) {
 			return false;
 		}
-		final ConstructedType type = (ConstructedType) other;
+		final BoogieConstructedType type = (BoogieConstructedType) other;
 		if (constr != type.constr) {
 			return false;
 		}
@@ -163,7 +163,7 @@ public class ConstructedType extends BoogieType {
 		return realType;
 	}
 	
-	public TypeConstructor getConstr() {
+	public BoogieTypeConstructor getConstr() {
 		return constr;
 	}
 	public BoogieType getParameter(int i) {

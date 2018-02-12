@@ -54,11 +54,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieConstructedType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.Multigraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
@@ -527,10 +527,10 @@ public class BoogiePreprocessorBacktranslator
 
 		private IdentifierExpression extractIdentifier(final ILocation mappedLoc, final VarList list,
 				final IdentifierExpression inputExp, final BoogieType type) {
-			if (type instanceof StructType) {
-				return extractStructIdentifier(mappedLoc, list, inputExp, type, (StructType) type);
-			} else if (type instanceof ConstructedType) {
-				final ConstructedType ct = (ConstructedType) type;
+			if (type instanceof BoogieStructType) {
+				return extractStructIdentifier(mappedLoc, list, inputExp, type, (BoogieStructType) type);
+			} else if (type instanceof BoogieConstructedType) {
+				final BoogieConstructedType ct = (BoogieConstructedType) type;
 				if (ct.equals(ct.getUnderlyingType())) {
 					// this constructed type is a named type;
 					if (ct.getClass() != ct.getUnderlyingType().getClass()) {
@@ -540,9 +540,9 @@ public class BoogiePreprocessorBacktranslator
 					return matchIdentifier(mappedLoc, list, inputExp);
 				}
 				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
-			} else if (type instanceof PrimitiveType) {
+			} else if (type instanceof BoogiePrimitiveType) {
 				return matchIdentifier(mappedLoc, list, inputExp);
-			} else if (type instanceof ArrayType) {
+			} else if (type instanceof BoogieArrayType) {
 				return matchIdentifier(mappedLoc, list, inputExp);
 			} else {
 				reportUnfinishedBacktranslation("Unfinished Backtranslation: Type" + type + " of VarList "
@@ -565,7 +565,7 @@ public class BoogiePreprocessorBacktranslator
 		}
 
 		private IdentifierExpression extractStructIdentifier(final ILocation mappedLoc, final VarList list,
-				final IdentifierExpression inputExp, final BoogieType type, final StructType st) {
+				final IdentifierExpression inputExp, final BoogieType type, final BoogieStructType st) {
 			final String[] inputNames = inputExp.getIdentifier().split("\\.");
 			if (inputNames.length == 1) {
 				// its the struct itself
