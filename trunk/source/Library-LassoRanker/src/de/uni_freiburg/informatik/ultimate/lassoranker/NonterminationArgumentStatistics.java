@@ -64,8 +64,8 @@ public class NonterminationArgumentStatistics implements ICsvProviderProvider<St
 
 			mLambdaZero = lambdaZero;
 			mGEVZero = gevZero;
-			mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " GEVs: "
-					+ (mGEVZero ? "is zero" : "is not zero");
+			mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " Mus: "
+					+ gnta.getNus() + " GEVs: " + (mGEVZero ? "is zero" : "is not zero");
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			mNtar = "Fixpoint";
 			mLambdaZero = true;
