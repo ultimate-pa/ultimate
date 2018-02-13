@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.ITypeErrorReporter;
@@ -65,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * <li> do minor simplifications (e.g. if all operands are literals)
  * <li> computes types for the resulting Boogie expressions, throws an exception if it cannot be typed.
  *   Note that this means that all input Boogie expressions must have a type. (Which is the case if they have been
- *   constructed using this factory.
+ *   constructed using this factory.)
  *
  * @author Daniel Dietsch
  * @author Matthias Heizmann
@@ -463,7 +464,7 @@ public class ExpressionFactory {
 		final List<BoogieType> indicesTypes = Arrays.stream(indices)
 					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
 
-		final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpression((BoogieType) array.getType(),
+		final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs((BoogieType) array.getType(),
 				indicesTypes, new TypeErrorReporter(loc));
 
 		if (indices.length == 1) {
@@ -482,15 +483,14 @@ public class ExpressionFactory {
 		assert indices[0].getType() != null;
 		assert array.getType() != null;
 
-//		final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
-//
-//		arrayType.get
 
-		final BoogieType lhsType = null;
-//		final BoogieType lhsType = BoogieType.
-				//	BoogieType.createArrayType(0,
-//				new BoogieType[] { (BoogieType) indices[0].getType() },
-//				(BoogieType) array.getType());
+		final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
+
+		final List<BoogieType> indicesTypes = Arrays.stream(indices)
+					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
+
+		final BoogieType lhsType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes,
+				new TypeErrorReporter(loc));
 
 		if (indices.length == 1) {
 			return new ArrayLHS(loc, lhsType, array, indices);
@@ -505,9 +505,16 @@ public class ExpressionFactory {
 		return constructNestedArrayLHS(loc, lhs, indices);
 	}
 
-	public static Expression constructIdentifierExpression(final ILocation loc, final BoogieArrayType type,
+	public static IdentifierExpression constructIdentifierExpression(final ILocation loc, final BoogieType type,
 			final String identifier, final DeclarationInformation declarationInformation) {
+		assert loc != null && type != null && identifier != null && declarationInformation != null;
 		return new IdentifierExpression(loc, type, identifier, declarationInformation);
+	}
+
+	public static VariableLHS constructVariableLHS(final ILocation loc, final BoogieType type,
+			final String identifier, final DeclarationInformation declarationInformation) {
+		assert loc != null && type != null && identifier != null && declarationInformation != null;
+		return new VariableLHS(loc, type, identifier, declarationInformation);
 	}
 
 	static class TypeErrorReporter implements ITypeErrorReporter<ILocation> {
@@ -521,7 +528,7 @@ public class ExpressionFactory {
 		@Override
 		public void report(final Function<ILocation, String> func) {
 			throw new TypeCheckException(func.apply(mLocation));
-//			typeError(mLocation, func.apply(mLocation));
 		}
 	}
+
 }
