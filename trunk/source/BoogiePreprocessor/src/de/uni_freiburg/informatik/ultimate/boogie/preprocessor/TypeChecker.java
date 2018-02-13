@@ -30,14 +30,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -112,7 +115,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class is a AST-Visitor for creating textual representations of the tree. It creates a String.
@@ -197,11 +199,8 @@ public class TypeChecker extends BaseObserver {
 		} else if (expr instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
 			final BoogieType arrayType = typecheckExpression(aaexpr.getArray()).getUnderlyingType();
-			final Expression[] indices = aaexpr.getIndices();
-			final BoogieType[] indicesTypes = new BoogieType[indices.length];
-			for (int i = 0; i < indices.length; i++) {
-				indicesTypes[i] = typecheckExpression(indices[i]);
-			}
+			final List<BoogieType> indicesTypes = Arrays.stream(aaexpr.getIndices())
+					.map(exp -> typecheckExpression(exp)).collect(Collectors.toList());
 			resultType = TypeCheckHelper.typeCheckArrayAccessExpression(arrayType, indicesTypes, typeErrorReporter);
 		} else if (expr instanceof ArrayStoreExpression) {
 			final ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
@@ -1117,7 +1116,7 @@ public class TypeChecker extends BaseObserver {
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
-	class TypeErrorReporter implements ITypeErrorReporter<BoogieASTNode, Pair<BoogieASTNode, String>> {
+	class TypeErrorReporter implements ITypeErrorReporter<BoogieASTNode> {
 
 		private final BoogieASTNode mReportNode;
 
@@ -1126,27 +1125,27 @@ public class TypeChecker extends BaseObserver {
 		}
 
 		@Override
-		public void report(final Function<BoogieASTNode, Pair<BoogieASTNode, String>> func) {
-			final Pair<BoogieASTNode, String> res = func.apply(mReportNode);
-			typeError(res.getFirst(), res.getSecond());
+		public void report(final Function<BoogieASTNode, String> func) {
+//			final Pair<BoogieASTNode, String> res = func.apply(mReportNode);
+			typeError(mReportNode, func.apply(mReportNode));
 		}
 
 	}
 
-	class InternalErrorReporter implements ITypeErrorReporter<Object, String> {
-
-		private final Object mReportNode;
-
-		InternalErrorReporter(final Object reportNode) {
-			mReportNode = reportNode;
-		}
-
-		@Override
-		public void report(final Function<Object, String> func) {
-			TypeCheckHelper.internalError(func.apply(mReportNode));
-		}
-
-	}
+//	class InternalErrorReporter implements ITypeErrorReporter<Object, String> {
+//
+//		private final Object mReportNode;
+//
+//		InternalErrorReporter(final Object reportNode) {
+//			mReportNode = reportNode;
+//		}
+//
+//		@Override
+//		public void report(final Function<Object, String> func) {
+//			TypeCheckHelper.internalError(func.apply(mReportNode));
+//		}
+//
+//	}
 
 
 }
