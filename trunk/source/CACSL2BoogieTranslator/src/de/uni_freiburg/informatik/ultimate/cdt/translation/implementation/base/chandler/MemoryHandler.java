@@ -45,6 +45,8 @@ import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -83,6 +85,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -1342,7 +1346,14 @@ public class MemoryHandler {
 	 */
 	public Expression getLengthArray(final ILocation loc) {
 		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Length);
-		return new IdentifierExpression(loc, SFO.LENGTH);
+
+		final BoogieArrayType lengthArrayType = BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT },
+				BoogieType.TYPE_INT);
+		final DeclarationInformation lengthArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+
+//		return new IdentifierExpression(loc, SFO.LENGTH);
+		return ExpressionFactory.constructIdentifierExpression(loc, lengthArrayType,
+				MemoryModelDeclarations.Ultimate_Length.getName(), lengthArrayDeclarationInfo);
 	}
 
 	/**
@@ -1352,7 +1363,14 @@ public class MemoryHandler {
 	 */
 	public Expression getValidArray(final ILocation loc) {
 		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Valid);
-		return new IdentifierExpression(loc, SFO.VALID);
+		// TODO: store type and decl info more centrally
+		final BoogieArrayType validArrayType = BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT },
+				BoogieType.TYPE_INT);
+		final DeclarationInformation validArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+//		return new IdentifierExpression(loc, validArrayType, MemoryModelDeclarations.Ultimate_Valid.getName(),
+//				validArrayDeclarationInfo);
+		return ExpressionFactory.constructIdentifierExpression(loc, validArrayType,
+				MemoryModelDeclarations.Ultimate_Valid.getName(), validArrayDeclarationInfo);
 	}
 
 	/**
