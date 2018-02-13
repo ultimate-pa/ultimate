@@ -100,13 +100,6 @@ public class GlobalVariableCollector extends ASTVisitor {
 			final CDeclaration cDecl = new CDeclaration(type, cId);
 			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, null, false);
 			mSymTab.storeCSymbol(spec, cId, stv);
-		} else if (spec instanceof IASTCompositeTypeSpecifier) {
-			final String cId = mSymTab.applyMultiparseRenaming(fileName, 
-					((IASTCompositeTypeSpecifier) spec).getName().toString());
-			final String bId = "STRUCT~" + cId;
-			final CDeclaration cDecl = new CDeclaration(type, cId);
-			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, null, false);
-			mSymTab.storeCSymbol(spec, cId, stv);
 		}
 		return super.visit(sd);
 	}

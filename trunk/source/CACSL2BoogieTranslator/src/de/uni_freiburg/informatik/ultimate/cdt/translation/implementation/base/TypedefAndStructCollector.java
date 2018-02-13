@@ -27,13 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TypeHelper;
 
@@ -41,31 +44,54 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.T
  * @author Yannick Bühler
  * @since 2018-01-15
  */
-public class TypedefCollector extends ASTVisitor {
+public class TypedefAndStructCollector extends ASTVisitor {
 	
 	private final FlatSymbolTable mSymTab;
 	
-	public TypedefCollector(final FlatSymbolTable st) {
+	public TypedefAndStructCollector(final FlatSymbolTable st) {
 		mSymTab = st;
 		shouldVisitDeclarations = true;
 	}
 	
 	@Override
 	public int visit(final IASTDeclaration raw) {
+		if (!(raw.getParent() instanceof IASTTranslationUnit)) {
+			return super.visit(raw);
+		}
 		if (!(raw instanceof IASTSimpleDeclaration)) {
 			return super.visit(raw);
 		}
 		final IASTSimpleDeclaration sd = (IASTSimpleDeclaration) raw;
+		final CType type = TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier());
+		
+		// Typedef
 		if (sd.getDeclSpecifier().getStorageClass() == IASTDeclSpecifier.sc_typedef) {
 			// This declaration is a typedef. Construct the CDecl from the node!
 			assert sd.getDeclarators().length == 1 : "unexpected length of decltr array";
 			final String name = sd.getDeclarators()[0].getName().toString();
 			final String explName = mSymTab.applyMultiparseRenaming(sd.getContainingFilename(), name);
-			final CNamed container = new CNamed(explName, TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier()));
+			final CNamed container = new CNamed(explName, type);
 			final CDeclaration tdCdecl = new CDeclaration(container, explName);
 			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, tdCdecl.getType(), false, explName);
 			final SymbolTableValue stv = new SymbolTableValue(bId, null, tdCdecl, true, raw, false);
 			mSymTab.storeCSymbol(raw.getParent(), explName, stv);
+		}
+		
+		// Struct / Union
+		if (sd.getDeclSpecifier() instanceof IASTCompositeTypeSpecifier) {
+			final IASTCompositeTypeSpecifier cspec = (IASTCompositeTypeSpecifier) sd.getDeclSpecifier();
+			final String namePrefix;
+			if (cspec.getKey() == IASTCompositeTypeSpecifier.k_struct) {
+				namePrefix = "STRUCT~";
+			} else {
+				assert cspec.getKey() == IASTCompositeTypeSpecifier.k_union : "unexpected spec type";
+				namePrefix = "UNION~";
+			}
+			final String cId = mSymTab.applyMultiparseRenaming(sd.getContainingFilename(), cspec.getName().toString());
+			final String bId = namePrefix + cId;
+			final CDeclaration cDecl = new CDeclaration(type, cId);
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, null, false);
+			mSymTab.storeCSymbol(cspec, cId, stv);
 		}
 		return super.visit(sd);
 	}

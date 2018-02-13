@@ -482,6 +482,10 @@ public class PRDispatcher extends Dispatcher {
 		if (mReachableDeclarations == null) {
 			return true;
 		}
+		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
+		if (!(decl.getParent() instanceof IASTTranslationUnit)) {
+			return true;
+		}
 		return mReachableDeclarations.contains(decl);
 	}
 

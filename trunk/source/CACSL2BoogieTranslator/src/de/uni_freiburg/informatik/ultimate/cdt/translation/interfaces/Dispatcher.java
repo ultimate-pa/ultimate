@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.GlobalVariableCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypedefCollector;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypedefAndStructCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -291,8 +291,9 @@ public abstract class Dispatcher {
 		mLocationFactory = new LocationFactory(lineDirectiveMapping);
 		mBacktranslator.setLocationFactory(mLocationFactory);
 
-		// Collect all type definitions
-		executePreRun(new TypedefCollector(mFlatTable), nodes);
+		// Collect all type definitions (including structs, unions and enums) - everything that might be needed for
+		// declaring a variable.
+		executePreRun(new TypedefAndStructCollector(mFlatTable), nodes);
 
 		// Collect all global variables
 		executePreRun(new GlobalVariableCollector(mFlatTable), nodes);

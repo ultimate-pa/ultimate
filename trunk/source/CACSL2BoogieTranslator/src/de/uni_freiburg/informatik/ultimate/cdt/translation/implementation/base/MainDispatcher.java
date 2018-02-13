@@ -320,6 +320,10 @@ public class MainDispatcher extends Dispatcher {
 		if (mReachableDeclarations == null) {
 			return true;
 		}
+		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
+		if (!(decl.getParent() instanceof IASTTranslationUnit)) {
+			return true;
+		}
 		return mReachableDeclarations.contains(decl);
 		/*if (!mReachableDeclarations.containsKey(decl.getContainingFilename())) {
 			// Nothing is reachable in this file.

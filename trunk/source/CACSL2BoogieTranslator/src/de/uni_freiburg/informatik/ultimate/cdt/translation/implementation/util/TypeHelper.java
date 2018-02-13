@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 
 /**
@@ -64,16 +65,22 @@ public class TypeHelper {
 		} else if (ds instanceof IASTCompositeTypeSpecifier) {
 			final IASTCompositeTypeSpecifier comp = (IASTCompositeTypeSpecifier) ds;
 			final String rslvName = fs.applyMultiparseRenaming(ds.getContainingFilename(), comp.getName().toString());
+			if (comp.getKey() == IASTCompositeTypeSpecifier.k_union) {
+				return new CUnion(rslvName);
+			}
 			return new CStruct(rslvName);
 		} else if (ds instanceof IASTElaboratedTypeSpecifier) {
 			final IASTElaboratedTypeSpecifier elab = (IASTElaboratedTypeSpecifier) ds;
-			if (elab.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
+			if (elab.getKind() == IASTElaboratedTypeSpecifier.k_struct 
+					|| elab.getKind() == IASTElaboratedTypeSpecifier.k_union) {
 				final String rslvStructName = 
 						fs.applyMultiparseRenaming(ds.getContainingFilename(), elab.getName().toString());
 				if (!fs.containsCSymbol(ds, rslvStructName)) {
 					throw new UnsupportedSyntaxException(null, "Struct used before collected");
 				}
 				return fs.findCSymbol(ds, rslvStructName).getCDecl().getType();
+			} else {
+				throw new UnsupportedOperationException("unknown elab kind");
 			}
 		}
 		throw new UnsupportedOperationException("only simple decl specifiers are currently supported");
