@@ -10,7 +10,8 @@ public class BndEntryConditionPattern extends PatternType {
 		final CDD r_cdd = mScope.getCdd2();
 		final CDD s_cdd = mCdds.get(0);
 
-		mPea = mPeaTransformator.bndEntryConditionPattern(p_cdd, q_cdd, r_cdd, s_cdd, mDuration, mScope.toString());
+		mPea = mPeaTransformator.bndEntryConditionPattern(mId, p_cdd, q_cdd, r_cdd, s_cdd, mDuration,
+				mScope.toString());
 	}
 
 	@Override

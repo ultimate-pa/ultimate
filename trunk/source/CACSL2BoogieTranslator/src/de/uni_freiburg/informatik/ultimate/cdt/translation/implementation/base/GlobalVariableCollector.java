@@ -82,7 +82,7 @@ public class GlobalVariableCollector extends ASTVisitor {
 			final CType lType;
 			if (decl instanceof IASTArrayDeclarator) {
 				// Dimension information is not available here...
-				lType = new CArray(new RValue[0], type);
+				lType = new CArray(null, type);
 			} else {
 				lType = type;
 			}

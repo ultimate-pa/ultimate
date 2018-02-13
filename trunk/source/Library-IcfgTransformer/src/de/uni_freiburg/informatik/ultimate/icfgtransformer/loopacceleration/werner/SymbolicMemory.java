@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -116,10 +117,6 @@ public class SymbolicMemory {
 			final Term t = entry.getValue();
 			final Map<Term, Term> substitution = new HashMap<>();
 
-			if (t instanceof TermVariable) {
-				int i = 1;
-			}
-			
 			if (t instanceof TermVariable && mMemoryMapping.containsKey(entry.getKey())) {
 				substitution.put(t, mMemoryMapping.get(entry.getKey()));
 			}
@@ -128,7 +125,6 @@ public class SymbolicMemory {
 				mMemoryMapping.put(entry.getKey(), entry.getValue());
 				continue;
 			}
-			
 
 			if (t instanceof ConstantTerm) {
 				substitution.put(mMemoryMapping.get(entry.getKey()), t);
@@ -149,9 +145,15 @@ public class SymbolicMemory {
 	 * 
 	 * @param tf
 	 *            {@link TransFormula}
-	 * @return 	a symbolic memory compatible {@link TransFormula}
+	 * @return a symbolic memory compatible {@link TransFormula}
 	 */
 	public UnmodifiableTransFormula updateCondition(final UnmodifiableTransFormula tf) {
+
+		final Term t = tf.getFormula();
+
+		if (t instanceof QuantifiedFormula) {
+			return null;
+		}
 
 		final ApplicationTerm appTerm = (ApplicationTerm) tf.getFormula();
 		final Map<Term, Term> substitution = new HashMap<>();

@@ -476,8 +476,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 						mCsToolkitWithRankVars.getSymbolTable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 						mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
 						generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
-						mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction,
-						mPref.getRefinementStrategy(), taskIdentifier, mBenchmarkGenerator);
+						mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction, taskIdentifier,
+						mBenchmarkGenerator);
 				if (lassoCheck.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
 					// if result was unknown, then try again but this time add one
 					// iteration of the loop to the stem.
@@ -492,8 +492,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 							mIcfg.getSymboltable(), mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 							mIcfg.getCfgSmtToolkit().getAxioms(), mBinaryStatePredicateManager, mCounterexample,
 							generateLassoCheckIdentifier(), mServices, mToolchainStorage, mSimplificationTechnique,
-							mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction,
-							mPref.getRefinementStrategy(), unwindingTaskIdentifier, mBenchmarkGenerator);
+							mXnfConversionTechnique, mRefinementStrategyFactory, mAbstraction, unwindingTaskIdentifier,
+							mBenchmarkGenerator);
 				}
 			} catch (final ToolchainCanceledException e) {
 				final int traceHistogramMaxStem =

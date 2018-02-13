@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 public class BoogieBooleanExpressionDecision extends Decision {
 
 	private final Expression mExpression;
+	private final static Expression TRUE = new BooleanLiteral(null, BoogieType.TYPE_BOOL, true);
 
 	/**
 	 *
@@ -47,6 +48,10 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 */
 	public static CDD create(final Expression e) {
 		return CDD.create(new BoogieBooleanExpressionDecision(e), CDD.trueChilds);
+	}
+
+	public static CDD createTrue() {
+		return CDD.create(new BoogieBooleanExpressionDecision(TRUE), CDD.trueChilds);
 	}
 
 	@Override

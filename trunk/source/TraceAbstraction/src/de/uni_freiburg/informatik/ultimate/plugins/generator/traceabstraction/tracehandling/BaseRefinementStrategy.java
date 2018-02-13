@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
@@ -52,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public abstract class BaseRefinementStrategy<LETTER> {
+public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> {
 
 	private final ILogger mLogger;
 
@@ -92,7 +92,7 @@ public abstract class BaseRefinementStrategy<LETTER> {
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	private boolean mSomePerfectSequenceFound = false;
 
-	private InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
+	private InterpolantConsolidation<LETTER>.InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
 
 	public BaseRefinementStrategy(final ILogger logger) {
 		mLogger = logger;
@@ -381,14 +381,15 @@ public abstract class BaseRefinementStrategy<LETTER> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void extractInterpolants(final List<TracePredicates> perfectIpps,
 			final List<TracePredicates> imperfectIpps) {
 		IInterpolantGenerator interpolantGenerator = null;
 		try {
 			interpolantGenerator = getInterpolantGenerator();
 			if (interpolantGenerator instanceof InterpolantConsolidation) {
-				mInterpolantConsolidationStatistics =
-						((InterpolantConsolidation) interpolantGenerator).getInterpolantConsolidationBenchmarks();
+				mInterpolantConsolidationStatistics = ((InterpolantConsolidation<LETTER>) interpolantGenerator)
+						.getInterpolantConsolidationBenchmarks();
 			}
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
@@ -452,7 +453,8 @@ public abstract class BaseRefinementStrategy<LETTER> {
 		}
 	}
 
-	protected InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationStatistics() {
+	protected InterpolantConsolidation<LETTER>.InterpolantConsolidationBenchmarkGenerator
+			getInterpolantConsolidationStatistics() {
 		return mInterpolantConsolidationStatistics;
 	}
 

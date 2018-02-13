@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -36,27 +36,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 
 /**
- * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
- * mode, and then {@code Z3}.
- * <p>
- * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for constructing the interpolant automaton.
- *
- * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		extends MultiTrackRefinementStrategy<LETTER> {
+public class MammothRefinementStrategy<LETTER extends IIcfgTransition<?>> extends MultiTrackRefinementStrategy<LETTER> {
 
-	public WolfRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
+	public MammothRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
@@ -69,25 +60,19 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
-		final TermClassifier tc =
-				TraceCheckUtils.classifyTermsInTrace(mCounterexample.getWord(), mCsToolkit.getAxioms());
-		if (RefinementStrategyUtils.hasNoFloats(tc)) {
-			list.add(Track.CVC4_FPBP);
-		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
-			// floats, but no quantifiers and no extensions
-			list.add(Track.MATHSAT_FPBP);
-		}
+		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
+		list.add(Track.Z3_NESTED_INTERPOLANTS);
 		list.add(Track.Z3_FPBP);
 		return list.iterator();
 	}
 
 	@Override
 	protected String getCvc4Logic() {
-		return RefinementStrategyUtils.LOGIC_CVC4_BITVECTORS;
+		return RefinementStrategyUtils.LOGIC_CVC4_DEFAULT;
 	}
 
 	@Override
 	protected int getInterpolantAcceptanceThreshold() {
-		return 2;
+		return Integer.MAX_VALUE;
 	}
 }

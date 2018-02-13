@@ -9,7 +9,7 @@ public class BndExistencePattern extends PatternType {
 		final CDD q_cdd = mScope.getCdd1();
 		final CDD r_cdd = mScope.getCdd2();
 
-		mPea = mPeaTransformator.bndExistencePattern(p_cdd, q_cdd, r_cdd, mScope.toString());
+		mPea = mPeaTransformator.bndExistencePattern(mId, p_cdd, q_cdd, r_cdd, mScope.toString());
 	}
 
 	@Override

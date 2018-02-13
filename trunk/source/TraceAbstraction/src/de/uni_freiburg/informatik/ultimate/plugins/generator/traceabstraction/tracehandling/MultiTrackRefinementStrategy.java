@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransition<?>>
+public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends BaseRefinementStrategy<LETTER> {
 	/**
 	 * Possible tracks.
@@ -168,7 +168,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 *            benchmark
 	 */
 	@SuppressWarnings("squid:S1699")
-	protected MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
+	protected MultiTrackRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final IUltimateServiceProvider services,
 			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,

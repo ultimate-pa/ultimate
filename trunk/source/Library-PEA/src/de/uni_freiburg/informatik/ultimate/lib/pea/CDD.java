@@ -81,6 +81,8 @@ public final class CDD {
 	CDD[] childs;
 	boolean timed = false;
 
+	private CDD primeCache;
+
 	/**
 	 * Create a new CDD with the given decision and sub diagrams.
 	 */
@@ -910,8 +912,6 @@ public final class CDD {
 		return decision;
 	}
 
-	private CDD primeCache;
-
 	public CDD prime() {
 		return this.prime(null);
 	}
@@ -924,7 +924,7 @@ public final class CDD {
 			return primeCache;
 		}
 
-		final Decision decision = this.decision;
+		final Decision ldecision = decision;
 		Decision newDecision;
 
 		final CDD[] children = childs;
@@ -934,7 +934,7 @@ public final class CDD {
 			newChildren[i] = children[i].prime();
 		}
 
-		newDecision = decision.prime(ignore);
+		newDecision = ldecision.prime(ignore);
 
 		primeCache = CDD.create(newDecision, newChildren);
 		return primeCache;

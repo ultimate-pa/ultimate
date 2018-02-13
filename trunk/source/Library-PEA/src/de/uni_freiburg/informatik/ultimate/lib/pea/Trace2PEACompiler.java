@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -100,7 +101,7 @@ public class Trace2PEACompiler {
 	 * @see ILogger
 	 * @see PropertyConfigurator
 	 */
-	public Trace2PEACompiler(ILogger logger, String loggerName) {
+	public Trace2PEACompiler(final ILogger logger, final String loggerName) {
 		mLogger = logger;
 
 		allPhases = new TreeMap<>();
@@ -112,7 +113,7 @@ public class Trace2PEACompiler {
 	/**
 	 * Initialises the Trace2PEACompiler object with the default logger.
 	 */
-	public Trace2PEACompiler(ILogger logger) {
+	public Trace2PEACompiler(final ILogger logger) {
 		this(logger, Trace2PEACompiler.DEFAULT_LOGGER);
 	}
 
@@ -233,7 +234,7 @@ public class Trace2PEACompiler {
 				return result;
 			}
 			if (countertrace.phases[i].boundType < 0 && (canseep(state) & ibit) == 0
-			        && (state.exactbound & ibit) == 0) {
+					&& (state.exactbound & ibit) == 0) {
 				/*
 				 * The phase has a strict upper bound. It is only complete if that bound has not yet been reached.
 				 */
@@ -308,7 +309,7 @@ public class Trace2PEACompiler {
 		// may be demanded to be able to neglect the phase.
 		lastphase = countertrace.phases.length - 1;
 		while (!buildTotal && lastphase > 0 && countertrace.phases[lastphase].allowEmpty
-		        && (canPossiblySeep & (1 << lastphase)) != 0) {
+				&& (canPossiblySeep & (1 << lastphase)) != 0) {
 			lastphase = lastphase - 1;
 		}
 		mLogger.debug("Lastphase = " + lastphase);
@@ -345,7 +346,7 @@ public class Trace2PEACompiler {
 
 			cEnter[p] = p > 0 ? complete(srcBits, p - 1).and(enter[p]) : CDD.FALSE;
 			mLogger.debug("initTrans for " + srcBits + "," + p + ": complete: " + complete(srcBits, p) + " enter: "
-			        + cEnter[p] + "  keep: " + cKeep[p]);
+					+ cEnter[p] + "  keep: " + cKeep[p]);
 		}
 	}
 
@@ -373,7 +374,7 @@ public class Trace2PEACompiler {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.CDD
 	 */
 	private void buildNewTrans(final PhaseBits srcBits, final Phase src, CDD guard, final CDD stateInv,
-	        final String[] resets, final PhaseBits destBits) {
+			final String[] resets, final PhaseBits destBits) {
 		Phase dest;
 		if (allPhases.containsKey(destBits)) {
 			mLogger.debug("Destination phase already exists");
@@ -382,13 +383,13 @@ public class Trace2PEACompiler {
 			CDD clockInv = CDD.TRUE;
 			for (int p = 0, pbit = 1; pbit <= destBits.active; p++, pbit += pbit) {
 				if ((destBits.waiting & pbit) != 0
-				        || (countertrace.phases[p].boundType < 0 && (canseep(destBits) & pbit) == 0)) {
+						|| (countertrace.phases[p].boundType < 0 && (canseep(destBits) & pbit) == 0)) {
 					/*
 					 * Phase invariants only apply to waiting states and states with upper bounds that cannot be
 					 * reentered immediately.
 					 */
 					if (!buildTotal && p == lastphase && countertrace.phases[p].boundType > 0
-					        && (destBits.exactbound & pbit) != 0) {
+							&& (destBits.exactbound & pbit) != 0) {
 
 						// There is a very special case in which clock invariant
 						// must be strict. It only occurs, if countertrace
@@ -449,12 +450,12 @@ public class Trace2PEACompiler {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.CDD
 	 */
 	private void recursiveBuildTrans(final PhaseBits srcBits, final Phase src, final CDD guard, CDD stateInv,
-	        final String[] resets, final int active, final int waiting, final int exactbound, final int p) {
+			final String[] resets, final int active, final int waiting, final int exactbound, final int p) {
 		if (guard.and(stateInv.prime()) == CDD.FALSE) {
 			return;
 		}
 		mLogger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " (" + p
-		        + ") partial guards: " + guard + " inv: " + stateInv);
+				+ ") partial guards: " + guard + " inv: " + stateInv);
 		if (p == countertrace.phases.length) {
 			// If countertrace automata are built, the phase satisfying the
 			// formula is omitted. Building test automata
@@ -484,7 +485,7 @@ public class Trace2PEACompiler {
 			 * doesn't hold in the state invariant.
 			 */
 			recursiveBuildTrans(srcBits, src, guard, stateInv.and(countertrace.phases[p].invariant.negate()), resets,
-			        active, waiting, exactbound, p + 1);
+					active, waiting, exactbound, p + 1);
 		} else {
 			/*
 			 * Make sure that the phase can neither be kept nor entered.
@@ -515,14 +516,14 @@ public class Trace2PEACompiler {
 					 * if previous state was waiting, we can either keep waiting, or enter non-waiting state.
 					 */
 					recursiveBuildTrans(srcBits, src, keep.and(cless[p]), stateInv, resets, active | pbit,
-					        waiting | pbit, exactbound | (srcBits.exactbound & pbit), p + 1);
+							waiting | pbit, exactbound | (srcBits.exactbound & pbit), p + 1);
 
 					recursiveBuildTrans(srcBits, src, keep.and(cless[p].negate()), stateInv, resets, active | pbit,
-					        waiting, exactbound, p + 1);
+							waiting, exactbound, p + 1);
 				} else {
 					/* We can keep it in non-waiting state. */
 					recursiveBuildTrans(srcBits, src, keep, stateInv, resets, active | pbit, waiting, exactbound,
-					        p + 1);
+							p + 1);
 				}
 			}
 
@@ -538,7 +539,7 @@ public class Trace2PEACompiler {
 				if (enterExact != CDD.FALSE) {
 					mLogger.debug("Phase " + p + " can be entered exact");
 					recursiveBuildTrans(srcBits, src, enterExact, stateInv, resetsPlus, active | pbit, waiting | pbit,
-					        exactbound | pbit, p + 1);
+							exactbound | pbit, p + 1);
 				}
 				enterStrict = canseepdest ? remaining.and(cEnter[p].negate()) : CDD.FALSE;
 			} else {
@@ -550,7 +551,7 @@ public class Trace2PEACompiler {
 			 */
 			if (enterStrict != CDD.FALSE) {
 				recursiveBuildTrans(srcBits, src, enterStrict, stateInv, resetsPlus, active | pbit, waiting | pbit,
-				        exactbound, p + 1);
+						exactbound, p + 1);
 			}
 		} else if (countertrace.phases[p].boundType < 0) {
 			/*
@@ -595,15 +596,15 @@ public class Trace2PEACompiler {
 				if (enterNormal != CDD.FALSE) {
 
 					recursiveBuildTrans(srcBits, src, enterNormal, stateInv, resetsPlus, active | pbit, waiting,
-					        exactbound, p + 1);
+							exactbound, p + 1);
 				}
 				if (enterExact != CDD.FALSE) {
 					recursiveBuildTrans(srcBits, src, enterExact, stateInv, resetsPlus, active | pbit, waiting,
-					        exactbound | pbit, p + 1);
+							exactbound | pbit, p + 1);
 				}
 				if (keep != CDD.FALSE) {
 					recursiveBuildTrans(srcBits, src, keep, stateInv, resets, active | pbit, waiting,
-					        exactbound | (srcBits.exactbound & pbit), p + 1);
+							exactbound | (srcBits.exactbound & pbit), p + 1);
 				}
 
 			}
@@ -618,7 +619,7 @@ public class Trace2PEACompiler {
 			}
 			if (enterKeep != CDD.FALSE) {
 				recursiveBuildTrans(srcBits, src, enterKeep, stateInv, resets, active | pbit, waiting, exactbound,
-				        p + 1);
+						p + 1);
 			}
 		}
 	}
@@ -803,10 +804,23 @@ public class Trace2PEACompiler {
 
 	private void addVariables(final CDD cdd, final HashMap<String, String> variables, final HashSet<String> events) {
 		final Decision dec = cdd.getDecision();
-		if (dec instanceof EventDecision) {
+		if (dec == null) {
+			// may happen for true/false phases
+		} else if (dec instanceof EventDecision) {
 			events.add(((EventDecision) dec).getEvent());
 		} else if (dec instanceof BooleanDecision) {
-			variables.put(((BooleanDecision) dec).getVar(), "boolean");
+			variables.put(((BooleanDecision) dec).getVar(), "bool");
+		} else if (dec instanceof BoogieBooleanExpressionDecision) {
+			final BoogieBooleanExpressionDecision bbedec = (BoogieBooleanExpressionDecision) dec;
+			for (final Entry<String, String> entry : bbedec.getVars().entrySet()) {
+				final String oldType = variables.put(entry.getKey(), entry.getValue());
+				if (oldType != null && !oldType.equals(entry.getValue())) {
+					throw new IllegalArgumentException("Variable with conflicting type declared: " + entry.getKey()
+							+ " : " + oldType + " vs. " + entry.getValue());
+				}
+			}
+		} else {
+			throw new UnsupportedOperationException("Unknown decision type: " + dec.getClass());
 		}
 		if (cdd.getChilds() != null) {
 			for (final CDD child : cdd.getChilds()) {

@@ -43,11 +43,14 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 	private final Map<IProgramNonOldVar, IProgramConst> mFreezeVarTofreezeVarLit;
 	private final IProgramVar mValidArray;
 
+	private final HeapSepSettings mSettings;
+
 	public FreezeVarInitializer(final ILogger logger, //final CfgSmtToolkit csToolkit,
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
-			final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit, final IProgramVar validArray) {
+			final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit, final IProgramVar validArray,
+			final HeapSepSettings settings) {
 		super(logger, //csToolkit,
 				resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 //		computeInitializingTerm(freezeVarTofreezeVarLit, validArray);
@@ -55,6 +58,8 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 		mValidArray = validArray;
 
 		mFreezeLiterals = new HashSet<>(freezeVarTofreezeVarLit.values());
+
+		mSettings = settings;
 	}
 
 
@@ -78,7 +83,7 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 
 
 			final ComputeInitializingTerm cit =
-				new ComputeInitializingTerm(mFreezeVarTofreezeVarLit, mValidArray, oldTransformula);
+				new ComputeInitializingTerm(mFreezeVarTofreezeVarLit, mValidArray, oldTransformula, mSettings);
 
 
 			final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(oldTransformula.getInVars());
@@ -125,12 +130,16 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 		private Map<IProgramVar, TermVariable> mFreezeVarInVars;
 		private Map<IProgramVar, TermVariable> mFreezeVarOutVars;
 
+		private final HeapSepSettings mSettings;
+
 //		private UnmodifiableTransFormula mOriginalTransFormula;
 
 		ComputeInitializingTerm(final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit,
-				final IProgramVar validArray, final UnmodifiableTransFormula originalTransFormula) {
+				final IProgramVar validArray, final UnmodifiableTransFormula originalTransFormula,
+				final HeapSepSettings settings) {
 //			mOriginalTransFormula = originalTransFormula;
 			computeInitializingTerm(freezeVarTofreezeVarLit, validArray, originalTransFormula);
+			mSettings = settings;
 		}
 
 		private void computeInitializingTerm(final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit,
@@ -182,7 +191,8 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 			 * furthermore add disequalities between all freeze var literals
 			 */
 			final List<Term> freezeLitDisequalities = new ArrayList<>();
-			if (HeapSepSettings.ASSUME_FREEZE_VAR_LIT_DISEQUALITIES_AT_INIT_EDGES) {
+//			if (HeapSepSettings.ASSUME_FREEZE_VAR_LIT_DISEQUALITIES_AT_INIT_EDGES) {
+			if (mSettings.isAssumeFreezeVarLitDisequalitiesAtInitEdges()) {
 				for (final Entry<IProgramConst, IProgramConst> en : CrossProducts.binarySelectiveCrossProduct(
 						new HashSet<>(freezeVarTofreezeVarLit.values()), false, false)) {
 					freezeLitDisequalities.add(

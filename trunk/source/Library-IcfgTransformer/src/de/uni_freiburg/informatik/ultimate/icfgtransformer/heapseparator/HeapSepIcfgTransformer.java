@@ -12,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer.Preprocessing;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -61,6 +60,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private final ManagedScript mMgdScript;
 
+	private final HeapSepSettings mSettings;
+
 
 	/**
 	 * prefix of heap arrays (copied from class "SFO" in C to Boogie translation)
@@ -100,6 +101,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mStatistics = new HeapSeparatorBenchmark();
 		mMgdScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
+
+		mSettings = new HeapSepSettings();
 
 		// TODO: complete, make nicer..
 //		final List<String> heapArrayNames = Arrays.asList("#memory_int", "memory_$Pointer$");
@@ -195,7 +198,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			// make sure the literals are all treated as pairwise unequal
 			equalityProvider.announceAdditionalLiterals(freezeVarTofreezeVarLit.values());
-			if (HeapSepSettings.ASSERT_FREEZE_VAR_LIT_DISEQUALITIES_INTO_SCRIPT) {
+			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
 				mMgdScript.lock(this);
 
 				final Set<Term> literalTerms = new HashSet<>();
@@ -218,7 +221,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 */
 			final FreezeVarInitializer<OUTLOC, OUTLOC> fvi = new FreezeVarInitializer<>(mLogger,
 					"icfg_with_initialized_freeze_vars", outLocationClass, icfgWFreezeVarsUninitialized, outToOutLocFac,
-					backtranslationTracker, freezeVarTofreezeVarLit, validArray);
+					backtranslationTracker, freezeVarTofreezeVarLit, validArray, mSettings);
 			final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = fvi.getResult();
 
 			preprocessedIcfg = icfgWFreezeVarsInitialized;
@@ -258,14 +261,13 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			edgeToIndexToStoreIndexInfo = mauit.getEdgeToIndexToStoreIndexInfo();
 			storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
-//			storeIndexInfos = edgeToIndexToStoreIndexInfo.values().collect(Collectors.toSet());
 
 			mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
 					" location literals (each corresponds to one heap write)");
 
 			// make sure the literals are all treated as pairwise unequal
 			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
-			if (HeapSepSettings.ASSERT_FREEZE_VAR_LIT_DISEQUALITIES_INTO_SCRIPT) {
+			if (mSettings.isAssumeFreezeVarLitDisequalitiesAtInitEdges()) {
 				mMgdScript.lock(this);
 
 				final Set<Term> literalTerms = mauit.getLocationLiterals().stream()
@@ -281,8 +283,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			preprocessedIcfg = icfgWithMemlocUpdates;
 			storeIndexInfoToFreezeVar = null;
-//			edgeToIndexToStoreIndexInfo = null;
-//			throw new AssertionError();
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
 		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
@@ -290,7 +290,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		} else {
 			mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
 		}
-//		mLogger.debug("storeIndexInfos : " + storeIndexInfos);
 		mLogger.debug("edgeToIndexToStoreIndexInfo: " + DataStructureUtils.prettyPrint(edgeToIndexToStoreIndexInfo));
 
 		/*
@@ -382,10 +381,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		return mResultIcfg;
 	}
 
-
-	enum Preprocessing {
-		FREEZE_VARIABLES, MEMLOC_ARRAY;
-	}
 
 	public HeapSeparatorBenchmark getStatistics() {
 		return mStatistics;
@@ -789,6 +784,10 @@ class PartitionManager {
 	}
 }
 
+enum Preprocessing {
+	FREEZE_VARIABLES, MEMLOC_ARRAY;
+}
+
 class HeapSepSettings {
 	/**
 	 *
@@ -796,7 +795,22 @@ class HeapSepSettings {
 	 *  <li> how much of a slowdown this causes
 	 *  <li> if it is only necessary for assertions or not
 	 */
-	public static final boolean ASSUME_FREEZE_VAR_LIT_DISEQUALITIES_AT_INIT_EDGES = false;
+	private final boolean mAssumeFreezeVarLitDisequalitiesAtInitEdges = false;
 
-	public static final boolean ASSERT_FREEZE_VAR_LIT_DISEQUALITIES_INTO_SCRIPT = true;
+	private final boolean mAssertFreezeVarLitDisequalitiesIntoScript = true;
+
+	private final Preprocessing mPreprocessing = Preprocessing.MEMLOC_ARRAY;
+//	private final Preprocessing mPreprocessing = Preprocessing.FREEZE_VARIABLES;
+
+	public boolean isAssumeFreezeVarLitDisequalitiesAtInitEdges() {
+		return mAssumeFreezeVarLitDisequalitiesAtInitEdges;
+	}
+
+	public boolean isAssertFreezeVarLitDisequalitiesIntoScript() {
+		return mAssertFreezeVarLitDisequalitiesIntoScript;
+	}
+
+	public Preprocessing getPreprocessing() {
+		return mPreprocessing;
+	}
 }

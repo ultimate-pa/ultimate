@@ -91,8 +91,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.BaseRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
@@ -139,8 +137,6 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	private final InterpolationTechnique mInterpolation;
-
 	private final AnalysisType mRankAnalysisType;
 	private final AnalysisType mGntaAnalysisType;
 	private final int mGntaDirections;
@@ -172,19 +168,13 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 	// ////////////////////////////// auxilliary variables
 	// //////////////////////
 
-	private final IPredicate mTruePredicate;
-	private final IPredicate mFalsePredicate;
-
 	// ////////////////////////////// output /////////////////////////////////
 
 	// private final BuchiModGlobalVarManager mBuchiModGlobalVarManager;
 
-	private final PredicateFactory mPredicateFactory;
-	private final PredicateUnifier mPredicateUnifier;
-
-	private TraceAbstractionRefinementEngine mStemCheck;
-	private TraceAbstractionRefinementEngine mLoopCheck;
-	private TraceAbstractionRefinementEngine mConcatCheck;
+	private TraceAbstractionRefinementEngine<LETTER> mStemCheck;
+	private TraceAbstractionRefinementEngine<LETTER> mLoopCheck;
+	private TraceAbstractionRefinementEngine<LETTER> mConcatCheck;
 
 	private NestedRun<LETTER, IPredicate> mConcatenatedCounterexample;
 
@@ -201,11 +191,8 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 
 	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks = new ArrayList<>();
 	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks = new ArrayList<>();
-	private final IIcfgSymbolTable mSymbolTable;
 
 	private final RefinementStrategyFactory<LETTER> mRefinementStrategyFactory;
-
-	private final RefinementStrategy mRefinementStrategy;
 
 	private final INestedWordAutomaton<LETTER, IPredicate> mAbstraction;
 
@@ -218,15 +205,15 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		return mLassoCheckResult;
 	}
 
-	public TraceAbstractionRefinementEngine getStemCheck() {
+	public TraceAbstractionRefinementEngine<LETTER> getStemCheck() {
 		return mStemCheck;
 	}
 
-	public TraceAbstractionRefinementEngine getLoopCheck() {
+	public TraceAbstractionRefinementEngine<LETTER> getLoopCheck() {
 		return mLoopCheck;
 	}
 
-	public TraceAbstractionRefinementEngine getConcatCheck() {
+	public TraceAbstractionRefinementEngine<LETTER> getConcatCheck() {
 		return mConcatCheck;
 	}
 
@@ -262,15 +249,13 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			final String lassoCheckIdentifier, final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final RefinementStrategyFactory<LETTER> refinementStrategyFactory,
-			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final RefinementStrategy refinementStrategy,
-			final TaskIdentifier taskIdentifier, final BuchiCegarLoopBenchmarkGenerator cegarStatistics)
-			throws IOException {
+			final INestedWordAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier,
+			final BuchiCegarLoopBenchmarkGenerator cegarStatistics) throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSymbolTable = symbolTable;
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mRankAnalysisType =
 				baPref.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
@@ -281,19 +266,12 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 		mTemplateBenchmarkMode = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TEMPLATE_BENCHMARK_MODE);
 		mTrySimplificationTerminationArgument = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_SIMPLIFY);
 		mTryTwofoldRefinement = baPref.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
-		mInterpolation = interpolation;
 		mCsToolkit = csToolkit;
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mLassoCheckIdentifier = lassoCheckIdentifier;
-		mPredicateFactory = predicateFactory;
-		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), predicateFactory,
-				mSymbolTable, simplificationTechnique, xnfConversionTechnique);
-		mTruePredicate = mPredicateUnifier.getTruePredicate();
-		mFalsePredicate = mPredicateUnifier.getFalsePredicate();
 		mAxioms = axioms;
 		mRefinementStrategyFactory = refinementStrategyFactory;
-		mRefinementStrategy = refinementStrategy;
 		mAbstraction = abstraction;
 		mTaskIdentifier = taskIdentifier;
 		mCegarStatistics = cegarStatistics;
@@ -469,13 +447,13 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		private TraceAbstractionRefinementEngine checkFeasibilityAndComputeInterpolants(
+		private TraceAbstractionRefinementEngine<LETTER> checkFeasibilityAndComputeInterpolants(
 				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
 
 			final BaseRefinementStrategy<LETTER> strategy =
-					mRefinementStrategyFactory.createStrategy(mRefinementStrategy, run, mAbstraction, taskIdentifier);
+					mRefinementStrategyFactory.createStrategy(run, mAbstraction, taskIdentifier);
 
-			final TraceAbstractionRefinementEngine result;
+			final TraceAbstractionRefinementEngine<LETTER> result;
 			try {
 				result = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 				mCegarStatistics.addRefinementEngineStatistics(strategy.getRefinementEngineStatistics());

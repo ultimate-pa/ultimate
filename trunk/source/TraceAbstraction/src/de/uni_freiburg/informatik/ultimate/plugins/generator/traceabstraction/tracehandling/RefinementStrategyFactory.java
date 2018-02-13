@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
@@ -66,6 +67,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	protected final PredicateFactory mPredicateFactory;
 	protected final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final PathProgramCache<LETTER> mPathProgramCache;
+	private final RefinementStrategy mStrategy;
 
 	/**
 	 * @param logger
@@ -99,7 +101,33 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
 		mPathProgramCache = pathProgramCache;
-		mAssertionOrderModulation = new AssertionOrderModulation<>(pathProgramCache, logger);
+		mStrategy = mPrefs.getRefinementStrategy();
+		mAssertionOrderModulation = createAssertionOrderModulation(logger, pathProgramCache, mStrategy);
+	}
+
+	private AssertionOrderModulation<LETTER> createAssertionOrderModulation(final ILogger logger,
+			final PathProgramCache<LETTER> pathProgramCache, final RefinementStrategy strategy) {
+		switch (strategy) {
+		case CAMEL_NO_AM:
+		case MAMMOTH_NO_AM:
+		case WARTHOG_NO_AM:
+			return new AssertionOrderModulation<>(pathProgramCache, logger, AssertCodeBlockOrder.NOT_INCREMENTALLY);
+		case CAMEL:
+		case FIXED_PREFERENCES:
+		case LAZY_TAIPAN:
+		case PENGUIN:
+		case RUBBER_TAIPAN:
+		case SMTINTERPOL:
+		case TAIPAN:
+		case TOOTHLESS_TAIPAN:
+		case WALRUS:
+		case WARTHOG:
+		case WOLF:
+		case MAMMOTH:
+		default:
+			logger.info("Using default assertion order modulation");
+			return new AssertionOrderModulation<>(pathProgramCache, logger);
+		}
 	}
 
 	protected PredicateUnifier getNewPredicateUnifier() {
@@ -119,24 +147,23 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            benchmark
 	 * @return refinement strategy
 	 */
-	public BaseRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier) {
+	public BaseRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
 		mPathProgramCache.addRun(counterexample);
 
-		switch (strategy) {
+		switch (mStrategy) {
 		case FIXED_PREFERENCES:
 			final ManagedScript managedScript =
 					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, taskIdentifier, mPrefs);
-			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
-					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation,
-					taskIdentifier);
+			return new FixedRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices, mPredicateFactory,
+					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, taskIdentifier);
 		case PENGUIN:
 			return new PenguinRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
 					mPrefsConsolidation, taskIdentifier);
 		case CAMEL:
+		case CAMEL_NO_AM:
 			return new CamelRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
 					mPrefsConsolidation, taskIdentifier);
@@ -148,6 +175,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			return new WolfRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
 					mPrefsConsolidation, taskIdentifier);
+		case WARTHOG_NO_AM:
 		case WARTHOG:
 			return new WarthogRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
@@ -170,6 +198,11 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 					abstraction, taskIdentifier);
 		case SMTINTERPOL:
 			return new SmtInterpolRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPrefsConsolidation, taskIdentifier);
+		case MAMMOTH:
+		case MAMMOTH_NO_AM:
+			return new MammothRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
 					mPrefsConsolidation, taskIdentifier);
 		default:

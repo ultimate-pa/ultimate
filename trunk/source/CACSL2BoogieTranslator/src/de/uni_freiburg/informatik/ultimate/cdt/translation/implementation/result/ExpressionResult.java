@@ -416,9 +416,9 @@ public class ExpressionResult extends Result {
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final ArrayList<Overapprox> overApp = new ArrayList<>();
 
-		if (arrayType.getDimensions().length == 1) {
+		if (!(arrayType.getValueType().getUnderlyingType() instanceof CArray)) {
 			final ExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
-			final BigInteger dimBigInteger = exprTrans.extractIntegerValue(arrayType.getDimensions()[0], hook);
+			final BigInteger dimBigInteger = exprTrans.extractIntegerValue(arrayType.getBound(), hook);
 			if (dimBigInteger == null) {
 				throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 			}
@@ -426,7 +426,7 @@ public class ExpressionResult extends Result {
 
 			final String newArrayId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY, arrayType);
 			final VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, new ArrayType(loc, new String[0],
-					new ASTType[] { main.mTypeHandler.cType2AstType(loc, arrayType.getDimensions()[0].getCType()) },
+					new ASTType[] { main.mTypeHandler.cType2AstType(loc, arrayType.getBound().getCType()) },
 					main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
 			final VariableDeclaration newArrayDec =
 					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });

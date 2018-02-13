@@ -40,13 +40,12 @@ public class InteractiveRefinementStrategyFactory<LETTER extends IIcfgTransition
 	}
 
 	@Override
-	public BaseRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier) {
+	public BaseRefinementStrategy<LETTER> createStrategy(final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TaskIdentifier taskIdentifier) {
 		final PredicateUnifier predicateUnifier = getNewPredicateUnifier();
 
 		final Function<RefinementStrategy, BaseRefinementStrategy<LETTER>> fallBack =
-				s -> super.createStrategy(s, counterexample, abstraction, taskIdentifier);
+				s -> super.createStrategy(counterexample, abstraction, taskIdentifier);
 
 		return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
 				mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,

@@ -76,6 +76,9 @@ public class Loop {
 	 * 
 	 * @param loopHead
 	 *            The loop entry node.
+	 * 
+	 * @param script
+	 *            a {@link ManagedScript}
 	 */
 	public Loop(final IcfgLocation loopHead, final ManagedScript script) {
 		mPath = null;
@@ -99,17 +102,18 @@ public class Loop {
 	/**
 	 * unify the vars
 	 * 
-	 * @param tf
+	 * @param t
+	 *            a {@link Term}
 	 * @param inVars
 	 *            of the tf
 	 * @param outVars
 	 *            of the tf
 	 * @return Transformula with unified var names
 	 */
-	public Term updateVars(final Term tf, final Map<IProgramVar, TermVariable> inVars,
+	public Term updateVars(final Term t, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
-		if (SmtUtils.isFalse(tf)) {
-			return tf;
+		if (SmtUtils.isFalse(t)) {
+			return t;
 		}
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(mInVars);
@@ -160,7 +164,7 @@ public class Loop {
 		setOutVars(newOutVars);
 
 		final Substitution sub = new Substitution(mScript, subMapping);
-		return sub.transform(tf);
+		return sub.transform(t);
 	}
 
 	/**

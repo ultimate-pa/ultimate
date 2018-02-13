@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author Matthias Heizmann
  *
  */
-public class ExpressionFactory extends BoogieTransformer {
+public class ExpressionFactory {
 
 	public static Expression newUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator,
 			final Expression expr) {

@@ -447,25 +447,45 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		TOOTHLESS_TAIPAN,
 		/**
-		 * Strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
+		 * Integer strategy that tries Craig interpolation with SMTInterpol, SP/WP with Z3 and CVC4 with a high
+		 * interpolant threshold.
 		 */
 		PENGUIN,
 		/**
-		 * Strategy that tries Sp/Wp interpolation with CVC4, Z3 and Mathsat with a high interpolant threshold
+		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WALRUS,
 		/**
-		 * Light-weight strategy that first tries to obtain craig interpolants with SMTInterpol and then Z3 with FP.
+		 * Light-weight integer strategy that first tries to obtain craig interpolants with SMTInterpol and then Z3 with
+		 * FP.
 		 */
 		CAMEL,
 		/**
-		 * Strategy that tries Sp/Wp interpolation with CVC4, Z3 and Mathsat with a low interpolant threshold
+		 * Even more light-weight than {@link #CAMEL}. This strategy is exactly like {@link #CAMEL} but does not use any
+		 * assertion order modulation.
+		 */
+		CAMEL_NO_AM,
+		/**
+		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WOLF,
 		/**
-		 * Strategy that tries Sp interpolation with CVC4, Z3 and Mathsat with a high interpolant threshold
+		 * Heavy-weight bitvector strategy that tries SP with CVC4, Z3 and Mathsat with a high interpolant threshold
 		 */
 		WARTHOG,
+		/**
+		 * Strategy like {@link #WARTHOG} but without assertion order modulation.
+		 */
+		WARTHOG_NO_AM,
+		/**
+		 * Heavy-weight integer strategy that tries craig interpolation with SMTInterpol and Z3 followed by SP/WP with
+		 * Z3 with a high interpolant threshold.
+		 */
+		MAMMOTH,
+		/**
+		 * Strategy like {@link #MAMMOTH} but without assertion order modulation.
+		 */
+		MAMMOTH_NO_AM,
 		/**
 		 * Strategy for benchmarking purposes only: it first uses SMTInterpol with Craig interpolation and disabled
 		 * array interpolation, then SMTInterpol with FP.

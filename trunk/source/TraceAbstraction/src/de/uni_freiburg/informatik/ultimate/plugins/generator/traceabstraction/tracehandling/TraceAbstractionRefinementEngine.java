@@ -32,13 +32,14 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.<br>
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public final class TraceAbstractionRefinementEngine<LETTER>
+public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransition<?>>
 		implements IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> {
 	private final ILogger mLogger;
 	private final BaseRefinementStrategy<LETTER> mStrategy;
@@ -102,7 +103,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		return mStrategy.somePerfectSequenceFound();
 	}
 
-	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationStatistics() {
+	public InterpolantConsolidation<LETTER>.InterpolantConsolidationBenchmarkGenerator
+			getInterpolantConsolidationStatistics() {
 		return mStrategy.getInterpolantConsolidationStatistics();
 	}
 

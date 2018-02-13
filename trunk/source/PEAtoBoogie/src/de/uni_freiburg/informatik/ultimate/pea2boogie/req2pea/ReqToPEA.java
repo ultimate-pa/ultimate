@@ -68,6 +68,10 @@ public class ReqToPEA {
 
 			pat.setPeaTransformator(peaTrans);
 			final PhaseEventAutomata pea = pat.transformToPea();
+			if (pea.getInit().length == 0) {
+				mLogger.error(pat.getId() + " PEA has no initial phase, ignoring!");
+				continue;
+			}
 			peaList.add(pea);
 		}
 

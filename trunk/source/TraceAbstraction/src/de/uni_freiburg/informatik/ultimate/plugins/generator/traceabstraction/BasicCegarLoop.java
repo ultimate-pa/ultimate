@@ -265,17 +265,17 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
 					taCheckAndRefinementPrefs, absIntRunner, mIcfg, mPredicateFactory, pathProgramCache);
 		}
-		
+
 		if (mPref.dumpOnlyReuseAutomata()) {
 			// Construct an empty file. We need this empty file in cases where
 			// the CFG does not have error location and no automaton is dumped.
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString());
 			final String filename = mTaskIdentifier + "-reuse";
-			final String fullPath = mPref.dumpPath() + File.separator + filename + "."
-					+ mPrintAutomataLabeling.getFileEnding();
+			final String fullPath =
+					mPref.dumpPath() + File.separator + filename + "." + mPrintAutomataLabeling.getFileEnding();
 			final File file = new File(fullPath);
 			try {
-				final FileWriter fw = new FileWriter(file,false);
+				final FileWriter fw = new FileWriter(file, false);
 				fw.close();
 			} catch (final IOException e) {
 				if (mLogger.isErrorEnabled()) {
@@ -390,9 +390,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
-		final BaseRefinementStrategy<LETTER> strategy =
-				mRefinementStrategyFactory.createStrategy(mPref.getRefinementStrategy(), mCounterexample, mAbstraction,
-						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()));
+		final BaseRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(mCounterexample,
+				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()));
 		try {
 			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 		} catch (final ToolchainCanceledException tce) {
@@ -689,7 +688,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						((CoverageRelation) predicateUnifier.getCoverageRelation()).getCopyOfImplicationRelation();
 				INestedWordAutomaton<LETTER, IPredicate> backingNestedWordAutomaton;
 				try {
-					backingNestedWordAutomaton = new RemoveDeadEnds<LETTER, IPredicate>(services, automaton).getResult();
+					backingNestedWordAutomaton = new RemoveDeadEnds<>(services, automaton).getResult();
 					if (backingNestedWordAutomaton.getStates().isEmpty()) {
 						mLogger.warn("Automaton with emtpy language -- ommited dump");
 						mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DUMP_TIME);
