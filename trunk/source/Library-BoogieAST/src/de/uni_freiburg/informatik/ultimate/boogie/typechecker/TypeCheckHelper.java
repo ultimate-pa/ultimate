@@ -12,13 +12,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 
 public class TypeCheckHelper {
 
-	public static <T> BoogieType typeCheckArrayAccessExpression(final BoogieType arrayType,
+	public static <T> BoogieType typeCheckArrayAccessExpressionOrLhs(final BoogieType arrayType,
 				final List<BoogieType> indicesTypes,
 				final ITypeErrorReporter<T> typeErrorReporter) {
 			BoogieType resultType;
 			if (!(arrayType instanceof BoogieArrayType)) {
 				if (!arrayType.equals(BoogieType.TYPE_ERROR)) {
-	//					typeError(expr, "Type check failed (not an array): " + expr);
 					typeErrorReporter.report(exp -> "Type check failed (not an array): " + exp);
 				}
 				resultType = BoogieType.TYPE_ERROR;
@@ -26,14 +25,11 @@ public class TypeCheckHelper {
 				final BoogieArrayType arr = (BoogieArrayType) arrayType;
 				final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 				if (indicesTypes.size() != arr.getIndexCount()) {
-	//					typeError(expr, "Type check failed (wrong number of indices): " + expr);
 					typeErrorReporter.report(exp -> "Type check failed (wrong number of indices): " + exp);
 				} else {
 					for (int i = 0; i < indicesTypes.size(); i++) {
-	//						final BoogieType t = typecheckExpression(indices[i]);
 						final BoogieType t = indicesTypes.get(i);
 						if (!t.equals(BoogieType.TYPE_ERROR) && !arr.getIndexType(i).unify(t, subst)) {
-	//							typeError(expr, "Type check failed (index " + i + "): " + expr);
 							final int index = i;
 							typeErrorReporter.report(exp -> "Type check failed (index " + index + "): " + exp);
 						}
@@ -49,7 +45,6 @@ public class TypeCheckHelper {
 			BoogieType resultType;
 			if (!(structType instanceof BoogieStructType)) {
 				if (!structType.equals(BoogieType.TYPE_ERROR)) {
-	//					typeError(sae, "Type check failed (not a struct): " + sae);
 					typeErrorReporter.report(exp -> "Type check failed (not a struct): " + exp);
 				}
 				resultType = BoogieType.TYPE_ERROR;
@@ -62,7 +57,6 @@ public class TypeCheckHelper {
 					}
 				}
 				if (resultType == null) {
-	//					typeError(sae, "Type check failed (field " + sae.getField() + " not in struct): " + sae);
 					typeErrorReporter.report(exp -> "Type check failed (field " +
 							((StructAccessExpression) exp).getField() + " not in struct): " + exp);
 					resultType = BoogieType.TYPE_ERROR;
@@ -77,7 +71,6 @@ public class TypeCheckHelper {
 			BoogieType resultType;
 			if (start < 0 || end < start || bvlen < end) {
 				if (!bvType.equals(BoogieType.TYPE_ERROR)) {
-	//					typeError(expr, "Type check failed for " + expr);
 					typeErrorReporter.report(exp -> "Type check failed for " + exp);
 				}
 				start = end = 0;
@@ -87,13 +80,11 @@ public class TypeCheckHelper {
 		}
 
 	public static <T> BoogieType typeCheckUnaryExpression(final Operator op, final BoogieType subtype,
-//				final ITypeErrorReporter<BoogieASTNode, Pair<BoogieASTNode, String>> typeErrorReporter) {
 				final ITypeErrorReporter<T> typeErrorReporter) {
 			BoogieType resultType;
 			switch (op) {
 			case LOGICNEG:
 				if (!subtype.equals(BoogieType.TYPE_ERROR) && !subtype.equals(BoogieType.TYPE_BOOL)) {
-	//					typeError(expr, "Type check failed for " + expr);
 					typeErrorReporter.report(exp -> "Type check failed for " + exp);
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
@@ -101,7 +92,6 @@ public class TypeCheckHelper {
 			case ARITHNEGATIVE:
 				if (!subtype.equals(BoogieType.TYPE_ERROR) && !subtype.equals(BoogieType.TYPE_INT)
 						&& !subtype.equals(BoogieType.TYPE_REAL)) {
-	//					typeError(expr, "Type check failed for " + expr);
 					typeErrorReporter.report(exp -> "Type check failed for " + exp);
 				}
 				resultType = subtype;
@@ -119,11 +109,7 @@ public class TypeCheckHelper {
 	public static <T> BoogieType typeCheckBinaryExpression(final BinaryExpression.Operator op,
 				final BoogieType leftType, final BoogieType rightType,
 				final ITypeErrorReporter<T> typeErrorReporter) {
-	//			,
-	//			final InternalErrorReporter internalErrorReporter) {
 			BoogieType resultType;
-	//		BoogieType left = typecheckExpression(leftex);
-	//		BoogieType right = typecheckExpression(rightex);
 			BoogieType left = leftType;
 			BoogieType right = rightType;
 
@@ -134,7 +120,6 @@ public class TypeCheckHelper {
 			case LOGICOR:
 				if (!left.equals(BoogieType.TYPE_ERROR) && !left.equals(BoogieType.TYPE_BOOL)
 						|| !right.equals(BoogieType.TYPE_ERROR) && !right.equals(BoogieType.TYPE_BOOL)) {
-	//				typeError(binexp, "Type check failed for " + binexp);
 					typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
@@ -153,7 +138,6 @@ public class TypeCheckHelper {
 				if (!left.equals(right) || !left.equals(BoogieType.TYPE_INT) && !left.equals(BoogieType.TYPE_REAL)
 						|| left.equals(BoogieType.TYPE_REAL)
 								&& op == BinaryExpression.Operator.ARITHMOD) {
-	//				typeError(binexp, "Type check failed for " + binexp);
 					typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
 					resultType = BoogieType.TYPE_ERROR;
 				} else {
@@ -171,7 +155,6 @@ public class TypeCheckHelper {
 					right = left;
 				}
 				if (!left.equals(right) || !left.equals(BoogieType.TYPE_INT) && !left.equals(BoogieType.TYPE_REAL)) {
-	//				typeError(binexp, "Type check failed for " + binexp);
 					typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
@@ -179,7 +162,6 @@ public class TypeCheckHelper {
 			case COMPNEQ:
 			case COMPEQ:
 				if (!left.isUnifiableTo(right)) {
-	//				typeError(binexp, "Type check failed for " + binexp);
 					typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
@@ -187,8 +169,6 @@ public class TypeCheckHelper {
 			case COMPPO:
 				if (!left.equals(right) && !left.equals(BoogieType.TYPE_ERROR)
 						&& !right.equals(BoogieType.TYPE_ERROR)) {
-	//				typeError(binexp, "Type check failed for " + binexp + ": " + left.getUnderlyingType() + " != "
-	//						+ right.getUnderlyingType());
 					typeErrorReporter.report(
 							binexp -> "Type check failed for " + binexp + ": " + leftType.getUnderlyingType() + " != "
 											+ rightType.getUnderlyingType());
@@ -202,7 +182,6 @@ public class TypeCheckHelper {
 																			 * handle overflow
 																			 */) {
 					if (!left.equals(BoogieType.TYPE_ERROR) && !right.equals(BoogieType.TYPE_ERROR)) {
-	//					typeError(binexp, "Type check failed for " + binexp);
 						typeErrorReporter.report(binexp -> "Type check failed for " + binexp);
 					}
 					leftLen = 0;

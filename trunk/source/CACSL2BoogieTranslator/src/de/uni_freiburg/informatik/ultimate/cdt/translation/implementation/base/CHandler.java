@@ -158,6 +158,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BoogieTypeHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
@@ -516,6 +517,8 @@ public class CHandler implements ICHandler {
 	 */
 	protected ArrayDeque<TypesResult> mCurrentDeclaredTypes;
 
+	private final BoogieTypeHelper mBoogieTypeHelper;
+
 	/**
 	 * Constructor.
 	 *
@@ -565,6 +568,8 @@ public class CHandler implements ICHandler {
 			mExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment,
 					inRange, pointerIntegerConversion, overapproximateFloatingPointOperations);
 		}
+		mBoogieTypeHelper = new BoogieTypeHelper();
+
 		mPostProcessor =
 				new PostProcessor(main, mLogger, mExpressionTranslation, overapproximateFloatingPointOperations);
 		mTypeSizeComputer =
@@ -575,12 +580,13 @@ public class CHandler implements ICHandler {
 		final boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, mTypeSizeComputer,
 				main.getTypeSizes(), mExpressionTranslation, bitvectorTranslation, nameHandler, smtBoolArraysWorkaround,
-				prefs);
+				prefs, mBoogieTypeHelper);
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation);
 		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation);
 
 		mStandardFunctionHandler = new StandardFunctionHandler(mTypeHandler, mExpressionTranslation, mMemoryHandler,
 				mStructHandler, mTypeSizeComputer, mFunctionHandler, this);
+
 	}
 
 	/**
@@ -2693,23 +2699,10 @@ public class CHandler implements ICHandler {
 
 			if (!mFunctionHandler.isGlobalScope()) {
 
-//				final String modifiedBoogieVariableName = BoogieASTUtil.getLHSId(lValue.getLHS());
-
-//				final SymbolTableValue symbolTableValue =
-//						getSymbolTable().getEntryForBoogieVar(modifiedBoogieVariableName, loc);
-//				if (symbolTableValue.isBoogieGlobalVar()) {
-//				lValue.get
-
 				final String modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lValue.getLHS());
 				if (modifiedGlobal != null) {
 					mFunctionHandler.addModifiedGlobal(modifiedGlobal);
 				}
-
-
-//				if (getSymbolTable().isBoogieGlobalVar(modifiedBoogieVariableName, loc)) {
-//					mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(),
-//							modifiedBoogieVariableName);
-//				}
 			}
 			return builderWithUnionFieldAndNeighboursUpdated.build();
 		} else {
@@ -4338,5 +4331,10 @@ public class CHandler implements ICHandler {
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
 		}
+	}
+
+	@Override
+	public BoogieTypeHelper getBoogieTypeHelper() {
+		return mBoogieTypeHelper;
 	}
 }

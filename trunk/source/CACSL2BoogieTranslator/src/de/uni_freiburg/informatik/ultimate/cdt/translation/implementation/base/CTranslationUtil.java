@@ -365,7 +365,7 @@ class BoogieGlobalLhsFinder extends BoogieVisitor {
 	protected void visit(final VariableLHS lhs) {
 		if (lhs.getDeclarationInformation().getStorageClass() == StorageClass.GLOBAL) {
 			if (mResult != null) {
-				throw new AssertionError("there should be only one VariableLHS inside a LeftHandSide!")
+				throw new AssertionError("there should be at most one VariableLHS inside a LeftHandSide!");
 			} else {
 
 				mResult = lhs.getIdentifier();

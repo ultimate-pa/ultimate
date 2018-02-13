@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
@@ -239,37 +238,5 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
 			result |= name.equals(k);
 		}
 		return result;
-	}
-
-//	public SymbolTableValue getEntryForBoogieVar(final String boogieVarId, final ILocation loc) {
-//		final String cId = getCID4BoogieID(boogieVarId, loc);
-//		return get(cId, loc);
-//	}
-
-	/**
-	 * TODO: (alex, feb 18) this is dubious, but symbol table will be changed soon anyway, right?
-	 *
-	 * @param modifiedBoogieVariableName
-	 * @param loc
-	 * @return
-	 */
-	public boolean isBoogieGlobalVar(final String boogieIdentifier, final ILocation loc) {
-		if (boogieIdentifier == SFO.LENGTH) {
-			return true;
-		}
-		if (boogieIdentifier == SFO.VALID) {
-			return true;
-		}
-		// FIXME: to do this hack in a consequent manner, we would have to add all global variables that do not have a
-		//		direct correspondent in C here)
-
-		final String cId;
-		try {
-			cId = getCID4BoogieID(boogieIdentifier, loc);
-		} catch (final IncorrectSyntaxException ex) {
-			return false;
-		}
-		final SymbolTableValue stv = get(cId, loc);
-		return stv.isBoogieGlobalVar();
 	}
 }
