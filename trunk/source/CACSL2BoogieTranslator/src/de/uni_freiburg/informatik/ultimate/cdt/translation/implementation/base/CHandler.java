@@ -203,7 +203,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
@@ -2694,15 +2693,23 @@ public class CHandler implements ICHandler {
 
 			if (!mFunctionHandler.isGlobalScope()) {
 
-				final String modifiedBoogieVariableName = BoogieASTUtil.getLHSId(lValue.getLHS());
+//				final String modifiedBoogieVariableName = BoogieASTUtil.getLHSId(lValue.getLHS());
 
 //				final SymbolTableValue symbolTableValue =
 //						getSymbolTable().getEntryForBoogieVar(modifiedBoogieVariableName, loc);
 //				if (symbolTableValue.isBoogieGlobalVar()) {
-				if (getSymbolTable().isBoogieGlobalVar(modifiedBoogieVariableName, loc)) {
-					mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(),
-							modifiedBoogieVariableName);
+//				lValue.get
+
+				final String modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lValue.getLHS());
+				if (modifiedGlobal != null) {
+					mFunctionHandler.addModifiedGlobal(modifiedGlobal);
 				}
+
+
+//				if (getSymbolTable().isBoogieGlobalVar(modifiedBoogieVariableName, loc)) {
+//					mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(),
+//							modifiedBoogieVariableName);
+//				}
 			}
 			return builderWithUnionFieldAndNeighboursUpdated.build();
 		} else {

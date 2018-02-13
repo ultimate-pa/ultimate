@@ -706,7 +706,11 @@ public class FunctionHandler {
 					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(procedureName)) && main
 							.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
 				// add a specification to check for memory leaks
-				final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
+
+//				final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
+				final Expression vIe = //ExpressionFactory.constructIdentifierExpression(loc, MemoryModelDeclarations  SFO.VALID);
+						main.mCHandler.getMemoryHandler().getValidArray(loc);
+
 				final int nrSpec = newSpec.length;
 				final Check check = new Check(Check.Spec.MEMORY_LEAK);
 				final ILocation ensLoc = LocationFactory.createLocation(loc, check);
@@ -1577,6 +1581,19 @@ public class FunctionHandler {
 
 	public void addModifiedGlobal(final String procedureName, final String globalBoogieVarName) {
 		getProcedureInfo(procedureName).addModifiedGlobal(globalBoogieVarName);
+	}
+
+	/**
+	 * Adds a modified global for the procedure whose scope we are currently in.
+	 *
+	 * @param modifiedGlobal
+	 */
+	public void addModifiedGlobal(final String modifiedGlobal) {
+		if (mCurrentProcedureInfo == null) {
+			throw new IllegalStateException();
+		}
+		mCurrentProcedureInfo.addModifiedGlobal(modifiedGlobal);
+
 	}
 
 	/**
