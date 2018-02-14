@@ -361,19 +361,19 @@ public class CTranslationUtil {
 
 		return new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 	}
-
-	/**
-	 * Looks for a VariableLHS with a global variable inside a given LHS.
-	 * Returns the corresponding identifer if such a VariableLHS exists, null otherwise.
-	 * Note that this will crash if the VariableLHS does not contain a DeclarationInformation.
-	 *
-	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
-	 *
-	 */
 }
+
+/**
+ * Looks for a VariableLHS with a global variable inside a given LHS.
+ * Returns such a VariableLHS if it exists, null otherwise.
+ * Note that this will crash if the VariableLHS does not contain a DeclarationInformation.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 class BoogieGlobalLhsFinder extends BoogieVisitor {
 
-	private String mResult;
+	private VariableLHS mResult;
 
 	@Override
 	protected void visit(final VariableLHS lhs) {
@@ -382,13 +382,13 @@ class BoogieGlobalLhsFinder extends BoogieVisitor {
 				throw new AssertionError("there should be at most one VariableLHS inside a LeftHandSide!");
 			} else {
 
-				mResult = lhs.getIdentifier();
+				mResult = lhs;// lhs.getIdentifier();
 			}
 		}
 		super.visit(lhs);
 	}
 
-	public String getGlobalId(final LeftHandSide lhs) {
+	public VariableLHS getGlobalId(final LeftHandSide lhs) {
 		super.processLeftHandSide(lhs);
 		return mResult;
 	}

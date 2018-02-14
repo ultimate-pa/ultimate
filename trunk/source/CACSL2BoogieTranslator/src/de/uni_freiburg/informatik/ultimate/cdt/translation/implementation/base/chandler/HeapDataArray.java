@@ -29,40 +29,67 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class HeapDataArray {
 	private final String mName;
 	private final ASTType mASTType;
 	private final int mSize;
 	private final BoogieType mBoogieType;
+	private final IdentifierExpression mIdentifierExpression;
+	private final VariableLHS mVariableLhs;
+
 	public HeapDataArray(final String name, final ASTType aSTType, final BoogieType boogieType, final int size) {
 		super();
 		mName = name;
 		mASTType = aSTType;
 		mBoogieType = boogieType;
 		mSize = size;
+		mIdentifierExpression = ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
+				mBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		mVariableLhs = ExpressionFactory.constructVariableLHS(LocationFactory.createIgnoreCLocation(),
+				mBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
+
 	public String getName() {
 		return mName;
 	}
+
 	public ASTType getASTType() {
 		return mASTType;
 	}
+
 	public BoogieType getBoogieType() {
 		return mBoogieType;
 	}
+
 	public String getVariableName() {
 		return SFO.MEMORY + "_" + getName();
 	}
+
+	public IdentifierExpression getIdentifierExpression() {
+		return mIdentifierExpression;
+	}
+
+	public VariableLHS getVariableLHS() {
+		return mVariableLhs;
+	}
+
 	public int getSize() {
 		return mSize;
 	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -72,6 +99,7 @@ public class HeapDataArray {
 		result = prime * result + mSize;
 		return result;
 	}
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -100,11 +128,9 @@ public class HeapDataArray {
 		}
 		return mSize == other.mSize;
 	}
+
 	@Override
 	public String toString() {
 		return "HeapDataArray [mName=" + mName + ", mASTType=" + mASTType + ", mSize=" + mSize + "]";
 	}
-
-
-
 }
