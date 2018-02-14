@@ -1859,13 +1859,13 @@ public class MemoryHandler {
 
 	public CallStatement getMallocCall(final LocalLValue resultPointer, final ILocation loc) {
 		return getMallocCall(calculateSizeOf(loc, resultPointer.getCType()),
-				((VariableLHS) resultPointer.getLHS()).getIdentifier(), loc);
+				((VariableLHS) resultPointer.getLHS()), loc);
 	}
 
-	public CallStatement getMallocCall(final Expression size, final String resultVarId, final ILocation loc) {
+	public CallStatement getMallocCall(final Expression size, final VariableLHS returnedValue, final ILocation loc) {
 		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.Ultimate_Alloc);
 		final CallStatement result =
-				new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, resultVarId) },
+				new CallStatement(loc, false, new VariableLHS[] { returnedValue },
 						MemoryModelDeclarations.Ultimate_Alloc.getName(), new Expression[] { size });
 
 
@@ -2476,7 +2476,7 @@ public class MemoryHandler {
 	 * @param writeValues
 	 *            if not set we omit to write values and just allocate memory
 	 */
-	public List<Statement> writeStringToHeap(final ILocation loc, final String resultPointer, final char[] value,
+	public List<Statement> writeStringToHeap(final ILocation loc, final VariableLHS resultPointer, final char[] value,
 			final boolean writeValues) {
 		final Expression size = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(value.length + 1));
@@ -2496,16 +2496,13 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private AssignmentStatement writeCharToHeap(final ILocation loc, final String resultPointer,
+	private AssignmentStatement writeCharToHeap(final ILocation loc, final VariableLHS resultPointer,
 			final int additionalOffset, final BigInteger valueBigInt) {
 		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.CHAR);
 		final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.CHAR);
 		mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(), dhp.getVariableName());
 		final String array = dhp.getVariableName();
-		final Expression inputPointer = //new IdentifierExpression(loc, resultPointer);
-				ExpressionFactory.constructIdentifierExpression(loc, mBoogieTypeHelper.getBoogieTypeForPointerType(),
-						resultPointer,
-						new DeclarationInformation(StorageClass.LOCAL, mFunctionHandler.getCurrentProcedureID()));
+		final Expression inputPointer = CHandler.convertLHSToExpression(resultPointer);
 		final Expression additionalOffsetExpr = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(additionalOffset));
 		final Expression pointer = doPointerArithmetic(IASTBinaryExpression.op_plus, loc, inputPointer,

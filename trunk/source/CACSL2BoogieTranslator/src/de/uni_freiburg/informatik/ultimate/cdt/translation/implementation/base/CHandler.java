@@ -1987,12 +1987,15 @@ public class CHandler implements ICHandler {
 
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String breakLabelName = mNameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
-		final String switchFlag = mNameHandler.getTempVarUID(SFO.AUXVAR.SWITCH, intType);
+
+//		final String switchFlag = mNameHandler.getTempVarUID(SFO.AUXVAR.SWITCH, intType);
+//		final VariableDeclaration switchAuxVarDec = SFO.getTempVarVariableDeclaration(switchFlag, flagType, loc);
+		final AuxVarHelper switchAuxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, intType, SFO.AUXVAR.SWITCH);
+
 		final ASTType flagType = new PrimitiveType(loc, SFO.BOOL);
 
-		final VariableDeclaration switchAuxVarDec = SFO.getTempVarVariableDeclaration(switchFlag, flagType, loc);
-		decl.add(switchAuxVarDec);
-		auxVars.put(switchAuxVarDec, loc);
+		decl.add(switchAuxvar.getVarDec());
+		auxVars.put(switchAuxvar.getVarDec(), loc);
 
 		boolean isFirst = true;
 		boolean firstCond = true;
@@ -2019,20 +2022,20 @@ public class CHandler implements ICHandler {
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
 				final ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
-					final IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag),
+					final IfStatement ifStmt = new IfStatement(locC, switchAuxvar.getExp(),
 							ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 					for (final Overapprox overapprItem : caseExpression.mOverappr) {
 						overapprItem.annotate(ifStmt);
 					}
 
 					if (firstCond) {
-						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] { new VariableLHS(locC, switchFlag) },
+						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] { switchAuxvar.getLhs() },
 								new Expression[] { cond }));
 						firstCond = false;
 					} else {
-						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] { new VariableLHS(locC, switchFlag) },
+						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] { switchAuxvar.getLhs() },
 								new Expression[] { ExpressionFactory.newBinaryExpression(locC, Operator.LOGICOR,
-										new IdentifierExpression(locC, switchFlag), cond) }));
+										switchAuxvar.getExp(), cond) }));
 					}
 					stmt.add(ifStmt);
 				}
@@ -2086,20 +2089,20 @@ public class CHandler implements ICHandler {
 		}
 		if (locC != null) {
 			assert cond != null;
-			final IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag),
+			final IfStatement ifStmt = new IfStatement(locC, switchAuxvar.getExp(),
 					ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 			for (final Overapprox overapprItem : overappr) {
 				overapprItem.annotate(ifStmt);
 			}
 
 			if (firstCond) {
-				stmt.add(new AssignmentStatement(locC, new LeftHandSide[] { new VariableLHS(locC, switchFlag) },
+				stmt.add(new AssignmentStatement(locC, new LeftHandSide[] { switchAuxvar.getLhs() },
 						new Expression[] { cond }));
 				firstCond = false;
 			} else {
-				stmt.add(new AssignmentStatement(locC, new LeftHandSide[] { new VariableLHS(locC, switchFlag) },
+				stmt.add(new AssignmentStatement(locC, new LeftHandSide[] { switchAuxvar.getLhs() },
 						new Expression[] { ExpressionFactory.newBinaryExpression(locC, Operator.LOGICOR,
-								new IdentifierExpression(locC, switchFlag), cond) }));
+								switchAuxvar.getExp(), cond) }));
 			}
 			stmt.add(ifStmt);
 		}
@@ -2170,9 +2173,15 @@ public class CHandler implements ICHandler {
 			// would unique make sense here?? -- would potentially add lots of axioms
 			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
 
+			final Expression funcIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
+					mBoogieTypeHelper.getBoogieTypeForPointerType(),
+					funcId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+
 			final BigInteger offsetValue = BigInteger.valueOf(en.getValue());
 			decl.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc,
-					BinaryExpression.Operator.COMPEQ, new IdentifierExpression(loc, funcId), mExpressionTranslation
+					BinaryExpression.Operator.COMPEQ,
+					funcIdExpr, //new IdentifierExpression(loc, funcId),
+					mExpressionTranslation
 							.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
 		}
 
@@ -3905,7 +3914,7 @@ public class CHandler implements ICHandler {
 					intermediateResult.getDeclarations(),
 					intermediateResult.getAuxVars(),
 					intermediateResult.getOverapprs(),
-					((StringLiteralResult) left).getAuxVarName(),
+					((StringLiteralResult) left).getAuxVar(),
 					((StringLiteralResult) left).getLiteralString(),
 					((StringLiteralResult) left).overApproximatesLongStringLiteral());
 

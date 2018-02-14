@@ -1067,7 +1067,7 @@ public class InitializationHandler {
 
 					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
 					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-							exprResult.getAuxVarName());
+							exprResult.getAuxVar().getExp().getIdentifier());
 					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
 					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
 					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
