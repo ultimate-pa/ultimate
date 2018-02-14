@@ -531,4 +531,10 @@ public class ExpressionFactory {
 		}
 	}
 
+	public static boolean areBoogieAndCTypeCompatible() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
 }

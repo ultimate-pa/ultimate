@@ -926,7 +926,7 @@ public class FunctionHandler {
 	 *  <li> a pointer variable that points to a function then has the value {base: -1, offset: #f}
 	 *  <li> for every function f, that is used as a pointer, and that has a signature s, we introduce a
 	 *    "dispatch-procedure" in Boogie for s
-	 *  <li> the dispatch function for s = t1 x t2 x ... x tn -> t has the signature t1 x t2 x ... x tn x fp -> t, i.e.,
+	 *  <li> the dispatch-procedure for s = t1 x t2 x ... x tn -> t has the signature t1 x t2 x ... x tn x fp -> t, i.e.,
 	 *    it takes the normal arguments, and a function address. When called, it calls the procedure that corresponds
 	 *    to the function address with the corresponding arguments and returns the returned value
 	 *  <li> a call to a function pointer is then translated to a call to the dispatch-procedure with fitting signature
@@ -1060,20 +1060,25 @@ public class FunctionHandler {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final VarList[] in = new VarList[paramDecs.length];
 		for (int i = 0; i < paramDecs.length; ++i) {
-			final CDeclaration paramDec = paramDecs[i];
+			final CDeclaration currentParamDec = paramDecs[i];
 
-			final ASTType type;
-			if (paramDec.getType() instanceof CArray) {
+			final ASTType currentParamType;
+			if (currentParamDec.getType() instanceof CArray) {
 				// arrays are passed as pointers in C -- so we pass a Pointer in Boogie
-				type = main.mTypeHandler.constructPointerType(loc);
+				currentParamType = main.mTypeHandler.constructPointerType(loc);
 			} else {
-				type = main.mTypeHandler.cType2AstType(loc, paramDec.getType().getUnderlyingType());
+				currentParamType = main.mTypeHandler.cType2AstType(loc, currentParamDec.getType().getUnderlyingType());
 			}
 
-			final String paramId = main.mNameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
-			in[i] = new VarList(loc, new String[] { paramId }, type);
-			main.mCHandler.getSymbolTable().put(paramDec.getName(),
-					new SymbolTableValue(paramId, null, paramDec, false, null, false));
+			final String currentParamId = main.mNameHandler.getInParamIdentifier(currentParamDec.getName(),
+					currentParamDec.getType());
+			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
+
+			final DeclarationInformation declInformation = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
+					procInfo.getProcedureName());
+
+			main.mCHandler.getSymbolTable().put(currentParamDec.getName(),
+					new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
 		}
 		procInfo.updateCFunction(null, paramDecs, null, false);
 		return in;
@@ -1186,10 +1191,12 @@ public class FunctionHandler {
 							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 				}
 				assert main.mCHandler.getSymbolTable().containsCSymbol(cId);
+
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				main.mCHandler.getSymbolTable().put(cId,
-						new SymbolTableValue(inparamAuxVarName, inVarDecl, new CDeclaration(cvar, cId), false, paramDec, false));
+						new SymbolTableValue(inparamAuxVarName, inVarDecl, new CDeclaration(cvar, cId),
+								inparamAuxVarDeclInfo, paramDec, false));
 			}
 		}
 	}

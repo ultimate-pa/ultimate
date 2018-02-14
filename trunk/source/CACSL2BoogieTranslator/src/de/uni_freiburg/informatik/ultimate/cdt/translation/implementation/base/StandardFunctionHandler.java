@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatSupportInUltimate;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -1140,14 +1141,15 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String functionName, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		// introduce fresh aux variable
-		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-		final ASTType astType = main.mTypeHandler.cType2AstType(loc, resultType);
-		final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, astType, loc);
-		builder.addDeclaration(tmpVarDecl);
-		builder.putAuxVar(tmpVarDecl, loc);
-		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+//		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+//		final ASTType astType = main.mTypeHandler.cType2AstType(loc, resultType);
+//		final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, astType, loc);
+		final AuxVarHelper auxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, resultType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvar.getVarDec());
+		builder.putAuxVar(auxvar.getVarDec(), loc);
+//		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
 		builder.addOverapprox(new Overapprox(functionName, loc));
-		builder.setLrVal(new RValue(tmpVarIdExpr, resultType));
+		builder.setLrVal(new RValue(auxvar.getExp(), resultType));
 		return builder.build();
 	}
 

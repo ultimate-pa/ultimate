@@ -46,6 +46,8 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
@@ -66,6 +68,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -585,6 +589,7 @@ public class ACSLHandler implements IACSLHandler {
 
 		final String cId = main.mCHandler.getSymbolTable().getCID4BoogieID(id, loc);
 		final CType cType;
+		SymbolTableValue stv;
 		if (mSpecType != ACSLHandler.SPEC_TYPE.REQUIRES && mSpecType != ACSLHandler.SPEC_TYPE.ENSURES) {
 			// TODO : the translation is sometimes wrong, for requires and
 			// ensures! i.e. when referring to inparams in ensures clauses!
@@ -596,7 +601,8 @@ public class ACSLHandler implements IACSLHandler {
 			// variable! However, we don't know that at this moment!
 
 			if (main.mCHandler.getSymbolTable().containsKey(cId)) {
-				cType = main.mCHandler.getSymbolTable().get(cId, loc).getCVariable();
+				stv= main.mCHandler.getSymbolTable().get(cId, loc);
+				cType = stv.getCVariable();
 			} else {
 				throw new UnsupportedOperationException(
 						"not yet implemented: " + "unable to determine CType for variable " + id);
@@ -608,12 +614,28 @@ public class ACSLHandler implements IACSLHandler {
 
 		// FIXME: dereferencing does not work for ACSL yet, because we cannot pass
 		// the necessary auxiliary statements on.
+		// EDIT: (alex feb 18:) does this fixme still apply?
+
+		// TODO seems quite hacky, how we obtain storage class and procedure id ..
+		final ASTType astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
+		final StorageClass sc = stv.isBoogieGlobalVar() ? StorageClass.GLOBAL : StorageClass.LOCAL;
+		final String procId = sc == StorageClass.GLOBAL ?
+				null :
+					main.mCHandler.getFunctionHandler().getCurrentProcedureID();
 		LRValue lrVal;
 		if (((CHandler) main.mCHandler).isHeapVar(id)) {
-			final IdentifierExpression idExp = new IdentifierExpression(loc, id);
+			final IdentifierExpression idExp = //new IdentifierExpression(loc, id);
+					ExpressionFactory.constructIdentifierExpression(loc,
+							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(astType),
+							id,
+							new DeclarationInformation(sc, procId));
 			lrVal = new HeapLValue(idExp, cType, null);
 		} else {
-			final VariableLHS idLhs = new VariableLHS(loc, id);
+			final VariableLHS idLhs = //new VariableLHS(loc, id);
+					ExpressionFactory.constructVariableLHS(loc,
+							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(astType),
+							id,
+							new DeclarationInformation(sc, procId));
 			lrVal = new LocalLValue(idLhs, cType, null);
 		}
 
@@ -701,9 +723,14 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final ACSLResultExpression node) {
-		return new ExpressionResult(
-				new RValue(new IdentifierExpression(main.getLocationFactory().createACSLLocation(node), "#res"),
-						new CPrimitive(CPrimitives.INT)));
+		final String id = "#res";
+		final CACSLLocation loc = main.getLocationFactory().createACSLLocation(node);
+		// TODO: what is the right storageclass here? and procedure?..
+		final IdentifierExpression idEx = //new IdentifierExpression(loc, "#res");
+				ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
+						new DeclarationInformation(StorageClass.LOCAL,
+								main.mCHandler.getFunctionHandler().getCurrentProcedureID()));
+		return new ExpressionResult(new RValue(idEx, new CPrimitive(CPrimitives.INT)));
 		// return new Result(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"));
 	}
 
@@ -880,10 +907,16 @@ public class ACSLHandler implements IACSLHandler {
 
 		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
-		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
+
+		final Expression arr = //new IdentifierExpression(loc, SFO.VALID);
+				ExpressionFactory.constructIdentifierExpression(loc,
+						BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
+						SFO.VALID,
+						new DeclarationInformation(StorageClass.GLOBAL, null));
+
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
-		// TODO: CType
-		return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.BOOL)), decl, auxVars, overappr);
+		// TODO: CType/range type of valid array -- depends on a preference???
+		return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
 		// return new Result(e);
 	}
 
@@ -907,7 +940,10 @@ public class ACSLHandler implements IACSLHandler {
 
 		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
-		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
+		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
+						BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
+						SFO.VALID,
+						new DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression valid = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		final Expression e = ExpressionFactory.newUnaryExpression(loc,
 				// it,
@@ -938,7 +974,10 @@ public class ACSLHandler implements IACSLHandler {
 
 		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
-		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
+		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
+						BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
+						SFO.VALID,
+						new DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 
 		// TODO: CType
@@ -968,7 +1007,7 @@ public class ACSLHandler implements IACSLHandler {
 		opPositive = opPositive.switchToRValueIfNecessary(main, loc);
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getElsePart());
 		opNegative = opNegative.switchToRValueIfNecessary(main, loc);
-		return ((CHandler) main.mCHandler).handleConditionalOperator(loc, opCondition, opPositive, opNegative);
+		return ((CHandler) main.mCHandler).handleConditionalOperator(loc, main, opCondition, opPositive, opNegative);
 	}
 
 }

@@ -115,6 +115,8 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
@@ -155,6 +157,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
@@ -171,6 +174,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IntegerTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -246,7 +250,10 @@ public class CHandler implements ICHandler {
 
 	public static Expression convertLHSToExpression(final LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
-			return new IdentifierExpression(lhs.getLocation(), ((VariableLHS) lhs).getIdentifier());
+			final VariableLHS vlhs = (VariableLHS) lhs;
+//			return new IdentifierExpression(lhs.getLocation(), ((VariableLHS) lhs).getIdentifier());
+			return ExpressionFactory.constructIdentifierExpression(vlhs.getLoc(),
+					(BoogieType) vlhs.getType(), vlhs.getIdentifier(), vlhs.getDeclarationInformation());
 		} else if (lhs instanceof ArrayLHS) {
 			final ArrayLHS alhs = (ArrayLHS) lhs;
 			final Expression array = convertLHSToExpression(alhs.getArray());
@@ -739,21 +746,24 @@ public class CHandler implements ICHandler {
 			}
 			// create and add tmp var #t~AND~UID
 			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-			final String resName = mNameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT, intType);
-			final VarList tempVar = new VarList(loc, new String[] { resName }, new PrimitiveType(loc, SFO.BOOL));
-			final VariableDeclaration tmpVar =
-					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+//			final String resName = mNameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT, intType);
+//			final VarList tempVar = new VarList(loc, new String[] { resName }, new PrimitiveType(loc, SFO.BOOL));
+//			final VariableDeclaration tmpVar =
+//					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+			final AuxVarHelper resNameAuxvar =
+					CTranslationUtil.makeAuxVarDeclaration(loc, main, intType, SFO.AUXVAR.SHORTCIRCUIT);
 //			auxVars.put(tmpVar, loc);
 //			decl.add(tmpVar);
-			builder.addDeclaration(tmpVar);
-			builder.putAuxVar(tmpVar, loc);
-			final VariableLHS lhs = new VariableLHS(loc, resName);
-			final RValue tmpRval = new RValue(new IdentifierExpression(loc, resName), intType, true);
+			builder.addDeclaration(resNameAuxvar.getVarDec());
+			builder.putAuxVar(resNameAuxvar.getVarDec(), loc);
+//			final VariableLHS lhs = new VariableLHS(loc, resName);
+			final RValue tmpRval = new RValue(resNameAuxvar.getExp(), intType, true);
 			final RValue resRval = tmpRval;
 			// #t~AND~UID = left
 
 			final AssignmentStatement aStat =
-					new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rl.mLrVal.getValue() });
+					new AssignmentStatement(loc, new LeftHandSide[] { resNameAuxvar.getLhs() },
+							new Expression[] { rl.mLrVal.getValue() });
 //			for (final Overapprox overapprItem : overappr) {
 			for (final Overapprox overapprItem : builder.getOverappr()) {
 				overapprItem.annotate(aStat);
@@ -764,7 +774,7 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> outerThenPart = new ArrayList<>();
 			outerThenPart.addAll(rr.mStmt);
 
-			outerThenPart.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+			outerThenPart.add(new AssignmentStatement(loc, new LeftHandSide[] { resNameAuxvar.getLhs() },
 					new Expression[] { rr.mLrVal.getValue() }));
 			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(),
 					outerThenPart.toArray(new Statement[outerThenPart.size()]), new Statement[0]);
@@ -817,20 +827,24 @@ public class CHandler implements ICHandler {
 			}
 			// create and add tmp var #t~OR~UID
 			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-			final String resName = mNameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT, intType);
-			final VarList tempVar = new VarList(loc, new String[] { resName }, new PrimitiveType(loc, SFO.BOOL));
-			final VariableDeclaration tmpVar =
-					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+//			final String resName = mNameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT, intType);
+//			final VarList tempVar = new VarList(loc, new String[] { resName }, new PrimitiveType(loc, SFO.BOOL));
+//			final VariableDeclaration tmpVar =
+//					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 //			auxVars.put(tmpVar, loc);
 //			decl.add(tmpVar);
-			builder.addDeclaration(tmpVar);
-			builder.putAuxVar(tmpVar, loc);
-			final VariableLHS lhs = new VariableLHS(loc, resName);
-			final RValue tmpRval = new RValue(new IdentifierExpression(loc, resName), intType, true);
+			final AuxVarHelper resNameAuxvar =
+					CTranslationUtil.makeAuxVarDeclaration(loc, main, intType, SFO.AUXVAR.SHORTCIRCUIT);
+			builder.addDeclaration(resNameAuxvar.getVarDec());
+			builder.putAuxVar(resNameAuxvar.getVarDec(), loc);
+
+			final RValue tmpRval = new RValue(resNameAuxvar.getExp(), intType, true);
 			final RValue resRval = tmpRval;
 			// #t~OR~UID = left
 			final AssignmentStatement aStat =
-					new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rl.mLrVal.getValue() });
+					new AssignmentStatement(loc,
+							new LeftHandSide[] { resNameAuxvar.getLhs() },
+							new Expression[] { rl.mLrVal.getValue() });
 //			for (final Overapprox overapproxItem : overappr) {
 			for (final Overapprox overapproxItem : builder.getOverappr()) {
 				overapproxItem.annotate(aStat);
@@ -841,7 +855,7 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> outerElsePart = new ArrayList<>();
 			outerElsePart.addAll(rr.mStmt);
 
-			outerElsePart.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+			outerElsePart.add(new AssignmentStatement(loc, new LeftHandSide[] { resNameAuxvar.getLhs() },
 					new Expression[] { rr.mLrVal.getValue() }));
 			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(), new Statement[0],
 					outerElsePart.toArray(new Statement[outerElsePart.size()]));
@@ -1063,7 +1077,7 @@ public class CHandler implements ICHandler {
 		opPositive = opPositive.switchToRValueIfNecessary(main, loc);
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getNegativeResultExpression());
 		opNegative = opNegative.switchToRValueIfNecessary(main, loc);
-		return handleConditionalOperator(loc, opCondition, opPositive, opNegative);
+		return handleConditionalOperator(loc, main, opCondition, opPositive, opNegative);
 	}
 
 	@Override
@@ -1374,14 +1388,16 @@ public class CHandler implements ICHandler {
 		} else if ("__PRETTY_FUNCTION__".equals(cId) || "__FUNCTION__".equals(cId)) {
 			// TODO: Was only in SvComp14Handler, but seems useful anywhere
 			final CType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
-			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
-					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
-			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), returnType);
+//			final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
+//			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] {
+//					new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+			final AuxVarHelper auxvar =
+					CTranslationUtil.makeAuxVarDeclaration(loc, main, returnType, SFO.AUXVAR.NONDET);
+			final RValue rvalue = new RValue(auxvar.getExp(), returnType);
 			final ArrayList<Declaration> decls = new ArrayList<>();
-			decls.add(tVarDecl);
+			decls.add(auxvar.getVarDec());
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			auxVars.put(tVarDecl, loc);
+			auxVars.put(auxvar.getVarDec(), loc);
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		} else if (!mSymbolTable.containsCSymbol(cId)
 				&& ("NAN".equals(cId) || "INFINITY".equals(cId) || "inf".equals(cId))) {
@@ -1392,14 +1408,16 @@ public class CHandler implements ICHandler {
 			return new ExpressionResult(rvalue);
 		} else if ("__func__".equals(node.getName().toString())) {
 			final CType cType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-			final String tId = mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
-			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-					new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-			final RValue rvalue = new RValue(new IdentifierExpression(loc, tId), cType);
+//			final String tId = mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
+//			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+//					new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
+			final AuxVarHelper auxvar =
+					CTranslationUtil.makeAuxVarDeclaration(loc, main, cType, SFO.AUXVAR.NONDET);
+			final RValue rvalue = new RValue(auxvar.getExp(), cType);
 			final ArrayList<Declaration> decls = new ArrayList<>();
-			decls.add(tVarDecl);
+			decls.add(auxvar.getVarDec());
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			auxVars.put(tVarDecl, loc);
+			auxVars.put(auxvar.getVarDec(), loc);
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		}
 
@@ -1407,13 +1425,16 @@ public class CHandler implements ICHandler {
 		final CType cType;
 		final boolean useHeap;
 		final boolean intFromPtr;
+		DeclarationInformation declarationInformation;
 
 		if (mSymbolTable.containsCSymbol(cId)) {
 			// we have a normal variable
-			bId = mSymbolTable.get(cId, loc).getBoogieName();
-			cType = mSymbolTable.get(cId, loc).getCVariable();
+			final SymbolTableValue stv = mSymbolTable.get(cId, loc);
+			bId = stv.getBoogieName();
+			cType = stv.getCVariable();
 			useHeap = isHeapVar(bId);
-			intFromPtr = mSymbolTable.get(cId, loc).isIntFromPointer();
+			intFromPtr =stv.isIntFromPointer();
+			declarationInformation = stv.getDeclarationInformation();
 //		} else if (mFunctionHandler.getProcedures().keySet().contains(cId)) {
 		} else if (mFunctionHandler.hasProcedure(cId)) {
 			// C11 6.3.2.1.4 says: A function designator is an expression that
@@ -1423,6 +1444,7 @@ public class CHandler implements ICHandler {
 			bId = SFO.FUNCTION_ADDRESS + cId;
 			useHeap = true;
 			intFromPtr = false;
+			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 		} else if (main.getFunctionToIndex().containsKey(cId)) {
 			throw new AssertionError("function not known to function handler");
 		} else {
@@ -1430,14 +1452,22 @@ public class CHandler implements ICHandler {
 					"identifier is not declared (neither a variable nor a function name): " + cId);
 		}
 
+		BoogieType boogieType;
+		{
+			final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+			boogieType = mBoogieTypeHelper.getBoogieTypeForBoogieASTType(astType);
+		}
+
 		LRValue lrVal = null;
 		if (useHeap) {
-			final IdentifierExpression idExp = new IdentifierExpression(loc, bId);
+			final IdentifierExpression idExp = //new IdentifierExpression(loc, bId);
+					ExpressionFactory.constructIdentifierExpression(loc, boogieType, bId, declarationInformation);
 			// convention: the ctype in the symbol table of something that we put on the heap
 			// is the same as it would be if we did not put it on heap
 			lrVal = new HeapLValue(idExp, cType, intFromPtr, null);
 		} else {
-			final VariableLHS idLhs = new VariableLHS(loc, bId);
+			final VariableLHS idLhs = //new VariableLHS(loc, bId);
+					ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
 			lrVal = new LocalLValue(idLhs, cType, false, intFromPtr, null);
 		}
 		return new ExpressionResult(lrVal);
@@ -1790,12 +1820,13 @@ public class CHandler implements ICHandler {
 				}
 
 				Declaration boogieDec = null;
-				boolean globalInBoogie = false;
+//				boolean globalInBoogie = false;
+				final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 
 				// this .put() is only to have a minimal symbolTableEntry
 				// (containing boogieID) for
 				// translation of the initializer
-				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, d, false));
+				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId, boogieDec, cDec, dummyDeclInfo, d, false));
 				cDec.translateInitializer(main);
 
 				ASTType translatedType = null;
@@ -1805,19 +1836,22 @@ public class CHandler implements ICHandler {
 					translatedType = mTypeHandler.cType2AstType(loc, cDec.getType());
 				}
 
+				final DeclarationInformation declarationInformation;
 				if (storageClass == CStorageClass.TYPEDEF) {
 					boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
 					mTypeHandler.addDefinedType(bId,
 							new TypesResult(new NamedType(loc, cDec.getName(), null), false, false, cDec.getType()));
 					// TODO: add a sizeof-constant for the type??
-					globalInBoogie = true;
+//					globalInBoogie = true;
+					declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 				} else if (storageClass == CStorageClass.STATIC && !mFunctionHandler.isGlobalScope()) {
 					// we have a local static variable -> special treatment
 					// global static variables are treated like normal global variables..
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
 							new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-					globalInBoogie = true;
+//					globalInBoogie = true;
+					declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 				} else {
 					/**
@@ -1904,10 +1938,18 @@ public class CHandler implements ICHandler {
 					}
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
 							new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-					globalInBoogie |= mFunctionHandler.isGlobalScope();
+//					globalInBoogie |= mFunctionHandler.isGlobalScope();
+					if (mFunctionHandler.isGlobalScope()) {
+						declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+					} else {
+						declarationInformation = new DeclarationInformation(StorageClass.LOCAL,
+								mFunctionHandler.getCurrentProcedureID());
+					}
 				}
 
-				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, d, false));
+				// reset the symbol table value with its final contents
+				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId, boogieDec, cDec, declarationInformation,
+						d, false));
 			}
 			mCurrentDeclaredTypes.pop();
 			return result;
@@ -2941,14 +2983,19 @@ public class CHandler implements ICHandler {
 			} else {
 				// otherwise we consider the value undefined, thus havoc it
 				// TODO: maybe not use auxiliary variables so lavishly
-				final String tmpId = mNameHandler.getTempVarUID(SFO.AUXVAR.UNION, er.mLrVal.getCType());
-				final VariableDeclaration tVarDec =
-						new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
-								new String[] { tmpId }, mTypeHandler.cType2AstType(loc, er.mLrVal.getCType())) });
-				builder.addDeclaration(tVarDec).putAuxVar(tVarDec, loc);
+//				final String tmpId = mNameHandler.getTempVarUID(SFO.AUXVAR.UNION, er.mLrVal.getCType());
+//				final VariableDeclaration tVarDec =
+//						new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
+//								new String[] { tmpId }, mTypeHandler.cType2AstType(loc, er.mLrVal.getCType())) });
+				final AuxVarHelper auxVar =
+						CTranslationUtil.makeAuxVarDeclaration(loc, main, er.mLrVal.getCType(), SFO.AUXVAR.UNION);
 
-				final Expression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
-				final RValue tmpVarRVal = new RValueForArrays(tmpVarIdExpr, er.mLrVal.getCType());
+//				builder.addDeclaration(tVarDec).putAuxVar(tVarDec, loc);
+				builder.addDeclaration(auxVar.getVarDec());
+				builder.putAuxVar(auxVar.getVarDec(), loc);
+
+//				final Expression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+				final RValue tmpVarRVal = new RValueForArrays(auxVar.getExp(), er.mLrVal.getCType());
 
 				// builder.addOverapprox(new Overapprox("union field of non-heap union updated "
 				// + "--> havoccing other fields (CHandler.makeAssignment(..))", loc));
@@ -3515,25 +3562,27 @@ public class CHandler implements ICHandler {
 				.setLrVal(exprRes.getLrValue());
 
 		// In this case we need a temporary variable for the old value
-		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD, exprRes.mLrVal.getCType());
-		final ASTType tmpIType = mTypeHandler.cType2AstType(loc, exprRes.mLrVal.getCType());
-		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
+//		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD, exprRes.mLrVal.getCType());
+//		final ASTType tmpIType = mTypeHandler.cType2AstType(loc, exprRes.mLrVal.getCType());
+//		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
+		final AuxVarHelper auxvar =
+				CTranslationUtil.makeAuxVarDeclaration(loc, main, exprRes.mLrVal.getCType(), SFO.AUXVAR.POST_MOD);
 //		result.mAuxVars.put(tmpVar, loc);
 //		result.mDecl.add(tmpVar);
-		builder1.addDeclaration(tmpVar);
-		builder1.putAuxVar(tmpVar, loc);
+		builder1.addDeclaration(auxvar.getVarDec());
+		builder1.putAuxVar(auxvar.getVarDec(), loc);
 
 		// assign the old value to the temporary variable
 		final AssignmentStatement assignStmt;
 		{
-			final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { new VariableLHS(loc, tmpName) };
+			final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
 			final Expression[] oldValue = new Expression[] { exprRes.mLrVal.getValue() };
 			assignStmt = new AssignmentStatement(loc, tmpAsLhs, oldValue);
 		}
 //		result.mStmt.add(assignStmt);
 		builder1.addStatement(assignStmt);
 		final CType oType = exprRes.mLrVal.getCType().getUnderlyingType();
-		final RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpName), oType);
+		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
 
 		final int op;
 		if (postfixOp == IASTUnaryExpression.op_postFixIncr) {
@@ -3585,13 +3634,15 @@ public class CHandler implements ICHandler {
 		builder1.addAllExceptLrValue(exprRes);
 
 		// In this case we need a temporary variable for the new value
-		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.PRE_MOD, exprRes.mLrVal.getCType());
-		final ASTType tmpIType = mTypeHandler.cType2AstType(loc, exprRes.mLrVal.getCType());
-		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
+//		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.PRE_MOD, exprRes.mLrVal.getCType());
+//		final ASTType tmpIType = mTypeHandler.cType2AstType(loc, exprRes.mLrVal.getCType());
+//		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
+		final AuxVarHelper auxvar =
+				CTranslationUtil.makeAuxVarDeclaration(loc, main, exprRes.getLrValue().getCType(), SFO.AUXVAR.PRE_MOD);
 //		result.mAuxVars.put(tmpVar, loc);
 //		result.mDecl.add(tmpVar);
-		builder1.addDeclaration(tmpVar);
-		builder1.putAuxVar(tmpVar, loc);
+		builder1.addDeclaration(auxvar.getVarDec());
+		builder1.putAuxVar(auxvar.getVarDec(), loc);
 
 		final int op;
 		if (prefixOp == IASTUnaryExpression.op_prefixIncr) {
@@ -3615,7 +3666,7 @@ public class CHandler implements ICHandler {
 		// assign the old value to the temporary variable
 		final AssignmentStatement assignStmt;
 		{
-			final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { new VariableLHS(loc, tmpName) };
+			final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
 			final Expression[] newValue = new Expression[] { valueXcremented };
 			assignStmt = new AssignmentStatement(loc, tmpAsLhs, newValue);
 		}
@@ -3631,7 +3682,7 @@ public class CHandler implements ICHandler {
 		final ExpressionResultBuilder builder3 = new ExpressionResultBuilder();
 		builder3.addAllExceptLrValue(assign);
 
-		final RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpName), oType);
+		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
 //		assign.mLrVal = tmpRValue;
 //		return assign;
 		builder3.setLrVal(tmpRValue);
@@ -3681,23 +3732,24 @@ public class CHandler implements ICHandler {
 		assert rt.cType instanceof CEnum;
 		final CEnum cEnum = (CEnum) rt.cType;
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-		final ASTType at = mTypeHandler.cType2AstType(loc, intType);
+		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
+		final ASTType enumAstType = mTypeHandler.cType2AstType(loc, typeOfEnumIdentifiers);
 		final String enumId = cEnum.getIdentifier();
 		Expression oldValue = null;
 		final Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
 
 		// C standard says: "The identifiers in an enumerator list are declared
 		// as constants that have type int ..."
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
 
 		for (int i = 0; i < cEnum.getFieldCount(); i++) {
 			final String fId = cEnum.getFieldIds()[i];
 			final String bId = enumId + "~" + fId;
-			final VarList vl = new VarList(loc, new String[] { bId }, at);
+			final VarList vl = new VarList(loc, new String[] { bId }, enumAstType);
 			final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
 			mDeclarationsGlobalInBoogie.put(cd, new CDeclaration(cEnum, fId));
-			final Expression l = new IdentifierExpression(loc, bId);
+			final Expression l = ExpressionFactory.constructIdentifierExpression(loc,
+							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(enumAstType),
+							bId, new DeclarationInformation(StorageClass.GLOBAL, null));
 			Expression newValue = oldValue;
 			if (oldValue == null && cEnum.getFieldValue(fId) == null) {
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
@@ -3719,7 +3771,7 @@ public class CHandler implements ICHandler {
 					new SymbolTableValue(bId, cd,
 							new CDeclaration(typeOfEnumIdentifiers, fId,
 									scConstant2StorageClass(node.getDeclSpecifier().getStorageClass())),
-							true, node, false, newValue));
+							DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, newValue));
 		}
 	}
 
@@ -3996,7 +4048,7 @@ public class CHandler implements ICHandler {
 	 * {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed). TODO: Check all corner cases, write some
 	 * testfiles.
 	 */
-	ExpressionResult handleConditionalOperator(final ILocation loc, final ExpressionResult opCondition,
+	ExpressionResult handleConditionalOperator(final ILocation loc, final Dispatcher main, final ExpressionResult opCondition,
 			final ExpressionResult opPositive, final ExpressionResult opNegative) {
 		opCondition.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
 		opPositive.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
@@ -4029,18 +4081,20 @@ public class CHandler implements ICHandler {
 		stmt.addAll(opCondition.mStmt);
 		overappr.addAll(opCondition.mOverappr);
 
-		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(CPrimitives.INT));
-		final ASTType tmpType = mTypeHandler.cType2AstType(loc, opPositive.mLrVal.getCType());
-		assert tmpType != null : "Could not find ASTType for CType " + opPositive.mLrVal.getCType();
-		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
+//		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(CPrimitives.INT));
+//		final ASTType tmpType = mTypeHandler.cType2AstType(loc, opPositive.mLrVal.getCType());
+//		assert tmpType != null : "Could not find ASTType for CType " + opPositive.mLrVal.getCType();
+//		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
+		final AuxVarHelper auxvar =
+				CTranslationUtil.makeAuxVarDeclaration(loc, main, opPositive.getLrValue().getCType(), SFO.AUXVAR.ITE);
 
-		decl.add(tmpVar);
-		auxVars.put(tmpVar, loc);
+		decl.add(auxvar.getVarDec());
+		auxVars.put(auxvar.getVarDec(), loc);
 
 		final List<Statement> ifStatements = new ArrayList<>();
 		{
 			ifStatements.addAll(opPositive.mStmt);
-			final LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
+			final LeftHandSide[] lhs = { auxvar.getLhs() };
 			final Expression assignedVal = opPositive.mLrVal.getValue();
 			if (assignedVal != null) {
 				final AssignmentStatement assignStmt =
@@ -4058,7 +4112,7 @@ public class CHandler implements ICHandler {
 		final List<Statement> elseStatements = new ArrayList<>();
 		{
 			elseStatements.addAll(opNegative.mStmt);
-			final LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
+			final LeftHandSide[] lhs = { auxvar.getLhs() };
 			final Expression assignedVal = opNegative.mLrVal.getValue();
 			if (assignedVal != null) { // if we call a void function, we have to
 										// skip this assignment
@@ -4081,7 +4135,7 @@ public class CHandler implements ICHandler {
 		}
 		stmt.add(ifStatement);
 
-		final IdentifierExpression tmpExpr = new IdentifierExpression(loc, tmpName);
+		final IdentifierExpression tmpExpr = auxvar.getExp();
 		return new ExpressionResult(stmt, new RValue(tmpExpr, opPositive.mLrVal.getCType()), decl, auxVars, overappr);
 	}
 
