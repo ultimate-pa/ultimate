@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.RequiredMemoryModelFeatures;
@@ -48,21 +49,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class MemoryModel_SingleBitprecise extends AMemoryModel {
-	
+
 	private final HeapDataArray mDataArray;
 	private final int mResolution;
-	
+
 	public MemoryModel_SingleBitprecise(final int memoryModelResolution, final TypeSizes typeSizes, final TypeHandler typeHandler, final ExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
-		
+
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		final ASTType intArrayType = typeHandler.bytesize2asttype(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryModelResolution);
-		
+		final ASTType intArrayType = typeHandler.bytesize2asttype(ignoreLoc, CPrimitiveCategory.INTTYPE,
+				memoryModelResolution);
+		final BoogieType boogieType = mTypeHandler.astTypeToBoogieType(intArrayType);
+
         mResolution = memoryModelResolution;
-		mDataArray = new HeapDataArray(SFO.INT, intArrayType, memoryModelResolution);
+		mDataArray = new HeapDataArray(SFO.INT, intArrayType, boogieType, memoryModelResolution);
 	}
-       	
+
 	@Override
 	public String getProcedureSuffix(final CPrimitives primitive) {
 		return mDataArray.getName() + primitive.getPrimitiveCategory() + mTypeSizes.getSize(primitive);
@@ -73,7 +76,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	public HeapDataArray getDataHeapArray(final CPrimitives primitive) {
 		return mDataArray;
 	}
-	
+
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
@@ -98,7 +101,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 		}
 		return result;
 	}
-	
+
 	@Override
 	protected int bytesizeOfStoredPointerComponents() {
 		return mTypeSizes.getSizeOfPointer();
@@ -109,6 +112,6 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	}
 
 
-	
+
 
 }
