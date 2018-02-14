@@ -609,11 +609,11 @@ public class FunctionHandler {
 		 *  (within an SCC all procedure may call all others (possibly transitively) thus all must have the same
 		 *   modifies clause contents)
 		 */
-		final LinkedHashRelation<StronglyConnectedComponent<ProcedureInfo>, String> sccToModifiedGlobals
+		final LinkedHashRelation<StronglyConnectedComponent<ProcedureInfo>, VariableLHS> sccToModifiedGlobals
 			= new LinkedHashRelation<>();
 		for (final StronglyConnectedComponent<ProcedureInfo> scc : dssc.getSCCs()) {
 			for (final ProcedureInfo procInfo : scc.getNodes()) {
-				for (final String modGlobal : procInfo.getModifiedGlobals()) {
+				for (final VariableLHS modGlobal : procInfo.getModifiedGlobals()) {
 					sccToModifiedGlobals.addPair(scc, modGlobal);
 				}
 			}
@@ -637,14 +637,14 @@ public class FunctionHandler {
 			 * Note that we have chosen the ISuccessorProvider for the SccComputation such that the caller is the
 			 *  successor of the callee. (i.e., the successor relation is the inverse of the call graph)
 			 */
-			final Set<String> currentSccModGlobals = sccToModifiedGlobals.getImage(currentScc);
+			final Set<VariableLHS> currentSccModGlobals = sccToModifiedGlobals.getImage(currentScc);
 			final Iterator<StronglyConnectedComponent<ProcedureInfo>> callers =
 					dssc.getComponentsSuccessorsProvider().getSuccessors(currentScc);
 			while (callers.hasNext()) {
 				final StronglyConnectedComponent<ProcedureInfo> caller = callers.next();
 				frontier.add(caller);
 
-				for (final String currentSccModGlobal : currentSccModGlobals) {
+				for (final VariableLHS currentSccModGlobal : currentSccModGlobals) {
 					sccToModifiedGlobals.addPair(caller, currentSccModGlobal);
 				}
 			}
@@ -665,7 +665,7 @@ public class FunctionHandler {
 				newSpec = oldSpec;
 			} else {
 //			    // case: !procInfo.isModifiedGlobalsIsUsedDefined()
-				final Set<String> currModClause =
+				final Set<VariableLHS> currModClause =
 						sccToModifiedGlobals.getImage(dssc.getNodeToComponents().get(procInfo));
 				assert currModClause != null : "No modifies clause proc " + procedureName;
 
@@ -685,7 +685,7 @@ public class FunctionHandler {
 					if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 						for (final HeapDataArray hda : heapDataArrays) {
 //							currModClause.add(hda.getVariableName());
-							procInfo.addModifiedGlobal(hda.getVariableName());
+							procInfo.addModifiedGlobal(hda.getVariableLHS());
 						}
 					}
 				}
@@ -693,8 +693,8 @@ public class FunctionHandler {
 				final VariableLHS[] modifyList = new VariableLHS[currModClause.size()];
 				{
 					int i = 0;
-					for (final String modifyEntry : currModClause) {
-						modifyList[i++] = new VariableLHS(loc, modifyEntry);
+					for (final VariableLHS modifyEntry : currModClause) {
+						modifyList[i++] = modifyEntry;//new VariableLHS(loc, modifyEntry);
 					}
 				}
 				newSpec[oldSpec.length] = new ModifiesSpecification(loc, false, modifyList);
@@ -736,10 +736,10 @@ public class FunctionHandler {
 		return updatedDeclarations;
 	}
 
-	private static boolean containsOneHeapDataArray(final Set<String> modifySet,
+	private static boolean containsOneHeapDataArray(final Set<VariableLHS> modifySet,
 			final Collection<HeapDataArray> heapDataArrays) {
 		for (final HeapDataArray hda : heapDataArrays) {
-			if (modifySet.contains(hda.getVariableName())) {
+			if (modifySet.contains(hda.getVariableLHS())) {
 				return true;
 			}
 		}
@@ -1033,9 +1033,9 @@ public class FunctionHandler {
 //					mModifiedGlobalsIsUserDefined.add(methodName);
 					procInfo.setModifiedGlobalsIsUsedDefined(true);
 					final ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					final LinkedHashSet<String> modifiedSet = new LinkedHashSet<>();
+					final LinkedHashSet<VariableLHS> modifiedSet = new LinkedHashSet<>();
 					for (final VariableLHS var : ms.getIdentifiers()) {
-						modifiedSet.add(var.getIdentifier());
+						modifiedSet.add(var);
 					}
 //					mModifiedGlobals.put(methodName, modifiedSet);
 					procInfo.addModifiedGlobals(modifiedSet);
@@ -1618,7 +1618,7 @@ public class FunctionHandler {
 		return mProcedureNameToProcedureInfo.containsKey(tentativeProcedureName);
 	}
 
-	public void addModifiedGlobal(final String procedureName, final String globalBoogieVarName) {
+	public void addModifiedGlobal(final String procedureName, final VariableLHS globalBoogieVarName) {
 		getProcedureInfo(procedureName).addModifiedGlobal(globalBoogieVarName);
 	}
 
@@ -1627,7 +1627,7 @@ public class FunctionHandler {
 	 *
 	 * @param modifiedGlobal
 	 */
-	public void addModifiedGlobal(final String modifiedGlobal) {
+	public void addModifiedGlobal(final VariableLHS modifiedGlobal) {
 		if (mCurrentProcedureInfo == null) {
 			throw new IllegalStateException();
 		}
@@ -1652,7 +1652,7 @@ public class FunctionHandler {
 		private Procedure mDeclaration;
 		private Procedure mImplementation;
 
-		private final Set<String> mModifiedGlobals;
+		private final Set<VariableLHS> mModifiedGlobals;
 
 		private boolean mModifiedGlobalsIsUsedDefined;
 
@@ -1689,11 +1689,11 @@ public class FunctionHandler {
 			return mCType != null;
 		}
 
-		public void addModifiedGlobals(final Set<String> varNames) {
+		public void addModifiedGlobals(final Set<VariableLHS> varNames) {
 			mModifiedGlobals.addAll(varNames);
 		}
 
-		public void addModifiedGlobal(final String varName) {
+		public void addModifiedGlobal(final VariableLHS varName) {
 			mModifiedGlobals.add(varName);
 		}
 
@@ -1788,7 +1788,7 @@ public class FunctionHandler {
 			return mProcedureName;
 		}
 
-		public Set<String> getModifiedGlobals() {
+		public Set<VariableLHS> getModifiedGlobals() {
 			return Collections.unmodifiableSet(mModifiedGlobals);
 		}
 

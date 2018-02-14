@@ -730,10 +730,11 @@ public class PostProcessor {
 				// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is not allocated)
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(translationUnitLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final String lhsId = SFO.VALID;
+//				final String lhsId = SFO.VALID;
 				final Expression literalThatRepresentsFalse = memoryHandler.getBooleanArrayHelper().constructFalse();
 				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(
-						translationUnitLoc, zero, lhsId, literalThatRepresentsFalse);
+						translationUnitLoc, zero, memoryHandler.getValidArrayLhs(translationUnitLoc),
+						literalThatRepresentsFalse);
 				initStatements.add(0, assignment);
 				mInitializedGlobals.add(SFO.VALID);
 

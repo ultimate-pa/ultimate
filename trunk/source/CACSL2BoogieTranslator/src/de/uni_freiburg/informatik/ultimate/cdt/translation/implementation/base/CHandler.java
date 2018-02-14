@@ -2750,7 +2750,7 @@ public class CHandler implements ICHandler {
 
 			if (!mFunctionHandler.isGlobalScope()) {
 
-				final String modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lValue.getLHS());
+				final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lValue.getLHS());
 				if (modifiedGlobal != null) {
 					mFunctionHandler.addModifiedGlobal(modifiedGlobal);
 				}
