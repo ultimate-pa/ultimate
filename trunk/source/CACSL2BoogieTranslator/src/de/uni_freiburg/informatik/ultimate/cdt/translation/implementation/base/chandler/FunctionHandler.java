@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.M
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -502,7 +503,10 @@ public class FunctionHandler {
 				&& mCurrentProcedureInfo.getDeclaration().getOutParams().length == 0) {
 			// void method that was assumed to be returning int! -> return int
 			final String id = outParams[0].getIdentifiers()[0];
-			final VariableLHS lhs = new VariableLHS(loc, id);
+			final VariableLHS lhs = ExpressionFactory.constructVariableLHS(loc,
+							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(outParams[0].getType()),
+							id, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+									getCurrentProcedureID()));
 			final Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
 			stmt.add(havoc);
 		} else if (node.getReturnValue() != null) {
@@ -534,7 +538,13 @@ public class FunctionHandler {
 				throw new UnsupportedSyntaxException(loc, msg);
 			} else {
 				final String id = outParams[0].getIdentifiers()[0];
-				final VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
+				final VariableLHS lhs = //new VariableLHS(loc, id);
+						ExpressionFactory.constructVariableLHS(loc,
+								main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(outParams[0].getType()),
+								id, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+										getCurrentProcedureID()));
+				final VariableLHS[] lhss = new VariableLHS[] { lhs };
+
 				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construt a copy of returnValueSwitched
 				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
@@ -544,7 +554,7 @@ public class FunctionHandler {
 				decl.addAll(returnValueSwitched.mDecl);
 				auxVars.putAll(returnValueSwitched.mAuxVars);
 				overApp.addAll(returnValueSwitched.mOverappr);
-				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
+				stmt.add(new AssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
 			}
 		}
@@ -1165,7 +1175,9 @@ public class FunctionHandler {
 				final VariableDeclaration inVarDecl =
 						new VariableDeclaration(loc, new Attribute[0], new VarList[] { var });
 
-				final VariableLHS tempLHS = new VariableLHS(loc, inparamAuxVarName);
+				final VariableLHS tempLHS = //new VariableLHS(loc, inparamAuxVarName);
+						ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType, inparamAuxVarName,
+								inparamAuxVarDeclInfo);
 //				final IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
 				final IdentifierExpression rhsId = ExpressionFactory.constructIdentifierExpression(loc,
 						inParamAuxVarType, bId, inparamAuxVarDeclInfo);
@@ -1484,25 +1496,27 @@ public class FunctionHandler {
 			final String longDescription = "Method was called before it was declared: '" + methodName
 					+ "' unknown! Return value is assumed to be int ...";
 			main.warn(loc, longDescription);
-			final String ident = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 
-//			returnedValue = new IdentifierExpression(loc, ident);
-			returnedValue = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, ident,
-					new DeclarationInformation(StorageClass.LOCAL, mCurrentProcedureInfo.getProcedureName()));
+////			returnedValue = new IdentifierExpression(loc, ident);
+//			returnedValue = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, ident,
+//					new DeclarationInformation(StorageClass.LOCAL, mCurrentProcedureInfo.getProcedureName()));
 
-			// we don't know the CType of the returned value
-			// we we INT
-			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-			final VarList tempVar =
-					new VarList(loc, new String[] { ident }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
-			final VariableDeclaration tmpVarDecl =
-					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+			// we don't know the CType of the returned value we assume INT for now
+			final CPrimitive cIntType = new CPrimitive(CPrimitives.INT);
+//			final String ident = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
+//			final VarList tempVar =
+//					new VarList(loc, new String[] { ident }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
+//			final VariableDeclaration tmpVarDecl =
+//					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+			final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, cIntType, SFO.AUXVAR.RETURNED);
 
-			functionCallExpressionResultBuilder.putAuxVar(tmpVarDecl, loc);
-			functionCallExpressionResultBuilder.addDeclaration(tmpVarDecl);
+			returnedValue = auxvar.getExp();
 
-			final VariableLHS lhs = new VariableLHS(loc, ident);
-			call = new CallStatement(loc, false, new VariableLHS[] { lhs }, methodName,
+			functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
+			functionCallExpressionResultBuilder.putAuxVar(auxvar.getVarDec(), loc);
+
+//			final VariableLHS lhs = new VariableLHS(loc, ident);
+			call = new CallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,
 					translatedParameters.toArray(new Expression[translatedParameters.size()]));
 		}
 		functionCallExpressionResultBuilder.addStatement(call);

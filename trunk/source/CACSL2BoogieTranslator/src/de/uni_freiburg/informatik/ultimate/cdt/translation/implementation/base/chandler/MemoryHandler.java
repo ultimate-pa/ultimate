@@ -1013,9 +1013,9 @@ public class MemoryHandler {
 	 * Returns call to our memset procedure and announces that memset is required by our memory model.
 	 */
 	public CallStatement constructUltimateMemsetCall(final ILocation loc, final Expression pointer,
-			final Expression value, final Expression amount, final String resVarId) {
+			final Expression value, final Expression amount, final VariableLHS resVar) {
 		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.C_Memset);
-		return new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, resVarId) },
+		return new CallStatement(loc, false, new VariableLHS[] { resVar },//new VariableLHS(loc, resVarId) },
 				MemoryModelDeclarations.C_Memset.getName(), new Expression[] { pointer, value, amount });
 	}
 
@@ -1678,7 +1678,7 @@ public class MemoryHandler {
 								idcFree, bLFalse)));
 
 		specFree.add(new EnsuresSpecification(tuLoc, free, updateValidArray));
-		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }));
+		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { getValidArrayLhs(tuLoc) }));
 
 		decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE, new String[0],
 				new VarList[] { new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
@@ -1690,7 +1690,7 @@ public class MemoryHandler {
 			// // havoc #memory[n];
 			// }
 			final LeftHandSide[] lhs = new LeftHandSide[] {
-					ExpressionFactory.constructNestedArrayLHS(tuLoc, new VariableLHS(tuLoc, SFO.VALID), idcFree) };
+					ExpressionFactory.constructNestedArrayLHS(tuLoc, getValidArrayLhs(tuLoc), idcFree) };
 			final Expression[] rhsFree = new Expression[] { bLFalse };
 			final Body bodyFree = new Body(tuLoc, new VariableDeclaration[0],
 					new Statement[] { new AssignmentStatement(tuLoc, lhs, rhsFree) });
@@ -1732,7 +1732,7 @@ public class MemoryHandler {
 						bLFalse));
 
 		specFree.add(new EnsuresSpecification(tuLoc, true, updateValidArray));
-		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }));
+		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { getValidArrayLhs(tuLoc) }));
 
 		final Procedure deallocDeclaration = new Procedure(tuLoc, new Attribute[0],
 				MemoryModelDeclarations.Ultimate_Dealloc.getName(), new String[0],
@@ -1805,7 +1805,7 @@ public class MemoryHandler {
 								ExpressionFactory.newUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, length),
 								idcMalloc, size))));
 		specMalloc.add(new ModifiesSpecification(tuLoc, false,
-				new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID), new VariableLHS(tuLoc, SFO.LENGTH) }));
+				new VariableLHS[] { getValidArrayLhs(tuLoc), getLengthArrayLhs(tuLoc) }));
 		final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0],
 				MemoryModelDeclarations.Ultimate_Alloc.getName(), new String[0],
 				new VarList[] { new VarList(tuLoc, new String[] { SIZE }, intType) },
@@ -1838,6 +1838,11 @@ public class MemoryHandler {
 			final VariableDeclaration[] localVars =
 					new VariableDeclaration[] { new VariableDeclaration(tuLoc, new Attribute[0], new VarList[] {
 							new VarList(tuLoc, new String[] { ADDR }, typeHandler.constructPointerType(tuLoc)) }) };
+
+			final VariableLHS resLhs = ExpressionFactory.constructVariableLHS(tuLoc,
+					mBoogieTypeHelper.getBoogieTypeForPointerType(),
+					SFO.RES, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+							MemoryModelDeclarations.Ultimate_Alloc.getName()));
 			final Statement[] block = new Statement[6];
 			block[0] = new AssumeStatement(tuLoc,
 					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrOffset, nr0));
@@ -1846,11 +1851,11 @@ public class MemoryHandler {
 			block[2] = new AssumeStatement(tuLoc,
 					ExpressionFactory.newUnaryExpression(tuLoc, UnaryExpression.Operator.LOGICNEG,
 							ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, valid, idcAddrBase)));
-			block[3] = new AssignmentStatement(tuLoc, new LeftHandSide[] { new VariableLHS(tuLoc, SFO.VALID) },
+			block[3] = new AssignmentStatement(tuLoc, new LeftHandSide[] { getValidArrayLhs(tuLoc) },
 					new Expression[] { new ArrayStoreExpression(tuLoc, valid, idcAddrBase, bLTrue) });
-			block[4] = new AssignmentStatement(tuLoc, new LeftHandSide[] { new VariableLHS(tuLoc, SFO.LENGTH) },
+			block[4] = new AssignmentStatement(tuLoc, new LeftHandSide[] { getLengthArrayLhs(tuLoc) },
 					new Expression[] { new ArrayStoreExpression(tuLoc, length, idcAddrBase, size) });
-			block[5] = new AssignmentStatement(tuLoc, new LeftHandSide[] { new VariableLHS(tuLoc, SFO.RES) },
+			block[5] = new AssignmentStatement(tuLoc, new LeftHandSide[] { resLhs },
 					new Expression[] { addr });
 			final Body bodyMalloc = new Body(tuLoc, localVars, block);
 			decl.add(new Procedure(tuLoc, new Attribute[0], MemoryModelDeclarations.Ultimate_Alloc.getName(),
@@ -1927,7 +1932,7 @@ public class MemoryHandler {
 	 *         read value.
 	 */
 	// 2015-10
-	public ExpressionResult getReadCall(final Expression address, final CType resultType) {
+	public ExpressionResult getReadCall(final Dispatcher main, final Expression address, final CType resultType) {
 		final ILocation loc = address.getLocation();
 		// if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
 		// && (resultType.getUnderlyingType() instanceof CPrimitive)) {
@@ -1988,18 +1993,20 @@ public class MemoryHandler {
 			}
 		}
 
-		final String returnedValueId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
+		// TODO: bitvectorConversionNeeded switches between two identical branches --> what was the real intention??
 		final ASTType returnedValueAstType;
 		if (bitvectorConversionNeeded) {
 			returnedValueAstType = mTypeHandler.cType2AstType(loc, resultType);
 		} else {
 			returnedValueAstType = mTypeHandler.cType2AstType(loc, resultType);
 		}
-		final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(returnedValueId, returnedValueAstType, loc);
-		auxVars.put(tVarDecl, loc);
-		decl.add(tVarDecl);
-		final VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, returnedValueId) };
-		final CallStatement call = new CallStatement(loc, false, lhs, readCallProcedureName, // heapType.toString(),
+//		final String returnedValuId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
+//		final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(returnedValueId, returnedValueAstType, loc);
+		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MEMREAD);
+		decl.add(auxvar.getVarDec());
+		auxVars.put(auxvar.getVarDec(), loc);
+		final VariableLHS[] lhss = new VariableLHS[] { auxvar.getLhs() };
+		final CallStatement call = new CallStatement(loc, false, lhss, readCallProcedureName, // heapType.toString(),
 				new Expression[] { address, calculateSizeOf(loc, resultType) });
 		for (final Overapprox overapprItem : overappr) {
 			overapprItem.annotate(call);
@@ -2010,9 +2017,10 @@ public class MemoryHandler {
 		ExpressionResult result;
 		if (bitvectorConversionNeeded) {
 //			final IdentifierExpression tmpIdExpr = new IdentifierExpression(loc, tmpId);
-			final IdentifierExpression returnedValueIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
-					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType), returnedValueId,
-					new DeclarationInformation(StorageClass.LOCAL, mFunctionHandler.getCurrentProcedureID()));
+			final IdentifierExpression returnedValueIdExpr = auxvar.getExp();
+//					ExpressionFactory.constructIdentifierExpression(loc,
+//					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType), returnedValueId,
+//					new DeclarationInformation(StorageClass.LOCAL, mFunctionHandler.getCurrentProcedureID()));
 			result = new ExpressionResult(stmt, new RValue(returnedValueIdExpr, resultType), decl,
 					auxVars, overappr);
 			mExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
@@ -2035,7 +2043,8 @@ public class MemoryHandler {
 			result.mLrVal = new RValue(bvReturnedValueIdExpr, resultType);
 		} else {
 			final IdentifierExpression returnedValueIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
-					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType), returnedValueId,
+					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType),
+					auxvar.getExp().getIdentifier(),
 					new DeclarationInformation(StorageClass.LOCAL, mFunctionHandler.getCurrentProcedureID()));
 			result = new ExpressionResult(stmt, new RValue(returnedValueIdExpr, resultType), decl,
 					auxVars, overappr);
