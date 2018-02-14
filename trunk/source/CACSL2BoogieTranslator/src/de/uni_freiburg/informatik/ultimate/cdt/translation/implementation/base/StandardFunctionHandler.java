@@ -50,7 +50,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -59,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -638,15 +636,18 @@ public class StandardFunctionHandler {
 		result.addAll(argC);
 		result.addAll(argN);
 
-		final String tId =
-				main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMSETRES, new CPointer(new CPrimitive(CPrimitives.VOID)));
-		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
-		result.mDecl.add(tVarDecl);
-		result.mAuxVars.put(tVarDecl, loc);
+		final CPointer voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
+//		final String tId =
+//				main.mNameHandler.getTempVarUID(SFO.AUXVAR.MEMSETRES, new CPointer(new CPrimitive(CPrimitives.VOID)));
+//		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+//				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+		final AuxVarInfo auxvar =
+				CTranslationUtil.constructAuxVarInfo(loc, main, voidPointerType, SFO.AUXVAR.MEMSETRES);
+		result.mDecl.add(auxvar.getVarDec());
+		result.mAuxVars.put(auxvar.getVarDec(), loc);
 
 		result.mStmt.add(mMemoryHandler.constructUltimateMemsetCall(loc, argS.mLrVal.getValue(), argC.mLrVal.getValue(),
-				argN.mLrVal.getValue(), tId));
+				argN.mLrVal.getValue(), auxvar.getLhs()));
 
 //		mFunctionHandler.addMemoryModelDeclarations(MemoryModelDeclarations.C_Memset);
 		mFunctionHandler.registerCall(MemoryModelDeclarations.C_Memset.getName());
