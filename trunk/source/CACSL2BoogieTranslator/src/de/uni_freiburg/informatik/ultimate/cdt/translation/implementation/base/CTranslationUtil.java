@@ -34,8 +34,10 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -46,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BoogieTypeHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
@@ -93,14 +96,25 @@ public class CTranslationUtil {
 	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main, final CType cType,
 					final AUXVAR auxVarType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
+		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
 		final VariableDeclaration decl = new VariableDeclaration(loc,
 				new Attribute[0],
-				new VarList[] {
-						new VarList(loc, new String[] { id }, main.mTypeHandler.cType2AstType(loc, cType)) });
+				new VarList[] { new VarList(loc, new String[] { id }, astType ) });
 
-		final VariableLHS lhs = new VariableLHS(loc, id);
+		final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
+		final String currentProcId = main.mCHandler.getFunctionHandler().getCurrentProcedureID();
 
-		final IdentifierExpression exp = new IdentifierExpression(loc, id);
+		final VariableLHS lhs = //new VariableLHS(loc, id);
+				ExpressionFactory.constructVariableLHS(loc,
+						boogieTypeHelper.getBoogieTypeForBoogieASTType(astType),
+						id,
+						new DeclarationInformation(StorageClass.LOCAL, currentProcId));
+
+		final IdentifierExpression exp = //new IdentifierExpression(loc, id);
+				ExpressionFactory.constructIdentifierExpression(loc,
+						boogieTypeHelper.getBoogieTypeForBoogieASTType(astType),
+						id,
+						new DeclarationInformation(StorageClass.LOCAL, currentProcId));
 
 		return new AuxVarHelper(decl, lhs, exp);
 	}
