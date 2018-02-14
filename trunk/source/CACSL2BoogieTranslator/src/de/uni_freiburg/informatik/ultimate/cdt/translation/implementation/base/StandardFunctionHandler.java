@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatSupportInUltimate;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -676,7 +676,7 @@ public class StandardFunctionHandler {
 //		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
 //		final VariableDeclaration tmpVarDecl =
 //				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
-		final AuxVarHelper auxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, resultType, SFO.AUXVAR.MALLOC);
+		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MALLOC);
 		result.mDecl.add(auxvar.getVarDec());
 
 		result.mStmt.add(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc));
@@ -737,7 +737,7 @@ public class StandardFunctionHandler {
 //		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
 //		final VariableDeclaration tmpVarDecl =
 //				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
-		final AuxVarHelper auxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, resultType, SFO.AUXVAR.MALLOC);
+		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MALLOC);
 		exprRes.mDecl.add(auxvar.getVarDec());
 
 		exprRes.mStmt.add(mMemoryHandler.getMallocCall(exprRes.mLrVal.getValue(), auxvar.getLhs(), loc));
@@ -1146,7 +1146,7 @@ public class StandardFunctionHandler {
 //		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
 //		final ASTType astType = main.mTypeHandler.cType2AstType(loc, resultType);
 //		final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, astType, loc);
-		final AuxVarHelper auxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, resultType, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvar.getVarDec());
 		builder.putAuxVar(auxvar.getVarDec(), loc);
 //		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);

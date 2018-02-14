@@ -38,13 +38,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class AuxVarHelper {
+public class AuxVarInfo {
 
 	private final VariableDeclaration mVarDec;
 	private final VariableLHS mLhs;
 	private final IdentifierExpression mExp;
 
-	public AuxVarHelper(final VariableDeclaration varDec, final VariableLHS lhs, final IdentifierExpression exp) {
+	public AuxVarInfo(final VariableDeclaration varDec, final VariableLHS lhs, final IdentifierExpression exp) {
 		mVarDec = varDec;
 		mLhs = lhs;
 		mExp = exp;

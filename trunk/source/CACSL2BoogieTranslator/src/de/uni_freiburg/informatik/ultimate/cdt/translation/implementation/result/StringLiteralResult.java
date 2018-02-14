@@ -7,7 +7,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -48,7 +48,7 @@ public class StringLiteralResult extends ExpressionResult {
 
 	private final char[] mString;
 	private final boolean mOverapproximatesLongStringLiteral;
-	private final AuxVarHelper mAuxVarName;
+	private final AuxVarInfo mAuxVarName;
 
 	/**
 	 *
@@ -63,7 +63,7 @@ public class StringLiteralResult extends ExpressionResult {
 	 */
 	public StringLiteralResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Map<VariableDeclaration, ILocation> auxVars, final List<Overapprox> overapproxList,
-			final AuxVarHelper auxVarName, final char[] string, final boolean overAppLongLiteral) {
+			final AuxVarInfo auxVarName, final char[] string, final boolean overAppLongLiteral) {
 		super(stmt, lrVal, decl, auxVars, overapproxList);
 		mAuxVarName = auxVarName;
 		mString = string;
@@ -87,7 +87,7 @@ public class StringLiteralResult extends ExpressionResult {
 	 * Returns the name of the auxiliary variable that marks the memory location of the string in our Boogie heap array.
 	 * @return
 	 */
-	public AuxVarHelper getAuxVar() {
+	public AuxVarInfo getAuxVar() {
 		return mAuxVarName;
 	}
 }

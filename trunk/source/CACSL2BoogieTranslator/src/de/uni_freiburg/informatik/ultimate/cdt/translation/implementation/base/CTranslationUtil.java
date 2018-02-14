@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BoogieTypeHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
@@ -81,7 +81,7 @@ public class CTranslationUtil {
 		// don't instantiate this utility class
 	}
 
-	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main, final CType cType) {
+	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final CType cType) {
 		final AUXVAR auxVarType;
 		if (cType instanceof CArray) {
 			auxVarType = SFO.AUXVAR.ARRAYINIT;
@@ -90,10 +90,10 @@ public class CTranslationUtil {
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		return makeAuxVarDeclaration(loc, main, cType, auxVarType);
+		return constructAuxVarInfo(loc, main, cType, auxVarType);
 	}
 
-	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main, final CType cType,
+	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final CType cType,
 					final AUXVAR auxVarType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
 		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
@@ -116,7 +116,7 @@ public class CTranslationUtil {
 						id,
 						new DeclarationInformation(StorageClass.LOCAL, currentProcId));
 
-		return new AuxVarHelper(decl, lhs, exp);
+		return new AuxVarInfo(decl, lhs, exp);
 	}
 
 	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,

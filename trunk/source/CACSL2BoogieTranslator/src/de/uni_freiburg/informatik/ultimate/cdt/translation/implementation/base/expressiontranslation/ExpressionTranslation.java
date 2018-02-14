@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -141,7 +141,7 @@ public abstract class ExpressionTranslation {
 			// subtract two from length for quotes at beginning and end
 			final RValue rvalue;
 //			final String tId;
-			final AuxVarHelper auxvar;
+			final AuxVarInfo auxvar;
 			{
 				final int arrayLength = node.getValue().length - 2;
 				final RValue dimension = new RValue(
@@ -155,7 +155,7 @@ public abstract class ExpressionTranslation {
 //				tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
 //				tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 //						new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-				auxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
+				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
 				rvalue = new RValueForArrays(auxvar.getExp(), arrayType);
 			}
 			final ArrayList<Declaration> decls = new ArrayList<>();
