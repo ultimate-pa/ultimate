@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.P
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -429,8 +429,8 @@ public class ExpressionResult extends Result {
 //					main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
 //			final VariableDeclaration newArrayDec =
 //					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
-			final AuxVarHelper newArrayAuxvar =
-					CTranslationUtil.makeAuxVarDeclaration(loc, main, arrayType, SFO.AUXVAR.ARRAYCOPY);
+			final AuxVarInfo newArrayAuxvar =
+					CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.ARRAYCOPY);
 			resultValue = new HeapLValue(newArrayAuxvar.getExp(), arrayType, null);
 //			builder.setLrVal(new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null));
 
