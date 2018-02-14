@@ -44,24 +44,20 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -427,19 +423,21 @@ public class ExpressionResult extends Result {
 			}
 			final int dim = dimBigInteger.intValue();
 
-			final String newArrayId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY, arrayType);
-			final VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, new ArrayType(loc, new String[0],
-					new ASTType[] { main.mTypeHandler.cType2AstType(loc, arrayType.getBound().getCType()) },
-					main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
-			final VariableDeclaration newArrayDec =
-					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
-			resultValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null);
+//			final String newArrayId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY, arrayType);
+//			final VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, new ArrayType(loc, new String[0],
+//					new ASTType[] { main.mTypeHandler.cType2AstType(loc, arrayType.getBound().getCType()) },
+//					main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
+//			final VariableDeclaration newArrayDec =
+//					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
+			final AuxVarHelper newArrayAuxvar =
+					CTranslationUtil.makeAuxVarDeclaration(loc, main, arrayType, SFO.AUXVAR.ARRAYCOPY);
+			resultValue = new HeapLValue(newArrayAuxvar.getExp(), arrayType, null);
 //			builder.setLrVal(new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null));
 
 //			decl.add(newArrayDec);
 //			auxVars.put(newArrayDec, loc);
-			builder.addDeclaration(newArrayDec);
-			builder.putAuxVar(newArrayDec, loc);
+			builder.addDeclaration(newArrayAuxvar.getVarDec());
+			builder.putAuxVar(newArrayAuxvar.getVarDec(), loc);
 
 			final Expression arrayStartAddress = address;
 			Expression newStartAddressBase = null;
@@ -478,7 +476,7 @@ public class ExpressionResult extends Result {
 //				auxVars.putAll(readRex.mAuxVars);
 //				overApp.addAll(readRex.mOverappr);
 
-				final ArrayLHS aAcc = ExpressionFactory.constructNestedArrayLHS(loc, new VariableLHS(loc, newArrayId),
+				final ArrayLHS aAcc = ExpressionFactory.constructNestedArrayLHS(loc, newArrayAuxvar.getLhs(),
 						new Expression[] { exprTrans.constructLiteralForIntegerType(loc,
 								new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) });
 //				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc, stmt,

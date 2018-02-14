@@ -673,16 +673,17 @@ public class StandardFunctionHandler {
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(nmemb, size);
 
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
-		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
-		final VariableDeclaration tmpVarDecl =
-				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
-		result.mDecl.add(tmpVarDecl);
+//		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
+//		final VariableDeclaration tmpVarDecl =
+//				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
+		final AuxVarHelper auxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, resultType, SFO.AUXVAR.MALLOC);
+		result.mDecl.add(auxvar.getVarDec());
 
-		result.mStmt.add(mMemoryHandler.getMallocCall(product, tmpId, loc));
-		result.mLrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
+		result.mStmt.add(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc));
+		result.mLrVal = new RValue(auxvar.getExp(), resultType);
 
 		result.mStmt.add(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.mLrVal.getValue(),
-				size.mLrVal.getValue(), product, new IdentifierExpression(loc, tmpId)));
+				size.mLrVal.getValue(), product, auxvar.getExp()));
 
 //		mFunctionHandler.addMemoryModelDeclarations(MemoryModelDeclarations.Ultimate_MemInit,
 //				MemoryModelDeclarations.Ultimate_Alloc);
@@ -733,18 +734,19 @@ public class StandardFunctionHandler {
 		main.mCHandler.convert(loc, exprRes, mTypeSizeComputer.getSizeT());
 
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
-		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
-		final VariableDeclaration tmpVarDecl =
-				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
-		exprRes.mDecl.add(tmpVarDecl);
+//		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
+//		final VariableDeclaration tmpVarDecl =
+//				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
+		final AuxVarHelper auxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, resultType, SFO.AUXVAR.MALLOC);
+		exprRes.mDecl.add(auxvar.getVarDec());
 
-		exprRes.mStmt.add(mMemoryHandler.getMallocCall(exprRes.mLrVal.getValue(), tmpId, loc));
-		exprRes.mLrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
+		exprRes.mStmt.add(mMemoryHandler.getMallocCall(exprRes.mLrVal.getValue(), auxvar.getLhs(), loc));
+		exprRes.mLrVal = new RValue(auxvar.getExp(), resultType);
 
 		// for alloc a we have to free the variable ourselves when the
 		// stackframe is closed, i.e. at a return
 		if ("alloca".equals(methodName) || "__builtin_alloca".equals(methodName)) {
-			final LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), resultType, null);
+			final LocalLValue llVal = new LocalLValue(auxvar.getLhs(), resultType, null);
 			mMemoryHandler.addVariableToBeFreed(main,
 					new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 			// we need to clear auxVars because otherwise the malloc auxvar is havocced after

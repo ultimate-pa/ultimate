@@ -47,18 +47,18 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -139,9 +139,9 @@ public abstract class ExpressionTranslation {
 		}
 		case IASTLiteralExpression.lk_string_literal: {
 			// subtract two from length for quotes at beginning and end
-			final VariableDeclaration tVarDecl;
 			final RValue rvalue;
-			final String tId;
+//			final String tId;
+			final AuxVarHelper auxvar;
 			{
 				final int arrayLength = node.getValue().length - 2;
 				final RValue dimension = new RValue(
@@ -152,18 +152,19 @@ public abstract class ExpressionTranslation {
 //				final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
 				final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
 				// final CPointer arrayType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-				tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
-				tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-						new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-				rvalue = new RValueForArrays(new IdentifierExpression(loc, tId), arrayType);
+//				tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
+//				tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+//						new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
+				auxvar = CTranslationUtil.makeAuxVarDeclaration(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
+				rvalue = new RValueForArrays(auxvar.getExp(), arrayType);
 			}
 			final ArrayList<Declaration> decls = new ArrayList<>();
-			decls.add(tVarDecl);
+			decls.add(auxvar.getVarDec());
 //			main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(decls);
 
 
 			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			auxVars.put(tVarDecl, loc);
+			auxVars.put(auxvar.getVarDec(), loc);
 
 			/*
 			 * construct a char[] that may be used for intitializing off-heap string variables.
@@ -181,7 +182,7 @@ public abstract class ExpressionTranslation {
 			final boolean writeValues = charArray.length < STRING_OVERAPPROXIMATION_THRESHOLD;
 
 			final List<Statement> statements =
-					main.mCHandler.getMemoryHandler().writeStringToHeap(loc, tId, charArray, writeValues);
+					main.mCHandler.getMemoryHandler().writeStringToHeap(loc, auxvar.getLhs(), charArray, writeValues);
 //			main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(statements);
 //			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(tId);
 //			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
@@ -202,7 +203,7 @@ public abstract class ExpressionTranslation {
 				overapproxList.add(overapprox);
 			}
 			return new StringLiteralResult(statements, rvalue, decls, auxVars, overapproxList,
-					tId, charArray, !writeValues);
+					auxvar, charArray, !writeValues);
 //			return new StringLiteralResult(Collections.emptyList(), rvalue, Collections.emptyList(),
 //					Collections.emptyMap(), overapproxList, charArray);
 		}
