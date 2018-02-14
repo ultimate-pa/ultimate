@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
  */
 public class FaultLocalizationRelevanceChecker {
 	
-	private final boolean mUseUnsatCores = false;
+	private static final boolean mUseUnsatCores = false;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	/**
