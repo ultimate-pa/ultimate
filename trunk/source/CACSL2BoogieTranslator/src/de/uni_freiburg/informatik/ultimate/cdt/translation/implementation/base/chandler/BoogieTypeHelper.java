@@ -31,4 +31,8 @@ public class BoogieTypeHelper {
 				hda.getName(), new DeclarationInformation(StorageClass.GLOBAL, readProcedureName));
 	}
 
+	public BoogieType getBoogieTypeForSizeT() {
+		return BoogieType.TYPE_INT;
+	}
+
 }

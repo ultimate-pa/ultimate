@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -118,6 +119,8 @@ public class PostProcessor {
 	 */
 	public boolean mDeclareToIntFunction = false;
 
+	private final BoogieTypeHelper mBoogieTypeHelper;
+
 	/**
 	 * Constructor.
 	 *
@@ -130,6 +133,7 @@ public class PostProcessor {
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
+		mBoogieTypeHelper = dispatcher.mCHandler.getBoogieTypeHelper();
 	}
 
 	/**
@@ -475,8 +479,12 @@ public class PostProcessor {
 					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
 //			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
 //					new Expression[] { new IdentifierExpression(loc, oldId) }));
+			final IdentifierExpression oldIdExpr = //new IdentifierExpression(loc, oldId);
+					ExpressionFactory.constructIdentifierExpression(loc,
+							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()), oldId,
+							new DeclarationInformation(storageClass, procedure))
 			builder.addStatement(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
-					new Expression[] { new IdentifierExpression(loc, oldId) }));
+					new Expression[] { oldIdExpr }));
 			args.add(new IdentifierExpression(loc, newId));
 		}
 

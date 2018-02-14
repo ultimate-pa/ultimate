@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -673,6 +674,18 @@ public class TypeHandler implements ITypeHandler {
 	public ASTType constructPointerType(final ILocation loc) {
 		mPointerTypeNeeded = true;
 		return new NamedType(null, SFO.POINTER, new ASTType[0]);
+	}
+
+	@Override
+	public BoogieType constructBoogiePointerType() {
+		// TODO
+		throw new AssertionError("TODO");
+	}
+
+	@Override
+	public BoogieType astTypeToBoogieType(final ASTType astType) {
+		// TODO
+		throw new AssertionError("TODO");
 	}
 
 	/**

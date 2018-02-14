@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -51,26 +51,28 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public abstract class AMemoryModel {
-	
+
 	protected final static String s_ReadProcedurePrefix = "read~";
 	protected final static String s_WriteProcedurePrefix = "write~";
-	
+
 	protected final ITypeHandler mTypeHandler;
 	protected final TypeSizes mTypeSizes;
-	
+
 	private final HeapDataArray mPointerArray;
-	
+
 	public AMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-       	mPointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc), bytesizeOfStoredPointerComponents());
+       	mPointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc),
+       			typeHandler.constructBoogiePointerType(),
+       			bytesizeOfStoredPointerComponents());
 	}
-	
+
 	protected abstract int bytesizeOfStoredPointerComponents();
-	
+
 	protected abstract String getProcedureSuffix(CPrimitives primitive);
-       	
+
 	public final String getReadProcedureName(final CPrimitives primitive) {
 		return s_ReadProcedurePrefix + getProcedureSuffix(primitive);
 	}
@@ -78,7 +80,7 @@ public abstract class AMemoryModel {
 	public final String getWriteProcedureName(final CPrimitives primitive) {
 		return s_WriteProcedurePrefix + getProcedureSuffix(primitive);
 	}
-	
+
 	public final String getReadPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return s_ReadProcedurePrefix + hda.getName();
@@ -90,9 +92,9 @@ public abstract class AMemoryModel {
 		return s_WriteProcedurePrefix + hda.getName();
 	}
 
-	
+
 	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
-	
+
 	public final HeapDataArray getPointerHeapArray() {
 		return mPointerArray;
 	}
@@ -107,7 +109,7 @@ public abstract class AMemoryModel {
 		}
 		return result;
 	}
-	
+
 	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda, final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		if (hda == mPointerArray) {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
@@ -120,10 +122,10 @@ public abstract class AMemoryModel {
 			return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryModelFeatures);
 		}
 	}
-	
+
 	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures);
-	
+
 	public class ReadWriteDefinition {
 		private final String mProcedureSuffix;
 		private final int mBytesize;
