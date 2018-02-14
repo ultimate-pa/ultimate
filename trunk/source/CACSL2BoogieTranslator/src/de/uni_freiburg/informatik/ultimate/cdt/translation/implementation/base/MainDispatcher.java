@@ -321,10 +321,8 @@ public class MainDispatcher extends Dispatcher {
 			return true;
 		}
 		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
-		if (!(decl.getParent() instanceof IASTTranslationUnit)) {
-			return true;
-		}
-		return mReachableDeclarations.contains(decl);
+		return true;
+		//return mReachableDeclarations.contains(decl);
 		/*if (!mReachableDeclarations.containsKey(decl.getContainingFilename())) {
 			// Nothing is reachable in this file.
 			return false;
@@ -359,7 +357,8 @@ public class MainDispatcher extends Dispatcher {
 		mVariablesOnHeap = new LinkedHashSet<>();
 
 		// Build the function table
-		executePreRun(new FunctionTableBuilder(), nodes, ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
+		executePreRun(new FunctionTableBuilder(mFlatTable), nodes, 
+				ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
 
 		executePreRun(new PreRunner(mFlatTable, mFunctionTable), nodes, pr -> {
 			mVariablesOnHeap.addAll(pr.getVarsForHeap());
