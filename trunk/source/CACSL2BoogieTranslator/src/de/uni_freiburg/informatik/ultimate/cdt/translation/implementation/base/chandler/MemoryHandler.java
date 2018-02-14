@@ -1598,7 +1598,9 @@ public class MemoryHandler {
 		// modifies #valid;
 		final Expression nr0 = mExpressionTranslation.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final Expression addr = new IdentifierExpression(tuLoc, ADDR);
+		final Expression addr = //new IdentifierExpression(tuLoc, ADDR);
+				ExpressionFactory.constructIdentifierExpression(tuLoc, mBoogieTypeHelper.getBoogieTypeForPointerType(),
+						ADDR, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, SFO.FREE));
 		final Expression valid = getValidArray(tuLoc);
 		final Expression addrOffset = new StructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
 		final Expression addrBase = new StructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);

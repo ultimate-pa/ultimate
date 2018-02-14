@@ -48,7 +48,6 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -59,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -441,16 +439,17 @@ public class StandardFunctionHandler {
 
 		final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
 		// introduce fresh aux variable
-		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-		final VariableDeclaration tmpVarDecl =
-				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
-		builder.addDeclaration(tmpVarDecl);
-		builder.putAuxVar(tmpVarDecl, loc);
+//		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+//		final VariableDeclaration tmpVarDecl =
+//				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
+		final AuxVarInfo auxvarinfo =
+				CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvarinfo.getVarDec());
+		builder.putAuxVar(auxvarinfo.getVarDec(), loc);
 
-		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
 		final Overapprox overAppFlag = new Overapprox(name, loc);
 		builder.addOverapprox(overAppFlag);
-		final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
+		final RValue lrVal = new RValue(auxvarinfo.getExp(), resultType);
 		builder.setLrVal(lrVal);
 		return builder.build();
 	}
@@ -474,16 +473,17 @@ public class StandardFunctionHandler {
 		// according to standard result is size_t, we use int for efficiency
 		final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
 		// introduce fresh aux variable
-		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-		final VariableDeclaration tmpVarDecl =
-				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
-		builder.addDeclaration(tmpVarDecl);
-		builder.putAuxVar(tmpVarDecl, loc);
+//		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+//		final VariableDeclaration tmpVarDecl =
+//				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
+		final AuxVarInfo auxvarinfo = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvarinfo.getVarDec());
+		builder.putAuxVar(auxvarinfo.getVarDec(), loc);
 
-		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+//		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
 		final Overapprox overAppFlag = new Overapprox(methodName, loc);
 		builder.addOverapprox(overAppFlag);
-		final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
+		final RValue lrVal = new RValue(auxvarinfo.getExp(), resultType);
 		builder.setLrVal(lrVal);
 		return builder.build();
 	}
@@ -517,11 +517,12 @@ public class StandardFunctionHandler {
 
 		// introduce fresh aux variable
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-		final VariableDeclaration tmpVarDecl =
-				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
-		builder.addDeclaration(tmpVarDecl);
-		builder.putAuxVar(tmpVarDecl, loc);
+//		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+//		final VariableDeclaration tmpVarDecl =
+//				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
+		final AuxVarInfo auxvarinfo = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
+		builder.addDeclaration(auxvarinfo.getVarDec());
+		builder.putAuxVar(auxvarinfo.getVarDec(), loc);
 
 		final Expression nullExpr = mExpressionTranslation.constructNullPointer(loc);
 
@@ -535,7 +536,7 @@ public class StandardFunctionHandler {
 				mExpressionTranslation));
 
 		// the havocced/uninitialized variable that represents the return value
-		final Expression tmpExpr = new IdentifierExpression(loc, tmpId);
+		final Expression tmpExpr = auxvarinfo.getExp();//new IdentifierExpression(loc, tmpId);
 
 		/*
 		 * build the assume statement as described above
@@ -794,13 +795,14 @@ public class StandardFunctionHandler {
 		final List<Statement> stmt = new ArrayList<>();
 		final List<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final ASTType type = mTypeHandler.cType2AstType(loc, cType);
-		final String tmpName = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
-		final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
-		decl.add(tVarDecl);
-		auxVars.put(tVarDecl, loc);
+//		final ASTType type = mTypeHandler.cType2AstType(loc, cType);
+//		final String tmpName = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
+//		final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
+		final AuxVarInfo auxvarinfo = CTranslationUtil.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
+		decl.add(auxvarinfo.getVarDec());
+		auxVars.put(auxvarinfo.getVarDec(), loc);
 
-		final LRValue returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
 				stmt);
 
@@ -1006,14 +1008,16 @@ public class StandardFunctionHandler {
 		final List<Overapprox> overappr = new ArrayList<>();
 
 		// 2015-11-05 Matthias: TODO check if int is reasonable here
-		final ASTType tempType = mTypeHandler.cType2AstType(loc, new CPrimitive(CPrimitives.INT));
-		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
-		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-				new VarList[] { new VarList(loc, new String[] { tId }, tempType) });
-		auxVars.put(tVarDecl, loc);
-		decl.add(tVarDecl);
-		stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
-		final LRValue returnValue = new RValue(new IdentifierExpression(loc, tId), null);
+//		final ASTType tempType = mTypeHandler.cType2AstType(loc, new CPrimitive(CPrimitives.INT));
+//		final String tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
+//		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+//				new VarList[] { new VarList(loc, new String[] { tId }, tempType) });
+		final AuxVarInfo auxvarinfo = CTranslationUtil.constructAuxVarInfo(loc, main,
+				new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
+		auxVars.put(auxvarinfo.getVarDec(), loc);
+		decl.add(auxvarinfo.getVarDec());
+		stmt.add(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), null);
 		assert CHandler.isAuxVarMapComplete(main.mNameHandler, decl, auxVars);
 		return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 	}
@@ -1042,17 +1046,19 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
 
-		final String tId = main.mNameHandler.getTempVarUID(auxVar, dest.mLrVal.getCType());
-		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+//		final String tId = main.mNameHandler.getTempVarUID(auxVar, dest.mLrVal.getCType());
+//		final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+//				new VarList[] { new VarList(loc, new String[] { tId }, main.mTypeHandler.constructPointerType(loc)) });
+		final AuxVarInfo auxvarinfo =
+				CTranslationUtil.constructAuxVarInfo(loc, main, dest.getLrValue().getCType(), auxVar);
 
-		final CallStatement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) },
+		final CallStatement call = new CallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
 				mmDecl.getName(), new Expression[] { dest.getLrValue().getValue(), src.getLrValue().getValue(),
 						size.getLrValue().getValue() });
-		result.mDecl.add(tVarDecl);
-		result.mAuxVars.put(tVarDecl, loc);
+		result.mDecl.add(auxvarinfo.getVarDec());
+		result.mAuxVars.put(auxvarinfo.getVarDec(), loc);
 		result.mStmt.add(call);
-		result.mLrVal = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
+		result.mLrVal = new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID)));
 
 		// add marker for global declaration to memory handler
 		mMemoryHandler.getRequiredMemoryModelFeatures().require(mmDecl);
