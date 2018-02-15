@@ -1,15 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * A Result that carries the information for all the possible uses of a C string literal.
@@ -52,19 +48,20 @@ public class StringLiteralResult extends ExpressionResult {
 
 	/**
 	 *
-	 * @param stmt
+	 * Note that a StringLiteralResults need no fields for declarations and statements because the literals have static
+	 * storage duration and thus are handled by StaticObjectsHandler.
+	 * (whenever a StringLiteralResult is created, the statements and declarations must thus be registered in the
+	 *  StaticObjectsHandler)
+	 *
 	 * @param lrVal
-	 * @param decl
-	 * @param auxVars
 	 * @param overapproxList
 	 * @param auxVarName
 	 * @param string
 	 * @param overAppLongLiteral
 	 */
-	public StringLiteralResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
-			final Map<VariableDeclaration, ILocation> auxVars, final List<Overapprox> overapproxList,
+	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList,
 			final AuxVarInfo auxVarName, final char[] string, final boolean overAppLongLiteral) {
-		super(stmt, lrVal, decl, auxVars, overapproxList);
+		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptyMap(), overapproxList);
 		mAuxVarName = auxVarName;
 		mString = string;
 		mOverapproximatesLongStringLiteral = overAppLongLiteral;

@@ -1063,9 +1063,18 @@ public class InitializationHandler {
 					final StringLiteralResult exprResult = (StringLiteralResult)
 							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult);
 
-					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
+					assert exprResult.getDeclarations().isEmpty() : "the declarations necessary for a StringLiteral "
+							+ " should be registered in StaticObjectsHandler directly (because the need to be global"
+							+ "boogie declarations)";
+					assert exprResult.getStatements().isEmpty() : "the statements necessary for a StringLiteral "
+							+ " should be registered in StaticObjectsHandler directly (because the need to be global"
+							+ "boogie declarations)";
 
-					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
+
+//					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
+//					exprResult.getDeclarations().forEach(decl -> );
+
+//					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
 //					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
 //							exprResult.getAuxVar().getExp().getIdentifier());
 //					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init

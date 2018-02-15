@@ -484,7 +484,7 @@ public class CHandler implements ICHandler {
 	 * PostProcessor.createInit..() global variables: added to this map in IASTTranslationUnit, declared using this map
 	 * in ITranslationUnit, initialized using this map in PostProcessor.createInit..()
 	 */
-	protected final LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie;
+//	protected final LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie;
 
 	/**
 	 * A collection of axioms generated during translation process.
@@ -557,7 +557,7 @@ public class CHandler implements ICHandler {
 
 		mSymbolTable = new SymbolTable(main);
 
-		mDeclarationsGlobalInBoogie = new LinkedHashMap<>();
+//		mDeclarationsGlobalInBoogie = new LinkedHashMap<>();
 		mAxioms = new LinkedHashSet<>();
 		mContract = new ArrayList<>();
 		mInnerMostLoopLabel = new ArrayDeque<>();
@@ -1800,7 +1800,9 @@ public class CHandler implements ICHandler {
 					if (cDec.hasInitializer()) {
 						// undo the effects of the old declaration
 						if (mFunctionHandler.isGlobalScope() && !mTypeHandler.isStructDeclaration()) {
-							mDeclarationsGlobalInBoogie.remove(mSymbolTable.get(cDec.getName(), loc).getBoogieDecl());
+//							mDeclarationsGlobalInBoogie.remove(mSymbolTable.get(cDec.getName(), loc).getBoogieDecl());
+							mStaticObjectsHandler.removeDeclaration(
+									mSymbolTable.get(cDec.getName(), loc).getBoogieDecl());
 						}
 						// local variable may not be a problem, because symboltable will overwrite at put
 						// .. or are they not allowed in C?... TODO --> should look it up in standard
@@ -1845,7 +1847,8 @@ public class CHandler implements ICHandler {
 					// TODO: add a sizeof-constant for the type??
 //					globalInBoogie = true;
 					declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
+//					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
+					mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
 				} else if (storageClass == CStorageClass.STATIC && !mFunctionHandler.isGlobalScope()) {
 					// we have a local static variable -> special treatment
 					// global static variables are treated like normal global variables..
@@ -1853,7 +1856,8 @@ public class CHandler implements ICHandler {
 							new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
 //					globalInBoogie = true;
 					declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
+//					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
+					mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
 				} else {
 					if (mFunctionHandler.isGlobalScope()) {
 						declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
@@ -2192,17 +2196,15 @@ public class CHandler implements ICHandler {
 							.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
 		}
 
-		for (final Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
-			assert d instanceof ConstDeclaration || d instanceof VariableDeclaration || d instanceof TypeDeclaration;
-			decl.add(d);
-		}
+		// replaced by staticObjectsHandler:
+//		for (final Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
+//			assert d instanceof ConstDeclaration || d instanceof VariableDeclaration || d instanceof TypeDeclaration;
+//			decl.add(d);
+//		}
 
 		decl.addAll(mAxioms);
 
-		decl.addAll(0,
-				mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler,
-						(TypeHandler) mTypeHandler, mTypeHandler.getUndefinedTypes(), mDeclarationsGlobalInBoogie,
-						mExpressionTranslation));
+		decl.addAll(0, mPostProcessor.postProcess(main, loc));//, mDeclarationsGlobalInBoogie));
 
 		/*
 		 * this must come after the post processor because the post processor might add declarations when dispatching
@@ -2418,25 +2420,27 @@ public class CHandler implements ICHandler {
 	 * @param incompleteStruct
 	 */
 	public void completeTypeDeclaration(final CType incompleteStruct, final CType cvar) {
-		assert incompleteStruct.getClass().equals(cvar.getClass());
-		assert incompleteStruct.isIncomplete();
-		TypeDeclaration oldDec = null;
-		CDeclaration oldCDec = null;
-		TypeDeclaration newDec = null;
-		for (final Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
-			if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
-				oldDec = (TypeDeclaration) en.getKey();
-				oldCDec = en.getValue();
-				newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(), oldDec.isFinite(),
-						oldDec.getIdentifier(), oldDec.getTypeParams(),
-						mTypeHandler.cType2AstType(oldDec.getLocation(), cvar));
-				break; // the if should be entered only once, anyway
-			}
-		}
-		if (oldDec != null) {
-			mDeclarationsGlobalInBoogie.remove(oldDec);
-			mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
-		}
+		mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, mTypeHandler);
+
+//		assert incompleteStruct.getClass().equals(cvar.getClass());
+//		assert incompleteStruct.isIncomplete();
+//		TypeDeclaration oldDec = null;
+//		CDeclaration oldCDec = null;
+//		TypeDeclaration newDec = null;
+//		for (final Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
+//			if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
+//				oldDec = (TypeDeclaration) en.getKey();
+//				oldCDec = en.getValue();
+//				newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(), oldDec.isFinite(),
+//						oldDec.getIdentifier(), oldDec.getTypeParams(),
+//						mTypeHandler.cType2AstType(oldDec.getLocation(), cvar));
+//				break; // the if should be entered only once, anyway
+//			}
+//		}
+//		if (oldDec != null) {
+//			mDeclarationsGlobalInBoogie.remove(oldDec);
+//			mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
+//		}
 	}
 
 	/*
@@ -3720,7 +3724,14 @@ public class CHandler implements ICHandler {
 			// we have to add a global variable
 			final DeclarationResult rd = (DeclarationResult) childRes;
 			for (final CDeclaration cd : rd.getDeclarations()) {
-				mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
+//				mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
+
+				final Declaration boogieDecl = mSymbolTable.getBoogieDeclOfCDecl(cd);
+				if (boogieDecl instanceof VariableDeclaration) {
+					mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDecl, cd);
+				} else {
+					throw new AssertionError("TODO: handle this case!");
+				}
 			}
 		} else {
 			if (childRes instanceof SkipResult) {
@@ -3762,7 +3773,10 @@ public class CHandler implements ICHandler {
 			final String bId = enumId + "~" + fId;
 			final VarList vl = new VarList(loc, new String[] { bId }, enumAstType);
 			final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
-			mDeclarationsGlobalInBoogie.put(cd, new CDeclaration(cEnum, fId));
+
+//			mDeclarationsGlobalInBoogie.put(cd, new CDeclaration(cEnum, fId));
+			mStaticObjectsHandler.addGlobalConstDeclaration(cd, new CDeclaration(cEnum, fId));
+
 			final Expression l = ExpressionFactory.constructIdentifierExpression(loc,
 							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(enumAstType),
 							bId, new DeclarationInformation(StorageClass.GLOBAL, null));
@@ -3917,13 +3931,19 @@ public class CHandler implements ICHandler {
 //					result.getAuxVars(), result.getOverapprs(), ((StringLiteralResult) left).getAuxVarName(),
 //					((StringLiteralResult) left).getLiteralString(),
 //					((StringLiteralResult) left).overApproximatesLongStringLiteral());
-			intermediateResult2 = new StringLiteralResult(intermediateResult.getStatements(), null,
-					intermediateResult.getDeclarations(),
-					intermediateResult.getAuxVars(),
+			intermediateResult2 = new StringLiteralResult(
+//					intermediateResult.getStatements(),
+					intermediateResult.getLrValue(),	//null,
+//					intermediateResult.getDeclarations(),
+//					intermediateResult.getAuxVars(),
 					intermediateResult.getOverapprs(),
 					((StringLiteralResult) left).getAuxVar(),
 					((StringLiteralResult) left).getLiteralString(),
 					((StringLiteralResult) left).overApproximatesLongStringLiteral());
+
+			intermediateResult.getDeclarations().forEach(decl ->
+				mStaticObjectsHandler.addGlobalVarDeclarationWithoutCDeclaration((VariableDeclaration) decl));
+			mStaticObjectsHandler.addStatementsForUltimateInit(intermediateResult.getStatements());
 
 		} else {
 			intermediateResult2 = intermediateResult;

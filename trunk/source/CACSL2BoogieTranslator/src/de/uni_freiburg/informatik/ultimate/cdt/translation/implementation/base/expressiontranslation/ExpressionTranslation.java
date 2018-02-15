@@ -32,9 +32,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
@@ -44,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -52,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -158,13 +154,18 @@ public abstract class ExpressionTranslation {
 				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
 				rvalue = new RValueForArrays(auxvar.getExp(), arrayType);
 			}
-			final ArrayList<Declaration> decls = new ArrayList<>();
-			decls.add(auxvar.getVarDec());
+//			final ArrayList<Declaration> decls = new ArrayList<>();
+//			decls.add(auxvar.getVarDec());
 //			main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(decls);
+			// the declaration of the variable that corresponds to a string literal has to be made globally
+			main.mCHandler.getStaticObjectsHandler()//.addGlobalDeclarations(decls);
+				.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
 
 
-			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			auxVars.put(auxvar.getVarDec(), loc);
+
+			// aux var havoccing not necessary because of static storage duration
+//			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//			auxVars.put(auxvar.getVarDec(), loc);
 
 			/*
 			 * construct a char[] that may be used for intitializing off-heap string variables.
@@ -181,8 +182,14 @@ public abstract class ExpressionTranslation {
 			// overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
 			final boolean writeValues = charArray.length < STRING_OVERAPPROXIMATION_THRESHOLD;
 
+			/*
+			 *
+			 */
 			final List<Statement> statements =
 					main.mCHandler.getMemoryHandler().writeStringToHeap(loc, auxvar.getLhs(), charArray, writeValues);
+			main.mCHandler.getStaticObjectsHandler()
+				.addStatementsForUltimateInit(statements);
+
 //			main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(statements);
 //			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(tId);
 //			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
@@ -202,8 +209,8 @@ public abstract class ExpressionTranslation {
 				overapproxList = new ArrayList<>();
 				overapproxList.add(overapprox);
 			}
-			return new StringLiteralResult(statements, rvalue, decls, auxVars, overapproxList,
-					auxvar, charArray, !writeValues);
+//			return new StringLiteralResult(statements, rvalue, decls, auxVars, overapproxList,
+			return new StringLiteralResult(rvalue, overapproxList, auxvar, charArray, !writeValues);
 //			return new StringLiteralResult(Collections.emptyList(), rvalue, Collections.emptyList(),
 //					Collections.emptyMap(), overapproxList, charArray);
 		}
