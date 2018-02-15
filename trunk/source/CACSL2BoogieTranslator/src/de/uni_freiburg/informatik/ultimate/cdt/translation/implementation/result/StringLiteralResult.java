@@ -61,7 +61,7 @@ public class StringLiteralResult extends ExpressionResult {
 	 */
 	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList,
 			final AuxVarInfo auxVarName, final char[] string, final boolean overAppLongLiteral) {
-		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptyMap(), overapproxList);
+		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptySet(), overapproxList);
 		mAuxVarName = auxVarName;
 		mString = string;
 		mOverapproximatesLongStringLiteral = overAppLongLiteral;

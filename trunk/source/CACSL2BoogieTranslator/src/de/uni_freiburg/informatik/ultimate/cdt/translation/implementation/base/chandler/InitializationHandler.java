@@ -630,7 +630,7 @@ public class InitializationHandler {
 		final ExpressionResult x = new ExpressionResultBuilder()
 				.setLrVal(new RValue(auxVar.getExp(), fieldType))
 				.addDeclaration(auxVar.getVarDec())
-				.putAuxVar(auxVar.getVarDec(), loc)
+				.addAuxVar(auxVar)
 				.addOverapprox(new Overapprox("initialize union -- havoccing a field without explictit "
 						+ "initializer", loc))
 				.build();
@@ -758,7 +758,8 @@ public class InitializationHandler {
 		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 
 		initialization.addDeclaration(auxVar.getVarDec());
-		initialization.putAuxVar(auxVar.getVarDec(), loc);
+//		initialization.putAuxVar(auxVar.getVarDec(), loc);
+		initialization.addAuxVar(auxVar);
 		initialization.setLrVal(arrayLhsToInitialize);
 		return arrayLhsToInitialize;
 	}

@@ -108,7 +108,7 @@ public class CTranslationUtil {
 		return constructAuxVarHelper(loc, main, id, astType);
 	}
 
-	public static AuxVarInfo constructAuxVarHelper(final ILocation loc, final Dispatcher main, final String id,
+	private static AuxVarInfo constructAuxVarHelper(final ILocation loc, final Dispatcher main, final String id,
 			final ASTType astType) {
 		final VariableDeclaration decl = new VariableDeclaration(loc,
 				new Attribute[0],

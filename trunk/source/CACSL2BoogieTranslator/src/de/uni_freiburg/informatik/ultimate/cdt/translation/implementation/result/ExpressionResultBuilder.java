@@ -29,15 +29,14 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class ExpressionResultBuilder {
 
@@ -45,7 +44,8 @@ public class ExpressionResultBuilder {
 	private LRValue mLrVal;
 	private final List<Declaration> mDeclarations = new ArrayList<>();
 	private final List<Overapprox> mOverappr = new ArrayList<>();
-	private final Map<VariableDeclaration, ILocation> mAuxVars = new LinkedHashMap<>();
+//	private final Map<VariableDeclaration, ILocation> mAuxVars = new LinkedHashMap<>();
+	private final Set<AuxVarInfo> mAuxVars = new HashSet<>();
 	private final List<ExpressionResult> mNeighbourUnionFields = new ArrayList<>();
 
 
@@ -74,7 +74,8 @@ public class ExpressionResultBuilder {
 		mStatements.addAll(original.mStatements);
 		mDeclarations.addAll(original.mDeclarations);
 		mOverappr.addAll(original.mOverappr);
-		mAuxVars.putAll(original.mAuxVars);
+//		mAuxVars.putAll(original.mAuxVars);
+		mAuxVars.addAll(original.mAuxVars);
 		mNeighbourUnionFields.addAll(original.mNeighbourUnionFields);
 		mLrVal = original.mLrVal;
 	}
@@ -113,15 +114,24 @@ public class ExpressionResultBuilder {
 		mOverappr.addAll(oas);
 		return this;
 	}
+	public ExpressionResultBuilder addAuxVar(final AuxVarInfo auxvar) {
+		mAuxVars.add(auxvar);
+		return this;
+	}
 
-	public ExpressionResultBuilder putAuxVar(final VariableDeclaration avDecl, final ILocation avLoc) {
-		mAuxVars.put(avDecl, avLoc);
+	public ExpressionResultBuilder addAuxVars(final Collection<AuxVarInfo> auxvar) {
+		mAuxVars.addAll(auxvar);
 		return this;
 	}
-	public ExpressionResultBuilder putAuxVars(final Map<VariableDeclaration, ILocation> auxVars) {
-		mAuxVars.putAll(auxVars);
-		return this;
-	}
+
+//	public ExpressionResultBuilder putAuxVar(final VariableDeclaration avDecl, final ILocation avLoc) {
+//		mAuxVars.put(avDecl, avLoc);
+//		return this;
+//	}
+//	public ExpressionResultBuilder putAuxVars(final Map<VariableDeclaration, ILocation> auxVars) {
+//		mAuxVars.putAll(auxVars);
+//		return this;
+//	}
 
 	public ExpressionResultBuilder addNeighbourUnionField(final ExpressionResult unionField) {
 		mNeighbourUnionFields.add(unionField);
@@ -132,12 +142,22 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
-	public ExpressionResultBuilder addAllExceptLrValue(final ExpressionResult currentFieldInitializer) {
-		addDeclarations(currentFieldInitializer.getDeclarations());
-		addStatements(currentFieldInitializer.getStatements());
-		addOverapprox(currentFieldInitializer.getOverapprs());
-		putAuxVars(currentFieldInitializer.getAuxVars());
-		addNeighbourUnionFields(currentFieldInitializer.getNeighbourUnionFields());
+	/**
+	 *
+	 * @param exprResult
+	 * @return "this", i.e., the object it is called upon
+	 */
+	public ExpressionResultBuilder addAllExceptLrValue(final ExpressionResult exprResult) {
+		addStatements(exprResult.getStatements());
+		addAllExceptLrValueAndStatements(exprResult);
+		return this;
+	}
+
+	public ExpressionResultBuilder addAllExceptLrValueAndStatements(final ExpressionResult exprResult) {
+		addDeclarations(exprResult.getDeclarations());
+		addOverapprox(exprResult.getOverapprs());
+		addAuxVars(exprResult.getAuxVars());
+		addNeighbourUnionFields(exprResult.getNeighbourUnionFields());
 		return this;
 	}
 
@@ -161,8 +181,9 @@ public class ExpressionResultBuilder {
 		return Collections.unmodifiableList(mOverappr);
 	}
 
-	public Map<VariableDeclaration, ILocation> getAuxVars() {
-		return Collections.unmodifiableMap(mAuxVars);
+//	public Map<VariableDeclaration, ILocation> getAuxVars() {
+	public Set<AuxVarInfo> getAuxVars() {
+		return Collections.unmodifiableSet(mAuxVars);
 	}
 
 	public List<ExpressionResult> getNeighbourUnionFields() {
@@ -183,5 +204,15 @@ public class ExpressionResultBuilder {
 			resetLrVal(lrVal);
 		}
 
+	}
+
+	/**
+	 * Clears the current list of statements and puts the given list in its place.
+	 *
+	 * @param newStatements
+	 */
+	public void resetStatements(final List<Statement> newStatements) {
+		mStatements.clear();
+		mStatements.addAll(newStatements);
 	}
 }
