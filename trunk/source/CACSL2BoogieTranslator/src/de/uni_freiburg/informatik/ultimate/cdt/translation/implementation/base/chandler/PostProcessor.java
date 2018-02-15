@@ -117,8 +117,6 @@ public class PostProcessor {
 	 */
 	public boolean mDeclareToIntFunction = false;
 
-	private final BoogieTypeHelper mBoogieTypeHelper;
-
 	/**
 	 * Constructor.
 	 *
@@ -131,7 +129,6 @@ public class PostProcessor {
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
-		mBoogieTypeHelper = dispatcher.mCHandler.getBoogieTypeHelper();
 	}
 
 	/**
@@ -481,6 +478,7 @@ public class PostProcessor {
 			final VarList[] outParam) {
 
 		final StructHandler structHandler = main.mCHandler.getStructHandler();
+		final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
 
 		final boolean resultTypeIsVoid = (funcSignature.getReturnType() == null);
 
@@ -504,21 +502,21 @@ public class PostProcessor {
 //					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
 			builder.addDeclaration(new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
-//			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
+			//			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
 //					new Expression[] { new IdentifierExpression(loc, oldId) }));
 			final IdentifierExpression oldIdExpr = //new IdentifierExpression(loc, oldId);
 					ExpressionFactory.constructIdentifierExpression(loc,
-							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()), oldId,
+							boogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()), oldId,
 							new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, dispatchingProcedureName));
 			final VariableLHS newIdLhs = //new VariableLHS(loc, newId);
 					ExpressionFactory.constructVariableLHS(loc,
-							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
+							boogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
 							newId, new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
 			builder.addStatement(new AssignmentStatement(loc, new LeftHandSide[] { newIdLhs },
 					new Expression[] { oldIdExpr }));
 			final IdentifierExpression newIdIdExpr = //new IdentifierExpression(loc, newId);
 					ExpressionFactory.constructIdentifierExpression(loc,
-							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
+							boogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
 							newId, new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
 			args.add(newIdIdExpr);
 		}
@@ -575,7 +573,7 @@ public class PostProcessor {
 				final ASTType astType = outParam[0].getType();
 				final VariableLHS lhs = //new VariableLHS(loc, outParam[0].getIdentifiers()[0]);
 						ExpressionFactory.constructVariableLHS(loc,
-								mBoogieTypeHelper.getBoogieTypeForBoogieASTType(astType),
+								boogieTypeHelper.getBoogieTypeForBoogieASTType(astType),
 								id,
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
@@ -662,13 +660,13 @@ public class PostProcessor {
 
 				final IdentifierExpression functionPointerIdex =
 //						new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]);
-						mBoogieTypeHelper.constructIdentifierExpression(loc, inParams[inParams.length -1].getType(),
+						boogieTypeHelper.constructIdentifierExpression(loc, inParams[inParams.length -1].getType(),
 								inParams[inParams.length - 1].getIdentifiers()[0],
 								StorageClass.IMPLEMENTATION_INPARAM, dispatchingProcedureName);
 				final IdentifierExpression functionPointerValueOfCurrentFittingFunctionIdex =
 //						new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i));
-						mBoogieTypeHelper.constructIdentifierExpression(loc,
-								mBoogieTypeHelper.getBoogieTypeForPointerType(),
+						boogieTypeHelper.constructIdentifierExpression(loc,
+								boogieTypeHelper.getBoogieTypeForPointerType(),
 								SFO.FUNCTION_ADDRESS + fittingFunctions.get(i),
 								StorageClass.IMPLEMENTATION_INPARAM, dispatchingProcedureName);
 				final Expression condition =
@@ -692,7 +690,7 @@ public class PostProcessor {
 //						new Expression[] { funcCallResult }));
 				final VariableLHS dispatchingFunctionResultLhs = //new VariableLHS(loc, outParam[0].getIdentifiers()[0]);
 						ExpressionFactory.constructVariableLHS(loc,
-								mBoogieTypeHelper.getBoogieTypeForBoogieASTType(outParam[0].getType()),
+								boogieTypeHelper.getBoogieTypeForBoogieASTType(outParam[0].getType()),
 								outParam[0].getIdentifiers()[0],
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
@@ -728,6 +726,7 @@ public class PostProcessor {
 
 			final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
 			final ExpressionTranslation expressionTranslation = main.mCHandler.getExpressionTranslation();
+			final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
 
 			main.mCHandler.getFunctionHandler().beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
 			final ArrayList<Statement> initStatements = new ArrayList<>();
@@ -753,7 +752,7 @@ public class PostProcessor {
 				// set the value of the NULL-constant to NULL = { base : 0, offset : 0 }
 				final VariableLHS slhs = //new VariableLHS(translationUnitLoc, SFO.NULL);
 						ExpressionFactory.constructVariableLHS(translationUnitLoc,
-								mBoogieTypeHelper.getBoogieTypeForPointerType(),
+								boogieTypeHelper.getBoogieTypeForPointerType(),
 								SFO.NULL,
 								DeclarationInformation.DECLARATIONINFO_GLOBAL);
 				initStatements.add(0, new AssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
@@ -888,6 +887,7 @@ public class PostProcessor {
 		void createStartProc(final Dispatcher main, final ILocation loc) {
 
 			final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
+			final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
 
 //			final Map<String, Procedure> procedures = functionHandler.getProcedures();
 			final String checkedMethod = main.getCheckedMethod();
@@ -932,7 +932,7 @@ public class PostProcessor {
 						assert arg.getIdentifiers().length == 1; // by construction
 						final String id = arg.getIdentifiers()[0];
 						final IdentifierExpression idEx = //new IdentifierExpression(loc, id);
-								mBoogieTypeHelper.constructIdentifierExpression(loc,
+								boogieTypeHelper.constructIdentifierExpression(loc,
 										arg.getType(), id, StorageClass.LOCAL, SFO.START);
 						args.add(idEx);
 					}

@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -137,6 +138,8 @@ public class TypeHandler implements ITypeHandler {
 	private boolean mFloatingTypesNeeded = false;
 	private ICHandler mCHandler;
 
+	private final BoogieType mBoogiePointerType;
+
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
 	}
@@ -154,6 +157,9 @@ public class TypeHandler implements ITypeHandler {
 		mBitvectorTranslation = bitvectorTranslation;
 		mDefinedTypes = new LinkedScopedHashMap<>();
 		mIncompleteType = new LinkedHashSet<>();
+		mBoogiePointerType = new BoogieStructType(
+				new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
+				new BoogieType[] { BoogieType.TYPE_INT, BoogieType.TYPE_INT });
 	}
 
 	@Override
@@ -678,8 +684,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public BoogieType constructBoogiePointerType() {
-		// TODO
-		throw new AssertionError("TODO");
+		return mBoogiePointerType;
 	}
 
 	@Override

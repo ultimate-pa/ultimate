@@ -2017,10 +2017,6 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTSwitchStatement node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-//		ArrayList<Statement> stmt = new ArrayList<>();
-//		final ArrayList<Declaration> decl = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-//		final List<Overapprox> overappr = new ArrayList<>();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// dispatch the controlling expression, convert it to int
@@ -2033,10 +2029,6 @@ public class CHandler implements ICHandler {
 		// 6.8.4.2-5: "The integer promotions are performed on the controlling expression."
 		mExpressionTranslation.doIntegerPromotion(loc, l);
 
-//		stmt.addAll(l.mStmt);
-//		decl.addAll(l.mDecl);
-//		auxVars.putAll(l.mAuxVars);
-//		overappr.addAll(l.mOverappr);
 		resultBuilder.addAllExceptLrValue(l);
 
 		final Expression switchArg = l.mLrVal.getValue();
@@ -2044,14 +2036,10 @@ public class CHandler implements ICHandler {
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String breakLabelName = mNameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
 
-//		final String switchFlag = mNameHandler.getTempVarUID(SFO.AUXVAR.SWITCH, intType);
-//		final VariableDeclaration switchAuxVarDec = SFO.getTempVarVariableDeclaration(switchFlag, flagType, loc);
 		final AuxVarInfo switchAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType, SFO.AUXVAR.SWITCH);
 
 		final ASTType flagType = new PrimitiveType(loc, SFO.BOOL);
 
-//		decl.add(switchAuxvar.getVarDec());
-//		auxVars.put(switchAuxvar.getVarDec(), loc);
 		resultBuilder.addDeclaration(switchAuxvar.getVarDec());
 		resultBuilder.addAuxVar(switchAuxvar);
 
@@ -2076,7 +2064,6 @@ public class CHandler implements ICHandler {
 			}
 			isFirst = false;
 
-//			checkForACSL(main, ifBlock, decl, child, null);
 			checkForACSL(main, ifBlock, resultBuilder.getDeclarations(), child, null);
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
 				final ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
@@ -2091,7 +2078,6 @@ public class CHandler implements ICHandler {
 						final AssignmentStatement assign =
 								new AssignmentStatement(locC,
 										new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { cond });
-//						stmt.add(assign);
 						resultBuilder.addStatement(assign);
 						firstCond = false;
 					} else {
@@ -2099,10 +2085,8 @@ public class CHandler implements ICHandler {
 								new AssignmentStatement(locC, new LeftHandSide[] { switchAuxvar.getLhs() },
 										new Expression[] { ExpressionFactory.newBinaryExpression(locC, Operator.LOGICOR,
 										switchAuxvar.getExp(), cond) });
-//						stmt.add(assign);
 						resultBuilder.addStatement(assign);
 					}
-//					stmt.add(ifStmt);
 					resultBuilder.addStatement(ifStmt);
 				}
 
@@ -2115,10 +2099,6 @@ public class CHandler implements ICHandler {
 					mExpressionTranslation.convertIntToInt(locC, caseExpression, (CPrimitive) l.mLrVal.getCType());
 					cond = ExpressionFactory.newBinaryExpression(locC, Operator.COMPEQ, switchArg,
 							caseExpression.mLrVal.getValue());
-//					decl.addAll(caseExpression.mDecl);
-//					stmt.addAll(caseExpression.mStmt);
-//					auxVars.putAll(caseExpression.mAuxVars);
-//					overappr.addAll(caseExpression.mOverappr);
 					resultBuilder.addAllExceptLrValue(caseExpression);
 				} else {
 					// default statement
@@ -2129,11 +2109,8 @@ public class CHandler implements ICHandler {
 
 				if (r instanceof ExpressionResult) {
 					final ExpressionResult res = (ExpressionResult) r;
-//					decl.addAll(res.mDecl);
 					resultBuilder.addDeclarations(res.getDeclarations());
-//					auxVars.putAll(res.mAuxVars);
 					resultBuilder.addAuxVars(res.getAuxVars());
-//					overappr.addAll(res.mOverappr);
 					resultBuilder.addOverapprox(res.getOverapprs());
 					for (final Statement s : res.mStmt) {
 						if (s instanceof BreakStatement) {
@@ -2146,7 +2123,6 @@ public class CHandler implements ICHandler {
 				if (r.node != null && r.node instanceof Body) {
 					// we already have a unique naming for variables! -> unfold
 					final Body b = (Body) r.node;
-//					decl.addAll(Arrays.asList(b.getLocalVars()));
 					resultBuilder.addDeclarations(Arrays.asList(b.getLocalVars()));
 					for (final Statement s : b.getBlock()) {
 						if (s instanceof BreakStatement) {
@@ -2170,7 +2146,6 @@ public class CHandler implements ICHandler {
 				final AssignmentStatement assign =
 						new AssignmentStatement(locC, new LeftHandSide[] { switchAuxvar.getLhs() },
 								new Expression[] { cond });
-//				stmt.add(assign);
 				resultBuilder.addStatement(assign);
 				firstCond = false;
 			} else {
@@ -2178,24 +2153,18 @@ public class CHandler implements ICHandler {
 						new AssignmentStatement(locC, new LeftHandSide[] { switchAuxvar.getLhs() },
 								new Expression[] { ExpressionFactory.newBinaryExpression(locC, Operator.LOGICOR,
 								switchAuxvar.getExp(), cond) });
-//				stmt.add(assign);
 				resultBuilder.addStatement(assign);
 			}
-//			stmt.add(ifStmt);
 			resultBuilder.addStatement(ifStmt);
 		}
 		checkForACSL(main, resultBuilder.getStatements(), resultBuilder.getDeclarations(), null, node);
 
-//		stmt.add(new Label(loc, breakLabelName));
 		resultBuilder.addStatement(new Label(loc, breakLabelName));
-//		stmt.addAll(createHavocsForAuxVars(auxVars));
 		resultBuilder.addStatements(createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
-//		stmt = updateStmtsAndDeclsAtScopeEnd(main, decl, stmt);
 		updateStmtsAndDeclsAtScopeEnd(main, resultBuilder);
 		endScope();
 
-//		return new ExpressionResult(stmt, null, decl, new LinkedHashMap<VariableDeclaration, ILocation>(), overappr);
 		assert resultBuilder.getLrVal() == null;
 		return resultBuilder.build();
 	}
@@ -2267,12 +2236,6 @@ public class CHandler implements ICHandler {
 					mExpressionTranslation
 							.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
 		}
-
-		// replaced by staticObjectsHandler:
-//		for (final Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
-//			assert d instanceof ConstDeclaration || d instanceof VariableDeclaration || d instanceof TypeDeclaration;
-//			decl.add(d);
-//		}
 
 		decl.addAll(mAxioms);
 
