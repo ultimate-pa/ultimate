@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -54,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Yannick Bühler
@@ -101,7 +99,7 @@ public class FlatSymbolTable {
 	 * The name handler.
 	 */
 	private final INameHandler mNameHandler;
-	
+
 	public FlatSymbolTable(final MultiparseSymbolTable mst, final Dispatcher disp, final INameHandler nameHandler) {
 		mGlobalScope = new LinkedHashMap<>();
 		mCTable = new LinkedHashMap<>();
@@ -121,14 +119,14 @@ public class FlatSymbolTable {
 		};
 		mBoogieIdToCId = new HashMap<>();
 		mCDeclToBoogieDecl = new HashMap<>();
-		
+
 		mNameHandler = nameHandler;
 		// importAllGlobals(nameHandler);
 	}
 
 	/**
 	 * Implements the generic table lookup
-	 * 
+	 *
 	 * @param hook
 	 *            the hook which acts as an anchor for the current context in the AST
 	 * @param id
@@ -170,7 +168,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Lookup in the C-AST symbol table
-	 * 
+	 *
 	 * @see FlatSymbolTable#tableFind(IASTNode, String, Map, boolean)
 	 */
 	public SymbolTableValue findCSymbol(final IASTNode hook, final String id) {
@@ -179,7 +177,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Convenience method for checking if an entry exists
-	 * 
+	 *
 	 * @see FlatSymbolTable#findCSymbol(IASTNode, String)
 	 */
 	public boolean containsCSymbol(final IASTNode hook, final String id) {
@@ -188,7 +186,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Checks whether the entry with the given ID exists (or is shadowed) in the innermost scope
-	 * 
+	 *
 	 * @see FlatSymbolTable#containsCSymbol(IASTNode, String)
 	 */
 	public boolean containsCSymbolInInnermostScope(final IASTNode hook, final String id) {
@@ -197,7 +195,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Finds an entry in the innermost scope
-	 * 
+	 *
 	 * @see FlatSymbolTable#findCSymbol(IASTNode, String)
 	 */
 	public SymbolTableValue findCSymbolInInnermostScope(final IASTNode hook, final String id) {
@@ -206,7 +204,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Fetches the unique scope ID at the given hook
-	 * 
+	 *
 	 * @param hook
 	 *            where in the AST to look for scopes
 	 * @return the unique scope ID
@@ -239,7 +237,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Stores a value in the table
-	 * 
+	 *
 	 * @param hook
 	 *            anchor in the AST
 	 * @param id
@@ -278,7 +276,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Stores a C symbol
-	 * 
+	 *
 	 * @see FlatSymbolTable#tableStore(IASTNode, String, SymbolTableValue)
 	 */
 	public void storeCSymbol(final IASTNode hook, final String id, final SymbolTableValue val) {
@@ -289,7 +287,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Fetches all values in the innermost C scope
-	 * 
+	 *
 	 * @param hook
 	 *            the anchor in the C AST
 	 * @return the values that are present in the innermost scope
@@ -300,6 +298,9 @@ public class FlatSymbolTable {
 			if (mCTable.containsKey(cursor)) {
 				return Collections.unmodifiableCollection(mCTable.get(cursor).values());
 			}
+			if (hasOwnScope(cursor)) {
+				return Collections.emptyList();
+			}
 			cursor = cursor.getParent();
 			cursor = mCHookSkip.apply(cursor);
 		}
@@ -308,7 +309,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Renames an identifier given the file it is in and the original name
-	 * 
+	 *
 	 * @param filePath
 	 *            The file the identifier is used in
 	 * @param original
@@ -321,7 +322,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Fetches the C ID for the given Boogie ID
-	 * 
+	 *
 	 * @param boogieId
 	 *            the boogie ID
 	 * @return the C ID
@@ -332,7 +333,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Fetches the Boogie Declaration for the given C Declaration
-	 * 
+	 *
 	 * @param cDecl
 	 *            the C declaration
 	 * @return the Boogie Declaration
@@ -344,7 +345,7 @@ public class FlatSymbolTable {
 	/**
 	 * Checks whether a variable with the given boogie ID is known, used for checking if a variable is a temporary
 	 * variable
-	 * 
+	 *
 	 * @param boogieId
 	 *            the boogie ID
 	 * @return whether the variable is contained in the symbol table
@@ -355,7 +356,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Manually adds a C/Boogie ID pair to the symbol table
-	 * 
+	 *
 	 * @param boogieIdentifier
 	 *            the boogie ID
 	 * @param cIdentifier
@@ -373,7 +374,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Returns the Boogie to C ID mapping
-	 * 
+	 *
 	 * @return the boogie to C ID mapping
 	 */
 	public Map<String, String> getBoogieCIdentifierMapping() {
@@ -382,7 +383,7 @@ public class FlatSymbolTable {
 
 	/**
 	 * Fetches the type of a variable
-	 * 
+	 *
 	 * @param hook
 	 *            where to look for the variable
 	 * @param cId
@@ -394,10 +395,10 @@ public class FlatSymbolTable {
 	public ASTType getTypeOfVariable(final IASTNode hook, final String cId, final ILocation loc) {
 		return mDispatcher.mTypeHandler.cType2AstType(loc, findCSymbol(hook, cId).getCVariable());
 	}
-	
+
 	/**
 	 * Creates a boogie identifier.
-	 * 
+	 *
 	 * @param scope
 	 *            where the identifier is used
 	 * @param scopeHook
@@ -410,8 +411,16 @@ public class FlatSymbolTable {
 	 *            the original identifier in C
 	 * @return the identifier
 	 */
-	public String createBoogieId(final IASTNode scope, final IASTNode scopeHook, final CType type, 
-			final boolean onHeap, final String cName) {
+	public String createBoogieId(final IASTNode scope, final IASTNode scopeHook, final CType type, final boolean onHeap,
+			final String cName) {
 		return mNameHandler.getUniqueIdentifier(scope, cName, getCScopeId(scopeHook), onHeap, type);
+	}
+
+	private static boolean hasOwnScope(final IASTNode node) {
+		final boolean hasImplicitScope = node instanceof IASTFunctionDefinition || node instanceof IASTForStatement;
+		final boolean hasExplicitScope =
+				node instanceof IASTCompoundStatement && !(node.getParent() instanceof IASTFunctionDefinition)
+						&& !(node.getParent() instanceof IASTForStatement);
+		return hasImplicitScope || hasExplicitScope;
 	}
 }
