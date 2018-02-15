@@ -2025,22 +2025,18 @@ public class MemoryHandler {
 					auxVars, overappr);
 			mExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
 
-			final String bvReturnedValueId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
-			final VariableDeclaration bvtVarDecl =
-					SFO.getTempVarVariableDeclaration(bvReturnedValueId, returnedValueAstType, loc);
-			auxVars.put(bvtVarDecl, loc);
-			decl.add(bvtVarDecl);
-			final VariableLHS[] bvlhss = new VariableLHS[] { new VariableLHS(loc, bvReturnedValueId) };
+//			final String bvReturnedValueId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
+//			final VariableDeclaration bvtVarDecl =
+//					SFO.getTempVarVariableDeclaration(bvReturnedValueId, returnedValueAstType, loc);
+			final AuxVarInfo bvReturnedValueAux = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MEMREAD);
+			decl.add(bvReturnedValueAux.getVarDec());
+			auxVars.put(bvReturnedValueAux.getVarDec(), loc);
+			final VariableLHS[] bvlhss = new VariableLHS[] { bvReturnedValueAux.getLhs() };
 			final AssignmentStatement as =
 					new AssignmentStatement(loc, bvlhss, new Expression[] { result.mLrVal.getValue() });
 			stmt.add(as);
 			// TODO is it correct to use returnedValueAstType here?
-			final IdentifierExpression bvReturnedValueIdExpr = //new IdentifierExpression(loc, bvReturnedValueId);
-					ExpressionFactory.constructIdentifierExpression(loc,
-							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType),
-							bvReturnedValueId,
-							new DeclarationInformation(StorageClass.LOCAL, mFunctionHandler.getCurrentProcedureID()));
-			result.mLrVal = new RValue(bvReturnedValueIdExpr, resultType);
+			result.mLrVal = new RValue(bvReturnedValueAux.getExp(), resultType);
 		} else {
 			final IdentifierExpression returnedValueIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
 					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType),

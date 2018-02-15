@@ -235,7 +235,7 @@ public class StructHandler {
 
 		final CType resultType = structType.getFieldTypes()[fieldIndex];
 
-		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType);
+		final ExpressionResult call = mMemoryHandler.getReadCall(main, newPointer, resultType);
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();

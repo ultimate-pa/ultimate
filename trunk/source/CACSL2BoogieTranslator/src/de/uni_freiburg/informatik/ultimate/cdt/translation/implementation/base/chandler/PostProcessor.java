@@ -30,11 +30,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -58,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
@@ -75,21 +72,23 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -102,11 +101,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @date 12.10.2012
  */
 public class PostProcessor {
-	/**
-	 * Holds the Boogie identifiers of the initialized global variables. Used for filling the modifies clause of
-	 * Ultimate.start and Ultimate.init.
-	 */
-	private final LinkedHashSet<String> mInitializedGlobals;
+//	/**
+//	 * Holds the Boogie identifiers of the initialized global variables. Used for filling the modifies clause of
+//	 * Ultimate.start and Ultimate.init.
+//	 */
+//	private final LinkedHashSet<String> mInitializedGlobals;
 
 	private final Dispatcher mDispatcher;
 	private final ILogger mLogger;
@@ -129,7 +128,7 @@ public class PostProcessor {
 	 */
 	public PostProcessor(final Dispatcher dispatcher, final ILogger logger,
 			final ExpressionTranslation expressionTranslation, final boolean overapproximateFloatingPointOperations) {
-		mInitializedGlobals = new LinkedHashSet<>();
+//		mInitializedGlobals = new LinkedHashSet<>();
 		mDispatcher = dispatcher;
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
@@ -295,26 +294,26 @@ public class PostProcessor {
 		return decl;
 	}
 
-	/**
-	 *
-	 *
-	 * @param initStatements
-	 * @return
-	 */
-	private boolean assertInitializedGlobalsTracksAllInitializedVariables(final Collection<Statement> initStatements) {
-		for (final Statement stmt : initStatements) {
-			if (stmt instanceof AssignmentStatement) {
-				final AssignmentStatement ass = (AssignmentStatement) stmt;
-				assert ass.getLhs().length == 1; // by construction ...
-				final LeftHandSide lhs = ass.getLhs()[0];
-				final String id = BoogieASTUtil.getLHSId(lhs);
-				if (!mInitializedGlobals.contains(id)) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
+//	/**
+//	 *
+//	 *
+//	 * @param initStatements
+//	 * @return
+//	 */
+//	private boolean assertInitializedGlobalsTracksAllInitializedVariables(final Collection<Statement> initStatements) {
+//		for (final Statement stmt : initStatements) {
+//			if (stmt instanceof AssignmentStatement) {
+//				final AssignmentStatement ass = (AssignmentStatement) stmt;
+//				assert ass.getLhs().length == 1; // by construction ...
+//				final LeftHandSide lhs = ass.getLhs()[0];
+//				final String id = BoogieASTUtil.getLHSId(lhs);
+//				if (!mInitializedGlobals.contains(id)) {
+//					return false;
+//				}
+//			}
+//		}
+//		return true;
+//	}
 
 	/**
 	 * Generate type declarations like, e.g., the following. type { :isUnsigned true } { :bitsize 16 } C_USHORT = bv16;
@@ -562,12 +561,21 @@ public class PostProcessor {
 //			stmt.addAll(rex.mStmt);
 			builder.addAllExceptLrValue(rex);
 
+			assert outParam.length <= 1;
 			if (outParam.length == 1) {
 //				stmt.add(new AssignmentStatement(loc,
 //						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
 //						new Expression[] { funcCallResult }));
+				final String id = outParam[0].getIdentifiers()[0];
+				final ASTType astType = outParam[0].getType();
+				final VariableLHS lhs = //new VariableLHS(loc, outParam[0].getIdentifiers()[0]);
+						ExpressionFactory.constructVariableLHS(loc,
+								mBoogieTypeHelper.getBoogieTypeForBoogieASTType(astType),
+								id,
+								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+										dispatchingProcedureName));
 				builder.addStatement(new AssignmentStatement(loc,
-						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
+						new LeftHandSide[] { lhs },
 						new Expression[] { funcCallResult }));
 			}
 //			stmt.addAll(CHandler.createHavocsForAuxVars(rex.mAuxVars));
@@ -582,20 +590,24 @@ public class PostProcessor {
 		} else {
 //			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
-			String tmpId = null;
-
+//			final String tmpId = null;
+			AuxVarInfo auxvar = null;
 			if (!resultTypeIsVoid) {
-				tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
-				final VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
-						new VarList[] { new VarList(loc, new String[] { tmpId }, funcSignature.getReturnType()) });
+//				tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
+//				final VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
+//						new VarList[] { new VarList(loc, new String[] { tmpId }, funcSignature.getReturnType()) });
+				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main,
+						funcSignature.getReturnType(),
+						SFO.AUXVAR.FUNCPTRRES);
 //				decl.add(tmpVarDec);
-				builder.addDeclaration(tmpVarDec);
+				builder.addDeclaration(auxvar.getVarDec());
 //				auxVars.put(tmpVarDec, loc);
-				builder.putAuxVar(tmpVarDec, loc);
+				builder.putAuxVar(auxvar.getVarDec(), loc);
 				funcCallResult = //new IdentifierExpression(loc, tmpId);
-						ExpressionFactory.constructIdentifierExpression(loc,
-								mBoogieTypeHelper.getBoogieTypeForPointerType(), tmpId,
-								new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
+//						ExpressionFactory.constructIdentifierExpression(loc,
+//								mBoogieTypeHelper.getBoogieTypeForPointerType(), tmpId,
+//								new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
+						auxvar.getExp();
 			}
 
 //			final ExpressionResult firstElseRex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main,
@@ -614,7 +626,7 @@ public class PostProcessor {
 			firstElseStmt.addAll(firstElseRex.mStmt);
 			if (!resultTypeIsVoid) {
 				final AssignmentStatement assignment =
-						new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
+						new AssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
 								new Expression[] { firstElseRex.mLrVal.getValue() });
 				firstElseStmt.add(assignment);
 			}
@@ -637,7 +649,7 @@ public class PostProcessor {
 				newStmts.addAll(currentRex.mStmt);
 				if (!resultTypeIsVoid) {
 					final AssignmentStatement assignment =
-							new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
+							new AssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
 									new Expression[] { currentRex.mLrVal.getValue() });
 					newStmts.add(assignment);
 				}
@@ -736,10 +748,14 @@ public class PostProcessor {
 						translationUnitLoc, zero, memoryHandler.getValidArrayLhs(translationUnitLoc),
 						literalThatRepresentsFalse);
 				initStatements.add(0, assignment);
-				mInitializedGlobals.add(SFO.VALID);
+//				mInitializedGlobals.add(SFO.VALID);
 
 				// set the value of the NULL-constant to NULL = { base : 0, offset : 0 }
-				final VariableLHS slhs = new VariableLHS(translationUnitLoc, SFO.NULL);
+				final VariableLHS slhs = //new VariableLHS(translationUnitLoc, SFO.NULL);
+						ExpressionFactory.constructVariableLHS(translationUnitLoc,
+								mBoogieTypeHelper.getBoogieTypeForPointerType(),
+								SFO.NULL,
+								DeclarationInformation.DECLARATIONINFO_GLOBAL);
 				initStatements.add(0, new AssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
 						new Expression[] { new StructConstructor(translationUnitLoc, new String[] { "base", "offset" },
 								new Expression[] {
@@ -748,9 +764,9 @@ public class PostProcessor {
 										expressionTranslation.constructLiteralForIntegerType(translationUnitLoc,
 												expressionTranslation.getCTypeOfPointerComponents(),
 												BigInteger.ZERO) }) }));
-				mInitializedGlobals.add(SFO.NULL);
+//				mInitializedGlobals.add(SFO.NULL);
 			}
-			assert assertInitializedGlobalsTracksAllInitializedVariables(initStatements);
+//			assert assertInitializedGlobalsTracksAllInitializedVariables(initStatements);
 
 			// initialization for statics and other globals
 			for (final Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
@@ -792,7 +808,7 @@ public class PostProcessor {
 					}
 				}
 				for (final VarList vl : ((VariableDeclaration) en.getKey()).getVariables()) {
-					mInitializedGlobals.addAll(Arrays.asList(vl.getIdentifiers()));
+//					mInitializedGlobals.addAll(Arrays.asList(vl.getIdentifiers()));
 				}
 			}
 
@@ -802,7 +818,7 @@ public class PostProcessor {
 			 */
 			main.mCHandler.getStaticObjectsHandler().freeze();
 			initStatements.addAll(main.mCHandler.getStaticObjectsHandler().getStatementsForUltimateInit());
-			mInitializedGlobals.addAll(main.mCHandler.getStaticObjectsHandler().getVariablesModifiedByUltimateInit());
+//			mInitializedGlobals.addAll(main.mCHandler.getStaticObjectsHandler().getVariablesModifiedByUltimateInit());
 
 			// should not be necessary:
 //			mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
@@ -871,14 +887,14 @@ public class PostProcessor {
 				functionHandler.beginUltimateInitOrStart(main, loc, SFO.START);
 
 //				Procedure startDeclaration = null;
-				Specification[] specsStart = new Specification[0];
+//				Specification[] specsStart = new Specification[0];
 
 //				functionHandler.addCallGraphEdge(SFO.START, SFO.INIT);
 //				functionHandler.addCallGraphEdge(SFO.START, checkedMethod);
 
 				final ArrayList<Statement> startStmt = new ArrayList<>();
 				final ArrayList<VariableDeclaration> startDecl = new ArrayList<>();
-				specsStart = new Specification[1];
+//				specsStart = new Specification[1];
 				startStmt.add(new CallStatement(loc, false, new VariableLHS[0], SFO.INIT, new Expression[0]));
 				final VarList[] checkedMethodOutParams =
 						functionHandler.getProcedureDeclaration(checkedMethod).getOutParams();
@@ -911,33 +927,42 @@ public class PostProcessor {
 				if (checkedMethodOutParams.length != 0) {
 					assert checkedMethodOutParams.length == 1;
 					// there is 1(!) return value
-					final String checkMethodRet = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
-					main.mCHandler.getSymbolTable().addToReverseMap(checkMethodRet, SFO.NO_REAL_C_VAR + checkMethodRet,
+//					final String checkMethodRet = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
+//					final VarList tempVar =
+//							new VarList(loc, new String[] { checkMethodRet }, checkedMethodOutParams[0].getType());
+//					final VariableDeclaration tmpVar =
+//							new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+					final CType checkedMethodResultCType =
+							functionHandler.getCFunctionType(checkedMethod).getResultType();
+					final AuxVarInfo checkedMethodReturnAuxVar = CTranslationUtil.constructAuxVarInfo(loc, main,
+							checkedMethodResultCType, SFO.AUXVAR.RETURNED);
+					main.mCHandler.getSymbolTable().addToReverseMap(
+							checkedMethodReturnAuxVar.getExp().getIdentifier(),
+							SFO.NO_REAL_C_VAR + checkedMethodReturnAuxVar.getExp().getIdentifier(),
+//							checkMethodRet,
+//							SFO.NO_REAL_C_VAR + checkMethodRet,
 							loc);
-					final VarList tempVar =
-							new VarList(loc, new String[] { checkMethodRet }, checkedMethodOutParams[0].getType());
-					final VariableDeclaration tmpVar =
-							new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
-					startDecl.add(tmpVar);
-					startStmt.add(new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, checkMethodRet) },
+					startDecl.add(checkedMethodReturnAuxVar.getVarDec());
+					startStmt.add(new CallStatement(loc, false,
+							new VariableLHS[] { checkedMethodReturnAuxVar.getLhs() },
 							checkedMethod, args.toArray(new Expression[args.size()])));
 				} else { // void
 					startStmt.add(new CallStatement(loc, false, new VariableLHS[0], checkedMethod,
 							args.toArray(new Expression[args.size()])));
 				}
 
-				final LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<>();
-				for (final String id : mInitializedGlobals) {
-					startModifiesClause.add(new VariableLHS(loc, id));
-				}
+//				final LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<>();
+//				for (final String id : mInitializedGlobals) {
+//					startModifiesClause.add(new VariableLHS(loc, id));
+//				}
 
 				// should not be necessary if we treat start and init as normal procedures
 //				for (final String id : functionHandler.getModifiedGlobals().get(checkedMethod)) {
 //					startModifiesClause.add(new VariableLHS(loc, id));
 //				}
 
-				specsStart[0] = new ModifiesSpecification(loc, false,
-						startModifiesClause.toArray(new VariableLHS[startModifiesClause.size()]));
+//				specsStart[0] = new ModifiesSpecification(loc, false,
+//						startModifiesClause.toArray(new VariableLHS[startModifiesClause.size()]));
 
 				final Body startBody = new Body(loc, startDecl.toArray(new VariableDeclaration[startDecl.size()]),
 						startStmt.toArray(new Statement[startStmt.size()]));

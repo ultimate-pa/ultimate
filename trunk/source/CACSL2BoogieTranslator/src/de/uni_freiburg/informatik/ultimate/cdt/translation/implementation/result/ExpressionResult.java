@@ -232,11 +232,11 @@ public class ExpressionResult extends Result {
 
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-				final ExpressionResult rex = memoryHandler.getReadCall(hlv.getAddress(), underlyingType);
+				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.mLrVal;
 			} else if (underlyingType instanceof CPointer) {
-				final ExpressionResult rex = memoryHandler.getReadCall(hlv.getAddress(), underlyingType);
+				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.mLrVal;
 			} else if (underlyingType instanceof CArray) {
@@ -463,7 +463,7 @@ public class ExpressionResult extends Result {
 					readRex = readStructFromHeap(main, structHandler, memoryHandler, loc, readAddress,
 							(CStruct) arrayType.getValueType().getUnderlyingType());
 				} else {
-					readRex = memoryHandler.getReadCall(readAddress, arrayType.getValueType());
+					readRex = memoryHandler.getReadCall(main, readAddress, arrayType.getValueType());
 				}
 				builder.addAllExceptLrValue(readRex);
 				if (builder.getLrVal() == null) {

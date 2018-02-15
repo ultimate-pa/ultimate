@@ -1066,20 +1066,20 @@ public class InitializationHandler {
 					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
 
 					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
-					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-							exprResult.getAuxVar().getExp().getIdentifier());
-					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
-					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
-					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
+//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
+//							exprResult.getAuxVar().getExp().getIdentifier());
+//					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
+//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
+//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
 					/*
 					 * if the literal was short enought that we actually write it to memory, add the corresponding
 					 *  memory array
 					 */
 					if (!exprResult.overApproximatesLongStringLiteral()) {
 //						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.MEMORY_INT);
-						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-								main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
-									.getVariableName());
+//						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
+//								main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
+//									.getVariableName());
 					}
 
 					final ExpressionResult onlyRValueExprResult = new ExpressionResultBuilder()
