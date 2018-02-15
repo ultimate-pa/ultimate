@@ -32,8 +32,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -164,27 +162,30 @@ public class PostProcessor {
 	 *            a set of uninitialized global variables.
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(final Dispatcher main, final ILocation loc,
-			final MemoryHandler memoryHandler, final ArrayHandler arrayHandler, final FunctionHandler functionHandler,
-			final StructHandler structHandler, final TypeHandler typeHandler, final Set<String> undefinedTypes,
-			final LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie,
-			final ExpressionTranslation expressionTranslation) {
+	public ArrayList<Declaration> postProcess(final Dispatcher main, final ILocation loc) {
+//			final LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
+
+
+		final Set<String> undefinedTypes = main.mTypeHandler.getUndefinedTypes();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 
-		final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main, memoryHandler, arrayHandler,
-				functionHandler, structHandler, mDeclarationsGlobalInBoogie, expressionTranslation);
+		final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main);//, mDeclarationsGlobalInBoogie);
 		decl.add(initProcedure.getUltimateInitImplementation());
 
-		final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc, functionHandler);
+		final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc);
 		decl.add(startProcedure.getUltimateStartDeclaration());
 //		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler,
 //				initProcedure.getUltimateInitModifiesClauseContents()));
 
-		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
-		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
+		decl.addAll(declareFunctionPointerProcedures(main));
+		decl.addAll(declareConversionFunctions(main));
+
+		final TypeHandler typeHandler = (TypeHandler) main.mTypeHandler;
 
 		if ((typeHandler).isBitvectorTranslation()) {
+			final ExpressionTranslation expressionTranslation = main.mCHandler.getExpressionTranslation();
+
 			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), typeHandler));
 
 			if ((typeHandler).areFloatingTypesNeeded()) {
@@ -199,9 +200,9 @@ public class PostProcessor {
 		return decl;
 	}
 
-	private ArrayList<Declaration> declareConversionFunctions(final Dispatcher main,
-			final FunctionHandler functionHandler, final MemoryHandler memoryHandler,
-			final StructHandler structHandler) {
+	private ArrayList<Declaration> declareConversionFunctions(final Dispatcher main) {
+//			final FunctionHandler functionHandler, final MemoryHandler memoryHandler,
+//			final StructHandler structHandler) {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -249,9 +250,11 @@ public class PostProcessor {
 		return decls;
 	}
 
-	private ArrayList<Declaration> declareFunctionPointerProcedures(final Dispatcher main,
-			final FunctionHandler functionHandler, final MemoryHandler memoryHandler,
-			final StructHandler structHandler) {
+	private ArrayList<Declaration> declareFunctionPointerProcedures(final Dispatcher main) {
+		final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
+		final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
+
+
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Declaration> result = new ArrayList<>();
 		for (final ProcedureSignature cFunc : functionHandler.getFunctionsSignaturesWithFunctionPointers()) {
@@ -270,7 +273,7 @@ public class PostProcessor {
 							// functionHandler.getFunctionPointerFunctionBody(ignoreLoc, main, memoryHandler,
 							// structHandler, procName, cFunc, inParams, outParams));
 							getFunctionPointerFunctionBody(ignoreLoc, main, functionHandler, memoryHandler,
-									structHandler, procName, cFunc, inParams, outParams));
+									procName, cFunc, inParams, outParams));
 			result.add(functionPointerMuxProc);
 		}
 		return result;
@@ -473,9 +476,11 @@ public class PostProcessor {
 	 * @return
 	 */
 	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main,
-			final FunctionHandler functionHandler, final MemoryHandler memoryHandler, final StructHandler structHandler,
+			final FunctionHandler functionHandler, final MemoryHandler memoryHandler,
 			final String dispatchingProcedureName, final ProcedureSignature funcSignature, final VarList[] inParams,
 			final VarList[] outParam) {
+
+		final StructHandler structHandler = main.mCHandler.getStructHandler();
 
 		final boolean resultTypeIsVoid = (funcSignature.getReturnType() == null);
 
@@ -709,35 +714,29 @@ public class PostProcessor {
 	class UltimateInitProcedure {
 
 		private Declaration mUltimateInitImplementation;
-		private final List<VariableLHS> mModifiesClauseContents;
+//		private final List<VariableLHS> mModifiesClauseContents;
 
-		UltimateInitProcedure(final ILocation translationUnitLoc,
-				final Dispatcher main,
-				final MemoryHandler memoryHandler,
-				final ArrayHandler arrayHandler,
-				final FunctionHandler functionHandler,
-				final StructHandler structHandler,
-				final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie,
-				final ExpressionTranslation expressionTranslation) {
-			mModifiesClauseContents = new ArrayList<>();
-			createInit(translationUnitLoc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
-					declarationsGlobalInBoogie, expressionTranslation);
+		UltimateInitProcedure(final ILocation translationUnitLoc, final Dispatcher main) {//,
+//				final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie) {
+//			mModifiesClauseContents = new ArrayList<>();
+			createInit(translationUnitLoc, main);//, declarationsGlobalInBoogie);
 		}
 
-		void createInit(final ILocation translationUnitLoc,
-			final Dispatcher main, final MemoryHandler memoryHandler, final ArrayHandler arrayHandler,
-			final FunctionHandler functionHandler, final StructHandler structHandler,
-			final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie,
-			final ExpressionTranslation expressionTranslation) {
+		void createInit(final ILocation translationUnitLoc, final Dispatcher main) {
+//			final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie) {
 
-			functionHandler.beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
+			final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
+			final ExpressionTranslation expressionTranslation = main.mCHandler.getExpressionTranslation();
+
+			main.mCHandler.getFunctionHandler().beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
 			final ArrayList<Statement> initStatements = new ArrayList<>();
 			final Collection<String> proceduresCalledByUltimateInit = new HashSet<>();
 
 //			final ArrayList<Declaration> decl = new ArrayList<>();
 			final ArrayList<VariableDeclaration> initDecl = new ArrayList<>();
 
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
+			if (main.mCHandler.getMemoryHandler().getRequiredMemoryModelFeatures()
+					.isMemoryModelInfrastructureRequired()) {
 
 				// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is not allocated)
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(translationUnitLoc,
@@ -769,10 +768,12 @@ public class PostProcessor {
 //			assert assertInitializedGlobalsTracksAllInitializedVariables(initStatements);
 
 			// initialization for statics and other globals
-			for (final Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
-				if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration) {
-					continue;
-				}
+//			for (final Entry<Declaration, CDeclaration> en : declarationsGlobalInBoogie.entrySet()) {
+			for (final Entry<VariableDeclaration, CDeclaration> en :
+					main.mCHandler.getStaticObjectsHandler().getGlobalVariableDeclsWithAssociatedCDecls().entrySet()) {
+//				if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration) {
+//					continue;
+//				}
 				final ILocation currentDeclsLoc = en.getKey().getLocation();
 				final InitializerResult initializer = en.getValue().getInitializer();
 
@@ -784,17 +785,25 @@ public class PostProcessor {
 					continue;
 				}
 
-				for (final VarList vl : ((VariableDeclaration) en.getKey()).getVariables()) {
+				for (final VarList vl : en.getKey().getVariables()) {
 					for (final String id : vl.getIdentifiers()) {
+
+						final VariableLHS lhs = //new VariableLHS(currentDeclsLoc, id);
+								ExpressionFactory.constructVariableLHS(currentDeclsLoc,
+										main.mCHandler.getBoogieTypeHelper()
+											.getBoogieTypeForBoogieASTType(vl.getType()),
+										id,
+										DeclarationInformation.DECLARATIONINFO_GLOBAL);
+
 						if (main.mCHandler.isHeapVar(id)) {
 							final LocalLValue llVal =
-									new LocalLValue(new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), null);
+									new LocalLValue(lhs, en.getValue().getType(), null);
 							initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc));
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.Ultimate_Alloc.name());
 						}
 
 						final ExpressionResult initRex = main.mCHandler.getInitHandler().initialize(currentDeclsLoc,
-								main, new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
+								main, lhs, en.getValue().getType(), initializer);
 						for (final Statement stmt : initRex.getStatements()) {
 							if (stmt instanceof CallStatement) {
 								proceduresCalledByUltimateInit.add(((CallStatement) stmt).getMethodName());
@@ -807,7 +816,7 @@ public class PostProcessor {
 						}
 					}
 				}
-				for (final VarList vl : ((VariableDeclaration) en.getKey()).getVariables()) {
+				for (final VarList vl : en.getKey().getVariables()) {
 //					mInitializedGlobals.addAll(Arrays.asList(vl.getIdentifiers()));
 				}
 			}
@@ -851,7 +860,7 @@ public class PostProcessor {
 
 //			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT, proceduresCalledByUltimateInit);
 //			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT);
-			functionHandler.endUltimateInitOrStart(main, SFO.INIT);
+			main.mCHandler.getFunctionHandler().endUltimateInitOrStart(main, SFO.INIT);
 
 			mUltimateInitImplementation = initProcedureImplementation;
 		}
@@ -860,9 +869,9 @@ public class PostProcessor {
 			return mUltimateInitImplementation;
 		}
 
-		public List<VariableLHS> getUltimateInitModifiesClauseContents() {
-			return  mModifiesClauseContents;
-		}
+//		public List<VariableLHS> getUltimateInitModifiesClauseContents() {
+//			return  mModifiesClauseContents;
+//		}
 
 	}
 
@@ -871,11 +880,14 @@ public class PostProcessor {
 
 		private Procedure mStartProcedure;
 
-		UltimateStartProcedure(final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler) {
-			createStartProc(main, loc, functionHandler);
+		UltimateStartProcedure(final Dispatcher main, final ILocation loc) {
+			createStartProc(main, loc);
 		}
 
-		void createStartProc(final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler) {
+		void createStartProc(final Dispatcher main, final ILocation loc) {
+
+			final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
+
 //			final Map<String, Procedure> procedures = functionHandler.getProcedures();
 			final String checkedMethod = main.getCheckedMethod();
 
