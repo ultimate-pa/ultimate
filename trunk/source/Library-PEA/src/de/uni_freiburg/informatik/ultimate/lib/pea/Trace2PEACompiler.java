@@ -815,8 +815,8 @@ public class Trace2PEACompiler {
 			for (final Entry<String, String> entry : bbedec.getVars().entrySet()) {
 				final String oldType = variables.put(entry.getKey(), entry.getValue());
 				if (oldType != null && !oldType.equals(entry.getValue())) {
-					throw new IllegalArgumentException("Variable with conflicting type declared: " + entry.getKey()
-							+ " : " + oldType + " vs. " + entry.getValue());
+					throw new IllegalArgumentException(name + " Variable with conflicting type declared: "
+							+ entry.getKey() + " : " + oldType + " vs. " + entry.getValue());
 				}
 			}
 		} else {

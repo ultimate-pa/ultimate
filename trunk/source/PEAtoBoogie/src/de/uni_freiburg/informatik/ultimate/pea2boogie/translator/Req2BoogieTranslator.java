@@ -252,6 +252,9 @@ public class Req2BoogieTranslator {
 		for (final InitializationPattern init : mInit) {
 			final ASTType type;
 			type = toPrimitiveType(init.getType(), loc).toASTType(loc);
+			if (type.getBoogieType() == BoogieType.TYPE_ERROR) {
+				mLogger.error(init.getIdent() + " has type None");
+			}
 			addStateVar(init.getIdent(), type, loc);
 		}
 
@@ -301,7 +304,14 @@ public class Req2BoogieTranslator {
 			for (final Entry<String, String> entry : varMap.entrySet()) {
 				final String name = entry.getKey();
 				final String type = entry.getValue();
-				final ASTType astType = getBoogieType(type, mBoogieLocations[i + 1]);
+
+				if (type == null) {
+					if (!mStateVars.containsKey(name)) {
+						syntaxError(mBoogieLocations[i + 1],
+								"Variable " + name + " not declared in " + currentAutomaton.getName());
+					}
+					continue;
+				}
 
 				switch (type.toLowerCase()) {
 				case "bool":
@@ -312,7 +322,7 @@ public class Req2BoogieTranslator {
 					}
 					break;
 				case "event":
-					mEventVars.put(name, astType);
+					mEventVars.put(name, getBoogieType("bool", mBoogieLocations[i + 1]));
 					break;
 				default:
 					mLogger.warn("Skipping unknown PEA variable type " + type);

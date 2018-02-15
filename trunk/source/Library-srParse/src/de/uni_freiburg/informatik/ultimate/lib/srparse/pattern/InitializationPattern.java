@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 public class InitializationPattern extends PatternType {
 
 	public enum VarAccess {
-		IN, OUT, HIDDEN
+		IN, OUT, HIDDEN, CONST
 	}
 
 	private final String mType;
