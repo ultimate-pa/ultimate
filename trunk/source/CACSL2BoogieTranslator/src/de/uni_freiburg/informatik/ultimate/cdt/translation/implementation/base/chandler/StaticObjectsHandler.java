@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -53,15 +52,15 @@ public class StaticObjectsHandler {
 
 	private final Collection<Declaration> mGlobalDeclarations = new ArrayList<>();
 	private final Collection<Statement> mStatementsForUltimateInit = new ArrayList<>();
-	private final Collection<String> mVariablesModifiedByUltimateInit = new HashSet<>();
+//	private final Collection<String> mVariablesModifiedByUltimateInit = new HashSet<>();
 //	private final Collection<String> mProceduresCalledByUltimateInit = new HashSet<>();
 
 	private boolean mIsFrozen = false;
 
-	public void addVariableModifiedByUltimateInit(final String varName) {
-		assert !mIsFrozen;
-		mVariablesModifiedByUltimateInit.add(varName);
-	}
+//	public void addVariableModifiedByUltimateInit(final String varName) {
+//		assert !mIsFrozen;
+//		mVariablesModifiedByUltimateInit.add(varName);
+//	}
 
 	public void addGlobalDeclaration(final Declaration decl) {
 		assert !mIsFrozen;
@@ -73,13 +72,13 @@ public class StaticObjectsHandler {
 		mGlobalDeclarations.addAll(decls);
 	}
 
-	public void addStatementForUltimateInit(final Statement stmt) {
-		assert !mIsFrozen;
-//		if (stmt instanceof CallStatement) {
-//			addProcedureCalledByUltimateInit(((CallStatement) stmt).getMethodName());
-//		}
-		mStatementsForUltimateInit.add(stmt);
-	}
+//	public void addStatementForUltimateInit(final Statement stmt) {
+//		assert !mIsFrozen;
+////		if (stmt instanceof CallStatement) {
+////			addProcedureCalledByUltimateInit(((CallStatement) stmt).getMethodName());
+////		}
+//		mStatementsForUltimateInit.add(stmt);
+//	}
 
 	public void addStatementsForUltimateInit(final Collection<Statement> stmts) {
 		assert !mIsFrozen;
@@ -106,10 +105,10 @@ public class StaticObjectsHandler {
 		return mStatementsForUltimateInit;
 	}
 
-	public Collection<String> getVariablesModifiedByUltimateInit() {
-		assert mIsFrozen;
-		return mVariablesModifiedByUltimateInit;
-	}
+//	public Collection<String> getVariablesModifiedByUltimateInit() {
+//		assert mIsFrozen;
+//		return mVariablesModifiedByUltimateInit;
+//	}
 
 //	public Collection<String> getProceduresCalledByUltimateInit() {
 //		assert mIsFrozen;

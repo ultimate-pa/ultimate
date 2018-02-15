@@ -281,7 +281,8 @@ public class CHandler implements ICHandler {
 			for (final VarList varList : varLists) {
 				for (final String varId : varList.getIdentifiers()) {
 					final ILocation originloc = allAuxVars.get(varDecl);
-					result.add(new HavocStatement(originloc, new VariableLHS[] { new VariableLHS(originloc, varId) }));
+					final VariableLHS lhs = new VariableLHS(originloc, varId);
+					result.add(new HavocStatement(originloc, new VariableLHS[] { lhs }));
 				}
 			}
 		}
@@ -1854,6 +1855,16 @@ public class CHandler implements ICHandler {
 					declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 				} else {
+					if (mFunctionHandler.isGlobalScope()) {
+						declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+					} else {
+						declarationInformation = new DeclarationInformation(StorageClass.LOCAL,
+								mFunctionHandler.getCurrentProcedureID());
+					}
+					final BoogieType boogieType = mTypeHandler.astTypeToBoogieType(
+											mTypeHandler.cType2AstType(loc, cDec.getType()));
+
+
 					/**
 					 * For Variable length arrays we have a "non-real" initializer which just initializes the aux var
 					 * for the array's size. We do not want to treat this like other initializers (call initVar and so).
@@ -1877,7 +1888,8 @@ public class CHandler implements ICHandler {
 							result = new ExpressionResult((LRValue) null);
 						}
 
-						final VariableLHS lhs = new VariableLHS(loc, bId);
+						final VariableLHS lhs = //new VariableLHS(loc, bId);
+								ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
 
 						if (cDec.hasInitializer()) { // must be a non-real initializer for variable length array size
 														// --> need to pass this on
@@ -1906,7 +1918,8 @@ public class CHandler implements ICHandler {
 						// in case of a local variable declaration with an initializer, the statements and delcs
 						// necessary for the initialization are the result
 						assert result instanceof SkipResult || result instanceof ExpressionResult;
-						final VariableLHS lhs = new VariableLHS(loc, bId);
+						final VariableLHS lhs = //new VariableLHS(loc, bId);
+								ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
 						final ExpressionResult initRex =
 								mInitHandler.initialize(loc, main, lhs, cDec.getType(), cDec.getInitializer());
 						if (result instanceof SkipResult) {
@@ -1938,13 +1951,7 @@ public class CHandler implements ICHandler {
 					}
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
 							new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-//					globalInBoogie |= mFunctionHandler.isGlobalScope();
-					if (mFunctionHandler.isGlobalScope()) {
-						declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-					} else {
-						declarationInformation = new DeclarationInformation(StorageClass.LOCAL,
-								mFunctionHandler.getCurrentProcedureID());
-					}
+
 				}
 
 				// reset the symbol table value with its final contents

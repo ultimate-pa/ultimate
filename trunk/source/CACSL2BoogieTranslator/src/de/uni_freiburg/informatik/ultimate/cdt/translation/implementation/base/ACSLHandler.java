@@ -703,10 +703,12 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final Dispatcher main, final Assigns node) {
 		mSpecType = ACSLHandler.SPEC_TYPE.ASSIGNS;
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-		final ArrayList<String> identifiers = new ArrayList<>();
+		final List<IdentifierExpression> identifiers = new ArrayList<>();
 		for (final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression e : node.getLocations()) {
 			if (e instanceof de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression) {
-				identifiers.add(((IdentifierExpression) main.dispatch(e).node).getIdentifier());
+				final IdentifierExpression dispatched = ((IdentifierExpression) main.dispatch(e).node);
+//				identifiers.add(dispatched.getIdentifier());
+				identifiers.add(dispatched);
 			} else {
 				final String msg = "Unexpected Expression: " + e.getClass();
 				throw new UnsupportedSyntaxException(loc, msg);
@@ -714,7 +716,10 @@ public class ACSLHandler implements IACSLHandler {
 		}
 		final VariableLHS[] identifiersVarLHS = new VariableLHS[identifiers.size()];
 		for (int i = 0; i < identifiers.size(); i++) {
-			identifiersVarLHS[i] = new VariableLHS(loc, identifiers.get(i));
+			identifiersVarLHS[i] = //new VariableLHS(loc, identifiers.get(i));
+					ExpressionFactory.constructVariableLHS(loc, (BoogieType) identifiers.get(i).getType() ,
+							identifiers.get(i).getIdentifier(),
+							identifiers.get(i).getDeclarationInformation());
 		}
 
 		final ModifiesSpecification req = new ModifiesSpecification(loc, false, identifiersVarLHS);
