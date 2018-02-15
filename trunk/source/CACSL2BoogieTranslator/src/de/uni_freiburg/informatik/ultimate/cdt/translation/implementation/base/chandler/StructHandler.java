@@ -28,22 +28,17 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
@@ -63,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
@@ -236,17 +230,21 @@ public class StructHandler {
 		final CType resultType = structType.getFieldTypes()[fieldIndex];
 
 		final ExpressionResult call = mMemoryHandler.getReadCall(main, newPointer, resultType);
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final List<Overapprox> overappr = new ArrayList<>();
-		stmt.addAll(call.mStmt);
-		decl.addAll(call.mDecl);
-		auxVars.putAll(call.mAuxVars);
-		overappr.addAll(call.mOverappr);
-		final ExpressionResult result =
-				new ExpressionResult(stmt, new RValue(call.mLrVal.getValue(), resultType), decl, auxVars, overappr);
-		return result;
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+//		final ArrayList<Statement> stmt = new ArrayList<>();
+//		final ArrayList<Declaration> decl = new ArrayList<>();
+//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//		final List<Overapprox> overappr = new ArrayList<>();
+//		stmt.addAll(call.mStmt);
+//		decl.addAll(call.mDecl);
+//		auxVars.putAll(call.mAuxVars);
+//		overappr.addAll(call.mOverappr);
+		resultBuilder.addAllExceptLrValue(call);
+//		final ExpressionResult result =
+//				new ExpressionResult(stmt, new RValue(call.mLrVal.getValue(), resultType), decl, auxVars, overappr);
+		resultBuilder.setLrVal(new RValue(call.mLrVal.getValue(), resultType));
+//		return result;
+		return resultBuilder.build();
 	}
 
 	Expression computeStructFieldOffset(final MemoryHandler memoryHandler, final ILocation loc, final int fieldIndex,

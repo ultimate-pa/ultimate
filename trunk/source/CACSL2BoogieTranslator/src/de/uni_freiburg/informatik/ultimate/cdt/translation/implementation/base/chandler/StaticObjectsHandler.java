@@ -128,36 +128,7 @@ public class StaticObjectsHandler {
 		if (oldBooogieDec != null) {
 			removeDeclaration(oldBooogieDec);
 			addGlobalTypeDeclaration(newBoogieDec, oldCDec);
-//			mGlobalDeclarations.add(e)
-//			mTypeDeclarationToCDeclaration.put(newBoogieDec, oldCDec);
-//			mDeclarationsGlobalInBoogie.remove(oldBoogieDec);
-//			mDeclarationsGlobalInBoogie.put(newBoogieDec, oldCDec);
 		}
-
-
-		// TODO Auto-generated method stub
-
-	//		assert incompleteStruct.getClass().equals(cvar.getClass());
-//		assert incompleteStruct.isIncomplete();
-//		TypeDeclaration oldDec = null;
-//		CDeclaration oldCDec = null;
-//		TypeDeclaration newDec = null;
-//		for (final Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
-//			if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
-//				oldDec = (TypeDeclaration) en.getKey();
-//				oldCDec = en.getValue();
-//				newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(), oldDec.isFinite(),
-//						oldDec.getIdentifier(), oldDec.getTypeParams(),
-//						mTypeHandler.cType2AstType(oldDec.getLocation(), cvar));
-//				break; // the if should be entered only once, anyway
-//			}
-//		}
-//		if (oldDec != null) {
-//			mDeclarationsGlobalInBoogie.remove(oldDec);
-//			mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
-//		}
-
-
 	}
 
 	public void removeDeclaration(final Declaration boogieDecl) {

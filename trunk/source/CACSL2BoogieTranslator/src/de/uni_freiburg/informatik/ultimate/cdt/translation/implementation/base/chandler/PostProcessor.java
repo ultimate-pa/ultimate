@@ -607,7 +607,7 @@ public class PostProcessor {
 //				decl.add(tmpVarDec);
 				builder.addDeclaration(auxvar.getVarDec());
 //				auxVars.put(tmpVarDec, loc);
-				builder.putAuxVar(auxvar.getVarDec(), loc);
+				builder.addAuxVar(auxvar);
 				funcCallResult = //new IdentifierExpression(loc, tmpId);
 //						ExpressionFactory.constructIdentifierExpression(loc,
 //								mBoogieTypeHelper.getBoogieTypeForPointerType(), tmpId,
@@ -625,7 +625,8 @@ public class PostProcessor {
 				builder.addDeclaration(dec);
 			}
 //			auxVars.putAll(firstElseRex.mAuxVars);
-			builder.putAuxVars(firstElseRex.getAuxVars());
+//			builder.putAuxVars(firstElseRex.getAuxVars());
+			builder.addAuxVars(firstElseRex.getAuxVars());
 
 			final ArrayList<Statement> firstElseStmt = new ArrayList<>();
 			firstElseStmt.addAll(firstElseRex.mStmt);
@@ -648,7 +649,7 @@ public class PostProcessor {
 					builder.addDeclaration(dec);
 				}
 //				auxVars.putAll(currentRex.mAuxVars);
-				builder.putAuxVars(currentRex.mAuxVars);
+				builder.addAuxVars(currentRex.mAuxVars);
 
 				final ArrayList<Statement> newStmts = new ArrayList<>();
 				newStmts.addAll(currentRex.mStmt);
