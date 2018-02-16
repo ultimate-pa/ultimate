@@ -401,8 +401,12 @@ public class MemoryHandler {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ASTType pointerComponentType =
 				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
+		final BoogieType boogieType = BoogieType.createArrayType(0,
+				new BoogieType[] { (BoogieType) pointerComponentType.getBoogieType() },
+				(BoogieType) pointerComponentType.getBoogieType());
 		final ASTType lengthType =
-				new ArrayType(ignoreLoc, new String[0], new ASTType[] { pointerComponentType }, pointerComponentType);
+				new ArrayType(ignoreLoc, boogieType, new String[0], new ASTType[] { pointerComponentType },
+						pointerComponentType);
 		final VarList vlL = new VarList(ignoreLoc, new String[] { SFO.LENGTH }, lengthType);
 		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlL });
 	}
@@ -412,7 +416,11 @@ public class MemoryHandler {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ASTType pointerComponentType =
 				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
-		final ASTType validType = new ArrayType(ignoreLoc, new String[0], new ASTType[] { pointerComponentType },
+		final BoogieType boogieType = BoogieType.createArrayType(0,
+				new BoogieType[] { (BoogieType) pointerComponentType.getBoogieType() },
+				(BoogieType) mBooleanArrayHelper.constructBoolReplacementType().getBoogieType());
+		final ASTType validType = new ArrayType(ignoreLoc, boogieType, new String[0],
+				new ASTType[] { pointerComponentType },
 				mBooleanArrayHelper.constructBoolReplacementType());
 		final VarList vlV = new VarList(ignoreLoc, new String[] { SFO.VALID }, validType);
 		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlV });
@@ -1021,8 +1029,12 @@ public class MemoryHandler {
 
 	private VariableDeclaration constructMemoryArrayDeclaration(final ILocation loc, final String typeName,
 			final ASTType astType) {
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.constructBoogiePointerType() },
+						(BoogieType) astType.getBoogieType());
 		final ASTType memoryArrayType =
-				new ArrayType(loc, new String[0], new ASTType[] { mTypeHandler.constructPointerType(loc) }, astType);
+				new ArrayType(loc, boogieType,
+						new String[0], new ASTType[] { mTypeHandler.constructPointerType(loc) }, astType);
 		final VarList varList = new VarList(loc, new String[] { SFO.MEMORY + "_" + typeName }, memoryArrayType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
@@ -2374,19 +2386,19 @@ public class MemoryHandler {
 		@Override
 		public ASTType constructBoolReplacementType() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, "bool");
+			return new PrimitiveType(ignoreLoc, BoogieType.TYPE_BOOL, "bool");
 		}
 
 		@Override
 		public Expression constructTrue() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new BooleanLiteral(ignoreLoc, true);
+			return new BooleanLiteral(ignoreLoc, BoogieType.TYPE_BOOL, true);
 		}
 
 		@Override
 		public Expression constructFalse() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new BooleanLiteral(ignoreLoc, false);
+			return new BooleanLiteral(ignoreLoc, BoogieType.TYPE_BOOL, false);
 		}
 
 		@Override
@@ -2401,19 +2413,19 @@ public class MemoryHandler {
 		@Override
 		public ASTType constructBoolReplacementType() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, "int");
+			return new PrimitiveType(ignoreLoc, BoogieType.TYPE_INT, "int");
 		}
 
 		@Override
 		public Expression constructTrue() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new IntegerLiteral(ignoreLoc, "1");
+			return new IntegerLiteral(ignoreLoc, BoogieType.TYPE_INT, "1");
 		}
 
 		@Override
 		public Expression constructFalse() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new IntegerLiteral(ignoreLoc, "0");
+			return new IntegerLiteral(ignoreLoc, BoogieType.TYPE_INT, "0");
 		}
 
 		@Override
@@ -2429,19 +2441,19 @@ public class MemoryHandler {
 		@Override
 		public ASTType constructBoolReplacementType() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, "bv1");
+			return new PrimitiveType(ignoreLoc, BoogieType.createBitvectorType(1), "bv1");
 		}
 
 		@Override
 		public Expression constructTrue() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new BitvecLiteral(ignoreLoc, "1", 1);
+			return new BitvecLiteral(ignoreLoc, BoogieType.createBitvectorType(1), "1", 1);
 		}
 
 		@Override
 		public Expression constructFalse() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new BitvecLiteral(ignoreLoc, "0", 1);
+			return new BitvecLiteral(ignoreLoc, BoogieType.createBitvectorType(1), "0", 1);
 		}
 
 		@Override

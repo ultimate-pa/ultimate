@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -77,6 +78,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	public static final String BOOGIE_ROUNDING_MODE_IDENTIFIER = "FloatRoundingMode";
 	public static final String BOOGIE_ROUNDING_MODE_RNE = "RoundingMode_RNE";
 	public static final String BOOGIE_ROUNDING_MODE_RTZ = "RoundingMode_RTZ";
+	public static final BoogieType TYPE_OF_BOOGIE_ROUNDING_MODES = BoogieType.TYPE_INT;
 
 	public static final String SMT_LIB_NAN = "NaN";
 	public static final String SMT_LIB_PLUS_INF = "+oo";
@@ -98,7 +100,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final IdentifierExpression roundingMode = //new IdentifierExpression(null, BOOGIE_ROUNDING_MODE_RNE);
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-						BoogieType.TYPE_INT, BOOGIE_ROUNDING_MODE_RNE, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+						TYPE_OF_BOOGIE_ROUNDING_MODES, BOOGIE_ROUNDING_MODE_RNE,
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 		mRoundingMode = roundingMode;
 	}
@@ -370,7 +373,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
 			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, resultCType);
 			int counter = 1;
-			paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
+			paramASTTypes[0] = new NamedType(loc, TYPE_OF_BOOGIE_ROUNDING_MODES,
+					BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 			for (final CPrimitive cType : paramCType) {
 				paramASTTypes[counter] = mTypeHandler.cType2AstType(loc, cType);
 				counter += 1;
@@ -390,8 +394,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	private void declareFloatingPointConstructorFromReal(final ILocation loc, final CPrimitive type) {
 		final String smtFunctionName = "to_fp";
 		final ASTType[] paramASTTypes = new ASTType[2];
-		paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
-		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
+		paramASTTypes[0] = new NamedType(loc, TYPE_OF_BOOGIE_ROUNDING_MODES,
+					 BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
+		paramASTTypes[1] = new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final Attribute[] attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName,
 				new int[] { fps.getExponent(), fps.getSignificant() });
@@ -404,9 +409,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final String smtFunctionName = "fp";
 		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final ASTType[] paramASTTypes = new ASTType[3];
-		paramASTTypes[0] = new PrimitiveType(loc, "bv1");
-		paramASTTypes[1] = new PrimitiveType(loc, "bv" + fps.getExponent());
-		paramASTTypes[2] = new PrimitiveType(loc, "bv" + (fps.getSignificant() - 1));
+		paramASTTypes[0] = new PrimitiveType(loc, BoogiePrimitiveType.createBitvectorType(1), "bv1");
+		paramASTTypes[1] = new PrimitiveType(loc, BoogiePrimitiveType.createBitvectorType(fps.getExponent()),
+				"bv" + fps.getExponent());
+		paramASTTypes[2] = new PrimitiveType(loc, BoogiePrimitiveType.createBitvectorType(fps.getSignificant() - 1),
+				"bv" + (fps.getSignificant() - 1));
 		final Attribute[] attributes =
 				generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, null);
 		final ASTType resultASTType = mTypeHandler.cType2AstType(loc, type);
@@ -728,7 +735,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 			final Attribute[] attributes;
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, oldType);
-			final ASTType roundingMode = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
+			final ASTType roundingMode = new NamedType(loc, TYPE_OF_BOOGIE_ROUNDING_MODES,
+					BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 			if (newType.isFloatingType()) {
 				final int[] indices = new int[2];
 				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType.getType());
@@ -960,7 +968,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final CPrimitive argumentCType = (CPrimitive) argument.getCType();
 		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentCType);
 		final CPrimitive resultCType = new CPrimitive(CPrimitives.INT);
-		final ASTType resultBoogieType = new PrimitiveType(loc, SFO.BOOL);
+		final ASTType resultBoogieType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
 		final Attribute[] attributes =
 				generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, null);
 		final ASTType paramBoogieType = mTypeHandler.cType2AstType(loc, argumentCType);

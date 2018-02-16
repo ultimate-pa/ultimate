@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -711,7 +712,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 						new Expression[] { new StringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
 				final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type1);
-				final ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
+				final ASTType resultAstType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType,
 						paramAstType, paramAstType);
 			}
