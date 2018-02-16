@@ -71,8 +71,8 @@ public class RValue extends LRValue {
 	public RValue(final Expression value, final CType cType,
 			final boolean isBoogieBool, final boolean isIntFromPointer) {
 		super(cType, isBoogieBool, isIntFromPointer);
-		checkType(cType);
 		this.value = value;
+		checkType(cType);
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class RValue extends LRValue {
 		if (type instanceof CFunction) {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
-		if (!ExpressionFactory.areBoogieAndCTypeCompatible()) {
+		if (!ExpressionFactory.areBoogieAndCTypeCompatible(type, value.getType())) {
 			throw new IllegalArgumentException("The value of the constructed RValue has a BoogieType that is "
 					+ "incompatible with its CType.");
 		}

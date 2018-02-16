@@ -689,8 +689,30 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public BoogieType astTypeToBoogieType(final ASTType astType) {
-		// TODO
-		throw new AssertionError("TODO");
+		return (BoogieType) astType.getBoogieType();
+//		// TODO starting with a rather naive implementation..
+//
+//		if (astType.getBoogieType() != null) {
+//			return (BoogieType) astType.getBoogieType();
+//		}
+//
+//		if (astType instanceof PrimitiveType) {
+//			final PrimitiveType pt = (PrimitiveType) astType;
+//			switch(pt.getName()) {
+//			case "int" :
+//				return BoogieType.TYPE_INT;
+//			case "real" :
+//				return BoogieType.TYPE_REAL;
+//			case "bool" :
+//				return BoogieType.TYPE_BOOL;
+//			default :
+//				throw new AssertionError("TODO");
+//			}
+//		} else if (astType instanceof NamedType) {
+//			final NamedType nt = (NamedType) astType;
+//			nt.get
+//		}
+//		throw new AssertionError("TODO");
 	}
 
 	/**
