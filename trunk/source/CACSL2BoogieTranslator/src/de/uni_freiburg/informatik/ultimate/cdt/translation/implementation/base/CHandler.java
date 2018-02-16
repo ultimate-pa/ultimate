@@ -1884,8 +1884,14 @@ public class CHandler implements ICHandler {
 				final DeclarationInformation declarationInformation;
 				if (storageClass == CStorageClass.TYPEDEF) {
 					boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
+
+					final BoogieType boogieType =
+							(BoogieType) mTypeHandler.cType2AstType(loc, cDec.getType().getUnderlyingType())
+								.getBoogieType();
+
 					mTypeHandler.addDefinedType(bId,
-							new TypesResult(new NamedType(loc, cDec.getName(), null), false, false, cDec.getType()));
+							new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null), false, false,
+									cDec.getType()));
 					// TODO: add a sizeof-constant for the type??
 //					globalInBoogie = true;
 					declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
@@ -2038,7 +2044,7 @@ public class CHandler implements ICHandler {
 
 		final AuxVarInfo switchAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType, SFO.AUXVAR.SWITCH);
 
-		final ASTType flagType = new PrimitiveType(loc, SFO.BOOL);
+		final ASTType flagType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
 
 		resultBuilder.addDeclaration(switchAuxvar.getVarDec());
 		resultBuilder.addAuxVar(switchAuxvar);

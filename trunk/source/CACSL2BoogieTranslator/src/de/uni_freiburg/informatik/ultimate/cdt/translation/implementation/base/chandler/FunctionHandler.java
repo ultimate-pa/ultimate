@@ -1329,7 +1329,8 @@ public class FunctionHandler {
 //			if (mMethodsCalledBeforeDeclared.contains(methodName)) {
 			if (mMethodsCalledBeforeDeclared.contains(procInfo)) {
 				// this method was assumed to return int -> return int
-				out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, SFO.INT));
+				out[0] = new VarList(loc, new String[] { SFO.RES },
+						new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT));
 			} else {
 				// void, so there are no out vars
 				out = new VarList[0];

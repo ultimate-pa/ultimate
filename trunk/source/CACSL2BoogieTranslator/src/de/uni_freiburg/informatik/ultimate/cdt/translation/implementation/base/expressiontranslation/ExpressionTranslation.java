@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -542,7 +543,7 @@ public abstract class ExpressionTranslation {
 					new Expression[] { new StringLiteral(loc, functionName) });
 			final Attribute[] attributes = new Attribute[] { attribute };
 			final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type);
-			final ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
+			final ASTType resultAstType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType,
 					paramAstType);
 		}

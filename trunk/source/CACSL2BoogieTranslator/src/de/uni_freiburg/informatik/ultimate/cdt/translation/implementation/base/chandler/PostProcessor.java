@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
@@ -210,9 +211,11 @@ public class PostProcessor {
 		// IdentifierExpression inRealIdex = new IdentifierExpression(ignoreLoc, inReal);
 		final String outInt = "outInt";
 		// IdentifierExpression outIntIdex = new IdentifierExpression(ignoreLoc, outInt);
-		final VarList realParam = new VarList(ignoreLoc, new String[] {}, new PrimitiveType(ignoreLoc, SFO.REAL));
+		final VarList realParam = new VarList(ignoreLoc, new String[] {},
+				new PrimitiveType(ignoreLoc, BoogieType.TYPE_REAL, SFO.REAL));
 		final VarList[] oneRealParam = new VarList[] { realParam };
-		final VarList intParam = new VarList(ignoreLoc, new String[] { outInt }, new PrimitiveType(ignoreLoc, SFO.INT));
+		final VarList intParam = new VarList(ignoreLoc, new String[] { outInt },
+				new PrimitiveType(ignoreLoc, BoogieType.TYPE_INT, SFO.INT));
 		// VarList[] oneIntParam = new VarList[] { intParam };
 		// Expression inRealGeq0 = new BinaryExpression(ignoreLoc,
 		// BinaryExpression.Operator.COMPGEQ, inRealIdex, new IntegerLiteral(ignoreLoc, SFO.NR0));
@@ -389,11 +392,13 @@ public class PostProcessor {
 		}
 		decls.add(new ConstDeclaration(loc, attributesRNE, false,
 				new VarList(loc, new String[] { BitvectorTranslation.BOOGIE_ROUNDING_MODE_RNE },
-						new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),
+						new NamedType(loc, BitvectorTranslation.TYPE_OF_BOOGIE_ROUNDING_MODES,
+								BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),
 				null, false));
 		decls.add(new ConstDeclaration(loc, attributesRTZ, false,
 				new VarList(loc, new String[] { BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ },
-						new NamedType(loc, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),
+						new NamedType(loc, BitvectorTranslation.TYPE_OF_BOOGIE_ROUNDING_MODES,
+								BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0])),
 				null, false));
 
 		for (final CPrimitive.CPrimitives cPrimitive : CPrimitive.CPrimitives.values()) {

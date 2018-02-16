@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Jeremi Dzienian
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Cookiefy plug-in.
- * 
+ *
  * The ULTIMATE Cookiefy plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Cookiefy plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Cookiefy plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Cookiefy plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Cookiefy plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Cookiefy plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cookiefy;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Implementation of the Cookiefy Algorithm
- * 
+ *
  * @author Jeremi
  */
 public class CookiefyAlgorithm implements IUnmanagedObserver {
@@ -86,12 +86,12 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	protected Program InputProgram;
 	private final ILogger mLogger;
 
-	public CookiefyAlgorithm(ILogger logger) {
+	public CookiefyAlgorithm(final ILogger logger) {
 		mLogger = logger;
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		root = null;
 	}
 
@@ -109,7 +109,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 
 		if (root instanceof WrapperNode) {
 			if (((WrapperNode) root).getBacking() instanceof Unit) {
@@ -133,7 +133,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 
 	/**
 	 * Executes the Cookiefy Algorithm
-	 * 
+	 *
 	 * @param P
 	 *            input program
 	 * @param entryPoint
@@ -144,8 +144,8 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	 *            initial valuation for global variables
 	 * @return
 	 */
-	public Program Cookiefy(Unit P, String entryPoint, Map<String, Expression> entryPointInit,
-			Map<String, Expression> globalVarsInit) {
+	public Program Cookiefy(final Unit P, final String entryPoint, final Map<String, Expression> entryPointInit,
+			final Map<String, Expression> globalVarsInit) {
 		final Program EncodedProgram = new Program(mLogger);
 
 		// add program entry point
@@ -219,11 +219,11 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 
 	/**
 	 * shortcut for Cookiefy Algorithm. Initializes some standard init values
-	 * 
+	 *
 	 * @param P
 	 * @return
 	 */
-	public Program Cookiefy(Unit P) {
+	public Program Cookiefy(final Unit P) {
 		if (!InputProgram.Procedures.containsKey("main")) {
 			mLogger.error("Input program contains no program entry point named 'main'");
 			return null; // TODO??
@@ -239,13 +239,13 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 
 	/**
 	 * see algorithm 8 in "Cookiefy"
-	 * 
+	 *
 	 * @param cp
 	 * @param p
 	 * @param EncodedProgram
 	 * @return
 	 */
-	private Statement[] TemporalProcedureBody(ContextPathNode cp, Procedure p, Program EncodedProgram) {
+	private Statement[] TemporalProcedureBody(final ContextPathNode cp, final Procedure p, final Program EncodedProgram) {
 		int pp = 0;
 		final LinkedList<Statement> statements = new LinkedList<Statement>();
 
@@ -353,9 +353,9 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 
 	/**
 	 * Create global return values for each type that could be returned
-	 * 
+	 *
 	 */
-	private void create_globalRetVals(Program encodedProgram) {
+	private void create_globalRetVals(final Program encodedProgram) {
 		final Map<String, VariableDeclaration> retVals = new HashMap<String, VariableDeclaration>();
 
 		for (final Procedure p : TemplateStore.getInputProgram().Procedures.values()) {

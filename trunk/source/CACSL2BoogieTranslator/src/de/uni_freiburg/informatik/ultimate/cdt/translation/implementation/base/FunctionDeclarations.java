@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * Collect function declarations for all functions that are used in the translation. During the translation we use one
  * object of this class. The object provides methods to construct function declarations. At the end of the translation
  * process all these function declarations should be added to the resulting Boogie program.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -71,7 +72,7 @@ public class FunctionDeclarations {
 			final boolean boogieResultTypeBool, final CPrimitive resultCType, final CPrimitive... paramCTypes) {
 		final ASTType resultASTType;
 		if (boogieResultTypeBool) {
-			resultASTType = new PrimitiveType(loc, "bool");
+			resultASTType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
 		} else {
 			resultASTType = mTypeHandler.cType2AstType(loc, resultCType);
 		}
@@ -116,7 +117,7 @@ public class FunctionDeclarations {
 
 	/**
 	 * Check if all CPrimitives in a sequence are equivalent.
-	 * 
+	 *
 	 * @return true iff all CPrimitives in cPrimitives are equivalent.
 	 */
 	public boolean checkParameters(final CPrimitive... cPrimitives) {
