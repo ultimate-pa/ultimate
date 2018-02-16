@@ -531,9 +531,9 @@ public class ExpressionFactory {
 		}
 	}
 
-	public static boolean areBoogieAndCTypeCompatible() {
-		// TODO Auto-generated method stub
-		return false;
+	public static boolean areBoogieAndCTypeCompatible(final Object cType, final IBoogieType iBoogieType) {
+		// TODO implement a check here! (will have to move it because CType is not visible..
+		return true;
 	}
 
 
