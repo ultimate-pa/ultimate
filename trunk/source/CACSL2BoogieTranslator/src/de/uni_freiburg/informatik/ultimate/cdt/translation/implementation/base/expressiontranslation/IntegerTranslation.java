@@ -218,9 +218,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, typeLeft, typeLeft, typeRight);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[] { left, right });
+		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
+		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
+		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+				new Expression[] { left, right },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		return func;
 	}
 
@@ -256,9 +258,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private Expression constructUnaryIntExprTilde(final ILocation loc, final Expression expr, final CPrimitive type) {
 		final String funcname = "bitwiseComplement";
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, type);
-		return ExpressionFactory.constructFunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname,
-				new Expression[] { expr });
+		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
+		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
+		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
@@ -725,7 +728,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 						paramAstType, paramAstType);
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { exp1, exp2 });
+					new Expression[] { exp1, exp2 },
+					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		}
 		BinaryExpression.Operator op;
 		switch (nodeOperator) {
@@ -767,7 +771,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 			}
-			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { exp });
+			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { exp },
+					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		}
 		return constructUnaryIntExprMinus(loc, exp, type);
 	}
@@ -786,7 +791,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { exp1, exp2 });
+					new Expression[] { exp1, exp2 },
+					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		}
 		return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
 	}
@@ -828,7 +834,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		if (mOverapproximateFloatingPointOperations) {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { exp1, exp2 });
+					new Expression[] { exp1, exp2 },
+					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		}
 		return constructEquality(loc, nodeOperator, exp1, exp2);
 	}
@@ -917,7 +924,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				newType);
 		final Expression oldExpression = rexp.mLrVal.getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { oldExpression });
+				new Expression[] { oldExpression },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.mLrVal = rValue;
 	}
