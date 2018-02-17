@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 
 public class LocalLValue extends LRValue {
@@ -73,7 +73,7 @@ public class LocalLValue extends LRValue {
 
 	@Override
 	public Expression getValue() {
-		return CHandler.convertLHSToExpression(lhs);
+		return CTranslationUtil.convertLHSToExpression(lhs);
 	}
 	
 	public BitfieldInformation getBitfieldInformation() {

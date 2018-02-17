@@ -63,14 +63,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
@@ -334,7 +332,8 @@ public class PostProcessor {
 			if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 				final Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, "isUnsigned",
-						new Expression[] { new BooleanLiteral(loc, typeSizes.isUnsigned(cPrimitiveO)) });
+						new Expression[] { new BooleanLiteral(loc, BoogieType.TYPE_BOOL,
+								typeSizes.isUnsigned(cPrimitiveO)) });
 				final int bytesize = typeSizes.getSize(cPrimitive);
 				final int bitsize = bytesize * 8;
 				attributes[1] = new NamedAttribute(loc, "bitsize",
@@ -587,7 +586,7 @@ public class PostProcessor {
 						new Expression[] { funcCallResult }));
 			}
 //			stmt.addAll(CHandler.createHavocsForAuxVars(rex.mAuxVars));
-			builder.addStatements(CHandler.createHavocsForAuxVars(rex.mAuxVars));
+			builder.addStatements(CTranslationUtil.createHavocsForAuxVars(rex.mAuxVars));
 //			stmt.add(new ReturnStatement(loc));
 			builder.addStatement(new ReturnStatement(loc));
 
@@ -707,7 +706,7 @@ public class PostProcessor {
 //			stmt.add(new ReturnStatement(loc));
 //			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
 //					stmt.toArray(new Statement[stmt.size()]));
-			builder.addStatements(CHandler.createHavocsForAuxVars(builder.getAuxVars()));
+			builder.addStatements(CTranslationUtil.createHavocsForAuxVars(builder.getAuxVars()));
 			builder.addStatement(new ReturnStatement(loc));
 			return new Body(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
@@ -761,7 +760,9 @@ public class PostProcessor {
 								SFO.NULL,
 								DeclarationInformation.DECLARATIONINFO_GLOBAL);
 				initStatements.add(0, new AssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
-						new Expression[] { new StructConstructor(translationUnitLoc, new String[] { "base", "offset" },
+						new Expression[] {
+								ExpressionFactory.constructStructConstructor(translationUnitLoc,
+										new String[] { "base", "offset" },
 								new Expression[] {
 										expressionTranslation.constructLiteralForIntegerType(translationUnitLoc,
 												expressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
@@ -815,7 +816,7 @@ public class PostProcessor {
 							}
 							initStatements.add(stmt);
 						}
-						initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.mAuxVars));
+						initStatements.addAll(CTranslationUtil.createHavocsForAuxVars(initRex.mAuxVars));
 						for (final Declaration d : initRex.mDecl) {
 							initDecl.add((VariableDeclaration) d);
 						}

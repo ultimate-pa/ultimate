@@ -100,7 +100,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieFunctionSignature;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -197,7 +196,7 @@ public class TypeChecker extends BaseObserver {
 					bvaexpr.getStart(), bvType, new TypeErrorReporter(expr));
 		} else if (expr instanceof StructAccessExpression) {
 			final StructAccessExpression sae = (StructAccessExpression) expr;
-			resultType = TypeCheckHelper.typeCheckStructAccessExpression(
+			resultType = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs(
 					typecheckExpression(sae.getStruct()).getUnderlyingType(), sae.getField(), typeErrorReporter);
 		} else if (expr instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
@@ -214,7 +213,8 @@ public class TypeChecker extends BaseObserver {
 			assert indicesTypes.size() == indices.length;
 			final BoogieType valueType = typecheckExpression(asexpr.getValue());
 
-			resultType = typeCheckArrayStoreExpression(arrayType, indicesTypes, valueType, typeErrorReporter);
+			resultType = TypeCheckHelper.typeCheckArrayStoreExpression(arrayType, indicesTypes, valueType,
+					typeErrorReporter);
 		} else if (expr instanceof BooleanLiteral) {
 			resultType = BoogieType.TYPE_BOOL;
 		} else if (expr instanceof IntegerLiteral) {
@@ -324,41 +324,6 @@ public class TypeChecker extends BaseObserver {
 		return resultType;
 	}
 
-
-	public BoogieType typeCheckArrayStoreExpression(final BoogieType arrayType, final List<BoogieType> indicesTypes,
-			final BoogieType valueType, final TypeErrorReporter typeErrorReporter) {
-		BoogieType resultType;
-		if (!(arrayType instanceof BoogieArrayType)) {
-			if (!arrayType.equals(BoogieType.TYPE_ERROR)) {
-//					typeError(expr, "Type check failed (not an array): " + expr);
-				typeErrorReporter.report(exp -> "Type check failed (not an array): " + exp);
-			}
-			resultType = BoogieType.TYPE_ERROR;
-		} else {
-			final BoogieArrayType arr = (BoogieArrayType) arrayType;
-			final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
-			if (indicesTypes.size() != arr.getIndexCount()) {
-//					typeError(expr, "Type check failed (wrong number of indices): " + expr);
-				typeErrorReporter.report(exp -> "Type check failed (wrong number of indices): " + exp);
-			} else {
-				for (int i = 0; i < indicesTypes.size(); i++) {
-//						final BoogieType t = typecheckExpression(indices[i]);
-					final BoogieType t = indicesTypes.get(i);//typecheckExpression(indices[i]);
-					if (!t.equals(BoogieType.TYPE_ERROR) && !arr.getIndexType(i).unify(t, subst)) {
-//							typeError(expr, "Type check failed (index " + i + "): " + expr);
-						final int index = i;
-						typeErrorReporter.report(exp -> "Type check failed (index " + index + "): " + exp);
-					}
-				}
-				if (!valueType.equals(BoogieType.TYPE_ERROR) && !arr.getValueType().unify(valueType, subst)) {
-//						typeError(expr, "Type check failed (value): " + expr);
-					typeErrorReporter.report(exp -> "Type check failed (value): " + exp);
-				}
-			}
-			resultType = arr;
-		}
-		return resultType;
-	}
 
 	/**
 	 * Compare existingDeclInfo with correctDeclInfo and raise an internalError if both are not equivalent.
@@ -1124,7 +1089,7 @@ public class TypeChecker extends BaseObserver {
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
-	class TypeErrorReporter implements ITypeErrorReporter<BoogieASTNode> {
+	public class TypeErrorReporter implements ITypeErrorReporter<BoogieASTNode> {
 
 		private final BoogieASTNode mReportNode;
 
