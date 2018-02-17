@@ -973,7 +973,8 @@ public class CHandler implements ICHandler {
 		}
 
 		for (final IASTNode child : node.getChildren()) {
-			checkForACSL(main, resultBuilder.getStatements(), resultBuilder.getDeclarations(), child, null);
+//			checkForACSL(main, resultBuilder.getStatements(), resultBuilder.getDeclarations(), child, null);
+			checkForACSL(main, resultBuilder, child, null, true);
 			final Result r = main.dispatch(child);
 			if (r instanceof ExpressionResult) {
 				final ExpressionResult res = (ExpressionResult) r;
@@ -998,7 +999,8 @@ public class CHandler implements ICHandler {
 						+ "ExpressionResult or a CompoundStatementExpressionResult";
 			}
 		}
-		checkForACSL(main, resultBuilder.getStatements(), resultBuilder.getDeclarations(), null, node);
+//		checkForACSL(main, resultBuilder.getStatements(), resultBuilder.getDeclarations(), null, node);
+		checkForACSL(main, resultBuilder, null, node, true);
 		if (isNewScopeRequired(parent)) {
 //			stmt = updateStmtsAndDeclsAtScopeEnd(main, decl, stmt);
 			updateStmtsAndDeclsAtScopeEnd(main, resultBuilder);
@@ -1972,7 +1974,14 @@ public class CHandler implements ICHandler {
 			}
 			isFirst = false;
 
-			checkForACSL(main, ifBlock, resultBuilder.getDeclarations(), child, null);
+			{
+				final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();
+				//			checkForACSL(main, ifBlock, resultBuilder.getDeclarations(), child, null, true);
+				checkForACSL(main, acslResultBuilder, child, null, true);
+				ifBlock.addAll(acslResultBuilder.getStatements());
+				resultBuilder.addDeclarations(acslResultBuilder.getDeclarations());
+			}
+
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
 				final ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
@@ -2065,7 +2074,8 @@ public class CHandler implements ICHandler {
 			}
 			resultBuilder.addStatement(ifStmt);
 		}
-		checkForACSL(main, resultBuilder.getStatements(), resultBuilder.getDeclarations(), null, node);
+//		checkForACSL(main, resultBuilder.getStatements(), resultBuilder.getDeclarations(), null, node);
+		checkForACSL(main, resultBuilder, null, node, true);
 
 		resultBuilder.addStatement(new Label(loc, breakLabelName));
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
@@ -2094,8 +2104,13 @@ public class CHandler implements ICHandler {
 		}
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
-		// TODO(thrax): Check if decl should be passed as null or not.
-		checkForACSL(main, null, decl, node, null);
+		{
+			final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();
+			// TODO(thrax): Check if decl should be passed as null or not.
+			//		checkForACSL(main, null, decl, node, null);
+			checkForACSL(main, acslResultBuilder, node, null, false);
+			decl.addAll(acslResultBuilder.getDeclarations());
+		}
 
 		// delayed processing of IASTFunctionDefinitions and structs
 		// This is a workaround. Invariants my use global variables that
@@ -2192,8 +2207,13 @@ public class CHandler implements ICHandler {
 		// handle global ACSL stuff
 		// TODO: do it!
 
-		// TODO(thrax): Check if decl should be passed as null.
-		checkForACSL(main, null, decl, node, null);
+		{
+			// TODO(thrax): Check if decl should be passed as null.
+			final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();
+			//		checkForACSL(main, null, decl, node, null, false);
+			checkForACSL(main, acslResultBuilder, node, null, false);
+			decl.addAll(acslResultBuilder.getDeclarations());
+		}
 
 		// the overall translation result:
 		final Unit boogieUnit = new Unit(loc, decl.toArray(new Declaration[decl.size()]));
@@ -3005,12 +3025,18 @@ public class CHandler implements ICHandler {
 	 * @param next
 	 *            the current child node of a translation unit of compound statement that will be added next. Should be
 	 *            <code>null</code> when called at the end of <i>compound statement</i>.
+     * @param resultBuilder
+     * 			the result builder where code translated from the ACSL code can be added to by this method
+     * @param compoundStatement
+     * 			true iff this method was called during translation of a compound statement
+     * @param translationUnit
+     * 			true iff this method was called during translation of the translation unit
 	 * @param parent
 	 *            the parent node of the current ACSL node. This should only be set if called at the end of a
 	 *            <i>compound statement</i> and <code>null</code> otherwise.
 	 */
-	private void checkForACSL(final Dispatcher main, final List<Statement> stmt, final List<Declaration> decl,
-			final IASTNode next, final IASTNode parent) {
+	private void checkForACSL(final Dispatcher main, final ExpressionResultBuilder resultBuilder, //final List<Statement> stmt, final List<Declaration> decl,
+			final IASTNode next, final IASTNode parent, final boolean compoundStatement) {
 		if (mAcsl != null) {
 			if (next instanceof IASTTranslationUnit) {
 				for (final ACSLNode globAcsl : mAcsl.getAcsl()) {
@@ -3028,7 +3054,9 @@ public class CHandler implements ICHandler {
 					}
 				} // TODO: deal with other global ACSL stuff
 			} else if (mAcsl.getSuccessorCNode() == null) {
-				if (parent != null && stmt != null && next == null) {
+//				if (parent != null && stmt != null && next == null) {
+				// TODO: unclear what the stmt != null case should be
+				if (parent != null && compoundStatement && next == null) {
 					// ACSL at the end of a function or at the end of the last statement in a switch that is not
 					// terminated by a break
 					// TODO: the latter case needs fixing, the ACSL is inserted outside the corresponding if-scope right
@@ -3043,9 +3071,9 @@ public class CHandler implements ICHandler {
 										.getStartingLineNumber()) {
 							final Result acslResult = main.dispatch(acslNode);
 							if (acslResult instanceof ExpressionResult) {
-								decl.addAll(((ExpressionResult) acslResult).mDecl);
-								stmt.addAll(((ExpressionResult) acslResult).mStmt);
-								stmt.addAll(CTranslationUtil.createHavocsForAuxVars(((ExpressionResult) acslResult).mAuxVars));
+								resultBuilder.addDeclarations(((ExpressionResult) acslResult).mDecl);
+								resultBuilder.addStatements(((ExpressionResult) acslResult).mStmt);
+								resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(((ExpressionResult) acslResult).mAuxVars));
 								try {
 									mAcsl = main.nextACSLStatement();
 								} catch (final ParseException e1) {
@@ -3069,7 +3097,8 @@ public class CHandler implements ICHandler {
 			} else if (mAcsl.getSuccessorCNode().equals(next)) {
 				assert mContract.isEmpty();
 				for (final ACSLNode acslNode : mAcsl.getAcsl()) {
-					if (stmt != null) {
+//					if (stmt != null) {
+					if (compoundStatement) {
 						// this means we are in a compound statement
 						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
 							// Loop contract
@@ -3078,10 +3107,10 @@ public class CHandler implements ICHandler {
 							final Result acslResult = main.dispatch(acslNode);
 							if (acslResult instanceof ExpressionResult) {
 								final ExpressionResult re = (ExpressionResult) acslResult;
-								stmt.addAll(re.mStmt);
-								decl.addAll(re.mDecl);
+								resultBuilder.addStatements(re.mStmt);
+								resultBuilder.addDeclarations(re.mDecl);
 							} else {
-								stmt.add((Statement) acslResult.node);
+								resultBuilder.addStatement((Statement) acslResult.node);
 							}
 						} else {
 							final String msg = "Unexpected ACSL comment: " + acslNode.getClass();
@@ -3089,6 +3118,7 @@ public class CHandler implements ICHandler {
 							throw new IncorrectSyntaxException(loc, msg);
 						}
 					} else {
+//					} else if (translationUnit) {
 						// this means we are in the translation unit
 						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
 							// Function contract
@@ -3699,7 +3729,12 @@ public class CHandler implements ICHandler {
 	}
 
 	private void processTUchild(final Dispatcher main, final ArrayList<Declaration> decl, final IASTNode child) {
-		checkForACSL(main, null, decl, child, null);
+		{
+			final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();
+			//		checkForACSL(main, null, decl, child, null);
+			checkForACSL(main, acslResultBuilder, child, null, false);
+			decl.addAll(acslResultBuilder.getDeclarations());
+		}
 		final Result childRes = main.dispatch(child);
 
 		if (childRes instanceof DeclarationResult) {
