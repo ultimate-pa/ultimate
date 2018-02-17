@@ -86,7 +86,8 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 			final String prefixedFunctionName = declareConvertPointerToIntFunction(loc, newType);
 			final Expression pointerExpression = rexp.mLrVal.getValue();
 			final Expression intExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { pointerExpression });
+					new Expression[] { pointerExpression },
+					mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().get(prefixedFunctionName));
 			final RValue rValue = new RValue(intExpression, newType, false, false);
 			rexp.mLrVal = rValue;
 		}
@@ -111,7 +112,8 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 					(CPrimitive) rexp.mLrVal.getCType());
 			final Expression intExpression = rexp.mLrVal.getValue();
 			final Expression pointerExpression = ExpressionFactory.constructFunctionApplication(loc,
-					prefixedFunctionName, new Expression[] { intExpression });
+					prefixedFunctionName, new Expression[] { intExpression },
+					mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().get(prefixedFunctionName));
 			final RValue rValue = new RValue(pointerExpression, newType, false, false);
 			rexp.mLrVal = rValue;
 		} else {

@@ -705,7 +705,8 @@ public abstract class ExpressionTranslation {
 			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
 		}
-		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] {});
+		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] {},
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 
 	}
 

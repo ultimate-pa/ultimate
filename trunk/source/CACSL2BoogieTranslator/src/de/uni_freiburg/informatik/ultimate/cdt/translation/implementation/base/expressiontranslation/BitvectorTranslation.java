@@ -127,8 +127,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression realValue = new RealLiteral(loc, value.toString());
 			arguments = new Expression[] { getRoundingMode(), realValue };
 		}
-		return ExpressionFactory.constructFunctionApplication(loc, SFO.getBoogieFunctionName(smtFunctionName, type),
-				arguments);
+		final String functionName = SFO.getBoogieFunctionName(smtFunctionName, type);
+		return ExpressionFactory.constructFunctionApplication(loc, functionName,
+				arguments, mFunctionDeclarations.getDeclaredFunctions().get(functionName));
 	}
 
 	@Override
@@ -212,10 +213,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		declareBitvectorFunction(loc, functionName,
 				functionName + mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), true,
 				new CPrimitive(CPrimitives.BOOL), null, type1, type2);
+		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + functionName
+				+ mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2);
 		final Expression result = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.AUXILIARY_FUNCTION_PREFIX + functionName
-						+ mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2),
-				new Expression[] { exp1, exp2 });
+				fullFunctionName, new Expression[] { exp1, exp2 },
+				mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		return result;
 	}
 
@@ -258,10 +260,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		declareBitvectorFunction(loc, funcname,
 				funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), false, typeLeft,
 				null, typeLeft, typeRight);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.AUXILIARY_FUNCTION_PREFIX + funcname
-						+ mFunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight),
-				new Expression[] { left, right });
+		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname
+						+ mFunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight);
+		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { left, right }, mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		return func;
 	}
 
@@ -282,9 +284,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		declareBitvectorFunction(loc, funcname, funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type),
 				false, type, null, type);
-		final Expression func = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.AUXILIARY_FUNCTION_PREFIX + funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type),
-				new Expression[] { expr });
+		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname
+				+ mFunctionDeclarations.computeBitvectorSuffix(loc, type);
+		final Expression func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { expr }, mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		return func;
 	}
 
@@ -337,10 +340,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		declareBitvectorFunction(loc, funcname,
 				funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), false, type1, null, type1,
 				type2);
-		func = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.AUXILIARY_FUNCTION_PREFIX + funcname
-						+ mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2),
-				new Expression[] { exp1, exp2 });
+		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname
+						+ mFunctionDeclarations.computeBitvectorSuffix(loc, type1, type2);
+		func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { exp1, exp2 }, mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 
 		return func;
 	}
@@ -467,7 +470,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		// roundingMode.setDeclarationInformation(new
 		// DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { roundingMode, oldExpression });
+				new Expression[] { roundingMode, oldExpression },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.mLrVal = rValue;
 	}
@@ -478,7 +482,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				newType);
 		final Expression oldExpression = rexp.mLrVal.getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { getRoundingMode(), oldExpression });
+				new Expression[] { getRoundingMode(), oldExpression },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.mLrVal = rValue;
 	}
@@ -489,7 +494,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				newType);
 		final Expression oldExpression = rexp.mLrVal.getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-				new Expression[] { getRoundingMode(), oldExpression });
+				new Expression[] { getRoundingMode(), oldExpression },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.mLrVal = rValue;
 	}
@@ -513,8 +519,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				+ mFunctionDeclarations.computeBitvectorSuffix(loc, resultPrimitive);
 		declareBitvectorFunction(loc, smtFunctionName, boogieFunctionName, false, resultPrimitive, indices,
 				(CPrimitive) operand.mLrVal.getCType());
-		final FunctionApplication func = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, new Expression[] { operand.mLrVal.getValue() });
+		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName;
+		final FunctionApplication func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { operand.mLrVal.getValue() },
+				mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		final RValue rVal = new RValue(func, resultType);
 		operand.mLrVal = rVal;
 	}
@@ -587,8 +595,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes,
 					resultType, inputType);
 		}
-		return ExpressionFactory.constructFunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName,
-				new Expression[] { operand });
+		final String fullFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName;
+		return ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { operand }, mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 	}
 
 	@Override
@@ -636,8 +645,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 		declareFloatingPointFunction(loc, smtFunctionName, true, false, new CPrimitive(CPrimitives.BOOL), null, type1,
 				type2);
-		Expression result = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.getBoogieFunctionName(smtFunctionName, type1), new Expression[] { exp1, exp2 });
+		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
+		Expression result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { exp1, exp2 }, mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 
 		if (isNegated) {
 			result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
@@ -659,8 +669,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		declareFloatingPointFunction(loc, smtFunctionName, false, false, type, null, type);
-		result = ExpressionFactory.constructFunctionApplication(loc, SFO.getBoogieFunctionName(smtFunctionName, type),
-				new Expression[] { exp });
+		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type);
+		result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] { exp }, mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		return result;
 	}
 
@@ -701,13 +712,16 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		}
 		if (isRounded) {
 			declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, null, type1, type2);
-			result = ExpressionFactory.constructFunctionApplication(loc,
-					SFO.getBoogieFunctionName(smtFunctionName, type1),
-					new Expression[] { getRoundingMode(), exp1, exp2 });
+			final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
+			result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+					new Expression[] { getRoundingMode(), exp1, exp2 },
+					mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		} else {
 			declareFloatingPointFunction(loc, smtFunctionName, false, isRounded, type1, null, type1, type2);
-			result = ExpressionFactory.constructFunctionApplication(loc,
-					SFO.getBoogieFunctionName(smtFunctionName, type1), new Expression[] { exp1, exp2 });
+			final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type1);
+			result = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+					new Expression[] { exp1, exp2 },
+					mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		}
 		return result;
 	}
@@ -796,8 +810,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			throw new IllegalArgumentException("not a nan or infinity type");
 		}
 		declareFloatConstant(loc, smtFunctionName, type);
-		final FunctionApplication func = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.getBoogieFunctionName(smtFunctionName, type), new Expression[] {});
+		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, type);
+		final FunctionApplication func = ExpressionFactory.constructFunctionApplication(loc, fullFunctionName,
+				new Expression[] {}, mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		return new ExpressionResult(new RValue(func, type));
 	}
 
@@ -826,7 +841,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { getRoundingMode(), argument.getValue() });
+					new Expression[] { getRoundingMode(), argument.getValue() },
+					mFunctionDeclarations.getDeclaredFunctions().get(boogieFunctionName));
 			return new RValue(expr, resultType);
 		} else if ("fabs".equals(floatFunction.getFunctionName())) {
 			checkIsFloatPrimitive(argument);
@@ -837,7 +853,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, argumentType);
 			final CPrimitive resultType = (CPrimitive) argument.getCType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-					new Expression[] { argument.getValue() });
+					new Expression[] { argument.getValue() },
+					mFunctionDeclarations.getDeclaredFunctions().get(boogieFunctionName));
 			return new RValue(expr, resultType);
 		} else if ("isnan".equals(floatFunction.getFunctionName())) {
 			final String smtFunctionName = "fp.isNaN";
@@ -966,7 +983,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, firstArgumentType);
 		final CPrimitive resultType = firstArgumentType;
 		final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { first.getValue(), second.getValue() });
+				new Expression[] { first.getValue(), second.getValue() },
+				mFunctionDeclarations.getDeclaredFunctions().get(boogieFunctionName));
 		return new RValue(expr, resultType);
 	}
 
@@ -982,7 +1000,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		getFunctionDeclarations().declareFunction(loc, boogieFunctionName, attributes, resultBoogieType,
 				paramBoogieType);
 		final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { argument.getValue() });
+				new Expression[] { argument.getValue() },
+				mFunctionDeclarations.getDeclaredFunctions().get(boogieFunctionName));
 		return new RValue(expr, resultCType, true);
 	}
 
@@ -998,9 +1017,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent() + 1,
 				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent());
 		final String smtFunctionName = "fp";
+		final String fullFunctionName = SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType));
 		final Expression result = ExpressionFactory.constructFunctionApplication(loc,
-				SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType)),
-				new Expression[] { signBit, exponentBits, significantBits });
+				fullFunctionName, new Expression[] { signBit, exponentBits, significantBits },
+				mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 		return result;
 
 	}
@@ -1022,7 +1042,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, bvType, params);
 		}
 		final Expression result = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { value });
+				new Expression[] { value }, mFunctionDeclarations.getDeclaredFunctions().get(boogieFunctionName));
 		return result;
 	}
 
