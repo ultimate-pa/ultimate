@@ -40,7 +40,7 @@ public class TypeCheckHelper {
 			return resultType;
 		}
 
-	public static <T> BoogieType typeCheckStructAccessExpression(final BoogieType structType, final String accessedField,
+	public static <T> BoogieType typeCheckStructAccessExpressionOrLhs(final BoogieType structType, final String accessedField,
 				final ITypeErrorReporter<T> typeErrorReporter) {
 			BoogieType resultType;
 			if (!(structType instanceof BoogieStructType)) {
@@ -208,5 +208,41 @@ public class TypeCheckHelper {
 		}
 		return ((BoogiePrimitiveType) t).getTypeCode();
 	}
+
+	public static <T> BoogieType typeCheckArrayStoreExpression(final BoogieType arrayType,
+				final List<BoogieType> indicesTypes, final BoogieType valueType,
+				final ITypeErrorReporter<T> typeErrorReporter) {
+			BoogieType resultType;
+			if (!(arrayType instanceof BoogieArrayType)) {
+				if (!arrayType.equals(BoogieType.TYPE_ERROR)) {
+	//					typeError(expr, "Type check failed (not an array): " + expr);
+					typeErrorReporter.report(exp -> "Type check failed (not an array): " + exp);
+				}
+				resultType = BoogieType.TYPE_ERROR;
+			} else {
+				final BoogieArrayType arr = (BoogieArrayType) arrayType;
+				final BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
+				if (indicesTypes.size() != arr.getIndexCount()) {
+	//					typeError(expr, "Type check failed (wrong number of indices): " + expr);
+					typeErrorReporter.report(exp -> "Type check failed (wrong number of indices): " + exp);
+				} else {
+					for (int i = 0; i < indicesTypes.size(); i++) {
+	//						final BoogieType t = typecheckExpression(indices[i]);
+						final BoogieType t = indicesTypes.get(i);//typecheckExpression(indices[i]);
+						if (!t.equals(BoogieType.TYPE_ERROR) && !arr.getIndexType(i).unify(t, subst)) {
+	//							typeError(expr, "Type check failed (index " + i + "): " + expr);
+							final int index = i;
+							typeErrorReporter.report(exp -> "Type check failed (index " + index + "): " + exp);
+						}
+					}
+					if (!valueType.equals(BoogieType.TYPE_ERROR) && !arr.getValueType().unify(valueType, subst)) {
+	//						typeError(expr, "Type check failed (value): " + expr);
+						typeErrorReporter.report(exp -> "Type check failed (value): " + exp);
+					}
+				}
+				resultType = arr;
+			}
+			return resultType;
+		}
 
 }

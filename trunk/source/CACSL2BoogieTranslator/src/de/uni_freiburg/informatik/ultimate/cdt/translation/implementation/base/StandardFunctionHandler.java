@@ -538,8 +538,8 @@ public class StandardFunctionHandler {
 					IASTBinaryExpression.op_equals, MemoryHandler.getPointerOffset(tmpExpr, loc),
 					mExpressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(nullExpr, loc),
 					mExpressionTranslation.getCTypeOfPointerComponents());
-			final BinaryExpression equalsNull =
-					new BinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
+			final BinaryExpression equalsNull = ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND,
+					baseEqualsNull, offsetEqualsNull);
 			// old solution did not work quickly..
 			// final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc,
 			// new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
@@ -600,7 +600,8 @@ public class StandardFunctionHandler {
 		// TODO: Add option that just ignores the function:
 		// return new SkipResult();
 		// TODO: Keep the following code, but add it as option together with the other two
-		return new ExpressionResult(Collections.singletonList(new AssumeStatement(loc, new BooleanLiteral(loc, false))),
+		return new ExpressionResult(Collections.singletonList(new AssumeStatement(loc,
+				new BooleanLiteral(loc, BoogieType.TYPE_BOOL, false))),
 				null);
 	}
 
@@ -762,7 +763,8 @@ public class StandardFunctionHandler {
 	}
 
 	private static ExpressionResult handleAbort(final ILocation loc) {
-		return new ExpressionResult(Collections.singletonList(new AssumeStatement(loc, new BooleanLiteral(loc, false))),
+		return new ExpressionResult(Collections.singletonList(new AssumeStatement(loc,
+				new BooleanLiteral(loc, BoogieType.TYPE_BOOL, false))),
 				null);
 	}
 
@@ -777,7 +779,7 @@ public class StandardFunctionHandler {
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
 				resultBuilder);
 
-		assert CHandler.isAuxVarMapComplete(main.mNameHandler, resultBuilder.getDeclarations(),
+		assert CTranslationUtil.isAuxVarMapComplete(main.mNameHandler, resultBuilder.getDeclarations(),
 				resultBuilder.getAuxVars());
 		return resultBuilder.build();
 	}
@@ -805,7 +807,7 @@ public class StandardFunctionHandler {
 			// could just take the first as there is only one, but it's so easy to make it more general..
 			rtr.addStatement(new AssumeStatement(loc, a));
 		}
-		assert CHandler.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		assert CTranslationUtil.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
 
@@ -902,17 +904,17 @@ public class StandardFunctionHandler {
 		final ExpressionResult nanRResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 
 		mExpressionTranslation.usualArithmeticConversions(loc, nanLResult, leftRvaluedResult);
-		final BinaryExpression leftExpr = new BinaryExpression(loc, Operator.COMPEQ,
+		final BinaryExpression leftExpr = ExpressionFactory.constructBinaryExpression(loc, Operator.COMPEQ,
 				leftRvaluedResult.getLrValue().getValue(), nanLResult.getLrValue().getValue());
 
 		mExpressionTranslation.usualArithmeticConversions(loc, nanRResult, rightRvaluedResult);
-		final BinaryExpression rightExpr = new BinaryExpression(loc, Operator.COMPEQ,
+		final BinaryExpression rightExpr = ExpressionFactory.constructBinaryExpression(loc, Operator.COMPEQ,
 				rightRvaluedResult.getLrValue().getValue(), nanRResult.getLrValue().getValue());
 		final BinaryExpression expr = new BinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
 		final ExpressionResult rtr =
 				combineExpressionResults(lrVal, leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult);
-		assert CHandler.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		assert CTranslationUtil.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
 
@@ -946,11 +948,12 @@ public class StandardFunctionHandler {
 		final ExpressionResult greaterThan = mCHandler.handleRelationalOperators(main, loc,
 				IASTBinaryExpression.op_greaterThan, leftRvaluedResult, rightRvaluedResult);
 
-		final BinaryExpression expr = new BinaryExpression(loc, Operator.LOGICOR, lessThan.getLrValue().getValue(),
+		final BinaryExpression expr = ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICOR,
+				lessThan.getLrValue().getValue(),
 				greaterThan.getLrValue().getValue());
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
 		final ExpressionResult rtr = combineExpressionResults(lrVal, lessThan, greaterThan);
-		assert CHandler.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
+		assert CTranslationUtil.isAuxVarMapComplete(main.mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
 
@@ -1181,7 +1184,9 @@ public class StandardFunctionHandler {
 					expressionTranslation.getCTypeOfPointerComponents());
 
 			final Expression aAndB =
-					new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
+//					new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
+					ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
+							offsetNonnegative);
 			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);

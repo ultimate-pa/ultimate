@@ -589,7 +589,7 @@ public class FunctionHandler {
 			}
 		}
 //		stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
-		resultBuilder.addStatements(CHandler.createHavocsForAuxVars(resultBuilder.getAuxVars()));
+		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
 		// we need to insert a free for each malloc of an auxvar before each return
 		// frees are inserted in handleReturnStm
@@ -1585,7 +1585,7 @@ public class FunctionHandler {
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType,
 				functionCallExpressionResultBuilder);
 
-		assert CHandler.isAuxVarMapComplete(main.mNameHandler,
+		assert CTranslationUtil.isAuxVarMapComplete(main.mNameHandler,
 				functionCallExpressionResultBuilder.getDeclarations(),
 				functionCallExpressionResultBuilder.getAuxVars());
 

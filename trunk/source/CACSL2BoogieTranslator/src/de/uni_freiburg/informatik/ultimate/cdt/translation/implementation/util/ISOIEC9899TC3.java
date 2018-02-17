@@ -4,22 +4,22 @@
  * Copyright (C) 2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,6 +38,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class holds methods, that help translating constants.
- * 
+ *
  * @author Markus Lindenmann
  * @date 12.07.2012
  */
@@ -79,28 +80,28 @@ public final class ISOIEC9899TC3 {
 	 */
 	private static final String[] SUFFIXES_INT = new String[] { "ULL", "Ull", "ull", "uLL", "llu", "llU", "LLu", "LLU",
 			"ul", "uL", "Ul", "UL", "lu", "lU", "Lu", "LU", "ll", "LL", "u", "U", "l", "L" };
-	
+
 	public enum IntegerConstantType {
 		OCTAL(8),
 		DECIMAL(10),
 		HEXADECIMAL(16);
-		
+
 		private final int mBase;
-		
+
 		IntegerConstantType(final int base) {
 			mBase = base;
 		}
-		
+
 		public int getBase() {
 			return mBase;
 		}
 	}
-	
+
 	/**
 	 * Parses Integer constants according to <a
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.4.
-	 * 
+	 *
 	 * @param val
 	 *            the value to parse
 	 * @param loc
@@ -118,7 +119,7 @@ public final class ISOIEC9899TC3 {
 		if (!val.startsWith("'") || !val.endsWith("'")) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		if (val.charAt(1) == '\\') {
 			switch (val.charAt(2)) {
 				case '\'':
@@ -171,12 +172,12 @@ public final class ISOIEC9899TC3 {
 		}
 		return BigInteger.valueOf(value);
 	}
-	
+
 	/**
 	 * Parses FloatingPoint constants according to <a
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.2.
-	 * 
+	 *
 	 * @param loc
 	 *            the location
 	 * @param val
@@ -196,7 +197,7 @@ public final class ISOIEC9899TC3 {
 		final FloatingPointLiteral result = new FloatingPointLiteral(resultValue, resultType);
 		return result;
 	}
-	
+
 	/**
 	 * Given a suffix-free decimal value, compute a BigDecimal representation of
 	 * this value.
@@ -208,13 +209,13 @@ public final class ISOIEC9899TC3 {
 			String hexValue = suffixFreeValue.substring(2);
 			int suffixLength = -1;
 			String hexExponentValue = null;
-			
+
 			// extract exponent value of the hex literal
 			if (hexValue.contains("p")) {
 				hexExponentValue = hexValue.substring(hexValue.indexOf('p') + 1);
 				hexValue = hexValue.substring(0, hexValue.indexOf('p'));
 			}
-			
+
 			if (hexValue.contains(".")) {
 				final int dotPosition = hexValue.indexOf('.');
 				suffixLength = hexValue.substring(dotPosition + 1).length();
@@ -223,7 +224,7 @@ public final class ISOIEC9899TC3 {
 			}
 			final BigInteger hexValueToDecimalValue = new BigInteger(hexValue, 16);
 			BigDecimal hexValueBigDecimal = new BigDecimal(hexValueToDecimalValue.toString());
-			
+
 			if (hexExponentValue != null) {
 				final int hexExponent = Integer.parseInt(hexExponentValue);
 				if (hexExponent > 0) {
@@ -236,7 +237,7 @@ public final class ISOIEC9899TC3 {
 					}
 				}
 			}
-			
+
 			if (suffixLength != -1) {
 				hexValueBigDecimal = hexValueBigDecimal.divide(BigDecimal.valueOf(Math.pow(16, suffixLength)));
 			}
@@ -254,10 +255,10 @@ public final class ISOIEC9899TC3 {
 		}
 		return floatVal;
 	}
-	
+
 	/**
 	 * Determine the type of a real floating type from the given float suffix.
-	 * 
+	 *
 	 * @param floatSuffix
 	 *            either "d", "D", "f", "F", "l", "L"
 	 */
@@ -275,7 +276,7 @@ public final class ISOIEC9899TC3 {
 		}
 		return resultType;
 	}
-	
+
 	/**
 	 * Check if value has float suffix.
 	 * Return Pair whose first entry is a suffix-free float value and whose
@@ -295,12 +296,12 @@ public final class ISOIEC9899TC3 {
 		final String floatSuffix = null;
 		return new Pair<>(suffixFreeValue, floatSuffix);
 	}
-	
+
 	/**
 	 * Parses Integer constants according to <a
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.1.
-	 * 
+	 *
 	 * @param valueWithSuffixes
 	 *            the value to parse
 	 * @param loc
@@ -328,7 +329,7 @@ public final class ISOIEC9899TC3 {
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 	}
-	
+
 	public static Expression constructLiteralForCIntegerLiteral(
 			final ILocation loc, final boolean bitvectorTranslation,
 			final TypeSizes typeSizeConstants, final CPrimitive cType,
@@ -341,26 +342,27 @@ public final class ISOIEC9899TC3 {
 				value = value.add(BigInteger.valueOf(maxValue));
 			}
 			final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
-			resultLiteral = new BitvecLiteral(loc, valueInRange.toString(), bitlength);
+			resultLiteral = new BitvecLiteral(loc, BoogieType.createBitvectorType(bitlength), valueInRange.toString(),
+					bitlength);
 		} else {
-			resultLiteral = new IntegerLiteral(loc, value.toString());
+			resultLiteral = new IntegerLiteral(loc, BoogieType.TYPE_INT, value.toString());
 		}
 		return resultLiteral;
 	}
-	
+
 	/**
 	 * @return the result of value % 2^bitlength
 	 */
 	public static BigInteger constructBitvectorInRange(final BigInteger value, final int bitlength) {
 		return value.mod(new BigInteger("2").pow(bitlength));
 	}
-	
+
 	private static class IntegerConstant {
-		
+
 		private final IntegerConstantType mIntegerConstantType;
 		private final String mSuffix;
 		private final BigInteger mValue;
-		
+
 		public IntegerConstant(final String valueWithPrefixAndSuffix) {
 			String valueWithPrefix = valueWithPrefixAndSuffix;
 			String suffix = "";
@@ -387,28 +389,28 @@ public final class ISOIEC9899TC3 {
 			}
 			mValue = new BigInteger(valueAsString, mIntegerConstantType.getBase());
 		}
-		
+
 		public BigInteger getValue() {
 			return mValue;
 		}
-		
+
 		public IntegerConstantType getIntegerConstantType() {
 			return mIntegerConstantType;
 		}
-		
+
 		public boolean hasUnsignedSuffix() {
 			return mSuffix.contains("u") || mSuffix.contains("U");
 		}
-		
+
 		public boolean hasLongLongSuffix() {
 			return mSuffix.contains("ll") || mSuffix.contains("LL");
 		}
-		
+
 		public boolean hasLongSuffix() {
 			return !hasLongLongSuffix() && (mSuffix.contains("l") || mSuffix.contains("L"));
 		}
 	}
-	
+
 	/**
 	 * Get the types that a given integer type can have.
 	 * Returns the types in the correct order according to 6.4.4.1.5 of the
@@ -447,7 +449,7 @@ public final class ISOIEC9899TC3 {
 			}
 		}
 	}
-	
+
 	private static CPrimitive determineCType(final IntegerConstant ic, final TypeSizes typeSizes) {
 		final CPrimitives[] primitives = getPossibleTypes(ic);
 		for (final CPrimitives primitive : primitives) {
@@ -461,24 +463,24 @@ public final class ISOIEC9899TC3 {
 				+ " using any of the given types. This is probably undefined"
 				+ " or we need extended integer types. See 6.4.4.1 in the C standard");
 	}
-	
+
 	public static class FloatingPointLiteral {
 		private final BigDecimal mDecimalRepresenation;
 		private final CPrimitive mCPrimitive;
-		
+
 		public FloatingPointLiteral(final BigDecimal decimalRepresenation, final CPrimitive cPrimitive) {
 			super();
 			mDecimalRepresenation = decimalRepresenation;
 			mCPrimitive = cPrimitive;
 		}
-		
+
 		public BigDecimal getDecimalRepresenation() {
 			return mDecimalRepresenation;
 		}
-		
+
 		public CPrimitive getCPrimitive() {
 			return mCPrimitive;
 		}
-		
+
 	}
 }

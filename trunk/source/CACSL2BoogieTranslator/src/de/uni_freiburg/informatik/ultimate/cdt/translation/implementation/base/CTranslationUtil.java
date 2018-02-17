@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
@@ -40,7 +41,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
@@ -48,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BoogieTypeHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -67,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
@@ -374,6 +379,88 @@ public class CTranslationUtil {
 
 		return new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 	}
+
+	public static Expression convertLHSToExpression(final LeftHandSide lhs) {
+			if (lhs instanceof VariableLHS) {
+				final VariableLHS vlhs = (VariableLHS) lhs;
+	//			return new IdentifierExpression(lhs.getLocation(), ((VariableLHS) lhs).getIdentifier());
+				return ExpressionFactory.constructIdentifierExpression(vlhs.getLoc(),
+						(BoogieType) vlhs.getType(), vlhs.getIdentifier(), vlhs.getDeclarationInformation());
+			} else if (lhs instanceof ArrayLHS) {
+				final ArrayLHS alhs = (ArrayLHS) lhs;
+				final Expression array = convertLHSToExpression(alhs.getArray());
+				return ExpressionFactory.constructNestedArrayAccessExpression(alhs.getLocation(), array,
+						alhs.getIndices());
+			} else if (lhs instanceof StructLHS) {
+				final StructLHS slhs = (StructLHS) lhs;
+				final Expression struct = convertLHSToExpression(slhs.getStruct());
+				return ExpressionFactory.constructStructAccessExpression(slhs.getLocation(), struct, slhs.getField());
+			} else {
+				throw new AssertionError("Strange LeftHandSide " + lhs);
+			}
+		}
+
+	/**
+	 * Create a havoc statement for each variable in auxVars. (Does not modify this auxVars map). We insert havocs for
+	 * auxvars after the translation of a _statement_. This means that the Expressions carry the auxVarMap outside (via
+	 * the ResultExpression they return), and that map is used for calling this procedure once we reach a (basic)
+	 * statement.
+	 *
+	 * TODO: perhaps this could be integrated in ExpressionResultBuilder (i.e. a method that takes all auxvars,
+	 *  adds havocs for them, then resets the set of auxvars, and forbids adding further auxvars)
+	 */
+	public static List<HavocStatement> createHavocsForAuxVars(final Set<AuxVarInfo> auxVars) {
+		final List<HavocStatement> result = new ArrayList<>();
+		for (final AuxVarInfo auxvar : auxVars) {
+			final HavocStatement havocStatement =
+					new HavocStatement(auxvar.getVarDec().getLoc(), new VariableLHS[] { auxvar.getLhs() });
+			result.add(havocStatement);
+		}
+		return Collections.unmodifiableList(result);
+	}
+
+	/**
+	 * Returns true iff all auxvars in decls are contained in auxVars
+	 */
+	public static boolean isAuxVarMapComplete(final INameHandler nameHandler,
+			final ExpressionResultBuilder resultBuilder) {
+		return CTranslationUtil.isAuxVarMapComplete(nameHandler, resultBuilder.getDeclarations(), resultBuilder.getAuxVars());
+	}
+
+	/**
+		 * Returns true iff all auxvars in decls are contained in auxVars
+		 */
+		public static boolean isAuxVarMapComplete(final INameHandler nameHandler, final List<Declaration> decls,
+	//			final Map<VariableDeclaration, ILocation> auxVars) {
+				final Set<AuxVarInfo> auxVars) {
+			boolean result = true;
+			for (final Declaration rExprdecl : decls) {
+				assert rExprdecl instanceof VariableDeclaration;
+				final VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
+	
+				assert varDecl
+						.getVariables().length == 1 : "there are never two auxvars declared in one declaration, right??";
+				final VarList vl = varDecl.getVariables()[0];
+				assert vl.getIdentifiers().length == 1 : "there are never two auxvars declared in one declaration, right??";
+				final String id = vl.getIdentifiers()[0];
+	
+				if (nameHandler.isTempVar(id)) {
+					// malloc auxvars do not need to be havocced in some cases (alloca)
+					// result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
+	//				result &= auxVars.containsKey(varDecl);
+	
+					boolean auxVarExists = false;
+					for (final AuxVarInfo auxVar : auxVars) {
+						if (auxVar.getVarDec().equals(varDecl)) {
+							auxVarExists = true;
+							break;
+						}
+					}
+					result &= auxVarExists;
+				}
+			}
+			return result;
+		}
 }
 
 /**

@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
@@ -216,9 +215,11 @@ public abstract class ExpressionTranslation {
 //					Collections.emptyMap(), overapproxList, charArray);
 		}
 		case IASTLiteralExpression.lk_false:
-			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
+			return new ExpressionResult(new RValue(new BooleanLiteral(loc, BoogieType.TYPE_BOOL, false),
+					new CPrimitive(CPrimitives.INT)));
 		case IASTLiteralExpression.lk_true:
-			return new ExpressionResult(new RValue(new BooleanLiteral(loc, true), new CPrimitive(CPrimitives.INT)));
+			return new ExpressionResult(new RValue(new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true),
+					new CPrimitive(CPrimitives.INT)));
 		default:
 			final String msg = "Unknown or unsupported kind of IASTLiteralExpression";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -704,7 +705,7 @@ public abstract class ExpressionTranslation {
 			final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
 		}
-		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] {});
+		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] {});
 
 	}
 

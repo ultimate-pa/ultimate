@@ -130,7 +130,8 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 public class ACSLHandler implements IACSLHandler {
 
 	/**
-	 * To determine the right names, we need to know where we are in the specification.
+	 * To determine the right names, we need to know where we are in the
+	 * specification.
 	 */
 
 	private enum SPEC_TYPE {
@@ -194,10 +195,12 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final Dispatcher main, final CodeAnnot node) {
 		if (node instanceof CodeAnnotStmt) {
 			/*
-			 * Result formula = main.dispatch(((Assertion) ((CodeAnnotStmt) node) .getCodeStmt()).getFormula()); Check
-			 * check = new Check(Check.Spec.ASSERT); AssertStatement assertStmt = new AssertStatement(
-			 * main.getLocationFactory().createACSLLocation(node, check), ((Expression) formula.node));
-			 * check.addToNodeAnnot(assertStmt); return new Result(assertStmt);
+			 * Result formula = main.dispatch(((Assertion) ((CodeAnnotStmt) node)
+			 * .getCodeStmt()).getFormula()); Check check = new Check(Check.Spec.ASSERT);
+			 * AssertStatement assertStmt = new AssertStatement(
+			 * main.getLocationFactory().createACSLLocation(node, check), ((Expression)
+			 * formula.node)); check.addToNodeAnnot(assertStmt); return new
+			 * Result(assertStmt);
 			 */
 			final Check check;
 			if (mWitnessInvariantMode) {
@@ -206,13 +209,13 @@ public class ACSLHandler implements IACSLHandler {
 				check = new Check(Check.Spec.ASSERT);
 			}
 			final ILocation loc = main.getLocationFactory().createACSLLocation(node, check);
-//			final ArrayList<Declaration> decl = new ArrayList<>();
-//			final ArrayList<Statement> stmt = new ArrayList<>();
-//			final List<Overapprox> overappr = new ArrayList<>();
-//			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+			// final ArrayList<Declaration> decl = new ArrayList<>();
+			// final ArrayList<Statement> stmt = new ArrayList<>();
+			// final List<Overapprox> overappr = new ArrayList<>();
+			// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
-			ExpressionResult formula =
-					(ExpressionResult) main.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula());
+			ExpressionResult formula = (ExpressionResult) main
+					.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula());
 
 			formula = formula.switchToRValueIfNecessary(main, loc);
 
@@ -220,10 +223,10 @@ public class ACSLHandler implements IACSLHandler {
 					((CHandler) main.mCHandler).getMemoryHandler());
 
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-//			decl.addAll(formula.mDecl);
-//			stmt.addAll(formula.mStmt);
-//			overappr.addAll(formula.mOverappr);
-//			auxVars.putAll(formula.mAuxVars);
+			// decl.addAll(formula.mDecl);
+			// stmt.addAll(formula.mStmt);
+			// overappr.addAll(formula.mOverappr);
+			// auxVars.putAll(formula.mAuxVars);
 			resultBuilder.addAllExceptLrValue(formula);
 
 			final AssertStatement assertStmt = new AssertStatement(loc, formula.mLrVal.getValue());
@@ -231,14 +234,14 @@ public class ACSLHandler implements IACSLHandler {
 			for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 				overapprItem.annotate(assertStmt);
 			}
-//			stmt.add(assertStmt);
+			// stmt.add(assertStmt);
 			resultBuilder.addStatement(assertStmt);
-			final List<HavocStatement> havocs = CHandler.createHavocsForAuxVars(formula.mAuxVars);
-//			stmt.addAll(havocs);
+			final List<HavocStatement> havocs = CTranslationUtil.createHavocsForAuxVars(formula.mAuxVars);
+			// stmt.addAll(havocs);
 			resultBuilder.addStatements(havocs);
 
 			check.annotate(assertStmt);
-//			return new ExpressionResult(stmt, null, decl, auxVars, overappr);
+			// return new ExpressionResult(stmt, null, decl, auxVars, overappr);
 			return resultBuilder.build();
 		}
 		// TODO : other cases
@@ -248,8 +251,8 @@ public class ACSLHandler implements IACSLHandler {
 	}
 
 	/**
-	 * Translates an ACSL binary expression operator into a boogie binary expression operator, iff there is a one to one
-	 * translation - otherwise null.
+	 * Translates an ACSL binary expression operator into a boogie binary expression
+	 * operator, iff there is a one to one translation - otherwise null.
 	 *
 	 * @param op
 	 *            the ACSL binary expression operator
@@ -304,7 +307,8 @@ public class ACSLHandler implements IACSLHandler {
 	}
 
 	/**
-	 * Translates operator of ACSL binary expression to operator of binary expression in the C AST.
+	 * Translates operator of ACSL binary expression to operator of binary
+	 * expression in the C AST.
 	 */
 	private static int getCASTBinaryExprOperator(
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
@@ -380,25 +384,26 @@ public class ACSLHandler implements IACSLHandler {
 		final CHandler mainCHandler = (CHandler) main.mCHandler;
 		final ExpressionTranslation expressionTranslation = mainCHandler.getExpressionTranslation();
 
-//		final ArrayList<Declaration> decl = new ArrayList<>();
-//		final ArrayList<Statement> stmt = new ArrayList<>();
-//		final List<Overapprox> overappr = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		// final ArrayList<Declaration> decl = new ArrayList<>();
+		// final ArrayList<Statement> stmt = new ArrayList<>();
+		// final List<Overapprox> overappr = new ArrayList<>();
+		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-//		decl.addAll(left.mDecl);
-//		stmt.addAll(left.mStmt);
-//		auxVars.putAll(left.mAuxVars);
-//		overappr.addAll(left.mOverappr);
-//		resultBuilder.addAllExceptLrValue(left);
+		// decl.addAll(left.mDecl);
+		// stmt.addAll(left.mStmt);
+		// auxVars.putAll(left.mAuxVars);
+		// overappr.addAll(left.mOverappr);
+		// resultBuilder.addAllExceptLrValue(left);
 
-//		decl.addAll(right.mDecl);
-//		stmt.addAll(right.mStmt);
-//		auxVars.putAll(right.mAuxVars);
-//		overappr.addAll(right.mOverappr);
+		// decl.addAll(right.mDecl);
+		// stmt.addAll(right.mStmt);
+		// auxVars.putAll(right.mAuxVars);
+		// overappr.addAll(right.mOverappr);
 		resultBuilder.addAllExceptLrValue(right);
 
-		// if (left.getType() != null && //FIXME: (alex:) commenting this out bc of removal of InferredType -- replace
+		// if (left.getType() != null && //FIXME: (alex:) commenting this out bc of
+		// removal of InferredType -- replace
 		// with sth?
 		// left.getType().equals(new InferredType(InferredType.Type.Boolean))) {
 		// //convert to boolean if neccessary
@@ -446,11 +451,12 @@ public class ACSLHandler implements IACSLHandler {
 				final MemoryHandler memoryHandler = mainCHandler.getMemoryHandler();
 				left.rexIntToBoolIfNecessary(loc, mainCHandler.getExpressionTranslation(), memoryHandler);
 				right.rexIntToBoolIfNecessary(loc, mainCHandler.getExpressionTranslation(), memoryHandler);
-				final Expression be =
-						ExpressionFactory.newBinaryExpression(loc, op, left.mLrVal.getValue(), right.mLrVal.getValue());
+				final Expression be = ExpressionFactory.newBinaryExpression(loc, op, left.mLrVal.getValue(),
+						right.mLrVal.getValue());
 				// TODO: Handle Ctype
-//				return new ExpressionResult(stmt, new RValue(be, new CPrimitive(CPrimitives.INT), true), decl, auxVars,
-//						overappr);
+				// return new ExpressionResult(stmt, new RValue(be, new
+				// CPrimitive(CPrimitives.INT), true), decl, auxVars,
+				// overappr);
 				final RValue rval = new RValue(be, new CPrimitive(CPrimitives.INT), true);
 				resultBuilder.setLrVal(rval);
 				return resultBuilder.build();
@@ -462,21 +468,22 @@ public class ACSLHandler implements IACSLHandler {
 			// where l = left & !right
 			final Expression notRight = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
 					right.mLrVal.getValue());
-			final Expression l =
-					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, left.mLrVal.getValue(), notRight);
+			final Expression l = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, left.mLrVal.getValue(),
+					notRight);
 			// and r = !left & right
 			final Expression notLeft = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
 					left.mLrVal.getValue());
-			final Expression r =
-					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, notLeft, right.mLrVal.getValue());
-//			return new ExpressionResult(stmt,
-//					new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r),
-//							new CPrimitive(CPrimitives.INT), true),
-//					decl, auxVars, overappr);
+			final Expression r = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, notLeft,
+					right.mLrVal.getValue());
+			// return new ExpressionResult(stmt,
+			// new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l,
+			// r),
+			// new CPrimitive(CPrimitives.INT), true),
+			// decl, auxVars, overappr);
 			final RValue rval = new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r),
-							new CPrimitive(CPrimitives.INT), true);
-				resultBuilder.setLrVal(rval);
-				return resultBuilder.build();
+					new CPrimitive(CPrimitives.INT), true);
+			resultBuilder.setLrVal(rval);
+			return resultBuilder.build();
 		}
 		case BITAND:
 		case BITIFF:
@@ -526,7 +533,8 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IntegerLiteral node) {
 		/*
-		 * return new Result( new de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral(
+		 * return new Result( new
+		 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral(
 		 * LocationFactory.createACSLLocation(node), node.getValue()));
 		 */
 		final ExpressionTranslation expressionTranslation = ((CHandler) main.mCHandler).getExpressionTranslation();
@@ -540,12 +548,13 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final BooleanLiteral node) {
 		/*
-		 * return new Result( new de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral(
+		 * return new Result( new
+		 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral(
 		 * LocationFactory.createACSLLocation(node), node.getValue()));
 		 */
 		return new ExpressionResult(new RValue(
 				new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(
-						main.getLocationFactory().createACSLLocation(node), node.getValue()),
+						main.getLocationFactory().createACSLLocation(node), BoogieType.TYPE_BOOL, node.getValue()),
 				new CPrimitive(CPrimitives.BOOL), true));
 	}
 
@@ -616,7 +625,7 @@ public class ACSLHandler implements IACSLHandler {
 			// variable! However, we don't know that at this moment!
 
 			if (main.mCHandler.getSymbolTable().containsKey(cId)) {
-				stv= main.mCHandler.getSymbolTable().get(cId, loc);
+				stv = main.mCHandler.getSymbolTable().get(cId, loc);
 				cType = stv.getCVariable();
 			} else {
 				throw new UnsupportedOperationException(
@@ -634,29 +643,27 @@ public class ACSLHandler implements IACSLHandler {
 		// TODO seems quite hacky, how we obtain storage class and procedure id ..
 		final ASTType astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
 		final StorageClass sc = stv.isBoogieGlobalVar() ? StorageClass.GLOBAL : StorageClass.LOCAL;
-		final String procId = sc == StorageClass.GLOBAL ?
-				null :
-					main.mCHandler.getFunctionHandler().getCurrentProcedureID();
+		final String procId = sc == StorageClass.GLOBAL ? null
+				: main.mCHandler.getFunctionHandler().getCurrentProcedureID();
 		LRValue lrVal;
 		if (((CHandler) main.mCHandler).isHeapVar(id)) {
-			final IdentifierExpression idExp = //new IdentifierExpression(loc, id);
+			final IdentifierExpression idExp = // new IdentifierExpression(loc, id);
 					ExpressionFactory.constructIdentifierExpression(loc,
-							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(astType),
-							id,
+							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(astType), id,
 							new DeclarationInformation(sc, procId));
 			lrVal = new HeapLValue(idExp, cType, null);
 		} else {
-			final VariableLHS idLhs = //new VariableLHS(loc, id);
+			final VariableLHS idLhs = // new VariableLHS(loc, id);
 					ExpressionFactory.constructVariableLHS(loc,
-							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(astType),
-							id,
+							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(astType), id,
 							new DeclarationInformation(sc, procId));
 			lrVal = new LocalLValue(idLhs, cType, null);
 		}
 
 		// for now, to make the error output clearer:
 		// if (lrVal instanceof HeapLValue)
-		// throw new UnsupportedOperationException("variables on heap are not supported in ACSL code right now.");
+		// throw new UnsupportedOperationException("variables on heap are not supported
+		// in ACSL code right now.");
 
 		return new ExpressionResult(lrVal);
 		// return new Result(lrVal.getValue());
@@ -722,7 +729,7 @@ public class ACSLHandler implements IACSLHandler {
 		for (final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression e : node.getLocations()) {
 			if (e instanceof de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression) {
 				final IdentifierExpression dispatched = ((IdentifierExpression) main.dispatch(e).node);
-//				identifiers.add(dispatched.getIdentifier());
+				// identifiers.add(dispatched.getIdentifier());
 				identifiers.add(dispatched);
 			} else {
 				final String msg = "Unexpected Expression: " + e.getClass();
@@ -731,10 +738,9 @@ public class ACSLHandler implements IACSLHandler {
 		}
 		final VariableLHS[] identifiersVarLHS = new VariableLHS[identifiers.size()];
 		for (int i = 0; i < identifiers.size(); i++) {
-			identifiersVarLHS[i] = //new VariableLHS(loc, identifiers.get(i));
-					ExpressionFactory.constructVariableLHS(loc, (BoogieType) identifiers.get(i).getType() ,
-							identifiers.get(i).getIdentifier(),
-							identifiers.get(i).getDeclarationInformation());
+			identifiersVarLHS[i] = // new VariableLHS(loc, identifiers.get(i));
+					ExpressionFactory.constructVariableLHS(loc, (BoogieType) identifiers.get(i).getType(),
+							identifiers.get(i).getIdentifier(), identifiers.get(i).getDeclarationInformation());
 		}
 
 		final ModifiesSpecification req = new ModifiesSpecification(loc, false, identifiersVarLHS);
@@ -746,12 +752,13 @@ public class ACSLHandler implements IACSLHandler {
 		final String id = "#res";
 		final CACSLLocation loc = main.getLocationFactory().createACSLLocation(node);
 		// TODO: what is the right storageclass here? and procedure?..
-		final IdentifierExpression idEx = //new IdentifierExpression(loc, "#res");
+		final IdentifierExpression idEx = // new IdentifierExpression(loc, "#res");
 				ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
 						new DeclarationInformation(StorageClass.LOCAL,
 								main.mCHandler.getFunctionHandler().getCurrentProcedureID()));
 		return new ExpressionResult(new RValue(idEx, new CPrimitive(CPrimitives.INT)));
-		// return new Result(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"));
+		// return new Result(new
+		// IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"));
 	}
 
 	@Override
@@ -789,13 +796,14 @@ public class ACSLHandler implements IACSLHandler {
 		// TODO
 		throw new AssertionError("TOOD: revise the code below ");
 
-//		decl.addAll(res.mDecl);
-//		stmt.addAll(res.mStmt);
-//		overappr.addAll(res.mOverappr);
-//		auxVars.putAll(res.mAuxVars);
-//
-//		// return new ResultExpression(stmt, new RValue(lis, new CPrimitive(PRIMITIVE.BOOL)), decl, auxVars, overappr);
-//		return new Result(lis);
+		// decl.addAll(res.mDecl);
+		// stmt.addAll(res.mStmt);
+		// overappr.addAll(res.mOverappr);
+		// auxVars.putAll(res.mAuxVars);
+		//
+		// // return new ResultExpression(stmt, new RValue(lis, new
+		// CPrimitive(PRIMITIVE.BOOL)), decl, auxVars, overappr);
+		// return new Result(lis);
 	}
 
 	@Override
@@ -817,26 +825,26 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
 		final Stack<Expression> args = new Stack<>();
 
-//		final ArrayList<Declaration> decl = new ArrayList<>();
-//		final ArrayList<Statement> stmt = new ArrayList<>();
-//		final List<Overapprox> overappr = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		// final ArrayList<Declaration> decl = new ArrayList<>();
+		// final ArrayList<Statement> stmt = new ArrayList<>();
+		// final List<Overapprox> overappr = new ArrayList<>();
+		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression arr = node;
 		do {
 			assert arr instanceof ArrayAccessExpression;
 			assert ((ArrayAccessExpression) arr).getIndices().length == 1;
-			final ExpressionResult arg =
-					(ExpressionResult) main.dispatch(((ArrayAccessExpression) arr).getIndices()[0]);
+			final ExpressionResult arg = (ExpressionResult) main
+					.dispatch(((ArrayAccessExpression) arr).getIndices()[0]);
 			assert arg.getClass() == ExpressionResult.class;
 			args.push(arg.mLrVal.getValue());
 			arr = ((ArrayAccessExpression) arr).getArray();
 
-//			decl.addAll(arg.mDecl);
-//			stmt.addAll(arg.mStmt);
-//			overappr.addAll(arg.mOverappr);
-//			auxVars.putAll(arg.mAuxVars);
+			// decl.addAll(arg.mDecl);
+			// stmt.addAll(arg.mStmt);
+			// overappr.addAll(arg.mOverappr);
+			// auxVars.putAll(arg.mAuxVars);
 			resultBuilder.addAllExceptLrValue(arg);
 
 		} while (arr instanceof ArrayAccessExpression);
@@ -849,17 +857,19 @@ public class ACSLHandler implements IACSLHandler {
 		assert idExprRes.getClass() == ExpressionResult.class;
 		final Expression subExpr = idExprRes.mLrVal.getValue();
 
-//		decl.addAll(idExprRes.mDecl);
-//		stmt.addAll(idExprRes.mStmt);
-//		overappr.addAll(idExprRes.mOverappr);
-//		auxVars.putAll(idExprRes.mAuxVars);
+		// decl.addAll(idExprRes.mDecl);
+		// stmt.addAll(idExprRes.mStmt);
+		// overappr.addAll(idExprRes.mOverappr);
+		// auxVars.putAll(idExprRes.mAuxVars);
 		resultBuilder.addAllExceptLrValue(idExprRes);
 
 		// TODO: compute the CType of returned ResultExpression
-		// basic idea: same as arrayType (below) except the last args.size() entries of arrayType.getDimensions() have
+		// basic idea: same as arrayType (below) except the last args.size() entries of
+		// arrayType.getDimensions() have
 		// to be removed for the new type
 		// CArray arrayType = (CArray) idExprRes.lrVal.cType;
-		// CArray arrayType = new CArray(dimensions, idExprRes.lrVal.cType); --> wrong, i think (alex)
+		// CArray arrayType = new CArray(dimensions, idExprRes.lrVal.cType); --> wrong,
+		// i think (alex)
 		// arrayType.getDimensions().length == args.size()
 
 		Expression expr;
@@ -868,7 +878,8 @@ public class ACSLHandler implements IACSLHandler {
 			final String bId = idEx.getIdentifier();
 			final String cId = main.mCHandler.getSymbolTable().getCID4BoogieID(bId, loc);
 			assert main.mCHandler.getSymbolTable().containsKey(cId);
-//			final InferredType it = new InferredType(main.mCHandler.getSymbolTable().getTypeOfVariable(cId, loc));
+			// final InferredType it = new
+			// InferredType(main.mCHandler.getSymbolTable().getTypeOfVariable(cId, loc));
 			expr = ExpressionFactory.constructNestedArrayAccessExpression(loc, idEx, idx);
 		} else if (subExpr instanceof StructAccessExpression) {
 			final StructAccessExpression sae = (StructAccessExpression) subExpr;
@@ -887,34 +898,35 @@ public class ACSLHandler implements IACSLHandler {
 		final RValue rval = new RValue(expr, new CPrimitive(CPrimitives.INT));
 		resultBuilder.setLrVal(rval);
 		return resultBuilder.build();
-//		return new ExpressionResult(stmt, rval, decl, auxVars, overappr);
+		// return new ExpressionResult(stmt, rval, decl, auxVars, overappr);
 		// return new Result(expr);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final FieldAccessExpression node) {
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-//		final ArrayList<Declaration> decl = new ArrayList<>();
-//		final ArrayList<Statement> stmt = new ArrayList<>();
-//		final List<Overapprox> overappr = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		// final ArrayList<Declaration> decl = new ArrayList<>();
+		// final ArrayList<Statement> stmt = new ArrayList<>();
+		// final List<Overapprox> overappr = new ArrayList<>();
+		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-		final ExpressionResult r =
-				((ExpressionResult) main.dispatch(node.getStruct())).switchToRValueIfNecessary(main, loc);
+		final ExpressionResult r = ((ExpressionResult) main.dispatch(node.getStruct())).switchToRValueIfNecessary(main,
+				loc);
 		assert r.getClass() == ExpressionResult.class;
 		final String field = node.getField();
 
-//		decl.addAll(r.mDecl);
-//		stmt.addAll(r.mStmt);
-//		overappr.addAll(r.mOverappr);
-//		auxVars.putAll(r.mAuxVars);
+		// decl.addAll(r.mDecl);
+		// stmt.addAll(r.mStmt);
+		// overappr.addAll(r.mOverappr);
+		// auxVars.putAll(r.mAuxVars);
 		resultBuilder.addAllExceptLrValue(r);
 
 		// TODO: CType
-		final RValue rval = new RValue(new StructAccessExpression(loc, r.mLrVal.getValue(), field),
-						((CStruct) r.mLrVal.getCType().getUnderlyingType()).getFieldType(field));
-//		return new ExpressionResult(stmt, rval decl, auxVars, overappr);
+		final RValue rval = new RValue(
+				ExpressionFactory.constructStructAccessExpression(loc, r.mLrVal.getValue(), field),
+				((CStruct) r.mLrVal.getCType().getUnderlyingType()).getFieldType(field));
+		// return new ExpressionResult(stmt, rval decl, auxVars, overappr);
 		resultBuilder.setLrVal(rval);
 		return resultBuilder.build();
 	}
@@ -922,36 +934,35 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final FreeableExpression node) {
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-//		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
+		// final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
-//		final ArrayList<Declaration> decl = new ArrayList<>();
-//		final ArrayList<Statement> stmt = new ArrayList<>();
-//		final List<Overapprox> overappr = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		// final ArrayList<Declaration> decl = new ArrayList<>();
+		// final ArrayList<Statement> stmt = new ArrayList<>();
+		// final List<Overapprox> overappr = new ArrayList<>();
+		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
 		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getFormula());
 		Expression idx = (Expression) rIdc.node;
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-//		decl.addAll(rIdc.mDecl);
-//		stmt.addAll(rIdc.mStmt);
-//		overappr.addAll(rIdc.mOverappr);
-//		auxVars.putAll(rIdc.mAuxVars);
+		// decl.addAll(rIdc.mDecl);
+		// stmt.addAll(rIdc.mStmt);
+		// overappr.addAll(rIdc.mOverappr);
+		// auxVars.putAll(rIdc.mAuxVars);
 		resultBuilder.addAllExceptLrValue(rIdc);
 
-		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
+		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
 
-		final Expression arr = //new IdentifierExpression(loc, SFO.VALID);
+		final Expression arr = // new IdentifierExpression(loc, SFO.VALID);
 				ExpressionFactory.constructIdentifierExpression(loc,
 						BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
-						SFO.VALID,
-						new DeclarationInformation(StorageClass.GLOBAL, null));
+						SFO.VALID, new DeclarationInformation(StorageClass.GLOBAL, null));
 
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		// TODO: CType/range type of valid array -- depends on a preference???
 		final RValue rval = new RValue(e, new CPrimitive(CPrimitives.INT));
-//		return new ExpressionResult(stmt, rval, decl, auxVars, overappr);
+		// return new ExpressionResult(stmt, rval, decl, auxVars, overappr);
 		return resultBuilder.build();
 		// return new Result(e);
 	}
@@ -959,29 +970,28 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final MallocableExpression node) {
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-//		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
+		// final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
-//		final ArrayList<Declaration> decl = new ArrayList<>();
-//		final ArrayList<Statement> stmt = new ArrayList<>();
-//		final List<Overapprox> overappr = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		// final ArrayList<Declaration> decl = new ArrayList<>();
+		// final ArrayList<Statement> stmt = new ArrayList<>();
+		// final List<Overapprox> overappr = new ArrayList<>();
+		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
 		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getFormula());
 		Expression idx = rIdc.mLrVal.getValue();
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-//		decl.addAll(rIdc.mDecl);
-//		stmt.addAll(rIdc.mStmt);
-//		overappr.addAll(rIdc.mOverappr);
-//		auxVars.putAll(rIdc.mAuxVars);
+		// decl.addAll(rIdc.mDecl);
+		// stmt.addAll(rIdc.mStmt);
+		// overappr.addAll(rIdc.mOverappr);
+		// auxVars.putAll(rIdc.mAuxVars);
 		resultBuilder.addAllExceptLrValue(rIdc);
 
-		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
+		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
-						BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
-						SFO.VALID,
-						new DeclarationInformation(StorageClass.GLOBAL, null));
+				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression valid = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		final Expression e = ExpressionFactory.newUnaryExpression(loc,
 				// it,
@@ -991,45 +1001,39 @@ public class ACSLHandler implements IACSLHandler {
 		final RValue rval = new RValue(e, new CPrimitive(CPrimitives.INT));
 		resultBuilder.setLrVal(rval);
 		return resultBuilder.build();
-//		return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
+		// return new ExpressionResult(stmt, new RValue(e, new
+		// CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
 		// return new Result(e);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final ValidExpression node) {
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-//		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
+		// final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
-//		final ArrayList<Declaration> decl = new ArrayList<>();
-//		final ArrayList<Statement> stmt = new ArrayList<>();
-//		final List<Overapprox> overappr = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		// final ArrayList<Declaration> decl = new ArrayList<>();
+		// final ArrayList<Statement> stmt = new ArrayList<>();
+		// final List<Overapprox> overappr = new ArrayList<>();
+		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
 		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getFormula());
 		Expression idx = (Expression) rIdc.node;
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-//		decl.addAll(rIdc.mDecl);
-//		stmt.addAll(rIdc.mStmt);
-//		overappr.addAll(rIdc.mOverappr);
-//		auxVars.putAll(rIdc.mAuxVars);
 		resultBuilder.addAllExceptLrValue(rIdc);
 
-		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
+		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
-						BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
-						SFO.VALID,
-						new DeclarationInformation(StorageClass.GLOBAL, null));
+				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 
 		// TODO: CType
 		final RValue rval = new RValue(e, new CPrimitive(CPrimitives.INT));
-//		return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
 		resultBuilder.setLrVal(rval);
 		return resultBuilder.build();
-		// return new Result(e);
 	}
 
 	@Override
