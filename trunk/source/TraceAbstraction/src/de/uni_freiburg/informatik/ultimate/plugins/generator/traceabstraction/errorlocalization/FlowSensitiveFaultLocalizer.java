@@ -176,14 +176,17 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 *         If the pair (k,j) is in the list this means that there is an alternative path from position k to position
 	 *         j in the trace.
 	 */
-	private Map<Integer, List<Integer>> computeInformationFromCfg(final NestedRun<LETTER, IPredicate> counterexample,
+	private Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> computeInformationFromCfg(final NestedRun<LETTER, IPredicate> counterexample,
 			final INestedWordAutomaton<LETTER, IPredicate> cfg) {
 		// TODO: result of alternative computation, only used for debugging
 		final List<int[]> resultOld = new ArrayList<>();
 
 		// Using Better Data Structure to save graph information.
 		final Map<Integer, List<Integer>> result = new HashMap<>();
-
+		
+		// A Data Structure that saves the branching information 
+		// along with the alternative paths.
+		final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> result2 = new HashMap<>();
 		// Create a Map of Programpoints in the CFG to States of the CFG.
 		final Map<IcfgLocation, IPredicate> programPointToState = new HashMap<>();
 		for (final IPredicate cfgState : cfg.getStates()) {
@@ -249,19 +252,25 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 								final List<Integer> branchInPosArray = new ArrayList<>();
 								branchInPosArray.add(posOfStartState);
 								result.put(i - 1, branchInPosArray);
+								// add to the result2 
+								final Map<Integer, NestedRun<LETTER, IPredicate>> branchInPosMap = new HashMap<>();
+								branchInPosMap.put(posOfStartState, alternativePath);
+								result2.put(i-1, branchInPosMap);
 							} else {
 								// It is in the map,
 								result.get(i - 1).add(posOfStartState);
 								// The array should be in descending order, so we can delete
 								// the elements from this array more efficiently.
 								result.get(i - 1).sort(Collections.reverseOrder());
+								// add to result2
+								result2.get(i - 1).put(posOfStartState, alternativePath);
 							}
 						}
 					}
 				}
 			}
 		}
-		return result;
+		return result2; // result2 returns branching information + alternative paths
 	}
 
 	/**
@@ -430,6 +439,78 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
+	
+	/**
+	 * Computes the branch encoded formula (based on either markhor formula or block-encoding)
+	 * 
+	 * @param startPosition
+	 *            - Starting location of the branch.
+	 * @param endPosition
+	 *            - End location of the branch.
+	 * @param alternativePath
+	 * 		 	  - Alternative path in the CFG
+	 */
+	private UnmodifiableTransFormula doBranchEncoding(final int startPosition, final int endPosition, final NestedWord<LETTER> alternativePath, 
+			final NestedWord<LETTER> counterexampleWord, final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg,
+			final ManagedScript csToolkit) {
+		UnmodifiableTransFormula combinedTransitionFormula =
+				counterexampleWord.getSymbolAt(startPosition).getTransformula();
+		
+		UnmodifiableTransFormula combineTransitionFormulaAlternativePath = TransFormulaUtils.negate(combinedTransitionFormula, csToolkit, 
+				mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
+		
+		for (int i = startPosition + 1; i <= endPosition; i++) {
+			boolean subBranch = false;
+			int branchOut = 0;
+			int branchIn = 0;
+			// Find out if the current position is a branchOut position.
+			for (final Entry<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> entry : informationFromCfg.entrySet()) {
+				if (entry.getValue().containsKey(i)) {
+					subBranch = true;
+					branchOut = i;
+					final Integer brachInPosition = entry.getKey();
+					branchIn = brachInPosition - 1; // WHY IS IT -1 here ? This should be removed here.
+					i = branchIn;
+					break;
+				}
+			}
+			if (subBranch) {
+				// The current statement is a branch out and it's branch-in is with in the current branch.
+				final UnmodifiableTransFormula subBranchMarkhorFormula =
+						doBranchEncoding(branchOut, branchIn, counterexampleWord, null, informationFromCfg, csToolkit);
+				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
+						false, false, false, mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(
+								new UnmodifiableTransFormula[] { combinedTransitionFormula, subBranchMarkhorFormula }));
+			} else {
+				// It is a normal statement.
+				final LETTER statement = counterexampleWord.getSymbol(i);
+				final UnmodifiableTransFormula transitionFormula = statement.getTransformula();
+				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
+						false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
+						Arrays.asList(new UnmodifiableTransFormula[] { combinedTransitionFormula, transitionFormula }));
+			}
+		}
+		
+		
+		// Compute the combined transition formula for the alternative path
+		if(alternativePath != null) {
+			for(int i = 0; i< alternativePath.length(); i++) {
+				final UnmodifiableTransFormula transitionFormulaAlternPathElement =  alternativePath.getSymbol(i).getTransformula();
+				combineTransitionFormulaAlternativePath = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
+						false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
+						Arrays.asList(new UnmodifiableTransFormula[] { combineTransitionFormulaAlternativePath, transitionFormulaAlternPathElement }));
+			}
+		}
+		
+		UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula, csToolkit, mServices, mLogger,
+				mXnfConversionTechnique, mSimplificationTechnique);
+		
+		UnmodifiableTransFormula blockEncodedFormula =  TransFormulaUtils.computeEncodedBranchFormula(combinedTransitionFormula, combineTransitionFormulaAlternativePath,
+				csToolkit, mServices, mLogger, 	mXnfConversionTechnique, mSimplificationTechnique);
+		
+		return blockEncodedFormula;
+	}
+	
 	/**
 	 * Recursively Compute the Markhor Formula of a branch.
 	 *
@@ -439,7 +520,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 *            - End location of the branch.
 	 */
 	private UnmodifiableTransFormula computeMarkhorFormula(final int startPosition, final int endPosition,
-			final NestedWord<LETTER> counterexampleWord, final Map<Integer, List<Integer>> informationFromCfg,
+			final NestedWord<LETTER> counterexampleWord, final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg,
 			final ManagedScript csToolkit) {
 		UnmodifiableTransFormula combinedTransitionFormula =
 				counterexampleWord.getSymbolAt(startPosition).getTransformula();
@@ -448,12 +529,12 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			int branchOut = 0;
 			int branchIn = 0;
 			// Find out if the current position is a branchOut position.
-			for (final Entry<Integer, List<Integer>> entry : informationFromCfg.entrySet()) {
-				if (entry.getValue().contains(i)) {
+			for (final Entry<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> entry : informationFromCfg.entrySet()) {
+				if (entry.getValue().containsKey(i)) {
 					subBranch = true;
 					branchOut = i;
 					final Integer brachInPosition = entry.getKey();
-					branchIn = brachInPosition - 1;
+					branchIn = brachInPosition - 1; // WHY IS IT -1 here ? This should be removed here.
 					i = branchIn;
 					break;
 				}
@@ -529,33 +610,42 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	private IPredicate computeRelevantStatements_FlowSensitive(final NestedWord<LETTER> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer pt, final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit csToolkit,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final Map<Integer, List<Integer>> informationFromCfg,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg,
 			TracePredicates strongestPostconditionSequence) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--) {
 			final LETTER statement = counterexampleWord.getSymbol(position);
-
-			final List<Integer> branchIn = informationFromCfg.get(position);
+			// final List<Integer> branchIn = informationFromCfg.get(position);
+			final Map<Integer, NestedRun<LETTER, IPredicate>> branchIn = informationFromCfg.get(position);
+			
 			final Integer branchOutPosition;
 			if (branchIn != null && !branchIn.isEmpty()) {
 				// Branch IN Statement
-				branchOutPosition = computeCorrespondingBranchOutLocation(branchIn, startLocation);
+				ArrayList<Integer> branchIn2 = new ArrayList<>(branchIn.keySet());
+				branchIn2.sort(Collections.reverseOrder());
+				branchOutPosition = computeCorrespondingBranchOutLocation(branchIn2, startLocation);
 			} else {
 				branchOutPosition = null;
 			}
 			IPredicate weakestPreconditionRight = weakestPreconditionLeft;
 			if (branchOutPosition != null) {
+				NestedRun<LETTER, IPredicate> alternativePath = branchIn.get(branchOutPosition);
+				branchIn.remove(branchOutPosition);
 				final int positionBranchIn = position;
 				position = branchOutPosition;
-				final UnmodifiableTransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn,
-						counterexampleWord, informationFromCfg, csToolkit.getManagedScript());
+				// block encoding for the branch
+				final UnmodifiableTransFormula blockEncodedBranchFormula = doBranchEncoding(branchOutPosition, 
+						positionBranchIn, alternativePath.getWord(),counterexampleWord, informationFromCfg,
+						csToolkit.getManagedScript());
+				//final UnmodifiableTransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn,
+				//		counterexampleWord, informationFromCfg, csToolkit.getManagedScript());
 				final Term wpTerm =
-						computeWp(weakestPreconditionRight, markhor, csToolkit.getManagedScript().getScript(),
+						computeWp(weakestPreconditionRight, blockEncodedBranchFormula, csToolkit.getManagedScript().getScript(),
 								csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
 				// Check the relevance of the branch.
 				final boolean isRelevant =
-						checkBranchRelevance(branchOutPosition, positionBranchIn, markhor, weakestPreconditionLeft,
+						checkBranchRelevance(branchOutPosition, positionBranchIn, blockEncodedBranchFormula, weakestPreconditionLeft,
 								weakestPreconditionRight, counterexampleWord, csToolkit, modifiableGlobalsTable, 
 								strongestPostconditionSequence);
 				if (isRelevant) {
@@ -567,7 +657,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 					// That is why weakestPreconditionLeft is coming from inside the branch now.
 				} else {
 					// Don't do anything.
-					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:" + markhor + " ]");
+					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:" + blockEncodedBranchFormula + " ]");
 				}
 
 			} else {
@@ -663,7 +753,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final INestedWordAutomaton<LETTER, IPredicate> cfg, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
-		final Map<Integer, List<Integer>> informationFromCfg = computeInformationFromCfg(counterexample, cfg);
+		final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg = computeInformationFromCfg(counterexample, cfg);
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the
 		// branch.
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(
