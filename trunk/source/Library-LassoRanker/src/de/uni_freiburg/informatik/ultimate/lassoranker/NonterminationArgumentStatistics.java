@@ -50,10 +50,12 @@ public class NonterminationArgumentStatistics implements ICsvProviderProvider<St
 	private final String mNtar;
 	private final boolean mLambdaZero;
 	private final boolean mGEVZero;
+	private final int mNumberOfGevs;
 
 	public NonterminationArgumentStatistics(final NonTerminationArgument nta) {
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
+			mNumberOfGevs = computeNumberOfGevs(((GeometricNonTerminationArgument) nta).getGEVs());
 			boolean lambdaZero = true;
 			boolean gevZero = true;
 			final List<Rational> lambdas = gnta.getLambdas();
@@ -64,15 +66,21 @@ public class NonterminationArgumentStatistics implements ICsvProviderProvider<St
 
 			mLambdaZero = lambdaZero;
 			mGEVZero = gevZero;
-			mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + "Lambdas: " + lambdas + " Mus: "
-					+ gnta.getNus() + " GEVs: " + (mGEVZero ? "is zero" : "is not zero");
+			mNtar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") + mNumberOfGevs + "GEVs " + "Lambdas: "
+					+ lambdas + " Mus: " + gnta.getNus();
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			mNtar = "Fixpoint";
 			mLambdaZero = true;
 			mGEVZero = true;
+			mNumberOfGevs = 0;
 		} else {
 			throw new IllegalArgumentException("unknown NonTerminationArgument");
 		}
+	}
+	
+	private int computeNumberOfGevs(final List<Map<IProgramVar, Rational>> gevs) {
+		return (int) gevs.stream().filter(x -> x.entrySet().stream().anyMatch(y -> !y.getValue().equals(Rational.ZERO)))
+				.count();
 	}
 
 	private boolean isFixpoint() {
