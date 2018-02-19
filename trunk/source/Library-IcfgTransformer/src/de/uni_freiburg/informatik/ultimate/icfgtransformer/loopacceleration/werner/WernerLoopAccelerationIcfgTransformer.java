@@ -155,6 +155,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mOverApproximation = new HashMap<>();
 		mAcceleratedLoops = new HashSet<>();
 
+		/**
+		 * Get the loopbodies using the loopdetector.
+		 */
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mLoopHeads, mScript, mServices, backboneLimit);
 		mLoopBodies = mLoopDetector.getLoopBodies();
 
@@ -195,6 +198,10 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			return;
 		}
 
+		/**
+		 * if loop has nested loops mark as overapprox and accelerate the nested
+		 * loop first.
+		 */
 		if (!loop.getNestedLoops().isEmpty()) {
 			for (final Loop nestedLoop : loop.getNestedLoops()) {
 				mOverApproximation.put(nestedLoop.getLoophead(), true);
@@ -204,7 +211,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		}
 
 		/**
-		 * Go through each backbone and calculate an iterated value
+		 * Go through each backbone and construct a symbolic memory.
 		 */
 		for (final Backbone backbone : loop.getBackbones()) {
 			calculateSymbolicMemory(backbone, loop);
@@ -226,6 +233,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		final IteratedSymbolicMemory iteratedSymbolicMemory = new IteratedSymbolicMemory(mScript, mServices, mLogger,
 				loop, pathCounters, mNewPathCounter);
 
+		/**
+		 * get the iterated variable values.
+		 */
 		iteratedSymbolicMemory.updateMemory();
 		iteratedSymbolicMemory.updateCondition();
 
@@ -234,7 +244,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mOverApproximation.putIfAbsent(loop.getLoophead(), iteratedSymbolicMemory.isOverapprox());
 
 		/**
-		 * Dealing with nested loops
+		 * Dealing with nested loops by combining the two accelerated loop
+		 * summaries.
 		 */
 		if (!loop.getNestedLoops().isEmpty()) {
 			for (final Loop nestedLoop : loop.getNestedLoops()) {
@@ -260,8 +271,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		loop.setIteratedSymbolicMemory(iteratedSymbolicMemory);
 
 		/**
-		 * compute the main accelerated loop exit, by combining an exit
-		 * transition with the loop summary
+		 * compute the main accelerated loop exit, by combining the exit
+		 * transitions with the loop summary
 		 */
 		for (int i = 0; i < loop.getExitTransitions().size(); i++) {
 			final IcfgEdge exitTransition = loop.getExitTransitions().get(i);
@@ -278,9 +289,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			final UnmodifiableTransFormula exitFormula = buildFormula(mScript, exitTerm, loop.getInVars(),
 					loop.getOutVars(), auxVars);
 
-			/**
-			 * accelerated loop
-			 */
 			loop.addExitCondition(exitFormula);
 		}
 
@@ -294,6 +302,12 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 	}
 
+	/**
+	 * Execute backbone once to get a symbolic memory.
+	 * 
+	 * @param backbone
+	 * @param loop
+	 */
 	private void calculateSymbolicMemory(final Backbone backbone, final Loop loop) {
 		final SimultaneousUpdate update = new SimultaneousUpdate(backbone.getFormula(), mScript);
 
@@ -322,7 +336,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		backbone.setCondition(condition);
 
 		/**
-		 * First accelerate each nested loop
+		 * Attach the accelerated loopsummary of each nested loop to the
+		 * backbone.
 		 */
 		if (backbone.isNested()) {
 			for (final IcfgLocation nestedLoopHead : backbone.getNestedLoops()) {
@@ -340,6 +355,13 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		backbone.setSymbolicMemory(symbolicMemory);
 	}
 
+	/**
+	 * If there is a path that leads to an ErrorLocation in the loop calculate
+	 * an accelerated path.
+	 * 
+	 * @param loop
+	 * @param loopSummary
+	 */
 	private void dealWithErrorPaths(final Loop loop, final Term loopSummary) {
 
 		for (final Entry<IcfgLocation, Backbone> errorPath : loop.getErrorPaths().entrySet()) {
@@ -388,6 +410,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		return tfb.finishConstruction(script);
 	}
 
+	/**
+	 * check for arrays in the icfg
+	 * 
+	 * @param init
+	 */
 	private void preprocessIcfg(Set<INLOC> init) {
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 		final Set<INLOC> closed = new HashSet<>();
