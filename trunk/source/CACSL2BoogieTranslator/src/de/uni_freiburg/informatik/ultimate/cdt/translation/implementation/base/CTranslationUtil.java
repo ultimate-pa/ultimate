@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -465,4 +467,25 @@ public class CTranslationUtil {
 			}
 			return result;
 		}
+
+		/**
+		 * Convert the given expression to a corresponding LeftHandSide. This does not work for all kinds of Expressions,
+		 *  as not all have a corresponding LeftHandSide (e.g. ArrayStoreExpressions).
+		 *
+		 * @param modifiedGlobal
+		 * @return
+		 */
+	public static LeftHandSide convertExpressionToLHS(final Expression expr) {
+		if (expr instanceof IdentifierExpression) {
+			final IdentifierExpression idex = (IdentifierExpression) expr;
+			return ExpressionFactory.constructVariableLHS(idex.getLoc(), (BoogieType) idex.getType(),
+					idex.getIdentifier(), idex.getDeclarationInformation());
+		} else if (expr instanceof ArrayAccessExpression) {
+			throw new UnsupportedOperationException("todo: implement");
+		} else if (expr instanceof StructAccessExpression) {
+			throw new UnsupportedOperationException("todo: implement");
+		} else {
+			throw new IllegalArgumentException("expression cannot be converted to a LeftHandSide: " + expr);
+		}
+	}
 }

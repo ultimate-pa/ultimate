@@ -331,8 +331,8 @@ public class MemoryHandler {
 			for (final HeapDataArray heapDataArray : heapDataArrays) {
 				decl.add(constructMemoryArrayDeclaration(tuLoc, heapDataArray.getName(), heapDataArray.getASTType()));
 				// create and add read and write procedure
-				decl.addAll(constructWriteProcedures(tuLoc, heapDataArrays, heapDataArray));
-				decl.addAll(constructReadProcedures(tuLoc, heapDataArray));
+				decl.addAll(constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray));
+				decl.addAll(constructReadProcedures(main, tuLoc, heapDataArray));
 			}
 		}
 
@@ -643,7 +643,7 @@ public class MemoryHandler {
 		}
 
 		// free ensures #res == dest;
-		final EnsuresSpecification returnValue = new EnsuresSpecification(ignoreLoc, true,
+		final EnsuresSpecification returnValue = mFunctionHandler.constructEnsuresSpecification(ignoreLoc, true,
 				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
 //						new IdentifierExpression(ignoreLoc, SFO.RES),
 						ExpressionFactory.constructIdentifierExpression(ignoreLoc,
@@ -991,7 +991,7 @@ public class MemoryHandler {
 		checkPointerTargetFullyAllocated(ignoreLoc, inParamAmountExpr, inParamPtr, specs, procName);
 
 		// free ensures #res == dest;
-		final EnsuresSpecification returnValue = new EnsuresSpecification(ignoreLoc, true,
+		final EnsuresSpecification returnValue = mFunctionHandler.constructEnsuresSpecification(ignoreLoc, true,
 				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
 //						new IdentifierExpression(ignoreLoc, outParamResult),
 						ExpressionFactory.constructIdentifierExpression(ignoreLoc,
@@ -1041,51 +1041,81 @@ public class MemoryHandler {
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
 
-	private List<Declaration> constructWriteProcedures(final ILocation loc,
+	private List<Declaration> constructWriteProcedures(final Dispatcher main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray) {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
 //			result.add(constructWriteProcedure(loc, heapDataArrays, heapDataArray, rda));
-			final Procedure writeDeclaration = constructWriteProcedure(loc, heapDataArrays, heapDataArray, rda);
-			assert writeDeclaration.getBody() == null : "if it has a body we should add it to the result here "
-					+ "(only the declaration goes to the FucntionHanlder).";
-			mFunctionHandler.registerProcedureDeclaration(rda.getWriteProcedureName(), writeDeclaration);
+			final Collection<Procedure> writeDeclaration =
+					constructWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda);
+			result.addAll(writeDeclaration);
+//			assert writeDeclaration.getBody() == null : "if it has a body we should add it to the result here "
+//					+ "(only the declaration goes to the FucntionHanlder).";
+//			mFunctionHandler.registerProcedureDeclaration(rda.getWriteProcedureName(), writeDeclaration);
 		}
 		return result;
 	}
 
-	private List<Declaration> constructReadProcedures(final ILocation loc, final HeapDataArray heapDataArray) {
+	private List<Declaration> constructReadProcedures(final Dispatcher main, final ILocation loc,
+			final HeapDataArray heapDataArray) {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
 //			result.add(constructReadProcedure(loc, heapDataArray, rda));
-			final Procedure readDeclaration = constructReadProcedure(loc, heapDataArray, rda);
-			assert readDeclaration.getBody() == null : "if it has a body we should add it to the result here "
-					+ "(only the declaration goes to the FucntionHanlder).";
-			mFunctionHandler.registerProcedureDeclaration(rda.getReadProcedureName(), readDeclaration);
+			final List<Procedure> readDeclaration = constructReadProcedure(main, loc, heapDataArray, rda);
+			result.addAll(readDeclaration);
+//			assert readDeclaration.getBody() == null : "if it has a body we should add it to the result here "
+//					+ "(only the declaration goes to the FucntionHanlder).";
+//			mFunctionHandler.registerProcedureDeclaration(rda.getReadProcedureName(), readDeclaration);
+
 		}
 		return result;
 	}
 
-	private Procedure constructWriteProcedure(final ILocation loc, final Collection<HeapDataArray> heapDataArrays,
-			final HeapDataArray heapDataArray, final ReadWriteDefinition rda) {
-		final ASTType valueAstType = rda.getASTType();
-		Expression returnValue = //new IdentifierExpression(loc, "#value");
-				ExpressionFactory.constructIdentifierExpression(loc,
-						mBoogieTypeHelper.getBoogieTypeForBoogieASTType(valueAstType), "#value",
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, rda.getWriteProcedureName()));
+	/**
+	 *
+	 * Note that we do not return a Procedure declaration here anymore because procedure declarations are handled
+	 * by the FunctionHandler directly. So the return value will be an empty set, or perhaps in the future an
+	 * implementation, should we ever want one.
+	 *
+	 * @param main
+	 * @param loc
+	 * @param heapDataArrays
+	 * @param heapDataArray
+	 * @param rda
+	 * @return
+	 */
+	private Collection<Procedure> constructWriteProcedure(final Dispatcher main, final ILocation loc,
+			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray,
+			final ReadWriteDefinition rda) {
+
+//		mFunctionHandler.beginCustomProcedure(main, loc, rda.getWriteProcedureName(),
+//				new Procedure(loc, new Attribute[0], rda.getWriteProcedureName(),  ));
+
+
 		final String inPtr = "#ptr";
-		final IdentifierExpression inPtrExp = ExpressionFactory.constructIdentifierExpression(loc,
-				mBoogieTypeHelper.getBoogieTypeForPointerType(), inPtr,
-				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, rda.getWriteProcedureName()));
-
 		final String writtenTypeSize = "#sizeOfWrittenType";
+		final ASTType valueAstType = rda.getASTType();
 
-		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSizeT());
-		final VarList[] inWrite = new VarList[] { new VarList(loc, new String[] { "#value" }, valueAstType),
-				new VarList(loc, new String[] { inPtr }, mTypeHandler.constructPointerType(loc)),
+		Expression returnValue = //new IdentifierExpression(loc, "#value");
+					ExpressionFactory.constructIdentifierExpression(loc,
+							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(valueAstType), "#value",
+							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, rda.getWriteProcedureName()));
+		final IdentifierExpression inPtrExp = ExpressionFactory.constructIdentifierExpression(loc,
+					mBoogieTypeHelper.getBoogieTypeForPointerType(), inPtr,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, rda.getWriteProcedureName()));
+
+		{
+			final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSizeT());
+			final VarList[] inWrite = new VarList[] { new VarList(loc, new String[] { "#value" }, valueAstType),
+					new VarList(loc, new String[] { inPtr }, mTypeHandler.constructPointerType(loc)),
 				new VarList(loc, new String[] { writtenTypeSize }, sizetType) };
+
+			mFunctionHandler.beginCustomProcedure(main, loc, rda.getWriteProcedureName(),
+					new Procedure(loc, new Attribute[0], rda.getWriteProcedureName(), new String[0], inWrite,
+							new VarList[0], new Specification[0], null ));
+		}
 
 		// specification for memory writes
 		final ArrayList<Specification> swrite = new ArrayList<>();
@@ -1098,8 +1128,8 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, rda.getWriteProcedureName()));
 		checkPointerTargetFullyAllocated(loc, sizeWrite, inPtr, swrite, rda.getWriteProcedureName());
 
-		final ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x -> x.getVariableLHS());
-		swrite.add(mod);
+//		final ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x -> x.getVariableLHS());
+//		swrite.add(mod);
 
 		final boolean floating2bitvectorTransformationNeeded = ((mMemoryModel instanceof MemoryModel_SingleBitprecise)
 				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE));
@@ -1168,13 +1198,18 @@ public class MemoryHandler {
 			final VarList[] parameters = new VarList[] { new VarList(loc, new String[] { "#valueAsBitvector" }, type) };
 			final QuantifierExpression qe =
 					new QuantifierExpression(loc, false, new String[0], parameters, new Attribute[0], conjunction);
-			swrite.add(new EnsuresSpecification(loc, false, qe));
+			swrite.add(mFunctionHandler.constructEnsuresSpecification(loc, false, qe));
 		} else {
-			swrite.add(new EnsuresSpecification(loc, false, ExpressionFactory.and(loc, conjuncts)));
+			swrite.add(mFunctionHandler.constructEnsuresSpecification(loc, false, ExpressionFactory.and(loc, conjuncts)));
 		}
-		final Procedure result = new Procedure(loc, new Attribute[0], rda.getWriteProcedureName(), new String[0],
-				inWrite, new VarList[0], swrite.toArray(new Specification[swrite.size()]), null);
-		return result;
+//		final Procedure result = new Procedure(loc, new Attribute[0], rda.getWriteProcedureName(), new String[0],
+//				inWrite, new VarList[0], swrite.toArray(new Specification[swrite.size()]), null);
+
+		mFunctionHandler.addSpecificationsToCurrentProcedure(swrite);
+		mFunctionHandler.endCustomProcedure(main, rda.getWriteProcedureName());
+
+		return Collections.emptySet();
+//		return result;
 	}
 
 	private static List<Expression> constructConjunctsForWriteEnsuresSpecification(final ILocation loc,
@@ -1193,18 +1228,34 @@ public class MemoryHandler {
 		return conjuncts;
 	}
 
-	private Procedure constructReadProcedure(final ILocation loc, final HeapDataArray hda,
+	/**
+	 * Note: Currently this returns an empty list, see also {@link constructWriteProcedure} on this topic.
+	 *
+	 * @param main
+	 * @param loc
+	 * @param hda
+	 * @param rda
+	 * @return
+	 */
+	private List<Procedure> constructReadProcedure(final Dispatcher main, final ILocation loc, final HeapDataArray hda,
 			final ReadWriteDefinition rda) {
 		// specification for memory reads
 		final String returnValue = "#value";
 		final ASTType valueAstType = rda.getASTType();
 		final String ptrId = "#ptr";
 		final String readTypeSize = "#sizeOfReadType";
-		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSizeT());
-		final VarList[] inRead =
-				new VarList[] { new VarList(loc, new String[] { ptrId }, mTypeHandler.constructPointerType(loc)),
-						new VarList(loc, new String[] { readTypeSize }, sizetType) };
-		final VarList[] outRead = new VarList[] { new VarList(loc, new String[] { returnValue }, valueAstType) };
+		{
+			final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSizeT());
+			final VarList[] inRead =
+					new VarList[] { new VarList(loc, new String[] { ptrId }, mTypeHandler.constructPointerType(loc)),
+							new VarList(loc, new String[] { readTypeSize }, sizetType) };
+
+			final VarList[] outRead = new VarList[] { new VarList(loc, new String[] { returnValue }, valueAstType) };
+			final Procedure decl = new Procedure(loc, new Attribute[0], rda.getReadProcedureName(), new String[0],
+					inRead, outRead, new Specification[0], null);
+			mFunctionHandler.beginCustomProcedure(main, loc, rda.getReadProcedureName(), decl);
+
+		}
 
 		final ArrayList<Specification> sread = new ArrayList<>();
 
@@ -1255,10 +1306,15 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, rda.getReadProcedureName()));
 		final Expression equality =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueExpr, dataFromHeap);
-		sread.add(new EnsuresSpecification(loc, false, equality));
-		final Procedure result = new Procedure(loc, new Attribute[0], rda.getReadProcedureName(), new String[0], inRead,
-				outRead, sread.toArray(new Specification[sread.size()]), null);
-		return result;
+		sread.add(mFunctionHandler.constructEnsuresSpecification(loc, false, equality));
+//		final Procedure result = new Procedure(loc, new Attribute[0], rda.getReadProcedureName(), new String[0], inRead,
+//				outRead, sread.toArray(new Specification[sread.size()]), null);
+
+
+		mFunctionHandler.addSpecificationsToCurrentProcedure(sread);
+		mFunctionHandler.endCustomProcedure(main, rda.getReadProcedureName());
+
+		return Collections.emptyList();
 	}
 
 	private Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
@@ -1694,7 +1750,7 @@ public class MemoryHandler {
 								ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid),
 								idcFree, bLFalse)));
 
-		specFree.add(new EnsuresSpecification(tuLoc, free, updateValidArray));
+		specFree.add(mFunctionHandler.constructEnsuresSpecification(tuLoc, free, updateValidArray));
 		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { getValidArrayLhs(tuLoc) }));
 
 		decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE, new String[0],
@@ -1756,8 +1812,8 @@ public class MemoryHandler {
 		final Expression updateValidArray = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
 			arrayStore);
 
-		specFree.add(new EnsuresSpecification(tuLoc, true, updateValidArray));
-		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { getValidArrayLhs(tuLoc) }));
+		specFree.add(mFunctionHandler.constructEnsuresSpecification(tuLoc, true, updateValidArray));
+//		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { getValidArrayLhs(tuLoc) }));
 
 		final Procedure deallocDeclaration = new Procedure(tuLoc, new Attribute[0],
 				MemoryModelDeclarations.Ultimate_Dealloc.getName(), new String[0],
@@ -1814,23 +1870,23 @@ public class MemoryHandler {
 		final List<Specification> specMalloc = new ArrayList<>();
 
 		specMalloc
-				.add(new EnsuresSpecification(tuLoc, false,
+				.add(mFunctionHandler.constructEnsuresSpecification(tuLoc, false,
 						ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
 								ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, ExpressionFactory
 										.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid), idcMalloc),
 								bLFalse)));
-		specMalloc.add(new EnsuresSpecification(tuLoc, false, ensuresArrayUpdate(tuLoc, bLTrue, base, valid)));
-		specMalloc.add(new EnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
+		specMalloc.add(mFunctionHandler.constructEnsuresSpecification(tuLoc, false, ensuresArrayUpdate(tuLoc, bLTrue, base, valid)));
+		specMalloc.add(mFunctionHandler.constructEnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
 				Operator.COMPEQ, ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_OFFSET), nr0)));
-		specMalloc.add(new EnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
+		specMalloc.add(mFunctionHandler.constructEnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
 				Operator.COMPNEQ, ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0)));
-		specMalloc.add(new EnsuresSpecification(tuLoc, false,
+		specMalloc.add(mFunctionHandler.constructEnsuresSpecification(tuLoc, false,
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, length,
 						ExpressionFactory.constructArrayStoreExpression(tuLoc,
 								ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, length),
 								idcMalloc, size))));
-		specMalloc.add(new ModifiesSpecification(tuLoc, false,
-				new VariableLHS[] { getValidArrayLhs(tuLoc), getLengthArrayLhs(tuLoc) }));
+//		specMalloc.add(new ModifiesSpecification(tuLoc, false,
+//				new VariableLHS[] { getValidArrayLhs(tuLoc), getLengthArrayLhs(tuLoc) }));
 		final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0],
 				MemoryModelDeclarations.Ultimate_Alloc.getName(), new String[0],
 				new VarList[] { new VarList(tuLoc, new String[] { SIZE }, intType) },

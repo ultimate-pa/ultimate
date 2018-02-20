@@ -435,9 +435,22 @@ public class ExpressionResult extends Result {
 		return result;
 	}
 
+	/**
+	 * Copy the contents of a given on-heap array (given via address parameter) in to a fresh Boogie array.
+	 * Introduces a fresh auxvar for the Boogie Array, which is the LRValue of the returned expression result.
+	 *
+	 * @param main
+	 * @param structHandler
+	 * @param memoryHandler
+	 * @param loc
+	 * @param address
+	 * @param arrayType
+	 * @return
+	 */
 	public ExpressionResult readArrayFromHeap(final Dispatcher main, final StructHandler structHandler,
 			final MemoryHandler memoryHandler, final ILocation loc, final Expression address, final CArray arrayType) {
-		final HeapLValue resultValue;
+//		final HeapLValue resultValue;
+		final LRValue resultValue;
 //		List<Declaration> decl = new ArrayList<>();
 //		List<Statement> stmt = new ArrayList<>();
 //		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
@@ -461,12 +474,16 @@ public class ExpressionResult extends Result {
 //					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
 			final AuxVarInfo newArrayAuxvar =
 					CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.ARRAYCOPY);
-			resultValue = LRValueFactory.constructHeapLValue(main,
-					newArrayAuxvar.getExp(),
+
+//			resultValue = LRValueFactory.constructHeapLValue(main,
+////					newArrayAuxvar.getExp(),
 //					ExpressionFactory.replaceBoogieType(
 //							newArrayAuxvar.getExp(),
 //							main.mTypeHandler.getBoogiePointerType()),
-					arrayType, null);
+//					arrayType, null);
+
+			resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
+
 //			builder.setLrVal(new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null));
 
 //			decl.add(newArrayDec);

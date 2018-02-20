@@ -197,7 +197,7 @@ public class ExpressionResultBuilder {
 		mLrVal = rVal;
 	}
 
-	public void setOrResetLrVal(final HeapLValue lrVal) {
+	public void setOrResetLrVal(final LRValue lrVal) {
 		if (mLrVal == null) {
 			setLrVal(lrVal);
 		} else {
