@@ -730,7 +730,13 @@ public class PostProcessor {
 			final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
 			final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
 
-			main.mCHandler.getFunctionHandler().beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
+			{
+				final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT,
+						new String[0], new VarList[0], new VarList[0], new Specification[0], null);
+				main.mCHandler.getFunctionHandler().beginCustomProcedure(main, translationUnitLoc, SFO.INIT,
+						initProcedureDecl);
+//				main.mCHandler.getFunctionHandler().beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
+			}
 			final ArrayList<Statement> initStatements = new ArrayList<>();
 			final Collection<String> proceduresCalledByUltimateInit = new HashSet<>();
 
@@ -865,7 +871,7 @@ public class PostProcessor {
 
 //			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT, proceduresCalledByUltimateInit);
 //			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT);
-			main.mCHandler.getFunctionHandler().endUltimateInitOrStart(main, SFO.INIT);
+			main.mCHandler.getFunctionHandler().endCustomProcedure(main, SFO.INIT);
 
 			mUltimateInitImplementation = initProcedureImplementation;
 		}
@@ -902,7 +908,11 @@ public class PostProcessor {
 			if (!checkedMethod.equals(SFO.EMPTY) && functionHandler.hasProcedure(checkedMethod)) {
 				mLogger.info("Settings: Checked method=" + checkedMethod);
 
-				functionHandler.beginUltimateInitOrStart(main, loc, SFO.START);
+				{
+					final Procedure startDeclaration = new Procedure(loc, new Attribute[0], SFO.START, new String[0],
+						new VarList[0], new VarList[0], new Specification[0], null);
+					functionHandler.beginCustomProcedure(main, loc, SFO.START, startDeclaration);
+				}
 
 //				Procedure startDeclaration = null;
 //				Specification[] specsStart = new Specification[0];
@@ -1004,7 +1014,7 @@ public class PostProcessor {
 
 //				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START, proceduresCalledByStart);
 //				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START);
-				functionHandler.endUltimateInitOrStart(main, SFO.START);
+				functionHandler.endCustomProcedure(main, SFO.START);
 			} else {
 				mLogger.info("Settings: Library mode!");
 				if (functionHandler.hasProcedure(SFO.MAIN)) {

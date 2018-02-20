@@ -133,7 +133,8 @@ public abstract class AMemoryModel {
 		private final ASTType mASTType;
 		private final Set<CPrimitives> mPrimitives;
 		private final Set<CPrimitiveCategory> mCPrimitiveCategory;
-		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType aSTType, final Set<CPrimitives> primitives) {
+		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType aSTType,
+				final Set<CPrimitives> primitives) {
 			super();
 			mProcedureSuffix = procedureName;
 			mBytesize = bytesize;
