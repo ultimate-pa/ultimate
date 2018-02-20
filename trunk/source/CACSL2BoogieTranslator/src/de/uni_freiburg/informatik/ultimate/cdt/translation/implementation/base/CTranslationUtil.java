@@ -34,7 +34,6 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -65,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -217,7 +217,7 @@ public class CTranslationUtil {
 				IASTBinaryExpression.op_plus, pointerOffset, sizeT, cellOffset, sizeT);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
-		return new HeapLValue(newPointer, cArrayType.getValueType(), null);
+		return LRValueFactory.constructHeapLValue(main, newPointer, cArrayType.getValueType(), null);
 	}
 
 	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
@@ -229,8 +229,12 @@ public class CTranslationUtil {
 		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation()
 				.constructLiteralForIntegerType(loc, pointerComponentType, new BigInteger(arrayIndex.toString()));
 
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
+		/* do a conversion so the expression has boogie pointer type */
+		final RValue addressRVal =
+				arrayBaseAddress.getAddressAsPointerRValue(main.mTypeHandler.getBoogiePointerType());
+//		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
+		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(addressRVal.getValue(), loc);
+		final Expression pointerOffset = MemoryHandler.getPointerOffset(addressRVal.getValue(), loc);
 
 		final CType cellType = cArrayType.getValueType();
 
@@ -243,7 +247,7 @@ public class CTranslationUtil {
 
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
-		return new HeapLValue(newPointer, cellType, null);
+		return LRValueFactory.constructHeapLValue(main, newPointer, cellType, null);
 	}
 
 	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
@@ -262,7 +266,7 @@ public class CTranslationUtil {
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
 
-		return new HeapLValue(newPointer, cStructType.getFieldTypes()[fieldIndex], null);
+		return LRValueFactory.constructHeapLValue(main, newPointer, cStructType.getFieldTypes()[fieldIndex], null);
 	}
 
 	public static boolean isVarlengthArray(final CArray cArrayType, final ExpressionTranslation expressionTranslation) {
@@ -437,18 +441,18 @@ public class CTranslationUtil {
 			for (final Declaration rExprdecl : decls) {
 				assert rExprdecl instanceof VariableDeclaration;
 				final VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
-	
+
 				assert varDecl
 						.getVariables().length == 1 : "there are never two auxvars declared in one declaration, right??";
 				final VarList vl = varDecl.getVariables()[0];
 				assert vl.getIdentifiers().length == 1 : "there are never two auxvars declared in one declaration, right??";
 				final String id = vl.getIdentifiers()[0];
-	
+
 				if (nameHandler.isTempVar(id)) {
 					// malloc auxvars do not need to be havocced in some cases (alloca)
 					// result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
 	//				result &= auxVars.containsKey(varDecl);
-	
+
 					boolean auxVarExists = false;
 					for (final AuxVarInfo auxVar : auxVars) {
 						if (auxVar.getVarDec().equals(varDecl)) {
@@ -461,35 +465,4 @@ public class CTranslationUtil {
 			}
 			return result;
 		}
-}
-
-/**
- * Looks for a VariableLHS with a global variable inside a given LHS.
- * Returns such a VariableLHS if it exists, null otherwise.
- * Note that this will crash if the VariableLHS does not contain a DeclarationInformation.
- *
- * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
- */
-class BoogieGlobalLhsFinder extends BoogieVisitor {
-
-	private VariableLHS mResult;
-
-	@Override
-	protected void visit(final VariableLHS lhs) {
-		if (lhs.getDeclarationInformation().getStorageClass() == StorageClass.GLOBAL) {
-			if (mResult != null) {
-				throw new AssertionError("there should be at most one VariableLHS inside a LeftHandSide!");
-			} else {
-
-				mResult = lhs;// lhs.getIdentifier();
-			}
-		}
-		super.visit(lhs);
-	}
-
-	public VariableLHS getGlobalId(final LeftHandSide lhs) {
-		super.processLeftHandSide(lhs);
-		return mResult;
-	}
 }

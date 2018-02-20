@@ -58,6 +58,7 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -89,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
@@ -113,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -396,7 +399,8 @@ public class FunctionHandler {
 			assert bodyResultBuilder.getLrVal() == null;
 			//		final Body body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]),
 			//				stmts.toArray(new Statement[stmts.size()]));
-			body = new Body(loc,
+//			body = new Body(loc,
+			body = constructBody(loc,
 					bodyResultBuilder.getDeclarations().toArray(
 							new VariableDeclaration[bodyResultBuilder.getDeclarations().size()]),
 					bodyResultBuilder.getStatements().toArray(
@@ -584,7 +588,7 @@ public class FunctionHandler {
 
 				final RValue castExprResultRVal = (RValue) returnValueSwitched.getLrValue();
 				resultBuilder.addStatement(
-						new AssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
+						constructAssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
 			}
 		}
@@ -677,7 +681,8 @@ public class FunctionHandler {
 		 *
 		 */
 		final Deque<StronglyConnectedComponent<ProcedureInfo>> frontier = new ArrayDeque<>();
-		frontier.addAll(dssc.getLeafComponents());
+//		frontier.addAll(dssc.getLeafComponents());
+		frontier.addAll(dssc.getRootComponents());
 		while (!frontier.isEmpty()) {
 			final StronglyConnectedComponent<ProcedureInfo> currentScc = frontier.pollFirst();
 
@@ -768,7 +773,7 @@ public class FunctionHandler {
 				newSpecWithExtraEnsuresClauses = Arrays.copyOf(newSpec, nrSpec + 1);
 				newSpecWithExtraEnsuresClauses[nrSpec] = new EnsuresSpecification(ensLoc, false,
 						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, vIe,
-								ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
+								ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
 				check.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
 				if (main.getPreferences()
 						.getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE)) {
@@ -876,7 +881,8 @@ public class FunctionHandler {
 				final CType valueType =
 						((CArray) in.mLrVal.getCType().getUnderlyingType()).getValueType().getUnderlyingType();
 				if (in.mLrVal instanceof HeapLValue) {
-					in.mLrVal = new RValue(((HeapLValue) in.mLrVal).getAddress(), new CPointer(valueType));
+//					in.mLrVal = new RValue(((HeapLValue) in.mLrVal).getAddress(), new CPointer(valueType));
+					in.mLrVal = ((HeapLValue) in.mLrVal).getAddressAsPointerRValue(main);
 				} else {
 					in.mLrVal = new RValue(in.mLrVal.getValue(), new CPointer(valueType));
 				}
@@ -946,7 +952,8 @@ public class FunctionHandler {
 		if (isGlobalScope()) {
 			throw new IllegalStateException("attempting to register a call when in global scope");
 		}
-		registerCall(mCurrentProcedureInfo, getProcedureInfo(callee));
+//		registerCall(mCurrentProcedureInfo, getProcedureInfo(callee));
+		registerCall(mCurrentProcedureInfo, getOrConstructProcedureInfo(callee));
 	}
 
 	/**
@@ -1233,7 +1240,7 @@ public class FunctionHandler {
 					// malloc
 					memoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llv, igLoc));
 					// dereference
-					final HeapLValue hlv = new HeapLValue(llv.getValue(), cvar, null);
+					final HeapLValue hlv = LRValueFactory.constructHeapLValue(main, llv.getValue(), cvar, null);
 
 					// convention (or rather an insight?): if a variable is put on heap or not, its ctype stays the same
 					final ExpressionResult assign = ((CHandler) main.mCHandler).makeAssignment(main, igLoc, hlv,
@@ -1248,7 +1255,7 @@ public class FunctionHandler {
 //					stmt.add(
 //							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 					resultBuilder.addStatement(
-							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
+							constructAssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 				}
 				assert main.mCHandler.getSymbolTable().containsCSymbol(cId);
 
@@ -1260,6 +1267,8 @@ public class FunctionHandler {
 			}
 		}
 	}
+
+
 
 //	/**
 //	 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
@@ -1506,7 +1515,8 @@ public class FunctionHandler {
 
 			if (outParamVarlists.length == 0) { // void
 				// C has only one return statement -> no need for forall
-				call = new CallStatement(loc, false, new VariableLHS[0], methodName,
+//				call = new CallStatement(loc, false, new VariableLHS[0], methodName,
+				call = constructCallStatement(loc, false, new VariableLHS[0], methodName,
 						translatedParameters.toArray(new Expression[translatedParameters.size()]));
 			} else if (outParamVarlists.length == 1) { // one return value
 				final VariableLHS returnedValueAsLhs;
@@ -1537,7 +1547,8 @@ public class FunctionHandler {
 				functionCallExpressionResultBuilder.addAuxVar(auxvar);
 				functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
 
-				call = new CallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs }, methodName,
+//				call = new CallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs }, methodName,
+				call = constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs }, methodName,
 						translatedParameters.toArray(new Expression[translatedParameters.size()]));
 			} else { // unsupported!
 				// String msg = "Cannot handle multiple out params! "
@@ -1573,7 +1584,8 @@ public class FunctionHandler {
 			functionCallExpressionResultBuilder.addAuxVar(auxvar);
 
 //			final VariableLHS lhs = new VariableLHS(loc, ident);
-			call = new CallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,
+//			call = new CallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,
+			call = constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,
 					translatedParameters.toArray(new Expression[translatedParameters.size()]));
 		}
 		functionCallExpressionResultBuilder.addStatement(call);
@@ -2089,4 +2101,43 @@ public class FunctionHandler {
 			throw new IllegalArgumentException("Both arguments are non-null");
 		}
 	}
+
+	public CallStatement constructCallStatement(final ILocation loc, final boolean b, final VariableLHS[] variableLHSs,
+			final String methodName, final Expression[] array) {
+		assert !isGlobalScope();
+
+		for (final LeftHandSide lhs : variableLHSs) {
+				final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
+				if (modifiedGlobal != null) {
+					addModifiedGlobal(modifiedGlobal);
+				}
+			}
+
+
+		registerCall(methodName);
+		return new CallStatement(loc, b, variableLHSs, methodName, array);
+	}
+
+	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
+			final Statement[] statements) {
+		assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
+//		for (final Statement statement: statements) {
+//			if (statement instanceof CallStatement) {
+//				registerCall(((CallStatement) statement).getMethodName());
+//			}
+//		}
+		return new Body(loc, localDeclarations, statements);
+	}
+
+	public AssignmentStatement constructAssignmentStatement(final ILocation loc, final LeftHandSide[] leftHandSides,
+				final Expression[] rightHandSides) {
+			for (final LeftHandSide lhs : leftHandSides) {
+				final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
+				if (modifiedGlobal != null) {
+					addModifiedGlobal(modifiedGlobal);
+				}
+			}
+	//		return new AssignmentStatement(loc, leftHandSides, rightHandSides);
+			return StatementFactory.constructAssignmentStatement(loc, leftHandSides, rightHandSides);
+		}
 }

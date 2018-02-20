@@ -64,4 +64,11 @@ public class AuxVarInfo {
 	public IdentifierExpression getExp() {
 		return mExp;
 	}
+
+	@Override
+	public String toString() {
+		return "AuxVarInfo [mVarDec=" + mVarDec + ", mLhs=" + mLhs + ", mExp=" + mExp + "]";
+	}
+
+
 }

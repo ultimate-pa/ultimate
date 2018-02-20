@@ -63,7 +63,8 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 		final BoogieType boogieType = mTypeHandler.astTypeToBoogieType(intArrayType);
 
         mResolution = memoryModelResolution;
-		mDataArray = new HeapDataArray(SFO.INT, intArrayType, boogieType, memoryModelResolution);
+		mDataArray = new HeapDataArray(SFO.INT, intArrayType, boogieType, mTypeHandler.getBoogiePointerType(),
+				memoryModelResolution);
 	}
 
 	@Override

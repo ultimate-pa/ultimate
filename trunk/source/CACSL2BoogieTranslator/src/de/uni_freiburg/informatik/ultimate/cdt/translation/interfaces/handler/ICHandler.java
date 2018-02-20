@@ -645,4 +645,6 @@ public interface ICHandler extends IHandler {
 	StaticObjectsHandler getStaticObjectsHandler();
 
 	BoogieTypeHelper getBoogieTypeHelper();
+
+	boolean isPreRunMode();
 }
