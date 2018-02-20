@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
@@ -124,7 +123,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			arguments = new Expression[] {};
 		} else {
 			smtFunctionName = "to_fp";
-			final Expression realValue = new RealLiteral(loc, value.toString());
+			final Expression realValue = ExpressionFactory.createRealLiteral(loc, value.toString());
 			arguments = new Expression[] { getRoundingMode(), realValue };
 		}
 		final String functionName = SFO.getBoogieFunctionName(smtFunctionName, type);
@@ -650,7 +649,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				new Expression[] { exp1, exp2 }, mFunctionDeclarations.getDeclaredFunctions().get(fullFunctionName));
 
 		if (isNegated) {
-			result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
+			result = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, result);
 		}
 		return result;
 	}

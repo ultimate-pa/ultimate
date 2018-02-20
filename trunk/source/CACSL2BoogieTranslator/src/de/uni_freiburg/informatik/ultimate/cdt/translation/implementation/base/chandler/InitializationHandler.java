@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
@@ -68,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
@@ -114,11 +114,15 @@ public class InitializationHandler {
 
 	private boolean mDeclareArrayInitializationFunction;
 
-	public InitializationHandler(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation) {
+	private final FunctionHandler mFunctionHandler;
+
+	public InitializationHandler(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
+			final FunctionHandler functionHandler) {
 		super();
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
 		mDeclareArrayInitializationFunction = false;
+		mFunctionHandler = functionHandler;
 	}
 
 	/**
@@ -149,8 +153,8 @@ public class InitializationHandler {
 //			IdentifierExpression idEx = new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier());
 			final VariableLHS vlhs = ((VariableLHS) lhsRaw);
 			final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc,
-					(BoogieType) lhsRaw.getType(), vlhs.getIdentifier(), vlhs.getDeclarationInformation());
-			lhs = new HeapLValue(idEx, targetCTypeRaw, null);
+					main.mTypeHandler.getBoogiePointerType(), vlhs.getIdentifier(), vlhs.getDeclarationInformation());
+			lhs = LRValueFactory.constructHeapLValue(main, idEx, targetCTypeRaw, null);
 		} else {
 			lhs = lhsRaw == null ? null : new LocalLValue(lhsRaw, targetCTypeRaw, null);
 		}
@@ -232,7 +236,7 @@ public class InitializationHandler {
 
 		if (lhsIfAny != null) {
 			// we have a lhs given, insert assignments such that the lhs is initialized
-			final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsIfAny, onHeap, cType,
+			final List<Statement> assigningStatements = makeAssignmentStatements(main, loc, lhsIfAny, onHeap, cType,
 					initializationValue.getValue(), initInfo.getOverapprs());
 			assigningStatements.forEach(stm -> addOverApprToStatementAnnots(initInfo.getOverapprs(), stm));
 			initializer.addStatements(assigningStatements);
@@ -333,7 +337,7 @@ public class InitializationHandler {
 					fieldValues.toArray(new Expression[fieldValues.size()]));
 
 			final AssignmentStatement assignment =
-					new AssignmentStatement(loc,
+					mFunctionHandler.constructAssignmentStatement(loc,
 							new LeftHandSide[] { ((LocalLValue) structBaseLhsToInitialize).getLHS() },
 							new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(initInfo.getOverapprs(), assignment);
@@ -483,7 +487,7 @@ public class InitializationHandler {
 		final CType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
-			final List<Statement> defaultInit = makeAssignmentStatements(loc, baseAddress, true, cType,
+			final List<Statement> defaultInit = makeAssignmentStatements(main, loc, baseAddress, true, cType,
 					getDefaultValueForSimpleType(loc, cType), Collections.emptyList());
 			initialization.addStatements(defaultInit);
 			return initialization.build();
@@ -551,7 +555,7 @@ public class InitializationHandler {
 
 			if (lhsToInitIfAny != null) {
 				// we have a lhs given, insert assignments such that the lhs is initialized
-				final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsToInitIfAny, false, cType,
+				final List<Statement> assigningStatements = makeAssignmentStatements(main, loc, lhsToInitIfAny, false, cType,
 						initializationValue.getValue(), Collections.emptyList());
 				initializer.addStatements(assigningStatements);
 			} else {
@@ -833,19 +837,19 @@ public class InitializationHandler {
 	 * @param overAppr
 	 * @return
 	 */
-	private List<Statement> makeAssignmentStatements(final ILocation loc, final LRValue lhs,
+	private List<Statement> makeAssignmentStatements(final Dispatcher main, final ILocation loc, final LRValue lhs,
 			final boolean onHeap, final CType cType, final Expression initializationValue,
 			final Collection<Overapprox> overAppr) {
 		assert lhs != null;
 
 		List<Statement> assigningStatements;
 		if (onHeap) {
-			assigningStatements = mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue,
+			assigningStatements = mMemoryHandler.getWriteCall(main, loc, (HeapLValue) lhs, initializationValue,
 					cType);
 		} else {
 			//!onHeap
 			final AssignmentStatement assignment =
-					new AssignmentStatement(loc,
+					mFunctionHandler.constructAssignmentStatement(loc,
 							new LeftHandSide[] { ((LocalLValue) lhs).getLHS() },
 							new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(overAppr, assignment);

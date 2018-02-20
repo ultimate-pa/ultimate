@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -64,9 +64,10 @@ public class StaticObjectsHandler {
 	private final Collection<Statement> mStatementsForUltimateInit = new ArrayList<>();
 
 	private boolean mIsFrozen = false;
-	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration = new HashMap<>();
+	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration =
+			new LinkedHashMap<>();
 
-	private Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
+	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
 
 	/**
 	 * Returns all Boogie declarations that need to be added to the translated program in global scope

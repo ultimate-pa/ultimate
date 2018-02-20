@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -44,22 +45,38 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
  */
 public class HeapDataArray {
 	private final String mName;
-	private final ASTType mASTType;
+	private final ASTType mContentASTType;
 	private final int mSize;
-	private final BoogieType mBoogieType;
+	private final BoogieType mContentBoogieType;
 	private final IdentifierExpression mIdentifierExpression;
 	private final VariableLHS mVariableLhs;
 
-	public HeapDataArray(final String name, final ASTType aSTType, final BoogieType boogieType, final int size) {
+	/**
+	 *
+	 * @param name
+	 * @param aSTType
+	 * 		ast type of the memory contents
+	 * @param contentBoogieType
+	 * 		boogie type of the memory contents
+	 * @param pointerType
+	 * 		boogie type for pointers (used to build the type of the memory array)
+	 * @param size
+	 */
+	public HeapDataArray(final String name, final ASTType aSTType, final BoogieType contentBoogieType,
+			final BoogieType pointerType, final int size) {
 		super();
 		mName = name;
-		mASTType = aSTType;
-		mBoogieType = boogieType;
+		mContentASTType = aSTType;
+		mContentBoogieType = contentBoogieType;
 		mSize = size;
+
+		final BoogieArrayType arrayBoogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { pointerType }, contentBoogieType);
+
 		mIdentifierExpression = ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
-				mBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+				arrayBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		mVariableLhs = ExpressionFactory.constructVariableLHS(LocationFactory.createIgnoreCLocation(),
-				mBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+				arrayBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	public String getName() {
@@ -67,11 +84,11 @@ public class HeapDataArray {
 	}
 
 	public ASTType getASTType() {
-		return mASTType;
+		return mContentASTType;
 	}
 
 	public BoogieType getBoogieType() {
-		return mBoogieType;
+		return mContentBoogieType;
 	}
 
 	public String getVariableName() {
@@ -94,7 +111,7 @@ public class HeapDataArray {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mASTType == null) ? 0 : mASTType.hashCode());
+		result = prime * result + ((mContentASTType == null) ? 0 : mContentASTType.hashCode());
 		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
 		result = prime * result + mSize;
 		return result;
@@ -112,11 +129,11 @@ public class HeapDataArray {
 			return false;
 		}
 		final HeapDataArray other = (HeapDataArray) obj;
-		if (mASTType == null) {
-			if (other.mASTType != null) {
+		if (mContentASTType == null) {
+			if (other.mContentASTType != null) {
 				return false;
 			}
-		} else if (!mASTType.equals(other.mASTType)) {
+		} else if (!mContentASTType.equals(other.mContentASTType)) {
 			return false;
 		}
 		if (mName == null) {
@@ -131,6 +148,6 @@ public class HeapDataArray {
 
 	@Override
 	public String toString() {
-		return "HeapDataArray [mName=" + mName + ", mASTType=" + mASTType + ", mSize=" + mSize + "]";
+		return "HeapDataArray [mName=" + mName + ", mASTType=" + mContentASTType + ", mSize=" + mSize + "]";
 	}
 }

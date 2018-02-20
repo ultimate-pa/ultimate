@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
@@ -59,8 +60,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.typechecker.ITypeErrorReporter;
-import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckException;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -82,19 +81,24 @@ public class ExpressionFactory {
 
 
 
-	public static Expression newUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator,
+	public static Expression constructUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator,
 			final Expression expr) {
 		final Expression exprLiteral = filterLiteral(expr);
+
+		final BoogieType resultType =
+				TypeCheckHelper.typeCheckUnaryExpression(operator, (BoogieType) expr.getType(),
+						new TypeErrorReporter(loc));
+
 		Expression result;
 		if (exprLiteral != null) {
 			switch (operator) {
 			case ARITHNEGATIVE:
 				if (exprLiteral instanceof IntegerLiteral) {
 					final BigInteger value = new BigInteger(((IntegerLiteral) exprLiteral).getValue());
-					result = new IntegerLiteral(loc, (value.negate()).toString());
+					result = createIntegerLiteral(loc, (value.negate()).toString());
 				} else if (exprLiteral instanceof RealLiteral) {
 					final BigDecimal value = new BigDecimal(((RealLiteral) exprLiteral).getValue());
-					result = new RealLiteral(loc, (value.negate()).toString());
+					result = createRealLiteral(loc, (value.negate()).toString());
 				} else {
 					throw new IllegalArgumentException("type error: unable to apply " + operator);
 				}
@@ -102,7 +106,7 @@ public class ExpressionFactory {
 			case LOGICNEG:
 				if (exprLiteral instanceof BooleanLiteral) {
 					final boolean value = ((BooleanLiteral) exprLiteral).getValue();
-					result = new BooleanLiteral(loc, !value);
+					result = createBooleanLiteral(loc, !value);
 				} else {
 					throw new IllegalArgumentException("type error: unable to apply " + operator);
 				}
@@ -113,7 +117,7 @@ public class ExpressionFactory {
 				throw new AssertionError("unknown operator " + operator);
 			}
 		} else {
-			result = new UnaryExpression(loc, operator, expr);
+			result = new UnaryExpression(loc, resultType, operator, expr);
 		}
 		return result;
 	}
@@ -142,7 +146,7 @@ public class ExpressionFactory {
 				throw new AssertionError("impossible");
 			}
 		} else {
-			result = new BinaryExpression(loc, operator, left, right);
+			result = constructBinaryExpression(loc, operator, left, right);
 		}
 		return result;
 	}
@@ -186,7 +190,7 @@ public class ExpressionFactory {
 		default:
 			throw new AssertionError("unknown operator " + operator);
 		}
-		return new BooleanLiteral(loc, result);
+		return createBooleanLiteral(loc, result);
 	}
 
 	private static Expression constructBinaryExpression_Integer(final ILocation loc, final Operator operator,
@@ -196,47 +200,47 @@ public class ExpressionFactory {
 		switch (operator) {
 		case ARITHDIV: {
 			final BigInteger result = BoogieUtils.euclideanDiv(leftValue, rightValue);
-			return new IntegerLiteral(loc, result.toString());
+			return createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMINUS: {
 			final BigInteger result = leftValue.subtract(rightValue);
-			return new IntegerLiteral(loc, result.toString());
+			return createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMOD: {
 			final BigInteger result = BoogieUtils.euclideanMod(leftValue, rightValue);
-			return new IntegerLiteral(loc, result.toString());
+			return createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHMUL: {
 			final BigInteger result = leftValue.multiply(rightValue);
-			return new IntegerLiteral(loc, result.toString());
+			return createIntegerLiteral(loc, result.toString());
 		}
 		case ARITHPLUS: {
 			final BigInteger result = leftValue.add(rightValue);
-			return new IntegerLiteral(loc, result.toString());
+			return createIntegerLiteral(loc, result.toString());
 		}
 		case COMPEQ: {
 			final boolean result = (leftValue.compareTo(rightValue) == 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPGEQ: {
 			final boolean result = (leftValue.compareTo(rightValue) >= 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPGT: {
 			final boolean result = (leftValue.compareTo(rightValue) > 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPLEQ: {
 			final boolean result = (leftValue.compareTo(rightValue) <= 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPLT: {
 			final boolean result = (leftValue.compareTo(rightValue) < 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
 			final boolean result = (leftValue.compareTo(rightValue) != 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case BITVECCONCAT:
 		case COMPPO:
@@ -273,27 +277,27 @@ public class ExpressionFactory {
 		}
 		case COMPEQ: {
 			final boolean result = (leftValue.compareTo(rightValue) >= 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPGEQ: {
 			final boolean result = (leftValue.compareTo(rightValue) >= 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPGT: {
 			final boolean result = (leftValue.compareTo(rightValue) >= 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPLEQ: {
 			final boolean result = (leftValue.compareTo(rightValue) >= 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPLT: {
 			final boolean result = (leftValue.compareTo(rightValue) >= 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
 			final boolean result = (leftValue.compareTo(rightValue) >= 0);
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case ARITHMOD:
 		case BITVECCONCAT:
@@ -327,14 +331,14 @@ public class ExpressionFactory {
 				throw new IllegalArgumentException("type error: cannot compare bitvectors of differnt lengths");
 			}
 			final boolean result = (leftValue.equals(rightValue));
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case COMPNEQ: {
 			if (leftLength != rightLength) {
 				throw new IllegalArgumentException("type error: cannot compare bitvectors of differnt lengths");
 			}
 			final boolean result = !(leftValue.equals(rightValue));
-			return new BooleanLiteral(loc, result);
+			return createBooleanLiteral(loc, result);
 		}
 		case BITVECCONCAT: {
 			throw new UnsupportedOperationException("not yet implemented " + operator);
@@ -425,7 +429,7 @@ public class ExpressionFactory {
 	private static Expression bin(final ILocation loc, final List<Expression> exprs, final boolean neutralElement,
 			final Operator op) {
 		if (exprs == null || exprs.isEmpty()) {
-			return new BooleanLiteral(loc, neutralElement);
+			return createBooleanLiteral(loc, neutralElement);
 		}
 		if (exprs.size() == 1) {
 			return exprs.get(0);
@@ -489,20 +493,29 @@ public class ExpressionFactory {
 		assert array.getType() != null;
 
 
-		final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
-
-		final List<BoogieType> indicesTypes = Arrays.stream(indices)
-					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
-
-		final BoogieType lhsType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes,
-				new TypeErrorReporter(loc));
 
 		if (indices.length == 1) {
+			final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
+			final List<BoogieType> indicesTypes = Arrays.stream(indices)
+					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
+			final BoogieType lhsType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes,
+					new TypeErrorReporter(loc));
 			return new ArrayLHS(loc, lhsType, array, indices);
 		}
 		final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
 		final LeftHandSide innerLhs = constructNestedArrayLHS(loc, array, innerIndices);
-		return new ArrayLHS(loc, lhsType, innerLhs, new Expression[] { indices[indices.length - 1] });
+
+		final Expression outerMostIndexValue = indices[indices.length - 1];
+		final Expression[] outerMostIndex = new Expression[] { outerMostIndexValue };
+
+		final BoogieArrayType arrayType = (BoogieArrayType) innerLhs.getType();
+//			final List<BoogieType> indicesTypes = Arrays.stream(innerIndices)
+//					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
+			final BoogieType lhsType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType,
+					Arrays.asList(new BoogieType[] { (BoogieType) outerMostIndexValue.getType() }),
+					new TypeErrorReporter(loc));
+
+		return new ArrayLHS(loc, lhsType, innerLhs, outerMostIndex);
 	}
 
 	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final IBoogieType type, final LeftHandSide lhs,
@@ -520,25 +533,6 @@ public class ExpressionFactory {
 			final String identifier, final DeclarationInformation declarationInformation) {
 		assert loc != null && type != null && identifier != null && declarationInformation != null;
 		return new VariableLHS(loc, type, identifier, declarationInformation);
-	}
-
-	static class TypeErrorReporter implements ITypeErrorReporter<ILocation> {
-
-		ILocation mLocation;
-
-		public TypeErrorReporter(final ILocation location) {
-			mLocation = location;
-		}
-
-		@Override
-		public void report(final Function<ILocation, String> func) {
-			throw new TypeCheckException(func.apply(mLocation));
-		}
-	}
-
-	public static boolean areBoogieAndCTypeCompatible(final Object cType, final IBoogieType iBoogieType) {
-		// TODO implement a check here! (will have to move this method because CType is not visible..
-		return true;
 	}
 
 	public static ArrayStoreExpression constructArrayStoreExpression(final ILocation loc, final Expression array,
@@ -574,6 +568,110 @@ public class ExpressionFactory {
 		final BoogieType type = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs((BoogieType) struct.getType() ,
 				fieldName, new TypeErrorReporter(loc));
 		return new StructAccessExpression(loc, type, struct, fieldName);
+	}
+
+	public static BooleanLiteral createBooleanLiteral(final ILocation loc, final boolean value) {
+		return new BooleanLiteral(loc, BoogieType.TYPE_BOOL, value);
+	}
+
+	public static IntegerLiteral createIntegerLiteral(final ILocation loc, final String value) {
+		return new IntegerLiteral(loc, BoogieType.TYPE_INT, value);
+	}
+
+	public static BitvecLiteral createBitvecLiteral(final ILocation loc, final String value, final int length) {
+		return new BitvecLiteral(loc, BoogieType.createBitvectorType(length), value, length);
+	}
+
+	public static RealLiteral createRealLiteral(final ILocation loc, final String value) {
+		return new RealLiteral(loc, BoogieType.TYPE_REAL, value);
+	}
+
+	public static StringLiteral createStringLiteral(final ILocation loc, final String value) {
+		// TODO: what boogie type should we give a string literal??
+		return new StringLiteral(loc, value);
+	}
+
+	/**
+	 * Returns an Expression that is the same as the given expression, except that its BoogieType has been changed
+	 * to the given BoogieType.
+	 *
+	 * Note that this circumvents our type checks, thus should not be used for the final translation, as the type errors
+	 * would occur in the BoogiePreprocessor.. (but is currently use in pre run mode).
+	 *
+	 * @param oe
+	 * @param newType
+	 * @return
+	 */
+	public static Expression replaceBoogieType(final Expression oe, final BoogieType newType) {
+		return modifyExpression(oe, x -> x, x -> newType);
+	}
+
+	public static Expression modifyExpression(final Expression oe, final Function<ILocation, ILocation> oldToNewLoc,
+			final Function<BoogieType, BoogieType> oldToNewType) {
+
+		final ILocation newLoc = oldToNewLoc.apply(oe.getLoc());
+		final BoogieType newType = oldToNewType.apply((BoogieType) oe.getType());
+
+		if (oe instanceof ArrayAccessExpression) {
+			return new ArrayAccessExpression(
+					newLoc,
+					newType,
+					((ArrayAccessExpression) oe).getArray(),
+					((ArrayAccessExpression) oe).getIndices());
+		} else if (oe instanceof ArrayStoreExpression) {
+			return new ArrayStoreExpression(
+					newLoc,
+					newType,
+					((ArrayStoreExpression) oe).getArray(),
+					((ArrayStoreExpression) oe).getIndices(),
+					((ArrayStoreExpression) oe).getValue());
+		} else if (oe instanceof BinaryExpression) {
+			return new BinaryExpression(
+					newLoc,
+					newType,
+					((BinaryExpression) oe).getOperator(),
+					((BinaryExpression) oe).getLeft(),
+					((BinaryExpression) oe).getRight());
+		} else if (oe instanceof BitvecLiteral) {
+			return new BitvecLiteral(
+					newLoc,
+					newType,
+					((BitvecLiteral) oe).getValue(),
+					((BitvecLiteral) oe).getLength());
+		} else if (oe instanceof BitVectorAccessExpression) {
+			return new BitVectorAccessExpression(
+					newLoc,
+					newType,
+					((BitVectorAccessExpression) oe).getBitvec(),
+					((BitVectorAccessExpression) oe).getStart(),
+					((BitVectorAccessExpression) oe).getEnd());
+//		} else if (oe instanceof BooleanLiteral) {
+//			return createBooleanLiteral(newLoc, newType, ((BooleanLiteral) oe).getValue());
+		} else if (oe instanceof FunctionApplication) {
+			return new FunctionApplication(
+					newLoc,
+					newType,
+					((FunctionApplication) oe).getIdentifier(),
+					((FunctionApplication) oe).getArguments());
+		} else if (oe instanceof IdentifierExpression) {
+			return new IdentifierExpression(newLoc, newType,
+					((IdentifierExpression) oe).getIdentifier(),
+					((IdentifierExpression) oe).getDeclarationInformation());
+		} else if (oe instanceof StructConstructor) {
+			return new StructConstructor(newLoc, newType,
+					((StructConstructor) oe).getFieldIdentifiers(),
+					((StructConstructor) oe).getFieldValues());
+			// TODO implement these if needed
+//		} else if (oe instanceof IfThenElseExpression) {
+//		} else if (oe instanceof IntegerLiteral) {
+//		} else if (oe instanceof QuantifierExpression) {
+//		} else if (oe instanceof RealLiteral) {
+//		} else if (oe instanceof StringLiteral) {
+//		} else if (oe instanceof StructAccessExpression) {
+//		} else if (oe instanceof UnaryExpression) {
+		} else {
+			throw new AssertionError("unexpected expression type");
+		}
 	}
 
 

@@ -27,10 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
 public class HeapLValue extends LRValue {
-	
+
 	private final BitfieldInformation mBitfieldInformation;
 
 	/**
@@ -44,8 +47,8 @@ public class HeapLValue extends LRValue {
 	 *
 	 * @param address the memory address
 	 * @param cType the type (in terms of C, as opposed to boogie) of the information that is stored at address
-	 * @param bi In case this HeapLValue represents a bit-field this object 
-	 * contains additional information. In case this HeapLValue does not 
+	 * @param bi In case this HeapLValue represents a bit-field this object
+	 * contains additional information. In case this HeapLValue does not
 	 * represent a bit-field we use null.
 	 */
 	public HeapLValue(final Expression address, final CType cType, final BitfieldInformation bi) {
@@ -71,6 +74,14 @@ public class HeapLValue extends LRValue {
 	public BitfieldInformation getBitfieldInformation() {
 		return mBitfieldInformation;
 	}
-	
-	
+
+	public RValue getAddressAsPointerRValue(final BoogieType pointerType) {
+		return new RValue(address, new CPointer(getCType()));
+	}
+
+	public LRValue getAddressAsPointerRValue(final Dispatcher main) {
+		return getAddressAsPointerRValue(main.mTypeHandler.getBoogiePointerType());
+	}
+
+
 }

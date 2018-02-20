@@ -331,8 +331,9 @@ public class TypeChecker extends BaseObserver {
 	private static void checkExistingDeclarationInformation(final String id,
 			final DeclarationInformation existingDeclInfo, final DeclarationInformation correctDeclInfo) {
 		if (!existingDeclInfo.equals(correctDeclInfo)) {
-			TypeCheckHelper.internalError("Incorrect DeclarationInformation of " + id + ". Expected: " + correctDeclInfo + "   Found: "
-					+ existingDeclInfo);
+			TypeCheckHelper.internalError("Incorrect DeclarationInformation of " + id
+					+ ". Expected: " + correctDeclInfo
+					+ "   Found: " + existingDeclInfo);
 		}
 	}
 
@@ -409,17 +410,6 @@ public class TypeChecker extends BaseObserver {
 				}
 			}
 		}
-	}
-
-	private static String getLeftHandSideIdentifier(LeftHandSide lhs) {
-		while (lhs instanceof ArrayLHS || lhs instanceof StructLHS) {
-			if (lhs instanceof ArrayLHS) {
-				lhs = ((ArrayLHS) lhs).getArray();
-			} else if (lhs instanceof StructLHS) {
-				lhs = ((StructLHS) lhs).getStruct();
-			}
-		}
-		return ((VariableLHS) lhs).getIdentifier();
 	}
 
 	private void processVariableDeclaration(final VariableDeclaration varDecl) {
@@ -661,6 +651,9 @@ public class TypeChecker extends BaseObserver {
 	 */
 	private void typecheckStatement(final Stack<String> outer, final HashSet<String> allLabels,
 			final Statement statement) {
+
+		final TypeErrorReporter typeErrorReporter = new TypeErrorReporter(statement);
+
 		if (statement instanceof AssumeStatement) {
 			final BoogieType t = typecheckExpression(((AssumeStatement) statement).getFormula());
 			if (!t.equals(BoogieType.TYPE_BOOL) && !t.equals(BoogieType.TYPE_ERROR)) {
@@ -683,26 +676,18 @@ public class TypeChecker extends BaseObserver {
 		} else if (statement instanceof AssignmentStatement) {
 			final AssignmentStatement astmt = (AssignmentStatement) statement;
 			final LeftHandSide[] lhs = astmt.getLhs();
-			final String[] lhsId = new String[lhs.length];
 			final Expression[] rhs = astmt.getRhs();
-			if (lhs.length != rhs.length) {
-				typeError(statement, "Number of variables do not match in " + statement);
-			} else {
-				for (int i = 0; i < lhs.length; i++) {
-					lhsId[i] = getLeftHandSideIdentifier(lhs[i]);
-					for (int j = 0; j < i; j++) {
-						if (lhsId[i].equals(lhsId[j])) {
-							typeError(statement, "Variable appears multiple times in assignment: " + statement);
-						}
-					}
-					final BoogieType lhsType = typecheckLeftHandSide(lhs[i]);
-					final BoogieType rhsType = typecheckExpression(rhs[i]);
-					if (!lhsType.equals(BoogieType.TYPE_ERROR) && !rhsType.equals(BoogieType.TYPE_ERROR)
-							&& !lhsType.equals(rhsType)) {
-						typeError(statement, "Type mismatch (" + lhsType + " != " + rhsType + ") in " + statement);
-					}
-				}
+
+			final String[] lhsIds = new String[lhs.length];
+			final BoogieType[] lhsTypes = new BoogieType[lhs.length];
+			final BoogieType[] rhsTypes = new BoogieType[rhs.length];
+			for (int i = 0; i < lhs.length; i++) {
+				lhsIds[i] = TypeCheckHelper.getLeftHandSideIdentifier(lhs[i]);
+				lhsTypes[i] = typecheckLeftHandSide(lhs[i]);
+				rhsTypes[i] = typecheckExpression(rhs[i]);
 			}
+
+			TypeCheckHelper.typeCheckAssignStatement(lhsIds, lhsTypes, rhsTypes, typeErrorReporter);
 		} else if (statement instanceof GotoStatement) {
 			for (final String label : ((GotoStatement) statement).getLabels()) {
 				if (!allLabels.contains(label)) {
@@ -793,6 +778,7 @@ public class TypeChecker extends BaseObserver {
 			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
 		}
 	}
+
 
 	/**
 	 * Type check the given block.

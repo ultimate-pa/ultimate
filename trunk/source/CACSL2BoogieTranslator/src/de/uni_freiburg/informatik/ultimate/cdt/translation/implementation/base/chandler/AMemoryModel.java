@@ -65,7 +65,8 @@ public abstract class AMemoryModel {
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
        	mPointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc),
-       			typeHandler.constructBoogiePointerType(),
+       			typeHandler.getBoogiePointerType(),
+       			typeHandler.getBoogiePointerType(),
        			bytesizeOfStoredPointerComponents());
 	}
 

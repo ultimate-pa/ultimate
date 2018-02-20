@@ -2,9 +2,13 @@ package de.uni_freiburg.informatik.ultimate.boogie.typechecker;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
@@ -243,6 +247,44 @@ public class TypeCheckHelper {
 				resultType = arr;
 			}
 			return resultType;
+		}
+
+	public static String getLeftHandSideIdentifier(LeftHandSide lhs) {
+		while (lhs instanceof ArrayLHS || lhs instanceof StructLHS) {
+			if (lhs instanceof ArrayLHS) {
+				lhs = ((ArrayLHS) lhs).getArray();
+			} else if (lhs instanceof StructLHS) {
+				lhs = ((StructLHS) lhs).getStruct();
+			}
+		}
+		return ((VariableLHS) lhs).getIdentifier();
+	}
+
+	public static <T> void typeCheckAssignStatement(final String[] lhsIds, final BoogieType[] lhsTypes,
+				final BoogieType[] rhsTypes, final ITypeErrorReporter<T> typeErrorReporter) {
+			//			if (lhs.length != rhs.length) {
+			if (lhsTypes.length != rhsTypes.length) {
+	//				typeError(statement, "Number of variables do not match in " + statement);
+				typeErrorReporter.report(stm -> "Number of variables do not match in " + stm);
+			} else {
+				for (int i = 0; i < lhsTypes.length; i++) {
+	//					lhsId[i] = getLeftHandSideIdentifier(lhs[i]);
+					for (int j = 0; j < i; j++) {
+						if (lhsIds[i].equals(lhsIds[j])) {
+	//							typeError(statement, "Variable appears multiple times in assignment: " + statement);
+							typeErrorReporter.report(stm -> "Variable appears multiple times in assignment: " + stm);
+						}
+					}
+					final BoogieType lhsType = lhsTypes[i];//typecheckLeftHandSide(lhs[i]);
+					final BoogieType rhsType = rhsTypes[i];//typecheckExpression(rhs[i]);
+					if (!lhsType.equals(BoogieType.TYPE_ERROR) && !rhsType.equals(BoogieType.TYPE_ERROR)
+							&& !lhsType.equals(rhsType)) {
+	//						typeError(statement, "Type mismatch (" + lhsType + " != " + rhsType + ") in " + statement);
+						typeErrorReporter.report(stm ->
+							"Type mismatch (" + lhsType + " != " + rhsType + ") in " + stm);
+					}
+				}
+			}
 		}
 
 }
