@@ -122,7 +122,7 @@ public class CTranslationUtil {
 				new VarList[] { new VarList(loc, new String[] { id }, astType ) });
 
 		final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
-		final String currentProcId = main.mCHandler.getFunctionHandler().getCurrentProcedureID();
+		final String currentProcId = main.mCHandler.getProcedureManager().getCurrentProcedureID();
 
 		final VariableLHS lhs = //new VariableLHS(loc, id);
 				ExpressionFactory.constructVariableLHS(loc,

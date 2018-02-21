@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -115,16 +116,19 @@ public class StandardFunctionHandler {
 
 	private final FunctionHandler mFunctionHandler;
 
+	ProcedureManager mProcedureManager;
+
 	private final CHandler mCHandler;
 
 	public StandardFunctionHandler(final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation,
 			final MemoryHandler memoryHandler, final StructHandler structHandler,
 			final TypeSizeAndOffsetComputer typeSizeComputer, final FunctionHandler functionHandler,
-			final CHandler cHandler) {
+			final ProcedureManager procedureManager, final CHandler cHandler) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeComputer;
 		mFunctionHandler = functionHandler;
+		mProcedureManager = procedureManager;
 		mCHandler = cHandler;
 
 		mFunctionModels = getFunctionModels();
@@ -633,7 +637,7 @@ public class StandardFunctionHandler {
 		result.addStatement(mMemoryHandler.constructUltimateMemsetCall(loc, argS.mLrVal.getValue(),
 				argC.mLrVal.getValue(), argN.mLrVal.getValue(), auxvar.getLhs()));
 
-		mFunctionHandler.registerCall(MemoryModelDeclarations.C_Memset.getName());
+		mProcedureManager.registerCall(MemoryModelDeclarations.C_Memset.getName());
 
 		return result.build();
 	}
@@ -667,7 +671,7 @@ public class StandardFunctionHandler {
 		result.mStmt.add(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.mLrVal.getValue(),
 				size.mLrVal.getValue(), product, auxvar.getExp()));
 
-		mFunctionHandler.registerCall(MemoryModelDeclarations.Ultimate_MemInit.getName(),
+		mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_MemInit.getName(),
 				MemoryModelDeclarations.Ultimate_Alloc.getName());
 		return result;
 	}
@@ -697,7 +701,7 @@ public class StandardFunctionHandler {
 		/*
 		 * Add a call to our internal deallocation procedure Ultimate.dealloc
 		 */
-		final CallStatement deallocCall = mMemoryHandler.getDeallocCall(main, mFunctionHandler, pRex.getLrValue(), loc);
+		final CallStatement deallocCall = mMemoryHandler.getDeallocCall(main, pRex.getLrValue(), loc);
 		resultBuilder.addStatement(deallocCall);
 
 		return resultBuilder.build();
@@ -1020,7 +1024,7 @@ public class StandardFunctionHandler {
 		final AuxVarInfo auxvarinfo =
 				CTranslationUtil.constructAuxVarInfo(loc, main, dest.getLrValue().getCType(), auxVar);
 
-		final CallStatement call = mFunctionHandler.constructCallStatement(loc, false,
+		final CallStatement call = mProcedureManager.constructCallStatement(loc, false,
 				new VariableLHS[] { auxvarinfo.getLhs() }, mmDecl.getName(),
 				new Expression[] { dest.getLrValue().getValue(), src.getLrValue().getValue(),
 						size.getLrValue().getValue() });
@@ -1033,8 +1037,8 @@ public class StandardFunctionHandler {
 		mMemoryHandler.getRequiredMemoryModelFeatures().require(mmDecl);
 
 		// add required information to function handler.
-		mFunctionHandler.registerProcedure(mmDecl.getName());
-		mFunctionHandler.registerCall(mmDecl.getName());
+		mProcedureManager.registerProcedure(mmDecl.getName());
+		mProcedureManager.registerCall(mmDecl.getName());
 
 		return resultBuilder.build();
 	}
