@@ -164,6 +164,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.PostProcessor;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
@@ -493,6 +494,8 @@ public class CHandler implements ICHandler {
 
 	private final Dispatcher mMainDispatcher;
 
+	private final ProcedureManager mProcedureManager;
+
 	/**
 	 * Constructor.
 	 *
@@ -553,18 +556,21 @@ public class CHandler implements ICHandler {
 				overapproximateFloatingPointOperations);
 		mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, mExpressionTranslation,
 				main.getTypeSizes());
-		mFunctionHandler = new FunctionHandler(mExpressionTranslation, mTypeSizeComputer);
+
+		mProcedureManager = new ProcedureManager(main);
+		mFunctionHandler = new FunctionHandler(mExpressionTranslation, mTypeSizeComputer, mProcedureManager);
+
 		final boolean smtBoolArraysWorkaround = prefs
 				.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		final boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, mTypeSizeComputer,
 				main.getTypeSizes(), mExpressionTranslation, bitvectorTranslation, nameHandler, smtBoolArraysWorkaround,
-				prefs, mBoogieTypeHelper);
+				prefs, mBoogieTypeHelper, mProcedureManager);
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation);
-		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, mFunctionHandler);
+		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, mProcedureManager);
 
 		mStandardFunctionHandler = new StandardFunctionHandler(mTypeHandler, mExpressionTranslation, mMemoryHandler,
-				mStructHandler, mTypeSizeComputer, mFunctionHandler, this);
+				mStructHandler, mTypeSizeComputer, mFunctionHandler, mProcedureManager, this);
 
 	}
 
@@ -741,7 +747,7 @@ public class CHandler implements ICHandler {
 			final RValue resRval = tmpRval;
 			// #t~AND~UID = left
 
-			final AssignmentStatement aStat = mFunctionHandler.constructAssignmentStatement(loc,
+			final AssignmentStatement aStat = mProcedureManager.constructAssignmentStatement(loc,
 					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rl.mLrVal.getValue() });
 			// for (final Overapprox overapprItem : overappr) {
 			for (final Overapprox overapprItem : builder.getOverappr()) {
@@ -753,7 +759,7 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> outerThenPart = new ArrayList<>();
 			outerThenPart.addAll(rr.mStmt);
 
-			outerThenPart.add(mFunctionHandler.constructAssignmentStatement(loc,
+			outerThenPart.add(mProcedureManager.constructAssignmentStatement(loc,
 					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rr.mLrVal.getValue() }));
 			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(),
 					outerThenPart.toArray(new Statement[outerThenPart.size()]), new Statement[0]);
@@ -820,7 +826,7 @@ public class CHandler implements ICHandler {
 			final RValue tmpRval = new RValue(resNameAuxvar.getExp(), intType, true);
 			final RValue resRval = tmpRval;
 			// #t~OR~UID = left
-			final AssignmentStatement aStat = mFunctionHandler.constructAssignmentStatement(loc,
+			final AssignmentStatement aStat = mProcedureManager.constructAssignmentStatement(loc,
 					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rl.mLrVal.getValue() });
 			// for (final Overapprox overapproxItem : overappr) {
 			for (final Overapprox overapproxItem : builder.getOverappr()) {
@@ -832,7 +838,7 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> outerElsePart = new ArrayList<>();
 			outerElsePart.addAll(rr.mStmt);
 
-			outerElsePart.add(mFunctionHandler.constructAssignmentStatement(loc,
+			outerElsePart.add(mProcedureManager.constructAssignmentStatement(loc,
 					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rr.mLrVal.getValue() }));
 			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(), new Statement[0],
 					outerElsePart.toArray(new Statement[outerElsePart.size()]));
@@ -1486,10 +1492,10 @@ public class CHandler implements ICHandler {
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
 			// } else if (mFunctionHandler.getProcedures().keySet().contains(cId)) {
-		} else if (mFunctionHandler.hasProcedure(cId)) {
+		} else if (mProcedureManager.hasProcedure(cId)) {
 			// C11 6.3.2.1.4 says: A function designator is an expression that
 			// has function type.
-			final CFunction cFunction = mFunctionHandler.getCFunctionType(cId);
+			final CFunction cFunction = mProcedureManager.getCFunctionType(cId);
 			cType = cFunction;
 			bId = SFO.FUNCTION_ADDRESS + cId;
 			useHeap = true;
@@ -1859,7 +1865,7 @@ public class CHandler implements ICHandler {
 				if (!mTypeHandler.isStructDeclaration() && mSymbolTable.existsInCurrentScope(cDec.getName())) {
 					if (cDec.hasInitializer()) {
 						// undo the effects of the old declaration
-						if (mFunctionHandler.isGlobalScope() && !mTypeHandler.isStructDeclaration()) {
+						if (mProcedureManager.isGlobalScope() && !mTypeHandler.isStructDeclaration()) {
 							// mDeclarationsGlobalInBoogie.remove(mSymbolTable.get(cDec.getName(),
 							// loc).getBoogieDecl());
 							mStaticObjectsHandler
@@ -1916,7 +1922,7 @@ public class CHandler implements ICHandler {
 					declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 					// mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 					mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
-				} else if (storageClass == CStorageClass.STATIC && !mFunctionHandler.isGlobalScope()) {
+				} else if (storageClass == CStorageClass.STATIC && !mProcedureManager.isGlobalScope()) {
 					// we have a local static variable -> special treatment
 					// global static variables are treated like normal global variables..
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
@@ -1926,11 +1932,11 @@ public class CHandler implements ICHandler {
 					// mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
 					mStaticObjectsHandler.addGlobalVariableDeclaration((VariableDeclaration) boogieDec, cDec);
 				} else {
-					if (mFunctionHandler.isGlobalScope()) {
+					if (mProcedureManager.isGlobalScope()) {
 						declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 					} else {
 						declarationInformation = new DeclarationInformation(StorageClass.LOCAL,
-								mFunctionHandler.getCurrentProcedureID());
+								mProcedureManager.getCurrentProcedureID());
 					}
 					final BoogieType boogieType = mTypeHandler
 							.astTypeToBoogieType(mTypeHandler.cType2AstType(loc, cDec.getType()));
@@ -1943,7 +1949,7 @@ public class CHandler implements ICHandler {
 					final boolean hasRealInitializer = cDec.hasInitializer()
 							&& (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
 
-					if (!hasRealInitializer && !mFunctionHandler.isGlobalScope()
+					if (!hasRealInitializer && !mProcedureManager.isGlobalScope()
 							&& !mTypeHandler.isStructDeclaration()) {
 						// in case of a local variable declaration without an
 						// initializer, we need to insert a
@@ -1985,7 +1991,7 @@ public class CHandler implements ICHandler {
 							mMemoryHandler.addVariableToBeFreed(main,
 									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 						}
-					} else if (hasRealInitializer && !mFunctionHandler.isGlobalScope()
+					} else if (hasRealInitializer && !mProcedureManager.isGlobalScope()
 							&& !mTypeHandler.isStructDeclaration()) {
 						// in case of a local variable declaration with an initializer, the statements
 						// and delcs
@@ -2116,12 +2122,12 @@ public class CHandler implements ICHandler {
 					}
 
 					if (firstCond) {
-						final AssignmentStatement assign = mFunctionHandler.constructAssignmentStatement(locC,
+						final AssignmentStatement assign = mProcedureManager.constructAssignmentStatement(locC,
 								new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { cond });
 						resultBuilder.addStatement(assign);
 						firstCond = false;
 					} else {
-						final AssignmentStatement assign = mFunctionHandler.constructAssignmentStatement(locC,
+						final AssignmentStatement assign = mProcedureManager.constructAssignmentStatement(locC,
 								new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { ExpressionFactory
 										.newBinaryExpression(locC, Operator.LOGICOR, switchAuxvar.getExp(), cond) });
 						resultBuilder.addStatement(assign);
@@ -2183,12 +2189,12 @@ public class CHandler implements ICHandler {
 			}
 
 			if (firstCond) {
-				final AssignmentStatement assign = mFunctionHandler.constructAssignmentStatement(locC,
+				final AssignmentStatement assign = mProcedureManager.constructAssignmentStatement(locC,
 						new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { cond });
 				resultBuilder.addStatement(assign);
 				firstCond = false;
 			} else {
-				final AssignmentStatement assign = mFunctionHandler.constructAssignmentStatement(locC,
+				final AssignmentStatement assign = mProcedureManager.constructAssignmentStatement(locC,
 						new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { ExpressionFactory
 								.newBinaryExpression(locC, Operator.LOGICOR, switchAuxvar.getExp(), cond) });
 				resultBuilder.addStatement(assign);
@@ -2317,7 +2323,7 @@ public class CHandler implements ICHandler {
 		 */
 		if (!(main instanceof PRDispatcher)) {
 			// handle proc. declaration & resolve their transitive modified globals
-			decl.addAll(mFunctionHandler.computeFinalProcedureDeclarations(main, mMemoryHandler));
+			decl.addAll(mProcedureManager.computeFinalProcedureDeclarations(main, mMemoryHandler));
 		}
 
 		/**
@@ -2838,7 +2844,7 @@ public class CHandler implements ICHandler {
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
-			final AssignmentStatement assignStmt = mFunctionHandler.constructAssignmentStatement(loc,
+			final AssignmentStatement assignStmt = mProcedureManager.constructAssignmentStatement(loc,
 					new LeftHandSide[] { lValue.getLHS() }, new Expression[] { rhsWithBitfieldTreatment });
 
 			builder.addStatement(assignStmt);
@@ -3785,7 +3791,7 @@ public class CHandler implements ICHandler {
 		{
 			final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
 			final Expression[] oldValue = new Expression[] { exprRes.mLrVal.getValue() };
-			assignStmt = mFunctionHandler.constructAssignmentStatement(loc, tmpAsLhs, oldValue);
+			assignStmt = mProcedureManager.constructAssignmentStatement(loc, tmpAsLhs, oldValue);
 		}
 		// result.mStmt.add(assignStmt);
 		builder1.addStatement(assignStmt);
@@ -3887,7 +3893,7 @@ public class CHandler implements ICHandler {
 		{
 			final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
 			final Expression[] newValue = new Expression[] { valueXcremented };
-			assignStmt = mFunctionHandler.constructAssignmentStatement(loc, tmpAsLhs, newValue);
+			assignStmt = mProcedureManager.constructAssignmentStatement(loc, tmpAsLhs, newValue);
 		}
 		// result.mStmt.add(assignStmt);
 		builder2.addStatement(assignStmt);
@@ -4354,7 +4360,7 @@ public class CHandler implements ICHandler {
 			final LeftHandSide[] lhs = { auxvar.getLhs() };
 			final Expression assignedVal = opPositive.mLrVal.getValue();
 			if (assignedVal != null) {
-				final AssignmentStatement assignStmt = mFunctionHandler.constructAssignmentStatement(loc, lhs,
+				final AssignmentStatement assignStmt = mProcedureManager.constructAssignmentStatement(loc, lhs,
 						new Expression[] { opPositive.mLrVal.getValue() });
 				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 					overapprItem.annotate(assignStmt);
@@ -4374,7 +4380,7 @@ public class CHandler implements ICHandler {
 			final Expression assignedVal = opNegative.mLrVal.getValue();
 			if (assignedVal != null) { // if we call a void function, we have to
 										// skip this assignment
-				final AssignmentStatement assignStmt = mFunctionHandler.constructAssignmentStatement(loc, lhs,
+				final AssignmentStatement assignStmt = mProcedureManager.constructAssignmentStatement(loc, lhs,
 						new Expression[] { assignedVal });
 				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 					overapprItem.annotate(assignStmt);
@@ -4663,5 +4669,10 @@ public class CHandler implements ICHandler {
 	@Override
 	public boolean isPreRunMode() {
 		return mMainDispatcher instanceof PRDispatcher;
+	}
+
+	@Override
+	public ProcedureManager getProcedureManager() {
+		return mProcedureManager;
 	}
 }

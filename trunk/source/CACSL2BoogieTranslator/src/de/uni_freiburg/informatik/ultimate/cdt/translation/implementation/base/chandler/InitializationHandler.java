@@ -114,15 +114,19 @@ public class InitializationHandler {
 
 	private boolean mDeclareArrayInitializationFunction;
 
-	private final FunctionHandler mFunctionHandler;
+//	private final FunctionHandler mFunctionHandler;
+
+	private final ProcedureManager mProcedureManager;
 
 	public InitializationHandler(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
-			final FunctionHandler functionHandler) {
+//			final FunctionHandler functionHandler,
+			final ProcedureManager procedureManager) {
 		super();
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
 		mDeclareArrayInitializationFunction = false;
-		mFunctionHandler = functionHandler;
+//		mFunctionHandler = functionHandler;
+		mProcedureManager = procedureManager;
 	}
 
 	/**
@@ -337,7 +341,7 @@ public class InitializationHandler {
 					fieldValues.toArray(new Expression[fieldValues.size()]));
 
 			final AssignmentStatement assignment =
-					mFunctionHandler.constructAssignmentStatement(loc,
+					mProcedureManager.constructAssignmentStatement(loc,
 							new LeftHandSide[] { ((LocalLValue) structBaseLhsToInitialize).getLHS() },
 							new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(initInfo.getOverapprs(), assignment);
@@ -849,7 +853,7 @@ public class InitializationHandler {
 		} else {
 			//!onHeap
 			final AssignmentStatement assignment =
-					mFunctionHandler.constructAssignmentStatement(loc,
+					mProcedureManager.constructAssignmentStatement(loc,
 							new LeftHandSide[] { ((LocalLValue) lhs).getLHS() },
 							new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(overAppr, assignment);

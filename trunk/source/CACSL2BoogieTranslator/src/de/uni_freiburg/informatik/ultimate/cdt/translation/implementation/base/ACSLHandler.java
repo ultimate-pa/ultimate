@@ -644,7 +644,7 @@ public class ACSLHandler implements IACSLHandler {
 		final ASTType astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
 		final StorageClass sc = stv.isBoogieGlobalVar() ? StorageClass.GLOBAL : StorageClass.LOCAL;
 		final String procId = sc == StorageClass.GLOBAL ? null
-				: main.mCHandler.getFunctionHandler().getCurrentProcedureID();
+				: main.mCHandler.getProcedureManager().getCurrentProcedureID();
 		LRValue lrVal;
 		if (((CHandler) main.mCHandler).isHeapVar(id)) {
 			final IdentifierExpression idExp = // new IdentifierExpression(loc, id);
@@ -755,7 +755,7 @@ public class ACSLHandler implements IACSLHandler {
 		final IdentifierExpression idEx = // new IdentifierExpression(loc, "#res");
 				ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
 						new DeclarationInformation(StorageClass.LOCAL,
-								main.mCHandler.getFunctionHandler().getCurrentProcedureID()));
+								main.mCHandler.getProcedureManager().getCurrentProcedureID()));
 		return new ExpressionResult(new RValue(idEx, new CPrimitive(CPrimitives.INT)));
 		// return new Result(new
 		// IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"));
