@@ -909,11 +909,11 @@ public class FunctionHandler {
 				final VarList inparamVarList = inparamVarListArray[i];
 				// final IASTParameterDeclaration paramDec = paramDecs[i];
 				final IASTNode paramDec = paramDecs[i];
-				for (final String bId : inparamVarList.getIdentifiers()) {
-					final String cId = main.mCHandler.getSymbolTable().getCID4BoogieID(bId, loc);
+				for (final String inparamBId : inparamVarList.getIdentifiers()) {
+					final String inparamCId = main.mCHandler.getSymbolTable().getCID4BoogieID(inparamBId, loc);
 
 					ASTType type = inparamVarList.getType();
-					final CType cvar = main.mCHandler.getSymbolTable().get(cId, loc).getCVariable();
+					final CType cvar = main.mCHandler.getSymbolTable().get(inparamCId, loc).getCVariable();
 
 					// onHeap case for a function parameter means the parameter is
 					// addressoffed in the function body
@@ -923,7 +923,7 @@ public class FunctionHandler {
 					}
 
 					// Copy of inparam that is writeable
-					final String inparamAuxVarName = main.mNameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap, cvar);
+					final String inparamAuxVarName = main.mNameHandler.getUniqueIdentifier(parent, inparamCId, 0, isOnHeap, cvar);
 
 					final DeclarationInformation inparamAuxVarDeclInfo = new DeclarationInformation(StorageClass.LOCAL,
 							mProcedureManager.getCurrentProcedureInfo().getProcedureName());
@@ -937,7 +937,12 @@ public class FunctionHandler {
 					final VarList var = new VarList(loc, new String[] { inparamAuxVarName }, type);
 					final VariableDeclaration inVarDecl =
 							new VariableDeclaration(loc, new Attribute[0], new VarList[] { var });
-					resultBuilder.addDeclaration(inVarDecl);
+
+					/* note: because the writable aux var version of the inparam is added to the symbol table,
+					 *  which will trigger adding its declaration at endScope(), we do not add its declaration here!
+					 */
+//					resultBuilder.addDeclaration(inVarDecl);
+
 					/* note: because the auxvars for the inparams do not need to be havocced, we do not need to add them
 					 * here
 					 */
@@ -947,7 +952,9 @@ public class FunctionHandler {
 									inparamAuxVarDeclInfo);
 	//				final IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
 					final IdentifierExpression rhsId = ExpressionFactory.constructIdentifierExpression(loc,
-							inParamAuxVarType, bId, inparamAuxVarDeclInfo);
+							inParamAuxVarType, inparamBId,
+							new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM,
+									mProcedureManager.getCurrentProcedureInfo().getProcedureName()));
 
 					final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
 					if (isOnHeap && !(cvar instanceof CArray)) {
@@ -973,12 +980,12 @@ public class FunctionHandler {
 						resultBuilder.addStatement(
 								mProcedureManager.constructAssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 					}
-					assert main.mCHandler.getSymbolTable().containsCSymbol(cId);
+					assert main.mCHandler.getSymbolTable().containsCSymbol(inparamCId);
 
 					// Overwrite the information in the symbolTable for cId, s.t. it
 					// points to the locally declared variable.
-					main.mCHandler.getSymbolTable().put(cId,
-							new SymbolTableValue(inparamAuxVarName, inVarDecl, new CDeclaration(cvar, cId),
+					main.mCHandler.getSymbolTable().put(inparamCId,
+							new SymbolTableValue(inparamAuxVarName, inVarDecl, new CDeclaration(cvar, inparamCId),
 									inparamAuxVarDeclInfo, paramDec, false));
 				}
 			}
