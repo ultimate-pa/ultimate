@@ -233,8 +233,7 @@ public class Req2BoogieTranslator {
 		return mVacuityChecks != null && mVacuityChecks.get(propertyNum);
 	}
 
-	private BoogiePrimitiveType toPrimitiveType(final String type,
-			final ILocation loc) {
+	private BoogiePrimitiveType toPrimitiveType(final String type, final ILocation loc) {
 		switch (type.toLowerCase()) {
 		case "bool":
 			return BoogieType.TYPE_BOOL;
@@ -354,6 +353,9 @@ public class Req2BoogieTranslator {
 
 	private void addConstVar(final String name, final ASTType astType, final BoogieLocation loc) {
 		final ASTType oldType = mConstVars.put(name, astType);
+		if (oldType == null) {
+			mPrimedVars.put(getPrimedVar(name), astType);
+		}
 		checkMultipleDecls(name, astType, loc, oldType);
 	}
 
@@ -957,10 +959,17 @@ public class Req2BoogieTranslator {
 		}
 		final List<Statement> statements = new ArrayList<>(constInits.size());
 		for (final InitializationPattern constInit : constInits) {
-			statements.add(new AssignmentStatement(bl, new LeftHandSide[] { new VariableLHS(bl, constInit.getIdent()) },
-					new Expression[] { constInit.getExpression() }));
+			final String id = constInit.getIdent();
+			final Expression val = constInit.getExpression();
+			statements.add(genAssignmentStmt(bl, id, val));
+			statements.add(genAssignmentStmt(bl, getPrimedVar(id), val));
 		}
 		return statements;
+	}
+
+	private static AssignmentStatement genAssignmentStmt(final BoogieLocation bl, final String id,
+			final Expression val) {
+		return new AssignmentStatement(bl, new LeftHandSide[] { new VariableLHS(bl, id) }, new Expression[] { val });
 	}
 
 	/**
@@ -975,16 +984,9 @@ public class Req2BoogieTranslator {
 		modifiedVarsList.addAll(mClockIds);
 		modifiedVarsList.addAll(mPcIds);
 		modifiedVarsList.add("delta");
-
-		for (final String var : mConstVars.keySet()) {
-			modifiedVarsList.add(var);
-		}
-
-		for (final String stateVar : mStateVars.keySet()) {
-			modifiedVarsList.add(stateVar);
-			modifiedVarsList.add(getPrimedVar(stateVar));
-		}
-
+		modifiedVarsList.addAll(mConstVars.keySet());
+		modifiedVarsList.addAll(mStateVars.keySet());
+		modifiedVarsList.addAll(mPrimedVars.keySet());
 		modifiedVarsList.addAll(mEventVars.keySet());
 
 		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
