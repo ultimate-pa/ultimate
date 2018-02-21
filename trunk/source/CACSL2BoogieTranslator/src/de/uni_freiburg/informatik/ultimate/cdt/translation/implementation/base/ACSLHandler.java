@@ -923,8 +923,10 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(r);
 
 		// TODO: CType
-		final RValue rval = new RValue(
-				ExpressionFactory.constructStructAccessExpression(loc, r.mLrVal.getValue(), field),
+		final StructAccessExpression structAccessExpression =
+				ExpressionFactory.constructStructAccessExpression(loc, r.mLrVal.getValue(), field);
+
+		final RValue rval = new RValue(structAccessExpression,
 				((CStruct) r.mLrVal.getCType().getUnderlyingType()).getFieldType(field));
 		// return new ExpressionResult(stmt, rval decl, auxVars, overappr);
 		resultBuilder.setLrVal(rval);
