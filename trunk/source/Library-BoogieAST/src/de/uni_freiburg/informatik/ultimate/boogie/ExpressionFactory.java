@@ -363,7 +363,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	public static Expression newIfThenElseExpression(final ILocation loc, final Expression condition,
+	public static Expression constructIfThenElseExpression(final ILocation loc, final Expression condition,
 			final Expression thenPart, final Expression elsePart) {
 		final Expression condLiteral = filterLiteral(condition);
 		if (condLiteral instanceof BooleanLiteral) {
@@ -373,7 +373,9 @@ public class ExpressionFactory {
 			}
 			return elsePart;
 		}
-		return new IfThenElseExpression(loc, condition, thenPart, elsePart);
+		final BoogieType type = TypeCheckHelper.typeCheckIfThenElseExpression((BoogieType) condition.getType(),
+				(BoogieType) thenPart.getType(), (BoogieType) elsePart.getType(), new TypeErrorReporter(loc));
+		return new IfThenElseExpression(loc, type, condition, thenPart, elsePart);
 
 	}
 

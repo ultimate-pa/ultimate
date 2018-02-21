@@ -19,6 +19,8 @@ public class StatementFactory {
 			lhsIds[i] = TypeCheckHelper.getLeftHandSideIdentifier(lhs[i]);
 			lhsTypes[i] = (BoogieType) lhs[i].getType();
 			rhsTypes[i] = (BoogieType) rhs[i].getType();
+			assert lhsTypes[i] != null;
+			assert rhsTypes[i] != null;
 		}
 
 		TypeCheckHelper.typeCheckAssignStatement(lhsIds, lhsTypes, rhsTypes, new TypeErrorReporter(loc));

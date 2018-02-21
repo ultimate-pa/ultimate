@@ -363,7 +363,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			if (leftValue.signum() == 1) {
 				return normalDivision;
 			} else if (leftValue.signum() == -1) {
-				return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+				return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalDivision,
 								ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalDivision,
@@ -373,20 +373,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 		} else if (exp2 instanceof IntegerLiteral) {
 			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-				return ExpressionFactory.newIfThenElseExpression(
+				return ExpressionFactory.constructIfThenElseExpression(
 						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
 								BinaryExpression.Operator.ARITHPLUS, normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						normalDivision);
 			} else if (rightValue.signum() == -1) {
-				return ExpressionFactory.newIfThenElseExpression(
+				return ExpressionFactory.constructIfThenElseExpression(
 						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
 								BinaryExpression.Operator.ARITHMINUS, normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						normalDivision);
 			}
 			throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
 		} else {
-			return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
 									normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
@@ -438,7 +438,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			if (leftValue.signum() == 1) {
 				return normalModulo;
 			} else if (leftValue.signum() == -1) {
-				return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+				return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
 								exp2),
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
@@ -448,20 +448,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 		} else if (exp2 instanceof IntegerLiteral) {
 			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-				return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+				return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
 								exp2),
 						normalModulo);
 			} else if (rightValue.signum() == -1) {
-				return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+				return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
 								exp2),
 						normalModulo);
 			}
 			throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
 		} else {
-			return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
 									normalModulo, exp2),
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
@@ -558,7 +558,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 							maxValue);
 					final Expression range = constructLiteralForIntegerType(loc, oldType,
 							mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
-					newExpression = ExpressionFactory.newIfThenElseExpression(loc, condition, wrapped,
+					newExpression = ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
 							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
 				}
 

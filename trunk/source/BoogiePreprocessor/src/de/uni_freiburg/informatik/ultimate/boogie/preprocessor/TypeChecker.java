@@ -276,18 +276,13 @@ public class TypeChecker extends BaseObserver {
 			}
 		} else if (expr instanceof IfThenElseExpression) {
 			final IfThenElseExpression ite = (IfThenElseExpression) expr;
+
 			final BoogieType condType = typecheckExpression(ite.getCondition());
-			if (!condType.equals(BoogieType.TYPE_ERROR) && !condType.equals(BoogieType.TYPE_BOOL)) {
-				typeError(expr, "if expects boolean type: " + expr);
-			}
 			final BoogieType left = typecheckExpression(ite.getThenPart());
 			final BoogieType right = typecheckExpression(ite.getElsePart());
-			if (!left.isUnifiableTo(right)) {
-				typeError(expr, "Type check failed for " + expr);
-				resultType = BoogieType.TYPE_ERROR;
-			} else {
-				resultType = left.equals(BoogieType.TYPE_ERROR) ? right : left;
-			}
+
+
+			resultType = TypeCheckHelper.typeCheckIfThenElseExpression(condType, left, right, typeErrorReporter);
 		} else if (expr instanceof QuantifierExpression) {
 			final QuantifierExpression quant = (QuantifierExpression) expr;
 			final TypeParameters typeParams = new TypeParameters(quant.getTypeParams());

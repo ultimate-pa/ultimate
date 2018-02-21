@@ -2831,6 +2831,7 @@ public class CHandler implements ICHandler {
 			builder.addStatements(rightHandSide.getStatements());
 			builder.addDeclarations(rightHandSide.getDeclarations());
 			builder.addOverapprox(rightHandSide.getOverapprs());
+			builder.addAuxVars(rightHandSide.getAuxVars());
 
 			final LocalLValue lValue = (LocalLValue) leftHandSide;
 			builder.setLrVal(lValue);
