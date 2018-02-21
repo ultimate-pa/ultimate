@@ -430,10 +430,11 @@ public class StandardFunctionHandler {
 
 		final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
 		// introduce fresh aux variable
-		// final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-		// final VariableDeclaration tmpVarDecl =
-		// SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
-		final AuxVarInfo auxvarinfo = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
+//		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+//		final VariableDeclaration tmpVarDecl =
+//				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
+		final AuxVarInfo auxvarinfo =
+				AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvarinfo.getVarDec());
 		builder.addAuxVar(auxvarinfo);
 
@@ -466,7 +467,7 @@ public class StandardFunctionHandler {
 		// final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
 		// final VariableDeclaration tmpVarDecl =
 		// SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
-		final AuxVarInfo auxvarinfo = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvarinfo.getVarDec());
 		builder.addAuxVar(auxvarinfo);
 
@@ -507,7 +508,7 @@ public class StandardFunctionHandler {
 
 		// introduce fresh aux variable
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-		final AuxVarInfo auxvarinfo = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvarinfo.getVarDec());
 		builder.addAuxVar(auxvarinfo);
 
@@ -629,7 +630,7 @@ public class StandardFunctionHandler {
 
 		final CPointer voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar =
-				CTranslationUtil.constructAuxVarInfo(loc, main, voidPointerType, SFO.AUXVAR.MEMSETRES);
+				AuxVarInfo.constructAuxVarInfo(loc, main, voidPointerType, SFO.AUXVAR.MEMSETRES);
 		result.addDeclaration(auxvar.getVarDec());
 		result.addAuxVar(auxvar);
 
@@ -661,10 +662,11 @@ public class StandardFunctionHandler {
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(nmemb, size);
 
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
-		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MALLOC);
+		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MALLOC);
 		result.mDecl.add(auxvar.getVarDec());
 
-		result.mStmt.add(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc));
+		result.mStmt.add(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc,
+				mProcedureManager.getCurrentProcedureID()));
 		result.mLrVal = new RValue(auxvar.getExp(), resultType);
 
 		result.mStmt.add(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.mLrVal.getValue(),
@@ -712,10 +714,11 @@ public class StandardFunctionHandler {
 		main.mCHandler.convert(loc, exprRes, mTypeSizeComputer.getSizeT());
 
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
-		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MALLOC);
+		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MALLOC);
 		exprRes.mDecl.add(auxvar.getVarDec());
 
-		exprRes.mStmt.add(mMemoryHandler.getMallocCall(exprRes.mLrVal.getValue(), auxvar.getLhs(), loc));
+		exprRes.mStmt.add(mMemoryHandler.getMallocCall(exprRes.mLrVal.getValue(), auxvar.getLhs(), loc,
+				mProcedureManager.getCurrentProcedureID()));
 		exprRes.mLrVal = new RValue(auxvar.getExp(), resultType);
 
 		// for alloc a we have to free the variable ourselves when the
@@ -768,7 +771,7 @@ public class StandardFunctionHandler {
 
 	private Result handleVerifierNonDet(final Dispatcher main, final ILocation loc, final CType cType) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final AuxVarInfo auxvarinfo = CTranslationUtil.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addAuxVar(auxvarinfo);
 
@@ -977,8 +980,8 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// 2015-11-05 Matthias: TODO check if int is reasonable here
-		final AuxVarInfo auxvarinfo =
-				CTranslationUtil.constructAuxVarInfo(loc, main, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main,
+				new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
 
@@ -1016,7 +1019,7 @@ public class StandardFunctionHandler {
 		resultBuilder.addAllExceptLrValue(size);
 
 		final AuxVarInfo auxvarinfo =
-				CTranslationUtil.constructAuxVarInfo(loc, main, dest.getLrValue().getCType(), auxVar);
+				AuxVarInfo.constructAuxVarInfo(loc, main, dest.getLrValue().getCType(), auxVar);
 
 		final CallStatement call = mProcedureManager.constructCallStatement(loc, false,
 				new VariableLHS[] { auxvarinfo.getLhs() }, mmDecl.getName(), new Expression[] {
@@ -1111,7 +1114,7 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String functionName, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		// introduce fresh aux variable
-		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvar.getVarDec());
 		builder.addAuxVar(auxvar);
 		builder.addOverapprox(new Overapprox(functionName, loc));

@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
@@ -473,7 +472,7 @@ public class ExpressionResult extends Result {
 //			final VariableDeclaration newArrayDec =
 //					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
 			final AuxVarInfo newArrayAuxvar =
-					CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.ARRAYCOPY);
+					AuxVarInfo.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.ARRAYCOPY);
 
 //			resultValue = LRValueFactory.constructHeapLValue(main,
 ////					newArrayAuxvar.getExp(),

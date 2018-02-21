@@ -974,7 +974,8 @@ public class FunctionHandler {
 
 	//					stmt.add(memoryHandler.getMallocCall(llv, igLoc));
 	//					stmt.addAll(assign.mStmt);
-						resultBuilder.addStatement(memoryHandler.getMallocCall(llv, igLoc));
+						resultBuilder.addStatement(memoryHandler.getMallocCall(llv, igLoc,
+									mProcedureManager.getCurrentProcedureID()));
 						resultBuilder.addAllExceptLrValue(assign);
 					} else {
 						final VariableLHS tempLHS = ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType,
@@ -1131,7 +1132,7 @@ public class FunctionHandler {
 		//					final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 		//					final DeclarationInformation tmpDeclInfo = new DeclarationInformation(StorageClass.LOCAL,
 		//							mProcedureManager.getCurrentProcedureInfo().getProcedureName());
-							auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, astType, SFO.AUXVAR.RETURNED);
+							auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, astType, SFO.AUXVAR.RETURNED);
 
 							final BoogieType tmpBoogieType = main.mCHandler.getBoogieTypeHelper()
 									.getBoogieTypeForBoogieASTType(astType);
@@ -1181,7 +1182,7 @@ public class FunctionHandler {
 		//					new VarList(loc, new String[] { ident }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
 		//			final VariableDeclaration tmpVarDecl =
 		//					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
-					final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, cIntType, SFO.AUXVAR.RETURNED);
+					final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, cIntType, SFO.AUXVAR.RETURNED);
 
 					returnedValue = auxvar.getExp();
 

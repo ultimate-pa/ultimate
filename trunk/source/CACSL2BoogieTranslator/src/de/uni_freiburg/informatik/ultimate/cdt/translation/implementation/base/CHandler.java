@@ -735,7 +735,7 @@ public class CHandler implements ICHandler {
 			// PrimitiveType(loc, SFO.BOOL));
 			// final VariableDeclaration tmpVar =
 			// new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
-			final AuxVarInfo resNameAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType,
+			final AuxVarInfo resNameAuxvar = AuxVarInfo.constructAuxVarInfo(loc, main, intType,
 					new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
 			// auxVars.put(tmpVar, loc);
 			// decl.add(tmpVar);
@@ -818,7 +818,7 @@ public class CHandler implements ICHandler {
 			// new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 			// auxVars.put(tmpVar, loc);
 			// decl.add(tmpVar);
-			final AuxVarInfo resNameAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType,
+			final AuxVarInfo resNameAuxvar = AuxVarInfo.constructAuxVarInfo(loc, main, intType,
 					new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
 			builder.addDeclaration(resNameAuxvar.getVarDec());
 			builder.addAuxVar(resNameAuxvar);
@@ -1447,7 +1447,7 @@ public class CHandler implements ICHandler {
 			// Attribute[0], new VarList[] {
 			// new VarList(loc, new String[] { tId },
 			// main.mTypeHandler.constructPointerType(loc)) });
-			final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, returnType, SFO.AUXVAR.NONDET);
+			final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, returnType, SFO.AUXVAR.NONDET);
 			final RValue rvalue = new RValue(auxvar.getExp(), returnType);
 			final ArrayList<Declaration> decls = new ArrayList<>();
 			decls.add(auxvar.getVarDec());
@@ -1468,7 +1468,7 @@ public class CHandler implements ICHandler {
 			// Attribute[0],
 			// new VarList[] { new VarList(loc, new String[] { tId },
 			// mTypeHandler.constructPointerType(loc)) });
-			final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
+			final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, cType, SFO.AUXVAR.NONDET);
 			final RValue rvalue = new RValue(auxvar.getExp(), cType);
 			final ArrayList<Declaration> decls = new ArrayList<>();
 			decls.add(auxvar.getVarDec());
@@ -1987,7 +1987,8 @@ public class CHandler implements ICHandler {
 							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 							// old solution: havoc via an auxvar, new solution (below):
 							// just malloc at the right place (much shorter for arrays and structs..)
-							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc));
+							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc,
+									mProcedureManager.getCurrentProcedureID()));
 							mMemoryHandler.addVariableToBeFreed(main,
 									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 						}
@@ -2008,7 +2009,8 @@ public class CHandler implements ICHandler {
 						if (onHeap) {
 							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 							mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
-							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc));
+							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc,
+									mProcedureManager.getCurrentProcedureID()));
 						}
 
 						((ExpressionResult) result).mStmt.addAll(initRex.mStmt);
@@ -2073,7 +2075,7 @@ public class CHandler implements ICHandler {
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String breakLabelName = mNameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
 
-		final AuxVarInfo switchAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType,
+		final AuxVarInfo switchAuxvar = AuxVarInfo.constructAuxVarInfo(loc, main, intType,
 				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SWITCH);
 
 		final ASTType flagType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
@@ -3135,7 +3137,7 @@ public class CHandler implements ICHandler {
 				// VarList(loc,
 				// new String[] { tmpId }, mTypeHandler.cType2AstType(loc,
 				// er.mLrVal.getCType())) });
-				final AuxVarInfo auxVar = CTranslationUtil.constructAuxVarInfo(loc, main, er.mLrVal.getCType(),
+				final AuxVarInfo auxVar = AuxVarInfo.constructAuxVarInfo(loc, main, er.mLrVal.getCType(),
 						SFO.AUXVAR.UNION);
 
 				// builder.addDeclaration(tVarDec).putAuxVar(tVarDec, loc);
@@ -3780,7 +3782,7 @@ public class CHandler implements ICHandler {
 		// exprRes.mLrVal.getCType());
 		// final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName,
 		// tmpIType, loc);
-		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, exprRes.mLrVal.getCType(),
+		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, exprRes.mLrVal.getCType(),
 				SFO.AUXVAR.POST_MOD);
 		// result.mAuxVars.put(tmpVar, loc);
 		// result.mDecl.add(tmpVar);
@@ -3863,7 +3865,7 @@ public class CHandler implements ICHandler {
 		// exprRes.mLrVal.getCType());
 		// final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName,
 		// tmpIType, loc);
-		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, exprRes.getLrValue().getCType(),
+		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, exprRes.getLrValue().getCType(),
 				SFO.AUXVAR.PRE_MOD);
 		// result.mAuxVars.put(tmpVar, loc);
 		// result.mDecl.add(tmpVar);
@@ -4348,7 +4350,7 @@ public class CHandler implements ICHandler {
 		// opPositive.mLrVal.getCType();
 		// final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName,
 		// tmpType, loc);
-		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, opPositive.getLrValue().getCType(),
+		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, opPositive.getLrValue().getCType(),
 				SFO.AUXVAR.ITE);
 
 		// decl.add(auxvar.getVarDec());

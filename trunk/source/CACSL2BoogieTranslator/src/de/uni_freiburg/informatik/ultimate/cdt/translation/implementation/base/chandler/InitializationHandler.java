@@ -632,7 +632,7 @@ public class InitializationHandler {
 
 	private ExpressionResult makeUnionAuxVarExpressionResult(final ILocation loc, final Dispatcher main,
 			final CType fieldType) {
-		final AuxVarInfo auxVar = CTranslationUtil.constructAuxVarInfo(loc, main, fieldType,
+		final AuxVarInfo auxVar = AuxVarInfo.constructAuxVarInfo(loc, main, fieldType,
 				SFO.AUXVAR.NONDET);
 
 		final ExpressionResult x = new ExpressionResultBuilder()
@@ -761,7 +761,7 @@ public class InitializationHandler {
 	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final Dispatcher main, final CType cType,
 			final ExpressionResultBuilder initialization) {
 		final LocalLValue arrayLhsToInitialize;
-		final AuxVarInfo auxVar = CTranslationUtil.constructAuxVarInfo(loc, main, cType);
+		final AuxVarInfo auxVar = AuxVarInfo.constructAuxVarInfo(loc, main, cType);
 
 		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 

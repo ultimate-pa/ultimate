@@ -63,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
@@ -80,6 +82,12 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
  * Manages the Boogie procedures of the translated program.
+ * <p>
+ * Boogie procedures are inserted into the translated program from several sources:
+ * <li> translations of C functions ({@link CHandler}, {@link FunctionHandler})
+ * <li> helper procedures from the memory model ({@link MemoryHandler})
+ * <li> when we provide a Boogie model for a standard C function ({@link StandardFunctionHandler})
+ * <li> Ultimate.start and Ultimate.init ({@link PostProcessor})
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -378,7 +386,7 @@ public class ProcedureManager {
 	 * @param callee
 	 */
 	public void registerCall(final String caller, final String callee) {
-		registerCall(getProcedureInfo(caller), getProcedureInfo(callee));
+		registerCall(getOrConstructProcedureInfo(caller), getOrConstructProcedureInfo(callee));
 	}
 
 	void registerCall(final BoogieProcedureInfo caller, final BoogieProcedureInfo callee) {

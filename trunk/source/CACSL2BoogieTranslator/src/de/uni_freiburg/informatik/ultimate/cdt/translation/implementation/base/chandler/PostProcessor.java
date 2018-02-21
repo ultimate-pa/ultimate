@@ -602,7 +602,7 @@ public class PostProcessor {
 //				tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
 //				final VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
 //						new VarList[] { new VarList(loc, new String[] { tmpId }, funcSignature.getReturnType()) });
-				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main,
+				auxvar = AuxVarInfo.constructAuxVarInfo(loc, main,
 						funcSignature.getReturnType(),
 						SFO.AUXVAR.FUNCPTRRES);
 //				decl.add(tmpVarDec);
@@ -812,7 +812,7 @@ public class PostProcessor {
 						if (main.mCHandler.isHeapVar(id)) {
 							final LocalLValue llVal =
 									new LocalLValue(lhs, en.getValue().getType(), null);
-							initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc));
+							initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc, SFO.INIT));
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.Ultimate_Alloc.name());
 						}
 
@@ -967,7 +967,7 @@ public class PostProcessor {
 //							new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 					final CType checkedMethodResultCType =
 							procedureManager.getCFunctionType(checkedMethod).getResultType();
-					final AuxVarInfo checkedMethodReturnAuxVar = CTranslationUtil.constructAuxVarInfo(loc, main,
+					final AuxVarInfo checkedMethodReturnAuxVar = AuxVarInfo.constructAuxVarInfo(loc, main,
 							checkedMethodResultCType, SFO.AUXVAR.RETURNED);
 					main.mCHandler.getSymbolTable().addToReverseMap(
 							checkedMethodReturnAuxVar.getExp().getIdentifier(),

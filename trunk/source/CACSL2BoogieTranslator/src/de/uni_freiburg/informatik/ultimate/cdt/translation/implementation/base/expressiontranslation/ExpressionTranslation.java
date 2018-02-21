@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -145,11 +144,12 @@ public abstract class ExpressionTranslation {
 //				final RValue[] dimensions = { dimension };
 //				final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
 				final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
-				// final CPointer arrayType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+				 final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 //				tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
 //				tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 //						new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
+//				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
+				auxvar = AuxVarInfo.constructGlobalAuxVarInfo(loc, main, pointerType, SFO.AUXVAR.STRINGLITERAL);
 				rvalue = new RValueForArrays(auxvar.getExp(), arrayType);
 			}
 //			final ArrayList<Declaration> decls = new ArrayList<>();
