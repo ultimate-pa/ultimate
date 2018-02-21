@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.Collections;
-
-import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 
 /**
  *
@@ -11,30 +9,28 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
  */
 public class InitializationPattern extends PatternType {
 
-	public enum VarAccess {
+	public enum VariableCategory {
 		IN, OUT, HIDDEN, CONST
 	}
 
 	private final String mType;
-	private final VarAccess mVisibility;
+	private final VariableCategory mVisibility;
 	private final String mIdent;
+	private final Expression mExpression;
 
-	public InitializationPattern(final String ident, final String type, final VarAccess visibility) {
+	public InitializationPattern(final String ident, final String type, final VariableCategory visibility) {
 		this(ident, type, visibility, null);
 	}
 
-	public InitializationPattern(final String ident, final String type, final VarAccess visibility,
-			final CDD initially) {
+	public InitializationPattern(final String ident, final String type, final VariableCategory visibility,
+			final Expression expr) {
 		mIdent = ident;
 		mType = type;
 		mVisibility = visibility;
-
-		if (initially != null) {
-			mergeCDDs(Collections.singletonList(initially));
-		}
+		mExpression = expr;
 	}
 
-	public VarAccess getAccessability() {
+	public VariableCategory getCategory() {
 		return mVisibility;
 	}
 
@@ -44,5 +40,14 @@ public class InitializationPattern extends PatternType {
 
 	public String getType() {
 		return mType;
+	}
+
+	public Expression getExpression() {
+		return mExpression;
+	}
+
+	@Override
+	public String toString() {
+		return mVisibility + " " + mIdent + " : " + mType;
 	}
 }

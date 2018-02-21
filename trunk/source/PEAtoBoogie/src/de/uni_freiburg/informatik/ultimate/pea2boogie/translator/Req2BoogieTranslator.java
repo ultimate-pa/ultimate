@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.ConditionGenerator;
@@ -125,6 +126,12 @@ public class Req2BoogieTranslator {
 	 * The list of state variables.
 	 */
 	private final Map<String, ASTType> mStateVars;
+
+	/**
+	 * The list of constants declared via the Initialization pattern
+	 */
+	private final Map<String, ASTType> mConstVars;
+
 	/**
 	 * The list of primed variables.
 	 */
@@ -186,6 +193,7 @@ public class Req2BoogieTranslator {
 		mClockIds = new ArrayList<>();
 		mPcIds = new ArrayList<>();
 		mStateVars = new LinkedHashMap<>();
+		mConstVars = new LinkedHashMap<>();
 		mPrimedVars = new LinkedHashMap<>();
 		mEventVars = new LinkedHashMap<>();
 
@@ -251,12 +259,17 @@ public class Req2BoogieTranslator {
 
 		// extract state vars from init pattern
 		for (final InitializationPattern init : mInit) {
-			final ASTType type;
-			type = toPrimitiveType(init.getType(), loc).toASTType(loc);
+			final ASTType type = toPrimitiveType(init.getType(), loc).toASTType(loc);
+			final String name = init.getIdent();
 			if (type.getBoogieType() == BoogieType.TYPE_ERROR) {
-				mLogger.error(init.getIdent() + " has type None");
+				mLogger.error(name + " has type None");
 			}
-			addStateVar(init.getIdent(), type, loc);
+			if (init.getCategory() != VariableCategory.CONST) {
+				addStateVar(name, type, loc);
+			} else {
+				addConstVar(name, type, loc);
+			}
+
 		}
 
 		// extract pcid vars, clock vars, state vars, primed state vars, and event vars
@@ -270,6 +283,7 @@ public class Req2BoogieTranslator {
 			varLists.add(new VarList(loc, mPcIds.toArray(new String[mPcIds.size()]), intType));
 		}
 
+		varLists.addAll(createVarLists(mConstVars));
 		varLists.addAll(createVarLists(mStateVars));
 		varLists.addAll(createVarLists(mPrimedVars));
 		varLists.addAll(createVarLists(mEventVars));
@@ -307,7 +321,7 @@ public class Req2BoogieTranslator {
 				final String type = entry.getValue();
 
 				if (type == null) {
-					if (!mStateVars.containsKey(name)) {
+					if (!mStateVars.containsKey(name) && !mConstVars.containsKey(name)) {
 						syntaxError(mBoogieLocations[i + 1],
 								"Variable " + name + " not declared in " + currentAutomaton.getName());
 					}
@@ -318,10 +332,7 @@ public class Req2BoogieTranslator {
 				case "bool":
 				case "real":
 				case "int":
-					if (!mStateVars.containsKey(name)) {
-						syntaxError(mBoogieLocations[i + 1], "Variable " + name + " not declared");
-					}
-					break;
+					throw new AssertionError("Is handled before");
 				case "event":
 					mEventVars.put(name, getBoogieType("bool", mBoogieLocations[i + 1]));
 					break;
@@ -338,6 +349,16 @@ public class Req2BoogieTranslator {
 			mPrimedVars.put(getPrimedVar(name), astType);
 		}
 
+		checkMultipleDecls(name, astType, loc, oldType);
+	}
+
+	private void addConstVar(final String name, final ASTType astType, final BoogieLocation loc) {
+		final ASTType oldType = mConstVars.put(name, astType);
+		checkMultipleDecls(name, astType, loc, oldType);
+	}
+
+	private void checkMultipleDecls(final String name, final ASTType astType, final ILocation loc,
+			final ASTType oldType) {
 		if (oldType != null && astType != null && !Objects.equals(oldType.getBoogieType(), astType.getBoogieType())) {
 			syntaxError(loc, "Variable declared multiple times with different type: " + name + " : "
 					+ oldType.getBoogieType() + " vs. " + astType.getBoogieType());
@@ -853,7 +874,7 @@ public class Req2BoogieTranslator {
 		return exprList.get(exprList.size() - 1);
 	}
 
-	private Statement[] genInitialPhasesSmts(final BoogieLocation bl) {
+	private List<Statement> genInitialPhasesSmts(final BoogieLocation bl) {
 		final VariableLHS[] ids = new VariableLHS[mPcIds.size()];
 		for (int i = 0; i < mPcIds.size(); i++) {
 			ids[i] = new VariableLHS(bl, mPcIds.get(i));
@@ -867,9 +888,9 @@ public class Req2BoogieTranslator {
 
 		final AssumeStatement assumeSmt = new AssumeStatement(bl, genConjunction(pcExprs, bl));
 
-		final Statement[] statements = new Statement[2];
-		statements[0] = pcHavoc;
-		statements[1] = assumeSmt;
+		final List<Statement> statements = new ArrayList<>();
+		statements.add(pcHavoc);
+		statements.add(assumeSmt);
 		return statements;
 	}
 
@@ -892,9 +913,9 @@ public class Req2BoogieTranslator {
 		return initializer;
 	}
 
-	private Statement[] genClockInitSmts(final BoogieLocation bl) {
+	private List<Statement> genClockInitSmts(final BoogieLocation bl) {
 		if (mClockIds.isEmpty()) {
-			return new Statement[0];
+			return Collections.emptyList();
 		}
 		final VariableLHS[] clocks = new VariableLHS[mClockIds.size()];
 		int i = 0;
@@ -905,9 +926,9 @@ public class Req2BoogieTranslator {
 		final HavocStatement clockHavoc = new HavocStatement(bl, clocks);
 		final AssumeStatement assumeSmt = new AssumeStatement(bl, genClockInit(bl));
 
-		final Statement[] statements = new Statement[2];
-		statements[0] = clockHavoc;
-		statements[1] = assumeSmt;
+		final List<Statement> statements = new ArrayList<>();
+		statements.add(clockHavoc);
+		statements.add(assumeSmt);
 
 		return statements;
 	}
@@ -921,10 +942,25 @@ public class Req2BoogieTranslator {
 	 */
 	private Statement[] generateProcedureBodyStmts(final BoogieLocation bl) {
 		final List<Statement> statements = new ArrayList<>();
-		statements.addAll(Arrays.asList(genInitialPhasesSmts(bl)));
-		statements.addAll(Arrays.asList(genClockInitSmts(bl)));
+		statements.addAll(genInitialPhasesSmts(bl));
+		statements.addAll(genClockInitSmts(bl));
+		statements.addAll(genConstInitSmts(bl));
 		statements.add(genWhileSmt(bl));
 		return statements.toArray(new Statement[statements.size()]);
+	}
+
+	private List<Statement> genConstInitSmts(final BoogieLocation bl) {
+		final List<InitializationPattern> constInits =
+				mInit.stream().filter(a -> a.getCategory() == VariableCategory.CONST).collect(Collectors.toList());
+		if (constInits.isEmpty()) {
+			return Collections.emptyList();
+		}
+		final List<Statement> statements = new ArrayList<>(constInits.size());
+		for (final InitializationPattern constInit : constInits) {
+			statements.add(new AssignmentStatement(bl, new LeftHandSide[] { new VariableLHS(bl, constInit.getIdent()) },
+					new Expression[] { constInit.getExpression() }));
+		}
+		return statements;
 	}
 
 	/**
@@ -940,10 +976,15 @@ public class Req2BoogieTranslator {
 		modifiedVarsList.addAll(mPcIds);
 		modifiedVarsList.add("delta");
 
+		for (final String var : mConstVars.keySet()) {
+			modifiedVarsList.add(var);
+		}
+
 		for (final String stateVar : mStateVars.keySet()) {
 			modifiedVarsList.add(stateVar);
 			modifiedVarsList.add(getPrimedVar(stateVar));
 		}
+
 		modifiedVarsList.addAll(mEventVars.keySet());
 
 		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];

@@ -102,7 +102,7 @@ public class PeaToBoogie implements ISource {
 		vacuityChecks.set(0, patterns.length);
 
 		// TODO preference
-		final int combinationNum = Math.min(patterns.length, 2);
+		final int combinationNum = Math.min(patterns.length, 3);
 		final Req2BoogieTranslator translator =
 				new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, inputPath, combinationNum, patterns);
 		return translator.getUnit();

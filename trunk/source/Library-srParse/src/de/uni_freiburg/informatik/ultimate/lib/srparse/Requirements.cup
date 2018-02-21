@@ -173,17 +173,17 @@ property ::= propid?:id scope:s COMMA? pattern:p DOT?
             | error
                {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.IN); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VariableCategory.IN); :}
 		  	| OUTPUT cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.OUT); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VariableCategory.OUT); :}
 		 	| INTERNAL cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.HIDDEN); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VariableCategory.HIDDEN); :}
 		 	| CONST cid:i IS NUMBER:v
-		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VarAccess.CONST,null); :}
+		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$,false), v)); :}
 		 	| CONST cid:i IS REALNUMBER:v
-		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VarAccess.CONST,null); :}
+		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$,false), v)); :}
 		 	| CONST cid:i IS bool:v
-		  	   {: RESULT = new InitializationPattern(i,"bool",InitializationPattern.VarAccess.CONST,null); :}		  	   		  	   		  	   
+		  	   {: RESULT = new InitializationPattern(i,"bool",InitializationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$,false), v)); :}		  	   		  	   		  	   
            ;
 
 propid ::= ID:id IDSEP
