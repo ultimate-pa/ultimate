@@ -112,6 +112,7 @@ public class ProcedureManager {
 
 	/**
 	 * Announce the use of a procedure to the FunctionHandler
+	 *
 	 * @param methodName
 	 */
 	public void registerProcedure(final String methodName) {
@@ -158,9 +159,8 @@ public class ProcedureManager {
 	 * Returns declarations for all procedures that will appear in the translated program. Ensures that the modifies
 	 * clauses of all procedures are transitive with respect to the call graph.
 	 * <p>
-	 * Special case regarding memory models:
-	 *  if one memory-array is included, all active memory arrays
-	 * have to be included (f.i. we have procedure modifies memory_int, and memoryHandler.isFloatMMArray == true, and
+	 * Special case regarding memory models: if one memory-array is included, all active memory arrays have to be
+	 * included (f.i. we have procedure modifies memory_int, and memoryHandler.isFloatMMArray == true, and
 	 * memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false, then we have to add memory_real to
 	 * the modifies clause of procedure
 	 *
@@ -177,15 +177,16 @@ public class ProcedureManager {
 		}
 
 		/**
-		 * The base graph for the computation of strongly connected components (SCCs) is the inverse call graph.
-		 * I.e., in the sense of this graph, the successors of a procedure are its callers.
+		 * The base graph for the computation of strongly connected components (SCCs) is the inverse call graph. I.e.,
+		 * in the sense of this graph, the successors of a procedure are its callers.
 		 */
-		final ISuccessorProvider<BoogieProcedureInfo> successorProvider = new ISuccessorProvider<BoogieProcedureInfo>() {
-			@Override
-			public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
-				return mInverseCallGraph.getImage(node).iterator();
-			}
-		};
+		final ISuccessorProvider<BoogieProcedureInfo> successorProvider =
+				new ISuccessorProvider<BoogieProcedureInfo>() {
+					@Override
+					public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
+						return mInverseCallGraph.getImage(node).iterator();
+					}
+				};
 
 		final int numberOfAllNodes = mProcedureNameToProcedureInfo.size();
 		final Set<BoogieProcedureInfo> startNodes = new HashSet<>(mProcedureNameToProcedureInfo.values());
@@ -193,12 +194,12 @@ public class ProcedureManager {
 				new DefaultSccComputation<>(main.getLogger(), successorProvider, numberOfAllNodes, startNodes);
 
 		/*
-		 * Initialize the modified globals for each SCC with the union of each method's modified globals.
-		 *  (within an SCC all procedure may call all others (possibly transitively) thus all must have the same
-		 *   modifies clause contents)
+		 * Initialize the modified globals for each SCC with the union of each method's modified globals. (within an SCC
+		 * all procedure may call all others (possibly transitively) thus all must have the same modifies clause
+		 * contents)
 		 */
-		final LinkedHashRelation<StronglyConnectedComponent<BoogieProcedureInfo>, VariableLHS> sccToModifiedGlobals
-			= new LinkedHashRelation<>();
+		final LinkedHashRelation<StronglyConnectedComponent<BoogieProcedureInfo>, VariableLHS> sccToModifiedGlobals =
+				new LinkedHashRelation<>();
 		for (final StronglyConnectedComponent<BoogieProcedureInfo> scc : dssc.getSCCs()) {
 			for (final BoogieProcedureInfo procInfo : scc.getNodes()) {
 				for (final VariableLHS modGlobal : procInfo.getModifiedGlobals()) {
@@ -208,23 +209,21 @@ public class ProcedureManager {
 		}
 
 		/*
-		 * update the modified globals for the sccs according to the edges in the call graph that connect different
-		 * SCCs
+		 * update the modified globals for the sccs according to the edges in the call graph that connect different SCCs
 		 *
-		 * algorithmic idea:
-		 *  start with the leafs of the graph and propagate all modified globals back along call edges.
-		 *  The frontier is where we have already propagated modified globals.
+		 * algorithmic idea: start with the leafs of the graph and propagate all modified globals back along call edges.
+		 * The frontier is where we have already propagated modified globals.
 		 *
 		 */
 		final Deque<StronglyConnectedComponent<BoogieProcedureInfo>> frontier = new ArrayDeque<>();
-//		frontier.addAll(dssc.getLeafComponents());
+		// frontier.addAll(dssc.getLeafComponents());
 		frontier.addAll(dssc.getRootComponents());
 		while (!frontier.isEmpty()) {
 			final StronglyConnectedComponent<BoogieProcedureInfo> currentScc = frontier.pollFirst();
 
 			/*
 			 * Note that we have chosen the ISuccessorProvider for the SccComputation such that the caller is the
-			 *  successor of the callee. (i.e., the successor relation is the inverse of the call graph)
+			 * successor of the callee. (i.e., the successor relation is the inverse of the call graph)
 			 */
 			final Set<VariableLHS> currentSccModGlobals = sccToModifiedGlobals.getImage(currentScc);
 			final Iterator<StronglyConnectedComponent<BoogieProcedureInfo>> callers =
@@ -253,12 +252,12 @@ public class ProcedureManager {
 				// modifies clause is user defined --> leave the specification as is
 				newSpec = oldSpec;
 			} else {
-//			    // case: !procInfo.isModifiedGlobalsIsUsedDefined()
+				// // case: !procInfo.isModifiedGlobalsIsUsedDefined()
 				final Set<VariableLHS> currModClause =
 						sccToModifiedGlobals.getImage(dssc.getNodeToComponents().get(procInfo));
 				assert currModClause != null : "No modifies clause proc " + procedureName;
 
-//				final Set<VariableLHS> currModClauseDuplicatesFiltered = filterDuplicateVariableLHSs(currModClause);
+				// final Set<VariableLHS> currModClauseDuplicatesFiltered = filterDuplicateVariableLHSs(currModClause);
 
 				procInfo.addModifiedGlobals(currModClause);
 
@@ -275,7 +274,7 @@ public class ProcedureManager {
 							.getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
 					if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 						for (final HeapDataArray hda : heapDataArrays) {
-//							currModClause.add(hda.getVariableName());
+							// currModClause.add(hda.getVariableName());
 							procInfo.addModifiedGlobal(hda.getVariableLHS());
 						}
 					}
@@ -285,7 +284,7 @@ public class ProcedureManager {
 				{
 					int i = 0;
 					for (final VariableLHS modifyEntry : currModClause) {
-						modifyList[i++] = modifyEntry;//new VariableLHS(loc, modifyEntry);
+						modifyList[i++] = modifyEntry;// new VariableLHS(loc, modifyEntry);
 					}
 				}
 				newSpec[oldSpec.length] = constructModifiesSpecification(loc, false, modifyList);
@@ -297,12 +296,14 @@ public class ProcedureManager {
 			final Specification[] newSpecWithExtraEnsuresClauses;
 			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired() && (main
 					.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY)
-					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(procedureName)) && main
-							.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
+					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(procedureName))
+							&& main.getPreferences()
+									.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
 				// add a specification to check for memory leaks
 
-//				final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
-				final Expression vIe = //ExpressionFactory.constructIdentifierExpression(loc, MemoryModelDeclarations  SFO.VALID);
+				// final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
+				final Expression vIe = // ExpressionFactory.constructIdentifierExpression(loc, MemoryModelDeclarations
+										// SFO.VALID);
 						main.mCHandler.getMemoryHandler().getValidArray(loc);
 
 				final int nrSpec = newSpec.length;
@@ -316,19 +317,21 @@ public class ProcedureManager {
 				if (main.getPreferences()
 						.getBoolean(CACSLPreferenceInitializer.LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE)) {
 					new Overapprox(Collections.singletonMap("memtrack", ensLoc))
-						.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
+							.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
 				}
 			} else {
 				newSpecWithExtraEnsuresClauses = newSpec;
 			}
-			updatedDeclarations.add(new Procedure(loc, oldProcDecl.getAttributes(), procedureName, oldProcDecl.getTypeParams(),
-					oldProcDecl.getInParams(), oldProcDecl.getOutParams(), newSpecWithExtraEnsuresClauses, null));
+			updatedDeclarations.add(new Procedure(loc, oldProcDecl.getAttributes(), procedureName,
+					oldProcDecl.getTypeParams(), oldProcDecl.getInParams(), oldProcDecl.getOutParams(),
+					newSpecWithExtraEnsuresClauses, null));
 		}
 		return updatedDeclarations;
 	}
 
 	/**
 	 * only keep variable lhss that refer to the same global variable, i.e., keep only one per identifier String.
+	 *
 	 * @return
 	 */
 	private Set<VariableLHS> filterDuplicateVariableLHSs(final Set<VariableLHS> input) {
@@ -363,13 +366,13 @@ public class ProcedureManager {
 		if (isGlobalScope()) {
 			throw new IllegalStateException("attempting to register a call when in global scope");
 		}
-//		registerCall(mCurrentProcedureInfo, getProcedureInfo(callee));
+		// registerCall(mCurrentProcedureInfo, getProcedureInfo(callee));
 		registerCall(mCurrentProcedureInfo, getOrConstructProcedureInfo(callee));
 	}
 
 	/**
-	 * Announces that a procedure calls another procedure somewhere in the translated program.
-	 *  (for example this updates the call graph accordingly)
+	 * Announces that a procedure calls another procedure somewhere in the translated program. (for example this updates
+	 * the call graph accordingly)
 	 *
 	 * @param caller
 	 * @param callee
@@ -386,97 +389,91 @@ public class ProcedureManager {
 		mInverseCallGraph.addPair(callee, caller);
 	}
 
+	// /**
+	// * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
+	// * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
+	// */
+	// private static void updateCFunction(final ProcedureInfo procInfo, final CType returnType,
+	// final CDeclaration[] allParamDecs,
+	// final CDeclaration oneParamDec, final boolean takesVarArgs) {
+	// final CFunction oldCFunction = procInfo.getCType();
+	//
+	//// final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
+	// final CType oldRetType = procInfo.hasCType() ? procInfo.getCType().getResultType() : null;
+	// final CDeclaration[] oldInParams =
+	//// oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
+	// procInfo.hasCType() ? procInfo.getCType().getParameterTypes() : new CDeclaration[0];
+	//// final boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
+	// final boolean oldTakesVarArgs = procInfo.hasCType() ? procInfo.getCType().takesVarArgs() : false;
+	//
+	// CType newRetType = oldRetType;
+	// CDeclaration[] newInParams = oldInParams;
+	// final boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
+	//
+	// if (allParamDecs != null) { // set a new parameter list
+	// assert oneParamDec == null;
+	// newInParams = allParamDecs;
+	// } else if (oneParamDec != null) { // add a parameter to the list
+	// assert allParamDecs == null;
+	//
+	// final ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
+	// ips.add(oneParamDec);
+	// newInParams = ips.toArray(new CDeclaration[ips.size()]);
+	// }
+	// if (returnType != null) {
+	// newRetType = returnType;
+	// }
+	//
+	// procInfo.resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
+	// }
 
-
-
-
-//	/**
-//	 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
-//	 * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
-//	 */
-//	private static void updateCFunction(final ProcedureInfo procInfo, final CType returnType,
-//			final CDeclaration[] allParamDecs,
-//			final CDeclaration oneParamDec, final boolean takesVarArgs) {
-//		final CFunction oldCFunction = procInfo.getCType();
-//
-////		final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
-//		final CType oldRetType = procInfo.hasCType() ? procInfo.getCType().getResultType() : null;
-//		final CDeclaration[] oldInParams =
-////				oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
-//				procInfo.hasCType() ? procInfo.getCType().getParameterTypes() : new CDeclaration[0];
-////		final boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
-//		final boolean oldTakesVarArgs = procInfo.hasCType() ? procInfo.getCType().takesVarArgs() : false;
-//
-//		CType newRetType = oldRetType;
-//		CDeclaration[] newInParams = oldInParams;
-//		final boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
-//
-//		if (allParamDecs != null) { // set a new parameter list
-//			assert oneParamDec == null;
-//			newInParams = allParamDecs;
-//		} else if (oneParamDec != null) { // add a parameter to the list
-//			assert allParamDecs == null;
-//
-//			final ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
-//			ips.add(oneParamDec);
-//			newInParams = ips.toArray(new CDeclaration[ips.size()]);
-//		}
-//		if (returnType != null) {
-//			newRetType = returnType;
-//		}
-//
-//		procInfo.resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
-//	}
-
-
-
-//	/**
-//	 * Adds searchString to modifiedGlobals iff searchString is a global variable and the user has not defined a
-//	 * modifies clause.
-//	 *
-//	 * @param main
-//	 *            a reference to the main dispatcher.
-//	 *
-//	 * @param searchString
-//	 *            = boogieVarName!
-//	 * @param errLoc
-//	 *            the location for possible errors!
-//	 */
-//	public void checkIfModifiedGlobal(final SymbolTable symbTab, final String searchString, final ILocation errLoc) {
-//		String cName;
-//		if (!symbTab.containsBoogieSymbol(searchString)) {
-//			// temp variable!
-//			return;
-//		}
-//		cName = symbTab.getCID4BoogieID(searchString, errLoc);
-//		final String cId = mCurrentProcedure.getIdentifier();
-//		final SymbolTableValue stValue = symbTab.get(cName, errLoc);
-//		final CType cvar = stValue.getCVariable();
-//		if (cvar != null && stValue.getCDecl().isStatic()) {
-//			mModifiedGlobals.get(cId).add(searchString);
-//			return;
-//		}
-//		if (mModifiedGlobalsIsUserDefined.contains(cId)) {
-//			return;
-//		}
-//		final boolean isLocal;
-//		if (searchString.equals(SFO.RES)) {
-//			// this variable is reserved for the return variable and
-//			// therefore local!
-//			isLocal = true;
-//		} else {
-//			isLocal = !symbTab.get(cName, errLoc).isBoogieGlobalVar();
-//		}
-//		if (!isLocal) {
-//			// the variable is not local but could be a formal parameter
-//			if (!searchString.startsWith(SFO.IN_PARAM)) {
-//				// variable is global!
-//				mModifiedGlobals.get(cId).add(searchString);
-//			} else {
-//				assert false;
-//			}
-//		}
-//	}
+	// /**
+	// * Adds searchString to modifiedGlobals iff searchString is a global variable and the user has not defined a
+	// * modifies clause.
+	// *
+	// * @param main
+	// * a reference to the main dispatcher.
+	// *
+	// * @param searchString
+	// * = boogieVarName!
+	// * @param errLoc
+	// * the location for possible errors!
+	// */
+	// public void checkIfModifiedGlobal(final SymbolTable symbTab, final String searchString, final ILocation errLoc) {
+	// String cName;
+	// if (!symbTab.containsBoogieSymbol(searchString)) {
+	// // temp variable!
+	// return;
+	// }
+	// cName = symbTab.getCID4BoogieID(searchString, errLoc);
+	// final String cId = mCurrentProcedure.getIdentifier();
+	// final SymbolTableValue stValue = symbTab.get(cName, errLoc);
+	// final CType cvar = stValue.getCVariable();
+	// if (cvar != null && stValue.getCDecl().isStatic()) {
+	// mModifiedGlobals.get(cId).add(searchString);
+	// return;
+	// }
+	// if (mModifiedGlobalsIsUserDefined.contains(cId)) {
+	// return;
+	// }
+	// final boolean isLocal;
+	// if (searchString.equals(SFO.RES)) {
+	// // this variable is reserved for the return variable and
+	// // therefore local!
+	// isLocal = true;
+	// } else {
+	// isLocal = !symbTab.get(cName, errLoc).isBoogieGlobalVar();
+	// }
+	// if (!isLocal) {
+	// // the variable is not local but could be a formal parameter
+	// if (!searchString.startsWith(SFO.IN_PARAM)) {
+	// // variable is global!
+	// mModifiedGlobals.get(cId).add(searchString);
+	// } else {
+	// assert false;
+	// }
+	// }
+	// }
 
 	/**
 	 * Checks, whether all procedures that are being called in C, were eventually declared within the C program.
@@ -495,36 +492,34 @@ public class ProcedureManager {
 
 	/**
 	 * Announces the beginning of the declaration of a custom procedure. A custom procedure is a procedure that is
-	 * introduced by the translation and has no direct counterpart in the translated C program.
-	 * Examples are Ultimate.start, Ultimate.init, and the procedures introduces by the memory model.
+	 * introduced by the translation and has no direct counterpart in the translated C program. Examples are
+	 * Ultimate.start, Ultimate.init, and the procedures introduces by the memory model.
 	 *
 	 * @param main
 	 * @param loc
 	 * @param procedureName
 	 * @param procedureDecl
-	 * 		initial declaration for the procedure, should contain the signature, may be reset later for adding
-	 *		 specifications; modifies specification will be generated by FunctionHandler like for all procedures.
+	 *            initial declaration for the procedure, should contain the signature, may be reset later for adding
+	 *            specifications; modifies specification will be generated by FunctionHandler like for all procedures.
 	 */
 	void beginCustomProcedure(final Dispatcher main, final ILocation loc, final String procedureName,
 			final Procedure procedureDecl) {
-//		main.mCHandler.beginScope();
-
+		// main.mCHandler.beginScope();
 
 		final BoogieProcedureInfo procInfo = getOrConstructProcedureInfo(procedureName);
 		procInfo.setDeclaration(procedureDecl);
 
 		beginProcedureScope(main, procInfo);
-//		mCurrentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0],
-//				new VarList[0], new Specification[0], null);
-//
-//		final ProcedureInfo procInfo = getOrConstructProcedureInfo(startOrInit);
-//		procInfo.setDeclaration(mCurrentProcedure);
+		// mCurrentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0],
+		// new VarList[0], new Specification[0], null);
+		//
+		// final ProcedureInfo procInfo = getOrConstructProcedureInfo(startOrInit);
+		// procInfo.setDeclaration(mCurrentProcedure);
 
-//		mModifiedGlobals.put(mCurrentProcedure.getIdentifier(), new LinkedHashSet<String>());
-//		registerProcedureDeclaration(main, loc, null, name,
-//				new CFunction(new CPrimitive(CPrimitives.VOID), new CDeclaration[0], false));
-//		registerProcedureDeclaration(main, loc, null, procedureName, procedureDecl);
-
+		// mModifiedGlobals.put(mCurrentProcedure.getIdentifier(), new LinkedHashSet<String>());
+		// registerProcedureDeclaration(main, loc, null, name,
+		// new CFunction(new CPrimitive(CPrimitives.VOID), new CDeclaration[0], false));
+		// registerProcedureDeclaration(main, loc, null, procedureName, procedureDecl);
 
 	}
 
@@ -532,28 +527,29 @@ public class ProcedureManager {
 	 *
 	 * @param main
 	 * @param initDecl
-	 * 		note this must be a pure declaration, i.e., its body must be null
+	 *            note this must be a pure declaration, i.e., its body must be null
 	 * @param procName
 	 * @param calledProcedures
 	 */
 	void endCustomProcedure(final Dispatcher main, final String procName) {
 		assert mCurrentProcedureInfo.getProcedureName().equals(procName);
-//	void endUltimateInitOrStart(final Dispatcher main, final Procedure initDecl, final String startOrInit) {
-//	void endUltimateInitOrStart(final Dispatcher main, final Procedure initDecl, final String startOrInit,
-//			final Collection<String> calledProcedures) {
-//		for (final String calledProcedure : calledProcedures) {
-//			addCallGraphEdge(startOrInit, calledProcedure);
-//		}
+		// void endUltimateInitOrStart(final Dispatcher main, final Procedure initDecl, final String startOrInit) {
+		// void endUltimateInitOrStart(final Dispatcher main, final Procedure initDecl, final String startOrInit,
+		// final Collection<String> calledProcedures) {
+		// for (final String calledProcedure : calledProcedures) {
+		// addCallGraphEdge(startOrInit, calledProcedure);
+		// }
 
-//		mProcedures.put(startOrInit, initDecl);
-		// TODO: rethink this -- is this resetting only about modifies clause? if yes: shouldn't this be handled elsewhere?
-		//  EDIT: indeed, updates to modifies clauses should be registered with the function handler
-//		final ProcedureInfo procInfo = getProcedureInfo(startOrInit);
-//		procInfo.resetDeclaration(initDecl);
+		// mProcedures.put(startOrInit, initDecl);
+		// TODO: rethink this -- is this resetting only about modifies clause? if yes: shouldn't this be handled
+		// elsewhere?
+		// EDIT: indeed, updates to modifies clauses should be registered with the function handler
+		// final ProcedureInfo procInfo = getProcedureInfo(startOrInit);
+		// procInfo.resetDeclaration(initDecl);
 
-//		mCurrentProcedureInfo = null;
-//
-//		main.mCHandler.endScope();
+		// mCurrentProcedureInfo = null;
+		//
+		// main.mCHandler.endScope();
 		endProcedureScope(main);
 	}
 
@@ -568,7 +564,7 @@ public class ProcedureManager {
 	/**
 	 *
 	 * @return true iff we (the translation) are currently in global scope. (We are in global scope if we are not
-	 * 		currently translating the body of a function)
+	 *         currently translating the body of a function)
 	 */
 	public boolean isGlobalScope() {
 		return mCurrentProcedureInfo == null;
@@ -576,50 +572,50 @@ public class ProcedureManager {
 
 	/**
 	 * @return the identifier of the current procedure whose scope we are currently in (i.e. we are currently
-	 *  	translating the result's procedure body.
+	 *         translating the result's procedure body.
 	 */
 	public String getCurrentProcedureID() {
 		if (mCurrentProcedureInfo == null) {
 			throw new IllegalStateException("Check for isGlobalScope first");
 		}
 		return mCurrentProcedureInfo.getProcedureName();
-//		if (mCurrentProcedure == null) {
-//			return null;
-//		}
-//		return mCurrentProcedure.getIdentifier();
+		// if (mCurrentProcedure == null) {
+		// return null;
+		// }
+		// return mCurrentProcedure.getIdentifier();
 	}
 
-//	public void addMemoryModelDeclarations(final MemoryModelDeclarations... mmdecls) {
-//
-//		final String currentProcId = mCurrentProcedure.getIdentifier();
-//		Set<String> str = mCallGraphOld.get(currentProcId);
-//		if (str == null) {
-//			str = new LinkedHashSet<>();
-//			mCallGraphOld.put(currentProcId, str);
-//		}
-//		for (final MemoryModelDeclarations mmdecl : mmdecls) {
-//			str.add(mmdecl.getName());
-//		}
-//	}
+	// public void addMemoryModelDeclarations(final MemoryModelDeclarations... mmdecls) {
+	//
+	// final String currentProcId = mCurrentProcedure.getIdentifier();
+	// Set<String> str = mCallGraphOld.get(currentProcId);
+	// if (str == null) {
+	// str = new LinkedHashSet<>();
+	// mCallGraphOld.put(currentProcId, str);
+	// }
+	// for (final MemoryModelDeclarations mmdecl : mmdecls) {
+	// str.add(mmdecl.getName());
+	// }
+	// }
 
-//	public boolean noCurrentProcedure() {
-//		return mCurrentProcedure == null;
-//	}
+	// public boolean noCurrentProcedure() {
+	// return mCurrentProcedure == null;
+	// }
 
-//	public void addCallGraphEdge(final String source, final String target) {
-//		Set<String> set = mCallGraphOld.get(source);
-//		if (set == null) {
-//			set = new LinkedHashSet<>();
-//			mCallGraphOld.put(source, set);
-//		}
-//		set.add(target);
-//	}
+	// public void addCallGraphEdge(final String source, final String target) {
+	// Set<String> set = mCallGraphOld.get(source);
+	// if (set == null) {
+	// set = new LinkedHashSet<>();
+	// mCallGraphOld.put(source, set);
+	// }
+	// set.add(target);
+	// }
 
 	public CFunction getCFunctionType(final String function) {
-		final BoogieProcedureInfo procInfo = this.getProcedureInfo(function);
+		final BoogieProcedureInfo procInfo = getProcedureInfo(function);
 		return procInfo.getCType();
 
-//		return mProcedureToCFunctionType.get(function);
+		// return mProcedureToCFunctionType.get(function);
 	}
 
 	/**
@@ -669,7 +665,6 @@ public class ProcedureManager {
 
 		private boolean mModifiedGlobalsIsUsedDefined;
 
-
 		BoogieProcedureInfo(final String name) {
 			mProcedureName = name;
 			mModifiedGlobals = new LinkedHashSet<>();
@@ -682,6 +677,7 @@ public class ProcedureManager {
 
 		/**
 		 * replace the existing declaration with another (refined) one
+		 *
 		 * @param procDecl
 		 */
 		public void resetDeclaration(final Procedure declaration) {
@@ -726,18 +722,17 @@ public class ProcedureManager {
 		 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
 		 * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
 		 */
-		void updateCFunction(final CType returnType,
-				final CDeclaration[] allParamDecs,
-				final CDeclaration oneParamDec, final boolean takesVarArgs) {
-//			final CFunction oldCFunction = this.getCType();
+		void updateCFunction(final CType returnType, final CDeclaration[] allParamDecs, final CDeclaration oneParamDec,
+				final boolean takesVarArgs) {
+			// final CFunction oldCFunction = this.getCType();
 
-//			final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
-			final CType oldRetType = this.hasCType() ? this.getCType().getResultType() : null;
+			// final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
+			final CType oldRetType = hasCType() ? getCType().getResultType() : null;
 			final CDeclaration[] oldInParams =
-//					oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
-					this.hasCType() ? this.getCType().getParameterTypes() : new CDeclaration[0];
-//			final boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
-			final boolean oldTakesVarArgs = this.hasCType() ? this.getCType().takesVarArgs() : false;
+					// oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
+					hasCType() ? getCType().getParameterTypes() : new CDeclaration[0];
+			// final boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
+			final boolean oldTakesVarArgs = hasCType() ? getCType().takesVarArgs() : false;
 
 			CType newRetType = oldRetType;
 			CDeclaration[] newInParams = oldInParams;
@@ -757,10 +752,10 @@ public class ProcedureManager {
 				newRetType = returnType;
 			}
 
-			if (this.hasCType()) {
-				this.resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
+			if (hasCType()) {
+				resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
 			} else {
-				this.setCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
+				setCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
 			}
 		}
 
@@ -811,8 +806,6 @@ public class ProcedureManager {
 		}
 	}
 
-
-
 	private Specification constructModifiesSpecification(final CACSLLocation loc, final boolean isFree,
 			final VariableLHS[] modifyList) {
 		final Set<VariableLHS> modifiedGlobals = new LinkedHashSet<>(Arrays.asList(modifyList));
@@ -838,54 +831,54 @@ public class ProcedureManager {
 	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
 			final Statement[] statements) {
 		assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
-//		for (final Statement statement: statements) {
-//			if (statement instanceof CallStatement) {
-//				registerCall(((CallStatement) statement).getMethodName());
-//			}
-//		}
+		// for (final Statement statement: statements) {
+		// if (statement instanceof CallStatement) {
+		// registerCall(((CallStatement) statement).getMethodName());
+		// }
+		// }
 		return new Body(loc, localDeclarations, statements);
 	}
 
 	public AssignmentStatement constructAssignmentStatement(final ILocation loc, final LeftHandSide[] leftHandSides,
-				final Expression[] rightHandSides) {
-			for (final LeftHandSide lhs : leftHandSides) {
-				final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
-				if (modifiedGlobal != null) {
-					addModifiedGlobal(modifiedGlobal);
-				}
+			final Expression[] rightHandSides) {
+		for (final LeftHandSide lhs : leftHandSides) {
+			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
+			if (modifiedGlobal != null) {
+				addModifiedGlobal(modifiedGlobal);
 			}
-	//		return new AssignmentStatement(loc, leftHandSides, rightHandSides);
-			return StatementFactory.constructAssignmentStatement(loc, leftHandSides, rightHandSides);
 		}
+		// return new AssignmentStatement(loc, leftHandSides, rightHandSides);
+		return StatementFactory.constructAssignmentStatement(loc, leftHandSides, rightHandSides);
+	}
 
 	public EnsuresSpecification constructEnsuresSpecification(final ILocation loc, final boolean isFree,
 			final Expression formula, final Set<VariableLHS> modifiedGlobals) {
-//		// TODO: what is the criterion for when an ensures clause constitutes a modification??
-//		//  --> probably we have to set this manually!...
-//		if (!isFree) {
-//			final Set<IdentifierExpression> modifiedGlobals =
-//					new BoogieGlobalIdentifierExpressionsFinder().getGlobalIdentifierExpressions(formula);
-//			for (final IdentifierExpression modifiedGlobal : modifiedGlobals) {
-//				addModifiedGlobal((VariableLHS) CTranslationUtil.convertExpressionToLHS(modifiedGlobal));
-//			}
-//		}
+		// // TODO: what is the criterion for when an ensures clause constitutes a modification??
+		// // --> probably we have to set this manually!...
+		// if (!isFree) {
+		// final Set<IdentifierExpression> modifiedGlobals =
+		// new BoogieGlobalIdentifierExpressionsFinder().getGlobalIdentifierExpressions(formula);
+		// for (final IdentifierExpression modifiedGlobal : modifiedGlobals) {
+		// addModifiedGlobal((VariableLHS) CTranslationUtil.convertExpressionToLHS(modifiedGlobal));
+		// }
+		// }
 		modifiedGlobals.forEach(this::addModifiedGlobal);
 
 		return new EnsuresSpecification(loc, isFree, formula);
 	}
 
-//	public void addSpecificationsToCustomProcedure(final String procedureName, final Specification[] array) {
-//	public void addSpecificationsToCurrentProcedure(final String procedureName, final List<Specification> specs) {
+	// public void addSpecificationsToCustomProcedure(final String procedureName, final Specification[] array) {
+	// public void addSpecificationsToCurrentProcedure(final String procedureName, final List<Specification> specs) {
 	public void addSpecificationsToCurrentProcedure(final List<Specification> specs) {
 		assert !isGlobalScope();
-//		final ProcedureInfo procInfo = getProcedureInfo(procedureName);
+		// final ProcedureInfo procInfo = getProcedureInfo(procedureName);
 		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
 		final Procedure oldDecl = procInfo.getDeclaration();
 
 		final List<Specification> newSpecs = new ArrayList<>();
 		newSpecs.addAll(Arrays.asList(oldDecl.getSpecification()));
 		newSpecs.addAll(specs);
-//		newSpecs.addAll(Arrays.asList(array));
+		// newSpecs.addAll(Arrays.asList(array));
 
 		final Procedure newDecl = new Procedure(oldDecl.getLoc(), oldDecl.getAttributes(), oldDecl.getIdentifier(),
 				oldDecl.getTypeParams(), oldDecl.getInParams(), oldDecl.getOutParams(),
