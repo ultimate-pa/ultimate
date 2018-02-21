@@ -472,18 +472,26 @@ public class ExpressionFactory {
 			throw new AssertionError("attempting to build array access without indices");
 		}
 
-		final List<BoogieType> indicesTypes = Arrays.stream(indices)
-					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
-
-		final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs((BoogieType) array.getType(),
-				indicesTypes, new TypeErrorReporter(loc));
-
 		if (indices.length == 1) {
+			final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
+			final List<BoogieType> indicesTypes = Arrays.stream(indices)
+					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
+			final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes,
+					new TypeErrorReporter(loc));
 			return new ArrayAccessExpression(loc, newType, array, indices);
 		}
 		final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
-		final Expression innerLhs = constructNestedArrayAccessExpression(loc, array, innerIndices);
-		return new ArrayAccessExpression(loc, newType, innerLhs, new Expression[] { indices[indices.length - 1] });
+		final Expression innerArrayAccessExpression = constructNestedArrayAccessExpression(loc, array, innerIndices);
+
+		final Expression outerMostIndexValue = indices[indices.length - 1];
+		final Expression[] outerMostIndex = new Expression[] { outerMostIndexValue };
+
+		final BoogieArrayType arrayType = (BoogieArrayType) innerArrayAccessExpression.getType();
+		final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType,
+					Arrays.asList(new BoogieType[] { (BoogieType) outerMostIndexValue.getType() }),
+					new TypeErrorReporter(loc));
+
+		return new ArrayAccessExpression(loc, newType, innerArrayAccessExpression, outerMostIndex);
 	}
 
 	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final LeftHandSide array,
