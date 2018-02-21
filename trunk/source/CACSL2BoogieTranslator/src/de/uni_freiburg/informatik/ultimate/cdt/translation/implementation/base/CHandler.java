@@ -736,7 +736,7 @@ public class CHandler implements ICHandler {
 			// final VariableDeclaration tmpVar =
 			// new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 			final AuxVarInfo resNameAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType,
-					SFO.AUXVAR.SHORTCIRCUIT);
+					new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
 			// auxVars.put(tmpVar, loc);
 			// decl.add(tmpVar);
 			builder.addDeclaration(resNameAuxvar.getVarDec());
@@ -819,7 +819,7 @@ public class CHandler implements ICHandler {
 			// auxVars.put(tmpVar, loc);
 			// decl.add(tmpVar);
 			final AuxVarInfo resNameAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType,
-					SFO.AUXVAR.SHORTCIRCUIT);
+					new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SHORTCIRCUIT);
 			builder.addDeclaration(resNameAuxvar.getVarDec());
 			builder.addAuxVar(resNameAuxvar);
 
