@@ -2073,7 +2073,8 @@ public class CHandler implements ICHandler {
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String breakLabelName = mNameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
 
-		final AuxVarInfo switchAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType, SFO.AUXVAR.SWITCH);
+		final AuxVarInfo switchAuxvar = CTranslationUtil.constructAuxVarInfo(loc, main, intType,
+				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SWITCH);
 
 		final ASTType flagType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
 
