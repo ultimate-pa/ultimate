@@ -617,7 +617,7 @@ public abstract class ExpressionTranslation {
 				constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO);
 		final Expression oneBool =
 				constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ONE);
-		final Expression resultExpression = ExpressionFactory.newIfThenElseExpression(loc, isZero, zeroBool, oneBool);
+		final Expression resultExpression = ExpressionFactory.constructIfThenElseExpression(loc, isZero, zeroBool, oneBool);
 		final RValue rValue = new RValue(resultExpression, new CPrimitive(CPrimitives.BOOL), false, false);
 		rexp.mLrVal = rValue;
 	}

@@ -620,7 +620,7 @@ public class MemoryHandler {
 		final IdentifierExpression sizeIdExpr = //new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 						mBoogieTypeHelper.getBoogieTypeForSizeT(), SFO.MEMCPY_SIZE,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
 
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
@@ -711,10 +711,10 @@ public class MemoryHandler {
 		final List<Expression> noOverlapExprs = new ArrayList<>(3);
 		final IdentifierExpression srcpointer =
 				ExpressionFactory.constructIdentifierExpression(loc, mBoogieTypeHelper.getBoogieTypeForPointerType(),
-						SFO.MEMCPY_SRC, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, SFO.MEMCPY));
+						SFO.MEMCPY_SRC, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, SFO.MEMCPY));
 		final IdentifierExpression destpointer =
 				ExpressionFactory.constructIdentifierExpression(loc, mBoogieTypeHelper.getBoogieTypeForPointerType(),
-						SFO.MEMCPY_DEST, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, SFO.MEMCPY));
+						SFO.MEMCPY_DEST, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, SFO.MEMCPY));
 		final Expression srcbase = getPointerBaseAddress(srcpointer, loc);
 		final Expression destbase = getPointerBaseAddress(destpointer, loc);
 		final Expression srcoffset = getPointerOffset(srcpointer, loc);
@@ -818,11 +818,11 @@ public class MemoryHandler {
 		final IdentifierExpression destPtrExpr = //new IdentifierExpression(ignoreLoc, destPtr);
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 						mBoogieTypeHelper.getBoogieTypeForPointerType(), destPtrName,
-						new DeclarationInformation(StorageClass.LOCAL, surroundingProcedure));
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
 		final IdentifierExpression srcPtrExpr = //new IdentifierExpression(ignoreLoc, srcPtrName);
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 						mBoogieTypeHelper.getBoogieTypeForPointerType(), srcPtrName,
-						new DeclarationInformation(StorageClass.LOCAL, surroundingProcedure));
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
 
 
 		final Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destPtrExpr,
@@ -1777,7 +1777,7 @@ public class MemoryHandler {
 
 		// ensures (if ~addr!base == 0 then #valid == old(#valid) else #valid == old(#valid)[~addr!base := false])
 		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
-		final Expression updateValidArray = ExpressionFactory.newIfThenElseExpression(tuLoc, isNullPtr,
+		final Expression updateValidArray = ExpressionFactory.constructIfThenElseExpression(tuLoc, isNullPtr,
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
 						ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid)),
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,

@@ -426,7 +426,7 @@ public class TypeSizeAndOffsetComputer {
 				final Expression firstIsGreater = mExpressionTranslation.constructBinaryComparisonExpression(
 						loc, IASTBinaryExpression.op_greaterEqual,
 						op1, getSizeT(), op2, getSizeT());
-				final Expression result = ExpressionFactory.newIfThenElseExpression(loc, firstIsGreater, op1, op2);
+				final Expression result = ExpressionFactory.constructIfThenElseExpression(loc, firstIsGreater, op1, op2);
 				return result;
 			}
 

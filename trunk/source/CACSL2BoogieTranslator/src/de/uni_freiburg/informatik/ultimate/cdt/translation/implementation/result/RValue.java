@@ -102,7 +102,7 @@ public class RValue extends LRValue {
 				new CPrimitive(CPrimitives.INT), BigInteger.ONE);
 		final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		return new RValue(ExpressionFactory.newIfThenElseExpression(loc, rVal.getValue(), one, zero), rVal.getCType(),
+		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero), rVal.getCType(),
 				false);
 	}
 

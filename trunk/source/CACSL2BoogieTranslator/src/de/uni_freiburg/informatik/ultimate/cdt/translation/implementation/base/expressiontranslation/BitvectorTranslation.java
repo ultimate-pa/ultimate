@@ -919,13 +919,13 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			// smtLibFunctionName, argument);
 			// isZero = rvalue.getValue();
 			// }
-			final Expression resultExpr = ExpressionFactory.newIfThenElseExpression(loc, isInfinite,
+			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
 					handleNumberClassificationMacro(loc, "FP_INFINITE").getValue(),
-					ExpressionFactory.newIfThenElseExpression(loc, isNan,
+					ExpressionFactory.constructIfThenElseExpression(loc, isNan,
 							handleNumberClassificationMacro(loc, "FP_NAN").getValue(),
-							ExpressionFactory.newIfThenElseExpression(loc, isNormal,
+							ExpressionFactory.constructIfThenElseExpression(loc, isNormal,
 									handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(),
-									ExpressionFactory.newIfThenElseExpression(loc, isSubnormal,
+									ExpressionFactory.constructIfThenElseExpression(loc, isSubnormal,
 											handleNumberClassificationMacro(loc, "FP_SUBNORMAL").getValue(),
 											handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
 			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT));
@@ -937,7 +937,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				isNegative = rvalue.getValue();
 			}
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-			final Expression resultExpr = ExpressionFactory.newIfThenElseExpression(loc, isNegative,
+			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
 					constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
 					constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
 			return new RValue(resultExpr, cPrimitive);

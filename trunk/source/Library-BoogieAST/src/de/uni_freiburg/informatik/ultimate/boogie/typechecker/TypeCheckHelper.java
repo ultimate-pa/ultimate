@@ -201,6 +201,50 @@ public class TypeCheckHelper {
 			return resultType;
 		}
 
+	public static <T> BoogieType typeCheckIfThenElseExpression(final BoogieType condType, final BoogieType left,
+				final BoogieType right, final ITypeErrorReporter<T> typeErrorReporter) {
+			BoogieType resultType;
+			if (!condType.equals(BoogieType.TYPE_ERROR) && !condType.equals(BoogieType.TYPE_BOOL)) {
+	//				typeError(expr, "if expects boolean type: " + expr);
+				typeErrorReporter.report(exp -> "if expects boolean type: " + exp);
+			}
+			if (!left.isUnifiableTo(right)) {
+	//				typeError(expr, "Type check failed for " + expr);
+				typeErrorReporter.report(exp -> "Type check failed for " + exp);
+				resultType = BoogieType.TYPE_ERROR;
+			} else {
+				resultType = left.equals(BoogieType.TYPE_ERROR) ? right : left;
+			}
+			return resultType;
+		}
+
+	public static <T> void typeCheckAssignStatement(final String[] lhsIds, final BoogieType[] lhsTypes,
+				final BoogieType[] rhsTypes, final ITypeErrorReporter<T> typeErrorReporter) {
+			//			if (lhs.length != rhs.length) {
+			if (lhsTypes.length != rhsTypes.length) {
+	//				typeError(statement, "Number of variables do not match in " + statement);
+				typeErrorReporter.report(stm -> "Number of variables do not match in " + stm);
+			} else {
+				for (int i = 0; i < lhsTypes.length; i++) {
+	//					lhsId[i] = getLeftHandSideIdentifier(lhs[i]);
+					for (int j = 0; j < i; j++) {
+						if (lhsIds[i].equals(lhsIds[j])) {
+	//							typeError(statement, "Variable appears multiple times in assignment: " + statement);
+							typeErrorReporter.report(stm -> "Variable appears multiple times in assignment: " + stm);
+						}
+					}
+					final BoogieType lhsType = lhsTypes[i];//typecheckLeftHandSide(lhs[i]);
+					final BoogieType rhsType = rhsTypes[i];//typecheckExpression(rhs[i]);
+					if (!lhsType.equals(BoogieType.TYPE_ERROR) && !rhsType.equals(BoogieType.TYPE_ERROR)
+							&& !lhsType.equals(rhsType)) {
+	//						typeError(statement, "Type mismatch (" + lhsType + " != " + rhsType + ") in " + statement);
+						typeErrorReporter.report(stm ->
+							"Type mismatch (" + lhsType + " != " + rhsType + ") in " + stm);
+					}
+				}
+			}
+		}
+
 	public static void internalError(final String message) {
 		throw new AssertionError(message);
 	}
@@ -259,32 +303,5 @@ public class TypeCheckHelper {
 		}
 		return ((VariableLHS) lhs).getIdentifier();
 	}
-
-	public static <T> void typeCheckAssignStatement(final String[] lhsIds, final BoogieType[] lhsTypes,
-				final BoogieType[] rhsTypes, final ITypeErrorReporter<T> typeErrorReporter) {
-			//			if (lhs.length != rhs.length) {
-			if (lhsTypes.length != rhsTypes.length) {
-	//				typeError(statement, "Number of variables do not match in " + statement);
-				typeErrorReporter.report(stm -> "Number of variables do not match in " + stm);
-			} else {
-				for (int i = 0; i < lhsTypes.length; i++) {
-	//					lhsId[i] = getLeftHandSideIdentifier(lhs[i]);
-					for (int j = 0; j < i; j++) {
-						if (lhsIds[i].equals(lhsIds[j])) {
-	//							typeError(statement, "Variable appears multiple times in assignment: " + statement);
-							typeErrorReporter.report(stm -> "Variable appears multiple times in assignment: " + stm);
-						}
-					}
-					final BoogieType lhsType = lhsTypes[i];//typecheckLeftHandSide(lhs[i]);
-					final BoogieType rhsType = rhsTypes[i];//typecheckExpression(rhs[i]);
-					if (!lhsType.equals(BoogieType.TYPE_ERROR) && !rhsType.equals(BoogieType.TYPE_ERROR)
-							&& !lhsType.equals(rhsType)) {
-	//						typeError(statement, "Type mismatch (" + lhsType + " != " + rhsType + ") in " + statement);
-						typeErrorReporter.report(stm ->
-							"Type mismatch (" + lhsType + " != " + rhsType + ") in " + stm);
-					}
-				}
-			}
-		}
 
 }
