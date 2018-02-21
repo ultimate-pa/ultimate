@@ -655,8 +655,8 @@ public class FunctionHandler {
 	//				procDecl != null && procDecl.getBody() == null && procDecl.getInParams().length == 0;
 
 			final IASTInitializerClause[] inParams = arguments;
-			final CFunction cFunction = calleeProcInfo.getCType();
-			if (cFunction != null && cFunction.takesVarArgs()) {
+//			final CFunction cFunction = calleeProcInfo.getCType();
+			if (calleeProcInfo.getCType() != null && calleeProcInfo.getCType().takesVarArgs()) {
 
 				/* (EDIT, Alexander Nutz, Feb 2018, this describes an old solution:)
 				 * if the function has varArgs, we throw away all parameters that belong
@@ -727,9 +727,9 @@ public class FunctionHandler {
 					// add the current parameter to the procedure's signature
 					calleeProcInfo.updateCFunction(null, null, new CDeclaration(in.mLrVal.getCType(), SFO.IN_PARAM + i),
 							false);
-				} else if (cFunction != null) {
+				} else if (calleeProcInfo.getCType() != null) {
 					// we already know the parameters: do implicit casts and bool/int conversion
-					CType expectedParamType = cFunction.getParameterTypes()[i].getType().getUnderlyingType();
+					CType expectedParamType = calleeProcInfo.getCType().getParameterTypes()[i].getType().getUnderlyingType();
 					// bool/int conversion
 					if (expectedParamType instanceof CPrimitive
 							&& ((CPrimitive) expectedParamType).getGeneralType() == CPrimitiveCategory.INTTYPE
@@ -756,11 +756,12 @@ public class FunctionHandler {
 				 * This call determined the signature of the called function (it was declared without any parameters)
 				 * Reset the declaration in our data structures.
 				 */
-				final VarList[] procParams = new VarList[cFunction.getParameterTypes().length];
+				final VarList[] procParams = new VarList[calleeProcInfo.getCType().getParameterTypes().length];
 				for (int i = 0; i < procParams.length; i++) {
-					procParams[i] = new VarList(loc, new String[] { cFunction.getParameterTypes()[i].getName() },
+					procParams[i] = new VarList(loc, new String[] {
+							calleeProcInfo.getCType().getParameterTypes()[i].getName() },
 							((TypeHandler) main.mTypeHandler).cType2AstType(loc,
-									cFunction.getParameterTypes()[i].getType()));
+									calleeProcInfo.getCType().getParameterTypes()[i].getType()));
 				}
 				final Procedure newProc = new Procedure(calleeProcDecl.getLocation(), calleeProcDecl.getAttributes(),
 						calleeProcDecl.getIdentifier(), calleeProcDecl.getTypeParams(), procParams,
