@@ -363,7 +363,6 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	protected void init() {
-		mSideEffectHandler = new SideEffectHandler();
 		mTypeHandler = new TypeHandler(mBitvectorTranslation);
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 		mNameHandler = new NameHandler(mBacktranslator);
