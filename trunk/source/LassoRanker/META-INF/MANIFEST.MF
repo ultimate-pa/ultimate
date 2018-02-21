@@ -3,7 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: LassoRanker
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;singleton:=true
 Bundle-Version: 0.1.23
-Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util;bundle-version="0.1.23",
+ de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,

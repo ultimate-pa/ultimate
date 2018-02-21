@@ -84,6 +84,8 @@ public class IteratedSymbolicMemory {
 
 	private List<Term> mTerms;
 
+	private List<IProgramVar> mIllegal;
+
 	private enum caseType {
 		NOT_CHANGED, ADDITION, SUBTRACTION, MULTIPLICATION, CONSTANT_ASSIGNMENT, CONSTANT_ASSIGNMENT_PATHCOUNTER
 	}
@@ -92,11 +94,17 @@ public class IteratedSymbolicMemory {
 	 * Construct a new iterated symbolic memory for a loop.
 	 * 
 	 * @param script
+	 *            a {@link ManagedScript}
 	 * @param services
+	 *            {@link IUltimateServiceProvider}
 	 * @param logger
+	 *            {@link ILogger}
 	 * @param loop
+	 *            the corresponding {@link Loop}
 	 * @param pathCounters
+	 *            a List of pathCounters
 	 * @param newPathCounter
+	 *            mapping of old pathcounters to new
 	 */
 	public IteratedSymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services,
 			final ILogger logger, final Loop loop, final List<TermVariable> pathCounters,
@@ -117,6 +125,8 @@ public class IteratedSymbolicMemory {
 
 		mOverapprox = false;
 		mTerms = new ArrayList<>();
+
+		mIllegal = new ArrayList<>();
 
 		if (pathCounters.size() > 1) {
 			mOverapprox = true;
@@ -206,6 +216,8 @@ public class IteratedSymbolicMemory {
 				// multiplicating
 				if ("*".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
+					mIllegal.add(entry.getKey());
+
 					mLogger.debug("Multiplication");
 					update = mScript.getScript().term("*", update, mScript.getScript().term("*",
 							((ApplicationTerm) memory).getParameters()[0], backbone.getPathCounter()));
@@ -245,8 +257,12 @@ public class IteratedSymbolicMemory {
 					update = sub.transform(memory);
 				}
 			}
-
 			mIteratedMemory.replace(entry.getKey(), update);
+		}
+		for (IProgramVar var : mIllegal) {
+			mOverapprox = true;
+			mIteratedMemory.remove(var);
+			mMemoryMapping.remove(var);
 		}
 	}
 
@@ -350,7 +366,8 @@ public class IteratedSymbolicMemory {
 		terms.add(mAbstractPathCondition);
 
 		for (final Entry<IProgramVar, TermVariable> outvar : mOutVars.entrySet()) {
-			if (!checkIfVarContained(outvar.getValue(), mAbstractPathCondition)) {
+			if (!checkIfVarContained(outvar.getValue(), mAbstractPathCondition)
+					&& mIteratedMemory.containsKey(outvar.getKey())) {
 				terms.add(mScript.getScript().term("=", outvar.getValue(), mIteratedMemory.get(outvar.getKey())));
 			}
 		}

@@ -76,7 +76,7 @@ public class Backbone {
 	 * Construct a new backbone
 	 * 
 	 * @param trans
-	 *            entry transition.
+	 *            entry transition
 	 */
 	public Backbone(final IcfgEdge trans) {
 		mPath = new ArrayDeque<>();

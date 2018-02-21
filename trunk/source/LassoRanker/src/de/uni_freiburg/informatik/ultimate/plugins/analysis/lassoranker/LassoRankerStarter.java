@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
+import de.uni_freiburg.informatik.ultimate.lassoranker.NonterminationArgumentStatistics;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.GeometricNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
@@ -97,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
@@ -194,6 +197,8 @@ public class LassoRankerStarter {
 						reportFailBecauseOfOverapproximationResult();
 						return;
 					}
+					reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
+							new NonterminationArgumentStatistics(nta)));
 					reportNonTerminationResult(nta, mStem, mLoop);
 					return;
 				}
