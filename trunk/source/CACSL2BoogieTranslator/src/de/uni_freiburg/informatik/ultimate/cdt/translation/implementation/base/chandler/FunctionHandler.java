@@ -947,9 +947,9 @@ public class FunctionHandler {
 					 * here
 					 */
 
-					final VariableLHS tempLHS = //new VariableLHS(loc, inparamAuxVarName);
-							ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType, inparamAuxVarName,
-									inparamAuxVarDeclInfo);
+//					final VariableLHS tempLHS = //new VariableLHS(loc, inparamAuxVarName);
+//							ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType, inparamAuxVarName,
+//									inparamAuxVarDeclInfo);
 	//				final IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
 					final IdentifierExpression rhsId = ExpressionFactory.constructIdentifierExpression(loc,
 							inParamAuxVarType, inparamBId,
@@ -958,6 +958,8 @@ public class FunctionHandler {
 
 					final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
 					if (isOnHeap && !(cvar instanceof CArray)) {
+						final VariableLHS tempLHS = ExpressionFactory.constructVariableLHS(loc,
+								main.mTypeHandler.getBoogiePointerType(), inparamAuxVarName, inparamAuxVarDeclInfo);
 						// we treat an array argument as a pointer -- thus no onHeap treatment here
 						final LocalLValue llv = new LocalLValue(tempLHS, cvar, null);
 						// malloc
@@ -975,6 +977,8 @@ public class FunctionHandler {
 						resultBuilder.addStatement(memoryHandler.getMallocCall(llv, igLoc));
 						resultBuilder.addAllExceptLrValue(assign);
 					} else {
+						final VariableLHS tempLHS = ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType,
+								inparamAuxVarName, inparamAuxVarDeclInfo);
 	//					stmt.add(
 	//							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 						resultBuilder.addStatement(
@@ -1197,14 +1201,18 @@ public class FunctionHandler {
 						: procInfo.getCType().getResultType();
 		//				: mProcedureToCFunctionType.get(methodName).getResultType().getUnderlyingType();
 
-				mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType,
+				if (returnedValue != null) {
+					mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType,
 						functionCallExpressionResultBuilder);
+				}
 
 				assert CTranslationUtil.isAuxVarMapComplete(main.mNameHandler,
 						functionCallExpressionResultBuilder.getDeclarations(),
 						functionCallExpressionResultBuilder.getAuxVars());
 
-				functionCallExpressionResultBuilder.setLrVal(new RValue(returnedValue, returnCType));
+				if (returnedValue != null) {
+					functionCallExpressionResultBuilder.setLrVal(new RValue(returnedValue, returnCType));
+				}
 
 				return functionCallExpressionResultBuilder.build();
 			}

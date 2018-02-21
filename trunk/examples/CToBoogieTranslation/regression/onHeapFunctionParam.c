@@ -7,6 +7,11 @@
 #include<stddef.h>
 #include<stdio.h>
 
+int f(int i) {
+  int *j = &i;
+  return *j;
+}
+
 int main() {
   int i;
   f(i);
@@ -14,7 +19,4 @@ int main() {
 }
 
 
-int f(int i) {
-  int *j = &i;
-  return *j;
-}
+
