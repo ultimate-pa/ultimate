@@ -47,6 +47,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -665,8 +666,7 @@ public class StandardFunctionHandler {
 		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MALLOC);
 		result.mDecl.add(auxvar.getVarDec());
 
-		result.mStmt.add(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc,
-				mProcedureManager.getCurrentProcedureID()));
+		result.mStmt.add(mMemoryHandler.getMallocCall(product, auxvar.getLhs(), loc));
 		result.mLrVal = new RValue(auxvar.getExp(), resultType);
 
 		result.mStmt.add(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.mLrVal.getValue(),
@@ -717,8 +717,7 @@ public class StandardFunctionHandler {
 		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MALLOC);
 		exprRes.mDecl.add(auxvar.getVarDec());
 
-		exprRes.mStmt.add(mMemoryHandler.getMallocCall(exprRes.mLrVal.getValue(), auxvar.getLhs(), loc,
-				mProcedureManager.getCurrentProcedureID()));
+		exprRes.mStmt.add(mMemoryHandler.getMallocCall(exprRes.mLrVal.getValue(), auxvar.getLhs(), loc));
 		exprRes.mLrVal = new RValue(auxvar.getExp(), resultType);
 
 		// for alloc a we have to free the variable ourselves when the
@@ -1021,7 +1020,7 @@ public class StandardFunctionHandler {
 		final AuxVarInfo auxvarinfo =
 				AuxVarInfo.constructAuxVarInfo(loc, main, dest.getLrValue().getCType(), auxVar);
 
-		final CallStatement call = mProcedureManager.constructCallStatement(loc, false,
+		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
 				new VariableLHS[] { auxvarinfo.getLhs() }, mmDecl.getName(), new Expression[] {
 						dest.getLrValue().getValue(), src.getLrValue().getValue(), size.getLrValue().getValue() });
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());

@@ -38,6 +38,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -515,7 +516,7 @@ public class PostProcessor {
 					ExpressionFactory.constructVariableLHS(loc,
 							boogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
 							newId, new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
-			builder.addStatement(procedureManager.constructAssignmentStatement(loc, new LeftHandSide[] { newIdLhs },
+			builder.addStatement(StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { newIdLhs },
 					new Expression[] { oldIdExpr }));
 			final IdentifierExpression newIdIdExpr = //new IdentifierExpression(loc, newId);
 					ExpressionFactory.constructIdentifierExpression(loc,
@@ -553,7 +554,8 @@ public class PostProcessor {
 //					stmt.toArray(new Statement[stmt.size()]));
 			return procedureManager.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
-					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
+					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
+					dispatchingProcedureName);
 		} else if (fittingFunctions.size() == 1) {
 //			final ExpressionResult rex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
 //					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
@@ -580,7 +582,7 @@ public class PostProcessor {
 								id,
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
-				builder.addStatement(procedureManager.constructAssignmentStatement(loc,
+				builder.addStatement(StatementFactory.constructAssignmentStatement(loc,
 						new LeftHandSide[] { lhs },
 						new Expression[] { funcCallResult }));
 			}
@@ -633,7 +635,7 @@ public class PostProcessor {
 			firstElseStmt.addAll(firstElseRex.mStmt);
 			if (!resultTypeIsVoid) {
 				final AssignmentStatement assignment =
-						procedureManager.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
+						StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
 								new Expression[] { firstElseRex.mLrVal.getValue() });
 				firstElseStmt.add(assignment);
 			}
@@ -656,7 +658,7 @@ public class PostProcessor {
 				newStmts.addAll(currentRex.mStmt);
 				if (!resultTypeIsVoid) {
 					final AssignmentStatement assignment =
-							procedureManager.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
+							StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
 									new Expression[] { currentRex.mLrVal.getValue() });
 					newStmts.add(assignment);
 				}
@@ -697,7 +699,7 @@ public class PostProcessor {
 								outParam[0].getIdentifiers()[0],
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
-				builder.addStatement(procedureManager.constructAssignmentStatement(loc,
+				builder.addStatement(StatementFactory.constructAssignmentStatement(loc,
 						new LeftHandSide[] { dispatchingFunctionResultLhs },
 						new Expression[] { funcCallResult }));
 			}
@@ -766,7 +768,7 @@ public class PostProcessor {
 								boogieTypeHelper.getBoogieTypeForPointerType(),
 								SFO.NULL,
 								DeclarationInformation.DECLARATIONINFO_GLOBAL);
-				initStatements.add(0, procedureManager.constructAssignmentStatement(translationUnitLoc,
+				initStatements.add(0, StatementFactory.constructAssignmentStatement(translationUnitLoc,
 						new LeftHandSide[] { slhs },
 						new Expression[] {
 								ExpressionFactory.constructStructConstructor(translationUnitLoc,
@@ -812,7 +814,7 @@ public class PostProcessor {
 						if (main.mCHandler.isHeapVar(id)) {
 							final LocalLValue llVal =
 									new LocalLValue(lhs, en.getValue().getType(), null);
-							initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc, SFO.INIT));
+							initStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc));
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.Ultimate_Alloc.name());
 						}
 
@@ -861,7 +863,8 @@ public class PostProcessor {
 			 */
 			final Body initBody = procedureManager.constructBody(translationUnitLoc,
 					initDecl.toArray(new VariableDeclaration[initDecl.size()]),
-					initStatements.toArray(new Statement[initStatements.size()]));
+					initStatements.toArray(new Statement[initStatements.size()]),
+					SFO.INIT);
 			final Procedure initProcedureImplementation = new Procedure(translationUnitLoc, new Attribute[0],
 					SFO.INIT, new String[0], new VarList[0], new VarList[0], null, initBody);
 
@@ -927,7 +930,7 @@ public class PostProcessor {
 				final ArrayList<Statement> startStmt = new ArrayList<>();
 				final ArrayList<VariableDeclaration> startDecl = new ArrayList<>();
 //				specsStart = new Specification[1];
-				startStmt.add(procedureManager.constructCallStatement(loc, false, new VariableLHS[0], SFO.INIT,
+				startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], SFO.INIT,
 						new Expression[0]));
 				final VarList[] checkedMethodOutParams =
 						procedureManager.getProcedureDeclaration(checkedMethod).getOutParams();
@@ -976,12 +979,12 @@ public class PostProcessor {
 //							SFO.NO_REAL_C_VAR + checkMethodRet,
 							loc);
 					startDecl.add(checkedMethodReturnAuxVar.getVarDec());
-					startStmt.add(procedureManager.constructCallStatement(loc, false,
+					startStmt.add(StatementFactory.constructCallStatement(loc, false,
 							new VariableLHS[] { checkedMethodReturnAuxVar.getLhs() },
 							checkedMethod, args.toArray(new Expression[args.size()])));
 					procedureManager.registerCall(checkedMethod);
 				} else { // void
-					startStmt.add(procedureManager.constructCallStatement(loc, false, new VariableLHS[0], checkedMethod,
+					startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], checkedMethod,
 							args.toArray(new Expression[args.size()])));
 					procedureManager.registerCall(checkedMethod);
 				}
@@ -1001,7 +1004,7 @@ public class PostProcessor {
 
 				final Body startBody = procedureManager.constructBody(loc,
 						startDecl.toArray(new VariableDeclaration[startDecl.size()]),
-						startStmt.toArray(new Statement[startStmt.size()]));
+						startStmt.toArray(new Statement[startStmt.size()]), SFO.START);
 //				final Body startBody = new Body(loc, startDecl.toArray(new VariableDeclaration[startDecl.size()]),
 //						startStmt.toArray(new Statement[startStmt.size()]));
 

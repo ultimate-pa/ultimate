@@ -118,6 +118,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -747,7 +748,7 @@ public class CHandler implements ICHandler {
 			final RValue resRval = tmpRval;
 			// #t~AND~UID = left
 
-			final AssignmentStatement aStat = mProcedureManager.constructAssignmentStatement(loc,
+			final AssignmentStatement aStat = StatementFactory.constructAssignmentStatement(loc,
 					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rl.mLrVal.getValue() });
 			// for (final Overapprox overapprItem : overappr) {
 			for (final Overapprox overapprItem : builder.getOverappr()) {
@@ -759,7 +760,7 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> outerThenPart = new ArrayList<>();
 			outerThenPart.addAll(rr.mStmt);
 
-			outerThenPart.add(mProcedureManager.constructAssignmentStatement(loc,
+			outerThenPart.add(StatementFactory.constructAssignmentStatement(loc,
 					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rr.mLrVal.getValue() }));
 			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(),
 					outerThenPart.toArray(new Statement[outerThenPart.size()]), new Statement[0]);
@@ -826,7 +827,7 @@ public class CHandler implements ICHandler {
 			final RValue tmpRval = new RValue(resNameAuxvar.getExp(), intType, true);
 			final RValue resRval = tmpRval;
 			// #t~OR~UID = left
-			final AssignmentStatement aStat = mProcedureManager.constructAssignmentStatement(loc,
+			final AssignmentStatement aStat = StatementFactory.constructAssignmentStatement(loc,
 					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rl.mLrVal.getValue() });
 			// for (final Overapprox overapproxItem : overappr) {
 			for (final Overapprox overapproxItem : builder.getOverappr()) {
@@ -838,7 +839,7 @@ public class CHandler implements ICHandler {
 			final ArrayList<Statement> outerElsePart = new ArrayList<>();
 			outerElsePart.addAll(rr.mStmt);
 
-			outerElsePart.add(mProcedureManager.constructAssignmentStatement(loc,
+			outerElsePart.add(StatementFactory.constructAssignmentStatement(loc,
 					new LeftHandSide[] { resNameAuxvar.getLhs() }, new Expression[] { rr.mLrVal.getValue() }));
 			final IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(), new Statement[0],
 					outerElsePart.toArray(new Statement[outerElsePart.size()]));
@@ -1987,8 +1988,7 @@ public class CHandler implements ICHandler {
 							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 							// old solution: havoc via an auxvar, new solution (below):
 							// just malloc at the right place (much shorter for arrays and structs..)
-							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc,
-									mProcedureManager.getCurrentProcedureID()));
+							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc));
 							mMemoryHandler.addVariableToBeFreed(main,
 									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 						}
@@ -2009,8 +2009,7 @@ public class CHandler implements ICHandler {
 						if (onHeap) {
 							final LocalLValue llVal = new LocalLValue(lhs, cDec.getType(), null);
 							mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
-							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc,
-									mProcedureManager.getCurrentProcedureID()));
+							((ExpressionResult) result).mStmt.add(mMemoryHandler.getMallocCall(llVal, loc));
 						}
 
 						((ExpressionResult) result).mStmt.addAll(initRex.mStmt);
@@ -2125,12 +2124,12 @@ public class CHandler implements ICHandler {
 					}
 
 					if (firstCond) {
-						final AssignmentStatement assign = mProcedureManager.constructAssignmentStatement(locC,
+						final AssignmentStatement assign = StatementFactory.constructAssignmentStatement(locC,
 								new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { cond });
 						resultBuilder.addStatement(assign);
 						firstCond = false;
 					} else {
-						final AssignmentStatement assign = mProcedureManager.constructAssignmentStatement(locC,
+						final AssignmentStatement assign = StatementFactory.constructAssignmentStatement(locC,
 								new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { ExpressionFactory
 										.newBinaryExpression(locC, Operator.LOGICOR, switchAuxvar.getExp(), cond) });
 						resultBuilder.addStatement(assign);
@@ -2192,12 +2191,12 @@ public class CHandler implements ICHandler {
 			}
 
 			if (firstCond) {
-				final AssignmentStatement assign = mProcedureManager.constructAssignmentStatement(locC,
+				final AssignmentStatement assign = StatementFactory.constructAssignmentStatement(locC,
 						new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { cond });
 				resultBuilder.addStatement(assign);
 				firstCond = false;
 			} else {
-				final AssignmentStatement assign = mProcedureManager.constructAssignmentStatement(locC,
+				final AssignmentStatement assign = StatementFactory.constructAssignmentStatement(locC,
 						new LeftHandSide[] { switchAuxvar.getLhs() }, new Expression[] { ExpressionFactory
 								.newBinaryExpression(locC, Operator.LOGICOR, switchAuxvar.getExp(), cond) });
 				resultBuilder.addStatement(assign);
@@ -2848,7 +2847,7 @@ public class CHandler implements ICHandler {
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
-			final AssignmentStatement assignStmt = mProcedureManager.constructAssignmentStatement(loc,
+			final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
 					new LeftHandSide[] { lValue.getLHS() }, new Expression[] { rhsWithBitfieldTreatment });
 
 			builder.addStatement(assignStmt);
@@ -3795,7 +3794,7 @@ public class CHandler implements ICHandler {
 		{
 			final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
 			final Expression[] oldValue = new Expression[] { exprRes.mLrVal.getValue() };
-			assignStmt = mProcedureManager.constructAssignmentStatement(loc, tmpAsLhs, oldValue);
+			assignStmt = StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, oldValue);
 		}
 		// result.mStmt.add(assignStmt);
 		builder1.addStatement(assignStmt);
@@ -3897,7 +3896,7 @@ public class CHandler implements ICHandler {
 		{
 			final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
 			final Expression[] newValue = new Expression[] { valueXcremented };
-			assignStmt = mProcedureManager.constructAssignmentStatement(loc, tmpAsLhs, newValue);
+			assignStmt = StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, newValue);
 		}
 		// result.mStmt.add(assignStmt);
 		builder2.addStatement(assignStmt);
@@ -4364,7 +4363,7 @@ public class CHandler implements ICHandler {
 			final LeftHandSide[] lhs = { auxvar.getLhs() };
 			final Expression assignedVal = opPositive.mLrVal.getValue();
 			if (assignedVal != null) {
-				final AssignmentStatement assignStmt = mProcedureManager.constructAssignmentStatement(loc, lhs,
+				final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc, lhs,
 						new Expression[] { opPositive.mLrVal.getValue() });
 				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 					overapprItem.annotate(assignStmt);
@@ -4384,7 +4383,7 @@ public class CHandler implements ICHandler {
 			final Expression assignedVal = opNegative.mLrVal.getValue();
 			if (assignedVal != null) { // if we call a void function, we have to
 										// skip this assignment
-				final AssignmentStatement assignStmt = mProcedureManager.constructAssignmentStatement(loc, lhs,
+				final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc, lhs,
 						new Expression[] { assignedVal });
 				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 					overapprItem.annotate(assignStmt);

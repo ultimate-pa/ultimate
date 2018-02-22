@@ -51,6 +51,7 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -386,7 +387,8 @@ public class FunctionHandler {
 					bodyResultBuilder.getDeclarations().toArray(
 							new VariableDeclaration[bodyResultBuilder.getDeclarations().size()]),
 					bodyResultBuilder.getStatements().toArray(
-							new Statement[bodyResultBuilder.getStatements().size()]));
+							new Statement[bodyResultBuilder.getStatements().size()]),
+					mProcedureManager.getCurrentProcedureID());
 		}
 
 //		proc = mCurrentProcedure;
@@ -600,7 +602,7 @@ public class FunctionHandler {
 
 					final RValue castExprResultRVal = (RValue) returnValueSwitched.getLrValue();
 					resultBuilder.addStatement(
-							mProcedureManager.constructAssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
+							StatementFactory.constructAssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
 					// //assuming that we need no auxvars or overappr, here
 				}
 			}
@@ -974,8 +976,7 @@ public class FunctionHandler {
 
 	//					stmt.add(memoryHandler.getMallocCall(llv, igLoc));
 	//					stmt.addAll(assign.mStmt);
-						resultBuilder.addStatement(memoryHandler.getMallocCall(llv, igLoc,
-									mProcedureManager.getCurrentProcedureID()));
+						resultBuilder.addStatement(memoryHandler.getMallocCall(llv, igLoc));
 						resultBuilder.addAllExceptLrValue(assign);
 					} else {
 						final VariableLHS tempLHS = ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType,
@@ -983,7 +984,7 @@ public class FunctionHandler {
 	//					stmt.add(
 	//							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 						resultBuilder.addStatement(
-								mProcedureManager.constructAssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
+								StatementFactory.constructAssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 					}
 					assert main.mCHandler.getSymbolTable().containsCSymbol(inparamCId);
 
@@ -1121,7 +1122,8 @@ public class FunctionHandler {
 					if (outParamVarlists.length == 0) { // void
 						// C has only one return statement -> no need for forall
 		//				call = new CallStatement(loc, false, new VariableLHS[0], methodName,
-						call = mProcedureManager.constructCallStatement(loc, false, new VariableLHS[0], methodName,
+//						call = mProcedureManager.constructCallStatement(loc, false, new VariableLHS[0], methodName,
+						call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], methodName,
 								translatedParameters.toArray(new Expression[translatedParameters.size()]));
 					} else if (outParamVarlists.length == 1) { // one return value
 						final VariableLHS returnedValueAsLhs;
@@ -1153,7 +1155,8 @@ public class FunctionHandler {
 						functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
 
 		//				call = new CallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs }, methodName,
-						call = mProcedureManager.constructCallStatement(loc, false,
+//						call = mProcedureManager.constructCallStatement(loc, false,
+						call = StatementFactory.constructCallStatement(loc, false,
 								new VariableLHS[] { returnedValueAsLhs }, methodName,
 								translatedParameters.toArray(new Expression[translatedParameters.size()]));
 					} else { // unsupported!
@@ -1192,7 +1195,9 @@ public class FunctionHandler {
 
 		//			final VariableLHS lhs = new VariableLHS(loc, ident);
 		//			call = new CallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,
-					call = mProcedureManager.constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,
+//					call = mProcedureManager.constructCallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,
+					call = StatementFactory.constructCallStatement(loc, false,
+							new VariableLHS[] { auxvar.getLhs() }, methodName,
 							translatedParameters.toArray(new Expression[translatedParameters.size()]));
 				}
 				functionCallExpressionResultBuilder.addStatement(call);

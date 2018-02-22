@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
@@ -397,92 +396,6 @@ public class ProcedureManager {
 		mInverseCallGraph.addPair(callee, caller);
 	}
 
-	// /**
-	// * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
-	// * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
-	// */
-	// private static void updateCFunction(final ProcedureInfo procInfo, final CType returnType,
-	// final CDeclaration[] allParamDecs,
-	// final CDeclaration oneParamDec, final boolean takesVarArgs) {
-	// final CFunction oldCFunction = procInfo.getCType();
-	//
-	//// final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
-	// final CType oldRetType = procInfo.hasCType() ? procInfo.getCType().getResultType() : null;
-	// final CDeclaration[] oldInParams =
-	//// oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
-	// procInfo.hasCType() ? procInfo.getCType().getParameterTypes() : new CDeclaration[0];
-	//// final boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
-	// final boolean oldTakesVarArgs = procInfo.hasCType() ? procInfo.getCType().takesVarArgs() : false;
-	//
-	// CType newRetType = oldRetType;
-	// CDeclaration[] newInParams = oldInParams;
-	// final boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
-	//
-	// if (allParamDecs != null) { // set a new parameter list
-	// assert oneParamDec == null;
-	// newInParams = allParamDecs;
-	// } else if (oneParamDec != null) { // add a parameter to the list
-	// assert allParamDecs == null;
-	//
-	// final ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
-	// ips.add(oneParamDec);
-	// newInParams = ips.toArray(new CDeclaration[ips.size()]);
-	// }
-	// if (returnType != null) {
-	// newRetType = returnType;
-	// }
-	//
-	// procInfo.resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
-	// }
-
-	// /**
-	// * Adds searchString to modifiedGlobals iff searchString is a global variable and the user has not defined a
-	// * modifies clause.
-	// *
-	// * @param main
-	// * a reference to the main dispatcher.
-	// *
-	// * @param searchString
-	// * = boogieVarName!
-	// * @param errLoc
-	// * the location for possible errors!
-	// */
-	// public void checkIfModifiedGlobal(final SymbolTable symbTab, final String searchString, final ILocation errLoc) {
-	// String cName;
-	// if (!symbTab.containsBoogieSymbol(searchString)) {
-	// // temp variable!
-	// return;
-	// }
-	// cName = symbTab.getCID4BoogieID(searchString, errLoc);
-	// final String cId = mCurrentProcedure.getIdentifier();
-	// final SymbolTableValue stValue = symbTab.get(cName, errLoc);
-	// final CType cvar = stValue.getCVariable();
-	// if (cvar != null && stValue.getCDecl().isStatic()) {
-	// mModifiedGlobals.get(cId).add(searchString);
-	// return;
-	// }
-	// if (mModifiedGlobalsIsUserDefined.contains(cId)) {
-	// return;
-	// }
-	// final boolean isLocal;
-	// if (searchString.equals(SFO.RES)) {
-	// // this variable is reserved for the return variable and
-	// // therefore local!
-	// isLocal = true;
-	// } else {
-	// isLocal = !symbTab.get(cName, errLoc).isBoogieGlobalVar();
-	// }
-	// if (!isLocal) {
-	// // the variable is not local but could be a formal parameter
-	// if (!searchString.startsWith(SFO.IN_PARAM)) {
-	// // variable is global!
-	// mModifiedGlobals.get(cId).add(searchString);
-	// } else {
-	// assert false;
-	// }
-	// }
-	// }
-
 	/**
 	 * Checks, whether all procedures that are being called in C, were eventually declared within the C program.
 	 *
@@ -821,44 +734,53 @@ public class ProcedureManager {
 		return new ModifiesSpecification(loc, isFree, mgFiltered.toArray(new VariableLHS[mgFiltered.size()]));
 	}
 
-	public CallStatement constructCallStatement(final ILocation loc, final boolean b, final VariableLHS[] variableLHSs,
-			final String methodName, final Expression[] array) {
-		assert !isGlobalScope();
+	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
+			final Statement[] statements, final String procName) {
+		assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
 
-		for (final LeftHandSide lhs : variableLHSs) {
-			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
-			if (modifiedGlobal != null) {
-				addModifiedGlobal(modifiedGlobal);
+		final BoogieProcedureInfo procInfo = getProcedureInfo(procName);
+
+		for (final Statement statement: statements) {
+			if (statement instanceof CallStatement) {
+				registerCallStatement((CallStatement) statement, procInfo);
+			}
+			if (statement instanceof AssignmentStatement) {
+				registerAssignmentStatement((AssignmentStatement) statement, procInfo);
 			}
 		}
-
-		registerCall(methodName);
-		return new CallStatement(loc, b, variableLHSs, methodName, array);
-	}
-
-	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
-			final Statement[] statements) {
-		assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
-		// for (final Statement statement: statements) {
-		// if (statement instanceof CallStatement) {
-		// registerCall(((CallStatement) statement).getMethodName());
-		// }
-		// }
 		return new Body(loc, localDeclarations, statements);
 	}
 
-	public AssignmentStatement constructAssignmentStatement(final ILocation loc, final LeftHandSide[] leftHandSides,
-			final Expression[] rightHandSides) {
-		for (final LeftHandSide lhs : leftHandSides) {
+	private void registerAssignmentStatement(final AssignmentStatement statement, final BoogieProcedureInfo procInfo) {
+		for (final LeftHandSide lhs : statement.getLhs()) {
+			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
+			if (modifiedGlobal != null) {
+				procInfo.addModifiedGlobal(modifiedGlobal);
+			}
+		}
+	}
+
+	private void registerCallStatement(final CallStatement statement, final BoogieProcedureInfo caller) {
+		for (final LeftHandSide lhs : statement.getLhs()) {
 			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
 			if (modifiedGlobal != null) {
 				addModifiedGlobal(modifiedGlobal);
 			}
 		}
-		// return new AssignmentStatement(loc, leftHandSides, rightHandSides);
-		return StatementFactory.constructAssignmentStatement(loc, leftHandSides, rightHandSides);
+		final BoogieProcedureInfo callee = getOrConstructProcedureInfo(statement.getMethodName());
+		registerCall(caller, callee);
 	}
 
+	/**
+	 * Essentially this method is to remind the programmer that he or she has to give modified globals for an ensures
+	 * specification manually.
+	 *
+	 * @param loc
+	 * @param isFree
+	 * @param formula
+	 * @param modifiedGlobals
+	 * @return
+	 */
 	public EnsuresSpecification constructEnsuresSpecification(final ILocation loc, final boolean isFree,
 			final Expression formula, final Set<VariableLHS> modifiedGlobals) {
 		// // TODO: what is the criterion for when an ensures clause constitutes a modification??
@@ -875,18 +797,14 @@ public class ProcedureManager {
 		return new EnsuresSpecification(loc, isFree, formula);
 	}
 
-	// public void addSpecificationsToCustomProcedure(final String procedureName, final Specification[] array) {
-	// public void addSpecificationsToCurrentProcedure(final String procedureName, final List<Specification> specs) {
 	public void addSpecificationsToCurrentProcedure(final List<Specification> specs) {
 		assert !isGlobalScope();
-		// final ProcedureInfo procInfo = getProcedureInfo(procedureName);
 		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
 		final Procedure oldDecl = procInfo.getDeclaration();
 
 		final List<Specification> newSpecs = new ArrayList<>();
 		newSpecs.addAll(Arrays.asList(oldDecl.getSpecification()));
 		newSpecs.addAll(specs);
-		// newSpecs.addAll(Arrays.asList(array));
 
 		final Procedure newDecl = new Procedure(oldDecl.getLoc(), oldDecl.getAttributes(), oldDecl.getIdentifier(),
 				oldDecl.getTypeParams(), oldDecl.getInParams(), oldDecl.getOutParams(),

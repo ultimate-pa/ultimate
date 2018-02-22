@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -341,7 +342,7 @@ public class InitializationHandler {
 					fieldValues.toArray(new Expression[fieldValues.size()]));
 
 			final AssignmentStatement assignment =
-					mProcedureManager.constructAssignmentStatement(loc,
+					StatementFactory.constructAssignmentStatement(loc,
 							new LeftHandSide[] { ((LocalLValue) structBaseLhsToInitialize).getLHS() },
 							new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(initInfo.getOverapprs(), assignment);
@@ -853,7 +854,7 @@ public class InitializationHandler {
 		} else {
 			//!onHeap
 			final AssignmentStatement assignment =
-					mProcedureManager.constructAssignmentStatement(loc,
+					StatementFactory.constructAssignmentStatement(loc,
 							new LeftHandSide[] { ((LocalLValue) lhs).getLHS() },
 							new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(overAppr, assignment);

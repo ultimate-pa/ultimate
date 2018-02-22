@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.boogie;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -26,6 +28,11 @@ public class StatementFactory {
 		TypeCheckHelper.typeCheckAssignStatement(lhsIds, lhsTypes, rhsTypes, new TypeErrorReporter(loc));
 
 		return new AssignmentStatement(loc, lhs, rhs);
+	}
+
+	public static CallStatement constructCallStatement(final ILocation loc, final boolean b,
+			final VariableLHS[] variableLHSs, final String methodName, final Expression[] array) {
+		return new CallStatement(loc, b, variableLHSs, methodName, array);
 	}
 
 }
