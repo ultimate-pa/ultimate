@@ -130,6 +130,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -4316,6 +4317,37 @@ public class CHandler implements ICHandler {
 		opCondition.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
 		opPositive.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 		opNegative.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+
+
+		if (!opPositive.hasLRValue()) {
+			final boolean conditionIsConstantFalse = (opCondition.getLrValue().getValue() instanceof BooleanLiteral) &&
+				!((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
+			if (conditionIsConstantFalse) {
+				return opNegative;
+			} else {
+				/* TODO: it may still be unreachable, so the correct solution would probably be to put an arbitrary
+				 * value in place of opPositive (and possibly a check for undefined behaviour for when the value is
+				 * actually used)
+				 */
+				throw new UnsupportedOperationException("void value in possibly reachable part of if-then-else "
+						+ "expression");
+			}
+		}
+		if (!opNegative.hasLRValue()) {
+			final boolean conditionIsConstantTrue = (opCondition.getLrValue().getValue() instanceof BooleanLiteral) &&
+				((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
+			if (conditionIsConstantTrue) {
+				return opPositive;
+			} else {
+				/* TODO: it may still be unreachable, so the correct solution would probably be to put an arbitrary
+				 * value in place of opPositive (and possibly a check for undefined behaviour for when the value is
+				 * actually used)
+				 */
+				throw new UnsupportedOperationException("void value in possibly reachable part of if-then-else "
+						+ "expression");
+			}
+		}
+
 
 		if (opPositive.mLrVal.getCType().isArithmeticType() && opNegative.mLrVal.getCType().isArithmeticType()) {
 			// C11 6.5.15.5: If 2nd and 3rd operand have arithmetic type,

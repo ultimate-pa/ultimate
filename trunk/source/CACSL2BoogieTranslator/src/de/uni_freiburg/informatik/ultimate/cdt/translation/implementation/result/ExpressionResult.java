@@ -661,6 +661,16 @@ public class ExpressionResult extends Result {
 
 	/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
 	public void rexBoolToIntIfNecessary(final ILocation loc, final ExpressionTranslation expressionTranslation) {
+		if (mLrVal == null) {
+			/* This ExpressionResult does not have a value (for example it may be the translation of a call to a void
+			 * function).
+			 * Void values like this are allowed for example in something like <code>0 ? foo() : 0</code> where foo is
+			 * void.
+			 * Do nothing here.
+			 */
+			return;
+		}
+
 		if (!(mLrVal instanceof RValue)) {
 			throw new UnsupportedOperationException("only RValue can switch");
 		}
@@ -673,8 +683,15 @@ public class ExpressionResult extends Result {
 
 	@Override
 	public String toString() {
-		return "ExpressionResult, LrVal: " + mLrVal.toString();
+		final StringBuilder sb = new StringBuilder();
+		sb.append("ExpressionResult");
+
+		sb.append("LrVal: " + mLrVal);
+
+		return sb.toString();
 	}
+
+
 
 	public LRValue getLrValue() {
 		return mLrVal;
@@ -699,5 +716,9 @@ public class ExpressionResult extends Result {
 
 	public Collection<ExpressionResult> getNeighbourUnionFields() {
 		return Collections.unmodifiableCollection(mOtherUnionFields);
+	}
+
+	public boolean hasLRValue() {
+		return mLrVal != null;
 	}
 }
