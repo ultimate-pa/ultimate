@@ -1986,7 +1986,7 @@ public class MemoryHandler {
 		mProcedureManager.registerProcedure(MemoryModelDeclarations.Ultimate_Alloc.getName());
 //		mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), getValidArrayLhs(loc));
 //		mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), getLengthArrayLhs(loc));
-		assert !mProcedureManager.isGlobalScope() : "cannot have a call in global scope!";
+//		assert !mProcedureManager.isGlobalScope() : "cannot have a call in global scope!";
 		// mProcedureManager.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
 		// mProcedureManager.addCallGraphEdge(mProcedureManager.getCurrentProcedureID(),
 		// MemoryModelDeclarations.Ultimate_Alloc.getName());

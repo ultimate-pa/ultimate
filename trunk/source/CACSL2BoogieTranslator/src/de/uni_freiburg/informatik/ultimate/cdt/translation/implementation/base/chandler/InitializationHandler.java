@@ -1015,13 +1015,15 @@ public class InitializationHandler {
 				 * We are initializing through an (possibly aggregate-type) expression (not through a list of
 				 *  expressions).
 				 */
+
 				if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
 //						&& !(targetCTypeRaw instanceof CPointer)) {
 						&& targetCTypeRaw instanceof CArray) {
 					/*
-					 * case like 'char a[] = "bla"'
+					 * Case like 'char a[] = "bla"'
 					 * in C, initialization would copy the char array contents to a position on the stack
-					 * we create an InitializerInfo that corresponds to the initializer { 'b', 'l', 'a', '\0' }
+					 * we create an InitializerInfo that corresponds to the initializer { 'b', 'l', 'a', '\0' }.
+					 * (For this purpose, StringLiteralResult holds the original string contents.)
 					 */
 
 					final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
@@ -1031,11 +1033,8 @@ public class InitializationHandler {
 							slr.getLiteralString().length + 1);
 					literalString[literalString.length - 1] = '\0';
 
-					// we overapproximate strings of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-					final boolean useOverApproximation = slr.overApproximatesLongStringLiteral();
-//							literalString.length < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 					final List<Overapprox> overapproxList;
-					if (useOverApproximation) {
+					if (slr.overApproximatesLongStringLiteral()) {
 						final Overapprox overapprox = new Overapprox("large string literal", loc);
 						overapproxList = new ArrayList<>();
 						overapproxList.add(overapprox);
@@ -1066,10 +1065,6 @@ public class InitializationHandler {
 					 *  future)
 					 * The result we return here will only contain the RValue.
 					 */
-//					final ExpressionResult converted = convertInitResultWithExpressionResult(loc, main, targetCType,
-//							initializerResult);
-
-//					final ExpressionResult exprResult = initializerResult.getRootExpressionResult();
 					final StringLiteralResult exprResult = (StringLiteralResult)
 							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult);
 
@@ -1079,27 +1074,6 @@ public class InitializationHandler {
 					assert exprResult.getStatements().isEmpty() : "the statements necessary for a StringLiteral "
 							+ " should be registered in StaticObjectsHandler directly (because the need to be global"
 							+ "boogie declarations)";
-
-
-//					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
-//					exprResult.getDeclarations().forEach(decl -> );
-
-//					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
-//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-//							exprResult.getAuxVar().getExp().getIdentifier());
-//					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
-//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
-//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
-					/*
-					 * if the literal was short enought that we actually write it to memory, add the corresponding
-					 *  memory array
-					 */
-					if (!exprResult.overApproximatesLongStringLiteral()) {
-//						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.MEMORY_INT);
-//						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-//								main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
-//									.getVariableName());
-					}
 
 					final ExpressionResult onlyRValueExprResult = new ExpressionResultBuilder()
 							.setLrVal(exprResult.getLrValue())

@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -164,13 +165,34 @@ public class PostProcessor {
 		final Set<String> undefinedTypes = main.mTypeHandler.getUndefinedTypes();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 
-		final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main);//, mDeclarationsGlobalInBoogie);
-		decl.add(initProcedure.getUltimateInitImplementation());
+		final String checkedMethod = main.getCheckedMethod();
 
-		final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc);
-		decl.add(startProcedure.getUltimateStartDeclaration());
-//		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler,
+		if (!checkedMethod.equals(SFO.EMPTY)
+				&& main.mCHandler.getProcedureManager().hasProcedure(checkedMethod)) {
+				mLogger.info("Settings: Checked method=" + checkedMethod);
+				final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main);//, mDeclarationsGlobalInBoogie);
+				decl.add(initProcedure.getUltimateInitImplementation());
+
+				final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc);
+				decl.add(startProcedure.getUltimateStartImplementation());
+				//		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler,
 //				initProcedure.getUltimateInitModifiesClauseContents()));
+
+
+		} else {
+			// this would be done during createInit otherwise
+			main.mCHandler.getStaticObjectsHandler().freeze();
+
+			mLogger.info("Settings: Library mode!");
+			if (main.mCHandler.getProcedureManager().hasProcedure(SFO.MAIN)) {
+				final String msg =
+						"You selected the library mode (i.e., each procedure can be starting procedure and global "
+								+ "variables are not initialized). This program contains a \"main\" procedure. Maybe you "
+								+ "wanted to select the \"main\" procedure as starting procedure.";
+				mDispatcher.warn(loc, msg);
+			}
+		}
+
 
 		decl.addAll(declareFunctionPointerProcedures(main));
 		decl.addAll(declareConversionFunctions(main));
@@ -191,6 +213,7 @@ public class PostProcessor {
 			final BitvectorTranslation bitvectorTranslation = (BitvectorTranslation) expressionTranslation;
 			bitvectorTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantFunctions);
 		}
+		assert decl.stream().allMatch(Objects::nonNull);
 		return decl;
 	}
 
@@ -889,6 +912,7 @@ public class PostProcessor {
 		}
 
 		public Declaration getUltimateInitImplementation() {
+			assert mUltimateInitImplementation != null;
 			return mUltimateInitImplementation;
 		}
 
@@ -918,8 +942,6 @@ public class PostProcessor {
 
 			Procedure startProcedure = null;
 
-			if (!checkedMethod.equals(SFO.EMPTY) && procedureManager.hasProcedure(checkedMethod)) {
-				mLogger.info("Settings: Checked method=" + checkedMethod);
 
 				{
 					final Procedure startDeclaration = new Procedure(loc, new Attribute[0], SFO.START, new String[0],
@@ -1028,21 +1050,12 @@ public class PostProcessor {
 //				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START, proceduresCalledByStart);
 //				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START);
 				procedureManager.endCustomProcedure(main, SFO.START);
-			} else {
-				mLogger.info("Settings: Library mode!");
-				if (procedureManager.hasProcedure(SFO.MAIN)) {
-					final String msg =
-							"You selected the library mode (i.e., each procedure can be starting procedure and global "
-							+ "variables are not initialized). This program contains a \"main\" procedure. Maybe you "
-							+ "wanted to select the \"main\" procedure as starting procedure.";
-					mDispatcher.warn(loc, msg);
-				}
-			}
 
 			mStartProcedure = startProcedure;
 		}
 
-		public Declaration getUltimateStartDeclaration() {
+		public Declaration getUltimateStartImplementation() {
+			assert mStartProcedure != null;
 			return mStartProcedure;
 		}
 	}

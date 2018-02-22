@@ -100,13 +100,13 @@ public class AuxVarInfo {
 					final AUXVAR auxVarType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
 		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
-	
+
 		return constructAuxVarHelper(loc, main, id, astType, false);
 	}
 
 	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final CType cType,
 				final ASTType astType, final AUXVAR auxVarType) {
-	
+
 			final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
 	//		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
 			return constructAuxVarHelper(loc, main, id, astType, false);
@@ -115,7 +115,7 @@ public class AuxVarInfo {
 	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final ASTType astType,
 					final AUXVAR auxVarType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, null);
-	
+
 		return constructAuxVarHelper(loc, main, id, astType, false);
 	}
 
@@ -123,7 +123,7 @@ public class AuxVarInfo {
 			final CType cType, final AUXVAR auxVarType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
 		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
-	
+
 		return constructAuxVarHelper(loc, main, id, astType, true);
 	}
 
@@ -132,21 +132,21 @@ public class AuxVarInfo {
 		final VariableDeclaration decl = new VariableDeclaration(loc,
 				new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { id }, astType ) });
-	
+
 		final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
-		final String currentProcId = main.mCHandler.getProcedureManager().getCurrentProcedureID();
-	
+
 		final DeclarationInformation declInfo = isGlobal ?
 					DeclarationInformation.DECLARATIONINFO_GLOBAL :
-				new DeclarationInformation(StorageClass.LOCAL, currentProcId);
-	
-	
+				new DeclarationInformation(StorageClass.LOCAL,
+						main.mCHandler.getProcedureManager().getCurrentProcedureID());
+
+
 		final VariableLHS lhs = ExpressionFactory.constructVariableLHS(loc,
 						boogieTypeHelper.getBoogieTypeForBoogieASTType(astType), id, declInfo);
-	
+
 		final IdentifierExpression exp = ExpressionFactory.constructIdentifierExpression(loc,
 						boogieTypeHelper.getBoogieTypeForBoogieASTType(astType), id, declInfo);
-	
+
 		return new AuxVarInfo(decl, lhs, exp);
 	}
 

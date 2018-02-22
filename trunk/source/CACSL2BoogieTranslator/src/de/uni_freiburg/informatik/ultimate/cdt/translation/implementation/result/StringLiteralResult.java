@@ -76,6 +76,11 @@ public class StringLiteralResult extends ExpressionResult {
 		return "StringLiteralResult: " + Arrays.toString(mString);
 	}
 
+	/**
+	 * We overapproximate string literals that are longer than a certain threshold by a nondeterministic value.
+	 *
+	 * @return true iff the string literal that this StringLiteralResult represents is being overapproximated
+	 */
 	public boolean overApproximatesLongStringLiteral() {
 		return mOverapproximatesLongStringLiteral;
 	}
