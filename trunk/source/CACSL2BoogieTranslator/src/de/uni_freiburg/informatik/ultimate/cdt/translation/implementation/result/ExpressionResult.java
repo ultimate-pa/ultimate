@@ -481,7 +481,7 @@ public class ExpressionResult extends Result {
 //							main.mTypeHandler.getBoogiePointerType()),
 //					arrayType, null);
 
-			resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
+			resultValue = new RValueForArrays(newArrayAuxvar.getExp(), arrayType);
 
 //			builder.setLrVal(new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null));
 
