@@ -369,6 +369,7 @@ public class ProcedureManager {
 	 *
 	 * @param callee
 	 */
+	@Deprecated
 	public void registerCall(final String callee) {
 		if (isGlobalScope()) {
 			throw new IllegalStateException("attempting to register a call when in global scope");
@@ -384,6 +385,7 @@ public class ProcedureManager {
 	 * @param caller
 	 * @param callee
 	 */
+	@Deprecated
 	public void registerCall(final String caller, final String callee) {
 		registerCall(getOrConstructProcedureInfo(caller), getOrConstructProcedureInfo(callee));
 	}

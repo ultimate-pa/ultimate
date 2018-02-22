@@ -638,7 +638,7 @@ public class StandardFunctionHandler {
 		result.addStatement(mMemoryHandler.constructUltimateMemsetCall(loc, argS.mLrVal.getValue(),
 				argC.mLrVal.getValue(), argN.mLrVal.getValue(), auxvar.getLhs()));
 
-		mProcedureManager.registerCall(MemoryModelDeclarations.C_Memset.getName());
+//		mProcedureManager.registerCall(MemoryModelDeclarations.C_Memset.getName());
 
 		return result.build();
 	}
@@ -672,8 +672,8 @@ public class StandardFunctionHandler {
 		result.mStmt.add(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.mLrVal.getValue(),
 				size.mLrVal.getValue(), product, auxvar.getExp()));
 
-		mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_MemInit.getName(),
-				MemoryModelDeclarations.Ultimate_Alloc.getName());
+//		mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_MemInit.getName(),
+//				MemoryModelDeclarations.Ultimate_Alloc.getName());
 		return result;
 	}
 
@@ -1033,7 +1033,7 @@ public class StandardFunctionHandler {
 
 		// add required information to function handler.
 		mProcedureManager.registerProcedure(mmDecl.getName());
-		mProcedureManager.registerCall(mmDecl.getName());
+//		mProcedureManager.registerCall(mmDecl.getName());
 
 		return resultBuilder.build();
 	}

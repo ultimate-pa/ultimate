@@ -642,7 +642,7 @@ public class FunctionHandler {
 			final BoogieProcedureInfo calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 
 
-			mProcedureManager.registerCall(mProcedureManager.getCurrentProcedureInfo(), calleeProcInfo);
+//			mProcedureManager.registerCall(mProcedureManager.getCurrentProcedureInfo(), calleeProcInfo);
 
 			final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 			assert calleeProcDecl != null : "unclear -- solve in conjunction with the exception directly above..";

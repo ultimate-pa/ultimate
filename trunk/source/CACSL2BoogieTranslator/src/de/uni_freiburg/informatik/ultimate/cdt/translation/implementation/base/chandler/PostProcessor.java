@@ -542,10 +542,10 @@ public class PostProcessor {
 		// visit(TranslationUnit) after the postprocessor)
 		// can compute the correct modifies clause
 //		functionHandler.addModifiedGlobalEntry(fpfName);
-		for (final String fittingFunc : fittingFunctions) {
-//			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
-			procedureManager.registerCall(dispatchingProcedureName, fittingFunc);
-		}
+//		for (final String fittingFunc : fittingFunctions) {
+////			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
+//			procedureManager.registerCall(dispatchingProcedureName, fittingFunc);
+//		}
 
 		// generate the actual body
 		IdentifierExpression funcCallResult = null;
@@ -982,11 +982,11 @@ public class PostProcessor {
 					startStmt.add(StatementFactory.constructCallStatement(loc, false,
 							new VariableLHS[] { checkedMethodReturnAuxVar.getLhs() },
 							checkedMethod, args.toArray(new Expression[args.size()])));
-					procedureManager.registerCall(checkedMethod);
+//					procedureManager.registerCall(checkedMethod);
 				} else { // void
 					startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], checkedMethod,
 							args.toArray(new Expression[args.size()])));
-					procedureManager.registerCall(checkedMethod);
+//					procedureManager.registerCall(checkedMethod);
 				}
 
 //				final LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<>();

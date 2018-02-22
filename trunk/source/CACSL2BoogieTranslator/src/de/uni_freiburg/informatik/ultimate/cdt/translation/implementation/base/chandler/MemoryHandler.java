@@ -2048,7 +2048,7 @@ public class MemoryHandler {
 		if (mProcedureManager.isGlobalScope()) {
 			mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Dealloc.getName(),
 					getValidArrayLhs(loc));
-			mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_Dealloc.getName());
+//			mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_Dealloc.getName());
 		}
 		return freeCall;
 	}
