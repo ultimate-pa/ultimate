@@ -131,11 +131,11 @@ public abstract class ExpressionTranslation {
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal: {
-			// subtract two from length for quotes at beginning and end
 			final RValue rvalue;
 //			final String tId;
 			final AuxVarInfo auxvar;
 			{
+				// subtract two from length for quotes at beginning and end
 				final int arrayLength = node.getValue().length - 2;
 				final RValue dimension = new RValue(
 						constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),

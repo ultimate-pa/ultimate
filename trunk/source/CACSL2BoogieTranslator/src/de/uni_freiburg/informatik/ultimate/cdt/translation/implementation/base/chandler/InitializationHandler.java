@@ -1032,10 +1032,15 @@ public class InitializationHandler {
 					literalString[literalString.length - 1] = '\0';
 
 					// we overapproximate strings of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-					final boolean useActualValues = slr.overApproximatesLongStringLiteral();
+					final boolean useOverApproximation = slr.overApproximatesLongStringLiteral();
 //							literalString.length < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 					final List<Overapprox> overapproxList;
-					if (useActualValues) {
+					if (useOverApproximation) {
+						final Overapprox overapprox = new Overapprox("large string literal", loc);
+						overapproxList = new ArrayList<>();
+						overapproxList.add(overapprox);
+						return new InitializerInfo(overapprox);
+					} else {
 						// make the list (in our case a map because we support sparse lists in other cases)
 						final Map<Integer, InitializerInfo> indexToInitInfo = new HashMap<>();
 						for (int i = 0; i < literalString.length; i++) {
@@ -1049,11 +1054,6 @@ public class InitializationHandler {
 							indexToInitInfo.put(i, new InitializerInfo(charResult, Collections.emptyList()));
 						}
 						return new InitializerInfo(indexToInitInfo, Collections.emptyList());
-					} else {
-						final Overapprox overapprox = new Overapprox("large string literal", loc);
-						overapproxList = new ArrayList<>();
-						overapproxList.add(overapprox);
-						return new InitializerInfo(overapprox);
 					}
 				} else if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
 						&& targetCTypeRaw instanceof CPointer) {

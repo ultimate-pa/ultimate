@@ -967,7 +967,11 @@ public class CHandler implements ICHandler {
 			((PRDispatcher) mMainDispatcher).moveArrayAndStructIdsOnHeap(loc, rightLrVal.getValue(),
 					Collections.emptySet());
 		} else {
-			newValue = ((HeapLValue) rightLrVal).getAddress();
+			if (rightLrVal instanceof RValueForArrays) {
+				newValue = rightLrVal.getValue();
+			} else {
+				newValue = ((HeapLValue) rightLrVal).getAddress();
+			}
 		}
 		final CType newType = new CPointer(((CArray) rightLrVal.getCType()).getValueType());
 		return new RValue(newValue, newType);
