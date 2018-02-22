@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -87,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.AMemoryModel.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -176,6 +178,9 @@ public class MemoryHandler {
 	private final BoogieTypeHelper mBoogieTypeHelper;
 	private final ProcedureManager mProcedureManager;
 	private final FunctionHandler mFunctionHandler;
+	public Map<MemoryModelDeclarations, MemoryModelDeclarationInfo> mMemoryModelDeclarationInfos;
+
+	HandlerHandler mHandlerHandler;
 
 	/**
 	 * Constructor.
@@ -187,16 +192,20 @@ public class MemoryHandler {
 	 * @param nameHandler
 	 * @param boogieTypeHelper
 	 */
-	public MemoryHandler(final ITypeHandler typeHandler, final FunctionHandler functionHandler,
-			final boolean checkPointerValidity, final TypeSizeAndOffsetComputer typeSizeComputer,
-			final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
+	public MemoryHandler(final HandlerHandler handlerHandler, final boolean checkPointerValidity, //final TypeSizeAndOffsetComputer typeSizeComputer,
+			final TypeSizes typeSizes,// final ExpressionTranslation expressionTranslation,
 			final boolean bitvectorTranslation, final INameHandler nameHandler, final boolean smtBoolArrayWorkaround,
-			final IPreferenceProvider prefs, final BoogieTypeHelper boogieTypeHelper,
-			final ProcedureManager procedureManager) {
-		mTypeHandler = typeHandler;
+			final IPreferenceProvider prefs) {
+			//final BoogieTypeHelper boogieTypeHelper,
+		//	final ProcedureManager procedureManager
+//			) {
+		mHandlerHandler = handlerHandler;
+		handlerHandler.setMemoryHandler(this);
+
+		mTypeHandler = handlerHandler.getTypeHandler();
 		mTypeSizes = typeSizes;
-		mFunctionHandler = functionHandler;
-		mExpressionTranslation = expressionTranslation;
+		mFunctionHandler = handlerHandler.getFunctionHandler();
+		mExpressionTranslation = handlerHandler.getExpressionTranslation();
 		mNameHandler = nameHandler;
 		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();
 		if (smtBoolArrayWorkaround) {
@@ -229,10 +238,12 @@ public class MemoryHandler {
 		mVariablesToBeMalloced = new LinkedScopedHashMap<>();
 		mVariablesToBeFreed = new LinkedScopedHashMap<>();
 
-		mTypeSizeAndOffsetComputer = typeSizeComputer;
+		mTypeSizeAndOffsetComputer = handlerHandler.getTypeSizeAndOffsetComputer();
 
-		mBoogieTypeHelper = boogieTypeHelper;
-		mProcedureManager = procedureManager;
+		mBoogieTypeHelper = handlerHandler.getBoogieTypeHelper();
+		mProcedureManager = handlerHandler.getProcedureManager();
+
+		mMemoryModelDeclarationInfos = new LinkedHashMap<>();
 	}
 
 	private AMemoryModel getMemoryModel(final boolean bitvectorTranslation, final MemoryModel memoryModelPreference)
@@ -421,7 +432,8 @@ public class MemoryHandler {
 				(BoogieType) mBooleanArrayHelper.constructBoolReplacementType().getBoogieType());
 		final ASTType validType = new ArrayType(ignoreLoc, boogieType, new String[0],
 				new ASTType[] { pointerComponentType }, mBooleanArrayHelper.constructBoolReplacementType());
-		final VarList vlV = new VarList(ignoreLoc, new String[] { SFO.VALID }, validType);
+		final VarList vlV = new VarList(ignoreLoc, new String[] { MemoryModelDeclarations.Ultimate_Valid.getName() },
+				validType);
 		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlV });
 	}
 
@@ -538,7 +550,7 @@ public class MemoryHandler {
 
 	public CallStatement constructUltimateMeminitCall(final ILocation loc, final Expression amountOfFields,
 			final Expression sizeOfFields, final Expression product, final Expression pointer) {
-		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.Ultimate_MemInit);
+		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_MemInit);
 		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[0],
 				MemoryModelDeclarations.Ultimate_MemInit.getName(),
 				new Expression[] { pointer, amountOfFields, sizeOfFields, product });
@@ -1053,7 +1065,7 @@ public class MemoryHandler {
 	 */
 	public CallStatement constructUltimateMemsetCall(final ILocation loc, final Expression pointer,
 			final Expression value, final Expression amount, final VariableLHS resVar) {
-		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.C_Memset);
+		requireMemoryModelFeature(MemoryModelDeclarations.C_Memset);
 		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { resVar }, // new
 																									// VariableLHS(loc,
 																									// resVarId) },
@@ -1572,7 +1584,7 @@ public class MemoryHandler {
 	 * @return new IdentifierExpression that represents the <em>#length array</em>
 	 */
 	public Expression getLengthArray(final ILocation loc) {
-		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Length);
+		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Length);
 
 		final BoogieArrayType lengthArrayType =
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
@@ -1589,7 +1601,7 @@ public class MemoryHandler {
 	 * @return new IdentifierExpression that represents the <em>#length array</em>
 	 */
 	public VariableLHS getLengthArrayLhs(final ILocation loc) {
-		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Length);
+		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Length);
 
 		final BoogieArrayType lengthArrayType =
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
@@ -1606,23 +1618,30 @@ public class MemoryHandler {
 	 * @return new IdentifierExpression that represents the <em>#valid array</em>
 	 */
 	public Expression getValidArray(final ILocation loc) {
-		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Valid);
-		// TODO: store type and decl info more centrally
-		final BoogieArrayType validArrayType =
-				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
-		final DeclarationInformation validArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
-		return ExpressionFactory.constructIdentifierExpression(loc, validArrayType,
-				MemoryModelDeclarations.Ultimate_Valid.getName(), validArrayDeclarationInfo);
+		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Valid);
+//		final BoogieArrayType validArrayType =
+//				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
+//		final DeclarationInformation validArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+
+		final MemoryModelDeclarationInfo validMmfInfo =
+				getMemoryModelDeclarationInfo(MemoryModelDeclarations.Ultimate_Valid);
+		return validMmfInfo.constructIdentiferExpression(loc);
+
+//		return ExpressionFactory.constructIdentifierExpression(loc, validArrayType,
+//				MemoryModelDeclarations.Ultimate_Valid.getName(), validArrayDeclarationInfo);
 	}
 
 	public VariableLHS getValidArrayLhs(final ILocation loc) {
-		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Valid);
-		// TODO: store type and decl info more centrally
-		final BoogieArrayType validArrayType =
-				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
-		final DeclarationInformation validArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
-		return ExpressionFactory.constructVariableLHS(loc, validArrayType,
-				MemoryModelDeclarations.Ultimate_Valid.getName(), validArrayDeclarationInfo);
+		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Valid);
+//		final BoogieArrayType validArrayType =
+//				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
+//		final DeclarationInformation validArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+//		return ExpressionFactory.constructVariableLHS(loc, validArrayType,
+//				MemoryModelDeclarations.Ultimate_Valid.getName(), validArrayDeclarationInfo);
+
+		final MemoryModelDeclarationInfo validMmfInfo =
+				getMemoryModelDeclarationInfo(MemoryModelDeclarations.Ultimate_Valid);
+		return validMmfInfo.constructVariableLHS(loc);
 	}
 
 	/**
@@ -1943,7 +1962,7 @@ public class MemoryHandler {
 	 */
 	public CallStatement getDeallocCall(final Dispatcher main, final LRValue lrVal, final ILocation loc) {
 		assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
-		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Dealloc);
+		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Dealloc);
 		// assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion
 		// or let it be??
 
@@ -1977,7 +1996,7 @@ public class MemoryHandler {
 	 * @return
 	 */
 	public CallStatement getMallocCall(final Expression size, final VariableLHS returnedValue, final ILocation loc) {
-		mRequiredMemoryModelFeatures.require(MemoryModelDeclarations.Ultimate_Alloc);
+		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Alloc);
 		final CallStatement result =
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValue },
 						MemoryModelDeclarations.Ultimate_Alloc.getName(), new Expression[] { size });
@@ -2444,6 +2463,14 @@ public class MemoryHandler {
 		return timesSizeOf;
 	}
 
+	MemoryModelDeclarationInfo getMemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
+		final MemoryModelDeclarationInfo result = mMemoryModelDeclarationInfos.get(mmd);
+		if (result == null) {
+			throw new AssertionError("call  requireMemoryModelFeature first!");
+		}
+		return result;
+	}
+
 	public interface IBooleanArrayHelper {
 		ASTType constructBoolReplacementType();
 
@@ -2453,6 +2480,7 @@ public class MemoryHandler {
 
 		Expression compareWithTrue(Expression expr);
 	}
+
 
 	public static final class BooleanArrayHelper_Bool implements IBooleanArrayHelper {
 
@@ -2569,6 +2597,93 @@ public class MemoryHandler {
 
 		public Set<MemoryModelDeclarations> getRequiredMemoryModelDeclarations() {
 			return Collections.unmodifiableSet(mRequiredMemoryModelDeclarations);
+		}
+	}
+
+	static class MemoryModelDeclarationInfo {
+
+		private final MemoryModelDeclarations mMmd;
+		private final BoogieType mBoogieType;
+		private final ASTType mAstType;
+//		private VariableLHS mVariableLHS;
+//		private IdentifierExpression mIdExp;
+
+		public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
+			mMmd = mmd;
+			mBoogieType = null;
+			mAstType = null;
+		}
+
+		public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd, final BoogieType boogieType,
+				final ASTType astType) {
+			mMmd = mmd;
+			mBoogieType = boogieType;
+			mAstType = astType;
+//			mIdExp = ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
+//					mBoogieType, mmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+//			mVariableLHS = ExpressionFactory.constructVariableLHS(LocationFactory.createIgnoreCLocation(),
+//					mBoogieType, mmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		}
+
+		IdentifierExpression constructIdentiferExpression(final ILocation loc) {
+			return ExpressionFactory.constructIdentifierExpression(loc,
+					mBoogieType, mMmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+//			if (mIdExp == null) {
+//				throw new IllegalStateException();
+//			}
+//			return mIdExp;
+		}
+
+		VariableLHS constructVariableLHS(final ILocation loc) {
+			return ExpressionFactory.constructVariableLHS(loc,
+					mBoogieType, mMmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+//			if (mVariableLHS == null) {
+//				throw new IllegalStateException();
+//			}
+//			return mVariableLHS;
+		}
+
+		BoogieType getBoogieType() {
+			if (mBoogieType == null) {
+				throw new IllegalStateException();
+			}
+			return mBoogieType;
+		}
+
+		ASTType getAstType() {
+			if (mBoogieType == null) {
+				throw new IllegalStateException();
+			}
+			return mAstType;
+		}
+
+		static MemoryModelDeclarationInfo constructMemoryModelDeclarationInfo(final HandlerHandler handlerHandler,
+				final MemoryModelDeclarations mmd) {
+
+			switch (mmd) {
+			case C_Memcpy:
+				break;
+			case C_Memmove:
+				break;
+			case C_Memset:
+				break;
+			case Ultimate_Alloc:
+				break;
+			case Ultimate_Dealloc:
+				break;
+			case Ultimate_Length:
+				break;
+			case Ultimate_MemInit:
+				break;
+			case Ultimate_Valid:
+				return new MemoryModelDeclarationInfo(mmd,
+						handlerHandler.getTypeHandler().getBoogiePointerType(),
+						handlerHandler.getTypeHandler().constructPointerType(LocationFactory.createIgnoreCLocation()));
+			default:
+				break;
+			}
+			// construct empty mmdi
+			return new MemoryModelDeclarationInfo(mmd);
 		}
 	}
 
@@ -2694,6 +2809,16 @@ public class MemoryHandler {
 
 	public PointerCheckMode getPointerTargetFullyAllocatedCheckMode() {
 		return mPointerTargetFullyAllocated;
+	}
+
+	public void requireMemoryModelFeature(final MemoryModelDeclarations mmDecl) {
+		mRequiredMemoryModelFeatures.require(mmDecl);
+
+		MemoryModelDeclarationInfo mmdInfo = mMemoryModelDeclarationInfos.get(mmDecl);
+		if (mmdInfo == null) {
+			mmdInfo = MemoryModelDeclarationInfo.constructMemoryModelDeclarationInfo(mHandlerHandler, mmDecl);
+			mMemoryModelDeclarationInfos.put(mmDecl, mmdInfo);
+		}
 	}
 
 }

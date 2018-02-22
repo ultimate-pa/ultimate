@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -103,7 +104,8 @@ public class ProcedureManager {
 
 	private BoogieProcedureInfo mCurrentProcedureInfo;
 
-	public ProcedureManager(final Dispatcher main) {
+	public ProcedureManager(final HandlerHandler handlerHandler) {
+		handlerHandler.setProcedureManager(this);
 
 		mMethodsCalledBeforeDeclared = new LinkedHashSet<>();
 		mProcedureNameToProcedureInfo = new LinkedHashMap<>();

@@ -1029,7 +1029,7 @@ public class StandardFunctionHandler {
 		resultBuilder.setLrVal(new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID))));
 
 		// add marker for global declaration to memory handler
-		mMemoryHandler.getRequiredMemoryModelFeatures().require(mmDecl);
+		mMemoryHandler.requireMemoryModelFeature(mmDecl);
 
 		// add required information to function handler.
 		mProcedureManager.registerProcedure(mmDecl.getName());

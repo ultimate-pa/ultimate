@@ -498,6 +498,8 @@ public class CHandler implements ICHandler {
 
 	private final ProcedureManager mProcedureManager;
 
+	private final HandlerHandler mHandlerHandler;
+
 	/**
 	 * Constructor.
 	 *
@@ -508,18 +510,20 @@ public class CHandler implements ICHandler {
 	 * @param overapproximateFloatingPointOperations
 	 * @param nameHandler
 	 */
-	public CHandler(final Dispatcher main, final CACSL2BoogieBacktranslator backtranslator,
-			final boolean errorLabelWarning, final ILogger logger, final ITypeHandler typeHandler,
-			final boolean bitvectorTranslation, final boolean overapproximateFloatingPointOperations,
-			final INameHandler nameHandler) {
+	public CHandler(final Dispatcher main, final HandlerHandler handlerHandler,
+			final CACSL2BoogieBacktranslator backtranslator,
+			final boolean errorLabelWarning, final ILogger logger,// final ITypeHandler typeHandler,
+			final boolean bitvectorTranslation, final boolean overapproximateFloatingPointOperations) {
 		final IPreferenceProvider prefs = main.getPreferences();
+
+		mHandlerHandler = handlerHandler;
 
 		mMainDispatcher = main;
 
 		mLogger = logger;
-		mTypeHandler = typeHandler;
+		mTypeHandler = handlerHandler.getTypeHandler();
 		mTypeHandler.setCHandler(this);
-		mNameHandler = nameHandler;
+		mNameHandler = handlerHandler.getNameHandler();
 		mBacktranslator = backtranslator;
 		mErrorLabelWarning = errorLabelWarning;
 
@@ -543,11 +547,11 @@ public class CHandler implements ICHandler {
 				CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
 				CACSLPreferenceInitializer.PointerIntegerConversion.class);
 		if (bitvectorTranslation) {
-			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler,
+			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), handlerHandler,
 					pointerIntegerConversion, overapproximateFloatingPointOperations);
 		} else {
 			final boolean inRange = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
-			mExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment,
+			mExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), handlerHandler, mUnsignedTreatment,
 					inRange, pointerIntegerConversion, overapproximateFloatingPointOperations);
 		}
 
@@ -556,18 +560,17 @@ public class CHandler implements ICHandler {
 
 		mPostProcessor = new PostProcessor(main, mLogger, mExpressionTranslation,
 				overapproximateFloatingPointOperations);
-		mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, mExpressionTranslation,
-				main.getTypeSizes());
+		mTypeSizeComputer = new TypeSizeAndOffsetComputer(handlerHandler, main.getTypeSizes());
 
-		mProcedureManager = new ProcedureManager(main);
-		mFunctionHandler = new FunctionHandler(mExpressionTranslation, mTypeSizeComputer, mProcedureManager);
+		mProcedureManager = new ProcedureManager(handlerHandler);
+		mFunctionHandler = new FunctionHandler(handlerHandler);
 
 		final boolean smtBoolArraysWorkaround = prefs
 				.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		final boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
-		mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, mTypeSizeComputer,
-				main.getTypeSizes(), mExpressionTranslation, bitvectorTranslation, nameHandler, smtBoolArraysWorkaround,
-				prefs, mBoogieTypeHelper, mProcedureManager);
+		mMemoryHandler = new MemoryHandler(mHandlerHandler, checkPointerValidity,
+				main.getTypeSizes(), bitvectorTranslation, handlerHandler.getNameHandler(), smtBoolArraysWorkaround,
+				prefs);
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation);
 		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, mProcedureManager);
 

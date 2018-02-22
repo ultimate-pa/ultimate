@@ -136,6 +136,7 @@ public class PRDispatcher extends Dispatcher {
 
 	private final LinkedHashSet<IASTDeclaration> mReachableDeclarations;
 	private final LinkedHashSet<IASTNode> mVariablesOnHeap;
+	private HandlerHandler mHandlerHandler;
 
 	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
@@ -161,14 +162,21 @@ public class PRDispatcher extends Dispatcher {
 
 	@Override
 	protected void init() {
+		mHandlerHandler = new HandlerHandler();
+
 		final boolean bitvectorTranslation =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		final boolean overapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
+
 		mNameHandler = new NameHandler(mBacktranslator);
+		mHandlerHandler.setNameHandler(mNameHandler);
+
 		mTypeHandler = new TypeHandler(bitvectorTranslation);
-		mCHandler = new CHandler(this, mBacktranslator, false, mLogger, mTypeHandler, bitvectorTranslation,
-				overapproximateFloatingPointOperations, mNameHandler);
+		mHandlerHandler.setTypeHandler(mTypeHandler);
+
+		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, false, mLogger, bitvectorTranslation,
+				overapproximateFloatingPointOperations);
 	}
 
 	@Override

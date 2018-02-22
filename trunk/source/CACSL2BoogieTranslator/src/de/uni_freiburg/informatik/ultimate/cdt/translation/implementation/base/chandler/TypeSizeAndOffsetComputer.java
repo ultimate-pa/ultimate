@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -102,9 +103,9 @@ public class TypeSizeAndOffsetComputer {
 
 	    private SizeTValue mTypeSizePointer = null;
 
-	    public TypeSizeAndOffsetComputer(final TypeHandler typeHandler, final ExpressionTranslation expressionTranslation, final TypeSizes typeSizes) {
-			mExpressionTranslation = expressionTranslation;
-	    	mTypeHandler = typeHandler;
+	    public TypeSizeAndOffsetComputer(final HandlerHandler handlerHandler, final TypeSizes typeSizes) {
+			mExpressionTranslation = handlerHandler.getExpressionTranslation();
+	    	mTypeHandler = (TypeHandler) handlerHandler.getTypeHandler();
 	    	mTypeSizes = typeSizes;
 	    	mTypeSizeCache = new HashMap<>();
 	    	mStructOffsets = new HashMap<>();

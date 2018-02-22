@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -84,14 +85,16 @@ public abstract class ExpressionTranslation {
 	protected final IPointerIntegerConversion mPointerIntegerConversion;
 	protected final boolean mOverapproximateFloatingPointOperations;
 
-	public ExpressionTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+	public ExpressionTranslation(final TypeSizes typeSizes, final HandlerHandler handlerHandler,
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
 		super();
+		handlerHandler.setExpressionTranslation(this);
+
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 		mTypeSizes = typeSizes;
-		mFunctionDeclarations = new FunctionDeclarations(typeHandler, mTypeSizes);
-		mTypeHandler = typeHandler;
+		mFunctionDeclarations = new FunctionDeclarations(handlerHandler.getTypeHandler(), mTypeSizes);
+		mTypeHandler = handlerHandler.getTypeHandler();
 		switch (pointerIntegerConversion) {
 		case IdentityAxiom:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);

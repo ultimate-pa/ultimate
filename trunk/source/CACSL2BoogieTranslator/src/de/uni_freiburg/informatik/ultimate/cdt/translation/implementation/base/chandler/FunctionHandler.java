@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
@@ -147,6 +148,8 @@ public class FunctionHandler {
 
 	ProcedureManager mProcedureManager;
 
+	private final HandlerHandler mHandlerHandler;
+
 	/**
 	 * Constructor.
 	 *
@@ -155,9 +158,11 @@ public class FunctionHandler {
 	 * @param procedureManager
 	 * @param checkMemoryLeakAtEndOfMain
 	 */
-	public FunctionHandler(final ExpressionTranslation expressionTranslation,
-			final TypeSizeAndOffsetComputer typeSizeComputer, final ProcedureManager procedureManager) {
-		mExpressionTranslation = expressionTranslation;
+	public FunctionHandler(final HandlerHandler handlerHandler) {
+		mHandlerHandler = handlerHandler;
+		handlerHandler.setFunctionHandler(this);
+
+		mExpressionTranslation = handlerHandler.getExpressionTranslation();
 
 //		mMethodsCalledBeforeDeclared = new LinkedHashSet<>();
 
@@ -166,7 +171,7 @@ public class FunctionHandler {
 
 		mFunctionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 
-		mProcedureManager = procedureManager;
+		mProcedureManager = handlerHandler.getProcedureManager();
 	}
 
 	/**
