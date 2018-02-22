@@ -516,8 +516,8 @@ public class MemoryHandler {
 		// final ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
 		// specs.add(modifiesSpec);
 		// announceModifiedGlobals(procName, heapDataArrays);
-		heapDataArrays.forEach(
-				heapDataArray -> mProcedureManager.addModifiedGlobal(procName, heapDataArray.getVariableLHS()));
+//		heapDataArrays.forEach(
+//				heapDataArray -> mProcedureManager.addModifiedGlobal(procName, heapDataArray.getVariableLHS()));
 
 		// add the procedure declaration
 		// final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0],
@@ -636,8 +636,8 @@ public class MemoryHandler {
 		// specs.add(modifiesSpec);
 		// announceModifiedGlobals(memModelDecl.getName(), heapDataArrays);
 
-		heapDataArrays.forEach(heapDataArray -> mProcedureManager.addModifiedGlobal(memCopyOrMemMove.getName(),
-				heapDataArray.getVariableLHS()));
+//		heapDataArrays.forEach(heapDataArray -> mProcedureManager.addModifiedGlobal(memCopyOrMemMove.getName(),
+//				heapDataArray.getVariableLHS()));
 
 		// add requires #valid[dest!base];
 		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST, specs, memCopyOrMemMove.getName());
@@ -1006,8 +1006,8 @@ public class MemoryHandler {
 		// final ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
 		// specs.add(modifiesSpec);
 		// announceModifiedGlobals(procName, heapDataArrays);
-		heapDataArrays.forEach(
-				heapDataArray -> mProcedureManager.addModifiedGlobal(procName, heapDataArray.getVariableLHS()));
+//		heapDataArrays.forEach(
+//				heapDataArray -> mProcedureManager.addModifiedGlobal(procName, heapDataArray.getVariableLHS()));
 
 		// add requires #valid[#ptr!base];
 		addPointerBaseValidityCheck(ignoreLoc, inParamPtr, specs, procName);
@@ -1710,100 +1710,6 @@ public class MemoryHandler {
 		return result;
 	}
 
-	/**
-	 * Generate <code>procedure ~free(~addr:$Pointer$) returns()</code>'s declaration and implementation.
-	 *
-	 * deprecated: we use Ultimate.dealloc now, and add the additional specifications in StandardFunctionHandler
-	 *
-	 * @param tuLoc
-	 *            the location for the new nodes.
-	 * @return declaration and implementation of procedure <code>~free</code>
-	 */
-	@Deprecated
-	private ArrayList<Declaration> declareFree(final Dispatcher main, final ILocation tuLoc) {
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		// procedure ~free(~addr:$Pointer$) returns();
-		// requires #valid[~addr!base];
-		// ensures #valid = old(valid)[~addr!base := false];
-		// modifies #valid;
-		final Expression nr0 = mExpressionTranslation.constructLiteralForIntegerType(tuLoc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final Expression addr = // new IdentifierExpression(tuLoc, ADDR);
-				ExpressionFactory.constructIdentifierExpression(tuLoc, mBoogieTypeHelper.getBoogieTypeForPointerType(),
-						ADDR, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, SFO.FREE));
-		final Expression valid = getValidArray(tuLoc);
-		final Expression addrOffset =
-				ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
-		final Expression addrBase = ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
-		final Expression[] idcFree = new Expression[] { addrBase };
-
-		final ArrayList<Specification> specFree = new ArrayList<>();
-
-		/*
-		 * creating the specification according to C99:7.20.3.2-2: The free function causes the space pointed to by ptr
-		 * to be deallocated, that is, made available for further allocation. If ptr is a null pointer, no action
-		 * occurs. Otherwise, if the argument does not match a pointer earlier returned by the calloc, malloc, or
-		 * realloc function, or if the space has been deallocated by a call to free or realloc, the behavior is
-		 * undefined.
-		 */
-		final Check check = new Check(Spec.MEMORY_FREE);
-		final boolean free = // !mCheckFreeValid;
-				mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
-		final RequiresSpecification offsetZero = new RequiresSpecification(tuLoc, free,
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrOffset, nr0));
-		check.annotate(offsetZero);
-		specFree.add(offsetZero);
-
-		// ~addr!base == 0
-		final Expression ptrBaseZero = mExpressionTranslation.constructLiteralForIntegerType(tuLoc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final Expression isNullPtr =
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrBase, ptrBaseZero);
-
-		// requires ~addr!base == 0 || #valid[~addr!base];
-		final Expression addrIsValid = mBooleanArrayHelper
-				.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(tuLoc, valid, idcFree));
-		final RequiresSpecification baseValid = new RequiresSpecification(tuLoc, free,
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.LOGICOR, isNullPtr, addrIsValid));
-
-		check.annotate(baseValid);
-		specFree.add(baseValid);
-
-		// ensures (if ~addr!base == 0 then #valid == old(#valid) else #valid == old(#valid)[~addr!base := false])
-		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
-		final Expression updateValidArray = ExpressionFactory.constructIfThenElseExpression(tuLoc, isNullPtr,
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
-						ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid)),
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
-						new ArrayStoreExpression(tuLoc,
-								ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid),
-								idcFree, bLFalse)));
-
-		specFree.add(mProcedureManager.constructEnsuresSpecification(tuLoc, free, updateValidArray,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(valid))));
-		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { getValidArrayLhs(tuLoc) }));
-
-		decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE, new String[0],
-				new VarList[] { new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
-				new VarList[0], specFree.toArray(new Specification[specFree.size()]), null));
-
-		if (ADD_IMPLEMENTATIONS) {
-			// procedure ~free(~addr:$Pointer$) returns() {
-			// #valid[~addr!base] := false;
-			// // havoc #memory[n];
-			// }
-			final LeftHandSide[] lhs = new LeftHandSide[] {
-					ExpressionFactory.constructNestedArrayLHS(tuLoc, getValidArrayLhs(tuLoc), idcFree) };
-			final Expression[] rhsFree = new Expression[] { bLFalse };
-			final Body bodyFree = new Body(tuLoc, new VariableDeclaration[0],
-					new Statement[] { StatementFactory.constructAssignmentStatement(tuLoc, lhs, rhsFree) });
-			decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE, new String[0],
-					new VarList[] {
-							new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
-					new VarList[0], null, bodyFree));
-		}
-		return decl;
-	}
 
 	/**
 	 * Generate <code>procedure ULTIMATE.dealloc(~addr:$Pointer$) returns()</code>'s declaration and implementation.
@@ -2046,8 +1952,8 @@ public class MemoryHandler {
 						MemoryModelDeclarations.Ultimate_Dealloc.getName(), new Expression[] { lrVal.getValue() });
 		// add required information to function handler.
 		if (mProcedureManager.isGlobalScope()) {
-			mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Dealloc.getName(),
-					getValidArrayLhs(loc));
+//			mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Dealloc.getName(),
+//					getValidArrayLhs(loc));
 //			mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_Dealloc.getName());
 		}
 		return freeCall;
@@ -2078,8 +1984,8 @@ public class MemoryHandler {
 
 		// add required information to function handler.
 		mProcedureManager.registerProcedure(MemoryModelDeclarations.Ultimate_Alloc.getName());
-		mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), getValidArrayLhs(loc));
-		mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), getLengthArrayLhs(loc));
+//		mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), getValidArrayLhs(loc));
+//		mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), getLengthArrayLhs(loc));
 		assert !mProcedureManager.isGlobalScope() : "cannot have a call in global scope!";
 		// mProcedureManager.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
 		// mProcedureManager.addCallGraphEdge(mProcedureManager.getCurrentProcedureID(),
@@ -2293,7 +2199,7 @@ public class MemoryHandler {
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
 			final String writeCallProcedureName = mMemoryModel.getWriteProcedureName(cp.getType());
 			final HeapDataArray dhp = mMemoryModel.getDataHeapArray(cp.getType());
-			mProcedureManager.addModifiedGlobal(mProcedureManager.getCurrentProcedureID(), dhp.getVariableLHS());
+//			mProcedureManager.addModifiedGlobal(mProcedureManager.getCurrentProcedureID(), dhp.getVariableLHS());
 			stmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
 					new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 		} else if (valueType instanceof CEnum) {
@@ -2301,14 +2207,14 @@ public class MemoryHandler {
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
 			final String writeCallProcedureName = mMemoryModel.getWriteProcedureName(CPrimitives.INT);
 			final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.INT);
-			mProcedureManager.addModifiedGlobal(mProcedureManager.getCurrentProcedureID(), dhp.getVariableLHS());
+//			mProcedureManager.addModifiedGlobal(mProcedureManager.getCurrentProcedureID(), dhp.getVariableLHS());
 			stmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
 					new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 		} else if (valueType instanceof CPointer) {
 			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
 			final String writeCallProcedureName = mMemoryModel.getWritePointerProcedureName();
 			final HeapDataArray dhp = mMemoryModel.getPointerHeapArray();
-			mProcedureManager.addModifiedGlobal(mProcedureManager.getCurrentProcedureID(), dhp.getVariableLHS());
+//			mProcedureManager.addModifiedGlobal(mProcedureManager.getCurrentProcedureID(), dhp.getVariableLHS());
 			stmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
 					new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 		} else if (valueType instanceof CStruct) {
@@ -2753,7 +2659,7 @@ public class MemoryHandler {
 			final VariableLHS resultPointer, final int additionalOffset, final BigInteger valueBigInt) {
 		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.CHAR);
 		final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.CHAR);
-		mProcedureManager.addModifiedGlobal(dhp.getVariableLHS());
+//		mProcedureManager.addModifiedGlobal(dhp.getVariableLHS());
 		final Expression inputPointer = CTranslationUtil.convertLHSToExpression(resultPointer);
 		final Expression additionalOffsetExpr = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(additionalOffset));

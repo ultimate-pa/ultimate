@@ -591,10 +591,14 @@ public class PostProcessor {
 //			stmt.add(new ReturnStatement(loc));
 			builder.addStatement(new ReturnStatement(loc));
 
-			return new Body(loc,
-//					decl.toArray(new VariableDeclaration[decl.size()]),
+//			return new Body(loc,
+////					decl.toArray(new VariableDeclaration[decl.size()]),
+//					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
+//					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
+			return procedureManager.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
-					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
+					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
+					dispatchingProcedureName);
 		} else {
 //			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
@@ -709,9 +713,11 @@ public class PostProcessor {
 //					stmt.toArray(new Statement[stmt.size()]));
 			builder.addStatements(CTranslationUtil.createHavocsForAuxVars(builder.getAuxVars()));
 			builder.addStatement(new ReturnStatement(loc));
-			return new Body(loc,
+//			return new Body(loc,
+			return procedureManager.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
-					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
+					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
+					dispatchingProcedureName);
 		}
 	}
 
