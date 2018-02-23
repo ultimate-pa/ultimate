@@ -1586,13 +1586,18 @@ public class MemoryHandler {
 	public Expression getLengthArray(final ILocation loc) {
 		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Length);
 
-		final BoogieArrayType lengthArrayType =
-				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
-		final DeclarationInformation lengthArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+//		final BoogieArrayType lengthArrayType =
+//				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
+//		final DeclarationInformation lengthArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+//
+//		// return new IdentifierExpression(loc, SFO.LENGTH);
+//		return ExpressionFactory.constructIdentifierExpression(loc, lengthArrayType,
+//				MemoryModelDeclarations.Ultimate_Length.getName(), lengthArrayDeclarationInfo);
 
-		// return new IdentifierExpression(loc, SFO.LENGTH);
-		return ExpressionFactory.constructIdentifierExpression(loc, lengthArrayType,
-				MemoryModelDeclarations.Ultimate_Length.getName(), lengthArrayDeclarationInfo);
+		final MemoryModelDeclarationInfo validMmfInfo =
+				getMemoryModelDeclarationInfo(MemoryModelDeclarations.Ultimate_Length);
+		return validMmfInfo.constructIdentiferExpression(loc);
+
 	}
 
 	/**
@@ -1602,14 +1607,19 @@ public class MemoryHandler {
 	 */
 	public VariableLHS getLengthArrayLhs(final ILocation loc) {
 		requireMemoryModelFeature(MemoryModelDeclarations.Ultimate_Length);
+//
+//		final BoogieArrayType lengthArrayType =
+//				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
+//		final DeclarationInformation lengthArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+//
+//		// return new IdentifierExpression(loc, SFO.LENGTH);
+//		return ExpressionFactory.constructVariableLHS(loc, lengthArrayType,
+//				MemoryModelDeclarations.Ultimate_Length.getName(), lengthArrayDeclarationInfo);
 
-		final BoogieArrayType lengthArrayType =
-				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT);
-		final DeclarationInformation lengthArrayDeclarationInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+		final MemoryModelDeclarationInfo validMmfInfo =
+				getMemoryModelDeclarationInfo(MemoryModelDeclarations.Ultimate_Length);
+		return validMmfInfo.constructVariableLHS(loc);
 
-		// return new IdentifierExpression(loc, SFO.LENGTH);
-		return ExpressionFactory.constructVariableLHS(loc, lengthArrayType,
-				MemoryModelDeclarations.Ultimate_Length.getName(), lengthArrayDeclarationInfo);
 	}
 
 	/**
@@ -2604,21 +2614,21 @@ public class MemoryHandler {
 
 		private final MemoryModelDeclarations mMmd;
 		private final BoogieType mBoogieType;
-		private final ASTType mAstType;
+//		private final ASTType mAstType;
 //		private VariableLHS mVariableLHS;
 //		private IdentifierExpression mIdExp;
 
 		public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
 			mMmd = mmd;
 			mBoogieType = null;
-			mAstType = null;
+//			mAstType = null;
 		}
 
-		public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd, final BoogieType boogieType,
-				final ASTType astType) {
+		public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd, final BoogieType boogieType) {
+//				final ASTType astType) {
 			mMmd = mmd;
 			mBoogieType = boogieType;
-			mAstType = astType;
+//			mAstType = astType;
 //			mIdExp = ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
 //					mBoogieType, mmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
 //			mVariableLHS = ExpressionFactory.constructVariableLHS(LocationFactory.createIgnoreCLocation(),
@@ -2650,12 +2660,12 @@ public class MemoryHandler {
 			return mBoogieType;
 		}
 
-		ASTType getAstType() {
-			if (mBoogieType == null) {
-				throw new IllegalStateException();
-			}
-			return mAstType;
-		}
+//		ASTType getAstType() {
+//			if (mBoogieType == null) {
+//				throw new IllegalStateException();
+//			}
+//			return mAstType;
+//		}
 
 		static MemoryModelDeclarationInfo constructMemoryModelDeclarationInfo(final HandlerHandler handlerHandler,
 				final MemoryModelDeclarations mmd) {
@@ -2672,13 +2682,21 @@ public class MemoryHandler {
 			case Ultimate_Dealloc:
 				break;
 			case Ultimate_Length:
-				break;
+				return new MemoryModelDeclarationInfo(mmd,
+						BoogieType.createArrayType(0,
+								new BoogieType[] {
+										handlerHandler.getBoogieTypeHelper().getBoogieTypeForPointerComponents() },
+								BoogieType.TYPE_INT));
 			case Ultimate_MemInit:
 				break;
 			case Ultimate_Valid:
 				return new MemoryModelDeclarationInfo(mmd,
-						handlerHandler.getTypeHandler().getBoogiePointerType(),
-						handlerHandler.getTypeHandler().constructPointerType(LocationFactory.createIgnoreCLocation()));
+						BoogieType.createArrayType(0,
+								new BoogieType[] {
+										handlerHandler.getBoogieTypeHelper().getBoogieTypeForPointerComponents() },
+								handlerHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(
+										handlerHandler.getMemoryHandler().getBooleanArrayHelper()
+										.constructBoolReplacementType())));
 			default:
 				break;
 			}

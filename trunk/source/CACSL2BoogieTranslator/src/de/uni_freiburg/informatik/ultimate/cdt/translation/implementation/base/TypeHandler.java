@@ -144,11 +144,13 @@ public class TypeHandler implements ITypeHandler {
 	private BoogieType mBoogiePointerType;
 
 	private ExpressionTranslation mExpressionTranslation;
+	private final HandlerHandler mHandlerHandler;
 
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
 	}
 
+	@Override
 	public boolean isBitvectorTranslation() {
 		return mBitvectorTranslation;
 	}
@@ -158,7 +160,9 @@ public class TypeHandler implements ITypeHandler {
 	 *
 	 * @param useIntForAllIntegerTypes
 	 */
-	public TypeHandler(final boolean bitvectorTranslation) {
+	public TypeHandler(final boolean bitvectorTranslation, final HandlerHandler handlerHandler) {
+		mHandlerHandler = handlerHandler;
+		handlerHandler.setTypeHandler(this);
 		mBitvectorTranslation = bitvectorTranslation;
 		mDefinedTypes = new LinkedScopedHashMap<>();
 		mIncompleteType = new LinkedHashSet<>();
@@ -636,26 +640,37 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private ASTType cPrimitive2AstType(final ILocation loc, final CPrimitive cPrimitive) {
+		final BoogieType boogieType = mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(cPrimitive);
+
 		switch (cPrimitive.getGeneralType()) {
 		case VOID:
 			return null; // (alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
 		case INTTYPE:
 			if (mBitvectorTranslation) {
-				return new NamedType(loc, BoogieType.TYPE_ERROR, "C_" + cPrimitive.getType().toString(),
-						new ASTType[0]);
+				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
-			return new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
+			return new PrimitiveType(loc, boogieType, SFO.INT);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mBitvectorTranslation) {
-				return new NamedType(loc, BoogieType.TYPE_ERROR, "C_" + cPrimitive.getType().toString(),
-						new ASTType[0]);
+				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
-			return new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
+			return new PrimitiveType(loc, boogieType, SFO.REAL);
 		default:
 			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 		}
 	}
+//
+//	/**
+//	 *
+//	 *  (alex:) it is unclear to me if this is a) unsound b) a valid workaround c) a valid solution
+//	 *
+//	 * @param cPrimitive
+//	 * @return
+//	 */
+//	public BoogieType getBitVectorTranslationBoogieTypeForCPrimitive(final CPrimitive cPrimitive) {
+//		return mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(cPrimitive);
+//	}
 
 	public ASTType bytesize2asttype(final ILocation loc, final CPrimitiveCategory generalprimitive,
 			final int bytesize) {

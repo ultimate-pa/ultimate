@@ -104,6 +104,7 @@ public class TypeSizeAndOffsetComputer {
 	    private SizeTValue mTypeSizePointer = null;
 
 	    public TypeSizeAndOffsetComputer(final HandlerHandler handlerHandler, final TypeSizes typeSizes) {
+	    	handlerHandler.setTypeSizeAndOffsetComputer(this);
 			mExpressionTranslation = handlerHandler.getExpressionTranslation();
 	    	mTypeHandler = (TypeHandler) handlerHandler.getTypeHandler();
 	    	mTypeSizes = typeSizes;

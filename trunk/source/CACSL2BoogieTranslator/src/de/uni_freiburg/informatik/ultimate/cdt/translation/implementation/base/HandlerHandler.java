@@ -6,6 +6,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -21,6 +22,7 @@ public class HandlerHandler {
 	private TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private BoogieTypeHelper mBoogieTypeHelper;
 	private INameHandler mNameHandler;
+	private TypeSizes mTypeSizes;
 
 
 	public INameHandler getNameHandler() {
@@ -107,6 +109,14 @@ public class HandlerHandler {
 
 	public StructHandler getStructHandler() {
 		return mStructHandler;
+	}
+
+	public void setTypeSizes(final TypeSizes typeSizes) {
+		mTypeSizes = typeSizes;
+	}
+
+	public TypeSizes getTypeSizes() {
+		return mTypeSizes;
 	}
 
 

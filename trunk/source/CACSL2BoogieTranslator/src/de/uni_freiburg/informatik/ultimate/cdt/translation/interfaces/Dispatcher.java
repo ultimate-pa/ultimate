@@ -47,6 +47,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -130,13 +131,16 @@ public abstract class Dispatcher {
 
 	protected final Map<String, IASTNode> mFunctionTable;
 
+	protected final HandlerHandler mHandlerHandler;
+
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable) {
+		mHandlerHandler = new HandlerHandler();
 		mBacktranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
 		mPreferences = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mTypeSizes = new TypeSizes(mPreferences);
+		mTypeSizes = new TypeSizes(mPreferences, mHandlerHandler);
 		mTranslationSettings = new TranslationSettings(mPreferences);
 		mLocationFactory = locFac;
 		mFunctionTable = functionTable;

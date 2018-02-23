@@ -556,7 +556,7 @@ public class CHandler implements ICHandler {
 		}
 
 		mTypeHandler.setExpressionTranslation(mExpressionTranslation);
-		mBoogieTypeHelper = new BoogieTypeHelper(main);
+		mBoogieTypeHelper = new BoogieTypeHelper(handlerHandler);
 
 		mPostProcessor = new PostProcessor(main, mLogger, mExpressionTranslation,
 				overapproximateFloatingPointOperations);
@@ -571,7 +571,7 @@ public class CHandler implements ICHandler {
 		mMemoryHandler = new MemoryHandler(mHandlerHandler, checkPointerValidity,
 				main.getTypeSizes(), bitvectorTranslation, handlerHandler.getNameHandler(), smtBoolArraysWorkaround,
 				prefs);
-		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation);
+		mStructHandler = new StructHandler(handlerHandler);
 		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, mProcedureManager);
 
 		mStandardFunctionHandler = new StandardFunctionHandler(mTypeHandler, mExpressionTranslation, mMemoryHandler,
@@ -2605,8 +2605,15 @@ public class CHandler implements ICHandler {
 	public void convert(final ILocation loc, final ExpressionResult rexp, final CType newTypeRaw) {
 		final RValue rValIn = (RValue) rexp.mLrVal;
 		final CType newType = newTypeRaw.getUnderlyingType();
+
 		final CType oldType = rValIn.getCType().getUnderlyingType();
-		if (TypeHandler.areMatchingTypes(newType, oldType)) {
+
+		final BoogieType oldBoogieType = (BoogieType) rexp.getLrValue().getValue().getType();
+		final BoogieType newBoogieType = mBoogieTypeHelper.getBoogieTypeForCType(newTypeRaw);
+
+		if (TypeHandler.areMatchingTypes(newType, oldType)
+//				oldBoogieType.isUnifiableTo(other)
+				&& oldBoogieType.equals(newBoogieType)) {
 			// types are already identical -- nothing to do
 			return;
 		}

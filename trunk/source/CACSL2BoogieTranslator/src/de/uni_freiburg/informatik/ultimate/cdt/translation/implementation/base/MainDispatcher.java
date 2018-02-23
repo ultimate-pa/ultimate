@@ -261,8 +261,6 @@ public class MainDispatcher extends Dispatcher {
 	protected boolean mOverapproximateFloatingPointOperations;
 	protected Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 
-	private HandlerHandler mHandlerHandler;
-
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
 			final ILogger logger) {
@@ -365,15 +363,12 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	protected void init() {
-		mHandlerHandler = new HandlerHandler();
 
-		mTypeHandler = new TypeHandler(mBitvectorTranslation);
-		mHandlerHandler.setTypeHandler(mTypeHandler);
+		mTypeHandler = new TypeHandler(mBitvectorTranslation, mHandlerHandler);
 
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 
-		mNameHandler = new NameHandler(mBacktranslator);
-		mHandlerHandler.setNameHandler(mNameHandler);
+		mNameHandler = new NameHandler(mBacktranslator, mHandlerHandler);
 
 		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, true, mLogger, mBitvectorTranslation,
 				mOverapproximateFloatingPointOperations);

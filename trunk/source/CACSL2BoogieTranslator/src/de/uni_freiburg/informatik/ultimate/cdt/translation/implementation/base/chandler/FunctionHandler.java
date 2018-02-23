@@ -584,7 +584,8 @@ public class FunctionHandler {
 					final String id = outParams[0].getIdentifiers()[0];
 					final VariableLHS lhs = //new VariableLHS(loc, id);
 							ExpressionFactory.constructVariableLHS(loc,
-									main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(outParams[0].getType()),
+//									main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(outParams[0].getType()),
+									main.mCHandler.getBoogieTypeHelper().getBoogieTypeForCType(functionResultType),
 									id, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 											mProcedureManager.getCurrentProcedureID()));
 					final VariableLHS[] lhss = new VariableLHS[] { lhs };

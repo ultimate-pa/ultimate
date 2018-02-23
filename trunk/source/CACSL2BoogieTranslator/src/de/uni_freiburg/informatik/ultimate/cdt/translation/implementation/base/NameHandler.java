@@ -5,31 +5,31 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
@@ -55,20 +55,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @date 07.03.2012
  */
 public class NameHandler implements INameHandler {
-	
+
 	/**
 	 * Local variables with similar identifiers may occur in different scopes.
-	 * Since there are mainly two scopes in Boogie (global, local) we have to 
+	 * Since there are mainly two scopes in Boogie (global, local) we have to
 	 * make sure that every local C variables gets a unique name.
 	 * The simple solution is to append the "compound counter" as a suffix to
 	 * the Boogie variable.
 	 * This has however a negative impact on the reproducibility (important for,
-	 * e.g., the resue of automata). As soon as we add a new compound all 
+	 * e.g., the resue of automata). As soon as we add a new compound all
 	 * variables get different names.
 	 * As an alternative we have a different solution in which we only use
 	 * the compound counter to get a unique suffix for the variable.
 	 * (We count the occurrences of id/compound counter pairs and use this as
-	 * suffix.)   
+	 * suffix.)
 	 */
 	private static final boolean USE_COMPOUND_COUNTER_DIRECTLY_ASLOCAL_VAR_SUFFIX = false;
 	private final NestedMap2<String, Integer, Integer> mLocalVarSuffix = new NestedMap2<>();
@@ -81,8 +81,11 @@ public class NameHandler implements INameHandler {
 	private int mGlobalCounter;
 
 	private final CACSL2BoogieBacktranslator mBacktranslator;
+	private final HandlerHandler mHandlerHandler;
 
-	public NameHandler(final CACSL2BoogieBacktranslator backtranslator) {
+	public NameHandler(final CACSL2BoogieBacktranslator backtranslator, final HandlerHandler handlerHandler) {
+		handlerHandler.setNameHandler(this);
+		mHandlerHandler = handlerHandler;
 		mBacktranslator = backtranslator;
 	}
 
@@ -145,8 +148,8 @@ public class NameHandler implements INameHandler {
 		mBacktranslator.putVar(boogieId, cId, cType);
 		return boogieId;
 	}
-	
-	
+
+
 	private int generateUniqueLocalVarSuffix(final String cId, final int compCnt) {
 		if (USE_COMPOUND_COUNTER_DIRECTLY_ASLOCAL_VAR_SUFFIX) {
 			return compCnt;
