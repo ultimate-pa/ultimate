@@ -73,7 +73,7 @@ public class BoogieStructType extends BoogieType {
      * @param fTypes
      *            a list of type names.
      */
-    public BoogieStructType(final String[] fNames, final BoogieType[] fTypes) {
+    BoogieStructType(final String[] fNames, final BoogieType[] fTypes) {
         assert fNames.length == fTypes.length;
         this.fNames = fNames;
         this.fTypes = fTypes;

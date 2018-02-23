@@ -49,7 +49,7 @@ public class BoogiePlaceholderType extends BoogieType {
 	private static final long serialVersionUID = 3301828910886451978L;
 	private final int depth;
 
-	public BoogiePlaceholderType(final int depth) {
+	BoogiePlaceholderType(final int depth) {
 		this.depth = depth;
 	}
 
