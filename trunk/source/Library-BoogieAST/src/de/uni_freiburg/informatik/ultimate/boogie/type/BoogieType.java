@@ -278,11 +278,6 @@ public abstract class BoogieType implements IBoogieType {
 		return o instanceof BoogieType && getUnderlyingType() == ((BoogieType) o).getUnderlyingType();
 	}
 
-	@Override
-	public int hashCode() {
-		return 0;
-	}
-
 	/**
 	 * Unify the this type (which contains Placeholders) with another type (which doesn't) and compute a suitable
 	 * substitution.

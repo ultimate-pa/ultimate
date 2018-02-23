@@ -5,7 +5,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.Storage
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -127,7 +126,7 @@ public class BoogieTypeHelper {
 			for (int i = 0; i < cStructType.getFieldCount(); i++) {
 				boogieFieldTypes[i] = getBoogieTypeForCType(cStructType.getFieldTypes()[i]);
 			}
-			return new BoogieStructType(cStructType.getFieldIds(), boogieFieldTypes);
+			return BoogieType.createStructType(cStructType.getFieldIds(), boogieFieldTypes);
 		} else {
 			throw new AssertionError("unknown type " + cType);
 		}
