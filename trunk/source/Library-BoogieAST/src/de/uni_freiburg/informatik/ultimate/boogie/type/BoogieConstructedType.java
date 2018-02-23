@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -220,48 +219,4 @@ public class BoogieConstructedType extends BoogieType {
 		}
 		return constr.isFinite();
 	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((constr == null) ? 0 : constr.hashCode());
-		result = prime * result + Arrays.hashCode(parameters);
-		result = prime * result + ((realType == null) ? 0 : realType.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!super.equals(obj)) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final BoogieConstructedType other = (BoogieConstructedType) obj;
-		if (constr == null) {
-			if (other.constr != null) {
-				return false;
-			}
-		} else if (!constr.equals(other.constr)) {
-			return false;
-		}
-		if (!Arrays.equals(parameters, other.parameters)) {
-			return false;
-		}
-		if (realType == null) {
-			if (other.realType != null) {
-				return false;
-			}
-		} else if (!realType.equals(other.realType)) {
-			return false;
-		}
-		return true;
-	}
-
-
 }

@@ -285,44 +285,4 @@ public class BoogieStructType extends BoogieType {
 		}
         return isFinite;
     }
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + Arrays.hashCode(fTypes);
-		result = prime * result + (isFinite ? 1231 : 1237);
-		result = prime * result + ((realType == null) ? 0 : realType.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!super.equals(obj)) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final BoogieStructType other = (BoogieStructType) obj;
-		if (!Arrays.equals(fTypes, other.fTypes)) {
-			return false;
-		}
-		if (isFinite != other.isFinite) {
-			return false;
-		}
-		if (realType == null) {
-			if (other.realType != null) {
-				return false;
-			}
-		} else if (!realType.equals(other.realType)) {
-			return false;
-		}
-		return true;
-	}
-
-
 }

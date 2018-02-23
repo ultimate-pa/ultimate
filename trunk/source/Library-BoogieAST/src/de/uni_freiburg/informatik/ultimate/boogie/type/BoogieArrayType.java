@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -277,57 +276,5 @@ public class BoogieArrayType extends BoogieType {
 	@Override
 	public boolean isFinite() {
 		return isFinite;
-	}
-
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + Arrays.hashCode(indexTypes);
-		result = prime * result + (isFinite ? 1231 : 1237);
-		result = prime * result + numPlaceholders;
-		result = prime * result + ((realType == null) ? 0 : realType.hashCode());
-		result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
-		return result;
-	}
-
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final BoogieArrayType other = (BoogieArrayType) obj;
-		if (!Arrays.equals(indexTypes, other.indexTypes)) {
-			return false;
-		}
-		if (isFinite != other.isFinite) {
-			return false;
-		}
-		if (numPlaceholders != other.numPlaceholders) {
-			return false;
-		}
-		if (realType == null) {
-			if (other.realType != null) {
-				return false;
-			}
-		} else if (!realType.equals(other.realType)) {
-			return false;
-		}
-		if (valueType == null) {
-			if (other.valueType != null) {
-				return false;
-			}
-		} else if (!valueType.equals(other.valueType)) {
-			return false;
-		}
-		return true;
 	}
 }
