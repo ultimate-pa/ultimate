@@ -624,7 +624,7 @@ public class MemoryHandler {
 		final List<Statement> loopBody = constructMemcpyOrMemmoveLoopBody(heapDataArrays, loopCtrAux, SFO.MEMCPY_DEST,
 				SFO.MEMCPY_SRC, memCopyOrMemMove.getName());
 
-		final IdentifierExpression sizeIdExpr = // new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
+		final IdentifierExpression sizeIdExprBody = // new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mBoogieTypeHelper.getBoogieTypeForSizeT(),
 						SFO.MEMCPY_SIZE,
 						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
@@ -632,7 +632,7 @@ public class MemoryHandler {
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 		final List<Statement> stmt =
-				constructCountingLoop(sizeIdExpr, loopCtrAux, one, loopBody, memCopyOrMemMove.getName());
+				constructCountingLoop(sizeIdExprBody, loopCtrAux, one, loopBody, memCopyOrMemMove.getName());
 
 		final Body procBody = mProcedureManager.constructBody(ignoreLoc,
 				decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt.size()]),
@@ -651,20 +651,26 @@ public class MemoryHandler {
 //		heapDataArrays.forEach(heapDataArray -> mProcedureManager.addModifiedGlobal(memCopyOrMemMove.getName(),
 //				heapDataArray.getVariableLHS()));
 
+	final IdentifierExpression sizeIdExprDecl = // new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mBoogieTypeHelper.getBoogieTypeForSizeT(),
+						SFO.MEMCPY_SIZE,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
+
+
 		// add requires #valid[dest!base];
 		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST, specs, memCopyOrMemMove.getName());
 		// add requires #valid[src!base];
 		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_SRC, specs, memCopyOrMemMove.getName());
 
 		// add requires (#size + #dest!offset <= #length[#dest!base] && 0 <= #dest!offset)
-		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExpr, SFO.MEMCPY_DEST, specs, memCopyOrMemMove.getName());
+		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExprDecl, SFO.MEMCPY_DEST, specs, memCopyOrMemMove.getName());
 
 		// add requires (#size + #src!offset <= #length[#src!base] && 0 <= #src!offset)
-		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExpr, SFO.MEMCPY_SRC, specs, memCopyOrMemMove.getName());
+		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExprDecl, SFO.MEMCPY_SRC, specs, memCopyOrMemMove.getName());
 
 		if (memCopyOrMemMove == MemoryModelDeclarations.C_Memcpy && false) {
 			// disabled because underapprox. for undefined behavior is ok
-			final RequiresSpecification noOverlapping = constructRequiresSourceDestNoOverlap(ignoreLoc, sizeIdExpr);
+			final RequiresSpecification noOverlapping = constructRequiresSourceDestNoOverlap(ignoreLoc, sizeIdExprDecl);
 			specs.add(noOverlapping);
 		}
 

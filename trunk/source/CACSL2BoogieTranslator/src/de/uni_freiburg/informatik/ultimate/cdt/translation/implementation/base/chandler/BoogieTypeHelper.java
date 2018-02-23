@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -117,7 +118,13 @@ public class BoogieTypeHelper {
 		} else if (cType instanceof CEnum) {
 			throw new AssertionError("implement if needed");
 		} else if (cType instanceof CArray) {
-			throw new AssertionError("implement if needed");
+
+			// may have to change this from int to something depending on bitvector settings and stuff..
+			final BoogieType[] indexTypes = new BoogieType[] {
+					getBoogieTypeForCType(new CPrimitive(CPrimitives.UINT)) };
+
+			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
+			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
 			throw new AssertionError("implement if needed");
 		} else if (cType instanceof CStruct) {

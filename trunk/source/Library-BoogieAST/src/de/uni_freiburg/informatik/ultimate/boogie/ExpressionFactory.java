@@ -409,15 +409,20 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructBitvectorAccessExpression(final ILocation loc, final Expression operand,
 			final int high, final int low) {
+
+		final BoogieType type = TypeCheckHelper.typeCheckBitVectorAccessExpression(
+					TypeCheckHelper.getBitVecLength((BoogieType) operand.getType()), high,
+					low, (BoogieType) operand.getType(), new TypeErrorReporter(loc));
+
 		final Expression operandLiteral = filterLiteral(operand);
 		if (operandLiteral instanceof BitvecLiteral) {
 			final BigInteger biValue = new BigInteger(((BitvecLiteral) operandLiteral).getValue());
 			final BigInteger two = BigInteger.valueOf(2);
 			final BigInteger dividedByLow = biValue.divide(two.pow(low));
 			final BigInteger biresult = dividedByLow.mod(two.pow(high));
-			return new BitvecLiteral(loc, biresult.toString(), high - low);
+			return new BitvecLiteral(loc, type, biresult.toString(), high - low);
 		}
-		return new BitVectorAccessExpression(loc, operand, high, low);
+		return new BitVectorAccessExpression(loc, type, operand, high, low);
 	}
 
 	public static Expression and(final ILocation loc, final List<Expression> exprs) {
