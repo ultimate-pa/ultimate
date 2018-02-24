@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
@@ -61,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -80,6 +80,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class ExpressionFactory {
 
+
+	/**
+	 * Name for dummy expressions that represent a "void" result. Those identifier expressions may not be used anywhere
+	 * and thus should get an error BoogieType.
+	 */
+	public static final String DUMMY_VOID = null;
 
 
 	public static Expression constructUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator,
@@ -692,7 +698,7 @@ public class ExpressionFactory {
 
 	public static IdentifierExpression createVoidDummyExpression(final ILocation loc) {
 		return constructIdentifierExpression(loc, BoogieType.TYPE_ERROR,
-				SFO.DUMMY_VOID, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+				DUMMY_VOID, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 
