@@ -735,6 +735,10 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public BoogieType astTypeToBoogieType(final ASTType astType) {
+		if (astType == null) {
+			// "null" astType represents a void type
+			return BoogieType.TYPE_ERROR;
+		}
 		return (BoogieType) astType.getBoogieType();
 	}
 
