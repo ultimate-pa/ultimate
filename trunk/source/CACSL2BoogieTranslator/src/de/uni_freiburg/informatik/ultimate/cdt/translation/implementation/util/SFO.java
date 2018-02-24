@@ -205,6 +205,12 @@ public final class SFO {
 	public static final String C_MEMSET = "#Ultimate.C_memset";
 
 	/**
+	 * Name for dummy expressions that represent a "void" result. Those identifier expressions may not be used anywhere
+	 * and thus should get an error BoogieType.
+	 */
+	public static final String DUMMY_VOID = null;
+
+	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */
 	public enum AUXVAR {

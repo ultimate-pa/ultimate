@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -687,6 +688,11 @@ public class ExpressionFactory {
 		} else {
 			throw new AssertionError("unexpected expression type");
 		}
+	}
+
+	public static IdentifierExpression createVoidDummyExpression(final ILocation loc) {
+		return constructIdentifierExpression(loc, BoogieType.TYPE_ERROR,
+				SFO.DUMMY_VOID, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 

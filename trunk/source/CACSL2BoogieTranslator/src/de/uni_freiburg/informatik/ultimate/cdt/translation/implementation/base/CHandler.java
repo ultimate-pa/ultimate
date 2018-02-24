@@ -130,7 +130,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -653,8 +652,7 @@ public class CHandler implements ICHandler {
 
 				final LRValue rightLrVal = rightOperand.mLrVal;
 
-				final RValue address = decayArrayLrValToPointer(isPreRunMode(), loc, rightLrVal,
-						mTypeHandler.getBoogiePointerType());
+				final RValue address = decayArrayLrValToPointer(isPreRunMode(), loc, rightLrVal);
 				builder.setLrVal(address);
 				// return makeAssignment(main, loc, stmt, leftOperand.mLrVal, address, decl,
 				// auxVars, overappr);
@@ -945,8 +943,7 @@ public class CHandler implements ICHandler {
 	 * @param rightLrVal
 	 * @return
 	 */
-	public RValue decayArrayLrValToPointer(final boolean preRunMode, final ILocation loc, final LRValue rightLrVal,
-			final BoogieType pointerType) {
+	public RValue decayArrayLrValToPointer(final boolean preRunMode, final ILocation loc, final LRValue rightLrVal) {
 		assert rightLrVal.getCType().getUnderlyingType() instanceof CArray;
 
 		final Expression newValue;
@@ -965,7 +962,7 @@ public class CHandler implements ICHandler {
 				 * circumvents Boogie type checking during preprocessing TODO: use type error
 				 * instead of pointer type?
 				 */
-				newValue = ExpressionFactory.replaceBoogieType(oldValue, pointerType);
+				newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
 
 			}
 			((PRDispatcher) mMainDispatcher).moveArrayAndStructIdsOnHeap(loc, rightLrVal.getValue(),
@@ -1028,8 +1025,7 @@ public class CHandler implements ICHandler {
 			// } else {
 			// expr.mLrVal = new RValue(expr.mLrVal.getValue(), new CPointer(valueType));
 			// }
-			final RValue newRval = decayArrayLrValToPointer(isPreRunMode(), loc, expr.getLrValue(),
-					mTypeHandler.getBoogiePointerType());
+			final RValue newRval = decayArrayLrValToPointer(isPreRunMode(), loc, expr.getLrValue());
 			expr.mLrVal = newRval;
 		} else {
 			expr = expr.switchToRValueIfNecessary(main, loc);
@@ -2527,28 +2523,6 @@ public class CHandler implements ICHandler {
 	 */
 	public void completeTypeDeclaration(final CType incompleteStruct, final CType cvar) {
 		mStaticObjectsHandler.completeTypeDeclaration(incompleteStruct, cvar, mTypeHandler);
-
-		// assert incompleteStruct.getClass().equals(cvar.getClass());
-		// assert incompleteStruct.isIncomplete();
-		// TypeDeclaration oldDec = null;
-		// CDeclaration oldCDec = null;
-		// TypeDeclaration newDec = null;
-		// for (final Entry<Declaration, CDeclaration> en :
-		// mDeclarationsGlobalInBoogie.entrySet()) {
-		// if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
-		// oldDec = (TypeDeclaration) en.getKey();
-		// oldCDec = en.getValue();
-		// newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(),
-		// oldDec.isFinite(),
-		// oldDec.getIdentifier(), oldDec.getTypeParams(),
-		// mTypeHandler.cType2AstType(oldDec.getLocation(), cvar));
-		// break; // the if should be entered only once, anyway
-		// }
-		// }
-		// if (oldDec != null) {
-		// mDeclarationsGlobalInBoogie.remove(oldDec);
-		// mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
-		// }
 	}
 
 	/*
@@ -4321,88 +4295,150 @@ public class CHandler implements ICHandler {
 	 * operands. Requires that the {@link LRValue} of operands is an {@link RValue}
 	 * (i.e., switchToRValueIfNecessary was applied if needed). TODO: Check all
 	 * corner cases, write some testfiles.
+	 *
+	 *
+	 *
 	 */
 	ExpressionResult handleConditionalOperator(final ILocation loc, final Dispatcher main,
 			final ExpressionResult opCondition, final ExpressionResult opPositive, final ExpressionResult opNegative) {
+
 		opCondition.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
+
 		opPositive.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 		opNegative.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 
+		/*
+		 * C11 6.5.15.2 The first operand shall have scalar type.
+		 */
+		if (!opCondition.getLrValue().getCType().isScalarType()) {
+			throw new IncorrectSyntaxException(loc, "first operand of a conditional operator must have scalar type");
+		}
 
+		/*
+		 * C11 6.5.15.3 One of the following shall hold for the second and third operands:
+		 * <li> both operands have arithmetic type;
+		 * <li> both operands have the same structure or union type;
+		 * <li> both operands have void type;
+		 * <li> both operands are pointers to qualified or unqualified versions of compatible types;
+		 * <li> one operand is a pointer and the other is a null pointer constant; or
+		 * <li> one operand is a pointer to an object type and the other is a pointer to a qualified or unqualified
+		 *   version of void.
+		 */
+
+
+		/* C11 6.5.15.4 The first operand is evaluated; there is a sequence point between its evaluation and the
+         *  evaluation of the second or third operand (whichever is evaluated). The second operand
+         *  is evaluated only if the first compares unequal to 0; the third operand is evaluated only if
+         *  the first compares equal to 0; the result is the value of the second or third operand
+         *  (whichever is evaluated), converted to the type described below. 110)
+         *
+         * --> we translate this by a Boogie if-statement, such that the side effects of the evaluation of each
+         *  C expression go into the respective branch of the Boogie if statement.
+         */
+
+
+
+
+        /* C11 6.5.15.5 If both the second and third operands have arithmetic type, the result type that would be
+         *  determined by the usual arithmetic conversions, were they applied to those two operands,
+         *  is the type of the result. If both the operands have structure or union type, the result has
+         *  that type. If both operands have void type, the result has void type.
+         */
+
+		/* C11 6.5.15.6 If both the second and third operands are pointers or one is a null pointer constant and the
+         *  other is a pointer, the result type is a pointer to a type qualified with all the type qualifiers
+         *  of the types referenced by both operands. Furthermore, if both operands are pointers to
+         *  compatible types or to differently qualified versions of compatible types, the result type is
+         *  a pointer to an appropriately qualified version of the composite type; if one operand is a
+         *  null pointer constant, the result has the type of the other operand; otherwise, one operand
+         *  is a pointer to void or a qualified version of void, in which case the result type is a
+         *  pointer to an appropriately qualified version of void.
+         *
+         *  TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
+         *   currently.
+		 */
+
+		CType resultCType = null;
+
+		/* Treatment of the cases where one or both branches have void type and the LRValue of the dispatch result of
+		 * the branch is is null:
+		 *  We give a dummy LRValue, whose BoogieType is a type error so it cannot be used further.
+		 */
 		if (!opPositive.hasLRValue()) {
-			final boolean conditionIsConstantFalse = (opCondition.getLrValue().getValue() instanceof BooleanLiteral) &&
-				!((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
-			if (conditionIsConstantFalse) {
-				return opNegative;
-			} else {
-				/* TODO: it may still be unreachable, so the correct solution would probably be to put an arbitrary
-				 * value in place of opPositive (and possibly a check for undefined behaviour for when the value is
-				 * actually used)
-				 */
-				throw new UnsupportedOperationException("void value in possibly reachable part of if-then-else "
-						+ "expression");
-			}
+			opPositive.mLrVal = new RValue(ExpressionFactory.createVoidDummyExpression(loc),
+					new CPrimitive(CPrimitives.VOID));
+			resultCType = opNegative.hasLRValue() ? opNegative.getLrValue().getCType()
+					: new CPrimitive(CPrimitives.VOID);
 		}
 		if (!opNegative.hasLRValue()) {
-			final boolean conditionIsConstantTrue = (opCondition.getLrValue().getValue() instanceof BooleanLiteral) &&
-				((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
-			if (conditionIsConstantTrue) {
-				return opPositive;
-			} else {
-				/* TODO: it may still be unreachable, so the correct solution would probably be to put an arbitrary
-				 * value in place of opPositive (and possibly a check for undefined behaviour for when the value is
-				 * actually used)
-				 */
-				throw new UnsupportedOperationException("void value in possibly reachable part of if-then-else "
-						+ "expression");
-			}
+			opNegative.mLrVal = new RValue(ExpressionFactory.createVoidDummyExpression(loc),
+					new CPrimitive(CPrimitives.VOID));
+			resultCType = opPositive.hasLRValue() ? opPositive.getLrValue().getCType()
+					: new CPrimitive(CPrimitives.VOID);
 		}
 
 
-		if (opPositive.mLrVal.getCType().isArithmeticType() && opNegative.mLrVal.getCType().isArithmeticType()) {
+		if (opPositive.getLrValue().getCType().isArithmeticType()
+				&& opNegative.getLrValue().getCType().isArithmeticType()) {
 			// C11 6.5.15.5: If 2nd and 3rd operand have arithmetic type,
 			// the result type is determined by the usual arithmetic conversions.
 			mExpressionTranslation.usualArithmeticConversions(loc, opPositive, opNegative);
+			resultCType = opPositive.getLrValue().getCType();
 		}
 
-		if (opPositive.mLrVal.getCType().getUnderlyingType() instanceof CPointer
-				&& opNegative.mLrVal.getCType().getUnderlyingType().isIntegerType()) {
+		/* if one of the branches has pointer type and one has int type, we convert the int to a pointer
+		 */
+		if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
+				&& opNegative.getLrValue().isNullPointerConstant()) {
 			mExpressionTranslation.convertIntToPointer(loc, opNegative,
 					(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
+			resultCType = opPositive.getLrValue().getCType();
 		}
-		if (opNegative.mLrVal.getCType().getUnderlyingType() instanceof CPointer
-				&& opPositive.mLrVal.getCType().getUnderlyingType().isIntegerType()) {
+		if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
+				&& opPositive.getLrValue().isNullPointerConstant()) {
 			mExpressionTranslation.convertIntToPointer(loc, opPositive,
 					(CPointer) opNegative.mLrVal.getCType().getUnderlyingType());
+			resultCType = opNegative.getLrValue().getCType();
 		}
 
-		// final ArrayList<Statement> stmt = new ArrayList<>();
-		// final ArrayList<Declaration> decl = new ArrayList<>();
-		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>(0);
-		// final List<Overapprox> overappr = new ArrayList<>();
+		/* if one of the branches has pointer type and one has array type, the array decays to a pointer.
+		 */
+		if ((opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
+				|| opPositive.getLrValue().isNullPointerConstant())
+				&& opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+			opNegative.mLrVal = decayArrayLrValToPointer(isPreRunMode(), loc, opNegative.getLrValue());
+			mExpressionTranslation.convertIntToPointer(loc, opPositive,
+					(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
+			resultCType = opNegative.getLrValue().getCType();
+		}
+		if ((opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
+				|| opNegative.getLrValue().isNullPointerConstant())
+				&& opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+			opPositive.mLrVal = decayArrayLrValToPointer(isPreRunMode(), loc, opPositive.getLrValue());
+			mExpressionTranslation.convertIntToPointer(loc, opNegative,
+					(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
+			resultCType = opPositive.getLrValue().getCType();
+		}
+
+		// default case: the types of the operands match --> we choose one of them as the result CType
+		if (resultCType == null) {
+			resultCType = opPositive.getLrValue().getCType();
+		}
+
+//			final boolean conditionIsConstantTrue = (opCondition.getLrValue().getValue() instanceof BooleanLiteral) &&
+//				((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
+
+
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		// decl.addAll(opCondition.mDecl);
-		// auxVars.putAll(opCondition.mAuxVars);
-		// stmt.addAll(opCondition.mStmt);
-		// overappr.addAll(opCondition.mOverappr);
 		resultBuilder.addAllExceptLrValue(opCondition);
 
-		// final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.ITE, new
-		// CPrimitive(CPrimitives.INT));
-		// final ASTType tmpType = mTypeHandler.cType2AstType(loc,
-		// opPositive.mLrVal.getCType());
-		// assert tmpType != null : "Could not find ASTType for CType " +
-		// opPositive.mLrVal.getCType();
-		// final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName,
-		// tmpType, loc);
-		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, opPositive.getLrValue().getCType(),
-				SFO.AUXVAR.ITE);
+		// auxvar that will hold the result of the ite expression
+		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultCType, SFO.AUXVAR.ITE);
 
-		// decl.add(auxvar.getVarDec());
-		// auxVars.put(auxvar.getVarDec(), loc);
 		resultBuilder.addDeclaration(auxvar.getVarDec());
 		resultBuilder.addAuxVar(auxvar);
 
+		// collect side effects of "then" branch
 		final List<Statement> ifStatements = new ArrayList<>();
 		{
 			ifStatements.addAll(opPositive.mStmt);
@@ -4416,12 +4452,10 @@ public class CHandler implements ICHandler {
 				}
 				ifStatements.add(assignStmt);
 			}
-			// decl.addAll(opPositive.mDecl);
-			// auxVars.putAll(opPositive.mAuxVars);
-			// overappr.addAll(opPositive.mOverappr);
 			resultBuilder.addAllExceptLrValueAndStatements(opPositive);
 		}
 
+		// collect side effects of "else" branch
 		final List<Statement> elseStatements = new ArrayList<>();
 		{
 			elseStatements.addAll(opNegative.mStmt);
@@ -4436,9 +4470,6 @@ public class CHandler implements ICHandler {
 				}
 				elseStatements.add(assignStmt);
 			}
-			// decl.addAll(opNegative.mDecl);
-			// auxVars.putAll(opNegative.mAuxVars);
-			// overappr.addAll(opNegative.mOverappr);
 			resultBuilder.addAllExceptLrValueAndStatements(opNegative);
 		}
 		final Statement ifStatement = new IfStatement(loc, opCondition.mLrVal.getValue(),
@@ -4447,12 +4478,9 @@ public class CHandler implements ICHandler {
 		for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 			overapprItem.annotate(ifStatement);
 		}
-		// stmt.add(ifStatement);
 		resultBuilder.addStatement(ifStatement);
 
 		final IdentifierExpression tmpExpr = auxvar.getExp();
-		// return new ExpressionResult(stmt, new RValue(tmpExpr,
-		// opPositive.mLrVal.getCType()), decl, auxVars, overappr);
 		resultBuilder.setLrVal(new RValue(tmpExpr, opPositive.mLrVal.getCType()));
 		return resultBuilder.build();
 	}
