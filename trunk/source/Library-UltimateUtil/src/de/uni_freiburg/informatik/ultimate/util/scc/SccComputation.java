@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
@@ -46,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
 /**
  * Computes strongly connected components (SCCs) of a graph. Implementation of Tarjan SCC algorithm. See
  * <a href="http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm">Wikipedia</a>.
- * 
+ *
  * @param <NODE>
  *            Type of objects that represent nodes of the graph.
  * @param <COMP>
  *            Type of objects that represent strongly connected components.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>> {
@@ -115,7 +114,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		}
 		return componentOf;
 	}
-	
+
 	/***
 	 * Get a successor provider for the SCCs
 	 * @return
@@ -137,14 +136,14 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 			}
 		}
 		return new ISuccessorProvider<COMP>() {
-			
+
 			@Override
-			public Iterator<COMP> getSuccessors(COMP node) {
+			public Iterator<COMP> getSuccessors(final COMP node) {
 				return adjComp.get(node).iterator();
 			}
 		};
 	}
-	
+
 	/***
 	 * Get all components root components
 	 * @return
@@ -152,7 +151,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	public Collection<COMP> getRootComponents() {
 		final Set<COMP> res = new HashSet<>();
 		res.addAll(getSCCs());
-		ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
+		final ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
 		for (final COMP comp : getSCCs()) {
 			for (final COMP next : CombinatoricsUtils.iterateAll(componentsSuccessors.getSuccessors(comp))) {
 				res.remove(next);
@@ -160,13 +159,13 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		}
 		return res;
 	}
-	
+
 	/***
 	 * Get all the leaf components of the SCC directed-acyclic graph
 	 * @return
 	 */
 	public Collection<COMP> getLeafComponents() {
-		ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
+		final ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
 		final Set<COMP> res = new HashSet<>();
 		for (final COMP comp : getSCCs()) {
 			if (!componentsSuccessors.getSuccessors(comp).hasNext()) {
@@ -175,16 +174,16 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		}
 		return res;
 	}
-	
+
 	public Collection<COMP> getLeafComponents(final Iterable<NODE> root) {
 		final ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
 		final Set<COMP> res = new HashSet<>();
-		final Stack<COMP> stk = new Stack();
+		final Stack<COMP> stk = new Stack<>();
 		for (final NODE r : root) {
 			stk.add(getNodeToComponents().get(r));
 		}
 		final Set<COMP> visited = new HashSet<>();
-	
+
 		while (!stk.isEmpty()) {
 			final COMP top = stk.pop();
 			boolean hasNext = false;
@@ -202,7 +201,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		}
 		return res;
 	}
-	
+
 
 	public Collection<NODE> getLeafNodes() {
 		final Set<NODE> res = new HashSet<>();
@@ -212,14 +211,14 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		return res;
 	}
 
-	
+
 	public Collection<NODE> getLeafNodes(final NODE root) {
 		final Set<NODE> res = new HashSet<>();
 		res.add(root);
 		return getLeafNodes(res);
 	}
 
-	
+
 	public Collection<NODE> getLeafNodes(final Iterable<NODE> root) {
 		final Collection<COMP> comps = getLeafComponents(root);
 		final Set<NODE> res = new HashSet<>();
@@ -327,7 +326,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 
 	/**
 	 * Stack and Set in one object. Elements that are already contained must not be added.
-	 * 
+	 *
 	 * @author Matthias Heizmann
 	 *
 	 */

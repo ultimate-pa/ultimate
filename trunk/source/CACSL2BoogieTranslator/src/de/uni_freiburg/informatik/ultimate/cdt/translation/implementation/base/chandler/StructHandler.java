@@ -200,7 +200,7 @@ public class StructHandler {
 
 			if (fieldOwner instanceof LocalLValue) {
 				final StructLHS havocSlhs = new StructLHS(loc, ((LocalLValue) fieldOwner).getLHS(), neighbourField);
-				builder.setLRVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
+				builder.setLrVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
 			} else {
 				assert fieldOwner instanceof HeapLValue;
 				final Expression fieldOffset =
@@ -213,7 +213,7 @@ public class StructHandler {
 				final StructConstructor neighbourFieldAddress = MemoryHandler.constructPointerFromBaseAndOffset(
 						MemoryHandler.getPointerBaseAddress(unionAddress, loc), summedOffset, loc);
 
-				builder.setLRVal(new HeapLValue(neighbourFieldAddress, foType.getFieldType(neighbourField), null));
+				builder.setLrVal(new HeapLValue(neighbourFieldAddress, foType.getFieldType(neighbourField), null));
 
 			}
 

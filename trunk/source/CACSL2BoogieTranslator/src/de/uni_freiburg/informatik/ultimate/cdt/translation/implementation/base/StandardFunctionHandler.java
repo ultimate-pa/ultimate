@@ -449,7 +449,7 @@ public class StandardFunctionHandler {
 		final Overapprox overAppFlag = new Overapprox(name, loc);
 		builder.addOverapprox(overAppFlag);
 		final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
-		builder.setLRVal(lrVal);
+		builder.setLrVal(lrVal);
 		return builder.build();
 	}
 
@@ -482,7 +482,7 @@ public class StandardFunctionHandler {
 		final Overapprox overAppFlag = new Overapprox(methodName, loc);
 		builder.addOverapprox(overAppFlag);
 		final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
-		builder.setLRVal(lrVal);
+		builder.setLrVal(lrVal);
 		return builder.build();
 	}
 
@@ -590,7 +590,7 @@ public class StandardFunctionHandler {
 		builder.addOverapprox(overappFlag);
 
 		final RValue lrVal = new RValue(tmpExpr, resultType);
-		builder.setLRVal(lrVal);
+		builder.setLrVal(lrVal);
 
 		return builder.build();
 	}
@@ -1135,7 +1135,7 @@ public class StandardFunctionHandler {
 		builder.putAuxVar(tmpVarDecl, loc);
 		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
 		builder.addOverapprox(new Overapprox(functionName, loc));
-		builder.setLRVal(new RValue(tmpVarIdExpr, resultType));
+		builder.setLrVal(new RValue(tmpVarIdExpr, resultType));
 		return builder.build();
 	}
 

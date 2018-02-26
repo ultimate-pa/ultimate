@@ -471,4 +471,8 @@ public abstract class Dispatcher {
 	public IASTNode getAcslHook() {
 		return mAcslHook;
 	}
+
+	public ILogger getLogger() {
+		return mLogger;
+	}
 }

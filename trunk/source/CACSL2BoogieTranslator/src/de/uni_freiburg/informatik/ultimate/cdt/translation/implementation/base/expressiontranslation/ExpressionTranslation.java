@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValueForArrays;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
@@ -616,6 +617,9 @@ public abstract class ExpressionTranslation {
 
 	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
 			List<Statement> stmt);
+
+	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
+			ExpressionResultBuilder expressionResultBuilder);
 
 	public Expression constructNullPointer(final ILocation loc) {
 		// return new IdentifierExpression(loc, SFO.NULL);
