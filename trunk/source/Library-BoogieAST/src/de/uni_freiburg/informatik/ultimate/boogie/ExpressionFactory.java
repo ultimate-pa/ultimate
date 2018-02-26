@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -453,7 +452,7 @@ public class ExpressionFactory {
 		final Iterator<Expression> iter = exprs.iterator();
 		Expression current = iter.next();
 		while (iter.hasNext()) {
-			current = new BinaryExpression(loc, op, current, iter.next());
+			current = constructBinaryExpression(loc, op, current, iter.next());
 		}
 		return current;
 	}
@@ -580,10 +579,19 @@ public class ExpressionFactory {
 		return new BinaryExpression(loc, type, operator, operand1, operand2);
 	}
 
+	/**
+	 *
+	 * @param loc
+	 * @param identifier
+	 * @param arguments
+	 * @param resultBoogieType
+	 * 		the BoogieType of the result of the function application.
+	 * @return
+	 */
 	public static FunctionApplication constructFunctionApplication(final ILocation loc, final String identifier,
-			final Expression[] arguments, final FunctionDeclaration declaration) {
-		final BoogieType type = (BoogieType) declaration.getOutParam().getType().getBoogieType();
-		return new FunctionApplication(loc, type, identifier, arguments);
+			final Expression[] arguments, final BoogieType resultBoogieType) {
+//		final BoogieType type = (BoogieType) declaration.getOutParam().getType().getBoogieType();
+		return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 	}
 
 	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,

@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -49,6 +50,8 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final ITypeHandler mTypeHandler;
 
+	private final HandlerHandler mHandlerHandler;
+
 	/**
 	 * Defines the following conversion between pointers and integers. An integer n
 	 * is converted to the pointer with base address 0 and offset n. If a pointer is
@@ -59,11 +62,13 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 	 */
 
 	public OverapproximationUF(final ExpressionTranslation expressionTranslation,
-			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler) {
+			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler,
+			final HandlerHandler handlerHandler) {
 		super();
 		mExpressionTranslation = expressionTranslation;
 		mFunctionDeclarations = functionDeclarations;
 		mTypeHandler = typeHandler;
+		mHandlerHandler = handlerHandler;
 	}
 
 	/*
@@ -86,7 +91,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 			final Expression pointerExpression = rexp.mLrVal.getValue();
 			final Expression intExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { pointerExpression },
-					mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().get(prefixedFunctionName));
+					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
 			final RValue rValue = new RValue(intExpression, newType, false, false);
 			rexp.mLrVal = rValue;
 		}
@@ -112,7 +117,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 			final Expression intExpression = rexp.mLrVal.getValue();
 			final Expression pointerExpression = ExpressionFactory.constructFunctionApplication(loc,
 					prefixedFunctionName, new Expression[] { intExpression },
-					mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().get(prefixedFunctionName));
+					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
 			final RValue rValue = new RValue(pointerExpression, newType, false, false);
 			rexp.mLrVal = rValue;
 		} else {

@@ -567,11 +567,14 @@ public class StandardFunctionHandler {
 							new Expression[] { MemoryHandler.getPointerBaseAddress(argS.mLrVal.getValue(), loc) }),
 					mExpressionTranslation.getCTypeOfPointerComponents());
 			// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
-			final BinaryExpression inRange = new BinaryExpression(loc, Operator.LOGICAND, baseEquals,
-					new BinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
+			final BinaryExpression inRange =
+					ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND, baseEquals,
+							ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND, offsetNonNegative,
+									offsetSmallerLength));
 			// assume equalsNull or inRange
 			final AssumeStatement assume =
-					new AssumeStatement(loc, new BinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
+					new AssumeStatement(loc, ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICOR,
+							equalsNull, inRange));
 			builder.addStatement(assume);
 		}
 
@@ -910,7 +913,8 @@ public class StandardFunctionHandler {
 		mExpressionTranslation.usualArithmeticConversions(loc, nanRResult, rightRvaluedResult);
 		final BinaryExpression rightExpr = ExpressionFactory.constructBinaryExpression(loc, Operator.COMPEQ,
 				rightRvaluedResult.getLrValue().getValue(), nanRResult.getLrValue().getValue());
-		final BinaryExpression expr = new BinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
+		final BinaryExpression expr =
+				ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
 		final ExpressionResult rtr =
 				combineExpressionResults(lrVal, leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult);

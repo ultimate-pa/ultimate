@@ -220,7 +220,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { left, right },
-				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(typeLeft));
 		return func;
 	}
 
@@ -259,7 +259,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
 		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
-				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type));
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
@@ -727,8 +727,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 						paramAstType, paramAstType);
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { exp1, exp2 },
-					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+					new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		}
 		BinaryExpression.Operator op;
 		switch (nodeOperator) {
@@ -771,7 +770,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { exp },
-					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type));
 		}
 		return constructUnaryIntExprMinus(loc, exp, type);
 	}
@@ -791,7 +790,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { exp1, exp2 },
-					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type1));
 		}
 		return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
 	}
@@ -833,8 +832,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		if (mOverapproximateFloatingPointOperations) {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { exp1, exp2 },
-					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+					new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		}
 		return constructEquality(loc, nodeOperator, exp1, exp2);
 	}
@@ -924,7 +922,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final Expression oldExpression = rexp.mLrVal.getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { oldExpression },
-				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.mLrVal = rValue;
 	}

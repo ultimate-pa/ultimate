@@ -85,11 +85,14 @@ public abstract class ExpressionTranslation {
 	protected final IPointerIntegerConversion mPointerIntegerConversion;
 	protected final boolean mOverapproximateFloatingPointOperations;
 
+	protected HandlerHandler mHandlerHandler;
+
 	public ExpressionTranslation(final TypeSizes typeSizes, final HandlerHandler handlerHandler,
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
 		super();
 		handlerHandler.setExpressionTranslation(this);
+		mHandlerHandler = handlerHandler;
 
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 		mTypeSizes = typeSizes;
@@ -104,7 +107,8 @@ public abstract class ExpressionTranslation {
 		case NutzBijection:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
 		case Overapproximate:
-			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler);
+			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler,
+					mHandlerHandler);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown value " + pointerIntegerConversion);
@@ -708,7 +712,7 @@ public abstract class ExpressionTranslation {
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
 		}
 		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] {},
-				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type));
 
 	}
 
