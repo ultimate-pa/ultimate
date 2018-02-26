@@ -1,6 +1,7 @@
-void data2hex(int  data, int len, int *str);
+void data2hex(int  data, int len, int *str) {
+}
 
-void layoutFirmwareHash()
+void main()
 {
     int str[1][1];
 

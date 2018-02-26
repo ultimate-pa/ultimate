@@ -516,6 +516,7 @@ public class CHandler implements ICHandler {
 		final IPreferenceProvider prefs = main.getPreferences();
 
 		mHandlerHandler = handlerHandler;
+		mHandlerHandler.setCHandler(this);
 
 		mMainDispatcher = main;
 
@@ -652,7 +653,7 @@ public class CHandler implements ICHandler {
 
 				final LRValue rightLrVal = rightOperand.mLrVal;
 
-				final RValue address = decayArrayLrValToPointer(isPreRunMode(), loc, rightLrVal);
+				final RValue address = decayArrayLrValToPointer(loc, rightLrVal);
 				builder.setLrVal(address);
 				// return makeAssignment(main, loc, stmt, leftOperand.mLrVal, address, decl,
 				// auxVars, overappr);
@@ -943,11 +944,11 @@ public class CHandler implements ICHandler {
 	 * @param rightLrVal
 	 * @return
 	 */
-	public RValue decayArrayLrValToPointer(final boolean preRunMode, final ILocation loc, final LRValue rightLrVal) {
+	public RValue decayArrayLrValToPointer(final ILocation loc, final LRValue rightLrVal) {
 		assert rightLrVal.getCType().getUnderlyingType() instanceof CArray;
 
 		final Expression newValue;
-		if (preRunMode) {
+		if (isPreRunMode()) {
 			if (rightLrVal instanceof HeapLValue) {
 
 				newValue = ((HeapLValue) rightLrVal).getAddress();
@@ -1025,7 +1026,7 @@ public class CHandler implements ICHandler {
 			// } else {
 			// expr.mLrVal = new RValue(expr.mLrVal.getValue(), new CPointer(valueType));
 			// }
-			final RValue newRval = decayArrayLrValToPointer(isPreRunMode(), loc, expr.getLrValue());
+			final RValue newRval = decayArrayLrValToPointer(loc, expr.getLrValue());
 			expr.mLrVal = newRval;
 		} else {
 			expr = expr.switchToRValueIfNecessary(main, loc);
@@ -4406,7 +4407,7 @@ public class CHandler implements ICHandler {
 		if ((opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
 				|| opPositive.getLrValue().isNullPointerConstant())
 				&& opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
-			opNegative.mLrVal = decayArrayLrValToPointer(isPreRunMode(), loc, opNegative.getLrValue());
+			opNegative.mLrVal = decayArrayLrValToPointer(loc, opNegative.getLrValue());
 			mExpressionTranslation.convertIntToPointer(loc, opPositive,
 					(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 			resultCType = opNegative.getLrValue().getCType();
@@ -4414,7 +4415,7 @@ public class CHandler implements ICHandler {
 		if ((opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
 				|| opNegative.getLrValue().isNullPointerConstant())
 				&& opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
-			opPositive.mLrVal = decayArrayLrValToPointer(isPreRunMode(), loc, opPositive.getLrValue());
+			opPositive.mLrVal = decayArrayLrValToPointer(loc, opPositive.getLrValue());
 			mExpressionTranslation.convertIntToPointer(loc, opNegative,
 					(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 			resultCType = opPositive.getLrValue().getCType();

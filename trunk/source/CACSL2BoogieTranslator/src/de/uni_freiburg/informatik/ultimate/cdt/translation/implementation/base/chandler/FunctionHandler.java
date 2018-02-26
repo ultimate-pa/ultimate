@@ -648,8 +648,6 @@ public class FunctionHandler {
 			final BoogieProcedureInfo calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 
 
-//			mProcedureManager.registerCall(mProcedureManager.getCurrentProcedureInfo(), calleeProcInfo);
-
 			final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 			assert calleeProcDecl != null : "unclear -- solve in conjunction with the exception directly above..";
 
@@ -703,25 +701,14 @@ public class FunctionHandler {
 			 *  dispatch the inparams
 			 */
 			final ArrayList<Expression> translatedParams = new ArrayList<>();
-	//		final ArrayList<Statement> stmt = new ArrayList<>();
-	//		final ArrayList<Declaration> decl = new ArrayList<>();
-	//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-	//		final ArrayList<Overapprox> overappr = new ArrayList<>();
 			final ExpressionResultBuilder functionCallExpressionResultBuilder = new ExpressionResultBuilder();
 			for (int i = 0; i < inParams.length; i++) {
 				final IASTInitializerClause inParam = inParams[i];
 				ExpressionResult in = (ExpressionResult) main.dispatch(inParam);
 
 				if (in.mLrVal.getCType().getUnderlyingType() instanceof CArray) {
-					// arrays are passed as pointers --> switch to RValue would make a boogie array..
-					final CType valueType =
-							((CArray) in.mLrVal.getCType().getUnderlyingType()).getValueType().getUnderlyingType();
-					if (in.mLrVal instanceof HeapLValue) {
-	//					in.mLrVal = new RValue(((HeapLValue) in.mLrVal).getAddress(), new CPointer(valueType));
-						in.mLrVal = ((HeapLValue) in.mLrVal).getAddressAsPointerRValue(main);
-					} else {
-						in.mLrVal = new RValue(in.mLrVal.getValue(), new CPointer(valueType));
-					}
+					// arrays are passed as pointers
+					in.mLrVal = mHandlerHandler.getCHandler().decayArrayLrValToPointer(loc, in.getLrValue());
 				} else {
 					in = in.switchToRValueIfNecessary(main, loc);
 				}
@@ -809,14 +796,12 @@ public class FunctionHandler {
 				spec = specList.toArray(new Specification[specList.size()]);
 				for (int i = 0; i < spec.length; i++) {
 					if (spec[i] instanceof ModifiesSpecification) {
-	//					mModifiedGlobalsIsUserDefined.add(methodName);
 						procInfo.setModifiedGlobalsIsUsedDefined(true);
 						final ModifiesSpecification ms = (ModifiesSpecification) spec[i];
 						final LinkedHashSet<VariableLHS> modifiedSet = new LinkedHashSet<>();
 						for (final VariableLHS var : ms.getIdentifiers()) {
 							modifiedSet.add(var);
 						}
-	//					mModifiedGlobals.put(methodName, modifiedSet);
 						procInfo.addModifiedGlobals(modifiedSet);
 					}
 				}

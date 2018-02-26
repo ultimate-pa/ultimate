@@ -23,6 +23,7 @@ public class HandlerHandler {
 	private BoogieTypeHelper mBoogieTypeHelper;
 	private INameHandler mNameHandler;
 	private TypeSizes mTypeSizes;
+	private CHandler mCHandler;
 
 
 	public INameHandler getNameHandler() {
@@ -32,20 +33,6 @@ public class HandlerHandler {
 	public void setNameHandler(final INameHandler nameHandler) {
 		mNameHandler = nameHandler;
 	}
-
-//	public HandlerHandler() {
-//	}
-
-//	public updateHandlers(final Dispatcher main) {
-//		mTypeHandler = main.mTypeHandler;
-//		mMemoryHandler = main.mCHandler.getMemoryHandler();
-//		mExpressionTranslation = main.mCHandler.getExpressionTranslation();
-//		mStructHandler = main.mCHandler.getStructHandler();
-//		mProcedureManager = main.mCHandler.getProcedureManager();
-//		mFunctionHandler = main.mCHandler.getFunctionHandler();
-//		mTypeSizeAndOffsetComputer = main.mCHandler.getTypeSizeAndOffsetComputer();
-//		mBoogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
-//	}
 
 	public BoogieTypeHelper getBoogieTypeHelper() {
 		return mBoogieTypeHelper;
@@ -119,5 +106,11 @@ public class HandlerHandler {
 		return mTypeSizes;
 	}
 
+	public void setCHandler(final CHandler cHandler) {
+		mCHandler = cHandler;
+	}
 
+	public CHandler getCHandler() {
+		return mCHandler;
+	}
 }

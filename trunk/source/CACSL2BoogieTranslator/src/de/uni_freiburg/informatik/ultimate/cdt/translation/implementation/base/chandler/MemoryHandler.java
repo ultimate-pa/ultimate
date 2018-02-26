@@ -2046,8 +2046,6 @@ public class MemoryHandler {
 	// 2015-10
 	public ExpressionResult getReadCall(final Dispatcher main, final Expression address, final CType resultType) {
 		final ILocation loc = address.getLocation();
-		// if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
-		// && (resultType.getUnderlyingType() instanceof CPrimitive)) {
 		// CPrimitive cPrimitive = (CPrimitive) resultType.getUnderlyingType();
 		// if (main.getTypeSizes().getSize(cPrimitive.getType()) >
 		// main.getTypeSizes().getSize(PRIMITIVE.INT)) {
@@ -2062,10 +2060,6 @@ public class MemoryHandler {
 		// main.getTypeSizes().getSize(PRIMITIVE.INT));
 		final boolean bitvectorConversionNeeded = false;
 
-		// final ArrayList<Statement> stmt = new ArrayList<>();
-		// final ArrayList<Declaration> decl = new ArrayList<>();
-		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		// final ArrayList<Overapprox> overappr = new ArrayList<>();
 		ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		final String readCallProcedureName;
@@ -2113,12 +2107,7 @@ public class MemoryHandler {
 		} else {
 			returnedValueAstType = mTypeHandler.cType2AstType(loc, resultType);
 		}
-		// final String returnedValuId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
-		// final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(returnedValueId, returnedValueAstType,
-		// loc);
 		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MEMREAD);
-		// decl.add(auxvar.getVarDec());
-		// auxVars.put(auxvar.getVarDec(), loc);
 		resultBuilder.addDeclaration(auxvar.getVarDec());
 		resultBuilder.addAuxVar(auxvar);
 
@@ -2128,36 +2117,23 @@ public class MemoryHandler {
 		for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 			overapprItem.annotate(call);
 		}
-		// stmt.add(call);
 		resultBuilder.addStatement(call);
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
 
 		// ExpressionResult result;
 		if (bitvectorConversionNeeded) {
-			// final IdentifierExpression tmpIdExpr = new IdentifierExpression(loc, tmpId);
 			final IdentifierExpression returnedValueIdExpr = auxvar.getExp();
-			// ExpressionFactory.constructIdentifierExpression(loc,
-			// mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType), returnedValueId,
-			// new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID()));
 
-			// result = new ExpressionResult(stmt, new RValue(returnedValueIdExpr, resultType), decl,
-			// auxVars, overappr);
 			resultBuilder.setLrVal(new RValue(returnedValueIdExpr, resultType));
 
 			final ExpressionResult intermediateResult = resultBuilder.build();
-			// mExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
 			mExpressionTranslation.convertIntToInt(loc, intermediateResult,
 					(CPrimitive) resultType.getUnderlyingType());
 			resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(intermediateResult)
 					.setLrVal(intermediateResult.getLrValue());
 
-//			final String bvReturnedValueId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
-//			final VariableDeclaration bvtVarDecl =
-//					SFO.getTempVarVariableDeclaration(bvReturnedValueId, returnedValueAstType, loc);
 			final AuxVarInfo bvReturnedValueAux = AuxVarInfo.constructAuxVarInfo(loc, main, resultType,
 					SFO.AUXVAR.MEMREAD);
-//			decl.add(bvReturnedValueAux.getVarDec());
-//			auxVars.put(bvReturnedValueAux.getVarDec(), loc);
 			resultBuilder.addDeclaration(bvReturnedValueAux.getVarDec());
 			resultBuilder.addAuxVar(bvReturnedValueAux);
 
@@ -2177,8 +2153,6 @@ public class MemoryHandler {
 					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType),
 					auxvar.getExp().getIdentifier(),
 					new DeclarationInformation(StorageClass.LOCAL, mProcedureManager.getCurrentProcedureID()));
-			// result = new ExpressionResult(stmt, new RValue(returnedValueIdExpr, resultType), decl,
-			// auxVars, overappr);
 			resultBuilder.setLrVal(new RValue(returnedValueIdExpr, resultType));
 		}
 		// return result;

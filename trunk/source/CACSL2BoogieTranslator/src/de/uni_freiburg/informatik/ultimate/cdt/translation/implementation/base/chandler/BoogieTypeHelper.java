@@ -108,7 +108,7 @@ public class BoogieTypeHelper {
 				case INTTYPE:
 					return BoogieType.TYPE_INT;
 				case VOID:
-					throw new AssertionError();
+					return BoogieType.TYPE_ERROR;
 				default:
 					throw new AssertionError();
 				}
