@@ -4359,95 +4359,102 @@ public class CHandler implements ICHandler {
          *   currently.
 		 */
 
-		CType resultCType = null;
 
 		/* Treatment of the cases where one or both branches have void type and the LRValue of the dispatch result of
 		 * the branch is is null:
 		 *  We give a dummy LRValue, whose BoogieType is a type error so it cannot be used further.
 		 */
+
+		boolean secondArgIsVoid = false;
+		boolean thirdArgIsVoid = false;
+
 		if (!opPositive.hasLRValue()) {
 			opPositive.mLrVal = new RValue(ExpressionFactory.createVoidDummyExpression(loc),
 					new CPrimitive(CPrimitives.VOID));
-			resultCType = opNegative.hasLRValue() ? opNegative.getLrValue().getCType()
-					: new CPrimitive(CPrimitives.VOID);
+//			resultCType = opNegative.hasLRValue() ? opNegative.getLrValue().getCType()
+//					: new CPrimitive(CPrimitives.VOID);
+			secondArgIsVoid = true;
 		}
 		if (!opNegative.hasLRValue()) {
 			opNegative.mLrVal = new RValue(ExpressionFactory.createVoidDummyExpression(loc),
 					new CPrimitive(CPrimitives.VOID));
-			resultCType = opPositive.hasLRValue() ? opPositive.getLrValue().getCType()
-					: new CPrimitive(CPrimitives.VOID);
+//			resultCType = opPositive.hasLRValue() ? opPositive.getLrValue().getCType()
+//					: new CPrimitive(CPrimitives.VOID);
+			thirdArgIsVoid = true;
 		}
 
-
+		final CType resultCType;
 		if (opPositive.getLrValue().getCType().isArithmeticType()
 				&& opNegative.getLrValue().getCType().isArithmeticType()) {
-			// C11 6.5.15.5: If 2nd and 3rd operand have arithmetic type,
-			// the result type is determined by the usual arithmetic conversions.
+			/* C11 6.5.15.5: If both the second and third operands have arithmetic type, the result type that would be
+	         *  determined by the usual arithmetic conversions, were they applied to those two operands,
+	         *  is the type of the result. */
 			mExpressionTranslation.usualArithmeticConversions(loc, opPositive, opNegative);
 			resultCType = opPositive.getLrValue().getCType();
-		}
-
-		/* if one of the branches has pointer type and one has int type, we convert the int to a pointer
-		 */
-		if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
+		} else if (secondArgIsVoid && thirdArgIsVoid) {
+			/* C11 6.5.15.5 If both operands have void type, the result has void type. */
+			resultCType = new CPrimitive(CPrimitives.VOID);
+		} else if (opPositive.getLrValue().isNullPointerConstant()) {
+			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
+			resultCType = opNegative.getLrValue().getCType();
+		} else if (opNegative.getLrValue().isNullPointerConstant()) {
+			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
+			resultCType = opPositive.getLrValue().getCType();
+		} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
 				&& opNegative.getLrValue().isNullPointerConstant()) {
 			mExpressionTranslation.convertIntToPointer(loc, opNegative,
 					(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
 			resultCType = opPositive.getLrValue().getCType();
-		}
-		if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
+		} else if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
 				&& opPositive.getLrValue().isNullPointerConstant()) {
 			mExpressionTranslation.convertIntToPointer(loc, opPositive,
 					(CPointer) opNegative.mLrVal.getCType().getUnderlyingType());
 			resultCType = opNegative.getLrValue().getCType();
-		}
-
-		/* if one of the branches has pointer type and one has array type, the array decays to a pointer.
-		 */
-		if ((opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
+		} else if ((opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
 				|| opPositive.getLrValue().isNullPointerConstant())
 				&& opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+			/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
 			opNegative.mLrVal = decayArrayLrValToPointer(loc, opNegative.getLrValue());
 			mExpressionTranslation.convertIntToPointer(loc, opPositive,
 					(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 			resultCType = opNegative.getLrValue().getCType();
-		}
-		if ((opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
+		} else if ((opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
 				|| opNegative.getLrValue().isNullPointerConstant())
 				&& opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+			/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
 			opPositive.mLrVal = decayArrayLrValToPointer(loc, opPositive.getLrValue());
 			mExpressionTranslation.convertIntToPointer(loc, opNegative,
 					(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 			resultCType = opPositive.getLrValue().getCType();
-		}
-
-		// default case: the types of the operands match --> we choose one of them as the result CType
-		if (resultCType == null) {
+		} else {
+			// default case: the types of the operands (should) match --> we choose one of them as the result CType
 			resultCType = opPositive.getLrValue().getCType();
 		}
-
-//			final boolean conditionIsConstantTrue = (opCondition.getLrValue().getValue() instanceof BooleanLiteral) &&
-//				((BooleanLiteral) opCondition.getLrValue().getValue()).getValue();
-
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(opCondition);
 
 		// auxvar that will hold the result of the ite expression
-		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultCType, SFO.AUXVAR.ITE);
+		final AuxVarInfo auxvar;
+		if (resultCType.isVoidType()) {
+			/* in this case we will not make any assignment, so we do not need the aux var */
+			auxvar = null;
+		} else {
+			auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, resultCType, SFO.AUXVAR.ITE);
+			resultBuilder.addDeclaration(auxvar.getVarDec());
+			resultBuilder.addAuxVar(auxvar);
+		}
 
-		resultBuilder.addDeclaration(auxvar.getVarDec());
-		resultBuilder.addAuxVar(auxvar);
 
 		// collect side effects of "then" branch
 		final List<Statement> ifStatements = new ArrayList<>();
 		{
 			ifStatements.addAll(opPositive.mStmt);
-			final LeftHandSide[] lhs = { auxvar.getLhs() };
-			final Expression assignedVal = opPositive.mLrVal.getValue();
-			if (assignedVal != null) {
+			if (!resultCType.isVoidType()) {
+				final LeftHandSide[] lhs = { auxvar.getLhs() };
+				final Expression assignedVal = opPositive.getLrValue().getValue();
 				final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc, lhs,
-						new Expression[] { opPositive.mLrVal.getValue() });
+						new Expression[] { assignedVal });
 				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 					overapprItem.annotate(assignStmt);
 				}
@@ -4460,10 +4467,9 @@ public class CHandler implements ICHandler {
 		final List<Statement> elseStatements = new ArrayList<>();
 		{
 			elseStatements.addAll(opNegative.mStmt);
-			final LeftHandSide[] lhs = { auxvar.getLhs() };
-			final Expression assignedVal = opNegative.mLrVal.getValue();
-			if (assignedVal != null) { // if we call a void function, we have to
-										// skip this assignment
+			if (!resultCType.isVoidType()) {
+				final LeftHandSide[] lhs = { auxvar.getLhs() };
+				final Expression assignedVal = opNegative.getLrValue().getValue();
 				final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc, lhs,
 						new Expression[] { assignedVal });
 				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
@@ -4481,8 +4487,14 @@ public class CHandler implements ICHandler {
 		}
 		resultBuilder.addStatement(ifStatement);
 
-		final IdentifierExpression tmpExpr = auxvar.getExp();
-		resultBuilder.setLrVal(new RValue(tmpExpr, opPositive.mLrVal.getCType()));
+		if (!resultCType.isVoidType()) {
+			/* the result has a value only if the result type is not void.. */
+			resultBuilder.setLrVal(new RValue(auxvar.getExp(), resultCType));
+		} else {
+			/* for better error detection we give the dummy void value here */
+			resultBuilder.setLrVal(new RValue(ExpressionFactory.createVoidDummyExpression(loc),
+					resultCType));
+		}
 		return resultBuilder.build();
 	}
 

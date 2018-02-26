@@ -84,8 +84,9 @@ public class ExpressionFactory {
 	/**
 	 * Name for dummy expressions that represent a "void" result. Those identifier expressions may not be used anywhere
 	 * and thus should get an error BoogieType.
+	 * (note that this string has to fit the regex that is checked during creation of an IdentifierExpression...)
 	 */
-	public static final String DUMMY_VOID = null;
+	public static final String DUMMY_VOID = "#dummy~void~value";
 
 
 	public static Expression constructUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator,

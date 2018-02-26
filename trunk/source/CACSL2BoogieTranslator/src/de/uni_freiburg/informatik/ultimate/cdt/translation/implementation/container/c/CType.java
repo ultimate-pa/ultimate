@@ -185,8 +185,12 @@ public abstract class CType {
 	}
 
 	public boolean isVoidPointerType() {
-		return this instanceof CPointer
-				&& ((CPointer) this).getTargetType().getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
+		return this.getUnderlyingType() instanceof CPointer
+				&& ((CPointer) this.getUnderlyingType())
+					.getTargetType().getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
 	}
 
+	public boolean isVoidType() {
+		return this.getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
+	}
 }
