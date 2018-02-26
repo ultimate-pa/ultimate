@@ -4414,7 +4414,7 @@ public class CHandler implements ICHandler {
 						(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
 				resultCType = opNegative.getLrValue().getCType();
 			} else {
-				throw new AssertionError("unexpected case");
+				resultCType = opNegative.getLrValue().getCType();
 			}
 
 		} else if (opNegative.getLrValue().isNullPointerConstant()) {
@@ -4432,7 +4432,7 @@ public class CHandler implements ICHandler {
 						(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
 			} else {
-				throw new AssertionError("unexpected case");
+				resultCType = opPositive.getLrValue().getCType();
 			}
 		} else {
 			// default case: the types of the operands (should) match --> we choose one of them as the result CType
