@@ -240,4 +240,8 @@ public class OldSymbolTable extends LinkedScopedHashMap<String, SymbolTableValue
 		}
 		return result;
 	}
+
+	public SymbolTableValue getEntryForBoogieVar(final String boogieVarId, final ILocation loc) {
+		throw new UnsupportedOperationException(); // See FlatSymbolTable.
+	}
 }

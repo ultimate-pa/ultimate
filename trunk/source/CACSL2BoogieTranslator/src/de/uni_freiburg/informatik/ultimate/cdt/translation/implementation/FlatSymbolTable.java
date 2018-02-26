@@ -415,6 +415,16 @@ public class FlatSymbolTable {
 			final String cName) {
 		return mNameHandler.getUniqueIdentifier(scope, cName, getCScopeId(scopeHook), onHeap, type);
 	}
+	
+	/**
+	 * Retrieves a symbol by its boogie name.
+	 * @param scope The scope of the symbol.
+	 * @param boogieName The boogie name.
+	 * @return The symbol, or null.
+	 */
+	public SymbolTableValue findSymbolByBoogieName(final IASTNode scope, final String boogieName) {
+		return findCSymbol(scope, getCIdForBoogieId(boogieName));
+	}
 
 	private static boolean hasOwnScope(final IASTNode node) {
 		final boolean hasImplicitScope = node instanceof IASTFunctionDefinition || node instanceof IASTForStatement;

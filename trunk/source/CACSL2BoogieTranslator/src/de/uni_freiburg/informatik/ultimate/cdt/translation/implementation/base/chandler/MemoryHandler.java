@@ -279,12 +279,19 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Declare all variables required for the memory model.
+	 * Returns declarations needed for the memory model (right now we use the Hoenicke-Lindenmann memory
+	 *  model). Depending on the translated program this may include any or all of the following:
+	 *  <li> declarations of the arrays #valid, #length, #memory_int, etc.
+	 *  <li> declarations of the procedures Ultimate.alloc, Ultimate.dealloc, read_int, write_int, etc.
+	 *
+	 * Note that this method only returns procedure implementations (if there are any). The corresponding declarations
+	 *  are introduced by registering the procedures in the FunctionHandler. The FunctionHandler will add them to the
+	 *  program.
 	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 * @param tuLoc
-	 *            location to use for declarations.
+	 *            location to use for declarations. Usually this will be the location of the TranslationUnit.
 	 * @return a set of declarations.
 	 */
 	public ArrayList<Declaration> declareMemoryModelInfrastructure(final Dispatcher main, final ILocation tuLoc,
@@ -326,36 +333,36 @@ public class MemoryHandler {
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.Ultimate_Alloc)) {
 			decl.addAll(declareMalloc(mTypeHandler, tuLoc));
-			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
-			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.Ultimate_Alloc.getName());
+//			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
+//			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.Ultimate_Alloc.getName());
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memset)) {
 			decl.addAll(declareMemset(main, heapDataArrays, hook));
-			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memset.getName());
-			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memset.getName());
+//			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memset.getName());
+//			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memset.getName());
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.Ultimate_MemInit)) {
 			decl.addAll(declareUltimateMeminit(main, heapDataArrays, hook));
-			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_MemInit.getName());
-			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.Ultimate_MemInit.getName());
+//			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_MemInit.getName());
+//			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.Ultimate_MemInit.getName());
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memcpy)) {
 			decl.addAll(declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_Memcpy, hook));
-			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
-			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
+//			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
+//			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memmove)) {
 			decl.addAll(declareMemcpyOrMemmove(main, heapDataArrays, MemoryModelDeclarations.C_Memmove, hook));
-			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memmove.getName());
-			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memmove.getName());
+//			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memmove.getName());
+//			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memmove.getName());
 		}
 		return decl;
 	}
@@ -447,9 +454,11 @@ public class MemoryHandler {
 		// make the specifications
 		final ArrayList<Specification> specs = new ArrayList<>();
 
+		// EDIT: the function handler should completely deal with modifies clauses if we announce them correctly
 		// add modifies spec
-		final ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
-		specs.add(modifiesSpec);
+//		final ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
+//		specs.add(modifiesSpec);
+		announceModifiedGlobals(proc, heapDataArrays);
 
 		// add the procedure declaration
 		final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], proc, new String[0], inParams,
@@ -482,7 +491,7 @@ public class MemoryHandler {
 			final String memArrayName = hda.getVariableName();
 			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
 
-			mFunctionHandler.addCallGraphNode(proc);
+//			mFunctionHandler.addCallGraphNode(proc);
 			mFunctionHandler.addModifiedGlobal(proc, memArrayName);
 		}
 		return new ModifiesSpecification(ignoreLoc, false, modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
@@ -544,8 +553,10 @@ public class MemoryHandler {
 
 		// add modifies spec
 
-		final ModifiesSpecification modifiesSpec = announceModifiedGlobals(memModelDecl.getName(), heapDataArrays);
-		specs.add(modifiesSpec);
+		// EDIT: the function handler should completely deal with modifies clauses if we announce them correctly
+//		final ModifiesSpecification modifiesSpec = announceModifiedGlobals(memModelDecl.getName(), heapDataArrays);
+//		specs.add(modifiesSpec);
+		announceModifiedGlobals(memModelDecl.getName(), heapDataArrays);
 
 		// add requires #valid[dest!base];
 		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST, specs);
@@ -858,9 +869,11 @@ public class MemoryHandler {
 		// make the specifications
 		final ArrayList<Specification> specs = new ArrayList<>();
 
+		// EDIT: the function handler should completely deal with modifies clauses if we announce them correctly
 		// add modifies spec
-		final ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
-		specs.add(modifiesSpec);
+//		final ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
+//		specs.add(modifiesSpec);
+		announceModifiedGlobals(proc, heapDataArrays);
 
 		// add requires #valid[#ptr!base];
 		addPointerBaseValidityCheck(ignoreLoc, inParamPtr, specs);
@@ -1566,10 +1579,13 @@ public class MemoryHandler {
 		final CallStatement freeCall =
 				new CallStatement(loc, false, new VariableLHS[0], SFO.DEALLOC, new Expression[] { lrVal.getValue() });
 		// add required information to function handler.
-		if (fh.getCurrentProcedureID() != null) {
+//		if (fh.getCurrentProcedureID() != null) {
+		if (fh.isGlobalScope()) {
 			fh.addModifiedGlobal(SFO.DEALLOC, SFO.VALID);
-			fh.addCallGraphNode(SFO.DEALLOC);
-			fh.addCallGraphEdge(fh.getCurrentProcedureID(), SFO.DEALLOC);
+//			fh.addCallGraphNode(SFO.DEALLOC);
+//			fh.addCallGraphEdge(fh.getCurrentProcedureID(), SFO.DEALLOC);
+//			fh.registerCall(fh.getCurrentProcedureID(), SFO.DEALLOC);
+			fh.registerCall(SFO.DEALLOC);
 		}
 		return freeCall;
 	}
@@ -1623,9 +1639,10 @@ public class MemoryHandler {
 			mFunctionHandler.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), SFO.VALID);
 			mFunctionHandler.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), SFO.LENGTH);
 
-			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
-			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(),
-					MemoryModelDeclarations.Ultimate_Alloc.getName());
+//			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
+//			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(),
+//					MemoryModelDeclarations.Ultimate_Alloc.getName());
+			mFunctionHandler.registerCall(MemoryModelDeclarations.Ultimate_Alloc.getName());
 		}
 		return result;
 	}
@@ -2161,14 +2178,14 @@ public class MemoryHandler {
 
 	public static enum MemoryModelDeclarations {
 		//@formatter:off
-		Ultimate_Alloc("#Ultimate.alloc"),
+		Ultimate_Alloc(SFO.ALLOC),
 		Free(SFO.FREE),
 		Ultimate_MemInit("#Ultimate.meminit"),
-		C_Memcpy("#Ultimate.C_memcpy"),
-		C_Memmove("#Ultimate.C_memmove"),
-		C_Memset("#Ultimate.C_memset"),
-		Ultimate_Length("#length"),
-		Ultimate_Valid("#valid"),
+		C_Memcpy(SFO.C_MEMCPY),
+		C_Memmove(SFO.C_MEMMOVE),
+		C_Memset(SFO.C_MEMSET),
+		Ultimate_Length(SFO.LENGTH),
+		Ultimate_Valid(SFO.VALID),
 		//@formatter:on
 		;
 

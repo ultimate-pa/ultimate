@@ -173,9 +173,9 @@ public class PostProcessor {
 
 		final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main, memoryHandler, arrayHandler,
 				functionHandler, structHandler, mDeclarationsGlobalInBoogie, expressionTranslation, hook);
-		decl.add(initProcedure.getUltimateInitDeclaration());
+		decl.add(initProcedure.getUltimateInitImplementation());
 
-		final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc, functionHandler);
+		final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc, functionHandler, hook);
 		decl.add(startProcedure.getUltimateStartDeclaration());
 //		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler,
 //				initProcedure.getUltimateInitModifiesClauseContents()));
@@ -499,9 +499,10 @@ public class PostProcessor {
 		// such that calculateTransitive (which is executed later, in
 		// visit(TranslationUnit) after the postprocessor)
 		// can compute the correct modifies clause
-		functionHandler.addModifiedGlobalEntry(fpfName);
+//		functionHandler.addModifiedGlobalEntry(fpfName);
 		for (final String fittingFunc : fittingFunctions) {
-			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
+//			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
+			functionHandler.registerCall(fpfName, fittingFunc);
 		}
 
 		// generate the actual body
@@ -640,7 +641,7 @@ public class PostProcessor {
 
 	class UltimateInitProcedure {
 
-		private Declaration mUltimateInitDeclaration;
+		private Declaration mUltimateInitImplementation;
 		private final List<VariableLHS> mModifiesClauseContents;
 
 		UltimateInitProcedure(final ILocation translationUnitLoc,
@@ -662,7 +663,7 @@ public class PostProcessor {
 			final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie,
 			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
 
-			functionHandler.beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
+			functionHandler.beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT, hook);
 			final ArrayList<Statement> initStatements = new ArrayList<>();
 			final Collection<String> proceduresCalledByUltimateInit = new HashSet<>();
 
@@ -747,37 +748,44 @@ public class PostProcessor {
 			initStatements.addAll(main.mCHandler.getStaticObjectsHandler().getStatementsForUltimateInit());
 			mInitializedGlobals.addAll(main.mCHandler.getStaticObjectsHandler().getVariablesModifiedByUltimateInit());
 
-			mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
+			// should not be necessary:
+//			mInitializedGlobals.addAll(functionHandler.getModifiedGlobals().get(SFO.INIT));
 
-			final Specification[] specsInit = new Specification[1];
+//			final Specification[] specsInit = new Specification[1];
+//
+//
+//			for (final String varName : mInitializedGlobals) {
+//				mModifiesClauseContents.add(new VariableLHS(translationUnitLoc, varName));
+//			}
+//			specsInit[0] = new ModifiesSpecification(translationUnitLoc, false,
+//					mModifiesClauseContents.toArray(new VariableLHS[mModifiesClauseContents.size()]));
 
-
-			for (final String varName : mInitializedGlobals) {
-				mModifiesClauseContents.add(new VariableLHS(translationUnitLoc, varName));
-			}
-			specsInit[0] = new ModifiesSpecification(translationUnitLoc, false,
-					mModifiesClauseContents.toArray(new VariableLHS[mModifiesClauseContents.size()]));
-
+			/*
+			 * note that we only have to deal with the implementation part of the procedure, the declaration is managed
+			 * by the FunctionHandler
+			 */
 			final Body initBody = new Body(translationUnitLoc,
 					initDecl.toArray(new VariableDeclaration[initDecl.size()]),
 					initStatements.toArray(new Statement[initStatements.size()]));
-			final Procedure initProcedure = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
-					new VarList[0], new VarList[0], null, initBody);
+			final Procedure initProcedureImplementation = new Procedure(translationUnitLoc, new Attribute[0],
+					SFO.INIT, new String[0], new VarList[0], new VarList[0], null, initBody);
 
 
-			final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT,
-					new String[0], new VarList[0], new VarList[0], specsInit, null);
+//			final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT,
+//					new String[0], new VarList[0], new VarList[0], specsInit, null);
 
-			proceduresCalledByUltimateInit.addAll(
-					main.mCHandler.getStaticObjectsHandler().getProceduresCalledByUltimateInit());
+//			proceduresCalledByUltimateInit.addAll(
+//					main.mCHandler.getStaticObjectsHandler().getProceduresCalledByUltimateInit());
 
-			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT, proceduresCalledByUltimateInit);
+//			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT, proceduresCalledByUltimateInit);
+//			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT);
+			functionHandler.endUltimateInitOrStart(main, SFO.INIT);
 
-			mUltimateInitDeclaration = initProcedure;
+			mUltimateInitImplementation = initProcedureImplementation;
 		}
 
-		public Declaration getUltimateInitDeclaration() {
-			return mUltimateInitDeclaration;
+		public Declaration getUltimateInitImplementation() {
+			return mUltimateInitImplementation;
 		}
 
 		public List<VariableLHS> getUltimateInitModifiesClauseContents() {
@@ -791,11 +799,13 @@ public class PostProcessor {
 
 		private Procedure mStartProcedure;
 
-		UltimateStartProcedure(final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler) {
-			createStartProc(main, loc, functionHandler);
+		UltimateStartProcedure(final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler,
+				final IASTNode hook) {
+			createStartProc(main, loc, functionHandler, hook);
 		}
 
-		void createStartProc(final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler) {
+		void createStartProc(final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler,
+				final IASTNode hook) {
 //			final Map<String, Procedure> procedures = functionHandler.getProcedures();
 			final String checkedMethod = main.getCheckedMethod();
 
@@ -804,7 +814,7 @@ public class PostProcessor {
 			if (!checkedMethod.equals(SFO.EMPTY) && functionHandler.hasProcedure(checkedMethod)) {
 				mLogger.info("Settings: Checked method=" + checkedMethod);
 
-				functionHandler.beginUltimateInitOrStart(main, loc, SFO.START);
+				functionHandler.beginUltimateInitOrStart(main, loc, SFO.START, hook);
 
 //				Procedure startDeclaration = null;
 				Specification[] specsStart = new Specification[0];
@@ -863,9 +873,12 @@ public class PostProcessor {
 				for (final String id : mInitializedGlobals) {
 					startModifiesClause.add(new VariableLHS(loc, id));
 				}
-				for (final String id : functionHandler.getModifiedGlobals().get(checkedMethod)) {
-					startModifiesClause.add(new VariableLHS(loc, id));
-				}
+
+				// should not be necessary if we treat start and init as normal procedures
+//				for (final String id : functionHandler.getModifiedGlobals().get(checkedMethod)) {
+//					startModifiesClause.add(new VariableLHS(loc, id));
+//				}
+
 				specsStart[0] = new ModifiesSpecification(loc, false,
 						startModifiesClause.toArray(new VariableLHS[startModifiesClause.size()]));
 
@@ -875,12 +888,17 @@ public class PostProcessor {
 				startProcedure = new Procedure(loc, new Attribute[0], SFO.START, new String[0], new VarList[0],
 						new VarList[0], null, startBody);
 
-				final Procedure startDeclaration = new Procedure(loc, new Attribute[0], SFO.START, new String[0],
-						new VarList[0], new VarList[0], specsStart, null);
+				/* note that we only deal with the implementation of the procedure here, the declaration is managed
+				 * by the FucntionHandler
+				 */
+//				final Procedure startDeclaration = new Procedure(loc, new Attribute[0], SFO.START, new String[0],
+//						new VarList[0], new VarList[0], specsStart, null);
 
-				final List<String> proceduresCalledByStart = Arrays.asList(new String[] { SFO.INIT, checkedMethod });
+//				final List<String> proceduresCalledByStart = Arrays.asList(new String[] { SFO.INIT, checkedMethod });
 
-				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START, proceduresCalledByStart);
+//				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START, proceduresCalledByStart);
+//				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START);
+				functionHandler.endUltimateInitOrStart(main, SFO.START);
 			} else {
 				mLogger.info("Settings: Library mode!");
 				if (functionHandler.hasProcedure(SFO.MAIN)) {

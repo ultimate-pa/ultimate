@@ -664,10 +664,6 @@ public class CHandler implements ICHandler {
 		mDeclarations.addAll(
 				((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
 
-		final Collection<FunctionDeclaration> declaredFunctions =
-				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
-		mDeclarations.addAll(declaredFunctions);
-
 		/**
 		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}.
 		 * Short version:
@@ -681,8 +677,16 @@ public class CHandler implements ICHandler {
 		 */
 		if (!(main instanceof PRDispatcher)) {
 			// handle proc. declaration & resolve their transitive modified globals
-			mDeclarations.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
+			mDeclarations.addAll(mFunctionHandler.computeFinalProcedureDeclarations(main, mMemoryHandler));
 		}
+
+		/**
+		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the Boogie program that have been
+		 * collected by the ExpressionTranslation
+		 */
+		final Collection<FunctionDeclaration> declaredFunctions =
+				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
+		mDeclarations.addAll(declaredFunctions);
 
 		// TODO Need to get a CLocation from somewhere
 		final Unit boogieUnit = new Unit(
@@ -1893,7 +1897,7 @@ public class CHandler implements ICHandler {
 					if (stv != null) {
 						if (!stv.getCDecl().hasInitializer() || cDec.hasInitializer()) {
 							// Keep the last STV with an initializer
-							if (mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) {
+							if (mFunctionHandler.isGlobalScope() && !mTypeHandler.isStructDeclaration()) {
 								mDeclarationsGlobalInBoogie
 										.remove(mSymbolTable.findCSymbol(d, cDec.getName()).getBoogieDecl());
 							}
@@ -1932,7 +1936,7 @@ public class CHandler implements ICHandler {
 					// TODO: add a sizeof-constant for the type??
 					globalInBoogie = true;
 					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
-				} else if (storageClass == CStorageClass.STATIC && !mFunctionHandler.noCurrentProcedure()) {
+				} else if (storageClass == CStorageClass.STATIC && !mFunctionHandler.isGlobalScope()) {
 					// we have a local static variable -> special treatment
 					// global static variables are treated like normal global variables..
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
@@ -1947,7 +1951,7 @@ public class CHandler implements ICHandler {
 					final boolean hasRealInitializer = cDec.hasInitializer()
 							&& (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
 
-					if (!hasRealInitializer && !mFunctionHandler.noCurrentProcedure()
+					if (!hasRealInitializer && !mFunctionHandler.isGlobalScope()
 							&& !mTypeHandler.isStructDeclaration()) {
 						// in case of a local variable declaration without an
 						// initializer, we need to insert a
@@ -1987,7 +1991,7 @@ public class CHandler implements ICHandler {
 							mMemoryHandler.addVariableToBeFreed(main,
 									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 						}
-					} else if (hasRealInitializer && !mFunctionHandler.noCurrentProcedure()
+					} else if (hasRealInitializer && !mFunctionHandler.isGlobalScope()
 							&& !mTypeHandler.isStructDeclaration()) {
 						// in case of a local variable declaration with an initializer, the statements and delcs
 						// necessary for the initialization are the result
@@ -2024,7 +2028,7 @@ public class CHandler implements ICHandler {
 					}
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
 							new VarList[] { new VarList(loc, new String[] { bId }, translatedType) });
-					globalInBoogie |= mFunctionHandler.noCurrentProcedure();
+					globalInBoogie |= mFunctionHandler.isGlobalScope();
 				}
 
 				mSymbolTable.storeCSymbol(d, cDec.getName(),
@@ -2245,13 +2249,6 @@ public class CHandler implements ICHandler {
 			processTUchild(main, mDeclarations, funcDef);
 		}
 		
-		/**
-		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the Boogie program that have been
-		 * collected by the ExpressionTranslation
-		 */
-		final Collection<FunctionDeclaration> declaredFunctions =
-				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
-		mDeclarations.addAll(declaredFunctions);
 		// handle global ACSL stuff
 		// TODO: do it!
 
@@ -2771,9 +2768,17 @@ public class CHandler implements ICHandler {
 							rightHandSideValueWithConversionsApplied,
 							builder, hook);
 
-			if (!mFunctionHandler.noCurrentProcedure()) {
-				mFunctionHandler.checkIfModifiedGlobal(getSymbolTable(), BoogieASTUtil.getLHSId(lValue.getLHS()), loc,
-						hook);
+			if (!mFunctionHandler.isGlobalScope()) {
+
+				final String modifiedBoogieVariableName = BoogieASTUtil.getLHSId(lValue.getLHS());
+				final SymbolTableValue symbolTableValue = 
+						getSymbolTable().findSymbolByBoogieName(hook, modifiedBoogieVariableName);
+				if (symbolTableValue.isBoogieGlobalVar()) {
+					mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(),
+							modifiedBoogieVariableName);
+				}
+
+//				mFunctionHandler.checkIfModifiedGlobal(getSymbolTable(), BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
 			}
 			return builderWithUnionFieldAndNeighboursUpdated.build();
 		} else {
