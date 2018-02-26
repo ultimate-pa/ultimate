@@ -114,7 +114,6 @@ public class LinVar implements Comparable<LinVar> {
 	Rational[] mCachedRowCoeffs;
 	
 	int mAssertionstacklevel;
-	boolean mDead = false;
 
 	int mChainlength;
 	
@@ -136,7 +135,7 @@ public class LinVar implements Comparable<LinVar> {
 	 * 							  variable has been created.
 	 * @param num The count for this variable.
 	 */
-	public LinVar(Object name,boolean isint, int assertionstacklevel, int num) {
+	public LinVar(final Object name,final boolean isint, final int assertionstacklevel, final int num) {
 		mName = name;
 		mCurval = InfinitNumber.ZERO;
 		mIsInt = isint;
@@ -228,7 +227,7 @@ public class LinVar implements Comparable<LinVar> {
 	}
 	
 	@Override
-	public final int compareTo(LinVar o) {
+	public final int compareTo(final LinVar o) {
 		return mMatrixpos - o.mMatrixpos;
 	}
 	/**
@@ -260,7 +259,7 @@ public class LinVar implements Comparable<LinVar> {
 	 */
 	final static LinVar DUMMY_LINVAR = new LinVar();
 	
-	void addDiseq(LAEquality ea) {
+	void addDiseq(final LAEquality ea) {
 		if (mDisequalities == null) {
 			mDisequalities = new HashMap<Rational,LAEquality>();
 		}
@@ -271,7 +270,7 @@ public class LinVar implements Comparable<LinVar> {
 			mDisequalities.put(ea.getBound(),ea);
 		}
 	}
-	void removeDiseq(LAEquality ea) {
+	void removeDiseq(final LAEquality ea) {
 		// only remove the disequality if it is the right one.
 		// chronological backtracking will ensure that if we remove
 		// the disequality there is no other disequality with the 
@@ -283,13 +282,13 @@ public class LinVar implements Comparable<LinVar> {
 			mDisequalities.remove(ea.getBound());
 		}
 	}
-	LAEquality getDiseq(Rational bound) {
+	LAEquality getDiseq(final Rational bound) {
 		if (mDisequalities != null) {
 			return mDisequalities.get(bound);
 		}
 		return null;
 	}
-	public void addEquality(LAEquality ea) {
+	public void addEquality(final LAEquality ea) {
 		mEqualities.put(new InfinitNumber(ea.getBound(), 0), ea);
 	}
 	boolean unconstrained() {
@@ -305,7 +304,7 @@ public class LinVar implements Comparable<LinVar> {
 		return mIsInt ? InfinitNumber.ONE : InfinitNumber.EPSILON;
 	}
 	
-	public final void moveBounds(LinVar other) {
+	public final void moveBounds(final LinVar other) {
 		mNumUpperInf = other.mNumUpperInf;
 		mNumLowerInf = other.mNumLowerInf;
 		mNumUpperEps = other.mNumUpperEps;
@@ -316,13 +315,13 @@ public class LinVar implements Comparable<LinVar> {
 		other.mLowerComposite = null;
 	}
 	
-	public void mulUpperLower(Rational r) {
+	public void mulUpperLower(final Rational r) {
 		mUpperComposite.mul(r);
 		mLowerComposite.mul(r);
 	}
 
 	public final void updateUpper(
-			BigInteger coeff, InfinitNumber oldBound, InfinitNumber newBound) {
+			final BigInteger coeff, final InfinitNumber oldBound, final InfinitNumber newBound) {
 		if (oldBound.isInfinity()) {
 			if (newBound.isInfinity()) {
 				return;
@@ -339,7 +338,7 @@ public class LinVar implements Comparable<LinVar> {
 	}
 	
 	public final void updateLower(
-			BigInteger coeff, InfinitNumber oldBound, InfinitNumber newBound) {
+			final BigInteger coeff, final InfinitNumber oldBound, final InfinitNumber newBound) {
 		if (oldBound.isInfinity()) {
 			if (newBound.isInfinity()) {
 				return;
@@ -355,7 +354,7 @@ public class LinVar implements Comparable<LinVar> {
 		mNumLowerEps += (newBound.mEps - oldBound.mEps) * coeff.signum();
 	}
 	
-	public void updateUpperLowerSet(BigInteger coeff, LinVar nb) {
+	public void updateUpperLowerSet(final BigInteger coeff, final LinVar nb) {
 		InfinitNumber ubound = nb.getUpperBound();
 		InfinitNumber lbound = nb.getLowerBound();
 		if (coeff.signum() < 0) {
@@ -376,7 +375,7 @@ public class LinVar implements Comparable<LinVar> {
 		}
 		mNumLowerEps += lbound.mEps * coeff.signum();
 	}
-	public void updateUpperLowerClear(BigInteger coeff, LinVar nb) {
+	public void updateUpperLowerClear(final BigInteger coeff, final LinVar nb) {
 		InfinitNumber ubound = nb.getUpperBound().negate();
 		InfinitNumber lbound = nb.getLowerBound().negate();
 		if (coeff.signum() < 0) {
@@ -590,11 +589,8 @@ public class LinVar implements Comparable<LinVar> {
 					epsilons.signum() * mHeadEntry.mCoeff.signum());
 		}
 	}
-	public LAEquality getEquality(InfinitNumber bound) {
+	public LAEquality getEquality(final InfinitNumber bound) {
 		return mEqualities.get(bound);
-	}
-	public boolean isAlive() {
-		return !mDead;
 	}
 	
 	public final ExactInfinitNumber getExactValue() {
@@ -608,7 +604,7 @@ public class LinVar implements Comparable<LinVar> {
 		mExactVal = null;
 	}
 	
-	public final void setValue(InfinitNumber value) {
+	public final void setValue(final InfinitNumber value) {
 		mCurval = value;
 		mExactVal = null;
 	}

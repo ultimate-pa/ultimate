@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
 
 public class EqualityProxy {
-	
+
 	/**
 	 * Singleton class to represent an equality that is a tautology.
 	 * @author Juergen Christ
@@ -38,7 +38,7 @@ public class EqualityProxy {
 			super(null, null, null);
 		}
 		@Override
-		public DPLLAtom getLiteral(SourceAnnotation source) {
+		public DPLLAtom getLiteral(final SourceAnnotation source) {
 			throw new InternalError("Should never be called");
 		}
 	}
@@ -51,22 +51,22 @@ public class EqualityProxy {
 			super(null, null, null);
 		}
 		@Override
-		public DPLLAtom getLiteral(SourceAnnotation source) {
+		public DPLLAtom getLiteral(final SourceAnnotation source) {
 			throw new InternalError("Should never be called");
 		}
 	}
-	
+
 	private static final TrueEqualityProxy TRUE = new TrueEqualityProxy();
 	private static final FalseEqualityProxy FALSE = new FalseEqualityProxy();
-	
+
 	public static TrueEqualityProxy getTrueProxy() {
 		return TRUE;
 	}
-	
+
 	public static FalseEqualityProxy getFalseProxy() {
 		return FALSE;
 	}
-	
+
 	private final class RemoveAtom extends Clausifier.TrailObject {
 
 		@Override
@@ -75,12 +75,12 @@ public class EqualityProxy {
 		}
 
 	}
-	
+
 	final Clausifier mClausifier;
 	final SharedTerm mLhs, mRhs;
 	DPLLAtom mEqAtom;
-	
-	public EqualityProxy(Clausifier clausifier, SharedTerm lhs, SharedTerm rhs) {
+
+	public EqualityProxy(final Clausifier clausifier, final SharedTerm lhs, final SharedTerm rhs) {
 		mClausifier = clausifier;
 		mLhs = lhs;
 		mRhs = rhs;
@@ -90,23 +90,22 @@ public class EqualityProxy {
 		/* create la part */
 		final MutableAffinTerm at = mClausifier.createMutableAffinTerm(mLhs);
 		at.add(Rational.MONE, mClausifier.createMutableAffinTerm(mRhs));
-		return mClausifier.getLASolver().createEquality(
-		        mClausifier.getStackLevel(), at);
+		return mClausifier.getLASolver().createEquality(at);
 	}
-	
+
 	/**
 	 * Creates a CCEquality for the given lhs and rhs.  The equality must
-	 * match this EqualityFormula, i.e., 
+	 * match this EqualityFormula, i.e.,
 	 * <code>lhs-rhs = c*(this.lhs-this.rhs)</code> for some rational c.
 	 * This also has as side-effect, that it creates an LAEquality if it
 	 * did not exists before.  For this reason it is only allowed to call
 	 * it for integer or real terms. It will register LAEquality and CCEquality
-	 * with each other.   
+	 * with each other.
 	 * @param lhs the left hand side.
 	 * @param rhs the right hand side.
 	 * @return The created (or cached) CCEquality.
 	 */
-	public CCEquality createCCEquality(SharedTerm lhs, SharedTerm rhs) {
+	public CCEquality createCCEquality(final SharedTerm lhs, final SharedTerm rhs) {
 		assert lhs.mCCterm != null && rhs.mCCterm != null;
 		LAEquality laeq;
 		if (mEqAtom == null) {
@@ -145,25 +144,25 @@ public class EqualityProxy {
 		return eq;
 	}
 
-	private DPLLAtom createAtom(SourceAnnotation source) {
+	private DPLLAtom createAtom(final SourceAnnotation source) {
 		if (mLhs.mCCterm == null && mRhs.mCCterm == null) {
 			/* if both terms do not exist in CClosure yet, it may be better to
 			 * create them in linear arithmetic.
 			 * Do this, if we don't have a CClosure, or the other term is
 			 * already in linear arithmetic.
 			 */
-			if (mClausifier.getCClosure() == null 
+			if (mClausifier.getCClosure() == null
 					|| mLhs.mOffset != null && mRhs.mOffset == null) {
 				//m_Clausifier.createMutableAffinTerm(mRhs);
 				mRhs.shareWithLinAr();
 			}
-			if (mClausifier.getCClosure() == null 
+			if (mClausifier.getCClosure() == null
 					|| mLhs.mOffset == null && mRhs.mOffset != null) {
 				//m_Clausifier.createMutableAffinTerm(mLhs);
 				mLhs.shareWithLinAr();
 			}
 		}
-		
+
 		if (mLhs.getSort() != mRhs.getSort()) {
 			/* This can only happen in Logic LIRA, where one of the
 			 * shared terms is integer and the other is real.
@@ -173,7 +172,7 @@ public class EqualityProxy {
 			 */
 			return createLAEquality();
 		}
-		
+
 		/* check if the shared terms share at least one theory. */
 		if (!((mLhs.mCCterm != null && mRhs.mCCterm != null)
 				|| (mLhs.mOffset != null && mRhs.mOffset != null))) {
@@ -192,8 +191,8 @@ public class EqualityProxy {
 					mClausifier.getStackLevel(), mLhs.mCCterm, mRhs.mCCterm);
 		}
 	}
-	
-	public DPLLAtom getLiteral(SourceAnnotation source) {
+
+	public DPLLAtom getLiteral(final SourceAnnotation source) {
 		if (mEqAtom == null) {
 			mEqAtom = createAtom(source);
 			if (mClausifier.getLogger().isDebugEnabled()) {
@@ -202,7 +201,7 @@ public class EqualityProxy {
 		}
 		return mEqAtom;
 	}
-	
+
 	@Override
 	public String toString() {
 		final PrintTerm pt = new PrintTerm();
