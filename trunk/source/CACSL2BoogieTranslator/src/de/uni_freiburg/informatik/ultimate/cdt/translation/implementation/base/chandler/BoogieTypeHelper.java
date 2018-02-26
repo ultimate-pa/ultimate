@@ -31,4 +31,41 @@ public class BoogieTypeHelper {
 				hda.getName(), new DeclarationInformation(StorageClass.GLOBAL, readProcedureName));
 	}
 
+	public BoogieType getBoogieTypeForSizeT() {
+		return BoogieType.TYPE_INT;
+	}
+
+	/**
+	 * Convenience method
+	 *
+	 * @param loc
+	 * @param astType
+	 * @param id
+	 * @param storageClass
+	 * @param surroundingProcedureName
+	 * @return
+	 */
+	public IdentifierExpression constructIdentifierExpression(final ILocation loc, final ASTType astType,
+			final String id, final StorageClass storageClass, final String surroundingProcedureName) {
+		return ExpressionFactory.constructIdentifierExpression(loc, getBoogieTypeForBoogieASTType(astType), id,
+				new DeclarationInformation(storageClass, surroundingProcedureName));
+	}
+
+	/**
+	 * Convenience method
+	 * @param loc
+	 * @param boogieTypeForPointerType
+	 * @param id
+	 * @param implementationInparam
+	 * @param dispatchingProcedureName
+	 * @return
+	 */
+	public IdentifierExpression constructIdentifierExpression(final ILocation loc, final BoogieType boogieType,
+			final String id, final StorageClass storageClass, final String surroundingProcedureName) {
+		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, id,
+				new DeclarationInformation(storageClass, surroundingProcedureName));
+	}
+
+
+
 }

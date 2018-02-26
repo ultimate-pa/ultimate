@@ -38,6 +38,7 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -146,14 +148,18 @@ public class TypeSizeAndOffsetComputer {
 	    private Expression constructTypeSizeConstant(final ILocation loc, final CType cType) {
 	    	final String id = SFO.SIZEOF + cType.toString();
 	    	declareConstant(loc, id);
-	    	final IdentifierExpression idexpr = new IdentifierExpression(loc, id);
+	    	final IdentifierExpression idexpr = //new IdentifierExpression(loc, id);
+	    			ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
+	    					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	    	return idexpr;
 	    }
 
 	    private Expression constructTypeSizeConstant_Pointer(final ILocation loc) {
 	    	final String id = SFO.SIZEOF + SFO.POINTER;
 	    	declareConstant(loc, id);
-	    	final IdentifierExpression idexpr = new IdentifierExpression(loc, id);
+	    	final IdentifierExpression idexpr = //new IdentifierExpression(loc, id);
+	    			ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
+	    					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	    	return idexpr;
 	    }
 
@@ -165,7 +171,9 @@ public class TypeSizeAndOffsetComputer {
 				final String fieldId = cStruct.getFieldIds()[fieldNumber];
 				final String resultId = SFO.OFFSET + cStruct.toString() + "~" + fieldId;
 				declareConstant(loc, resultId);
-				final Expression result = new IdentifierExpression(loc, resultId);
+				final Expression result = //new IdentifierExpression(loc, resultId);
+	    			ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, resultId,
+	    					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 				return result;
 	    }
 

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,34 +29,67 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class HeapDataArray {
 	private final String mName;
 	private final ASTType mASTType;
 	private final int mSize;
-	public HeapDataArray(final String name, final ASTType aSTType, final int size) {
+	private final BoogieType mBoogieType;
+	private final IdentifierExpression mIdentifierExpression;
+	private final VariableLHS mVariableLhs;
+
+	public HeapDataArray(final String name, final ASTType aSTType, final BoogieType boogieType, final int size) {
 		super();
 		mName = name;
 		mASTType = aSTType;
+		mBoogieType = boogieType;
 		mSize = size;
+		mIdentifierExpression = ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
+				mBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		mVariableLhs = ExpressionFactory.constructVariableLHS(LocationFactory.createIgnoreCLocation(),
+				mBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
+
 	public String getName() {
 		return mName;
 	}
+
 	public ASTType getASTType() {
 		return mASTType;
 	}
+
+	public BoogieType getBoogieType() {
+		return mBoogieType;
+	}
+
 	public String getVariableName() {
 		return SFO.MEMORY + "_" + getName();
 	}
+
+	public IdentifierExpression getIdentifierExpression() {
+		return mIdentifierExpression;
+	}
+
+	public VariableLHS getVariableLHS() {
+		return mVariableLhs;
+	}
+
 	public int getSize() {
 		return mSize;
 	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -66,6 +99,7 @@ public class HeapDataArray {
 		result = prime * result + mSize;
 		return result;
 	}
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -94,11 +128,9 @@ public class HeapDataArray {
 		}
 		return mSize == other.mSize;
 	}
+
 	@Override
 	public String toString() {
 		return "HeapDataArray [mName=" + mName + ", mASTType=" + mASTType + ", mSize=" + mSize + "]";
 	}
-	
-	
-	
 }

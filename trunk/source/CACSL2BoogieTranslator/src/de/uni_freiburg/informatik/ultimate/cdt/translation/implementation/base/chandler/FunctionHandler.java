@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.M
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -512,7 +513,10 @@ public class FunctionHandler {
 				&& mCurrentProcedureInfo.getDeclaration().getOutParams().length == 0) {
 			// void method that was assumed to be returning int! -> return int
 			final String id = outParams[0].getIdentifiers()[0];
-			final VariableLHS lhs = new VariableLHS(loc, id);
+			final VariableLHS lhs = ExpressionFactory.constructVariableLHS(loc,
+							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(outParams[0].getType()),
+							id, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+									getCurrentProcedureID()));
 			final Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
 			stmt.add(havoc);
 		} else if (node.getReturnValue() != null) {
@@ -544,7 +548,13 @@ public class FunctionHandler {
 				throw new UnsupportedSyntaxException(loc, msg);
 			} else {
 				final String id = outParams[0].getIdentifiers()[0];
-				final VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
+				final VariableLHS lhs = //new VariableLHS(loc, id);
+						ExpressionFactory.constructVariableLHS(loc,
+								main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(outParams[0].getType()),
+								id, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+										getCurrentProcedureID()));
+				final VariableLHS[] lhss = new VariableLHS[] { lhs };
+
 				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construt a copy of returnValueSwitched
 				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
@@ -554,7 +564,7 @@ public class FunctionHandler {
 				decl.addAll(returnValueSwitched.mDecl);
 				auxVars.putAll(returnValueSwitched.mAuxVars);
 				overApp.addAll(returnValueSwitched.mOverappr);
-				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
+				stmt.add(new AssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
 			}
 		}
@@ -619,11 +629,11 @@ public class FunctionHandler {
 		 *  (within an SCC all procedure may call all others (possibly transitively) thus all must have the same
 		 *   modifies clause contents)
 		 */
-		final LinkedHashRelation<StronglyConnectedComponent<ProcedureInfo>, String> sccToModifiedGlobals
+		final LinkedHashRelation<StronglyConnectedComponent<ProcedureInfo>, VariableLHS> sccToModifiedGlobals
 			= new LinkedHashRelation<>();
 		for (final StronglyConnectedComponent<ProcedureInfo> scc : dssc.getSCCs()) {
 			for (final ProcedureInfo procInfo : scc.getNodes()) {
-				for (final String modGlobal : procInfo.getModifiedGlobals()) {
+				for (final VariableLHS modGlobal : procInfo.getModifiedGlobals()) {
 					sccToModifiedGlobals.addPair(scc, modGlobal);
 				}
 			}
@@ -647,14 +657,14 @@ public class FunctionHandler {
 			 * Note that we have chosen the ISuccessorProvider for the SccComputation such that the caller is the
 			 *  successor of the callee. (i.e., the successor relation is the inverse of the call graph)
 			 */
-			final Set<String> currentSccModGlobals = sccToModifiedGlobals.getImage(currentScc);
+			final Set<VariableLHS> currentSccModGlobals = sccToModifiedGlobals.getImage(currentScc);
 			final Iterator<StronglyConnectedComponent<ProcedureInfo>> callers =
 					dssc.getComponentsSuccessorsProvider().getSuccessors(currentScc);
 			while (callers.hasNext()) {
 				final StronglyConnectedComponent<ProcedureInfo> caller = callers.next();
 				frontier.add(caller);
 
-				for (final String currentSccModGlobal : currentSccModGlobals) {
+				for (final VariableLHS currentSccModGlobal : currentSccModGlobals) {
 					sccToModifiedGlobals.addPair(caller, currentSccModGlobal);
 				}
 			}
@@ -675,7 +685,7 @@ public class FunctionHandler {
 				newSpec = oldSpec;
 			} else {
 //			    // case: !procInfo.isModifiedGlobalsIsUsedDefined()
-				final Set<String> currModClause =
+				final Set<VariableLHS> currModClause =
 						sccToModifiedGlobals.getImage(dssc.getNodeToComponents().get(procInfo));
 				assert currModClause != null : "No modifies clause proc " + procedureName;
 
@@ -695,7 +705,7 @@ public class FunctionHandler {
 					if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 						for (final HeapDataArray hda : heapDataArrays) {
 //							currModClause.add(hda.getVariableName());
-							procInfo.addModifiedGlobal(hda.getVariableName());
+							procInfo.addModifiedGlobal(hda.getVariableLHS());
 						}
 					}
 				}
@@ -703,8 +713,8 @@ public class FunctionHandler {
 				final VariableLHS[] modifyList = new VariableLHS[currModClause.size()];
 				{
 					int i = 0;
-					for (final String modifyEntry : currModClause) {
-						modifyList[i++] = new VariableLHS(loc, modifyEntry);
+					for (final VariableLHS modifyEntry : currModClause) {
+						modifyList[i++] = modifyEntry;//new VariableLHS(loc, modifyEntry);
 					}
 				}
 				newSpec[oldSpec.length] = new ModifiesSpecification(loc, false, modifyList);
@@ -746,10 +756,10 @@ public class FunctionHandler {
 		return updatedDeclarations;
 	}
 
-	private static boolean containsOneHeapDataArray(final Set<String> modifySet,
+	private static boolean containsOneHeapDataArray(final Set<VariableLHS> modifySet,
 			final Collection<HeapDataArray> heapDataArrays) {
 		for (final HeapDataArray hda : heapDataArrays) {
-			if (modifySet.contains(hda.getVariableName())) {
+			if (modifySet.contains(hda.getVariableLHS())) {
 				return true;
 			}
 		}
@@ -936,7 +946,7 @@ public class FunctionHandler {
 	 *  <li> a pointer variable that points to a function then has the value {base: -1, offset: #f}
 	 *  <li> for every function f, that is used as a pointer, and that has a signature s, we introduce a
 	 *    "dispatch-procedure" in Boogie for s
-	 *  <li> the dispatch function for s = t1 x t2 x ... x tn -> t has the signature t1 x t2 x ... x tn x fp -> t, i.e.,
+	 *  <li> the dispatch-procedure for s = t1 x t2 x ... x tn -> t has the signature t1 x t2 x ... x tn x fp -> t, i.e.,
 	 *    it takes the normal arguments, and a function address. When called, it calls the procedure that corresponds
 	 *    to the function address with the corresponding arguments and returns the returned value
 	 *  <li> a call to a function pointer is then translated to a call to the dispatch-procedure with fitting signature
@@ -1044,9 +1054,9 @@ public class FunctionHandler {
 //					mModifiedGlobalsIsUserDefined.add(methodName);
 					procInfo.setModifiedGlobalsIsUsedDefined(true);
 					final ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					final LinkedHashSet<String> modifiedSet = new LinkedHashSet<>();
+					final LinkedHashSet<VariableLHS> modifiedSet = new LinkedHashSet<>();
 					for (final VariableLHS var : ms.getIdentifiers()) {
-						modifiedSet.add(var.getIdentifier());
+						modifiedSet.add(var);
 					}
 //					mModifiedGlobals.put(methodName, modifiedSet);
 					procInfo.addModifiedGlobals(modifiedSet);
@@ -1071,20 +1081,25 @@ public class FunctionHandler {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final VarList[] in = new VarList[paramDecs.length];
 		for (int i = 0; i < paramDecs.length; ++i) {
-			final CDeclaration paramDec = paramDecs[i];
+			final CDeclaration currentParamDec = paramDecs[i];
 
-			final ASTType type;
-			if (paramDec.getType() instanceof CArray) {
+			final ASTType currentParamType;
+			if (currentParamDec.getType() instanceof CArray) {
 				// arrays are passed as pointers in C -- so we pass a Pointer in Boogie
-				type = main.mTypeHandler.constructPointerType(loc);
+				currentParamType = main.mTypeHandler.constructPointerType(loc);
 			} else {
-				type = main.mTypeHandler.cType2AstType(loc, paramDec.getType().getUnderlyingType());
+				currentParamType = main.mTypeHandler.cType2AstType(loc, currentParamDec.getType().getUnderlyingType());
 			}
 
-			final String paramId = main.mNameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
-			in[i] = new VarList(loc, new String[] { paramId }, type);
-			main.mCHandler.getSymbolTable().storeCSymbol(hook, paramDec.getName(),
-					new SymbolTableValue(paramId, null, paramDec, false, null, false));
+			final String currentParamId = main.mNameHandler.getInParamIdentifier(currentParamDec.getName(),
+					currentParamDec.getType());
+			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
+
+			final DeclarationInformation declInformation = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
+					procInfo.getProcedureName());
+
+			main.mCHandler.getSymbolTable().storeCSymbol(hook, currentParamDec.getName(),
+					new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
 		}
 		procInfo.updateCFunction(null, paramDecs, null, false);
 		return in;
@@ -1171,7 +1186,9 @@ public class FunctionHandler {
 				final VariableDeclaration inVarDecl =
 						new VariableDeclaration(loc, new Attribute[0], new VarList[] { var });
 
-				final VariableLHS tempLHS = new VariableLHS(loc, inparamAuxVarName);
+				final VariableLHS tempLHS = //new VariableLHS(loc, inparamAuxVarName);
+						ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType, inparamAuxVarName,
+								inparamAuxVarDeclInfo);
 //				final IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
 				final IdentifierExpression rhsId = ExpressionFactory.constructIdentifierExpression(loc,
 						inParamAuxVarType, bId, inparamAuxVarDeclInfo);
@@ -1197,11 +1214,12 @@ public class FunctionHandler {
 							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 				}
 				assert main.mCHandler.getSymbolTable().containsCSymbol(parent, cId);
+
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				main.mCHandler.getSymbolTable().storeCSymbol(parent, cId,
-						new SymbolTableValue(inparamAuxVarName, inVarDecl, new CDeclaration(cvar, cId), false, paramDec, 
-								false));
+						new SymbolTableValue(inparamAuxVarName, inVarDecl, new CDeclaration(cvar, cId),
+								inparamAuxVarDeclInfo, paramDec, false));
 			}
 		}
 	}
@@ -1490,25 +1508,27 @@ public class FunctionHandler {
 			final String longDescription = "Method was called before it was declared: '" + methodName
 					+ "' unknown! Return value is assumed to be int ...";
 			main.warn(loc, longDescription);
-			final String ident = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 
-//			returnedValue = new IdentifierExpression(loc, ident);
-			returnedValue = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, ident,
-					new DeclarationInformation(StorageClass.LOCAL, mCurrentProcedureInfo.getProcedureName()));
+////			returnedValue = new IdentifierExpression(loc, ident);
+//			returnedValue = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, ident,
+//					new DeclarationInformation(StorageClass.LOCAL, mCurrentProcedureInfo.getProcedureName()));
 
-			// we don't know the CType of the returned value
-			// we we INT
-			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-			final VarList tempVar =
-					new VarList(loc, new String[] { ident }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
-			final VariableDeclaration tmpVarDecl =
-					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+			// we don't know the CType of the returned value we assume INT for now
+			final CPrimitive cIntType = new CPrimitive(CPrimitives.INT);
+//			final String ident = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
+//			final VarList tempVar =
+//					new VarList(loc, new String[] { ident }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
+//			final VariableDeclaration tmpVarDecl =
+//					new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+			final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, cIntType, SFO.AUXVAR.RETURNED);
 
-			functionCallExpressionResultBuilder.putAuxVar(tmpVarDecl, loc);
-			functionCallExpressionResultBuilder.addDeclaration(tmpVarDecl);
+			returnedValue = auxvar.getExp();
 
-			final VariableLHS lhs = new VariableLHS(loc, ident);
-			call = new CallStatement(loc, false, new VariableLHS[] { lhs }, methodName,
+			functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
+			functionCallExpressionResultBuilder.putAuxVar(auxvar.getVarDec(), loc);
+
+//			final VariableLHS lhs = new VariableLHS(loc, ident);
+			call = new CallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,
 					translatedParameters.toArray(new Expression[translatedParameters.size()]));
 		}
 		functionCallExpressionResultBuilder.addStatement(call);
@@ -1624,7 +1644,7 @@ public class FunctionHandler {
 		return mProcedureNameToProcedureInfo.containsKey(tentativeProcedureName);
 	}
 
-	public void addModifiedGlobal(final String procedureName, final String globalBoogieVarName) {
+	public void addModifiedGlobal(final String procedureName, final VariableLHS globalBoogieVarName) {
 		getProcedureInfo(procedureName).addModifiedGlobal(globalBoogieVarName);
 	}
 
@@ -1633,7 +1653,7 @@ public class FunctionHandler {
 	 *
 	 * @param modifiedGlobal
 	 */
-	public void addModifiedGlobal(final String modifiedGlobal) {
+	public void addModifiedGlobal(final VariableLHS modifiedGlobal) {
 		if (mCurrentProcedureInfo == null) {
 			throw new IllegalStateException();
 		}
@@ -1658,7 +1678,7 @@ public class FunctionHandler {
 		private Procedure mDeclaration;
 		private Procedure mImplementation;
 
-		private final Set<String> mModifiedGlobals;
+		private final Set<VariableLHS> mModifiedGlobals;
 
 		private boolean mModifiedGlobalsIsUsedDefined;
 
@@ -1695,11 +1715,11 @@ public class FunctionHandler {
 			return mCType != null;
 		}
 
-		public void addModifiedGlobals(final Set<String> varNames) {
+		public void addModifiedGlobals(final Set<VariableLHS> varNames) {
 			mModifiedGlobals.addAll(varNames);
 		}
 
-		public void addModifiedGlobal(final String varName) {
+		public void addModifiedGlobal(final VariableLHS varName) {
 			mModifiedGlobals.add(varName);
 		}
 
@@ -1794,7 +1814,7 @@ public class FunctionHandler {
 			return mProcedureName;
 		}
 
-		public Set<String> getModifiedGlobals() {
+		public Set<VariableLHS> getModifiedGlobals() {
 			return Collections.unmodifiableSet(mModifiedGlobals);
 		}
 

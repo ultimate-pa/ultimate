@@ -32,6 +32,12 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
+/**
+ * Represents a declaration in a C program.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class CDeclaration {
 	private final CType mType;
 	private final String mName;
@@ -99,8 +105,8 @@ public class CDeclaration {
 
 	public InitializerResult getInitializer() {
 		if (!mIsInitializerTranslated) {
-			throw new AssertionError(
-					"Initializer must have been translated (with method CDeclaration.translateInitializer()) before this is called.");
+			throw new AssertionError("Initializer must have been translated (with method "
+					+ "CDeclaration.translateInitializer()) before this is called.");
 		}
 		return mInitializer;
 	}

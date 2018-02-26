@@ -46,6 +46,7 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -222,4 +223,8 @@ public interface ITypeHandler extends IHandler {
 	ICHandler getCHandler();
 
 	void setCHandler(CHandler cHandler);
+
+	BoogieType constructBoogiePointerType();
+
+	BoogieType astTypeToBoogieType(ASTType astType);
 }

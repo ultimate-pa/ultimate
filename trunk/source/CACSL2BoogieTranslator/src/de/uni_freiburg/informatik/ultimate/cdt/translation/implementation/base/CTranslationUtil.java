@@ -35,8 +35,10 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -47,9 +49,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BoogieTypeHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
@@ -79,7 +82,7 @@ public class CTranslationUtil {
 		// don't instantiate this utility class
 	}
 
-	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main, final CType cType) {
+	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final CType cType) {
 		final AUXVAR auxVarType;
 		if (cType instanceof CArray) {
 			auxVarType = SFO.AUXVAR.ARRAYINIT;
@@ -88,22 +91,33 @@ public class CTranslationUtil {
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		return makeAuxVarDeclaration(loc, main, cType, auxVarType);
+		return constructAuxVarInfo(loc, main, cType, auxVarType);
 	}
 
-	public static AuxVarHelper makeAuxVarDeclaration(final ILocation loc, final Dispatcher main, final CType cType,
+	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final CType cType,
 					final AUXVAR auxVarType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
+		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
 		final VariableDeclaration decl = new VariableDeclaration(loc,
 				new Attribute[0],
-				new VarList[] {
-						new VarList(loc, new String[] { id }, main.mTypeHandler.cType2AstType(loc, cType)) });
+				new VarList[] { new VarList(loc, new String[] { id }, astType ) });
 
-		final VariableLHS lhs = new VariableLHS(loc, id);
+		final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
+		final String currentProcId = main.mCHandler.getFunctionHandler().getCurrentProcedureID();
 
-		final IdentifierExpression exp = new IdentifierExpression(loc, id);
+		final VariableLHS lhs = //new VariableLHS(loc, id);
+				ExpressionFactory.constructVariableLHS(loc,
+						boogieTypeHelper.getBoogieTypeForBoogieASTType(astType),
+						id,
+						new DeclarationInformation(StorageClass.LOCAL, currentProcId));
 
-		return new AuxVarHelper(decl, lhs, exp);
+		final IdentifierExpression exp = //new IdentifierExpression(loc, id);
+				ExpressionFactory.constructIdentifierExpression(loc,
+						boogieTypeHelper.getBoogieTypeForBoogieASTType(astType),
+						id,
+						new DeclarationInformation(StorageClass.LOCAL, currentProcId));
+
+		return new AuxVarInfo(decl, lhs, exp);
 	}
 
 	public static LocalLValue constructArrayAccessLhs(final ILocation loc, final LocalLValue arrayLhsToInitialize,
@@ -348,19 +362,19 @@ public class CTranslationUtil {
 
 		return new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 	}
-
-	/**
-	 * Looks for a VariableLHS with a global variable inside a given LHS.
-	 * Returns the corresponding identifer if such a VariableLHS exists, null otherwise.
-	 * Note that this will crash if the VariableLHS does not contain a DeclarationInformation.
-	 *
-	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
-	 *
-	 */
 }
+
+/**
+ * Looks for a VariableLHS with a global variable inside a given LHS.
+ * Returns such a VariableLHS if it exists, null otherwise.
+ * Note that this will crash if the VariableLHS does not contain a DeclarationInformation.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 class BoogieGlobalLhsFinder extends BoogieVisitor {
 
-	private String mResult;
+	private VariableLHS mResult;
 
 	@Override
 	protected void visit(final VariableLHS lhs) {
@@ -369,13 +383,13 @@ class BoogieGlobalLhsFinder extends BoogieVisitor {
 				throw new AssertionError("there should be at most one VariableLHS inside a LeftHandSide!");
 			} else {
 
-				mResult = lhs.getIdentifier();
+				mResult = lhs;// lhs.getIdentifier();
 			}
 		}
 		super.visit(lhs);
 	}
 
-	public String getGlobalId(final LeftHandSide lhs) {
+	public VariableLHS getGlobalId(final LeftHandSide lhs) {
 		super.processLeftHandSide(lhs);
 		return mResult;
 	}

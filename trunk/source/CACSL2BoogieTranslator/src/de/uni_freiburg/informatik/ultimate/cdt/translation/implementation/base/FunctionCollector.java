@@ -34,6 +34,7 @@ import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -78,7 +79,8 @@ public class FunctionCollector extends ASTVisitor {
 			final String cId = mSymTab.applyMultiparseRenaming(raw.getContainingFilename(), decl.getName().toString());
 			final String bId = mSymTab.createBoogieId(raw.getParent(), raw.getParent(), type, false, cId);
 			final CDeclaration cDecl = new CDeclaration(type, cId);
-			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, decl, false);
+			final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, dummyDeclInfo, decl, false);
 			mSymTab.storeCSymbol(raw.getParent(), cId, stv);
 		}
 		return super.visit(raw);

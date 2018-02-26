@@ -42,6 +42,8 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -121,6 +123,8 @@ public class PostProcessor {
 	 */
 	public boolean mDeclareToIntFunction = false;
 
+	private final BoogieTypeHelper mBoogieTypeHelper;
+
 	/**
 	 * Constructor.
 	 *
@@ -133,6 +137,7 @@ public class PostProcessor {
 		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
+		mBoogieTypeHelper = dispatcher.mCHandler.getBoogieTypeHelper();
 	}
 
 	/**
@@ -451,9 +456,29 @@ public class PostProcessor {
 		return decls;
 	}
 
+	/**
+	 * Generate the body for one of our internal function pointer dispatching procedures.
+	 * See also {@link FunctionHandler.handleFunctionPointerCall} on how we treat function pointers.
+	 *
+	 *
+	 * @param loc
+	 * @param main
+	 * @param functionHandler
+	 * @param memoryHandler
+	 * @param structHandler
+	 * @param dispatchingProcedureName
+	 * 			name of the dispatching procedure
+	 * @param funcSignature
+	 * 			signature of the dispatching procedure
+	 * @param inParams
+	 * 			in parameters of the dispatching procedure as it has been registered in FunctionHandler
+	 * @param outParam
+	 * 			out parameters of the dispatching procedure as it has been registered in FunctionHandler
+	 * @return
+	 */
 	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main,
 			final FunctionHandler functionHandler, final MemoryHandler memoryHandler, final StructHandler structHandler,
-			final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
+			final String dispatchingProcedureName, final ProcedureSignature funcSignature, final VarList[] inParams,
 			final VarList[] outParam) {
 
 		final boolean resultTypeIsVoid = (funcSignature.getReturnType() == null);
@@ -463,8 +488,10 @@ public class PostProcessor {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		/*
-		 * setup the input parameters the last inParam is the function pointer in this case, here we only handle the
-		 * normal in params --> therefore we iterate to inParams.lenth - 1 only..
+		 * Setup the input parameters for the dispatched procedures.
+		 * The last inParam of the dispatching procedure is the function pointer in this case, which is not given to
+		 *  the dispatched procedures.
+		 *  --> therefore we iterate to inParams.lenth - 1 only..
 		 */
 		final ArrayList<Expression> args = new ArrayList<>();
 		for (int i = 0; i < inParams.length - 1; i++) {
@@ -478,9 +505,21 @@ public class PostProcessor {
 					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
 //			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
 //					new Expression[] { new IdentifierExpression(loc, oldId) }));
-			builder.addStatement(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
-					new Expression[] { new IdentifierExpression(loc, oldId) }));
-			args.add(new IdentifierExpression(loc, newId));
+			final IdentifierExpression oldIdExpr = //new IdentifierExpression(loc, oldId);
+					ExpressionFactory.constructIdentifierExpression(loc,
+							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()), oldId,
+							new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, dispatchingProcedureName));
+			final VariableLHS newIdLhs = //new VariableLHS(loc, newId);
+					ExpressionFactory.constructVariableLHS(loc,
+							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
+							newId, new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
+			builder.addStatement(new AssignmentStatement(loc, new LeftHandSide[] { newIdLhs },
+					new Expression[] { oldIdExpr }));
+			final IdentifierExpression newIdIdExpr = //new IdentifierExpression(loc, newId);
+					ExpressionFactory.constructIdentifierExpression(loc,
+							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
+							newId, new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
+			args.add(newIdIdExpr);
 		}
 
 		// collect all functions that are addressoffed in the program and that
@@ -502,7 +541,7 @@ public class PostProcessor {
 //		functionHandler.addModifiedGlobalEntry(fpfName);
 		for (final String fittingFunc : fittingFunctions) {
 //			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
-			functionHandler.registerCall(fpfName, fittingFunc);
+			functionHandler.registerCall(dispatchingProcedureName, fittingFunc);
 		}
 
 		// generate the actual body
@@ -556,7 +595,10 @@ public class PostProcessor {
 				builder.addDeclaration(tmpVarDec);
 //				auxVars.put(tmpVarDec, loc);
 				builder.putAuxVar(tmpVarDec, loc);
-				funcCallResult = new IdentifierExpression(loc, tmpId);
+				funcCallResult = //new IdentifierExpression(loc, tmpId);
+						ExpressionFactory.constructIdentifierExpression(loc,
+								mBoogieTypeHelper.getBoogieTypeForPointerType(), tmpId,
+								new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
 			}
 
 //			final ExpressionResult firstElseRex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main,
@@ -603,10 +645,20 @@ public class PostProcessor {
 					newStmts.add(assignment);
 				}
 
+				final IdentifierExpression functionPointerIdex =
+//						new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]);
+						mBoogieTypeHelper.constructIdentifierExpression(loc, inParams[inParams.length -1].getType(),
+								inParams[inParams.length - 1].getIdentifiers()[0],
+								StorageClass.IMPLEMENTATION_INPARAM, dispatchingProcedureName);
+				final IdentifierExpression functionPointerValueOfCurrentFittingFunctionIdex =
+//						new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i));
+						mBoogieTypeHelper.constructIdentifierExpression(loc,
+								mBoogieTypeHelper.getBoogieTypeForPointerType(),
+								SFO.FUNCTION_ADDRESS + fittingFunctions.get(i),
+								StorageClass.IMPLEMENTATION_INPARAM, dispatchingProcedureName);
 				final Expression condition =
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
-								new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
-								new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
+								functionPointerIdex, functionPointerValueOfCurrentFittingFunctionIdex);
 
 				if (i == 1) {
 					currentIfStmt = new IfStatement(loc, condition, newStmts.toArray(new Statement[newStmts.size()]),
@@ -623,8 +675,14 @@ public class PostProcessor {
 //				stmt.add(new AssignmentStatement(loc,
 //						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
 //						new Expression[] { funcCallResult }));
+				final VariableLHS dispatchingFunctionResultLhs = //new VariableLHS(loc, outParam[0].getIdentifiers()[0]);
+						ExpressionFactory.constructVariableLHS(loc,
+								mBoogieTypeHelper.getBoogieTypeForBoogieASTType(outParam[0].getType()),
+								outParam[0].getIdentifiers()[0],
+								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+										dispatchingProcedureName));
 				builder.addStatement(new AssignmentStatement(loc,
-						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
+						new LeftHandSide[] { dispatchingFunctionResultLhs },
 						new Expression[] { funcCallResult }));
 			}
 //			stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
@@ -675,10 +733,11 @@ public class PostProcessor {
 				// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is not allocated)
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(translationUnitLoc,
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final String lhsId = SFO.VALID;
+//				final String lhsId = SFO.VALID;
 				final Expression literalThatRepresentsFalse = memoryHandler.getBooleanArrayHelper().constructFalse();
 				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(
-						translationUnitLoc, zero, lhsId, literalThatRepresentsFalse);
+						translationUnitLoc, zero, memoryHandler.getValidArrayLhs(translationUnitLoc),
+						literalThatRepresentsFalse);
 				initStatements.add(0, assignment);
 				mInitializedGlobals.add(SFO.VALID);
 
@@ -848,7 +907,10 @@ public class PostProcessor {
 					for (final VarList arg : checkedMethodInParams) {
 						assert arg.getIdentifiers().length == 1; // by construction
 						final String id = arg.getIdentifiers()[0];
-						args.add(new IdentifierExpression(loc, id));
+						final IdentifierExpression idEx = //new IdentifierExpression(loc, id);
+								mBoogieTypeHelper.constructIdentifierExpression(loc,
+										arg.getType(), id, StorageClass.LOCAL, SFO.START);
+						args.add(idEx);
 					}
 				}
 				if (checkedMethodOutParams.length != 0) {

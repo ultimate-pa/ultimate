@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -631,7 +631,7 @@ public class InitializationHandler {
 
 	private ExpressionResult makeUnionAuxVarExpressionResult(final ILocation loc, final Dispatcher main,
 			final CType fieldType) {
-		final AuxVarHelper auxVar = CTranslationUtil.makeAuxVarDeclaration(loc, main, fieldType,
+		final AuxVarInfo auxVar = CTranslationUtil.constructAuxVarInfo(loc, main, fieldType,
 				SFO.AUXVAR.NONDET);
 
 		final ExpressionResult x = new ExpressionResultBuilder()
@@ -761,7 +761,7 @@ public class InitializationHandler {
 	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final Dispatcher main, final CType cType,
 			final ExpressionResultBuilder initialization) {
 		final LocalLValue arrayLhsToInitialize;
-		final AuxVarHelper auxVar = CTranslationUtil.makeAuxVarDeclaration(loc, main, cType);
+		final AuxVarInfo auxVar = CTranslationUtil.constructAuxVarInfo(loc, main, cType);
 
 		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 
@@ -1075,7 +1075,7 @@ public class InitializationHandler {
 
 					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
 					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-							exprResult.getAuxVarName());
+							exprResult.getAuxVar().getExp().getIdentifier());
 					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
 					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
 					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);

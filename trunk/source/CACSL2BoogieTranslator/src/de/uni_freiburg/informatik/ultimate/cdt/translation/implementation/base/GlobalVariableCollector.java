@@ -37,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -89,7 +90,8 @@ public class GlobalVariableCollector extends ASTVisitor {
 			final String cId = mSymTab.applyMultiparseRenaming(fileName, decl.getName().toString());
 			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, lType, false, cId);
 			final CDeclaration cDecl = new CDeclaration(lType, cId);
-			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, decl, false);
+			final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, dummyDeclInfo, decl, false);
 			mSymTab.storeCSymbol(decl, cId, stv);
 		}
 		final IASTDeclSpecifier spec = sd.getDeclSpecifier();
@@ -98,7 +100,8 @@ public class GlobalVariableCollector extends ASTVisitor {
 					((IASTEnumerationSpecifier) spec).getName().toString());
 			final String bId = "STRUCT~" + cId;
 			final CDeclaration cDecl = new CDeclaration(type, cId);
-			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, null, false);
+			final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, dummyDeclInfo, null, false);
 			mSymTab.storeCSymbol(spec, cId, stv);
 		}
 		return super.visit(sd);

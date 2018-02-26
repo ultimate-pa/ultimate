@@ -37,7 +37,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -52,6 +51,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes.FloatingPointSize;
@@ -87,8 +89,18 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
 		super(mTypeSizeConstants, typeHandler, pointerIntegerConversion, overapproximateFloatingPointOperations);
-		final IdentifierExpression roundingMode = new IdentifierExpression(null, BOOGIE_ROUNDING_MODE_RNE);
-		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
+
+		/*
+		 *  TODO: what is the BoogieType of roundingMode? -- from what I (alex) get it is of an uninterpreted type
+		 *    (or an enumeration type??)
+		 *   --> choosing int for now, change it later in case
+		 *    also, location was null before --> is ignore location an improvement??
+		 */
+		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		final IdentifierExpression roundingMode = //new IdentifierExpression(null, BOOGIE_ROUNDING_MODE_RNE);
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc,
+						BoogieType.TYPE_INT, BOOGIE_ROUNDING_MODE_RNE, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+
 		mRoundingMode = roundingMode;
 	}
 
@@ -436,9 +448,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName =
 				declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(), newType);
 		final Expression oldExpression = rexp.mLrVal.getValue();
+
+		// TODO double check if the type and location of roundingMode are well-chosen, also see the constructor
+		//  BitvectorTranslation(..) for an analogous case
+		final CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final IdentifierExpression roundingMode =
-				new IdentifierExpression(null, BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ);
-		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT,
+						BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+//				new IdentifierExpression(null, BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ);
+//		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression resultExpression =
 				new FunctionApplication(loc, prefixedFunctionName, new Expression[] { roundingMode, oldExpression });
 		final RValue rValue = new RValue(resultExpression, newType, false, false);

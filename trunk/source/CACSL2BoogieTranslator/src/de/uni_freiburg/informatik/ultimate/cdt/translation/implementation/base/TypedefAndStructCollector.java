@@ -33,6 +33,7 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -73,7 +74,8 @@ public class TypedefAndStructCollector extends ASTVisitor {
 			final CNamed container = new CNamed(explName, type);
 			final CDeclaration tdCdecl = new CDeclaration(container, explName);
 			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, tdCdecl.getType(), false, explName);
-			final SymbolTableValue stv = new SymbolTableValue(bId, null, tdCdecl, true, raw, false);
+			final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, tdCdecl, dummyDeclInfo, raw, false);
 			mSymTab.storeCSymbol(raw.getParent(), explName, stv);
 		}
 		
@@ -90,7 +92,8 @@ public class TypedefAndStructCollector extends ASTVisitor {
 			final String cId = mSymTab.applyMultiparseRenaming(sd.getContainingFilename(), cspec.getName().toString());
 			final String bId = namePrefix + cId;
 			final CDeclaration cDecl = new CDeclaration(type, cId);
-			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, true, null, false);
+			final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
+			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, dummyDeclInfo, null, false);
 			mSymTab.storeCSymbol(cspec, cId, stv);
 		}
 		return super.visit(sd);
