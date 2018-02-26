@@ -1206,6 +1206,15 @@ public class StandardFunctionHandler {
 		}
 	}
 
+	/**
+	 * Dispatch a function argument and do conversions that are applied to all function arguments.
+	 * TODO: move this method to a more appropriate place (it is also used by FunctionHandler)
+	 *
+	 * @param main
+	 * @param loc
+	 * @param initClause
+	 * @return
+	 */
 	public static ExpressionResult dispatchAndConvertFunctionArgument(final Dispatcher main, final ILocation loc,
 			final IASTInitializerClause initClause) {
 		final ExpressionResult dispatched = ((ExpressionResult) main.dispatch(initClause));

@@ -4301,9 +4301,14 @@ public class CHandler implements ICHandler {
 	 *
 	 */
 	ExpressionResult handleConditionalOperator(final ILocation loc, final Dispatcher main,
-			final ExpressionResult opCondition, final ExpressionResult opPositive, final ExpressionResult opNegative) {
+			final ExpressionResult opConditionRaw, final ExpressionResult opPositiveRaw,
+			final ExpressionResult opNegativeRaw) {
 
+		final ExpressionResult opCondition = opConditionRaw;
 		opCondition.rexIntToBoolIfNecessary(loc, mExpressionTranslation, mMemoryHandler);
+
+		ExpressionResult opPositive = opPositiveRaw;
+		ExpressionResult opNegative = opNegativeRaw;
 
 		opPositive.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 		opNegative.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
@@ -4396,36 +4401,39 @@ public class CHandler implements ICHandler {
 			resultCType = new CPrimitive(CPrimitives.VOID);
 		} else if (opPositive.getLrValue().isNullPointerConstant()) {
 			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
-			resultCType = opNegative.getLrValue().getCType();
+
+			if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
+				// convert the "0" to a pointer
+				mExpressionTranslation.convertIntToPointer(loc, opPositive,
+						(CPointer) opNegative.mLrVal.getCType().getUnderlyingType());
+				resultCType = opNegative.getLrValue().getCType();
+			} else if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
+				opNegative = opNegative.decayArrayToPointerIfNecessary(main, loc);
+				mExpressionTranslation.convertIntToPointer(loc, opPositive,
+						(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
+				resultCType = opNegative.getLrValue().getCType();
+			} else {
+				throw new AssertionError("unexpected case");
+			}
+
 		} else if (opNegative.getLrValue().isNullPointerConstant()) {
 			/* C11 6.5.15.6 if one operand is a null pointer constant, the result has the type of the other operand; */
-			resultCType = opPositive.getLrValue().getCType();
-		} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
-				&& opNegative.getLrValue().isNullPointerConstant()) {
-			mExpressionTranslation.convertIntToPointer(loc, opNegative,
+
+			if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
+				// convert the "0" to a pointer
+				mExpressionTranslation.convertIntToPointer(loc, opNegative,
 					(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
-			resultCType = opPositive.getLrValue().getCType();
-		} else if (opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
-				&& opPositive.getLrValue().isNullPointerConstant()) {
-			mExpressionTranslation.convertIntToPointer(loc, opPositive,
-					(CPointer) opNegative.mLrVal.getCType().getUnderlyingType());
-			resultCType = opNegative.getLrValue().getCType();
-		} else if ((opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer
-				|| opPositive.getLrValue().isNullPointerConstant())
-				&& opNegative.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
-			/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
-			opNegative.mLrVal = decayArrayLrValToPointer(loc, opNegative.getLrValue());
-			mExpressionTranslation.convertIntToPointer(loc, opPositive,
-					(CPointer) opNegative.getLrValue().getCType().getUnderlyingType());
-			resultCType = opNegative.getLrValue().getCType();
-		} else if ((opNegative.getLrValue().getCType().getUnderlyingType() instanceof CPointer
-				|| opNegative.getLrValue().isNullPointerConstant())
-				&& opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
-			/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
-			opPositive.mLrVal = decayArrayLrValToPointer(loc, opPositive.getLrValue());
-			mExpressionTranslation.convertIntToPointer(loc, opNegative,
-					(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
-			resultCType = opPositive.getLrValue().getCType();
+				resultCType = opPositive.getLrValue().getCType();
+			} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
+				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
+				opPositive = opPositive.decayArrayToPointerIfNecessary(main, loc);
+				mExpressionTranslation.convertIntToPointer(loc, opNegative,
+						(CPointer) opPositive.getLrValue().getCType().getUnderlyingType());
+				resultCType = opPositive.getLrValue().getCType();
+			} else {
+				throw new AssertionError("unexpected case");
+			}
 		} else {
 			// default case: the types of the operands (should) match --> we choose one of them as the result CType
 			resultCType = opPositive.getLrValue().getCType();
