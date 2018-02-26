@@ -1001,7 +1001,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 				paramBoogieType);
 		final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 				new Expression[] { argument.getValue() },
-				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(resultCType));
+				BoogieType.TYPE_BOOL);
 		return new RValue(expr, resultCType, true);
 	}
 
