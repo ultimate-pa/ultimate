@@ -116,6 +116,9 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			mLoopBodies.put(loopHead, loop);
 		}
 
+		/**
+		 * find loops.
+		 */
 		getLoop();
 
 		mLogger.debug("Found Backbones: " + mBackbones);
@@ -134,25 +137,36 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	private void getLoop() {
 
 		for (final IcfgLocation loopHead : mLoopHeads) {
-			/*
-			 * first get the backbones for each loop.
+			/**
+			 * first initialize the loops and get the backbones for each loop.
 			 */
 			mLogger.debug("LoopHead: " + loopHead);
 			final Deque<Backbone> backbones = getBackbonePath(mLoopBodies.get(loopHead));
 			mBackbones.put(loopHead, backbones);
 		}
 
+		/**
+		 * check backbones for nested loops and sort out backbones that are
+		 * nested in eachother.
+		 */
 		checkBackbones();
 
 		for (final Loop loop : mLoopBodies.values()) {
 			final IcfgLocation loopHead = loop.getLoophead();
 
+			/**
+			 * if the loop does not have an exit yet.
+			 */
 			if (!mLoopExitNodes.containsKey(loopHead)) {
 				final Set<IcfgLocation> forbidden = new HashSet<>();
 				forbidden.add(loopHead);
 				findLoopExits(loopHead, forbidden);
 			}
 
+			/**
+			 * Remove loops that do not have backbones, or where no loopexits
+			 * could be found.
+			 */
 			if (mIllegalLoopHeads.contains(loopHead) || mBackbones.get(loopHead).isEmpty()
 					|| !mLoopExitNodes.containsKey(loopHead)) {
 				mLoopBodies.remove(loopHead);
@@ -160,6 +174,10 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			}
 			final Deque<Backbone> backbones = mBackbones.get(loop.getLoophead());
 
+			/**
+			 * Assign the properties, loopexit, backbones, looppath, loopformula
+			 * to the loops.
+			 */
 			loop.setBackbones(backbones);
 			final Pair<UnmodifiableTransFormula, Set<IcfgEdge>> path = mergeBackbones(backbones);
 			loop.setFormula(path.getFirst());
@@ -172,6 +190,10 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		}
 	}
 
+	/**
+	 * Check backbones for nested loops and remove backbones that are nested in
+	 * each other.
+	 */
 	private void checkBackbones() {
 		final Deque<Backbone> backbones = new ArrayDeque<>();
 		for (final Deque<Backbone> bone : mBackbones.values()) {
@@ -189,6 +211,9 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				}
 				if (backbone1.getNodes().contains(loopHead2) && backbone2.getNodes().contains(loopHead1)) {
 
+					/**
+					 * remove loops that are looped in eachother, not nested.
+					 */
 					if (mIllegalLoopHeads.contains(loopHead1)) {
 						mIllegalLoopHeads.add(loopHead2);
 						continue;
@@ -199,6 +224,9 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 						continue;
 					}
 
+					/**
+					 * check which loop is nested in which.
+					 */
 					checkNesting(loopHead1, loopHead2);
 
 					if (mNested.containsKey(loopHead2) && mNested.get(loopHead2).equals(loopHead1)) {
@@ -292,6 +320,28 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		return false;
 	}
 
+	/**
+	 * Try to find a path back to the loopheader. If there is one return true,
+	 * else false.
+	 *
+	 * @param path
+	 *            path to check
+	 * @param start
+	 *            starting node
+	 *
+	 * @param target
+	 *            target node
+	 * 
+	 * @param forbidden
+	 *            edges which are forbidden which means they are not allowed to
+	 *            turn up in searching of the target
+	 * @param forbiddenNode
+	 *            nodes that are forbidden which means they are not allowed to
+	 *            turn up in searching of the target
+	 * @param plain
+	 *            select if one wants to check for nested loops or just try to
+	 *            find the target
+	 */
 	private boolean findLoopHeader(final Deque<IcfgEdge> transition, final IcfgLocation start,
 			final IcfgLocation target, final Set<IcfgEdge> forbidden, final Set<IcfgLocation> forbiddenNode,
 			final boolean plain) {
@@ -352,6 +402,10 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		if (mNested.containsKey(loopHead1)) {
 			forbidden.add(mNested.get(loopHead1));
 		}
+		/**
+		 * If it is not possible to reach one loophead without going over the
+		 * other, the first one is nested in the other.
+		 */
 		if (!findLoopHeader(loopHead1Edges, loopHead1, loopHead1, Collections.emptySet(), forbidden, false)) {
 			mNested.put(loopHead2, loopHead1);
 		}
@@ -366,11 +420,10 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		if (!findLoopHeader(loopHead2Edges, loopHead2, loopHead2, Collections.emptySet(), forbidden, false)) {
 			mNested.put(loopHead1, loopHead2);
 		}
-
 	}
 
 	/**
-	 * Find the exittransitions of a loop, needed for nestedloops
+	 * Find the exittransitions and exitnodes of a loop.
 	 * 
 	 * @param loopHead
 	 */
@@ -384,7 +437,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	}
 
 	/**
-	 * Get the backbone paths of a given loop
+	 * Get the backbones of a given {@link loop}
 	 * 
 	 * @param loop
 	 * @return
@@ -406,11 +459,19 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			visited.addAll(backbone.getNodes());
 			Boolean done = false;
 
+			/**
+			 * using a DFS approach. Add a new edge to the backbone if the
+			 * loopHead can be reached over it.
+			 */
 			while (!backbone.getPath().getLast().getTarget().equals(loopHead)) {
 
 				final IcfgEdge edge = backbone.getPath().getLast();
 				IcfgLocation target = backbone.getPath().getLast().getTarget();
 
+				/**
+				 * if there is an errorlocation in the backbone attach the
+				 * backbone as errorpath to the loop.
+				 */
 				if (mErrorLocations.contains(target)) {
 					mLogger.debug("FOUND ERROR LOCATIONS");
 					final TransFormula errorFormula = calculateFormula(backbone.getPath());
@@ -473,6 +534,12 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				transformulas);
 	}
 
+	/**
+	 * Merge all backbone paths into one and calculate its Transformula.
+	 * 
+	 * @param backbones
+	 * @return
+	 */
 	private Pair<UnmodifiableTransFormula, Set<IcfgEdge>> mergeBackbones(final Deque<Backbone> backbones) {
 		final Set<IcfgEdge> path = new HashSet<>();
 		UnmodifiableTransFormula loopFormula = (UnmodifiableTransFormula) backbones.getFirst().getFormula();

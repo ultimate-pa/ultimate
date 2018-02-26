@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
@@ -183,7 +184,7 @@ public class TypeChecker extends BaseObserver {
 			case LOGICOR:
 				if (!left.equals(BoogieType.TYPE_ERROR) && !left.equals(BoogieType.TYPE_BOOL)
 						|| !right.equals(BoogieType.TYPE_ERROR) && !right.equals(BoogieType.TYPE_BOOL)) {
-					typeError(expr, "Type check failed for " + expr);
+					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
 				break;
@@ -201,7 +202,7 @@ public class TypeChecker extends BaseObserver {
 				if (!left.equals(right) || !left.equals(BoogieType.TYPE_INT) && !left.equals(BoogieType.TYPE_REAL)
 						|| left.equals(BoogieType.TYPE_REAL)
 								&& binexp.getOperator() == BinaryExpression.Operator.ARITHMOD) {
-					typeError(expr, "Type check failed for " + expr);
+					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 					resultType = BoogieType.TYPE_ERROR;
 				} else {
 					resultType = left;
@@ -218,22 +219,22 @@ public class TypeChecker extends BaseObserver {
 					right = left;
 				}
 				if (!left.equals(right) || !left.equals(BoogieType.TYPE_INT) && !left.equals(BoogieType.TYPE_REAL)) {
-					typeError(expr, "Type check failed for " + expr);
+					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
 				break;
 			case COMPNEQ:
 			case COMPEQ:
 				if (!left.isUnifiableTo(right)) {
-					typeError(expr, "Type check failed for " + expr);
+					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
 				break;
 			case COMPPO:
 				if (!left.equals(right) && !left.equals(BoogieType.TYPE_ERROR)
 						&& !right.equals(BoogieType.TYPE_ERROR)) {
-					typeError(expr, "Type check failed for " + expr + ": " + left.getUnderlyingType() + " != "
-							+ right.getUnderlyingType());
+					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr) + ": "
+							+ left.getUnderlyingType() + " != " + right.getUnderlyingType());
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
 				break;
@@ -244,7 +245,7 @@ public class TypeChecker extends BaseObserver {
 																			 * handle overflow
 																			 */) {
 					if (!left.equals(BoogieType.TYPE_ERROR) && !right.equals(BoogieType.TYPE_ERROR)) {
-						typeError(expr, "Type check failed for " + expr);
+						typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 					}
 					leftLen = 0;
 					rightLen = 0; /* recover */
@@ -262,14 +263,14 @@ public class TypeChecker extends BaseObserver {
 			switch (unexp.getOperator()) {
 			case LOGICNEG:
 				if (!subtype.equals(BoogieType.TYPE_ERROR) && !subtype.equals(BoogieType.TYPE_BOOL)) {
-					typeError(expr, "Type check failed for " + expr);
+					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 				}
 				resultType = BoogieType.TYPE_BOOL; /* try to recover in any case */
 				break;
 			case ARITHNEGATIVE:
 				if (!subtype.equals(BoogieType.TYPE_ERROR) && !subtype.equals(BoogieType.TYPE_INT)
 						&& !subtype.equals(BoogieType.TYPE_REAL)) {
-					typeError(expr, "Type check failed for " + expr);
+					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 				}
 				resultType = subtype;
 				break;
@@ -289,7 +290,7 @@ public class TypeChecker extends BaseObserver {
 			int start = bvaexpr.getStart();
 			if (start < 0 || end < start || bvlen < end) {
 				if (!bvType.equals(BoogieType.TYPE_ERROR)) {
-					typeError(expr, "Type check failed for " + expr);
+					typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 				}
 				start = end = 0;
 			}
@@ -435,7 +436,7 @@ public class TypeChecker extends BaseObserver {
 			final BoogieType left = typecheckExpression(ite.getThenPart());
 			final BoogieType right = typecheckExpression(ite.getElsePart());
 			if (!left.isUnifiableTo(right)) {
-				typeError(expr, "Type check failed for " + expr);
+				typeError(expr, "Type check failed for " + BoogiePrettyPrinter.print(expr));
 				resultType = BoogieType.TYPE_ERROR;
 			} else {
 				resultType = left.equals(BoogieType.TYPE_ERROR) ? right : left;

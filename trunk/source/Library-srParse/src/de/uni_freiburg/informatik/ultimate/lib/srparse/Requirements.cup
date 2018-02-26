@@ -119,7 +119,7 @@ action code {:
 scan with {: return getScanner().next_token(); :}
 
 /* Keywords */
-terminal GLOBALLY, BEFORE, AFTER, BETWEEN, AND, UNTIL, INPUT, OUTPUT, INTERNAL;
+terminal GLOBALLY, BEFORE, AFTER, BETWEEN, AND, UNTIL, INPUT, OUTPUT, INTERNAL, CONST;
 terminal IT, IS, NEVER, ALWAYS, THE, CASE, THAT, INITIALLY;
 terminal IF, HOLD, HOLDS, HELD, EVENTUALLY;
 terminal TRANSITIONS, TO, STATES, IN, WHICH, OCCUR, AT, TWICE;
@@ -178,6 +178,12 @@ property ::= propid?:id scope:s COMMA? pattern:p DOT?
 		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.OUT); :}
 		 	| INTERNAL cid:i IS ID:t
 		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.HIDDEN); :}
+		 	| CONST cid:i IS NUMBER:v
+		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VarAccess.CONST,null); :}
+		 	| CONST cid:i IS REALNUMBER:v
+		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VarAccess.CONST,null); :}
+		 	| CONST cid:i IS bool:v
+		  	   {: RESULT = new InitializationPattern(i,"bool",InitializationPattern.VarAccess.CONST,null); :}		  	   		  	   		  	   
            ;
 
 propid ::= ID:id IDSEP

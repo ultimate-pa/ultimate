@@ -262,8 +262,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta, counterexample.getNestedLassoWord());
-			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
-					new NonterminationArgumentStatistics(nta)));
+			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
+					NonterminationArgumentStatistics.class.getSimpleName(), new NonterminationArgumentStatistics(nta)));
 
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")

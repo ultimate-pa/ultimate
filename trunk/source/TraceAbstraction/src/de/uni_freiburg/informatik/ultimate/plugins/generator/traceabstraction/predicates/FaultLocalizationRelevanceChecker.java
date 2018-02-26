@@ -142,10 +142,10 @@ public class FaultLocalizationRelevanceChecker {
 		if (mUseUnsatCores) {
 			final Validity val = mHoareTripleChecker.checkInternal(pre, act, post);
 			result = getResult(val, mHoareTripleChecker);
-			mHoareTripleChecker.clearAssertionStack();
 		} else {
 			result = computeRelevancyInternalWithoutUnsatCores(pre, act, post);
 		}
+		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
 
@@ -191,10 +191,10 @@ public class FaultLocalizationRelevanceChecker {
 		if (mUseUnsatCores) {
 			final Validity val = mHoareTripleChecker.checkCall(pre, call, post);
 			result = getResult(val, mHoareTripleChecker);
-			mHoareTripleChecker.clearAssertionStack();
 		} else {
 			result = computeRelevancyCallWithoutUnsatCores(pre, call, post);
 		}
+		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
 	
@@ -242,10 +242,10 @@ public class FaultLocalizationRelevanceChecker {
 			final Validity val = mHoareTripleChecker.checkReturn(returnPre, 
 					callPre, ret, post);
 			result = getResult(val, mHoareTripleChecker);
-			mHoareTripleChecker.clearAssertionStack();
 		} else {
 			result = computeRelevancyReturnWithoutUnsatCores(returnPre, callPre, ret, post);
 		}
+		mHoareTripleChecker.clearAssertionStack();
 		return result;
 	}
 	

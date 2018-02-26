@@ -93,6 +93,9 @@ public class SymbolicMemory {
 		mOutVars = tf.getOutVars();
 		mMemoryMapping = new HashMap<>();
 
+		/**
+		 * initialize the symbolic memory.
+		 */
 		for (final Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
 			mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
 		}
@@ -140,8 +143,7 @@ public class SymbolicMemory {
 	}
 
 	/**
-	 * Translate the given condition {@link TransFormula} to a for symbolic
-	 * memory compatible format.
+	 * Update the given transformula with entries of the symbolic memory.
 	 * 
 	 * @param tf
 	 *            {@link TransFormula}
@@ -172,6 +174,8 @@ public class SymbolicMemory {
 	}
 
 	/**
+	 * Unravel a given term and substitute subterms with values from the
+	 * symbolic memory.
 	 * 
 	 * @param appTerm
 	 * @return
@@ -200,6 +204,8 @@ public class SymbolicMemory {
 	}
 
 	/**
+	 * Unravel a given term and substitute subterms with values from the
+	 * symbolic memory.
 	 * 
 	 * @param appTerm
 	 * @param progVars

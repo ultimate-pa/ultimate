@@ -134,6 +134,9 @@ public class IteratedSymbolicMemory {
 
 		mMemoryMapping = new HashMap<>();
 
+		/**
+		 * initialize the memory.
+		 */
 		for (final Entry<IProgramVar, TermVariable> entry : mInVars.entrySet()) {
 			mMemoryMapping.put(entry.getKey(), (TermVariable) entry.getValue());
 		}
@@ -164,10 +167,16 @@ public class IteratedSymbolicMemory {
 			caseType currentType = caseType.NOT_CHANGED;
 			caseType prevCase = caseType.NOT_CHANGED;
 
+			/**
+			 * refine the iterated memory using the symbolic memories of each
+			 * backbone.
+			 */
 			for (final Backbone backbone : mLoop.getBackbones()) {
 
-				// A new value can only be computed, iff the cases do not
-				// change.
+				/**
+				 * A new value can only be computed, iff the cases do not
+				 * change.
+				 */
 				if (!currentType.equals(prevCase) && !prevCase.equals(caseType.NOT_CHANGED)) {
 					update = null;
 					mLogger.debug("None of the cases applicable " + entry.getKey() + " value = unknown");
@@ -177,14 +186,17 @@ public class IteratedSymbolicMemory {
 				final Term memory = backbone.getSymbolicMemory().getValue(entry.getKey());
 				final TransFormula backboneTf = backbone.getFormula();
 
-				// Case 1: variable not changed in backbone
+				/**
+				 * Variable not changed in backbone
+				 */
 				if (memory == null || memory.equals(symbol) || memory instanceof TermVariable) {
 					continue;
 				}
 
-				// Case 3:
-				// in each backbone the variable is either not changed or set to
-				// an expression,
+				/**
+				 * in each backbone the variable is either not changed or set to
+				 * an expression
+				 */
 				if (memory instanceof ConstantTerm || !backboneTf.getAssignedVars().contains(entry.getKey())) {
 
 					update = memory;
@@ -197,9 +209,11 @@ public class IteratedSymbolicMemory {
 					continue;
 				}
 
-				// Case 2.1: if the variable is changed from its symbol by
-				// adding
-				// a constant for each backbone.
+				/**
+				 * If the variable is changed from its symbol by adding a
+				 * constant for each backbone.
+				 */
+
 				if ("+".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
 					mLogger.debug("Addition");
@@ -212,8 +226,26 @@ public class IteratedSymbolicMemory {
 
 				}
 
-				// Case 2.2: if the variable is changed from its symbol by
-				// multiplicating
+				/**
+				 * If the variable is changed from its symbol by subtracting a
+				 * constant for each backbone.
+				 */
+				if ("-".equals(((ApplicationTerm) memory).getFunction().getName())) {
+
+					mLogger.debug("Subtraction");
+
+					update = mScript.getScript().term("-", update, mScript.getScript().term("*",
+							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
+
+					prevCase = currentType;
+					currentType = caseType.SUBTRACTION;
+
+				}
+
+				/**
+				 * If the variable is multiplicated by a non constant term mark
+				 * variable as unknown.
+				 */
 				if ("*".equals(((ApplicationTerm) memory).getFunction().getName())) {
 
 					mIllegal.add(entry.getKey());
@@ -227,21 +259,10 @@ public class IteratedSymbolicMemory {
 
 				}
 
-				// Case 2.3: if the variable is changed from its symbol by
-				// subtracting
-				// a constant for each backbone.
-				if ("-".equals(((ApplicationTerm) memory).getFunction().getName())) {
-
-					mLogger.debug("Subtraction");
-
-					update = mScript.getScript().term("-", update, mScript.getScript().term("*",
-							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
-
-					prevCase = currentType;
-					currentType = caseType.SUBTRACTION;
-
-				}
-
+				/**
+				 * If the variable is assigned a constant assignment that
+				 * contains a pathcounter.
+				 */
 				if (!Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol) && Arrays
 						.asList(((ApplicationTerm) memory).getParameters()).contains(backbone.getPathCounter())) {
 
@@ -259,6 +280,9 @@ public class IteratedSymbolicMemory {
 			}
 			mIteratedMemory.replace(entry.getKey(), update);
 		}
+		/**
+		 * remove unknown variables.
+		 */
 		for (IProgramVar var : mIllegal) {
 			mOverapprox = true;
 			mIteratedMemory.remove(var);
@@ -268,13 +292,20 @@ public class IteratedSymbolicMemory {
 
 	/**
 	 * Compute the abstract condition using the {@link IteratedSymbolicMemory}
+	 * via the technique described in the paper.
 	 */
 	public void updateCondition() {
-		for (final Backbone backbone : mLoop.getBackbones()) {
 
+		/**
+		 * going over all backbones to refine the accelerated loop summary.
+		 */
+		for (final Backbone backbone : mLoop.getBackbones()) {
 			final List<TermVariable> freeVars = new ArrayList<>();
 			final List<Term> terms = new ArrayList<>();
 
+			/**
+			 * entry condition of the backbone
+			 */
 			Term condition = mLoop.updateVars(backbone.getCondition().getFormula(), backbone.getCondition().getInVars(),
 					backbone.getCondition().getOutVars());
 
@@ -292,6 +323,10 @@ public class IteratedSymbolicMemory {
 
 			final ApplicationTerm appTerm = (ApplicationTerm) condition;
 
+			/**
+			 * replace subterms from backbone condition with accelerated
+			 * variables of the iterated memory.
+			 */
 			for (Term term : appTerm.getParameters()) {
 				mapping.putAll(termUnravel(term));
 			}
@@ -311,6 +346,10 @@ public class IteratedSymbolicMemory {
 			final List<TermVariable> tempNewPathCounters = new ArrayList<>(mNewPathCounters.values());
 			tempNewPathCounters.remove(mNewPathCounters.get(backbone.getPathCounter()));
 
+			/**
+			 * following the technique in the paper we construct step by step an
+			 * accelerated backbone condition.
+			 */
 			final Term t1 = mScript.getScript().term("<", mNewPathCounters.get(backbone.getPathCounter()),
 					backbone.getPathCounter());
 			final Term t2 = mScript.getScript().term("<=", Rational.ZERO.toTerm(SmtSortUtils.getIntSort(mScript)),
@@ -351,19 +390,19 @@ public class IteratedSymbolicMemory {
 			tFirstPart = Util.implies(mScript.getScript(), tFirstPart, tBackPart);
 
 			final TermVariable[] vars = { mNewPathCounters.get(backbone.getPathCounter()) };
+
+			/**
+			 * necessary condition is the finished accelerated summary of the
+			 * backbone.
+			 */
 			final Term necessaryCondition = mScript.getScript().quantifier(QuantifiedFormula.FORALL, vars, tFirstPart);
 
-			/*
-			 * Problem here
-			 */
 			mTerms.add(PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, necessaryCondition,
 					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 		}
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(mInVars, mOutVars, true, null, true, null, false);
 		final List<Term> terms = new ArrayList<>();
-
-		terms.add(mAbstractPathCondition);
 
 		for (final Entry<IProgramVar, TermVariable> outvar : mOutVars.entrySet()) {
 			if (!checkIfVarContained(outvar.getValue(), mAbstractPathCondition)
@@ -407,6 +446,13 @@ public class IteratedSymbolicMemory {
 		return sub.transform(condition);
 	}
 
+	/**
+	 * Check if a given variable is contained in a given term.
+	 * 
+	 * @param tv
+	 * @param term
+	 * @return
+	 */
 	private static boolean checkIfVarContained(final TermVariable tv, final Term term) {
 
 		Term t = term;

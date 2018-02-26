@@ -975,6 +975,18 @@ public final class TransFormulaUtils {
 				false, xnfConversionTechnique, tf, negGuard);
 		return markhor;
 	}
+	
+	public static UnmodifiableTransFormula computeEncodedBranchFormula(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula altPath,
+			final ManagedScript maScript, final IUltimateServiceProvider services, final ILogger logger,
+			final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique) {
+
+		final UnmodifiableTransFormula blockEnoded = parallelComposition(logger, services, tf.hashCode(), maScript, null,
+				false, xnfConversionTechnique, tf, altPath); 
+		return blockEnoded;
+		
+	}
+	
 
 	/**
 	 * Add all elements of progConsts to tfb that occur in formula, ignore the those that do not occur in the formula.

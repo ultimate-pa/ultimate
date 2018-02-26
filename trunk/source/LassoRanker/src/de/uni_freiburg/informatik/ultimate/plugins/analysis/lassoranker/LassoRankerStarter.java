@@ -197,7 +197,8 @@ public class LassoRankerStarter {
 						reportFailBecauseOfOverapproximationResult();
 						return;
 					}
-					reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
+					reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME,
+							NonterminationArgumentStatistics.class.getSimpleName(),
 							new NonterminationArgumentStatistics(nta)));
 					reportNonTerminationResult(nta, mStem, mLoop);
 					return;

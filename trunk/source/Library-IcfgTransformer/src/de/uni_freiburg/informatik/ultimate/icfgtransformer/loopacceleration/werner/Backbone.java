@@ -117,6 +117,11 @@ public class Backbone {
 		mAbstractPathCondition = null;
 	}
 
+	/**
+	 * attach a pathcounter to backbone.
+	 * 
+	 * @param pathCounter
+	 */
 	public void setPathCounter(final TermVariable pathCounter) {
 		mPathCounter = pathCounter;
 	}
@@ -131,14 +136,27 @@ public class Backbone {
 		mCondition = condition;
 	}
 
+	/**
+	 * set the backbones transformula.
+	 * 
+	 * @param formula
+	 */
 	public void setFormula(final TransFormula formula) {
 		mFormula = formula;
 	}
 
+	/**
+	 * set the backbones symbolic memory.
+	 */
 	public void setSymbolicMemory(final SymbolicMemory memory) {
 		mSymbolicMemory = memory;
 	}
 
+	/**
+	 * set the backbones abstract path condition (accelerated backbone)
+	 * 
+	 * @param condition
+	 */
 	public void setAbstractPathCondition(final Term condition) {
 		mAbstractPathCondition = condition;
 	}
@@ -174,6 +192,11 @@ public class Backbone {
 		return mPath;
 	}
 
+	/**
+	 * Returns the nodes in the backbone.
+	 * 
+	 * @return nodes in the backbone.
+	 */
 	public Deque<IcfgLocation> getNodes() {
 		return mNodes;
 	}

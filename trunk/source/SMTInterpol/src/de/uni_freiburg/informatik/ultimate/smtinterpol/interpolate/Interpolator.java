@@ -1502,52 +1502,41 @@ public class Interpolator extends NonRecursive {
 		if (term instanceof AnnotatedTerm) {
 			term = ((AnnotatedTerm) term).getSubterm();
 		}
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (!appTerm.getFunction().isIntern()) {
-				final InterpolatorAffineTerm affine = new InterpolatorAffineTerm();
-				affine.add(Rational.ONE, term);
-				return affine;
-			} else if (appTerm.getFunction().getName().equals("+")) {
-				final InterpolatorAffineTerm affine = new InterpolatorAffineTerm();
-				for (final Term param : appTerm.getParameters()) {
-					affine.add(Rational.ONE, termToAffine(param));
-				}
-				return affine;
-			} else if (appTerm.getFunction().getName().equals("*")) {
-				Term factorTerm = appTerm.getParameters()[0];
-				boolean isNeg = false;
-				if (factorTerm instanceof ApplicationTerm
-						&& ((ApplicationTerm) factorTerm).getFunction().getName().equals("-")) {
-					factorTerm = ((ApplicationTerm) factorTerm).getParameters()[0];
-					isNeg = true;
-				}
-				assert factorTerm instanceof ConstantTerm;
-				Rational factor = SMTAffineTerm.create(factorTerm).getConstant();
-				factor = isNeg ? factor.mul(Rational.MONE) : factor;
-				final InterpolatorAffineTerm affine = new InterpolatorAffineTerm();
-				affine.add(factor, appTerm.getParameters()[1]);
-				return affine;
-			} else if (appTerm.getFunction().getName().equals("-")) {
-				final InterpolatorAffineTerm affine = new InterpolatorAffineTerm();
-				affine.add(Rational.MONE, termToAffine(appTerm.getParameters()[0]));
-				return affine;
-			} else {
-				final InterpolatorAffineTerm affine = new InterpolatorAffineTerm();
-				affine.add(Rational.ONE, term);
-				return affine;
-			}
-		} else if (term instanceof ConstantTerm) {
-			final InterpolatorAffineTerm affine = new InterpolatorAffineTerm();
-			affine.add(SMTAffineTerm.create(term).getConstant());
-			return affine;
-		} else if (term instanceof TermVariable) {
-			final InterpolatorAffineTerm affine = new InterpolatorAffineTerm();
-			affine.add(Rational.ONE, term);
-			return affine;
+		final InterpolatorAffineTerm result = new InterpolatorAffineTerm();
+		Term[] summands;
+		if (term instanceof ApplicationTerm
+			&& ((ApplicationTerm)term).getFunction().getName() == "+") {
+			summands = ((ApplicationTerm) term).getParameters();
 		} else {
-			throw new IllegalArgumentException("Cannot create affine term!");
+			summands = new Term[] { term };
 		}
+		for (Term summand : summands) {
+			Rational factor = Rational.ONE;
+			if (summand instanceof ApplicationTerm
+				&& ((ApplicationTerm) summand).getFunction().getName() == "*") {
+				final Term[] params = ((ApplicationTerm) summand).getParameters();
+				final SMTAffineTerm constFactor = SMTAffineTerm.create(params[0]);
+				assert(constFactor.isConstant());
+				factor = constFactor.getConstant();
+				summand = params[1];
+			}
+			if (summand instanceof ApplicationTerm
+				&& ((ApplicationTerm) summand).getFunction().getName() == "-"
+				&& ((ApplicationTerm) summand).getParameters().length == 1) {
+				factor = factor.negate();
+				summand = ((ApplicationTerm) summand).getParameters()[0];
+			}
+			if (summand instanceof ApplicationTerm
+				&& ((ApplicationTerm) summand).getFunction().getName() == "to_real") {
+				summand = ((ApplicationTerm) summand).getParameters()[0];
+			}
+			if (summand instanceof ConstantTerm) {
+				result.add(factor.mul(SMTAffineTerm.create(summand).getConstant()));
+			} else {
+				result.add(factor, summand);
+			}
+		}
+		return result;
 	}
 
 	/**

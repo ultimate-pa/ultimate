@@ -11,8 +11,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -154,7 +152,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 		final List<IdentifierExpression> idents = collector.getIdentifiers(mExpression);
 
 		for (final IdentifierExpression ident : idents) {
-			vars.put(ident.getIdentifier(), ident.getType().toString());
+			vars.put(ident.getIdentifier(), null);
 		}
 
 		return vars;
@@ -166,39 +164,14 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	private static final class BoogieIdentifierCollector extends BoogieVisitor {
 
 		private final ArrayList<IdentifierExpression> mIdentifiers = new ArrayList<>();
-		private BoogieType mAproxType = BoogieType.TYPE_BOOL;
 
 		@Override
 		protected void visit(final IdentifierExpression expr) {
 			mIdentifiers.add(expr);
 		}
 
-		@Override
-		protected void visit(final RealLiteral expr) {
-			mAproxType = BoogieType.TYPE_REAL;
-		}
-
-		@Override
-		protected void visit(final BooleanLiteral expr) {
-			mAproxType = BoogieType.TYPE_BOOL;
-		}
-
-		@Override
-		protected void visit(final IntegerLiteral expr) {
-			mAproxType = BoogieType.TYPE_INT;
-		}
-
 		public List<IdentifierExpression> getIdentifiers(final Expression expr) {
 			processExpression(expr);
-
-			// try to find a solution to what type the variables of the expression are, by giving them
-			// simply the type of type the literals in the expression had.
-			// TODO: get a better solution for this!
-			for (final IdentifierExpression ident : mIdentifiers) {
-				if (ident.getType() == null) {
-					ident.setType(mAproxType);
-				}
-			}
 			return mIdentifiers;
 		}
 	}

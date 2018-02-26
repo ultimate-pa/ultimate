@@ -100,7 +100,7 @@ public class Loop {
 	}
 
 	/**
-	 * unify the vars
+	 * Rename the vars in a term to fit the given in and out vars.
 	 * 
 	 * @param t
 	 *            a {@link Term}

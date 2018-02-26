@@ -141,7 +141,9 @@ public class GeometricNonTerminationArgument extends NonTerminationArgument impl
 		lambdas.addAll(mLambdas);
 		lambdas.addAll(other.mLambdas);
 		nus.addAll(mNus);
-		nus.add(Rational.ZERO); // add 0 because the length of nus has to be #gevs-1
+		if (!mGEVs.isEmpty() && !other.mGEVs.isEmpty()) {
+			nus.add(Rational.ZERO); // add 0 because the length of nus has to be #gevs-1
+		}
 		nus.addAll(other.mNus);
 		return new GeometricNonTerminationArgument(stateInit, stateHonda, gevs, lambdas, nus);
 	}
