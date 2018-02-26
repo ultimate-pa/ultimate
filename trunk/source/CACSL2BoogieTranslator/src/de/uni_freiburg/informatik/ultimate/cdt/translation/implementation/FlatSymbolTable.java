@@ -416,38 +416,6 @@ public class FlatSymbolTable {
 			final String cName) {
 		return mNameHandler.getUniqueIdentifier(scope, cName, getCScopeId(scopeHook), onHeap, type);
 	}
-	
-	/**
-	 * Checks whether the given boogie identifier denotes a global variable.
-	 * 
-	 * @param scope the scope of the symbol table that is searched
-	 * @param boogieIdentifier the identifer
-	 * @return true iff it is a global boogie variable
-	 */
-	public boolean isBoogieGlobalVar(final IASTNode scope, final String boogieIdentifier) {
-		// Magic values
-		if (boogieIdentifier == SFO.LENGTH) {
-			return true;
-		}
-		if (boogieIdentifier == SFO.VALID) {
-			return true;
-		}
-		
-		// Regular symbols
-		final String cId = getCIdForBoogieId(boogieIdentifier);
-		if (cId == null) {
-			// C id not mapped to boogie Id
-			return false;
-		}
-		
-		final SymbolTableValue stv = findCSymbol(scope, cId);
-		if (stv == null) {
-			// Symbol mapped but not found
-			return false;
-		}
-		
-		return stv.isBoogieGlobalVar();
-	}
 
 	private static boolean hasOwnScope(final IASTNode node) {
 		final boolean hasImplicitScope = node instanceof IASTFunctionDefinition || node instanceof IASTForStatement;

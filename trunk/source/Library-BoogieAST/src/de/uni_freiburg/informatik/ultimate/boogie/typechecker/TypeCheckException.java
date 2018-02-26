@@ -27,7 +27,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.typechecker;
 
 /**
  * This exception is thrown by the type checker if there is a type error in the

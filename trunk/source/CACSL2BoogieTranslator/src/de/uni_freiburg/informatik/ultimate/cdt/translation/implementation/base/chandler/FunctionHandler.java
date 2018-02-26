@@ -55,6 +55,8 @@ import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
@@ -84,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -716,7 +719,11 @@ public class FunctionHandler {
 					|| (main.getCheckedMethod().equals(SFO.EMPTY) || main.getCheckedMethod().equals(procedureName)) && main
 							.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
 				// add a specification to check for memory leaks
-				final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
+
+//				final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
+				final Expression vIe = //ExpressionFactory.constructIdentifierExpression(loc, MemoryModelDeclarations  SFO.VALID);
+						main.mCHandler.getMemoryHandler().getValidArray(loc);
+
 				final int nrSpec = newSpec.length;
 				final Check check = new Check(Check.Spec.MEMORY_LEAK);
 				final ILocation ensLoc = LocationFactory.createLocation(loc, check);
@@ -1084,7 +1091,13 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Creates local variables for in parameters.
+	 * Basic idea:
+	 * For each of the procedure's input parameters we
+	 * <li> create an auxiliary variable,
+	 * <li> add code that initializes the auxiliary variable to the corresponding input parameter
+	 *
+	 * (note, alex, feb 18: I suppose this is because C allows changing of in parameters while Boogie does not, but
+	 *  would have to look it up to be sure)
 	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
@@ -1098,9 +1111,9 @@ public class FunctionHandler {
 	 */
 	private void handleFunctionsInParams(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler,
 			final ArrayList<Declaration> decl, final ArrayList<Statement> stmt, final IASTFunctionDefinition parent) {
-		final VarList[] varListArray = mCurrentProcedureInfo.getDeclaration().getInParams();
+		final VarList[] inparamVarListArray = mCurrentProcedureInfo.getDeclaration().getInParams();
 		IASTNode[] paramDecs;
-		if (varListArray.length == 0) {
+		if (inparamVarListArray.length == 0) {
 			/*
 			 * In C it is possible to write func(void) { ... } This results in the empty name. (alex: what is an empty
 			 * name??)
@@ -1124,15 +1137,15 @@ public class FunctionHandler {
 			}
 		}
 
-		assert varListArray.length == paramDecs.length;
+		assert inparamVarListArray.length == paramDecs.length;
 		for (int i = 0; i < paramDecs.length; ++i) {
-			final VarList varList = varListArray[i];
+			final VarList inparamVarList = inparamVarListArray[i];
 			// final IASTParameterDeclaration paramDec = paramDecs[i];
 			final IASTNode paramDec = paramDecs[i];
-			for (final String bId : varList.getIdentifiers()) {
+			for (final String bId : inparamVarList.getIdentifiers()) {
 				final String cId = main.mCHandler.getSymbolTable().getCIdForBoogieId(bId);
 
-				ASTType type = varList.getType();
+				ASTType type = inparamVarList.getType();
 				final CType cvar = main.mCHandler.getSymbolTable().findCSymbol(parent, cId).getCVariable();
 
 				// onHeap case for a function parameter means the parameter is
@@ -1143,18 +1156,25 @@ public class FunctionHandler {
 				}
 
 				// Copy of inparam that is writeable
-				final String auxInvar = main.mNameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap, cvar);
+				final String inparamAuxVarName = main.mNameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap, cvar);
+
+				final DeclarationInformation inparamAuxVarDeclInfo = new DeclarationInformation(StorageClass.LOCAL,
+						mCurrentProcedureInfo.getProcedureName());
+				final BoogieType inParamAuxVarType = main.mCHandler.getBoogieTypeHelper()
+						.getBoogieTypeForBoogieASTType(type);
 
 				if (isOnHeap || cvar instanceof CArray) {
 					type = main.mTypeHandler.constructPointerType(loc);
-					((CHandler) main.mCHandler).addBoogieIdsOfHeapVars(auxInvar);
+					((CHandler) main.mCHandler).addBoogieIdsOfHeapVars(inparamAuxVarName);
 				}
-				final VarList var = new VarList(loc, new String[] { auxInvar }, type);
+				final VarList var = new VarList(loc, new String[] { inparamAuxVarName }, type);
 				final VariableDeclaration inVarDecl =
 						new VariableDeclaration(loc, new Attribute[0], new VarList[] { var });
 
-				final VariableLHS tempLHS = new VariableLHS(loc, auxInvar);
-				final IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
+				final VariableLHS tempLHS = new VariableLHS(loc, inparamAuxVarName);
+//				final IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
+				final IdentifierExpression rhsId = ExpressionFactory.constructIdentifierExpression(loc,
+						inParamAuxVarType, bId, inparamAuxVarDeclInfo);
 
 				final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
 				if (isOnHeap && !(cvar instanceof CArray)) {
@@ -1180,7 +1200,8 @@ public class FunctionHandler {
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				main.mCHandler.getSymbolTable().storeCSymbol(parent, cId,
-						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false, paramDec, false));
+						new SymbolTableValue(inparamAuxVarName, inVarDecl, new CDeclaration(cvar, cId), false, paramDec, 
+								false));
 			}
 		}
 	}
@@ -1426,22 +1447,35 @@ public class FunctionHandler {
 
 		if (hasProcedure(methodName)) {
 			procInfo = mProcedureNameToProcedureInfo.get(methodName);
-			final VarList[] type = procInfo.getDeclaration().getOutParams();
+			final VarList[] outParamVarlists = procInfo.getDeclaration().getOutParams();
 
-			if (type.length == 0) { // void
+			if (outParamVarlists.length == 0) { // void
 				// C has only one return statement -> no need for forall
 				call = new CallStatement(loc, false, new VariableLHS[0], methodName,
 						translatedParameters.toArray(new Expression[translatedParameters.size()]));
-			} else if (type.length == 1) { // one return value
-				final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
-				returnedValue = new IdentifierExpression(loc, tmpId);
-				final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, type[0].getType(), loc);
+			} else if (outParamVarlists.length == 1) { // one return value
+				final VariableLHS returnedValueAsLhs;
+				final VariableDeclaration tmpVarDecl;
+				{
+					final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
+					final BoogieType tmpBoogieType = main.mCHandler.getBoogieTypeHelper()
+							.getBoogieTypeForBoogieASTType(outParamVarlists[0].getType());
+					final DeclarationInformation tmpDeclInfo = new DeclarationInformation(StorageClass.LOCAL,
+							mCurrentProcedureInfo.getProcedureName());
+
+					//				returnedValue = new IdentifierExpression(loc, tmpId);
+					returnedValue = ExpressionFactory.constructIdentifierExpression(loc, tmpBoogieType, tmpId,
+							tmpDeclInfo);
+					returnedValueAsLhs = ExpressionFactory.constructVariableLHS(loc, tmpBoogieType, tmpId, tmpDeclInfo);
+					tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, outParamVarlists[0].getType(), loc);
+				}
+//				final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId,
+//						outParamVarlists[0].getType(), loc);
 
 				functionCallExpressionResultBuilder.putAuxVar(tmpVarDecl, loc);
 				functionCallExpressionResultBuilder.addDeclaration(tmpVarDecl);
 
-				final VariableLHS tmpLhs = new VariableLHS(loc, tmpId);
-				call = new CallStatement(loc, false, new VariableLHS[] { tmpLhs }, methodName,
+				call = new CallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs }, methodName,
 						translatedParameters.toArray(new Expression[translatedParameters.size()]));
 			} else { // unsupported!
 				// String msg = "Cannot handle multiple out params! "
@@ -1457,7 +1491,10 @@ public class FunctionHandler {
 					+ "' unknown! Return value is assumed to be int ...";
 			main.warn(loc, longDescription);
 			final String ident = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
-			returnedValue = new IdentifierExpression(loc, ident);
+
+//			returnedValue = new IdentifierExpression(loc, ident);
+			returnedValue = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, ident,
+					new DeclarationInformation(StorageClass.LOCAL, mCurrentProcedureInfo.getProcedureName()));
 
 			// we don't know the CType of the returned value
 			// we we INT
@@ -1589,6 +1626,19 @@ public class FunctionHandler {
 
 	public void addModifiedGlobal(final String procedureName, final String globalBoogieVarName) {
 		getProcedureInfo(procedureName).addModifiedGlobal(globalBoogieVarName);
+	}
+
+	/**
+	 * Adds a modified global for the procedure whose scope we are currently in.
+	 *
+	 * @param modifiedGlobal
+	 */
+	public void addModifiedGlobal(final String modifiedGlobal) {
+		if (mCurrentProcedureInfo == null) {
+			throw new IllegalStateException();
+		}
+		mCurrentProcedureInfo.addModifiedGlobal(modifiedGlobal);
+
 	}
 
 	/**

@@ -84,6 +84,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BoogieTypeHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -655,4 +656,6 @@ public interface ICHandler extends IHandler {
 	StructHandler getStructHandler();
 
 	StaticObjectsHandler getStaticObjectsHandler();
+
+	BoogieTypeHelper getBoogieTypeHelper();
 }

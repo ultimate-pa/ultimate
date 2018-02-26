@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
@@ -147,7 +148,11 @@ public class InitializationHandler {
 		LRValue lhs = null;
 		if (onHeap) {
 			// lhsRaw must be non-null at this point because of the above code that determined "onHeap"
-			lhs = new HeapLValue(new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier()), targetCTypeRaw, null);
+//			IdentifierExpression idEx = new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier());
+			final VariableLHS vlhs = ((VariableLHS) lhsRaw);
+			final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc,
+					(BoogieType) lhsRaw.getType(), vlhs.getIdentifier(), vlhs.getDeclarationInformation());
+			lhs = new HeapLValue(idEx, targetCTypeRaw, null);
 		} else {
 			lhs = lhsRaw == null ? null : new LocalLValue(lhsRaw, targetCTypeRaw, null);
 		}

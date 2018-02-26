@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
@@ -240,22 +239,5 @@ public class OldSymbolTable extends LinkedScopedHashMap<String, SymbolTableValue
 			result |= name.equals(k);
 		}
 		return result;
-	}
-
-//	public SymbolTableValue getEntryForBoogieVar(final String boogieVarId, final ILocation loc) {
-//		final String cId = getCID4BoogieID(boogieVarId, loc);
-//		return get(cId, loc);
-//	}
-
-	/**
-	 * TODO: (alex, feb 18) this is dubious, but symbol table will be changed soon anyway, right?
-	 * moved to new symbol table, feb 26
-	 *
-	 * @param modifiedBoogieVariableName
-	 * @param loc
-	 * @return
-	 */
-	public boolean isBoogieGlobalVar(final String boogieIdentifier, final ILocation loc) {
-		throw new UnsupportedOperationException("See FlatSymbolTable. Don't use this.");
 	}
 }

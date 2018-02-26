@@ -34,11 +34,14 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -346,4 +349,34 @@ public class CTranslationUtil {
 		return new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 	}
 
+	/**
+	 * Looks for a VariableLHS with a global variable inside a given LHS.
+	 * Returns the corresponding identifer if such a VariableLHS exists, null otherwise.
+	 * Note that this will crash if the VariableLHS does not contain a DeclarationInformation.
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 */
+}
+class BoogieGlobalLhsFinder extends BoogieVisitor {
+
+	private String mResult;
+
+	@Override
+	protected void visit(final VariableLHS lhs) {
+		if (lhs.getDeclarationInformation().getStorageClass() == StorageClass.GLOBAL) {
+			if (mResult != null) {
+				throw new AssertionError("there should be at most one VariableLHS inside a LeftHandSide!");
+			} else {
+
+				mResult = lhs.getIdentifier();
+			}
+		}
+		super.visit(lhs);
+	}
+
+	public String getGlobalId(final LeftHandSide lhs) {
+		super.processLeftHandSide(lhs);
+		return mResult;
+	}
 }

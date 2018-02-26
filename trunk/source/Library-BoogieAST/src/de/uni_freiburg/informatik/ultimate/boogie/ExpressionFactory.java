@@ -32,6 +32,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -41,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -48,17 +51,31 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.ITypeErrorReporter;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckException;
+import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * Construct Boogie Expressions and do minor simplification if all operands are literals.
+ * Construct Boogie Expressions (and LeftHandSides), use this instead of the constructors.
+ * Functionalities:
+ * <li> do minor simplifications (e.g. if all operands are literals)
+ * <li> computes types for the resulting Boogie expressions, throws an exception if it cannot be typed.
+ *   Note that this means that all input Boogie expressions must have a type. (Which is the case if they have been
+ *   constructed using this factory.)
  *
+ * @author Daniel Dietsch
  * @author Matthias Heizmann
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class ExpressionFactory {
+
+
 
 	public static Expression newUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator,
 			final Expression expr) {
@@ -443,13 +460,19 @@ public class ExpressionFactory {
 		if (indices.length == 0) {
 			throw new AssertionError("attempting to build array access without indices");
 		}
-		if (indices.length == 1) {
 
-			return new ArrayAccessExpression(loc, array, indices);
+		final List<BoogieType> indicesTypes = Arrays.stream(indices)
+					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
+
+		final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs((BoogieType) array.getType(),
+				indicesTypes, new TypeErrorReporter(loc));
+
+		if (indices.length == 1) {
+			return new ArrayAccessExpression(loc, newType, array, indices);
 		}
 		final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
 		final Expression innerLhs = constructNestedArrayAccessExpression(loc, array, innerIndices);
-		return new ArrayAccessExpression(loc, innerLhs, new Expression[] { indices[indices.length - 1] });
+		return new ArrayAccessExpression(loc, newType, innerLhs, new Expression[] { indices[indices.length - 1] });
 	}
 
 	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final LeftHandSide array,
@@ -460,15 +483,14 @@ public class ExpressionFactory {
 		assert indices[0].getType() != null;
 		assert array.getType() != null;
 
-//		final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
-//
-//		arrayType.get
 
-		final BoogieType lhsType = null;
-//		final BoogieType lhsType = BoogieType.
-				//	BoogieType.createArrayType(0,
-//				new BoogieType[] { (BoogieType) indices[0].getType() },
-//				(BoogieType) array.getType());
+		final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
+
+		final List<BoogieType> indicesTypes = Arrays.stream(indices)
+					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
+
+		final BoogieType lhsType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes,
+				new TypeErrorReporter(loc));
 
 		if (indices.length == 1) {
 			return new ArrayLHS(loc, lhsType, array, indices);
@@ -483,20 +505,30 @@ public class ExpressionFactory {
 		return constructNestedArrayLHS(loc, lhs, indices);
 	}
 
-	/**
-	 * deprecated because type parameter makes no sense: we should be able to derive the type
-	 *
-	 * @param loc
-	 * @param it
-	 * @param array
-	 * @param indices
-	 * @return
-	 */
-	@Deprecated
-	public static Expression constructNestedArrayAccessExpression(final ILocation loc, final IBoogieType it,
-			final Expression array, final Expression[] indices) {
-		// TODO: don't throw away type?
-
-		return constructNestedArrayAccessExpression(loc, array, indices);
+	public static IdentifierExpression constructIdentifierExpression(final ILocation loc, final BoogieType type,
+			final String identifier, final DeclarationInformation declarationInformation) {
+		assert loc != null && type != null && identifier != null && declarationInformation != null;
+		return new IdentifierExpression(loc, type, identifier, declarationInformation);
 	}
+
+	public static VariableLHS constructVariableLHS(final ILocation loc, final BoogieType type,
+			final String identifier, final DeclarationInformation declarationInformation) {
+		assert loc != null && type != null && identifier != null && declarationInformation != null;
+		return new VariableLHS(loc, type, identifier, declarationInformation);
+	}
+
+	static class TypeErrorReporter implements ITypeErrorReporter<ILocation> {
+
+		ILocation mLocation;
+
+		public TypeErrorReporter(final ILocation location) {
+			mLocation = location;
+		}
+
+		@Override
+		public void report(final Function<ILocation, String> func) {
+			throw new TypeCheckException(func.apply(mLocation));
+		}
+	}
+
 }
