@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -180,10 +180,10 @@ public final class ExpressionTransformer {
 		case COMPNEQ:
 			// expr1 != expr2 ---> expr1 == !expr2
 			if (isPrimitive(expr)) {
-				final PrimitiveType prim = (PrimitiveType) expr.getType();
-				final PrimitiveType leftPrim = (PrimitiveType) expr.getLeft().getType();
-				final PrimitiveType rightPrim = (PrimitiveType) expr.getRight().getType();
-				if (isOfType(PrimitiveType.BOOL, prim, leftPrim, rightPrim)) {
+				final BoogiePrimitiveType prim = (BoogiePrimitiveType) expr.getType();
+				final BoogiePrimitiveType leftPrim = (BoogiePrimitiveType) expr.getLeft().getType();
+				final BoogiePrimitiveType rightPrim = (BoogiePrimitiveType) expr.getRight().getType();
+				if (isOfType(BoogiePrimitiveType.BOOL, prim, leftPrim, rightPrim)) {
 					final UnaryExpression negatedRight = new UnaryExpression(expr.getLoc(), BoogieType.TYPE_BOOL,
 							de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG,
 							expr.getRight());
@@ -223,7 +223,7 @@ public final class ExpressionTransformer {
 		return new BinaryExpression(loc, BoogieType.TYPE_BOOL, newOp, newLeft, newRight);
 	}
 
-	private static boolean isOfType(final int typecode, final PrimitiveType... primitiveTypes) {
+	private static boolean isOfType(final int typecode, final BoogiePrimitiveType... primitiveTypes) {
 		if (primitiveTypes == null || primitiveTypes.length == 0) {
 			return false;
 		}
@@ -231,8 +231,8 @@ public final class ExpressionTransformer {
 	}
 
 	private static boolean isPrimitive(final BinaryExpression expr) {
-		return expr.getType() instanceof PrimitiveType && expr.getLeft().getType() instanceof PrimitiveType
-				&& expr.getRight().getType() instanceof PrimitiveType;
+		return expr.getType() instanceof BoogiePrimitiveType && expr.getLeft().getType() instanceof BoogiePrimitiveType
+				&& expr.getRight().getType() instanceof BoogiePrimitiveType;
 	}
 
 	/**

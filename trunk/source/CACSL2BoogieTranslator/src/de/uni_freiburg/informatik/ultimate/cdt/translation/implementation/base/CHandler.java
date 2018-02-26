@@ -251,7 +251,7 @@ public class CHandler implements ICHandler {
 		} else if (lhs instanceof ArrayLHS) {
 			final ArrayLHS alhs = (ArrayLHS) lhs;
 			final Expression array = convertLHSToExpression(alhs.getArray());
-			return ExpressionFactory.constructNestedArrayAccessExpression(alhs.getLocation(), alhs.getType(), array,
+			return ExpressionFactory.constructNestedArrayAccessExpression(alhs.getLocation(), array,
 					alhs.getIndices());
 		} else if (lhs instanceof StructLHS) {
 			final StructLHS slhs = (StructLHS) lhs;
@@ -2620,16 +2620,6 @@ public class CHandler implements ICHandler {
 		return mBoogieIdsOfHeapVars.contains(boogieId);
 	}
 
-//	public ExpressionResult makeAssignment(final Dispatcher main, final ILocation loc, final List<Statement> stmt,
-//			final LRValue lrVal, final RValue rVal, final List<Declaration> decl,
-//			final Map<VariableDeclaration, ILocation> auxVars, final List<Overapprox> overappr) {
-//		return makeAssignment(main, loc, stmt, lrVal, rVal, decl, auxVars, overappr, Collections.emptyList());
-//	}
-
-//	public ExpressionResult makeAssignment(final Dispatcher main, final ILocation loc, final List<Statement> stmtOld,
-//			final LRValue lrVal, final RValue rVal, final List<Declaration> declOld,
-//			final Map<VariableDeclaration, ILocation> auxVarsOld, final List<Overapprox> overapprOld,
-//			final List<ExpressionResult> unionFieldsToCType) {
 	/**
 	 *
 	 * @param main
@@ -2652,11 +2642,6 @@ public class CHandler implements ICHandler {
 			final ExpressionResult rightHandSide, final IASTNode hook) {
 
 		// do implicit cast -- assume the types are compatible
-//		final ExpressionResult rExp = new ExpressionResultBuilder().addDeclarations(declOld).addStatements(stmtOld)
-//				.putAuxVars(auxVarsOld).addNeighbourUnionFields(unionFieldsToCType).setLrVal(rVal).build();
-//		ExpressionResult rExp = rightHandSide.build();
-//		final ExpressionResult rightHandSide = rightHandSideBuilder.build();
-//		convert(loc, rExp, lrVal.getCType());
 		convert(loc, rightHandSide, leftHandSide.getCType());
 		final RValue rightHandSideValueWithConversionsApplied = (RValue) rightHandSide.mLrVal;
 
@@ -2664,21 +2649,16 @@ public class CHandler implements ICHandler {
 		// updates the value in the symbol table accordingly
 		// TODO: this is really ugly, do we still need this??
 		if (rightHandSideValueWithConversionsApplied.isIntFromPointer()) {
-//			if (lrVal instanceof HeapLValue) {
 			if (leftHandSide instanceof HeapLValue) {
-//				final Expression address = ((HeapLValue) lrVal).getAddress();
 				final Expression address = ((HeapLValue) leftHandSide).getAddress();
 				if (address instanceof IdentifierExpression) {
-//					final String lId = ((IdentifierExpression) ((HeapLValue) lrVal).getAddress()).getIdentifier();
 					final String lId = ((IdentifierExpression) ((HeapLValue) leftHandSide).getAddress()).getIdentifier();
 					markAsIntFromPointer(loc, lId, hook);
 				} else {
 					// TODO
 				}
-//			} else if (lrVal instanceof LocalLValue) {
 			} else if (leftHandSide instanceof LocalLValue) {
 				String lId = null;
-//				final LeftHandSide value = ((LocalLValue) lrVal).getLHS();
 				final LeftHandSide value = ((LocalLValue) leftHandSide).getLHS();
 				if (value instanceof VariableLHS) {
 					lId = ((VariableLHS) value).getIdentifier();
@@ -2698,9 +2678,6 @@ public class CHandler implements ICHandler {
 
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(rightHandSide);
-//			final ExpressionResultBuilder builder = new ExpressionResultBuilder().addDeclarations(declOld)
-//					.addStatements(stmtOld).addOverapprox(overapprOld).putAuxVars(auxVarsOld)
-//					.addNeighbourUnionFields(unionFieldsToCType);
 
 			/*
 			 * construct and add a statement that
@@ -2731,10 +2708,13 @@ public class CHandler implements ICHandler {
 			 */
 
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-			builder.addAllExceptLrValue(rightHandSide);
-//			ExpressionResultBuilder builder = new ExpressionResultBuilder().addDeclarations(declOld)
-//					.addStatements(stmtOld).addOverapprox(overapprOld).putAuxVars(auxVarsOld)
-//					.addNeighbourUnionFields(unionFieldsToCType);
+			/* take over everything but neighbour union fields -- those will be given to assignorHavocUnionNeighbours
+			 *  as an extra parameter
+			 */
+			builder.addStatements(rightHandSide.getStatements());
+			builder.addDeclarations(rightHandSide.getDeclarations());
+			builder.addOverapprox(rightHandSide.getOverapprs());
+
 
 			final LocalLValue lValue = (LocalLValue) leftHandSide;
 			builder.setLrVal(lValue);
@@ -2754,14 +2734,12 @@ public class CHandler implements ICHandler {
 
 			builder.addStatement(assignStmt);
 
-//			for (final Overapprox oa : overapprOld) {
 			for (final Overapprox oa : rightHandSide.getOverapprs()) {
 				for (final Statement stm : builder.getStatements()) {
 					oa.annotate(stm);
 				}
 			}
 
-//			builder = assignorHavocUnionNeighbours(main, loc, rVal, unionFieldsToCType,
 			final ExpressionResultBuilder builderWithUnionFieldAndNeighboursUpdated =
 					assignorHavocUnionNeighbours(main, loc, (RValue) rightHandSide.getLrValue(),
 							rightHandSide.getNeighbourUnionFields(),
@@ -2771,14 +2749,13 @@ public class CHandler implements ICHandler {
 			if (!mFunctionHandler.isGlobalScope()) {
 
 				final String modifiedBoogieVariableName = BoogieASTUtil.getLHSId(lValue.getLHS());
-				final SymbolTableValue symbolTableValue = 
-						getSymbolTable().findSymbolByBoogieName(hook, modifiedBoogieVariableName);
-				if (symbolTableValue.isBoogieGlobalVar()) {
+//				final SymbolTableValue symbolTableValue =
+//						getSymbolTable().getEntryForBoogieVar(modifiedBoogieVariableName, loc);
+//				if (symbolTableValue.isBoogieGlobalVar()) {
+				if (getSymbolTable().isBoogieGlobalVar(hook, modifiedBoogieVariableName)) {
 					mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(),
 							modifiedBoogieVariableName);
 				}
-
-//				mFunctionHandler.checkIfModifiedGlobal(getSymbolTable(), BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
 			}
 			return builderWithUnionFieldAndNeighboursUpdated.build();
 		} else {
@@ -2981,16 +2958,18 @@ public class CHandler implements ICHandler {
 	 *
 	 * @param loc
 	 * @param rVal
-	 * @param unionFieldsToCType
+	 * @param neighbourUnionFields
 	 * @param rightHandSideWithConversionsApplied
 	 * @param builder
 	 * @return
 	 */
 	private ExpressionResultBuilder assignorHavocUnionNeighbours(final Dispatcher main, final ILocation loc,
-			final RValue rVal, final Collection<ExpressionResult> unionFieldsToCType,
-			final RValue rightHandSideWithConversionsApplied, ExpressionResultBuilder builder, final IASTNode hook) {
+			final RValue rVal, final Collection<ExpressionResult> neighbourUnionFields,
+			final RValue rightHandSideWithConversionsApplied, final ExpressionResultBuilder builderIn,
+			final IASTNode hook) {
+		ExpressionResultBuilder builder = new ExpressionResultBuilder(builderIn);
 
-		for (final ExpressionResult er : unionFieldsToCType) {
+		for (final ExpressionResult er : neighbourUnionFields) {
 			// do not havoc when the type of the field is "compatible"
 			if (rightHandSideWithConversionsApplied.getCType().equals(er.mLrVal.getCType())
 					|| rightHandSideWithConversionsApplied.getCType().getUnderlyingType() instanceof CPrimitive
@@ -3002,9 +2981,13 @@ public class CHandler implements ICHandler {
 
 //				builder = new ExpressionResultBuilder(makeAssignment(main, loc, builder.mStatements, er.mLrVal, rVal,
 //						builder.mDeclarations, builder.mAuxVars, builder.mOverappr));
-				builder.setLrVal(rVal);
-				builder = new ExpressionResultBuilder(makeAssignment(main, loc, er.mLrVal, Collections.emptyList(),
-						builder.build(), hook));
+//				builder.setLrVal(rVal);
+				builder.resetLrVal(rVal);
+				final ExpressionResult assignment =
+						makeAssignment(main, loc, er.mLrVal, Collections.emptyList(), builder.build(), hook);
+				builder = new ExpressionResultBuilder()
+						.addAllExceptLrValue(assignment)
+						.setLrVal(assignment.getLrValue());
 //						rVal,
 //						builder.mDeclarations, builder.mAuxVars, builder.mOverappr));
 
@@ -3027,12 +3010,16 @@ public class CHandler implements ICHandler {
 						"field of union updated " + "--> havoccing other fields (CHandler.makeAssignment(..))", loc);
 				builder.addOverapprox(overapp);
 
-				builder.setLrVal(tmpVarRVal);
+				builder.resetLrVal(tmpVarRVal);
+
+				final ExpressionResult assignment = makeAssignment(main, loc, er.mLrVal, Collections.emptyList(),
+						builder.build(), hook);
 
 //				builder = new ExpressionResultBuilder(makeAssignment(main, loc, builder.mStatements, er.mLrVal,
 //						tmpVarRVal, builder.mDeclarations, builder.mAuxVars, Collections.singletonList(overapp)));
-				builder = new ExpressionResultBuilder(makeAssignment(main, loc, er.mLrVal, Collections.emptyList(),
-						builder.build(), hook));
+				builder = new ExpressionResultBuilder()
+						.addAllExceptLrValue(assignment)
+						.setLrVal(assignment.getLrValue());
 			}
 		}
 		return builder;
@@ -3576,7 +3563,9 @@ public class CHandler implements ICHandler {
 		final LRValue modifiedLValue = exprRes.mLrVal;
 		exprRes = exprRes.switchToRValueIfNecessary(main, loc, hook);
 //		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(exprRes);
-		final ExpressionResultBuilder builder1 = new ExpressionResultBuilder(exprRes);
+		final ExpressionResultBuilder builder1 = new ExpressionResultBuilder()
+				.addAllExceptLrValue(exprRes)
+				.setLrVal(exprRes.getLrValue());
 
 		// In this case we need a temporary variable for the old value
 		final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD, exprRes.mLrVal.getCType());
@@ -3613,7 +3602,7 @@ public class CHandler implements ICHandler {
 //		final Expression valueXcremented = constructXcrementedValue(main, loc, result, oType, op, tmpRValue.getValue());
 		final Expression valueXcremented = constructXcrementedValue(main, loc, intermediateResult, oType, op,
 				tmpRValue.getValue(), hook);
-		final ExpressionResultBuilder builder2 = new ExpressionResultBuilder(intermediateResult);
+		final ExpressionResultBuilder builder2 = new ExpressionResultBuilder().addAllExceptLrValue(intermediateResult);
 
 		final RValue rhs = new RValue(valueXcremented, oType, false, false);
 		builder2.setLrVal(rhs);
@@ -3621,7 +3610,7 @@ public class CHandler implements ICHandler {
 //				result.mAuxVars, result.mOverappr);
 		final ExpressionResult assign = makeAssignment(main, loc, modifiedLValue, Collections.emptyList(),
 				builder2.build(), hook);
-		final ExpressionResultBuilder builder3 = new ExpressionResultBuilder(assign);
+		final ExpressionResultBuilder builder3 = new ExpressionResultBuilder().addAllExceptLrValue(assign);
 //		assign.mLrVal = tmpRValue;
 		builder3.setLrVal(tmpRValue);
 //		return assign;
@@ -3672,7 +3661,9 @@ public class CHandler implements ICHandler {
 		final Expression valueXcremented =
 				constructXcrementedValue(main, loc, intermediateResult, oType, op, exprRes.mLrVal.getValue(), hook);
 //				constructXcrementedValue(main, loc, result, oType, op, exprRes.mLrVal.getValue());
-		final ExpressionResultBuilder builder2 = new ExpressionResultBuilder(intermediateResult);
+		final ExpressionResultBuilder builder2 = new ExpressionResultBuilder()
+				.addAllExceptLrValue(intermediateResult)
+				.setLrVal(intermediateResult.getLrValue());
 
 		// assign the old value to the temporary variable
 		final AssignmentStatement assignStmt;

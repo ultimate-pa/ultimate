@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieConstructedType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
@@ -370,12 +370,12 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		return false;
 	}
 
-	private static boolean isPrimitiveType(final IBoogieType type, final PrimitiveType desiredType) {
-		if (type instanceof PrimitiveType) {
-			return ((PrimitiveType) type).getTypeCode() == desiredType.getTypeCode();
-		} else if (type instanceof ConstructedType) {
-			final ConstructedType ctype = (ConstructedType) type;
-			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+	private static boolean isPrimitiveType(final IBoogieType type, final BoogiePrimitiveType desiredType) {
+		if (type instanceof BoogiePrimitiveType) {
+			return ((BoogiePrimitiveType) type).getTypeCode() == desiredType.getTypeCode();
+		} else if (type instanceof BoogieConstructedType) {
+			final BoogieConstructedType ctype = (BoogieConstructedType) type;
+			if (ctype.getUnderlyingType() instanceof BoogieConstructedType) {
 				return false;
 			}
 			if (ctype.getUnderlyingType() == ctype) {
@@ -390,11 +390,11 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		if (type == null) {
 			throw new IllegalArgumentException("type is null");
 		}
-		if (type instanceof PrimitiveType) {
+		if (type instanceof BoogiePrimitiveType) {
 			return true;
-		} else if (type instanceof ConstructedType) {
-			final ConstructedType ctype = (ConstructedType) type;
-			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+		} else if (type instanceof BoogieConstructedType) {
+			final BoogieConstructedType ctype = (BoogieConstructedType) type;
+			if (ctype.getUnderlyingType() instanceof BoogieConstructedType) {
 				return false;
 			}
 			if (ctype.getUnderlyingType() == ctype) {

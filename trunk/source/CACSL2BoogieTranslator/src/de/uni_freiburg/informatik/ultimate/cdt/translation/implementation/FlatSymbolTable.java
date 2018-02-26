@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -417,13 +418,35 @@ public class FlatSymbolTable {
 	}
 	
 	/**
-	 * Retrieves a symbol by its boogie name.
-	 * @param scope The scope of the symbol.
-	 * @param boogieName The boogie name.
-	 * @return The symbol, or null.
+	 * Checks whether the given boogie identifier denotes a global variable.
+	 * 
+	 * @param scope the scope of the symbol table that is searched
+	 * @param boogieIdentifier the identifer
+	 * @return true iff it is a global boogie variable
 	 */
-	public SymbolTableValue findSymbolByBoogieName(final IASTNode scope, final String boogieName) {
-		return findCSymbol(scope, getCIdForBoogieId(boogieName));
+	public boolean isBoogieGlobalVar(final IASTNode scope, final String boogieIdentifier) {
+		// Magic values
+		if (boogieIdentifier == SFO.LENGTH) {
+			return true;
+		}
+		if (boogieIdentifier == SFO.VALID) {
+			return true;
+		}
+		
+		// Regular symbols
+		final String cId = getCIdForBoogieId(boogieIdentifier);
+		if (cId == null) {
+			// C id not mapped to boogie Id
+			return false;
+		}
+		
+		final SymbolTableValue stv = findCSymbol(scope, cId);
+		if (stv == null) {
+			// Symbol mapped but not found
+			return false;
+		}
+		
+		return stv.isBoogieGlobalVar();
 	}
 
 	private static boolean hasOwnScope(final IASTNode node) {

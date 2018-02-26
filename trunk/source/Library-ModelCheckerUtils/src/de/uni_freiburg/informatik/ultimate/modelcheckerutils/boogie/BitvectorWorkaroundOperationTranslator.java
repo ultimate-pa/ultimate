@@ -35,7 +35,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -69,19 +69,19 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 		} else if (op == BinaryExpression.Operator.COMPNEQ) {
 		    throw new UnsupportedOperationException();
 		} else if (op == BinaryExpression.Operator.LOGICAND) {
-			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
+			if (type1.equals(BoogiePrimitiveType.TYPE_BOOL) && type2.equals(BoogiePrimitiveType.TYPE_BOOL)) {
 				return "and";
 			} else {
 			    return "bvand";
 			}
 		} else if (op == BinaryExpression.Operator.LOGICOR) {
-			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
+			if (type1.equals(BoogiePrimitiveType.TYPE_BOOL) && type2.equals(BoogiePrimitiveType.TYPE_BOOL)) {
 				return "or";
 			} else {
 			    return "bvor";
 			}
 		} else if (op == BinaryExpression.Operator.LOGICIMPLIES) {
-			if (type1.equals(PrimitiveType.TYPE_BOOL) && type2.equals(PrimitiveType.TYPE_BOOL)) {
+			if (type1.equals(BoogiePrimitiveType.TYPE_BOOL) && type2.equals(BoogiePrimitiveType.TYPE_BOOL)) {
 				return "=>";
 			} else {
 			    throw new AssertionError("LOGICIMPLIES of this type not allowed");
@@ -89,11 +89,11 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 		} else if (op == BinaryExpression.Operator.LOGICIFF) {
 			return "=";
 		} else if (op == BinaryExpression.Operator.ARITHDIV) {
-			if (type1 instanceof PrimitiveType) {
-				final PrimitiveType primType = (PrimitiveType) type1;
-				if (primType.getTypeCode() == PrimitiveType.INT) {
+			if (type1 instanceof BoogiePrimitiveType) {
+				final BoogiePrimitiveType primType = (BoogiePrimitiveType) type1;
+				if (primType.getTypeCode() == BoogiePrimitiveType.INT) {
 					return "div";
-				} else if (primType.getTypeCode() == PrimitiveType.REAL) {
+				} else if (primType.getTypeCode() == BoogiePrimitiveType.REAL) {
 					return "/";
 				} else {
 					throw new AssertionError("ARITHDIV of this type not allowed");
@@ -119,7 +119,7 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	@Override
 	public String opTranslation(UnaryExpression.Operator op, IBoogieType type) {
 		if (op == UnaryExpression.Operator.LOGICNEG) {
-			if (type.equals(PrimitiveType.TYPE_BOOL)) {
+			if (type.equals(BoogiePrimitiveType.TYPE_BOOL)) {
 				return "not";
 			} else {
 				throw new AssertionError("LOGICNEG of this type not allowed");
@@ -134,8 +134,8 @@ public class BitvectorWorkaroundOperationTranslator extends DefaultOperationTran
 	@Override
 	public String funcApplication(String funcIdentifier, IBoogieType[] argumentTypes) {
 		if (argumentTypes.length == 2 
-				&& argumentTypes[0].equals(PrimitiveType.TYPE_INT) 
-				&& argumentTypes[1].equals(PrimitiveType.TYPE_INT)) {
+				&& argumentTypes[0].equals(BoogiePrimitiveType.TYPE_INT) 
+				&& argumentTypes[1].equals(BoogiePrimitiveType.TYPE_INT)) {
 			if (funcIdentifier.equals("~bitwiseAnd")) {
 				return "bvand";
 			} else if (funcIdentifier.equals("~bitwiseOr")) {

@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -89,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
@@ -810,9 +808,8 @@ public class ACSLHandler implements IACSLHandler {
 			final String bId = idEx.getIdentifier();
 			final String cId = main.mCHandler.getSymbolTable().getCIdForBoogieId(bId);
 			assert main.mCHandler.getSymbolTable().containsCSymbol(main.getAcslHook(), cId);
-			final InferredType it =
-					new InferredType(main.mCHandler.getSymbolTable().getTypeOfVariable(main.getAcslHook(), cId, loc));
-			expr = ExpressionFactory.constructNestedArrayAccessExpression(loc, it, idEx, idx);
+//			final InferredType it = new InferredType(main.mCHandler.getSymbolTable().getTypeOfVariable(cId, loc));
+			expr = ExpressionFactory.constructNestedArrayAccessExpression(loc, idEx, idx);
 		} else if (subExpr instanceof StructAccessExpression) {
 			final StructAccessExpression sae = (StructAccessExpression) subExpr;
 			final StructLHS lhs = (StructLHS) BoogieASTUtil.getLHSforExpression(sae);
@@ -860,7 +857,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final FreeableExpression node) {
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
+//		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final ArrayList<Statement> stmt = new ArrayList<>();
@@ -878,7 +875,7 @@ public class ACSLHandler implements IACSLHandler {
 		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
 		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
-		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, it, arr, idc);
+		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		// TODO: CType
 		return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.BOOL)), decl, auxVars, overappr);
 		// return new Result(e);
@@ -887,7 +884,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final MallocableExpression node) {
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
+//		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final ArrayList<Statement> stmt = new ArrayList<>();
@@ -905,7 +902,7 @@ public class ACSLHandler implements IACSLHandler {
 		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
 		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
-		final Expression valid = ExpressionFactory.constructNestedArrayAccessExpression(loc, it, arr, idc);
+		final Expression valid = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		final Expression e = ExpressionFactory.newUnaryExpression(loc,
 				// it,
 				de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG, valid);
@@ -918,7 +915,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final ValidExpression node) {
 		final ILocation loc = main.getLocationFactory().createACSLLocation(node);
-		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
+//		final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final ArrayList<Statement> stmt = new ArrayList<>();
@@ -936,7 +933,7 @@ public class ACSLHandler implements IACSLHandler {
 		idx = new StructAccessExpression(loc, idx, SFO.POINTER_BASE);
 		final Expression[] idc = new Expression[] { idx };
 		final Expression arr = new IdentifierExpression(loc, SFO.VALID);
-		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, it, arr, idc);
+		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 
 		// TODO: CType
 		return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);

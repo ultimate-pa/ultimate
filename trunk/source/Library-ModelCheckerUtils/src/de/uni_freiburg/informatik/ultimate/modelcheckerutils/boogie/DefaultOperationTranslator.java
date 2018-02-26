@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -87,11 +87,11 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 			} else if (op == BinaryExpression.Operator.LOGICIFF) {
 				return "=";
 			} else if (op == BinaryExpression.Operator.ARITHDIV) {
-				if (type1 instanceof PrimitiveType) {
-					final PrimitiveType primType = (PrimitiveType) type1;
-					if (primType.getTypeCode() == PrimitiveType.INT) {
+				if (type1 instanceof BoogiePrimitiveType) {
+					final BoogiePrimitiveType primType = (BoogiePrimitiveType) type1;
+					if (primType.getTypeCode() == BoogiePrimitiveType.INT) {
 						return "div";
-					} else if (primType.getTypeCode() == PrimitiveType.REAL) {
+					} else if (primType.getTypeCode() == BoogiePrimitiveType.REAL) {
 						return "/";
 					} else {
 						throw new AssertionError("ARITHDIV of this type not allowed");

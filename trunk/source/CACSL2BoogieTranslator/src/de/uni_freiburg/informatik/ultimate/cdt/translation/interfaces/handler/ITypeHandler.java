@@ -43,16 +43,11 @@ import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IArrayType;
-import org.eclipse.cdt.core.dom.ast.IBasicType;
-import org.eclipse.cdt.core.dom.ast.IType;
-import org.eclipse.cdt.core.dom.ast.ITypedef;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
@@ -131,27 +126,27 @@ public interface ITypeHandler extends IHandler {
 	 */
 	Result visit(Dispatcher main, IASTCompositeTypeSpecifier node);
 
-	/**
-	 * Translates an CDT IType to a Boogie type.
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher
-	 * @param type
-	 *            the node to visit
-	 * @return a result object
-	 */
-	InferredType visit(Dispatcher main, IType type);
+//	/**
+//	 * Translates an CDT IType to a Boogie type.
+//	 *
+//	 * @param main
+//	 *            a reference to the main dispatcher
+//	 * @param type
+//	 *            the node to visit
+//	 * @return a result object
+//	 */
+//	InferredType visit(Dispatcher main, IType type);
 
-	/**
-	 * Translates an CDT IBasicType to a Boogie type. This includes ICBasicType and CBasicType.
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher
-	 * @param type
-	 *            the node to visit
-	 * @return a result object
-	 */
-	InferredType visit(final Dispatcher main, final IBasicType type);
+//	/**
+//	 * Translates an CDT IBasicType to a Boogie type. This includes ICBasicType and CBasicType.
+//	 *
+//	 * @param main
+//	 *            a reference to the main dispatcher
+//	 * @param type
+//	 *            the node to visit
+//	 * @return a result object
+//	 */
+//	InferredType visit(final Dispatcher main, final IBasicType type);
 
 	/**
 	 * Returns the type of the field in the struct.
@@ -167,27 +162,27 @@ public interface ITypeHandler extends IHandler {
 	ASTType getTypeOfStructLHS(final FlatSymbolTable sT, final ILocation loc, final StructLHS lhs,
 			final IASTNode hook);
 
-	/**
-	 * Translates an CDT ITypedef to a Boogie type.
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher
-	 * @param type
-	 *            the node to visit
-	 * @return a result object
-	 */
-	InferredType visit(Dispatcher main, ITypedef type);
+//	/**
+//	 * Translates an CDT ITypedef to a Boogie type.
+//	 *
+//	 * @param main
+//	 *            a reference to the main dispatcher
+//	 * @param type
+//	 *            the node to visit
+//	 * @return a result object
+//	 */
+//	InferredType visit(Dispatcher main, ITypedef type);
 
-	/**
-	 * Translates an CDT IArrayType to a Boogie type.
-	 *
-	 * @param main
-	 *            a reference to the main dispatcher
-	 * @param type
-	 *            the node to visit
-	 * @return a result objectd
-	 */
-	InferredType visit(Dispatcher main, IArrayType type);
+//	/**
+//	 * Translates an CDT IArrayType to a Boogie type.
+//	 *
+//	 * @param main
+//	 *            a reference to the main dispatcher
+//	 * @param type
+//	 *            the node to visit
+//	 * @return a result objectd
+//	 */
+//	InferredType visit(Dispatcher main, IArrayType type);
 
 	/**
 	 * Returns a list of undefined type identifiers.

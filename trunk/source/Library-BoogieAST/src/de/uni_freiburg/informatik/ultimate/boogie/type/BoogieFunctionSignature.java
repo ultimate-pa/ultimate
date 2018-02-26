@@ -36,7 +36,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
  * @author hoenicke
  *
  */
-public class FunctionSignature {
+public class BoogieFunctionSignature {
 	/**
 	 * Number of type arguments (placeholder).
 	 */
@@ -59,7 +59,7 @@ public class FunctionSignature {
 	 */
 	private final BoogieType   resultType;
 	
-	public FunctionSignature(int typeArgCount, String[] paramNames,
+	public BoogieFunctionSignature(int typeArgCount, String[] paramNames,
 			BoogieType[] paramTypes, String resultName, BoogieType resultType) {
 		super();
 		this.typeArgCount = typeArgCount;

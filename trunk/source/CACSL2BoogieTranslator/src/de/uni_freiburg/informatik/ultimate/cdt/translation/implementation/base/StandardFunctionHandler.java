@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
@@ -74,8 +75,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatSupportInUltimate;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -700,22 +701,26 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult pRex = dispatchAndConvert(main, loc, arguments[0]);
 
-		mMemoryHandler.getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Free);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder()
+				.addAllExceptLrValue(pRex)
+				.setLrVal(pRex.getLrValue());
 
-		// Further checks are done in the precondition of ~free()!
-		// ~free(E);
-		final CallStatement freeCall = new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
-				new Expression[] { pRex.getLrValue().getValue() });
-		// add required information to function handler.
-		if (mFunctionHandler.getCurrentProcedureID() != null) {
-			mFunctionHandler.addModifiedGlobal(SFO.FREE, SFO.VALID);
-//			mFunctionHandler.addCallGraphNode(SFO.FREE);
-//			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), SFO.FREE);
-			mFunctionHandler.registerCall(SFO.FREE);
-		}
+		/*
+		 * Add checks for validity of the to be freed pointer if required.
+		 */
+		resultBuilder.addStatements(
+				mMemoryHandler.getChecksForFreeCall(loc, (RValue) pRex.getLrValue()));
 
-		pRex.mStmt.add(freeCall);
-		return pRex;
+
+		/*
+		 * Add a call to our internal deallocation procedure Ultimate.dealloc
+		 */
+		final CallStatement deallocCall = mMemoryHandler.getDeallocCall(main, mFunctionHandler, pRex.getLrValue(), loc);
+		resultBuilder.addStatement(deallocCall);
+
+//		pRex.mStmt.add(deallocCall);
+//		return pRex;
+		return resultBuilder.build();
 	}
 
 	private Result handleAlloc(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
@@ -1050,6 +1055,7 @@ public class StandardFunctionHandler {
 		mMemoryHandler.getRequiredMemoryModelFeatures().require(mmDecl);
 
 		// add required information to function handler.
+		mFunctionHandler.registerProcedure(mmDecl.getName());
 //		mFunctionHandler.addCallGraphNode(mmDecl.getName());
 //		mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), mmDecl.getName());
 //		mFunctionHandler.addModifiedGlobalEntry(mmDecl.getName());
@@ -1062,7 +1068,7 @@ public class StandardFunctionHandler {
 			final ILocation loc) {
 		final boolean checkSvcompErrorfunction =
 				main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
-		final Expression falseLiteral = new BooleanLiteral(loc, new InferredType(Type.Boolean), false);
+		final Expression falseLiteral = new BooleanLiteral(loc, BoogieType.TYPE_BOOL, false);
 		Statement st;
 		if (checkSvcompErrorfunction) {
 			final Check check = new Check(Spec.ERROR_FUNCTION);
@@ -1078,7 +1084,7 @@ public class StandardFunctionHandler {
 			final ILocation loc) {
 		final LTLStepAnnotation ltlStep = new LTLStepAnnotation();
 		final AssumeStatement assumeStmt =
-				new AssumeStatement(loc, new BooleanLiteral(loc, new InferredType(Type.Boolean), true));
+				new AssumeStatement(loc, new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true));
 		ltlStep.annotate(assumeStmt);
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
 	}

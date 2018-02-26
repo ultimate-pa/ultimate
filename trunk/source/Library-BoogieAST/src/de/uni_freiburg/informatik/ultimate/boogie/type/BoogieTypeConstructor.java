@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * Copyright (C) 2010-2015 Jürgen Christ (christj@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
@@ -24,67 +25,65 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.type;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import java.io.Serializable;
 
-public class ProcedureInfo {
-	private final Procedure declaration;
-	private final TypeParameters typeParams;
-	private final VariableInfo[] inParams;
-	private final VariableInfo[] outParams;
-	
-	public TypeParameters getTypeParameters() {
-		return typeParams;
-	}
+public class BoogieTypeConstructor implements Serializable{
+	/**
+	 * long serialVersionUID
+	 */
+	private static final long serialVersionUID = 4794962965656111904L;
+	private final String name;
+	private final boolean isFinite;
+	private final int    paramCount;
+	private final int[]  paramOrder;
+	private final BoogieType synonym;
 
-	public Procedure getDeclaration() {
-		return declaration;
+	public BoogieTypeConstructor(String name, boolean isFinite, int paramCount, int[] paramOrder) {
+		this(name, isFinite, paramCount, paramOrder, null);
+	}
+	public BoogieTypeConstructor(String name, boolean isFinite, int paramCount, int[] paramOrder, BoogieType synonym) {
+		this.name = name;
+		this.isFinite = isFinite;
+		this.paramCount = paramCount;
+		this.paramOrder = paramOrder;
+		this.synonym = synonym;
 	}
 	
-	public VariableInfo[] getInParams() {
-		return inParams;
+	public String getName() {
+		return name;
 	}
-	
-	public VariableInfo[] getOutParams() {
-		return outParams;
+	public int getParamCount() {
+		return paramCount;
 	}
-	
-	public ProcedureInfo(Procedure declaration, 
-			TypeParameters typeParams, VariableInfo[] inParams, VariableInfo[] outParams) {
-		this.declaration = declaration; 
-		this.typeParams = typeParams;
-		this.inParams = inParams;
-		this.outParams = outParams;
+	public int[] getParamOrder() {
+		return paramOrder;
+	}
+	public BoogieType getSynonym() {
+		return synonym;
 	}
 	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(declaration.getIdentifier()).append('<').append(typeParams.getCount());
-		sb.append(">(");
-		String comma ="";
-		for (final VariableInfo vi : inParams) {
-			sb.append(comma);
-			if (vi.getName() != null) {
-				sb.append(vi.getName()).append(":");
-			}
-			sb.append(vi.getType());
-			comma = ",";
-		}
-		if (outParams.length > 0) {
-			sb.append(") returns (");
-			comma ="";
-			for (final VariableInfo vi : outParams) {
-				sb.append(comma);
-				if (vi.getName() != null) {
-					sb.append(vi.getName()).append(":");
-				}
-				sb.append(vi.getType());
+		sb.append(name);
+		if (paramOrder.length > 0) {
+			sb.append('<');
+			String comma = "";
+			for (int i = 0; i < paramOrder.length; i++) {
+				sb.append(comma).append(paramOrder[i]);
 				comma = ",";
 			}
+			sb.append('>');
 		}
-		sb.append(")");
+		if (synonym != null) {
+			sb.append('=').append(synonym);
+		}
 		return sb.toString();
+	}
+	
+	public boolean isFinite() {
+		return isFinite;
 	}
 }

@@ -46,7 +46,6 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
-import org.eclipse.cdt.core.dom.ast.IType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
@@ -60,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.N
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypedefAndStructCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
@@ -227,14 +225,14 @@ public abstract class Dispatcher {
 	 */
 	public abstract Result dispatch(IASTPreprocessorStatement node);
 
-	/**
-	 * Dispatch a given IType to a specific handler.
-	 *
-	 * @param type
-	 *            the type to dispatch
-	 * @return the result for the given type.
-	 */
-	public abstract InferredType dispatch(IType type);
+//	/**
+//	 * Dispatch a given IType to a specific handler.
+//	 *
+//	 * @param type
+//	 *            the type to dispatch
+//	 * @return the result for the given type.
+//	 */
+//	public abstract InferredType dispatch(IType type);
 
 	/**
 	 * Dispatch a given ACSL node to the specific handler.

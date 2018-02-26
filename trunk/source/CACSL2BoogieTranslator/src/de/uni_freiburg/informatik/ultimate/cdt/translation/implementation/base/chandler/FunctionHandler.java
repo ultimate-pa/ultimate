@@ -143,15 +143,9 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public class FunctionHandler {
 
 	private final Map<String, ProcedureInfo> mProcedureNameToProcedureInfo;
-	private ProcedureInfo mCurrentProcedureInfo;
-	private LinkedHashRelation<ProcedureInfo, ProcedureInfo> mCallGraph;
-	private LinkedHashRelation<ProcedureInfo, ProcedureInfo> mInverseCallGraph;
+	private final LinkedHashRelation<ProcedureInfo, ProcedureInfo> mInverseCallGraph;
 
-	/**
-	 * Whether the modified globals is user defined or not. If it is in this set, then it is a modifies clause defined
-	 * by the user.
-	 */
-	private final Set<String> mModifiedGlobalsIsUserDefined;
+	private ProcedureInfo mCurrentProcedureInfo;
 
 	/**
 	 * Methods that have been called before they were declared. These methods need a special treatment, as they are
@@ -177,11 +171,12 @@ public class FunctionHandler {
 	public FunctionHandler(final ExpressionTranslation expressionTranslation,
 			final TypeSizeAndOffsetComputer typeSizeComputer) {
 		mExpressionTranslation = expressionTranslation;
+
 		mMethodsCalledBeforeDeclared = new LinkedHashSet<>();
 
 		mProcedureNameToProcedureInfo = new LinkedHashMap<>();
+		mInverseCallGraph = new LinkedHashRelation<>();
 
-		mModifiedGlobalsIsUserDefined = new LinkedHashSet<>();
 		mFunctionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
 
@@ -239,20 +234,20 @@ public class FunctionHandler {
 			final IASTFunctionDefinition node, final CDeclaration cDec, final List<ACSLNode> contract) {
 
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-		final String procName = cDec.getName();
+		final String definedProcName = cDec.getName();
 
-		final ProcedureInfo currentProcInfo = getOrConstructProcedureInfo(procName);
+		final ProcedureInfo definedProcInfo = getOrConstructProcedureInfo(definedProcName);
 
-		beginProcedureScope(main, currentProcInfo);
+		beginProcedureScope(main, definedProcInfo);
 
 		final CType returnCType = ((CFunction) cDec.getType()).getResultType();
 		final boolean returnTypeIsVoid =
 				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
 
 //		updateCFunction(procName, returnCType, null, null, false);
-		updateCFunction(currentProcInfo, returnCType, null, null, false);
+		definedProcInfo.updateCFunction(returnCType, null, null, false);
 
-		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), currentProcInfo, node);
+		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), definedProcInfo, node);
 		if (isInParamVoid(in)) {
 			// in-parameter is "void", as in "int foo(void) .." we normalize this to an empty list of in-parameters
 			in = new VarList[0];
@@ -265,7 +260,7 @@ public class FunctionHandler {
 		if (returnTypeIsVoid) {
 			// void, so there are no out vars
 			out = new VarList[0];
-		} else if (mMethodsCalledBeforeDeclared.contains(procName)) {
+		} else if (mMethodsCalledBeforeDeclared.contains(definedProcInfo)) {
 			// defaulting to int, when a method is called that is only declared later
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 			out[0] = new VarList(loc, new String[] { SFO.RES }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
@@ -274,29 +269,29 @@ public class FunctionHandler {
 			assert type != null;
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, currentProcInfo, node);
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, definedProcInfo, node);
 
 //		Procedure proc = mProcedures.get(methodName);
 
 //		if (proc == null) {
-		if (!currentProcInfo.hasDeclaration()) {
+		if (!definedProcInfo.hasDeclaration()) {
 			/*
 			 * we have not seen this procedure yet, make a new declaration, register the procedure
 			 */
 			final Attribute[] attr = new Attribute[0];
 			final String[] typeParams = new String[0];
-			final Procedure proc = new Procedure(loc, attr, procName, typeParams, in, out, spec, null);
+			final Procedure proc = new Procedure(loc, attr, definedProcName, typeParams, in, out, spec, null);
 //			if (mProcedures.containsKey(methodName)) {
 //				final String msg =
 //						"Duplicated method identifier: " + methodName + ". C does not support function overloading!";
 //				throw new IncorrectSyntaxException(loc, msg);
 //			}
 //			mProcedures.put(methodName, proc);
-			currentProcInfo.setDeclaration(proc);
+			definedProcInfo.setDeclaration(proc);
 		} else {
 			// check declaration against its implementation
 
-			Procedure procDecl = currentProcInfo.getDeclaration();
+			Procedure procDecl = definedProcInfo.getDeclaration();
 
 			VarList[] declIn = procDecl.getInParams();
 			boolean checkInParams = true;
@@ -344,7 +339,7 @@ public class FunctionHandler {
 			procDecl = new Procedure(procDecl.getLocation(), procDecl.getAttributes(), procDecl.getIdentifier(), procDecl.getTypeParams(),
 					declIn, procDecl.getOutParams(), spec, null);
 
-			currentProcInfo.resetDeclaration(procDecl);
+			definedProcInfo.resetDeclaration(procDecl);
 //			mProcedures.put(methodName, procDecl);
 		}
 
@@ -352,11 +347,11 @@ public class FunctionHandler {
 		 * one more transformation of the declaration:
 		 */
 		{
-			final Procedure proc = currentProcInfo.getDeclaration();
+			final Procedure proc = definedProcInfo.getDeclaration();
 			final Procedure declWithCorrectlyNamedInParams = new Procedure(proc.getLocation(), proc.getAttributes(),
 					proc.getIdentifier(), proc.getTypeParams(), in, proc.getOutParams(), proc.getSpecification(), null);
 //			mCurrentProcedure = declWithCorrectlyNamedInParams;
-			currentProcInfo.resetDeclaration(declWithCorrectlyNamedInParams);
+			definedProcInfo.resetDeclaration(declWithCorrectlyNamedInParams);
 			// mCurrentProcedureIsVoid = returnTypeIsVoid;
 //			final String procId = mCurrentProcedure.getIdentifier();
 		}
@@ -389,13 +384,13 @@ public class FunctionHandler {
 				stmts.toArray(new Statement[stmts.size()]));
 
 //		proc = mCurrentProcedure;
-		final Procedure proc = currentProcInfo.getDeclaration();
+		final Procedure proc = definedProcInfo.getDeclaration();
 		// Implementation -> Specification always null!
-		final Procedure impl = new Procedure(loc, proc.getAttributes(), procName, proc.getTypeParams(), in,
+		final Procedure impl = new Procedure(loc, proc.getAttributes(), definedProcName, proc.getTypeParams(), in,
 				proc.getOutParams(), null, body);
 
 		// not sure if this is needed..
-		currentProcInfo.setImplementation(impl);
+		definedProcInfo.setImplementation(impl);
 
 //		mCurrentProcedure = null;
 		endProcedureScope(main);
@@ -413,14 +408,31 @@ public class FunctionHandler {
 		main.mCHandler.endScope();
 	}
 
-	private ProcedureInfo getOrConstructProcedureInfo(final String methodName) {
-		/*
-		 * add node to callgraph (if that is necessary..)
-		 */
+	/**
+	 * Announce the use of a procedure to the FunctionHandler
+	 * @param methodName
+	 */
+	public void registerProcedure(final String methodName) {
+		getOrConstructProcedureInfo(methodName);
+	}
 
-		// TODO Auto-generated method stub
-		throw new AssertionError("TODO");
-//		return null;
+	public void registerProcedureDeclaration(final String procName, final Procedure declaration) {
+		final ProcedureInfo procInfo = getOrConstructProcedureInfo(procName);
+		if (procInfo.hasDeclaration()) {
+			throw new IllegalStateException("procedure already has a declaration, this is unexpected");
+		}
+		procInfo.setDeclaration(declaration);
+	}
+
+	private ProcedureInfo getOrConstructProcedureInfo(final String methodName) {
+
+		ProcedureInfo result = mProcedureNameToProcedureInfo.get(methodName);
+		if (result == null) {
+			result = new ProcedureInfo(methodName);
+			mProcedureNameToProcedureInfo.put(methodName, result);
+		}
+
+		return result;
 	}
 
 	/**
@@ -493,7 +505,7 @@ public class FunctionHandler {
 		final VarList[] outParams = mCurrentProcedureInfo.getDeclaration().getOutParams();
 		final ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		// if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedure.getIdentifier()) && mCurrentProcedureIsVoid) {
-		if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedureInfo.getProcedureName())
+		if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedureInfo)
 				&& mCurrentProcedureInfo.getDeclaration().getOutParams().length == 0) {
 			// void method that was assumed to be returning int! -> return int
 			final String id = outParams[0].getIdentifiers()[0];
@@ -679,7 +691,8 @@ public class FunctionHandler {
 							.getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
 					if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 						for (final HeapDataArray hda : heapDataArrays) {
-							currModClause.add(hda.getVariableName());
+//							currModClause.add(hda.getVariableName());
+							procInfo.addModifiedGlobal(hda.getVariableName());
 						}
 					}
 				}
@@ -833,7 +846,7 @@ public class FunctionHandler {
 
 			if (isCalleeSignatureNotYetDetermined) {
 				// add the current parameter to the procedure's signature
-				updateCFunction(calleeProcInfo, null, null, new CDeclaration(in.mLrVal.getCType(), SFO.IN_PARAM + i),
+				calleeProcInfo.updateCFunction(null, null, new CDeclaration(in.mLrVal.getCType(), SFO.IN_PARAM + i),
 						false);
 			} else if (cFunction != null) {
 				// we already know the parameters: do implicit casts and bool/int conversion
@@ -903,7 +916,10 @@ public class FunctionHandler {
 	}
 
 	private void registerCall(final ProcedureInfo caller, final ProcedureInfo callee) {
-		mCallGraph.addPair(caller, callee);
+		if (!callee.hasDeclaration()) {
+			mMethodsCalledBeforeDeclared.add(callee);
+		}
+
 		mInverseCallGraph.addPair(callee, caller);
 	}
 
@@ -1063,7 +1079,7 @@ public class FunctionHandler {
 			main.mCHandler.getSymbolTable().storeCSymbol(hook, paramDec.getName(),
 					new SymbolTableValue(paramId, null, paramDec, false, null, false));
 		}
-		updateCFunction(procInfo, null, paramDecs, null, false);
+		procInfo.updateCFunction(null, paramDecs, null, false);
 		return in;
 	}
 
@@ -1169,39 +1185,43 @@ public class FunctionHandler {
 		}
 	}
 
-	/**
-	 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
-	 * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
-	 */
-	private void updateCFunction(final ProcedureInfo procInfo, final CType returnType, final CDeclaration[] allParamDecs,
-			final CDeclaration oneParamDec, final boolean takesVarArgs) {
-		final CFunction oldCFunction = procInfo.getCType();
-
-		final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
-		final CDeclaration[] oldInParams =
-				oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
-		final boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
-
-		CType newRetType = oldRetType;
-		CDeclaration[] newInParams = oldInParams;
-		final boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
-
-		if (allParamDecs != null) { // set a new parameter list
-			assert oneParamDec == null;
-			newInParams = allParamDecs;
-		} else if (oneParamDec != null) { // add a parameter to the list
-			assert allParamDecs == null;
-
-			final ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
-			ips.add(oneParamDec);
-			newInParams = ips.toArray(new CDeclaration[ips.size()]);
-		}
-		if (returnType != null) {
-			newRetType = returnType;
-		}
-
-		procInfo.resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
-	}
+//	/**
+//	 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
+//	 * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
+//	 */
+//	private static void updateCFunction(final ProcedureInfo procInfo, final CType returnType,
+//			final CDeclaration[] allParamDecs,
+//			final CDeclaration oneParamDec, final boolean takesVarArgs) {
+//		final CFunction oldCFunction = procInfo.getCType();
+//
+////		final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
+//		final CType oldRetType = procInfo.hasCType() ? procInfo.getCType().getResultType() : null;
+//		final CDeclaration[] oldInParams =
+////				oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
+//				procInfo.hasCType() ? procInfo.getCType().getParameterTypes() : new CDeclaration[0];
+////		final boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
+//		final boolean oldTakesVarArgs = procInfo.hasCType() ? procInfo.getCType().takesVarArgs() : false;
+//
+//		CType newRetType = oldRetType;
+//		CDeclaration[] newInParams = oldInParams;
+//		final boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
+//
+//		if (allParamDecs != null) { // set a new parameter list
+//			assert oneParamDec == null;
+//			newInParams = allParamDecs;
+//		} else if (oneParamDec != null) { // add a parameter to the list
+//			assert allParamDecs == null;
+//
+//			final ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
+//			ips.add(oneParamDec);
+//			newInParams = ips.toArray(new CDeclaration[ips.size()]);
+//		}
+//		if (returnType != null) {
+//			newRetType = returnType;
+//		}
+//
+//		procInfo.resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
+//	}
 
 	/**
 	 * Register a new procedure declaration in our internal data structures.
@@ -1259,7 +1279,7 @@ public class FunctionHandler {
 
 		procInfo.resetDeclaration(newDeclaration);
 
-		updateCFunction(procInfo, funcType.getResultType(), null, null, funcType.takesVarArgs());
+		procInfo.updateCFunction(funcType.getResultType(), null, null, funcType.takesVarArgs());
 		// end scope for retranslation of ACSL specification
 		main.mCHandler.endScope();
 	}
@@ -1330,6 +1350,11 @@ public class FunctionHandler {
 	void beginUltimateInitOrStart(final Dispatcher main, final ILocation loc, final String startOrInit, 
 			final IASTNode hook) {
 //		main.mCHandler.beginScope();
+
+
+		final ProcedureInfo procInfo = getOrConstructProcedureInfo(startOrInit);
+
+		beginProcedureScope(main, procInfo);
 //		mCurrentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0],
 //				new VarList[0], new Specification[0], null);
 //
@@ -1363,7 +1388,10 @@ public class FunctionHandler {
 //		final ProcedureInfo procInfo = getProcedureInfo(startOrInit);
 //		procInfo.resetDeclaration(initDecl);
 
-		main.mCHandler.endScope();
+//		mCurrentProcedureInfo = null;
+//
+//		main.mCHandler.endScope();
+		endProcedureScope(main);
 	}
 
 	private static CFunction addFPParamToCFunction(final CFunction calledFuncCFunction) {
@@ -1613,6 +1641,10 @@ public class FunctionHandler {
 			return mImplementation != null;
 		}
 
+		public boolean hasCType() {
+			return mCType != null;
+		}
+
 		public void addModifiedGlobals(final Set<String> varNames) {
 			mModifiedGlobals.addAll(varNames);
 		}
@@ -1623,7 +1655,7 @@ public class FunctionHandler {
 
 		public CFunction getCType() {
 			if (mCType == null) {
-				throw new IllegalStateException("c type not known");
+				throw new IllegalStateException("query hasCType before calling this");
 			}
 			return mCType;
 		}
@@ -1631,6 +1663,48 @@ public class FunctionHandler {
 		public void setCType(final CFunction cType) {
 			assert mCType == null : "can only be set once!";
 			mCType = cType;
+		}
+
+		/**
+		 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
+		 * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
+		 */
+		private void updateCFunction(final CType returnType,
+				final CDeclaration[] allParamDecs,
+				final CDeclaration oneParamDec, final boolean takesVarArgs) {
+//			final CFunction oldCFunction = this.getCType();
+
+//			final CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
+			final CType oldRetType = this.hasCType() ? this.getCType().getResultType() : null;
+			final CDeclaration[] oldInParams =
+//					oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
+					this.hasCType() ? this.getCType().getParameterTypes() : new CDeclaration[0];
+//			final boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
+			final boolean oldTakesVarArgs = this.hasCType() ? this.getCType().takesVarArgs() : false;
+
+			CType newRetType = oldRetType;
+			CDeclaration[] newInParams = oldInParams;
+			final boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
+
+			if (allParamDecs != null) { // set a new parameter list
+				assert oneParamDec == null;
+				newInParams = allParamDecs;
+			} else if (oneParamDec != null) { // add a parameter to the list
+				assert allParamDecs == null;
+
+				final ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
+				ips.add(oneParamDec);
+				newInParams = ips.toArray(new CDeclaration[ips.size()]);
+			}
+			if (returnType != null) {
+				newRetType = returnType;
+			}
+
+			if (this.hasCType()) {
+				this.resetCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
+			} else {
+				this.setCType(new CFunction(newRetType, newInParams, newTakesVarArgs));
+			}
 		}
 
 		public Procedure getDeclaration() {

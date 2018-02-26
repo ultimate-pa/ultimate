@@ -36,14 +36,14 @@ public class BoogiePreprocessorTests {
 	public void testTypes() {
 		final int[] o0 = new int[0];
 		final int[] o1 = new int[] { 0 };
-		final TypeConstructor wicket = new TypeConstructor("Wicket", false, 0, o0);
-		final TypeConstructor barrel = new TypeConstructor("Barrel", false, 1, o1);
-		final TypeConstructor field = new TypeConstructor("Field", false, 1, o1);
+		final BoogieTypeConstructor wicket = new BoogieTypeConstructor("Wicket", false, 0, o0);
+		final BoogieTypeConstructor barrel = new BoogieTypeConstructor("Barrel", false, 1, o1);
+		final BoogieTypeConstructor field = new BoogieTypeConstructor("Field", false, 1, o1);
 		final BoogieType msetType = BoogieType.createArrayType
 			(0, new BoogieType[] { BoogieType.createPlaceholderType(0) }, 
 					BoogieType.TYPE_INT);
 		System.err.println("Test1: "+msetType);
-		final TypeConstructor multiSet = new TypeConstructor("MultiSet", true, 1, o1, msetType);
+		final BoogieTypeConstructor multiSet = new BoogieTypeConstructor("MultiSet", true, 1, o1, msetType);
 		BoogieType testType = BoogieType.createConstructedType(multiSet, 
 				BoogieType.TYPE_INT);
 		System.err.println("Test2: "+testType+ " = "+ testType.getUnderlyingType());
@@ -54,7 +54,7 @@ public class BoogiePreprocessorTests {
 				BoogieType.createConstructedType(field, new BoogieType[] { BoogieType.createPlaceholderType(0) })
 		}, BoogieType.createPlaceholderType(0));
 		System.err.println("Test3: "+heapType+ " = "+ heapType.getUnderlyingType());
-		final TypeConstructor heap  = new TypeConstructor("Heap", true, 0, o0, heapType);
+		final BoogieTypeConstructor heap  = new BoogieTypeConstructor("Heap", true, 0, o0, heapType);
 		testType = BoogieType.createConstructedType(heap);
 		System.err.println("Test4: "+testType+ " = "+ testType.getUnderlyingType());
 		testType = BoogieType.createConstructedType(multiSet, testType);
@@ -72,7 +72,7 @@ public class BoogiePreprocessorTests {
 				BoogieType.createPlaceholderType(1),
 				BoogieType.createConstructedType(field, new BoogieType[] { BoogieType.createPlaceholderType(0) })
 			}, BoogieType.createPlaceholderType(0));
-		final TypeConstructor genHeap  = new TypeConstructor("GenHeap", true, 1, o1, nestedType);
+		final BoogieTypeConstructor genHeap  = new BoogieTypeConstructor("GenHeap", true, 1, o1, nestedType);
 		System.err.println("Test8: "+w+", "+bw+", "+bbw);
 		testType = BoogieType.createConstructedType(genHeap, BoogieType.createPlaceholderType(0));
 		System.err.println("Test9: "+testType+ " = "+ testType.getUnderlyingType());
@@ -81,7 +81,7 @@ public class BoogiePreprocessorTests {
 		testType = testType.substitutePlaceholders(new BoogieType[] { BoogieType.TYPE_INT });
 		System.err.println("TestB: "+testType+ " = "+ testType.getUnderlyingType());
 		
-		final FunctionSignature cm = new FunctionSignature(0, new String[] {"heap","this"}, 
+		final BoogieFunctionSignature cm = new BoogieFunctionSignature(0, new String[] {"heap","this"}, 
 				new BoogieType[] { heapType, BoogieType.TYPE_INT},
 				null, BoogieType.TYPE_BOOL);
 		System.err.println("function C.m"+cm+";");

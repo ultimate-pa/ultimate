@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;

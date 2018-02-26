@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
@@ -25,51 +24,45 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.typechecker;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieFunctionSignature;
 
-public class VariableInfo {
-	private final boolean rigid;
-	private final Declaration declaration;
+public class FunctionInfo {
+	private final FunctionDeclaration declaration;
 	private final String name;
-	private final BoogieType type;
-	private final DeclarationInformation declarationInformation;
+	private final TypeParameters typeParams;
+	private final BoogieFunctionSignature sig;
 	
-	public boolean isRigid() {
-		return rigid;
-	}
-
 	public String getName() {
 		return name;
 	}
 
-	public BoogieType getType() {
-		return type;
+	public BoogieFunctionSignature getSignature() {
+		return sig;
 	}
 	
-	public Declaration getDeclaration() {
+	public TypeParameters getTypeParameters() {
+		return typeParams;
+	}
+
+	public FunctionDeclaration getDeclaration() {
 		return declaration;
 	}
 	
-	public DeclarationInformation getDeclarationInformation() {
-		return declarationInformation;
-	}
-
-	public VariableInfo(boolean rigid, Declaration declaration, String name, 
-			BoogieType type, DeclarationInformation declarationInformation) {
-		super();
-		this.rigid = rigid;
+	public FunctionInfo(FunctionDeclaration declaration, String name, 
+			TypeParameters typeParams, BoogieFunctionSignature sig) {
 		this.declaration = declaration; 
 		this.name = name;
-		this.type = type;
-		this.declarationInformation = declarationInformation;
+		this.typeParams = typeParams;
+		this.sig = sig;
 	}
-	
+
 	@Override
 	public String toString() {
-		return name + ":" + type;
+		final StringBuilder sb = new StringBuilder();
+		sb.append(declaration.getIdentifier()).append(sig);
+		return sb.toString();
 	}
 }

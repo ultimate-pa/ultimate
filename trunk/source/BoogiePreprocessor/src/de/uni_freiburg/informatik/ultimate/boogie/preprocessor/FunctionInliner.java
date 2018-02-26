@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -193,8 +193,8 @@ public class FunctionInliner extends BoogieTransformer
 						final Expression[] funcParams = params.toArray(new Expression[params.size()]); 
 						final Expression funcApp = new FunctionApplication(fdecl.getLocation(), fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
 						final Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] {funcApp} );
-						final Expression funcEq = new BinaryExpression(fdecl.getLocation(), PrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
-						final Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), PrimitiveType.TYPE_BOOL, true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
+						final Expression funcEq = new BinaryExpression(fdecl.getLocation(), BoogiePrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
+						final Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), BoogiePrimitiveType.TYPE_BOOL, true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
 						final Axiom fdeclAxiom = new Axiom(fdecl.getLocation(),  
 								                     new Attribute[0], funcDecl);
 						newDeclarations.add(new FunctionDeclaration(fdecl.getLocation(),  

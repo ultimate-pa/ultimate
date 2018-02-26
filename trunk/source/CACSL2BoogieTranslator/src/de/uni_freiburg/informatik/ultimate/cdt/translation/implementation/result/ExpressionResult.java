@@ -469,6 +469,11 @@ public class ExpressionResult extends Result {
 					readRex = memoryHandler.getReadCall(readAddress, arrayType.getValueType(), hook);
 				}
 				builder.addAllExceptLrValue(readRex);
+				if (builder.getLrVal() == null) {
+					builder.setLrVal(readRex.getLrValue());
+				} else {
+					builder.resetLrVal(readRex.getLrValue());
+				}
 //				decl.addAll(readRex.mDecl);
 //				stmt.addAll(readRex.mStmt);
 //				auxVars.putAll(readRex.mAuxVars);
@@ -483,7 +488,9 @@ public class ExpressionResult extends Result {
 				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc,
 						new LocalLValue(aAcc, arrayType.getValueType(), null), Collections.emptyList(), builder.build(),
 						hook);
-				builder = new ExpressionResultBuilder(assRex);
+				builder = new ExpressionResultBuilder()
+						.addAllExceptLrValue(assRex)
+						.setLrVal(assRex.getLrValue());
 //				decl = assRex.mDecl;
 //				stmt = assRex.mStmt;
 //				auxVars = assRex.mAuxVars;
@@ -499,7 +506,7 @@ public class ExpressionResult extends Result {
 		}
 //		final ExpressionResult xres1 = new ExpressionResult(stmt, xfieldHeapLValue, decl, auxVars, overApp);
 //		return xres1;
-		builder.setLrVal(resultValue);
+		builder.setOrResetLrVal(resultValue);
 		return builder.build();
 	}
 

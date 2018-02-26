@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
