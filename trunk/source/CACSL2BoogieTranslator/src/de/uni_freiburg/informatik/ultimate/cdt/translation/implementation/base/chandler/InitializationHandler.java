@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -166,6 +167,13 @@ public class InitializationHandler {
 
 		final InitializerInfo initializerInfo;
 		if (initializerRaw != null) {
+			/*
+			 * C11 6.7.9.1 : the grammar for initializers cannot generate empty initializers
+			 */
+			if (initializerRaw.getList() == null || initializerRaw.getList().isEmpty()) {
+				throw new IncorrectSyntaxException(loc, "Empty initializers are not allowed by the C standard.");
+			}
+
 			// construct an InitializerInfo from the InitializerResult
 			initializerInfo = InitializerInfo.constructInitializerInfo(loc, main, initializerRaw, targetCTypeRaw);
 		} else {
