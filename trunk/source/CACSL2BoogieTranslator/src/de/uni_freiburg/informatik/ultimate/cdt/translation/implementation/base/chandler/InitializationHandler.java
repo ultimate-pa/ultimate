@@ -170,7 +170,8 @@ public class InitializationHandler {
 			/*
 			 * C11 6.7.9.1 : the grammar for initializers cannot generate empty initializers
 			 */
-			if (initializerRaw.getList() == null || initializerRaw.getList().isEmpty()) {
+			if (initializerRaw.getRootExpressionResult() == null &&
+					(initializerRaw.getList() == null || initializerRaw.getList().isEmpty())) {
 				throw new IncorrectSyntaxException(loc, "Empty initializers are not allowed by the C standard.");
 			}
 

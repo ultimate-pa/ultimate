@@ -268,13 +268,10 @@ public class ProcedureManager {
 				// modifies clause is user defined --> leave the specification as is
 				newSpec = oldSpec;
 			} else {
-				// // case: !procInfo.isModifiedGlobalsIsUsedDefined()
+				// case: !procInfo.isModifiedGlobalsIsUsedDefined()
 				final Set<VariableLHS> currModClause = sccToModifiedGlobals
 						.getImage(dssc.getNodeToComponents().get(procInfo));
 				assert currModClause != null : "No modifies clause proc " + procedureName;
-
-				// final Set<VariableLHS> currModClauseDuplicatesFiltered =
-				// filterDuplicateVariableLHSs(currModClause);
 
 				procInfo.addModifiedGlobals(currModClause);
 
@@ -319,10 +316,7 @@ public class ProcedureManager {
 									.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN))) {
 				// add a specification to check for memory leaks
 
-				// final Expression vIe = new IdentifierExpression(loc, SFO.VALID);
-				final Expression vIe = // ExpressionFactory.constructIdentifierExpression(loc, MemoryModelDeclarations
-										// SFO.VALID);
-						main.mCHandler.getMemoryHandler().getValidArray(loc);
+				final Expression vIe = main.mCHandler.getMemoryHandler().getValidArray(loc);
 
 				final int nrSpec = newSpec.length;
 				final Check check = new Check(Check.Spec.MEMORY_LEAK);
@@ -376,32 +370,6 @@ public class ProcedureManager {
 		return false;
 	}
 
-	/**
-	 * Announces that the procedure that is currently being translated calls another
-	 * procedure.
-	 *
-	 * @param callee
-	 */
-	@Deprecated
-	public void registerCall(final String callee) {
-		if (isGlobalScope()) {
-			throw new IllegalStateException("attempting to register a call when in global scope");
-		}
-		// registerCall(mCurrentProcedureInfo, getProcedureInfo(callee));
-		registerCall(mCurrentProcedureInfo, getOrConstructProcedureInfo(callee));
-	}
-
-	/**
-	 * Announces that a procedure calls another procedure somewhere in the
-	 * translated program. (for example this updates the call graph accordingly)
-	 *
-	 * @param caller
-	 * @param callee
-	 */
-	@Deprecated
-	public void registerCall(final String caller, final String callee) {
-		registerCall(getOrConstructProcedureInfo(caller), getOrConstructProcedureInfo(callee));
-	}
 
 	void registerCall(final BoogieProcedureInfo caller, final BoogieProcedureInfo callee) {
 		if (!callee.hasDeclaration()) {
@@ -574,25 +542,6 @@ public class ProcedureManager {
 	 */
 	public boolean hasProcedure(final String tentativeProcedureName) {
 		return mProcedureNameToProcedureInfo.containsKey(tentativeProcedureName);
-	}
-
-	@Deprecated
-	public void addModifiedGlobal(final String procedureName, final VariableLHS globalBoogieVarName) {
-		getProcedureInfo(procedureName).addModifiedGlobal(globalBoogieVarName);
-	}
-
-	/**
-	 * Adds a modified global for the procedure whose scope we are currently in.
-	 *
-	 * @param modifiedGlobal
-	 */
-	@Deprecated
-	public void addModifiedGlobal(final VariableLHS modifiedGlobal) {
-		if (mCurrentProcedureInfo == null) {
-			throw new IllegalStateException();
-		}
-		mCurrentProcedureInfo.addModifiedGlobal(modifiedGlobal);
-
 	}
 
 	/**
@@ -776,7 +725,6 @@ public class ProcedureManager {
 
 		final Collection<Statement> callsAndAssignments =
 				new CallAndAssignmentStatementFinder().getCallsAndAssignments(statements);
-//		for (final Statement statement : statements) {
 		for (final Statement statement : callsAndAssignments) {
 			if (statement instanceof CallStatement) {
 				registerCallStatement((CallStatement) statement, procInfo);
@@ -801,7 +749,6 @@ public class ProcedureManager {
 		for (final LeftHandSide lhs : statement.getLhs()) {
 			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
 			if (modifiedGlobal != null) {
-				// addModifiedGlobal(modifiedGlobal);
 				caller.addModifiedGlobal(modifiedGlobal);
 			}
 		}

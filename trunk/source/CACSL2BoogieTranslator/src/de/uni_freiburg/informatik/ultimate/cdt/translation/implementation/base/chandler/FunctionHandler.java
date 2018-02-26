@@ -778,7 +778,6 @@ public class FunctionHandler {
 		 */
 		private Specification[] makeBoogieSpecFromACSLContract(final Dispatcher main, final List<ACSLNode> contract,
 				final BoogieProcedureInfo procInfo) {
-	//			final String methodName) {
 			Specification[] spec;
 			if (contract == null) {
 				spec = new Specification[0];

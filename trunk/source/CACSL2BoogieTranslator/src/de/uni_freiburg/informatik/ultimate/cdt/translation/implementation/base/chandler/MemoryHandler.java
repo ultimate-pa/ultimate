@@ -2017,16 +2017,7 @@ public class MemoryHandler {
 				StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValue },
 						MemoryModelDeclarations.Ultimate_Alloc.getName(), new Expression[] { size });
 
-		// add required information to function handler.
 		mProcedureManager.registerProcedure(MemoryModelDeclarations.Ultimate_Alloc.getName());
-//		mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), getValidArrayLhs(loc));
-//		mProcedureManager.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), getLengthArrayLhs(loc));
-//		assert !mProcedureManager.isGlobalScope() : "cannot have a call in global scope!";
-		// mProcedureManager.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
-		// mProcedureManager.addCallGraphEdge(mProcedureManager.getCurrentProcedureID(),
-		// MemoryModelDeclarations.Ultimate_Alloc.getName());
-//		mProcedureManager.registerCall(surroundingProcedure, MemoryModelDeclarations.Ultimate_Alloc.getName());
-		// }
 		return result;
 	}
 
@@ -2594,43 +2585,25 @@ public class MemoryHandler {
 
 		private final MemoryModelDeclarations mMmd;
 		private final BoogieType mBoogieType;
-//		private final ASTType mAstType;
-//		private VariableLHS mVariableLHS;
-//		private IdentifierExpression mIdExp;
 
 		public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {
 			mMmd = mmd;
 			mBoogieType = null;
-//			mAstType = null;
 		}
 
 		public MemoryModelDeclarationInfo(final MemoryModelDeclarations mmd, final BoogieType boogieType) {
-//				final ASTType astType) {
 			mMmd = mmd;
 			mBoogieType = boogieType;
-//			mAstType = astType;
-//			mIdExp = ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
-//					mBoogieType, mmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
-//			mVariableLHS = ExpressionFactory.constructVariableLHS(LocationFactory.createIgnoreCLocation(),
-//					mBoogieType, mmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		}
 
 		IdentifierExpression constructIdentiferExpression(final ILocation loc) {
 			return ExpressionFactory.constructIdentifierExpression(loc,
 					mBoogieType, mMmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
-//			if (mIdExp == null) {
-//				throw new IllegalStateException();
-//			}
-//			return mIdExp;
 		}
 
 		VariableLHS constructVariableLHS(final ILocation loc) {
 			return ExpressionFactory.constructVariableLHS(loc,
 					mBoogieType, mMmd.getName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
-//			if (mVariableLHS == null) {
-//				throw new IllegalStateException();
-//			}
-//			return mVariableLHS;
 		}
 
 		BoogieType getBoogieType() {
@@ -2639,13 +2612,6 @@ public class MemoryHandler {
 			}
 			return mBoogieType;
 		}
-
-//		ASTType getAstType() {
-//			if (mBoogieType == null) {
-//				throw new IllegalStateException();
-//			}
-//			return mAstType;
-//		}
 
 		static MemoryModelDeclarationInfo constructMemoryModelDeclarationInfo(final HandlerHandler handlerHandler,
 				final MemoryModelDeclarations mmd) {
