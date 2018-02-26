@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager.BoogieProcedureInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -704,14 +705,15 @@ public class FunctionHandler {
 			final ExpressionResultBuilder functionCallExpressionResultBuilder = new ExpressionResultBuilder();
 			for (int i = 0; i < inParams.length; i++) {
 				final IASTInitializerClause inParam = inParams[i];
-				ExpressionResult in = (ExpressionResult) main.dispatch(inParam);
+//				ExpressionResult in = (ExpressionResult) main.dispatch(inParam);
 
-				if (in.mLrVal.getCType().getUnderlyingType() instanceof CArray) {
-					// arrays are passed as pointers
-					in.mLrVal = mHandlerHandler.getCHandler().decayArrayLrValToPointer(loc, in.getLrValue());
-				} else {
-					in = in.switchToRValueIfNecessary(main, loc);
-				}
+//				if (in.mLrVal.getCType().getUnderlyingType() instanceof CArray) {
+//					// arrays are passed as pointers
+//					in.mLrVal = mHandlerHandler.getCHandler().decayArrayLrValToPointer(loc, in.getLrValue());
+//				} else {
+//					in = in.switchToRValueIfNecessary(main, loc);
+//				}
+				final ExpressionResult in = StandardFunctionHandler.dispatchAndConvertFunctionArgument(main, loc, inParam);
 
 				if (in.mLrVal.getValue() == null) {
 					final String msg = "Incorrect or invalid in-parameter! " + loc.toString();

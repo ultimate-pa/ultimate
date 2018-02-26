@@ -871,7 +871,7 @@ public class MemoryHandler {
 
 		final IdentifierExpression ptrExpr = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 						mBoogieTypeHelper.getBoogieTypeForPointerType(), ptr,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, surroundingProcedureName));
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedureName));
 
 		final Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr,
 				new RValue(loopCtr.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
@@ -994,7 +994,7 @@ public class MemoryHandler {
 		// converted value to unsigned char
 		final IdentifierExpression inParamValueExpr = // new IdentifierExpression(ignoreLoc, inParamValue);
 			ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT, inParamValue,
-				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
 		final ExpressionResult exprRes =
 				new ExpressionResult(new RValue(inParamValueExpr, new CPrimitive(CPrimitives.INT)));
@@ -1006,11 +1006,11 @@ public class MemoryHandler {
 
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 				mTypeSizeAndOffsetComputer.getSizeT(), BigInteger.ONE);
-		final IdentifierExpression inParamAmountExpr = // new IdentifierExpression(ignoreLoc, inParamAmount);
+		final IdentifierExpression inParamAmountExprImpl =
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mBoogieTypeHelper.getBoogieTypeForSizeT(),
-						inParamAmount, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
+						inParamAmount, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
-		final List<Statement> stmt = constructCountingLoop(inParamAmountExpr, loopCtrAux, one, loopBody, procName);
+		final List<Statement> stmt = constructCountingLoop(inParamAmountExprImpl, loopCtrAux, one, loopBody, procName);
 
 		final Body procBody = mProcedureManager.constructBody(ignoreLoc,
 				decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt.size()]),
@@ -1030,8 +1030,11 @@ public class MemoryHandler {
 		// add requires #valid[#ptr!base];
 		addPointerBaseValidityCheck(ignoreLoc, inParamPtr, specs, procName);
 
+		final IdentifierExpression inParamAmountExprDecl =
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mBoogieTypeHelper.getBoogieTypeForSizeT(),
+						inParamAmount, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
 		// add requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset);
-		checkPointerTargetFullyAllocated(ignoreLoc, inParamAmountExpr, inParamPtr, specs, procName);
+		checkPointerTargetFullyAllocated(ignoreLoc, inParamAmountExprDecl, inParamPtr, specs, procName);
 
 		// free ensures #res == dest;
 		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(
@@ -1072,9 +1075,7 @@ public class MemoryHandler {
 	public CallStatement constructUltimateMemsetCall(final ILocation loc, final Expression pointer,
 			final Expression value, final Expression amount, final VariableLHS resVar) {
 		requireMemoryModelFeature(MemoryModelDeclarations.C_Memset);
-		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { resVar }, // new
-																									// VariableLHS(loc,
-																									// resVarId) },
+		return StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { resVar },
 				MemoryModelDeclarations.C_Memset.getName(), new Expression[] { pointer, value, amount });
 	}
 

@@ -721,4 +721,28 @@ public class ExpressionResult extends Result {
 	public boolean hasLRValue() {
 		return mLrVal != null;
 	}
+
+	/**
+	 * Converts an array to a pointer, if applicable.
+	 * Triggers that the array is moved on heap, if necessary.
+	 * Returns an ExpressionResult with the same side effects and the same value except the value has pointer type.
+	 *
+	 * (this can be used for example for function parameters, when an array is passed by reference (which is the
+	 *  standard case).)
+	 *
+	 * @param main
+	 * @param loc
+	 * @return
+	 */
+	public ExpressionResult decayArrayToPointerIfNecessary(final Dispatcher main, final ILocation loc) {
+		if (mLrVal.getCType().getUnderlyingType() instanceof CArray) {
+			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+			resultBuilder.addAllExceptLrValue(this);
+			resultBuilder.setLrVal(((CHandler) main.mCHandler).decayArrayLrValToPointer(loc, mLrVal));
+			return resultBuilder.build();
+		} else {
+			return this;
+		}
+	}
+
 }
