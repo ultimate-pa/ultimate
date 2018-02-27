@@ -339,11 +339,11 @@ public class MemoryHandler {
 		}
 
 //		decl.addAll(declareFree(main, tuLoc));
-		decl.addAll(declareDeallocation(main, tuLoc));
+		decl.addAll(declareDeallocation(main, tuLoc, hook));
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.Ultimate_Alloc)) {
-			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc));
+			decl.addAll(declareMalloc(main, mTypeHandler, tuLoc, hook));
 //			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
 //			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.Ultimate_Alloc.getName());
 		}
@@ -466,7 +466,7 @@ public class MemoryHandler {
 			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0],
 					inParams, outParams, new Specification[0], null);
 
-			mFunctionHandler.beginCustomProcedure(main, ignoreLoc, procName, memCpyProcDecl);
+			mFunctionHandler.beginCustomProcedure(main, ignoreLoc, procName, memCpyProcDecl, hook);
 		}
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
@@ -600,7 +600,7 @@ public class MemoryHandler {
 		{
 			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),
 					new String[0], inParams, outParams, new Specification[0], null);
-			mFunctionHandler.beginCustomProcedure(main, ignoreLoc, memCopyOrMemMove.getName(), memCpyProcDecl);
+			mFunctionHandler.beginCustomProcedure(main, ignoreLoc, memCopyOrMemMove.getName(), memCpyProcDecl, hook);
 		}
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
@@ -964,7 +964,7 @@ public class MemoryHandler {
 		{
 			final Procedure procDecl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams,
 					outParams, new Specification[0], null);
-			mFunctionHandler.beginCustomProcedure(main, ignoreLoc, procName, procDecl);
+			mFunctionHandler.beginCustomProcedure(main, ignoreLoc, procName, procDecl, hook);
 		}
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
@@ -1822,7 +1822,7 @@ public class MemoryHandler {
 	 *            the location for the new nodes.
 	 * @return declaration and implementation of procedure <code>Ultimate_dealloc</code>
 	 */
-	private List<Declaration> declareDeallocation(final Dispatcher main, final ILocation tuLoc) {
+	private List<Declaration> declareDeallocation(final Dispatcher main, final ILocation tuLoc, final IASTNode hook) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		// ensures #valid = old(valid)[~addr!base := false];
 		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
@@ -1841,7 +1841,7 @@ public class MemoryHandler {
 				new VarList[] { new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
 				new VarList[0], new Specification[0], null);
 			mFunctionHandler.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.Ultimate_Dealloc.getName(),
-					deallocDeclaration);
+					deallocDeclaration, hook);
 		}
 
 
@@ -1888,7 +1888,7 @@ public class MemoryHandler {
 	 * @return declaration and implementation of procedure <code>~malloc</code>
 	 */
 	private ArrayList<Declaration> declareMalloc(final Dispatcher main, final ITypeHandler typeHandler,
-			final ILocation tuLoc) {
+			final ILocation tuLoc, final IASTNode hook) {
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression nr0 = mExpressionTranslation.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -1930,7 +1930,7 @@ public class MemoryHandler {
 							typeHandler.constructPointerType(tuLoc)) },
 					new Specification[0], null);
 			mFunctionHandler.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.Ultimate_Alloc.getName(),
-					allocDeclaration);
+					allocDeclaration, hook);
 		}
 
 
