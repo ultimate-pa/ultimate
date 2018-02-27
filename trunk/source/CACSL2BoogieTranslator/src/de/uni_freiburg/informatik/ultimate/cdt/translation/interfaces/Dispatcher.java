@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IA
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IPreprocessorHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ISideEffectHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
@@ -97,10 +96,6 @@ public abstract class Dispatcher {
 
 	private final IPreferenceProvider mPreferences;
 
-	/**
-	 * The side effect handler.
-	 */
-	public ISideEffectHandler mSideEffectHandler;
 	/**
 	 * The C+ACSL handler.
 	 */
