@@ -80,7 +80,7 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 			final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(primitive));
 			final BoogieType boogieType = mTypeHandler.astTypeToBoogieType(astType);
-			result = new HeapDataArray(name, astType, boogieType, bytesize);
+			result = new HeapDataArray(name, astType, boogieType, mTypeHandler.getBoogiePointerType(), bytesize);
 			size2HeapdataArray.put(bytesize, result);
 		}
 		return result;

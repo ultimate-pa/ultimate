@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -155,7 +156,11 @@ public class PRDispatcher extends Dispatcher {
 	 * IASTNode of the last variable declaration ("last" in case the variable has several declarations).
 	 */
 	public Set<IASTNode> getVariablesOnHeap() {
-		return mVariablesOnHeap;
+		return Collections.unmodifiableSet(mVariablesOnHeap);
+	}
+
+	public void addToVariablesOnHeap(final IASTNode var) {
+		mVariablesOnHeap.add(var);
 	}
 	
 	@Override
@@ -505,7 +510,8 @@ public class PRDispatcher extends Dispatcher {
 				final SymbolTableValue value = st.findCSymbol(hook, cid);
 				final CType type = value.getCVariable().getUnderlyingType();
 				if (type instanceof CArray || type instanceof CStruct) {
-					getVariablesOnHeap().add(value.getDeclarationNode());
+//					getVariablesOnHeap().add(value.getDeclarationNode());
+					addToVariablesOnHeap(value.getDeclarationNode());
 				}
 			}
 		}
@@ -516,6 +522,7 @@ public class PRDispatcher extends Dispatcher {
 		final FlatSymbolTable st = mCHandler.getSymbolTable();
 		final String cid = st.getCIdForBoogieId(id);
 		final SymbolTableValue value = st.findCSymbol(hook, cid);
-		getVariablesOnHeap().add(value.getDeclarationNode());
+//		getVariablesOnHeap().add(value.getDeclarationNode());
+		addToVariablesOnHeap(value.getDeclarationNode());
 	}
 }

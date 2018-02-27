@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -130,7 +131,7 @@ public class ArrayHandler {
 					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType, node);
 			final Expression newAddress = newAddress_ER.mLrVal.getValue();
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
-			final HeapLValue lValue = new HeapLValue(newAddress, valueType, false, null);
+			final HeapLValue lValue = LRValueFactory.constructHeapLValue(main, newAddress, valueType, false, null);
 			result.addAll(newAddress_ER);
 			result.mLrVal = lValue;
 		} else {
@@ -156,12 +157,18 @@ public class ArrayHandler {
 				// We achieve this by doing pointer arithmetic where we use
 				// the "remaining" array as pointsToType, i.e., we compute
 				// addressOf(a) + 2 * sizeof(resultCType)
+
+//				final RValue decayedArray = CHandler.decayArrayLrValToPointer(main.mCHandler.isPreRunMode(),
+//						leftExpRes.getLrValue(), main.mTypeHandler.getBoogiePointerType()) ;
+
 				final Expression oldAddress = ((HeapLValue) leftExpRes.mLrVal).getAddress();
 				final RValue index = (RValue) subscript.mLrVal;
 				final ExpressionResult newAddress_ER = ((CHandler) main.mCHandler).doPointerArithmeticWithConversion(
+//						main, IASTBinaryExpression.op_plus, loc, decayedArray.getValue(), index, resultCType);
 						main, IASTBinaryExpression.op_plus, loc, oldAddress, index, resultCType, node);
 				final Expression newAddress = newAddress_ER.mLrVal.getValue();
-				final HeapLValue lValue = new HeapLValue(newAddress, resultCType, false, null);
+				final HeapLValue lValue = LRValueFactory.constructHeapLValue(main, newAddress, resultCType, false,
+						null);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 				result.addAll(newAddress_ER);
 				result.mLrVal = lValue;

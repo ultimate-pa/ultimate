@@ -30,12 +30,14 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class RValue extends LRValue {
@@ -81,13 +83,13 @@ public class RValue extends LRValue {
 	}
 
 	public void checkType(final CType type) {
-		if (type instanceof CArray) {
-			throw new IllegalArgumentException("RValues cannot have array type");
-		}
+//		if (type instanceof CArray) {
+//			throw new IllegalArgumentException("RValues cannot have array type");
+//		}
 		if (type instanceof CFunction) {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
-		if (!ExpressionFactory.areBoogieAndCTypeCompatible(type, value.getType())) {
+		if (!areBoogieAndCTypeCompatible(type, value.getType())) {
 			throw new IllegalArgumentException("The value of the constructed RValue has a BoogieType that is "
 					+ "incompatible with its CType.");
 		}
@@ -102,5 +104,23 @@ public class RValue extends LRValue {
 				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		return new RValue(ExpressionFactory.newIfThenElseExpression(loc, rVal.getValue(), one, zero), rVal.getCType(),
 				false);
+	}
+
+	static boolean areBoogieAndCTypeCompatible(final CType cType, final IBoogieType bType) {
+//		final BoogieType bType = (BoogieType) iBoogieType;
+		if (cType instanceof CPointer) {
+			if (!(bType instanceof BoogieStructType)) {
+				return false;
+			}
+			final BoogieStructType bStructType = (BoogieStructType) bType;
+			if (bStructType.getFieldCount() != 2) {
+				return false;
+			}
+			// TODO more checks
+		}
+
+		// TODO more checks
+
+		return true;
 	}
 }

@@ -141,7 +141,9 @@ public class TypeHandler implements ITypeHandler {
 	private boolean mFloatingTypesNeeded = false;
 	private ICHandler mCHandler;
 
-	private final BoogieType mBoogiePointerType;
+	private BoogieType mBoogiePointerType;
+
+	private ExpressionTranslation mExpressionTranslation;
 
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
@@ -160,9 +162,10 @@ public class TypeHandler implements ITypeHandler {
 		mBitvectorTranslation = bitvectorTranslation;
 		mDefinedTypes = new LinkedScopedHashMap<>();
 		mIncompleteType = new LinkedHashSet<>();
-		mBoogiePointerType = BoogieType.createStructType(
-				new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
-				new BoogieType[] { BoogieType.TYPE_INT, BoogieType.TYPE_INT });
+
+//		mBoogiePointerType = BoogieType.createStructType(
+//				new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
+//				new BoogieType[] { BoogieType.TYPE_INT, BoogieType.TYPE_INT });
 	}
 
 	@Override
@@ -709,40 +712,24 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public ASTType constructPointerType(final ILocation loc) {
 		mPointerTypeNeeded = true;
-		return new NamedType(loc, constructBoogiePointerType(), SFO.POINTER, new ASTType[0]);
+		return new NamedType(loc, getBoogiePointerType(), SFO.POINTER, new ASTType[0]);
 	}
 
 	@Override
-	public BoogieType constructBoogiePointerType() {
+	public BoogieType getBoogiePointerType() {
+		// the type of pointer components currently (feb 18) is always int, but we are keeping all options..
+		if (mBoogiePointerType == null) {
+			final BoogieType componentType = (BoogieType)
+					cType2AstType(null, mExpressionTranslation.getCTypeOfPointerComponents()).getBoogieType();
+			mBoogiePointerType = BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
+					new BoogieType[] { componentType, componentType });
+		}
 		return mBoogiePointerType;
 	}
 
 	@Override
 	public BoogieType astTypeToBoogieType(final ASTType astType) {
 		return (BoogieType) astType.getBoogieType();
-//		// TODO starting with a rather naive implementation..
-//
-//		if (astType.getBoogieType() != null) {
-//			return (BoogieType) astType.getBoogieType();
-//		}
-//
-//		if (astType instanceof PrimitiveType) {
-//			final PrimitiveType pt = (PrimitiveType) astType;
-//			switch(pt.getName()) {
-//			case "int" :
-//				return BoogieType.TYPE_INT;
-//			case "real" :
-//				return BoogieType.TYPE_REAL;
-//			case "bool" :
-//				return BoogieType.TYPE_BOOL;
-//			default :
-//				throw new AssertionError("TODO");
-//			}
-//		} else if (astType instanceof NamedType) {
-//			final NamedType nt = (NamedType) astType;
-//			nt.get
-//		}
-//		throw new AssertionError("TODO");
 	}
 
 	/**
@@ -972,5 +959,10 @@ public class TypeHandler implements ITypeHandler {
 		assert cHandler != null;
 		assert mCHandler == null : "don't call this twice";
 		mCHandler = cHandler;
+	}
+
+	@Override
+	public void setExpressionTranslation(final ExpressionTranslation expressionTranslation) {
+		mExpressionTranslation = expressionTranslation;
 	}
 }

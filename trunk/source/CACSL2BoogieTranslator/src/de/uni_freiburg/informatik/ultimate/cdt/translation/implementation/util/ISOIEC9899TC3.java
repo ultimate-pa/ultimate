@@ -35,10 +35,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -342,10 +340,9 @@ public final class ISOIEC9899TC3 {
 				value = value.add(BigInteger.valueOf(maxValue));
 			}
 			final BigInteger valueInRange = constructBitvectorInRange(value, bitlength);
-			resultLiteral = new BitvecLiteral(loc, BoogieType.createBitvectorType(bitlength), valueInRange.toString(),
-					bitlength);
+			resultLiteral = ExpressionFactory.createBitvecLiteral(loc, valueInRange.toString(), bitlength);
 		} else {
-			resultLiteral = new IntegerLiteral(loc, BoogieType.TYPE_INT, value.toString());
+			resultLiteral = ExpressionFactory.createIntegerLiteral(loc, value.toString());
 		}
 		return resultLiteral;
 	}

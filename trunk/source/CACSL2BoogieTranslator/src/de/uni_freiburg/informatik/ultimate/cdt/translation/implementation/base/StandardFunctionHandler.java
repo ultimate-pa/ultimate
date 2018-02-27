@@ -51,13 +51,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
@@ -601,7 +599,7 @@ public class StandardFunctionHandler {
 		// return new SkipResult();
 		// TODO: Keep the following code, but add it as option together with the other two
 		return new ExpressionResult(Collections.singletonList(new AssumeStatement(loc,
-				new BooleanLiteral(loc, BoogieType.TYPE_BOOL, false))),
+				ExpressionFactory.createBooleanLiteral(loc, false))),
 				null);
 	}
 
@@ -764,7 +762,7 @@ public class StandardFunctionHandler {
 
 	private static ExpressionResult handleAbort(final ILocation loc) {
 		return new ExpressionResult(Collections.singletonList(new AssumeStatement(loc,
-				new BooleanLiteral(loc, BoogieType.TYPE_BOOL, false))),
+				ExpressionFactory.createBooleanLiteral(loc, false))),
 				null);
 	}
 
@@ -1022,8 +1020,9 @@ public class StandardFunctionHandler {
 		final AuxVarInfo auxvarinfo =
 				CTranslationUtil.constructAuxVarInfo(loc, main, dest.getLrValue().getCType(), auxVar);
 
-		final CallStatement call = new CallStatement(loc, false, new VariableLHS[] { auxvarinfo.getLhs() },
-				mmDecl.getName(), new Expression[] { dest.getLrValue().getValue(), src.getLrValue().getValue(),
+		final CallStatement call = mFunctionHandler.constructCallStatement(loc, false,
+				new VariableLHS[] { auxvarinfo.getLhs() }, mmDecl.getName(),
+				new Expression[] { dest.getLrValue().getValue(), src.getLrValue().getValue(),
 						size.getLrValue().getValue() });
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addAuxVar(auxvarinfo);
@@ -1044,7 +1043,7 @@ public class StandardFunctionHandler {
 			final ILocation loc) {
 		final boolean checkSvcompErrorfunction =
 				main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
-		final Expression falseLiteral = new BooleanLiteral(loc, BoogieType.TYPE_BOOL, false);
+		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
 		Statement st;
 		if (checkSvcompErrorfunction) {
 			final Check check = new Check(Spec.ERROR_FUNCTION);
@@ -1060,7 +1059,7 @@ public class StandardFunctionHandler {
 			final ILocation loc) {
 		final LTLStepAnnotation ltlStep = new LTLStepAnnotation();
 		final AssumeStatement assumeStmt =
-				new AssumeStatement(loc, new BooleanLiteral(loc, BoogieType.TYPE_BOOL, true));
+				new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true));
 		ltlStep.annotate(assumeStmt);
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
 	}

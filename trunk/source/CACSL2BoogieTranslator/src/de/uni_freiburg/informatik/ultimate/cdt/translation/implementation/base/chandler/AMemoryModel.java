@@ -65,7 +65,8 @@ public abstract class AMemoryModel {
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
        	mPointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc),
-       			typeHandler.constructBoogiePointerType(),
+       			typeHandler.getBoogiePointerType(),
+       			typeHandler.getBoogiePointerType(),
        			bytesizeOfStoredPointerComponents());
 	}
 
@@ -132,7 +133,8 @@ public abstract class AMemoryModel {
 		private final ASTType mASTType;
 		private final Set<CPrimitives> mPrimitives;
 		private final Set<CPrimitiveCategory> mCPrimitiveCategory;
-		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType aSTType, final Set<CPrimitives> primitives) {
+		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType aSTType,
+				final Set<CPrimitives> primitives) {
 			super();
 			mProcedureSuffix = procedureName;
 			mBytesize = bytesize;

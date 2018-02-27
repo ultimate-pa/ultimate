@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -132,7 +131,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { new StringLiteral(loc, functionName) });
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
 			final Attribute[] attributes = new Attribute[] { attribute };
 			final ASTType resultASTType = mTypeHandler.constructPointerType(loc);
 			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, newType);
@@ -146,7 +145,7 @@ public class OverapproximationUF implements IPointerIntegerConversion {
 		final String prefixedFunctionName = "~" + functionName;
 		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-					new Expression[] { new StringLiteral(loc, functionName) });
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
 			final Attribute[] attributes = new Attribute[] { attribute };
 			final ASTType resultASTType = mTypeHandler.cType2AstType(loc, newType);
 			final ASTType paramASTType = mTypeHandler.constructPointerType(loc);

@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.InitializerResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -115,8 +116,8 @@ public class StructHandler {
 			final ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, loc, node);
 			final Expression address = rFieldOwnerRex.mLrVal.getValue();
 			fieldOwner = new ExpressionResult(rFieldOwnerRex.mStmt,
-					new HeapLValue(address, rFieldOwnerRex.mLrVal.getCType(), null), rFieldOwnerRex.mDecl,
-					rFieldOwnerRex.mAuxVars, rFieldOwnerRex.mOverappr);
+					LRValueFactory.constructHeapLValue(main, address, rFieldOwnerRex.mLrVal.getCType(), null),
+					rFieldOwnerRex.mDecl, rFieldOwnerRex.mAuxVars, rFieldOwnerRex.mOverappr);
 		}
 
 		if (fieldOwner.mLrVal instanceof HeapLValue) {
@@ -124,15 +125,13 @@ public class StructHandler {
 
 			// TODO: different calculations for unions
 			final Expression startAddress = fieldOwnerHlv.getAddress();
-			Expression newStartAddressBase = null;
-			Expression newStartAddressOffset = null;
-			if (startAddress instanceof StructConstructor) {
-				newStartAddressBase = ((StructConstructor) startAddress).getFieldValues()[0];
-				newStartAddressOffset = ((StructConstructor) startAddress).getFieldValues()[1];
-			} else {
-				newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
-				newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-			}
+//			final Expression startAddress = fieldOwnerHlv.getAddressAsPointerRValue(
+//			main.mTypeHandler.getBoogiePointerType()
+//			).getValue();
+
+			final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
+			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
+
 			final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field,
 					node);
 			final Expression sumOffset = mExpressionTranslation.constructArithmeticExpression(loc,
@@ -142,10 +141,10 @@ public class StructHandler {
 			final Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase,
 					sumOffset, loc);
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
-			newValue = new HeapLValue(newPointer, cFieldType, bi);
+			newValue = LRValueFactory.constructHeapLValue(main, newPointer, cFieldType, bi);
 
 			if (cStructType instanceof CUnion) {
-				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType,
+				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(main, loc, field, unionFieldToCType,
 						(CUnion) cStructType, fieldOwnerHlv, node));
 			}
 		} else if (fieldOwner.mLrVal instanceof RValue) {
@@ -155,14 +154,14 @@ public class StructHandler {
 			newValue = new RValue(sexpr, cFieldType);
 		} else {
 			final LocalLValue lVal = (LocalLValue) fieldOwner.mLrVal;
-			final StructLHS slhs = new StructLHS(loc, lVal.getLHS(), field);
+			final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLHS(), field);
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
 			newValue = new LocalLValue(slhs, cFieldType, bi);
 
 			if (cStructType instanceof CUnion) {
 				unionFieldToCType.addAll(
-						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, (CUnion) cStructType, lVal,
-								node));
+						computeNeighbourFieldsOfUnionField(main, loc, field, unionFieldToCType, (CUnion) cStructType,
+								lVal, node));
 			}
 		}
 
@@ -177,9 +176,9 @@ public class StructHandler {
 		return null;
 	}
 
-	private List<ExpressionResult> computeNeighbourFieldsOfUnionField(final ILocation loc, final String field,
-			final List<ExpressionResult> unionFieldToCType, final CUnion foType, final LRValue fieldOwner,
-			final IASTNode hook) {
+	private List<ExpressionResult> computeNeighbourFieldsOfUnionField(final Dispatcher main, final ILocation loc,
+			final String field, final List<ExpressionResult> unionFieldToCType, final CUnion foType,
+			final LRValue fieldOwner, final IASTNode hook) {
 
 		List<ExpressionResult> result;
 		if (unionFieldToCType == null) {
@@ -195,7 +194,8 @@ public class StructHandler {
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 			if (fieldOwner instanceof LocalLValue) {
-				final StructLHS havocSlhs = new StructLHS(loc, ((LocalLValue) fieldOwner).getLHS(), neighbourField);
+				final StructLHS havocSlhs = ExpressionFactory.constructStructAccessLhs(loc,
+						((LocalLValue) fieldOwner).getLHS(), neighbourField);
 				builder.setLrVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
 			} else {
 				assert fieldOwner instanceof HeapLValue;
@@ -209,7 +209,8 @@ public class StructHandler {
 				final StructConstructor neighbourFieldAddress = MemoryHandler.constructPointerFromBaseAndOffset(
 						MemoryHandler.getPointerBaseAddress(unionAddress, loc), summedOffset, loc);
 
-				builder.setLrVal(new HeapLValue(neighbourFieldAddress, foType.getFieldType(neighbourField), null));
+				builder.setLrVal(LRValueFactory.constructHeapLValue(main, neighbourFieldAddress,
+						foType.getFieldType(neighbourField), null));
 
 			}
 

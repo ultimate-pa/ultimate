@@ -82,8 +82,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -183,7 +183,7 @@ public class ACSLHandler implements IACSLHandler {
 			final ExpressionResult inner = (ExpressionResult) main.dispatch(ove.getFormula(), main.getAcslHook());
 			inner.switchToRValueIfNecessary(main, loc, main.getAcslHook());
 			inner.mLrVal = new RValue(
-					ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, inner.mLrVal.getValue()),
+					ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, inner.mLrVal.getValue()),
 					inner.mLrVal.getCType());
 			return inner;
 		}
@@ -466,12 +466,12 @@ public class ACSLHandler implements IACSLHandler {
 		case LOGICXOR: {
 			// translate into (l | r)
 			// where l = left & !right
-			final Expression notRight = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
+			final Expression notRight = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
 					right.mLrVal.getValue());
 			final Expression l = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, left.mLrVal.getValue(),
 					notRight);
 			// and r = !left & right
-			final Expression notLeft = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
+			final Expression notLeft = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
 					left.mLrVal.getValue());
 			final Expression r = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, notLeft,
 					right.mLrVal.getValue());
@@ -553,8 +553,8 @@ public class ACSLHandler implements IACSLHandler {
 		 * LocationFactory.createACSLLocation(node), node.getValue()));
 		 */
 		return new ExpressionResult(new RValue(
-				new de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral(
-						main.getLocationFactory().createACSLLocation(node), BoogieType.TYPE_BOOL, node.getValue()),
+				ExpressionFactory.createBooleanLiteral(
+						main.getLocationFactory().createACSLLocation(node), node.getValue()),
 				new CPrimitive(CPrimitives.BOOL), true));
 	}
 
@@ -612,7 +612,7 @@ public class ACSLHandler implements IACSLHandler {
 					ExpressionFactory.constructIdentifierExpression(loc,
 							main.mCHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(astType), id,
 							new DeclarationInformation(sc, procId));
-			lrVal = new HeapLValue(idExp, cType, null);
+			lrVal = LRValueFactory.constructHeapLValue(main, idExp, cType, null);
 		} else {
 			final VariableLHS idLhs = // new VariableLHS(loc, id);
 					ExpressionFactory.constructVariableLHS(loc,
@@ -988,7 +988,7 @@ public class ACSLHandler implements IACSLHandler {
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
 		final Expression valid = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
-		final Expression e = ExpressionFactory.newUnaryExpression(loc,
+		final Expression e = ExpressionFactory.constructUnaryExpression(loc,
 				// it,
 				de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG, valid);
 

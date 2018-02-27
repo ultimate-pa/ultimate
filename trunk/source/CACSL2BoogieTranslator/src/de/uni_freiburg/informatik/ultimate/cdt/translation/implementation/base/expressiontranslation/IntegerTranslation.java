@@ -47,9 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -117,7 +115,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Expression constructLiteralForFloatingType(final ILocation loc, final CPrimitive type,
 			final BigDecimal value) {
-		return new RealLiteral(loc, value.toString());
+		return ExpressionFactory.createRealLiteral(loc, value.toString());
 	}
 
 	@Override
@@ -175,7 +173,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private static Expression applyEucledeanModulo(final ILocation loc, final Expression operand,
 			final BigInteger divisor) {
 		return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, operand,
-				new IntegerLiteral(loc, divisor.toString()));
+				ExpressionFactory.createIntegerLiteral(loc, divisor.toString()));
 	}
 
 	@Override
@@ -268,11 +266,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
 			final CPrimitive type) {
 		if (type.getGeneralType() == CPrimitiveCategory.INTTYPE) {
-			return ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
+			return ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
 		} else if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
 			// TODO: having boogie deal with negative real literals would be the nice
 			// solution..
-			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"), expr);
+			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS,
+					ExpressionFactory.createRealLiteral(loc, "0.0"), expr);
 		} else {
 			throw new IllegalArgumentException("Unsupported type for unary minus: " + type);
 		}
@@ -282,7 +281,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final boolean boogieResultTypeBool, final CPrimitive resultCType, final CPrimitive... paramCType) {
 		final String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
 		final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-				new Expression[] { new StringLiteral(loc, functionName) });
+				new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
 		final Attribute[] attributes = new Attribute[] { attribute };
 		mFunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes,
 				boogieResultTypeBool, resultCType, paramCType);
@@ -355,11 +354,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 		 */
 		if (bothAreIntegerLiterals) {
 			final String constantResult = leftValue.divide(rightValue).toString();
-			return new IntegerLiteral(loc, constantResult);
+			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				exp2, new IntegerLiteral(loc, SFO.NR0));
+				exp2, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
 		if (exp1 instanceof IntegerLiteral) {
 			if (leftValue.signum() == 1) {
@@ -367,22 +366,22 @@ public class IntegerTranslation extends ExpressionTranslation {
 			} else if (leftValue.signum() == -1) {
 				return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalDivision,
-								new IntegerLiteral(loc, SFO.NR1)),
+								ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalDivision,
-								new IntegerLiteral(loc, SFO.NR1)));
+								ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)));
 			} else {
-				return new IntegerLiteral(loc, SFO.NR0);
+				return ExpressionFactory.createIntegerLiteral(loc, SFO.NR0);
 			}
 		} else if (exp2 instanceof IntegerLiteral) {
 			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
 				return ExpressionFactory.newIfThenElseExpression(
 						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
-								BinaryExpression.Operator.ARITHPLUS, normalDivision, new IntegerLiteral(loc, SFO.NR1)),
+								BinaryExpression.Operator.ARITHPLUS, normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						normalDivision);
 			} else if (rightValue.signum() == -1) {
 				return ExpressionFactory.newIfThenElseExpression(
 						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
-								BinaryExpression.Operator.ARITHMINUS, normalDivision, new IntegerLiteral(loc, SFO.NR1)),
+								BinaryExpression.Operator.ARITHMINUS, normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						normalDivision);
 			}
 			throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
@@ -390,9 +389,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 			return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 					ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
-									normalDivision, new IntegerLiteral(loc, SFO.NR1)),
+									normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
-									normalDivision, new IntegerLiteral(loc, SFO.NR1))),
+									normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1))),
 					normalDivision);
 		}
 	}
@@ -430,11 +429,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 			} else {
 				throw new UnsupportedOperationException("constant is not assigned");
 			}
-			return new IntegerLiteral(loc, constantResult);
+			return ExpressionFactory.createIntegerLiteral(loc, constantResult);
 		}
 		final Expression leftSmallerZeroAndThereIsRemainder = getLeftSmallerZeroAndThereIsRemainder(loc, exp1, exp2);
 		final Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				exp2, new IntegerLiteral(loc, SFO.NR0));
+				exp2, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
 		if (exp1 instanceof IntegerLiteral) {
 			if (leftValue.signum() == 1) {
@@ -446,7 +445,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
 								exp2));
 			} else {
-				return new IntegerLiteral(loc, SFO.NR0);
+				return ExpressionFactory.createIntegerLiteral(loc, SFO.NR0);
 			}
 		} else if (exp2 instanceof IntegerLiteral) {
 			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
@@ -476,9 +475,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression exp2) {
 		final Expression leftModRight = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
 		final Expression thereIsRemainder = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, leftModRight,
-				new IntegerLiteral(loc, SFO.NR0));
+				ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		final Expression leftSmallerZero = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-				exp1, new IntegerLiteral(loc, SFO.NR0));
+				exp1, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0));
 		return ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
 	}
 
@@ -513,14 +512,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 							.add(BigInteger.ONE);
 					final AssertStatement assertGeq0 = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-									oldWrappedIfNeeded, new IntegerLiteral(loc, SFO.NR0)));
+									oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
 					final Check chk1 = new Check(Spec.UINT_OVERFLOW);
 					chk1.annotate(assertGeq0);
 					operand.mStmt.add(assertGeq0);
 
 					final AssertStatement assertLtMax = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-									oldWrappedIfNeeded, new IntegerLiteral(loc, maxValuePlusOne.toString())));
+									oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
 					final Check chk2 = new Check(Spec.UINT_OVERFLOW);
 					chk2.annotate(assertLtMax);
 					operand.mStmt.add(assertLtMax);
@@ -582,7 +581,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression intExpression;
 			if (mTypeSizes.useFixedTypeSizes()) {
 				final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
-				final IntegerLiteral maxPointer = new IntegerLiteral(loc, maxPtrValuePlusOne.toString());
+				final IntegerLiteral maxPointer = ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
 				intExpression = constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 						constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
 								MemoryHandler.getPointerBaseAddress(pointerExpression, loc), newType, maxPointer,
@@ -605,7 +604,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression offsetAdress;
 			if (mTypeSizes.useFixedTypeSizes()) {
 				final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
-				final IntegerLiteral maxPointer = new IntegerLiteral(loc, maxPtrValuePlusOne.toString());
+				final IntegerLiteral maxPointer = ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
 				baseAdress = constructArithmeticExpression(loc, IASTBinaryExpression.op_divide, intExpression,
 						getCTypeOfPointerComponents(), maxPointer, getCTypeOfPointerComponents());
 				offsetAdress = constructArithmeticExpression(loc, IASTBinaryExpression.op_modulo, intExpression,
@@ -721,7 +720,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-						new Expression[] { new StringLiteral(loc, functionName) });
+						new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
 				final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type1);
 				final ASTType resultAstType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
@@ -767,7 +766,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-						new Expression[] { new StringLiteral(loc, functionName) });
+						new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
 				final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
@@ -786,7 +785,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String prefixedFunctionName = "~" + functionName;
 			if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 				final Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.OVERAPPROX_IDENTIFIER,
-						new Expression[] { new StringLiteral(loc, functionName) });
+						new Expression[] { ExpressionFactory.createStringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
 				final ASTType astType = mTypeHandler.cType2AstType(loc, type1);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);

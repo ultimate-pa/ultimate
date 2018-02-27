@@ -75,8 +75,10 @@ public class MemoryModel_Unbounded extends AMemoryModel {
 		final BoogieType boogieIntArrayType = mTypeHandler.astTypeToBoogieType(intArrayType);
 		final BoogieType boogieRealArrayType = mTypeHandler.astTypeToBoogieType(realArrayType);
 
-       	mIntegerArray = new HeapDataArray(SFO.INT, intArrayType, boogieIntArrayType, 0);
-       	mFloatingArray = new HeapDataArray(SFO.REAL, realArrayType, boogieRealArrayType, 0);
+       	mIntegerArray = new HeapDataArray(SFO.INT, intArrayType, boogieIntArrayType,
+       			mTypeHandler.getBoogiePointerType(), 0);
+       	mFloatingArray = new HeapDataArray(SFO.REAL, realArrayType, boogieRealArrayType,
+       			mTypeHandler.getBoogiePointerType(), 0);
 	}
 
 	@Override

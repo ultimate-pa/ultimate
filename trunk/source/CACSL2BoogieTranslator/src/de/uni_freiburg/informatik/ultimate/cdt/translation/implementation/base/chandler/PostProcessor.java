@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -54,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
@@ -64,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -334,12 +331,12 @@ public class PostProcessor {
 			if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 				final Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, "isUnsigned",
-						new Expression[] { new BooleanLiteral(loc, BoogieType.TYPE_BOOL,
-								typeSizes.isUnsigned(cPrimitiveO)) });
+						new Expression[] {
+								ExpressionFactory.createBooleanLiteral(loc, typeSizes.isUnsigned(cPrimitiveO)) });
 				final int bytesize = typeSizes.getSize(cPrimitive);
 				final int bitsize = bytesize * 8;
 				attributes[1] = new NamedAttribute(loc, "bitsize",
-						new Expression[] { new IntegerLiteral(loc, String.valueOf(bitsize)) });
+						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(bitsize)) });
 				final String identifier = "C_" + cPrimitive.name();
 				final String[] typeParams = new String[0];
 				final String name = "bv" + bitsize;
@@ -372,7 +369,7 @@ public class PostProcessor {
 			final String smtlibRmIdentifier = "RoundingMode";
 			attributesRM = new Attribute[1];
 			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-					new Expression[] { new StringLiteral(loc, smtlibRmIdentifier) });
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibRmIdentifier) });
 		}
 		final String[] typeParamsRM = new String[0];
 		decls.add(new TypeDeclaration(loc, attributesRM, false, BitvectorTranslation.BOOGIE_ROUNDING_MODE_IDENTIFIER,
@@ -385,9 +382,9 @@ public class PostProcessor {
 			attributesRTZ = new Attribute[0];
 		} else {
 			final Attribute attributeRNE = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-					new Expression[] { new StringLiteral(loc, "RNE") });
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, "RNE") });
 			final Attribute attributeRTZ = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-					new Expression[] { new StringLiteral(loc, "RTZ") });
+					new Expression[] { ExpressionFactory.createStringLiteral(loc, "RTZ") });
 			attributesRNE = new Attribute[] { attributeRNE };
 			attributesRTZ = new Attribute[] { attributeRTZ };
 		}
@@ -426,7 +423,7 @@ public class PostProcessor {
 				} else {
 					attributes = new Attribute[2];
 					attributes[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
-							new Expression[] { new StringLiteral(loc, "FloatingPoint") });
+							new Expression[] { ExpressionFactory.createStringLiteral(loc, "FloatingPoint") });
 					final int bytesize = typesizes.getSize(cPrimitive);
 					final int[] indices = new int[2];
 					switch (bytesize) {
@@ -447,8 +444,8 @@ public class PostProcessor {
 						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 					}
 					attributes[1] = new NamedAttribute(loc, FunctionDeclarations.INDEX_IDENTIFIER,
-							new Expression[] { new IntegerLiteral(loc, String.valueOf(indices[0])),
-									new IntegerLiteral(loc, String.valueOf(indices[1])) });
+							new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[0])),
+									ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
 				}
 				final String identifier = "C_" + cPrimitive.name();
 				final String[] typeParams = new String[0];
@@ -508,7 +505,7 @@ public class PostProcessor {
 //					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
 			builder.addDeclaration(new VariableDeclaration(loc, new Attribute[0],
 					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
-			//			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
+			//			stmt.add(mFunctionHandler.constructAssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
 //					new Expression[] { new IdentifierExpression(loc, oldId) }));
 			final IdentifierExpression oldIdExpr = //new IdentifierExpression(loc, oldId);
 					ExpressionFactory.constructIdentifierExpression(loc,
@@ -518,7 +515,7 @@ public class PostProcessor {
 					ExpressionFactory.constructVariableLHS(loc,
 							boogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
 							newId, new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
-			builder.addStatement(new AssignmentStatement(loc, new LeftHandSide[] { newIdLhs },
+			builder.addStatement(functionHandler.constructAssignmentStatement(loc, new LeftHandSide[] { newIdLhs },
 					new Expression[] { oldIdExpr }));
 			final IdentifierExpression newIdIdExpr = //new IdentifierExpression(loc, newId);
 					ExpressionFactory.constructIdentifierExpression(loc,
@@ -554,7 +551,7 @@ public class PostProcessor {
 		if (fittingFunctions.isEmpty()) {
 //			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
 //					stmt.toArray(new Statement[stmt.size()]));
-			return new Body(loc,
+			return functionHandler.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
 					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
 		} else if (fittingFunctions.size() == 1) {
@@ -572,7 +569,7 @@ public class PostProcessor {
 
 			assert outParam.length <= 1;
 			if (outParam.length == 1) {
-//				stmt.add(new AssignmentStatement(loc,
+//				stmt.add(mFunctionHandler.constructAssignmentStatement(loc,
 //						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
 //						new Expression[] { funcCallResult }));
 				final String id = outParam[0].getIdentifiers()[0];
@@ -583,7 +580,7 @@ public class PostProcessor {
 								id,
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
-				builder.addStatement(new AssignmentStatement(loc,
+				builder.addStatement(functionHandler.constructAssignmentStatement(loc,
 						new LeftHandSide[] { lhs },
 						new Expression[] { funcCallResult }));
 			}
@@ -636,7 +633,7 @@ public class PostProcessor {
 			firstElseStmt.addAll(firstElseRex.mStmt);
 			if (!resultTypeIsVoid) {
 				final AssignmentStatement assignment =
-						new AssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
+						functionHandler.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
 								new Expression[] { firstElseRex.mLrVal.getValue() });
 				firstElseStmt.add(assignment);
 			}
@@ -659,7 +656,7 @@ public class PostProcessor {
 				newStmts.addAll(currentRex.mStmt);
 				if (!resultTypeIsVoid) {
 					final AssignmentStatement assignment =
-							new AssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
+							functionHandler.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
 									new Expression[] { currentRex.mLrVal.getValue() });
 					newStmts.add(assignment);
 				}
@@ -691,7 +688,7 @@ public class PostProcessor {
 //			stmt.add(currentIfStmt);
 			builder.addStatement(currentIfStmt);
 			if (outParam.length == 1) {
-//				stmt.add(new AssignmentStatement(loc,
+//				stmt.add(mFunctionHandler.constructAssignmentStatement(loc,
 //						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
 //						new Expression[] { funcCallResult }));
 				final VariableLHS dispatchingFunctionResultLhs = //new VariableLHS(loc, outParam[0].getIdentifiers()[0]);
@@ -700,7 +697,7 @@ public class PostProcessor {
 								outParam[0].getIdentifiers()[0],
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
-				builder.addStatement(new AssignmentStatement(loc,
+				builder.addStatement(functionHandler.constructAssignmentStatement(loc,
 						new LeftHandSide[] { dispatchingFunctionResultLhs },
 						new Expression[] { funcCallResult }));
 			}
@@ -733,8 +730,15 @@ public class PostProcessor {
 			final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
 			final ExpressionTranslation expressionTranslation = main.mCHandler.getExpressionTranslation();
 			final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
+			final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
 
-			main.mCHandler.getFunctionHandler().beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT, hook);
+			{
+				final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT,
+						new String[0], new VarList[0], new VarList[0], new Specification[0], null);
+				main.mCHandler.getFunctionHandler().beginCustomProcedure(main, translationUnitLoc, SFO.INIT,
+						initProcedureDecl, hook);
+//				main.mCHandler.getFunctionHandler().beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
+			}
 			final ArrayList<Statement> initStatements = new ArrayList<>();
 			final Collection<String> proceduresCalledByUltimateInit = new HashSet<>();
 
@@ -749,7 +753,7 @@ public class PostProcessor {
 						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 //				final String lhsId = SFO.VALID;
 				final Expression literalThatRepresentsFalse = memoryHandler.getBooleanArrayHelper().constructFalse();
-				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(
+				final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(main,
 						translationUnitLoc, zero, memoryHandler.getValidArrayLhs(translationUnitLoc),
 						literalThatRepresentsFalse);
 				initStatements.add(0, assignment);
@@ -761,7 +765,8 @@ public class PostProcessor {
 								boogieTypeHelper.getBoogieTypeForPointerType(),
 								SFO.NULL,
 								DeclarationInformation.DECLARATIONINFO_GLOBAL);
-				initStatements.add(0, new AssignmentStatement(translationUnitLoc, new LeftHandSide[] { slhs },
+				initStatements.add(0, functionHandler.constructAssignmentStatement(translationUnitLoc,
+						new LeftHandSide[] { slhs },
 						new Expression[] {
 								ExpressionFactory.constructStructConstructor(translationUnitLoc,
 										new String[] { "base", "offset" },
@@ -853,7 +858,7 @@ public class PostProcessor {
 			 * note that we only have to deal with the implementation part of the procedure, the declaration is managed
 			 * by the FunctionHandler
 			 */
-			final Body initBody = new Body(translationUnitLoc,
+			final Body initBody = functionHandler.constructBody(translationUnitLoc,
 					initDecl.toArray(new VariableDeclaration[initDecl.size()]),
 					initStatements.toArray(new Statement[initStatements.size()]));
 			final Procedure initProcedureImplementation = new Procedure(translationUnitLoc, new Attribute[0],
@@ -868,7 +873,7 @@ public class PostProcessor {
 
 //			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT, proceduresCalledByUltimateInit);
 //			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT);
-			main.mCHandler.getFunctionHandler().endUltimateInitOrStart(main, SFO.INIT);
+			main.mCHandler.getFunctionHandler().endCustomProcedure(main, SFO.INIT);
 
 			mUltimateInitImplementation = initProcedureImplementation;
 		}
@@ -905,7 +910,11 @@ public class PostProcessor {
 			if (!checkedMethod.equals(SFO.EMPTY) && functionHandler.hasProcedure(checkedMethod)) {
 				mLogger.info("Settings: Checked method=" + checkedMethod);
 
-				functionHandler.beginUltimateInitOrStart(main, loc, SFO.START, hook);
+				{
+					final Procedure startDeclaration = new Procedure(loc, new Attribute[0], SFO.START, new String[0],
+						new VarList[0], new VarList[0], new Specification[0], null);
+					functionHandler.beginCustomProcedure(main, loc, SFO.START, startDeclaration, hook);
+				}
 
 //				Procedure startDeclaration = null;
 //				Specification[] specsStart = new Specification[0];
@@ -916,7 +925,8 @@ public class PostProcessor {
 				final ArrayList<Statement> startStmt = new ArrayList<>();
 				final ArrayList<VariableDeclaration> startDecl = new ArrayList<>();
 //				specsStart = new Specification[1];
-				startStmt.add(new CallStatement(loc, false, new VariableLHS[0], SFO.INIT, new Expression[0]));
+				startStmt.add(functionHandler.constructCallStatement(loc, false, new VariableLHS[0], SFO.INIT,
+						new Expression[0]));
 				final VarList[] checkedMethodOutParams =
 						functionHandler.getProcedureDeclaration(checkedMethod).getOutParams();
 				final VarList[] checkedMethodInParams =
@@ -964,12 +974,14 @@ public class PostProcessor {
 //							SFO.NO_REAL_C_VAR + checkMethodRet,
 							loc);
 					startDecl.add(checkedMethodReturnAuxVar.getVarDec());
-					startStmt.add(new CallStatement(loc, false,
+					startStmt.add(functionHandler.constructCallStatement(loc, false,
 							new VariableLHS[] { checkedMethodReturnAuxVar.getLhs() },
 							checkedMethod, args.toArray(new Expression[args.size()])));
+					functionHandler.registerCall(checkedMethod);
 				} else { // void
-					startStmt.add(new CallStatement(loc, false, new VariableLHS[0], checkedMethod,
+					startStmt.add(functionHandler.constructCallStatement(loc, false, new VariableLHS[0], checkedMethod,
 							args.toArray(new Expression[args.size()])));
+					functionHandler.registerCall(checkedMethod);
 				}
 
 //				final LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<>();
@@ -985,8 +997,11 @@ public class PostProcessor {
 //				specsStart[0] = new ModifiesSpecification(loc, false,
 //						startModifiesClause.toArray(new VariableLHS[startModifiesClause.size()]));
 
-				final Body startBody = new Body(loc, startDecl.toArray(new VariableDeclaration[startDecl.size()]),
+				final Body startBody = functionHandler.constructBody(loc,
+						startDecl.toArray(new VariableDeclaration[startDecl.size()]),
 						startStmt.toArray(new Statement[startStmt.size()]));
+//				final Body startBody = new Body(loc, startDecl.toArray(new VariableDeclaration[startDecl.size()]),
+//						startStmt.toArray(new Statement[startStmt.size()]));
 
 				startProcedure = new Procedure(loc, new Attribute[0], SFO.START, new String[0], new VarList[0],
 						new VarList[0], null, startBody);
@@ -1001,7 +1016,7 @@ public class PostProcessor {
 
 //				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START, proceduresCalledByStart);
 //				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START);
-				functionHandler.endUltimateInitOrStart(main, SFO.START);
+				functionHandler.endCustomProcedure(main, SFO.START);
 			} else {
 				mLogger.info("Settings: Library mode!");
 				if (functionHandler.hasProcedure(SFO.MAIN)) {
