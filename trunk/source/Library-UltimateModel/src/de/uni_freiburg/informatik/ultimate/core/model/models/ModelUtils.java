@@ -3,22 +3,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 
 /**
  * Helper methods for Ultimate models.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public final class ModelUtils {
 
@@ -56,7 +56,7 @@ public final class ModelUtils {
 	/**
 	 * Takes annotations from one {@link IElement} (if any) and adds them to another {@link IElement}. This is a shallow
 	 * copy.
-	 * 
+	 *
 	 * @param oldE
 	 *            old {@link IElement} to take annotations from.
 	 * @param newE
@@ -68,17 +68,29 @@ public final class ModelUtils {
 		}
 
 		final Map<String, IAnnotations> oldAnnots = getAnnotations(oldE);
-		if (oldAnnots != null) {
-			newE.getPayload().getAnnotations().putAll(oldAnnots);
+		if (oldAnnots == null) {
+			return;
+		}
+		final Map<String, IAnnotations> newAnnots = newE.getPayload().getAnnotations();
+		for (final Entry<String, IAnnotations> oldAnnot : oldAnnots.entrySet()) {
+			final IAnnotations replacedValue = newAnnots.put(oldAnnot.getKey(), oldAnnot.getValue());
+			if (replacedValue == null) {
+				continue;
+			}
+			// we would overwrite old annotations, so we merge instead
+			final IAnnotations mergedAnnot = replacedValue.merge(oldAnnot.getValue());
+			if (mergedAnnot != null) {
+				newAnnots.put(oldAnnot.getKey(), mergedAnnot);
+			}
 		}
 	}
 
 	/**
 	 * Collects all annotations annotated to a collection of {@link IElement}s and annotates them to a new
 	 * {@link IElement}.
-	 * 
+	 *
 	 * Throws an exception if annotations would be lost.
-	 * 
+	 *
 	 * @param oldElem
 	 *            a collection of {@link IElement}s
 	 * @param newElem
@@ -118,7 +130,7 @@ public final class ModelUtils {
 	/**
 	 * Takes annotations from one {@link IElement} that are assignable from <code>annotation</code> and adds them to
 	 * another {@link IElement}. This is a shallow copy.
-	 * 
+	 *
 	 * @param oldE
 	 *            old {@link IElement} to take annotations from
 	 * @param newE
@@ -149,7 +161,7 @@ public final class ModelUtils {
 
 	/**
 	 * Applies all annotations of <code>elem</code> (if any) to a provided {@link Consumer}.
-	 * 
+	 *
 	 * @param elem
 	 *            The element from which annotations should be taken.
 	 * @param funConsumer
@@ -166,7 +178,7 @@ public final class ModelUtils {
 
 	/**
 	 * Get some {@link IAnnotations} implementer from an {@link IElement} with the matching key if present.
-	 * 
+	 *
 	 * @param node
 	 *            The {@link IElement} instance which has the annotation
 	 * @param key
