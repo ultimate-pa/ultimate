@@ -36,6 +36,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
@@ -134,12 +135,12 @@ public class StructHandler {
 			}
 			final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field,
 					node);
-			final Expression sumOffset =
-					mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-							newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset,
-							mExpressionTranslation.getCTypeOfPointerComponents());
-			final Expression newPointer =
-					MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, sumOffset, loc);
+			final Expression sumOffset = mExpressionTranslation.constructArithmeticExpression(loc,
+					IASTBinaryExpression.op_plus, newStartAddressOffset,
+					mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset,
+					mExpressionTranslation.getCTypeOfPointerComponents());
+			final Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase,
+					sumOffset, loc);
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
 			newValue = new HeapLValue(newPointer, cFieldType, bi);
 
@@ -149,7 +150,8 @@ public class StructHandler {
 			}
 		} else if (fieldOwner.mLrVal instanceof RValue) {
 			final RValue rVal = (RValue) fieldOwner.mLrVal;
-			final StructAccessExpression sexpr = new StructAccessExpression(loc, rVal.getValue(), field);
+			final StructAccessExpression sexpr = ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(),
+					field);
 			newValue = new RValue(sexpr, cFieldType);
 		} else {
 			final LocalLValue lVal = (LocalLValue) fieldOwner.mLrVal;
@@ -197,8 +199,8 @@ public class StructHandler {
 				builder.setLrVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
 			} else {
 				assert fieldOwner instanceof HeapLValue;
-				final Expression fieldOffset =
-						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField, hook);
+				final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType,
+						neighbourField, hook);
 				final Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
 				final Expression summedOffset = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
 						IASTBinaryExpression.op_plus, MemoryHandler.getPointerOffset(unionAddress, loc),
@@ -222,32 +224,35 @@ public class StructHandler {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
 
-		addressBaseOfFieldOwner = new StructAccessExpression(loc, structAddress, SFO.POINTER_BASE);
-		addressOffsetOfFieldOwner = new StructAccessExpression(loc, structAddress, SFO.POINTER_OFFSET);
+		addressBaseOfFieldOwner = ExpressionFactory.constructStructAccessExpression(loc, structAddress,
+				SFO.POINTER_BASE);
+		addressOffsetOfFieldOwner = ExpressionFactory.constructStructAccessExpression(loc, structAddress,
+				SFO.POINTER_OFFSET);
 
-		final Expression newOffset =
-				computeStructFieldOffset(mMemoryHandler, loc, fieldIndex, addressOffsetOfFieldOwner, structType, hook);
+		final Expression newOffset = computeStructFieldOffset(mMemoryHandler, loc, fieldIndex,
+				addressOffsetOfFieldOwner, structType, hook);
 
-		final StructConstructor newPointer =
-				MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
+		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner,
+				newOffset, loc);
 
 		final CType resultType = structType.getFieldTypes()[fieldIndex];
 
 		final ExpressionResult call = mMemoryHandler.getReadCall(main, newPointer, resultType, hook);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-//		final ArrayList<Statement> stmt = new ArrayList<>();
-//		final ArrayList<Declaration> decl = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-//		final List<Overapprox> overappr = new ArrayList<>();
-//		stmt.addAll(call.mStmt);
-//		decl.addAll(call.mDecl);
-//		auxVars.putAll(call.mAuxVars);
-//		overappr.addAll(call.mOverappr);
+		// final ArrayList<Statement> stmt = new ArrayList<>();
+		// final ArrayList<Declaration> decl = new ArrayList<>();
+		// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		// final List<Overapprox> overappr = new ArrayList<>();
+		// stmt.addAll(call.mStmt);
+		// decl.addAll(call.mDecl);
+		// auxVars.putAll(call.mAuxVars);
+		// overappr.addAll(call.mOverappr);
 		resultBuilder.addAllExceptLrValue(call);
-//		final ExpressionResult result =
-//		new ExpressionResult(stmt, new RValue(call.mLrVal.getValue(), resultType), decl, auxVars, overappr);
+		// final ExpressionResult result =
+		// new ExpressionResult(stmt, new RValue(call.mLrVal.getValue(), resultType),
+		// decl, auxVars, overappr);
 		resultBuilder.setLrVal(new RValue(call.mLrVal.getValue(), resultType));
-//		return result;
+		// return result;
 		return resultBuilder.build();
 	}
 
@@ -280,7 +285,8 @@ public class StructHandler {
 			/*
 			 * Designators can be complex.
 			 *
-			 * Example from C11 6.7.9.35: <code> struct { int a[3], b; } w[] = { [0].a = {1}, [1].a[0] = 2 };</code>
+			 * Example from C11 6.7.9.35: <code> struct { int a[3], b; } w[] = { [0].a =
+			 * {1}, [1].a[0] = 2 };</code>
 			 *
 			 * Currently we only support designators that refer to a struct field, like in
 			 *

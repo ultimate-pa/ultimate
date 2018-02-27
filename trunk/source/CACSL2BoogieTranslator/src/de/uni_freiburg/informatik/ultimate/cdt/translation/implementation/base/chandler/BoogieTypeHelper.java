@@ -11,8 +11,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class BoogieTypeHelper {
 
 	public BoogieType getBoogieTypeForBoogieASTType(final ASTType asttype) {
-		//TODO
-		throw new AssertionError("TODO: implement");
+		final BoogieType result = (BoogieType) asttype.getBoogieType();
+		assert result != null;
+		return result;
 	}
 
 	/**

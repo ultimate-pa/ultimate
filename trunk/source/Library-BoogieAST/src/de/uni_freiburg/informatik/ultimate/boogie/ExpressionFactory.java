@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -37,17 +38,21 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -434,25 +439,25 @@ public class ExpressionFactory {
 		return current;
 	}
 
-	// public static ArrayLHS constructArrayLhs(final ILocation loc, final LeftHandSide array,
-	// final Expression[] indices) {
-	// // TODO: infer BoogieType and add to constructor parameters
-	// return new ArrayLHS(loc, array, indices);
-	// }
-
 	public static StructConstructor constructStructConstructor(final ILocation loc, final String[] fieldIds,
 			final Expression[] fieldValues) {
 		assert fieldIds.length == fieldValues.length;
-		// TODO: infer BoogieType and add to constructor parameters
-		return new StructConstructor(loc, fieldIds, fieldValues);
+		final BoogieType[] fieldTypes = new BoogieType[fieldIds.length];
+		boolean hasError = false;
+		for (int i = 0; i < fieldIds.length; i++) {
+			fieldTypes[i] = (BoogieType) fieldValues[i].getType();
+			hasError |= fieldValues[i].getType().equals(BoogieType.TYPE_ERROR);
+		}
+		final BoogieType type = hasError ? BoogieType.TYPE_ERROR :
+			BoogieType.createStructType(fieldIds, fieldTypes);
+		return new StructConstructor(loc, type, fieldIds, fieldValues);
 	}
 
-	public static StructLHS constructStructAccessLhs(final ILocation loc, final LeftHandSide lhs, final String field) {
-		// TODO: infer BoogieType and add to constructor parameters
-
-		final BoogieType lhsType = null;
-
-		return new StructLHS(loc, lhs, field);
+	public static StructLHS constructStructAccessLhs(final ILocation loc, final LeftHandSide struct,
+			final String fieldName) {
+		final BoogieType lhsType = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs((BoogieType) struct.getType(),
+				fieldName, new TypeErrorReporter(loc));
+		return new StructLHS(loc, lhsType, struct, fieldName);
 	}
 
 	public static ArrayAccessExpression constructNestedArrayAccessExpression(final ILocation loc,
@@ -531,9 +536,44 @@ public class ExpressionFactory {
 		}
 	}
 
-	public static boolean areBoogieAndCTypeCompatible() {
-		// TODO Auto-generated method stub
-		return false;
+	public static boolean areBoogieAndCTypeCompatible(final Object cType, final IBoogieType iBoogieType) {
+		// TODO implement a check here! (will have to move this method because CType is not visible..
+		return true;
+	}
+
+	public static ArrayStoreExpression constructArrayStoreExpression(final ILocation loc, final Expression array,
+			final Expression[] indices, final Expression value) {
+
+		final List<BoogieType> indicesTypes = new ArrayList<>();
+		for (final Expression index : indices) {
+			indicesTypes.add((BoogieType) index.getType());
+		}
+
+		final BoogieType type = TypeCheckHelper.typeCheckArrayStoreExpression((BoogieType) array.getType(),
+				indicesTypes, (BoogieType) value.getType(), new TypeErrorReporter(loc));
+		return new ArrayStoreExpression(loc, type, array, indices, value);
+	}
+
+	public static BinaryExpression constructBinaryExpression(final ILocation loc, final Operator operator,
+			final Expression operand1, final Expression operand2) {
+		final BoogieType type = TypeCheckHelper.typeCheckBinaryExpression(operator,
+				(BoogieType) operand1.getType(),
+				(BoogieType) operand2.getType(),
+				new TypeErrorReporter(loc));
+		return new BinaryExpression(loc, type, operator, operand1, operand2);
+	}
+
+	public static FunctionApplication constructFunctionApplication(final ILocation loc, final String identifier,
+			final Expression[] arguments, final FunctionDeclaration declaration) {
+		final BoogieType type = (BoogieType) declaration.getOutParam().getType().getBoogieType();
+		return new FunctionApplication(loc, type, identifier, arguments);
+	}
+
+	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,
+			final String fieldName) {
+		final BoogieType type = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs((BoogieType) struct.getType() ,
+				fieldName, new TypeErrorReporter(loc));
+		return new StructAccessExpression(loc, type, struct, fieldName);
 	}
 
 

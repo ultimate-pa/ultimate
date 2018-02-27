@@ -599,7 +599,7 @@ public class FunctionHandler {
 			}
 		}
 //		stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
-		resultBuilder.addStatements(CHandler.createHavocsForAuxVars(resultBuilder.getAuxVars()));
+		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
 		// we need to insert a free for each malloc of an auxvar before each return
 		// frees are inserted in handleReturnStm
@@ -1340,7 +1340,8 @@ public class FunctionHandler {
 //			if (mMethodsCalledBeforeDeclared.contains(methodName)) {
 			if (mMethodsCalledBeforeDeclared.contains(procInfo)) {
 				// this method was assumed to return int -> return int
-				out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, SFO.INT));
+				out[0] = new VarList(loc, new String[] { SFO.RES },
+						new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT));
 			} else {
 				// void, so there are no out vars
 				out = new VarList[0];
@@ -1596,7 +1597,7 @@ public class FunctionHandler {
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnedValue, returnCType,
 				functionCallExpressionResultBuilder);
 
-		assert CHandler.isAuxVarMapComplete(main.mNameHandler,
+		assert CTranslationUtil.isAuxVarMapComplete(main.mNameHandler,
 				functionCallExpressionResultBuilder.getDeclarations(),
 				functionCallExpressionResultBuilder.getAuxVars());
 

@@ -418,7 +418,8 @@ public class ExpressionResult extends Result {
 
 		}
 		final StructConstructor sc =
-				new StructConstructor(loc, fieldIdentifiers.toArray(new String[fieldIdentifiers.size()]),
+				ExpressionFactory.constructStructConstructor(loc,
+						fieldIdentifiers.toArray(new String[fieldIdentifiers.size()]),
 						fieldValues.toArray(new Expression[fieldValues.size()]));
 
 		final ExpressionResult result = new ExpressionResult(newStmt, new RValue(sc, structType), newDecl, newAuxVars,

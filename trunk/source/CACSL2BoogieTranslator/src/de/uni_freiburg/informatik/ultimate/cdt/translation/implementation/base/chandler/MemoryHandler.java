@@ -89,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.AMemoryModel.ReadWriteDefinition;
@@ -403,8 +402,12 @@ public class MemoryHandler {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ASTType pointerComponentType =
 				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
+		final BoogieType boogieType = BoogieType.createArrayType(0,
+				new BoogieType[] { (BoogieType) pointerComponentType.getBoogieType() },
+				(BoogieType) pointerComponentType.getBoogieType());
 		final ASTType lengthType =
-				new ArrayType(ignoreLoc, new String[0], new ASTType[] { pointerComponentType }, pointerComponentType);
+				new ArrayType(ignoreLoc, boogieType, new String[0], new ASTType[] { pointerComponentType },
+						pointerComponentType);
 		final VarList vlL = new VarList(ignoreLoc, new String[] { SFO.LENGTH }, lengthType);
 		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlL });
 	}
@@ -414,7 +417,11 @@ public class MemoryHandler {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ASTType pointerComponentType =
 				mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
-		final ASTType validType = new ArrayType(ignoreLoc, new String[0], new ASTType[] { pointerComponentType },
+		final BoogieType boogieType = BoogieType.createArrayType(0,
+				new BoogieType[] { (BoogieType) pointerComponentType.getBoogieType() },
+				(BoogieType) mBooleanArrayHelper.constructBoolReplacementType().getBoogieType());
+		final ASTType validType = new ArrayType(ignoreLoc, boogieType, new String[0],
+				new ASTType[] { pointerComponentType },
 				mBooleanArrayHelper.constructBoolReplacementType());
 		final VarList vlV = new VarList(ignoreLoc, new String[] { SFO.VALID }, validType);
 		return new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { vlV });
@@ -1026,8 +1033,12 @@ public class MemoryHandler {
 
 	private VariableDeclaration constructMemoryArrayDeclaration(final ILocation loc, final String typeName,
 			final ASTType astType) {
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.constructBoogiePointerType() },
+						(BoogieType) astType.getBoogieType());
 		final ASTType memoryArrayType =
-				new ArrayType(loc, new String[0], new ASTType[] { mTypeHandler.constructPointerType(loc) }, astType);
+				new ArrayType(loc, boogieType,
+						new String[0], new ASTType[] { mTypeHandler.constructPointerType(loc) }, astType);
 		final VarList varList = new VarList(loc, new String[] { SFO.MEMORY + "_" + typeName }, memoryArrayType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
@@ -1273,7 +1284,8 @@ public class MemoryHandler {
 	private static Expression constructOneDimensionalArrayStore(final ILocation loc, final Expression arr,
 			final Expression index, final Expression newValue) {
 		final Expression[] singletonIndex = new Expression[] { index };
-		return new ArrayStoreExpression(loc, arr, singletonIndex, newValue);
+//		return new ArrayStoreExpression(loc, arr, singletonIndex, newValue);
+		return ExpressionFactory.constructArrayStoreExpression(loc, arr, singletonIndex, newValue);
 	}
 
 	/**
@@ -1566,9 +1578,9 @@ public class MemoryHandler {
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 //		final Expression freedAddressExpr = new IdentifierExpression(loc, ADDR);
 		final Expression valid = getValidArray(loc);
-//		final Expression addrOffset = new StructAccessExpression(loc, freedAddressExpr, SFO.POINTER_OFFSET);
+//		final Expression addrOffset = ExpressionFactory.constructStructAccessExpression(loc, freedAddressExpr, SFO.POINTER_OFFSET);
 		final Expression addrOffset = getPointerOffset(pointerToBeFreed.getValue(), loc);
-//		final Expression addrBase = new StructAccessExpression(loc, freedAddressExpr, SFO.POINTER_BASE);
+//		final Expression addrBase = ExpressionFactory.constructStructAccessExpression(loc, freedAddressExpr, SFO.POINTER_BASE);
 		final Expression addrBase = getPointerBaseAddress(pointerToBeFreed.getValue(), loc);
 		final Expression[] idcFree = new Expression[] { addrBase };
 
@@ -1636,8 +1648,8 @@ public class MemoryHandler {
 				ExpressionFactory.constructIdentifierExpression(tuLoc, mBoogieTypeHelper.getBoogieTypeForPointerType(),
 						ADDR, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, SFO.FREE));
 		final Expression valid = getValidArray(tuLoc);
-		final Expression addrOffset = new StructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
-		final Expression addrBase = new StructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
+		final Expression addrOffset = ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
+		final Expression addrBase = ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
 		final Expression[] idcFree = new Expression[] { addrBase };
 
 		final ArrayList<Specification> specFree = new ArrayList<>();
@@ -1726,15 +1738,23 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
 								MemoryModelDeclarations.Ultimate_Dealloc.getName()));
 		final Expression valid = getValidArray(tuLoc);
-		final Expression addrBase = new StructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
+		final Expression addrBase = ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
 		final Expression[] idcFree = new Expression[] { addrBase };
 
 		final ArrayList<Specification> specFree = new ArrayList<>();
 
+		final ArrayStoreExpression arrayStore =
+//				new ArrayStoreExpression(tuLoc,
+//						ExpressionFactory.newUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid), idcFree,
+//						bLFalse);
+					ExpressionFactory.constructArrayStoreExpression(tuLoc,
+							ExpressionFactory.newUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid),
+							idcFree,
+							bLFalse);
+
+
 		final Expression updateValidArray = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
-				new ArrayStoreExpression(tuLoc,
-						ExpressionFactory.newUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid), idcFree,
-						bLFalse));
+			arrayStore);
 
 		specFree.add(new EnsuresSpecification(tuLoc, true, updateValidArray));
 		specFree.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] { getValidArrayLhs(tuLoc) }));
@@ -1782,7 +1802,7 @@ public class MemoryHandler {
 						MemoryModelDeclarations.Ultimate_Alloc.getName()));
 
 		final Expression length = getLengthArray(tuLoc);
-		final Expression base = new StructAccessExpression(tuLoc, res, SFO.POINTER_BASE);
+		final Expression base = ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE);
 		final Expression[] idcMalloc = new Expression[] { base };
 		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
 		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
@@ -1801,9 +1821,9 @@ public class MemoryHandler {
 								bLFalse)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false, ensuresArrayUpdate(tuLoc, bLTrue, base, valid)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
-				Operator.COMPEQ, new StructAccessExpression(tuLoc, res, SFO.POINTER_OFFSET), nr0)));
+				Operator.COMPEQ, ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_OFFSET), nr0)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
-				Operator.COMPNEQ, new StructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0)));
+				Operator.COMPNEQ, ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false,
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, length,
 						new ArrayStoreExpression(tuLoc,
@@ -1825,8 +1845,8 @@ public class MemoryHandler {
 							mBoogieTypeHelper.getBoogieTypeForPointerType(), ADDR,
 							new DeclarationInformation(StorageClass.LOCAL,
 									MemoryModelDeclarations.Ultimate_Alloc.getName()));
-			final Expression addrOffset = new StructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
-			final Expression addrBase = new StructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
+			final Expression addrOffset = ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_OFFSET);
+			final Expression addrBase = ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
 			// procedure ~malloc(~size:int) returns (#res:pointer) {
 			// var ~addr : pointer;
 			//
@@ -2023,7 +2043,7 @@ public class MemoryHandler {
 		}
 //		stmt.add(call);
 		resultBuilder.addStatement(call);
-		assert CHandler.isAuxVarMapComplete(mNameHandler, resultBuilder);
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
 
 //		ExpressionResult result;
 		if (bitvectorConversionNeeded) {
@@ -2159,7 +2179,7 @@ public class MemoryHandler {
 				}
 
 				final CType fieldType = rStructType.getFieldType(fieldId);
-				final StructAccessExpression sae = new StructAccessExpression(loc, value, fieldId);
+				final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
 				final Expression fieldOffset =
 						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, rStructType, fieldId, hook);
 				final Expression newOffset =
@@ -2252,7 +2272,7 @@ public class MemoryHandler {
 		if (pointer instanceof StructConstructor) {
 			return ((StructConstructor) pointer).getFieldValues()[0];
 		}
-		return new StructAccessExpression(loc, pointer, "base");
+		return ExpressionFactory.constructStructAccessExpression(loc, pointer, "base");
 	}
 
 	/**
@@ -2265,12 +2285,12 @@ public class MemoryHandler {
 		if (pointer instanceof StructConstructor) {
 			return ((StructConstructor) pointer).getFieldValues()[1];
 		}
-		return new StructAccessExpression(loc, pointer, "offset");
+		return ExpressionFactory.constructStructAccessExpression(loc, pointer, "offset");
 	}
 
 	public static StructConstructor constructPointerFromBaseAndOffset(final Expression base, final Expression offset,
 			final ILocation loc) {
-		return new StructConstructor(loc, new String[] { "base", "offset" }, new Expression[] { base, offset });
+		return ExpressionFactory.constructStructConstructor(loc, new String[] { "base", "offset" }, new Expression[] { base, offset });
 	}
 
 	/**
@@ -2380,19 +2400,19 @@ public class MemoryHandler {
 		@Override
 		public ASTType constructBoolReplacementType() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, "bool");
+			return new PrimitiveType(ignoreLoc, BoogieType.TYPE_BOOL, "bool");
 		}
 
 		@Override
 		public Expression constructTrue() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new BooleanLiteral(ignoreLoc, true);
+			return new BooleanLiteral(ignoreLoc, BoogieType.TYPE_BOOL, true);
 		}
 
 		@Override
 		public Expression constructFalse() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new BooleanLiteral(ignoreLoc, false);
+			return new BooleanLiteral(ignoreLoc, BoogieType.TYPE_BOOL, false);
 		}
 
 		@Override
@@ -2407,19 +2427,19 @@ public class MemoryHandler {
 		@Override
 		public ASTType constructBoolReplacementType() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, "int");
+			return new PrimitiveType(ignoreLoc, BoogieType.TYPE_INT, "int");
 		}
 
 		@Override
 		public Expression constructTrue() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new IntegerLiteral(ignoreLoc, "1");
+			return new IntegerLiteral(ignoreLoc, BoogieType.TYPE_INT, "1");
 		}
 
 		@Override
 		public Expression constructFalse() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new IntegerLiteral(ignoreLoc, "0");
+			return new IntegerLiteral(ignoreLoc, BoogieType.TYPE_INT, "0");
 		}
 
 		@Override
@@ -2435,19 +2455,19 @@ public class MemoryHandler {
 		@Override
 		public ASTType constructBoolReplacementType() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, "bv1");
+			return new PrimitiveType(ignoreLoc, BoogieType.createBitvectorType(1), "bv1");
 		}
 
 		@Override
 		public Expression constructTrue() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new BitvecLiteral(ignoreLoc, "1", 1);
+			return new BitvecLiteral(ignoreLoc, BoogieType.createBitvectorType(1), "1", 1);
 		}
 
 		@Override
 		public Expression constructFalse() {
 			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new BitvecLiteral(ignoreLoc, "0", 1);
+			return new BitvecLiteral(ignoreLoc, BoogieType.createBitvectorType(1), "0", 1);
 		}
 
 		@Override
@@ -2570,7 +2590,7 @@ public class MemoryHandler {
 		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.CHAR);
 		final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.CHAR);
 		mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(), dhp.getVariableLHS());
-		final Expression inputPointer = CHandler.convertLHSToExpression(resultPointer);
+		final Expression inputPointer = CTranslationUtil.convertLHSToExpression(resultPointer);
 		final Expression additionalOffsetExpr = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(additionalOffset));
 		final Expression pointer = doPointerArithmetic(IASTBinaryExpression.op_plus, loc, inputPointer,

@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -52,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -88,7 +88,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private final UnsignedTreatment mUnsignedTreatment;
 
 	/**
-	 * Add assume statements that state that values of signed integer types are in range.
+	 * Add assume statements that state that values of signed integer types are in
+	 * range.
 	 */
 	private final boolean mAssumeThatSignedValuesAreInRange;
 
@@ -218,9 +219,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, typeLeft, typeLeft, typeRight);
-		final Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname,
-				new Expression[] { left, right });
+		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
+		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
+		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+				new Expression[] { left, right },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		return func;
 	}
 
@@ -256,8 +259,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private Expression constructUnaryIntExprTilde(final ILocation loc, final Expression expr, final CPrimitive type) {
 		final String funcname = "bitwiseComplement";
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, type);
-		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[] { expr });
+		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
+		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
+		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
@@ -265,7 +270,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (type.getGeneralType() == CPrimitiveCategory.INTTYPE) {
 			return ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
 		} else if (type.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-			// TODO: having boogie deal with negative real literals would be the nice solution..
+			// TODO: having boogie deal with negative real literals would be the nice
+			// solution..
 			return ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"), expr);
 		} else {
 			throw new IllegalArgumentException("Unsupported type for unary minus: " + type);
@@ -302,13 +308,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 				rightExpr = applyWraparound(loc, mTypeSizes, rightType, rightExpr);
 			}
 		}
-		final boolean bothAreIntegerLiterals =
-				leftExpr instanceof IntegerLiteral && rightExpr instanceof IntegerLiteral;
+		final boolean bothAreIntegerLiterals = leftExpr instanceof IntegerLiteral
+				&& rightExpr instanceof IntegerLiteral;
 		BigInteger leftValue = null;
 		BigInteger rightValue = null;
-		// TODO: add checks for UnaryExpression (otherwise we don't catch negative constants, here) --> or remove all
+		// TODO: add checks for UnaryExpression (otherwise we don't catch negative
+		// constants, here) --> or remove all
 		// the cases
-		// (if-then-else conditions are checked for being constant in RCFGBuilder anyway, so this is merely a decision
+		// (if-then-else conditions are checked for being constant in RCFGBuilder
+		// anyway, so this is merely a decision
 		// of readability of Boogie code..)
 		if (leftExpr instanceof IntegerLiteral) {
 			leftValue = new BigInteger(((IntegerLiteral) leftExpr).getValue());
@@ -341,8 +349,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final BinaryExpression.Operator operator;
 		operator = Operator.ARITHDIV;
 		/*
-		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
-		 * translate a / b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
+		 * In C the semantics of integer division is "rounding towards zero". In Boogie
+		 * euclidian division is used. We translate a / b into (a < 0 && a%b != 0) ? (
+		 * (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
 		 */
 		if (bothAreIntegerLiterals) {
 			final String constantResult = leftValue.divide(rightValue).toString();
@@ -393,10 +402,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final BinaryExpression.Operator operator;
 		operator = Operator.ARITHMOD;
 		/*
-		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
-		 * translate a % b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
+		 * In C the semantics of integer division is "rounding towards zero". In Boogie
+		 * euclidian division is used. We translate a % b into (a < 0 && a%b != 0) ? (
+		 * (b < 0) ? (a%b)-b : (a%b)+b) : a%b
 		 */
-		// modulo on bigInteger does not seem to follow the "multiply, add, and get the result back"-rule, together
+		// modulo on bigInteger does not seem to follow the "multiply, add, and get the
+		// result back"-rule, together
 		// with its division..
 		if (bothAreIntegerLiterals) {
 			final String constantResult;
@@ -498,8 +509,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 					oldWrappedIfNeeded = operand.mLrVal.getValue();
 				}
 				if (mUnsignedTreatment == UnsignedTreatment.ASSERT) {
-					final BigInteger maxValuePlusOne =
-							mTypeSizes.getMaxValueOfPrimitiveType(resultType).add(BigInteger.ONE);
+					final BigInteger maxValuePlusOne = mTypeSizes.getMaxValueOfPrimitiveType(resultType)
+							.add(BigInteger.ONE);
 					final AssertStatement assertGeq0 = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
 									oldWrappedIfNeeded, new IntegerLiteral(loc, SFO.NR0)));
@@ -541,12 +552,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 					// If the number is strictly larger than MAX_VALUE we
 					// subtract the cardinality of the data range.
 					final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-					final Expression wrapped =
-							applyWraparound(loc, mTypeSizes, correspondingUnsignedType, oldWrappedIfUnsigned);
+					final Expression wrapped = applyWraparound(loc, mTypeSizes, correspondingUnsignedType,
+							oldWrappedIfUnsigned);
 					final Expression maxValue = constructLiteralForIntegerType(loc, oldType,
 							mTypeSizes.getMaxValueOfPrimitiveType(resultType));
-					final Expression condition =
-							ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
+					final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped,
+							maxValue);
 					final Expression range = constructLiteralForIntegerType(loc, oldType,
 							mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
 					newExpression = ExpressionFactory.newIfThenElseExpression(loc, condition, wrapped,
@@ -603,8 +614,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				baseAdress = constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
 				offsetAdress = intExpression;
 			}
-			final Expression pointerExpression =
-					MemoryHandler.constructPointerFromBaseAndOffset(baseAdress, offsetAdress, loc);
+			final Expression pointerExpression = MemoryHandler.constructPointerFromBaseAndOffset(baseAdress,
+					offsetAdress, loc);
 			final RValue rValue = new RValue(pointerExpression, newType, false, false);
 			rexp.mLrVal = rValue;
 		}
@@ -622,7 +633,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				}
 				return value;
 			} else if (expr instanceof IdentifierExpression) {
-				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
+				// An IdentifierExpression may be an alias for an integer value, this is stored
+				// in the symbol table.
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
 				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCIdForBoogieId(bId);
 				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().findCSymbol(hook, cId);
@@ -657,8 +669,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		if (mAssumeThatSignedValuesAreInRange && cType.getUnderlyingType().isIntegerType()) {
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (!mTypeSizes.isUnsigned(cPrimitive)) {
-				expressionResultBuilder.addStatement(
-						constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
+				expressionResultBuilder
+						.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
 			}
 		}
 	}
@@ -668,15 +680,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 	 */
 	private AssumeStatement constructAssumeInRangeStatement(final TypeSizes typeSizes, final ILocation loc,
 			final Expression expr, final CPrimitive type) {
-		final Expression minValue =
-				constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type));
-		final Expression maxValue =
-				constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
+		final Expression minValue = constructLiteralForIntegerType(loc, type,
+				typeSizes.getMinValueOfPrimitiveType(type));
+		final Expression maxValue = constructLiteralForIntegerType(loc, type,
+				typeSizes.getMaxValueOfPrimitiveType(type));
 
-		final Expression biggerMinInt =
-				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
-		final Expression smallerMaxValue =
-				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, expr, type, maxValue, type);
+		final Expression biggerMinInt = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
+				minValue, type, expr, type);
+		final Expression smallerMaxValue = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
+				expr, type, maxValue, type);
 		final AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc,
 				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
 		return inRange;
@@ -712,11 +724,13 @@ public class IntegerTranslation extends ExpressionTranslation {
 						new Expression[] { new StringLiteral(loc, functionName) });
 				final Attribute[] attributes = new Attribute[] { attribute };
 				final ASTType paramAstType = mTypeHandler.cType2AstType(loc, type1);
-				final ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
+				final ASTType resultAstType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType,
 						paramAstType, paramAstType);
 			}
-			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
+			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+					new Expression[] { exp1, exp2 },
+					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		}
 		BinaryExpression.Operator op;
 		switch (nodeOperator) {
@@ -758,7 +772,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				final ASTType astType = mTypeHandler.cType2AstType(loc, type);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 			}
-			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp });
+			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { exp },
+					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		}
 		return constructUnaryIntExprMinus(loc, exp, type);
 	}
@@ -776,7 +791,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 				final ASTType astType = mTypeHandler.cType2AstType(loc, type1);
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
 			}
-			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
+			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+					new Expression[] { exp1, exp2 },
+					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		}
 		return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
 	}
@@ -817,7 +834,9 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		if (mOverapproximateFloatingPointOperations) {
-			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
+			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+					new Expression[] { exp1, exp2 },
+					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		}
 		return constructEquality(loc, nodeOperator, exp1, exp2);
 	}
@@ -854,7 +873,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	// @Override
-	// protected String declareConversionFunction(final ILocation loc, final CPrimitive oldType, final CPrimitive
+	// protected String declareConversionFunction(final ILocation loc, final
+	// CPrimitive oldType, final CPrimitive
 	// newType) {
 	// return declareConversionFunctionOverApprox(loc, oldType, newType);
 	// }
@@ -901,11 +921,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private void doFloatIntAndIntFloatConversion(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
-		final String prefixedFunctionName =
-				declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(), newType);
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(),
+				newType);
 		final Expression oldExpression = rexp.mLrVal.getValue();
-		final Expression resultExpression =
-				new FunctionApplication(loc, prefixedFunctionName, new Expression[] { oldExpression });
+		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
+				new Expression[] { oldExpression },
+				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.mLrVal = rValue;
 	}
@@ -950,7 +971,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression erazeBits(final ILocation loc, final Expression value, final CPrimitive cType, 
+	public Expression erazeBits(final ILocation loc, final Expression value, final CPrimitive cType,
 			final int remainingWith, final IASTNode hook) {
 		return applyEucledeanModulo(loc, value, BigInteger.valueOf(2).pow(remainingWith));
 	}
