@@ -15,6 +15,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 
 
 parser Parser;
@@ -40,11 +42,11 @@ parser code {:
         if (sym instanceof BoogieSymbol) {
             BoogieSymbol bsym = (BoogieSymbol) sym;
             loc = new BoogieLocation(mFilename, sym.left, sym.right, 
-                    bsym.getLeftColumn(), bsym.getRightColumn(), false);
+                    bsym.getLeftColumn(), bsym.getRightColumn());
             position = mFilename+":"+bsym.getLocation();
         } else  {
             loc = new BoogieLocation(mFilename, sym.left, sym.right, 
-                    Integer.MAX_VALUE, Integer.MAX_VALUE, false);
+                    Integer.MAX_VALUE, Integer.MAX_VALUE);
             position = mFilename + ":EOF";
         }
 		
@@ -62,13 +64,13 @@ action code {:
 		return new BitvecLiteral(location, bitvec.substring(0, bvPos), length);
 	}
 	
-	public ILocation getLocation(Symbol sBegin, Symbol sEnd, boolean isLoop) {
+	public ILocation getLocation(Symbol sBegin, Symbol sEnd) {
 	    int startLine = sBegin.left;
 	    int endLine = sEnd.right;
 	    int startColumn = ((BoogieSymbol) sBegin).getLeftColumn();
 	    int endColumn = ((BoogieSymbol) sBegin).getRightColumn();
 	    return new BoogieLocation(parser.mFilename,
-	                   startLine, endLine, startColumn, endColumn, isLoop);
+	                   startLine, endLine, startColumn, endColumn);
 	}
 	
 	public StructConstructor createStruct(ILocation loc, List<NamedExpression> content) {
@@ -192,7 +194,7 @@ non terminal List<NamedExpression> idsExprCommaPlus;
 
 program ::=
 	declStar:d
-	{: RESULT = new Unit(getLocation(d$,d$,false),d.toArray(new Declaration[d.size()])); :}
+	{: RESULT = new Unit(getLocation(d$,d$),d.toArray(new Declaration[d.size()])); :}
 	;
 
 declStar ::=
@@ -217,20 +219,20 @@ typeDecl ::=
 	TYPE:x attributes:attr ID:name idStar:param EQUALS type:t SEMI
 	  {:/* Set isFinite to true; we do not know whether it is finite */
 	    RESULT = new TypeDeclaration
-	    (getLocation(x$,t$,false), attr, true, name, param.toArray(new String[param.size()]), t); :}
+	    (getLocation(x$,t$), attr, true, name, param.toArray(new String[param.size()]), t); :}
 	| TYPE:x attributes:attr FINITE ID:name idStar:param SEMI
 	  {:RESULT = new TypeDeclaration
-	    (getLocation(x$,param$,false), attr, true, name, param.toArray(new String[param.size()]), null); :}
+	    (getLocation(x$,param$), attr, true, name, param.toArray(new String[param.size()]), null); :}
 	| TYPE:x attributes:attr ID:name idStar:param SEMI
 	  {:RESULT = new TypeDeclaration
-	    (getLocation(x$,param$,false), attr, false, name, param.toArray(new String[param.size()]), null); :}
+	    (getLocation(x$,param$), attr, false, name, param.toArray(new String[param.size()]), null); :}
 	;
 	
 /* constant decl */
 
 constantDecl ::=
 	CONST:x attributes:attr uniqueOpt:u idsType:vl parentInfoOpt:p completeOpt:c SEMI
-	  {:RESULT = new ConstDeclaration(getLocation(x$,c$,false), attr, u, vl, p, c); :}
+	  {:RESULT = new ConstDeclaration(getLocation(x$,c$), attr, u, vl, p, c); :}
     ;
 uniqueOpt ::=
       /* EMPTY */ {: RESULT = false; :}
@@ -256,13 +258,13 @@ parentEdgeCommaPlus ::=
 		{: RESULT = pel; RESULT.add(p); :}
 	;
 parentEdge ::=
-	  uniqueOpt:u ID:i {: RESULT = new ParentEdge(getLocation(u$,i$,false), u, i); :}
+	  uniqueOpt:u ID:i {: RESULT = new ParentEdge(getLocation(u$,i$), u, i); :}
 	;
 
 /* axiom decl */
 axiomDecl ::=
 	AXIOM:x attributeStar:attr expr:e SEMI
-	{: RESULT = new Axiom(getLocation(x$,e$,false), attr.toArray(new NamedAttribute[attr.size()]), e); :}
+	{: RESULT = new Axiom(getLocation(x$,e$), attr.toArray(new NamedAttribute[attr.size()]), e); :}
 	;
 	
 /* function decl */
@@ -271,7 +273,7 @@ functionDecl ::=
 		typeArgsOpt:ta LPAR fargCommaStar:p RPAR returnSpec:r
 		fbodyOpt:b
 	  {: RESULT = new FunctionDeclaration
-		(getLocation(x$,b$,false), attr, i, ta, p.toArray(new VarList[p.size()]), r, b); :}
+		(getLocation(x$,b$), attr, i, ta, p.toArray(new VarList[p.size()]), r, b); :}
 	;
 fbodyOpt ::=
 	SEMI {: RESULT = null; :}
@@ -289,19 +291,19 @@ returnSpec ::=
 	RETURNS LPAR farg:r RPAR
 	  {: RESULT = r; :}
 	| COLON type:t 
-	  {: RESULT = new VarList(getLocation(t$,t$,false), new String[0], t, null); :}
+	  {: RESULT = new VarList(getLocation(t$,t$), new String[0], t, null); :}
 	;  
 farg ::=
 	ID:i COLON type:t
-	  {: RESULT = new VarList(getLocation(i$,t$,false), new String[] { i }, t, null); :}
+	  {: RESULT = new VarList(getLocation(i$,t$), new String[] { i }, t, null); :}
 	| type:t
-	  {: RESULT = new VarList(getLocation(t$,t$,false), new String[0], t, null); :}
+	  {: RESULT = new VarList(getLocation(t$,t$), new String[0], t, null); :}
 	;  
 
 /* var decl */
 varDecl ::=
     VAR:x attributes:attr idsTypeWhereCommaPlus:vlist SEMI
-    {: RESULT = new VariableDeclaration(getLocation(x$,vlist$,false), attr, vlist.toArray(new VarList[vlist.size()])); :}
+    {: RESULT = new VariableDeclaration(getLocation(x$,vlist$), attr, vlist.toArray(new VarList[vlist.size()])); :}
     ;
 
 /* procedure and implementation decl */
@@ -310,17 +312,17 @@ procedureDecl ::=
 	  PROCEDURE:x attributes:attr ID:i 
 	    typeArgsOpt:ta LPAR idsTypeWhereCommaStar:param RPAR poutparmOpt:outp
 	    SEMI specStar:s
-	  {: RESULT = new Procedure(getLocation(x$,s$,false), attr, i, ta, param.toArray(new VarList[param.size()]), outp.toArray(new VarList[outp.size()]), s.toArray(new Specification[s.size()]), null); :}
+	  {: RESULT = new Procedure(getLocation(x$,s$), attr, i, ta, param.toArray(new VarList[param.size()]), outp.toArray(new VarList[outp.size()]), s.toArray(new Specification[s.size()]), null); :}
 	| PROCEDURE:x attributes:attr ID:i 
 	    typeArgsOpt:ta LPAR idsTypeWhereCommaStar:param RPAR poutparmOpt:outp
 	    specStar:s body:b
-	  {: RESULT = new Procedure(getLocation(x$,b$,false), attr, i, ta, param.toArray(new VarList[param.size()]), outp.toArray(new VarList[outp.size()]), s.toArray(new Specification[s.size()]), b); :}
+	  {: RESULT = new Procedure(getLocation(x$,b$), attr, i, ta, param.toArray(new VarList[param.size()]), outp.toArray(new VarList[outp.size()]), s.toArray(new Specification[s.size()]), b); :}
 	;
 implementationDecl ::=
 	  IMPLEMENTATION:x attributes:attr ID:i
 	    typeArgsOpt:ta LPAR idsTypeCommaStar:param RPAR ioutparmOpt:out
 	    body:b
-	  {: RESULT = new Procedure(getLocation(x$,b$,false), attr, i, ta, param.toArray(new VarList[param.size()]), out.toArray(new VarList[out.size()]), null, b); :}
+	  {: RESULT = new Procedure(getLocation(x$,b$), attr, i, ta, param.toArray(new VarList[param.size()]), out.toArray(new VarList[out.size()]), null, b); :}
 	;
 
 poutparmOpt ::=
@@ -339,11 +341,11 @@ specStar ::=
 	; 
 spec ::=
 	  freeOpt:free REQUIRES expr:e SEMI:semi
-	  {: RESULT = new RequiresSpecification(getLocation(free$,semi$,false), free, e); Check check = new Check(Spec.PRE_CONDITION); check.annotate(RESULT); :}
+	  {: RESULT = new RequiresSpecification(getLocation(free$,semi$), free, e); Check check = new Check(Spec.PRE_CONDITION); check.annotate(RESULT); :}
 	| freeOpt:free ENSURES expr:e SEMI:semi
-	  {: RESULT = new EnsuresSpecification(getLocation(free$,semi$,false), free, e); Check check = new Check(Spec.POST_CONDITION); check.annotate(RESULT); :}
+	  {: RESULT = new EnsuresSpecification(getLocation(free$,semi$), free, e); Check check = new Check(Spec.POST_CONDITION); check.annotate(RESULT); :}
 	| freeOpt:free MODIFIES varCommaStar:l SEMI:semi
-	  {: RESULT = new ModifiesSpecification(getLocation(free$,semi$,false), free, l.toArray(new VariableLHS[l.size()])); :}
+	  {: RESULT = new ModifiesSpecification(getLocation(free$,semi$), free, l.toArray(new VariableLHS[l.size()])); :}
 	;
 freeOpt ::=
 	  /* empty */ {: RESULT = false; :}
@@ -365,7 +367,7 @@ attrtriggers ::=
 	;
 attribute ::=
 	LBRC COLON ID:name attrArgCommaStar:attr RBRC
-	  {: RESULT = new NamedAttribute(getLocation(name$,attr$,false), name, attr.toArray(new Expression[attr.size()])); :}
+	  {: RESULT = new NamedAttribute(getLocation(name$,attr$), name, attr.toArray(new Expression[attr.size()])); :}
 	;
 attrArgCommaStar ::=
 	/* empty */ {: RESULT = Collections.emptyList(); :}
@@ -378,12 +380,12 @@ attrArgCommaPlus ::=
 	
 attrArg ::=
 	expr:e
-	| ATTR_STRING:s {: RESULT = new StringLiteral(getLocation(s$,s$,false), s); :}
+	| ATTR_STRING:s {: RESULT = new StringLiteral(getLocation(s$,s$), s); :}
 	;
 
 trigger ::= 
 	LBRC exprCommaPlus:el RBRC
-	  {: RESULT = new Trigger(getLocation(el$,el$,false), el.toArray(new Expression[el.size()])); :}
+	  {: RESULT = new Trigger(getLocation(el$,el$), el.toArray(new Expression[el.size()])); :}
 	;
 
 /* types */
@@ -397,21 +399,21 @@ type ::=
     | mapType:t
     | structType:t
 	| ID:i typeCtorArgsOpt:args
-	  {:RESULT = new NamedType(getLocation(i$,args$,false), i, args.toArray(new ASTType[args.size()])); :}
+	  {:RESULT = new NamedType(getLocation(i$,args$), i, args.toArray(new ASTType[args.size()])); :}
 	;
 typeAtom ::= 
 	BOOL {: RESULT = new PrimitiveType(null, "bool"); :}
 	| INT {: RESULT = new PrimitiveType(null, "int"); :}
 	| REAL {: RESULT = new PrimitiveType(null, "real"); :}
-	| BVTYPE:bv  {: RESULT = new PrimitiveType(getLocation(bv$,bv$,false), bv); :}
+	| BVTYPE:bv  {: RESULT = new PrimitiveType(getLocation(bv$,bv$), bv); :}
 	| LPAR type:t RPAR {: RESULT = t; :};
 mapType ::=
 	typeArgsOpt:ta LBKT typeCommaList:tL RBKT type:t
-	  {: RESULT = new ArrayType(getLocation(ta$,t$,false), ta, tL.toArray(new ASTType[tL.size()]), t); :}
+	  {: RESULT = new ArrayType(getLocation(ta$,t$), ta, tL.toArray(new ASTType[tL.size()]), t); :}
 	;
 structType ::=
     LBRC idsTypeCommaPlus:vlist RBRC
-      {: RESULT = new StructType(getLocation(vlist$,vlist$,false), vlist.toArray(new VarList[vlist.size()])); :}
+      {: RESULT = new StructType(getLocation(vlist$,vlist$), vlist.toArray(new VarList[vlist.size()])); :}
     ;
 typeArgsOpt ::=
 	  /*empty*/
@@ -425,7 +427,7 @@ typeCtorArgsOpt ::=
 	  /* empty */ {:RESULT = new ArrayList<ASTType>(); :}
 	| typeAtom:ta typeCtorArgsOpt:tl {:  tl.add(0, ta); RESULT = tl; :}
 	| ID:i typeCtorArgsOpt:tl
-	  {: tl.add(0, new NamedType(getLocation(i$,tl$,false), i, new ASTType[0])); RESULT = tl; :}
+	  {: tl.add(0, new NamedType(getLocation(i$,tl$), i, new ASTType[0])); RESULT = tl; :}
 	| mapType:t
 	  {: RESULT = new ArrayList<ASTType>(); RESULT.add(t); :}
 	; 
@@ -445,111 +447,111 @@ exprCommaPlus ::=
 	;
 
 expr  ::= expr1NI:e1 IFF expr:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIFF, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIFF, e1, e2);:}
         | expr1:e
         ;
 expr1 ::= expr2NI:e1 IMPLIES exprImplies:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
         | exprExpliesNI:e1 EXPLIES expr2:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e2, e1);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e2, e1);:}
         | expr2:e
         ;
 exprImplies ::= expr2NI:e1 IMPLIES exprImplies:e2
-            {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+            {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
           | expr2:e
           ;
 expr2 ::= expr3NI:e1 AND exprAnd:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICAND, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2);:}
         | expr3NI:e1 OR  exprOr:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICOR, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2);:}
         | expr3:e
         ;
 exprAnd ::= expr3NI:e1 AND exprAnd:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICAND, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2);:}
           | expr3:e
           ;
 exprOr ::= expr3NI:e1 OR exprOr:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICOR, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2);:}
           | expr3:e
           ;
 expr3 ::= expr4NI:e1 LESS expr4:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPLT, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPLT, e1, e2);:}
         | expr4NI:e1 GREATER expr4:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPGT, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPGT, e1, e2);:}
         | expr4NI:e1 LTEQ expr4:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPLEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPLEQ, e1, e2);:}
         | expr4NI:e1 GTEQ expr4:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPGEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPGEQ, e1, e2);:}
         | expr4NI:e1 EQ expr4:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPEQ, e1, e2);:}
         | expr4NI:e1 NEQ expr4:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPNEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPNEQ, e1, e2);:}
         | expr4NI:e1 PARTORDER expr4:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPPO, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPPO, e1, e2);:}
         | expr4:e
         ;
 expr4 ::= expr4NI:e1 CONCAT expr5:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.BITVECCONCAT, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.BITVECCONCAT, e1, e2);:}
         | expr5:e
         ;
 expr5 ::= expr5NI:e1 PLUS expr6:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
         | expr5NI:e1 MINUS expr6:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
         | expr6:e
         ;
         
 expr6 ::= expr6NI:e1 TIMES expr7:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMUL, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMUL, e1, e2);:}
         | expr6NI:e1 DIVIDE expr7:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHDIV, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHDIV, e1, e2);:}
         | expr6NI:e1 MOD expr7:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMOD, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMOD, e1, e2);:}
         | expr7:e
         ;
 expr7 ::= NOT   expr7:e
-           {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.LOGICNEG, e);:}
+           {:RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.LOGICNEG, e);:}
         | MINUS expr7:e
-           {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.ARITHNEGATIVE, e);:}
+           {:RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.ARITHNEGATIVE, e);:}
         | expr8:e
         ;
 expr8 ::= expr8NI:e1 LBKT exprCommaPlus:e2 RBKT
           {:RESULT = new ArrayAccessExpression
-		(getLocation(e1$,e2$,false), e1, e2.toArray(new Expression[e2.size()])); :}
+		(getLocation(e1$,e2$), e1, e2.toArray(new Expression[e2.size()])); :}
         | expr8NI:e1 LBKT exprCommaPlus:e2 COLONEQUALS expr:e RBKT
           {:RESULT = new ArrayStoreExpression
-		(getLocation(e1$,e$,false), e1, e2.toArray(new Expression[e2.size()]), e); :}
+		(getLocation(e1$,e$), e1, e2.toArray(new Expression[e2.size()]), e); :}
         | expr8NI:e1 NOT ID:i
           {:RESULT = new StructAccessExpression
-        (getLocation(e1$,i$,false), e1, i); :}
+        (getLocation(e1$,i$), e1, i); :}
         | expr8NI:e1 LBKT NUMBER:e2 COLON NUMBER:e3 RBKT
           {:RESULT = new BitVectorAccessExpression
-		(getLocation(e1$,e3$,false), e1, Integer.parseInt(e2), Integer.parseInt(e3)); :}
+		(getLocation(e1$,e3$), e1, Integer.parseInt(e2), Integer.parseInt(e3)); :}
         | expr9:e
         ;
 expr9 ::= 
 	  FALSE:x
-	  {: RESULT = new BooleanLiteral(getLocation(x$,x$,false), false); :}
+	  {: RESULT = new BooleanLiteral(getLocation(x$,x$), false); :}
 	| TRUE:x
-	  {: RESULT = new BooleanLiteral(getLocation(x$,x$,false), true); :}
+	  {: RESULT = new BooleanLiteral(getLocation(x$,x$), true); :}
 	| NUMBER:n
-	  {: RESULT = new IntegerLiteral(getLocation(n$,n$,false), n); :}
+	  {: RESULT = new IntegerLiteral(getLocation(n$,n$), n); :}
 	| REALNUMBER:n
-	  {: RESULT = new RealLiteral(getLocation(n$,n$,false), n); :}
+	  {: RESULT = new RealLiteral(getLocation(n$,n$), n); :}
 	| BITVECTOR:bv
-	  {: RESULT = parseBitvec(getLocation(bv$,bv$,false), bv); :}
+	  {: RESULT = parseBitvec(getLocation(bv$,bv$), bv); :}
 	| ID:i
-	  {: RESULT = new IdentifierExpression(getLocation(i$,i$,false), i); :}
+	  {: RESULT = new IdentifierExpression(getLocation(i$,i$), i); :}
 	| ID:i LPAR exprCommaStar:args RPAR
-	  {: RESULT = new FunctionApplication(getLocation(i$,args$,false), i, args.toArray(new Expression[args.size()])); :}
+	  {: RESULT = new FunctionApplication(getLocation(i$,args$), i, args.toArray(new Expression[args.size()])); :}
 	| OLD LPAR expr:e RPAR
-	  {: RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.OLD, e); :}
+	  {: RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.OLD, e); :}
 	| LPAR quant:q typeArgsOpt:ta idsTypeCommaPlus:vars QSEP attrtriggers:a expr:e RPAR
-	  {: RESULT = new QuantifierExpression(getLocation(q$,e$,false), q, ta, vars.toArray(new VarList[vars.size()]), a.toArray(new Attribute[a.size()]), e); :}
+	  {: RESULT = new QuantifierExpression(getLocation(q$,e$), q, ta, vars.toArray(new VarList[vars.size()]), a.toArray(new Attribute[a.size()]), e); :}
 	| IF expr:c THEN expr:t ELSE expr:e 
-	  {: RESULT = new IfThenElseExpression(getLocation(c$,e$,false), c, t, e); :}
+	  {: RESULT = new IfThenElseExpression(getLocation(c$,e$), c, t, e); :}
 	| LBRC:l idsExprCommaPlus:f RBRC:r
-	  {: RESULT = createStruct(getLocation(l$,r$,false), f); :}
+	  {: RESULT = createStruct(getLocation(l$,r$), f); :}
 	| LPAR expr:e RPAR
 	  {:RESULT = e;:}
 	;
@@ -557,91 +559,91 @@ expr9 ::=
 /* expressions  without if-then-else*/
 
 expr1NI ::= expr2NI:e1 IMPLIES exprImpliesNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
         | exprExpliesNI:e1 EXPLIES expr2NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e2, e1);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e2, e1);:}
         | expr2NI:e {:RESULT = e;:}
         ;
 exprImpliesNI ::= expr2NI:e1 IMPLIES exprImpliesNI:e2
-            {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+            {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
           | expr2NI:e
             {:RESULT = e;:}
           ;
 exprExpliesNI ::= exprExpliesNI:e1 EXPLIES expr2NI:e2
-            {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e2, e1);:}
+            {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e2, e1);:}
           | expr2NI:e
             {:RESULT = e;:}
           ;
 expr2NI ::= expr3NI:e1 AND exprAndNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICAND, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2);:}
         | expr3NI:e1 OR  exprOrNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICOR, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2);:}
         | expr3NI:e
           {:RESULT = e;:}
         ;
 exprAndNI ::= expr3NI:e1 AND exprAndNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICAND, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2);:}
           | expr3NI:e
             {:RESULT = e;:}
           ;
 exprOrNI ::= expr3NI:e1 OR exprOrNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICOR, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2);:}
           | expr3NI:e
             {:RESULT = e;:}
           ;
 expr3NI ::= expr4NI:e1 LESS expr4NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPLT, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPLT, e1, e2);:}
         | expr4NI:e1 GREATER expr4NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPGT, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPGT, e1, e2);:}
         | expr4NI:e1 LTEQ expr4NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPLEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPLEQ, e1, e2);:}
         | expr4NI:e1 GTEQ expr4NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPGEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPGEQ, e1, e2);:}
         | expr4NI:e1 EQ expr4NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPEQ, e1, e2);:}
         | expr4NI:e1 NEQ expr4NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPNEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPNEQ, e1, e2);:}
         | expr4NI:e1 PARTORDER expr4NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPPO, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPPO, e1, e2);:}
         | expr4NI:e {:RESULT = e;:}
         ;
 expr4NI ::= expr4NI:e1 CONCAT expr5NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.BITVECCONCAT, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.BITVECCONCAT, e1, e2);:}
         | expr5NI:e {:RESULT = e;:}
         ;
 expr5NI ::= expr5NI:e1 PLUS expr6NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
         | expr5NI:e1 MINUS expr6NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
         | expr6NI:e {:RESULT = e;:}
         ;
         
 expr6NI ::= expr6NI:e1 TIMES expr7NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMUL, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMUL, e1, e2);:}
         | expr6NI:e1 DIVIDE expr7NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHDIV, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHDIV, e1, e2);:}
         | expr6NI:e1 MOD expr7NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMOD, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMOD, e1, e2);:}
         | expr7NI:e {:RESULT = e;:}
         ;
 expr7NI ::= NOT   expr7NI:e
-           {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.LOGICNEG, e);:}
+           {:RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.LOGICNEG, e);:}
         | MINUS expr7NI:e
-           {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.ARITHNEGATIVE, e);:}
+           {:RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.ARITHNEGATIVE, e);:}
         | expr8NI:e {:RESULT = e;:}
         ;
 expr8NI ::= expr8NI:e1 LBKT exprCommaPlus:e2 RBKT
           {:RESULT = new ArrayAccessExpression
-		(getLocation(e1$,e2$,false), e1, e2.toArray(new Expression[e2.size()])); :}
+		(getLocation(e1$,e2$), e1, e2.toArray(new Expression[e2.size()])); :}
         | expr8NI:e1 LBKT exprCommaPlus:e2 COLONEQUALS expr:e RBKT
           {:RESULT = new ArrayStoreExpression
-		(getLocation(e1$,e$,false), e1, e2.toArray(new Expression[e2.size()]), e); :}
+		(getLocation(e1$,e$), e1, e2.toArray(new Expression[e2.size()]), e); :}
         | expr8NI:e1 LBKT NUMBER:e2 COLON NUMBER:e3 RBKT
           {:RESULT = new BitVectorAccessExpression
-		(getLocation(e1$,e3$,false), e1, Integer.parseInt(e2), Integer.parseInt(e3)); :}
+		(getLocation(e1$,e3$), e1, Integer.parseInt(e2), Integer.parseInt(e3)); :}
         | expr8NI:e1 NOT ID:i
           {:RESULT = new StructAccessExpression
-        (getLocation(e1$,i$,false), e1, i); :}
+        (getLocation(e1$,i$), e1, i); :}
         | expr9NI:e
           {:RESULT = e;:}
         ;
@@ -651,21 +653,21 @@ expr9NI ::=
 	| TRUE
 	  {: RESULT = new BooleanLiteral(null, true); :}
 	| NUMBER:n
-	  {: RESULT = new IntegerLiteral(getLocation(n$,n$,false), n); :}
+	  {: RESULT = new IntegerLiteral(getLocation(n$,n$), n); :}
 	| REALNUMBER:n
-	  {: RESULT = new RealLiteral(getLocation(n$,n$,false), n); :}
+	  {: RESULT = new RealLiteral(getLocation(n$,n$), n); :}
 	| BITVECTOR:bv
-	  {: RESULT = parseBitvec(getLocation(bv$,bv$,false), bv); :}
+	  {: RESULT = parseBitvec(getLocation(bv$,bv$), bv); :}
 	| ID:i
-	  {: RESULT = new IdentifierExpression(getLocation(i$,i$,false), i); :}
+	  {: RESULT = new IdentifierExpression(getLocation(i$,i$), i); :}
 	| ID:i LPAR exprCommaStar:args RPAR
-	  {: RESULT = new FunctionApplication(getLocation(i$,args$,false), i, args.toArray(new Expression[args.size()])); :}
+	  {: RESULT = new FunctionApplication(getLocation(i$,args$), i, args.toArray(new Expression[args.size()])); :}
 	| OLD LPAR expr:e RPAR
-	  {: RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.OLD, e); :}
+	  {: RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.OLD, e); :}
 	| LPAR quant:q typeArgsOpt:ta idsTypeCommaPlus:vars QSEP attrtriggers:a expr:e RPAR
-	  {: RESULT = new QuantifierExpression(getLocation(q$,e$,false), q, ta, vars.toArray(new VarList[vars.size()]), a.toArray(new Attribute[a.size()]), e); :}
+	  {: RESULT = new QuantifierExpression(getLocation(q$,e$), q, ta, vars.toArray(new VarList[vars.size()]), a.toArray(new Attribute[a.size()]), e); :}
 	| LBRC:l idsExprCommaPlus:f RBRC:r
-	  {: RESULT = createStruct(getLocation(l$,r$,false), f); :}
+	  {: RESULT = createStruct(getLocation(l$,r$), f); :}
 	| LPAR expr:e RPAR
 	  {:RESULT = e;:}
 	;
@@ -676,7 +678,7 @@ quant ::=
 
 /* implementation body */
 body ::= LBRC localVarDeclStar:lv stmtList:s RBRC
-	  {: RESULT = new Body(getLocation(lv$,s$,false), lv.toArray(new VariableDeclaration[lv.size()]),
+	  {: RESULT = new Body(getLocation(lv$,s$), lv.toArray(new VariableDeclaration[lv.size()]),
 			 s.toArray(new Statement[s.size()])); :}
 	;
 localVarDeclStar ::=
@@ -685,7 +687,7 @@ localVarDeclStar ::=
 	;
 localVarDecl ::=
 	  VAR:x attributes:attr idsTypeWhereCommaPlus:i SEMI
-	  {: RESULT = new VariableDeclaration(getLocation(x$,i$,false), attr, i.toArray(new VarList[i.size()])); :}
+	  {: RESULT = new VariableDeclaration(getLocation(x$,i$), attr, i.toArray(new VarList[i.size()])); :}
 	;
 stmtList ::=
 	  /* empty */ {: RESULT = new ArrayList<Statement>(); :}
@@ -694,42 +696,45 @@ stmtList ::=
 	;
 stmt ::=
 	  ID:i COLON
-	  {: RESULT = new Label(getLocation(i$,i$,false), i); :}
+	  {: RESULT = new Label(getLocation(i$,i$), i); :}
 	| ASSERT:x attributes:attr expr:e SEMI
-	  {: RESULT = new AssertStatement(getLocation(x$,e$,false), attr, e); Check check = new Check(Spec.ASSERT); check.annotate(RESULT); :}
+	  {: RESULT = new AssertStatement(getLocation(x$,e$), attr, e); Check check = new Check(Spec.ASSERT); check.annotate(RESULT); :}
 	| ASSUME:x attributes:attr expr:e SEMI
-	  {: RESULT = new AssumeStatement(getLocation(x$,e$,false), attr, e); :}
+	  {: RESULT = new AssumeStatement(getLocation(x$,e$), attr, e); :}
 	| HAVOC:x varCommaPlus:i SEMI
-	  {: RESULT = new HavocStatement(getLocation(x$,i$,false), i.toArray(new VariableLHS[i.size()])); :}
+	  {: RESULT = new HavocStatement(getLocation(x$,i$), i.toArray(new VariableLHS[i.size()])); :}
 	| lhsCommaPlus:lhs COLONEQUALS exprCommaPlus:rhs SEMI
 	  {: RESULT = new AssignmentStatement
-		(getLocation(lhs$,rhs$,false), lhs.toArray(new LeftHandSide[lhs.size()]), rhs.toArray(new Expression[rhs.size()])); :}
+		(getLocation(lhs$,rhs$), lhs.toArray(new LeftHandSide[lhs.size()]), rhs.toArray(new Expression[rhs.size()])); :}
 	| ifStmt:s
 	| WHILE:x LPAR wildcardExpr:c RPAR loopInvStar:inv blockStmt:block
-	  {: RESULT = new WhileStatement(getLocation(x$,block$,true), c, inv.toArray(new LoopInvariantSpecification[inv.size()]), block); :}
+	  {: 
+	  	RESULT = new WhileStatement(getLocation(x$,block$), c, inv.toArray(new LoopInvariantSpecification[inv.size()]), block);
+	  	new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(RESULT);  
+	  :}
 	| BREAK:x SEMI
-	  {: RESULT = new BreakStatement(getLocation(x$,x$,false)); :}
+	  {: RESULT = new BreakStatement(getLocation(x$,x$)); :}
 	| BREAK:x ID:label SEMI
-	  {: RESULT = new BreakStatement(getLocation(x$,label$,false), label); :}
+	  {: RESULT = new BreakStatement(getLocation(x$,label$), label); :}
 	| RETURN:x SEMI
-	  {: RESULT = new ReturnStatement(getLocation(x$,x$,false)); :}
+	  {: RESULT = new ReturnStatement(getLocation(x$,x$)); :}
 	| GOTO:x idCommaPlus:l SEMI
-	  {: RESULT = new GotoStatement(getLocation(x$,l$,false), l.toArray(new String[l.size()])); :}
+	  {: RESULT = new GotoStatement(getLocation(x$,l$), l.toArray(new String[l.size()])); :}
 	| ASYNC callStmt:s 
 	  {: RESULT = s; :}
 	| callStmt:s
 	;
 callStmt ::= 
       CALL:x ID:m LPAR:y exprCommaStar:e RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,e$,false), false, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
+	  {: RESULT = new CallStatement(getLocation(x$,e$), false, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
 	| CALL:x varCommaPlus:ass COLONEQUALS ID:m LPAR exprCommaStar:p RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,p$,false), false, ass.toArray(new VariableLHS[ass.size()]), m, p.toArray(new Expression[p.size()])); :}
+	  {: RESULT = new CallStatement(getLocation(x$,p$), false, ass.toArray(new VariableLHS[ass.size()]), m, p.toArray(new Expression[p.size()])); :}
 	| CALL:x FORALL:z ID:m LPAR wildcardExprCommaStar:e RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,e$,false), true, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
+	  {: RESULT = new CallStatement(getLocation(x$,e$), true, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
 	;  
 ifStmt ::=
 	  IF:x LPAR wildcardExpr:c RPAR blockStmt:block elseOpt:e
-	  {: RESULT = new IfStatement(getLocation(x$,e$,false), c, block, e); :}
+	  {: RESULT = new IfStatement(getLocation(x$,e$), c, block, e); :}
 	;
 elseOpt ::=
 	  /* empty */ {: RESULT = new Statement[0]; :}
@@ -746,7 +751,7 @@ loopInvStar ::=
 	;
 loopInv ::=
 	  freeOpt:free INVARIANT:x expr:e SEMI
-	  {: RESULT = new LoopInvariantSpecification(getLocation(x$,e$,false), free, e); Check check = new Check(Spec.INVARIANT); check.annotate(RESULT); :}
+	  {: RESULT = new LoopInvariantSpecification(getLocation(x$,e$), free, e); Check check = new Check(Spec.INVARIANT); check.annotate(RESULT); :}
 	;
 	
 lhsCommaPlus ::=
@@ -757,11 +762,11 @@ lhsCommaPlus ::=
 	;
 lhs ::=
 	  ID:i
-	  {: RESULT = new VariableLHS(getLocation(i$,i$,false), i); :}
+	  {: RESULT = new VariableLHS(getLocation(i$,i$), i); :}
     | lhs:l LBKT exprCommaPlus:e RBKT
-      {: RESULT = new ArrayLHS(getLocation(l$,e$,false), l, e.toArray(new Expression[e.size()])); :}
+      {: RESULT = new ArrayLHS(getLocation(l$,e$), l, e.toArray(new Expression[e.size()])); :}
     | lhs:l NOT ID:i
-      {: RESULT = new StructLHS(getLocation(l$,i$,false), l, i); :}
+      {: RESULT = new StructLHS(getLocation(l$,i$), l, i); :}
 	;
 wildcardExprCommaStar ::=
 	/* empty */ {: RESULT = Collections.emptyList(); :}
@@ -803,7 +808,7 @@ varCommaPlus ::=
 	  {: il.add(i); RESULT = il; :} 
     ;
 var ::= ID:i
-        {: RESULT = new VariableLHS(getLocation(i$, i$, false), i); :}
+        {: RESULT = new VariableLHS(getLocation(i$, i$), i); :}
     ;
 
 idsTypeCommaStar ::=
@@ -817,7 +822,7 @@ idsTypeCommaPlus ::=
       {: RESULT = il; RESULT.add(i); :}
     ;
 idsType ::= idCommaPlus:i COLON type:t
-	  {: RESULT = new VarList(getLocation(i$,t$,false), i.toArray(new String[i.size()]),t); :}
+	  {: RESULT = new VarList(getLocation(i$,t$), i.toArray(new String[i.size()]),t); :}
 	;
 
 idsTypeWhereCommaStar ::=
@@ -831,7 +836,7 @@ idsTypeWhereCommaPlus ::=
       {: RESULT = il; RESULT.add(i); :}
     ;
 idsTypeWhere ::= idCommaPlus:i COLON type:t whereClauseOpt:w
-	  {: RESULT = new VarList(getLocation(i$,w$,false), i.toArray(new String[i.size()]), t, w); :}
+	  {: RESULT = new VarList(getLocation(i$,w$), i.toArray(new String[i.size()]), t, w); :}
 	;
 whereClauseOpt ::=
 	  /* empty */ {: RESULT = null; :}
