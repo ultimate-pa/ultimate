@@ -116,7 +116,7 @@ public class BoogieTypeHelper {
 		} else if (cType instanceof CPointer) {
 			return getBoogieTypeForPointerType();
 		} else if (cType instanceof CEnum) {
-			throw new AssertionError("implement if needed");
+			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
 		} else if (cType instanceof CArray) {
 
 			// may have to change this from int to something depending on bitvector settings and stuff..

@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.H
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes.FloatingPointSize;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
@@ -540,6 +541,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					return value;
 				}
 				return value;
+			} else if (expr instanceof IdentifierExpression) {
+				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
+				final String bId = ((IdentifierExpression) expr).getIdentifier();
+				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCID4BoogieID(bId, expr.getLoc());
+				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().get(cId, expr.getLoc());
+				if (stv.hasConstantValue()) {
+					return extractIntegerValue(stv.getConstantValue(), cType);
+				}
 			}
 			return null;
 		}

@@ -631,8 +631,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				}
 				return value;
 			} else if (expr instanceof IdentifierExpression) {
-				// An IdentifierExpression may be an alias for an integer value, this is stored
-				// in the symbol table.
+				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
 				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCID4BoogieID(bId, expr.getLoc());
 				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().get(cId, expr.getLoc());
@@ -665,7 +664,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
 			final ExpressionResultBuilder expressionResultBuilder) {
 		if (mAssumeThatSignedValuesAreInRange && cType.getUnderlyingType().isIntegerType()) {
-			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
+			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
 			if (!mTypeSizes.isUnsigned(cPrimitive)) {
 				expressionResultBuilder
 						.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
