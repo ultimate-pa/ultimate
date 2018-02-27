@@ -1629,6 +1629,8 @@ public class CHandler implements ICHandler {
 				result.addChild((InitializerResult) r);
 			} else if (r instanceof ExpressionResult) {
 				ExpressionResult rex = (ExpressionResult) r;
+				// TODO: (alex, feb 2018) quite unsure about always doing this array to pointer conversion..
+				rex = rex.decayArrayToPointerIfNecessary(main, loc);
 				rex = rex.switchToRValueIfNecessary(main, loc);
 				result.addChild(new InitializerResultBuilder().setRootExpressionResult(rex).build());
 
