@@ -365,27 +365,43 @@ public class FunctionHandler {
 //		addModifiedGlobalEntry(procName);
 //		addCallGraphNode(procName);
 
-		/*
-		 * The structure is as follows:
-		 *  <li> Preprocessing of the method body: - add new variables for parameters - havoc them - etc. (1)
-		 *  <li> dispatch body (2)
-		 *  <li> handle mallocs (3)
-		 *  <li> add statements and declarations to new body (4)
-		 */
-		ArrayList<Statement> stmts = new ArrayList<>();
-		final ArrayList<Declaration> decls = new ArrayList<>();
-		// 1)
-		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
-		// 2)
-		final ExpressionResult bodyResult = (ExpressionResult) main.dispatch(node.getBody());
-		decls.addAll(bodyResult.mDecl);
-		stmts.addAll(bodyResult.mStmt);
+		Body body;
+		{
+			/*
+			 * The structure is as follows:
+			 *  <li> Preprocessing of the method body: - add new variables for parameters - havoc them - etc. (1)
+			 *  <li> dispatch body (2)
+			 *  <li> handle mallocs (3)
+			 *  <li> add statements and declarations to new body (4)
+			 */
+			//		ArrayList<Statement> stmts = new ArrayList<>();
+			//		final ArrayList<Declaration> decls = new ArrayList<>();
+			final ExpressionResultBuilder bodyResultBuilder = new ExpressionResultBuilder();
 
-		// 3) ,4)
-		stmts = ((CHandler) main.mCHandler).updateStmtsAndDeclsAtScopeEnd(main, decls, stmts, node);
+			// 1)
+			//		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
+			handleFunctionsInParams(main, loc, memoryHandler, bodyResultBuilder, node);
+			// 2)
+			final ExpressionResult bodyResult = (ExpressionResult) main.dispatch(node.getBody());
+			//		decls.addAll(bodyResult.mDecl);
+			//		stmts.addAll(bodyResult.mStmt);
+			bodyResultBuilder.addAllExceptLrValue(bodyResult);
 
-		final Body body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]),
-				stmts.toArray(new Statement[stmts.size()]));
+			// 3) ,4)
+			//		stmts = ((CHandler) main.mCHandler).updateStmtsAndDeclsAtScopeEnd(main, decls, stmts);
+			((CHandler) main.mCHandler).updateStmtsAndDeclsAtScopeEnd(main, bodyResultBuilder, node);
+
+			assert bodyResultBuilder.getAuxVars().isEmpty();
+			assert bodyResultBuilder.getOverappr().isEmpty();
+			assert bodyResultBuilder.getLrVal() == null;
+			//		final Body body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]),
+			//				stmts.toArray(new Statement[stmts.size()]));
+			body = new Body(loc,
+					bodyResultBuilder.getDeclarations().toArray(
+							new VariableDeclaration[bodyResultBuilder.getDeclarations().size()]),
+					bodyResultBuilder.getStatements().toArray(
+							new Statement[bodyResultBuilder.getStatements().size()]));
+		}
 
 //		proc = mCurrentProcedure;
 		final Procedure proc = definedProcInfo.getDeclaration();
@@ -500,14 +516,18 @@ public class FunctionHandler {
 	 */
 	public Result handleReturnStatement(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final IASTReturnStatement node) {
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final ArrayList<Overapprox> overApp = new ArrayList<>();
+//		final ArrayList<Statement> stmt = new ArrayList<>();
+//		final ArrayList<Declaration> decl = new ArrayList<>();
+////		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//		final Set<AuxVarInfo> auxVars = new LinkedHashSet<>();
+//		final ArrayList<Overapprox> overApp = new ArrayList<>();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		// The ReturnValue could be empty!
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final VarList[] outParams = mCurrentProcedureInfo.getDeclaration().getOutParams();
-		final ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
+
+//		final ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
+
 		// if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedure.getIdentifier()) && mCurrentProcedureIsVoid) {
 		if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedureInfo)
 				&& mCurrentProcedureInfo.getDeclaration().getOutParams().length == 0) {
@@ -518,7 +538,8 @@ public class FunctionHandler {
 							id, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 									getCurrentProcedureID()));
 			final Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
-			stmt.add(havoc);
+//			stmt.add(havoc);
+			resultBuilder.addStatement(havoc);
 		} else if (node.getReturnValue() != null) {
 			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
 					loc, main, main.dispatch(node.getReturnValue()), node);
@@ -558,29 +579,46 @@ public class FunctionHandler {
 				// Ugly workaround: Apply the conversion to the result of the
 				// dispatched argument. On should first construt a copy of returnValueSwitched
 				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
-				rExp.mLrVal = returnValueSwitched.mLrVal;
-				final RValue castExprResultRVal = (RValue) rExp.mLrVal;
-				stmt.addAll(returnValueSwitched.mStmt);
-				decl.addAll(returnValueSwitched.mDecl);
-				auxVars.putAll(returnValueSwitched.mAuxVars);
-				overApp.addAll(returnValueSwitched.mOverappr);
-				stmt.add(new AssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
+
+//				rExp.mLrVal = returnValueSwitched.mLrVal;
+				resultBuilder.setLrVal(returnValueSwitched.getLrValue());
+
+//				stmt.addAll(returnValueSwitched.mStmt);
+//				decl.addAll(returnValueSwitched.mDecl);
+//				auxVars.putAll(returnValueSwitched.mAuxVars);
+//				overApp.addAll(returnValueSwitched.mOverappr);
+				resultBuilder.addAllExceptLrValue(returnValueSwitched);
+
+
+//				stmt.add(new AssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
+
+				final RValue castExprResultRVal = (RValue) returnValueSwitched.getLrValue();
+				resultBuilder.addStatement(
+						new AssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
 			}
 		}
-		stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
+//		stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
+		resultBuilder.addStatements(CHandler.createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
 		// we need to insert a free for each malloc of an auxvar before each return
 		// frees are inserted in handleReturnStm
 		for (final Entry<LocalLValueILocationPair, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {
 			if (entry.getValue() >= 1) {
-				stmt.add(memoryHandler.getDeallocCall(main, this, entry.getKey().llv, entry.getKey().loc));
-				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
+//				stmt.add(memoryHandler.getDeallocCall(main, this, entry.getKey().llv, entry.getKey().loc));
+				resultBuilder.addStatement(
+						memoryHandler.getDeallocCall(main, this, entry.getKey().llv, entry.getKey().loc));
+
+//				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
+				resultBuilder.addStatement(
+						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
 			}
 		}
 
-		stmt.add(new ReturnStatement(loc));
-		return rExp;
+//		stmt.add(new ReturnStatement(loc));
+		resultBuilder.addStatement(new ReturnStatement(loc));
+//		return rExp;
+		return resultBuilder.build();
 	}
 
 	/**
@@ -1125,7 +1163,9 @@ public class FunctionHandler {
 	 * @param parent
 	 */
 	private void handleFunctionsInParams(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler,
-			final ArrayList<Declaration> decl, final ArrayList<Statement> stmt, final IASTFunctionDefinition parent) {
+//			final ArrayList<Declaration> decl, final ArrayList<Statement> stmt,
+			final ExpressionResultBuilder resultBuilder,
+			final IASTFunctionDefinition parent) {
 		final VarList[] inparamVarListArray = mCurrentProcedureInfo.getDeclaration().getInParams();
 		IASTNode[] paramDecs;
 		if (inparamVarListArray.length == 0) {
@@ -1185,6 +1225,10 @@ public class FunctionHandler {
 				final VarList var = new VarList(loc, new String[] { inparamAuxVarName }, type);
 				final VariableDeclaration inVarDecl =
 						new VariableDeclaration(loc, new Attribute[0], new VarList[] { var });
+				resultBuilder.addDeclaration(inVarDecl);
+				/* note: because the auxvars for the inparams do not need to be havocced, we do not need to add them
+				 * here
+				 */
 
 				final VariableLHS tempLHS = //new VariableLHS(loc, inparamAuxVarName);
 						ExpressionFactory.constructVariableLHS(loc, inParamAuxVarType, inparamAuxVarName,
@@ -1207,10 +1251,14 @@ public class FunctionHandler {
 							Collections.emptyList(),
 							new ExpressionResultBuilder().setLrVal(new RValue(rhsId, cvar)).build(), parent);
 
-					stmt.add(memoryHandler.getMallocCall(llv, igLoc, parent));
-					stmt.addAll(assign.mStmt);
+//					stmt.add(memoryHandler.getMallocCall(llv, igLoc));
+//					stmt.addAll(assign.mStmt);
+					resultBuilder.addStatement(memoryHandler.getMallocCall(llv, igLoc, parent));
+					resultBuilder.addAllExceptLrValue(assign);
 				} else {
-					stmt.add(
+//					stmt.add(
+//							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
+					resultBuilder.addStatement(
 							new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 				}
 				assert main.mCHandler.getSymbolTable().containsCSymbol(parent, cId);
@@ -1473,25 +1521,32 @@ public class FunctionHandler {
 						translatedParameters.toArray(new Expression[translatedParameters.size()]));
 			} else if (outParamVarlists.length == 1) { // one return value
 				final VariableLHS returnedValueAsLhs;
-				final VariableDeclaration tmpVarDecl;
+//				final VariableDeclaration tmpVarDecl;
+				AuxVarInfo auxvar;
 				{
-					final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
+					final ASTType astType = outParamVarlists[0].getType();
+//					final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
+//					final DeclarationInformation tmpDeclInfo = new DeclarationInformation(StorageClass.LOCAL,
+//							mCurrentProcedureInfo.getProcedureName());
+					auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, astType, SFO.AUXVAR.RETURNED);
+
 					final BoogieType tmpBoogieType = main.mCHandler.getBoogieTypeHelper()
-							.getBoogieTypeForBoogieASTType(outParamVarlists[0].getType());
-					final DeclarationInformation tmpDeclInfo = new DeclarationInformation(StorageClass.LOCAL,
-							mCurrentProcedureInfo.getProcedureName());
+							.getBoogieTypeForBoogieASTType(astType);
 
 					//				returnedValue = new IdentifierExpression(loc, tmpId);
-					returnedValue = ExpressionFactory.constructIdentifierExpression(loc, tmpBoogieType, tmpId,
-							tmpDeclInfo);
-					returnedValueAsLhs = ExpressionFactory.constructVariableLHS(loc, tmpBoogieType, tmpId, tmpDeclInfo);
-					tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, outParamVarlists[0].getType(), loc);
+					returnedValue = auxvar.getExp();
+						//	ExpressionFactory.constructIdentifierExpression(loc, tmpBoogieType, tmpId,
+						////	tmpDeclInfo);
+					returnedValueAsLhs = //ExpressionFactory.constructVariableLHS(loc, tmpBoogieType, tmpId, tmpDeclInfo);
+							auxvar.getLhs();
+//					tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, outParamVarlists[0].getType(), loc);
 				}
 //				final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId,
 //						outParamVarlists[0].getType(), loc);
 
-				functionCallExpressionResultBuilder.putAuxVar(tmpVarDecl, loc);
-				functionCallExpressionResultBuilder.addDeclaration(tmpVarDecl);
+//				functionCallExpressionResultBuilder.putAuxVar(tmpVarDecl, loc);
+				functionCallExpressionResultBuilder.addAuxVar(auxvar);
+				functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
 
 				call = new CallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs }, methodName,
 						translatedParameters.toArray(new Expression[translatedParameters.size()]));
@@ -1525,7 +1580,8 @@ public class FunctionHandler {
 			returnedValue = auxvar.getExp();
 
 			functionCallExpressionResultBuilder.addDeclaration(auxvar.getVarDec());
-			functionCallExpressionResultBuilder.putAuxVar(auxvar.getVarDec(), loc);
+//			functionCallExpressionResultBuilder.putAuxVar(auxvar.getVarDec(), loc);
+			functionCallExpressionResultBuilder.addAuxVar(auxvar);
 
 //			final VariableLHS lhs = new VariableLHS(loc, ident);
 			call = new CallStatement(loc, false, new VariableLHS[] { auxvar.getLhs() }, methodName,

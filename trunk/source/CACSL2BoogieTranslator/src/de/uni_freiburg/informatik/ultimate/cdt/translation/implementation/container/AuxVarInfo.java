@@ -45,6 +45,9 @@ public class AuxVarInfo {
 	private final IdentifierExpression mExp;
 
 	public AuxVarInfo(final VariableDeclaration varDec, final VariableLHS lhs, final IdentifierExpression exp) {
+		assert varDec.getVariables().length == 1 : "we allow precisely one identifier per aux var at the moment";
+		assert varDec.getVariables()[0].getIdentifiers().length == 1 : "we allow precisely one identifier per aux var "
+				+ "at the moment";
 		mVarDec = varDec;
 		mLhs = lhs;
 		mExp = exp;

@@ -98,6 +98,19 @@ public class CTranslationUtil {
 					final AUXVAR auxVarType) {
 		final String id = main.mNameHandler.getTempVarUID(auxVarType, cType);
 		final ASTType astType = main.mTypeHandler.cType2AstType(loc, cType);
+
+		return constructAuxVarHelper(loc, main, id, astType);
+	}
+
+	public static AuxVarInfo constructAuxVarInfo(final ILocation loc, final Dispatcher main, final ASTType astType,
+					final AUXVAR auxVarType) {
+		final String id = main.mNameHandler.getTempVarUID(auxVarType, null);
+
+		return constructAuxVarHelper(loc, main, id, astType);
+	}
+
+	private static AuxVarInfo constructAuxVarHelper(final ILocation loc, final Dispatcher main, final String id,
+			final ASTType astType) {
 		final VariableDeclaration decl = new VariableDeclaration(loc,
 				new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { id }, astType ) });

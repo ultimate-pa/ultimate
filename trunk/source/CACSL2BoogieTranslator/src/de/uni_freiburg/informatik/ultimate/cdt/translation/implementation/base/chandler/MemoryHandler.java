@@ -37,7 +37,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -1956,10 +1956,11 @@ public class MemoryHandler {
 		// main.getTypeSizes().getSize(PRIMITIVE.INT));
 		final boolean bitvectorConversionNeeded = false;
 
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		final ArrayList<Declaration> decl = new ArrayList<>();
-		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final ArrayList<Overapprox> overappr = new ArrayList<>();
+//		final ArrayList<Statement> stmt = new ArrayList<>();
+//		final ArrayList<Declaration> decl = new ArrayList<>();
+//		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//		final ArrayList<Overapprox> overappr = new ArrayList<>();
+		ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		final String readCallProcedureName;
 		{
@@ -2009,53 +2010,71 @@ public class MemoryHandler {
 //		final String returnedValuId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
 //		final VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(returnedValueId, returnedValueAstType, loc);
 		final AuxVarInfo auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.MEMREAD);
-		decl.add(auxvar.getVarDec());
-		auxVars.put(auxvar.getVarDec(), loc);
+//		decl.add(auxvar.getVarDec());
+//		auxVars.put(auxvar.getVarDec(), loc);
+		resultBuilder.addDeclaration(auxvar.getVarDec());
+		resultBuilder.addAuxVar(auxvar);
+
 		final VariableLHS[] lhss = new VariableLHS[] { auxvar.getLhs() };
 		final CallStatement call = new CallStatement(loc, false, lhss, readCallProcedureName, // heapType.toString(),
 				new Expression[] { address, calculateSizeOf(loc, resultType, hook) });
-		for (final Overapprox overapprItem : overappr) {
+		for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 			overapprItem.annotate(call);
 		}
-		stmt.add(call);
-		assert CHandler.isAuxVarMapComplete(mNameHandler, decl, auxVars);
+//		stmt.add(call);
+		resultBuilder.addStatement(call);
+		assert CHandler.isAuxVarMapComplete(mNameHandler, resultBuilder);
 
-		ExpressionResult result;
+//		ExpressionResult result;
 		if (bitvectorConversionNeeded) {
 //			final IdentifierExpression tmpIdExpr = new IdentifierExpression(loc, tmpId);
 			final IdentifierExpression returnedValueIdExpr = auxvar.getExp();
 //					ExpressionFactory.constructIdentifierExpression(loc,
 //					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType), returnedValueId,
 //					new DeclarationInformation(StorageClass.LOCAL, mFunctionHandler.getCurrentProcedureID()));
-			result = new ExpressionResult(stmt, new RValue(returnedValueIdExpr, resultType), decl,
-					auxVars, overappr);
-			mExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
 
-			final String bvReturnedValueId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
-			final VariableDeclaration bvtVarDecl =
-					SFO.getTempVarVariableDeclaration(bvReturnedValueId, returnedValueAstType, loc);
-			auxVars.put(bvtVarDecl, loc);
-			decl.add(bvtVarDecl);
-			final VariableLHS[] bvlhss = new VariableLHS[] { new VariableLHS(loc, bvReturnedValueId) };
+//			result = new ExpressionResult(stmt, new RValue(returnedValueIdExpr, resultType), decl,
+//					auxVars, overappr);
+			resultBuilder.setLrVal(new RValue(returnedValueIdExpr, resultType));
+
+			final ExpressionResult intermediateResult = resultBuilder.build();
+//			mExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
+			mExpressionTranslation.convertIntToInt(loc, intermediateResult,
+					(CPrimitive) resultType.getUnderlyingType());
+			resultBuilder = new ExpressionResultBuilder()
+					.addAllExceptLrValue(intermediateResult)
+					.setLrVal(intermediateResult.getLrValue());
+
+//			final String bvReturnedValueId = mNameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
+//			final VariableDeclaration bvtVarDecl =
+//					SFO.getTempVarVariableDeclaration(bvReturnedValueId, returnedValueAstType, loc);
+			final AuxVarInfo bvReturnedValueAux = CTranslationUtil.constructAuxVarInfo(loc, main, resultType,
+					SFO.AUXVAR.MEMREAD);
+//			decl.add(bvReturnedValueAux.getVarDec());
+//			auxVars.put(bvReturnedValueAux.getVarDec(), loc);
+			resultBuilder.addDeclaration(bvReturnedValueAux.getVarDec());
+			resultBuilder.addAuxVar(bvReturnedValueAux);
+
+			final VariableLHS[] bvlhss = new VariableLHS[] { bvReturnedValueAux.getLhs() };
 			final AssignmentStatement as =
-					new AssignmentStatement(loc, bvlhss, new Expression[] { result.mLrVal.getValue() });
-			stmt.add(as);
+//					new AssignmentStatement(loc, bvlhss, new Expression[] { result.mLrVal.getValue() });
+					new AssignmentStatement(loc, bvlhss, new Expression[] { resultBuilder.getLrVal().getValue() });
+//			stmt.add(as);
+			resultBuilder.addStatement(as);
 			// TODO is it correct to use returnedValueAstType here?
-			final IdentifierExpression bvReturnedValueIdExpr = //new IdentifierExpression(loc, bvReturnedValueId);
-					ExpressionFactory.constructIdentifierExpression(loc,
-							mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType),
-							bvReturnedValueId,
-							new DeclarationInformation(StorageClass.LOCAL, mFunctionHandler.getCurrentProcedureID()));
-			result.mLrVal = new RValue(bvReturnedValueIdExpr, resultType);
+//			result.mLrVal = new RValue(bvReturnedValueAux.getExp(), resultType);
+			resultBuilder.resetLrVal(new RValue(bvReturnedValueAux.getExp(), resultType));
 		} else {
 			final IdentifierExpression returnedValueIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
 					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(returnedValueAstType),
 					auxvar.getExp().getIdentifier(),
 					new DeclarationInformation(StorageClass.LOCAL, mFunctionHandler.getCurrentProcedureID()));
-			result = new ExpressionResult(stmt, new RValue(returnedValueIdExpr, resultType), decl,
-					auxVars, overappr);
+//			result = new ExpressionResult(stmt, new RValue(returnedValueIdExpr, resultType), decl,
+//					auxVars, overappr);
+			resultBuilder.setLrVal(new RValue(returnedValueIdExpr, resultType));
 		}
-		return result;
+//		return result;
+		return resultBuilder.build();
 	}
 
 	/**
@@ -2256,20 +2275,22 @@ public class MemoryHandler {
 
 	/**
 	 * Takes a loop or function body and inserts mallocs and frees for all the identifiers in this.mallocedAuxPointers
+	 *
+	 * Note that this returns a statement block that is like the given block but with added statement in front
+	 * <b>and</b>in the back!
 	 */
-	public ArrayList<Statement> insertMallocs(final Dispatcher main, final ArrayList<Statement> block, 
-			final IASTNode hook) {
-		final ArrayList<Statement> mallocs = new ArrayList<>();
+	public List<Statement> insertMallocs(final Dispatcher main, final List<Statement> block, final IASTNode hook) {
+		final List<Statement> mallocs = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeMalloced.currentScopeKeys()) {
 			mallocs.add(this.getMallocCall(llvp.llv, llvp.loc, hook));
 		}
-		final ArrayList<Statement> frees = new ArrayList<>();
+		final List<Statement> frees = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) { // frees are inserted in
 			// handleReturnStm
 			frees.add(getDeallocCall(main, mFunctionHandler, llvp.llv, llvp.loc));
 			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLHS() }));
 		}
-		final ArrayList<Statement> newBlockAL = new ArrayList<>();
+		final List<Statement> newBlockAL = new ArrayList<>();
 		newBlockAL.addAll(mallocs);
 		newBlockAL.addAll(block);
 		newBlockAL.addAll(frees);

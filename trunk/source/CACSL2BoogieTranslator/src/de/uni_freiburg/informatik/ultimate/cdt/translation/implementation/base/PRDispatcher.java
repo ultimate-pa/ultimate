@@ -114,13 +114,12 @@ import cern.colt.Arrays;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
@@ -483,14 +482,17 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr,
-			final Map<VariableDeclaration, ILocation> auxVars, final IASTNode hook) {
+			final Set<AuxVarInfo> auxVars, final IASTNode hook) {
 		final Set<String> auxVarIds = new HashSet<>();
-		for (final VariableDeclaration decl : auxVars.keySet()) {
-			for (final VarList varList : decl.getVariables()) {
-				for (final String id : varList.getIdentifiers()) {
-					auxVarIds.add(id);
-				}
-			}
+//		for (final VariableDeclaration decl : auxVars.keySet()) {
+		for (final AuxVarInfo auxvar : auxVars) {
+//			final VariableDeclaration decl = auxvar.getVarDec();
+//			for (final VarList varList : decl.getVariables()) {
+//				for (final String id : varList.getIdentifiers()) {
+//					auxVarIds.add(id);
+//				}
+//			}
+			auxVarIds.add(auxvar.getExp().getIdentifier());
 		}
 		final BoogieIdExtractor bie = new BoogieIdExtractor();
 		bie.processExpression(expr);

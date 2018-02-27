@@ -28,10 +28,19 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
 /**
  * This class manages objects (in the meaning that the word has in the
@@ -53,49 +62,17 @@ public class StaticObjectsHandler {
 
 	private final Collection<Declaration> mGlobalDeclarations = new ArrayList<>();
 	private final Collection<Statement> mStatementsForUltimateInit = new ArrayList<>();
-	private final Collection<String> mVariablesModifiedByUltimateInit = new HashSet<>();
-//	private final Collection<String> mProceduresCalledByUltimateInit = new HashSet<>();
 
 	private boolean mIsFrozen = false;
+	private final Map<VariableDeclaration, CDeclaration> mVariableDeclarationToAssociatedCDeclaration = new HashMap<>();
 
-	public void addVariableModifiedByUltimateInit(final String varName) {
-		assert !mIsFrozen;
-		mVariablesModifiedByUltimateInit.add(varName);
-	}
+	private Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
 
-	public void addGlobalDeclaration(final Declaration decl) {
-		assert !mIsFrozen;
-		mGlobalDeclarations.add(decl);
-	}
-
-	public void addGlobalDeclarations(final Collection<Declaration> decls) {
-		assert !mIsFrozen;
-		mGlobalDeclarations.addAll(decls);
-	}
-
-	public void addStatementForUltimateInit(final Statement stmt) {
-		assert !mIsFrozen;
-//		if (stmt instanceof CallStatement) {
-//			addProcedureCalledByUltimateInit(((CallStatement) stmt).getMethodName());
-//		}
-		mStatementsForUltimateInit.add(stmt);
-	}
-
-	public void addStatementsForUltimateInit(final Collection<Statement> stmts) {
-		assert !mIsFrozen;
-		for (final Statement stmt : stmts) {
-//			if (stmt instanceof CallStatement) {
-//				addProcedureCalledByUltimateInit(((CallStatement) stmt).getMethodName());
-//			}
-			mStatementsForUltimateInit.add(stmt);
-		}
-	}
-
-//	private void addProcedureCalledByUltimateInit(final String proc) {
-//		assert !mIsFrozen;
-//		mProceduresCalledByUltimateInit.add(proc);
-//	}
-
+	/**
+	 * Returns all Boogie declarations that need to be added to the translated program in global scope
+	 *
+	 * @return
+	 */
 	public Collection<Declaration> getGlobalDeclarations() {
 		assert mIsFrozen;
 		return mGlobalDeclarations;
@@ -106,18 +83,79 @@ public class StaticObjectsHandler {
 		return mStatementsForUltimateInit;
 	}
 
-	public Collection<String> getVariablesModifiedByUltimateInit() {
-		assert mIsFrozen;
-		return mVariablesModifiedByUltimateInit;
-	}
-
-//	public Collection<String> getProceduresCalledByUltimateInit() {
-//		assert mIsFrozen;
-//		return mProceduresCalledByUltimateInit;
-//	}
-
 	public void freeze() {
 		assert !mIsFrozen;
 		mIsFrozen = true;
+	}
+
+	public void addGlobalTypeDeclaration(final TypeDeclaration boogieDec, final CDeclaration cDec) {
+		mGlobalDeclarations.add(boogieDec);
+		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
+	}
+
+	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec) {
+		mGlobalDeclarations.add(boogieDec);
+		mVariableDeclarationToAssociatedCDeclaration.put(boogieDec, cDec);
+	}
+
+	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration) {
+		mGlobalDeclarations.add(cd);
+	}
+
+	public void completeTypeDeclaration(final CType incompleteType, final CType completedType,
+			final ITypeHandler typeHandler) {
+
+		TypeDeclaration oldBooogieDec = null;
+		CDeclaration oldCDec = null;
+		TypeDeclaration newBoogieDec = null;
+
+		/*
+		 * find the CDeclaration that belongs to the given incomplete type
+		 */
+		for (final Entry<TypeDeclaration, CDeclaration> en : mTypeDeclarationToCDeclaration.entrySet()) {
+			oldBooogieDec = en.getKey();
+
+			if (en.getValue().getType().toString().equals(incompleteType.toString())) {
+
+				oldCDec = en.getValue();
+
+				newBoogieDec = new TypeDeclaration(oldBooogieDec.getLocation(), oldBooogieDec.getAttributes(),
+						oldBooogieDec.isFinite(), oldBooogieDec.getIdentifier(), oldBooogieDec.getTypeParams(),
+						typeHandler.cType2AstType(oldBooogieDec.getLocation(), completedType));
+				break;
+			}
+		}
+		if (oldBooogieDec != null) {
+			removeDeclaration(oldBooogieDec);
+			addGlobalTypeDeclaration(newBoogieDec, oldCDec);
+		}
+	}
+
+	public void removeDeclaration(final Declaration boogieDecl) {
+		mGlobalDeclarations.remove(boogieDecl);
+		mVariableDeclarationToAssociatedCDeclaration.remove(boogieDecl);
+		mTypeDeclarationToCDeclaration.remove(boogieDecl);
+	}
+
+	public Map<VariableDeclaration, CDeclaration> getGlobalVariableDeclsWithAssociatedCDecls() {
+		return Collections.unmodifiableMap(mVariableDeclarationToAssociatedCDeclaration);
+	}
+
+	/**
+	 * Add a VariableDeclaration for the global Boogie scope without an associated CDeclaration.
+	 * Normally, the CDeclaration would be used for initializing the variable; in this case, initialization code
+	 * can be added manually via addStatementsForUltimateInit(..).
+	 *
+	 * @param varDec
+	 */
+	public void addGlobalVarDeclarationWithoutCDeclaration(final VariableDeclaration varDec) {
+		mGlobalDeclarations.add(varDec);
+	}
+
+	public void addStatementsForUltimateInit(final Collection<Statement> stmts) {
+		assert !mIsFrozen;
+		for (final Statement stmt : stmts) {
+			mStatementsForUltimateInit.add(stmt);
+		}
 	}
 }

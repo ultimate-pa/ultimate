@@ -637,7 +637,7 @@ public class InitializationHandler {
 		final ExpressionResult x = new ExpressionResultBuilder()
 				.setLrVal(new RValue(auxVar.getExp(), fieldType))
 				.addDeclaration(auxVar.getVarDec())
-				.putAuxVar(auxVar.getVarDec(), loc)
+				.addAuxVar(auxVar)
 				.addOverapprox(new Overapprox("initialize union -- havoccing a field without explictit "
 						+ "initializer", loc))
 				.build();
@@ -766,7 +766,8 @@ public class InitializationHandler {
 		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 
 		initialization.addDeclaration(auxVar.getVarDec());
-		initialization.putAuxVar(auxVar.getVarDec(), loc);
+//		initialization.putAuxVar(auxVar.getVarDec(), loc);
+		initialization.addAuxVar(auxVar);
 		initialization.setLrVal(arrayLhsToInitialize);
 		return arrayLhsToInitialize;
 	}
@@ -1071,23 +1072,32 @@ public class InitializationHandler {
 					final StringLiteralResult exprResult = (StringLiteralResult)
 							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult, hook);
 
-					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
+					assert exprResult.getDeclarations().isEmpty() : "the declarations necessary for a StringLiteral "
+							+ " should be registered in StaticObjectsHandler directly (because the need to be global"
+							+ "boogie declarations)";
+					assert exprResult.getStatements().isEmpty() : "the statements necessary for a StringLiteral "
+							+ " should be registered in StaticObjectsHandler directly (because the need to be global"
+							+ "boogie declarations)";
 
-					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
-					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-							exprResult.getAuxVar().getExp().getIdentifier());
-					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
-					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
-					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
+
+//					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
+//					exprResult.getDeclarations().forEach(decl -> );
+
+//					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
+//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
+//							exprResult.getAuxVar().getExp().getIdentifier());
+//					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
+//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
+//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
 					/*
 					 * if the literal was short enought that we actually write it to memory, add the corresponding
 					 *  memory array
 					 */
 					if (!exprResult.overApproximatesLongStringLiteral()) {
 //						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.MEMORY_INT);
-						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-								main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
-									.getVariableName());
+//						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
+//								main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
+//									.getVariableName());
 					}
 
 					final ExpressionResult onlyRValueExprResult = new ExpressionResultBuilder()
