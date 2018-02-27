@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -424,9 +425,6 @@ public class CfgBuilder {
 
 				final ILocation loc = st.getLocation();
 				assert loc != null : "location of the following statement is null " + st;
-				if (loc.isLoop()) {
-					mLogger.debug("Found loop entry: " + st);
-				}
 
 				if (st instanceof Label) {
 					if (mCurrent instanceof BoogieIcfgLocation) {
@@ -809,10 +807,12 @@ public class CfgBuilder {
 		// return new AssignmentStatement(null,lhs,rhs);
 		// }
 
-		private String getLocName(final ILocation location) {
+		private String getLocName(final Statement stmt) {
+			final ILocation location = stmt.getLocation();
 			final int startLine = location.getStartLine();
 			String unprimedName = "L" + startLine;
-			if (location.isLoop()) {
+			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(stmt);
+			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
 				unprimedName += "loopEntry";
 			}
 			final String result = mNameCache.getUniqueName(unprimedName);
@@ -832,13 +832,15 @@ public class CfgBuilder {
 		 * @return LocNode that is the representative for labelName.
 		 */
 		private BoogieIcfgLocation getLocNodeForLabel(final String labelName, final Statement st) {
+			final ILocation loc = st.getLocation();
+			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
 			if (mLabel2LocNodes.containsKey(labelName)) {
 				final BoogieIcfgLocation locNode = mLabel2LocNodes.get(labelName);
 				mLogger.debug("LocNode for " + labelName + " already" + " constructed, namely: " + locNode);
 				if (st instanceof Label && locNode.getDebugIdentifier() == labelName) {
-					final ILocation loc = st.getLocation();
+
 					loc.annotate(locNode);
-					if (st.getLocation().isLoop()) {
+					if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
 						mLogger.debug("LocNode does not have to Location of the while loop" + st.getLocation());
 						mIcfg.getLoopLocations().add(locNode);
 					}
@@ -849,7 +851,7 @@ public class CfgBuilder {
 			mLabel2LocNodes.put(labelName, locNode);
 			mProcLocNodes.put(labelName, locNode);
 			mLogger.debug("LocNode for " + labelName + " has not" + " existed yet. Constructed it");
-			if (st != null && st.getLocation().isLoop()) {
+			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
 				mIcfg.getLoopLocations().add(locNode);
 			}
 			return locNode;
@@ -905,7 +907,7 @@ public class CfgBuilder {
 					stSeq.addStatement(st);
 					ModelUtils.copyAnnotations(st, stSeq);
 				} else {
-					final String locName = getLocName(st.getLocation());
+					final String locName = getLocName(st);
 					final BoogieIcfgLocation locNode =
 							new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 					((CodeBlock) mCurrent).connectTarget(locNode);
@@ -927,7 +929,7 @@ public class CfgBuilder {
 				return;
 			}
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st.getLocation());
+				final String locName = getLocName(st);
 				final BoogieIcfgLocation locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -978,7 +980,7 @@ public class CfgBuilder {
 			mLogger.debug("Goto statement with " + targets.length + " targets.");
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st.getLocation());
+				final String locName = getLocName(st);
 				locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -1009,7 +1011,7 @@ public class CfgBuilder {
 			}
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st.getLocation());
+				final String locName = getLocName(st);
 				locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -1019,7 +1021,7 @@ public class CfgBuilder {
 				// mcurrent must be either LocNode or TransEdge
 				throw new IllegalArgumentException();
 			}
-			final String locName = getLocName(st.getLocation());
+			final String locName = getLocName(st);
 			final BoogieIcfgLocation returnNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, returnNode);
 			// add summary edge

@@ -28,7 +28,7 @@ public class BoogieBooleanExpressionDecisionTest {
 	 */
 	@Test
 	public void TestBoogieBooleanExpressinDecision() {
-		final ILocation dummyLocation = new BoogieLocation("test", 0, 0, 0, 0, false);
+		final ILocation dummyLocation = new BoogieLocation("test", 0, 0, 0, 0);
 
 		final Expression e = new BinaryExpression(dummyLocation, BinaryExpression.Operator.COMPEQ,
 				new IdentifierExpression(dummyLocation, "crew"), new IntegerLiteral(dummyLocation, "47"));
@@ -51,7 +51,7 @@ public class BoogieBooleanExpressionDecisionTest {
 
 	@Test
 	public void TestBoogieBooleanExpressinDecisionIt() {
-		final ILocation dummyLocation = new BoogieLocation("test", 0, 0, 0, 0, false);
+		final ILocation dummyLocation = new BoogieLocation("test", 0, 0, 0, 0);
 		// signle boolean expression
 		final Expression e = new IdentifierExpression(dummyLocation, "e");
 		CDD cdd = BoogieBooleanExpressionDecision.create(e);

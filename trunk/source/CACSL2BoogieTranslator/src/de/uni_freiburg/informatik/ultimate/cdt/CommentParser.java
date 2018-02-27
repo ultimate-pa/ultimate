@@ -209,11 +209,6 @@ public class CommentParser {
 		}
 
 		@Override
-		public boolean isLoop() {
-			return false;
-		}
-
-		@Override
 		public int getStartLine() {
 			return mNode.getStartingLineNumber();
 		}

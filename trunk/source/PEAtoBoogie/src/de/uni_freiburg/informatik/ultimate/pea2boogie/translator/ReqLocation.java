@@ -68,9 +68,4 @@ public class ReqLocation extends DefaultLocation {
 	public Check getCheck() {
 		return mCheckedSpecification;
 	}
-
-	@Override
-	public boolean isLoop() {
-		return false;
-	}
 }

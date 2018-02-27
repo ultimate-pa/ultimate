@@ -290,8 +290,10 @@ public class UnstructureCode extends BaseObserver {
 			// location that represents the while loop.
 			final ILocation loopLocation = new BoogieLocation(stmt.getLocation().getFileName(),
 					stmt.getLocation().getStartLine(), stmt.getLocation().getEndLine(),
-					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn(), true);
-			addLabel(new Label(loopLocation, head));
+					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn());
+			final Label l = new Label(loopLocation, head);
+			new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(l);
+			addLabel(l);
 			for (final LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
 					postCreateStatement(spec, new AssumeStatement(spec.getLocation(), spec.getFormula()));

@@ -101,11 +101,6 @@ public class CLocation extends CACSLLocation {
 		return -1;
 	}
 
-	@Override
-	public boolean isLoop() {
-		return false;
-	}
-
 	public IASTNode getNode() {
 		return mNode;
 	}

@@ -466,7 +466,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements I
 			}
 		}
 
-		final ILocation loccationOfP = new BoogieLocation(p.getFilename(), p.getLineNr(), -1, -1, -1, false);
+		final ILocation loccationOfP = new BoogieLocation(p.getFilename(), p.getLineNr(), -1, -1, -1);
 		if (!newLists.isEmpty()) {
 			vardecls.add(new VariableDeclaration(loccationOfP, new NamedAttribute[0],
 					newLists.toArray(new VarList[newLists.size()])));
@@ -623,7 +623,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements I
 			int procType;
 			if ((procType = processProcedure(p, localVars, procModifies, localStatements)) != PROC_NOT_VALID) {
 
-				final Statement label = new Label(new BoogieLocation(p.getFilename(), -2, -2, -2, -2, false),
+				final Statement label = new Label(new BoogieLocation(p.getFilename(), -2, -2, -2, -2),
 						PROCEDURE_PREFIX + p.getIdentifier());
 				// Add the label to the corresponding group
 				if (mAllFunctions || procType == PROC_MODIFIER) {
@@ -666,13 +666,13 @@ public final class DSITransformerObserver extends BoogieTransformer implements I
 		VarList[] strPtrDecl;
 		strPtrDecl = new VarList[] { structPtr };
 
-		procVars.add(new VariableDeclaration(new BoogieLocation("", -5, -5, -5, -5, false), new NamedAttribute[0],
+		procVars.add(new VariableDeclaration(new BoogieLocation("", -5, -5, -5, -5), new NamedAttribute[0],
 				strPtrDecl));
 
 		// Now collect the statements in the right order
 		final List<Statement> procStatements = new ArrayList<Statement>();
 		// Add the init label
-		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4, false), PROC_INIT_LABEL));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4), PROC_INIT_LABEL));
 
 		// Create the expression that represents the invariant
 		// $inv($s, $ptr(THE_TYPE, structureVarID), THE_TYPE);
@@ -696,7 +696,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements I
 
 		if (!mAllFunctions) {
 			if (!initLabels.isEmpty()) { // Add the initializer procedures
-				final GotoStatement initGoto = new GotoStatement(new BoogieLocation("", -3, -3, -3, -3, false),
+				final GotoStatement initGoto = new GotoStatement(new BoogieLocation("", -3, -3, -3, -3),
 						initLabels.toArray(new String[initLabels.size()]));
 				procStatements.add(initGoto);
 				procStatements.addAll(initStatements);
@@ -706,7 +706,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements I
 		}
 
 		// Add the start label
-		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4, false), PROC_LOOP_START_LABEL));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4), PROC_LOOP_START_LABEL));
 
 		// Increment the counter (for the action(ctr))
 		if (mAllFunctions) {
@@ -720,13 +720,13 @@ public final class DSITransformerObserver extends BoogieTransformer implements I
 		// procStatements.add(new AssertStatement(null, null, inv));
 
 		// Create the initial GOTO statement
-		final GotoStatement initGoto = new GotoStatement(new BoogieLocation("", -3, -3, -3, -3, false),
+		final GotoStatement initGoto = new GotoStatement(new BoogieLocation("", -3, -3, -3, -3),
 				procLabels.toArray(new String[procLabels.size()]));
 		procStatements.add(initGoto);
 		// Add the procedure bodies
 		procStatements.addAll(statements);
 		// Add the exit label
-		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4, false), procLoopEndLabel));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4), procLoopEndLabel));
 		// Create the procedure's body
 		final Body procBody = new Body(null, procVars.toArray(new VariableDeclaration[procVars.size()]),
 				procStatements.toArray(new Statement[statements.size()]));
@@ -736,7 +736,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements I
 					new ModifiesSpecification(null, false, procModifies.toArray(new VariableLHS[procModifies.size()])));
 		}
 		// Finally return the new procedure
-		return new Procedure(new BoogieLocation("", -1, -1, -1, -1, false), new Attribute[0], mStructureProcID,
+		return new Procedure(new BoogieLocation("", -1, -1, -1, -1), new Attribute[0], mStructureProcID,
 				new String[0], new VarList[0], new VarList[0], procSpecs.toArray(new Specification[procSpecs.size()]),
 				procBody);
 	}

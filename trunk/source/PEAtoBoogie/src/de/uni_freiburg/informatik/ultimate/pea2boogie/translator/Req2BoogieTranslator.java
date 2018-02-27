@@ -1008,9 +1008,9 @@ public class Req2BoogieTranslator {
 			mInputFilePath = mBoogieFilePath;
 		}
 		mBoogieLocations = new BoogieLocation[count + 1];
-		mBoogieLocations[0] = new BoogieLocation(mInputFilePath, 1, count, 0, 100, false);
+		mBoogieLocations[0] = new BoogieLocation(mInputFilePath, 1, count, 0, 100);
 		for (int i = 0; i < count; i++) {
-			mBoogieLocations[i + 1] = new BoogieLocation(mInputFilePath, i + 1, i + 1, 0, 100, false);
+			mBoogieLocations[i + 1] = new BoogieLocation(mInputFilePath, i + 1, i + 1, 0, 100);
 		}
 	}
 
