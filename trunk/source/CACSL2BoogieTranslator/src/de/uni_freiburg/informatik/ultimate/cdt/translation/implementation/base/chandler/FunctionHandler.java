@@ -91,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalIdentifierExpressionsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
@@ -733,6 +732,8 @@ public class FunctionHandler {
 						sccToModifiedGlobals.getImage(dssc.getNodeToComponents().get(procInfo));
 				assert currModClause != null : "No modifies clause proc " + procedureName;
 
+//				final Set<VariableLHS> currModClauseDuplicatesFiltered = filterDuplicateVariableLHSs(currModClause);
+
 				procInfo.addModifiedGlobals(currModClause);
 
 				newSpec = Arrays.copyOf(oldSpec, oldSpec.length + 1);
@@ -761,7 +762,7 @@ public class FunctionHandler {
 						modifyList[i++] = modifyEntry;//new VariableLHS(loc, modifyEntry);
 					}
 				}
-				newSpec[oldSpec.length] = new ModifiesSpecification(loc, false, modifyList);
+				newSpec[oldSpec.length] = constructModifiesSpecification(loc, false, modifyList);
 			}
 
 			/*
@@ -798,6 +799,23 @@ public class FunctionHandler {
 					oldProcDecl.getInParams(), oldProcDecl.getOutParams(), newSpecWithExtraEnsuresClauses, null));
 		}
 		return updatedDeclarations;
+	}
+
+	/**
+	 * only keep variable lhss that refer to the same global variable, i.e., keep only one per identifier String.
+	 * @return
+	 */
+	private Set<VariableLHS> filterDuplicateVariableLHSs(final Set<VariableLHS> input) {
+		final Set<VariableLHS> result = new LinkedHashSet<>();
+		final Set<String> seenLhsNames = new LinkedHashSet<>();
+		for (final VariableLHS lhs : input) {
+			if (seenLhsNames.contains(lhs.getIdentifier())) {
+				continue;
+			}
+			result.add(lhs);
+			seenLhsNames.add(lhs.getIdentifier());
+		}
+		return result;
 	}
 
 	private static boolean containsOneHeapDataArray(final Set<VariableLHS> modifySet,
@@ -2132,6 +2150,13 @@ public class FunctionHandler {
 		}
 	}
 
+	private Specification constructModifiesSpecification(final CACSLLocation loc, final boolean isFree,
+			final VariableLHS[] modifyList) {
+		final Set<VariableLHS> modifiedGlobals = new LinkedHashSet<>(Arrays.asList(modifyList));
+		final Set<VariableLHS> mgFiltered = filterDuplicateVariableLHSs(modifiedGlobals);
+		return new ModifiesSpecification(loc, isFree, mgFiltered.toArray(new VariableLHS[mgFiltered.size()]));
+	}
+
 	public CallStatement constructCallStatement(final ILocation loc, final boolean b, final VariableLHS[] variableLHSs,
 			final String methodName, final Expression[] array) {
 		assert !isGlobalScope();
@@ -2171,14 +2196,17 @@ public class FunctionHandler {
 		}
 
 	public EnsuresSpecification constructEnsuresSpecification(final ILocation loc, final boolean isFree,
-			final Expression formula) {
-		if (!isFree) {
-			final Set<IdentifierExpression> modifiedGlobals =
-					new BoogieGlobalIdentifierExpressionsFinder().getGlobalIdentifierExpressions(formula);
-			for (final IdentifierExpression modifiedGlobal : modifiedGlobals) {
-				addModifiedGlobal((VariableLHS) CTranslationUtil.convertExpressionToLHS(modifiedGlobal));
-			}
-		}
+			final Expression formula, final Set<VariableLHS> modifiedGlobals) {
+//		// TODO: what is the criterion for when an ensures clause constitutes a modification??
+//		//  --> probably we have to set this manually!...
+//		if (!isFree) {
+//			final Set<IdentifierExpression> modifiedGlobals =
+//					new BoogieGlobalIdentifierExpressionsFinder().getGlobalIdentifierExpressions(formula);
+//			for (final IdentifierExpression modifiedGlobal : modifiedGlobals) {
+//				addModifiedGlobal((VariableLHS) CTranslationUtil.convertExpressionToLHS(modifiedGlobal));
+//			}
+//		}
+		modifiedGlobals.forEach(this::addModifiedGlobal);
 
 		return new EnsuresSpecification(loc, isFree, formula);
 	}
