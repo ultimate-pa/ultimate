@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author Oleksii Saukh
  * @author Stefan Wissert
  * @author Matthias Heizmann
- * @date 01.02.2012
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class ExpressionResult extends Result {
 	/**
@@ -101,7 +101,6 @@ public class ExpressionResult extends Result {
 	 * Auxiliary variables occurring in this result. The variable declaration of the var is mapped to the exact location
 	 * for that it was constructed.
 	 */
-//	public final Map<VariableDeclaration, ILocation> mAuxVars;
 	public final Set<AuxVarInfo> mAuxVars;
 
 	/**
@@ -125,9 +124,7 @@ public class ExpressionResult extends Result {
 	 *            list of overapproximation flags
 	 */
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
-//			final Map<VariableDeclaration, ILocation> auxVars,
-			final Set<AuxVarInfo> auxVars,
-			final List<Overapprox> overapproxList,
+			final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList,
 			final List<ExpressionResult> uField2CType) {
 		super(null);
 		mStmt = stmt;
@@ -139,7 +136,6 @@ public class ExpressionResult extends Result {
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
-//			final Map<VariableDeclaration, ILocation> auxVars,
 			final Set<AuxVarInfo> auxVars,
 			final List<Overapprox> overapproxList) {
 		this(stmt, lrVal, decl, auxVars, overapproxList, Collections.emptyList());
@@ -147,33 +143,26 @@ public class ExpressionResult extends Result {
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal, final List<Declaration> decl,
 			final Set<AuxVarInfo> auxVars) {
-//			final Map<VariableDeclaration, ILocation> auxVars) {
 		this(stmt, lrVal, decl, auxVars, new ArrayList<Overapprox>(), Collections.emptyList());
 	}
 
-	public ExpressionResult(final LRValue lrVal,
-//			final Map<VariableDeclaration, ILocation> auxVars,
-			final Set<AuxVarInfo> auxVars,
-			final List<Overapprox> overapproxList) {
+	public ExpressionResult(final LRValue lrVal, final Set<AuxVarInfo> auxVars, final List<Overapprox> overapproxList) {
 		this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(), auxVars, overapproxList,
 				Collections.emptyList());
 	}
 
 	public ExpressionResult(final List<Statement> stmt, final LRValue lrVal) {
 		this(stmt, lrVal, new ArrayList<Declaration>(),
-//				new LinkedHashMap<VariableDeclaration, ILocation>(),
 				new LinkedHashSet<AuxVarInfo>(),
 				new ArrayList<Overapprox>(), Collections.emptyList());
 	}
 
 	public ExpressionResult(final LRValue lrVal,
 			final Set<AuxVarInfo> auxVars) {
-//			final Map<VariableDeclaration, ILocation> auxVars) {
 		this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(), auxVars);
 	}
 
 	public ExpressionResult(final LRValue lrVal) {
-//		this(lrVal, new LinkedHashMap<VariableDeclaration, ILocation>());
 		this(lrVal, new LinkedHashSet<AuxVarInfo>());
 	}
 
@@ -187,7 +176,6 @@ public class ExpressionResult extends Result {
 		for (final ExpressionResult resExpr : resExprs) {
 			builder.addStatements(resExpr.mStmt);
 			builder.addDeclarations(resExpr.mDecl);
-//			builder.putAuxVars(resExpr.mAuxVars);
 			builder.addAuxVars(resExpr.getAuxVars());
 			builder.addOverapprox(resExpr.mOverappr);
 			if (resExpr.mOtherUnionFields != null && !resExpr.mOtherUnionFields.isEmpty()) {
@@ -238,8 +226,6 @@ public class ExpressionResult extends Result {
 		} else if (mLrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) mLrVal;
 
-//			final RValue addressRVal = hlv.getAddressAsPointerRValue(main.mTypeHandler.getBoogiePointerType());
-
 			CType underlyingType = mLrVal.getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
 				underlyingType = new CPrimitive(CPrimitives.INT);
@@ -247,29 +233,22 @@ public class ExpressionResult extends Result {
 
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-//				final ExpressionResult rex = memoryHandler.getReadCall(main, addressRVal.getValue(), underlyingType);
 				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.mLrVal;
 			} else if (underlyingType instanceof CPointer) {
-//				final ExpressionResult rex = memoryHandler.getReadCall(main, addressRVal.getValue(), underlyingType);
 				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.mLrVal;
 			} else if (underlyingType instanceof CArray) {
 				final CArray cArray = (CArray) underlyingType;
-				// ExpressionResult rex = readArrayFromHeap(main, structHandler,
-				// memoryHandler, loc, hlv.getAddress(), cArray);
-				// result = copyStmtDeclAuxvarOverapprox(this, rex);
 				result = copyStmtDeclAuxvarOverapprox(this);
 				newValue = new RValue(hlv.getAddress(), new CPointer(cArray.getValueType()), false, false);
-//				newValue = new RValue(addressRVal.getValue(), new CPointer(cArray.getValueType()), false, false);
 			} else if (underlyingType instanceof CEnum) {
 				throw new AssertionError("handled above");
 			} else if (underlyingType instanceof CStruct) {
 				final ExpressionResult rex = readStructFromHeap(main, structHandler, memoryHandler, loc,
 						hlv.getAddress(), (CStruct) underlyingType);
-//						addressRVal.getValue(), (CStruct) underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.mLrVal;
 			} else if (underlyingType instanceof CNamed) {
@@ -277,7 +256,6 @@ public class ExpressionResult extends Result {
 			} else if (underlyingType instanceof CFunction) {
 				result = copyStmtDeclAuxvarOverapprox(this);
 				newValue = new RValue(hlv.getAddress(), new CPointer(underlyingType), false, false);
-//				newValue = new RValue(addressRVal.getValue(), new CPointer(underlyingType), false, false);
 			} else {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
@@ -308,18 +286,10 @@ public class ExpressionResult extends Result {
 		final Expression startAddress = structOnHeapAddress;
 		final Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 		final Expression currentStructOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-//		if (startAddress instanceof StructConstructor) {
-//			currentStructBaseAddress = ((StructConstructor) startAddress).getFieldValues()[0];
-//			currentStructOffset = ((StructConstructor) startAddress).getFieldValues()[1];
-//		} else {
-//			currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
-//			currentStructOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-//		}
 
 		// everything for the new Result
 		final ArrayList<Statement> newStmt = new ArrayList<>();
 		final ArrayList<Declaration> newDecl = new ArrayList<>();
-//		final Map<VariableDeclaration, ILocation> newAuxVars = new LinkedHashMap<>();
 		final Set<AuxVarInfo> newAuxVars = new LinkedHashSet<>();
 
 		final String[] fieldIds = structType.getFieldIds();
@@ -347,7 +317,6 @@ public class ExpressionResult extends Result {
 				fieldLRVal = fieldRead.mLrVal;
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
-//				newAuxVars.putAll(fieldRead.mAuxVars);
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(main,
@@ -355,7 +324,6 @@ public class ExpressionResult extends Result {
 				fieldLRVal = fieldRead.mLrVal;
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
-//				newAuxVars.putAll(fieldRead.mAuxVars);
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CArray) {
 
@@ -366,16 +334,8 @@ public class ExpressionResult extends Result {
 				fieldLRVal = xres.mLrVal;
 				newStmt.addAll(xres.mStmt);
 				newDecl.addAll(xres.mDecl);
-//				newAuxVars.putAll(xres.mAuxVars);
 				newAuxVars.addAll(xres.getAuxVars());
 
-				// fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
-				// main, memoryHandler, loc, fieldIds[i],
-				// address);
-				// newStmt.addAll(fieldRead.stmt);
-				// newDecl.addAll(fieldRead.decl);
-				// newAuxVars.putAll(fieldRead.auxVars);
-				// throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CEnum) {
 				// like CPrimitive..
 				final ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(main,
@@ -383,9 +343,7 @@ public class ExpressionResult extends Result {
 				fieldLRVal = fieldRead.mLrVal;
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
-//				newAuxVars.putAll(fieldRead.mAuxVars);
 				newAuxVars.addAll(fieldRead.getAuxVars());
-				// throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CStruct) {
 
 				final Expression innerStructOffset =
@@ -404,17 +362,13 @@ public class ExpressionResult extends Result {
 				fieldLRVal = fieldRead.mLrVal;
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
-//				newAuxVars.putAll(fieldRead.mAuxVars);
 				newAuxVars.addAll(fieldRead.getAuxVars());
-
 			} else if (underlyingType instanceof CNamed) {
 				throw new AssertionError("This should not be the case as we took the underlying type.");
 			} else {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
 
-			// assert fieldRead.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
-			// fieldValues.add(((RValue) fieldRead.lrVal).getValue());
 			if (fieldLRVal instanceof RValue) {
 				fieldValues.add(fieldLRVal.getValue());
 			} else if (fieldLRVal instanceof HeapLValue) {
@@ -448,12 +402,7 @@ public class ExpressionResult extends Result {
 	 */
 	public ExpressionResult readArrayFromHeap(final Dispatcher main, final StructHandler structHandler,
 			final MemoryHandler memoryHandler, final ILocation loc, final Expression address, final CArray arrayType) {
-//		final HeapLValue resultValue;
 		final LRValue resultValue;
-//		List<Declaration> decl = new ArrayList<>();
-//		List<Statement> stmt = new ArrayList<>();
-//		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-//		final ArrayList<Overapprox> overApp = new ArrayList<>();
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		final CType arrayValueType = arrayType.getValueType().getUnderlyingType();
@@ -465,30 +414,12 @@ public class ExpressionResult extends Result {
 			}
 			final int bound = boundBigInteger.intValue();
 
-//			final String newArrayId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY, arrayType);
-//			final VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, new ArrayType(loc, new String[0],
-//					new ASTType[] { main.mTypeHandler.cType2AstType(loc, arrayType.getBound().getCType()) },
-//					main.mTypeHandler.cType2AstType(loc, arrayType.getValueType())));
-//			final VariableDeclaration newArrayDec =
-//					new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
 			final AuxVarInfo newArrayAuxvar =
 					AuxVarInfo.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.ARRAYCOPY);
 
-//			resultValue = LRValueFactory.constructHeapLValue(main,
-////					newArrayAuxvar.getExp(),
-//					ExpressionFactory.replaceBoogieType(
-//							newArrayAuxvar.getExp(),
-//							main.mTypeHandler.getBoogiePointerType()),
-//					arrayType, null);
-
 			resultValue = new RValueForArrays(newArrayAuxvar.getExp(), arrayType);
 
-//			builder.setLrVal(new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType, null));
-
-//			decl.add(newArrayDec);
-//			auxVars.put(newArrayDec, loc);
 			builder.addDeclaration(newArrayAuxvar.getVarDec());
-//			builder.putAuxVar(newArrayAuxvar.getVarDec(), loc);
 			builder.addAuxVar(newArrayAuxvar);
 
 			final Expression arrayStartAddress = address;
@@ -523,27 +454,16 @@ public class ExpressionResult extends Result {
 				} else {
 					builder.resetLrVal(readRex.getLrValue());
 				}
-//				decl.addAll(readRex.mDecl);
-//				stmt.addAll(readRex.mStmt);
-//				auxVars.putAll(readRex.mAuxVars);
-//				overApp.addAll(readRex.mOverappr);
 
 				final ArrayLHS arrayAccLhs = ExpressionFactory.constructNestedArrayLHS(loc, newArrayAuxvar.getLhs(),
 						new Expression[] { exprTrans.constructLiteralForIntegerType(loc,
 								new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) });
-//				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc, stmt,
-//						new LocalLValue(aAcc, arrayType.getValueType(), null), (RValue) readRex.mLrVal, decl, auxVars,
-//						mOverappr);
 				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc,
 						new LocalLValue(arrayAccLhs, arrayType.getValueType(), null), Collections.emptyList(), builder.build()
 						);
 				builder = new ExpressionResultBuilder()
 						.addAllExceptLrValue(assRex)
 						.setLrVal(assRex.getLrValue());
-//				decl = assRex.mDecl;
-//				stmt = assRex.mStmt;
-//				auxVars = assRex.mAuxVars;
-//				overApp.addAll(assRex.mOverappr);
 
 				arrayEntryAddressOffset = exprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 						arrayEntryAddressOffset, exprTrans.getCTypeOfPointerComponents(), valueTypeSize,
@@ -553,8 +473,6 @@ public class ExpressionResult extends Result {
 			throw new UnsupportedSyntaxException(loc,
 					"we need to generalize this to nested and/or variable length arrays");
 		}
-//		final ExpressionResult xres1 = new ExpressionResult(stmt, xfieldHeapLValue, decl, auxVars, overApp);
-//		return xres1;
 		builder.setOrResetLrVal(resultValue);
 		return builder.build();
 	}
@@ -565,7 +483,6 @@ public class ExpressionResult extends Result {
 	public void addAll(final ExpressionResult re) {
 		mDecl.addAll(re.mDecl);
 		mStmt.addAll(re.mStmt);
-//		mAuxVars.putAll(re.mAuxVars);
 		mAuxVars.addAll(re.getAuxVars());
 		mOverappr.addAll(re.mOverappr);
 	}
@@ -709,7 +626,6 @@ public class ExpressionResult extends Result {
 		return Collections.unmodifiableList(mOverappr);
 	}
 
-//	public Map<VariableDeclaration, ILocation> getAuxVars() {
 	public Set<AuxVarInfo> getAuxVars() {
 		return Collections.unmodifiableSet(mAuxVars);
 	}
