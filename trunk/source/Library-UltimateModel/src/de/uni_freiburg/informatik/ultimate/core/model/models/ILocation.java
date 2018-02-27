@@ -74,13 +74,6 @@ public interface ILocation extends IAnnotations {
 	@Deprecated
 	IAnnotations getCheck();
 
-	/**
-	 * 
-	 * @return true iff this Location represents a loop.
-	 */
-	@Deprecated
-	boolean isLoop();
-
 	default void annotate(final IElement node) {
 		annotate(node.getPayload());
 	}

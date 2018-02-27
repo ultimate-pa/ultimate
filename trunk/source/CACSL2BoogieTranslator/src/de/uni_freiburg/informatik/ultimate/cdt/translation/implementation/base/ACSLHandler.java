@@ -605,7 +605,7 @@ public class ACSLHandler implements IACSLHandler {
 		final ASTType astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
 		final StorageClass sc = stv.isBoogieGlobalVar() ? StorageClass.GLOBAL : StorageClass.LOCAL;
 		final String procId = sc == StorageClass.GLOBAL ? null
-				: main.mCHandler.getFunctionHandler().getCurrentProcedureID();
+				: main.mCHandler.getProcedureManager().getCurrentProcedureID();
 		LRValue lrVal;
 		if (((CHandler) main.mCHandler).isHeapVar(id)) {
 			final IdentifierExpression idExp = // new IdentifierExpression(loc, id);
@@ -749,7 +749,7 @@ public class ACSLHandler implements IACSLHandler {
 		final IdentifierExpression idEx = // new IdentifierExpression(loc, "#res");
 				ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
 						new DeclarationInformation(StorageClass.LOCAL,
-								main.mCHandler.getFunctionHandler().getCurrentProcedureID()));
+								main.mCHandler.getProcedureManager().getCurrentProcedureID()));
 		return new ExpressionResult(new RValue(idEx, new CPrimitive(CPrimitives.INT)));
 		// return new Result(new
 		// IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"));
@@ -918,8 +918,10 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(r);
 
 		// TODO: CType
-		final RValue rval = new RValue(
-				ExpressionFactory.constructStructAccessExpression(loc, r.mLrVal.getValue(), field),
+		final StructAccessExpression structAccessExpression =
+				ExpressionFactory.constructStructAccessExpression(loc, r.mLrVal.getValue(), field);
+
+		final RValue rval = new RValue(structAccessExpression,
 				((CStruct) r.mLrVal.getCType().getUnderlyingType()).getFieldType(field));
 		// return new ExpressionResult(stmt, rval decl, auxVars, overappr);
 		resultBuilder.setLrVal(rval);
@@ -1053,7 +1055,8 @@ public class ACSLHandler implements IACSLHandler {
 		opPositive = opPositive.switchToRValueIfNecessary(main, loc, main.getAcslHook());
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getElsePart());
 		opNegative = opNegative.switchToRValueIfNecessary(main, loc, main.getAcslHook());
-		return ((CHandler) main.mCHandler).handleConditionalOperator(loc, main, opCondition, opPositive, opNegative);
+		return ((CHandler) main.mCHandler).handleConditionalOperator(loc, main, opCondition, opPositive, opNegative,
+				main.getAcslHook());
 	}
 
 }

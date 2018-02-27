@@ -6,7 +6,15 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -15,10 +23,13 @@ public class BoogieTypeHelper {
 
 //	private MemoryHandler mMemoryHandler;
 	private final ITypeHandler mTypeHandler;
+	private final HandlerHandler mHandlerHandler;
 
-	public BoogieTypeHelper(final Dispatcher main) {
+	public BoogieTypeHelper(final HandlerHandler handlerHandler) {
 //		mMemoryHandler = main.mCHandler.getMemoryHandler();
-		mTypeHandler = main.mTypeHandler;
+		handlerHandler.setBoogieTypeHelper(this);
+		mHandlerHandler = handlerHandler;
+		mTypeHandler = handlerHandler.getTypeHandler();
 	}
 
 	public BoogieType getBoogieTypeForBoogieASTType(final ASTType asttype) {
@@ -80,6 +91,56 @@ public class BoogieTypeHelper {
 			final String id, final StorageClass storageClass, final String surroundingProcedureName) {
 		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, id,
 				new DeclarationInformation(storageClass, surroundingProcedureName));
+	}
+
+	public BoogieType getBoogieTypeForCType(final CType cTypeRaw) {
+		final CType cType = cTypeRaw.getUnderlyingType();
+
+		if (cType instanceof CPrimitive) {
+//			if (mHandlerHandler.getExpressionTranslation() instanceof Bit
+			if (mTypeHandler.isBitvectorTranslation()) {
+				final Integer byteSize = mHandlerHandler.getTypeSizes().getSize(((CPrimitive) cType).getType());
+				return BoogieType.createBitvectorType(byteSize * 8);
+			} else {
+				switch (((CPrimitive) cType).getGeneralType()) {
+				case FLOATTYPE:
+					return BoogieType.TYPE_REAL;
+				case INTTYPE:
+					return BoogieType.TYPE_INT;
+				case VOID:
+					return BoogieType.TYPE_ERROR;
+				default:
+					throw new AssertionError();
+				}
+			}
+		} else if (cType instanceof CPointer) {
+			return getBoogieTypeForPointerType();
+		} else if (cType instanceof CEnum) {
+			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
+		} else if (cType instanceof CArray) {
+
+			// may have to change this from int to something depending on bitvector settings and stuff..
+			final BoogieType[] indexTypes = new BoogieType[] {
+					getBoogieTypeForCType(new CPrimitive(CPrimitives.UINT)) };
+
+			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
+			return BoogieType.createArrayType(0, indexTypes, valueType);
+		} else if (cType instanceof CFunction) {
+			throw new AssertionError("implement if needed");
+		} else if (cType instanceof CStruct) {
+			final CStruct cStructType = (CStruct) cType;
+			final BoogieType [] boogieFieldTypes = new BoogieType[cStructType.getFieldCount()];
+			for (int i = 0; i < cStructType.getFieldCount(); i++) {
+				boogieFieldTypes[i] = getBoogieTypeForCType(cStructType.getFieldTypes()[i]);
+			}
+			return BoogieType.createStructType(cStructType.getFieldIds(), boogieFieldTypes);
+		} else {
+			throw new AssertionError("unknown type " + cType);
+		}
+	}
+
+	public BoogieType getBoogieTypeForPointerComponents() {
+		return getBoogieTypeForCType(mHandlerHandler.getExpressionTranslation().getCTypeOfPointerComponents());
 	}
 
 

@@ -5,14 +5,14 @@
  * written/read in main()
  * author: nutz, 18.12.2013
  */
-int main() {
-	int sv = 0;
-	sv = sv + f(sv);
-	sv = f(sv);
-}
-
 int f(int x) {
 	static int sv = 5;
 	sv++;
 	return x + sv;
+}
+
+int main() {
+	int sv = 0;
+	sv = sv + f(sv);
+	sv = f(sv);
 }

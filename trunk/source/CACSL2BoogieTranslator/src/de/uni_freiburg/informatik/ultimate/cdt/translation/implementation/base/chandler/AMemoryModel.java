@@ -60,14 +60,14 @@ public abstract class AMemoryModel {
 
 	private final HeapDataArray mPointerArray;
 
-	public AMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler, final ExpressionTranslation expressionTranslation) {
+	public AMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+			final ExpressionTranslation expressionTranslation) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-       	mPointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc),
-       			typeHandler.getBoogiePointerType(),
-       			typeHandler.getBoogiePointerType(),
-       			bytesizeOfStoredPointerComponents());
+		mPointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc),
+				typeHandler.getBoogiePointerType(), typeHandler.getBoogiePointerType(),
+				bytesizeOfStoredPointerComponents());
 	}
 
 	protected abstract int bytesizeOfStoredPointerComponents();
@@ -87,12 +87,10 @@ public abstract class AMemoryModel {
 		return s_ReadProcedurePrefix + hda.getName();
 	}
 
-
 	public final String getWritePointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return s_WriteProcedurePrefix + hda.getName();
 	}
-
 
 	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
 
@@ -100,7 +98,8 @@ public abstract class AMemoryModel {
 		return mPointerArray;
 	}
 
-	public final Collection<HeapDataArray> getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+	public final Collection<HeapDataArray>
+			getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final Set<HeapDataArray> result = new HashSet<>();
 		if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 			result.add(getPointerHeapArray());
@@ -111,17 +110,17 @@ public abstract class AMemoryModel {
 		return result;
 	}
 
-	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda, final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		if (hda == mPointerArray) {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
-				return Collections.singletonList(new ReadWriteDefinition(
-						getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(), getPointerHeapArray().getASTType(), Collections.emptySet()));
-			} else {
-				return Collections.emptyList();
+				return Collections.singletonList(
+						new ReadWriteDefinition(getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(),
+								getPointerHeapArray().getASTType(), Collections.emptySet()));
 			}
-		} else {
-			return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryModelFeatures);
+			return Collections.emptyList();
 		}
+		return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryModelFeatures);
 	}
 
 	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
@@ -133,6 +132,7 @@ public abstract class AMemoryModel {
 		private final ASTType mASTType;
 		private final Set<CPrimitives> mPrimitives;
 		private final Set<CPrimitiveCategory> mCPrimitiveCategory;
+
 		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType aSTType,
 				final Set<CPrimitives> primitives) {
 			super();
@@ -143,24 +143,31 @@ public abstract class AMemoryModel {
 			final Function<CPrimitives, CPrimitiveCategory> mapper = (x -> x.getPrimitiveCategory());
 			mCPrimitiveCategory = primitives.stream().map(mapper).collect(Collectors.toSet());
 		}
+
 		public String getReadProcedureName() {
 			return s_ReadProcedurePrefix + mProcedureSuffix;
 		}
+
 		public String getWriteProcedureName() {
 			return s_WriteProcedurePrefix + mProcedureSuffix;
 		}
+
 		public int getBytesize() {
 			return mBytesize;
 		}
+
 		public ASTType getASTType() {
 			return mASTType;
 		}
+
 		public Set<CPrimitives> getPrimitives() {
 			return mPrimitives;
 		}
+
 		public Set<CPrimitiveCategory> getCPrimitiveCategory() {
 			return mCPrimitiveCategory;
 		}
+
 		@Override
 		public String toString() {
 			return "ReadWriteDefinition [mProcedureSuffix=" + mProcedureSuffix + ", mBytesize=" + mBytesize

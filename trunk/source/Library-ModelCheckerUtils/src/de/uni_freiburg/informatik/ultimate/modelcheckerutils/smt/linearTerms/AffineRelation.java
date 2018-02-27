@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -41,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 /**
  * Represents an term of the form ψ ▷ φ, where ψ and φ are affine terms and ▷ is a binary relation symbol. Allows to
@@ -71,6 +74,29 @@ public class AffineRelation {
 		EQUIVALENT_TO_TRUE, EQUIVALENT_TO_FALSE, NONTRIVIAL
 	}
 
+	/**
+	 * Create {@link AffineRelation} from {@link AffineTerm} and {@link RelationSymbol}.
+	 *
+	 * Resulting relation is then <code><term> <symbol> 0</code>.
+	 */
+	public AffineRelation(final Script script, final AffineTerm term, final RelationSymbol relationSymbol) {
+		mAffineTerm = Objects.requireNonNull(term);
+		mRelationSymbol = relationSymbol;
+		mTrivialityStatus = computeTrivialityStatus(mAffineTerm, mRelationSymbol);
+		if (VMUtils.areAssertionsEnabled()) {
+			mOriginalTerm = term.toTerm(script);
+		} else {
+			mOriginalTerm = null;
+		}
+	}
+
+	/**
+	 * Transform {@link Term} to {@link AffineRelation} without transforming any equalities (i.e., by keeping the
+	 * natural relation of the term).
+	 *
+	 * @param term
+	 * @throws NotAffineException
+	 */
 	public AffineRelation(final Script script, final Term term) throws NotAffineException {
 		this(script, term, TransformInequality.NO_TRANFORMATION);
 	}
@@ -159,56 +185,37 @@ public class AffineRelation {
 			mAffineTerm = difference;
 			mRelationSymbol = bnr.getRelationSymbol();
 		}
-		if (mAffineTerm.isConstant()) {
-			switch (mRelationSymbol) {
-			case DISTINCT:
-				if (mAffineTerm.getConstant().signum() != 0) {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
-				} else {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;
-				}
-				break;
-			case EQ:
-				if (mAffineTerm.getConstant().signum() == 0) {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
-				} else {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;
-				}
-				break;
-			case LESS:
-				if (mAffineTerm.getConstant().signum() < 0) {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
-				} else {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;
-				}
-				break;
-			case GREATER:
-				if (mAffineTerm.getConstant().signum() > 0) {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
-				} else {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;
-				}
-				break;
-			case GEQ:
-				if (mAffineTerm.getConstant().signum() >= 0) {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
-				} else {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;
-				}
-				break;
-			case LEQ:
-				if (mAffineTerm.getConstant().signum() <= 0) {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;
-				} else {
-					mTrivialityStatus = TrivialityStatus.EQUIVALENT_TO_FALSE;
-				}
-				break;
-			default:
-				throw new AssertionError("unknown symbol");
-			}
-		} else {
-			mTrivialityStatus = TrivialityStatus.NONTRIVIAL;
+		mTrivialityStatus = computeTrivialityStatus(mAffineTerm, mRelationSymbol);
+	}
+
+	private static TrivialityStatus computeTrivialityStatus(final AffineTerm term, final RelationSymbol symbol) {
+		if (!term.isConstant()) {
+			return TrivialityStatus.NONTRIVIAL;
 		}
+
+		switch (symbol) {
+		case DISTINCT:
+			return computeTrivialityStatus(term, a -> a != 0);
+		case EQ:
+			return computeTrivialityStatus(term, a -> a == 0);
+		case LESS:
+			return computeTrivialityStatus(term, a -> a < 0);
+		case GREATER:
+			return computeTrivialityStatus(term, a -> a > 0);
+		case GEQ:
+			return computeTrivialityStatus(term, a -> a >= 0);
+		case LEQ:
+			return computeTrivialityStatus(term, a -> a <= 0);
+		default:
+			throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
+		}
+	}
+
+	private static TrivialityStatus computeTrivialityStatus(final AffineTerm term, final Predicate<Integer> pred) {
+		if (pred.test(term.getConstant().signum())) {
+			return TrivialityStatus.EQUIVALENT_TO_TRUE;
+		}
+		return TrivialityStatus.EQUIVALENT_TO_FALSE;
 	}
 
 	public RelationSymbol getRelationSymbol() {

@@ -204,6 +204,7 @@ public final class SFO {
 
 	public static final String C_MEMSET = "#Ultimate.C_memset";
 
+
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */

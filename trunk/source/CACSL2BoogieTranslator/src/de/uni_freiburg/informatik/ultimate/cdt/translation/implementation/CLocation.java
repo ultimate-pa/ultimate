@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
@@ -100,11 +101,6 @@ public class CLocation extends CACSLLocation {
 		return -1;
 	}
 
-	@Override
-	public boolean isLoop() {
-		return false;
-	}
-
 	public IASTNode getNode() {
 		return mNode;
 	}
@@ -158,22 +154,29 @@ public class CLocation extends CACSLLocation {
 	}
 
 	private IASTNode getMergedNode(final CLocation otherCloc) {
-		final IASTNode node;
-		if (getNode() != null || otherCloc.getNode() != null) {
-			if (getNode() == null) {
-				node = otherCloc.getNode();
-			} else if (otherCloc.getNode() == null) {
-				node = getNode();
+		final IASTNode otherNode = otherCloc.getNode();
+		final IASTNode myNode = getNode();
+		if (myNode == null && otherNode == null) {
+			return null;
+		}
+		if (myNode == null) {
+			return otherNode;
+		} else if (otherNode == null) {
+			return myNode;
+		} else {
+			// we have two nodes and want to merge them; if one of both is a translation unit, we take the other
+			// one. If both are not translation units, we try to find a common parent
+			if (myNode instanceof IASTTranslationUnit) {
+				return otherNode;
+			} else if (otherNode instanceof IASTTranslationUnit) {
+				return myNode;
 			} else {
 				final Collection<IASTNode> nodes = new HashSet<>();
-				nodes.add(getNode());
-				nodes.add(otherCloc.getNode());
-				node = CdtASTUtils.findCommonParent(nodes);
+				nodes.add(myNode);
+				nodes.add(otherNode);
+				return CdtASTUtils.findCommonParent(nodes);
 			}
-		} else {
-			node = null;
 		}
-		return node;
 	}
 
 }

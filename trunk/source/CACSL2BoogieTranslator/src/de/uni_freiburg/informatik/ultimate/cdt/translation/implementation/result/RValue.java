@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -83,9 +84,9 @@ public class RValue extends LRValue {
 	}
 
 	public void checkType(final CType type) {
-//		if (type instanceof CArray) {
-//			throw new IllegalArgumentException("RValues cannot have array type");
-//		}
+		if (type instanceof CArray) {
+			throw new IllegalArgumentException("RValues cannot have array type");
+		}
 		if (type instanceof CFunction) {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
@@ -102,7 +103,7 @@ public class RValue extends LRValue {
 				new CPrimitive(CPrimitives.INT), BigInteger.ONE);
 		final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		return new RValue(ExpressionFactory.newIfThenElseExpression(loc, rVal.getValue(), one, zero), rVal.getCType(),
+		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero), rVal.getCType(),
 				false);
 	}
 

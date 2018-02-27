@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.type;
@@ -40,15 +40,15 @@ public class BoogiePrimitiveType extends BoogieType {
 	public static final int INT   = -2;
 	public static final int REAL  = -3;
 	public static final int ERROR = -42;
-	
+
 	/**
 	 * The type code.  If this is >= 0, this is the length and the class
-	 * represents a bit vector type of this length.  Otherwise, this is 
-	 * one of BOOL, INT, REAL, or ERROR. 
+	 * represents a bit vector type of this length.  Otherwise, this is
+	 * one of BOOL, INT, REAL, or ERROR.
 	 */
 	private final int type;
-	
-	BoogiePrimitiveType(int type) {
+
+	BoogiePrimitiveType(final int type) {
 		this.type = type;
 	}
 
@@ -60,20 +60,20 @@ public class BoogiePrimitiveType extends BoogieType {
 
 	//@Override
 	@Override
-	protected boolean hasPlaceholder(int minDepth, int maxDepth) {
+	protected boolean hasPlaceholder(final int minDepth, final int maxDepth) {
 		return false;
 	}
 
 	//@Override
 	@Override
-	protected BoogieType incrementPlaceholders(int depth, int incDepth) {
+	protected BoogieType incrementPlaceholders(final int depth, final int incDepth) {
 		return this;
 	}
 
 	//@Override
 	@Override
-	protected boolean isUnifiableTo(int depth, BoogieType other,
-			ArrayList<BoogieType> subst) {
+	protected boolean isUnifiableTo(final int depth, final BoogieType other,
+			final ArrayList<BoogieType> subst) {
 		if (other instanceof BoogiePlaceholderType) {
 			return other.isUnifiableTo(depth, this, subst);
 		}
@@ -82,14 +82,14 @@ public class BoogiePrimitiveType extends BoogieType {
 
 	//@Override
 	@Override
-	protected BoogieType substitutePlaceholders(int depth,
-			BoogieType[] substType) {
+	protected BoogieType substitutePlaceholders(final int depth,
+			final BoogieType[] substType) {
 		return this;
 	}
 
 	//@Override
 	@Override
-	protected String toString(int depth, boolean needParentheses) {
+	protected String toString(final int depth, final boolean needParentheses) {
 		switch (type) {
 		case INT:
 			return "int";
@@ -101,20 +101,20 @@ public class BoogiePrimitiveType extends BoogieType {
 			return "*type-error*";
 		default:
 			return "bv"+type;
-					
+
 		}
 	}
-	
+
 	@Override
-	protected ASTType toASTType(ILocation loc, int depth) {
+	protected ASTType toASTType(final ILocation loc, final int depth) {
 		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			PrimitiveType(loc, this, toString(depth, false));
 	}
-	
+
 	//@Override
 	@Override
-	protected boolean unify(int depth, BoogieType other,
-			BoogieType[] substitution) {
+	protected boolean unify(final int depth, final BoogieType other,
+			final BoogieType[] substitution) {
 		return this == TYPE_ERROR || other == TYPE_ERROR || this == other;
 	}
 
@@ -127,4 +127,5 @@ public class BoogiePrimitiveType extends BoogieType {
 		/* Everything except INT may be finite */
 		return type != INT;
 	}
+
 }

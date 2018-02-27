@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -311,14 +312,6 @@ public class CfgBuilder {
 		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
 	}
 
-	private static void passAllAnnotations(final BoogieASTNode node, final IIcfgElement cb) {
-		ModelUtils.copyAnnotations(node, cb);
-	}
-
-	private static void passAllAnnotations(final BoogieASTNode node, final Statement st) {
-		ModelUtils.copyAnnotations(node, st);
-	}
-
 	/**
 	 * Build control flow graph of single procedures.
 	 *
@@ -432,9 +425,6 @@ public class CfgBuilder {
 
 				final ILocation loc = st.getLocation();
 				assert loc != null : "location of the following statement is null " + st;
-				if (loc.isLoop()) {
-					mLogger.debug("Found loop entry: " + st);
-				}
 
 				if (st instanceof Label) {
 					if (mCurrent instanceof BoogieIcfgLocation) {
@@ -720,7 +710,7 @@ public class CfgBuilder {
 
 			for (final EnsuresSpecification spec : ensures) {
 				final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
-				passAllAnnotations(spec, st);
+				ModelUtils.copyAnnotations(spec, st);
 				mBacktranslator.putAux(st, new BoogieASTNode[] { spec });
 				processAssuAssiHavoStatement(st, Origin.ENSURES);
 				mLastStmt = st;
@@ -739,13 +729,14 @@ public class CfgBuilder {
 					final Expression specExpr = spec.getFormula();
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(spec.getLocation(), getNegation(specExpr));
-					passAllAnnotations(spec, assumeSt);
+					final Statement st = assumeSt;
+					ModelUtils.copyAnnotations(spec, st);
 					mBacktranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
 					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec);
 					final CodeBlock assumeEdge =
 							mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES);
-					passAllAnnotations(spec, assumeEdge);
-					passAllAnnotations(spec, errorLocNode);
+					ModelUtils.copyAnnotations(spec, assumeEdge);
+					ModelUtils.copyAnnotations(spec, errorLocNode);
 					mEdges.add(assumeEdge);
 				}
 			}
@@ -764,7 +755,7 @@ public class CfgBuilder {
 			if (requires != null && !requires.isEmpty()) {
 				for (final RequiresSpecification spec : requires) {
 					final AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
-					passAllAnnotations(spec, st);
+					ModelUtils.copyAnnotations(spec, st);
 					mBacktranslator.putAux(st, new BoogieASTNode[] { spec });
 					processAssuAssiHavoStatement(st, Origin.REQUIRES);
 					mLastStmt = st;
@@ -816,10 +807,12 @@ public class CfgBuilder {
 		// return new AssignmentStatement(null,lhs,rhs);
 		// }
 
-		private String getLocName(final ILocation location) {
+		private String getLocName(final Statement stmt) {
+			final ILocation location = stmt.getLocation();
 			final int startLine = location.getStartLine();
 			String unprimedName = "L" + startLine;
-			if (location.isLoop()) {
+			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(stmt);
+			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
 				unprimedName += "loopEntry";
 			}
 			final String result = mNameCache.getUniqueName(unprimedName);
@@ -839,13 +832,15 @@ public class CfgBuilder {
 		 * @return LocNode that is the representative for labelName.
 		 */
 		private BoogieIcfgLocation getLocNodeForLabel(final String labelName, final Statement st) {
+			final ILocation loc = st.getLocation();
+			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(st);
 			if (mLabel2LocNodes.containsKey(labelName)) {
 				final BoogieIcfgLocation locNode = mLabel2LocNodes.get(labelName);
 				mLogger.debug("LocNode for " + labelName + " already" + " constructed, namely: " + locNode);
 				if (st instanceof Label && locNode.getDebugIdentifier() == labelName) {
-					final ILocation loc = st.getLocation();
+
 					loc.annotate(locNode);
-					if (st.getLocation().isLoop()) {
+					if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
 						mLogger.debug("LocNode does not have to Location of the while loop" + st.getLocation());
 						mIcfg.getLoopLocations().add(locNode);
 					}
@@ -856,7 +851,7 @@ public class CfgBuilder {
 			mLabel2LocNodes.put(labelName, locNode);
 			mProcLocNodes.put(labelName, locNode);
 			mLogger.debug("LocNode for " + labelName + " has not" + " existed yet. Constructed it");
-			if (st != null && st.getLocation().isLoop()) {
+			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
 				mIcfg.getLoopLocations().add(locNode);
 			}
 			return locNode;
@@ -902,7 +897,7 @@ public class CfgBuilder {
 			if (mCurrent instanceof BoogieIcfgLocation) {
 				final StatementSequence codeBlock =
 						mCbf.constructStatementSequence((BoogieIcfgLocation) mCurrent, null, st, origin);
-				passAllAnnotations(st, codeBlock);
+				ModelUtils.copyAnnotations(st, codeBlock);
 				mEdges.add(codeBlock);
 				mCurrent = codeBlock;
 			} else if (mCurrent instanceof CodeBlock) {
@@ -910,15 +905,15 @@ public class CfgBuilder {
 						|| mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 					final StatementSequence stSeq = (StatementSequence) mCurrent;
 					stSeq.addStatement(st);
-					passAllAnnotations(st, stSeq);
+					ModelUtils.copyAnnotations(st, stSeq);
 				} else {
-					final String locName = getLocName(st.getLocation());
+					final String locName = getLocName(st);
 					final BoogieIcfgLocation locNode =
 							new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 					((CodeBlock) mCurrent).connectTarget(locNode);
 					mProcLocNodes.put(locName, locNode);
 					final StatementSequence codeBlock = mCbf.constructStatementSequence(locNode, null, st, origin);
-					passAllAnnotations(st, codeBlock);
+					ModelUtils.copyAnnotations(st, codeBlock);
 					mEdges.add(codeBlock);
 					mCurrent = codeBlock;
 				}
@@ -934,7 +929,7 @@ public class CfgBuilder {
 				return;
 			}
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st.getLocation());
+				final String locName = getLocName(st);
 				final BoogieIcfgLocation locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -943,13 +938,13 @@ public class CfgBuilder {
 			final BoogieIcfgLocation locNode = (BoogieIcfgLocation) mCurrent;
 			final Expression assertion = st.getFormula();
 			final AssumeStatement assumeError = new AssumeStatement(st.getLocation(), getNegation(assertion));
-			passAllAnnotations(st, assumeError);
+			ModelUtils.copyAnnotations(st, assumeError);
 			mBacktranslator.putAux(assumeError, new BoogieASTNode[] { st });
 			final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st);
 			final StatementSequence assumeErrorCB =
 					mCbf.constructStatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
-			passAllAnnotations(st, errorLocNode);
-			passAllAnnotations(st, assumeErrorCB);
+			ModelUtils.copyAnnotations(st, errorLocNode);
+			ModelUtils.copyAnnotations(st, assumeErrorCB);
 			mEdges.add(assumeErrorCB);
 			AssumeStatement assumeSafe = new AssumeStatement(st.getLocation(), assertion);
 			if (mAddAssumeForEachAssert) {
@@ -964,11 +959,12 @@ public class CfgBuilder {
 				assumeSafe = new AssumeStatement(st.getLocation(),
 						new BooleanLiteral(st.getLocation(), BoogieType.TYPE_BOOL, true));
 			}
-			passAllAnnotations(st, assumeSafe);
+			final Statement st1 = assumeSafe;
+			ModelUtils.copyAnnotations(st, st1);
 			mBacktranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
 			final StatementSequence assumeSafeCB =
 					mCbf.constructStatementSequence(locNode, null, assumeSafe, Origin.ASSERT);
-			passAllAnnotations(st, assumeSafeCB);
+			ModelUtils.copyAnnotations(st, assumeSafeCB);
 			// add a new TransEdge labeled with st as successor of the
 			// last constructed LocNode
 			mEdges.add(assumeSafeCB);
@@ -984,7 +980,7 @@ public class CfgBuilder {
 			mLogger.debug("Goto statement with " + targets.length + " targets.");
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st.getLocation());
+				final String locName = getLocName(st);
 				locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -1015,7 +1011,7 @@ public class CfgBuilder {
 			}
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st.getLocation());
+				final String locName = getLocName(st);
 				locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -1025,7 +1021,7 @@ public class CfgBuilder {
 				// mcurrent must be either LocNode or TransEdge
 				throw new IllegalArgumentException();
 			}
-			final String locName = getLocName(st.getLocation());
+			final String locName = getLocName(st);
 			final BoogieIcfgLocation returnNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, returnNode);
 			// add summary edge
@@ -1033,11 +1029,13 @@ public class CfgBuilder {
 			Summary summaryEdge;
 			if (mBoogieDeclarations.getProcImplementation().containsKey(callee)) {
 				summaryEdge = mCbf.constructSummary(locNode, returnNode, st, true);
-				passAllAnnotations(st, summaryEdge);
+				final IIcfgElement cb = summaryEdge;
+				ModelUtils.copyAnnotations(st, cb);
 				mImplementationSummarys.add(summaryEdge);
 			} else {
 				summaryEdge = mCbf.constructSummary(locNode, returnNode, st, false);
-				passAllAnnotations(st, summaryEdge);
+				final IIcfgElement cb = summaryEdge;
+				ModelUtils.copyAnnotations(st, cb);
 			}
 			mEdges.add(summaryEdge);
 			mCurrent = returnNode;
@@ -1063,13 +1061,14 @@ public class CfgBuilder {
 							getNegation(new WeakestPrecondition(spec.getFormula(), st, proc).getResult());
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
-					passAllAnnotations(st, assumeSt);
+					final Statement st1 = assumeSt;
+					ModelUtils.copyAnnotations(st, st1);
 					mBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
 					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st);
 					final StatementSequence errorCB =
 							mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES);
-					passAllAnnotations(spec, errorCB);
-					passAllAnnotations(spec, errorLocNode);
+					ModelUtils.copyAnnotations(spec, errorCB);
+					ModelUtils.copyAnnotations(spec, errorLocNode);
 					mEdges.add(errorCB);
 				}
 			}

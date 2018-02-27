@@ -98,9 +98,4 @@ public class DefaultLocation extends ModernAnnotations implements ILocation {
 	public Check getCheck() {
 		throw new UnsupportedOperationException();
 	}
-
-	@Override
-	public boolean isLoop() {
-		throw new UnsupportedOperationException();
-	}
 }

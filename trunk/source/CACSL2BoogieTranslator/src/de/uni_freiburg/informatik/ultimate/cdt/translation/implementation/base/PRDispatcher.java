@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -125,6 +124,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
@@ -174,9 +174,11 @@ public class PRDispatcher extends Dispatcher {
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		final boolean overapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
-		mTypeHandler = new TypeHandler(bitvectorTranslation);
-		mCHandler = new CHandler(this, mBacktranslator, false, mLogger, mTypeHandler, bitvectorTranslation,
-				overapproximateFloatingPointOperations, mNameHandler, mFlatTable);
+
+		mTypeHandler = new TypeHandler(bitvectorTranslation, mHandlerHandler);
+
+		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, false, mLogger, bitvectorTranslation,
+				overapproximateFloatingPointOperations, mFlatTable);
 	}
 
 	@Override
@@ -488,32 +490,36 @@ public class PRDispatcher extends Dispatcher {
 
 	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr,
 			final Set<AuxVarInfo> auxVars, final IASTNode hook) {
-		final Set<String> auxVarIds = new HashSet<>();
-//		for (final VariableDeclaration decl : auxVars.keySet()) {
-		for (final AuxVarInfo auxvar : auxVars) {
-//			final VariableDeclaration decl = auxvar.getVarDec();
-//			for (final VarList varList : decl.getVariables()) {
-//				for (final String id : varList.getIdentifiers()) {
-//					auxVarIds.add(id);
-//				}
-//			}
-			auxVarIds.add(auxvar.getExp().getIdentifier());
-		}
+//		final Set<String> auxVarIds = new HashSet<>();
+////		for (final VariableDeclaration decl : auxVars.keySet()) {
+//		for (final AuxVarInfo auxvar : auxVars) {
+////			final VariableDeclaration decl = auxvar.getVarDec();
+////			for (final VarList varList : decl.getVariables()) {
+////				for (final String id : varList.getIdentifiers()) {
+////					auxVarIds.add(id);
+////				}
+////			}
+//			auxVarIds.add(auxvar.getExp().getIdentifier());
+//		}
 		final BoogieIdExtractor bie = new BoogieIdExtractor();
 		bie.processExpression(expr);
 		for (final String id : bie.getIds()) {
 			// auxVars do not have a corresponding C var, hence we move nothing
 			// onto the heap
-			if (!auxVarIds.contains(id)) {
+//			if (!auxVarIds.contains(id)) {
 				final FlatSymbolTable st = mCHandler.getSymbolTable();
 				final String cid = st.getCIdForBoogieId(id);
+				if (cid == null) {
+					// expression does not have a corresponding c identifier --> nothing to move on heap
+					continue;
+				}
 				final SymbolTableValue value = st.findCSymbol(hook, cid);
 				final CType type = value.getCVariable().getUnderlyingType();
 				if (type instanceof CArray || type instanceof CStruct) {
 //					getVariablesOnHeap().add(value.getDeclarationNode());
 					addToVariablesOnHeap(value.getDeclarationNode());
 				}
-			}
+//			}
 		}
 	}
 

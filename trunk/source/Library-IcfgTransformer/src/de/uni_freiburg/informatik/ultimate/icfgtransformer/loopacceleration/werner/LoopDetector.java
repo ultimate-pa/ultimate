@@ -21,7 +21,7 @@
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
- * to convey the resulting work.	
+ * to convey the resulting work.
  */
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner;
@@ -52,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which
- * are acyclic paths in the loop.
+ * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which are acyclic paths in the loop.
  *
  * @param <INLOC>
  *
@@ -63,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class LoopDetector<INLOC extends IcfgLocation> {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
-	private Map<IcfgLocation, Loop> mLoopBodies;
+	private final Map<IcfgLocation, Loop> mLoopBodies;
 	private final IUltimateServiceProvider mServices;
 	private final Set<INLOC> mErrorLocations;
 	private final Set<INLOC> mLoopHeads;
@@ -79,7 +78,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 	/**
 	 * Loopdetector for finding feasible loops in an Icfg.
-	 * 
+	 *
 	 * @param logger
 	 *            {@link ILogger}
 	 * @param originalIcfg
@@ -91,8 +90,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	 * @param services
 	 *            {@link IUltimateServiceProvider}
 	 * @param backboneLimit
-	 *            a limit for number of backbones. Send notification if there
-	 *            are more backbones than the limit.
+	 *            a limit for number of backbones. Send notification if there are more backbones than the limit.
 	 */
 	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Set<INLOC> loopHeads,
 			final ManagedScript script, final IUltimateServiceProvider services, final int backboneLimit) {
@@ -130,7 +128,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 	/**
 	 * Get Loops of the originalIcfg.
-	 * 
+	 *
 	 * @param originalIcfg
 	 * @return
 	 */
@@ -146,8 +144,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		}
 
 		/**
-		 * check backbones for nested loops and sort out backbones that are
-		 * nested in eachother.
+		 * check backbones for nested loops and sort out backbones that are nested in eachother.
 		 */
 		checkBackbones();
 
@@ -164,8 +161,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			}
 
 			/**
-			 * Remove loops that do not have backbones, or where no loopexits
-			 * could be found.
+			 * Remove loops that do not have backbones, or where no loopexits could be found.
 			 */
 			if (mIllegalLoopHeads.contains(loopHead) || mBackbones.get(loopHead).isEmpty()
 					|| !mLoopExitNodes.containsKey(loopHead)) {
@@ -175,8 +171,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			final Deque<Backbone> backbones = mBackbones.get(loop.getLoophead());
 
 			/**
-			 * Assign the properties, loopexit, backbones, looppath, loopformula
-			 * to the loops.
+			 * Assign the properties, loopexit, backbones, looppath, loopformula to the loops.
 			 */
 			loop.setBackbones(backbones);
 			final Pair<UnmodifiableTransFormula, Set<IcfgEdge>> path = mergeBackbones(backbones);
@@ -191,8 +186,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	}
 
 	/**
-	 * Check backbones for nested loops and remove backbones that are nested in
-	 * each other.
+	 * Check backbones for nested loops and remove backbones that are nested in each other.
 	 */
 	private void checkBackbones() {
 		final Deque<Backbone> backbones = new ArrayDeque<>();
@@ -212,7 +206,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				if (backbone1.getNodes().contains(loopHead2) && backbone2.getNodes().contains(loopHead1)) {
 
 					/**
-					 * remove loops that are looped in eachother, not nested.
+					 * remove loops that are looped in eachother, not nested. (i.e., loops that traverse call/return)
 					 */
 					if (mIllegalLoopHeads.contains(loopHead1)) {
 						mIllegalLoopHeads.add(loopHead2);
@@ -257,8 +251,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	}
 
 	/**
-	 * Try to find a path back to the loopheader. If there is one return true,
-	 * else false.
+	 * Try to find a path back to the loopheader. If there is one return true, else false.
 	 *
 	 * @param path
 	 *            path to check
@@ -267,16 +260,13 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	 *
 	 * @param target
 	 *            target node
-	 * 
+	 *
 	 * @param forbidden
-	 *            edges which are forbidden which means they are not allowed to
-	 *            turn up in searching of the target
+	 *            edges which are forbidden which means they are not allowed to turn up in searching of the target
 	 * @param forbiddenNode
-	 *            nodes that are forbidden which means they are not allowed to
-	 *            turn up in searching of the target
+	 *            nodes that are forbidden which means they are not allowed to turn up in searching of the target
 	 * @param plain
-	 *            select if one wants to check for nested loops or just try to
-	 *            find the target
+	 *            select if one wants to check for nested loops or just try to find the target
 	 */
 	private boolean findLoopHeader(final IcfgEdge transition, final IcfgLocation start, final IcfgLocation target,
 			final Set<IcfgEdge> forbidden, final Set<IcfgLocation> forbiddenNode, final boolean plain) {
@@ -321,8 +311,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	}
 
 	/**
-	 * Try to find a path back to the loopheader. If there is one return true,
-	 * else false.
+	 * Try to find a path back to the loopheader. If there is one return true, else false.
 	 *
 	 * @param path
 	 *            path to check
@@ -331,16 +320,13 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	 *
 	 * @param target
 	 *            target node
-	 * 
+	 *
 	 * @param forbidden
-	 *            edges which are forbidden which means they are not allowed to
-	 *            turn up in searching of the target
+	 *            edges which are forbidden which means they are not allowed to turn up in searching of the target
 	 * @param forbiddenNode
-	 *            nodes that are forbidden which means they are not allowed to
-	 *            turn up in searching of the target
+	 *            nodes that are forbidden which means they are not allowed to turn up in searching of the target
 	 * @param plain
-	 *            select if one wants to check for nested loops or just try to
-	 *            find the target
+	 *            select if one wants to check for nested loops or just try to find the target
 	 */
 	private boolean findLoopHeader(final Deque<IcfgEdge> transition, final IcfgLocation start,
 			final IcfgLocation target, final Set<IcfgEdge> forbidden, final Set<IcfgLocation> forbiddenNode,
@@ -403,8 +389,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			forbidden.add(mNested.get(loopHead1));
 		}
 		/**
-		 * If it is not possible to reach one loophead without going over the
-		 * other, the first one is nested in the other.
+		 * If it is not possible to reach one loophead without going over the other, the first one is nested in the
+		 * other.
 		 */
 		if (!findLoopHeader(loopHead1Edges, loopHead1, loopHead1, Collections.emptySet(), forbidden, false)) {
 			mNested.put(loopHead2, loopHead1);
@@ -424,7 +410,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 	/**
 	 * Find the exittransitions and exitnodes of a loop.
-	 * 
+	 *
 	 * @param loopHead
 	 */
 	private void findLoopExits(final IcfgLocation loopHead, final Set<IcfgLocation> forbiddenNodes) {
@@ -438,7 +424,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 	/**
 	 * Get the backbones of a given {@link loop}
-	 * 
+	 *
 	 * @param loop
 	 * @return
 	 */
@@ -460,17 +446,15 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			Boolean done = false;
 
 			/**
-			 * using a DFS approach. Add a new edge to the backbone if the
-			 * loopHead can be reached over it.
+			 * using a DFS approach. Add a new edge to the backbone if the loopHead can be reached over it.
 			 */
 			while (!backbone.getPath().getLast().getTarget().equals(loopHead)) {
 
 				final IcfgEdge edge = backbone.getPath().getLast();
-				IcfgLocation target = backbone.getPath().getLast().getTarget();
+				final IcfgLocation target = backbone.getPath().getLast().getTarget();
 
 				/**
-				 * if there is an errorlocation in the backbone attach the
-				 * backbone as errorpath to the loop.
+				 * if there is an errorlocation in the backbone attach the backbone as errorpath to the loop.
 				 */
 				if (mErrorLocations.contains(target)) {
 					mLogger.debug("FOUND ERROR LOCATIONS");
@@ -491,8 +475,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				visited.add(target);
 
 				/**
-				 * in case of multiple outgoing edges create more possible
-				 * backbones.
+				 * in case of multiple outgoing edges create more possible backbones.
 				 */
 				if (!target.getOutgoingEdges().isEmpty()) {
 					for (int i = 1; i < target.getOutgoingEdges().size(); i++) {
@@ -517,7 +500,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 	/**
 	 * Calculate a backbones {@link TransFormula}
-	 * 
+	 *
 	 * @param path
 	 * @return
 	 */
@@ -536,7 +519,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 	/**
 	 * Merge all backbone paths into one and calculate its Transformula.
-	 * 
+	 *
 	 * @param backbones
 	 * @return
 	 */

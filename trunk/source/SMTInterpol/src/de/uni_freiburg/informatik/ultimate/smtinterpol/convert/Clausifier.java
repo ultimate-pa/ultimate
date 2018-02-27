@@ -32,6 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -389,7 +390,7 @@ public class Clausifier {
 
 	private class AddAsAxiom implements Operation {
 		/**
-		 * The term to add as axiom.  This is annotated with its proof.
+		 * The term to add as axiom. This is annotated with its proof.
 		 */
 		private final Term mTerm;
 		/**
@@ -399,8 +400,11 @@ public class Clausifier {
 
 		/**
 		 * Add the clauses for an asserted term.
-		 * @param term the term to assert annotated with its proof.
-		 * @param source the prepared proof node containing the source annotation.
+		 * 
+		 * @param term
+		 *            the term to assert annotated with its proof.
+		 * @param source
+		 *            the prepared proof node containing the source annotation.
 		 */
 		public AddAsAxiom(Term term, final SourceAnnotation source) {
 			final Term axiom = mTracker.getProvedTerm(term);
@@ -560,14 +564,14 @@ public class Clausifier {
 				final Term[] params = at.getParameters();
 				if (at.getFunction() == t.mOr) {
 					if (mPositive) {
-						// (or (not (or t1 ...  tn)) t1 ... tn)
+						// (or (not (or t1 ... tn)) t1 ... tn)
 						final Term[] literals = new Term[params.length + 1];
 						literals[0] = negLitTerm;
 						System.arraycopy(params, 0, literals, 1, params.length);
 						final Term axiom = mTracker.auxAxiom(t.term("or", literals), ProofConstants.AUX_OR_POS);
 						buildAuxClause(negLit, axiom, mSource);
 					} else {
-						// (or (or t1 ...  tn)) (not ti))
+						// (or (or t1 ... tn)) (not ti))
 						for (final Term p : params) {
 							final Term axiom = t.term("or", negLitTerm, t.term("not", p));
 							final Term axiomProof = mTracker.auxAxiom(axiom, ProofConstants.AUX_OR_NEG);
@@ -689,8 +693,7 @@ public class Clausifier {
 				final ApplicationTerm at = (ApplicationTerm) idx;
 				Literal atom;
 				Term atomRewrite = null;
-				if (positive && at.getFunction() == theory.mOr
-					&& mTerm.mTmpCtr <= Config.OCC_INLINE_THRESHOLD) {
+				if (positive && at.getFunction() == theory.mOr && mTerm.mTmpCtr <= Config.OCC_INLINE_THRESHOLD) {
 					mCollector.addFlatten(at);
 					final Term[] params = at.getParameters();
 					for (int i = params.length - 1; i >= 0; i--) {
@@ -713,7 +716,7 @@ public class Clausifier {
 							mCollector.setTrue();
 						} else {
 							// rewrite (= (= lhs rhs) true)
-							rewrite = mTracker.congruence(rewrite, new Term[] {mTracker.intern(at, mTheory.mTrue)});
+							rewrite = mTracker.congruence(rewrite, new Term[] { mTracker.intern(at, mTheory.mTrue) });
 							// rewrite (= (not true) false)
 							rewrite = mUtils.convertNot(rewrite);
 							mCollector.addRewrite(rewrite);
@@ -747,7 +750,7 @@ public class Clausifier {
 				if (positive) {
 					rewrite = mTracker.transitivity(rewrite, atomRewrite);
 				} else {
-					rewrite = mTracker.congruence(rewrite, new Term[] {atomRewrite});
+					rewrite = mTracker.congruence(rewrite, new Term[] { atomRewrite });
 					if (atom != atom.getAtom()) {
 						/* (not (<= -x 0)) can be rewritten to (not (not (< x 0))); remove double negation */
 						rewrite = mUtils.convertNot(rewrite);
@@ -826,8 +829,7 @@ public class Clausifier {
 						rewrite = mTracker.transitivity(rewrite, mRewrites.get(0));
 					} else {
 						/* rewrite the (or ...) formula with a congruence lemma. */
-						rewrite = mTracker.congruence(rewrite,
-								mRewrites.toArray(new Term[mRewrites.size()]));
+						rewrite = mTracker.congruence(rewrite, mRewrites.toArray(new Term[mRewrites.size()]));
 					}
 				}
 				final Literal[] lits = mLits.toArray(new Literal[mLits.size()]);
@@ -878,10 +880,12 @@ public class Clausifier {
 		public Iterator<Term> iterator() {
 			return new Iterator<Term>() {
 				ConditionChain walk = ConditionChain.this;
+
 				@Override
 				public boolean hasNext() {
 					return walk.mSize > 0;
 				}
+
 				@Override
 				public Term next() {
 					final Term term = walk.getTerm();
@@ -916,8 +920,7 @@ public class Clausifier {
 				if (mTerm instanceof ApplicationTerm) {
 					final ApplicationTerm at = (ApplicationTerm) mTerm;
 					if (at.getFunction().getName().equals("ite")
-							&& (at.mTmpCtr <= Config.OCC_INLINE_TERMITE_THRESHOLD
-							|| mConds.size() == 0)) {
+							&& (at.mTmpCtr <= Config.OCC_INLINE_TERMITE_THRESHOLD || mConds.size() == 0)) {
 						final Term c = at.getParameters()[0];
 						final Term t = at.getParameters()[1];
 						final Term e = at.getParameters()[2];
@@ -999,6 +1002,15 @@ public class Clausifier {
 	 * @return Shared term.
 	 */
 	public SharedTerm getSharedTerm(Term t, final boolean inCCTermBuilder, final SourceAnnotation source) { // NOPMD
+		if (t instanceof ApplicationTerm) {
+			final String func = ((ApplicationTerm) t).getFunction().getName();
+			if (func.equals("+") || func.equals("-") || func.equals("*") || func.equals("to_real")) {
+				t = SMTAffineTerm.create(t);
+			}
+		}
+		if (t instanceof ConstantTerm) {
+			t = SMTAffineTerm.create(t);
+		}
 		if (t instanceof SMTAffineTerm) {
 			t = ((SMTAffineTerm) t).internalize(mCompiler);
 		}
@@ -1034,8 +1046,7 @@ public class Clausifier {
 				}
 			}
 			if (t instanceof SMTAffineTerm) {
-				getLASolver().generateSharedVar(res,
-						createMutableAffinTerm((SMTAffineTerm) t, source), getStackLevel());
+				getLASolver().generateSharedVar(res, createMutableAffinTerm((SMTAffineTerm) t, source));
 				addUnshareLA(res);
 			}
 		}
@@ -1144,8 +1155,7 @@ public class Clausifier {
 	}
 
 	private static boolean isNotTerm(final Term t) {
-		return (t instanceof ApplicationTerm)
-				&& ((ApplicationTerm) t).getFunction().getName() == "not";
+		return (t instanceof ApplicationTerm) && ((ApplicationTerm) t).getFunction().getName() == "not";
 	}
 
 	/**
@@ -1181,7 +1191,7 @@ public class Clausifier {
 		pushOperation(bc);
 		/* tell the clause that the outer or got flattened. */
 		bc.addFlatten(orTerm);
-		/* add auxlit directly to prevent it getting converted.  No rewrite proof necessary */
+		/* add auxlit directly to prevent it getting converted. No rewrite proof necessary */
 		bc.addLiteral(auxlit);
 		/* use the usual engine to create the other literals of the axiom. */
 		final Term[] params = orTerm.getParameters();
@@ -1288,15 +1298,14 @@ public class Clausifier {
 		BuildClause bc = new BuildClause(axiom, source);
 		bc.addFlatten(mTracker.getProvedTerm(axiom));
 		final Term litRewrite = mTracker.intern(litTerm, lit.getSMTFormula(theory, true));
-		Term rewrite = mTracker.congruence(mTracker.reflexivity(mTheory.term("not", litTerm)),
-				new Term[] { litRewrite });
+		Term rewrite =
+				mTracker.congruence(mTracker.reflexivity(mTheory.term("not", litTerm)), new Term[] { litRewrite });
 		bc.addLiteral(lit.negate(), rewrite);
 		rewrite = mTracker.intern(trueTerm, trueLit.getSMTFormula(theory, true));
 		bc.addLiteral(trueLit, rewrite);
 		pushOperation(bc);
 		// (not m_Term) => elseForm is m_Term \/ elseForm
-		axiom = mTracker.auxAxiom(theory.term("or", litTerm, falseTerm),
-				ProofConstants.AUX_EXCLUDED_MIDDLE_2);
+		axiom = mTracker.auxAxiom(theory.term("or", litTerm, falseTerm), ProofConstants.AUX_EXCLUDED_MIDDLE_2);
 		bc = new BuildClause(axiom, source);
 		bc.addFlatten(mTracker.getProvedTerm(axiom));
 		bc.addLiteral(lit, litRewrite);
@@ -1463,8 +1472,7 @@ public class Clausifier {
 			mSharedFalse = new SharedTerm(this, mTheory.mFalse);
 			mSharedFalse.mCCterm = mCClosure.createAnonTerm(mSharedFalse);
 			mSharedTerms.put(mTheory.mFalse, mSharedFalse);
-			final Literal atom =
-					mCClosure.createCCEquality(mStackLevel, mSharedTrue.mCCterm, mSharedFalse.mCCterm);
+			final Literal atom = mCClosure.createCCEquality(mStackLevel, mSharedTrue.mCCterm, mSharedFalse.mCCterm);
 			final Term trueEqFalse = mTheory.term("=", mTheory.mTrue, mTheory.mFalse);
 			final Term axiom = mTracker.auxAxiom(mTheory.not(trueEqFalse), ProofConstants.AUX_TRUE_NOT_FALSE);
 			final BuildClause bc = new BuildClause(axiom, SourceAnnotation.EMPTY_SOURCE_ANNOT);
@@ -1615,6 +1623,7 @@ public class Clausifier {
 		} finally {
 			mCompiler.reset();
 		}
+		simpFormula = SMTAffineTerm.cleanup(simpFormula);
 		simpFormula = mTracker.getRewriteProof(mTracker.asserted(origFormula), simpFormula);
 		origFormula = null;
 
@@ -1689,6 +1698,7 @@ public class Clausifier {
 
 	/**
 	 * This is called for named formulas and creates a literal for the whole term.
+	 * 
 	 * @param term
 	 * @param names
 	 */
@@ -1738,7 +1748,7 @@ public class Clausifier {
 		if (lit == null) {
 			final SMTAffineTerm sum = SMTAffineTerm.create(leq0term.getParameters()[0]);
 			final MutableAffinTerm msum = createMutableAffinTerm(sum, source);
-			lit = mLASolver.generateConstraint(msum, false, mStackLevel);
+			lit = mLASolver.generateConstraint(msum, false);
 			mLiteralData.put(leq0term, lit);
 			mUndoTrail = new RemoveAtom(mUndoTrail, leq0term);
 		}
@@ -1780,6 +1790,7 @@ public class Clausifier {
 		} finally {
 			mCompiler.reset();
 		}
+		tmp2 = SMTAffineTerm.cleanup(tmp2);
 		tmp = null;
 		mOccCounter.count(tmp2);
 
@@ -1803,9 +1814,8 @@ public class Clausifier {
 			if (at.getParameters()[0].getSort() == mTheory.getBooleanSort()) {
 				res = getLiteralTseitin(at, source);
 			} else {
-				final EqualityProxy ep =
-						createEqualityProxy(getSharedTerm(at.getParameters()[0], source),
-								getSharedTerm(at.getParameters()[1], source));
+				final EqualityProxy ep = createEqualityProxy(getSharedTerm(at.getParameters()[0], source),
+						getSharedTerm(at.getParameters()[1], source));
 				if (ep == EqualityProxy.getFalseProxy()) {
 					res = new TrueAtom().negate();
 				} else if (ep == EqualityProxy.getTrueProxy()) {

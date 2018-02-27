@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -292,7 +292,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	protected void findLoopEntryExit(final IcfgLocation loopNode) {
-		if (ILocation.getAnnotation(loopNode).isLoop()) {
+		if (LoopEntryAnnotation.getAnnotation(loopNode) != null) {
 			for (final IcfgEdge potentialSelfLoop : loopNode.getOutgoingEdges()) {
 				if (potentialSelfLoop.getTarget().equals(loopNode)) {
 					addAnnotation(potentialSelfLoop, loopNode, true, true);

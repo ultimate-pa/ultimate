@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * Copyright (C) 2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE BoogieAST library.
+ *
+ * The ULTIMATE BoogieAST library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE BoogieAST library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE BoogieAST library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE BoogieAST library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieAST library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.boogie.typechecker;
 
 import java.util.List;
@@ -14,7 +41,20 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 
+/**
+ * Contains methods that infer the Boogie type for any kind of composite Boogie expression from its component's types.
+ *
+ * This code was factored our from the TypeChecker in BoogiePreprocessor in order to make it available to the
+ * ExpressionFactory.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class TypeCheckHelper {
+
+	private TypeCheckHelper() {
+		// don't instantiate this
+	}
 
 	public static <T> BoogieType typeCheckArrayAccessExpressionOrLhs(final BoogieType arrayType,
 				final List<BoogieType> indicesTypes,
@@ -201,6 +241,50 @@ public class TypeCheckHelper {
 			return resultType;
 		}
 
+	public static <T> BoogieType typeCheckIfThenElseExpression(final BoogieType condType, final BoogieType left,
+				final BoogieType right, final ITypeErrorReporter<T> typeErrorReporter) {
+			BoogieType resultType;
+			if (!condType.equals(BoogieType.TYPE_ERROR) && !condType.equals(BoogieType.TYPE_BOOL)) {
+	//				typeError(expr, "if expects boolean type: " + expr);
+				typeErrorReporter.report(exp -> "if expects boolean type: " + exp);
+			}
+			if (!left.isUnifiableTo(right)) {
+	//				typeError(expr, "Type check failed for " + expr);
+				typeErrorReporter.report(exp -> "Type check failed for " + exp);
+				resultType = BoogieType.TYPE_ERROR;
+			} else {
+				resultType = left.equals(BoogieType.TYPE_ERROR) ? right : left;
+			}
+			return resultType;
+		}
+
+	public static <T> void typeCheckAssignStatement(final String[] lhsIds, final BoogieType[] lhsTypes,
+				final BoogieType[] rhsTypes, final ITypeErrorReporter<T> typeErrorReporter) {
+			//			if (lhs.length != rhs.length) {
+			if (lhsTypes.length != rhsTypes.length) {
+	//				typeError(statement, "Number of variables do not match in " + statement);
+				typeErrorReporter.report(stm -> "Number of variables do not match in " + stm);
+			} else {
+				for (int i = 0; i < lhsTypes.length; i++) {
+	//					lhsId[i] = getLeftHandSideIdentifier(lhs[i]);
+					for (int j = 0; j < i; j++) {
+						if (lhsIds[i].equals(lhsIds[j])) {
+	//							typeError(statement, "Variable appears multiple times in assignment: " + statement);
+							typeErrorReporter.report(stm -> "Variable appears multiple times in assignment: " + stm);
+						}
+					}
+					final BoogieType lhsType = lhsTypes[i];//typecheckLeftHandSide(lhs[i]);
+					final BoogieType rhsType = rhsTypes[i];//typecheckExpression(rhs[i]);
+					if (!lhsType.equals(BoogieType.TYPE_ERROR) && !rhsType.equals(BoogieType.TYPE_ERROR)
+							&& !lhsType.equals(rhsType)) {
+	//						typeError(statement, "Type mismatch (" + lhsType + " != " + rhsType + ") in " + statement);
+						typeErrorReporter.report(stm ->
+							"Type mismatch (" + lhsType + " != " + rhsType + ") in " + stm);
+					}
+				}
+			}
+		}
+
 	public static void internalError(final String message) {
 		throw new AssertionError(message);
 	}
@@ -259,32 +343,5 @@ public class TypeCheckHelper {
 		}
 		return ((VariableLHS) lhs).getIdentifier();
 	}
-
-	public static <T> void typeCheckAssignStatement(final String[] lhsIds, final BoogieType[] lhsTypes,
-				final BoogieType[] rhsTypes, final ITypeErrorReporter<T> typeErrorReporter) {
-			//			if (lhs.length != rhs.length) {
-			if (lhsTypes.length != rhsTypes.length) {
-	//				typeError(statement, "Number of variables do not match in " + statement);
-				typeErrorReporter.report(stm -> "Number of variables do not match in " + stm);
-			} else {
-				for (int i = 0; i < lhsTypes.length; i++) {
-	//					lhsId[i] = getLeftHandSideIdentifier(lhs[i]);
-					for (int j = 0; j < i; j++) {
-						if (lhsIds[i].equals(lhsIds[j])) {
-	//							typeError(statement, "Variable appears multiple times in assignment: " + statement);
-							typeErrorReporter.report(stm -> "Variable appears multiple times in assignment: " + stm);
-						}
-					}
-					final BoogieType lhsType = lhsTypes[i];//typecheckLeftHandSide(lhs[i]);
-					final BoogieType rhsType = rhsTypes[i];//typecheckExpression(rhs[i]);
-					if (!lhsType.equals(BoogieType.TYPE_ERROR) && !rhsType.equals(BoogieType.TYPE_ERROR)
-							&& !lhsType.equals(rhsType)) {
-	//						typeError(statement, "Type mismatch (" + lhsType + " != " + rhsType + ") in " + statement);
-						typeErrorReporter.report(stm ->
-							"Type mismatch (" + lhsType + " != " + rhsType + ") in " + stm);
-					}
-				}
-			}
-		}
 
 }

@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -116,15 +118,19 @@ public class InitializationHandler {
 
 	private boolean mDeclareArrayInitializationFunction;
 
-	private final FunctionHandler mFunctionHandler;
+//	private final FunctionHandler mFunctionHandler;
+
+	private final ProcedureManager mProcedureManager;
 
 	public InitializationHandler(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
-			final FunctionHandler functionHandler) {
+//			final FunctionHandler functionHandler,
+			final ProcedureManager procedureManager) {
 		super();
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
 		mDeclareArrayInitializationFunction = false;
-		mFunctionHandler = functionHandler;
+//		mFunctionHandler = functionHandler;
+		mProcedureManager = procedureManager;
 	}
 
 	/**
@@ -163,6 +169,14 @@ public class InitializationHandler {
 
 		final InitializerInfo initializerInfo;
 		if (initializerRaw != null) {
+			/*
+			 * C11 6.7.9.1 : the grammar for initializers cannot generate empty initializers
+			 */
+			if (initializerRaw.getRootExpressionResult() == null &&
+					(initializerRaw.getList() == null || initializerRaw.getList().isEmpty())) {
+				throw new IncorrectSyntaxException(loc, "Empty initializers are not allowed by the C standard.");
+			}
+
 			// construct an InitializerInfo from the InitializerResult
 			initializerInfo = InitializerInfo.constructInitializerInfo(loc, main, initializerRaw, targetCTypeRaw, hook);
 		} else {
@@ -341,7 +355,7 @@ public class InitializationHandler {
 					fieldValues.toArray(new Expression[fieldValues.size()]));
 
 			final AssignmentStatement assignment =
-					mFunctionHandler.constructAssignmentStatement(loc,
+					StatementFactory.constructAssignmentStatement(loc,
 							new LeftHandSide[] { ((LocalLValue) structBaseLhsToInitialize).getLHS() },
 							new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(initInfo.getOverapprs(), assignment);
@@ -635,7 +649,7 @@ public class InitializationHandler {
 
 	private ExpressionResult makeUnionAuxVarExpressionResult(final ILocation loc, final Dispatcher main,
 			final CType fieldType) {
-		final AuxVarInfo auxVar = CTranslationUtil.constructAuxVarInfo(loc, main, fieldType,
+		final AuxVarInfo auxVar = AuxVarInfo.constructAuxVarInfo(loc, main, fieldType,
 				SFO.AUXVAR.NONDET);
 
 		final ExpressionResult x = new ExpressionResultBuilder()
@@ -765,7 +779,7 @@ public class InitializationHandler {
 	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final Dispatcher main, final CType cType,
 			final ExpressionResultBuilder initialization) {
 		final LocalLValue arrayLhsToInitialize;
-		final AuxVarInfo auxVar = CTranslationUtil.constructAuxVarInfo(loc, main, cType);
+		final AuxVarInfo auxVar = AuxVarInfo.constructAuxVarInfo(loc, main, cType);
 
 		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 
@@ -857,7 +871,7 @@ public class InitializationHandler {
 		} else {
 			//!onHeap
 			final AssignmentStatement assignment =
-					mFunctionHandler.constructAssignmentStatement(loc,
+					StatementFactory.constructAssignmentStatement(loc,
 							new LeftHandSide[] { ((LocalLValue) lhs).getLHS() },
 							new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(overAppr, assignment);
@@ -1018,13 +1032,15 @@ public class InitializationHandler {
 				 * We are initializing through an (possibly aggregate-type) expression (not through a list of
 				 *  expressions).
 				 */
+
 				if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
 //						&& !(targetCTypeRaw instanceof CPointer)) {
 						&& targetCTypeRaw instanceof CArray) {
 					/*
-					 * case like 'char a[] = "bla"'
+					 * Case like 'char a[] = "bla"'
 					 * in C, initialization would copy the char array contents to a position on the stack
-					 * we create an InitializerInfo that corresponds to the initializer { 'b', 'l', 'a', '\0' }
+					 * we create an InitializerInfo that corresponds to the initializer { 'b', 'l', 'a', '\0' }.
+					 * (For this purpose, StringLiteralResult holds the original string contents.)
 					 */
 
 					final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
@@ -1034,11 +1050,13 @@ public class InitializationHandler {
 							slr.getLiteralString().length + 1);
 					literalString[literalString.length - 1] = '\0';
 
-					// we overapproximate strings of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-					final boolean useActualValues = slr.overApproximatesLongStringLiteral();
-//							literalString.length < ExpressionTranslation.STRING_OVERAPPROXIMATION_THRESHOLD;
 					final List<Overapprox> overapproxList;
-					if (useActualValues) {
+					if (slr.overApproximatesLongStringLiteral()) {
+						final Overapprox overapprox = new Overapprox("large string literal", loc);
+						overapproxList = new ArrayList<>();
+						overapproxList.add(overapprox);
+						return new InitializerInfo(overapprox);
+					} else {
 						// make the list (in our case a map because we support sparse lists in other cases)
 						final Map<Integer, InitializerInfo> indexToInitInfo = new HashMap<>();
 						for (int i = 0; i < literalString.length; i++) {
@@ -1052,11 +1070,6 @@ public class InitializationHandler {
 							indexToInitInfo.put(i, new InitializerInfo(charResult, Collections.emptyList()));
 						}
 						return new InitializerInfo(indexToInitInfo, Collections.emptyList());
-					} else {
-						final Overapprox overapprox = new Overapprox("large string literal", loc);
-						overapproxList = new ArrayList<>();
-						overapproxList.add(overapprox);
-						return new InitializerInfo(overapprox);
 					}
 				} else if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
 						&& targetCTypeRaw instanceof CPointer) {
@@ -1069,10 +1082,6 @@ public class InitializationHandler {
 					 *  future)
 					 * The result we return here will only contain the RValue.
 					 */
-//					final ExpressionResult converted = convertInitResultWithExpressionResult(loc, main, targetCType,
-//							initializerResult);
-
-//					final ExpressionResult exprResult = initializerResult.getRootExpressionResult();
 					final StringLiteralResult exprResult = (StringLiteralResult)
 							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult, hook);
 
@@ -1082,27 +1091,6 @@ public class InitializationHandler {
 					assert exprResult.getStatements().isEmpty() : "the statements necessary for a StringLiteral "
 							+ " should be registered in StaticObjectsHandler directly (because the need to be global"
 							+ "boogie declarations)";
-
-
-//					main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(exprResult.getDeclarations());
-//					exprResult.getDeclarations().forEach(decl -> );
-
-//					main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(exprResult.getStatements());
-//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-//							exprResult.getAuxVar().getExp().getIdentifier());
-//					// statements contain an alloc-call --> add valid, length to modifies clause of Ultimate.init
-//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
-//					main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
-					/*
-					 * if the literal was short enought that we actually write it to memory, add the corresponding
-					 *  memory array
-					 */
-					if (!exprResult.overApproximatesLongStringLiteral()) {
-//						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.MEMORY_INT);
-//						main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-//								main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
-//									.getVariableName());
-					}
 
 					final ExpressionResult onlyRValueExprResult = new ExpressionResultBuilder()
 							.setLrVal(exprResult.getLrValue())

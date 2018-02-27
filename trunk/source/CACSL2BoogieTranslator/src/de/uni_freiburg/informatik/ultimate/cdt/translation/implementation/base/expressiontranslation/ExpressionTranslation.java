@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -86,14 +86,19 @@ public abstract class ExpressionTranslation {
 	protected final IPointerIntegerConversion mPointerIntegerConversion;
 	protected final boolean mOverapproximateFloatingPointOperations;
 
-	public ExpressionTranslation(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+	protected HandlerHandler mHandlerHandler;
+
+	public ExpressionTranslation(final TypeSizes typeSizes, final HandlerHandler handlerHandler,
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
 		super();
+		handlerHandler.setExpressionTranslation(this);
+		mHandlerHandler = handlerHandler;
+
 		mOverapproximateFloatingPointOperations = overapproximateFloatingPointOperations;
 		mTypeSizes = typeSizes;
-		mFunctionDeclarations = new FunctionDeclarations(typeHandler, mTypeSizes);
-		mTypeHandler = typeHandler;
+		mFunctionDeclarations = new FunctionDeclarations(handlerHandler.getTypeHandler(), mTypeSizes);
+		mTypeHandler = handlerHandler.getTypeHandler();
 		switch (pointerIntegerConversion) {
 		case IdentityAxiom:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
@@ -103,7 +108,8 @@ public abstract class ExpressionTranslation {
 		case NutzBijection:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
 		case Overapproximate:
-			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler);
+			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler,
+					mHandlerHandler);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown value " + pointerIntegerConversion);
@@ -133,11 +139,11 @@ public abstract class ExpressionTranslation {
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal: {
-			// subtract two from length for quotes at beginning and end
 			final RValue rvalue;
 //			final String tId;
 			final AuxVarInfo auxvar;
 			{
+				// subtract two from length for quotes at beginning and end
 				final int arrayLength = node.getValue().length - 2;
 				final RValue dimension = new RValue(
 						constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),
@@ -146,11 +152,12 @@ public abstract class ExpressionTranslation {
 //				final RValue[] dimensions = { dimension };
 //				final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
 				final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
-				// final CPointer arrayType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+				 final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 //				tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
 //				tVarDecl = new VariableDeclaration(loc, new Attribute[0],
 //						new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
+//				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
+				auxvar = AuxVarInfo.constructGlobalAuxVarInfo(loc, main, pointerType, SFO.AUXVAR.STRINGLITERAL);
 				rvalue = new RValueForArrays(auxvar.getExp(), arrayType);
 			}
 //			final ArrayList<Declaration> decls = new ArrayList<>();
@@ -619,7 +626,7 @@ public abstract class ExpressionTranslation {
 				constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO);
 		final Expression oneBool =
 				constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ONE);
-		final Expression resultExpression = ExpressionFactory.newIfThenElseExpression(loc, isZero, zeroBool, oneBool);
+		final Expression resultExpression = ExpressionFactory.constructIfThenElseExpression(loc, isZero, zeroBool, oneBool);
 		final RValue rValue = new RValue(resultExpression, new CPrimitive(CPrimitives.BOOL), false, false);
 		rexp.mLrVal = rValue;
 	}
@@ -708,7 +715,7 @@ public abstract class ExpressionTranslation {
 			mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType);
 		}
 		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] {},
-				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type));
 
 	}
 

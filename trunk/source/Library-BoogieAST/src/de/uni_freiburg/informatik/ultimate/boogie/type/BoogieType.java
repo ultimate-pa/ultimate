@@ -2,22 +2,22 @@
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
  * The base class for all Boogie types. The type instances are immutable.
- * 
+ *
  * @author hoenicke
- * 
+ *
  */
 public abstract class BoogieType implements IBoogieType {
 	/**
@@ -60,7 +60,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Create a bit vector type; reuses an old instance if it already exists.
-	 * 
+	 *
 	 * @param len
 	 *            the number of bits in this type
 	 * @return the bit vector type.
@@ -80,7 +80,7 @@ public abstract class BoogieType implements IBoogieType {
 	 * </code> is represented as <code>
 	 *    &lt;2&gt;[&lt;1&gt;[1,2,0]2, 0, 1]0
 	 * </code> This weird numbering makes it easy to substitute the outermost placeholders.
-	 * 
+	 *
 	 * @param i
 	 *            the index of the typevar argument.
 	 * @return the placeholder type.
@@ -95,7 +95,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Create a new constructed type; reuses an old instance if it already exists. A constructed type is build from a
 	 * TypeConstructor and some type arguments.
-	 * 
+	 *
 	 * @param constr
 	 *            the type constructor.
 	 * @param params
@@ -104,7 +104,7 @@ public abstract class BoogieType implements IBoogieType {
 	 */
 	/*
 	 * @ requires constr.getParamCount() == params.length;
-	 * 
+	 *
 	 * @
 	 */
 	public static BoogieConstructedType createConstructedType(final BoogieTypeConstructor constr, final BoogieType... params) {
@@ -138,7 +138,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Creates a new constructed type without parameters; reuses an old instance if it already exists. A constructed
 	 * type is build from a TypeConstructor and some type arguments.
-	 * 
+	 *
 	 * @param constr
 	 *            the type constructor, constr.getParamCount() must be 0.
 	 * @return The constructed type.
@@ -150,7 +150,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Creates a new array type; reuses an old instance if it already exists. An array has a number of placeholders
 	 * (type variables), some index types and a value type.
-	 * 
+	 *
 	 * @param numPlaceholders
 	 *            number of declared placeholders
 	 * @param indexTypes
@@ -191,7 +191,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Creates a new struct type; reuses an old instance if it already exists.
-	 * 
+	 *
 	 * @param fNames
 	 *            Field names.
 	 * @param fTypes
@@ -231,7 +231,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Substitute placeholders in given type. This is called recursively to substitute.
-	 * 
+	 *
 	 * @param depth
 	 *            the depth into the type to substitute. Normally 0.
 	 * @param substType
@@ -243,7 +243,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Increment all placeholders in given type. This is used to adapt the place holders in a substitution if it is
 	 * applied deep inside another type.
-	 * 
+	 *
 	 * @param depth
 	 *            the depth into the type to substitute. Normally 0.
 	 * @param incDepth
@@ -254,7 +254,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Substitute placeholders in given type. This is called recursively to substitute.
-	 * 
+	 *
 	 * @param substType
 	 *            The types to substitute.
 	 * @return The substituted type
@@ -265,7 +265,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Returns the type as which this type was ultimately defined.
-	 * 
+	 *
 	 * @return The underlying type (this if it is a basic or a free type).
 	 */
 	public abstract BoogieType getUnderlyingType();
@@ -281,7 +281,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Unify the this type (which contains Placeholders) with another type (which doesn't) and compute a suitable
 	 * substitution.
-	 * 
+	 *
 	 * @param depth
 	 *            the depth into the type to unify. Normally 0.
 	 * @param other
@@ -295,7 +295,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Unify the this type (which contains Placeholders) with another type (which doesn't) and compute a suitable
 	 * substitution.
-	 * 
+	 *
 	 * @param other
 	 *            the other type
 	 * @param substitution
@@ -309,7 +309,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Determines if this type contains a placeholder to the given depth range. Needed for the occur check in
 	 * unification.
-	 * 
+	 *
 	 * @param minDepth
 	 *            the minimum index of the placeholder. Measured from the start of this type.
 	 * @param maxDepth
@@ -321,7 +321,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Check whether this and the other type are unifiable by replacing Placeholders. This is symmetric, i.e. place
 	 * holders are considered in both types.
-	 * 
+	 *
 	 * @param depth
 	 *            the depth
 	 * @param other
@@ -335,7 +335,7 @@ public abstract class BoogieType implements IBoogieType {
 	/**
 	 * Check whether this and the other type are unifiable by replacing Placeholders. This is symmetric, i.e. place
 	 * holders are considered in both types.
-	 * 
+	 *
 	 * @param other
 	 *            the other type
 	 * @returns true if unification was successful, false on type mismatch.
@@ -348,7 +348,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Computes a string representation. It uses depth to compute artificial names for the placeholders.
-	 * 
+	 *
 	 * @param depth
 	 *            the number of placeholders outside this expression.
 	 * @param needParentheses
@@ -359,7 +359,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Computes an AST type representation. It uses depth to compute artificial names for the placeholders.
-	 * 
+	 *
 	 * @param depth
 	 *            the number of placeholders outside this expression.
 	 * @param needParentheses
@@ -370,7 +370,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Computes a string representation.
-	 * 
+	 *
 	 * @return a string representation of this type.
 	 */
 	@Override
@@ -380,7 +380,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Computes an AST type representation.
-	 * 
+	 *
 	 * @return the AST type representation of this type.
 	 */
 	public ASTType toASTType(final ILocation loc) {
@@ -389,7 +389,7 @@ public abstract class BoogieType implements IBoogieType {
 
 	/**
 	 * Returns whether the type has finitely many elements.
-	 * 
+	 *
 	 * @return true if this type has finitely many elements, or if it is unknown.
 	 */
 	public abstract boolean isFinite();

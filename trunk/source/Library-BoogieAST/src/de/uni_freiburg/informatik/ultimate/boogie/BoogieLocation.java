@@ -47,12 +47,10 @@ public class BoogieLocation extends DefaultLocation {
 	private static final long serialVersionUID = 4495864682359937328L;
 
 	protected BoogieASTNode mBoogieASTNode;
-	private final boolean mLoopEntry;
 
 	public BoogieLocation(final String fileName, final int startLine, final int endLine, final int startColum,
-			final int endColumn, final boolean isLoopEntry) {
+			final int endColumn) {
 		super(fileName, startLine, endLine, startColum, endColumn);
-		mLoopEntry = isLoopEntry;
 	}
 
 	@Override
@@ -76,11 +74,6 @@ public class BoogieLocation extends DefaultLocation {
 		} else {
 			return new Check(Check.Spec.UNKNOWN);
 		}
-	}
-
-	@Override
-	public boolean isLoop() {
-		return mLoopEntry;
 	}
 
 	public BoogieASTNode getBoogieASTNode() {

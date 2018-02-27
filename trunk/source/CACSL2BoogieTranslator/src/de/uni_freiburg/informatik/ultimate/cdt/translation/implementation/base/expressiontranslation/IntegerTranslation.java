@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -66,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -91,11 +91,11 @@ public class IntegerTranslation extends ExpressionTranslation {
 	 */
 	private final boolean mAssumeThatSignedValuesAreInRange;
 
-	public IntegerTranslation(final TypeSizes typeSizeConstants, final ITypeHandler typeHandler,
+	public IntegerTranslation(final TypeSizes typeSizeConstants, final HandlerHandler handlerHandler,
 			final UnsignedTreatment unsignedTreatment, final boolean assumeSignedInRange,
 			final PointerIntegerConversion pointerIntegerConversion,
 			final boolean overapproximateFloatingPointOperations) {
-		super(typeSizeConstants, typeHandler, pointerIntegerConversion, overapproximateFloatingPointOperations);
+		super(typeSizeConstants, handlerHandler, pointerIntegerConversion, overapproximateFloatingPointOperations);
 		mUnsignedTreatment = unsignedTreatment;
 		mAssumeThatSignedValuesAreInRange = assumeSignedInRange;
 	}
@@ -221,7 +221,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		declareBitvectorFunction(loc, prefixedFunctionName, false, typeLeft, typeLeft, typeRight);
 		final Expression func = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { left, right },
-				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(typeLeft));
 		return func;
 	}
 
@@ -260,7 +260,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName = SFO.AUXILIARY_FUNCTION_PREFIX + funcname;
 		declareBitvectorFunction(loc, prefixedFunctionName, false, type, type);
 		return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { expr },
-				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type));
 	}
 
 	private static Expression constructUnaryIntExprMinus(final ILocation loc, final Expression expr,
@@ -364,7 +364,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			if (leftValue.signum() == 1) {
 				return normalDivision;
 			} else if (leftValue.signum() == -1) {
-				return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+				return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalDivision,
 								ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalDivision,
@@ -374,20 +374,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 		} else if (exp2 instanceof IntegerLiteral) {
 			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-				return ExpressionFactory.newIfThenElseExpression(
+				return ExpressionFactory.constructIfThenElseExpression(
 						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
 								BinaryExpression.Operator.ARITHPLUS, normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						normalDivision);
 			} else if (rightValue.signum() == -1) {
-				return ExpressionFactory.newIfThenElseExpression(
+				return ExpressionFactory.constructIfThenElseExpression(
 						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
 								BinaryExpression.Operator.ARITHMINUS, normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 						normalDivision);
 			}
 			throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
 		} else {
-			return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
 									normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
@@ -439,7 +439,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			if (leftValue.signum() == 1) {
 				return normalModulo;
 			} else if (leftValue.signum() == -1) {
-				return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+				return ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
 								exp2),
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
@@ -449,20 +449,20 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 		} else if (exp2 instanceof IntegerLiteral) {
 			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-				return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+				return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, normalModulo,
 								exp2),
 						normalModulo);
 			} else if (rightValue.signum() == -1) {
-				return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+				return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, normalModulo,
 								exp2),
 						normalModulo);
 			}
 			throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
 		} else {
-			return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
-					ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero,
+			return ExpressionFactory.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+					ExpressionFactory.constructIfThenElseExpression(loc, rightSmallerZero,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
 									normalModulo, exp2),
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
@@ -559,7 +559,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 							maxValue);
 					final Expression range = constructLiteralForIntegerType(loc, oldType,
 							mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
-					newExpression = ExpressionFactory.newIfThenElseExpression(loc, condition, wrapped,
+					newExpression = ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
 							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
 				}
 
@@ -632,8 +632,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				}
 				return value;
 			} else if (expr instanceof IdentifierExpression) {
-				// An IdentifierExpression may be an alias for an integer value, this is stored
-				// in the symbol table.
+				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
 				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCIdForBoogieId(bId);
 				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().findCSymbol(hook, cId);
@@ -666,7 +665,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
 			final ExpressionResultBuilder expressionResultBuilder) {
 		if (mAssumeThatSignedValuesAreInRange && cType.getUnderlyingType().isIntegerType()) {
-			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
+			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
 			if (!mTypeSizes.isUnsigned(cPrimitive)) {
 				expressionResultBuilder
 						.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
@@ -728,8 +727,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 						paramAstType, paramAstType);
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { exp1, exp2 },
-					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+					new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		}
 		BinaryExpression.Operator op;
 		switch (nodeOperator) {
@@ -772,7 +770,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				mFunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName, new Expression[] { exp },
-					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type));
 		}
 		return constructUnaryIntExprMinus(loc, exp, type);
 	}
@@ -792,7 +790,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 					new Expression[] { exp1, exp2 },
-					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+					mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(type1));
 		}
 		return constructArithmeticExpression(loc, nodeOperator, exp1, exp2);
 	}
@@ -834,8 +832,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		if (mOverapproximateFloatingPointOperations) {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
-					new Expression[] { exp1, exp2 },
-					mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+					new Expression[] { exp1, exp2 }, BoogieType.TYPE_BOOL);
 		}
 		return constructEquality(loc, nodeOperator, exp1, exp2);
 	}
@@ -925,7 +922,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final Expression oldExpression = rexp.mLrVal.getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { oldExpression },
-				mFunctionDeclarations.getDeclaredFunctions().get(prefixedFunctionName));
+				mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(newType));
 		final RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.mLrVal = rValue;
 	}

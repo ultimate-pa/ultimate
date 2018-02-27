@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
  * It starts by collecting the non-basic variables and building a matrix
  * mAColumns, where the rows are the current non-basic variables (the ones
  * defining the current vertex) and the columns the variables of the formula.
- * This matrix is then brought to hermite normal form, where the inverse 
+ * This matrix is then brought to hermite normal form, where the inverse
  * transformation matrix is stored in mURows.
  *
  * The matrix U and A are always kept in sync, such that A*U stays constant.
@@ -46,21 +46,21 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
  * Why does this work better then branching directly on v?
  * In a certain sense the cut variables v' form a new basis and every integer
  * solution for these new variables leads to an integer solution of the original
- * problem. Now the constraint system A'*v' is much nicer, as it is in 
- * Hermite normal form.  If one of the variables in v' is set to integer, it 
+ * problem. Now the constraint system A'*v' is much nicer, as it is in
+ * Hermite normal form.  If one of the variables in v' is set to integer, it
  * cannot force later variables to go to a fraction as long as the constraint
- * system remains to be dominated by the constraints for x.  As long as no 
- * constraint other than our initial constraints and the generated branches 
+ * system remains to be dominated by the constraints for x.  As long as no
+ * constraint other than our initial constraints and the generated branches
  * become a non-basic, the matrix U' stays the same, thus we will eventually
  * get an integer solution.
- * 
+ *
  * Also by the way we choose the sign in the Hermite normal form we will even
  * force the new cut variables to lead to real cuts.  They will replace the
  * non-basic variable that they represent in the tableaux in the next pivot
  * step (only guaranteed when using Bland's rule though).
  *
  * When comparing this algorithm to the original Cuts from Proofs paper, note
- * that H^{-1}A is U', since H is A' and A'U' = AU = A.   H^-1b is only 
+ * that H^{-1}A is U', since H is A' and A'U' = AU = A.   H^-1b is only
  * computed indirectly by determining the current value of v'.
  *
  * In the LIRA case some variables are real-valued.  In the matrix we make sure
@@ -79,7 +79,7 @@ public class CutCreator {
 	/**
 	 * Class to represent a column of a sparse matrix.  This is used for
 	 * the A matrix, which is stored as an array of columns.
-	 * 
+	 *
 	 * The rows of this matrix are LinVars, more exactly the current
 	 * non-basic variables that define the current vertex.  The columns
 	 * are the v' variables that become the cuts.
@@ -87,8 +87,8 @@ public class CutCreator {
 	public class Column {
 		LinVar[] mIndices;
 		BigInteger[] mCoeffs;
-		
-		public Column(LinVar[] indices, BigInteger[] coeffs) {
+
+		public Column(final LinVar[] indices, final BigInteger[] coeffs) {
 			mIndices = indices;
 			mCoeffs = coeffs;
 		}
@@ -107,13 +107,13 @@ public class CutCreator {
 		 * @param other  the other column.
 		 * @param factor the factor.
 		 */
-		public void addmul(Column other, BigInteger factor) {
+		public void addmul(final Column other, final BigInteger factor) {
 			final LinVar[] newIndices = new LinVar[mIndices.length + other.mIndices.length];
 			final BigInteger[] newCoeffs = new BigInteger[newIndices.length];
 			int idx = 0, oidx = 0, newidx = 0;
 			while (idx < mIndices.length && oidx < other.mIndices.length) {
 				if (mIndices[idx] == other.mIndices[oidx]) {
-					final BigInteger newcoeff = 
+					final BigInteger newcoeff =
 						mCoeffs[idx].add(other.mCoeffs[oidx].multiply(factor));
 					if (newcoeff.signum() != 0) {
 						newIndices[newidx] = mIndices[idx];
@@ -157,7 +157,7 @@ public class CutCreator {
 				mCoeffs = newCoeffs;
 			}
 		}
-		
+
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
@@ -170,14 +170,14 @@ public class CutCreator {
 			return sb.toString();
 		}
 	}
-	
+
 	/**
 	 * Class to represent a row of a sparse matrix.  This is used for
 	 * the U matrix, which is stored as an array of rows.
-	 * 
+	 *
 	 * The rows are the v' variables that become the cuts.  The columns
 	 * are the original variables of the formula and have to be integral.
-	 * 
+	 *
 	 * Some rows stem from the real variables of the original formula.  For
 	 * these we do not track the U matrix at all as they are never involved
 	 * in a cut.  We will just use the isInt flag to detect them.
@@ -195,8 +195,8 @@ public class CutCreator {
 		boolean mFixed;
 		Rational mCurval;
 		Rational mEpsilons;
-		
-		public Row(LinVar nonbasic) {
+
+		public Row(final LinVar nonbasic) {
 			assert !nonbasic.isInitiallyBasic();
 			mIsInt = nonbasic.mIsInt;
 			if (mIsInt) {
@@ -208,11 +208,11 @@ public class CutCreator {
 				mCoeffs = new BigInteger[0];
 			}
 		}
-		
+
 		public boolean isInt() {
 			return mIsInt;
 		}
-		
+
 		/**
 		 * Negates the row, i.e., the coefficients.
 		 */
@@ -227,7 +227,7 @@ public class CutCreator {
 		 * @param other the other row.
 		 * @param factor the factor.
 		 */
-		public void addmul(Row other, BigInteger factor) {
+		public void addmul(final Row other, final BigInteger factor) {
 			// Do not compute real rows; they do not lead to cuts anyway.
 			if (!isInt()) {
 				return;
@@ -238,7 +238,7 @@ public class CutCreator {
 			int idx = 0, oidx = 0, newidx = 0;
 			while (idx < mIndices.length && oidx < other.mIndices.length) {
 				if (mIndices[idx] == other.mIndices[oidx]) {
-					final BigInteger newcoeff = 
+					final BigInteger newcoeff =
 						mCoeffs[idx].add(other.mCoeffs[oidx].multiply(factor));
 					if (newcoeff.signum() != 0) {
 						newIndices[newidx] = mIndices[idx];
@@ -282,7 +282,7 @@ public class CutCreator {
 				mCoeffs = newCoeffs;
 			}
 		}
-		
+
 		public String getVar() {
 			final StringBuilder sb = new StringBuilder();
 			String plus = "";
@@ -293,7 +293,7 @@ public class CutCreator {
 			}
 			return sb.toString();
 		}
-		
+
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
@@ -310,15 +310,11 @@ public class CutCreator {
 		public Literal createConstraint() {
 			assert mIsInt;
 			final MutableAffinTerm mat = new MutableAffinTerm();
-			int maxlevel = 0;
 			for (int i = 0; i < mIndices.length; i++) {
-				if (maxlevel < mIndices[i].mAssertionstacklevel) {
-					maxlevel = mIndices[i].mAssertionstacklevel;
-				}
 				mat.add(Rational.valueOf(mCoeffs[i], BigInteger.ONE), mIndices[i]);
 			}
 			mat.add(new InfinitNumber(mCurval, mEpsilons.signum()).floor().negate());
-			return mSolver.generateConstraint(mat, false, maxlevel);
+			return mSolver.generateConstraint(mat, false);
 		}
 
 		public void computeValue() {
@@ -339,7 +335,7 @@ public class CutCreator {
 			return mCurval.isIntegral() && mEpsilons.signum() == 0;
 		}
 
-		public void divide(BigInteger denom) {
+		public void divide(final BigInteger denom) {
 			assert(!mIsInt);
 			// Do not compute real rows; they do not lead to cuts anyway.
 		}
@@ -356,11 +352,11 @@ public class CutCreator {
 	 * form.  The class maintains the invariant A * U = origA.
 	 */
 	Column[] mAColumns;
-	
-	private int compare(LinVar v1, LinVar v2) {
+
+	private int compare(final LinVar v1, final LinVar v2) {
 		return v1.mMatrixpos - v2.mMatrixpos;
 	}
-	
+
 	/**
 	 * Creates the A matrix for the given solver state and initializes
 	 * the U matrix to the unit matrix.  The rows of the A matrix are
@@ -368,16 +364,16 @@ public class CutCreator {
 	 * and the columns are the initial non-basic variables.
 	 * @param solver  The linear arithmetic solver.
 	 */
-	public void computeMatrix(LinArSolve solver) {
+	public void computeMatrix(final LinArSolve solver) {
 		final class LinVarBigInt implements Comparable<LinVarBigInt> {
 			LinVar mRow;
 			BigInteger mCoeff;
-			public LinVarBigInt(LinVar r, BigInteger c) {
+			public LinVarBigInt(final LinVar r, final BigInteger c) {
 				mRow = r;
 				mCoeff = c;
 			}
-			
-			void addToMap(Map<LinVar, Collection<LinVarBigInt>> map, LinVar lv) {
+
+			void addToMap(final Map<LinVar, Collection<LinVarBigInt>> map, final LinVar lv) {
 				Collection<LinVarBigInt> column = map.get(lv);
 				if (column == null) {
 					column = new TreeSet<LinVarBigInt>();
@@ -387,12 +383,16 @@ public class CutCreator {
 			}
 
 			@Override
-			public int compareTo(LinVarBigInt o) {
+			public int compareTo(final LinVarBigInt o) {
 				return compare(mRow, o.mRow);
 			}
-			
+
+			@Override
+			public String toString() {
+				return mCoeff.toString() + "*" + mRow;
+			}
 		}
-		final Map<LinVar, Collection<LinVarBigInt>> colmap = 
+		final Map<LinVar, Collection<LinVarBigInt>> colmap =
 			new TreeMap<LinVar, Collection<LinVarBigInt>>();
 		for (final LinVar lv : solver.mLinvars) {
 			if (lv.mBasic) {
@@ -438,19 +438,19 @@ public class CutCreator {
 			i++;
 		}
 	}
-	
+
 	/**
 	 * Computes the nr-th row of the Hermite Normal Form, by applying the
 	 * mgcd algorithm on the columns from nr upwards.  This ensures that
 	 * the nr-th column contains the gcd at that row and the later columns
 	 * are zero.  Afterward the nr-th column is subtracted from column 0
 	 * to nr-1 to make the coefficients as small as possible.
-	 * 
+	 *
 	 * This assumes that the columns smaller than nr has been normalized
 	 * before.
 	 * @param nr the row of U resp. column of A to normalize.
 	 */
-	private void mgcdColumn(int nr) {
+	private void mgcdColumn(final int nr) {
 		/* find row to work on. */
 		LinVar row = mAColumns[nr].mIndices[0];
 		for (int i = nr + 1; i < mAColumns.length; i++) {
@@ -461,7 +461,7 @@ public class CutCreator {
 
 		boolean isTight = isTight(row);
 		boolean isFixed = isFixed(row);
-		
+
 		/* reorder columns: put zero columns at end,
 		 * put column with smallest absolute coeff to the front.
 		 * If there is a real non-zero column put that to the front.
@@ -479,7 +479,7 @@ public class CutCreator {
 					final Column tc = mAColumns[i];
 					mAColumns[i] = mAColumns[--end];
 					mAColumns[end] = tc;
-					
+
 					final Row tr = mURows[i];
 					mURows[i] = mURows[end];
 					mURows[end] = tr;
@@ -514,7 +514,7 @@ public class CutCreator {
 
 			// make one if real
 			BigInteger coeffNr = mAColumns[nr].mCoeffs[0];
-			if (!mURows[nr].isInt() 
+			if (!mURows[nr].isInt()
 				&& !coeffNr.equals(BigInteger.ONE)) {
 				mURows[nr].divide(coeffNr);
 				for (int i = 0; i < mAColumns[nr].mCoeffs.length; i++) {
@@ -525,7 +525,7 @@ public class CutCreator {
 				}
 				coeffNr = BigInteger.ONE;
 			}
-			
+
 			// now reduce all other columns with column[nr].
 			final BigInteger coeffNr2 = coeffNr.shiftRight(1);
 			for (int i = nr + 1; i < end; i++) {
@@ -544,7 +544,7 @@ public class CutCreator {
 				mURows[nr].addmul(mURows[i], div);
 			}
 		}
-		
+
 		// make positive
 		if (mAColumns[nr].mCoeffs[0].signum() < 0) {
 			mAColumns[nr].negate();
@@ -610,7 +610,7 @@ public class CutCreator {
 					BigInteger limit;
 					if (mURows[i].mFixed || !isTight
 						|| !mURows[i].mTight) {
-						/* This is an equality constraint, or we cannot 
+						/* This is an equality constraint, or we cannot
 						 * create a cut anymore.
 						 * make remainder small, i.e rem.abs() <= coeffNr2
 						 */
@@ -649,23 +649,23 @@ public class CutCreator {
 				|| mAColumns[nr + 1].mIndices[0] != row);
 	}
 
-	private void multiplyARow(LinVar linVar, BigInteger factor) {
+	private void multiplyARow(final LinVar linVar, final BigInteger factor) {
 		for (int i = 0; i < mAColumns.length; i++) {
 			for (int j = 0; j < mAColumns[i].mIndices.length; j++) {
 				if (mAColumns[i].mIndices[j] == linVar) {
-					mAColumns[i].mCoeffs[j] = 
-							mAColumns[i].mCoeffs[j].multiply(factor); 
+					mAColumns[i].mCoeffs[j] =
+							mAColumns[i].mCoeffs[j].multiply(factor);
 				}
 			}
 		}
 	}
 
-	private boolean isTight(LinVar linVar) {
+	private boolean isTight(final LinVar linVar) {
 		return linVar.getValue().lesseq(linVar.getLowerBound())
 			|| linVar.getUpperBound().lesseq(linVar.getValue());
 	}
 
-	private boolean isFixed(LinVar linVar) {
+	private boolean isFixed(final LinVar linVar) {
 		return linVar.getLowerBound().equals(linVar.getUpperBound());
 	}
 
@@ -683,12 +683,12 @@ public class CutCreator {
 			} else {
 				int k = i + 1;
 				for (int j = 1; j < mAColumns[i].mIndices.length; j++) {
-					while (k < mAColumns.length 
-							&& compare(mAColumns[k].mIndices[0], 
+					while (k < mAColumns.length
+							&& compare(mAColumns[k].mIndices[0],
 								mAColumns[i].mIndices[j]) < 0) {
 						k++;
 					}
-					if (k < mAColumns.length 
+					if (k < mAColumns.length
 						&& mAColumns[k].mIndices[0] == mAColumns[i].mIndices[j]) {
 						isBad[k] = true;
 					}
@@ -698,7 +698,7 @@ public class CutCreator {
 		return isBad;
 	}
 
-	public void generateCut(int row, boolean isTight) {
+	public void generateCut(final int row, final boolean isTight) {
 		assert mURows[row].mIndices[0].mIsInt;
 
 		final Literal cut = mURows[row].createConstraint();
@@ -716,12 +716,11 @@ public class CutCreator {
 		}
 	}
 
-	public CutCreator(LinArSolve solver) {
+	public CutCreator(final LinArSolve solver) {
 		mSolver = solver;
-		solver.calculateSimpVals();
 		computeMatrix(solver);
 	}
-	
+
 	public void generateCuts() {
 		for (int i = 0; i < mAColumns.length; i++) {
 			mgcdColumn(i);
@@ -740,7 +739,7 @@ public class CutCreator {
 				mSolver.mEngine.getLogger().debug("[" + i + "] " + mURows[i]);
 			}
 		}
-		
+
 		final boolean[] isBad = computeBadness();
 		int best = -1;
 		int bestlen = Integer.MAX_VALUE;
@@ -754,7 +753,7 @@ public class CutCreator {
 				continue;
 			}
 			/* prefer short cuts */
-			if (mURows[i].mCoeffs.length > bestlen 
+			if (mURows[i].mCoeffs.length > bestlen
 					&& mURows[best].mTight == mURows[i].mTight) {
 				continue;
 			}
@@ -763,12 +762,12 @@ public class CutCreator {
 			for (final BigInteger coeff : mURows[i].mCoeffs) {
 				max = Math.max(max, coeff.bitLength());
 			}
-			if (max >= bestsize 
-				&& mURows[i].mCoeffs.length == bestlen 
+			if (max >= bestsize
+				&& mURows[i].mCoeffs.length == bestlen
 				&& mURows[best].mTight == mURows[i].mTight) {
 				continue;
 			}
-			
+
 			best = i;
 			bestsize = max;
 			bestlen = mURows[i].mCoeffs.length;

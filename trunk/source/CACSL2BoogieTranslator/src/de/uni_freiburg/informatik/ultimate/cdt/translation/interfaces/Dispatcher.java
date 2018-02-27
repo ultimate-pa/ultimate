@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.GlobalVariableCollector;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypedefAndStructCollector;
@@ -145,18 +146,21 @@ public abstract class Dispatcher {
 
 	protected IASTNode mAcslHook;
 
+	protected final HandlerHandler mHandlerHandler;
+
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable,
 			final MultiparseSymbolTable mst) {
+		mHandlerHandler = new HandlerHandler();
 		mBacktranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
 		mPreferences = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mTypeSizes = new TypeSizes(mPreferences);
+		mTypeSizes = new TypeSizes(mPreferences, mHandlerHandler);
 		mTranslationSettings = new TranslationSettings(mPreferences);
 		mLocationFactory = locFac;
 		mMultiparseTable = mst;
-		mNameHandler = new NameHandler(mBacktranslator);
+		mNameHandler = new NameHandler(mBacktranslator, mHandlerHandler);
 		mFlatTable = new FlatSymbolTable(mst, this, mNameHandler);
 		mFunctionTable = functionTable;
 

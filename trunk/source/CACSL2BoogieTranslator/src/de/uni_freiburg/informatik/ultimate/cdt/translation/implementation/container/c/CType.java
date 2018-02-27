@@ -3,22 +3,22 @@
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -60,7 +60,7 @@ public abstract class CType {
 	public boolean isVolatile() {
 		return isVolatile;
 	}
-	
+
 	public boolean isIncomplete() {
 		return false;
 	}
@@ -105,8 +105,8 @@ public abstract class CType {
 	 */
 //	public boolean equals(Object o);
 //	public abstract int hashCode();
-	
-	
+
+
 	/**
 	 * Returns true iff this type is an integer type according to the
 	 * definition 6.2.5.7 in the C11 standard.
@@ -117,7 +117,7 @@ public abstract class CType {
 		}
 		return this instanceof CEnum;
 	}
-	
+
 	/**
 	 * Returns true iff this type is a real floating type according to the
 	 * definition 6.2.5.10 of the C11 standard.
@@ -132,7 +132,7 @@ public abstract class CType {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Returns true iff this type is a complex type according to the
 	 * definition 6.2.5.11 of the C11 standard.
@@ -147,7 +147,7 @@ public abstract class CType {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Returns true iff this type is an floating type according to the
 	 * definition 6.2.5.11 in the C11 standard.
@@ -159,7 +159,7 @@ public abstract class CType {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Returns true iff this type is a real type according to the
 	 * definition 6.2.5.17 in the C11 standard.
@@ -167,7 +167,7 @@ public abstract class CType {
 	public boolean isRealType() {
 		return isIntegerType() || isRealFloatingType();
 	}
-	
+
 	/**
 	 * Returns true iff this type is an arithmetic type according to the
 	 * definition 6.2.5.18 in the C11 standard.
@@ -175,7 +175,7 @@ public abstract class CType {
 	public boolean isArithmeticType() {
 		return isIntegerType() || isFloatingType();
 	}
-	
+
 	/**
 	 * Returns true iff this type is a scalar type according to the
 	 * definition 6.2.5.21 in the C11 standard.
@@ -183,5 +183,14 @@ public abstract class CType {
 	public boolean isScalarType() {
 		return (this instanceof CPointer) || isArithmeticType();
 	}
-		
+
+	public boolean isVoidPointerType() {
+		return this.getUnderlyingType() instanceof CPointer
+				&& ((CPointer) this.getUnderlyingType())
+					.getTargetType().getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
+	}
+
+	public boolean isVoidType() {
+		return this.getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
+	}
 }

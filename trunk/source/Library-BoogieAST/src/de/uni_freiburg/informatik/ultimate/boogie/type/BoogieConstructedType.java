@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.type;
@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * A Constructed type is a 
+ * A Constructed type is a
  * @author hoenicke
  *
  */
@@ -44,8 +44,8 @@ public class BoogieConstructedType extends BoogieType {
 	private final BoogieTypeConstructor constr;
 	private final BoogieType[] parameters;
 	private final BoogieType realType;
-	
-	BoogieConstructedType(BoogieTypeConstructor c, BoogieType[] parameters) {
+
+	BoogieConstructedType(final BoogieTypeConstructor c, final BoogieType[] parameters) {
 		constr = c;
 		this.parameters = parameters;
 
@@ -71,7 +71,7 @@ public class BoogieConstructedType extends BoogieType {
 
 	//@Override
 	@Override
-	protected BoogieType substitutePlaceholders(int depth, BoogieType[] substType) {
+	protected BoogieType substitutePlaceholders(final int depth, final BoogieType[] substType) {
 		if (parameters.length == 0) {
 			return this;
 		}
@@ -91,7 +91,7 @@ public class BoogieConstructedType extends BoogieType {
 
 	//@Override
 	@Override
-	protected BoogieType incrementPlaceholders(int depth, int incDepth) {
+	protected BoogieType incrementPlaceholders(final int depth, final int incDepth) {
 		if (parameters.length == 0) {
 			return this;
 		}
@@ -111,7 +111,7 @@ public class BoogieConstructedType extends BoogieType {
 
 	//@Override
 	@Override
-	protected boolean unify(int depth, BoogieType other, BoogieType[] substitution) {
+	protected boolean unify(final int depth, final BoogieType other, final BoogieType[] substitution) {
 		if (!(other instanceof BoogieConstructedType)) {
 			return false;
 		}
@@ -128,18 +128,18 @@ public class BoogieConstructedType extends BoogieType {
 	}
 
 	@Override
-	protected boolean hasPlaceholder(int minDepth, int maxDepth) {
+	protected boolean hasPlaceholder(final int minDepth, final int maxDepth) {
 		for (final BoogieType t : parameters) {
 			if (t.hasPlaceholder(minDepth, maxDepth)) {
 				return true;
 			}
 		}
-		return false; 
+		return false;
 	}
 
 	//@Override
 	@Override
-	protected boolean isUnifiableTo(int depth, BoogieType other, ArrayList<BoogieType> subst) {
+	protected boolean isUnifiableTo(final int depth, final BoogieType other, final ArrayList<BoogieType> subst) {
 		if (this == other || other == TYPE_ERROR) {
 			return true;
 		}
@@ -162,14 +162,14 @@ public class BoogieConstructedType extends BoogieType {
 	public BoogieType getUnderlyingType() {
 		return realType;
 	}
-	
+
 	public BoogieTypeConstructor getConstr() {
 		return constr;
 	}
-	public BoogieType getParameter(int i) {
+	public BoogieType getParameter(final int i) {
 		return parameters[i];
 	}
-	
+
 	public int getParameterCount() {
 		return parameters.length;
 	}
@@ -182,11 +182,11 @@ public class BoogieConstructedType extends BoogieType {
 	 * @return a string representation of this type.
 	 */
 	@Override
-	protected String toString(int depth, boolean needParentheses) {
+	protected String toString(final int depth, final boolean needParentheses) {
 		if (parameters.length == 0) {
 			return constr.getName();
 		}
-		
+
 		final StringBuilder sb = new StringBuilder();
 		if (needParentheses) {
 			sb.append("(");
@@ -200,9 +200,9 @@ public class BoogieConstructedType extends BoogieType {
 		}
 		return sb.toString();
 	}
-	
+
 	@Override
-	protected ASTType toASTType(ILocation loc, int depth) {
+	protected ASTType toASTType(final ILocation loc, final int depth) {
 		final ASTType[] astParamTypes = new ASTType[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
 			astParamTypes[i] = parameters[i].toASTType(loc, depth);
@@ -210,7 +210,7 @@ public class BoogieConstructedType extends BoogieType {
 		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
 			NamedType(loc, this, constr.getName(), astParamTypes);
 	}
-	
+
 	//@Override
 	@Override
 	public boolean isFinite() {

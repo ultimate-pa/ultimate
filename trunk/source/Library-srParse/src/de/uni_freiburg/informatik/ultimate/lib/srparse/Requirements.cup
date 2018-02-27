@@ -105,13 +105,13 @@ action code {:
     	return result;
     }
     
-    public ILocation getLocation(Symbol sBegin, Symbol sEnd, boolean isLoop) {
+    public ILocation getLocation(Symbol sBegin, Symbol sEnd) {
 	    int startLine = sBegin.left;
 	    int endLine = sEnd.right;
 	    int startColumn = 0;
 	    int endColumn = 0;
 	    return new BoogieLocation("",
-	                   startLine, endLine, startColumn, endColumn, isLoop);
+	                   startLine, endLine, startColumn, endColumn);
 	}
 :}
 
@@ -173,17 +173,17 @@ property ::= propid?:id scope:s COMMA? pattern:p DOT?
             | error
                {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.IN); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VariableCategory.IN); :}
 		  	| OUTPUT cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.OUT); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VariableCategory.OUT); :}
 		 	| INTERNAL cid:i IS ID:t
-		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.HIDDEN); :}
+		  	   {: RESULT = new InitializationPattern(i,t,InitializationPattern.VariableCategory.HIDDEN); :}
 		 	| CONST cid:i IS NUMBER:v
-		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VarAccess.CONST,null); :}
+		  	   {: RESULT = new InitializationPattern(i,"int",InitializationPattern.VariableCategory.CONST, new IntegerLiteral(getLocation(v$,v$), v)); :}
 		 	| CONST cid:i IS REALNUMBER:v
-		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VarAccess.CONST,null); :}
+		  	   {: RESULT = new InitializationPattern(i,"real",InitializationPattern.VariableCategory.CONST, new RealLiteral(getLocation(v$,v$), v)); :}
 		 	| CONST cid:i IS bool:v
-		  	   {: RESULT = new InitializationPattern(i,"bool",InitializationPattern.VarAccess.CONST,null); :}		  	   		  	   		  	   
+		  	   {: RESULT = new InitializationPattern(i,"bool",InitializationPattern.VariableCategory.CONST, new BooleanLiteral(getLocation(v$,v$), v)); :}		  	   		  	   		  	   
            ;
 
 propid ::= ID:id IDSEP
@@ -319,74 +319,74 @@ expr ::= atom:a {: RESULT = BooleanDecision.create(rename(a)); :}
        ;
 
 expr1NI ::= expr2NI:e1 LIMPLIES exprImpliesNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
         | expr2NI:e {:RESULT = e;:}
         ;
         
 exprImpliesNI ::= expr2NI:e1 LIMPLIES exprImpliesNI:e2
-            {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+            {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
           | expr2NI:e {:RESULT = e;:}
           ;
           
 expr2NI ::= expr3NI:e1 LAND exprAndNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICAND, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2);:}
         | expr3NI:e1 LOR  exprOrNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICOR, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2);:}
         | expr3NI:e {:RESULT = e;:}
         ;
         
 exprAndNI ::= expr3NI:e1 LAND exprAndNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICAND, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2);:}
           | expr3NI:e {:RESULT = e;:}
           ;
           
 exprOrNI ::= expr3NI:e1 LOR exprOrNI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.LOGICOR, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2);:}
           | expr3NI:e {:RESULT = e;:}
 		  ;
        
 
 expr3NI ::= expr5NI:e1 LE expr5NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPLT, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPLT, e1, e2);:}
         | expr5NI:e1 GREATER expr5NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPGT, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPGT, e1, e2);:}
         | expr5NI:e1 LTEQ expr5NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPLEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPLEQ, e1, e2);:}
         | expr5NI:e1 GTEQ expr5NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPGEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPGEQ, e1, e2);:}
         | expr5NI:e1 EQ expr5NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPEQ, e1, e2);:}
         | expr5NI:e1 NEQ expr5NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPNEQ, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPNEQ, e1, e2);:}
         | expr5NI:e {:RESULT = e;:}
        ;
        
 expr5NI ::= expr5NI:e1 PLUS expr6NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
         | expr5NI:e1 MINUS expr6NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
         | expr6NI:e {:RESULT = e;:}
         ;
         
 expr6NI ::= expr6NI:e1 TIMES expr7NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMUL, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMUL, e1, e2);:}
         | expr6NI:e1 DIVIDE expr7NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHDIV, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHDIV, e1, e2);:}
         | expr6NI:e1 MOD expr7NI:e2
-           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMOD, e1, e2);:}
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMOD, e1, e2);:}
         | expr7NI:e {:RESULT = e;:}
         ;
 expr7NI ::= LNOT expr7NI:e
-           {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.LOGICNEG, e);:} 
+           {:RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.LOGICNEG, e);:} 
 		| MINUS expr7NI:e
-           {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.ARITHNEGATIVE, e);:}
+           {:RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.ARITHNEGATIVE, e);:}
         | expr9NI:e {:RESULT = e;:}
         ;
 
-expr9NI ::= REALNUMBER:n {: RESULT = new RealLiteral(getLocation(n$,n$,false), n); :}
-	    | NUMBER:n {: RESULT = new IntegerLiteral(getLocation(n$,n$,false), n); :}
-     	| cid:i {: RESULT = new IdentifierExpression(getLocation(i$,i$,false), i); :}
-	    | bool:b {:RESULT = new BooleanLiteral(getLocation(b$,b$,false),b);:}
+expr9NI ::= REALNUMBER:n {: RESULT = new RealLiteral(getLocation(n$,n$), n); :}
+	    | NUMBER:n {: RESULT = new IntegerLiteral(getLocation(n$,n$), n); :}
+     	| cid:i {: RESULT = new IdentifierExpression(getLocation(i$,i$), i); :}
+	    | bool:b {:RESULT = new BooleanLiteral(getLocation(b$,b$),b);:}
 	    | LPAR expr1NI:e RPAR {: RESULT = e; :}
 	    ;
 	

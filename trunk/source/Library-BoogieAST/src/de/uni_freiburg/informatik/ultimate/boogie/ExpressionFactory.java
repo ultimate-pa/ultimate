@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
@@ -46,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -79,6 +79,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class ExpressionFactory {
 
+
+	/**
+	 * Name for dummy expressions that represent a "void" result. Those identifier expressions may not be used anywhere
+	 * and thus should get an error BoogieType.
+	 * (note that this string has to fit the regex that is checked during creation of an IdentifierExpression...)
+	 */
+	public static final String DUMMY_VOID = "#dummy~void~value";
 
 
 	public static Expression constructUnaryExpression(final ILocation loc, final UnaryExpression.Operator operator,
@@ -363,7 +370,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	public static Expression newIfThenElseExpression(final ILocation loc, final Expression condition,
+	public static Expression constructIfThenElseExpression(final ILocation loc, final Expression condition,
 			final Expression thenPart, final Expression elsePart) {
 		final Expression condLiteral = filterLiteral(condition);
 		if (condLiteral instanceof BooleanLiteral) {
@@ -373,7 +380,9 @@ public class ExpressionFactory {
 			}
 			return elsePart;
 		}
-		return new IfThenElseExpression(loc, condition, thenPart, elsePart);
+		final BoogieType type = TypeCheckHelper.typeCheckIfThenElseExpression((BoogieType) condition.getType(),
+				(BoogieType) thenPart.getType(), (BoogieType) elsePart.getType(), new TypeErrorReporter(loc));
+		return new IfThenElseExpression(loc, type, condition, thenPart, elsePart);
 
 	}
 
@@ -407,15 +416,20 @@ public class ExpressionFactory {
 	 */
 	public static Expression constructBitvectorAccessExpression(final ILocation loc, final Expression operand,
 			final int high, final int low) {
+
+		final BoogieType type = TypeCheckHelper.typeCheckBitVectorAccessExpression(
+					TypeCheckHelper.getBitVecLength((BoogieType) operand.getType()), high,
+					low, (BoogieType) operand.getType(), new TypeErrorReporter(loc));
+
 		final Expression operandLiteral = filterLiteral(operand);
 		if (operandLiteral instanceof BitvecLiteral) {
 			final BigInteger biValue = new BigInteger(((BitvecLiteral) operandLiteral).getValue());
 			final BigInteger two = BigInteger.valueOf(2);
 			final BigInteger dividedByLow = biValue.divide(two.pow(low));
 			final BigInteger biresult = dividedByLow.mod(two.pow(high));
-			return new BitvecLiteral(loc, biresult.toString(), high - low);
+			return new BitvecLiteral(loc, type, biresult.toString(), high - low);
 		}
-		return new BitVectorAccessExpression(loc, operand, high, low);
+		return new BitVectorAccessExpression(loc, type, operand, high, low);
 	}
 
 	public static Expression and(final ILocation loc, final List<Expression> exprs) {
@@ -438,7 +452,7 @@ public class ExpressionFactory {
 		final Iterator<Expression> iter = exprs.iterator();
 		Expression current = iter.next();
 		while (iter.hasNext()) {
-			current = new BinaryExpression(loc, op, current, iter.next());
+			current = constructBinaryExpression(loc, op, current, iter.next());
 		}
 		return current;
 	}
@@ -470,18 +484,26 @@ public class ExpressionFactory {
 			throw new AssertionError("attempting to build array access without indices");
 		}
 
-		final List<BoogieType> indicesTypes = Arrays.stream(indices)
-					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
-
-		final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs((BoogieType) array.getType(),
-				indicesTypes, new TypeErrorReporter(loc));
-
 		if (indices.length == 1) {
+			final BoogieArrayType arrayType = (BoogieArrayType) array.getType();
+			final List<BoogieType> indicesTypes = Arrays.stream(indices)
+					.map(exp -> (BoogieType) exp.getType()).collect(Collectors.toList());
+			final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes,
+					new TypeErrorReporter(loc));
 			return new ArrayAccessExpression(loc, newType, array, indices);
 		}
 		final Expression[] innerIndices = Arrays.copyOfRange(indices, 0, indices.length - 1);
-		final Expression innerLhs = constructNestedArrayAccessExpression(loc, array, innerIndices);
-		return new ArrayAccessExpression(loc, newType, innerLhs, new Expression[] { indices[indices.length - 1] });
+		final Expression innerArrayAccessExpression = constructNestedArrayAccessExpression(loc, array, innerIndices);
+
+		final Expression outerMostIndexValue = indices[indices.length - 1];
+		final Expression[] outerMostIndex = new Expression[] { outerMostIndexValue };
+
+		final BoogieArrayType arrayType = (BoogieArrayType) innerArrayAccessExpression.getType();
+		final BoogieType newType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType,
+					Arrays.asList(new BoogieType[] { (BoogieType) outerMostIndexValue.getType() }),
+					new TypeErrorReporter(loc));
+
+		return new ArrayAccessExpression(loc, newType, innerArrayAccessExpression, outerMostIndex);
 	}
 
 	public static ArrayLHS constructNestedArrayLHS(final ILocation loc, final LeftHandSide array,
@@ -557,10 +579,19 @@ public class ExpressionFactory {
 		return new BinaryExpression(loc, type, operator, operand1, operand2);
 	}
 
+	/**
+	 *
+	 * @param loc
+	 * @param identifier
+	 * @param arguments
+	 * @param resultBoogieType
+	 * 		the BoogieType of the result of the function application.
+	 * @return
+	 */
 	public static FunctionApplication constructFunctionApplication(final ILocation loc, final String identifier,
-			final Expression[] arguments, final FunctionDeclaration declaration) {
-		final BoogieType type = (BoogieType) declaration.getOutParam().getType().getBoogieType();
-		return new FunctionApplication(loc, type, identifier, arguments);
+			final Expression[] arguments, final BoogieType resultBoogieType) {
+//		final BoogieType type = (BoogieType) declaration.getOutParam().getType().getBoogieType();
+		return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 	}
 
 	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,
@@ -672,6 +703,11 @@ public class ExpressionFactory {
 		} else {
 			throw new AssertionError("unexpected expression type");
 		}
+	}
+
+	public static IdentifierExpression createVoidDummyExpression(final ILocation loc) {
+		return constructIdentifierExpression(loc, BoogieType.TYPE_ERROR,
+				DUMMY_VOID, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 

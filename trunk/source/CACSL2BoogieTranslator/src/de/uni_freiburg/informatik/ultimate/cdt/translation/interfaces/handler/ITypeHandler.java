@@ -236,4 +236,6 @@ public interface ITypeHandler extends IHandler {
 	 * @param expressionTranslation
 	 */
 	void setExpressionTranslation(ExpressionTranslation expressionTranslation);
+
+	boolean isBitvectorTranslation();
 }

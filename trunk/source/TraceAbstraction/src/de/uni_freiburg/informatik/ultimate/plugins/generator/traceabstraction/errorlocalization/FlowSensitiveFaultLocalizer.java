@@ -227,13 +227,20 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				} else {
 					// For Branch in Branch Out information.
 					// Path from the successor state not in the counter example
-					// to one of the states in possibleEndPoints.
-					final NestedRun<LETTER, IPredicate> alternativePath =
-							findPathInCfg(immediateSuccesor, startStateInCfg, possibleEndPoints, cfg);
-					if (alternativePath != null) {
+					// to one of the states in possibleEndPoints.	
+					final NestedWord<LETTER> notGuard = new NestedWord<>(transition.getLetter(), NestedWord.INTERNAL_POSITION);
+					
+					NestedRun<LETTER, IPredicate> alternativePath =
+							new NestedRun<LETTER, IPredicate>(notGuard, new ArrayList<>(Arrays.asList(startStateInCfg, transition.getSucc())));
+					
+					// get rest of the alternative path
+					final NestedRun<LETTER, IPredicate> remainingPath = findPathInCfg(immediateSuccesor, startStateInCfg, possibleEndPoints, cfg);
+					if (remainingPath != null) {
 						// If such a path exists. Then that means that there is a path from the successor state
 						// that comes back to the counter example
 						// THAT MEANS WE HAVE FOUND AN out-BRANCH AT POSITION "COUNTER"
+						
+						alternativePath = alternativePath.concatenate(remainingPath);
 						final IPredicate lastStateOfAlternativePath =
 								alternativePath.getStateAtPosition(alternativePath.getLength() - 1);
 
@@ -441,7 +448,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 	
 	/**
-	 * Computes the branch encoded formula (based on either markhor formula or block-encoding)
+	 * Recursively computes the branch encoded formula (based on either markhor formula or block-encoding).
 	 * 
 	 * @param startPosition
 	 *            - Starting location of the branch.
@@ -455,9 +462,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final ManagedScript csToolkit) {
 		UnmodifiableTransFormula combinedTransitionFormula =
 				counterexampleWord.getSymbolAt(startPosition).getTransformula();
-		
-		UnmodifiableTransFormula combineTransitionFormulaAlternativePath = TransFormulaUtils.negate(combinedTransitionFormula, csToolkit, 
-				mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
+		NestedWord<LETTER> subAlternativePath = null;
 		
 		for (int i = startPosition + 1; i <= endPosition; i++) {
 			boolean subBranch = false;
@@ -469,15 +474,16 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 					subBranch = true;
 					branchOut = i;
 					final Integer brachInPosition = entry.getKey();
-					branchIn = brachInPosition - 1; // WHY IS IT -1 here ? This should be removed here.
+					branchIn = brachInPosition;
 					i = branchIn;
+					subAlternativePath = informationFromCfg.get(branchIn).get(branchOut).getWord();
 					break;
 				}
 			}
 			if (subBranch) {
 				// The current statement is a branch out and it's branch-in is with in the current branch.
 				final UnmodifiableTransFormula subBranchMarkhorFormula =
-						doBranchEncoding(branchOut, branchIn, counterexampleWord, null, informationFromCfg, csToolkit);
+						doBranchEncoding(branchOut, branchIn, subAlternativePath, counterexampleWord, informationFromCfg, csToolkit);
 				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
 						false, false, false, mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(
 								new UnmodifiableTransFormula[] { combinedTransitionFormula, subBranchMarkhorFormula }));
@@ -492,9 +498,10 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		}
 		
 		
+		UnmodifiableTransFormula combineTransitionFormulaAlternativePath = alternativePath.getSymbolAt(0).getTransformula();
 		// Compute the combined transition formula for the alternative path
 		if(alternativePath != null) {
-			for(int i = 0; i< alternativePath.length(); i++) {
+			for(int i = 1; i< alternativePath.length(); i++) {
 				final UnmodifiableTransFormula transitionFormulaAlternPathElement =  alternativePath.getSymbol(i).getTransformula();
 				combineTransitionFormulaAlternativePath = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
 						false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
@@ -502,8 +509,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 		
-		UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula, csToolkit, mServices, mLogger,
-				mXnfConversionTechnique, mSimplificationTechnique);
+		//UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula, csToolkit, mServices, mLogger,
+		//		mXnfConversionTechnique, mSimplificationTechnique);
 		
 		UnmodifiableTransFormula blockEncodedFormula =  TransFormulaUtils.computeEncodedBranchFormula(combinedTransitionFormula, combineTransitionFormulaAlternativePath,
 				csToolkit, mServices, mLogger, 	mXnfConversionTechnique, mSimplificationTechnique);
@@ -511,54 +518,6 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		return blockEncodedFormula;
 	}
 	
-	/**
-	 * Recursively Compute the Markhor Formula of a branch.
-	 *
-	 * @param startPosition
-	 *            - Starting location of the branch.
-	 * @param endPosition
-	 *            - End location of the branch.
-	 */
-	private UnmodifiableTransFormula computeMarkhorFormula(final int startPosition, final int endPosition,
-			final NestedWord<LETTER> counterexampleWord, final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg,
-			final ManagedScript csToolkit) {
-		UnmodifiableTransFormula combinedTransitionFormula =
-				counterexampleWord.getSymbolAt(startPosition).getTransformula();
-		for (int i = startPosition + 1; i <= endPosition; i++) {
-			boolean subBranch = false;
-			int branchOut = 0;
-			int branchIn = 0;
-			// Find out if the current position is a branchOut position.
-			for (final Entry<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> entry : informationFromCfg.entrySet()) {
-				if (entry.getValue().containsKey(i)) {
-					subBranch = true;
-					branchOut = i;
-					final Integer brachInPosition = entry.getKey();
-					branchIn = brachInPosition - 1; // WHY IS IT -1 here ? This should be removed here.
-					i = branchIn;
-					break;
-				}
-			}
-			if (subBranch) {
-				// The current statement is a branch out and it's branch-in is with in the current branch.
-				final UnmodifiableTransFormula subBranchMarkhorFormula =
-						computeMarkhorFormula(branchOut, branchIn, counterexampleWord, informationFromCfg, csToolkit);
-				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
-						false, false, false, mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(
-								new UnmodifiableTransFormula[] { combinedTransitionFormula, subBranchMarkhorFormula }));
-			} else {
-				// It is a normal statement.
-				final LETTER statement = counterexampleWord.getSymbol(i);
-				final UnmodifiableTransFormula transitionFormula = statement.getTransformula();
-				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
-						false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
-						Arrays.asList(new UnmodifiableTransFormula[] { combinedTransitionFormula, transitionFormula }));
-			}
-		}
-		return TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula, csToolkit, mServices, mLogger,
-				mXnfConversionTechnique, mSimplificationTechnique);
-	}
-
 	/**
 	 * Checks if subtrace from position "startPosition" to position "endPosition" is relevant.
 	 */

@@ -108,7 +108,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	@Override
 	public String toString(final int child) {
 		if (child != 0) {
-			final BoogieLocation loc = new BoogieLocation("", 0, 0, 0, 0, false);
+			final BoogieLocation loc = new BoogieLocation("", 0, 0, 0, 0);
 			return BoogiePrettyPrinter.print(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, mExpression));
 		}
 		return BoogiePrettyPrinter.print(mExpression);

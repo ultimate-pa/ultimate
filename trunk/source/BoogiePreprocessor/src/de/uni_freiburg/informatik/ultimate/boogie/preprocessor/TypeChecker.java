@@ -100,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieFunctionSignature;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -276,18 +277,13 @@ public class TypeChecker extends BaseObserver {
 			}
 		} else if (expr instanceof IfThenElseExpression) {
 			final IfThenElseExpression ite = (IfThenElseExpression) expr;
+
 			final BoogieType condType = typecheckExpression(ite.getCondition());
-			if (!condType.equals(BoogieType.TYPE_ERROR) && !condType.equals(BoogieType.TYPE_BOOL)) {
-				typeError(expr, "if expects boolean type: " + expr);
-			}
 			final BoogieType left = typecheckExpression(ite.getThenPart());
 			final BoogieType right = typecheckExpression(ite.getElsePart());
-			if (!left.isUnifiableTo(right)) {
-				typeError(expr, "Type check failed for " + expr);
-				resultType = BoogieType.TYPE_ERROR;
-			} else {
-				resultType = left.equals(BoogieType.TYPE_ERROR) ? right : left;
-			}
+
+
+			resultType = TypeCheckHelper.typeCheckIfThenElseExpression(condType, left, right, typeErrorReporter);
 		} else if (expr instanceof QuantifierExpression) {
 			final QuantifierExpression quant = (QuantifierExpression) expr;
 			final TypeParameters typeParams = new TypeParameters(quant.getTypeParams());
@@ -1075,7 +1071,7 @@ public class TypeChecker extends BaseObserver {
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
-	public class TypeErrorReporter implements ITypeErrorReporter<BoogieASTNode> {
+	public class TypeErrorReporter implements ITypeErrorReporter<String> {
 
 		private final BoogieASTNode mReportNode;
 
@@ -1084,9 +1080,17 @@ public class TypeChecker extends BaseObserver {
 		}
 
 		@Override
-		public void report(final Function<BoogieASTNode, String> func) {
+		public void report(final Function<String, String> func) {
 //			final Pair<BoogieASTNode, String> res = func.apply(mReportNode);
-			typeError(mReportNode, func.apply(mReportNode));
+			final String pp;
+			if (mReportNode instanceof Expression) {
+				pp = BoogiePrettyPrinter.print((Expression) mReportNode);
+			} else if (mReportNode instanceof Statement) {
+				pp = BoogiePrettyPrinter.print((Statement) mReportNode);
+			} else {
+				pp = mReportNode.toString();
+			}
+			typeError(mReportNode, func.apply(pp));
 		}
 
 	}

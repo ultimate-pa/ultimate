@@ -24,8 +24,10 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -35,12 +37,15 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
 /**
- *  Represents an affine term.  An affine term is a sum
- *  <pre>Σ c_i * x_i + c,</pre>
- *  where c_i, c are rational (or integer) constants
- *  and x_i are flat terms that are not themselves affine terms.
+ * Represents an affine term. An affine term is a sum
+ * 
+ * <pre>
+ * Σ c_i * x_i + c,
+ * </pre>
+ * 
+ * where c_i, c are rational (or integer) constants and x_i are flat terms that are not themselves affine terms.
  *
- *  @author hoenicke.
+ * @author hoenicke.
  */
 public final class SMTAffineTerm extends Term {
 
@@ -48,27 +53,63 @@ public final class SMTAffineTerm extends Term {
 	private final Map<Term, Rational> mSummands;
 	private final Rational mConstant;
 
-	private SMTAffineTerm(
-	        final Map<Term, Rational> summands, final Rational constant, final Sort sort) {
-		super(constant.hashCode() * 11 + summands.hashCode()
-		        + 1423 * sort.hashCode());
+	private SMTAffineTerm(final Map<Term, Rational> summands, final Rational constant, final Sort sort) {
+		super(constant.hashCode() * 11 + summands.hashCode() + 1423 * sort.hashCode());
 		mSort = sort;
 		mSummands = summands;
 		mConstant = constant;
 	}
 
-	public static SMTAffineTerm create(
-	        final Map<Term, Rational> summands, final Rational constant, final Sort sort) {
+	public static SMTAffineTerm create(final Map<Term, Rational> summands, final Rational constant, final Sort sort) {
 		return new SMTAffineTerm(summands, constant, sort);
 	}
 
 	public static SMTAffineTerm create(final Rational rat, final Sort sort) {
-		return create(Collections.<Term,Rational>emptyMap(), rat, sort);
+		return create(Collections.<Term, Rational> emptyMap(), rat, sort);
 	}
 
 	public static SMTAffineTerm create(final Term term) {
 		if (term instanceof SMTAffineTerm) {
 			return (SMTAffineTerm) term;
+		}
+
+		if (term instanceof ApplicationTerm) {
+			final Sort sort = term.getSort();
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			Map<Term, Rational> summands = new LinkedHashMap<Term, Rational>();
+			Rational constant = Rational.ZERO;
+			Term[] subterms;
+			if (appTerm.getFunction().getName().equals("+")) {
+				subterms = appTerm.getParameters();
+			} else {
+				subterms = new Term[] { term };
+			}
+			for (Term subterm : subterms) {
+				Rational factor = Rational.ONE;
+				if (subterm instanceof ApplicationTerm && ((ApplicationTerm) subterm).getFunction().getName() == "*") {
+					final Term[] params = ((ApplicationTerm) subterm).getParameters();
+					assert params.length == 2;
+					factor = convertConstant((ConstantTerm) params[0]);
+					subterm = params[1];
+				}
+				if (subterm instanceof ApplicationTerm && ((ApplicationTerm) subterm).getFunction().getName() == "-"
+						&& ((ApplicationTerm) subterm).getParameters().length == 1) {
+					factor = factor.negate();
+					subterm = ((ApplicationTerm) subterm).getParameters()[0];
+				}
+				if (subterm instanceof ApplicationTerm
+						&& ((ApplicationTerm) subterm).getFunction().getName() == "to_real") {
+					subterm = ((ApplicationTerm) subterm).getParameters()[0];
+				}
+				if (subterm instanceof ConstantTerm) {
+					assert factor == Rational.ONE && constant == Rational.ZERO;
+					constant = convertConstant((ConstantTerm) subterm);
+				} else {
+					assert !(summands.containsKey(subterm));
+					summands.put(subterm, factor);
+				}
+			}
+			return create(summands, constant, sort);
 		}
 		return create(Rational.ONE, term);
 	}
@@ -84,38 +125,40 @@ public final class SMTAffineTerm extends Term {
 			final SMTAffineTerm a = (SMTAffineTerm) subterm;
 			constant = a.mConstant.mul(factor);
 			summands = new HashMap<Term, Rational>();
-			for (final Map.Entry<Term,Rational> me : a.mSummands.entrySet()) {
+			for (final Map.Entry<Term, Rational> me : a.mSummands.entrySet()) {
 				summands.put(me.getKey(), me.getValue().mul(factor));
 			}
 		} else if (subterm instanceof ConstantTerm) {
-			final Object value = ((ConstantTerm) subterm).getValue();
-			if (value instanceof BigInteger) {
-				constant = Rational.valueOf(
-				        (BigInteger) value, BigInteger.ONE).mul(factor);
-				summands = Collections.emptyMap();
-			} else if (value instanceof BigDecimal) {
-				final BigDecimal decimal = (BigDecimal) value;
-				if (decimal.scale() <= 0) {
-					final BigInteger num = decimal.toBigInteger();
-					constant = Rational.valueOf(num, BigInteger.ONE).mul(factor);
-				} else {
-					final BigInteger num = decimal.unscaledValue();
-					final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
-					constant = Rational.valueOf(num, denom).mul(factor);
-				}
-				summands = Collections.emptyMap();
-			} else if (value instanceof Rational) {
-				constant = (Rational) value;
-				summands = Collections.emptyMap();
-			} else {
-				summands = Collections.singletonMap(subterm, factor);
-				constant = Rational.ZERO;
-			}
+			constant = convertConstant((ConstantTerm) subterm);
+			summands = Collections.emptyMap();
 		} else {
 			summands = Collections.singletonMap(subterm, factor);
 			constant = Rational.ZERO;
 		}
 		return create(summands, constant, sort);
+	}
+
+	public static Rational convertConstant(ConstantTerm term) {
+		Rational constant;
+		final Object value = ((ConstantTerm) term).getValue();
+		if (value instanceof BigInteger) {
+			constant = Rational.valueOf((BigInteger) value, BigInteger.ONE);
+		} else if (value instanceof BigDecimal) {
+			final BigDecimal decimal = (BigDecimal) value;
+			if (decimal.scale() <= 0) {
+				final BigInteger num = decimal.toBigInteger();
+				constant = Rational.valueOf(num, BigInteger.ONE);
+			} else {
+				final BigInteger num = decimal.unscaledValue();
+				final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
+				constant = Rational.valueOf(num, denom);
+			}
+		} else if (value instanceof Rational) {
+			constant = (Rational) value;
+		} else {
+			throw new InternalError("Something went wrong with constants!");
+		}
+		return constant;
 	}
 
 	public SMTAffineTerm add(final SMTAffineTerm a2) {
@@ -126,7 +169,7 @@ public final class SMTAffineTerm extends Term {
 	public SMTAffineTerm addUnchecked(final SMTAffineTerm a2, final boolean sortCorrect) {
 		final Map<Term, Rational> summands = new HashMap<Term, Rational>();
 		summands.putAll(mSummands);
-		for (final Map.Entry<Term,Rational> entry : a2.mSummands.entrySet()) {
+		for (final Map.Entry<Term, Rational> entry : a2.mSummands.entrySet()) {
 			final Term var = entry.getKey();
 			if (summands.containsKey(var)) {
 				final Rational r = summands.get(var).add(entry.getValue());
@@ -140,14 +183,14 @@ public final class SMTAffineTerm extends Term {
 			}
 		}
 		return create(summands, mConstant.add(a2.mConstant),
-				sortCorrect ? mSort
-					: a2.getSort().getName().equals("Real")
-							? a2.getSort() : mSort);
+				sortCorrect ? mSort : a2.getSort().getName().equals("Real") ? a2.getSort() : mSort);
 	}
 
 	/**
 	 * Add a rational constant to this affine term.
-	 * @param c the constant to add.
+	 * 
+	 * @param c
+	 *            the constant to add.
 	 * @return the sum of this and the constant.
 	 */
 	public SMTAffineTerm add(final Rational c) {
@@ -155,10 +198,13 @@ public final class SMTAffineTerm extends Term {
 	}
 
 	/**
-	 * Convert affine term to a different sort.  This should only be used
-	 * to convert from int to real, as it does not truncate.
-	 * @param other  the affine term to convert.
-	 * @param sort   the new sort.
+	 * Convert affine term to a different sort. This should only be used to convert from int to real, as it does not
+	 * truncate.
+	 * 
+	 * @param other
+	 *            the affine term to convert.
+	 * @param sort
+	 *            the new sort.
 	 */
 	public SMTAffineTerm typecast(final Sort realSort) {
 		return create(mSummands, mConstant, realSort);
@@ -166,7 +212,9 @@ public final class SMTAffineTerm extends Term {
 
 	/**
 	 * Multiply a rational constant with this affine term.
-	 * @param c the constant to multiply.
+	 * 
+	 * @param c
+	 *            the constant to multiply.
 	 * @return the product of this and the constant.
 	 */
 	public SMTAffineTerm mul(final Rational factor) {
@@ -176,14 +224,16 @@ public final class SMTAffineTerm extends Term {
 
 		final Rational constant = mConstant.mul(factor);
 		final HashMap<Term, Rational> summands = new HashMap<Term, Rational>();
-		for (final Map.Entry<Term,Rational> me : mSummands.entrySet()) {
+		for (final Map.Entry<Term, Rational> me : mSummands.entrySet()) {
 			summands.put(me.getKey(), me.getValue().mul(factor));
 		}
 		return create(summands, constant, mSort);
 	}
+
 	public SMTAffineTerm div(final Rational c) {
 		return mul(c.inverse());
 	}
+
 	public SMTAffineTerm negate() {
 		return mul(Rational.MONE);
 	}
@@ -191,6 +241,7 @@ public final class SMTAffineTerm extends Term {
 	public boolean isConstant() {
 		return mSummands.isEmpty();
 	}
+
 	public Rational getConstant() {
 		return mConstant;
 	}
@@ -205,9 +256,7 @@ public final class SMTAffineTerm extends Term {
 			return false;
 		}
 		final SMTAffineTerm l = (SMTAffineTerm) o;
-		return mSort == l.mSort
-			&& mConstant.equals(l.mConstant)
-			&& mSummands.equals(l.mSummands);
+		return mSort == l.mSort && mConstant.equals(l.mConstant) && mSummands.equals(l.mSummands);
 	}
 
 	@Override
@@ -235,14 +284,12 @@ public final class SMTAffineTerm extends Term {
 	}
 
 	/**
-	 * Convert the affine term to plain SMTLib term.
-	 * Note that this is does not convert terms inside this term.  Instead
-	 * use the static method cleanup() for this, which works on arbitrary
-	 * terms.
+	 * Convert the affine term to plain SMTLib term. Note that this is does not convert terms inside this term. Instead
+	 * use the static method cleanup() for this, which works on arbitrary terms.
+	 * 
 	 * @see SMTAffineTerm.cleanup
 	 */
-	private static Term toPlainTerm(
-	        final Map<Term, Rational> summands, final Rational constant, final Sort sort) {
+	private static Term toPlainTerm(final Map<Term, Rational> summands, final Rational constant, final Sort sort) {
 		assert sort.isNumericSort();
 		final Theory t = sort.getTheory();
 		int size = summands.size();
@@ -251,7 +298,7 @@ public final class SMTAffineTerm extends Term {
 		}
 		final Term[] sum = new Term[size];
 		int i = 0;
-		for (final Map.Entry<Term,Rational> factor : summands.entrySet()) {
+		for (final Map.Entry<Term, Rational> factor : summands.entrySet()) {
 			Term convTerm = factor.getKey();
 			if (!convTerm.getSort().equals(sort)) {
 				convTerm = t.term("to_real", convTerm);
@@ -282,7 +329,9 @@ public final class SMTAffineTerm extends Term {
 
 	/**
 	 * Remove all occurrences of SMTAffineTerm from the given term.
-	 * @param term the term to clean up.
+	 * 
+	 * @param term
+	 *            the term to clean up.
 	 * @return an equivalent term without SMTAffineTerm classes.
 	 */
 	public static Term cleanup(final Term term) {
@@ -294,13 +343,11 @@ public final class SMTAffineTerm extends Term {
 					enqueueWalker(new Walker() {
 						@Override
 						public void walk(final NonRecursive engine) {
-							final HashMap<Term, Rational> summands =
-							        new HashMap<Term, Rational>();
-							for (final Rational v: affine.mSummands.values()) {
+							final HashMap<Term, Rational> summands = new HashMap<Term, Rational>();
+							for (final Rational v : affine.mSummands.values()) {
 								summands.put(getConverted(), v);
 							}
-							final Term term = SMTAffineTerm.toPlainTerm(
-							        summands, affine.mConstant, affine.mSort);
+							final Term term = SMTAffineTerm.toPlainTerm(summands, affine.mConstant, affine.mSort);
 							setResult(term);
 						}
 					});
@@ -315,16 +362,16 @@ public final class SMTAffineTerm extends Term {
 	}
 
 	/**
-	 * Normalize this term.  If this term corresponds to a singleton sum with
-	 * coefficient 1 and constant 0, it will return the singleton term.
-	 * Otherwise, it will return this.
-	 * @param compiler TermCompiler used to unify SMTAffineTerms
+	 * Normalize this term. If this term corresponds to a singleton sum with coefficient 1 and constant 0, it will
+	 * return the singleton term. Otherwise, it will return this.
+	 * 
+	 * @param compiler
+	 *            TermCompiler used to unify SMTAffineTerms
 	 * @return this or the singleton term corresponding to this.
 	 */
 	public Term normalize(final TermCompiler compiler) {
 		if (mConstant.equals(Rational.ZERO) && mSummands.size() == 1) {
-			final Map.Entry<Term, Rational> me =
-					mSummands.entrySet().iterator().next();
+			final Map.Entry<Term, Rational> me = mSummands.entrySet().iterator().next();
 			if (me.getValue().equals(Rational.ONE)
 					// Fixes bug for to_real
 					&& me.getKey().getSort() == mSort) {

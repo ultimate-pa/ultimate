@@ -90,11 +90,6 @@ public class ACSLLocation extends CACSLLocation {
 	}
 
 	@Override
-	public boolean isLoop() {
-		return false;
-	}
-
-	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		if (mNode != null) {

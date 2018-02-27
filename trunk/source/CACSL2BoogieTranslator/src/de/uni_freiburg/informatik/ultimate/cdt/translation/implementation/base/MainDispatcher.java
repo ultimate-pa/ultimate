@@ -427,10 +427,13 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	protected void init() {
-		mTypeHandler = new TypeHandler(mBitvectorTranslation);
+
+		mTypeHandler = new TypeHandler(mBitvectorTranslation, mHandlerHandler);
+
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
-		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,
-				mOverapproximateFloatingPointOperations, mNameHandler, mFlatTable);
+
+		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, true, mLogger, mBitvectorTranslation,
+				mOverapproximateFloatingPointOperations, mFlatTable);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new PreprocessorHandler(isSvcomp());
 		mReportWarnings = true;

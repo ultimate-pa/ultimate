@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -463,6 +464,13 @@ public abstract class BoogieTransformer {
 				final LeftHandSide newLhs = new ArrayLHS(lhs.getLocation(), alhs.getType(), newArray, newIndices);
 				ModelUtils.copyAnnotations(lhs, newLhs);
 				return newLhs;
+			}
+		} else if (lhs instanceof StructLHS) {
+			final StructLHS slhs = (StructLHS) lhs;
+			final LeftHandSide struct = slhs.getStruct();
+			final LeftHandSide newStruct = processLeftHandSide(struct);
+			if (newStruct != struct) {
+				return new StructLHS(lhs.getLocation(), slhs.getType(), newStruct, slhs.getField());
 			}
 		}
 		return lhs;

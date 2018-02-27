@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -40,6 +41,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -165,13 +167,34 @@ public class PostProcessor {
 		final Set<String> undefinedTypes = main.mTypeHandler.getUndefinedTypes();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 
-		final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main, hook);//, mDeclarationsGlobalInBoogie);
-		decl.add(initProcedure.getUltimateInitImplementation());
-		
-		final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc, hook);
-		decl.add(startProcedure.getUltimateStartDeclaration());
-//		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler,
+		final String checkedMethod = main.getCheckedMethod();
+
+		if (!checkedMethod.equals(SFO.EMPTY)
+				&& main.mCHandler.getProcedureManager().hasProcedure(checkedMethod)) {
+				mLogger.info("Settings: Checked method=" + checkedMethod);
+				final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main, hook);//, mDeclarationsGlobalInBoogie);
+				decl.add(initProcedure.getUltimateInitImplementation());
+
+				final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc, hook);
+				decl.add(startProcedure.getUltimateStartImplementation());
+				//		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler,
 //				initProcedure.getUltimateInitModifiesClauseContents()));
+
+
+		} else {
+			// this would be done during createInit otherwise
+			main.mCHandler.getStaticObjectsHandler().freeze();
+
+			mLogger.info("Settings: Library mode!");
+			if (main.mCHandler.getProcedureManager().hasProcedure(SFO.MAIN)) {
+				final String msg =
+						"You selected the library mode (i.e., each procedure can be starting procedure and global "
+								+ "variables are not initialized). This program contains a \"main\" procedure. Maybe you "
+								+ "wanted to select the \"main\" procedure as starting procedure.";
+				mDispatcher.warn(loc, msg);
+			}
+		}
+
 
 		decl.addAll(declareFunctionPointerProcedures(main));
 		decl.addAll(declareConversionFunctions(main));
@@ -192,6 +215,7 @@ public class PostProcessor {
 			final BitvectorTranslation bitvectorTranslation = (BitvectorTranslation) expressionTranslation;
 			bitvectorTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantFunctions);
 		}
+		assert decl.stream().allMatch(Objects::nonNull);
 		return decl;
 	}
 
@@ -250,6 +274,7 @@ public class PostProcessor {
 	private ArrayList<Declaration> declareFunctionPointerProcedures(final Dispatcher main) {
 		final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
 		final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
+		final ProcedureManager procedureManager = main.mCHandler.getProcedureManager();
 
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -257,8 +282,8 @@ public class PostProcessor {
 		for (final ProcedureSignature cFunc : functionHandler.getFunctionsSignaturesWithFunctionPointers()) {
 			final String procName = cFunc.toString();
 
-			final VarList[] inParams = functionHandler.getProcedureDeclaration(procName).getInParams();
-			final VarList[] outParams = functionHandler.getProcedureDeclaration(procName).getOutParams();
+			final VarList[] inParams = procedureManager.getProcedureDeclaration(procName).getInParams();
+			final VarList[] outParams = procedureManager.getProcedureDeclaration(procName).getOutParams();
 			assert outParams.length <= 1;
 			final Procedure functionPointerMuxProc =
 					new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams, outParams,
@@ -269,8 +294,8 @@ public class PostProcessor {
 							null,
 							// functionHandler.getFunctionPointerFunctionBody(ignoreLoc, main, memoryHandler,
 							// structHandler, procName, cFunc, inParams, outParams));
-							getFunctionPointerFunctionBody(ignoreLoc, main, functionHandler, memoryHandler,
-									procName, cFunc, inParams, outParams));
+							getFunctionPointerFunctionBody(ignoreLoc, main, functionHandler, procedureManager,
+									memoryHandler, procName, cFunc, inParams, outParams));
 			result.add(functionPointerMuxProc);
 		}
 		return result;
@@ -462,7 +487,7 @@ public class PostProcessor {
 	 *
 	 * @param loc
 	 * @param main
-	 * @param functionHandler
+	 * @param procedureManager
 	 * @param memoryHandler
 	 * @param structHandler
 	 * @param dispatchingProcedureName
@@ -476,8 +501,9 @@ public class PostProcessor {
 	 * @return
 	 */
 	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main,
-			final FunctionHandler functionHandler, final MemoryHandler memoryHandler,
-			final String dispatchingProcedureName, final ProcedureSignature funcSignature, final VarList[] inParams,
+			final FunctionHandler functionHandler, final ProcedureManager procedureManager,
+			final MemoryHandler memoryHandler, final String dispatchingProcedureName,
+			final ProcedureSignature funcSignature, final VarList[] inParams,
 			final VarList[] outParam) {
 
 		final StructHandler structHandler = main.mCHandler.getStructHandler();
@@ -515,7 +541,7 @@ public class PostProcessor {
 					ExpressionFactory.constructVariableLHS(loc,
 							boogieTypeHelper.getBoogieTypeForBoogieASTType(vl.getType()),
 							newId, new DeclarationInformation(StorageClass.LOCAL, dispatchingProcedureName));
-			builder.addStatement(functionHandler.constructAssignmentStatement(loc, new LeftHandSide[] { newIdLhs },
+			builder.addStatement(StatementFactory.constructAssignmentStatement(loc, new LeftHandSide[] { newIdLhs },
 					new Expression[] { oldIdExpr }));
 			final IdentifierExpression newIdIdExpr = //new IdentifierExpression(loc, newId);
 					ExpressionFactory.constructIdentifierExpression(loc,
@@ -528,7 +554,7 @@ public class PostProcessor {
 		// match the signature
 		final ArrayList<String> fittingFunctions = new ArrayList<>();
 		for (final Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
-			final CFunction ptdToFuncType = functionHandler.getCFunctionType(en.getKey());
+			final CFunction ptdToFuncType = procedureManager.getCFunctionType(en.getKey());
 			// if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
 			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {
 				fittingFunctions.add(en.getKey());
@@ -541,19 +567,20 @@ public class PostProcessor {
 		// visit(TranslationUnit) after the postprocessor)
 		// can compute the correct modifies clause
 //		functionHandler.addModifiedGlobalEntry(fpfName);
-		for (final String fittingFunc : fittingFunctions) {
-//			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
-			functionHandler.registerCall(dispatchingProcedureName, fittingFunc);
-		}
+//		for (final String fittingFunc : fittingFunctions) {
+////			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
+//			procedureManager.registerCall(dispatchingProcedureName, fittingFunc);
+//		}
 
 		// generate the actual body
 		IdentifierExpression funcCallResult = null;
 		if (fittingFunctions.isEmpty()) {
 //			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
 //					stmt.toArray(new Statement[stmt.size()]));
-			return functionHandler.constructBody(loc,
+			return procedureManager.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
-					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
+					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
+					dispatchingProcedureName);
 		} else if (fittingFunctions.size() == 1) {
 //			final ExpressionResult rex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
 //					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
@@ -580,7 +607,7 @@ public class PostProcessor {
 								id,
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
-				builder.addStatement(functionHandler.constructAssignmentStatement(loc,
+				builder.addStatement(StatementFactory.constructAssignmentStatement(loc,
 						new LeftHandSide[] { lhs },
 						new Expression[] { funcCallResult }));
 			}
@@ -589,10 +616,14 @@ public class PostProcessor {
 //			stmt.add(new ReturnStatement(loc));
 			builder.addStatement(new ReturnStatement(loc));
 
-			return new Body(loc,
-//					decl.toArray(new VariableDeclaration[decl.size()]),
+//			return new Body(loc,
+////					decl.toArray(new VariableDeclaration[decl.size()]),
+//					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
+//					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
+			return procedureManager.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
-					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
+					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
+					dispatchingProcedureName);
 		} else {
 //			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
@@ -602,7 +633,7 @@ public class PostProcessor {
 //				tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
 //				final VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
 //						new VarList[] { new VarList(loc, new String[] { tmpId }, funcSignature.getReturnType()) });
-				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main,
+				auxvar = AuxVarInfo.constructAuxVarInfo(loc, main,
 						funcSignature.getReturnType(),
 						SFO.AUXVAR.FUNCPTRRES);
 //				decl.add(tmpVarDec);
@@ -633,7 +664,7 @@ public class PostProcessor {
 			firstElseStmt.addAll(firstElseRex.mStmt);
 			if (!resultTypeIsVoid) {
 				final AssignmentStatement assignment =
-						functionHandler.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
+						StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
 								new Expression[] { firstElseRex.mLrVal.getValue() });
 				firstElseStmt.add(assignment);
 			}
@@ -656,7 +687,7 @@ public class PostProcessor {
 				newStmts.addAll(currentRex.mStmt);
 				if (!resultTypeIsVoid) {
 					final AssignmentStatement assignment =
-							functionHandler.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
+							StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
 									new Expression[] { currentRex.mLrVal.getValue() });
 					newStmts.add(assignment);
 				}
@@ -697,7 +728,7 @@ public class PostProcessor {
 								outParam[0].getIdentifiers()[0],
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
-				builder.addStatement(functionHandler.constructAssignmentStatement(loc,
+				builder.addStatement(StatementFactory.constructAssignmentStatement(loc,
 						new LeftHandSide[] { dispatchingFunctionResultLhs },
 						new Expression[] { funcCallResult }));
 			}
@@ -707,9 +738,11 @@ public class PostProcessor {
 //					stmt.toArray(new Statement[stmt.size()]));
 			builder.addStatements(CTranslationUtil.createHavocsForAuxVars(builder.getAuxVars()));
 			builder.addStatement(new ReturnStatement(loc));
-			return new Body(loc,
+//			return new Body(loc,
+			return procedureManager.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
-					builder.getStatements().toArray(new Statement[builder.getStatements().size()]));
+					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
+					dispatchingProcedureName);
 		}
 	}
 
@@ -731,12 +764,13 @@ public class PostProcessor {
 			final ExpressionTranslation expressionTranslation = main.mCHandler.getExpressionTranslation();
 			final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
 			final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
+			final ProcedureManager procedureManager = main.mCHandler.getProcedureManager();
 
 			{
 				final Procedure initProcedureDecl = new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT,
 						new String[0], new VarList[0], new VarList[0], new Specification[0], null);
-				main.mCHandler.getFunctionHandler().beginCustomProcedure(main, translationUnitLoc, SFO.INIT,
-						initProcedureDecl, hook);
+				main.mCHandler.getProcedureManager().beginCustomProcedure(main, translationUnitLoc, SFO.INIT,
+						initProcedureDecl);
 //				main.mCHandler.getFunctionHandler().beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
 			}
 			final ArrayList<Statement> initStatements = new ArrayList<>();
@@ -765,7 +799,7 @@ public class PostProcessor {
 								boogieTypeHelper.getBoogieTypeForPointerType(),
 								SFO.NULL,
 								DeclarationInformation.DECLARATIONINFO_GLOBAL);
-				initStatements.add(0, functionHandler.constructAssignmentStatement(translationUnitLoc,
+				initStatements.add(0, StatementFactory.constructAssignmentStatement(translationUnitLoc,
 						new LeftHandSide[] { slhs },
 						new Expression[] {
 								ExpressionFactory.constructStructConstructor(translationUnitLoc,
@@ -858,9 +892,10 @@ public class PostProcessor {
 			 * note that we only have to deal with the implementation part of the procedure, the declaration is managed
 			 * by the FunctionHandler
 			 */
-			final Body initBody = functionHandler.constructBody(translationUnitLoc,
+			final Body initBody = procedureManager.constructBody(translationUnitLoc,
 					initDecl.toArray(new VariableDeclaration[initDecl.size()]),
-					initStatements.toArray(new Statement[initStatements.size()]));
+					initStatements.toArray(new Statement[initStatements.size()]),
+					SFO.INIT);
 			final Procedure initProcedureImplementation = new Procedure(translationUnitLoc, new Attribute[0],
 					SFO.INIT, new String[0], new VarList[0], new VarList[0], null, initBody);
 
@@ -873,12 +908,13 @@ public class PostProcessor {
 
 //			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT, proceduresCalledByUltimateInit);
 //			functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT);
-			main.mCHandler.getFunctionHandler().endCustomProcedure(main, SFO.INIT);
+			main.mCHandler.getProcedureManager().endCustomProcedure(main, SFO.INIT);
 
 			mUltimateInitImplementation = initProcedureImplementation;
 		}
 
 		public Declaration getUltimateInitImplementation() {
+			assert mUltimateInitImplementation != null;
 			return mUltimateInitImplementation;
 		}
 
@@ -900,6 +936,7 @@ public class PostProcessor {
 		void createStartProc(final Dispatcher main, final ILocation loc, final IASTNode hook) {
 
 			final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
+			final ProcedureManager procedureManager = main.mCHandler.getProcedureManager();
 			final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
 
 //			final Map<String, Procedure> procedures = functionHandler.getProcedures();
@@ -907,13 +944,11 @@ public class PostProcessor {
 
 			Procedure startProcedure = null;
 
-			if (!checkedMethod.equals(SFO.EMPTY) && functionHandler.hasProcedure(checkedMethod)) {
-				mLogger.info("Settings: Checked method=" + checkedMethod);
 
 				{
 					final Procedure startDeclaration = new Procedure(loc, new Attribute[0], SFO.START, new String[0],
 						new VarList[0], new VarList[0], new Specification[0], null);
-					functionHandler.beginCustomProcedure(main, loc, SFO.START, startDeclaration, hook);
+					procedureManager.beginCustomProcedure(main, loc, SFO.START, startDeclaration);
 				}
 
 //				Procedure startDeclaration = null;
@@ -925,14 +960,14 @@ public class PostProcessor {
 				final ArrayList<Statement> startStmt = new ArrayList<>();
 				final ArrayList<VariableDeclaration> startDecl = new ArrayList<>();
 //				specsStart = new Specification[1];
-				startStmt.add(functionHandler.constructCallStatement(loc, false, new VariableLHS[0], SFO.INIT,
+				startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], SFO.INIT,
 						new Expression[0]));
 				final VarList[] checkedMethodOutParams =
-						functionHandler.getProcedureDeclaration(checkedMethod).getOutParams();
+						procedureManager.getProcedureDeclaration(checkedMethod).getOutParams();
 				final VarList[] checkedMethodInParams =
-						functionHandler.getProcedureDeclaration(checkedMethod).getInParams();
+						procedureManager.getProcedureDeclaration(checkedMethod).getInParams();
 				final Specification[] checkedMethodSpec =
-						functionHandler.getProcedureDeclaration(checkedMethod).getSpecification();
+						procedureManager.getProcedureDeclaration(checkedMethod).getSpecification();
 
 				// find out the requires specs of the checked method and assume it before its start
 				final ArrayList<Statement> reqSpecsAssumes = new ArrayList<>();
@@ -964,8 +999,8 @@ public class PostProcessor {
 //					final VariableDeclaration tmpVar =
 //							new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 					final CType checkedMethodResultCType =
-							functionHandler.getCFunctionType(checkedMethod).getResultType();
-					final AuxVarInfo checkedMethodReturnAuxVar = CTranslationUtil.constructAuxVarInfo(loc, main,
+							procedureManager.getCFunctionType(checkedMethod).getResultType();
+					final AuxVarInfo checkedMethodReturnAuxVar = AuxVarInfo.constructAuxVarInfo(loc, main,
 							checkedMethodResultCType, SFO.AUXVAR.RETURNED);
 					main.mCHandler.getSymbolTable().addBoogieCIdPair(
 							checkedMethodReturnAuxVar.getExp().getIdentifier(),
@@ -974,14 +1009,14 @@ public class PostProcessor {
 //							SFO.NO_REAL_C_VAR + checkMethodRet,
 							loc);
 					startDecl.add(checkedMethodReturnAuxVar.getVarDec());
-					startStmt.add(functionHandler.constructCallStatement(loc, false,
+					startStmt.add(StatementFactory.constructCallStatement(loc, false,
 							new VariableLHS[] { checkedMethodReturnAuxVar.getLhs() },
 							checkedMethod, args.toArray(new Expression[args.size()])));
-					functionHandler.registerCall(checkedMethod);
+//					procedureManager.registerCall(checkedMethod);
 				} else { // void
-					startStmt.add(functionHandler.constructCallStatement(loc, false, new VariableLHS[0], checkedMethod,
+					startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], checkedMethod,
 							args.toArray(new Expression[args.size()])));
-					functionHandler.registerCall(checkedMethod);
+//					procedureManager.registerCall(checkedMethod);
 				}
 
 //				final LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<>();
@@ -997,9 +1032,9 @@ public class PostProcessor {
 //				specsStart[0] = new ModifiesSpecification(loc, false,
 //						startModifiesClause.toArray(new VariableLHS[startModifiesClause.size()]));
 
-				final Body startBody = functionHandler.constructBody(loc,
+				final Body startBody = procedureManager.constructBody(loc,
 						startDecl.toArray(new VariableDeclaration[startDecl.size()]),
-						startStmt.toArray(new Statement[startStmt.size()]));
+						startStmt.toArray(new Statement[startStmt.size()]), SFO.START);
 //				final Body startBody = new Body(loc, startDecl.toArray(new VariableDeclaration[startDecl.size()]),
 //						startStmt.toArray(new Statement[startStmt.size()]));
 
@@ -1016,22 +1051,13 @@ public class PostProcessor {
 
 //				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START, proceduresCalledByStart);
 //				functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START);
-				functionHandler.endCustomProcedure(main, SFO.START);
-			} else {
-				mLogger.info("Settings: Library mode!");
-				if (functionHandler.hasProcedure(SFO.MAIN)) {
-					final String msg =
-							"You selected the library mode (i.e., each procedure can be starting procedure and global "
-							+ "variables are not initialized). This program contains a \"main\" procedure. Maybe you "
-							+ "wanted to select the \"main\" procedure as starting procedure.";
-					mDispatcher.warn(loc, msg);
-				}
-			}
+				procedureManager.endCustomProcedure(main, SFO.START);
 
 			mStartProcedure = startProcedure;
 		}
 
-		public Declaration getUltimateStartDeclaration() {
+		public Declaration getUltimateStartImplementation() {
+			assert mStartProcedure != null;
 			return mStartProcedure;
 		}
 	}
