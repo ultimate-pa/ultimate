@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public abstract class AMemoryModel {
 
-	protected final static String s_ReadProcedurePrefix = "read~";
-	protected final static String s_WriteProcedurePrefix = "write~";
+	protected static final String READ_PROCEDURE_PREFIX = "read~";
+	protected static final String WRITE_PROCEDURE_PREFIX = "write~";
 
 	protected final ITypeHandler mTypeHandler;
 	protected final TypeSizes mTypeSizes;
@@ -75,21 +75,21 @@ public abstract class AMemoryModel {
 	protected abstract String getProcedureSuffix(CPrimitives primitive);
 
 	public final String getReadProcedureName(final CPrimitives primitive) {
-		return s_ReadProcedurePrefix + getProcedureSuffix(primitive);
+		return READ_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
 
 	public final String getWriteProcedureName(final CPrimitives primitive) {
-		return s_WriteProcedurePrefix + getProcedureSuffix(primitive);
+		return WRITE_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
 
 	public final String getReadPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
-		return s_ReadProcedurePrefix + hda.getName();
+		return READ_PROCEDURE_PREFIX + hda.getName();
 	}
 
 	public final String getWritePointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
-		return s_WriteProcedurePrefix + hda.getName();
+		return WRITE_PROCEDURE_PREFIX + hda.getName();
 	}
 
 	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
@@ -126,7 +126,7 @@ public abstract class AMemoryModel {
 	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures);
 
-	public class ReadWriteDefinition {
+	public static class ReadWriteDefinition {
 		private final String mProcedureSuffix;
 		private final int mBytesize;
 		private final ASTType mASTType;
@@ -140,16 +140,16 @@ public abstract class AMemoryModel {
 			mBytesize = bytesize;
 			mASTType = aSTType;
 			mPrimitives = primitives;
-			final Function<CPrimitives, CPrimitiveCategory> mapper = (x -> x.getPrimitiveCategory());
+			final Function<CPrimitives, CPrimitiveCategory> mapper = CPrimitives::getPrimitiveCategory;
 			mCPrimitiveCategory = primitives.stream().map(mapper).collect(Collectors.toSet());
 		}
 
 		public String getReadProcedureName() {
-			return s_ReadProcedurePrefix + mProcedureSuffix;
+			return READ_PROCEDURE_PREFIX + mProcedureSuffix;
 		}
 
 		public String getWriteProcedureName() {
-			return s_WriteProcedurePrefix + mProcedureSuffix;
+			return WRITE_PROCEDURE_PREFIX + mProcedureSuffix;
 		}
 
 		public int getBytesize() {
