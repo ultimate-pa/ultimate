@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 /**
@@ -140,6 +141,17 @@ public class LocationFactory {
 
 		public Set<String> getFilenames() {
 			return mFilenames;
+		}
+		
+		@Override
+		public IAnnotations merge(final IAnnotations other) {
+			if (other == null) {
+				return this;
+			}
+			if (other == this) {
+				return this;
+			}
+			return super.merge(other);
 		}
 
 	}
