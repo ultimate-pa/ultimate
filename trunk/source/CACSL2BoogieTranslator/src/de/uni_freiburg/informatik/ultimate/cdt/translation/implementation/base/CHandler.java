@@ -537,7 +537,7 @@ public class CHandler implements ICHandler {
 
 		final PointerIntegerConversion pointerIntegerConversion =
 				prefs.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
-						CACSLPreferenceInitializer.PointerIntegerConversion.class);
+				CACSLPreferenceInitializer.PointerIntegerConversion.class);
 		if (bitvectorTranslation) {
 			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), handlerHandler,
 					pointerIntegerConversion, overapproximateFloatingPointOperations);
@@ -2774,7 +2774,7 @@ public class CHandler implements ICHandler {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
 				rhsWithBitfieldTreatment =
 						mExpressionTranslation.erazeBits(loc, rightHandSideValueWithConversionsApplied.getValue(),
-								(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth);
+						(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
@@ -3686,7 +3686,7 @@ public class CHandler implements ICHandler {
 		final ILocation ignoreLocation = LocationFactory.createIgnoreCLocation(node);
 		final WhileStatement whileStmt =
 				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
-						bodyBlock.toArray(new Statement[bodyBlock.size()]));
+				bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		// overappr.stream().forEach(a -> a.annotate(whileStmt));
 		// stmt.add(whileStmt);
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
@@ -4281,17 +4281,17 @@ public class CHandler implements ICHandler {
 		 * the first compares unequal to 0; the third operand is evaluated only if the first compares equal to 0; the
 		 * result is the value of the second or third operand (whichever is evaluated), converted to the type described
 		 * below. 110)
-		 *
+         *
 		 * --> we translate this by a Boogie if-statement, such that the side effects of the evaluation of each C
 		 * expression go into the respective branch of the Boogie if statement.
-		 */
+         */
 
 		/*
 		 * C11 6.5.15.5 If both the second and third operands have arithmetic type, the result type that would be
 		 * determined by the usual arithmetic conversions, were they applied to those two operands, is the type of the
 		 * result. If both the operands have structure or union type, the result has that type. If both operands have
 		 * void type, the result has void type.
-		 */
+         */
 
 		/*
 		 * C11 6.5.15.6 If both the second and third operands are pointers or one is a null pointer constant and the
@@ -4301,9 +4301,9 @@ public class CHandler implements ICHandler {
 		 * qualified version of the composite type; if one operand is a null pointer constant, the result has the type
 		 * of the other operand; otherwise, one operand is a pointer to void or a qualified version of void, in which
 		 * case the result type is a pointer to an appropriately qualified version of void.
-		 *
-		 * TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
-		 * currently.
+         *
+         *  TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
+         *   currently.
 		 */
 
 		/*
@@ -4312,21 +4312,23 @@ public class CHandler implements ICHandler {
 		 * further.
 		 */
 
+
 		boolean secondArgIsVoid = false;
 		boolean thirdArgIsVoid = false;
 
+
 		if (!opPositive.hasLRValue()) {
-			opPositive.mLrVal =
-					new RValue(ExpressionFactory.createVoidDummyExpression(loc), new CPrimitive(CPrimitives.VOID));
-			// resultCType = opNegative.hasLRValue() ? opNegative.getLrValue().getCType()
-			// : new CPrimitive(CPrimitives.VOID);
+			opPositive.mLrVal = new RValue(
+					ExpressionFactory.createVoidDummyExpression(loc),
+//					dummyVoidAuxVar.getExp(),
+					new CPrimitive(CPrimitives.VOID));
 			secondArgIsVoid = true;
 		}
 		if (!opNegative.hasLRValue()) {
-			opNegative.mLrVal =
-					new RValue(ExpressionFactory.createVoidDummyExpression(loc), new CPrimitive(CPrimitives.VOID));
-			// resultCType = opPositive.hasLRValue() ? opPositive.getLrValue().getCType()
-			// : new CPrimitive(CPrimitives.VOID);
+			opNegative.mLrVal = new RValue(
+					ExpressionFactory.createVoidDummyExpression(loc),
+//					dummyVoidAuxVar.getExp(),
+					new CPrimitive(CPrimitives.VOID));
 			thirdArgIsVoid = true;
 		}
 
@@ -4367,7 +4369,7 @@ public class CHandler implements ICHandler {
 			if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				// convert the "0" to a pointer
 				mExpressionTranslation.convertIntToPointer(loc, opNegative,
-						(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
+					(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
 			} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
@@ -4384,6 +4386,19 @@ public class CHandler implements ICHandler {
 		}
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+
+		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary..
+//		/*
+//		 * the value of this aux var may never be used outside the translation of this conditional operator.
+//		 * Using the aux var in the hope of detecting such errors easier. Otherwise one could just not make the
+//		 * assignment.
+//		 */
+//		final AuxVarInfo dummyVoidAuxVar = AuxVarInfo.constructAuxVarInfo(loc, main, resultCType,
+//				mTypeHandler.cType2AstType(loc, resultCType),
+//				SFO.AUXVAR.DUMMY_VOID);
+//		resultBuilder.addDeclaration(dummyVoidAuxVar.getVarDec());
+//		resultBuilder.addAuxVar(dummyVoidAuxVar);
+
 		resultBuilder.addAllExceptLrValue(opCondition);
 
 		// auxvar that will hold the result of the ite expression
@@ -4401,7 +4416,8 @@ public class CHandler implements ICHandler {
 		final List<Statement> ifStatements = new ArrayList<>();
 		{
 			ifStatements.addAll(opPositive.mStmt);
-			if (!resultCType.isVoidType()) {
+//			if (!resultCType.isVoidType()) {
+			if (!resultCType.isVoidType() && !secondArgIsVoid) {
 				final LeftHandSide[] lhs = { auxvar.getLhs() };
 				final Expression assignedVal = opPositive.getLrValue().getValue();
 				final AssignmentStatement assignStmt =
@@ -4418,7 +4434,7 @@ public class CHandler implements ICHandler {
 		final List<Statement> elseStatements = new ArrayList<>();
 		{
 			elseStatements.addAll(opNegative.mStmt);
-			if (!resultCType.isVoidType()) {
+			if (!resultCType.isVoidType() && !thirdArgIsVoid) {
 				final LeftHandSide[] lhs = { auxvar.getLhs() };
 				final Expression assignedVal = opNegative.getLrValue().getValue();
 				final AssignmentStatement assignStmt =
@@ -4442,8 +4458,8 @@ public class CHandler implements ICHandler {
 			/* the result has a value only if the result type is not void.. */
 			resultBuilder.setLrVal(new RValue(auxvar.getExp(), resultCType));
 		} else {
-			/* for better error detection we give the dummy void value here */
-			resultBuilder.setLrVal(new RValue(ExpressionFactory.createVoidDummyExpression(loc), resultCType));
+//			/* for better error detection we give the dummy void value here */ (edit: see the todo above)
+//			resultBuilder.setLrVal(new RValue(dummyVoidAuxVar.getExp(), resultCType));
 		}
 		return resultBuilder.build();
 	}

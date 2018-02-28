@@ -326,7 +326,17 @@ public final class SFO {
 		/**
 		 * Auxiliary variable used for the result of a call to the 'builtin' memset function
 		 */
-		MEMSETRES("memset");
+		MEMSETRES("memset"),
+
+		/**
+		 * Name for dummy expressions that represent a "void" result. Those identifier expressions may not be used
+		 * anywhere and thus should get an error BoogieType.
+		 * (note that this string has to fit the regex that is checked during creation of an IdentifierExpression...)
+		 */
+		DUMMY_VOID("#dummy~void~value"),
+
+		;
+
 
 		private final String mId;
 

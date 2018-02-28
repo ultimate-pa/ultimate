@@ -30,6 +30,9 @@ public class BoogieTypeHelper {
 	}
 
 	public BoogieType getBoogieTypeForBoogieASTType(final ASTType asttype) {
+		if (asttype == null) {
+			return BoogieType.TYPE_ERROR;
+		}
 		final BoogieType result = (BoogieType) asttype.getBoogieType();
 		assert result != null;
 		return result;
