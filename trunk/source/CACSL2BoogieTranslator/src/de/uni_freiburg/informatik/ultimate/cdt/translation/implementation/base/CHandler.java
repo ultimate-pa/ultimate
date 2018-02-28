@@ -2340,7 +2340,9 @@ public class CHandler implements ICHandler {
 		resultBuilder.addStatement(new Label(loc, breakLabelName));
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
-		updateStmtsAndDeclsAtScopeEnd(main, resultBuilder, node);
+		// Use body as hook: This is the scope holder for switch statements! (as controller expression is child of the
+		// switch itself and may not have scope access.)
+		updateStmtsAndDeclsAtScopeEnd(main, resultBuilder, node.getBody());
 		endScope();
 
 		assert resultBuilder.getLrVal() == null;
