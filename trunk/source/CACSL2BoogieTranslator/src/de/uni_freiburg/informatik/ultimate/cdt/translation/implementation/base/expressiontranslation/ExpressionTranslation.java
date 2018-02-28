@@ -139,7 +139,6 @@ public abstract class ExpressionTranslation {
 		}
 		case IASTLiteralExpression.lk_string_literal: {
 			final RValue rvalue;
-//			final String tId;
 			final AuxVarInfo auxvar;
 			{
 				// subtract two from length for quotes at beginning and end
@@ -148,29 +147,14 @@ public abstract class ExpressionTranslation {
 						constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),
 								BigInteger.valueOf(arrayLength)),
 						getCTypeOfPointerComponents());
-//				final RValue[] dimensions = { dimension };
-//				final CArray arrayType = new CArray(dimensions, new CPrimitive(CPrimitives.CHAR));
 				final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
 				 final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
-//				tId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.STRINGLITERAL, arrayType);
-//				tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-//						new VarList[] { new VarList(loc, new String[] { tId }, mTypeHandler.constructPointerType(loc)) });
-//				auxvar = CTranslationUtil.constructAuxVarInfo(loc, main, arrayType, SFO.AUXVAR.STRINGLITERAL);
 				auxvar = AuxVarInfo.constructGlobalAuxVarInfo(loc, main, pointerType, SFO.AUXVAR.STRINGLITERAL);
 				rvalue = new RValueForArrays(auxvar.getExp(), arrayType);
 			}
-//			final ArrayList<Declaration> decls = new ArrayList<>();
-//			decls.add(auxvar.getVarDec());
-//			main.mCHandler.getStaticObjectsHandler().addGlobalDeclarations(decls);
 			// the declaration of the variable that corresponds to a string literal has to be made globally
 			main.mCHandler.getStaticObjectsHandler()//.addGlobalDeclarations(decls);
 				.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
-
-
-
-			// aux var havoccing not necessary because of static storage duration
-//			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-//			auxVars.put(auxvar.getVarDec(), loc);
 
 			/*
 			 * construct a char[] that may be used for intitializing off-heap string variables.
@@ -196,17 +180,6 @@ public abstract class ExpressionTranslation {
 			main.mCHandler.getStaticObjectsHandler()
 				.addStatementsForUltimateInit(statements);
 
-//			main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(statements);
-//			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(tId);
-//			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.VALID);
-//			main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.LENGTH);
-//			if (writeValues) {
-////				main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(SFO.MEMORY_INT);
-//				main.mCHandler.getStaticObjectsHandler().addVariableModifiedByUltimateInit(
-//						main.mCHandler.getMemoryHandler().getMemoryModel().getDataHeapArray(CPrimitives.CHAR)
-//							.getVariableName());
-//			}
-
 			final List<Overapprox> overapproxList;
 			if (writeValues) {
 				overapproxList = Collections.emptyList();
@@ -215,10 +188,7 @@ public abstract class ExpressionTranslation {
 				overapproxList = new ArrayList<>();
 				overapproxList.add(overapprox);
 			}
-//			return new StringLiteralResult(statements, rvalue, decls, auxVars, overapproxList,
 			return new StringLiteralResult(rvalue, overapproxList, auxvar, charArray, !writeValues);
-//			return new StringLiteralResult(Collections.emptyList(), rvalue, Collections.emptyList(),
-//					Collections.emptyMap(), overapproxList, charArray);
 		}
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(new RValue(ExpressionFactory.createBooleanLiteral(loc, false),
