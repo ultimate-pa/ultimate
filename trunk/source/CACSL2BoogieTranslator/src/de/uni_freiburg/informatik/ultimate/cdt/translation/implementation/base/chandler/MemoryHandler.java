@@ -627,8 +627,8 @@ public class MemoryHandler {
 
 		final IdentifierExpression sizeIdExprBody = // new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE);
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mBoogieTypeHelper.getBoogieTypeForSizeT(),
-						SFO.MEMCPY_SIZE, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM,
-								memCopyOrMemMove.getName()));
+						SFO.MEMCPY_SIZE,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, memCopyOrMemMove.getName()));
 
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
@@ -658,15 +658,17 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()));
 
 		// add requires #valid[dest!base];
-		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST, specs, memCopyOrMemMove.getName());
+		specs.addAll(constructPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_DEST, memCopyOrMemMove.getName()));
 		// add requires #valid[src!base];
-		addPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_SRC, specs, memCopyOrMemMove.getName());
+		specs.addAll(constructPointerBaseValidityCheck(ignoreLoc, SFO.MEMCPY_SRC, memCopyOrMemMove.getName()));
 
 		// add requires (#size + #dest!offset <= #length[#dest!base] && 0 <= #dest!offset)
-		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExprDecl, SFO.MEMCPY_DEST, specs, memCopyOrMemMove.getName());
+		specs.addAll(constructPointerTargetFullyAllocatedCheck(ignoreLoc, sizeIdExprDecl, SFO.MEMCPY_DEST,
+				memCopyOrMemMove.getName()));
 
 		// add requires (#size + #src!offset <= #length[#src!base] && 0 <= #src!offset)
-		checkPointerTargetFullyAllocated(ignoreLoc, sizeIdExprDecl, SFO.MEMCPY_SRC, specs, memCopyOrMemMove.getName());
+		specs.addAll(constructPointerTargetFullyAllocatedCheck(ignoreLoc, sizeIdExprDecl, SFO.MEMCPY_SRC,
+				memCopyOrMemMove.getName()));
 
 		if (memCopyOrMemMove == MemoryModelDeclarations.C_Memcpy && false) {
 			// disabled because underapprox. for undefined behavior is ok
@@ -677,8 +679,8 @@ public class MemoryHandler {
 		// free ensures #res == dest;
 		final EnsuresSpecification returnValue =
 				mProcedureManager
-						.constructEnsuresSpecification(ignoreLoc, true,
-								ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
+						.constructEnsuresSpecification(
+								ignoreLoc, true, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
 										// new IdentifierExpression(ignoreLoc, SFO.RES),
 										ExpressionFactory
 												.constructIdentifierExpression(ignoreLoc,
@@ -686,8 +688,8 @@ public class MemoryHandler {
 														new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
 																memCopyOrMemMove.getName())),
 										// new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST)));
-										ExpressionFactory.constructIdentifierExpression(ignoreLoc,
-												mBoogieTypeHelper.getBoogieTypeForPointerType(),
+										ExpressionFactory.constructIdentifierExpression(
+												ignoreLoc, mBoogieTypeHelper.getBoogieTypeForPointerType(),
 												SFO.MEMCPY_DEST, new DeclarationInformation(
 														StorageClass.PROC_FUNC_INPARAM, memCopyOrMemMove.getName()))),
 								Collections.emptySet());
@@ -1026,17 +1028,17 @@ public class MemoryHandler {
 		// heapDataArray -> mProcedureManager.addModifiedGlobal(procName, heapDataArray.getVariableLHS()));
 
 		// add requires #valid[#ptr!base];
-		addPointerBaseValidityCheck(ignoreLoc, inParamPtr, specs, procName);
+		specs.addAll(constructPointerBaseValidityCheck(ignoreLoc, inParamPtr, procName));
 
 		final IdentifierExpression inParamAmountExprDecl =
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mBoogieTypeHelper.getBoogieTypeForSizeT(),
 						inParamAmount, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procName));
 		// add requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset);
-		checkPointerTargetFullyAllocated(ignoreLoc, inParamAmountExprDecl, inParamPtr, specs, procName);
+		specs.addAll(constructPointerTargetFullyAllocatedCheck(ignoreLoc, inParamAmountExprDecl, inParamPtr, procName));
 
 		// free ensures #res == dest;
-		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(ignoreLoc, true,
-				ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
+		final EnsuresSpecification returnValue = mProcedureManager.constructEnsuresSpecification(
+				ignoreLoc, true, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ,
 						// new IdentifierExpression(ignoreLoc, outParamResult),
 						ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 								mBoogieTypeHelper.getBoogieTypeForPointerType(), outParamResult,
@@ -1164,12 +1166,12 @@ public class MemoryHandler {
 		// specification for memory writes
 		final ArrayList<Specification> swrite = new ArrayList<>();
 
-		addPointerBaseValidityCheck(loc, inPtr, swrite, rda.getWriteProcedureName());
+		swrite.addAll(constructPointerBaseValidityCheck(loc, inPtr, rda.getWriteProcedureName()));
 
 		final Expression sizeWrite =
 				ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, writtenTypeSize,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, rda.getWriteProcedureName()));
-		checkPointerTargetFullyAllocated(loc, sizeWrite, inPtr, swrite, rda.getWriteProcedureName());
+		swrite.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeWrite, inPtr, rda.getWriteProcedureName()));
 
 		// final ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x ->
 		// x.getVariableLHS());
@@ -1304,12 +1306,12 @@ public class MemoryHandler {
 
 		final ArrayList<Specification> sread = new ArrayList<>();
 
-		addPointerBaseValidityCheck(loc, ptrId, sread, rda.getReadProcedureName());
+		sread.addAll(constructPointerBaseValidityCheck(loc, ptrId, rda.getReadProcedureName()));
 
 		final Expression sizeRead = ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT,
 				readTypeSize, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, rda.getReadProcedureName()));
 
-		checkPointerTargetFullyAllocated(loc, sizeRead, ptrId, sread, rda.getReadProcedureName());
+		sread.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeRead, ptrId, rda.getReadProcedureName()));
 
 		final Expression arr = hda.getIdentifierExpression();
 		// mBoogieTypeHelper.constructIdentifierExpressionForHeapDataArray(loc, hda, rda.getReadProcedureName());
@@ -1457,14 +1459,18 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Add specification that target of pointer is fully allocated to the list {@link specList}. The specification
-	 * checks that the address of the pointer plus the size of the type that we read/write is smaller than or equal to
-	 * the size of the allocated memory at the base address of the pointer. Furthermore, we check that the offset is
-	 * greater than or equal to zero. * In case mPointerBaseValidity is ASSERTandASSUME, we add the requires
-	 * specification <code>requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>. In case
-	 * mPointerBaseValidity is ASSERTandASSUME, we add the <b>free</b> requires specification
-	 * <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>. In case
-	 * mPointerBaseValidity is IGNORE, we add nothing.
+	 * Constructs specification that target of pointer is fully allocated. The specification checks that the address of
+	 * the pointer plus the size of the type that we read/write is smaller than or equal to the size of the allocated
+	 * memory at the base address of the pointer. Furthermore, we check that the offset is greater than or equal to
+	 * zero.
+	 *
+	 * In case mPointerBaseValidity is ASSERTandASSUME, we construct the requires specification
+	 * <code>requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
+	 *
+	 * In case mPointerBaseValidity is ASSERTandASSUME, we construct the <b>free</b> requires specification
+	 * <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
+	 *
+	 * In case mPointerBaseValidity is IGNORE, we construct nothing.
 	 *
 	 * @param loc
 	 *            location of translation unit
@@ -1472,14 +1478,13 @@ public class MemoryHandler {
 	 *            Expression that represents the size of the data type that we read/write at the address of the pointer.
 	 * @param ptrName
 	 *            name of pointer whose base address is checked
-	 * @param specList
-	 *            list to which the specification is added
+	 * @return A list containing the created specification
 	 */
-	private void checkPointerTargetFullyAllocated(final ILocation loc, final Expression size, final String ptrName,
-			final ArrayList<Specification> specList, final String procedureName) {
+	private List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
+			final String ptrName, final String procedureName) {
 		if (mPointerTargetFullyAllocated == PointerCheckMode.IGNORE) {
 			// add nothing
-			return;
+			return Collections.emptyList();
 		}
 		final Expression leq;
 		{
@@ -1520,35 +1525,34 @@ public class MemoryHandler {
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
 		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
 		check.annotate(spec);
-		specList.add(spec);
+		return Collections.singletonList(spec);
 	}
 
 	/**
-	 * Add specification that the pointer base address is valid to the list {@link specList}. In case
-	 * mPointerBaseValidity is ASSERTandASSUME, we add the requires specification
-	 * <code>requires #valid[#ptr!base]</code>. In case mPointerBaseValidity is ASSERTandASSUME, we add the <b>free</b>
-	 * requires specification <code>free requires #valid[#ptr!base]</code>. In case mPointerBaseValidity is IGNORE, we
-	 * add nothing.
+	 * Construct specification that the pointer base address is valid. In case
+	 * {@link #getPointerBaseValidityCheckMode()} is ASSERTandASSUME, we add the requires specification
+	 * <code>requires #valid[#ptr!base]</code>. In case {@link #getPointerBaseValidityCheckMode()} is ASSERTandASSUME,
+	 * we add the <b>free</b> requires specification <code>free requires #valid[#ptr!base]</code>. In case
+	 * {@link #getPointerBaseValidityCheckMode()} is IGNORE, we add nothing.
 	 *
 	 * @param loc
 	 *            location of translation unit
 	 * @param ptrName
 	 *            name of pointer whose base address is checked
-	 * @param specList
-	 *            list to which the specification is added
 	 * @param procedureName
 	 *            name of the procedure where the specifications will be added
+	 * @return A list containing the created specifications.
 	 */
-	private void addPointerBaseValidityCheck(final ILocation loc, final String ptrName,
-			final ArrayList<Specification> specList, final String procedureName) {
+	private List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
+			final String procedureName) {
 		if (mPointerBaseValidity == PointerCheckMode.IGNORE) {
 			// add nothing
-			return;
+			return Collections.emptyList();
 		}
 		final Expression ptrExpr =
 				ExpressionFactory.constructIdentifierExpression(loc, mBoogieTypeHelper.getBoogieTypeForPointerType(),
 						ptrName, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
-		final Expression isValid = constructPointerBaseValidityCheck(loc, ptrExpr);
+		final Expression isValid = constructPointerBaseValidityCheckExpr(loc, ptrExpr);
 		final boolean isFreeRequires;
 		if (mPointerBaseValidity == PointerCheckMode.ASSERTandASSUME) {
 			isFreeRequires = false;
@@ -1559,7 +1563,7 @@ public class MemoryHandler {
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
 		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
 		check.annotate(spec);
-		specList.add(spec);
+		return Collections.singletonList(spec);
 	}
 
 	/**
@@ -1574,7 +1578,7 @@ public class MemoryHandler {
 	 *
 	 *
 	 */
-	public Expression constructPointerBaseValidityCheck(final ILocation loc, final Expression ptr) {
+	public Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr) {
 		final Expression ptrBase = getPointerBaseAddress(ptr, loc);
 		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
 				getValidArray(loc), new Expression[] { ptrBase });
@@ -1769,12 +1773,11 @@ public class MemoryHandler {
 		final Expression[] idcFree = new Expression[] { addrBase };
 
 		{
-			final Procedure deallocDeclaration =
-					new Procedure(tuLoc, new Attribute[0], MemoryModelDeclarations.Ultimate_Dealloc.getName(),
-							new String[0],
-							new VarList[] { new VarList(tuLoc, new String[] { ADDR },
-									mTypeHandler.constructPointerType(tuLoc)) },
-							new VarList[0], new Specification[0], null);
+			final Procedure deallocDeclaration = new Procedure(tuLoc, new Attribute[0],
+					MemoryModelDeclarations.Ultimate_Dealloc.getName(), new String[0],
+					new VarList[] {
+							new VarList(tuLoc, new String[] { ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
+					new VarList[0], new Specification[0], null);
 			mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.Ultimate_Dealloc.getName(),
 					deallocDeclaration);
 		}
@@ -2260,13 +2263,11 @@ public class MemoryHandler {
 					ExpressionFactory.constructNestedArrayAccessExpression(loc, value, new Expression[] { position }),
 					valueType.getValueType());
 			// }
-			stmt.addAll(
-					getWriteCall(main, loc,
-							LRValueFactory.constructHeapLValue(main,
-									constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset,
-											loc),
-									valueType.getValueType(), null),
-							arrayAccRVal.getValue(), arrayAccRVal.getCType()));
+			stmt.addAll(getWriteCall(main, loc,
+					LRValueFactory.constructHeapLValue(main,
+							constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc),
+							valueType.getValueType(), null),
+					arrayAccRVal.getValue(), arrayAccRVal.getCType()));
 			// TODO 2015-10-11 Matthias: Why is there an addition of value Type size
 			// and no multiplication? Check this more carefully.
 			arrayEntryAddressOffset =
@@ -2654,20 +2655,16 @@ public class MemoryHandler {
 			case Ultimate_Dealloc:
 				break;
 			case Ultimate_Length:
-				return new MemoryModelDeclarationInfo(mmd,
-						BoogieType.createArrayType(0,
-								new BoogieType[] {
-										handlerHandler.getBoogieTypeHelper().getBoogieTypeForPointerComponents() },
-								BoogieType.TYPE_INT));
+				return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
+						new BoogieType[] { handlerHandler.getBoogieTypeHelper().getBoogieTypeForPointerComponents() },
+						BoogieType.TYPE_INT));
 			case Ultimate_MemInit:
 				break;
 			case Ultimate_Valid:
-				return new MemoryModelDeclarationInfo(mmd,
-						BoogieType.createArrayType(0,
-								new BoogieType[] {
-										handlerHandler.getBoogieTypeHelper().getBoogieTypeForPointerComponents() },
-								handlerHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(handlerHandler
-										.getMemoryHandler().getBooleanArrayHelper().constructBoolReplacementType())));
+				return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
+						new BoogieType[] { handlerHandler.getBoogieTypeHelper().getBoogieTypeForPointerComponents() },
+						handlerHandler.getBoogieTypeHelper().getBoogieTypeForBoogieASTType(handlerHandler
+								.getMemoryHandler().getBooleanArrayHelper().constructBoolReplacementType())));
 			default:
 				break;
 			}

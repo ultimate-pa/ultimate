@@ -1148,7 +1148,7 @@ public class StandardFunctionHandler {
 		if (memoryHandler.getPointerBaseValidityCheckMode() != PointerCheckMode.IGNORE) {
 
 			// valid[s.base]
-			final Expression validBase = memoryHandler.constructPointerBaseValidityCheck(loc, pointerValue);
+			final Expression validBase = memoryHandler.constructPointerBaseValidityCheckExpr(loc, pointerValue);
 
 			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, validBase);
