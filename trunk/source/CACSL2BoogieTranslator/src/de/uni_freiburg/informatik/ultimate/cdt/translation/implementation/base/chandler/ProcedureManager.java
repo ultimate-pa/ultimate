@@ -45,7 +45,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -58,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -67,6 +70,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -668,6 +673,26 @@ public class ProcedureManager {
 				throw new IllegalStateException("query hasDeclaration() first");
 			}
 			return mDeclaration;
+		}
+
+		public void setDefaultDeclarationAndCType(final ILocation loc, final ASTType intType) {
+			setDefaultDeclaration(loc, intType);
+			setDefaultCType(loc);
+		}
+
+		private void setDefaultCType(final ILocation loc) {
+			setCType(new CFunction(new CPrimitive(CPrimitives.INT), new CDeclaration[0], false));
+		}
+
+		/**
+		 * Sets the Boogie declaration that corresponds to the C declaration "int foo()".
+		 */
+		public void setDefaultDeclaration(final ILocation loc, final ASTType intType) {
+			setDeclaration(new Procedure(loc, new Attribute[0], mProcedureName, new String[0], new VarList[0],
+					new VarList[] {
+							new VarList(loc, new String[] { SFO.RES },
+							intType) },
+					new Specification[0], null));
 		}
 
 		public void setDeclaration(final Procedure declaration) {

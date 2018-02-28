@@ -524,19 +524,12 @@ public class FunctionHandler {
 	 */
 	public Result handleReturnStatement(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final IASTReturnStatement node) {
-		// final ArrayList<Statement> stmt = new ArrayList<>();
-		// final ArrayList<Declaration> decl = new ArrayList<>();
-		//// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		// final Set<AuxVarInfo> auxVars = new LinkedHashSet<>();
-		// final ArrayList<Overapprox> overApp = new ArrayList<>();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		// The ReturnValue could be empty!
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final VarList[] outParams = mProcedureManager.getCurrentProcedureInfo().getDeclaration().getOutParams();
 
-		// final ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
 
-		// if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedure.getIdentifier()) && mCurrentProcedureIsVoid) {
 		if (mProcedureManager.isCalledBeforeDeclared(mProcedureManager.getCurrentProcedureInfo())
 				&& mProcedureManager.getCurrentProcedureInfo().getDeclaration().getOutParams().length == 0) {
 			// void method that was assumed to be returning int! -> return int
@@ -546,7 +539,7 @@ public class FunctionHandler {
 					new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 							mProcedureManager.getCurrentProcedureID()));
 			final Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
-			// stmt.add(havoc);
+
 			resultBuilder.addStatement(havoc);
 		} else if (node.getReturnValue() != null) {
 			final ExpressionResult returnValue = CTranslationUtil.convertExpressionListToExpressionResultIfNecessary(
@@ -588,16 +581,9 @@ public class FunctionHandler {
 				// dispatched argument. On should first construt a copy of returnValueSwitched
 				main.mCHandler.convert(loc, returnValueSwitched, functionResultType);
 
-				// rExp.mLrVal = returnValueSwitched.mLrVal;
 				resultBuilder.setLrVal(returnValueSwitched.getLrValue());
 
-				// stmt.addAll(returnValueSwitched.mStmt);
-				// decl.addAll(returnValueSwitched.mDecl);
-				// auxVars.putAll(returnValueSwitched.mAuxVars);
-				// overApp.addAll(returnValueSwitched.mOverappr);
 				resultBuilder.addAllExceptLrValue(returnValueSwitched);
-
-				// stmt.add(new AssignmentStatement(loc, lhss, new Expression[] { castExprResultRVal.getValue() }));
 
 				final RValue castExprResultRVal = (RValue) returnValueSwitched.getLrValue();
 				resultBuilder.addStatement(StatementFactory.constructAssignmentStatement(loc, lhss,
@@ -605,25 +591,20 @@ public class FunctionHandler {
 				// //assuming that we need no auxvars or overappr, here
 			}
 		}
-		// stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
 		// we need to insert a free for each malloc of an auxvar before each return
 		// frees are inserted in handleReturnStm
 		for (final Entry<LocalLValueILocationPair, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {
 			if (entry.getValue() >= 1) {
-				// stmt.add(memoryHandler.getDeallocCall(main, this, entry.getKey().llv, entry.getKey().loc));
 				resultBuilder.addStatement(memoryHandler.getDeallocCall(main, entry.getKey().llv, entry.getKey().loc));
 
-				// stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
 				resultBuilder.addStatement(
 						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
 			}
 		}
 
-		// stmt.add(new ReturnStatement(loc));
 		resultBuilder.addStatement(new ReturnStatement(loc));
-		// return rExp;
 		return resultBuilder.build();
 	}
 
@@ -631,13 +612,19 @@ public class FunctionHandler {
 			final StructHandler structHandler, final ILocation loc, final String calleeName,
 			final IASTInitializerClause[] arguments) {
 
+		final BoogieProcedureInfo calleeProcInfo;
 		if (!mProcedureManager.hasProcedure(calleeName)) {
-			// TODO (feb 18) -- this case is probably treated by below code somehow but i dont know how, yet
-			throw new UnsupportedOperationException(
-					"TODO: handle case when a procedure is called before it is " + "declared");
+			/* "implicit function declaration", assume it was declared as int foo();
+			 * (thus the signature can be completed by the first call, which we are dispatching here) */
+			main.getLogger().warn("implicit declaration of function " + calleeName);
+			mProcedureManager.registerProcedure(calleeName);
+			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
+			calleeProcInfo.setDefaultDeclarationAndCType(loc,
+					mHandlerHandler.getTypeHandler().cType2AstType(loc, new CPrimitive(CPrimitives.INT)));
+		} else {
+			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 		}
 
-		final BoogieProcedureInfo calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		assert calleeProcDecl != null : "unclear -- solve in conjunction with the exception directly above..";
@@ -648,10 +635,9 @@ public class FunctionHandler {
 		 */
 		final boolean isCalleeSignatureNotYetDetermined =
 				!calleeProcInfo.hasImplementation() && calleeProcDecl.getInParams().length == 0;
-		// procDecl != null && procDecl.getBody() == null && procDecl.getInParams().length == 0;
 
 		final IASTInitializerClause[] inParams = arguments;
-		// final CFunction cFunction = calleeProcInfo.getCType();
+
 		if (calleeProcInfo.getCType() != null && calleeProcInfo.getCType().takesVarArgs()) {
 
 			/*
