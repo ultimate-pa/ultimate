@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -135,13 +134,12 @@ public abstract class AMemoryModel {
 
 		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType aSTType,
 				final Set<CPrimitives> primitives) {
-			super();
 			mProcedureSuffix = procedureName;
 			mBytesize = bytesize;
 			mASTType = aSTType;
 			mPrimitives = primitives;
-			final Function<CPrimitives, CPrimitiveCategory> mapper = CPrimitives::getPrimitiveCategory;
-			mCPrimitiveCategory = primitives.stream().map(mapper).collect(Collectors.toSet());
+			mCPrimitiveCategory =
+					primitives.stream().map(CPrimitives::getPrimitiveCategory).collect(Collectors.toSet());
 		}
 
 		public String getReadProcedureName() {

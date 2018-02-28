@@ -55,16 +55,15 @@ public class HeapDataArray {
 	 *
 	 * @param name
 	 * @param aSTType
-	 * 		ast type of the memory contents
+	 *            ast type of the memory contents
 	 * @param contentBoogieType
-	 * 		boogie type of the memory contents
+	 *            boogie type of the memory contents
 	 * @param pointerType
-	 * 		boogie type for pointers (used to build the type of the memory array)
+	 *            boogie type for pointers (used to build the type of the memory array)
 	 * @param size
 	 */
 	public HeapDataArray(final String name, final ASTType aSTType, final BoogieType contentBoogieType,
 			final BoogieType pointerType, final int size) {
-		super();
 		mName = name;
 		mContentASTType = aSTType;
 		mContentBoogieType = contentBoogieType;
@@ -75,8 +74,8 @@ public class HeapDataArray {
 
 		mIdentifierExpression = ExpressionFactory.constructIdentifierExpression(LocationFactory.createIgnoreCLocation(),
 				arrayBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		mVariableLhs = ExpressionFactory.constructVariableLHS(LocationFactory.createIgnoreCLocation(),
-				arrayBoogieType, getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		mVariableLhs = ExpressionFactory.constructVariableLHS(LocationFactory.createIgnoreCLocation(), arrayBoogieType,
+				getVariableName(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	public String getName() {
