@@ -1623,7 +1623,7 @@ public class CHandler implements ICHandler {
 		final boolean intFromPtr;
 		DeclarationInformation declarationInformation;
 
-		if (mSymbolTable.containsCSymbol(node, cId)) {
+		if (mSymbolTable.containsCSymbol(node, cId) && !mProcedureManager.hasProcedure(cId)) {
 			// we have a normal variable
 			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cId);
 			bId = stv.getBoogieName();
