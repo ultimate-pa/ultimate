@@ -121,8 +121,6 @@ public class InitializationHandler {
 	}
 
 	/**
-	 *
-	 *
 	 * Either an expression that is to be initialized is given (via a LeftHandSide). Or we return an ExpressionResult
 	 * that has an LrValue that is initialized and that can then be assigned to something by the caller. (we might do
 	 * both in the "on-heap" case)
@@ -138,12 +136,14 @@ public class InitializationHandler {
 	public ExpressionResult initialize(final ILocation loc, final Dispatcher main, final LeftHandSide lhsRaw,
 			final CType targetCTypeRaw, final InitializerResult initializerRaw) {
 
-		boolean onHeap = false;
+		final boolean onHeap;
 		if (lhsRaw != null && lhsRaw instanceof VariableLHS) {
 			onHeap = ((CHandler) main.mCHandler).isHeapVar(((VariableLHS) lhsRaw).getIdentifier());
+		} else {
+			onHeap = false;
 		}
 
-		LRValue lhs = null;
+		final LRValue lhs;
 		if (onHeap) {
 			// lhsRaw must be non-null at this point because of the above code that determined "onHeap"
 			// IdentifierExpression idEx = new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier());
@@ -819,9 +819,9 @@ public class InitializationHandler {
 
 		List<Statement> assigningStatements;
 		if (onHeap) {
-			assigningStatements = mMemoryHandler.getWriteCall(main, loc, (HeapLValue) lhs, initializationValue, cType);
+			assigningStatements =
+					mMemoryHandler.getWriteCall(main, loc, (HeapLValue) lhs, initializationValue, cType, true);
 		} else {
-			// !onHeap
 			final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
 					new LeftHandSide[] { ((LocalLValue) lhs).getLHS() }, new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(overAppr, assignment);

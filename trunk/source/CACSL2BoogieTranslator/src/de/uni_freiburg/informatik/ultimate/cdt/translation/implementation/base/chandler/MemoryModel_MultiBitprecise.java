@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -72,7 +74,8 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 		}
 	}
 
-	private HeapDataArray getDataHeapArrayForGivenGeneralType(final CPrimitives primitive, final Map<Integer, HeapDataArray> size2HeapdataArray) {
+	private HeapDataArray getDataHeapArrayForGivenGeneralType(final CPrimitives primitive,
+			final Map<Integer, HeapDataArray> size2HeapdataArray) {
 		final int bytesize = mTypeSizes.getSize(primitive);
 		HeapDataArray result = size2HeapdataArray.get(bytesize);
 		if (result == null) {
@@ -103,12 +106,14 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 		}
 		final List<ReadWriteDefinition> result = new ArrayList<>();
 		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
-			final CPrimitives representative = bytesizes2primitives.getImage(bytesize).iterator().next();
+			final Set<CPrimitives> primitives = bytesizes2primitives.getImage(bytesize);
+			final CPrimitives representative = primitives.iterator().next();
 			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(),
-					new CPrimitive(representative));
-			result.add(
-					new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
+			final ASTType astType =
+					mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+			final boolean alsoUnchecked = DataStructureUtils
+					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedWriteRequired(), primitives);
+			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, primitives, alsoUnchecked));
 		}
 		return result;
 	}

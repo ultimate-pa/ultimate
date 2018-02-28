@@ -242,9 +242,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class CHandler implements ICHandler {
 
 	/**
-	 * If set to true we say Unsupported Syntax if there is some cast of pointers.
-	 * Right now we are unable to handle casts of pointers soundly. However these
-	 * soundness errors occur seldom.
+	 * If set to true we say Unsupported Syntax if there is some cast of pointers. Right now we are unable to handle
+	 * casts of pointers soundly. However these soundness errors occur seldom.
 	 */
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
 
@@ -262,9 +261,9 @@ public class CHandler implements ICHandler {
 						.getKind() == IASTLiteralExpression.lk_string_literal) {
 			final CASTLiteralExpression lit = (CASTLiteralExpression) equalsInitializer.getInitializerClause();
 			/*
-			 * subtracting -1 because lit.getValue includes the quotation marks (-2) and we
-			 * will add a termination character (+1), for example the string literals "bla"
-			 * will give us length 7, as C will store it as 'b' 'l' 'a' '\0'
+			 * subtracting -1 because lit.getValue includes the quotation marks (-2) and we will add a termination
+			 * character (+1), for example the string literals "bla" will give us length 7, as C will store it as 'b'
+			 * 'l' 'a' '\0'
 			 */
 			return lit.getValue().length - 1;
 		} else {
@@ -306,8 +305,8 @@ public class CHandler implements ICHandler {
 			throw new AssertionError("unknown type " + newType);
 		}
 		final RValue oldRValue = (RValue) rexp.mLrVal;
-		final RValue resultRvalue = new RValue(oldRValue.getValue(), newType, oldRValue.isBoogieBool(),
-				oldRValue.isIntFromPointer());
+		final RValue resultRvalue =
+				new RValue(oldRValue.getValue(), newType, oldRValue.isBoogieBool(), oldRValue.isIntFromPointer());
 		rexp.mLrVal = resultRvalue;
 	}
 
@@ -365,16 +364,16 @@ public class CHandler implements ICHandler {
 		return result;
 	}
 
-	private static RValue convertToPointerRValue(final Dispatcher main, final LRValue lrValue, final BoogieType pointerType) {
+	private static RValue convertToPointerRValue(final Dispatcher main, final LRValue lrValue,
+			final BoogieType pointerType) {
 		assert main.mCHandler.isPreRunMode();
 		if (lrValue instanceof HeapLValue) {
 			throw new AssertionError("does this occur??");
-//			return ((HeapLValue) lrValue).getAddressAsPointerRValue(pointerType);
+			// return ((HeapLValue) lrValue).getAddressAsPointerRValue(pointerType);
 		} else {
 			//
 			final Expression oldValue = lrValue.getValue();
-			final Expression convertedValue =
-					ExpressionFactory.replaceBoogieType(oldValue, pointerType);
+			final Expression convertedValue = ExpressionFactory.replaceBoogieType(oldValue, pointerType);
 
 			return new RValue(convertedValue, new CPointer(lrValue.getCType()));
 		}
@@ -407,8 +406,7 @@ public class CHandler implements ICHandler {
 	private final LinkedHashSet<String> mBoogieIdsOfHeapVars;
 
 	/**
-	 * Stores the labels of the loops we are currently inside. (For translation of a
-	 * possible continue statement)
+	 * Stores the labels of the loops we are currently inside. (For translation of a possible continue statement)
 	 */
 	private final Deque<String> mInnerMostLoopLabel;
 
@@ -434,17 +432,13 @@ public class CHandler implements ICHandler {
 	protected final SymbolTable mSymbolTable;
 
 	/**
-	 * A set holding declarations of global variables required for variables,
-	 * declared locally in C but required to be global in Boogie. e.g. constants for
-	 * enums (in boogie constants may only be defined globally) or local static
-	 * variables. Each declaration can have a set of initialization statements. So
-	 * the procedure is: typeDeclarations: added to this map in
-	 * IASTSimpleDeclaration, declared using this map in ITranslationUnit static
-	 * variables: added to this map in IASTSimpleDeclaration, declared using this
-	 * map in ITranslationUnit, initialized using this map in
-	 * PostProcessor.createInit..() global variables: added to this map in
-	 * IASTTranslationUnit, declared using this map in ITranslationUnit, initialized
-	 * using this map in PostProcessor.createInit..()
+	 * A set holding declarations of global variables required for variables, declared locally in C but required to be
+	 * global in Boogie. e.g. constants for enums (in boogie constants may only be defined globally) or local static
+	 * variables. Each declaration can have a set of initialization statements. So the procedure is: typeDeclarations:
+	 * added to this map in IASTSimpleDeclaration, declared using this map in ITranslationUnit static variables: added
+	 * to this map in IASTSimpleDeclaration, declared using this map in ITranslationUnit, initialized using this map in
+	 * PostProcessor.createInit..() global variables: added to this map in IASTTranslationUnit, declared using this map
+	 * in ITranslationUnit, initialized using this map in PostProcessor.createInit..()
 	 */
 	// protected final LinkedHashMap<Declaration, CDeclaration>
 	// mDeclarationsGlobalInBoogie;
@@ -460,8 +454,8 @@ public class CHandler implements ICHandler {
 	protected final CACSL2BoogieBacktranslator mBacktranslator;
 
 	/**
-	 * If set to true and the program contains an error label ULTIMATE shows a
-	 * warning that suggests a different translation mode.
+	 * If set to true and the program contains an error label ULTIMATE shows a warning that suggests a different
+	 * translation mode.
 	 */
 	protected final boolean mErrorLabelWarning;
 
@@ -475,19 +469,16 @@ public class CHandler implements ICHandler {
 	private NextACSL mAcsl;
 
 	/**
-	 * This is a stack containing the types of the things declared IASTDeclarator
-	 * nodes. The last element on the stack corresponds to the type of the current
-	 * (inner) declarator node. There may be several types on this stack if the
+	 * This is a stack containing the types of the things declared IASTDeclarator nodes. The last element on the stack
+	 * corresponds to the type of the current (inner) declarator node. There may be several types on this stack if the
 	 * declarators are nested, as in
 	 *
 	 * <pre>
 	 * int *(*a(int))[3]
 	 * </pre>
 	 *
-	 * which declares a function returning a pointer to an array of length three
-	 * containing int pointers. There are three nested declarators: A
-	 * PointerDeclarator contains an ArrayDeclarator contains a Pointer contains a
-	 * function.
+	 * which declares a function returning a pointer to an array of length three containing int pointers. There are
+	 * three nested declarators: A PointerDeclarator contains an ArrayDeclarator contains a Pointer contains a function.
 	 */
 	protected ArrayDeque<TypesResult> mCurrentDeclaredTypes;
 
@@ -510,8 +501,9 @@ public class CHandler implements ICHandler {
 	 * @param nameHandler
 	 */
 	public CHandler(final Dispatcher main, final HandlerHandler handlerHandler,
-			final CACSL2BoogieBacktranslator backtranslator,
-			final boolean errorLabelWarning, final ILogger logger,// final ITypeHandler typeHandler,
+			final CACSL2BoogieBacktranslator backtranslator, final boolean errorLabelWarning, final ILogger logger, // final
+																													// ITypeHandler
+																													// typeHandler,
 			final boolean bitvectorTranslation, final boolean overapproximateFloatingPointOperations) {
 		final IPreferenceProvider prefs = main.getPreferences();
 
@@ -543,9 +535,9 @@ public class CHandler implements ICHandler {
 		mCurrentDeclaredTypes = new ArrayDeque<>();
 		mGlobAcslExtractors = new ArrayList<>();
 
-		final PointerIntegerConversion pointerIntegerConversion = prefs.getEnum(
-				CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
-				CACSLPreferenceInitializer.PointerIntegerConversion.class);
+		final PointerIntegerConversion pointerIntegerConversion =
+				prefs.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
+						CACSLPreferenceInitializer.PointerIntegerConversion.class);
 		if (bitvectorTranslation) {
 			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), handlerHandler,
 					pointerIntegerConversion, overapproximateFloatingPointOperations);
@@ -558,19 +550,18 @@ public class CHandler implements ICHandler {
 		mTypeHandler.setExpressionTranslation(mExpressionTranslation);
 		mBoogieTypeHelper = new BoogieTypeHelper(handlerHandler);
 
-		mPostProcessor = new PostProcessor(main, mLogger, mExpressionTranslation,
-				overapproximateFloatingPointOperations);
+		mPostProcessor =
+				new PostProcessor(main, mLogger, mExpressionTranslation, overapproximateFloatingPointOperations);
 		mTypeSizeComputer = new TypeSizeAndOffsetComputer(handlerHandler, main.getTypeSizes());
 
 		mProcedureManager = new ProcedureManager(handlerHandler);
 		mFunctionHandler = new FunctionHandler(handlerHandler);
 
-		final boolean smtBoolArraysWorkaround = prefs
-				.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
+		final boolean smtBoolArraysWorkaround =
+				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		final boolean checkPointerValidity = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
-		mMemoryHandler = new MemoryHandler(mHandlerHandler, checkPointerValidity,
-				main.getTypeSizes(), bitvectorTranslation, handlerHandler.getNameHandler(), smtBoolArraysWorkaround,
-				prefs);
+		mMemoryHandler = new MemoryHandler(mHandlerHandler, checkPointerValidity, main.getTypeSizes(),
+				bitvectorTranslation, handlerHandler.getNameHandler(), smtBoolArraysWorkaround, prefs);
 		mStructHandler = new StructHandler(handlerHandler);
 		mInitHandler = new InitializationHandler(mMemoryHandler, mExpressionTranslation, mProcedureManager);
 
@@ -641,8 +632,7 @@ public class CHandler implements ICHandler {
 
 			if (lType instanceof CPointer && rType instanceof CArray) {
 				/*
-				 * assigning an array to a pointer the array must be on heap --> just take the
-				 * address
+				 * assigning an array to a pointer the array must be on heap --> just take the address
 				 */
 
 				// stmt.addAll(rightOperand.mStmt);
@@ -932,12 +922,10 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Convert an LrValue of array type to an (otherwise equivalent) RValue of
-	 * pointer type.
+	 * Convert an LrValue of array type to an (otherwise equivalent) RValue of pointer type.
 	 * <p>
-	 * Background: Array expressions can be used in place of pointer expressions in
-	 * C. (An array may "decay" to a pointer in C standard terminology.) E.g. when
-	 * an array is assigned to a pointer variable.
+	 * Background: Array expressions can be used in place of pointer expressions in C. (An array may "decay" to a
+	 * pointer in C standard terminology.) E.g. when an array is assigned to a pointer variable.
 	 *
 	 *
 	 *
@@ -960,8 +948,7 @@ public class CHandler implements ICHandler {
 			} else {
 				final Expression oldValue = rightLrVal.getValue();
 				/*
-				 * circumvents Boogie type checking during preprocessing TODO: use type error
-				 * instead of pointer type?
+				 * circumvents Boogie type checking during preprocessing TODO: use type error instead of pointer type?
 				 */
 				newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
 
@@ -987,9 +974,8 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Translate a case statement for use inside a switch statement. C99:6.8.4.2-3:
-	 * "The expression of each case label shall be an integer constant expression
-	 * and no two of the case constant expressions in the same switch statement
+	 * Translate a case statement for use inside a switch statement. C99:6.8.4.2-3: "The expression of each case label
+	 * shall be an integer constant expression and no two of the case constant expressions in the same switch statement
 	 * shall have the same value after conversion."
 	 *
 	 */
@@ -1018,8 +1004,8 @@ public class CHandler implements ICHandler {
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
 		if (expr.mLrVal.getCType().getUnderlyingType() instanceof CArray
 				&& newCType.getUnderlyingType() instanceof CPointer) {
-			final CType valueType = ((CArray) expr.mLrVal.getCType().getUnderlyingType()).getValueType()
-					.getUnderlyingType();
+			final CType valueType =
+					((CArray) expr.mLrVal.getCType().getUnderlyingType()).getValueType().getUnderlyingType();
 			// if (expr.mLrVal instanceof HeapLValue) {
 			// expr.mLrVal = new RValue(((HeapLValue) expr.mLrVal).getAddress(), new
 			// CPointer(valueType));
@@ -1154,9 +1140,8 @@ public class CHandler implements ICHandler {
 
 		// are we running the PRDispatcher (PR stands for PreRun)?
 		// --> in that case "isOnHeap" has not yet been determined, we set it to false
-		newResType.isOnHeap |= main instanceof MainDispatcher
-				? ((MainDispatcher) main).getVariablesForHeap().contains(node)
-				: false;
+		newResType.isOnHeap |=
+				main instanceof MainDispatcher ? ((MainDispatcher) main).getVariablesForHeap().contains(node) : false;
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		for (int i = 0; i < pointerOps.length; i++) {
@@ -1174,8 +1159,8 @@ public class CHandler implements ICHandler {
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
 
-			final ListIterator<IASTArrayModifier> it = Arrays.asList(arrDecl.getArrayModifiers())
-					.listIterator(arrDecl.getArrayModifiers().length);
+			final ListIterator<IASTArrayModifier> it =
+					Arrays.asList(arrDecl.getArrayModifiers()).listIterator(arrDecl.getArrayModifiers().length);
 			while (it.hasPrevious()) {
 				final IASTArrayModifier am = it.previous();
 				final RValue sizeFactor;
@@ -1261,8 +1246,8 @@ public class CHandler implements ICHandler {
 
 			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
 			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
-				final DeclarationResult paramDeclRes = (DeclarationResult) main
-						.dispatch(funcDecl.getParameterDeclarations()[i]);
+				final DeclarationResult paramDeclRes =
+						(DeclarationResult) main.dispatch(funcDecl.getParameterDeclarations()[i]);
 				assert paramDeclRes.getDeclarations().size() == 1;
 				paramsParsed[i] = paramDeclRes.getDeclarations().get(0);
 			}
@@ -1289,9 +1274,9 @@ public class CHandler implements ICHandler {
 			}
 			return result;
 		}
-		final DeclaratorResult result = new DeclaratorResult(
-				new CDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(), null,
-						newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
+		final DeclaratorResult result =
+				new DeclaratorResult(new CDeclaration(newResType.cType, node.getName().toString(),
+						node.getInitializer(), null, newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
 	}
 
@@ -1390,8 +1375,8 @@ public class CHandler implements ICHandler {
 	public Result visit(final Dispatcher main, final IASTFunctionCallExpression node) {
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		if (functionName instanceof IASTIdExpression) {
-			final Result standardFunction = mStandardFunctionHandler.translateStandardFunction(main, node,
-					(IASTIdExpression) functionName);
+			final Result standardFunction =
+					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
 
 			if (standardFunction != null) {
 				return standardFunction;
@@ -1652,7 +1637,8 @@ public class CHandler implements ICHandler {
 		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
 		if (mErrorLabelWarning && "ERROR".equals(label)) {
-			final String longDescription = "The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";
+			final String longDescription =
+					"The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";
 			main.warn(loc, longDescription);
 		}
 		stmt.add(new Label(loc, label));
@@ -1761,23 +1747,21 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Visit the SimpleDeclaration (which may be quite complex in fact..). The
-	 * return value here may have different uses:
-	 * <li>for global variables and declarations inside of struct definitions, it is
-	 * a ResultDeclaration (containing the Boogie Declaration of the variable)
-	 * <li>for local variables that have an initializer, a ResultExpression is
-	 * returned which contains (Boogie) statements and declarations that make the
-	 * initialization according to the initializer
-	 * <li>for local variables without an initializer, a havoc statement is inserted
-	 * into the ResultExpression instead The declarations themselves of the local
-	 * variables (and f.i. typedefs) are stored in the symbolTable and inserted into
-	 * the Boogie code at the next endScope()
+	 * Visit the SimpleDeclaration (which may be quite complex in fact..). The return value here may have different
+	 * uses:
+	 * <li>for global variables and declarations inside of struct definitions, it is a ResultDeclaration (containing the
+	 * Boogie Declaration of the variable)
+	 * <li>for local variables that have an initializer, a ResultExpression is returned which contains (Boogie)
+	 * statements and declarations that make the initialization according to the initializer
+	 * <li>for local variables without an initializer, a havoc statement is inserted into the ResultExpression instead
+	 * The declarations themselves of the local variables (and f.i. typedefs) are stored in the symbolTable and inserted
+	 * into the Boogie code at the next endScope()
 	 * <p>
-	 * Declarations of static variables are added to mDeclarationsGlobalInBoogie
-	 * such that they can be declared and initialized globally.
+	 * Declarations of static variables are added to mDeclarationsGlobalInBoogie such that they can be declared and
+	 * initialized globally.
 	 * <p>
-	 * Variables/types that are global in Boogie but not in C are stored in the
-	 * Symboltable to keep the association of BoogieId and CId.
+	 * Variables/types that are global in Boogie but not in C are stored in the Symboltable to keep the association of
+	 * BoogieId and CId.
 	 */
 	@Override
 	public Result visit(final Dispatcher main, final IASTSimpleDeclaration node) {
@@ -1826,10 +1810,9 @@ public class CHandler implements ICHandler {
 
 			mCurrentDeclaredTypes.push(resType);
 			/**
-			 * Christian: C allows several declarations of "similar" types in one go. For
-			 * instance: <code>int a, b[2];</code> Here <code>a</code> has type
-			 * <code>int</code> and <code>b</code> has type <code>int[]</code>. To solve
-			 * this, the declaration items are visited one after another.
+			 * Christian: C allows several declarations of "similar" types in one go. For instance:
+			 * <code>int a, b[2];</code> Here <code>a</code> has type <code>int</code> and <code>b</code> has type
+			 * <code>int[]</code>. To solve this, the declaration items are visited one after another.
 			 */
 			for (final IASTDeclarator d : node.getDeclarators()) {
 				// if (d instanceof IASTFieldDeclarator)
@@ -1946,13 +1929,12 @@ public class CHandler implements ICHandler {
 						declarationInformation = new DeclarationInformation(StorageClass.LOCAL,
 								mProcedureManager.getCurrentProcedureID());
 					}
-					final BoogieType boogieType = mTypeHandler
-							.astTypeToBoogieType(mTypeHandler.cType2AstType(loc, cDec.getType()));
+					final BoogieType boogieType =
+							mTypeHandler.astTypeToBoogieType(mTypeHandler.cType2AstType(loc, cDec.getType()));
 
 					/**
-					 * For Variable length arrays we have a "non-real" initializer which just
-					 * initializes the aux var for the array's size. We do not want to treat this
-					 * like other initializers (call initVar and so).
+					 * For Variable length arrays we have a "non-real" initializer which just initializes the aux var
+					 * for the array's size. We do not want to treat this like other initializers (call initVar and so).
 					 */
 					final boolean hasRealInitializer = cDec.hasInitializer()
 							&& (!(cDec.getType() instanceof CArray) || cDec.getInitializer() != null);
@@ -2007,8 +1989,8 @@ public class CHandler implements ICHandler {
 						assert result instanceof SkipResult || result instanceof ExpressionResult;
 						final VariableLHS lhs = // new VariableLHS(loc, bId);
 								ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
-						final ExpressionResult initRex = mInitHandler.initialize(loc, main, lhs, cDec.getType(),
-								cDec.getInitializer());
+						final ExpressionResult initRex =
+								mInitHandler.initialize(loc, main, lhs, cDec.getType(), cDec.getInitializer());
 						if (result instanceof SkipResult) {
 							result = new ExpressionResult((LRValue) null);
 						}
@@ -2303,8 +2285,8 @@ public class CHandler implements ICHandler {
 		decl.addAll(0, mPostProcessor.postProcess(main, loc));// , mDeclarationsGlobalInBoogie));
 
 		/*
-		 * this must come after the post processor because the post processor might add
-		 * declarations when dispatching initializers of static variables
+		 * this must come after the post processor because the post processor might add declarations when dispatching
+		 * initializers of static variables
 		 */
 		decl.addAll(getStaticObjectsHandler().getGlobalDeclarations());
 
@@ -2319,16 +2301,15 @@ public class CHandler implements ICHandler {
 		decl.addAll(((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
 
 		/**
-		 * For Notes on our handling of procedures see
-		 * {@link FunctionHandler.handleFunctionDefinition(..)}. Short version:
-		 * <li>procedure implementations have already been inserted into the Boogie
-		 * program by code above
+		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}. Short
+		 * version:
+		 * <li>procedure implementations have already been inserted into the Boogie program by code above
 		 * <li>procedure declarations have been collected in the FunctionHandler
-		 * <li>now we recompute the declarations, in order to give them correct modifies
-		 * clauses and insert them into the Boogie program
+		 * <li>now we recompute the declarations, in order to give them correct modifies clauses and insert them into
+		 * the Boogie program
 		 *
-		 * have to block this in prerun, because there, memory model is not declared
-		 * which may cause problems with the call graph computation
+		 * have to block this in prerun, because there, memory model is not declared which may cause problems with the
+		 * call graph computation
 		 */
 		if (!(main instanceof PRDispatcher)) {
 			// handle proc. declaration & resolve their transitive modified globals
@@ -2336,11 +2317,11 @@ public class CHandler implements ICHandler {
 		}
 
 		/**
-		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the
-		 * Boogie program that have been collected by the ExpressionTranslation
+		 * Add declarations of Boogie functions (as opposed to Boogie procedures) to the Boogie program that have been
+		 * collected by the ExpressionTranslation
 		 */
-		final Collection<FunctionDeclaration> declaredFunctions = mExpressionTranslation.getFunctionDeclarations()
-				.getDeclaredFunctions().values();
+		final Collection<FunctionDeclaration> declaredFunctions =
+				mExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		decl.addAll(declaredFunctions);
 
 		// handle global ACSL stuff
@@ -2367,8 +2348,8 @@ public class CHandler implements ICHandler {
 				// TODO: some switchToRValue and handling of sideeffects?
 				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression(r.mLrVal.getValue(), null));
 			}
-			final LTLPropertyCheck propCheck = new LTLPropertyCheck(ex.getLTLFormatString(),
-					checkableAtomicPropositions, null);
+			final LTLPropertyCheck propCheck =
+					new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
 			propCheck.annotate(boogieUnit);
 		}
 
@@ -2517,9 +2498,8 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * mdeclarationsGlobalInBoogie may contain type declarations that stem from
-	 * typedefs using an incomplete struct type. This method is called when the
-	 * struct type is completed.
+	 * mdeclarationsGlobalInBoogie may contain type declarations that stem from typedefs using an incomplete struct
+	 * type. This method is called when the struct type is completed.
 	 *
 	 * @param cvar
 	 * @param incompleteStruct
@@ -2529,10 +2509,9 @@ public class CHandler implements ICHandler {
 	}
 
 	/*
-	 * Matthias 2015-09-21: "premature optimization is the root of all evil" I
-	 * think, by now we should not use this method and better live with long
-	 * expressions. However, I don't want to delete this method, we might want to
-	 * use it in the future.
+	 * Matthias 2015-09-21: "premature optimization is the root of all evil" I think, by now we should not use this
+	 * method and better live with long expressions. However, I don't want to delete this method, we might want to use
+	 * it in the future.
 	 */
 	@Override
 	@Deprecated
@@ -2589,7 +2568,7 @@ public class CHandler implements ICHandler {
 		final BoogieType newBoogieType = mBoogieTypeHelper.getBoogieTypeForCType(newTypeRaw);
 
 		if (TypeHandler.areMatchingTypes(newType, oldType)
-//				oldBoogieType.isUnifiableTo(other)
+				// oldBoogieType.isUnifiableTo(other)
 				&& oldBoogieType.equals(newBoogieType)) {
 			// types are already identical -- nothing to do
 			return;
@@ -2624,19 +2603,17 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Like
-	 * {@link CHandler#doPointerArithmetic(int, ILocation, Expression, RValue, CType)}
-	 * but additionally the integer operand is converted to the same type that we
-	 * use to represent pointer components. As a consequence we have to return an
-	 * ExpressionResult.
+	 * Like {@link CHandler#doPointerArithmetic(int, ILocation, Expression, RValue, CType)} but additionally the integer
+	 * operand is converted to the same type that we use to represent pointer components. As a consequence we have to
+	 * return an ExpressionResult.
 	 */
 	public ExpressionResult doPointerArithmeticWithConversion(final Dispatcher main, final int operator,
 			final ILocation loc, final Expression ptrAddress, final RValue integer, final CType valueType) {
 		final ExpressionResult eres = new ExpressionResult(integer);
 		final ExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
 		exprTrans.convertIntToInt(loc, eres, exprTrans.getCTypeOfPointerComponents());
-		final Expression resultExpression = mMemoryHandler.doPointerArithmetic(operator, loc, ptrAddress,
-				(RValue) eres.mLrVal, valueType);
+		final Expression resultExpression =
+				mMemoryHandler.doPointerArithmetic(operator, loc, ptrAddress, (RValue) eres.mLrVal, valueType);
 		eres.mLrVal = new RValue(resultExpression, mExpressionTranslation.getCTypeOfPointerComponents());
 		return eres;
 	}
@@ -2735,15 +2712,14 @@ public class CHandler implements ICHandler {
 	 * @param leftHandSide
 	 *            value of the left hand side that will be assigned to
 	 * @param leftHandSideOtherUnionFields
-	 *            information about union fields that need to be havocced in our
-	 *            struct representation of an off-heap union
+	 *            information about union fields that need to be havocced in our struct representation of an off-heap
+	 *            union
 	 * @param rightHandSide
 	 *            contains:
 	 *            <li>the value (LRValue) of the right hand side of the assignment
-	 *            <li>side effects (statements, declarations) etc. that are needed
-	 *            to prepare the value of the right hand side of the assignment
-	 *            <li>side effects that are needed to prepare the value of the left
+	 *            <li>side effects (statements, declarations) etc. that are needed to prepare the value of the right
 	 *            hand side of the assignment
+	 *            <li>side effects that are needed to prepare the value of the left hand side of the assignment
 	 * @return
 	 */
 	public ExpressionResult makeAssignment(final Dispatcher main, final ILocation loc, final LRValue leftHandSide,
@@ -2760,8 +2736,8 @@ public class CHandler implements ICHandler {
 			if (leftHandSide instanceof HeapLValue) {
 				final Expression address = ((HeapLValue) leftHandSide).getAddress();
 				if (address instanceof IdentifierExpression) {
-					final String lId = ((IdentifierExpression) ((HeapLValue) leftHandSide).getAddress())
-							.getIdentifier();
+					final String lId =
+							((IdentifierExpression) ((HeapLValue) leftHandSide).getAddress()).getIdentifier();
 					markAsIntFromPointer(loc, lId);
 				} else {
 					// TODO
@@ -2796,18 +2772,17 @@ public class CHandler implements ICHandler {
 			Expression rhsWithBitfieldTreatment;
 			if (hlv.getBitfieldInformation() != null) {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
-				rhsWithBitfieldTreatment = mExpressionTranslation.erazeBits(loc,
-						rightHandSideValueWithConversionsApplied.getValue(),
-						(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth);
+				rhsWithBitfieldTreatment =
+						mExpressionTranslation.erazeBits(loc, rightHandSideValueWithConversionsApplied.getValue(),
+								(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
 			builder.addStatements(mMemoryHandler.getWriteCall(main, loc, hlv, rhsWithBitfieldTreatment,
-					rightHandSideValueWithConversionsApplied.getCType()));
+					rightHandSideValueWithConversionsApplied.getCType(), false));
 
 			/*
-			 * the value of an assignment statement expression is the right hand side of the
-			 * assignment
+			 * the value of an assignment statement expression is the right hand side of the assignment
 			 */
 			builder.setLrVal(rightHandSideValueWithConversionsApplied);
 
@@ -2819,8 +2794,8 @@ public class CHandler implements ICHandler {
 
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			/*
-			 * take over everything but neighbour union fields -- those will be given to
-			 * assignorHavocUnionNeighbours as an extra parameter
+			 * take over everything but neighbour union fields -- those will be given to assignorHavocUnionNeighbours as
+			 * an extra parameter
 			 */
 			builder.addStatements(rightHandSide.getStatements());
 			builder.addDeclarations(rightHandSide.getDeclarations());
@@ -2833,9 +2808,9 @@ public class CHandler implements ICHandler {
 			Expression rhsWithBitfieldTreatment;
 			if (lValue.getBitfieldInformation() != null) {
 				final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
-				rhsWithBitfieldTreatment = mExpressionTranslation.erazeBits(loc,
-						rightHandSideValueWithConversionsApplied.getValue(), (CPrimitive) lValue.getCType(),
-						bitfieldWidth);
+				rhsWithBitfieldTreatment =
+						mExpressionTranslation.erazeBits(loc, rightHandSideValueWithConversionsApplied.getValue(),
+								(CPrimitive) lValue.getCType(), bitfieldWidth);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
@@ -2850,18 +2825,18 @@ public class CHandler implements ICHandler {
 				}
 			}
 
-			final ExpressionResultBuilder builderWithUnionFieldAndNeighboursUpdated = assignorHavocUnionNeighbours(main,
-					loc, (RValue) rightHandSide.getLrValue(), rightHandSide.getNeighbourUnionFields(),
-					rightHandSideValueWithConversionsApplied, builder);
+			final ExpressionResultBuilder builderWithUnionFieldAndNeighboursUpdated =
+					assignorHavocUnionNeighbours(main, loc, (RValue) rightHandSide.getLrValue(),
+							rightHandSide.getNeighbourUnionFields(), rightHandSideValueWithConversionsApplied, builder);
 
 			// the following block's functionality has moved to FunctionHandler.constructAssignmentStatement(..)
-//			if (!mFunctionHandler.isGlobalScope()) {
-//
-//				final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lValue.getLHS());
-//				if (modifiedGlobal != null) {
-//					mFunctionHandler.addModifiedGlobal(modifiedGlobal);
-//				}
-//			}
+			// if (!mFunctionHandler.isGlobalScope()) {
+			//
+			// final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lValue.getLHS());
+			// if (modifiedGlobal != null) {
+			// mFunctionHandler.addModifiedGlobal(modifiedGlobal);
+			// }
+			// }
 			return builderWithUnionFieldAndNeighboursUpdated.build();
 		} else {
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
@@ -2869,15 +2844,12 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * At the end of a scope, typically a C compound statement, we need to insert
-	 * some mallocs and frees surrounding the stmt block, and we need to insert all
-	 * the declarations that are needed for that block, according to the symbol
-	 * table. (at the dispatch of a simple declaration, the declarations are stored
-	 * in the symbol table)
+	 * At the end of a scope, typically a C compound statement, we need to insert some mallocs and frees surrounding the
+	 * stmt block, and we need to insert all the declarations that are needed for that block, according to the symbol
+	 * table. (at the dispatch of a simple declaration, the declarations are stored in the symbol table)
 	 *
-	 * Updates the given ExpressionResultBuilder in place. Adds some declarations
-	 * and resets the statements. Based on information in the symbol table
-	 * concerning the scope that is to be closed.
+	 * Updates the given ExpressionResultBuilder in place. Adds some declarations and resets the statements. Based on
+	 * information in the symbol table concerning the scope that is to be closed.
 	 */
 	// public ArrayList<Statement> updateStmtsAndDeclsAtScopeEnd(final Dispatcher
 	// main,
@@ -2902,8 +2874,8 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Check if two pointers have the same base component (i.e. if both point to the
-	 * same array object). Depending on the preferences of this plugin we
+	 * Check if two pointers have the same base component (i.e. if both point to the same array object). Depending on
+	 * the preferences of this plugin we
 	 * <ul>
 	 * <li>assert that both have the same base component,
 	 * <li>assume that both have the same base component, or
@@ -2915,8 +2887,7 @@ public class CHandler implements ICHandler {
 	 * @param rightPtr
 	 *            Boogie {@link Expression} that represents the right pointer.
 	 * @param result
-	 *            {@link ExpressionResult} to which the additional statements are
-	 *            added.
+	 *            {@link ExpressionResult} to which the additional statements are added.
 	 */
 	private void addBaseEqualityCheck(final Dispatcher main, final ILocation loc, final Expression leftPtr,
 			final Expression rightPtr, final ExpressionResult result) {
@@ -2967,13 +2938,13 @@ public class CHandler implements ICHandler {
 
 		final Expression divisorNotZero;
 		if (divisorType.isIntegerType()) {
-			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, divisorType,
-					BigInteger.ZERO);
+			final Expression zero =
+					mExpressionTranslation.constructLiteralForIntegerType(loc, divisorType, BigInteger.ZERO);
 			divisorNotZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
 					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
 		} else if (divisorType.isFloatingType()) {
-			final Expression zero = mExpressionTranslation.constructLiteralForFloatingType(loc, divisorType,
-					BigDecimal.ZERO);
+			final Expression zero =
+					mExpressionTranslation.constructLiteralForFloatingType(loc, divisorType, BigDecimal.ZERO);
 			divisorNotZero = mExpressionTranslation.constructBinaryComparisonFloatingPointExpression(loc,
 					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
 		} else {
@@ -2994,15 +2965,12 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Add checks for integer overflows. Construct arithmetic operation and add an
-	 * assert statement that checks if the result is in the range of the
-	 * corresponding C data type (i.e. check for overflow wrt. max and min value).
-	 * Note that we do not check if a given expression is in the range. We
-	 * explicitly construct a new expression for the arithmetic operation in this
-	 * check because we possibly have to adjust the data type used in boogie. E.g.,
-	 * if we use 32bit bitvectors in Boogie we are unable to express an overflow
-	 * check for a 32bit integer addition in C. Instead, we have to use a 33bit bit
-	 * bitvector in Boogie.
+	 * Add checks for integer overflows. Construct arithmetic operation and add an assert statement that checks if the
+	 * result is in the range of the corresponding C data type (i.e. check for overflow wrt. max and min value). Note
+	 * that we do not check if a given expression is in the range. We explicitly construct a new expression for the
+	 * arithmetic operation in this check because we possibly have to adjust the data type used in boogie. E.g., if we
+	 * use 32bit bitvectors in Boogie we are unable to express an overflow check for a 32bit integer addition in C.
+	 * Instead, we have to use a 33bit bit bitvector in Boogie.
 	 */
 	private void addIntegerBoundsCheck(final Dispatcher main, final ILocation loc, final ExpressionResult rex,
 			final CPrimitive resultType, final int operation, final Expression... operands) {
@@ -3019,8 +2987,8 @@ public class CHandler implements ICHandler {
 				operationResult = mExpressionTranslation.constructBinaryBitwiseIntegerExpression(loc, operation,
 						operands[0], resultType, operands[1], resultType);
 			} else if (operands.length == 1) {
-				operationResult = mExpressionTranslation.constructUnaryExpression(loc, operation, operands[0],
-						resultType);
+				operationResult =
+						mExpressionTranslation.constructUnaryExpression(loc, operation, operands[0], resultType);
 			} else if (operands.length == 2) {
 				operationResult = mExpressionTranslation.constructArithmeticExpression(loc, operation, operands[0],
 						resultType, operands[1], resultType);
@@ -3051,14 +3019,13 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Check if pointer offset is in a legal range. In case a pointer points to
-	 * allocated memory, the "base" of a pointer points to some array object (in C).
-	 * Now we check if the offset of this pointer does not violate the bounds of
-	 * that array. This means that the offset
+	 * Check if pointer offset is in a legal range. In case a pointer points to allocated memory, the "base" of a
+	 * pointer points to some array object (in C). Now we check if the offset of this pointer does not violate the
+	 * bounds of that array. This means that the offset
 	 * <ul>
 	 * <li>must be non-negative, and
-	 * <li>must be small enough that the pointer points to an element of the array
-	 * or one past the last element of the array.
+	 * <li>must be small enough that the pointer points to an element of the array or one past the last element of the
+	 * array.
 	 * </ul>
 	 * Depending on the preferences of this plugin we
 	 * <ul>
@@ -3070,8 +3037,7 @@ public class CHandler implements ICHandler {
 	 * @param ptr
 	 *            Boogie {@link Expression} that represents the pointer.
 	 * @param result
-	 *            {@link ExpressionResult} to which the additional statements are
-	 *            added.
+	 *            {@link ExpressionResult} to which the additional statements are added.
 	 */
 	private void addOffsetInBoundsCheck(final Dispatcher main, final ILocation loc, final Expression ptr,
 			final ExpressionResult result) {
@@ -3080,8 +3046,8 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * add havocs if we have a write to a union (which is not on heap, otherwise the
-	 * heap model should deal with everything)
+	 * add havocs if we have a write to a union (which is not on heap, otherwise the heap model should deal with
+	 * everything)
 	 *
 	 * @param loc
 	 * @param rVal
@@ -3111,10 +3077,10 @@ public class CHandler implements ICHandler {
 				// builder.mDeclarations, builder.mAuxVars, builder.mOverappr));
 				// builder.setLrVal(rVal);
 				builder.resetLrVal(rVal);
-				final ExpressionResult assignment = makeAssignment(main, loc, er.mLrVal, Collections.emptyList(),
-						builder.build());
-				builder = new ExpressionResultBuilder().addAllExceptLrValue(assignment)
-						.setLrVal(assignment.getLrValue());
+				final ExpressionResult assignment =
+						makeAssignment(main, loc, er.mLrVal, Collections.emptyList(), builder.build());
+				builder =
+						new ExpressionResultBuilder().addAllExceptLrValue(assignment).setLrVal(assignment.getLrValue());
 				// rVal,
 				// builder.mDeclarations, builder.mAuxVars, builder.mOverappr));
 
@@ -3128,8 +3094,8 @@ public class CHandler implements ICHandler {
 				// VarList(loc,
 				// new String[] { tmpId }, mTypeHandler.cType2AstType(loc,
 				// er.mLrVal.getCType())) });
-				final AuxVarInfo auxVar = AuxVarInfo.constructAuxVarInfo(loc, main, er.mLrVal.getCType(),
-						SFO.AUXVAR.UNION);
+				final AuxVarInfo auxVar =
+						AuxVarInfo.constructAuxVarInfo(loc, main, er.mLrVal.getCType(), SFO.AUXVAR.UNION);
 
 				// builder.addDeclaration(tVarDec).putAuxVar(tVarDec, loc);
 				builder.addDeclaration(auxVar.getVarDec());
@@ -3148,47 +3114,40 @@ public class CHandler implements ICHandler {
 
 				builder.resetLrVal(tmpVarRVal);
 
-				final ExpressionResult assignment = makeAssignment(main, loc, er.mLrVal, Collections.emptyList(),
-						builder.build());
+				final ExpressionResult assignment =
+						makeAssignment(main, loc, er.mLrVal, Collections.emptyList(), builder.build());
 
 				// builder = new ExpressionResultBuilder(makeAssignment(main, loc,
 				// builder.mStatements, er.mLrVal,
 				// tmpVarRVal, builder.mDeclarations, builder.mAuxVars,
 				// Collections.singletonList(overapp)));
-				builder = new ExpressionResultBuilder().addAllExceptLrValue(assignment)
-						.setLrVal(assignment.getLrValue());
+				builder =
+						new ExpressionResultBuilder().addAllExceptLrValue(assignment).setLrVal(assignment.getLrValue());
 			}
 		}
 		return builder;
 	}
 
 	/**
-	 * Checks ACSL for the next element and whether it must be added at the place
-	 * where this method is called.
+	 * Checks ACSL for the next element and whether it must be added at the place where this method is called.
 	 *
 	 * @param main
 	 *            the main dispatcher.
 	 * @param stmt
-	 *            the statement list where the acsl should be appended - this is
-	 *            assumed to be <code>null</code> when called from within the
-	 *            <i>translation unit</i>.
+	 *            the statement list where the acsl should be appended - this is assumed to be <code>null</code> when
+	 *            called from within the <i>translation unit</i>.
 	 * @param next
-	 *            the current child node of a translation unit of compound statement
-	 *            that will be added next. Should be <code>null</code> when called
-	 *            at the end of <i>compound statement</i>.
+	 *            the current child node of a translation unit of compound statement that will be added next. Should be
+	 *            <code>null</code> when called at the end of <i>compound statement</i>.
 	 * @param resultBuilder
-	 *            the result builder where code translated from the ACSL code can be
-	 *            added to by this method
+	 *            the result builder where code translated from the ACSL code can be added to by this method
 	 * @param compoundStatement
-	 *            true iff this method was called during translation of a compound
-	 *            statement
+	 *            true iff this method was called during translation of a compound statement
 	 * @param translationUnit
-	 *            true iff this method was called during translation of the
-	 *            translation unit
+	 *            true iff this method was called during translation of the translation unit
 	 * @param parent
-	 *            the parent node of the current ACSL node. This should only be set
-	 *            if called at the end of a <i>compound statement</i> and
-	 *            <code>null</code> otherwise.
+	 *            the parent node of the current ACSL node. This should only be set if called at the end of a
+	 *            <i>compound statement</i> and <code>null</code> otherwise.
 	 */
 	private void checkForACSL(final Dispatcher main, final ExpressionResultBuilder resultBuilder, // final
 																									// List<Statement>
@@ -3317,10 +3276,10 @@ public class CHandler implements ICHandler {
 	private Expression constructPointerComponentRelation(final ILocation loc, final int op,
 			final Expression leftPointer, final Expression rightPointer, final String component) {
 		assert component.equals(SFO.POINTER_BASE) || component.equals(SFO.POINTER_OFFSET) : "unknown pointer component";
-		final StructAccessExpression leftComponent = ExpressionFactory.constructStructAccessExpression(loc, leftPointer,
-				component);
-		final StructAccessExpression rightComponent = ExpressionFactory.constructStructAccessExpression(loc,
-				rightPointer, component);
+		final StructAccessExpression leftComponent =
+				ExpressionFactory.constructStructAccessExpression(loc, leftPointer, component);
+		final StructAccessExpression rightComponent =
+				ExpressionFactory.constructStructAccessExpression(loc, rightPointer, component);
 		switch (op) {
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
@@ -3341,18 +3300,15 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Increment or decrement an expression. Construct expression that represents
-	 * the value of the input expression but is incremented or decremented by one.
-	 * If op is IASTBinaryExpression.op_plus we increment, if op is
-	 * IASTBinaryExpression.op_minus we decrement. If ctype is CPrimitive, we
-	 * increment/decrement by one and also call the method that adds (depending on
-	 * the settings) an overflow check. If ctype is CPointer, we increment/decrement
-	 * by the size of the pointsToType and call the method that adds (depending on
-	 * the settings) an check if the pointer arithmetic was legal.
+	 * Increment or decrement an expression. Construct expression that represents the value of the input expression but
+	 * is incremented or decremented by one. If op is IASTBinaryExpression.op_plus we increment, if op is
+	 * IASTBinaryExpression.op_minus we decrement. If ctype is CPrimitive, we increment/decrement by one and also call
+	 * the method that adds (depending on the settings) an overflow check. If ctype is CPointer, we increment/decrement
+	 * by the size of the pointsToType and call the method that adds (depending on the settings) an check if the pointer
+	 * arithmetic was legal.
 	 *
 	 * @param result
-	 *            note that this method has sideeffects on this object!
-	 *            (add..BoundCheck(..) calls)
+	 *            note that this method has sideeffects on this object! (add..BoundCheck(..) calls)
 	 */
 	private Expression constructXcrementedValue(final Dispatcher main, final ILocation loc,
 			final ExpressionResult result, final CType ctype, final int op, final Expression value) {
@@ -3377,8 +3333,8 @@ public class CHandler implements ICHandler {
 				one = mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE);
 			}
 			addIntegerBoundsCheck(main, loc, result, cPrimitive, op, value, one);
-			valueIncremented = mExpressionTranslation.constructArithmeticExpression(loc, op, value, cPrimitive, one,
-					cPrimitive);
+			valueIncremented =
+					mExpressionTranslation.constructArithmeticExpression(loc, op, value, cPrimitive, one, cPrimitive);
 		} else {
 			throw new IllegalArgumentException("input has to be CPointer or CPrimitive");
 		}
@@ -3464,8 +3420,8 @@ public class CHandler implements ICHandler {
 		} else if (oldType instanceof CArray) {
 			if (rexp instanceof StringLiteralResult) {
 				/*
-				 * a string literal's char-array decays to a pointer the stringLiteralResult
-				 * already has the correct RValue, we just need to change the type
+				 * a string literal's char-array decays to a pointer the stringLiteralResult already has the correct
+				 * RValue, we just need to change the type
 				 */
 				rexp.mLrVal = new RValue(rexp.mLrVal.getValue(), new CPointer(new CPrimitive(CPrimitives.CHAR)));
 			} else {
@@ -3489,8 +3445,7 @@ public class CHandler implements ICHandler {
 	 *            Boogie {@link Expression} that represents the right pointer.
 	 * @param pointsToType
 	 *            {@link CType} of the objects to which the pointers point.
-	 * @return An {@link Expression} that represents the difference of two Pointers
-	 *         according to C11 6.5.6.9.
+	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
 	 */
 	private Expression doPointerSubtraction(final Dispatcher main, final ILocation loc, final Expression ptr1,
 			final Expression ptr2, final CType pointsToType) {
@@ -3504,15 +3459,15 @@ public class CHandler implements ICHandler {
 		// TODO: typesizeType and .getCTypeOfPointerComponents() might be
 		// different then one expression has to be converted into the type of
 		// the other
-		final Expression offsetDifferenceDividedByTypesize = mExpressionTranslation.constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_divide, offsetDifference, mExpressionTranslation.getCTypeOfPointerComponents(),
-				typesize, typesizeType);
+		final Expression offsetDifferenceDividedByTypesize =
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_divide,
+						offsetDifference, mExpressionTranslation.getCTypeOfPointerComponents(), typesize, typesizeType);
 		return offsetDifferenceDividedByTypesize;
 	}
 
 	/**
-	 * Handle the indirection operator according to Section 6.5.3.2 of C11. (The
-	 * indirection operator is the star for pointer dereference.)
+	 * Handle the indirection operator according to Section 6.5.3.2 of C11. (The indirection operator is the star for
+	 * pointer dereference.)
 	 */
 	private Result handleIndirectionOperator(final Dispatcher main, final ExpressionResult er, final ILocation loc) {
 		final ExpressionResult rop = er.switchToRValueIfNecessary(main, loc);
@@ -3532,8 +3487,7 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Method that handles loops (for, while, do/while). Each of corresponding visit
-	 * methods will call this method.
+	 * Method that handles loops (for, while, do/while). Each of corresponding visit methods will call this method.
 	 *
 	 * @param main
 	 *            the main dispatcher
@@ -3665,11 +3619,11 @@ public class CHandler implements ICHandler {
 		{
 			final Expression cond = ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG,
 					condRVal.getValue());
-			final ArrayList<Statement> thenStmt = new ArrayList<>(
-					CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()));
+			final ArrayList<Statement> thenStmt =
+					new ArrayList<>(CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()));
 			thenStmt.add(new BreakStatement(loc));
-			final Statement[] elseStmt = CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars())
-					.toArray(new Statement[0]);
+			final Statement[] elseStmt =
+					CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars()).toArray(new Statement[0]);
 			ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt);
 		}
 
@@ -3730,9 +3684,9 @@ public class CHandler implements ICHandler {
 		}
 
 		final ILocation ignoreLocation = LocationFactory.createIgnoreCLocation(node);
-		final WhileStatement whileStmt = new WhileStatement(ignoreLocation,
-				ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
-				bodyBlock.toArray(new Statement[bodyBlock.size()]));
+		final WhileStatement whileStmt =
+				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
+						bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		// overappr.stream().forEach(a -> a.annotate(whileStmt));
 		// stmt.add(whileStmt);
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
@@ -3748,13 +3702,10 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle postfix increment and decrement operators according to Section 6.5.2.4
-	 * of C11. We translate the expression <code>LV++</code> to an auxiliary
-	 * variable <code>t~post</code> and add to the resulting
-	 * {@link ExpressionResult} the two assignments <code>t~post := LV</code> and
-	 * <code>LV := t~post + 1</code>. Hence the auxiliary variable
-	 * <code>t~post</code> stores the old value of the object to which the lvalue
-	 * <code>LV</code> refers.
+	 * Handle postfix increment and decrement operators according to Section 6.5.2.4 of C11. We translate the expression
+	 * <code>LV++</code> to an auxiliary variable <code>t~post</code> and add to the resulting {@link ExpressionResult}
+	 * the two assignments <code>t~post := LV</code> and <code>LV := t~post + 1</code>. Hence the auxiliary variable
+	 * <code>t~post</code> stores the old value of the object to which the lvalue <code>LV</code> refers.
 	 */
 	private Result handlePostfixIncrementAndDecrement(final Dispatcher main, final ILocation loc, final int postfixOp,
 			ExpressionResult exprRes) {
@@ -3763,8 +3714,8 @@ public class CHandler implements ICHandler {
 		exprRes = exprRes.switchToRValueIfNecessary(main, loc);
 		// final ExpressionResult result =
 		// ExpressionResult.copyStmtDeclAuxvarOverapprox(exprRes);
-		final ExpressionResultBuilder builder1 = new ExpressionResultBuilder().addAllExceptLrValue(exprRes)
-				.setLrVal(exprRes.getLrValue());
+		final ExpressionResultBuilder builder1 =
+				new ExpressionResultBuilder().addAllExceptLrValue(exprRes).setLrVal(exprRes.getLrValue());
 
 		// In this case we need a temporary variable for the old value
 		// final String tmpName = mNameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD,
@@ -3773,8 +3724,8 @@ public class CHandler implements ICHandler {
 		// exprRes.mLrVal.getCType());
 		// final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName,
 		// tmpIType, loc);
-		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, exprRes.mLrVal.getCType(),
-				SFO.AUXVAR.POST_MOD);
+		final AuxVarInfo auxvar =
+				AuxVarInfo.constructAuxVarInfo(loc, main, exprRes.mLrVal.getCType(), SFO.AUXVAR.POST_MOD);
 		// result.mAuxVars.put(tmpVar, loc);
 		// result.mDecl.add(tmpVar);
 		builder1.addDeclaration(auxvar.getVarDec());
@@ -3806,8 +3757,8 @@ public class CHandler implements ICHandler {
 		final ExpressionResult intermediateResult = builder1.build();
 		// final Expression valueXcremented = constructXcrementedValue(main, loc,
 		// result, oType, op, tmpRValue.getValue());
-		final Expression valueXcremented = constructXcrementedValue(main, loc, intermediateResult, oType, op,
-				tmpRValue.getValue());
+		final Expression valueXcremented =
+				constructXcrementedValue(main, loc, intermediateResult, oType, op, tmpRValue.getValue());
 		final ExpressionResultBuilder builder2 = new ExpressionResultBuilder().addAllExceptLrValue(intermediateResult);
 
 		final RValue rhs = new RValue(valueXcremented, oType, false, false);
@@ -3815,8 +3766,8 @@ public class CHandler implements ICHandler {
 		// final ExpressionResult assign = makeAssignment(main, loc, result.mStmt,
 		// modifiedLValue, rhs, result.mDecl,
 		// result.mAuxVars, result.mOverappr);
-		final ExpressionResult assign = makeAssignment(main, loc, modifiedLValue, Collections.emptyList(),
-				builder2.build());
+		final ExpressionResult assign =
+				makeAssignment(main, loc, modifiedLValue, Collections.emptyList(), builder2.build());
 		final ExpressionResultBuilder builder3 = new ExpressionResultBuilder().addAllExceptLrValue(assign);
 		// assign.mLrVal = tmpRValue;
 		builder3.setLrVal(tmpRValue);
@@ -3825,19 +3776,15 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle prefix increment and decrement operators according to Section 6.5.3.1
-	 * of C11. We translate the expression <code>++LV</code> to an auxiliary
-	 * variable <code>t~pre</code> and add to the resulting {@link ExpressionResult}
-	 * the two assignments <code>t~pre := LV+1</code> and <code>LV := t~pre</code>.
-	 * Hence, the auxiliary variable <code>t~pre</code> stores the new value of the
-	 * object to which the lvalue <code>LV</code> refers.
+	 * Handle prefix increment and decrement operators according to Section 6.5.3.1 of C11. We translate the expression
+	 * <code>++LV</code> to an auxiliary variable <code>t~pre</code> and add to the resulting {@link ExpressionResult}
+	 * the two assignments <code>t~pre := LV+1</code> and <code>LV := t~pre</code>. Hence, the auxiliary variable
+	 * <code>t~pre</code> stores the new value of the object to which the lvalue <code>LV</code> refers.
 	 *
-	 * Question: Why are we doing this complicated replacement and do not replace
-	 * <code>++LV</code> by <code>LV + 1</code> ? Answer: We want to be ready for
-	 * dealing with cases where there are several pre/post increment/decrement
-	 * operations in one expression. We might extend our implementation in a way
-	 * where the operation is done at a certain sequence point or all evaluation
-	 * orders are considered.
+	 * Question: Why are we doing this complicated replacement and do not replace <code>++LV</code> by
+	 * <code>LV + 1</code> ? Answer: We want to be ready for dealing with cases where there are several pre/post
+	 * increment/decrement operations in one expression. We might extend our implementation in a way where the operation
+	 * is done at a certain sequence point or all evaluation orders are considered.
 	 */
 	private Result handlePrefixIncrementAndDecrement(final Dispatcher main, final int prefixOp, final ILocation loc,
 			ExpressionResult exprRes) {
@@ -3856,8 +3803,8 @@ public class CHandler implements ICHandler {
 		// exprRes.mLrVal.getCType());
 		// final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName,
 		// tmpIType, loc);
-		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, exprRes.getLrValue().getCType(),
-				SFO.AUXVAR.PRE_MOD);
+		final AuxVarInfo auxvar =
+				AuxVarInfo.constructAuxVarInfo(loc, main, exprRes.getLrValue().getCType(), SFO.AUXVAR.PRE_MOD);
 		// result.mAuxVars.put(tmpVar, loc);
 		// result.mDecl.add(tmpVar);
 		builder1.addDeclaration(auxvar.getVarDec());
@@ -3876,8 +3823,8 @@ public class CHandler implements ICHandler {
 		final CType oType = exprRes.mLrVal.getCType().getUnderlyingType();
 		// in-/decremented value
 		final ExpressionResult intermediateResult = builder1.build();
-		final Expression valueXcremented = constructXcrementedValue(main, loc, intermediateResult, oType, op,
-				exprRes.mLrVal.getValue());
+		final Expression valueXcremented =
+				constructXcrementedValue(main, loc, intermediateResult, oType, op, exprRes.mLrVal.getValue());
 		// constructXcrementedValue(main, loc, result, oType, op,
 		// exprRes.mLrVal.getValue());
 		final ExpressionResultBuilder builder2 = new ExpressionResultBuilder().addAllExceptLrValue(intermediateResult)
@@ -3898,8 +3845,8 @@ public class CHandler implements ICHandler {
 		// modifiedLValue, rhs, result.mDecl,
 		// result.mAuxVars, result.mOverappr);
 		builder2.setLrVal(rhs);
-		final ExpressionResult assign = makeAssignment(main, loc, modifiedLValue, Collections.emptyList(),
-				builder2.build());
+		final ExpressionResult assign =
+				makeAssignment(main, loc, modifiedLValue, Collections.emptyList(), builder2.build());
 		final ExpressionResultBuilder builder3 = new ExpressionResultBuilder();
 		builder3.addAllExceptLrValue(assign);
 
@@ -4036,12 +3983,11 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle additive operators according to Sections 6.5.6 of C11. Assumes that
-	 * left (resp. right) are the results from handling the operands. Requires that
-	 * the {@link LRValue} of operands is an {@link RValue} (i.e.,
-	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie
-	 * expressions in left (resp. right) are a non-boolean representation of these
-	 * results (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 * Handle additive operators according to Sections 6.5.6 of C11. Assumes that left (resp. right) are the results
+	 * from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
+	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
+	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
+	 * needed).
 	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
@@ -4131,8 +4077,8 @@ public class CHandler implements ICHandler {
 
 		ExpressionResult intermediateResult2;
 		/*
-		 * if we had a StringLiteralResult as input, we have to restore the
-		 * StringLiteralResult from the ExpressionResult.
+		 * if we had a StringLiteralResult as input, we have to restore the StringLiteralResult from the
+		 * ExpressionResult.
 		 */
 		if (left instanceof StringLiteralResult) {
 			assert lhs == null : "unforseen case";
@@ -4173,8 +4119,8 @@ public class CHandler implements ICHandler {
 			// result.mAuxVars,
 			// result.mOverappr);
 			intermediateResult2.mLrVal = rval;
-			final ExpressionResult result = makeAssignment(main, loc, lhs, Collections.emptyList(),
-					intermediateResult2);
+			final ExpressionResult result =
+					makeAssignment(main, loc, lhs, Collections.emptyList(), intermediateResult2);
 			return result;
 		}
 		default:
@@ -4183,12 +4129,11 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle equality operators according to Section 6.5.7 of C11. Assumes that
-	 * left (resp. right) are the results from handling the operands. Requires that
-	 * the {@link LRValue} of operands is an {@link RValue} (i.e.,
-	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie
-	 * expressions in left (resp. right) are a non-boolean representation of these
-	 * results (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 * Handle equality operators according to Section 6.5.7 of C11. Assumes that left (resp. right) are the results from
+	 * handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
+	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
+	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
+	 * needed).
 	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
@@ -4242,13 +4187,11 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle bitwise AND, bitwise XOR, and bitwise OR operators according to
-	 * sections 6.5.10, 6.5.11, 6.5.12 of C11. Assumes that left (resp. right) are
-	 * the results from handling the operands. Requires that the {@link LRValue} of
-	 * operands is an {@link RValue} (i.e., switchToRValueIfNecessary was applied if
-	 * needed). requires that the Boogie expressions in left (resp. right) are a
-	 * non-boolean representation of these results (i.e., rexBoolToIntIfNecessary()
-	 * has already been applied if needed).
+	 * Handle bitwise AND, bitwise XOR, and bitwise OR operators according to sections 6.5.10, 6.5.11, 6.5.12 of C11.
+	 * Assumes that left (resp. right) are the results from handling the operands. Requires that the {@link LRValue} of
+	 * operands is an {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed). requires that the Boogie
+	 * expressions in left (resp. right) are a non-boolean representation of these results (i.e.,
+	 * rexBoolToIntIfNecessary() has already been applied if needed).
 	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
@@ -4296,11 +4239,10 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle conditional operator according to Section 6.5.15 of C11. Assumes that
-	 * opCondition, opPositive, and opNegative are the results from handling the
-	 * operands. Requires that the {@link LRValue} of operands is an {@link RValue}
-	 * (i.e., switchToRValueIfNecessary was applied if needed). TODO: Check all
-	 * corner cases, write some testfiles.
+	 * Handle conditional operator according to Section 6.5.15 of C11. Assumes that opCondition, opPositive, and
+	 * opNegative are the results from handling the operands. Requires that the {@link LRValue} of operands is an
+	 * {@link RValue} (i.e., switchToRValueIfNecessary was applied if needed). TODO: Check all corner cases, write some
+	 * testfiles.
 	 *
 	 *
 	 *
@@ -4326,79 +4268,76 @@ public class CHandler implements ICHandler {
 		}
 
 		/*
-		 * C11 6.5.15.3 One of the following shall hold for the second and third operands:
-		 * <li> both operands have arithmetic type;
-		 * <li> both operands have the same structure or union type;
-		 * <li> both operands have void type;
-		 * <li> both operands are pointers to qualified or unqualified versions of compatible types;
-		 * <li> one operand is a pointer and the other is a null pointer constant; or
-		 * <li> one operand is a pointer to an object type and the other is a pointer to a qualified or unqualified
-		 *   version of void.
+		 * C11 6.5.15.3 One of the following shall hold for the second and third operands: <li> both operands have
+		 * arithmetic type; <li> both operands have the same structure or union type; <li> both operands have void type;
+		 * <li> both operands are pointers to qualified or unqualified versions of compatible types; <li> one operand is
+		 * a pointer and the other is a null pointer constant; or <li> one operand is a pointer to an object type and
+		 * the other is a pointer to a qualified or unqualified version of void.
 		 */
 
-
-		/* C11 6.5.15.4 The first operand is evaluated; there is a sequence point between its evaluation and the
-         *  evaluation of the second or third operand (whichever is evaluated). The second operand
-         *  is evaluated only if the first compares unequal to 0; the third operand is evaluated only if
-         *  the first compares equal to 0; the result is the value of the second or third operand
-         *  (whichever is evaluated), converted to the type described below. 110)
-         *
-         * --> we translate this by a Boogie if-statement, such that the side effects of the evaluation of each
-         *  C expression go into the respective branch of the Boogie if statement.
-         */
-
-
-
-
-        /* C11 6.5.15.5 If both the second and third operands have arithmetic type, the result type that would be
-         *  determined by the usual arithmetic conversions, were they applied to those two operands,
-         *  is the type of the result. If both the operands have structure or union type, the result has
-         *  that type. If both operands have void type, the result has void type.
-         */
-
-		/* C11 6.5.15.6 If both the second and third operands are pointers or one is a null pointer constant and the
-         *  other is a pointer, the result type is a pointer to a type qualified with all the type qualifiers
-         *  of the types referenced by both operands. Furthermore, if both operands are pointers to
-         *  compatible types or to differently qualified versions of compatible types, the result type is
-         *  a pointer to an appropriately qualified version of the composite type; if one operand is a
-         *  null pointer constant, the result has the type of the other operand; otherwise, one operand
-         *  is a pointer to void or a qualified version of void, in which case the result type is a
-         *  pointer to an appropriately qualified version of void.
-         *
-         *  TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
-         *   currently.
+		/*
+		 * C11 6.5.15.4 The first operand is evaluated; there is a sequence point between its evaluation and the
+		 * evaluation of the second or third operand (whichever is evaluated). The second operand is evaluated only if
+		 * the first compares unequal to 0; the third operand is evaluated only if the first compares equal to 0; the
+		 * result is the value of the second or third operand (whichever is evaluated), converted to the type described
+		 * below. 110)
+		 *
+		 * --> we translate this by a Boogie if-statement, such that the side effects of the evaluation of each C
+		 * expression go into the respective branch of the Boogie if statement.
 		 */
 
+		/*
+		 * C11 6.5.15.5 If both the second and third operands have arithmetic type, the result type that would be
+		 * determined by the usual arithmetic conversions, were they applied to those two operands, is the type of the
+		 * result. If both the operands have structure or union type, the result has that type. If both operands have
+		 * void type, the result has void type.
+		 */
 
-		/* Treatment of the cases where one or both branches have void type and the LRValue of the dispatch result of
-		 * the branch is is null:
-		 *  We give a dummy LRValue, whose BoogieType is a type error so it cannot be used further.
+		/*
+		 * C11 6.5.15.6 If both the second and third operands are pointers or one is a null pointer constant and the
+		 * other is a pointer, the result type is a pointer to a type qualified with all the type qualifiers of the
+		 * types referenced by both operands. Furthermore, if both operands are pointers to compatible types or to
+		 * differently qualified versions of compatible types, the result type is a pointer to an appropriately
+		 * qualified version of the composite type; if one operand is a null pointer constant, the result has the type
+		 * of the other operand; otherwise, one operand is a pointer to void or a qualified version of void, in which
+		 * case the result type is a pointer to an appropriately qualified version of void.
+		 *
+		 * TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
+		 * currently.
+		 */
+
+		/*
+		 * Treatment of the cases where one or both branches have void type and the LRValue of the dispatch result of
+		 * the branch is is null: We give a dummy LRValue, whose BoogieType is a type error so it cannot be used
+		 * further.
 		 */
 
 		boolean secondArgIsVoid = false;
 		boolean thirdArgIsVoid = false;
 
 		if (!opPositive.hasLRValue()) {
-			opPositive.mLrVal = new RValue(ExpressionFactory.createVoidDummyExpression(loc),
-					new CPrimitive(CPrimitives.VOID));
-//			resultCType = opNegative.hasLRValue() ? opNegative.getLrValue().getCType()
-//					: new CPrimitive(CPrimitives.VOID);
+			opPositive.mLrVal =
+					new RValue(ExpressionFactory.createVoidDummyExpression(loc), new CPrimitive(CPrimitives.VOID));
+			// resultCType = opNegative.hasLRValue() ? opNegative.getLrValue().getCType()
+			// : new CPrimitive(CPrimitives.VOID);
 			secondArgIsVoid = true;
 		}
 		if (!opNegative.hasLRValue()) {
-			opNegative.mLrVal = new RValue(ExpressionFactory.createVoidDummyExpression(loc),
-					new CPrimitive(CPrimitives.VOID));
-//			resultCType = opPositive.hasLRValue() ? opPositive.getLrValue().getCType()
-//					: new CPrimitive(CPrimitives.VOID);
+			opNegative.mLrVal =
+					new RValue(ExpressionFactory.createVoidDummyExpression(loc), new CPrimitive(CPrimitives.VOID));
+			// resultCType = opPositive.hasLRValue() ? opPositive.getLrValue().getCType()
+			// : new CPrimitive(CPrimitives.VOID);
 			thirdArgIsVoid = true;
 		}
 
 		final CType resultCType;
 		if (opPositive.getLrValue().getCType().isArithmeticType()
 				&& opNegative.getLrValue().getCType().isArithmeticType()) {
-			/* C11 6.5.15.5: If both the second and third operands have arithmetic type, the result type that would be
-	         *  determined by the usual arithmetic conversions, were they applied to those two operands,
-	         *  is the type of the result. */
+			/*
+			 * C11 6.5.15.5: If both the second and third operands have arithmetic type, the result type that would be
+			 * determined by the usual arithmetic conversions, were they applied to those two operands, is the type of
+			 * the result.
+			 */
 			mExpressionTranslation.usualArithmeticConversions(loc, opPositive, opNegative);
 			resultCType = opPositive.getLrValue().getCType();
 		} else if (secondArgIsVoid && thirdArgIsVoid) {
@@ -4428,7 +4367,7 @@ public class CHandler implements ICHandler {
 			if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				// convert the "0" to a pointer
 				mExpressionTranslation.convertIntToPointer(loc, opNegative,
-					(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
+						(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
 			} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
@@ -4458,7 +4397,6 @@ public class CHandler implements ICHandler {
 			resultBuilder.addAuxVar(auxvar);
 		}
 
-
 		// collect side effects of "then" branch
 		final List<Statement> ifStatements = new ArrayList<>();
 		{
@@ -4466,8 +4404,8 @@ public class CHandler implements ICHandler {
 			if (!resultCType.isVoidType()) {
 				final LeftHandSide[] lhs = { auxvar.getLhs() };
 				final Expression assignedVal = opPositive.getLrValue().getValue();
-				final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc, lhs,
-						new Expression[] { assignedVal });
+				final AssignmentStatement assignStmt =
+						StatementFactory.constructAssignmentStatement(loc, lhs, new Expression[] { assignedVal });
 				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 					overapprItem.annotate(assignStmt);
 				}
@@ -4483,8 +4421,8 @@ public class CHandler implements ICHandler {
 			if (!resultCType.isVoidType()) {
 				final LeftHandSide[] lhs = { auxvar.getLhs() };
 				final Expression assignedVal = opNegative.getLrValue().getValue();
-				final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc, lhs,
-						new Expression[] { assignedVal });
+				final AssignmentStatement assignStmt =
+						StatementFactory.constructAssignmentStatement(loc, lhs, new Expression[] { assignedVal });
 				for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
 					overapprItem.annotate(assignStmt);
 				}
@@ -4505,19 +4443,17 @@ public class CHandler implements ICHandler {
 			resultBuilder.setLrVal(new RValue(auxvar.getExp(), resultCType));
 		} else {
 			/* for better error detection we give the dummy void value here */
-			resultBuilder.setLrVal(new RValue(ExpressionFactory.createVoidDummyExpression(loc),
-					resultCType));
+			resultBuilder.setLrVal(new RValue(ExpressionFactory.createVoidDummyExpression(loc), resultCType));
 		}
 		return resultBuilder.build();
 	}
 
 	/**
-	 * Handle equality operators according to Section 6.5.9 of C11. Assumes that
-	 * left (resp. right) are the results from handling the operands. Requires that
-	 * the {@link LRValue} of operands is an {@link RValue} (i.e.,
-	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie
-	 * expressions in left (resp. right) are a non-boolean representation of these
-	 * results (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 * Handle equality operators according to Section 6.5.9 of C11. Assumes that left (resp. right) are the results from
+	 * handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
+	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
+	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
+	 * needed).
 	 */
 	ExpressionResult handleEqualityOperators(final Dispatcher main, final ILocation loc, final int op,
 			final ExpressionResult left, final ExpressionResult right) {
@@ -4555,12 +4491,11 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle multiplicative operators according to Sections 6.5.5 of C11. Assumes
-	 * that left (resp. right) are the results from handling the operands. Requires
-	 * that the {@link LRValue} of operands is an {@link RValue} (i.e.,
-	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie
-	 * expressions in left (resp. right) are a non-boolean representation of these
-	 * results (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 * Handle multiplicative operators according to Sections 6.5.5 of C11. Assumes that left (resp. right) are the
+	 * results from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
+	 * switchToRValueIfNecessary was applied if needed). requires that the Boogie expressions in left (resp. right) are
+	 * a non-boolean representation of these results (i.e., rexBoolToIntIfNecessary() has already been applied if
+	 * needed).
 	 *
 	 * @param lhs
 	 *            is non-null iff we haven an assignment
@@ -4627,9 +4562,8 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle relational operators according to Section 6.5.8 of C11. Assumes that
-	 * left (resp. right) are the results from handling the operands. Requires that
-	 * the {@link LRValue} of operands is an {@link RValue} (i.e.,
+	 * Handle relational operators according to Section 6.5.8 of C11. Assumes that left (resp. right) are the results
+	 * from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
 	ExpressionResult handleRelationalOperators(final Dispatcher main, final ILocation loc, final int op,
@@ -4687,9 +4621,8 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Handle unary arithmetic operators according to Section 6.5.3.3 of C11.
-	 * Assumes that left (resp. right) are the results from handling the operands.
-	 * Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
+	 * Handle unary arithmetic operators according to Section 6.5.3.3 of C11. Assumes that left (resp. right) are the
+	 * results from handling the operands. Requires that the {@link LRValue} of operands is an {@link RValue} (i.e.,
 	 * switchToRValueIfNecessary was applied if needed).
 	 */
 	ExpressionResult handleUnaryArithmeticOperators(final Dispatcher main, final ILocation loc, final int op,
@@ -4754,8 +4687,8 @@ public class CHandler implements ICHandler {
 			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
 				addIntegerBoundsCheck(main, loc, result, resultType, op, operand.mLrVal.getValue());
 			}
-			final Expression bwexpr = mExpressionTranslation.constructUnaryExpression(loc, op,
-					operand.mLrVal.getValue(), resultType);
+			final Expression bwexpr =
+					mExpressionTranslation.constructUnaryExpression(loc, op, operand.mLrVal.getValue(), resultType);
 			final RValue rval = new RValue(bwexpr, resultType, false);
 			result.mLrVal = rval;
 			return result;

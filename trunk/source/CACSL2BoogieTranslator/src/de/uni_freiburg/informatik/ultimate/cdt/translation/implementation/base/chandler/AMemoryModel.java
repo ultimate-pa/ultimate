@@ -53,6 +53,7 @@ public abstract class AMemoryModel {
 
 	protected static final String READ_PROCEDURE_PREFIX = "read~";
 	protected static final String WRITE_PROCEDURE_PREFIX = "write~";
+	protected static final String UNCHECKED_PREFIX = "unchecked~";
 
 	protected final ITypeHandler mTypeHandler;
 	protected final TypeSizes mTypeSizes;
@@ -79,6 +80,10 @@ public abstract class AMemoryModel {
 
 	public final String getWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
+	}
+
+	public final String getUncheckedWriteProcedureName(final CPrimitives primitive) {
+		return WRITE_PROCEDURE_PREFIX + UNCHECKED_PREFIX + getProcedureSuffix(primitive);
 	}
 
 	public final String getReadPointerProcedureName() {
@@ -115,7 +120,7 @@ public abstract class AMemoryModel {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(
 						new ReadWriteDefinition(getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(),
-								getPointerHeapArray().getASTType(), Collections.emptySet()));
+								getPointerHeapArray().getASTType(), Collections.emptySet(), false));
 			}
 			return Collections.emptyList();
 		}
@@ -131,15 +136,17 @@ public abstract class AMemoryModel {
 		private final ASTType mASTType;
 		private final Set<CPrimitives> mPrimitives;
 		private final Set<CPrimitiveCategory> mCPrimitiveCategory;
+		private final boolean mAlsoUnchecked;
 
-		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType aSTType,
-				final Set<CPrimitives> primitives) {
+		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType astType,
+				final Set<CPrimitives> primitives, final boolean alsoUnchecked) {
 			mProcedureSuffix = procedureName;
 			mBytesize = bytesize;
-			mASTType = aSTType;
+			mASTType = astType;
 			mPrimitives = primitives;
 			mCPrimitiveCategory =
 					primitives.stream().map(CPrimitives::getPrimitiveCategory).collect(Collectors.toSet());
+			mAlsoUnchecked = alsoUnchecked;
 		}
 
 		public String getReadProcedureName() {
@@ -148,6 +155,17 @@ public abstract class AMemoryModel {
 
 		public String getWriteProcedureName() {
 			return WRITE_PROCEDURE_PREFIX + mProcedureSuffix;
+		}
+
+		public String getUncheckedWriteProcedureName() {
+			return WRITE_PROCEDURE_PREFIX + UNCHECKED_PREFIX + mProcedureSuffix;
+		}
+
+		/**
+		 * @return if true, we also need the unchecked variant of the write definition.
+		 */
+		public boolean alsoUnchecked() {
+			return mAlsoUnchecked;
 		}
 
 		public int getBytesize() {
@@ -169,7 +187,8 @@ public abstract class AMemoryModel {
 		@Override
 		public String toString() {
 			return "ReadWriteDefinition [mProcedureSuffix=" + mProcedureSuffix + ", mBytesize=" + mBytesize
-					+ ", mASTType=" + mASTType + ", mPrimitives=" + mPrimitives + "]";
+					+ ", mASTType=" + mASTType + ", mPrimitives=" + mPrimitives + ", alsoUnchecked=" + mAlsoUnchecked
+					+ "]";
 		}
 	}
 

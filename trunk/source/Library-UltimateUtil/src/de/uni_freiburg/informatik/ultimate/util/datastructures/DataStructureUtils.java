@@ -131,20 +131,14 @@ public class DataStructureUtils {
 	/**
 	 * Returns true, if the given sets have at least one common element.
 	 *
-	 * Should be quicker than first computing the intersection and the calling isEmpty() on it. Optimized for HashSets,
-	 * iterates over smaller set (second argument) and does lookups in the larger set (first argument).
+	 * Should be quicker than first computing the intersection and the calling isEmpty() on it.
 	 *
-	 * @param largerSet
-	 * @param smallerSet
+	 * @param set1
+	 * @param set2
 	 * @return
 	 */
-	public static <T> boolean haveNonEmptyIntersection(final Set<T> largerSet, final Set<T> smallerSet) {
-		for (final T t : smallerSet) {
-			if (largerSet.contains(t)) {
-				return true;
-			}
-		}
-		return false;
+	public static <T> boolean haveNonEmptyIntersection(final Set<T> set1, final Set<T> set2) {
+		return getSomeCommonElement(set1, set2).isPresent();
 	}
 
 	public static <E> String prettyPrint(final Set<E> set) {
