@@ -3968,8 +3968,10 @@ public class CHandler implements ICHandler {
 		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
 		final ASTType enumAstType = mTypeHandler.cType2AstType(loc, typeOfEnumIdentifiers);
 		final String enumId = cEnum.getIdentifier();
-		Expression oldValue = null;
 		final Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
+
+		Expression oldValue = null;
+		final Integer oldValueInt = -1;
 
 		// C standard says: "The identifiers in an enumerator list are declared
 		// as constants that have type int ..."
@@ -3980,22 +3982,23 @@ public class CHandler implements ICHandler {
 			final VarList vl = new VarList(loc, new String[] { bId }, enumAstType);
 			final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
 
-			// mDeclarationsGlobalInBoogie.put(cd, new CDeclaration(cEnum, fId));
 			mStaticObjectsHandler.addGlobalConstDeclaration(cd, new CDeclaration(cEnum, fId));
 
 			final Expression l = ExpressionFactory.constructIdentifierExpression(loc,
 					mBoogieTypeHelper.getBoogieTypeForBoogieASTType(enumAstType), bId,
 					new DeclarationInformation(StorageClass.GLOBAL, null));
 			Expression newValue = oldValue;
+			Integer newValueInt = oldValueInt;
 			if (oldValue == null && cEnum.getFieldValue(fId) == null) {
 				final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
 						typeOfEnumIdentifiers, BigInteger.ZERO);
 				newValue = zero;
+				newValueInt = 0;
 			} else if (cEnum.getFieldValue(fId) == null) {
-				final Expression one = mExpressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
-						BigInteger.ONE);
-				newValue = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-						oldValue, typeOfEnumIdentifiers, one, typeOfEnumIdentifiers);
+				newValueInt = oldValueInt + 1;
+				newValue = mExpressionTranslation.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers,
+						new BigInteger(newValueInt.toString()));
+
 			} else {
 				newValue = cEnum.getFieldValue(fId);
 			}
