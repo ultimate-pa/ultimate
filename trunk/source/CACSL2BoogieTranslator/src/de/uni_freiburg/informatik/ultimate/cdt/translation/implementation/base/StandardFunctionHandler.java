@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -969,13 +968,8 @@ public class StandardFunctionHandler {
 		// return new ExpressionResult(new RValue(zero, cType));
 	}
 
-	private Result handlePrintF(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
-		// skip if parent of parent is CompoundStatement
-		// otherwise, replace by havoced variable
-		if (node.getParent().getParent() instanceof IASTCompoundStatement) {
-			return new SkipResult();
-		}
-
+	private static Result handlePrintF(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// 2015-11-05 Matthias: TODO check if int is reasonable here
@@ -986,7 +980,13 @@ public class StandardFunctionHandler {
 
 		final LRValue returnValue = new RValue(auxvarinfo.getExp(), null);
 		resultBuilder.setLrVal(returnValue);
-		resultBuilder.setLrVal(returnValue);
+
+		// dispatch all arguments
+		for (final IASTInitializerClause arg : node.getArguments()) {
+			final ExpressionResult argRes = dispatchAndConvertFunctionArgument(main, loc, arg);
+			resultBuilder.addAllExceptLrValue(argRes);
+		}
+
 		return resultBuilder.build();
 	}
 
