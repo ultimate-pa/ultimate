@@ -192,15 +192,10 @@ public class MemoryHandler {
 	 * @param nameHandler
 	 * @param boogieTypeHelper
 	 */
-	public MemoryHandler(final HandlerHandler handlerHandler, final boolean checkPointerValidity, // final
-																									// TypeSizeAndOffsetComputer
-																									// typeSizeComputer,
-			final TypeSizes typeSizes, // final ExpressionTranslation expressionTranslation,
+	public MemoryHandler(final HandlerHandler handlerHandler, final boolean checkPointerValidity,
+			final TypeSizes typeSizes,
 			final boolean bitvectorTranslation, final INameHandler nameHandler, final boolean smtBoolArrayWorkaround,
 			final IPreferenceProvider prefs) {
-		// final BoogieTypeHelper boogieTypeHelper,
-		// final ProcedureManager procedureManager
-		// ) {
 		mHandlerHandler = handlerHandler;
 		handlerHandler.setMemoryHandler(this);
 
@@ -1507,7 +1502,7 @@ public class MemoryHandler {
 			// add nothing
 			return Collections.emptyList();
 		}
-		final Expression leq;
+		Expression leq;
 		{
 			final Expression ptrExpr = ExpressionFactory.constructIdentifierExpression(loc,
 					mBoogieTypeHelper.getBoogieTypeForPointerType(), ptrName,
@@ -1534,6 +1529,23 @@ public class MemoryHandler {
 					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, nr0, ptrOffset);
 
 		}
+
+		if (mTypeHandler.isBitvectorTranslation()) {
+			/*
+			 * Check that "#ptr!offset <= #ptr!offset + #sizeOf[Written|Read]Type", i.e., the sum does not overflow.
+			 * (This works because #size.. is positive.)
+			 */
+			final Expression ptrExpr = ExpressionFactory.constructIdentifierExpression(loc,
+					mBoogieTypeHelper.getBoogieTypeForPointerType(), ptrName,
+					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
+			final Expression sum =
+					constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
+			final Expression noOverFlowInSum = constructPointerBinaryComparisonExpression(loc,
+					IASTBinaryExpression.op_lessEqual, ptrOffset, sum);
+			leq = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, noOverFlowInSum);
+		}
+
 		final Expression offsetInAllocatedRange =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, offsetGeqZero);
 		final boolean isFreeRequires;
