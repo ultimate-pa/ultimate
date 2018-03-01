@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -176,6 +177,26 @@ public class DataStructureUtils {
 			sep = "\n";
 		}
 		return sb.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T[] concat(final T[] a1, final T[] a2) {
+		if (a1 == null) {
+			return a2;
+		}
+		if (a2 == null) {
+			return a1;
+		}
+		if (a1.length == 0) {
+			return a2;
+		}
+		if (a2.length == 0) {
+			return a1;
+		}
+		final T[] dest = (T[]) Array.newInstance(a1.getClass().getComponentType(), a1.length + a2.length);
+		System.arraycopy(a1, 0, dest, 0, a1.length);
+		System.arraycopy(a2, 0, dest, a1.length, a2.length);
+		return dest;
 	}
 
 }

@@ -126,8 +126,23 @@ public class Check extends ModernAnnotations {
 		/**
 		 * Undefined behavior according to the standard
 		 */
-		UNDEFINED_BEHAVIOR
-		// add missing failure types...
+		UNDEFINED_BEHAVIOR,
+		/**
+		 * Check for requirements. Checks for rt-inconsistency.
+		 */
+		RTINCONSISTENT,
+		/**
+		 * Check for requirements. Checks for vacuity.
+		 */
+		VACUOUS,
+		/**
+		 * Check for requirements. Checks for consistency.
+		 */
+		CONSISTENCY,
+		/**
+		 * Check for requirements. Checks for incompleteness.
+		 */
+		INCOMPLETE,
 
 	}
 
@@ -138,13 +153,32 @@ public class Check extends ModernAnnotations {
 	@Visualizable
 	private final EnumSet<Spec> mSpec;
 
+	private final Function<Spec, String> mPosMsgProvider;
+
+	private final Function<Spec, String> mNegMsgProvider;
+
 	public Check(final Check.Spec spec) {
-		mSpec = EnumSet.of(spec);
+		this(EnumSet.of(spec));
 	}
 
-	private Check(final EnumSet<Spec> newSpec) {
+	public Check(final Check.Spec spec, final Function<Spec, String> funPositiveMessageProvider,
+			final Function<Spec, String> funNegativeMessageProvider) {
+		this(EnumSet.of(spec), funPositiveMessageProvider, funNegativeMessageProvider);
+	}
+
+	protected Check(final EnumSet<Spec> newSpec) {
+		assert newSpec != null && !newSpec.isEmpty();
 		mSpec = newSpec;
-		assert !mSpec.isEmpty();
+		mPosMsgProvider = Check::getPositiveMessage;
+		mNegMsgProvider = Check::getNegativeMessage;
+	}
+
+	protected Check(final EnumSet<Spec> newSpec, final Function<Spec, String> funPositiveMessageProvider,
+			final Function<Spec, String> funNegativeMessageProvider) {
+		assert !newSpec.isEmpty();
+		mSpec = newSpec;
+		mPosMsgProvider = funPositiveMessageProvider;
+		mNegMsgProvider = funNegativeMessageProvider;
 	}
 
 	public EnumSet<Spec> getSpec() {
@@ -152,11 +186,11 @@ public class Check extends ModernAnnotations {
 	}
 
 	public String getPositiveMessage() {
-		return getMessage(this::getPositiveMessage);
+		return getMessage(mPosMsgProvider);
 	}
 
 	public String getNegativeMessage() {
-		return getMessage(this::getNegativeMessage);
+		return getMessage(mNegMsgProvider);
 	}
 
 	private String getMessage(final Function<Spec, String> funMessageProvider) {
@@ -173,7 +207,7 @@ public class Check extends ModernAnnotations {
 		return sb.toString();
 	}
 
-	private String getPositiveMessage(final Spec spec) {
+	protected static String getPositiveMessage(final Spec spec) {
 		switch (spec) {
 		case ARRAY_INDEX:
 			return "array index is always in bounds";
@@ -209,12 +243,20 @@ public class Check extends ModernAnnotations {
 			return "there are no unsigned integer over- or underflows";
 		case UNDEFINED_BEHAVIOR:
 			return "there is no undefined behavior";
+		case RTINCONSISTENT:
+			return "rt-consistent";
+		case VACUOUS:
+			return "vacuous";
+		case CONSISTENCY:
+			return "inconsistent";
+		case INCOMPLETE:
+			return "incomplete";
 		default:
 			return "a specification is correct but has no positive message: " + spec;
 		}
 	}
 
-	private String getNegativeMessage(final Spec spec) {
+	protected static String getNegativeMessage(final Spec spec) {
 		switch (spec) {
 		case ARRAY_INDEX:
 			return "array index can be out of bounds";
@@ -250,6 +292,14 @@ public class Check extends ModernAnnotations {
 			return "an unsigned integer over- or underflow may occur";
 		case UNDEFINED_BEHAVIOR:
 			return "undefined behavior may occur";
+		case RTINCONSISTENT:
+			return "rt-inconsistent";
+		case VACUOUS:
+			return "non-vacuous";
+		case CONSISTENCY:
+			return "consistent";
+		case INCOMPLETE:
+			return "incomplete";
 		default:
 			return "a specification may be violated but has no negative message: " + spec;
 		}
@@ -267,6 +317,7 @@ public class Check extends ModernAnnotations {
 
 		final EnumSet<Spec> newSpec = EnumSet.copyOf(mSpec);
 		newSpec.addAll(otherCheck.getSpec());
+		// note: automatic merging looses all information about message providers and uses the default ones
 		return new Check(newSpec);
 	}
 

@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE PEAtoBoogie plug-in.
  *
@@ -26,32 +27,44 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
+import java.util.EnumSet;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ *
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class ReqCheck extends Check {
 
 	private static final long serialVersionUID = 6800618860906443122L;
 
-	enum ReqSpec {
-		RTINCONSISTENT, VACUOUS, INCOMPLETE, UNKNOWN, CONSISTENCY
-	}
-
 	private final int mStartline;
 	private final int mEndline;
-	private final String mPositive;
-	private final String mNegative;
 	private final String mInputFilename;
 
-	public ReqCheck(final ReqSpec type, final int[] reqNrs, final PatternType[] reqs, final String inputFilename) {
-		super(Check.Spec.UNKNOWN);
-		assert reqNrs != null && reqNrs.length > 0;
-		assert reqs != null && reqs.length > 0;
-		mStartline = reqNrs[0] + 1;
-		mEndline = reqNrs[reqNrs.length - 1] + 1;
+	private final PatternType[] mReqs;
+
+	public ReqCheck(final Check.Spec type, final int[] reqNrs, final PatternType[] reqs, final String inputFilename) {
+		this(EnumSet.of(type), reqNrs, reqs, inputFilename);
+	}
+
+	private ReqCheck(final EnumSet<Check.Spec> types, final int[] reqNrs, final PatternType[] reqs,
+			final String inputFilename) {
+		this(types, reqNrs[0] + 1, reqNrs[reqNrs.length - 1] + 1, reqs, inputFilename);
+	}
+
+	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline, final PatternType[] reqs,
+			final String inputFilename) {
+		super(types, a -> ReqCheck.getCustomPositiveMessage(a, reqs), a -> ReqCheck.getCustomNegativeMessage(a, reqs));
+		mStartline = startline;
+		mEndline = endline;
 		mInputFilename = inputFilename;
-		mPositive = createPositiveMessage(type, reqs);
-		mNegative = createNegativeMessage(type, reqs);
+		mReqs = reqs;
 	}
 
 	public int getStartLine() {
@@ -62,38 +75,16 @@ public class ReqCheck extends Check {
 		return mEndline;
 	}
 
-	private static String createPositiveMessage(final ReqSpec spec, final PatternType[] types) {
-		switch (spec) {
-		case RTINCONSISTENT:
-			assert types.length > 1;
-			return getRequirementTexts(types) + " rt-consistent";
-		case VACUOUS:
-			assert types.length == 1;
-			return getRequirementTexts(types) + " vacuous.";
-		case CONSISTENCY:
-			return getRequirementTexts(types) + " inconsistent";
-		case INCOMPLETE:
-		case UNKNOWN:
-		default:
-			return "Unknown Check";
-		}
+	public String getFileName() {
+		return mInputFilename;
 	}
 
-	private static String createNegativeMessage(final ReqSpec spec, final PatternType[] types) {
-		switch (spec) {
-		case RTINCONSISTENT:
-			assert types.length > 1;
-			return getRequirementTexts(types) + " rt-inconsistent";
-		case VACUOUS:
-			assert types.length == 1;
-			return getRequirementTexts(types) + " non-vacuous.";
-		case CONSISTENCY:
-			return getRequirementTexts(types) + " consistent";
-		case INCOMPLETE:
-		case UNKNOWN:
-		default:
-			return "Unknown Check";
-		}
+	private static String getCustomPositiveMessage(final Spec spec, final PatternType[] types) {
+		return getRequirementTexts(types) + " " + getPositiveMessage(spec);
+	}
+
+	private static String getCustomNegativeMessage(final Spec spec, final PatternType[] types) {
+		return getRequirementTexts(types) + " " + getNegativeMessage(spec);
 	}
 
 	private static String getRequirementTexts(final PatternType[] types) {
@@ -113,17 +104,20 @@ public class ReqCheck extends Check {
 		return sb.toString();
 	}
 
-	@Override
-	public String getPositiveMessage() {
-		return mPositive;
+	public ReqCheck merge(final ReqCheck other) {
+		if (other == null) {
+			return this;
+		}
+		if (!other.mInputFilename.equals(mInputFilename)) {
+			throw new UnmergeableAnnotationsException(this, other);
+		}
+
+		final EnumSet<Spec> newSpec = EnumSet.copyOf(getSpec());
+		newSpec.addAll(other.getSpec());
+		final int startline = Math.min(mStartline, other.mStartline);
+		final int endline = Math.max(mEndline, other.mEndline);
+		final PatternType[] reqs = DataStructureUtils.concat(mReqs, other.mReqs);
+		return new ReqCheck(newSpec, startline, endline, reqs, mInputFilename);
 	}
 
-	@Override
-	public String getNegativeMessage() {
-		return mNegative;
-	}
-
-	public String getFileName() {
-		return mInputFilename;
-	}
 }

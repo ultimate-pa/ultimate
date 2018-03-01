@@ -71,6 +71,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -87,7 +89,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.ConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqCheck.ReqSpec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 /**
@@ -705,19 +706,19 @@ public class Req2BoogieTranslator {
 			return null;
 		}
 
-		final ReqCheck check = createReqCheck(ReqSpec.RTINCONSISTENT, permutation);
+		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, permutation);
 		final ReqLocation loc = new ReqLocation(check);
 		final AssertStatement assertSmt = new AssertStatement(loc, expr);
 		return assertSmt;
 	}
 
 	private Statement genAssertConsistency(final BoogieLocation bl) {
-		final ReqCheck check = createReqCheck(ReqSpec.CONSISTENCY, 0);
+		final ReqCheck check = createReqCheck(Spec.CONSISTENCY, 0);
 		final ReqLocation loc = new ReqLocation(check);
 		return new AssertStatement(loc, new BooleanLiteral(bl, false));
 	}
 
-	private ReqCheck createReqCheck(final ReqCheck.ReqSpec reqSpec, final int... idx) {
+	private ReqCheck createReqCheck(final Check.Spec reqSpec, final int... idx) {
 		final PatternType[] reqs = new PatternType[idx.length];
 		for (int i = 0; i < idx.length; ++i) {
 			reqs[i] = mRequirements.get(idx[i]);
@@ -771,7 +772,7 @@ public class Req2BoogieTranslator {
 			return null;
 		}
 		final Expression disjunction = genDisjunction(checkReached, bl);
-		final ReqCheck check = createReqCheck(ReqSpec.VACUOUS, automatonIndex);
+		final ReqCheck check = createReqCheck(Spec.VACUOUS, automatonIndex);
 		final ReqLocation loc = new ReqLocation(check);
 		return new AssertStatement(loc, disjunction);
 	}
