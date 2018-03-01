@@ -1067,7 +1067,7 @@ public class LinArSolve implements ITheory {
 				confl = new TreeSet<ExactInfinitNumber>();
 				sharedPoints.put(eps, confl);
 			}
-			confl.add(value);
+			confl.add(new ExactInfinitNumber(value.getRealValue()));
 		}
 		// If we cannot choose the current value since we would violate a
 		// disequality, choose a different number.

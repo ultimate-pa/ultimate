@@ -676,14 +676,20 @@ public class SMTInterpol extends NoopScript {
 					return LBool.UNSAT;
 				}
 			}
+		} catch (final SMTLIBException ex) {
+			mAssertions.remove(mAssertions.size());
+			throw ex;
 		} catch (final UnsupportedOperationException ex) {
+			mAssertions.remove(mAssertions.size());
 			throw new SMTLIBException(ex.getMessage());
 		} catch (final RuntimeException exc) {
+			mAssertions.remove(mAssertions.size());
 			if (mDDFriendly) {
 				System.exit(7);// NOCHECKSTYLE
 			}
 			throw exc;
 		} catch (final AssertionError exc) {
+			mAssertions.remove(mAssertions.size());
 			if (mDDFriendly) {
 				System.exit(7);// NOCHECKSTYLE
 			}
