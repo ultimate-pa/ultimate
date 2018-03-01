@@ -76,14 +76,7 @@ public class EquivalenceFinder {
 				final AffineTerm negative = symbol == RelationSymbol.LEQ ? affine2 : affine1;
 				if (leqTerms.contains(negative)) {
 					leqTerms.remove(negative);
-					// TODO: Is there a more efficient way to get an AffineRelation from an AffineTerm and a
-					// RelationSymbol?
-					final Term equality = SmtUtils.binaryEquality(script, positive.toTerm(script), script.numeral("0"));
-					try {
-						result.add(new AffineRelation(script, equality, TransformInequality.STRICT2NONSTRICT));
-					} catch (final NotAffineException e) {
-						continue;
-					}
+					result.add(new AffineRelation(script, positive, RelationSymbol.EQ));
 				} else {
 					leqTerms.add(positive);
 				}
