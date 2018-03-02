@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LpSolverPreferences;
@@ -134,27 +135,16 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN_FUTURE,
 				DEF_ABSTRACT_DOMAIN_FUTURE, PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN_FUTURE));
 
-		// Interval Domain
 		abstractDomainContainer.addAbstractItems(IntervalDomainPreferences.getPreferences());
-
-		// Octagon Domain
 		abstractDomainContainer.addAbstractItems(OctagonDomainPreferences.createPreferences());
-
-		// Congruence Domain
 		abstractDomainContainer.addAbstractItems(CongruenceDomainPreferences.getPreferences());
-
-		// Compound Domain
 		abstractDomainContainer.addAbstractItems(CompoundDomainPreferences.getPreferences());
-
-		// Array Domain
 		abstractDomainContainer.addAbstractItems(ArrayDomainPreferences.getPreferences());
-
-		// VP Domain
 		abstractDomainContainer.addAbstractItems(VPDomainPreferences.getPreferences());
+		abstractDomainContainer.addAbstractItems(PoormanDomainPreferences.getPreferences());
 
 		rtr.add(abstractDomainContainer);
 
-		// LPSolver Preferences
 		rtr.addAll(LpSolverPreferences.getPreferences());
 
 		return rtr.toArray(new BaseUltimatePreferenceItem[rtr.size()]);

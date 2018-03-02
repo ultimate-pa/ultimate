@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -131,20 +132,14 @@ public class DataStructureUtils {
 	/**
 	 * Returns true, if the given sets have at least one common element.
 	 *
-	 * Should be quicker than first computing the intersection and the calling isEmpty() on it. Optimized for HashSets,
-	 * iterates over smaller set (second argument) and does lookups in the larger set (first argument).
+	 * Should be quicker than first computing the intersection and the calling isEmpty() on it.
 	 *
-	 * @param largerSet
-	 * @param smallerSet
+	 * @param set1
+	 * @param set2
 	 * @return
 	 */
-	public static <T> boolean haveNonEmptyIntersection(final Set<T> largerSet, final Set<T> smallerSet) {
-		for (final T t : smallerSet) {
-			if (largerSet.contains(t)) {
-				return true;
-			}
-		}
-		return false;
+	public static <T> boolean haveNonEmptyIntersection(final Set<T> set1, final Set<T> set2) {
+		return getSomeCommonElement(set1, set2).isPresent();
 	}
 
 	public static <E> String prettyPrint(final Set<E> set) {
@@ -182,6 +177,26 @@ public class DataStructureUtils {
 			sep = "\n";
 		}
 		return sb.toString();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T[] concat(final T[] a1, final T[] a2) {
+		if (a1 == null) {
+			return a2;
+		}
+		if (a2 == null) {
+			return a1;
+		}
+		if (a1.length == 0) {
+			return a2;
+		}
+		if (a2.length == 0) {
+			return a1;
+		}
+		final T[] dest = (T[]) Array.newInstance(a1.getClass().getComponentType(), a1.length + a2.length);
+		System.arraycopy(a1, 0, dest, 0, a1.length);
+		System.arraycopy(a2, 0, dest, a1.length, a2.length);
+		return dest;
 	}
 
 }

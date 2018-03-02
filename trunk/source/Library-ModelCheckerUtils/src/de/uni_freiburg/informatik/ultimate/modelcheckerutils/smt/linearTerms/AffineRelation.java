@@ -84,7 +84,7 @@ public class AffineRelation {
 		mRelationSymbol = relationSymbol;
 		mTrivialityStatus = computeTrivialityStatus(mAffineTerm, mRelationSymbol);
 		if (VMUtils.areAssertionsEnabled()) {
-			mOriginalTerm = term.toTerm(script);
+			mOriginalTerm = script.term(mRelationSymbol.toString(), term.toTerm(script), script.numeral("0"));
 		} else {
 			mOriginalTerm = null;
 		}

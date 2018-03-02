@@ -82,31 +82,30 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 /**
- * Generates Boogie code that models initializations that happen in the C program.
- * Initializations may happen implicitly, e.g., for static variables, or explicitly via an initializer.
+ * Generates Boogie code that models initializations that happen in the C program. Initializations may happen
+ * implicitly, e.g., for static variables, or explicitly via an initializer.
  * <p>
- * The "uninitialized" case is not treated here (We havoc each variable at its initialization position, by default.
- * That is done somewhere else.).
+ * The "uninitialized" case is not treated here (We havoc each variable at its initialization position, by default. That
+ * is done somewhere else.).
  * <p>
- * C11 draft, 6.7.9.10: (concerning) default initialization)
- * If an object that has automatic storage duration is not initialized explicitly, its value is
- * indeterminate. If an object that has static or thread storage duration is not initialized
- * explicitly, then:
- *  <li> if it has pointer type, it is initialized to a null pointer;
- *  <li> if it has arithmetic type, it is initialized to (positive or unsigned) zero;
- *  <li> if it is an aggregate, every member is initialized (recursively) according to these rules,
- *    and any padding is initialized to zero bits;
- *  <li> if it is a union, the first named member is initialized (recursively) according to these
- *    rules, and any padding is initialized to zero bits;
+ * C11 draft, 6.7.9.10: (concerning) default initialization) If an object that has automatic storage duration is not
+ * initialized explicitly, its value is indeterminate. If an object that has static or thread storage duration is not
+ * initialized explicitly, then:
+ * <li>if it has pointer type, it is initialized to a null pointer;
+ * <li>if it has arithmetic type, it is initialized to (positive or unsigned) zero;
+ * <li>if it is an aggregate, every member is initialized (recursively) according to these rules, and any padding is
+ * initialized to zero bits;
+ * <li>if it is a union, the first named member is initialized (recursively) according to these rules, and any padding
+ * is initialized to zero bits;
  * <p>
  * Some other special cases mentioned in C11 draft, 6.7.9, mostly concerning designators:
- *  <li> Unnamed fields of a struct are uninitialized after initialization with an initializer. However after
- *   initialization with a fitting struct object identifier they are initialized according to the object.
- *  <li> array designators may specify start points for the initialization of an array
- *  <li> array designators must use constant expressions (6.6. : such expression can be evaluated at compile-time).
- *  <li> array designators can lead to a cell being assigned twice, when they overlap
- *  <li> struct designators may specify which field is initialized next, regardless of order in the initializer list
- *  <li> struct and array designators can be mixed.
+ * <li>Unnamed fields of a struct are uninitialized after initialization with an initializer. However after
+ * initialization with a fitting struct object identifier they are initialized according to the object.
+ * <li>array designators may specify start points for the initialization of an array
+ * <li>array designators must use constant expressions (6.6. : such expression can be evaluated at compile-time).
+ * <li>array designators can lead to a cell being assigned twice, when they overlap
+ * <li>struct designators may specify which field is initialized next, regardless of order in the initializer list
+ * <li>struct and array designators can be mixed.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
@@ -116,50 +115,41 @@ public class InitializationHandler {
 
 	private final ExpressionTranslation mExpressionTranslation;
 
-	private boolean mDeclareArrayInitializationFunction;
-
-//	private final FunctionHandler mFunctionHandler;
-
-	private final ProcedureManager mProcedureManager;
-
 	public InitializationHandler(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
-//			final FunctionHandler functionHandler,
 			final ProcedureManager procedureManager) {
 		super();
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
-		mDeclareArrayInitializationFunction = false;
-//		mFunctionHandler = functionHandler;
-		mProcedureManager = procedureManager;
 	}
 
 	/**
-	 *
-	 *
 	 * Either an expression that is to be initialized is given (via a LeftHandSide). Or we return an ExpressionResult
-	 * that has an LrValue that is initialized and that can then be assigned to something by the caller.
-	 * (we might do both in the "on-heap" case)
+	 * that has an LrValue that is initialized and that can then be assigned to something by the caller. (we might do
+	 * both in the "on-heap" case)
 	 *
 	 * @param loc
 	 * @param main
 	 * @param lhsRaw
-	 * @param targetCTypeRaw The CType of the object that is to be initialized (required for conversions)
+	 * @param targetCTypeRaw
+	 *            The CType of the object that is to be initialized (required for conversions)
 	 * @param initializerRaw
 	 * @return
 	 */
 	public ExpressionResult initialize(final ILocation loc, final Dispatcher main, final LeftHandSide lhsRaw,
 			final CType targetCTypeRaw, final InitializerResult initializerRaw, final IASTNode hook) {
 
-		boolean onHeap = false;
+		final boolean onHeap;
 		if (lhsRaw != null && lhsRaw instanceof VariableLHS) {
 			onHeap = ((CHandler) main.mCHandler).isHeapVar(((VariableLHS) lhsRaw).getIdentifier());
+		} else {
+			onHeap = false;
 		}
 
-		LRValue lhs = null;
+		final LRValue lhs;
 		if (onHeap) {
 			// lhsRaw must be non-null at this point because of the above code that determined "onHeap"
-//			IdentifierExpression idEx = new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier());
-			final VariableLHS vlhs = ((VariableLHS) lhsRaw);
+			// IdentifierExpression idEx = new IdentifierExpression(loc, ((VariableLHS) lhsRaw).getIdentifier());
+			final VariableLHS vlhs = (VariableLHS) lhsRaw;
 			final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc,
 					main.mTypeHandler.getBoogiePointerType(), vlhs.getIdentifier(), vlhs.getDeclarationInformation());
 			lhs = LRValueFactory.constructHeapLValue(main, idEx, targetCTypeRaw, null);
@@ -172,8 +162,8 @@ public class InitializationHandler {
 			/*
 			 * C11 6.7.9.1 : the grammar for initializers cannot generate empty initializers
 			 */
-			if (initializerRaw.getRootExpressionResult() == null &&
-					(initializerRaw.getList() == null || initializerRaw.getList().isEmpty())) {
+			if (initializerRaw.getRootExpressionResult() == null
+					&& (initializerRaw.getList() == null || initializerRaw.getList().isEmpty())) {
 				throw new IncorrectSyntaxException(loc, "Empty initializers are not allowed by the C standard.");
 			}
 
@@ -188,8 +178,7 @@ public class InitializationHandler {
 
 	private ExpressionResult initRec(final ILocation loc, final Dispatcher main, final CType targetCTypeRaw,
 			final InitializerInfo initInfoIfAny, final boolean onHeap, final LRValue lhsIfAny, final IASTNode hook) {
-		assert lhsIfAny == null
-				|| lhsIfAny.getCType().getUnderlyingType().equals(targetCTypeRaw.getUnderlyingType());
+		assert lhsIfAny == null || lhsIfAny.getCType().getUnderlyingType().equals(targetCTypeRaw.getUnderlyingType());
 		assert !onHeap || lhsIfAny != null : "we need a start address for on-heap initialization";
 
 		final CType targetCType = targetCTypeRaw.getUnderlyingType();
@@ -221,8 +210,8 @@ public class InitializationHandler {
 	}
 
 	protected ExpressionResult makeNondetInitAndAddOverapprFromInitInfo(final ILocation loc, final Dispatcher main,
-			final InitializerInfo initInfo, final boolean onHeap, final LRValue lhsIfAny,
-			final CType targetCType, final IASTNode hook) {
+			final InitializerInfo initInfo, final boolean onHeap, final LRValue lhsIfAny, final CType targetCType,
+			final IASTNode hook) {
 		assert initInfo != null;
 		assert initInfo.isMakeNondeterministicInitialization();
 
@@ -269,7 +258,6 @@ public class InitializationHandler {
 			final CStruct cStructType, final InitializerInfo initInfo, final boolean onHeap, final IASTNode hook) {
 		assert !initInfo.isMakeNondeterministicInitialization() : "catch nondeterministic case outside";
 
-
 		if (initInfo.hasExpressionResult()) {
 			// we are initializing through a struct-typed expression, not an initializer list
 			return initExpressionWithExpression(loc, main, lhsIfAny, onHeap, cStructType, initInfo, hook);
@@ -282,12 +270,12 @@ public class InitializationHandler {
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
 		/*
-		 *  list that collects the initialization values for each field
+		 * list that collects the initialization values for each field
 		 */
 		final ArrayList<LRValue> fieldLrValues = new ArrayList<>();
 
-		final LRValue structBaseLhsToInitialize = obtainLhsToInitialize(loc, main, lhsIfAny, cStructType, onHeap,
-				initialization);
+		final LRValue structBaseLhsToInitialize =
+				obtainLhsToInitialize(loc, main, lhsIfAny, cStructType, onHeap, initialization);
 
 		for (int i = 0; i < cStructType.getFieldCount(); i++) {
 
@@ -311,18 +299,17 @@ public class InitializationHandler {
 			final ExpressionResult currentFieldInitialization;
 			{
 				final CType currentFieldUnderlyingType = cStructType.getFieldTypes()[i].getUnderlyingType();
-				final InitializerInfo currentFieldInitializerRawIfAny = initInfo.hasInitInfoForIndex(i) ?
-						initInfo.getInitInfoForIndex(i) : null;
+				final InitializerInfo currentFieldInitializerRawIfAny =
+						initInfo.hasInitInfoForIndex(i) ? initInfo.getInitInfoForIndex(i) : null;
 
 				if (cStructType instanceof CUnion && !initInfo.hasInitInfoForIndex(i)) {
 					assert !onHeap;
-					currentFieldInitialization =
-							makeDefaultOrNondetInitialization(loc, main, currentFieldLhs, currentFieldUnderlyingType,
-									onHeap, true, hook);
+					currentFieldInitialization = makeDefaultOrNondetInitialization(loc, main, currentFieldLhs,
+							currentFieldUnderlyingType, onHeap, true, hook);
 				} else {
 					// normal case intitalize recursively with or without intitializer..
 					currentFieldInitialization = initRec(loc, main, currentFieldUnderlyingType,
-						currentFieldInitializerRawIfAny, onHeap, currentFieldLhs, hook);
+							currentFieldInitializerRawIfAny, onHeap, currentFieldLhs, hook);
 				}
 			}
 			// add the initialization code
@@ -347,17 +334,14 @@ public class InitializationHandler {
 			 * Build the Boogie StructConstructor that carries the initialization values. And assign it to the lhs we
 			 * constructed for this purpose.
 			 */
-			final List<Expression> fieldValues = fieldLrValues.stream()
-					.map(fieldLrValue -> fieldLrValue.getValue())
-					.collect(Collectors.toList());
+			final List<Expression> fieldValues =
+					fieldLrValues.stream().map(fieldLrValue -> fieldLrValue.getValue()).collect(Collectors.toList());
 			final StructConstructor initializationValue = ExpressionFactory.constructStructConstructor(loc,
-					cStructType.getFieldIds(),
-					fieldValues.toArray(new Expression[fieldValues.size()]));
+					cStructType.getFieldIds(), fieldValues.toArray(new Expression[fieldValues.size()]));
 
-			final AssignmentStatement assignment =
-					StatementFactory.constructAssignmentStatement(loc,
-							new LeftHandSide[] { ((LocalLValue) structBaseLhsToInitialize).getLHS() },
-							new Expression[] { initializationValue });
+			final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
+					new LeftHandSide[] { ((LocalLValue) structBaseLhsToInitialize).getLHS() },
+					new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(initInfo.getOverapprs(), assignment);
 			initialization.addStatement(assignment);
 		}
@@ -380,27 +364,24 @@ public class InitializationHandler {
 		}
 
 		/*
-		 * On-heap:
-		 * Obtain the start address HeapLValue for the array initialization.
+		 * On-heap: Obtain the start address HeapLValue for the array initialization.
 		 *
-		 * Off-heap:
-		 * Obtain the array that we will assign to later. (Will be the lhs, if that is non-null, or some auxiliary
-		 * variable)
+		 * Off-heap: Obtain the array that we will assign to later. (Will be the lhs, if that is non-null, or some
+		 * auxiliary variable)
 		 */
-		final LRValue arrayLhsToInitialize = obtainLhsToInitialize(loc, main, lhsIfAny, cArrayType, onHeap,
-				initialization);
+		final LRValue arrayLhsToInitialize =
+				obtainLhsToInitialize(loc, main, lhsIfAny, cArrayType, onHeap, initialization);
 
 		if (sophisticated) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
-			final ExpressionResult defaultInit = makeDefaultOrNondetInitialization(loc, main, arrayLhsToInitialize, 
-					cArrayType, onHeap, false, hook);
+			final ExpressionResult defaultInit =
+					makeDefaultOrNondetInitialization(loc, main, arrayLhsToInitialize, cArrayType, onHeap, false, hook);
 			initialization.addAllExceptLrValue(defaultInit);
 		}
 
 		/*
-		 * Iterate over all array indices and assign the corresponding array cell;
-		 * In the sophisticated case, only cells explicitly mentioned by the initializer are updated here.
-		 * Otherwise all cells are updated
+		 * Iterate over all array indices and assign the corresponding array cell; In the sophisticated case, only cells
+		 * explicitly mentioned by the initializer are updated here. Otherwise all cells are updated
 		 */
 		if (CTranslationUtil.isToplevelVarlengthArray(cArrayType, mExpressionTranslation, hook)) {
 			throw new UnsupportedOperationException("handling varlength arrays not implemented for this case");
@@ -410,7 +391,7 @@ public class InitializationHandler {
 		for (int i = 0; i < bound; i++) {
 			final InitializerInfo arrayIndexInitInfo;
 			if (initInfo.hasInitInfoForIndex(i)) {
-				 arrayIndexInitInfo = initInfo.getInitInfoForIndex(i);
+				arrayIndexInitInfo = initInfo.getInitInfoForIndex(i);
 			} else {
 				// setting this to null will make the recursive call return a default initialization
 				arrayIndexInitInfo = null;
@@ -436,13 +417,14 @@ public class InitializationHandler {
 						(HeapLValue) arrayLhsToInitialize, arrayIndex, hook);
 			} else {
 				/*
-				 * this expression result contains a value that holds the contents for the array cell at the current index
-				 * (we don't give a leftHandSide to initVarRec, and use the value that is given to the ExpressionResult)
+				 * this expression result contains a value that holds the contents for the array cell at the current
+				 * index (we don't give a leftHandSide to initVarRec, and use the value that is given to the
+				 * ExpressionResult)
 				 */
 
 				// say we initialize multidimensional array a, build a lhs a[i] here (which still may have array type)
-				arrayCellLhs = CTranslationUtil.constructArrayAccessLhs(loc,
-						(LocalLValue) arrayLhsToInitialize, arrayIndex, mExpressionTranslation);
+				arrayCellLhs = CTranslationUtil.constructArrayAccessLhs(loc, (LocalLValue) arrayLhsToInitialize,
+						arrayIndex, mExpressionTranslation);
 
 			}
 			// generate and add code to initialize the array cell (and possibly its subcells)
@@ -452,12 +434,10 @@ public class InitializationHandler {
 
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 
-
 		}
 
 		return initialization.build();
 	}
-
 
 	private ExpressionResult makeDefaultOrNondetInitialization(final ILocation loc, final Dispatcher main,
 			final LRValue lhsIfAny, final CType cTypeRaw, final boolean onHeap, final boolean nondet, 
@@ -469,9 +449,8 @@ public class InitializationHandler {
 		final boolean sophisticated = determineIfSophisticatedDefaultInit(cType);
 
 		/*
-		 * If one of the following conditions holds, we must have an lhs for initialization.
-		 * <li> we initialize something on-heap (we need a start-address to assign to
-		 * <li> we initialize an array
+		 * If one of the following conditions holds, we must have an lhs for initialization. <li> we initialize
+		 * something on-heap (we need a start-address to assign to <li> we initialize an array
 		 */
 		if (!onHeap && !(cType instanceof CArray)) {
 			return makeOffHeapDefaultOrNondetInitializationForType(loc, main, cType, sophisticated,
@@ -484,8 +463,9 @@ public class InitializationHandler {
 		final LRValue lhsToInit = obtainLhsToInitialize(loc, main, lhsIfAny, cType, onHeap, initialization);
 
 		if (onHeap) {
-			final ExpressionResult defaultInit = makeOnHeapDefaultInitializationForType(loc, main,
-					(HeapLValue) lhsToInit, cType, sophisticated, hook);
+			final ExpressionResult defaultInit =
+					makeOnHeapDefaultInitializationForType(loc, main, (HeapLValue) lhsToInit, cType, sophisticated,
+							hook);
 			initialization.addAllExceptLrValue(defaultInit);
 			assert defaultInit.getLrValue() == null : "on-heap intialization does not need a return value";
 		} else {
@@ -521,9 +501,8 @@ public class InitializationHandler {
 				final HeapLValue fieldPointer =
 						CTranslationUtil.constructAddressForStructField(loc, main, baseAddress, i, hook);
 
-				final ExpressionResult fieldDefaultInit =
-						makeOnHeapDefaultInitializationForType(loc, main, fieldPointer, cStructType.getFieldTypes()[i],
-								sophisticated, hook);
+				final ExpressionResult fieldDefaultInit = makeOnHeapDefaultInitializationForType(loc, main,
+						fieldPointer, cStructType.getFieldTypes()[i], sophisticated, hook);
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
 
@@ -536,9 +515,8 @@ public class InitializationHandler {
 		} else if (cType instanceof CArray) {
 			if (sophisticated) {
 				return makeSophisticatedOnHeapDefaultInitializationForArray(loc, main, baseAddress, (CArray) cType);
-			} else {
-				return makeNaiveOnHeapDefaultInitializationForArray(loc, main, baseAddress, (CArray) cType, hook);
 			}
+			return makeNaiveOnHeapDefaultInitializationForArray(loc, main, baseAddress, (CArray) cType, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}
@@ -551,7 +529,8 @@ public class InitializationHandler {
 	 * @param cTypeRaw
 	 * @param sophisticated
 	 * @param lhsToInitIfAny
-	 * @param nondet if this is true, a nondeterministic value is used for initialization otherwise the default value
+	 * @param nondet
+	 *            if this is true, a nondeterministic value is used for initialization otherwise the default value
 	 * @return
 	 */
 	private ExpressionResult makeOffHeapDefaultOrNondetInitializationForType(final ILocation loc, final Dispatcher main,
@@ -572,11 +551,10 @@ public class InitializationHandler {
 				initializationValue = new RValue(getDefaultValueForSimpleType(loc, cType), cType);
 			}
 
-
 			if (lhsToInitIfAny != null) {
 				// we have a lhs given, insert assignments such that the lhs is initialized
-				final List<Statement> assigningStatements = makeAssignmentStatements(main, loc, lhsToInitIfAny, false, cType,
-						initializationValue.getValue(), Collections.emptyList(), hook);
+				final List<Statement> assigningStatements = makeAssignmentStatements(main, loc, lhsToInitIfAny, false,
+						cType, initializationValue.getValue(), Collections.emptyList(), hook);
 				initializer.addStatements(assigningStatements);
 			} else {
 				initializer.setLrVal(initializationValue);
@@ -597,27 +575,24 @@ public class InitializationHandler {
 						fieldLhs = null;
 					} else {
 						final String fieldName = cStructType.getFieldIds()[i];
-						final LeftHandSide lhs = ExpressionFactory.constructStructAccessLhs(loc, lhsToInitIfAny.getLHS(),
-								fieldName);
+						final LeftHandSide lhs =
+								ExpressionFactory.constructStructAccessLhs(loc, lhsToInitIfAny.getLHS(), fieldName);
 						fieldLhs = new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 					}
 				}
-
 
 				final ExpressionResult fieldDefaultInit;
 				if (cType instanceof CUnion && i != 0) {
 					/*
 					 * In case of a union, all fields not mentioned in the initializer are havocced, thus their default
-					 * initialization is a fresh auxiliary variable.
-					 * However there is one exception: the first field is default-inititalized.
+					 * initialization is a fresh auxiliary variable. However there is one exception: the first field is
+					 * default-inititalized.
 					 */
-					fieldDefaultInit =
-						makeOffHeapDefaultOrNondetInitializationForType(loc, main, cStructType.getFieldTypes()[i],
-								sophisticated, fieldLhs, true, hook);
+					fieldDefaultInit = makeOffHeapDefaultOrNondetInitializationForType(loc, main,
+							cStructType.getFieldTypes()[i], sophisticated, fieldLhs, true, hook);
 				} else {
-					fieldDefaultInit =
-						makeOffHeapDefaultOrNondetInitializationForType(loc, main, cStructType.getFieldTypes()[i],
-								sophisticated, fieldLhs, nondet, hook);
+					fieldDefaultInit = makeOffHeapDefaultOrNondetInitializationForType(loc, main,
+							cStructType.getFieldTypes()[i], sophisticated, fieldLhs, nondet, hook);
 				}
 
 				initialization.addAllExceptLrValue(fieldDefaultInit);
@@ -625,12 +600,10 @@ public class InitializationHandler {
 			}
 
 			if (lhsToInitIfAny == null) {
-				final List<Expression> fieldValues = fieldLrValues.stream()
-						.map(LRValue::getValue)
-						.collect(Collectors.toList());
+				final List<Expression> fieldValues =
+						fieldLrValues.stream().map(LRValue::getValue).collect(Collectors.toList());
 				final StructConstructor initializationValue = ExpressionFactory.constructStructConstructor(loc,
-						cStructType.getFieldIds(),
-						fieldValues.toArray(new Expression[fieldValues.size()]));
+						cStructType.getFieldIds(), fieldValues.toArray(new Expression[fieldValues.size()]));
 				initialization.setLrVal(new RValue(initializationValue, cType));
 			}
 
@@ -638,10 +611,8 @@ public class InitializationHandler {
 		} else if (cType instanceof CArray) {
 			if (sophisticated) {
 				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, main, (CArray) cType, nondet);
-			} else {
-				return makeNaiveOffHeapDefaultOrNondetInitForArray(loc, main, (CArray) cType, lhsToInitIfAny, nondet,
-						hook);
 			}
+			return makeNaiveOffHeapDefaultOrNondetInitForArray(loc, main, (CArray) cType, lhsToInitIfAny, nondet, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}
@@ -649,29 +620,24 @@ public class InitializationHandler {
 
 	private ExpressionResult makeUnionAuxVarExpressionResult(final ILocation loc, final Dispatcher main,
 			final CType fieldType) {
-		final AuxVarInfo auxVar = AuxVarInfo.constructAuxVarInfo(loc, main, fieldType,
-				SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxVar = AuxVarInfo.constructAuxVarInfo(loc, main, fieldType, SFO.AUXVAR.NONDET);
 
-		final ExpressionResult x = new ExpressionResultBuilder()
-				.setLrVal(new RValue(auxVar.getExp(), fieldType))
-				.addDeclaration(auxVar.getVarDec())
-				.addAuxVar(auxVar)
-				.addOverapprox(new Overapprox("initialize union -- havoccing a field without explictit "
-						+ "initializer", loc))
+		return new ExpressionResultBuilder().setLrVal(new RValue(auxVar.getExp(), fieldType))
+				.addDeclaration(auxVar.getVarDec()).addAuxVar(auxVar)
+				.addOverapprox(
+						new Overapprox("initialize union -- havoccing a field without explictit " + "initializer", loc))
 				.build();
-		return x;
 	}
 
 	private ExpressionResult makeNaiveOnHeapDefaultInitializationForArray(final ILocation loc, final Dispatcher main,
 			final HeapLValue baseAddress, final CArray cArrayType, final IASTNode hook) {
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
-		final List<List<Integer>> allIndicesToInitialize =
-				CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
-						CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation, hook));
+		final List<List<Integer>> allIndicesToInitialize = CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
+				CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation, hook));
 		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
-			final HeapLValue arrayAccessLhs = CTranslationUtil.constructAddressForArrayAtIndex(loc, main, baseAddress,
-					arrayIndex, hook);
+			final HeapLValue arrayAccessLhs =
+					CTranslationUtil.constructAddressForArrayAtIndex(loc, main, baseAddress, arrayIndex, hook);
 
 			final ExpressionResult arrayIndexInitialization =
 					makeOnHeapDefaultInitializationForType(loc, main, arrayAccessLhs, cArrayType.getValueType(), false,
@@ -683,47 +649,45 @@ public class InitializationHandler {
 
 	private ExpressionResult makeSophisticatedOnHeapDefaultInitializationForArray(final ILocation loc,
 			final Dispatcher main, final HeapLValue baseAddress, final CArray cType) {
-		throw new UnsupportedOperationException("TODO"); //TODO
+		throw new UnsupportedOperationException("TODO"); // TODO
 	}
 
 	private ExpressionResult makeNaiveOffHeapDefaultOrNondetInitForArray(final ILocation loc, final Dispatcher main,
-				final CArray cArrayType, final LocalLValue lhsToInit, final boolean nondet, final IASTNode hook) {
-			assert lhsToInit != null;
+			final CArray cArrayType, final LocalLValue lhsToInit, final boolean nondet, final IASTNode hook) {
+		assert lhsToInit != null;
 
-			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
+		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
-			final LocalLValue arrayLhsToInitialize = lhsToInit;
+		final LocalLValue arrayLhsToInitialize = lhsToInit;
 
-			CType innerMostValueType  = cArrayType.getValueType().getUnderlyingType();
-			while (innerMostValueType instanceof CArray) {
-				innerMostValueType = ((CArray) innerMostValueType).getValueType().getUnderlyingType();
-			}
-
-			final List<List<Integer>> allIndicesToInitialize =
-					CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
-							CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation, hook));
-			for (final List<Integer> arrayIndex : allIndicesToInitialize) {
-
-				final LocalLValue arrayAccessLhs = CTranslationUtil.constructArrayAccessLhs(loc,
-						arrayLhsToInitialize, arrayIndex, mExpressionTranslation);
-
-				final ExpressionResult arrayIndexInitialization =
-						makeOffHeapDefaultOrNondetInitializationForType(loc, main, innerMostValueType, false,
-								arrayAccessLhs, nondet, hook);
-				initialization.addAllExceptLrValue(arrayIndexInitialization);
-			}
-
-			return initialization.build();
+		CType innerMostValueType = cArrayType.getValueType().getUnderlyingType();
+		while (innerMostValueType instanceof CArray) {
+			innerMostValueType = ((CArray) innerMostValueType).getValueType().getUnderlyingType();
 		}
+
+		final List<List<Integer>> allIndicesToInitialize = CrossProducts.crossProductOfSetsOfFirstNaturalNumbers(
+				CTranslationUtil.getConstantDimensionsOfArray(cArrayType, mExpressionTranslation, hook));
+		for (final List<Integer> arrayIndex : allIndicesToInitialize) {
+
+			final LocalLValue arrayAccessLhs = CTranslationUtil.constructArrayAccessLhs(loc, arrayLhsToInitialize,
+					arrayIndex, mExpressionTranslation);
+
+			final ExpressionResult arrayIndexInitialization = makeOffHeapDefaultOrNondetInitializationForType(loc, main,
+					innerMostValueType, false, arrayAccessLhs, nondet, hook);
+			initialization.addAllExceptLrValue(arrayIndexInitialization);
+		}
+
+		return initialization.build();
+	}
 
 	private ExpressionResult makeSophisticatedOffHeapDefaultInitializationForArray(final ILocation loc,
 			final Dispatcher main, final CArray cArrayType, final boolean nondet) {
-		throw new UnsupportedOperationException("TODO"); //TODO
+		throw new UnsupportedOperationException("TODO"); // TODO
 	}
 
 	/**
 	 * Side effect notice: This method may update the given initialization with declarations for an auxiliary variable
-	 *  and possibly set the LrValue.
+	 * and possibly set the LrValue.
 	 *
 	 * @param loc
 	 * @param main
@@ -740,8 +704,8 @@ public class InitializationHandler {
 			assert lhsIfAny != null && lhsIfAny instanceof HeapLValue;
 			arrayLhsToInitialize = lhsIfAny;
 		} else {
-			arrayLhsToInitialize = obtainLocalLValueToInitialize(loc, main, (LocalLValue) lhsIfAny, cType,
-					initialization);
+			arrayLhsToInitialize =
+					obtainLocalLValueToInitialize(loc, main, (LocalLValue) lhsIfAny, cType, initialization);
 		}
 		return arrayLhsToInitialize;
 	}
@@ -751,8 +715,9 @@ public class InitializationHandler {
 	 * @param loc
 	 * @param main
 	 * @param cType
-	 * @param initialization side effects on this parameter: is updated with the necessary declaration and the returned
-	 * 	LocalLValue is set as LrValue
+	 * @param initialization
+	 *            side effects on this parameter: is updated with the necessary declaration and the returned LocalLValue
+	 *            is set as LrValue
 	 * @return
 	 */
 	private LocalLValue obtainLocalLValueToInitialize(final ILocation loc, final Dispatcher main,
@@ -772,8 +737,9 @@ public class InitializationHandler {
 	 * @param loc
 	 * @param main
 	 * @param cType
-	 * @param initialization side effects on this parameter: is updated with the necessary declaration and the returned
-	 * 	LocalLValue is set as LrValue
+	 * @param initialization
+	 *            side effects on this parameter: is updated with the necessary declaration and the returned LocalLValue
+	 *            is set as LrValue
 	 * @return
 	 */
 	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final Dispatcher main, final CType cType,
@@ -784,41 +750,39 @@ public class InitializationHandler {
 		arrayLhsToInitialize = new LocalLValue(auxVar.getLhs(), cType, null);
 
 		initialization.addDeclaration(auxVar.getVarDec());
-//		initialization.putAuxVar(auxVar.getVarDec(), loc);
+		// initialization.putAuxVar(auxVar.getVarDec(), loc);
 		initialization.addAuxVar(auxVar);
 		initialization.setLrVal(arrayLhsToInitialize);
 		return arrayLhsToInitialize;
 	}
 
 	/**
-	 * Returns a call to the special array initialization procedure. ("off-heap" case)
-	 * This procedure returns an array with the given signature where all cells within the given ranges have been
-	 * initialized to the default value for the given value type.
+	 * Returns a call to the special array initialization procedure. ("off-heap" case) This procedure returns an array
+	 * with the given signature where all cells within the given ranges have been initialized to the default value for
+	 * the given value type.
 	 *
 	 * (Whether the initialization procedure will initialize cells beyond these ranges may vary between different
 	 * implementations of that procedure.)
 	 *
-	 * @param lhs the variable that the return value of the initialization procedure should be assigned to
-	 * @param dimensions the dimensions of the C array to initialize, this specifies both the index types
-	 *   (should be integer) and the ranges for each array dimension.
-	 * @param valueType the type that the entries in the innermost arrays have
+	 * @param lhs
+	 *            the variable that the return value of the initialization procedure should be assigned to
+	 * @param dimensions
+	 *            the dimensions of the C array to initialize, this specifies both the index types (should be integer)
+	 *            and the ranges for each array dimension.
+	 * @param valueType
+	 *            the type that the entries in the innermost arrays have
 	 * @return
 	 */
 	private Statement getInitializerArrayCall(final LocalLValue lhs, final CArray arrayType) {
-		mDeclareArrayInitializationFunction = true;
-
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-
-
 	/**
-	 * Returns a call to the special array initialization procedure. ("on-heap" case)
-	 * The initialization procedure takes as arguments a memory address and signature and range information for an
-	 * array.
-	 * The procedure ensures that after it has been called all the memory cells belonging to the given array and ranges
-	 * have been initialized to the default value.
+	 * Returns a call to the special array initialization procedure. ("on-heap" case) The initialization procedure takes
+	 * as arguments a memory address and signature and range information for an array. The procedure ensures that after
+	 * it has been called all the memory cells belonging to the given array and ranges have been initialized to the
+	 * default value.
 	 *
 	 * (Whether the initialization procedure will initialize cells beyond these ranges may vary between different
 	 * implementations of that procedure.)
@@ -842,11 +806,9 @@ public class InitializationHandler {
 		}
 	}
 
-
 	public List<Declaration> declareInitializationInfrastructure(final Dispatcher main, final ILocation loc) {
 		return Collections.emptyList();
 	}
-
 
 	/**
 	 * Construct assignment statements that make sure that "lhs" gets the value "initializationValue".
@@ -866,14 +828,11 @@ public class InitializationHandler {
 
 		List<Statement> assigningStatements;
 		if (onHeap) {
-			assigningStatements = mMemoryHandler.getWriteCall(main, loc, (HeapLValue) lhs, initializationValue,
-					cType, hook);
+			assigningStatements =
+					mMemoryHandler.getWriteCall(main, loc, (HeapLValue) lhs, initializationValue, cType, true, hook);
 		} else {
-			//!onHeap
-			final AssignmentStatement assignment =
-					StatementFactory.constructAssignmentStatement(loc,
-							new LeftHandSide[] { ((LocalLValue) lhs).getLHS() },
-							new Expression[] { initializationValue });
+			final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
+					new LeftHandSide[] { ((LocalLValue) lhs).getLHS() }, new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(overAppr, assignment);
 			assigningStatements = Collections.singletonList(assignment);
 		}
@@ -886,11 +845,9 @@ public class InitializationHandler {
 			final CPrimitive cPrimitive = (CPrimitive) cType;
 			switch (cPrimitive.getGeneralType()) {
 			case INTTYPE:
-				return mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive,
-						BigInteger.ZERO);
+				return mExpressionTranslation.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
 			case FLOATTYPE:
-				return mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive,
-						BigDecimal.ZERO);
+				return mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
 			case VOID:
 				throw new AssertionError("cannot initialize something that has type void");
 			default:
@@ -906,18 +863,16 @@ public class InitializationHandler {
 		}
 	}
 
-
 	/**
 	 * Determines which kind of initialization code we want to generate. There are two variants
-	 * <li> "naive": We generate a sequence of assignments that initialize each field of the aggregate type object.
-	 * <li> "sophisticated": We first initialize the whole object to default values and then insert assignments that
-	 *   initialize the fields that are explicitly mentioned by the initializer.
-	 *   The first step may be performed in different ways, for instance by while loops, or by using special SMT
-	 *   default arrays.
+	 * <li>"naive": We generate a sequence of assignments that initialize each field of the aggregate type object.
+	 * <li>"sophisticated": We first initialize the whole object to default values and then insert assignments that
+	 * initialize the fields that are explicitly mentioned by the initializer. The first step may be performed in
+	 * different ways, for instance by while loops, or by using special SMT default arrays.
 	 * <p>
 	 * Some criteria for when to choose which:
-	 * <li> when "most" of the initialized values are initialized explicitly, we choose "naive", for some threshold
-	 * <li> variable length arrays need "sophisticated"
+	 * <li>when "most" of the initialized values are initialized explicitly, we choose "naive", for some threshold
+	 * <li>variable length arrays need "sophisticated"
 	 *
 	 * @param initializerIfAny
 	 * @return true iff sophisticated initialization should be applied
@@ -928,8 +883,8 @@ public class InitializationHandler {
 	}
 
 	/**
-	 * For the given type. Determine if we want to make a sophisticated or a naive initialization.
-	 * See also {@link determineIfSophisticatedArrayInit}.
+	 * For the given type. Determine if we want to make a sophisticated or a naive initialization. See also
+	 * {@link determineIfSophisticatedArrayInit}.
 	 *
 	 * @param targetCType
 	 * @return
@@ -939,10 +894,9 @@ public class InitializationHandler {
 		return false;
 	}
 
-
 	/**
-	 * Represents all information that is needed to initialize a given target expression with a given initializer.
-	 * Is generated from an InitializerResult together with the target expression's CType.
+	 * Represents all information that is needed to initialize a given target expression with a given initializer. Is
+	 * generated from an InitializerResult together with the target expression's CType.
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
@@ -953,19 +907,18 @@ public class InitializationHandler {
 
 		private final Collection<Overapprox> mOverApprs;
 
+		// /*
+		// * Initialization information for when the target CType is a CArray
+		// */
+		// private final Map<List<Integer>, InitializerInfo> mArrayIndexToInitInfo;
+		//
+		// /*
+		// * Initialization information for when the target CType is a CStruct.
+		// * Note that his list may have "gaps" (i.e. null entries) because of designated initializers.
+		// */
+		// private final List<InitializerInfo> mStructFieldInitInfos;
 
-//		/*
-//		 * Initialization information for when the target CType is a CArray
-//		 */
-//		private final Map<List<Integer>, InitializerInfo> mArrayIndexToInitInfo;
-//
-//		/*
-//		 * Initialization information for when the target CType is a CStruct.
-//		 * Note that his list may have "gaps" (i.e. null entries) because of designated initializers.
-//		 */
-//		private final List<InitializerInfo> mStructFieldInitInfos;
-
-//		private final List<InitializerInfo> mElementInitInfos;
+		// private final List<InitializerInfo> mElementInitInfos;
 		private final Map<Integer, InitializerInfo> mElementInitInfos;
 
 		/**
@@ -980,8 +933,8 @@ public class InitializationHandler {
 		private final List<InitializerResult> mUnusedListEntries;
 
 		private InitializerInfo(final ExpressionResult expressionResult, final List<InitializerResult> rest) {
-			assert expressionResult.getLrValue() == null || expressionResult.getLrValue() instanceof RValue :
-				"switch to RValue first!";
+			assert expressionResult.getLrValue() == null
+					|| expressionResult.getLrValue() instanceof RValue : "switch to RValue first!";
 			mExpressionResult = expressionResult;
 			mOverApprs = expressionResult.getOverapprs();
 			mElementInitInfos = null;
@@ -989,8 +942,7 @@ public class InitializationHandler {
 			mMakeNondeterministicInitialization = false;
 		}
 
-		public InitializerInfo(final Map<Integer, InitializerInfo> indexInitInfos,
-				final List<InitializerResult> rest) {
+		public InitializerInfo(final Map<Integer, InitializerInfo> indexInitInfos, final List<InitializerResult> rest) {
 			mExpressionResult = null;
 			mOverApprs = null;
 			mElementInitInfos = indexInitInfos;
@@ -1015,10 +967,9 @@ public class InitializationHandler {
 		 * Converts a given InitializerResult to an InitializerInfo with respect to a given target CType.
 		 *
 		 * The target CType is the CType of the C object that will be initialized with the initializer that the
-		 * InitializerResult has been generated from.
-		 * Conceptually, the target CType is important because conversions may need to be applied according to it
-		 * (e.g. a "0" may become the NULL pointer), and designated initializers may need to be reordered according to
-		 * the field names of a target CStruct type.
+		 * InitializerResult has been generated from. Conceptually, the target CType is important because conversions
+		 * may need to be applied according to it (e.g. a "0" may become the NULL pointer), and designated initializers
+		 * may need to be reordered according to the field names of a target CStruct type.
 		 *
 		 * @param initializerResult
 		 * @param targetCType
@@ -1030,24 +981,23 @@ public class InitializationHandler {
 			if (initializerResult.hasRootExpressionResult()) {
 				/*
 				 * We are initializing through an (possibly aggregate-type) expression (not through a list of
-				 *  expressions).
+				 * expressions).
 				 */
 
 				if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
-//						&& !(targetCTypeRaw instanceof CPointer)) {
+						// && !(targetCTypeRaw instanceof CPointer)) {
 						&& targetCTypeRaw instanceof CArray) {
 					/*
-					 * Case like 'char a[] = "bla"'
-					 * in C, initialization would copy the char array contents to a position on the stack
-					 * we create an InitializerInfo that corresponds to the initializer { 'b', 'l', 'a', '\0' }.
-					 * (For this purpose, StringLiteralResult holds the original string contents.)
+					 * Case like 'char a[] = "bla"' in C, initialization would copy the char array contents to a
+					 * position on the stack we create an InitializerInfo that corresponds to the initializer { 'b',
+					 * 'l', 'a', '\0' }. (For this purpose, StringLiteralResult holds the original string contents.)
 					 */
 
 					final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
 
 					// append the '\0'
-					final char[] literalString = Arrays.copyOf(slr.getLiteralString(),
-							slr.getLiteralString().length + 1);
+					final char[] literalString =
+							Arrays.copyOf(slr.getLiteralString(), slr.getLiteralString().length + 1);
 					literalString[literalString.length - 1] = '\0';
 
 					final List<Overapprox> overapproxList;
@@ -1056,34 +1006,31 @@ public class InitializationHandler {
 						overapproxList = new ArrayList<>();
 						overapproxList.add(overapprox);
 						return new InitializerInfo(overapprox);
-					} else {
-						// make the list (in our case a map because we support sparse lists in other cases)
-						final Map<Integer, InitializerInfo> indexToInitInfo = new HashMap<>();
-						for (int i = 0; i < literalString.length; i++) {
-							final CPrimitive charCType = new CPrimitive(CPrimitives.CHAR);
-							final Expression charLitExp =
-									main.mCHandler.getExpressionTranslation().constructLiteralForIntegerType(loc,
-											charCType, BigInteger.valueOf(literalString[i]));
-							final ExpressionResult charResult = new ExpressionResultBuilder()
-									.setLrVal(new RValue(charLitExp, charCType))
-									.build();
-							indexToInitInfo.put(i, new InitializerInfo(charResult, Collections.emptyList()));
-						}
-						return new InitializerInfo(indexToInitInfo, Collections.emptyList());
 					}
+					// make the list (in our case a map because we support sparse lists in other cases)
+					final Map<Integer, InitializerInfo> indexToInitInfo = new HashMap<>();
+					for (int i = 0; i < literalString.length; i++) {
+						final CPrimitive charCType = new CPrimitive(CPrimitives.CHAR);
+						final Expression charLitExp = main.mCHandler.getExpressionTranslation()
+								.constructLiteralForIntegerType(loc, charCType, BigInteger.valueOf(literalString[i]));
+						final ExpressionResult charResult =
+								new ExpressionResultBuilder().setLrVal(new RValue(charLitExp, charCType)).build();
+						indexToInitInfo.put(i, new InitializerInfo(charResult, Collections.emptyList()));
+					}
+					return new InitializerInfo(indexToInitInfo, Collections.emptyList());
 				} else if (initializerResult.getRootExpressionResult() instanceof StringLiteralResult
 						&& targetCTypeRaw instanceof CPointer) {
 					/*
 					 * case like 'char *a = "bla"' --> initialization will make the variable'a' point to the special
-					 *   read-only memory area for strings. There is already code in the StringLiteralResult for this.
+					 * read-only memory area for strings. There is already code in the StringLiteralResult for this.
 					 *
-					 * We use this code for a global declaration and code in Ultimate.init()
-					 * (currently the field auxVars has entries, but they are not needed and may be removed in the
-					 *  future)
-					 * The result we return here will only contain the RValue.
+					 * We use this code for a global declaration and code in Ultimate.init() (currently the field
+					 * auxVars has entries, but they are not needed and may be removed in the future) The result we
+					 * return here will only contain the RValue.
 					 */
-					final StringLiteralResult exprResult = (StringLiteralResult)
-							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult, hook);
+					final StringLiteralResult exprResult =
+							(StringLiteralResult) convertInitResultWithExpressionResult(loc, main, targetCType,
+									initializerResult, hook);
 
 					assert exprResult.getDeclarations().isEmpty() : "the declarations necessary for a StringLiteral "
 							+ " should be registered in StaticObjectsHandler directly (because the need to be global"
@@ -1093,51 +1040,43 @@ public class InitializationHandler {
 							+ "boogie declarations)";
 
 					final ExpressionResult onlyRValueExprResult = new ExpressionResultBuilder()
-							.setLrVal(exprResult.getLrValue())
-							.addOverapprox(exprResult.getOverapprs())
-							.build();
+							.setLrVal(exprResult.getLrValue()).addOverapprox(exprResult.getOverapprs()).build();
 
 					return new InitializerInfo(onlyRValueExprResult, Collections.emptyList());
 				} else {
 					/*
-					 * or  case like "struct s s1 = s2;",
-					 * make initializerInfo with one ExpressionResult
+					 * or case like "struct s s1 = s2;", make initializerInfo with one ExpressionResult
 					 */
-					final ExpressionResult converted = convertInitResultWithExpressionResult(loc, main, targetCType,
-							initializerResult, hook);
+					final ExpressionResult converted =
+							convertInitResultWithExpressionResult(loc, main, targetCType, initializerResult, hook);
 					return new InitializerInfo(converted, Collections.emptyList());
 				}
 			}
 
 			if (targetCType instanceof CArray || targetCType instanceof CStruct) {
-//				// aggregate or union type
+				// // aggregate or union type
 				return constructIndexToInitInfo(loc, main, initializerResult.getList(), targetCType, hook);
-//			} else if (targetCType instanceof CStruct) {
-//				// target type is a struct or a union type
-//				return constructArrayIndexToInitInfo(loc, main, initializerResult.getList(), targetCType);
-			} else {
-				// target type is simple
-
-				// do the necessary conversions
-				final Deque<InitializerResult> ad = new ArrayDeque<>(initializerResult.getList());
-				final InitializerResult first = ad.pollFirst();
-
-				final ExpressionResult expressionResultSwitched =
-						convertInitResultWithExpressionResult(loc, main, targetCType, first, hook);
-
-				return new InitializerInfo(expressionResultSwitched, new ArrayList<>(ad));
-
-
+				// } else if (targetCType instanceof CStruct) {
+				// // target type is a struct or a union type
+				// return constructArrayIndexToInitInfo(loc, main, initializerResult.getList(), targetCType);
 			}
+			// do the necessary conversions
+			final Deque<InitializerResult> ad = new ArrayDeque<>(initializerResult.getList());
+			final InitializerResult first = ad.pollFirst();
+
+			final ExpressionResult expressionResultSwitched =
+					convertInitResultWithExpressionResult(loc, main, targetCType, first, hook);
+
+			return new InitializerInfo(expressionResultSwitched, new ArrayList<>(ad));
 		}
 
 		protected static ExpressionResult convertInitResultWithExpressionResult(final ILocation loc,
 				final Dispatcher main, final CType targetCType, final InitializerResult first, final IASTNode hook) {
-			final ExpressionResult expressionResultSwitched = first.getRootExpressionResult()
-					.switchToRValueIfNecessary(main, loc, hook);
+			final ExpressionResult expressionResultSwitched =
+					first.getRootExpressionResult().switchToRValueIfNecessary(main, loc, hook);
 			expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
 			// 2017-11-19 Matthias: introduced workaround to omit conversion
-			if ((expressionResultSwitched.getLrValue().getCType() instanceof CArray)) {
+			if (expressionResultSwitched.getLrValue().getCType() instanceof CArray) {
 				// omit conversion
 			} else {
 				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
@@ -1171,12 +1110,11 @@ public class InitializationHandler {
 			}
 
 			/*
-			 * The currentCellIndex stands for the "current object" from the standard text.
-			 * Designators may modify that index otherwise it just counts up.
+			 * The currentCellIndex stands for the "current object" from the standard text. Designators may modify that
+			 * index otherwise it just counts up.
 			 */
 			int currentCellIndex = -1;
-			while (currentCellIndex < (bound - 1)
-					&& !rest.isEmpty()) {
+			while (currentCellIndex < bound - 1 && !rest.isEmpty()) {
 				if (rest.peekFirst().hasRootDesignator()) {
 					assert targetCType instanceof CStruct : "array designators not yet supported and should not (yet)"
 							+ " show up here";
@@ -1191,20 +1129,18 @@ public class InitializationHandler {
 				}
 
 				/*
-				 * C11 6.7.9.13
-				 *  The initializer for a structure or union object that has automatic storage duration shall be
-				 *  either an initializer list as described below, or a single expression that has compatible
-				 *  structure or union type. In the latter case, the initial value of the object, including
-				 *  unnamed members, is that of the expression.
+				 * C11 6.7.9.13 The initializer for a structure or union object that has automatic storage duration
+				 * shall be either an initializer list as described below, or a single expression that has compatible
+				 * structure or union type. In the latter case, the initial value of the object, including unnamed
+				 * members, is that of the expression.
 				 */
 				if (rest.peekFirst().isInitializerList() ||
-						// TODO: make a more general compatibility check, for example for array and pointer
+				// TODO: make a more general compatibility check, for example for array and pointer
 						TypeHandler.isCompatibleType(cellType,
 								rest.peekFirst().getRootExpressionResult().getLrValue().getCType())) {
 					/*
-					 * case "{", i.e. one more brace opens
-					 * Then the cell is initialized with the list belonging to that brace (until the matching brace).
-					 * No residue is taken over if too many elements are left.
+					 * case "{", i.e. one more brace opens Then the cell is initialized with the list belonging to that
+					 * brace (until the matching brace). No residue is taken over if too many elements are left.
 					 *
 					 * other case: first list entry has a compatible struct or union type
 					 */
@@ -1215,14 +1151,14 @@ public class InitializationHandler {
 					indexInitInfos.put(currentCellIndex, cellInitInfo);
 				} else {
 					/*
-					 * Case where the list starts with a value (or identifier, just not with a brace).
-					 * Then the current list is handed down to the cell, and if anything is left after processing that
-					 * cell we use it for the next cell.
+					 * Case where the list starts with a value (or identifier, just not with a brace). Then the current
+					 * list is handed down to the cell, and if anything is left after processing that cell we use it for
+					 * the next cell.
 					 */
 					final InitializerResultBuilder restInitResultBuilder = new InitializerResultBuilder();
 					rest.forEach(restInitResultBuilder::addChild);
-					final InitializerInfo cellInitInfo = constructInitializerInfo(loc, main,
-							restInitResultBuilder.build(), cellType, hook);
+					final InitializerInfo cellInitInfo =
+							constructInitializerInfo(loc, main, restInitResultBuilder.build(), cellType, hook);
 					indexInitInfos.put(currentCellIndex, cellInitInfo);
 					rest = new ArrayDeque<>(cellInitInfo.getUnusedListEntries());
 				}

@@ -21,7 +21,6 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.option;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 
 /**
@@ -38,10 +37,10 @@ public class VerbosityOption extends Option {
 
 	public VerbosityOption(LogProxy logger) {
 		super(true, "How much output to produce on the diagnostic output "
-	+ "channel.  The bigger the number the more output will be produces.  0 "
+				+ "channel.  The bigger the number the more output will be produces.  0 "
 				+ "turns off diagnostic output.");
 		mLogger = logger;
-		mLogger.setLoglevel(mDefaultLvl = Config.DEFAULT_LOG_LEVEL);
+		mDefaultLvl = mLogger.getLoglevel();
 	}
 	@Override
 	public Option copy() {

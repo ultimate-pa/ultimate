@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -102,7 +101,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * libraries or SV-COMP extensions.
  *
  * @author Markus Lindenmann,
- * @auhtor Matthias Heizmann
+ * @author Matthias Heizmann
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class StandardFunctionHandler {
@@ -431,11 +430,10 @@ public class StandardFunctionHandler {
 
 		final CPrimitive resultType = new CPrimitive(CPrimitives.INT);
 		// introduce fresh aux variable
-//		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-//		final VariableDeclaration tmpVarDecl =
-//				SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
-		final AuxVarInfo auxvarinfo =
-				AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
+		// final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+		// final VariableDeclaration tmpVarDecl =
+		// SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.cType2AstType(loc, resultType), loc);
+		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, resultType, SFO.AUXVAR.NONDET);
 		builder.addDeclaration(auxvarinfo.getVarDec());
 		builder.addAuxVar(auxvarinfo);
 
@@ -568,13 +566,11 @@ public class StandardFunctionHandler {
 					mExpressionTranslation.getCTypeOfPointerComponents());
 			// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
 			final BinaryExpression inRange =
-					ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND, baseEquals,
-							ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND, offsetNonNegative,
-									offsetSmallerLength));
+					ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND, baseEquals, ExpressionFactory
+							.constructBinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
 			// assume equalsNull or inRange
-			final AssumeStatement assume =
-					new AssumeStatement(loc, ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICOR,
-							equalsNull, inRange));
+			final AssumeStatement assume = new AssumeStatement(loc,
+					ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
 			builder.addStatement(assume);
 		}
 
@@ -633,15 +629,14 @@ public class StandardFunctionHandler {
 		result.addAllExceptLrValue(argN);
 
 		final CPointer voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
-		final AuxVarInfo auxvar =
-				AuxVarInfo.constructAuxVarInfo(loc, main, voidPointerType, SFO.AUXVAR.MEMSETRES);
+		final AuxVarInfo auxvar = AuxVarInfo.constructAuxVarInfo(loc, main, voidPointerType, SFO.AUXVAR.MEMSETRES);
 		result.addDeclaration(auxvar.getVarDec());
 		result.addAuxVar(auxvar);
 
 		result.addStatement(mMemoryHandler.constructUltimateMemsetCall(loc, argS.mLrVal.getValue(),
 				argC.mLrVal.getValue(), argN.mLrVal.getValue(), auxvar.getLhs()));
 
-//		mProcedureManager.registerCall(MemoryModelDeclarations.C_Memset.getName());
+		// mProcedureManager.registerCall(MemoryModelDeclarations.C_Memset.getName());
 
 		return result.build();
 	}
@@ -675,8 +670,8 @@ public class StandardFunctionHandler {
 		result.mStmt.add(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.mLrVal.getValue(),
 				size.mLrVal.getValue(), product, auxvar.getExp()));
 
-//		mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_MemInit.getName(),
-//				MemoryModelDeclarations.Ultimate_Alloc.getName());
+		// mProcedureManager.registerCall(MemoryModelDeclarations.Ultimate_MemInit.getName(),
+		// MemoryModelDeclarations.Ultimate_Alloc.getName());
 		return result;
 	}
 
@@ -973,24 +968,25 @@ public class StandardFunctionHandler {
 		// return new ExpressionResult(new RValue(zero, cType));
 	}
 
-	private Result handlePrintF(final Dispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
-		// skip if parent of parent is CompoundStatement
-		// otherwise, replace by havoced variable
-		if (node.getParent().getParent() instanceof IASTCompoundStatement) {
-			return new SkipResult();
-		}
-
+	private static Result handlePrintF(final Dispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// 2015-11-05 Matthias: TODO check if int is reasonable here
-		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main,
-				new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
+		final AuxVarInfo auxvarinfo =
+				AuxVarInfo.constructAuxVarInfo(loc, main, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.NONDET);
 		resultBuilder.addDeclaration(auxvarinfo.getVarDec());
 		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
 
 		final LRValue returnValue = new RValue(auxvarinfo.getExp(), null);
 		resultBuilder.setLrVal(returnValue);
-		resultBuilder.setLrVal(returnValue);
+
+		// dispatch all arguments
+		for (final IASTInitializerClause arg : node.getArguments()) {
+			final ExpressionResult argRes = dispatchAndConvertFunctionArgument(main, loc, arg);
+			resultBuilder.addAllExceptLrValue(argRes);
+		}
+
 		return resultBuilder.build();
 	}
 
@@ -1021,8 +1017,7 @@ public class StandardFunctionHandler {
 		resultBuilder.addAllExceptLrValue(src);
 		resultBuilder.addAllExceptLrValue(size);
 
-		final AuxVarInfo auxvarinfo =
-				AuxVarInfo.constructAuxVarInfo(loc, main, dest.getLrValue().getCType(), auxVar);
+		final AuxVarInfo auxvarinfo = AuxVarInfo.constructAuxVarInfo(loc, main, dest.getLrValue().getCType(), auxVar);
 
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false,
 				new VariableLHS[] { auxvarinfo.getLhs() }, mmDecl.getName(), new Expression[] {
@@ -1037,7 +1032,7 @@ public class StandardFunctionHandler {
 
 		// add required information to function handler.
 		mProcedureManager.registerProcedure(mmDecl.getName());
-//		mProcedureManager.registerCall(mmDecl.getName());
+		// mProcedureManager.registerCall(mmDecl.getName());
 
 		return resultBuilder.build();
 	}
@@ -1153,7 +1148,7 @@ public class StandardFunctionHandler {
 		if (memoryHandler.getPointerBaseValidityCheckMode() != PointerCheckMode.IGNORE) {
 
 			// valid[s.base]
-			final Expression validBase = memoryHandler.constructPointerBaseValidityCheck(loc, pointerValue);
+			final Expression validBase = memoryHandler.constructPointerBaseValidityCheckExpr(loc, pointerValue);
 
 			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, validBase);
@@ -1211,8 +1206,8 @@ public class StandardFunctionHandler {
 	}
 
 	/**
-	 * Dispatch a function argument and do conversions that are applied to all function arguments.
-	 * TODO: move this method to a more appropriate place (it is also used by FunctionHandler)
+	 * Dispatch a function argument and do conversions that are applied to all function arguments. TODO: move this
+	 * method to a more appropriate place (it is also used by FunctionHandler)
 	 *
 	 * @param main
 	 * @param loc
@@ -1221,7 +1216,7 @@ public class StandardFunctionHandler {
 	 */
 	public static ExpressionResult dispatchAndConvertFunctionArgument(final Dispatcher main, final ILocation loc,
 			final IASTInitializerClause initClause) {
-		final ExpressionResult dispatched = ((ExpressionResult) main.dispatch(initClause));
+		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(initClause);
 		final ExpressionResult converted1 = dispatched.decayArrayToPointerIfNecessary(main, loc, initClause);
 		final ExpressionResult switched = converted1.switchToRValueIfNecessary(main, loc, initClause);
 		return switched;

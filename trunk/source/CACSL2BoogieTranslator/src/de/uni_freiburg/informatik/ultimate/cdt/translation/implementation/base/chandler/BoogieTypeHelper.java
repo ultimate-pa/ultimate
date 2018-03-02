@@ -20,19 +20,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class BoogieTypeHelper {
 
-
-//	private MemoryHandler mMemoryHandler;
 	private final ITypeHandler mTypeHandler;
 	private final HandlerHandler mHandlerHandler;
 
 	public BoogieTypeHelper(final HandlerHandler handlerHandler) {
-//		mMemoryHandler = main.mCHandler.getMemoryHandler();
 		handlerHandler.setBoogieTypeHelper(this);
 		mHandlerHandler = handlerHandler;
 		mTypeHandler = handlerHandler.getTypeHandler();
 	}
 
 	public BoogieType getBoogieTypeForBoogieASTType(final ASTType asttype) {
+		if (asttype == null) {
+			return BoogieType.TYPE_ERROR;
+		}
 		final BoogieType result = (BoogieType) asttype.getBoogieType();
 		assert result != null;
 		return result;
@@ -46,17 +46,8 @@ public class BoogieTypeHelper {
 	 * @return
 	 */
 	public BoogieType getBoogieTypeForPointerType() {
-//		mMemoryHandler.poin
-//		BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
-//				new BoogieType[] { BoogieType.TYPE_INT, Boo });
 		return mTypeHandler.getBoogiePointerType();
 	}
-
-//	public IdentifierExpression constructIdentifierExpressionForHeapDataArray(final ILocation loc,
-//			final HeapDataArray hda, final String readProcedureName) {
-//		return ExpressionFactory.constructIdentifierExpression(loc, getBoogieTypeForBoogieASTType(hda.getASTType()),
-//				hda.getName(), new DeclarationInformation(StorageClass.GLOBAL, readProcedureName));
-//	}
 
 	public BoogieType getBoogieTypeForSizeT() {
 		return BoogieType.TYPE_INT;
@@ -97,7 +88,6 @@ public class BoogieTypeHelper {
 		final CType cType = cTypeRaw.getUnderlyingType();
 
 		if (cType instanceof CPrimitive) {
-//			if (mHandlerHandler.getExpressionTranslation() instanceof Bit
 			if (mTypeHandler.isBitvectorTranslation()) {
 				final Integer byteSize = mHandlerHandler.getTypeSizes().getSize(((CPrimitive) cType).getType());
 				return BoogieType.createBitvectorType(byteSize * 8);

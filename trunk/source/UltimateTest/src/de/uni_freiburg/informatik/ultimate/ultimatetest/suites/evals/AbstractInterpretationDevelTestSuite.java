@@ -78,6 +78,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 
 
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default+Strongman_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
@@ -96,12 +98,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 			//### BPL Inline
 //			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
-			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
-//			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
-			new Triple<>("AutomizerBplInline.xml", BPL, "default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+////			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
+//			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
+////			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
+//			new Triple<>("AutomizerBplInline.xml", BPL, "default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"),
 
 //			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_Debug.epf"),
@@ -148,12 +150,14 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 			//### C Inline
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 
-			new Triple<>("AutomizerCInline.xml", C, "default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "default/automizer/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "default/taipan/svcomp-Reach-64bit-Taipan_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-64bit-RubberTaipan_INT.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
-			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-LazyTaipan_Default.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
@@ -165,21 +169,28 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	private static final String[] INPUT = new String[] {
 			// Normal regressions
-//			"examples/programs/abstractInterpretation/regression",
+			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/open/int/stmt-bool-true-assign-top.bpl",
 //			"examples/programs/abstractInterpretation/regression/non_con/loop-literal-widening-predicate-weakening.bpl",
 
 			//old vars support
 //			"examples/programs/abstractInterpretation/bug-old-stmt-3.bpl",
-			"examples/programs/abstractInterpretation/regression/all/taipan-bug-postunsound-oldvarassign.bpl",
-			"examples/programs/abstractInterpretation/regression/all/bug-nonrelationalpost-smtidentifier.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/taipan-bug-postunsound-oldvarassign.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/bug-nonrelationalpost-smtidentifier.bpl",
 //			"examples/programs/abstractInterpretation/bug-old-stmt-4.bpl",
 //			"examples/programs/abstractInterpretation/regression/open/eq/mixedGlobalLocalSelectNonModifyingProcedure.bpl",
 //			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
 //			"examples/svcomp/loop-acceleration/simple_true-unreach-call4.i",
 //			"examples/svcomp/reducercommutativity/rangesum05_false-unreach-call.i",
 //			"examples/svcomp/loop-new/count_by_k_true-unreach-call_true-termination.i"
-			"examples/svcomp/loops/eureka_01_true-unreach-call.i"
+//			"examples/svcomp/loops/eureka_01_true-unreach-call.i",
+//			"examples/svcomp/loop-acceleration/functions_true-unreach-call1_true-termination.i"
+//			"C:\\Users\\firefox\\Desktop\\Diverses\\ultimate-wip\\regression-verif\\dbeyer-regressionverificationtasks-05936972a4e8\\regression-verification-tasks"
+
+//			"examples/svcomp/ldv-linux-3.4-simple/43_1a_cilled_true-unreach-call_ok_nondet_linux-43_1a-drivers--tty--serial--altera_jtaguart.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c",
+//			"examples/svcomp/ldv-linux-3.14/linux-3.14__linux-drivers-clk1__drivers-net-can-mcp251x_false-unreach-call.cil.c"
+
+
 
 	};
 	// @formatter:on
@@ -190,8 +201,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 		// return 15 * 60 * 1000;
 		// return 5 * 60 * 1000;
 		// return 3 * 60 * 1000;
-		// return 90 * 1000;
-		return 30 * 1000;
+		return 90 * 1000;
+		// return 30 * 1000;
 		// return 15 * 1000;
 	}
 

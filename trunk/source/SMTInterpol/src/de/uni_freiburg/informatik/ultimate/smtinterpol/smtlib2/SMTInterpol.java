@@ -653,16 +653,19 @@ public class SMTInterpol extends NoopScript {
 		if (Config.STRONG_USAGE_CHECKS && !new CheckClosedTerm().isClosed(term)) {
 			throw new SMTLIBException("Asserted terms must be closed");
 		}
-		if (mAssertions != null) {
-			mAssertions.add(term);
-		}
-		if (mEngine.inconsistent()) {
-			mLogger.info("Asserting into inconsistent context");
-			return LBool.UNSAT;
-		}
 		try {
 			modifyAssertionStack();
+			if (mEngine.inconsistent()) {
+				mLogger.info("Asserting into inconsistent context");
+				if (mAssertions != null) {
+					mAssertions.add(term);
+				}
+				return LBool.UNSAT;
+			}
 			mClausifier.addFormula(term);
+			if (mAssertions != null) {
+				mAssertions.add(term);
+			}
 			/*
 			 * We always have to reset the flag, but only need to set the stack level if it is not already set.
 			 */
