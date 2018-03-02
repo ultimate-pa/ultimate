@@ -76,7 +76,7 @@ public class GlobalVariableCollector extends ASTVisitor {
 		final IASTSimpleDeclaration sd = (IASTSimpleDeclaration) raw;
 		final CType type = TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier());
 		final String fileName = raw.getContainingFilename();
-		for (IASTDeclarator decl : sd.getDeclarators()) {
+		for (final IASTDeclarator decl : sd.getDeclarators()) {
 			if (decl instanceof CASTFunctionDeclarator) {
 				continue; // functions are handled elsewhere.
 			}
@@ -84,6 +84,14 @@ public class GlobalVariableCollector extends ASTVisitor {
 			if (decl instanceof IASTArrayDeclarator) {
 				// Dimension information is not available here...
 				lType = new CArray(null, type);
+				continue;
+				// TODO YB,2018-03-02 there needs to be a better way for this.
+				// The whole reason for this class to exist is that multiple files might require a global variable that
+				// was not yet dispatched. in this case it still 'should' be in the symtab.
+				//
+				// Maybe a better way to do this is to dispatch global declarations in their logical order (C requires
+				// everything to be declared first anyways!). Anything that uses something conflicting has to import
+				// (a header) for it anyways!
 			} else {
 				lType = type;
 			}
