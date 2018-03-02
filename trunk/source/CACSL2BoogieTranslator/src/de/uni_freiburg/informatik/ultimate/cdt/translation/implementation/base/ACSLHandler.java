@@ -633,8 +633,11 @@ public class ACSLHandler implements IACSLHandler {
 	private String lookupId(final Dispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node, final ILocation loc) {
 
+		final String rslvId = main.mCHandler.getSymbolTable().applyMultiparseRenaming(
+				main.getAcslHook().getContainingFilename(), node.getIdentifier());
+		
 		final SymbolTableValue stv =
-				main.mCHandler.getSymbolTable().findCSymbol(main.getAcslHook(), node.getIdentifier());
+				main.mCHandler.getSymbolTable().findCSymbol(main.getAcslHook(), rslvId);
 		if (stv == null) {
 			throw new IncorrectSyntaxException(loc, "Undeclared variable in ACSL expression: " + node.getIdentifier());
 		}
