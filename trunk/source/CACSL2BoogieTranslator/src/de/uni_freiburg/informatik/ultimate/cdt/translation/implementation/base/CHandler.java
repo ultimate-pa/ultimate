@@ -1403,7 +1403,7 @@ public class CHandler implements ICHandler {
 			return result;
 		}
 		final DeclaratorResult result =
-				new DeclaratorResult(new CDeclaration(newResType.cType, node.getName().toString(),
+				new DeclaratorResult(new CDeclaration(newResType.cType, declName,
 						node.getInitializer(), null, newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
 	}
