@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -89,9 +90,10 @@ public class DPLLEngine {
 	private Clause mUnsatClause = null;
 
 	/**
-	 * If we assume a literal and its negation, we mark the conflicting assumption in this variable.
+	 * The literals assumed in the last check-sat-assuming call.
 	 */
-	private Literal mConflictingAssumption = null;
+	private Set<Literal> mAssumptionLiterals = new LinkedHashSet<>();
+
 	/* Statistics */
 	private int mConflicts, mDecides, mTProps, mProps;
 	private int mNumSolvedAtoms, mNumClauses, mNumAxiomClauses;
@@ -469,12 +471,9 @@ public class DPLLEngine {
 				}
 			} else {
 				// Make sure the unit literal is actually a unit
-				if (clause.getLiteral(0).getAtom().isAssumption()) {
-					// CHECK do we learn trivially satisfied clauses?
-					if (clause.getLiteral(0) != clause.getLiteral(0).getAtom().getDecideStatus()) {
-						mUnsatClause = clause;
-						return;
-					}
+				if (mAssumptionLiterals.contains(clause.getLiteral(0).negate())) {
+					mUnsatClause = clause;
+					return;
 				}
 				/* propagate unit clause: only register watcher zero. */
 				mWatcherBackList.append(clause, 0);
@@ -483,10 +482,10 @@ public class DPLLEngine {
 			// Move unset literals upfront
 			int dest = 0;
 			while (dest < 2) {
-				if (clause.getLiteral(dest).getAtom().isAssumption()) {
+				if (mAssumptionLiterals.contains(clause.getLiteral(dest).negate())) {
 					boolean found = false;
 					for (int i = dest + 1; i < clause.getSize(); ++i) {
-						if (clause.getLiteral(dest).getAtom().isAssumption()) {
+						if (!mAssumptionLiterals.contains(clause.getLiteral(i).negate())) {
 							// swap literal @dest with literal @i
 							final Literal tmp = clause.mLiterals[i];
 							clause.mLiterals[i] = clause.mLiterals[dest];
@@ -640,7 +639,7 @@ public class DPLLEngine {
 				}
 				conflict.add(lit.negate());
 			} else {
-				if (atom.isAssumption()) {
+				if (mAssumptionLiterals.contains(lit.negate())) {
 					conflict.add(lit.negate());
 					++numAssumptions;
 				} else {
@@ -738,7 +737,7 @@ public class DPLLEngine {
 				if (l != lit) {
 					assert l.getAtom().mDecideStatus == l.negate();
 					final int level = l.getAtom().mDecideLevel;
-					if (l.getAtom().isAssumption()) {
+					if (mAssumptionLiterals.contains(l.negate())) {
 						if (conflict.add(l.negate())) {
 							++numAssumptions;
 						}
@@ -802,7 +801,7 @@ public class DPLLEngine {
 					if (l != lit) {
 						assert l.getAtom().mDecideStatus == l.negate();
 						final int level = l.getAtom().mDecideLevel;
-						if (l.getAtom().isAssumption()) {
+						if (mAssumptionLiterals.contains(l.negate())) {
 							if (conflict.add(l.negate())) {
 								++numAssumptions;
 							}
@@ -1495,9 +1494,6 @@ public class DPLLEngine {
 	}
 
 	public Literal[] getUnsatAssumptions() {
-		if (mConflictingAssumption != null) {
-			return new Literal[] { mConflictingAssumption, mConflictingAssumption.negate() };
-		}
 		return mUnsatClause.mLiterals;
 	}
 
@@ -1509,8 +1505,8 @@ public class DPLLEngine {
 			final Antecedent[] antecedents = new Antecedent[mUnsatClause.getSize()];
 			for (int i = 0; i < mUnsatClause.getSize(); ++i) {
 				final Literal lit = mUnsatClause.getLiteral(i).negate();
-				antecedents[i] =
-						new Antecedent(lit, new Clause(new Literal[] { lit }, new LeafNode(LeafNode.ASSUMPTION, null)));
+				antecedents[i] = new Antecedent(lit,
+						new Clause(new Literal[] { lit }, new LeafNode(LeafNode.ASSUMPTION, null)));
 			}
 			final ResolutionNode proof = new ResolutionNode(mUnsatClause, antecedents);
 			empty = new Clause(new Literal[0], proof);
@@ -1520,7 +1516,7 @@ public class DPLLEngine {
 
 	private void generateLevel0Proof(final Literal lit) {
 		assert lit.getAtom().mDecideLevel <= mBaseLevel : "Level0 proof for non-level0 literal?";
-		assert !lit.getAtom().isAssumption();
+		assert !mAssumptionLiterals.contains(lit);
 		final HashSet<Literal> clauseLits = new HashSet<>();
 		final Clause c = getExplanation(lit);
 		if (c.getSize() > 1) {
@@ -1530,7 +1526,7 @@ public class DPLLEngine {
 			final Antecedent[] ants = isProofGenerationEnabled() ? new Antecedent[c.getSize() - 1] : null;
 			int i = 0;
 			for (final Literal l : lits) {
-				if (l.getAtom().isAssumption()) {
+				if (mAssumptionLiterals.contains(l.negate())) {
 					clauseLits.add(l);
 				} else if (l != lit) {
 					final Clause lc = getLevel0(l.negate());
@@ -1540,7 +1536,7 @@ public class DPLLEngine {
 					for (int j = 0; j < lc.getSize(); j++) {
 						final Literal depLit = lc.getLiteral(j);
 						if (depLit != l.negate()) {
-							assert depLit.getAtom().isAssumption();
+							assert mAssumptionLiterals.contains(depLit.negate());
 							clauseLits.add(depLit);
 						}
 					}
@@ -1564,7 +1560,7 @@ public class DPLLEngine {
 			if (l == lit) {
 				found = true;
 			} else {
-				assert l.getAtom().isAssumption();
+				assert mAssumptionLiterals.contains(l.negate());
 			}
 		}
 		return found;
@@ -1572,7 +1568,6 @@ public class DPLLEngine {
 
 	private Clause getLevel0(final Literal lit) {
 		assert lit.getAtom().mDecideLevel <= mBaseLevel;
-		assert !lit.getAtom().isAssumption();
 		final Object expl = lit.getAtom().mExplanation;
 		assert expl instanceof Clause;
 		assert checkLevel0Clause((Clause) expl, lit);
@@ -1856,7 +1851,7 @@ public class DPLLEngine {
 		if (mBaseLevel == 0) {
 			return;
 		}
-		mConflictingAssumption = null;
+		mAssumptionLiterals.clear();
 		mLogger.debug("Clearing Assumptions (Baselevel is %d)", mBaseLevel);
 		while (!mDecideStack.isEmpty()) {
 			final Literal top = mDecideStack.get(mDecideStack.size() - 1);
@@ -1865,9 +1860,6 @@ public class DPLLEngine {
 			}
 			mDecideStack.remove(mDecideStack.size() - 1);
 			backtrackLiteral(top);
-			if (top.getAtom().isAssumption()) {
-				top.getAtom().unassume();
-			}
 		}
 		mBaseLevel = 0;
 		mCurrentDecideLevel = 0;
@@ -1885,6 +1877,7 @@ public class DPLLEngine {
 		assert mCurrentDecideLevel == mBaseLevel;
 		for (final Literal lit : lits) {
 			mLogger.debug("Assuming Literal %s", lit);
+			mAssumptionLiterals.add(lit);
 			// First check if the literal is already set
 			if (lit.getAtom().getDecideStatus() != null) {
 				if (lit.getAtom().getDecideStatus() == lit) {
@@ -1892,30 +1885,19 @@ public class DPLLEngine {
 					continue;
 				} else {
 					// We have the assumption lit, but we know ~lit holds.
-					// This can have two cases:
-					// 1) We assumed ~lit in which case we have to build a
-					// new clause to represent the proof using only
-					// assumptions
-					// 2) We derived the unit ~lit from assertions in which
-					// case we can use the proof for ~lit
-					if (lit.getAtom().isAssumption()) {
-						mUnsatClause =
-								new Clause(new Literal[] { lit.negate() }, new LeafNode(LeafNode.ASSUMPTION, null));
-						mLogger.debug("Conflicting assumptions");
-						mConflictingAssumption = lit;
+					// Build the unsatClause from the level0 proof.
+					if (mAssumptionLiterals.contains(lit.negate())) {
+						mUnsatClause = new Clause(new Literal[] { lit },
+								new LeafNode(LeafNode.ASSUMPTION, null));
 					} else {
-						assert lit.getAtom().getDecideLevel() <= mBaseLevel;
-						assert lit.getAtom().mExplanation instanceof Clause;
-						mUnsatClause = (Clause) lit.getAtom().mExplanation;
-						mLogger.debug("Conflict against unit clause");
+						mUnsatClause = getLevel0(lit.negate());
 					}
 					assert checkValidUnsatClause();
 					assert mBaseLevel == mCurrentDecideLevel;
 					return false;
 				}
 			}
-			// The literal is not already set => assume it
-			lit.getAtom().assume();
+			// The literal is not already set => decide it to true
 			increaseDecideLevel();
 			final Clause conflict = setLiteral(lit);
 			mBaseLevel = mCurrentDecideLevel;
@@ -1934,11 +1916,9 @@ public class DPLLEngine {
 	private boolean checkValidUnsatClause() {
 		if (mUnsatClause != null) {
 			for (final Literal lit : mUnsatClause.mLiterals) {
-				assert lit.getAtom().isAssumption() : "Not an assumption in unsat clause";
-				assert lit.getAtom().getDecideStatus() == lit : "unsat clause satisfied!";
+				assert mAssumptionLiterals.contains(lit.negate()) : "Not an assumption in unsat clause";
 			}
 		}
 		return true;
 	}
-
 }
