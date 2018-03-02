@@ -1852,22 +1852,26 @@ public class DPLLEngine {
 	 * Remove all assumptions. We backtrack to level 0.
 	 */
 	public void clearAssumptions() {
+		/* check if we need to clear any assumptions */
+		if (mBaseLevel == 0) {
+			return;
+		}
 		mConflictingAssumption = null;
 		mLogger.debug("Clearing Assumptions (Baselevel is %d)", mBaseLevel);
-		if (mBaseLevel != 0) {
-			Literal top = mDecideStack.get(mDecideStack.size() - 1);
-			while (top.getAtom().getDecideLevel() != 0) {
-				backtrackLiteral(top);
-				mDecideStack.remove(mDecideStack.size() - 1);
-				if (top.getAtom().isAssumption()) {
-					top.getAtom().unassume();
-				}
-				top = mDecideStack.get(mDecideStack.size() - 1);
+		while (!mDecideStack.isEmpty()) {
+			final Literal top = mDecideStack.get(mDecideStack.size() - 1);
+			if (top.getAtom().getDecideLevel() == 0) {
+				break;
 			}
-			mBaseLevel = 0;
-			mCurrentDecideLevel = 0;
-			mUnsatClause = finalizeBacktrack();
+			mDecideStack.remove(mDecideStack.size() - 1);
+			backtrackLiteral(top);
+			if (top.getAtom().isAssumption()) {
+				top.getAtom().unassume();
+			}
 		}
+		mBaseLevel = 0;
+		mCurrentDecideLevel = 0;
+		mUnsatClause = finalizeBacktrack();
 	}
 
 	/**
@@ -1914,17 +1918,16 @@ public class DPLLEngine {
 			lit.getAtom().assume();
 			increaseDecideLevel();
 			final Clause conflict = setLiteral(lit);
+			mBaseLevel = mCurrentDecideLevel;
 			if (conflict != null) {
 				mLogger.debug("Conflict when setting literal");
-				mBaseLevel = mCurrentDecideLevel;
 				mUnsatClause = explainConflict(conflict);
 				checkValidUnsatClause();
 				finalizeBacktrack();
 				return false;
 			}
-			mLogger.debug("Setting base level to %d", mCurrentDecideLevel);
-			mBaseLevel = mCurrentDecideLevel;
 		}
+		mLogger.debug("Setting base level to %d", mCurrentDecideLevel);
 		return true;
 	}
 

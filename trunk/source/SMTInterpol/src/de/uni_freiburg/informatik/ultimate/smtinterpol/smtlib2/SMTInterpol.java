@@ -653,16 +653,19 @@ public class SMTInterpol extends NoopScript {
 		if (Config.STRONG_USAGE_CHECKS && !new CheckClosedTerm().isClosed(term)) {
 			throw new SMTLIBException("Asserted terms must be closed");
 		}
-		if (mAssertions != null) {
-			mAssertions.add(term);
-		}
-		if (mEngine.inconsistent()) {
-			mLogger.info("Asserting into inconsistent context");
-			return LBool.UNSAT;
-		}
 		try {
 			modifyAssertionStack();
+			if (mEngine.inconsistent()) {
+				mLogger.info("Asserting into inconsistent context");
+				if (mAssertions != null) {
+					mAssertions.add(term);
+				}
+				return LBool.UNSAT;
+			}
 			mClausifier.addFormula(term);
+			if (mAssertions != null) {
+				mAssertions.add(term);
+			}
 			/*
 			 * We always have to reset the flag, but only need to set the stack level if it is not already set.
 			 */
@@ -676,20 +679,14 @@ public class SMTInterpol extends NoopScript {
 					return LBool.UNSAT;
 				}
 			}
-		} catch (final SMTLIBException ex) {
-			mAssertions.remove(mAssertions.size());
-			throw ex;
 		} catch (final UnsupportedOperationException ex) {
-			mAssertions.remove(mAssertions.size());
 			throw new SMTLIBException(ex.getMessage());
 		} catch (final RuntimeException exc) {
-			mAssertions.remove(mAssertions.size());
 			if (mDDFriendly) {
 				System.exit(7);// NOCHECKSTYLE
 			}
 			throw exc;
 		} catch (final AssertionError exc) {
-			mAssertions.remove(mAssertions.size());
 			if (mDDFriendly) {
 				System.exit(7);// NOCHECKSTYLE
 			}
