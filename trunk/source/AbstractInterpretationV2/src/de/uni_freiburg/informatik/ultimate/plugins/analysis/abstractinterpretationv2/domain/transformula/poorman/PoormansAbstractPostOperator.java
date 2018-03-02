@@ -34,17 +34,31 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieSymbolTableVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -64,6 +78,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING>>
 		implements IAbstractPostOperator<PoormanAbstractState<BACKING>, IcfgEdge> {
 
+	private static final boolean DEBUG_QUANTIFIERS = false;
+
 	private final IAbstractDomain<BACKING, IcfgEdge> mBackingDomain;
 	private final Boogie2SMT mBoogie2Smt;
 	private final ManagedScript mManagedScript;
@@ -71,6 +87,9 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final Boogie2SmtSymbolTableTmpVars mBoogie2SmtSymbolTable;
 	private final Map<UnmodifiableTransFormula, PoormanCachedPostOperation<BACKING>> mCachedTransformulaOperations;
+	private final IIcfgSymbolTable mIcfgSymbolTable;
+	private final ILogger mLogger;
+	private final boolean mUseStrongman;
 
 	protected PoormansAbstractPostOperator(final IUltimateServiceProvider services, final IIcfg<?> root,
 			final IAbstractDomain<BACKING, IcfgEdge> backingDomain,
@@ -82,14 +101,52 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		assert variableProvider instanceof Boogie2SmtSymbolTableTmpVars;
 		mBoogie2SmtSymbolTable = (Boogie2SmtSymbolTableTmpVars) variableProvider;
 		mManagedScript = boogieIcfgContainer.getCfgSmtToolkit().getManagedScript();
+		mIcfgSymbolTable = root.getCfgSmtToolkit().getSymbolTable();
 		mBackingDomain = backingDomain;
 		mCachedTransformulaOperations = new HashMap<>();
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mUseStrongman = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(PoormanDomainPreferences.LABEL_USE_STRONGMAN);
 	}
 
 	@Override
 	public List<PoormanAbstractState<BACKING>> apply(final PoormanAbstractState<BACKING> oldstate,
 			final IcfgEdge transition) {
+		if (mUseStrongman) {
+			return applySPPost(oldstate, transition);
+		}
 		return applyPost(oldstate, transition.getTransformula());
+	}
+
+	private List<PoormanAbstractState<BACKING>> applySPPost(final PoormanAbstractState<BACKING> oldstate,
+			final IcfgEdge transition) {
+		final PredicateTransformer<Term, IPredicate, TransFormula> predicateTransformer =
+				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
+
+		final Term stateAsTerm = oldstate.getTerm(mManagedScript.getScript());
+		final BasicPredicateFactory pf = new BasicPredicateFactory(mServices, mManagedScript, mIcfgSymbolTable,
+				SimplificationTechnique.SIMPLIFY_QUICK, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final IPredicate predFromState = pf.newPredicate(stateAsTerm);
+		final Term spTerm = predicateTransformer.strongestPostcondition(predFromState, transition.getTransformula());
+		final Term spNoQuantTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript,
+				spTerm, SimplificationTechnique.SIMPLIFY_QUICK,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		if (DEBUG_QUANTIFIERS) {
+			final TermClassifier tc = new TermClassifier();
+			tc.checkTerm(spNoQuantTerm);
+			if (!tc.getOccuringQuantifiers().isEmpty()) {
+				mLogger.info("Could not eliminate quantifiers: " + spNoQuantTerm);
+			}
+		}
+
+		final IPredicate spPred = pf.newPredicate(spNoQuantTerm);
+		final BACKING emptyTopState = mBackingDomain.createTopState();
+		final BACKING fullTopState = emptyTopState.addVariables(oldstate.getVariables());
+		final UnmodifiableTransFormula spTransformula =
+				TransFormulaBuilder.constructTransFormulaFromPredicate(spPred, mManagedScript);
+		final PoormanAbstractState<BACKING> pmFullTopState =
+				new PoormanAbstractState<>(mServices, mBackingDomain, fullTopState);
+		return applyPost(pmFullTopState, spTransformula);
 	}
 
 	@Override
@@ -169,11 +226,10 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 	private PoormanCachedPostOperation<BACKING> getCachedOperation(final UnmodifiableTransFormula transformula) {
 		if (mCachedTransformulaOperations.containsKey(transformula)) {
 			return mCachedTransformulaOperations.get(transformula);
-		} else {
-			final PoormanCachedPostOperation<BACKING> cachedOperation = new PoormanCachedPostOperation<>(transformula,
-					mServices, mBoogie2Smt, mManagedScript, mBoogie2SmtSymbolTable, mCodeBlockFactory, mBackingDomain);
-			mCachedTransformulaOperations.put(transformula, cachedOperation);
-			return cachedOperation;
 		}
+		final PoormanCachedPostOperation<BACKING> cachedOperation = new PoormanCachedPostOperation<>(transformula,
+				mServices, mBoogie2Smt, mManagedScript, mBoogie2SmtSymbolTable, mCodeBlockFactory, mBackingDomain);
+		mCachedTransformulaOperations.put(transformula, cachedOperation);
+		return cachedOperation;
 	}
 }
