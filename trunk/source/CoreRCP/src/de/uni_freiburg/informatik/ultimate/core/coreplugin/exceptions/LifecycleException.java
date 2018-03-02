@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class LivecycleException extends RuntimeException {
+public class LifecycleException extends RuntimeException {
 
 	private static final long serialVersionUID = -6577471260294280323L;
 
-	public LivecycleException(String arg0) {
+	public LifecycleException(String arg0) {
 		super(arg0);
 	}
 

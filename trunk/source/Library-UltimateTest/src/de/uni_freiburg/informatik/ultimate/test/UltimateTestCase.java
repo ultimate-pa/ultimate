@@ -30,7 +30,7 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IStatus;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LivecycleException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LifecycleException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
@@ -133,10 +133,10 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 				result = TestResult.FAIL;
 			}
 
-		} catch (final LivecycleException lex) {
+		} catch (final LifecycleException lex) {
 			// if this happens, mStarter, mLogger, etc. are not initialized
 			th = lex;
-			result = mDecider.getTestResult(null, lex);
+			result = TestResult.FAIL;
 			lex.printStackTrace();
 			livecycleFailure = true;
 		} catch (final Throwable e) {
