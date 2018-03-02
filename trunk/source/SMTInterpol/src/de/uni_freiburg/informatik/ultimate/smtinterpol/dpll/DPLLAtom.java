@@ -68,7 +68,6 @@ public abstract class DPLLAtom extends Literal {
 	Clause.WatchList mBacktrackWatchers = new Clause.WatchList();
 	int mAtomQueueIndex = -1;
 	final int mAssertionstacklevel;
-	private boolean mAssumption;
 
 	public DPLLAtom(int hash, int assertionstacklevel) {
 		super(hash);
@@ -140,20 +139,4 @@ public abstract class DPLLAtom extends Literal {
 	public Literal getPreferredStatus() {
 		return mLastStatus;
 	}
-
-	public void assume() {
-		mAssumption = true;
-	}
-
-	public void unassume() {
-		mAssumption = false;
-	}
-	/**
-	 * Check if the decision status of this atom was assumed.
-	 * @return Was the decision status set by assumption?
-	 */
-	public boolean isAssumption() {
-		return mAssumption;
-	}
-	
 }

@@ -938,18 +938,21 @@ public class Interpolator extends NonRecursive {
 	Occurrence getOccurrence(final Term term) {
 		if (term instanceof ConstantTerm) {
 			return mFullOccurrence;
-		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()) {
-			final Term[] subTerms = ((ApplicationTerm) term).getParameters();
-			Occurrence result = mFullOccurrence;
-			for (final Term p : subTerms) {
-				final Occurrence occ = getOccurrence(p);
-				result = result.intersect(occ);
-			}
-			return result;
 		}
 		Occurrence result = mSymbolPartition.get(term);
 		if (result == null) {
-			result = new Occurrence();
+			if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().isIntern()) {
+				final Term[] subTerms = ((ApplicationTerm) term).getParameters();
+				result = mFullOccurrence;
+				if (subTerms.length == 0)
+					return result;
+				for (final Term p : subTerms) {
+					final Occurrence occ = getOccurrence(p);
+					result = result.intersect(occ);
+				}
+			} else {
+				result = new Occurrence();
+			}
 			mSymbolPartition.put(term, result);
 		}
 		return result;
