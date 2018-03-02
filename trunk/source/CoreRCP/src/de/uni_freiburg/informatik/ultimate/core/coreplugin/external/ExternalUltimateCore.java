@@ -28,17 +28,20 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.external;
 
 import java.io.File;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LivecycleException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.LifecycleException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 
@@ -91,7 +94,25 @@ public class ExternalUltimateCore {
 		final Thread thread = new Thread(runnable, "ActualUltimateInstance");
 
 		thread.start();
-		mStarterContinue.acquireUninterruptibly();
+		// Try to acquire for 10 seconds, just to make sure everything is there.
+		if (!mStarterContinue.tryAcquire(10, TimeUnit.SECONDS)) {
+			final IPreferenceProvider prefs = mCurrentUltimateInstance.getPreferenceProvider(Activator.PLUGIN_ID);
+			if (prefs == null) {
+				throw new LifecycleException("Could not initialize preferences in given time frame.");
+			}
+
+			final long timeout = prefs.getLong(CorePreferenceInitializer.LABEL_TIMEOUT);
+
+			if (!mStarterContinue.tryAcquire(timeout, TimeUnit.MILLISECONDS)) {
+				// mCurrentUltimateInstance.cancelToolchain();
+				// Die after 5 seconds definitely
+				if (!mStarterContinue.tryAcquire(5, TimeUnit.SECONDS)) {
+					throw new LifecycleException("Timeout elapsed but Ultimate did not shut down.");
+				}
+			}
+		}
+
+		// mStarterContinue.acquireUninterruptibly();
 		if (mUltimateThrowable != null) {
 			throw mUltimateThrowable;
 		}
@@ -165,7 +186,7 @@ public class ExternalUltimateCore {
 
 			if (!mReachedInit) {
 				if (mUltimateThrowable == null) {
-					mUltimateThrowable = new LivecycleException(
+					mUltimateThrowable = new LifecycleException(
 							"Ultimate terminated before calling init(...) on ExternalUltimateCore");
 				}
 				mStarterContinue.release();
