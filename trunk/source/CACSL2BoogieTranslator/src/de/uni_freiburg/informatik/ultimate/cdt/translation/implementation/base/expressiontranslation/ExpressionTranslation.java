@@ -128,7 +128,7 @@ public abstract class ExpressionTranslation {
 		}
 		case IASTLiteralExpression.lk_char_constant: {
 			final BigInteger integerValue = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
+			final CPrimitive charType = new CPrimitive(CPrimitives.UCHAR);
 			final Expression literal = constructLiteralForIntegerType(loc, charType, integerValue);
 			return new ExpressionResult(new RValue(literal, charType));
 		}
