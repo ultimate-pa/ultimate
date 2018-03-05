@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTrack
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -197,21 +199,19 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			mMgdScript.unlock(this);
 
 			// make sure the literals are all treated as pairwise unequal
-			equalityProvider.announceAdditionalLiterals(freezeVarTofreezeVarLit.values());
+			final Collection<IProgramConst> freezeVarLits = freezeVarTofreezeVarLit.values();
+			final Set<ConstantTerm> allConstantTerms = sifit.getAllConstantTerms();
+
+			equalityProvider.announceAdditionalLiterals(freezeVarLits);
 			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
-				mMgdScript.lock(this);
 
 				final Set<Term> literalTerms = new HashSet<>();
-				literalTerms.addAll(freezeVarTofreezeVarLit.values().stream()
+				literalTerms.addAll(freezeVarLits.stream()
 						.map(pvoc -> pvoc.getTerm())
 						.collect(Collectors.toList()));
-				literalTerms.addAll(sifit.getAllConstantTerms());
+				literalTerms.addAll(allConstantTerms);
 
-				final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
-						CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(
-								mMgdScript.getScript(), literalTerms));
-				mMgdScript.assertTerm(this, allLiteralDisequalities);
-				mMgdScript.unlock(this);
+				assertLiteralDisequalitiesIntoScript(literalTerms);
 			}
 
 			/*
@@ -266,19 +266,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					" location literals (each corresponds to one heap write)");
 
 			// make sure the literals are all treated as pairwise unequal
-			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
-			if (mSettings.isAssumeFreezeVarLitDisequalitiesAtInitEdges()) {
-				mMgdScript.lock(this);
+			final Set<IProgramConst> locLiterals = mauit.getLocationLiterals();
+			equalityProvider.announceAdditionalLiterals(locLiterals);
+			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
 
-				final Set<Term> literalTerms = mauit.getLocationLiterals().stream()
+				final Set<Term> literalTerms = locLiterals.stream()
 						.map(pvoc -> pvoc.getTerm())
 						.collect(Collectors.toSet());
-
-				final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
-						CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(
-								mMgdScript.getScript(), literalTerms));
-				mMgdScript.assertTerm(this, allLiteralDisequalities);
-				mMgdScript.unlock(this);
+				assertLiteralDisequalitiesIntoScript(literalTerms);
 			}
 
 			preprocessedIcfg = icfgWithMemlocUpdates;
@@ -357,6 +352,15 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 						mHeapArrays,
 						mStatistics);
 		mResultIcfg = heapSeparatingTransformer.getResult();
+	}
+
+	public void assertLiteralDisequalitiesIntoScript(final Set<Term> literalTerms) {
+		mMgdScript.lock(this);
+		final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
+				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(
+						mMgdScript.getScript(), literalTerms));
+		mMgdScript.assertTerm(this, allLiteralDisequalities);
+		mMgdScript.unlock(this);
 	}
 
 	private String getFreezeVarLitName(final IProgramNonOldVar freezeVar) {

@@ -129,7 +129,8 @@ public abstract class ExpressionTranslation {
 		}
 		case IASTLiteralExpression.lk_char_constant: {
 			final BigInteger integerValue = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
+			// According to C11 6.4.4.4.9 the type of character constants is unsigned char
+			final CPrimitive charType = new CPrimitive(CPrimitives.UCHAR);
 			final Expression literal = constructLiteralForIntegerType(loc, charType, integerValue);
 			return new ExpressionResult(new RValue(literal, charType));
 		}
