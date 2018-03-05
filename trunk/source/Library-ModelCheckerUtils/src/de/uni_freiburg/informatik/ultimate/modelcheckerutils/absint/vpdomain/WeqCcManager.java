@@ -81,7 +81,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final WeqSettings mSettings;
 
 	final boolean mDebug;
-	final boolean mSkipSolverChecks = false;
+	final boolean mSkipSolverChecks = true;
 
 	private final Set<NODE> mNonTheoryLiteralNodes;
 

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -93,6 +94,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private final IIcfg<INLOC> mOriginalIcfg;
 	private final BasicIcfg<OUTLOC> mResultIcfg;
 	private final IcfgEdgeFactory mEdgeFactory;
+	private final Collection<IPredicate> mAdditionalAxioms;
 	private boolean mIsFinished;
 
 	/**
@@ -113,6 +115,29 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	public TransformedIcfgBuilder(final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final ITransformulaTransformer transformer,
 			final IIcfg<INLOC> originalIcfg, final BasicIcfg<OUTLOC> resultIcfg) {
+		this(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg, Collections.emptySet());
+	}
+
+	/**
+	 * Constructor of {@link TransformedIcfgBuilder}.
+	 *
+	 * @param funLocFac
+	 *            A function that actually creates new locations.
+	 * @param backtranslationTracker
+	 *            A function that is used to track the dependencies between input and output {@link IIcfg}.
+	 * @param transformer
+	 *            The {@link ITransformulaTransformer} that is applied to transformulas of transitions of the input
+	 *            {@link IIcfg} before new transitions for the output {@link IIcfg} are created.
+	 * @param originalIcfg
+	 *            The input {@link IIcfg}.
+	 * @param resultIcfg
+	 *            The output {@link IIcfg}.
+	 * @param additionalAxioms axioms that are to be added to the resulting {@link IIcfg}
+	 */
+	public TransformedIcfgBuilder(final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final IBacktranslationTracker backtranslationTracker, final ITransformulaTransformer transformer,
+			final IIcfg<INLOC> originalIcfg, final BasicIcfg<OUTLOC> resultIcfg,
+			final Collection<IPredicate> additionalAxioms) {
 		mLocationFactory = Objects.requireNonNull(funLocFac);
 		mBacktranslationTracker = Objects.requireNonNull(backtranslationTracker);
 		mTransformer = Objects.requireNonNull(transformer);
@@ -123,6 +148,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		mNewVars = new HashSet<>();
 		mIsFinished = false;
 		mEdgeFactory = originalIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
+		mAdditionalAxioms = Objects.requireNonNull(additionalAxioms);
 	}
 
 	/**

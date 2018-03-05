@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.AxiomsAdderIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
@@ -17,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.CongruenceClosureSmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -26,30 +26,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityProvidingIntermediateState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
 
 	private IIcfg<OUTLOC> mResultIcfg;
-
-	private final Preprocessing mPreprocessing = Preprocessing.MEMLOC_ARRAY;
-//	private final Preprocessing mPreprocessing = Preprocessing.FREEZE_VARIABLES;
 
 	/**
 	 * The IProgramVarOrConsts that model the heap in our memory model.
@@ -108,10 +99,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 		// TODO: complete, make nicer..
 //		final List<String> heapArrayNames = Arrays.asList("#memory_int", "memory_$Pointer$");
-
 		mHeapArrays = originalIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals().stream()
 				.filter(pvoc -> pvoc.getGloballyUniqueId().startsWith(MEMORY)).collect(Collectors.toList());
-//				.filter(pvoc -> heapArrayNames.contains(pvoc.getGloballyUniqueId())).collect(Collectors.toList());
 
 		mLogger.info("HeapSepIcfgTransformer: Starting heap partitioning");
 		mLogger.info("To be partitioned heap arrays found " + mHeapArrays);
@@ -160,10 +149,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo;
 		final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar;
 		final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral;
-//		final Set<StoreIndexInfo> storeIndexInfos;
 		final IProgramNonOldVar memlocArrayInt;
 		final Sort memLocSort;
-		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
+		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
 			mLogger.info("starting freeze-var-style preprocessing");
 			/*
 			 * add the freeze var updates to each transition with an array update
@@ -171,7 +159,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			final StoreIndexFreezerIcfgTransformer<INLOC, OUTLOC> sifit =
 					new StoreIndexFreezerIcfgTransformer<>(mLogger, "icfg_with_uninitialized_freeze_vars",
 							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, mHeapArrays);
-			final IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
+			IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
 
 			storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
 			edgeToIndexToStoreIndexInfo = sifit.getEdgeToIndexToStoreIndexInfo();
@@ -194,30 +182,44 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 				final ApplicationTerm freezeVarLitTerm = (ApplicationTerm) mMgdScript.term(this, freezeVarLitName);
 
 				freezeVarTofreezeVarLit.put(freezeVar, new HeapSepProgramConst(freezeVarLitTerm));
-//						(IProgramConst) replacementVarFactory.getOrConstuctReplacementVar(null, false));
 			}
 			mMgdScript.unlock(this);
 
 			// make sure the literals are all treated as pairwise unequal
 			final Collection<IProgramConst> freezeVarLits = freezeVarTofreezeVarLit.values();
 			final Set<ConstantTerm> allConstantTerms = sifit.getAllConstantTerms();
-
-			equalityProvider.announceAdditionalLiterals(freezeVarLits);
-			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
-
-				final Set<Term> literalTerms = new HashSet<>();
+			final Set<Term> literalTerms = new HashSet<>();
 				literalTerms.addAll(freezeVarLits.stream()
 						.map(pvoc -> pvoc.getTerm())
 						.collect(Collectors.toList()));
 				literalTerms.addAll(allConstantTerms);
 
+
+			equalityProvider.announceAdditionalLiterals(freezeVarLits);
+			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
+				/*
+				 * TODO: this is something between non-elegant and highly problematic -- make the axiom-style solution
+				 * work!
+				 */
 				assertLiteralDisequalitiesIntoScript(literalTerms);
+			}
+
+			if (mSettings.isAddLiteralDisequalitiesAsAxioms()) {
+
+				final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
+						CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
+								literalTerms));
+
+				icfgWFreezeVarsUninitialized = new AxiomsAdderIcfgTransformer<>( mLogger,
+						"icfg_with_uninitialized_freeze_vars_and_literal_axioms", outLocationClass,
+						icfgWFreezeVarsUninitialized, outToOutLocFac, backtranslationTracker, allLiteralDisequalities)
+						.getResult();
 			}
 
 			/*
 			 * Add initialization code for each of the newly introduced freeze variables.
 			 * Each freeze variable is initialized to its corresponding freeze literal.
-//			 * Furthermore the valid-array (of the memory model) is assumed to be 1 at each freeze literal.
+			 * Furthermore the valid-array (of the memory model) is assumed to be 1 at each freeze literal.
 			 */
 			final FreezeVarInitializer<OUTLOC, OUTLOC> fvi = new FreezeVarInitializer<>(mLogger,
 					"icfg_with_initialized_freeze_vars", outLocationClass, icfgWFreezeVarsUninitialized, outToOutLocFac,
@@ -226,11 +228,10 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			preprocessedIcfg = icfgWFreezeVarsInitialized;
 
-//			storeIndexInfos = storeIndexInfoToFreezeVar.keySet();
 			storeIndexInfoToLocLiteral = null;
 			memlocArrayInt = null;
 		} else {
-			assert mPreprocessing == Preprocessing.MEMLOC_ARRAY;
+			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
 			mLogger.info("Heap separator: starting memloc-array-style preprocessing");
 
 			/**
@@ -254,10 +255,10 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 * the values the memloc array is set to are location literals, those are pairwise different by axiom
 			 */
 			final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
-					new MemlocArrayUpdaterIcfgTransformer<>(mLogger, "icfg_with_uninitialized_freeze_vars",
+					new MemlocArrayUpdaterIcfgTransformer<>(mLogger, "icfg_with_memloc_updates",
 							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, memlocArrayInt,
 							memLocSort, mHeapArrays);
-			final IIcfg<OUTLOC> icfgWithMemlocUpdates = mauit.getResult();
+			IIcfg<OUTLOC> icfgWithMemlocUpdates = mauit.getResult();
 
 			edgeToIndexToStoreIndexInfo = mauit.getEdgeToIndexToStoreIndexInfo();
 			storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
@@ -266,21 +267,35 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					" location literals (each corresponds to one heap write)");
 
 			// make sure the literals are all treated as pairwise unequal
-			final Set<IProgramConst> locLiterals = mauit.getLocationLiterals();
-			equalityProvider.announceAdditionalLiterals(locLiterals);
-			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
+			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
 
-				final Set<Term> literalTerms = locLiterals.stream()
+			final Set<Term> literalTerms = mauit.getLocationLiterals().stream()
 						.map(pvoc -> pvoc.getTerm())
 						.collect(Collectors.toSet());
+			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
+				/*
+				 * TODO: this is somewhere between inelegant and highly problematic -- make the axiom-style solution
+				 * work!
+				 */
 				assertLiteralDisequalitiesIntoScript(literalTerms);
+			}
+			if (mSettings.isAddLiteralDisequalitiesAsAxioms()) {
+
+				final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
+						CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
+								literalTerms));
+
+				icfgWithMemlocUpdates = new AxiomsAdderIcfgTransformer<>( mLogger,
+						"icfg_with_memloc_updates_and_literal_axioms", outLocationClass,
+						icfgWithMemlocUpdates, outToOutLocFac, backtranslationTracker, allLiteralDisequalities)
+						.getResult();
 			}
 
 			preprocessedIcfg = icfgWithMemlocUpdates;
 			storeIndexInfoToFreezeVar = null;
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
-		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
+		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
 			mLogger.debug("storeIndexInfoToFreezeVar: " + DataStructureUtils.prettyPrint(storeIndexInfoToFreezeVar));
 		} else {
 			mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
@@ -308,34 +323,24 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup = heapSepPreanalysis.getArrayToArrayGroup();
 
-		final PartitionManager partitionManager;
-		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
-			partitionManager = new PartitionManager(mLogger, arrayToArrayGroup, storeIndexInfoToFreezeVar, mHeapArrays,
-					mStatistics, mMgdScript);
+		final HeapPartitionManager partitionManager;
+		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
+			partitionManager = new HeapPartitionManager(mLogger, arrayToArrayGroup, storeIndexInfoToFreezeVar,
+					mHeapArrays, mStatistics, mMgdScript);
 		} else {
-			assert mPreprocessing == Preprocessing.MEMLOC_ARRAY;
-			partitionManager = new PartitionManager(mLogger, mMgdScript, arrayToArrayGroup,
-//					edgeToIndexToStoreIndexInfo.values().collect(Collectors.toSet()),
-					mHeapArrays, mStatistics, memlocArrayInt,
-					storeIndexInfoToLocLiteral);
+			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
+			partitionManager = new HeapPartitionManager(mLogger, mMgdScript, arrayToArrayGroup, mHeapArrays,
+					mStatistics, memlocArrayInt, storeIndexInfoToLocLiteral);
 		}
 
 		/*
 		 * 3b. compute an array partitioning
 		 */
-//		if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
-			for (final SelectInfo si : heapSepPreanalysis.getSelectInfos()) {
-				partitionManager.processSelect(si, getEqualityProvidingIntermediateState(si.getEdgeInfo(),
-						equalityProvider));
-			}
-			partitionManager.finish();
-
-//		} else {
-//			// TODO
-//			throw new AssertionError();
-//		}
-
-
+		for (final SelectInfo si : heapSepPreanalysis.getSelectInfos()) {
+			partitionManager.processSelect(si, getEqualityProvidingIntermediateState(si.getEdgeInfo(),
+					equalityProvider));
+		}
+		partitionManager.finish();
 
 
 		/*
@@ -406,388 +411,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 }
 
-class PartitionManager {
-
-	// input
-	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
-
-//	// input
-//	private final Map<IProgramVar, StoreIndexInfo> mFreezeVarToStoreIndexInfo;
-	private final Map<StoreIndexInfo, IProgramNonOldVar> mStoreIndexInfoToFreezeVar;
-
-	// output
-	private final NestedMap2<SelectInfo, Integer, LocationBlock> mSelectInfoToDimensionToLocationBlock;
-
-	private final NestedMap2<ArrayGroup, Integer, UnionFind<StoreIndexInfo>>
-		mArrayGroupToDimensionToStoreIndexInfoPartition;
-
-	/**
-	 * maps a selectInfo to any one of the StoreIndexInfos that may be equal to the selectInfo
-	 */
-	NestedMap2<SelectInfo, Integer, StoreIndexInfo> mSelectInfoToDimensionToToSampleStoreIndexInfo;
-
-	private boolean mIsFinished = false;
-
-	private final List<IProgramVarOrConst> mHeapArrays;
-
-	private final ILogger mLogger;
-
-	/**
-	 * map for caching/unifying LocationBlocks
-	 */
-	private final NestedMap3<Set<StoreIndexInfo>, ArrayGroup, Integer, LocationBlock>
-		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock;
-
-	private final HeapSeparatorBenchmark mStatistics;
-
-	private final Set<StoreIndexInfo> mStoreIndexInfos;
-
-	private final Preprocessing mPreprocessing;
-
-	private final ManagedScript mMgdScript;
-
-	private final TermVariable mMemLocArrayTv;
-
-	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
-
-	/**
-	 * for freeze var style
-	 * @param logger
-	 * @param arrayToArrayGroup
-	 * @param storeIndexInfoToFreezeVar
-	 * @param heapArrays
-	 * @param statistics
-	 * @param mgdScript
-	 */
-	public PartitionManager(final ILogger logger, final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
-			final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar,
-			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
-			final ManagedScript mgdScript) {
-		mLogger = logger;
-		mMgdScript = mgdScript;
-		mArrayToArrayGroup = arrayToArrayGroup;
-		mStoreIndexInfos = storeIndexInfoToFreezeVar.keySet();
-		mStoreIndexInfoToFreezeVar = storeIndexInfoToFreezeVar;
-		mHeapArrays = heapArrays;
-		mStatistics = statistics;
-		mPreprocessing = Preprocessing.FREEZE_VARIABLES;
-
-		mMemLocArrayTv = null;
-		mStoreIndexInfoToLocLiteral = null;
-
-		mArrayGroupToDimensionToStoreIndexInfoPartition = new NestedMap2<>();
-		mSelectInfoToDimensionToLocationBlock = new NestedMap2<>();
-		mSelectInfoToDimensionToToSampleStoreIndexInfo = new NestedMap2<>();
-		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock = new NestedMap3<>();
-	}
-
-	/**
-	 * for memloc style
-	 * @param logger
-	 * @param arrayToArrayGroup
-	 * @param storeIndexInfos
-	 * @param heapArrays
-	 * @param statistics
-	 * @param memLocArray
-	 * @param storeIndexInfoToLocLiteral
-	 */
-	public PartitionManager(final ILogger logger, final ManagedScript mgdScript,
-			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
-			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
-			final IProgramVar memLocArray, final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral) {
-		mPreprocessing = Preprocessing.MEMLOC_ARRAY;
-		mMgdScript = mgdScript;
-
-		mLogger = logger;
-		mArrayToArrayGroup = arrayToArrayGroup;
-		mStoreIndexInfos = storeIndexInfoToLocLiteral.keySet();
-		mHeapArrays = heapArrays;
-		mStatistics = statistics;
-		mMemLocArrayTv = memLocArray.getTermVariable();
-		mStoreIndexInfoToLocLiteral = storeIndexInfoToLocLiteral;
-
-		mStoreIndexInfoToFreezeVar = null;
-
-
-		mArrayGroupToDimensionToStoreIndexInfoPartition = new NestedMap2<>();
-		mSelectInfoToDimensionToLocationBlock = new NestedMap2<>();
-		mSelectInfoToDimensionToToSampleStoreIndexInfo = new NestedMap2<>();
-		mStoreIndexInfosToArrayGroupToDimensionToLocationBlock = new NestedMap3<>();
-	}
-
-	/**
-	 * Merge all LocationBlocks (sets of StoreIndexInfos) that
-	 *  <li> may write to the same array as the given SelectInfo reads from
-	 *  <li> whose freezeVar may equal the SelectInfo's index at the SelectInfo's location (according to our equality
-	 * 		 analysis)
-	 *
-	 * @param selectInfo
-	 * @param eps
-	 * @param preprocessing
-	 */
-	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingIntermediateState eps) {
-		final HashRelation<Integer, StoreIndexInfo> dimensionToMayEqualStoreIndexInfos = new HashRelation<>();
-
-		final ArrayIndex selectIndex = selectInfo.getIndex();
-
-		for (final StoreIndexInfo sii : mStoreIndexInfos) {
-
-			final IProgramVar freezeVar;
-			final IProgramConst locLit;
-			if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
-				freezeVar = mStoreIndexInfoToFreezeVar.get(sii);
-				locLit = null;
-			} else {
-				freezeVar = null;
-				locLit = mStoreIndexInfoToLocLiteral.get(sii);
-			}
-
-			if (!sii.getArrays().contains(selectInfo.getArrayPvoc())) {
-				// arrays don't match (coarse check failed..)
-				continue;
-			}
-
-			for (int dim = 0; dim < selectIndex.size(); dim++) {
-
-				if (!sii.getArrayToAccessDimensions().containsPair(selectInfo.getArrayPvoc(), dim)) {
-					/*
-					 * not the right base-array/dimension combination --> continue
-					 *  (more detailed: the array write(s) that the storeIndexInfo represents are not to the array that
-					 *   the SelectInfo reads or not to the current dimension dim that the current element of the
-					 *   SelectInfo's index tuple refers to)
-					 */
-					continue;
-				}
-				final Term selectIndexNormalized = selectInfo.getNormalizedArrayIndex(dim);
-
-				if (mPreprocessing == Preprocessing.FREEZE_VARIABLES) {
-					if (eps.areUnequal(selectIndexNormalized, freezeVar.getTerm())) {
-						// nothing to do
-					} else {
-						// select index and freezeVar may be equal at this location
-						dimensionToMayEqualStoreIndexInfos.addPair(dim, sii);
-					}
-				} else {
-					// aliasing question to ask: memloc[selectIndex] (mayequal) locLiteral_sii
-					final Term memlocSelect = SmtUtils.select(mMgdScript.getScript(), mMemLocArrayTv,
-							selectIndexNormalized);
-					if (eps.areUnequal(memlocSelect, locLit.getTerm())) {
-						// nothing to do
-					} else {
-						// select index and freezeVar may be equal at this location
-						dimensionToMayEqualStoreIndexInfos.addPair(dim, sii);
-					}
-				}
-			}
-		}
-
-
-		for (int dim = 0; dim < selectIndex.size(); dim++) {
-			final Set<StoreIndexInfo> mayEqualStoreIndexInfos = dimensionToMayEqualStoreIndexInfos.getImage(dim);
-
-
-			if (mayEqualStoreIndexInfos.size() == 0) {
-				/* there is no array write/StoreIndexInfo that has a data flow to this array read/SelectInfo
-				 *  --> this is a special case, we can replace the array that is read here with an uninitialized array
-				 *    of the correct sort
-				 */
-				final NoStoreIndexInfo nsii = new NoStoreIndexInfo();
-				createPartitionAndBlockIfNecessary(selectInfo, dim, nsii);
-				mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, nsii);
-				continue;
-			}
-
-			final StoreIndexInfo sample = mayEqualStoreIndexInfos.iterator().next();
-
-			mSelectInfoToDimensionToToSampleStoreIndexInfo.put(selectInfo, dim, sample);
-
-			createPartitionAndBlockIfNecessary(selectInfo, dim, sample);
-
-			for (final StoreIndexInfo sii : mayEqualStoreIndexInfos) {
-				if (sii == sample) {
-					// no need to merge sii with itself
-					continue;
-				}
-				mLogger.debug("merging partition blocks for array " + selectInfo.getArrayPvoc() + " :");
-				mLogger.debug("\t" + sii);
-				mLogger.debug("\t and");
-				mLogger.debug("\t" + sample);
-				mLogger.debug("\t because of possible aliasing at dimension " + dim);
-				mLogger.debug("\t at array read " + selectInfo + ".");
-				mergeBlocks(selectInfo, dim, sii, sample);
-			}
-//			}
-		}
-	}
-
-	private void createPartitionAndBlockIfNecessary(final SelectInfo selectInfo, final int dim, final StoreIndexInfo sample) {
-		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
-		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
-
-		UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
-		if (partition == null) {
-			partition = new UnionFind<>();
-			mArrayGroupToDimensionToStoreIndexInfoPartition.put(arrayGroup, dim, partition);
-		}
-		partition.findAndConstructEquivalenceClassIfNeeded(sample);
-	}
-
-	private void mergeBlocks(final SelectInfo selectInfo, final int dim, final StoreIndexInfo sii1,
-			final StoreIndexInfo sii2) {
-		final IProgramVarOrConst array = selectInfo.getArrayPvoc();
-		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
-
-		final UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
-		if (partition == null) {
-			throw new AssertionError("should have been created in createBlockIfNecessary");
-		}
-
-		partition.findAndConstructEquivalenceClassIfNeeded(sii1);
-		partition.findAndConstructEquivalenceClassIfNeeded(sii2);
-		partition.union(sii1, sii2);
-	}
-
-	public void finish() {
-
-//		final Map<ArrayGroup, Integer> heapArrayGroupToReadCount = new HashMap<>();
-//		for (final SelectInfo selectInfo : mSelectInfoToDimensionToLocationBlock.keySet()) {
-//
-//			final ArrayGroup ag = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
-//
-//			Integer oldCount = heapArrayGroupToReadCount.get(ag);
-//			if (oldCount == null) {
-//				oldCount = 0;
-//				heapArrayGroupToReadCount.put(ag, oldCount);
-//			}
-//			heapArrayGroupToReadCount.put(ag, oldCount + 1);
-//		}
-//		for (final Entry<ArrayGroup, Integer> en : heapArrayGroupToReadCount.entrySet()) {
-//			mLogger.info("Number of read from array group " + en.getKey() + " : " + en.getValue());
-//			mStatistics.registerPerArrayInfo(en.getKey(), HeapSeparatorStatistics.COUNT_ARRAY_READS, en.getValue());
-//		}
-
-		/*
-		 * rewrite the collected information into our output format
-		 */
-		for (final Triple<SelectInfo, Integer, StoreIndexInfo> en :
-				mSelectInfoToDimensionToToSampleStoreIndexInfo.entrySet()) {
-
-			final StoreIndexInfo sampleSii = en.getThird();
-
-			final SelectInfo selectInfo = en.getFirst();
-			final Integer dim = en.getSecond();
-
-			final ArrayGroup arrayGroup = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
-
-			final UnionFind<StoreIndexInfo> partition =
-					mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
-			final Set<StoreIndexInfo> eqc = partition.getEquivalenceClassMembers(sampleSii);
-
-			final LocationBlock locationBlock = getOrConstructLocationBlock(eqc, arrayGroup, dim);
-			mSelectInfoToDimensionToLocationBlock.put(selectInfo, dim, locationBlock);
-			mLogger.debug("adding LocationBlock " + locationBlock);
-			mLogger.debug("\t at dimension " + dim + " for " + selectInfo);
-			mLogger.debug("\t write locations: " + locationBlock.getLocations());
-
-		}
-
-
-		mLogger.info("partitioning result:");
-		for (final ArrayGroup arrayGroup : mArrayToArrayGroup.values()) {
-
-			mStatistics.registerArrayGroup(arrayGroup);
-
-			mLogger.info("\t location blocks for array group " + arrayGroup);
-
-			for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
-				final UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
-				final int noWrites = partition == null ? 0 : partition.getAllElements().size();
-//						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size();
-
-				final int noBlocks = partition == null ? 0 : partition.getAllEquivalenceClasses().size();
-//						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses()
-//						.size();
-				mLogger.info("\t at dimension " + dim);
-				mLogger.info("\t # array writes (possibly including 1 dummy write/NoStoreIndexInfo) : " + noWrites);
-				mLogger.info("\t # location blocks :" + noBlocks);
-
-				mStatistics.registerPerArrayAndDimensionInfo(arrayGroup, dim,
-						HeapSeparatorStatistics.COUNT_ARRAY_WRITES, noWrites);
-				mStatistics.registerPerArrayAndDimensionInfo(arrayGroup, dim,
-						HeapSeparatorStatistics.COUNT_BLOCKS, noBlocks);
-
-				mLogger.debug("\t location block contents:");
-				if (mLogger.isDebugEnabled() && partition != null) {
-					for (final Set<StoreIndexInfo> eqc : partition.getAllEquivalenceClasses()) {
-						mLogger.debug("\t\t " + eqc);
-					}
-				}
-			}
-		}
-
-		mIsFinished = true;
-		assert sanityCheck();
-	}
-
-	private LocationBlock getOrConstructLocationBlock(final Set<StoreIndexInfo> eqc, final ArrayGroup arrayGroup,
-			final Integer dim) {
-		LocationBlock result = mStoreIndexInfosToArrayGroupToDimensionToLocationBlock.get(eqc, arrayGroup, dim);
-		if (result == null) {
-			result = new LocationBlock(eqc, arrayGroup, dim);
-			mStoreIndexInfosToArrayGroupToDimensionToLocationBlock.put(eqc, arrayGroup, dim, result);
-
-			mLogger.debug("creating LocationBlock " + result);
-			mLogger.debug("\t with contents " + result.getLocations());
-
-		}
-		return result;
-	}
-
-	private boolean assertWritesAreToReadArray(final Set<StoreIndexInfo> eqc, final SelectInfo selectInfo) {
-		for (final StoreIndexInfo sii : eqc) {
-			if (sii instanceof NoStoreIndexInfo) {
-				continue;
-			}
-			if (!sii.getArrays().contains(selectInfo.getArrayPvoc())) {
-				assert false;
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private boolean sanityCheck() {
-		/*
-		 * each location block in the image of a selectInfo must only contain StoreIndexInfos that refer to the same
-		 *  array
-		 * (a write cannot influence a read if it is to a different array)
-		 */
-		for (final Triple<SelectInfo, Integer, LocationBlock> en : mSelectInfoToDimensionToLocationBlock.entrySet()) {
-			assert assertWritesAreToReadArray(en.getThird().getLocations(), en.getFirst());
-
-			if (!en.getSecond().equals(en.getThird().getDimension())) {
-				assert false;
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public NestedMap2<SelectInfo, Integer, LocationBlock> getSelectInfoToDimensionToLocationBlock() {
-		if (!mIsFinished) {
-			throw new AssertionError();
-		}
-		return mSelectInfoToDimensionToLocationBlock;
-	}
-
-	public LocationBlock getLocationBlock(final SelectInfo si, final Integer dim) {
-		if (!mIsFinished) {
-			throw new AssertionError();
-		}
-		return mSelectInfoToDimensionToLocationBlock.get(si, dim);
-	}
-}
-
 enum Preprocessing {
 	FREEZE_VARIABLES, MEMLOC_ARRAY;
 }
@@ -806,8 +429,14 @@ class HeapSepSettings {
 	private final Preprocessing mPreprocessing = Preprocessing.MEMLOC_ARRAY;
 //	private final Preprocessing mPreprocessing = Preprocessing.FREEZE_VARIABLES;
 
+	private final boolean mAddLiteralDisequalitiesAsAxioms = false;
+
 	public boolean isAssumeFreezeVarLitDisequalitiesAtInitEdges() {
 		return mAssumeFreezeVarLitDisequalitiesAtInitEdges;
+	}
+
+	public boolean isAddLiteralDisequalitiesAsAxioms() {
+		return mAddLiteralDisequalitiesAsAxioms;
 	}
 
 	public boolean isAssertFreezeVarLitDisequalitiesIntoScript() {
