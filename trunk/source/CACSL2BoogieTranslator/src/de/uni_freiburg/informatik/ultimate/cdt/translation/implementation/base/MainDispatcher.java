@@ -316,25 +316,8 @@ public class MainDispatcher extends Dispatcher {
 			return true;
 		}
 		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
-		return true;
-		//return mReachableDeclarations.contains(decl);
-		/*if (!mReachableDeclarations.containsKey(decl.getContainingFilename())) {
-			// Nothing is reachable in this file.
-			return false;
-		}
-		if (decl instanceof IASTSimpleDeclaration) {
-			// Rule of thumb: If any of the declarators is reachable, return true for all.
-			final Set<String> reachableNames = mReachableDeclarations.get(decl.getContainingFilename());
-			final IASTDeclarator[] decls = ((IASTSimpleDeclaration) decl).getDeclarators();
-			return java.util.Arrays.stream(decls).map(x -> x.getName().toString()).filter(reachableNames::contains)
-					.findAny().isPresent();
-		} else if (decl instanceof IASTFunctionDefinition) {
-			// Check if the function is reachable.
-			return mReachableDeclarations.get(decl.getContainingFilename())
-					.contains(((IASTFunctionDefinition) decl).getDeclarator().getName().toString());
-		} else {
-			throw new UnsupportedSyntaxException(null, "Invalid declaration type!");
-		}*/
+		//return true;
+		return mReachableDeclarations.contains(decl);
 	}
 
 	/**

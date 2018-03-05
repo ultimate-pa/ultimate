@@ -1523,6 +1523,7 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTFunctionDefinition node) {
 		if (!main.isReachable(node)) {
+			// Unreachable function declaration. Test for parent=TU skipped: Not necessary, right?
 			return new SkipResult();
 		}
 
@@ -1900,7 +1901,8 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTSimpleDeclaration node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-		if (!main.isReachable(node)) {
+		if (node.getParent() instanceof IASTTranslationUnit && !main.isReachable(node)) {
+			// Unreachable global declaration.
 			return new SkipResult();
 		}
 

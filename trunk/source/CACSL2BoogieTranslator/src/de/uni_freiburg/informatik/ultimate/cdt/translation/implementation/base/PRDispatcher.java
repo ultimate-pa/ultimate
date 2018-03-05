@@ -484,8 +484,8 @@ public class PRDispatcher extends Dispatcher {
 			return true;
 		}
 		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
-		return true;
-		// return mReachableDeclarations.contains(decl);
+		// return true;
+		return mReachableDeclarations.contains(decl);
 	}
 
 	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr,
