@@ -310,6 +310,9 @@ public class Check extends ModernAnnotations {
 		if (other == null) {
 			return this;
 		}
+		if (other == this) {
+			return this;
+		}
 		if (!(other instanceof Check)) {
 			throw new UnmergeableAnnotationsException(this, other);
 		}
