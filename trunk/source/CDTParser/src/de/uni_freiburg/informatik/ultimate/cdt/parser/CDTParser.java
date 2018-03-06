@@ -87,6 +87,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.GNUCSourceParser;
 import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFactory;
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
+import org.eclipse.cdt.utils.Platform;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -101,6 +102,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.content.IContentType;
+import org.eclipse.core.runtime.content.IContentTypeSettings;
 import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
@@ -492,6 +495,14 @@ public class CDTParser implements ISource {
 
 		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
 		project.open(null);
+		
+		final IContentType contentType = org.eclipse.core.runtime.Platform.getContentTypeManager().getContentType(
+				CCorePlugin.CONTENT_TYPE_CSOURCE);
+		try {
+			contentType.addFileSpec("i", IContentTypeSettings.FILE_EXTENSION_SPEC);
+		} catch (CoreException e) {
+			throw new IllegalStateException("Could not add .i to C extensions.", e);
+		}
 
 		CoreModel.getDefault().create(project)
 				.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(project.getFullPath()) }, NULL_MONITOR);
