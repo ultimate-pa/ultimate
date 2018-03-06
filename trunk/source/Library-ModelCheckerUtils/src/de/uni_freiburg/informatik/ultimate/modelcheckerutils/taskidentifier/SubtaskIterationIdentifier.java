@@ -27,22 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier;
 
 /**
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class SubtaskIterationIdentifier extends TaskIdentifier {
-	
+
 	private final int mIteration;
-	
-	
 
 	public SubtaskIterationIdentifier(final TaskIdentifier parentTaskIdentifier, final int iteration) {
 		super(parentTaskIdentifier);
 		mIteration = iteration;
 	}
-
-
 
 	@Override
 	protected String getSubtaskIdentifier() {
