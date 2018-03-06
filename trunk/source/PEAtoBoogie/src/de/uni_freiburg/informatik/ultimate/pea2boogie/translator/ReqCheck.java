@@ -27,7 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
@@ -121,6 +123,11 @@ public class ReqCheck extends Check {
 		final int endline = Math.max(mEndline, other.mEndline);
 		final PatternType[] reqs = DataStructureUtils.concat(mReqs, other.mReqs);
 		return new ReqCheck(newSpec, startline, endline, reqs, mInputFilename);
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + " for " + Arrays.stream(mReqs).map(a -> a.getId()).collect(Collectors.joining(", "));
 	}
 
 }
