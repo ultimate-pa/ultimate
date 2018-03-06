@@ -63,7 +63,6 @@ public class TypedefAndStructCollector extends ASTVisitor {
 			return super.visit(raw);
 		}
 		final IASTSimpleDeclaration sd = (IASTSimpleDeclaration) raw;
-		final CType type = TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier());
 		
 		// Typedef
 		if (sd.getDeclSpecifier().getStorageClass() == IASTDeclSpecifier.sc_typedef) {
@@ -71,6 +70,7 @@ public class TypedefAndStructCollector extends ASTVisitor {
 			assert sd.getDeclarators().length == 1 : "unexpected length of decltr array";
 			final String name = sd.getDeclarators()[0].getName().toString();
 			final String explName = mSymTab.applyMultiparseRenaming(sd.getContainingFilename(), name);
+			final CType type = TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier());
 			final CNamed container = new CNamed(explName, type);
 			final CDeclaration tdCdecl = new CDeclaration(container, explName);
 			final String bId = mSymTab.createBoogieId(raw.getParent(), sd, tdCdecl.getType(), false, explName);
@@ -91,6 +91,7 @@ public class TypedefAndStructCollector extends ASTVisitor {
 			}
 			final String cId = mSymTab.applyMultiparseRenaming(sd.getContainingFilename(), cspec.getName().toString());
 			final String bId = namePrefix + cId;
+			final CType type = TypeHelper.typeFromSpecifier(mSymTab, sd.getDeclSpecifier());
 			final CDeclaration cDecl = new CDeclaration(type, cId);
 			final DeclarationInformation dummyDeclInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			final SymbolTableValue stv = new SymbolTableValue(bId, null, cDecl, dummyDeclInfo, null, false);

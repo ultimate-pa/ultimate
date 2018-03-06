@@ -230,7 +230,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class MainDispatcher extends Dispatcher {
 
-	private static final boolean DETERMINIZE_NECESSARY_DECLARATIONS = true;
+	private static final boolean DETERMINIZE_NECESSARY_DECLARATIONS = false;
 
 	/**
 	 * The current decorator tree.
