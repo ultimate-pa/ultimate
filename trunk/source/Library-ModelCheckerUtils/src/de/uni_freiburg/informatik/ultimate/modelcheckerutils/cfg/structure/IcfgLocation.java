@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 
 /**
  * Node of an interprocedureal control flow graph.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.
  */
 public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge>
@@ -58,9 +58,7 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 	}
 
 	public IcfgLocation(final String debugIdentifier, final String procedure) {
-		super();
-		mProcedure = procedure;
-		mDebugIdentifier = debugIdentifier;
+		this(debugIdentifier, procedure, null);
 	}
 
 	@Override
