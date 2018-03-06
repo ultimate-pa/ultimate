@@ -189,7 +189,7 @@ public class SolverBuilder {
 	/**
 	 * Settings that define how a solver is build.
 	 */
-	public static class Settings {
+	public static final class Settings {
 
 		public Settings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
 				final String commandExternalSolver, final long timeoutSmtInterpol,

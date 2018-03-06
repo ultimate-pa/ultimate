@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -137,9 +138,10 @@ public class FreezeVarInitializer<INLOC extends IcfgLocation, OUTLOC extends Icf
 		ComputeInitializingTerm(final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit,
 				final IProgramVar validArray, final UnmodifiableTransFormula originalTransFormula,
 				final HeapSepSettings settings) {
-//			mOriginalTransFormula = originalTransFormula;
-			computeInitializingTerm(freezeVarTofreezeVarLit, validArray, originalTransFormula);
-			mSettings = settings;
+			mSettings = Objects.requireNonNull(settings);
+			computeInitializingTerm(Objects.requireNonNull(freezeVarTofreezeVarLit),
+					Objects.requireNonNull(validArray),
+					Objects.requireNonNull(originalTransFormula));
 		}
 
 		private void computeInitializingTerm(final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit,

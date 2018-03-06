@@ -55,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
  */
 public class Boogie2SMT {
 
-	private static final int HARDCODED_SERIALNUMBER_FOR_AXIOMS = 0;
+	public static final int HARDCODED_SERIALNUMBER_FOR_AXIOMS = 0;
+
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final ManagedScript mScript;
 

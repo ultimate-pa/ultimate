@@ -108,6 +108,9 @@ public class ReqCheck extends Check {
 		if (other == null) {
 			return this;
 		}
+		if (other == this) {
+			return this;
+		}
 		if (!other.mInputFilename.equals(mInputFilename)) {
 			throw new UnmergeableAnnotationsException(this, other);
 		}
