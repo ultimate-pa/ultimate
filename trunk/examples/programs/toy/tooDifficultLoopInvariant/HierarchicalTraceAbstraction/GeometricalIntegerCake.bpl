@@ -19,16 +19,20 @@
 
 procedure main()
 {
-  var cakeLeft, eat: int;
+  var cakeLeft, eat, init: int;
   
-  cakeLeft := 2000;
-  eat := 1000;
+  assume init >= 0;
   
-  while (*) {
+  cakeLeft := init;
+  eat := init / 2;
+  
+  while (*) 
+      invariant cakeLeft + eat >= init / 2 && eat >=0;
+  {
     eat := eat / 2;
     cakeLeft := cakeLeft - eat;
   }
 
-  assert (cakeLeft >= 500);
+  assert (cakeLeft >= init / 2);
 
 } 
