@@ -570,11 +570,15 @@ public class CfgBuilder {
 			} else {
 				throw new IllegalArgumentException();
 			}
-			final BoogieIcfgLocation errorLocNode =
-					new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
+			final BoogieIcfgLocation errorLocNode;
+
 			final Check check = Check.getAnnotation(boogieASTNode);
 			if (check != null) {
+				final String checkStr = check.toString().replaceAll(" ", "").replaceAll(",", "_");
+				errorLocNode = new BoogieIcfgLocation(errorLocLabel + checkStr, procName, true, boogieASTNode);
 				check.annotate(errorLocNode);
+			} else {
+				errorLocNode = new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
 			}
 			mProcLocNodes.put(errorLocLabel, errorLocNode);
 			errorNodes.add(errorLocNode);

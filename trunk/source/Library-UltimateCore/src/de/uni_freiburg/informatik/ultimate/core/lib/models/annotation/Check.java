@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -346,6 +347,11 @@ public class Check extends ModernAnnotations {
 			return one;
 		}
 		return (Check) one.merge(other);
+	}
+
+	@Override
+	public String toString() {
+		return mSpec.stream().map(a -> a.toString()).collect(Collectors.joining(MSG_AND));
 	}
 
 }

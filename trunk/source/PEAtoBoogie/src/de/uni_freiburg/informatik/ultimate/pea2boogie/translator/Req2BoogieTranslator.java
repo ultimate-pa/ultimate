@@ -709,13 +709,16 @@ public class Req2BoogieTranslator {
 		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, permutation);
 		final ReqLocation loc = new ReqLocation(check);
 		final AssertStatement assertSmt = new AssertStatement(loc, expr);
+		check.annotate(assertSmt);
 		return assertSmt;
 	}
 
 	private Statement genAssertConsistency(final BoogieLocation bl) {
 		final ReqCheck check = createReqCheck(Spec.CONSISTENCY, 0);
 		final ReqLocation loc = new ReqLocation(check);
-		return new AssertStatement(loc, new BooleanLiteral(bl, false));
+		final AssertStatement rtr = new AssertStatement(loc, new BooleanLiteral(bl, false));
+		check.annotate(rtr);
+		return rtr;
 	}
 
 	private ReqCheck createReqCheck(final Check.Spec reqSpec, final int... idx) {
@@ -774,7 +777,9 @@ public class Req2BoogieTranslator {
 		final Expression disjunction = genDisjunction(checkReached, bl);
 		final ReqCheck check = createReqCheck(Spec.VACUOUS, automatonIndex);
 		final ReqLocation loc = new ReqLocation(check);
-		return new AssertStatement(loc, disjunction);
+		final AssertStatement rtr = new AssertStatement(loc, disjunction);
+		check.annotate(rtr);
+		return rtr;
 	}
 
 	/**
