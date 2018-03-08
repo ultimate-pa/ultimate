@@ -35,12 +35,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * {@link IcfgLocation} of an ICFG that was obtained directly from a Boogie program
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.
  */
 
@@ -62,6 +63,7 @@ public class BoogieIcfgLocation extends IcfgLocation {
 		super(debugIdentifier, procedure);
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;
+		ModelUtils.copyAnnotations(boogieASTNode, this);
 		final ILocation loc = getLocationFromASTNode(boogieASTNode);
 		if (loc != null) {
 			loc.annotate(this);
