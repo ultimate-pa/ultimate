@@ -332,7 +332,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 * 3a.
 		 */
 		final HeapSepPreAnalysis heapSepPreanalysis = new HeapSepPreAnalysis(mLogger, mMgdScript, mHeapArrays,
-				mStatistics);
+				mStatistics, arrayToArrayGroup);
 		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> heapSepPreanalysis.processEdge(edge));
 		heapSepPreanalysis.finish();
 		mLogger.info("Finished pre analysis before partitioning");
@@ -515,8 +515,8 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final List<ArrayEqualityAllowStores> aeass =
 						ArrayEqualityAllowStores.extractArrayEqualityAllowStores(tf.getFormula());
 				for (final ArrayEqualityAllowStores aeas : aeass) {
-					final Term lhsArrayTerm = getArrayId(aeas.getLhsArray());
-					final Term rhsArrayTerm = getArrayId(aeas.getRhsArray());
+					final Term lhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getLhsArray());
+					final Term rhsArrayTerm = SmtUtils.getBasicArrayTerm(aeas.getRhsArray());
 					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsArrayTerm);
 					perTfArrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsArrayTerm);
 					perTfArrayPartition.union(lhsArrayTerm, rhsArrayTerm);
@@ -534,6 +534,7 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 							.map(term -> TransFormulaUtils.getProgramVarOrConstForTerm(tf, term))
 							.filter(pvoc -> pvoc != null)
 							.collect(Collectors.toSet());
+					eqcPvocs.forEach(globalArrayPartition::findAndConstructEquivalenceClassIfNeeded);
 					globalArrayPartition.union(eqcPvocs);
 				}
 			}
@@ -549,6 +550,11 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 			}
 
 			for (final ArrayGroup ag : arrayGroups) {
+				if (DataStructureUtils.intersection(new HashSet<>(heapArrays), ag.getArrays())
+						.isEmpty()) {
+					/* we are only interested in writes to heap arrays */
+					continue;
+				}
 				for (final IProgramVarOrConst a : ag.getArrays()) {
 					mArrayToArrayGroup.put(a, ag);
 				}
@@ -591,6 +597,13 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 				 * construct the StoreIndexInfos
 				 */
 				for (final StoreInfo store : StoreInfo.extractStores(tf.getFormula(), arrayTermToArrayGroup)) {
+
+					if (DataStructureUtils.intersection(new HashSet<>(heapArrays), store.getWrittenArray().getArrays())
+							.isEmpty()) {
+						/* we are only interested in writes to heap arrays */
+						continue;
+					}
+
 					final StoreIndexInfo storeIndexInfo = getOrConstructStoreIndexInfo(edgeInfo, store.getWriteIndex());
 					storeIndexInfo.addArrayAccessDimension(store.getWrittenArray(), store.getWrittenDimension());
 				}
@@ -619,15 +632,6 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 	public Map<IProgramVarOrConst, ArrayGroup> getArrayToArrayGroup() {
 		return Collections.unmodifiableMap(mArrayToArrayGroup);
-	}
-
-	private Term getArrayId(final Term lhs) {
-		assert lhs.getSort().isArraySort();
-		Term result = lhs;
-		while (SmtUtils.isFunctionApplication(result, "store")) {
-			result = ((ApplicationTerm) result).getParameters()[0];
-		}
-		return result;
 	}
 
 	/**
@@ -675,18 +679,29 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 				final Term arrayTerm = storeTerm.getParameters()[0];
 				final Term index = storeTerm.getParameters()[1];
 
-				Term arrayId = arrayTerm;
-				int dimensionOffset = 0;
-				while (SmtUtils.isFunctionApplication(arrayId, "store")) {
-					dimensionOffset ++;
-					arrayId = ((ApplicationTerm) arrayId).getParameters()[0];
-				}
+				final Term arrayId = SmtUtils.getBasicArrayTerm(arrayTerm);
 
-				final int writtenDimension = new MultiDimensionalSort(arrayId.getSort()).getDimension() - dimensionOffset;
+				/*
+				 * @formatter:off
+				 * Example:
+				 * 1 (store a i1
+				 * 2   (store (select a i1) i2
+				 * 3      (store (select (select a i1) i2) i3 v)))
+				 * Now say the current storeTerm is the one in line 3 and we want to know at wich dimension a is
+				 *  accessed by i3.
+				 * We compute (dimensonality of a) - (dimensionality of store3) = 3 - 1 = 2 .
+				 *  (so, by convention we count the access dimensions starting from 0)
+				 * @formatter:on
+				 */
+				final int writtenDimension = new MultiDimensionalSort(arrayId.getSort()).getDimension()
+						- new MultiDimensionalSort(storeTerm.getSort()).getDimension();
 
-				//			final IProgramVarOrConst arrayPvoc = TransFormulaUtils.getProgramVarOrConstForTerm(tf, arrayId);
 				final ArrayGroup arrayPvoc = termToArrayGroup.get(arrayId);
-				assert arrayPvoc != null;
+				if (arrayPvoc == null) {
+					// array is not tracked: do not make a StoreInfo for it
+					continue;
+				}
+//				assert arrayPvoc != null;
 
 				result.add(new StoreInfo(arrayPvoc, writtenDimension, index));
 			}

@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -437,7 +438,12 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		if (!term.getSort().isArraySort()) {
 			return false;
 		}
-		if (!mHeapArrays.contains(mEdgeInfo.getProgramVarOrConstForTerm(term))) {
+//		if (!mHeapArrays.contains(mEdgeInfo.getProgramVarOrConstForTerm(term))) {
+//		if (DataStructureUtils.intersection(new HashSet<>(mHeapArrays),
+//				mArrayToArrayGroup.get(mEdgeInfo.getProgramVarOrConstForTerm(term)).getArrays()).isEmpty()) {
+			// the given array term is not in an array group with one of the heap arrays
+		if (!mArrayToArrayGroup.containsKey(mEdgeInfo.getProgramVarOrConstForTerm(term))) {
+			// the given array term is not in an array group with one of the heap arrays
 			return false;
 		}
 
@@ -718,19 +724,6 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 			}
 		}
 
-
-//		mNewInVars = newInVars;
-//		mNewOutVars = newInVars;
-
-//		final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
-//		final List<List<LocationBlock>> locationBlockTuples =
-//				CrossProducts.crossProductOfSets(locationBlocks);
-//
-//
-//				for (final List<LocationBlock> lbt : locationBlockTuples) {
-//
-//
-
 		for (final Entry<IProgramVar, TermVariable> en : mNewInVars.entrySet()) {
 			if (mHeapArrays.contains(en.getKey())) {
 				throw new IllegalStateException();
@@ -746,8 +739,9 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	}
 
 	private List<List<LocationBlock>> getAllLocationBlockTuplesForHeapArray(final IProgramVarOrConst array) {
-		assert mHeapArrays.contains(array);
 		final ArrayGroup arrayGroup = mArrayToArrayGroup.get(array);
+		assert arrayGroup != null
+				&& !DataStructureUtils.intersection(new HashSet<>(mHeapArrays), arrayGroup.getArrays()).isEmpty();
 		final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
 		final List<List<LocationBlock>> locationBlockTuples = CrossProducts.crossProductOfSets(locationBlocks);
 		return locationBlockTuples;

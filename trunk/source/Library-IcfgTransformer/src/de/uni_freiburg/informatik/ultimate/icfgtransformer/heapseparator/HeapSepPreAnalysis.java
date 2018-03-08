@@ -88,25 +88,20 @@ public class HeapSepPreAnalysis {
 	 * @param logger
 	 * @param heapArrays
 	 * @param statistics
+	 * @param arrayToArrayGroup
 	 * @param equalityProvider
 	 */
 	public HeapSepPreAnalysis(final ILogger logger, final ManagedScript mgdScript,
-			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics) {
+			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
+			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup) {
 		mMgdScript = mgdScript;
-
 		mLogger = logger;
-
 		mStatistics = statistics;
-
 		mHeapArrays = heapArrays;
-
 		mEdgeToCellUpdates = new HashRelation<>();
-
 		mEdgeToArrayRelations = new HashRelation<>();
-
 		mSelectInfos = new HashSet<>();
-
-		mArrayToArrayGroup = new HashMap<>();
+		mArrayToArrayGroup = arrayToArrayGroup;
 	}
 
 	public void processEdge(final IcfgEdge edge) {
@@ -181,38 +176,6 @@ public class HeapSepPreAnalysis {
 	}
 
 	public void finish() {
-//		/*
-//		 * Compute the array groups. Rule: Whenever two arrays are related via "=" in any formula in the program, they
-//		 *  must be in the same array group.
-//		 */
-//		final UnionFind<IProgramVarOrConst> arrayPartition = new UnionFind<>();
-//
-//		// base line for the array groups: the heap arrays
-//		mHeapArrays.forEach(arrayPartition::findAndConstructEquivalenceClassIfNeeded);
-//
-//		for (final Entry<EdgeInfo, ArrayEqualityAllowStores> en : mEdgeToArrayRelations) {
-//			final EdgeInfo edgeInfo = en.getKey();
-//			final ArrayEqualityAllowStores aeas = en.getValue();
-//
-//
-//			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getLhsArray());
-//			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getRhsArray());
-//
-//			arrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsPvoc);
-//			arrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsPvoc);
-//			arrayPartition.union(lhsPvoc, rhsPvoc);
-//		}
-//		mArrayGroups = new HashSet<>();
-//		for (final Set<IProgramVarOrConst> block : arrayPartition.getAllEquivalenceClasses()) {
-//			mArrayGroups.add(new ArrayGroup(block));
-//		}
-//
-//		for (final ArrayGroup ag : mArrayGroups) {
-//			for (final IProgramVarOrConst a : ag.getArrays()) {
-//				mArrayToArrayGroup.put(a, ag);
-//			}
-//		}
-
 		/*
 		 * compute array read statistics
 		 */

@@ -99,6 +99,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 					.collect(Collectors.toList()));
 		}
 
+		if (mEdgeToIndexToStoreIndexInfo.get(edgeInfo) == null) {
+			// edge does not have any array writes --> return it unchanged
+			return tf;
+		}
+
 		/*
 		 * core business from here on..
 		 */

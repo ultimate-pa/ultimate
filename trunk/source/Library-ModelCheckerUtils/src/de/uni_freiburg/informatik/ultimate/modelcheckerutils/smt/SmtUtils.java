@@ -73,6 +73,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
+/**
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de) (methods added by me are marked specifically)
+ */
 public final class SmtUtils {
 
 	private static final String ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT = "unknown enum constant ";
@@ -1343,6 +1348,31 @@ public final class SmtUtils {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Takes a Term with array sort and unwraps all select and store terms until it hits the TermVariable or
+	 *  ConstantTerm that can no longer be unwrapped.
+	 * Examples:
+	 *  let a be an array variable, i1, i2, v some terms
+	 *  a returns a
+	 *  (store a i v) returns a
+	 *  (store (select a i1) i2 v) returns a
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 * @return the simple array term inside the given array term that is obtained by taking the first argument of
+	 * 	store and select terms exhaustively.
+	 */
+	public final static Term getBasicArrayTerm(final Term possiblyComplexArrayTerm) {
+		assert possiblyComplexArrayTerm.getSort().isArraySort();
+		Term result = possiblyComplexArrayTerm;
+		while (SmtUtils.isFunctionApplication(result, "store") || SmtUtils.isFunctionApplication(result, "select")) {
+			result = ((ApplicationTerm) result).getParameters()[0];
+		}
+		assert result.getSort().isArraySort();
+		assert result instanceof TermVariable || result instanceof ConstantTerm || isConstant(result);
+		return result;
 	}
 
 	/**

@@ -157,7 +157,7 @@ class HeapPartitionManager {
 				locLit = mStoreIndexInfoToLocLiteral.get(sii);
 			}
 
-			if (!sii.getArrays().contains(selectInfo.getArrayPvoc())) {
+			if (!sii.getArrays().contains(mArrayToArrayGroup.get(selectInfo.getArrayPvoc()))) {
 				// arrays don't match (coarse check failed..)
 				continue;
 			}
@@ -224,7 +224,9 @@ class HeapPartitionManager {
 					// no need to merge sii with itself
 					continue;
 				}
-				mLogger.debug("merging partition blocks for array " + selectInfo.getArrayPvoc() + " :");
+//				mLogger.debug("merging partition blocks for array " + selectInfo.getArrayPvoc() + " :");
+				mLogger.debug("merging partition blocks for array group" +
+							mArrayToArrayGroup.get(selectInfo.getArrayPvoc()) + " :");
 				mLogger.debug("\t" + sii);
 				mLogger.debug("\t and");
 				mLogger.debug("\t" + sample);
@@ -346,7 +348,7 @@ class HeapPartitionManager {
 			if (sii instanceof NoStoreIndexInfo) {
 				continue;
 			}
-			if (!sii.getArrays().contains(selectInfo.getArrayPvoc())) {
+			if (!sii.getArrays().contains(mArrayToArrayGroup.get(selectInfo.getArrayPvoc()))) {
 				assert false;
 				return false;
 			}
