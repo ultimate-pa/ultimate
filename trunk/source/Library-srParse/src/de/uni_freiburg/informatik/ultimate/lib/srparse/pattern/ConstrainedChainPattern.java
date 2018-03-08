@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
 public class ConstrainedChainPattern extends PatternType
 {
-	public void transform()
+	public void transform(Map<String, Integer> id2bounds)
 	{
 		CDD p_cdd = mCdds.get(0); 
 		CDD q_cdd = mScope.getCdd1(); 

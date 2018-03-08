@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeAfterUntil;
@@ -10,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeGlob;
 public class InstAbsPattern extends PatternType {
 	// erwartet cdds rückwärts
 	@Override
-	public void transform() {
+	public void transform(Map<String, Integer> id2bounds) {
 
 		// Case: GLOBALLY
 		if (mScope instanceof srParseScopeGlob) {

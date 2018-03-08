@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
 public class BndExistencePattern extends PatternType {
 	@Override
-	public void transform() {
+	public void transform(Map<String, Integer> id2bounds) {
 		final CDD p_cdd = mCdds.get(0);
 		final CDD q_cdd = mScope.getCdd1();
 		final CDD r_cdd = mScope.getCdd2();

@@ -147,12 +147,12 @@ terminal String NUMBER;
 /* Non-terminals */
 non terminal String propid;
 non terminal CDD expression, expr;
-non terminal String atom, cid;
+non terminal String atom, cid, duration;
 non terminal PatternType property;
 non terminal PatternType pattern, orderpattern, realtimepattern;
 non terminal srParseScope scope;
 non terminal PatternType[] patternset;
-non terminal Integer duration, num;
+non terminal Integer num;
 non terminal boolean bool;
 non terminal Expression exprImplies, exprImpliesNI, exprAnd, exprAndNI, exprOr, exprOrNI;
 non terminal Expression expr1NI, expr2NI, expr3NI, expr5NI; 
@@ -398,10 +398,12 @@ bool ::= TRUE {: RESULT = true; :}
 		|FALSE {: RESULT = false; :}
 		;
 		
-duration ::= num:n TIME UNITS {: RESULT = n; :}
-           | num:n USEC {: RESULT = n; :}
-           | num:n MSEC {: RESULT = n*1000; :}
-           | num:n SEC {: RESULT = n*1000000; :}
+duration ::= num:n TIME UNITS {: RESULT = String.valueOf(n); :}
+           | num:n USEC {: RESULT = String.valueOf(n); :}
+           | num:n MSEC {: RESULT = String.valueOf(n*1000); :}
+           | num:n SEC {: RESULT = String.valueOf(n*1000000); :}
+           | cid:i TIME UNITS {: RESULT = i; :}
+           | QUOTE cid:i QUOTE TIME UNITS {: RESULT = i; :}
            ;
            
 num ::= NUMBER:n {: RESULT = Integer.parseInt(n); :}

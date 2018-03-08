@@ -1,16 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
 public class BndResponsePattern extends PatternType {
 	@Override
-	public void transform() {
+	public void transform(final Map<String, Integer> id2bounds) {
 		final CDD p_cdd = mCdds.get(1);
 		final CDD q_cdd = mScope.getCdd1();
 		final CDD r_cdd = mScope.getCdd2();
 		final CDD s_cdd = mCdds.get(0);
 
-		mPea = mPeaTransformator.bndResponsePattern(mId, p_cdd, q_cdd, r_cdd, s_cdd, mDuration, mScope.toString());
+		mPea = mPeaTransformator.bndResponsePattern(mId, p_cdd, q_cdd, r_cdd, s_cdd,
+				parseDuration(getDuration(), id2bounds), mScope.toString());
 	}
 
 	@Override

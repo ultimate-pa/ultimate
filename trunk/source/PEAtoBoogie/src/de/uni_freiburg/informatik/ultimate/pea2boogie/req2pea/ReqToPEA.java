@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
@@ -55,7 +56,7 @@ public class ReqToPEA {
 		return patterns;
 	}
 
-	public PhaseEventAutomata[] genPEA(final List<PatternType> patterns) {
+	public PhaseEventAutomata[] genPEA(final List<PatternType> patterns, final Map<String, Integer> id2bounds) {
 		final List<PhaseEventAutomata> peaList = new ArrayList<>();
 
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
@@ -67,7 +68,7 @@ public class ReqToPEA {
 			}
 
 			pat.setPeaTransformator(peaTrans);
-			final PhaseEventAutomata pea = pat.transformToPea();
+			final PhaseEventAutomata pea = pat.transformToPea(id2bounds);
 			if (pea.getInit().length == 0) {
 				mLogger.error(pat.getId() + " PEA has no initial phase, ignoring!");
 				continue;
@@ -79,7 +80,8 @@ public class ReqToPEA {
 		return peaArray;
 	}
 
-	public void genPEAforUPPAAL(final PatternType[] patterns, final String xmlFilePath) {
+	public void genPEAforUPPAAL(final PatternType[] patterns, final String xmlFilePath,
+			final Map<String, Integer> id2bounds) {
 
 		PhaseEventAutomata pea = null;
 
@@ -88,10 +90,10 @@ public class ReqToPEA {
 		for (final PatternType pat : patterns) {
 			pat.setPeaTransformator(peaTrans);
 			if (pea == null) {
-				pea = pat.transformToPea();
+				pea = pat.transformToPea(id2bounds);
 
 			} else {
-				final PhaseEventAutomata pea2 = pat.transformToPea();
+				final PhaseEventAutomata pea2 = pat.transformToPea(id2bounds);
 				if (pea2 == null) {
 					continue;
 				}

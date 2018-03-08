@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
 public class UniversalityPattern extends PatternType {
 
 	@Override
-	public void transform() {
+	public void transform(Map<String, Integer> id2bounds) {
 		/*
 		 * CDD p_cdd = BooleanDecision.create("ANB_Request_valid = 1"); CDD q_cdd = BooleanDecision.create(
 		 * "ANB_Teilbremsung_Freigabe = 1").and( BooleanDecision.create("ANB_info_Teilbremsung = 1") ); CDD r_cdd =

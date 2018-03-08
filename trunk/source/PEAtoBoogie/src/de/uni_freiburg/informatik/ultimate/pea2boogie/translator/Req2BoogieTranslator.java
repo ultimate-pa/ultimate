@@ -27,11 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -69,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -204,15 +208,16 @@ public class Req2BoogieTranslator {
 				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
 		mRequirements =
 				Arrays.stream(patterns).filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
-		generateBoogie(patterns);
+		generateBoogie();
 	}
 
 	public Unit getUnit() {
 		return mUnit;
 	}
 
-	private Unit generateBoogie(final PatternType[] patterns) {
-		final PhaseEventAutomata[] automata = new ReqToPEA(mServices, mLogger).genPEA(mRequirements);
+	private Unit generateBoogie() {
+		final Map<String, Integer> id2bounds = genId2Bounds(mInit);
+		final PhaseEventAutomata[] automata = new ReqToPEA(mServices, mLogger).genPEA(mRequirements, id2bounds);
 
 		// TODO: initBoogieLocations is completely broken. Rewrite.
 		initBoogieLocations(automata.length);
@@ -226,6 +231,46 @@ public class Req2BoogieTranslator {
 		return mUnit;
 	}
 
+	private Map<String, Integer> genId2Bounds(final List<InitializationPattern> inits) {
+		final Map<String, Integer> rtr = new HashMap<>();
+		final Predicate<InitializationPattern> pred = a -> {
+			final BoogiePrimitiveType type = toPrimitiveTypeNoError(a.getType());
+			return type == BoogieType.TYPE_INT || type == BoogieType.TYPE_REAL;
+		};
+		final Iterator<InitializationPattern> iter =
+				inits.stream().filter(a -> a.getCategory() == VariableCategory.CONST).filter(pred).iterator();
+		while (iter.hasNext()) {
+			final InitializationPattern init = iter.next();
+			final Expression expr = init.getExpression();
+			final Integer val;
+			if (expr instanceof RealLiteral) {
+				val = tryParseInt(((RealLiteral) expr).getValue());
+			} else if (expr instanceof IntegerLiteral) {
+				val = tryParseInt(((IntegerLiteral) expr).getValue());
+			} else {
+				val = null;
+				syntaxError(mBoogieLocations[0],
+						"Cannot convert CONST with expression " + BoogiePrettyPrinter.print(expr) + " to duration");
+			}
+			if (val == null) {
+				continue;
+			}
+			rtr.put(init.getIdent(), val);
+		}
+		return rtr;
+	}
+
+	private Integer tryParseInt(final String val) {
+		try {
+			return new BigDecimal(val).toBigIntegerExact().intValueExact();
+		} catch (NumberFormatException | ArithmeticException ex) {
+			syntaxError(mBoogieLocations[0],
+					"Cannot convert CONST with value " + val + " to duration (must be integer)");
+			return null;
+		}
+
+	}
+
 	private Set<String> getPrimedVars() {
 		return Collections.unmodifiableSet(mPrimedVars.keySet());
 	}
@@ -235,6 +280,14 @@ public class Req2BoogieTranslator {
 	}
 
 	private BoogiePrimitiveType toPrimitiveType(final String type, final ILocation loc) {
+		final BoogiePrimitiveType rtr = toPrimitiveTypeNoError(type);
+		if (rtr == BoogieType.TYPE_ERROR) {
+			syntaxError(loc, "Unknown type " + type);
+		}
+		return rtr;
+	}
+
+	private static BoogiePrimitiveType toPrimitiveTypeNoError(final String type) {
 		switch (type.toLowerCase()) {
 		case "bool":
 			return BoogieType.TYPE_BOOL;
@@ -243,7 +296,6 @@ public class Req2BoogieTranslator {
 		case "int":
 			return BoogieType.TYPE_INT;
 		default:
-			syntaxError(loc, "Unknown type " + type);
 			return BoogieType.TYPE_ERROR;
 		}
 	}
