@@ -36,6 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -121,8 +122,8 @@ public class TypeSizeAndOffsetComputer {
 	     * can be obtained using the {@link TypeSizeAndOffsetComputer#getConstants()}
 	     * and {@link TypeSizeAndOffsetComputer#getAxioms()} methods.
 	     */
-	    public Expression constructBytesizeExpression(final ILocation loc, final CType cType) {
-	    	final SizeTValue value = computeSize(loc, cType);
+	    public Expression constructBytesizeExpression(final ILocation loc, final CType cType, final IASTNode hook) {
+	    	final SizeTValue value = computeSize(loc, cType, hook);
 	    	return value.asExpression(loc);
 	    }
 
@@ -130,19 +131,20 @@ public class TypeSizeAndOffsetComputer {
 	     * @return An Expression that represents the offset (in bytes) at which
 	     * a certain field of a stuct is stored (on the heap).
 	     */
-	    public Expression constructOffsetForField(final ILocation loc, final CStruct cStruct, final int fieldIndex) {
+	    public Expression constructOffsetForField(final ILocation loc, final CStruct cStruct, final int fieldIndex,
+	    		final IASTNode hook) {
 	    	if (!mTypeSizeCache.containsKey(cStruct)) {
 	    		assert !mStructOffsets.containsKey(cStruct) : "both or none";
-	    		computeSize(loc, cStruct);
+	    		computeSize(loc, cStruct, hook);
 	    	}
 	    	final Expression[] offsets = mStructOffsets.get(cStruct);
 	    	assert offsets.length == cStruct.getFieldCount() : "inconsistent struct";
 	    	return offsets[fieldIndex];
 	    }
-
-	    public Expression constructOffsetForField(final ILocation loc, final CStruct cStruct, final String fieldId) {
+	    public Expression constructOffsetForField(final ILocation loc, final CStruct cStruct, final String fieldId,
+	    		final IASTNode hook) {
 	    	final int fieldIndex = Arrays.asList(cStruct.getFieldIds()).indexOf(fieldId);
-	    	return constructOffsetForField(loc, cStruct, fieldIndex);
+	    	return constructOffsetForField(loc, cStruct, fieldIndex, hook);
 	    }
 
 	    private Expression constructTypeSizeConstant(final ILocation loc, final CType cType) {
@@ -184,8 +186,8 @@ public class TypeSizeAndOffsetComputer {
 	    			new Attribute[0], false, varList, null, false);
 			mConstants.add(decl);
 	    }
-
-		private SizeTValue computeSize(final ILocation loc, final CType cType) {
+	    
+		private SizeTValue computeSize(final ILocation loc, final CType cType, final IASTNode hook) {
 			final CType underlyingType = cType.getUnderlyingType();
 			if (underlyingType instanceof CPointer) {
 				if (mTypeSizePointer == null) {
@@ -194,16 +196,16 @@ public class TypeSizeAndOffsetComputer {
 				return mTypeSizePointer;
 			} else if (underlyingType instanceof CEnum) {
 				// an Enum contains constants of type int
-				return computeSize(loc, new CPrimitive(CPrimitives.INT));
+				return computeSize(loc, new CPrimitive(CPrimitives.INT), hook);
 			} else {
 				SizeTValue sizeTValue = mTypeSizeCache.get(underlyingType);
 				if (sizeTValue == null) {
 					if (underlyingType instanceof CPrimitive) {
 						sizeTValue = constructSizeTValue_Primitive(loc, (CPrimitive) underlyingType);
 					} else if (underlyingType instanceof CArray) {
-						sizeTValue = constructSizeTValue_Array(loc, (CArray) underlyingType);
+						sizeTValue = constructSizeTValue_Array(loc, (CArray) underlyingType, hook);
 					} else if (underlyingType instanceof CStruct) {
-						sizeTValue = constructSizeTValueAndOffsets_StructAndUnion(loc, (CStruct) underlyingType);
+						sizeTValue = constructSizeTValueAndOffsets_StructAndUnion(loc, (CStruct) underlyingType, hook);
 					} else {
 						throw new UnsupportedOperationException("Unsupported type" + underlyingType);
 					}
@@ -227,14 +229,13 @@ public class TypeSizeAndOffsetComputer {
 			return result;
 		}
 
-		private SizeTValue constructSizeTValue_Array(final ILocation loc, final CArray cArray) {
+		private SizeTValue constructSizeTValue_Array(final ILocation loc, final CArray cArray, final IASTNode hook) {
 
-			final SizeTValue valueSize = computeSize(loc, cArray.getValueType());
-			final SizeTValue factor = extractSizeTValue(cArray.getBound());
+			final SizeTValue valueSize = computeSize(loc, cArray.getValueType(), hook);
+			final SizeTValue factor = extractSizeTValue(cArray.getBound(), hook);
 
 			final SizeTValue size = (new SizeTValueAggregator_Multiply())
 					.aggregate(loc, Arrays.asList(new SizeTValue[] { valueSize, factor }));
-
 			final SizeTValue result;
 			if (mPreferConstantsOverValues) {
 				final Expression sizeConstant = constructTypeSizeConstant(loc, cArray);
@@ -250,7 +251,8 @@ public class TypeSizeAndOffsetComputer {
 			return result;
 		}
 
-		private SizeTValue constructSizeTValueAndOffsets_StructAndUnion(final ILocation loc, final CStruct cStruct) {
+		private SizeTValue constructSizeTValueAndOffsets_StructAndUnion(final ILocation loc, final CStruct cStruct,
+				final IASTNode hook) {
  			if (cStruct.isIncomplete()) {
  				// according to C11 6.5.3.4.1
  				throw new IllegalArgumentException("cannot determine size of incomplete type");
@@ -283,7 +285,7 @@ public class TypeSizeAndOffsetComputer {
  				} else {
  					offsets[i] = offset;
  				}
- 				final SizeTValue fieldTypeSize = computeSize(loc, fieldType);
+ 				final SizeTValue fieldTypeSize = computeSize(loc, fieldType, hook);
  				fieldTypeSizes.add(fieldTypeSize);
  			}
 
@@ -320,8 +322,8 @@ public class TypeSizeAndOffsetComputer {
 			return axiom;
 		}
 
-		private SizeTValue extractSizeTValue(final RValue rvalue) {
-			final BigInteger value = mExpressionTranslation.extractIntegerValue(rvalue);
+		private SizeTValue extractSizeTValue(final RValue rvalue, final IASTNode hook) {
+			final BigInteger value = mExpressionTranslation.extractIntegerValue(rvalue, hook);
 			if (value != null) {
 				return new SizeTValue_Integer(value);
 			} else {

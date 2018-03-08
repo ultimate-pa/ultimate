@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -186,8 +187,7 @@ public class ExpressionResult extends Result {
 		return builder.build();
 	}
 
-	public ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final ILocation loc) {
-
+	public ExpressionResult switchToRValueIfNecessary(final Dispatcher main, final ILocation loc, final IASTNode hook) {
 		final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
 		final StructHandler structHandler = main.mCHandler.getStructHandler();
 
@@ -203,7 +203,7 @@ public class ExpressionResult extends Result {
 			if (main.mCHandler.isPreRunMode()) {
 				if (mLrVal.getCType().getUnderlyingType() instanceof CArray) {
 					// move it on-heap
-					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, mLrVal.getValue(), mAuxVars);
+					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, mLrVal.getValue(), mAuxVars, hook);
 				}
 			} else {
 				if (mLrVal.getCType().getUnderlyingType() instanceof CArray) {
@@ -233,11 +233,11 @@ public class ExpressionResult extends Result {
 
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
+				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType, hook);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.mLrVal;
 			} else if (underlyingType instanceof CPointer) {
-				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
+				final ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType, hook);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.mLrVal;
 			} else if (underlyingType instanceof CArray) {
@@ -248,7 +248,7 @@ public class ExpressionResult extends Result {
 				throw new AssertionError("handled above");
 			} else if (underlyingType instanceof CStruct) {
 				final ExpressionResult rex = readStructFromHeap(main, structHandler, memoryHandler, loc,
-						hlv.getAddress(), (CStruct) underlyingType);
+						hlv.getAddress(), (CStruct) underlyingType, hook);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.mLrVal;
 			} else if (underlyingType instanceof CNamed) {
@@ -281,7 +281,7 @@ public class ExpressionResult extends Result {
 	 */
 	ExpressionResult readStructFromHeap(final Dispatcher main, final StructHandler structHandler,
 			final MemoryHandler memoryHandler, final ILocation loc, final Expression structOnHeapAddress,
-			final CStruct structType) {
+			final CStruct structType, final IASTNode hook) {
 
 		final Expression startAddress = structOnHeapAddress;
 		final Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
@@ -313,14 +313,14 @@ public class ExpressionResult extends Result {
 			final LRValue fieldLRVal;
 			if (underlyingType instanceof CPrimitive) {
 				final ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(main,
-						loc, i, structOnHeapAddress, structType);
+						loc, i, structOnHeapAddress, structType, hook);
 				fieldLRVal = fieldRead.mLrVal;
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(main,
-						loc, i, structOnHeapAddress, structType);
+						loc, i, structOnHeapAddress, structType, hook);
 				fieldLRVal = fieldRead.mLrVal;
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
@@ -328,7 +328,7 @@ public class ExpressionResult extends Result {
 			} else if (underlyingType instanceof CArray) {
 
 				final ExpressionResult xres1 = readArrayFromHeap(main, structHandler, memoryHandler, loc,
-						structOnHeapAddress, (CArray) underlyingType);
+						structOnHeapAddress, (CArray) underlyingType, hook);
 				final ExpressionResult xres = xres1;
 
 				fieldLRVal = xres.mLrVal;
@@ -339,7 +339,7 @@ public class ExpressionResult extends Result {
 			} else if (underlyingType instanceof CEnum) {
 				// like CPrimitive..
 				final ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(main,
-						loc, i, structOnHeapAddress, structType);
+						loc, i, structOnHeapAddress, structType, hook);
 				fieldLRVal = fieldRead.mLrVal;
 				newStmt.addAll(fieldRead.mStmt);
 				newDecl.addAll(fieldRead.mDecl);
@@ -347,7 +347,7 @@ public class ExpressionResult extends Result {
 			} else if (underlyingType instanceof CStruct) {
 
 				final Expression innerStructOffset =
-						memoryHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, structType, i);
+						memoryHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, structType, i, hook);
 
 				final ExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
 				final Expression offsetSum = exprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
@@ -357,7 +357,7 @@ public class ExpressionResult extends Result {
 						MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, offsetSum, loc);
 
 				final ExpressionResult fieldRead = readStructFromHeap(main, structHandler, memoryHandler, loc,
-						innerStructAddress, (CStruct) underlyingType);
+						innerStructAddress, (CStruct) underlyingType, hook);
 
 				fieldLRVal = fieldRead.mLrVal;
 				newStmt.addAll(fieldRead.mStmt);
@@ -401,14 +401,15 @@ public class ExpressionResult extends Result {
 	 * @return
 	 */
 	public ExpressionResult readArrayFromHeap(final Dispatcher main, final StructHandler structHandler,
-			final MemoryHandler memoryHandler, final ILocation loc, final Expression address, final CArray arrayType) {
+			final MemoryHandler memoryHandler, final ILocation loc, final Expression address, final CArray arrayType,
+			final IASTNode hook) {
 		final LRValue resultValue;
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		final CType arrayValueType = arrayType.getValueType().getUnderlyingType();
 		if (!(arrayValueType instanceof CArray)) {
 			final ExpressionTranslation exprTrans = ((CHandler) main.mCHandler).getExpressionTranslation();
-			final BigInteger boundBigInteger = exprTrans.extractIntegerValue(arrayType.getBound());
+			final BigInteger boundBigInteger = exprTrans.extractIntegerValue(arrayType.getBound(), hook);
 			if (boundBigInteger == null) {
 				throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 			}
@@ -433,7 +434,7 @@ public class ExpressionResult extends Result {
 				newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
 			}
 
-			final Expression valueTypeSize = memoryHandler.calculateSizeOf(loc, arrayValueType);
+			final Expression valueTypeSize = memoryHandler.calculateSizeOf(loc, arrayValueType, hook);
 
 			Expression arrayEntryAddressOffset = newStartAddressOffset;
 
@@ -444,9 +445,9 @@ public class ExpressionResult extends Result {
 						arrayEntryAddressOffset, loc);
 				if (arrayValueType instanceof CStruct) {
 					readRex = readStructFromHeap(main, structHandler, memoryHandler, loc, readAddress,
-							(CStruct) arrayValueType);
+							(CStruct) arrayValueType, hook);
 				} else {
-					readRex = memoryHandler.getReadCall(main, readAddress, arrayType.getValueType());
+					readRex = memoryHandler.getReadCall(main, readAddress, arrayType.getValueType(), hook);
 				}
 				builder.addAllExceptLrValue(readRex);
 				if (builder.getLrVal() == null) {
@@ -459,8 +460,8 @@ public class ExpressionResult extends Result {
 						new Expression[] { exprTrans.constructLiteralForIntegerType(loc,
 								new CPrimitive(CPrimitives.INT), BigInteger.valueOf(pos)) });
 				final ExpressionResult assRex = ((CHandler) main.mCHandler).makeAssignment(main, loc,
-						new LocalLValue(arrayAccLhs, arrayType.getValueType(), null), Collections.emptyList(), builder.build()
-						);
+						new LocalLValue(arrayAccLhs, arrayType.getValueType(), null), Collections.emptyList(),
+							builder.build(), hook);
 				builder = new ExpressionResultBuilder()
 						.addAllExceptLrValue(assRex)
 						.setLrVal(assRex.getLrValue());
@@ -650,11 +651,12 @@ public class ExpressionResult extends Result {
 	 * @param loc
 	 * @return
 	 */
-	public ExpressionResult decayArrayToPointerIfNecessary(final Dispatcher main, final ILocation loc) {
+	public ExpressionResult decayArrayToPointerIfNecessary(final Dispatcher main, final ILocation loc,
+			final IASTNode hook) {
 		if (mLrVal.getCType().getUnderlyingType() instanceof CArray) {
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 			resultBuilder.addAllExceptLrValue(this);
-			resultBuilder.setLrVal(((CHandler) main.mCHandler).decayArrayLrValToPointer(loc, mLrVal));
+			resultBuilder.setLrVal(((CHandler) main.mCHandler).decayArrayLrValToPointer(loc, mLrVal, hook));
 			return resultBuilder.build();
 		} else {
 			return this;

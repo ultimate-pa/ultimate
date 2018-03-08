@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
@@ -78,23 +79,23 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	/**
 	 * The table containing all functions.
 	 */
-	private final LinkedHashMap<String, IASTNode> mFunctionTable;
+	private final Map<String, IASTNode> mFunctionTable;
 
 	private final Stack<IASTDeclaration> mCurrentDeclarationStack;
 
-	private final LinkedHashMap<IASTDeclaration, LinkedHashSet<IASTDeclaration>> mDependencyGraph;
+	private final Map<IASTDeclaration, LinkedHashSet<IASTDeclaration>> mDependencyGraph;
 
-	private final LinkedHashMap<String, IASTDeclaration> mDependencyGraphPreliminaryInverse;
+	private final Map<String, IASTDeclaration> mDependencyGraphPreliminaryInverse;
 
 	private final LinkedHashSet<IASTDeclaration> mReachableDeclarations;
 
 	private final String mCheckedMethod;
 	private IASTTranslationUnit mTranslationUnit;
 	private final Dispatcher mDispatcher;
-	private final LinkedHashMap<String, Integer> mFunctionToIndex;
+	private final Map<String, Integer> mFunctionToIndex;
 
 	public DetermineNecessaryDeclarations(final String checkedMethod, final Dispatcher dispatcher,
-			final LinkedHashMap<String, IASTNode> fT, final LinkedHashMap<String, Integer> functionToIndex) {
+			final Map<String, IASTNode> fT, final Map<String, Integer> functionToIndex) {
 		mDispatcher = dispatcher;
 		shouldVisitParameterDeclarations = true;
 		shouldVisitTranslationUnit = true;

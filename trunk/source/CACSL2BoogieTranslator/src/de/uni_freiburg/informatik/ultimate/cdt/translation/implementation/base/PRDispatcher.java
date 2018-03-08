@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -109,12 +110,15 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
+import cern.colt.Arrays;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -134,14 +138,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public class PRDispatcher extends Dispatcher {
 
-	private final LinkedHashSet<IASTDeclaration> mReachableDeclarations;
+	private final Set<IASTDeclaration> mReachableDeclarations;
 	private final LinkedHashSet<IASTNode> mVariablesOnHeap;
 
 	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger, final LinkedHashMap<String, Integer> functionToIndex,
-			final LinkedHashSet<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
-			final Map<String, IASTNode> functionTable) {
-		super(backtranslator, services, logger, locFac, functionTable);
+			final Set<IASTDeclaration> reachableDeclarations, final LocationFactory locFac,
+			final Map<String, IASTNode> functionTable, final MultiparseSymbolTable mst) {
+		super(backtranslator, services, logger, locFac, functionTable, mst);
 		mFunctionToIndex = functionToIndex;
 		mReachableDeclarations = reachableDeclarations;
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -158,6 +162,11 @@ public class PRDispatcher extends Dispatcher {
 	public void addToVariablesOnHeap(final IASTNode var) {
 		mVariablesOnHeap.add(var);
 	}
+	
+	@Override
+	protected void preRun(Collection<DecoratedUnit> nodes) {
+		super.preRun(nodes);
+	}
 
 	@Override
 	protected void init() {
@@ -166,22 +175,20 @@ public class PRDispatcher extends Dispatcher {
 		final boolean overapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 
-		mNameHandler = new NameHandler(mBacktranslator, mHandlerHandler);
-
 		mTypeHandler = new TypeHandler(bitvectorTranslation, mHandlerHandler);
 
 		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, false, mLogger, bitvectorTranslation,
-				overapproximateFloatingPointOperations);
+				overapproximateFloatingPointOperations, mFlatTable);
 	}
 
 	@Override
-	public Result dispatch(final DecoratorNode node) {
+	public Result dispatch(final Collection<DecoratedUnit> nodes) {
 		// this.decoratorTree = node;
 		// this.decoratorTreeIterator = node.iterator();
-		if (node.getCNode() != null) {
-			return dispatch(node.getCNode());
-		}
-		return dispatch(node.getAcslNode());
+		return mCHandler.visit(this, nodes);
+		// ACSL dispatch just returns null..
+		// return dispatch(node.getAcslNode());
+		// return null;
 	}
 
 	@Override
@@ -431,6 +438,12 @@ public class PRDispatcher extends Dispatcher {
 	public Result dispatch(final IASTPreprocessorStatement node) {
 		return new SkipResult();
 	}
+	
+	@Override
+	public Result dispatch(ACSLNode node) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 //	@Override
 //	public InferredType dispatch(final IType type) {
@@ -447,7 +460,7 @@ public class PRDispatcher extends Dispatcher {
 //	}
 
 	@Override
-	public Result dispatch(final ACSLNode node) {
+	public Result dispatch(final ACSLNode node, final IASTNode cHook) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -465,12 +478,18 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
-		return mReachableDeclarations;
+	public boolean isReachable(IASTDeclaration decl) {
+		// Just mimic the main dispatcher.
+		if (mReachableDeclarations == null) {
+			return true;
+		}
+		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
+		// return true;
+		return mReachableDeclarations.contains(decl);
 	}
 
 	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr,
-			final Set<AuxVarInfo> auxVars) {
+			final Set<AuxVarInfo> auxVars, final IASTNode hook) {
 //		final Set<String> auxVarIds = new HashSet<>();
 ////		for (final VariableDeclaration decl : auxVars.keySet()) {
 //		for (final AuxVarInfo auxvar : auxVars) {
@@ -488,15 +507,13 @@ public class PRDispatcher extends Dispatcher {
 			// auxVars do not have a corresponding C var, hence we move nothing
 			// onto the heap
 //			if (!auxVarIds.contains(id)) {
-				final SymbolTable st = mCHandler.getSymbolTable();
-				final String cid;
-				try {
-					cid = st.getCID4BoogieID(id, loc);
-				} catch (final IncorrectSyntaxException e) {
+				final FlatSymbolTable st = mCHandler.getSymbolTable();
+				final String cid = st.getCIdForBoogieId(id);
+				if (cid == null) {
 					// expression does not have a corresponding c identifier --> nothing to move on heap
 					continue;
 				}
-				final SymbolTableValue value = st.get(cid, loc);
+				final SymbolTableValue value = st.findCSymbol(hook, cid);
 				final CType type = value.getCVariable().getUnderlyingType();
 				if (type instanceof CArray || type instanceof CStruct) {
 //					getVariablesOnHeap().add(value.getDeclarationNode());
@@ -506,11 +523,11 @@ public class PRDispatcher extends Dispatcher {
 		}
 	}
 
-	public void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr) {
+	public void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr, final IASTNode hook) {
 		final String id = idExpr.getIdentifier();
-		final SymbolTable st = mCHandler.getSymbolTable();
-		final String cid = st.getCID4BoogieID(id, loc);
-		final SymbolTableValue value = st.get(cid, loc);
+		final FlatSymbolTable st = mCHandler.getSymbolTable();
+		final String cid = st.getCIdForBoogieId(id);
+		final SymbolTableValue value = st.findCSymbol(hook, cid);
 //		getVariablesOnHeap().add(value.getDeclarationNode());
 		addToVariablesOnHeap(value.getDeclarationNode());
 	}

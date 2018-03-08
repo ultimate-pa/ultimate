@@ -37,6 +37,7 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashM
  * @author Markus Lindenmann
  * @since 13.07.2012
  */
-public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
+public class OldSymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
 	/**
 	 * Holds a map from BoogieIDs and the corresponding CIDs.
 	 */
@@ -73,7 +74,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
 	 * @param main
 	 *            a reference to the main dispatcher.
 	 */
-	public SymbolTable(final Dispatcher main) {
+	public OldSymbolTable(final Dispatcher main) {
 		super();
 		mBoogieID2CID = new HashMap<>();
 		mCDecl2BoogieDecl = new HashMap<>();

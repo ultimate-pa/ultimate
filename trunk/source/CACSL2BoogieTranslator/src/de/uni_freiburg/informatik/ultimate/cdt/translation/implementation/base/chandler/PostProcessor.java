@@ -37,6 +37,8 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -158,7 +160,7 @@ public class PostProcessor {
 	 *            a set of uninitialized global variables.
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(final Dispatcher main, final ILocation loc) {
+	public ArrayList<Declaration> postProcess(final Dispatcher main, final ILocation loc, final IASTNode hook) {
 //			final LinkedHashMap<Declaration, CDeclaration> mDeclarationsGlobalInBoogie) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
@@ -171,10 +173,10 @@ public class PostProcessor {
 		if (!checkedMethod.equals(SFO.EMPTY)
 				&& main.mCHandler.getProcedureManager().hasProcedure(checkedMethod)) {
 				mLogger.info("Settings: Checked method=" + checkedMethod);
-				final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main);//, mDeclarationsGlobalInBoogie);
+				final UltimateInitProcedure initProcedure = new UltimateInitProcedure(loc, main, hook);//, mDeclarationsGlobalInBoogie);
 				decl.add(initProcedure.getUltimateInitImplementation());
 
-				final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc);
+				final UltimateStartProcedure startProcedure = new UltimateStartProcedure(main, loc, hook);
 				decl.add(startProcedure.getUltimateStartImplementation());
 				//		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler,
 //				initProcedure.getUltimateInitModifiesClauseContents()));
@@ -674,11 +676,11 @@ public class PostProcessor {
 
 		private Declaration mUltimateInitImplementation;
 
-		UltimateInitProcedure(final ILocation translationUnitLoc, final Dispatcher main) {
-			createInit(translationUnitLoc, main);
+		UltimateInitProcedure(final ILocation translationUnitLoc, final Dispatcher main, final IASTNode hook) {
+			createInit(translationUnitLoc, main, hook);
 		}
 
-		void createInit(final ILocation translationUnitLoc, final Dispatcher main) {
+		void createInit(final ILocation translationUnitLoc, final Dispatcher main, final IASTNode hook) {
 
 			final MemoryHandler memoryHandler = main.mCHandler.getMemoryHandler();
 			final ExpressionTranslation expressionTranslation = main.mCHandler.getExpressionTranslation();
@@ -766,12 +768,12 @@ public class PostProcessor {
 						if (main.mCHandler.isHeapVar(id)) {
 							final LocalLValue llVal =
 									new LocalLValue(lhs, en.getValue().getType(), null);
-							staticObjectInitStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc));
+							staticObjectInitStatements.add(memoryHandler.getMallocCall(llVal, currentDeclsLoc, hook));
 							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.Ultimate_Alloc.name());
 						}
 
 						final ExpressionResult initRex = main.mCHandler.getInitHandler().initialize(currentDeclsLoc,
-								main, lhs, en.getValue().getType(), initializer);
+								main, lhs, en.getValue().getType(), initializer, hook);
 						for (final Statement stmt : initRex.getStatements()) {
 							if (stmt instanceof CallStatement) {
 								proceduresCalledByUltimateInit.add(((CallStatement) stmt).getMethodName());
@@ -819,11 +821,11 @@ public class PostProcessor {
 
 		private Procedure mStartProcedure;
 
-		UltimateStartProcedure(final Dispatcher main, final ILocation loc) {
-			createStartProc(main, loc);
+		UltimateStartProcedure(final Dispatcher main, final ILocation loc, final IASTNode hook) {
+			createStartProc(main, loc, hook);
 		}
 
-		void createStartProc(final Dispatcher main, final ILocation loc) {
+		void createStartProc(final Dispatcher main, final ILocation loc, final IASTNode hook) {
 
 			final FunctionHandler functionHandler = main.mCHandler.getFunctionHandler();
 			final ProcedureManager procedureManager = main.mCHandler.getProcedureManager();
@@ -892,7 +894,7 @@ public class PostProcessor {
 							procedureManager.getCFunctionType(checkedMethod).getResultType();
 					final AuxVarInfo checkedMethodReturnAuxVar = AuxVarInfo.constructAuxVarInfo(loc, main,
 							checkedMethodResultCType, SFO.AUXVAR.RETURNED);
-					main.mCHandler.getSymbolTable().addToReverseMap(
+					main.mCHandler.getSymbolTable().addBoogieCIdPair(
 							checkedMethodReturnAuxVar.getExp().getIdentifier(),
 							SFO.NO_REAL_C_VAR + checkedMethodReturnAuxVar.getExp().getIdentifier(),
 //							checkMethodRet,

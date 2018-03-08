@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -223,7 +224,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
-			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight) {
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		if (!mFunctionDeclarations.checkParameters(typeLeft, typeRight)) {
 			throw new IllegalArgumentException("incompatible types " + typeLeft + " " + typeRight);
 		}
@@ -529,7 +530,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public BigInteger extractIntegerValue(final Expression expr, CType cType) {
+	public BigInteger extractIntegerValue(final Expression expr, CType cType, final IASTNode hook) {
 		if (cType.isIntegerType()) {
 			cType = CEnum.replaceEnumWithInt(cType);
 			if (expr instanceof BitvecLiteral) {
@@ -544,10 +545,10 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			} else if (expr instanceof IdentifierExpression) {
 				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
-				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCID4BoogieID(bId, expr.getLoc());
-				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().get(cId, expr.getLoc());
+				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCIdForBoogieId(bId);
+				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().findCSymbol(hook, cId);
 				if (stv.hasConstantValue()) {
-					return extractIntegerValue(stv.getConstantValue(), cType);
+					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
 			}
 			return null;
@@ -611,11 +612,11 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression erazeBits(final ILocation loc, final Expression value, final CPrimitive cType,
-			final int remainingWith) {
+			final int remainingWith, final IASTNode hook) {
 		final BigInteger bitmaskNumber = BigInteger.valueOf(2).pow(remainingWith).subtract(BigInteger.ONE);
 		final Expression bitmask = constructLiteralForIntegerType(loc, cType, bitmaskNumber);
 		final Expression result = constructBinaryBitwiseExpression(loc, IASTBinaryExpression.op_binaryAnd, value, cType,
-				bitmask, cType);
+				bitmask, cType, hook);
 		return result;
 	}
 

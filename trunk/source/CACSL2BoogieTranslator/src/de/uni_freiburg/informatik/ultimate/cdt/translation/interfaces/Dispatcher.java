@@ -34,21 +34,31 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
 
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.function.Consumer;
 
+import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionCollector;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.GlobalVariableCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypedefAndStructCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -127,14 +137,20 @@ public abstract class Dispatcher {
 
 	private LocationFactory mLocationFactory;
 
+	protected final FlatSymbolTable mFlatTable;
+	protected final MultiparseSymbolTable mMultiparseTable;
+
 	private final boolean mUseSvcompSettings;
 
 	protected final Map<String, IASTNode> mFunctionTable;
 
+	protected IASTNode mAcslHook;
+
 	protected final HandlerHandler mHandlerHandler;
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
-			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable) {
+			final ILogger logger, final LocationFactory locFac, final Map<String, IASTNode> functionTable,
+			final MultiparseSymbolTable mst) {
 		mHandlerHandler = new HandlerHandler();
 		mBacktranslator = backtranslator;
 		mLogger = logger;
@@ -143,6 +159,9 @@ public abstract class Dispatcher {
 		mTypeSizes = new TypeSizes(mPreferences, mHandlerHandler);
 		mTranslationSettings = new TranslationSettings(mPreferences);
 		mLocationFactory = locFac;
+		mMultiparseTable = mst;
+		mNameHandler = new NameHandler(mBacktranslator, mHandlerHandler);
+		mFlatTable = new FlatSymbolTable(mst, this, mNameHandler);
 		mFunctionTable = functionTable;
 
 		mUseSvcompSettings = getSvcompMode();
@@ -185,7 +204,7 @@ public abstract class Dispatcher {
 	 *            the node to dispatch
 	 * @return the result for the given node
 	 */
-	public abstract Result dispatch(DecoratorNode node);
+	public abstract Result dispatch(final Collection<DecoratedUnit> nodes);
 
 	/**
 	 * Dispatch a given C node to a specific handler.
@@ -219,6 +238,20 @@ public abstract class Dispatcher {
 	 *
 	 * @param node
 	 *            the node to dispatch
+	 * @param cHook
+	 *            the C AST node where this ACSL node has scope access
+	 * @return the result for the given node
+	 */
+	public abstract Result dispatch(ACSLNode node, IASTNode cHook);
+
+	/**
+	 * Dispatch a given ACSL node to the specific handler.
+	 * Shortcut for methods where the hook does not change.
+	 *
+	 * @param node
+	 *            the node to dispatch
+	 * @param cHook
+	 *            the C AST node where this ACSL node has scope access
 	 * @return the result for the given node
 	 */
 	public abstract Result dispatch(ACSLNode node);
@@ -226,14 +259,14 @@ public abstract class Dispatcher {
 	/**
 	 * Entry point for a translation.
 	 *
-	 * @param node
-	 *            the root node from which the translation should be started
+	 * @param nodes
+	 *            the root nodes from which the translation should be started
 	 * @return the result for the given node
 	 */
-	public final Result run(final DecoratorNode node) {
-		preRun(node);
+	public final Result run(final Collection<DecoratedUnit> nodes) {
+		preRun(nodes);
 		init();
-		return dispatch(node);
+		return dispatch(nodes);
 	}
 
 	/**
@@ -242,14 +275,42 @@ public abstract class Dispatcher {
 	 * @param node
 	 *            the node for which the pre run should be started
 	 */
-	protected void preRun(final DecoratorNode node) {
-		assert node.getCNode() != null;
-		assert node.getCNode() instanceof IASTTranslationUnit;
+	protected void preRun(final Collection<DecoratedUnit> nodes) {
+		assert !nodes.isEmpty();
 
-		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
+		// Line Directive mapping doesn't work with multiple TUs right now
+		final DecoratorNode ldmNode = nodes.stream().findFirst().get().getRootNode();
+		assert ldmNode.getCNode() != null;
+		assert ldmNode.getCNode() instanceof IASTTranslationUnit;
+
+		final IASTTranslationUnit tu = (IASTTranslationUnit) ldmNode.getCNode();
 		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
 		mLocationFactory = new LocationFactory(lineDirectiveMapping);
 		mBacktranslator.setLocationFactory(mLocationFactory);
+
+		// Collect all type definitions (including structs, unions and enums) - everything that might be needed for
+		// declaring a variable.
+		executePreRun(new TypedefAndStructCollector(mFlatTable), nodes);
+
+		// Collect all global variables
+		executePreRun(new GlobalVariableCollector(mFlatTable), nodes);
+
+		// Collect all functions
+		executePreRun(new FunctionCollector(mFlatTable), nodes);
+	}
+
+	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,
+			final Consumer<T> callback) {
+		for (final DecoratedUnit unit : units) {
+			unit.getRootNode().getCNode().accept(preRun);
+		}
+		callback.accept(preRun);
+	}
+
+	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units) {
+		for (final DecoratedUnit unit : units) {
+			unit.getRootNode().getCNode().accept(preRun);
+		}
 	}
 
 	/**
@@ -349,7 +410,7 @@ public abstract class Dispatcher {
 	 * @return the mapping of Boogie identifiers to origin C identifiers.
 	 */
 	public Map<String, String> getIdentifierMapping() {
-		return mCHandler.getSymbolTable().getIdentifierMapping();
+		return mCHandler.getSymbolTable().getBoogieCIdentifierMapping();
 	}
 
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
@@ -363,8 +424,13 @@ public abstract class Dispatcher {
 	public TranslationSettings getTranslationSettings() {
 		return mTranslationSettings;
 	}
-
-	public abstract LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators();
+	
+	/**
+	 * Checks whether a declaration is reachable.
+	 * @param decl The declaration
+	 * @return Whether it is reachable
+	 */
+	public abstract boolean isReachable(IASTDeclaration decl);
 
 	public IPreferenceProvider getPreferences() {
 		return mPreferences;
@@ -397,6 +463,10 @@ public abstract class Dispatcher {
 		public PointerCheckMode getDivisionByZeroOfFloatingTypes() {
 			return mDivisionByZeroOfFloatingTypes;
 		}
+	}
+
+	public IASTNode getAcslHook() {
+		return mAcslHook;
 	}
 
 	public ILogger getLogger() {

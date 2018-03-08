@@ -37,13 +37,18 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
+
 public class FunctionTableBuilder extends ASTVisitor {
 
 	private final LinkedHashMap<String, IASTNode> mFunctionTable;
+	
+	private final FlatSymbolTable mSymTab;
 
-	public FunctionTableBuilder() {
+	public FunctionTableBuilder(final FlatSymbolTable fst) {
 		shouldVisitDeclarations = true;
 		mFunctionTable = new LinkedHashMap<>();
+		mSymTab = fst;
 	}
 
 	@Override
@@ -51,16 +56,21 @@ public class FunctionTableBuilder extends ASTVisitor {
 		if (!(declaration.getParent() instanceof IASTTranslationUnit)) {
 			return super.visit(declaration);
 		}
+		if (!declaration.isPartOfTranslationUnitFile()) {
+			// Handled in another run.
+			return super.visit(declaration);
+		}
 		if (declaration instanceof CASTSimpleDeclaration) {
 			final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
 			for (final IASTDeclarator d : cd.getDeclarators()) {
 				final String key = d.getName().toString();
+				final String rslvKey = mSymTab.applyMultiparseRenaming(declaration.getContainingFilename(), key);
 				if (d instanceof IASTFunctionDeclarator) {
 					// we only update the table with a declaration, if there is no entry for that name yet.
 					// otherwise we might only keep the declaration and omit the implementation from
 					// reachableDeclarations.
-					if (!mFunctionTable.containsKey(key)) {
-						mFunctionTable.put(key, d);
+					if (!mFunctionTable.containsKey(rslvKey)) {
+						mFunctionTable.put(rslvKey, d);
 					}
 				}
 
@@ -72,7 +82,9 @@ public class FunctionTableBuilder extends ASTVisitor {
 				possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
 			}
 			final String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
-			mFunctionTable.put(nameOfInnermostDeclarator, declaration);
+			final String rslvName = mSymTab.applyMultiparseRenaming(declaration.getContainingFilename(), 
+					nameOfInnermostDeclarator);
+			mFunctionTable.put(rslvName, declaration);
 		}
 		return super.visit(declaration);
 	}

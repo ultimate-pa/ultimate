@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -277,8 +277,10 @@ public class TypeHandler implements ITypeHandler {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.VOID))));
 			} else {
-				final SymbolTableValue stv = main.mCHandler.getSymbolTable().get(cId, loc);
-				final BoogieType boogieType = (BoogieType) cType2AstType(loc,
+				final String modifiedName = 
+						main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
+				final SymbolTableValue stv = main.mCHandler.getSymbolTable().findCSymbol(node, modifiedName);
+				final BoogieType boogieType = (BoogieType) cType2AstType(loc, 
 						stv.getCVariable().getUnderlyingType()).getBoogieType();
 				final String bId = stv.getBoogieName();
 				// TODO: replace constants "false, false"
@@ -294,10 +296,12 @@ public class TypeHandler implements ITypeHandler {
 	public Result visit(final Dispatcher main, final IASTEnumerationSpecifier node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final String cId = node.getName().toString();
+		final String rslvName = 
+				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String enumId = main.mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
-				main.mCHandler.getSymbolTable().getCompoundCounter(), false, intType);
+				main.mCHandler.getSymbolTable().getCScopeId(node), false, intType);
 		final int nrFields = node.getEnumerators().length;
 		final String[] fNames = new String[nrFields];
 		final Expression[] fValues = new Expression[nrFields];
@@ -318,10 +322,10 @@ public class TypeHandler implements ITypeHandler {
 		final ASTType at = cPrimitive2AstType(loc, intType);
 		final TypesResult result = new TypesResult(at, false, false, cEnum);
 
-		final String incompleteTypeName = "ENUM~" + cId;
+		final String incompleteTypeName = "ENUM~" + rslvName;
 		if (mIncompleteType.contains(incompleteTypeName)) {
 			mIncompleteType.remove(incompleteTypeName);
-			final TypesResult incompleteType = mDefinedTypes.get(cId);
+			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
 			final CEnum incompleteEnum = (CEnum) incompleteType.cType;
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
@@ -331,7 +335,7 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		if (!enumId.equals(SFO.EMPTY)) {
-			mDefinedTypes.put(cId, result);
+			mDefinedTypes.put(rslvName, result);
 		}
 
 		return result;
@@ -344,9 +348,11 @@ public class TypeHandler implements ITypeHandler {
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
 			final String type = node.getName().toString();
+			final String rslvName = 
+					main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), type);
 
 			// if (mDefinedTypes.containsKey(type)) {
-			final TypesResult originalType = mDefinedTypes.get(type);
+			final TypesResult originalType = mDefinedTypes.get(rslvName);
 			// if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
 			// // --> we have an incomplete enum --> do nothing
 			// //(i cannot think of an effect of an incomplete enum declaration right now..)
@@ -383,7 +389,7 @@ public class TypeHandler implements ITypeHandler {
 					new TypesResult(new NamedType(loc, BoogieType.TYPE_ERROR, incompleteTypeName, new ASTType[0]),
 							false, false, ctype);
 
-			mDefinedTypes.put(type, r);
+			mDefinedTypes.put(rslvName, r);
 
 			return r;
 		}
@@ -427,15 +433,17 @@ public class TypeHandler implements ITypeHandler {
 		mStructCounter--;
 
 		final String cId = node.getName().toString();
+		final String rslvName = 
+				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 
 		CStruct cvar;
 		String name = null;
 		if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
-			name = "STRUCT~" + cId;
+			name = "STRUCT~" + rslvName;
 			cvar = new CStruct(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
 					bitFieldWidths);
 		} else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
-			name = "UNION~" + cId;
+			name = "UNION~" + rslvName;
 			cvar = new CUnion(fNames.toArray(new String[fNames.size()]), fTypes.toArray(new CType[fTypes.size()]),
 					bitFieldWidths);
 		} else {
@@ -449,7 +457,7 @@ public class TypeHandler implements ITypeHandler {
 
 		if (mIncompleteType.contains(name)) {
 			mIncompleteType.remove(name);
-			final TypesResult incompleteType = mDefinedTypes.get(cId);
+			final TypesResult incompleteType = mDefinedTypes.get(rslvName);
 			final CStruct incompleteStruct = (CStruct) incompleteType.cType;
 			// search for any typedefs that were made for the incomplete type
 			// typedefs are made globally, so the CHandler has to do this
@@ -459,7 +467,7 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		if (!cId.equals(SFO.EMPTY)) {
-			mDefinedTypes.put(cId, result);
+			mDefinedTypes.put(rslvName, result);
 		}
 		return result;
 	}
@@ -512,14 +520,15 @@ public class TypeHandler implements ITypeHandler {
 //	}
 
 	@Override
-	public ASTType getTypeOfStructLHS(final SymbolTable sT, final ILocation loc, final StructLHS lhs) {
+	public ASTType getTypeOfStructLHS(final FlatSymbolTable sT, final ILocation loc, final StructLHS lhs,
+			final IASTNode hook) {
 		final String[] flat = BoogieASTUtil.getLHSList(lhs);
 		final String leftMostId = flat[0];
 		assert leftMostId.equals(BoogieASTUtil.getLHSId(lhs));
 		assert sT.containsBoogieSymbol(leftMostId);
-		final String cId = sT.getCID4BoogieID(leftMostId, loc);
-		assert sT.containsKey(cId);
-		final ASTType t = cType2AstType(loc, sT.get(cId, loc).getCVariable());
+		final String cId = sT.getCIdForBoogieId(leftMostId);
+		assert sT.containsCSymbol(hook, cId);
+		final ASTType t = cType2AstType(loc, sT.findCSymbol(hook, cId).getCVariable());
 		return traverseForType(loc, t, flat, 1);
 	}
 

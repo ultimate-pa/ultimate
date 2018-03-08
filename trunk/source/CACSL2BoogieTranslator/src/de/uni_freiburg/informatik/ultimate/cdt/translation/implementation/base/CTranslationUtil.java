@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -137,11 +138,11 @@ public class CTranslationUtil {
 //	}
 
 	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
-			final HeapLValue arrayBaseAddress, final List<Integer> arrayIndex) {
+			final HeapLValue arrayBaseAddress, final List<Integer> arrayIndex, final IASTNode hook) {
 		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
 
 		final List<Integer> arrayBounds = getConstantDimensionsOfArray(cArrayType,
-				main.mCHandler.getExpressionTranslation());
+				main.mCHandler.getExpressionTranslation(), hook);
 
 		Integer product = 0;
 		for (int i = 0; i < arrayIndex.size(); i++) {
@@ -156,7 +157,7 @@ public class CTranslationUtil {
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
 		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc,
-				cArrayType.getValueType(), flatCellNumber, sizeT);
+				cArrayType.getValueType(), flatCellNumber, sizeT, hook);
 		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_plus, pointerOffset, sizeT, cellOffset, sizeT);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
@@ -165,7 +166,7 @@ public class CTranslationUtil {
 	}
 
 	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
-			final HeapLValue arrayBaseAddress, final Integer arrayIndex) {
+			final HeapLValue arrayBaseAddress, final Integer arrayIndex, final IASTNode hook) {
 		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
 
 		final CPrimitive pointerComponentType = main.mCHandler.getExpressionTranslation().getCTypeOfPointerComponents();
@@ -183,7 +184,7 @@ public class CTranslationUtil {
 		final CType cellType = cArrayType.getValueType();
 
 		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc,
-				cellType, flatCellNumber, pointerComponentType);
+				cellType, flatCellNumber, pointerComponentType, hook);
 
 
 		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
@@ -195,13 +196,13 @@ public class CTranslationUtil {
 	}
 
 	public static HeapLValue constructAddressForStructField(final ILocation loc, final Dispatcher main,
-			final HeapLValue baseAddress, final int fieldIndex) {
+			final HeapLValue baseAddress, final int fieldIndex, final IASTNode hook) {
 		final CStruct cStructType = (CStruct) baseAddress.getCType().getUnderlyingType();
 
 		final CPrimitive sizeT = main.mCHandler.getTypeSizeAndOffsetComputer().getSizeT();
 
 		final Expression fieldOffset = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(
-						loc, cStructType, fieldIndex);
+						loc, cStructType, fieldIndex, hook);
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress.getAddress(), loc);
@@ -212,11 +213,11 @@ public class CTranslationUtil {
 
 		return LRValueFactory.constructHeapLValue(main, newPointer, cStructType.getFieldTypes()[fieldIndex], null);
 	}
-
-	public static boolean isVarlengthArray(final CArray cArrayType, final ExpressionTranslation expressionTranslation) {
+	public static boolean isVarlengthArray(final CArray cArrayType, final ExpressionTranslation expressionTranslation,
+			final IASTNode hook) {
 		CArray currentArrayType = cArrayType;
 		while (true) {
-			if (expressionTranslation.extractIntegerValue(currentArrayType.getBound()) == null) {
+			if (expressionTranslation.extractIntegerValue(currentArrayType.getBound(), hook) == null) {
 				// found a variable length bound
 				return true;
 			}
@@ -231,20 +232,21 @@ public class CTranslationUtil {
 	}
 
 	public static boolean isToplevelVarlengthArray(final CArray cArrayType,
-			final ExpressionTranslation expressionTranslation) {
-		return expressionTranslation.extractIntegerValue(cArrayType.getBound()) == null;
+			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
+		return expressionTranslation.extractIntegerValue(cArrayType.getBound(), hook) == null;
 	}
 
 	public static List<Integer> getConstantDimensionsOfArray(final CArray cArrayType,
-			final ExpressionTranslation expressionTranslation) {
-		if (CTranslationUtil.isVarlengthArray(cArrayType, expressionTranslation)) {
+			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
+		if (CTranslationUtil.isVarlengthArray(cArrayType, expressionTranslation, hook)) {
 			throw new IllegalArgumentException("only call this for non-varlength array types");
 		}
 		CArray currentArrayType = cArrayType;
 
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
-			result.add(Integer.parseUnsignedInt(expressionTranslation.extractIntegerValue(currentArrayType.getBound()).toString()));
+			result.add(Integer.parseUnsignedInt(expressionTranslation.extractIntegerValue(currentArrayType.getBound(),
+					hook).toString()));
 
 			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
@@ -260,10 +262,10 @@ public class CTranslationUtil {
 	}
 
 	public static int getConstantFirstDimensionOfArray(final CArray cArrayType,
-			final ExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation, final IASTNode hook) {
 		final RValue dimRVal = cArrayType.getBound();
 
-		final BigInteger extracted = expressionTranslation.extractIntegerValue(dimRVal);
+		final BigInteger extracted = expressionTranslation.extractIntegerValue(dimRVal, hook);
 		if (extracted == null) {
 			throw new IllegalArgumentException("only call this for non-varlength first dimension types");
 		}
@@ -284,7 +286,7 @@ public class CTranslationUtil {
 	 * @return
 	 */
 	public static ExpressionResult convertExpressionListToExpressionResultIfNecessary(final ILocation loc,
-			final Dispatcher main, final Result dispatch) {
+			final Dispatcher main, final Result dispatch, final IASTNode hook) {
 		assert dispatch instanceof ExpressionListResult || dispatch instanceof ExpressionResult;
 		if (dispatch instanceof ExpressionResult) {
 			return (ExpressionResult) dispatch;
@@ -300,8 +302,7 @@ public class CTranslationUtil {
 			 *  A comma operator does not yield an lvalue.
 			 * --> thus we can immediately switch to rvalue here
 			 */
-			result.addAllExceptLrValue(listResult.list.get(i)
-					.switchToRValueIfNecessary(main, loc));
+			result.addAllExceptLrValue(listResult.list.get(i).switchToRValueIfNecessary(main, loc, hook));
 		}
 		result.setLrVal(listResult.list.get(listResult.list.size() - 1).getLrValue());
 

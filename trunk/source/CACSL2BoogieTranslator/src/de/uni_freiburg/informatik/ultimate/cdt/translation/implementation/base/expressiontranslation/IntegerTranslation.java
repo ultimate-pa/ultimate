@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -177,7 +178,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression constructBinaryBitwiseIntegerExpression(final ILocation loc, final int op, final Expression left,
-			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight) {
+			final CPrimitive typeLeft, final Expression right, final CPrimitive typeRight, final IASTNode hook) {
 		final String funcname;
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
@@ -194,7 +195,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftLeftAssign: {
-			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight);
+			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight, hook);
 			if (integerLiteralValue != null) {
 				return constructShiftWithLiteralOptimization(loc, left, typeRight, integerLiteralValue,
 						Operator.ARITHMUL);
@@ -204,7 +205,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign: {
-			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight);
+			final BigInteger integerLiteralValue = extractIntegerValue(right, typeRight, hook);
 			if (integerLiteralValue != null) {
 				return constructShiftWithLiteralOptimization(loc, left, typeRight, integerLiteralValue,
 						Operator.ARITHDIV);
@@ -620,7 +621,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public BigInteger extractIntegerValue(final Expression expr, final CType cType) {
+	public BigInteger extractIntegerValue(final Expression expr, final CType cType, final IASTNode hook) {
 		if (cType.isIntegerType()) {
 			if (expr instanceof IntegerLiteral) {
 				final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
@@ -633,10 +634,10 @@ public class IntegerTranslation extends ExpressionTranslation {
 			} else if (expr instanceof IdentifierExpression) {
 				// An IdentifierExpression may be an alias for an integer value, this is stored in the symbol table.
 				final String bId = ((IdentifierExpression) expr).getIdentifier();
-				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCID4BoogieID(bId, expr.getLoc());
-				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().get(cId, expr.getLoc());
+				final String cId = mTypeHandler.getCHandler().getSymbolTable().getCIdForBoogieId(bId);
+				final SymbolTableValue stv = mTypeHandler.getCHandler().getSymbolTable().findCSymbol(hook, cId);
 				if (stv.hasConstantValue()) {
-					return extractIntegerValue(stv.getConstantValue(), cType);
+					return extractIntegerValue(stv.getConstantValue(), cType, hook);
 				}
 			}
 			return null;
@@ -967,7 +968,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression erazeBits(final ILocation loc, final Expression value, final CPrimitive cType,
-			final int remainingWith) {
+			final int remainingWith, final IASTNode hook) {
 		return applyEucledeanModulo(loc, value, BigInteger.valueOf(2).pow(remainingWith));
 	}
 

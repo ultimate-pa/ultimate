@@ -62,6 +62,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -89,6 +90,10 @@ public class PreRunner extends ASTVisitor {
 	 */
 	private final LinkedScopedHashMap<String, IASTNode> mTemporarySymbolTable;
 	/**
+	 * The symbol table used for renaming IDs according to multiparse rules.
+	 */
+	private final FlatSymbolTable mSymTab;
+	/**
 	 * Whether or not the memory model is required.
 	 */
 	private boolean mIsMMRequired;
@@ -107,12 +112,13 @@ public class PreRunner extends ASTVisitor {
 	/**
 	 * Constructor.
 	 */
-	public PreRunner(final Map<String, IASTNode> functionTable) {
+	public PreRunner(final FlatSymbolTable symTab, final Map<String, IASTNode> functionTable) {
 		shouldVisitDeclarations = true;
 		shouldVisitParameterDeclarations = true;
 		shouldVisitExpressions = true;
 		shouldVisitStatements = true;
 		shouldVisitDeclSpecifiers = true;
+		mSymTab = symTab;
 		mIsMMRequired = false;
 		mTemporarySymbolTable = new LinkedScopedHashMap<>();
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -199,14 +205,16 @@ public class PreRunner extends ASTVisitor {
 
 				mIsMMRequired = true;
 				if (id != null) {
-					final IASTNode function = mFunctionTable.get(id);
-					if (function != null && mTemporarySymbolTable.get(id) == null) { // id is the name of a function and
+					final String rslvId = mSymTab.applyMultiparseRenaming(expression.getContainingFilename(), id);
+					final IASTNode function = mFunctionTable.get(rslvId);
+					if (function != null && mTemporarySymbolTable.get(rslvId) == null) { // id is the name of a function and
 																						// not shadowed here
-						updateFunctionPointers(id, function);
+						// Rename the ID according to multiparse rules
+						updateFunctionPointers(rslvId, function);
 						// functionPointers.put(id, function);
-						updateFunctionToIndex(id);
+						updateFunctionToIndex(rslvId);
 					} else {
-						mVariablesOnHeap.add(get(id, loc));
+						mVariablesOnHeap.add(get(rslvId, loc));
 					}
 				}
 			} else if (!mIsMMRequired && ue.getOperator() == IASTUnaryExpression.op_star) {
@@ -214,21 +222,22 @@ public class PreRunner extends ASTVisitor {
 			}
 		} else if (expression instanceof IASTIdExpression) {
 			final String id = ((IASTIdExpression) expression).getName().toString();
+			final String rslvId = mSymTab.applyMultiparseRenaming(expression.getContainingFilename(), id);
 
 			// a function address may be assigned to a function pointer without addressof
 			// like fptr = f; where f is a function
 			// check if id is the name of a function and not shadowed here
-			final IASTNode function = mFunctionTable.get(id);
-			if (function != null && mTemporarySymbolTable.get(id) == null
+			final IASTNode function = mFunctionTable.get(rslvId);
+			if (function != null && mTemporarySymbolTable.get(rslvId) == null
 					&& !(expression.getParent() instanceof IASTFunctionCallExpression
 							&& ((IASTFunctionCallExpression) expression.getParent()).getFunctionNameExpression()
 									.equals(expression))) {
-				updateFunctionPointers(id, function);
+				updateFunctionPointers(rslvId, function);
 				// functionPointers.put(id, function);
-				updateFunctionToIndex(id);
+				updateFunctionToIndex(rslvId);
 			}
 
-			final IASTNode d = mTemporarySymbolTable.get(id);
+			final IASTNode d = mTemporarySymbolTable.get(rslvId);
 			// don't check contains here!
 			// if the identifier refers to an array and is used in a functioncall, the Array has to go on the heap
 			if (d instanceof IASTArrayDeclarator && expression.getParent() instanceof IASTFunctionCallExpression) {
@@ -290,7 +299,8 @@ public class PreRunner extends ASTVisitor {
 			if (binEx.getOperator() == IASTBinaryExpression.op_assign) {
 				if (binEx.getOperand1() instanceof IASTIdExpression) {
 					final String lId = ((IASTIdExpression) binEx.getOperand1()).getName().toString();
-					final IASTNode lDecl = mTemporarySymbolTable.get(lId);
+					final String rslvLeftId = mSymTab.applyMultiparseRenaming(binEx.getContainingFilename(), lId);
+					final IASTNode lDecl = mTemporarySymbolTable.get(rslvLeftId);
 					final String rId = extraxtExpressionIdFromPossiblyComplexExpression(binEx.getOperand2());
 					final IASTNode rDecl = mTemporarySymbolTable.get(rId);
 					if (lDecl instanceof IASTDeclarator) {
@@ -366,9 +376,10 @@ public class PreRunner extends ASTVisitor {
 	 * identifier that designates the storage array used by the expression (here: s).
 	 *
 	 */
-	public static String extraxtExpressionIdFromPossiblyComplexExpression(final IASTNode expression) {
+	private String extraxtExpressionIdFromPossiblyComplexExpression(final IASTNode expression) {
 		if (expression instanceof IASTIdExpression) {
-			return ((IASTIdExpression) expression).getName().toString();
+			final String id = ((IASTIdExpression) expression).getName().toString();
+			return mSymTab.applyMultiparseRenaming(expression.getContainingFilename(), id);
 		} else if (expression instanceof IASTFieldReference) {
 			if (((IASTFieldReference) expression).isPointerDereference()) {
 				return null; // "->" cancels out "&", like "*"
@@ -422,7 +433,8 @@ public class PreRunner extends ASTVisitor {
 			// do nothing
 		} else {
 			final String key = d.getName().toString();
-			mTemporarySymbolTable.put(key, d);
+			final String rslvKey = mSymTab.applyMultiparseRenaming(d.getContainingFilename(), key);
+			mTemporarySymbolTable.put(rslvKey, d);
 		}
 	}
 

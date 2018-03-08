@@ -35,7 +35,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -136,7 +138,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -226,7 +230,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class MainDispatcher extends Dispatcher {
 
-	private static final boolean DETERMINIZE_NECESSARY_DECLARATIONS = true;
+	private static final boolean DETERMINIZE_NECESSARY_DECLARATIONS = false;
 
 	/**
 	 * The current decorator tree.
@@ -245,8 +249,8 @@ public class MainDispatcher extends Dispatcher {
 	 * point.
 	 */
 	private boolean mThereAreDereferencedPointerVariables;
-
-	private LinkedHashSet<IASTDeclaration> mReachableDeclarations;
+	
+	private Set<IASTDeclaration> mReachableDeclarations;
 	/**
 	 * Variables that need some special memory handling.
 	 */
@@ -263,8 +267,8 @@ public class MainDispatcher extends Dispatcher {
 
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
 			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
-			final ILogger logger) {
-		super(backtranslator, services, logger, null, new LinkedHashMap<>());
+			final ILogger logger, final MultiparseSymbolTable mst) {
+		super(backtranslator, services, logger, null, new LinkedHashMap<>(), mst);
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
@@ -306,8 +310,14 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
-		return mReachableDeclarations;
+	public boolean isReachable(IASTDeclaration decl) {
+		// Just mimic the main dispatcher.
+		if (mReachableDeclarations == null) {
+			return true;
+		}
+		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
+		//return true;
+		return mReachableDeclarations.contains(decl);
 	}
 
 	/**
@@ -320,44 +330,81 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	protected void preRun(final DecoratorNode node) {
-		super.preRun(node);
-		final IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
-
+	protected void preRun(final Collection<DecoratedUnit> nodes) {
+		super.preRun(nodes);
 		mVariablesOnHeap = new LinkedHashSet<>();
 
-		final FunctionTableBuilder ftb = new FunctionTableBuilder();
-		tu.accept(ftb);
-		mFunctionTable.putAll(ftb.getFunctionTable());
-		final PreRunner pr = new PreRunner(mFunctionTable);
-		tu.accept(pr);
+		// Build the function table
+		executePreRun(new FunctionTableBuilder(mFlatTable), nodes, 
+				ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
 
-		mVariablesOnHeap.addAll(pr.getVarsForHeap());
-
-		mFunctionToIndex = pr.getFunctionToIndex();
+		executePreRun(new PreRunner(mFlatTable, mFunctionTable), nodes, pr -> {
+			mVariablesOnHeap.addAll(pr.getVarsForHeap());
+			mFunctionToIndex = pr.getFunctionToIndex();
+			mThereAreDereferencedPointerVariables = pr.isMMRequired();
+		});
 
 		if (DETERMINIZE_NECESSARY_DECLARATIONS) {
-			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(), this,
-					ftb.getFunctionTable(), mFunctionToIndex);
-			tu.accept(dnd);
-
-			mReachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
+			// executePreRun can't be used here, as it visits all translation units after each other while the DND
+			// visitor expects exactly one TU.
+			mReachableDeclarations = new HashSet<>();
+			final Map<String, Map<String, IASTDeclaration>> reverseSourceMap = new HashMap<>();
+			for (final DecoratedUnit du : nodes) {
+				final String key = du.getRootNode().getCNode().getContainingFilename();
+				reverseSourceMap.put(key, new HashMap<>());
+				for (final IASTDeclaration decl : 
+						((IASTTranslationUnit) du.getRootNode().getCNode()).getDeclarations()) {
+					if (decl instanceof IASTSimpleDeclaration) {
+						final IASTSimpleDeclaration cd = (IASTSimpleDeclaration) decl;
+						for (final IASTDeclarator d : cd.getDeclarators()) {
+							reverseSourceMap.get(key).put(d.getName().toString(), cd);
+						}
+					} else if (decl instanceof IASTFunctionDefinition) {
+						final IASTFunctionDefinition cd = (IASTFunctionDefinition) decl;
+						reverseSourceMap.get(key).put(cd.getDeclarator().getName().toString(), cd);
+					} else {
+						// DND is only used for the two above so this is ok.
+					}
+				}
+			}
+			for (final DecoratedUnit du : nodes) {
+				final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(), this,
+						mFunctionTable, mFunctionToIndex);
+				du.getRootNode().getCNode().accept(dnd);
+				final Set<IASTDeclaration> decl = dnd.getReachableDeclarationsOrDeclarators();
+				for (final IASTDeclaration d : decl) {
+					if (!d.isPartOfTranslationUnitFile()) {
+						// This is not the correct declaration to store. Find the correct one!
+						if (d instanceof IASTSimpleDeclaration) {
+							final String name = ((IASTSimpleDeclaration) d).getDeclarators()[0].getName().toString();
+							mReachableDeclarations.add(reverseSourceMap.get(d.getContainingFilename()).get(name));
+						} else if (d instanceof IASTFunctionDefinition) {
+							final String name = ((IASTFunctionDefinition) d).getDeclarator().getName().toString();
+							mReachableDeclarations.add(reverseSourceMap.get(d.getContainingFilename()).get(name));
+						} else {
+							// Those are not regarded by DND.
+						}
+						
+					} else {
+						mReachableDeclarations.add(d);
+					}
+				}
+			}
 		} else {
 			mReachableDeclarations = null;
 		}
 
 		final PRDispatcher prd = new PRDispatcher(mBacktranslator, mServices, mLogger, mFunctionToIndex,
-				mReachableDeclarations, getLocationFactory(), mFunctionTable);
+				mReachableDeclarations, getLocationFactory(), mFunctionTable, mMultiparseTable);
+		prd.preRun(nodes);
 		prd.init();
-		prd.dispatch(node);
+		prd.dispatch(nodes);
 		mVariablesOnHeap.addAll(prd.getVariablesOnHeap());
 
 		mIndexToFunction = new LinkedHashMap<>();
 		for (final Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
 			mIndexToFunction.put(en.getValue(), en.getKey());
 		}
-
-		mThereAreDereferencedPointerVariables = pr.isMMRequired();
 
 	}
 
@@ -368,10 +415,8 @@ public class MainDispatcher extends Dispatcher {
 
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 
-		mNameHandler = new NameHandler(mBacktranslator, mHandlerHandler);
-
 		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, true, mLogger, mBitvectorTranslation,
-				mOverapproximateFloatingPointOperations);
+				mOverapproximateFloatingPointOperations, mFlatTable);
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new PreprocessorHandler(isSvcomp());
 		mReportWarnings = true;
@@ -384,7 +429,7 @@ public class MainDispatcher extends Dispatcher {
 		if (mWitnessInvariants != null) {
 			invariantBefore = mWitnessInvariants.get(n);
 			final ILocation loc = getLocationFactory().createCLocation(n);
-			witnessInvariantsBefore = translateWitnessInvariant(loc, invariantBefore, a -> a.isBefore());
+			witnessInvariantsBefore = translateWitnessInvariant(loc, invariantBefore, a -> a.isBefore(), n);
 		} else {
 			invariantBefore = null;
 			witnessInvariantsBefore = Collections.emptyList();
@@ -544,7 +589,7 @@ public class MainDispatcher extends Dispatcher {
 			// TODO: Use the new information as you see fit
 			invariantAfter = mWitnessInvariants.get(n);
 			final ILocation loc = getLocationFactory().createCLocation(n);
-			witnessInvariantsAfter = translateWitnessInvariant(loc, invariantAfter, a -> a.isAfter());
+			witnessInvariantsAfter = translateWitnessInvariant(loc, invariantAfter, a -> a.isAfter(), n);
 		} else {
 			invariantAfter = null;
 			witnessInvariantsAfter = Collections.emptyList();
@@ -601,7 +646,8 @@ public class MainDispatcher extends Dispatcher {
 
 	private List<AssertStatement> translateWitnessInvariant(final ILocation loc,
 			final ExtractedWitnessInvariant invariant,
-			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition) throws AssertionError {
+			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition, final IASTNode hook)
+			throws AssertionError {
 		if (invariant != null) {
 			if (!funHasCorrectPosition.test(invariant)) {
 				return Collections.emptyList();
@@ -616,7 +662,7 @@ public class MainDispatcher extends Dispatcher {
 			} catch (final Exception e) {
 				throw new AssertionError(e);
 			}
-			final Result translationResult = dispatch(acslNode);
+			final Result translationResult = dispatch(acslNode, hook);
 			final List<AssertStatement> invariants = new ArrayList<>();
 			if (translationResult instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) translationResult;
@@ -659,9 +705,15 @@ public class MainDispatcher extends Dispatcher {
 		}
 
 	}
-
+	
 	@Override
 	public Result dispatch(final ACSLNode n) {
+		return dispatch(n, mAcslHook);
+	}
+
+	@Override
+	public Result dispatch(final ACSLNode n, final IASTNode cHook) {
+		mAcslHook = cHook;
 		if (n instanceof CodeAnnot) {
 			return mAcslHandler.visit(this, (CodeAnnot) n);
 		}
@@ -864,13 +916,13 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(final DecoratorNode node) {
-		mDecoratorTree = node;
-		mDecoratorTreeIterator = node.iterator();
-		if (node.getCNode() != null) {
-			return dispatch(node.getCNode());
-		}
-		return dispatch(node.getAcslNode());
+	public Result dispatch(final Collection<DecoratedUnit> nodes) {
+		// Fix these two
+		mDecoratorTree = nodes.stream().findFirst().get().getRootNode();
+		mDecoratorTreeIterator = mDecoratorTree.iterator();
+		return mCHandler.visit(this, nodes);
+		// TODO Make this usable again
+		// return dispatch(node.getAcslNode());
 	}
 
 	@Override
@@ -1061,7 +1113,7 @@ public class MainDispatcher extends Dispatcher {
 			final ExtractedWitnessInvariant invariants = mWitnessInvariants.get(node);
 			try {
 				final ILocation loc = getLocationFactory().createCLocation(node);
-				final List<AssertStatement> list = translateWitnessInvariant(loc, invariants, (x -> x.isAt()));
+				final List<AssertStatement> list = translateWitnessInvariant(loc, invariants, (x -> x.isAt()), node);
 				if (list.isEmpty()) {
 					result = null;
 				} else {
