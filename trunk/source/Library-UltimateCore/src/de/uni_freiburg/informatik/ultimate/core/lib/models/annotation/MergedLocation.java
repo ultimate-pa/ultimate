@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -30,15 +30,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A default implementation of the {@link ILocation} interface. Does not support the deprecated parts of
  * {@link ILocation}.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -50,7 +52,7 @@ public class MergedLocation extends DefaultLocation {
 
 	/**
 	 * Create a {@link MergedLocation} with meaningful values.
-	 * 
+	 *
 	 * @param fileName
 	 * @param startLine
 	 * @param endLine
@@ -63,6 +65,7 @@ public class MergedLocation extends DefaultLocation {
 		mOriginLocations = Objects.requireNonNull(origins);
 	}
 
+	@Visualizable
 	public List<ILocation> getOriginLocations() {
 		return Collections.unmodifiableList(mOriginLocations);
 	}
@@ -145,6 +148,10 @@ public class MergedLocation extends DefaultLocation {
 		origins.add(one);
 		origins.add(other);
 		return mergeNonMergeLocation(one, other, origins);
+	}
 
+	@Override
+	public String toString() {
+		return "Merged: " + getOriginLocations().stream().map(a -> a.toString()).collect(Collectors.joining(", "));
 	}
 }

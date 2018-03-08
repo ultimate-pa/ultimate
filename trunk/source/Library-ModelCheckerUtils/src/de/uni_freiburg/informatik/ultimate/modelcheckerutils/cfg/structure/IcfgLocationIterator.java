@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,7 +56,7 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 	/**
 	 * Create an Iterator that iterates over all locations reachable by starting from the given location and following
 	 * the outgoing edges.
-	 * 
+	 *
 	 * @param location
 	 *            The given location.
 	 */
@@ -67,7 +67,7 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 	/**
 	 * Create an Iterator that iterates over all locations reachable by starting from the given locations and following
 	 * the outgoing edges.
-	 * 
+	 *
 	 * @param locations
 	 *            the given locations.
 	 */
@@ -81,7 +81,7 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 	/**
 	 * Create an Iterator that iterates over all locations reachable by starting from the locations defined by the given
 	 * {@link IIcfg}s {@link IIcfg#getInitialNodes()} method and following their outgoing edges.
-	 * 
+	 *
 	 * @param icfg
 	 *            The given {@link IIcfg}.
 	 */
@@ -108,5 +108,10 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 	 */
 	public Stream<LOC> asStream() {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(this, Spliterator.ORDERED), false);
+	}
+
+	public static <LOC extends IcfgLocation> Stream<LOC> asStream(final IIcfg<LOC> icfg) {
+		return StreamSupport.stream(
+				Spliterators.spliteratorUnknownSize(new IcfgLocationIterator<>(icfg), Spliterator.ORDERED), false);
 	}
 }

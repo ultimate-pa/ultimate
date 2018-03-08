@@ -140,41 +140,11 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 
 		if (elem.hasPayload()) {
 			final IPayload payload = elem.getPayload();
-
-			final GroupEntry payloadGroup = new GroupEntry("IPayload", null);
-			rtr.add(payloadGroup);
-
-			final ILocation loc = ILocation.getAnnotation(elem);
-			if (loc != null) {
-				final GroupEntry location = new GroupEntry("IPayload.Location", elementGroup);
-				rtr.add(location);
-				location.addEntry(new Entry("Source Info", loc.toString(), location));
-				location.addEntry(new Entry("Filename", loc.getFileName(), location));
-				location.addEntry(new Entry("Start Line Number", Integer.toString(loc.getStartLine()), location));
-				location.addEntry(new Entry("Start Column Number", Integer.toString(loc.getStartColumn()), location));
-				location.addEntry(new Entry("End Line Number", Integer.toString(loc.getEndLine()), location));
-				location.addEntry(new Entry("End Column Number", Integer.toString(loc.getEndColumn()), location));
-			}
 			final GroupEntry annotationGroup = new GroupEntry("IPayload.Annotation", null);
 			rtr.add(annotationGroup);
-			for (final Map.Entry<String, IAnnotations> outer : payload.getAnnotations().entrySet()) {
-				final GroupEntry group = new GroupEntry(outer.getKey(), annotationGroup);
-				if (outer.getValue() == null) {
-					continue;
-				}
-				final Map<String, Object> innerMap = outer.getValue().getAnnotationsAsMap();
 
-				// add traditional annotations to view
-				for (final Map.Entry<String, Object> inner : innerMap.entrySet()) {
-					final TreeViewEntry innerEntry = convertEntry(inner.getKey(), inner.getValue(), group);
-					if (innerEntry.isEmpty()) {
-						continue;
-					}
-					group.addEntry(innerEntry);
-				}
-				// add modern annotations to view
-				addVisualizableFieldsAndMethods(group, outer.getValue());
-				annotationGroup.addEntry(group);
+			for (final Map.Entry<String, IAnnotations> outer : payload.getAnnotations().entrySet()) {
+				annotationGroup.addEntry(convertEntry(outer.getKey(), outer.getValue(), annotationGroup));
 			}
 		}
 		return rtr.toArray();
@@ -288,15 +258,30 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			group.addEntry(convertEntry("subform", form.getSubformula(), group));
 			return group;
 		}
+		if (value instanceof ILocation) {
+			final ILocation loc = (ILocation) value;
+			final GroupEntry locGroup = new GroupEntry(name, parent);
+			locGroup.addEntry(new Entry("Type", loc.getClass().getSimpleName(), locGroup));
+			locGroup.addEntry(new Entry("Source Info", loc.toString(), locGroup));
+			locGroup.addEntry(new Entry("Filename", loc.getFileName(), locGroup));
+			locGroup.addEntry(new Entry("Start Line Number", Integer.toString(loc.getStartLine()), locGroup));
+			locGroup.addEntry(new Entry("Start Column Number", Integer.toString(loc.getStartColumn()), locGroup));
+			locGroup.addEntry(new Entry("End Line Number", Integer.toString(loc.getEndLine()), locGroup));
+			locGroup.addEntry(new Entry("End Column Number", Integer.toString(loc.getEndColumn()), locGroup));
+			addVisualizableFieldsAndMethods(locGroup, value);
+			return locGroup;
+		}
 		if (value instanceof ITree) {
 			return convertITreeEntry(String.valueOf(value), (ITree) value, parent);
 		}
 		if (value instanceof IAnnotations) {
 			final Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
 			final GroupEntry group = new GroupEntry(name, parent);
+			group.addEntry(convertEntry("toString", String.valueOf(value), parent));
 			for (final Map.Entry<String, Object> attrib : mapping.entrySet()) {
 				group.addEntry(convertEntry(attrib.getKey(), mapping.get(attrib.getKey()), group));
 			}
+			addVisualizableFieldsAndMethods(group, value);
 			return group;
 		}
 
@@ -310,9 +295,9 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		if (value instanceof Collection) {
 			final GroupEntry group = new GroupEntry(name, parent);
 			int cnt = 0;
-			for (final Object o : (Collection<?>) value) {
+			for (final Object obj : (Collection<?>) value) {
 				cnt++;
-				group.addEntry(convertEntry(String.valueOf(cnt), o, group));
+				group.addEntry(convertEntry(String.valueOf(cnt), obj, group));
 			}
 			return group;
 		}
