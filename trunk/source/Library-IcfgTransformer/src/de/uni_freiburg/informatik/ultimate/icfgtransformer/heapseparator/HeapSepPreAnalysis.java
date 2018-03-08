@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -50,11 +49,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * Computes of each icfg edge the subterms of the edge's TransFormula that are subject to transformation by the heap
  * separator.
  * These are divided into:
- * <li> cell updates (array updates where the lhs and rhs array refer to the same program variable)
+ * <ul>
+ * <li> cell updates (array updates where the lhs and rhs array refer to the same program variable, "array writes")
  * <li> array relations (equalities where the lhs and rhs have array type -stores are allowed- and which are not cell
  *  updates )
- * <li> cell accesses (essentially select terms)
- *
+ * <li> cell accesses (essentially select terms, "array reads")
+ * </ul>
  * Furthermore from the result of this preanalysis we can compute the groups of arrays whose partitioning has to be
  * aligned because they are assigned to each other.
  *
@@ -68,8 +68,6 @@ public class HeapSepPreAnalysis {
 	private final HashRelation<EdgeInfo, ArrayUpdate> mEdgeToCellUpdates;
 
 	private final HashRelation<EdgeInfo, ArrayEqualityAllowStores> mEdgeToArrayRelations;
-
-//	private final HashRelation<EdgeInfo, ArrayCellAccess> mEdgeToArrayCellAccesses;
 
 	private final ManagedScript mMgdScript;
 
@@ -103,7 +101,7 @@ public class HeapSepPreAnalysis {
 		mHeapArrays = heapArrays;
 
 		mEdgeToCellUpdates = new HashRelation<>();
-//		mEdgeToArrayCellAccesses = new HashRelation<>();
+
 		mEdgeToArrayRelations = new HashRelation<>();
 
 		mSelectInfos = new HashSet<>();
@@ -159,18 +157,14 @@ public class HeapSepPreAnalysis {
 			}
 
 			mEdgeToArrayRelations.addPair(edgeInfo, aeas);
-//			visitedSubTerms.add(aeas.getTerm(mMgdScript.getScript()));
 		}
 
 		for (final ArrayCellAccess aca : ArrayCellAccess.extractArrayCellAccesses(tf.getFormula())) {
-//			assert !visitedSubTerms.contains(aca.getTerm(mMgdScript.getScript()));
 
 			final SelectInfo selectInfo = new SelectInfo(aca, edgeInfo, mMgdScript);
 			if (mHeapArrays.contains(selectInfo.getArrayPvoc())) {
 				mSelectInfos.add(selectInfo);
 			}
-
-//			mEdgeToArrayCellAccesses.addPair(edgeInfo, aca);
 		}
 	}
 
@@ -187,43 +181,37 @@ public class HeapSepPreAnalysis {
 	}
 
 	public void finish() {
-//		mSelectInfos = new HashSet<>();
-//		for (final Entry<EdgeInfo, ArrayCellAccess> en : mEdgeToArrayCellAccesses) {
-//			final SelectInfo selectInfo = new SelectInfo(en.getValue(), en.getKey());
-//			mSelectInfos.add(selectInfo);
+//		/*
+//		 * Compute the array groups. Rule: Whenever two arrays are related via "=" in any formula in the program, they
+//		 *  must be in the same array group.
+//		 */
+//		final UnionFind<IProgramVarOrConst> arrayPartition = new UnionFind<>();
+//
+//		// base line for the array groups: the heap arrays
+//		mHeapArrays.forEach(arrayPartition::findAndConstructEquivalenceClassIfNeeded);
+//
+//		for (final Entry<EdgeInfo, ArrayEqualityAllowStores> en : mEdgeToArrayRelations) {
+//			final EdgeInfo edgeInfo = en.getKey();
+//			final ArrayEqualityAllowStores aeas = en.getValue();
+//
+//
+//			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getLhsArray());
+//			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getRhsArray());
+//
+//			arrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsPvoc);
+//			arrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsPvoc);
+//			arrayPartition.union(lhsPvoc, rhsPvoc);
 //		}
-
-		/*
-		 * Compute the array groups. Rule: Whenever two arrays are related via "=" in any formula in the program, they
-		 *  must be in the same array group.
-		 */
-		final UnionFind<IProgramVarOrConst> arrayPartition = new UnionFind<>();
-
-		// base line for the array groups: the heap arrays
-		mHeapArrays.forEach(arrayPartition::findAndConstructEquivalenceClassIfNeeded);
-
-		for (final Entry<EdgeInfo, ArrayEqualityAllowStores> en : mEdgeToArrayRelations) {
-			final EdgeInfo edgeInfo = en.getKey();
-			final ArrayEqualityAllowStores aeas = en.getValue();
-
-
-			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getLhsArray());
-			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(aeas.getRhsArray());
-
-			arrayPartition.findAndConstructEquivalenceClassIfNeeded(lhsPvoc);
-			arrayPartition.findAndConstructEquivalenceClassIfNeeded(rhsPvoc);
-			arrayPartition.union(lhsPvoc, rhsPvoc);
-		}
-		mArrayGroups = new HashSet<>();
-		for (final Set<IProgramVarOrConst> block : arrayPartition.getAllEquivalenceClasses()) {
-			mArrayGroups.add(new ArrayGroup(block));
-		}
-
-		for (final ArrayGroup ag : mArrayGroups) {
-			for (final IProgramVarOrConst a : ag.getArrays()) {
-				mArrayToArrayGroup.put(a, ag);
-			}
-		}
+//		mArrayGroups = new HashSet<>();
+//		for (final Set<IProgramVarOrConst> block : arrayPartition.getAllEquivalenceClasses()) {
+//			mArrayGroups.add(new ArrayGroup(block));
+//		}
+//
+//		for (final ArrayGroup ag : mArrayGroups) {
+//			for (final IProgramVarOrConst a : ag.getArrays()) {
+//				mArrayToArrayGroup.put(a, ag);
+//			}
+//		}
 
 		/*
 		 * compute array read statistics

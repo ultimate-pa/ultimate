@@ -59,5 +59,51 @@ public class ArrayGroup {
 		return true;
 	}
 
+	/*
+	 * return the dummy ArrayGroup
+	 */
+	public static ArrayGroup getNoArrayGroup() {
+		return new NoArrayGroup();
+	}
 
+	/**
+	 * Dummy class. The Array group that aux vars in Transformulas belong to which are never equated to some pvoc.
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static class NoArrayGroup extends ArrayGroup {
+
+		public NoArrayGroup() {
+			super(Collections.emptySet());
+		}
+
+		@Override
+		Set<IProgramVarOrConst> getArrays() {
+			return Collections.emptySet();
+		}
+
+		@Override
+		public String toString() {
+			return "NoArrayGroup";
+		}
+
+		@Override
+		public int getDimensionality() {
+			return -1;
+		}
+
+		@Override
+		public int hashCode() {
+			return 0;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (!(obj instanceof NoArrayGroup)) {
+				return false;
+			}
+			return true;
+		}
+	}
 }

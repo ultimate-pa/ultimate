@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
-	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
-			new NestedMap2<>();
+//	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
+//			new NestedMap2<>();
 
 	private final Map<StoreIndexInfo, IProgramNonOldVar> mStoreIndexInfoToFreezeVar = new HashMap<>();
 
@@ -57,22 +57,20 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	private final Set<ConstantTerm> mAllConstantTerms;
 
-	private int mStoreIndexInfoCounter;
+//	private final int mStoreIndexInfoCounter;
 
 	private final List<IProgramVarOrConst> mHeapArrays;
 
-//	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
-//			final CfgSmtToolkit csToolkit,
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
-			final List<IProgramVarOrConst> heapArrays) {
+			final List<IProgramVarOrConst> heapArrays,
+			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
-		mEdgeToIndexToStoreIndexInfo = new NestedMap2<>();
+		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 		mAllConstantTerms = new HashSet<>();
-		mStoreIndexInfoCounter = 0;
 		mHeapArrays = heapArrays;
 	}
 
@@ -82,7 +80,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				new EdgeInfo(oldTransition));
 		return super.transform(oldTransition, newSource, newTarget, newTransformula);
 	}
-//
+
 	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
 			final EdgeInfo edgeInfo) {
 
@@ -104,34 +102,40 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		mMgdScript.lock(this);
 
-//		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
-		final List<ArrayUpdate> aus = ArrayUpdate.extractArrayUpdates(tf.getFormula(), true);
 
+
+////		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
+//		final List<ArrayUpdate> aus = ArrayUpdate.extractArrayUpdates(tf.getFormula(), true);
+//
 		final List<Term> freezeVarUpdates = new ArrayList<>();
+		for (final Entry<Term, StoreIndexInfo> en : mEdgeToIndexToStoreIndexInfo.get(edgeInfo).entrySet()) {
+			final StoreIndexInfo storeIndexInfo = en.getValue();
+//
+//		for (final ArrayUpdate au : aus) {
+//
+//			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getNewArray());
+//			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getOldArray());
+//			if (!lhsPvoc.equals(rhsPvoc)){
+//				/*
+//				 *  we are only interested in array updates that update one cell here, i.e., the lhs and rhs array must
+//				 *  refer to the same program variable
+//				 */
+//				continue;
+//			}
+//
+//			if (!mHeapArrays.contains(lhsPvoc)) {
+//				/* we are only interested in writes to heap arrays */
+//				continue;
+//			}
+//
+//			for (int dim = 0; dim < au.getIndex().size(); dim++) {
+//				final Term indexTerm = au.getIndex().get(dim);
+				final Term indexTerm = storeIndexInfo.getIndexTerm();
 
-		for (final ArrayUpdate au : aus) {
+//				final StoreIndexInfo storeIndexInfo = getStoreIndexInfo(edgeInfo, indexTerm);
 
-			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getNewArray());
-			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getOldArray());
-			if (!lhsPvoc.equals(rhsPvoc)){
-				/*
-				 *  we are only interested in array updates that update one cell here, i.e., the lhs and rhs array must
-				 *  refer to the same program variable
-				 */
-				continue;
-			}
-
-			if (!mHeapArrays.contains(lhsPvoc)) {
-				/* we are only interested in writes to heap arrays */
-				continue;
-			}
-
-			for (int dim = 0; dim < au.getIndex().size(); dim++) {
-				final Term indexTerm = au.getIndex().get(dim);
-
-				final StoreIndexInfo storeIndexInfo = getStoreIndexInfo(edgeInfo, indexTerm);
 				final IProgramNonOldVar freezeVar = getOrConstructFreezeVariable(storeIndexInfo);
-				storeIndexInfo.addArrayAccessDimension(lhsPvoc, dim);
+//				storeIndexInfo.addArrayAccessDimension(lhsPvoc, dim);
 
 				final TermVariable inputFreezeIndexTv;
 				final TermVariable updatedFreezeIndexTv;
@@ -152,10 +156,9 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
 				 */
 				freezeVarUpdates.add(SmtUtils.or(mMgdScript.getScript(),
-						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm)
-						, mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv)
-						));
-			}
+						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm),
+						mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv)));
+//			}
 		}
 
 		mMgdScript.unlock(this);
@@ -207,14 +210,14 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		return result;
 	}
 
-	private StoreIndexInfo getStoreIndexInfo(final EdgeInfo tfInfo, final Term indexTerm) {
-		StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(tfInfo, indexTerm);
-		if (sii == null) {
-			sii = new StoreIndexInfo(tfInfo, indexTerm, mStoreIndexInfoCounter++);
-			mEdgeToIndexToStoreIndexInfo.put(tfInfo, indexTerm, sii);
-		}
-		return sii;
-	}
+//	private StoreIndexInfo getStoreIndexInfo(final EdgeInfo tfInfo, final Term indexTerm) {
+//		StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(tfInfo, indexTerm);
+//		if (sii == null) {
+//			sii = new StoreIndexInfo(tfInfo, indexTerm, mStoreIndexInfoCounter++);
+//			mEdgeToIndexToStoreIndexInfo.put(tfInfo, indexTerm, sii);
+//		}
+//		return sii;
+//	}
 
 //	public NestedMap2<Term, EdgeInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
 //		return mWriteIndexToTfInfoToFreezeVar;

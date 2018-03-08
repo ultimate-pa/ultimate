@@ -164,7 +164,8 @@ class HeapPartitionManager {
 
 			for (int dim = 0; dim < selectIndex.size(); dim++) {
 
-				if (!sii.getArrayToAccessDimensions().containsPair(selectInfo.getArrayPvoc(), dim)) {
+				if (!sii.getArrayToAccessDimensions()
+						.containsPair(mArrayToArrayGroup.get(selectInfo.getArrayPvoc()), dim)) {
 					/*
 					 * not the right base-array/dimension combination --> continue
 					 *  (more detailed: the array write(s) that the storeIndexInfo represents are not to the array that
@@ -264,23 +265,6 @@ class HeapPartitionManager {
 
 	public void finish() {
 
-//		final Map<ArrayGroup, Integer> heapArrayGroupToReadCount = new HashMap<>();
-//		for (final SelectInfo selectInfo : mSelectInfoToDimensionToLocationBlock.keySet()) {
-//
-//			final ArrayGroup ag = mArrayToArrayGroup.get(selectInfo.getArrayPvoc());
-//
-//			Integer oldCount = heapArrayGroupToReadCount.get(ag);
-//			if (oldCount == null) {
-//				oldCount = 0;
-//				heapArrayGroupToReadCount.put(ag, oldCount);
-//			}
-//			heapArrayGroupToReadCount.put(ag, oldCount + 1);
-//		}
-//		for (final Entry<ArrayGroup, Integer> en : heapArrayGroupToReadCount.entrySet()) {
-//			mLogger.info("Number of read from array group " + en.getKey() + " : " + en.getValue());
-//			mStatistics.registerPerArrayInfo(en.getKey(), HeapSeparatorStatistics.COUNT_ARRAY_READS, en.getValue());
-//		}
-
 		/*
 		 * rewrite the collected information into our output format
 		 */
@@ -315,13 +299,12 @@ class HeapPartitionManager {
 			mLogger.info("\t location blocks for array group " + arrayGroup);
 
 			for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
-				final UnionFind<StoreIndexInfo> partition = mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
+				final UnionFind<StoreIndexInfo> partition =
+						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim);
 				final int noWrites = partition == null ? 0 : partition.getAllElements().size();
-//						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllElements().size();
 
 				final int noBlocks = partition == null ? 0 : partition.getAllEquivalenceClasses().size();
-//						mArrayGroupToDimensionToStoreIndexInfoPartition.get(arrayGroup, dim).getAllEquivalenceClasses()
-//						.size();
+
 				mLogger.info("\t at dimension " + dim);
 				mLogger.info("\t # array writes (possibly including 1 dummy write/NoStoreIndexInfo) : " + noWrites);
 				mLogger.info("\t # location blocks :" + noBlocks);

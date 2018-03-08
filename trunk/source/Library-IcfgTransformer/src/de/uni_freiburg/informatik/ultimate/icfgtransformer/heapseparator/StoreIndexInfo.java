@@ -9,7 +9,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Represents an index that is used in a store term somewhere in the program.
+ * Represents an index that is used in a store term somewhere in the program and the location in the program where that
+ * store happens; colloquially: a "write location".
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -19,12 +20,19 @@ public class StoreIndexInfo {
 	private final Term mTerm;
 
 	/**
-	 * Each array write happens at a certain dimension of ore or more arrays.
+	 * Each array write happens at a certain dimension of one or more arrays.
 	 *  (+ the same Term may be used to do more than one array write in an IcfgEdge)
-	 *
-	 * which array is written at which dimensions in the given edge with the given term
+	 * <p>
+	 * This map stores which array is written at which dimensions in the given edge with the given term.
+	 * <p>
+	 * Storing the accessed dimensions allows an optimization when we compute the conjunction over elements of the cross
+	 *  product of partition blocks -- we may leave out certain blocks at certain positions in the cross product if we
+	 *  know none of their elements can ever be relevant at the given dimension.
+	 * Note that this is only an optimization and not conceptually relevant as it drops conjuncts that would be
+	 *  redundant anyway.
 	 */
-	private final HashRelation<IProgramVarOrConst, Integer> mArrayToAccessDimensions;
+//	private final HashRelation<IProgramVarOrConst, Integer> mArrayToAccessDimensions;
+	private final HashRelation<ArrayGroup, Integer> mArrayToAccessDimensions;
 
 	private final Set<Integer> mAccessDimensions;
 
@@ -56,7 +64,8 @@ public class StoreIndexInfo {
 //		return null;
 //	}
 
-	public void addArrayAccessDimension(final IProgramVarOrConst array, final Integer accessDimension) {
+//	public void addArrayAccessDimension(final IProgramVarOrConst array, final Integer accessDimension) {
+	public void addArrayAccessDimension(final ArrayGroup array, final Integer accessDimension) {
 		mArrayToAccessDimensions.addPair(array, accessDimension);
 		mAccessDimensions.add(accessDimension);
 	}
@@ -77,11 +86,13 @@ public class StoreIndexInfo {
 	 *
 	 * @return all the arrays that the stores with mTerm refer to in mEdgeInfo.
 	 */
-	public Set<IProgramVarOrConst> getArrays() {
+//	public Set<IProgramVarOrConst> getArrays() {
+	public Set<ArrayGroup> getArrays() {
 		return mArrayToAccessDimensions.getDomain();
 	}
 
-	public HashRelation<IProgramVarOrConst, Integer> getArrayToAccessDimensions() {
+//	public HashRelation<IProgramVarOrConst, Integer> getArrayToAccessDimensions() {
+	public HashRelation<ArrayGroup, Integer> getArrayToAccessDimensions() {
 		return mArrayToAccessDimensions;
 	}
 
