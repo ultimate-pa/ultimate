@@ -315,6 +315,11 @@ public class TypeSizes {
 		default:
 			throw new IllegalArgumentException("unsupported type " + this);
 		}
-
 	}
+
+	public Signedness getSignednessOfChar() {
+		return mSignednessOfChar;
+	}
+	
+	
 }

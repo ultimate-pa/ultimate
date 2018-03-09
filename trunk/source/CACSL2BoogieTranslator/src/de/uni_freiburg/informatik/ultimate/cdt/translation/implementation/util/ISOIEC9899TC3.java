@@ -323,7 +323,7 @@ public final class ISOIEC9899TC3 {
 	 * equivalent to signed char then \xFF has the value -1. This methods
 	 * implements a corresponding conversion.
 	 */
-	private static BigInteger convertNumericalValueToByteValue(final Signedness signednessOfChar,
+	public static BigInteger convertNumericalValueToByteValue(final Signedness signednessOfChar,
 			final BigInteger numericalValue) throws AssertionError {
 		BigInteger byteValue;
 		switch (signednessOfChar) {
