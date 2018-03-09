@@ -60,7 +60,9 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private Map<IcfgLocation, Set<IEqualityProvidingState>> mLoc2States;
+
 	private IEqualityProvidingState mTopState;
+	private IEqualityProvidingState mBotState;
 
 	private boolean mPreprocessed;
 
@@ -94,6 +96,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 						mTrackedArrays);
 		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
 		mTopState = absIntResult.getUsedDomain().createTopState();
+		mBotState = absIntResult.getUsedDomain().createBottomState();
 		mLoc2States = (Map<IcfgLocation, Set<IEqualityProvidingState>>) loc2states;
 		assert mLoc2States != null : "There was no AbsInt result";
 		assert !mPreprocessed;
@@ -140,7 +143,8 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 			result = result == null ? unionStateForCurrentLoc : result.join(unionStateForCurrentLoc);
 		}
 		if (result == null) {
-			result = mTopState;
+//			result = mTopState;
+			result = mBotState;
 		}
 		assert result != null;
 		return result;

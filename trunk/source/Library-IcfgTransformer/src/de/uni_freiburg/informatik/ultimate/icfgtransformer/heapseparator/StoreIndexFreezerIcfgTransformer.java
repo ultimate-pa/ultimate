@@ -57,11 +57,6 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	private final Set<ConstantTerm> mAllConstantTerms;
 
-//	private final int mStoreIndexInfoCounter;
-
-	private final List<IProgramVarOrConst> mHeapArrays;
-
-
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
 			final String resultName,
 			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
@@ -71,7 +66,6 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 		mAllConstantTerms = new HashSet<>();
-		mHeapArrays = heapArrays;
 	}
 
 	@Override
@@ -95,70 +89,47 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		 * core business from here on..
 		 */
 
+		if (mEdgeToIndexToStoreIndexInfo.get(edgeInfo) == null) {
+			// edge does not have any array writes --> return it unchanged
+			return tf;
+		}
+
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
-
-//		final List<Term> indexUpdateFormula = new ArrayList<>();
 
 		mMgdScript.lock(this);
 
 
 
-////		final List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, tf.getFormula()).getArrayUpdates();
-//		final List<ArrayUpdate> aus = ArrayUpdate.extractArrayUpdates(tf.getFormula(), true);
-//
 		final List<Term> freezeVarUpdates = new ArrayList<>();
 		for (final Entry<Term, StoreIndexInfo> en : mEdgeToIndexToStoreIndexInfo.get(edgeInfo).entrySet()) {
 			final StoreIndexInfo storeIndexInfo = en.getValue();
-//
-//		for (final ArrayUpdate au : aus) {
-//
-//			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getNewArray());
-//			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getOldArray());
-//			if (!lhsPvoc.equals(rhsPvoc)){
-//				/*
-//				 *  we are only interested in array updates that update one cell here, i.e., the lhs and rhs array must
-//				 *  refer to the same program variable
-//				 */
-//				continue;
-//			}
-//
-//			if (!mHeapArrays.contains(lhsPvoc)) {
-//				/* we are only interested in writes to heap arrays */
-//				continue;
-//			}
-//
-//			for (int dim = 0; dim < au.getIndex().size(); dim++) {
-//				final Term indexTerm = au.getIndex().get(dim);
-				final Term indexTerm = storeIndexInfo.getIndexTerm();
 
-//				final StoreIndexInfo storeIndexInfo = getStoreIndexInfo(edgeInfo, indexTerm);
+			final Term indexTerm = storeIndexInfo.getIndexTerm();
 
-				final IProgramNonOldVar freezeVar = getOrConstructFreezeVariable(storeIndexInfo);
-//				storeIndexInfo.addArrayAccessDimension(lhsPvoc, dim);
+			final IProgramNonOldVar freezeVar = getOrConstructFreezeVariable(storeIndexInfo);
 
-				final TermVariable inputFreezeIndexTv;
-				final TermVariable updatedFreezeIndexTv;
-				if (!extraInVars.containsKey(freezeVar)) {
-					assert !extraOutVars.containsKey(freezeVar);
-					inputFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
-					updatedFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
-					extraInVars.put(freezeVar, inputFreezeIndexTv);
-					extraOutVars.put(freezeVar, updatedFreezeIndexTv);
-				} else {
-					assert extraOutVars.containsKey(freezeVar);
-					inputFreezeIndexTv = extraInVars.get(freezeVar);
-					updatedFreezeIndexTv = extraOutVars.get(freezeVar);
-				}
-				assert extraInVars.containsKey(freezeVar) && extraOutVars.containsKey(freezeVar);
+			final TermVariable inputFreezeIndexTv;
+			final TermVariable updatedFreezeIndexTv;
+			if (!extraInVars.containsKey(freezeVar)) {
+				assert !extraOutVars.containsKey(freezeVar);
+				inputFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
+				updatedFreezeIndexTv = mMgdScript.constructFreshCopy(freezeVar.getTermVariable());
+				extraInVars.put(freezeVar, inputFreezeIndexTv);
+				extraOutVars.put(freezeVar, updatedFreezeIndexTv);
+			} else {
+				assert extraOutVars.containsKey(freezeVar);
+				inputFreezeIndexTv = extraInVars.get(freezeVar);
+				updatedFreezeIndexTv = extraOutVars.get(freezeVar);
+			}
+			assert extraInVars.containsKey(freezeVar) && extraOutVars.containsKey(freezeVar);
 
-				/*
-				 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
-				 */
-				freezeVarUpdates.add(SmtUtils.or(mMgdScript.getScript(),
-						mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm),
-						mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv)));
-//			}
+			/*
+			 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
+			 */
+			freezeVarUpdates.add(SmtUtils.or(mMgdScript.getScript(),
+					mMgdScript.term(this, "=", updatedFreezeIndexTv, indexTerm),
+					mMgdScript.term(this, "=", updatedFreezeIndexTv, inputFreezeIndexTv)));
 		}
 
 		mMgdScript.unlock(this);

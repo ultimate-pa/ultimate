@@ -114,75 +114,44 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		mMgdScript.lock(this);
 
-//		final List<ArrayUpdate> aus = ArrayUpdate.extractArrayUpdates(tf.getFormula(), true);
+		final Map<Term, Term> memlocUpdates = new HashMap<>();
 
-//		final List<ArrayEqualityAllowStores> aeass = ArrayEqualityAllowStores.extractArrayEqualityAllowStores(tf.getFormula());
-//
-//		final Set<StoreInfo> stores = StoreInfo.extractStores(tf.getFormula(), tf);
-
-		final List<Term> memlocUpdates = new ArrayList<>();
-
-//		for (final ArrayUpdate au : aus) {
-//		for (final StoreInfo si : stores) {
-//		for (final ArrayEqualityAllowStores aeas : aeass) {
 		for (final Entry<Term, StoreIndexInfo> en : mEdgeToIndexToStoreIndexInfo.get(edgeInfo).entrySet()) {
 
 			final StoreIndexInfo storeIndexInfo = en.getValue();
 
-//			final IProgramVarOrConst lhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getNewArray());
-//			final IProgramVarOrConst rhsPvoc = edgeInfo.getProgramVarOrConstForTerm(au.getOldArray());
-//			if (!lhsPvoc.equals(rhsPvoc)){
-//				/*
-//				 *  we are only interested in array updates that update one cell here, i.e., the lhs and rhs array must
-//				 *  refer to the same program variable
-//				 */
-//				continue;
-//			}
-
-//			if (!mHeapArrays.contains(lhsPvoc)) {
-//			if (!mHeapArrays.contains(si.getWrittenArray())) {
-//				/* we are only interested in writes to heap arrays */
-//				continue;
-//			}
-//
-////			for (int dim = 0; dim < au.getIndex().size(); dim++) {
-////				final Term indexTerm = au.getIndex().get(dim);
-//			final int dim = si.getWrittenDimension();
-//			final Term indexTerm = si.getWriteIndex();
 			final Term indexTerm = storeIndexInfo.getIndexTerm();
-//
-////				final StoreIndexInfo storeIndexInfo = getOrConstructStoreIndexInfo(edgeInfo, indexTerm);
-//				final StoreIndexInfo storeIndexInfo = mEdgeToIndexToStoreIndexInfo.get(edgeInfo, indexTerm);
-//				storeIndexInfo.addArrayAccessDimension(lhsPvoc, dim);
-//				storeIndexInfo.addArrayAccessDimension(si.getWrittenArray(), dim);
 
-				final IProgramConst locLit = getLocationLiteral(storeIndexInfo);
-				extraConstants.add(locLit);
+			final IProgramConst locLit = getLocationLiteral(storeIndexInfo);
+			extraConstants.add(locLit);
 
-				final TermVariable memlocIntInVar;
-				final TermVariable memlocIntOutVar;
+			/*
+			 * updated the memloc array
+			 *  in Boogie we would add memloc_int[indexTerm] := locLit
+			 *  note that just adding the conjunct "memloc_int' = (store memloc_int indexTerm locLit)" is wrong here,
+			 *   because if we add several of these constraints (always with the same in/outvar), then the overall
+			 *    constraint has a much narrower meaning than intended!
+			 *    (describing this because the first implementation did it wrong..)
+			 */
+			memlocUpdates.put(indexTerm, locLit.getTerm());
+		}
 
-				if (!extraInVars.containsKey(mMemlocArrayInt)) {
-					assert !extraOutVars.containsKey(mMemlocArrayInt);
-					memlocIntInVar = mMgdScript.constructFreshCopy(mMemlocArrayInt.getTermVariable());
-					memlocIntOutVar = mMgdScript.constructFreshCopy(mMemlocArrayInt.getTermVariable());
-					extraInVars.put(mMemlocArrayInt, memlocIntInVar);
-					extraOutVars.put(mMemlocArrayInt, memlocIntOutVar);
-				} else {
-					assert extraOutVars.containsKey(mMemlocArrayInt);
-					memlocIntInVar = extraInVars.get(mMemlocArrayInt);
-					memlocIntOutVar = extraOutVars.get(mMemlocArrayInt);
-				}
-				assert extraInVars.containsKey(mMemlocArrayInt) && extraOutVars.containsKey(mMemlocArrayInt);
+		// construct a store chain for the memlocUpdates
+		final Term memlocUpdateConjunct;// = mMgdScript.term(this, "true");
+		{
+			final TermVariable memlocIntInVar;
+			final TermVariable memlocIntOutVar;
+			assert !extraOutVars.containsKey(mMemlocArrayInt);
+			memlocIntInVar = mMgdScript.constructFreshCopy(mMemlocArrayInt.getTermVariable());
+			memlocIntOutVar = mMgdScript.constructFreshCopy(mMemlocArrayInt.getTermVariable());
+			extraInVars.put(mMemlocArrayInt, memlocIntInVar);
+			extraOutVars.put(mMemlocArrayInt, memlocIntOutVar);
 
-
-				/* memloc_int[indexTerm] := locLit */
-				final Term arrayUpdateTerm = SmtUtils.binaryEquality(mMgdScript.getScript(),
-						memlocIntOutVar,
-						SmtUtils.store(mMgdScript.getScript(), memlocIntInVar, indexTerm, locLit.getTerm()));
-
-				memlocUpdates.add(arrayUpdateTerm);
-//			}
+			Term storeChain = memlocIntInVar;
+			for (final Entry<Term, Term> en : memlocUpdates.entrySet()) {
+				storeChain = SmtUtils.store(mMgdScript.getScript(), storeChain, en.getKey(), en.getValue());
+			}
+			memlocUpdateConjunct = SmtUtils.binaryEquality(mMgdScript.getScript(), memlocIntOutVar, storeChain);
 		}
 
 		mMgdScript.unlock(this);
@@ -201,9 +170,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 				tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
 
 
+
 		final List<Term> newFormulaConjuncts = new ArrayList<>();
 		newFormulaConjuncts.add(tf.getFormula());
-		newFormulaConjuncts.addAll(memlocUpdates);
+//		newFormulaConjuncts.addAll(memlocUpdates);
+		newFormulaConjuncts.add(memlocUpdateConjunct);
 
 		tfBuilder.setFormula(SmtUtils.and(mMgdScript.getScript(), newFormulaConjuncts));
 		tfBuilder.setInfeasibility(tf.isInfeasible());

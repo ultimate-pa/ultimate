@@ -131,6 +131,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			assert preciseStrongestPostImpliesAbstractPost(oldState, transition,
 					mEqStateFactory.statesToPredicate(result)) : "soundness check failed!";
 		}
+//		TransFormulaUtils.prettyPrint(transition.getTransformula())
 		return result;
 	}
 

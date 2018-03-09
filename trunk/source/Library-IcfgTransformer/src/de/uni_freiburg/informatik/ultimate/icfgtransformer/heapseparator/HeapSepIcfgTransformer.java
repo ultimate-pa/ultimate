@@ -181,7 +181,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
 
 			storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
-//			edgeToIndexToStoreIndexInfo = sifit.getEdgeToIndexToStoreIndexInfo();
 
 			mLogger.info("finished StoreIndexFreezer, created " + storeIndexInfoToFreezeVar.size() + " freeze vars and "
 					+ "freeze var literals (each corresponds to one heap write)");
@@ -208,10 +207,10 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			final Collection<IProgramConst> freezeVarLits = freezeVarTofreezeVarLit.values();
 			final Set<ConstantTerm> allConstantTerms = sifit.getAllConstantTerms();
 			final Set<Term> literalTerms = new HashSet<>();
-				literalTerms.addAll(freezeVarLits.stream()
+			literalTerms.addAll(freezeVarLits.stream()
 						.map(pvoc -> pvoc.getTerm())
 						.collect(Collectors.toList()));
-				literalTerms.addAll(allConstantTerms);
+			literalTerms.addAll(allConstantTerms);
 
 
 			equalityProvider.announceAdditionalLiterals(freezeVarLits);
@@ -279,7 +278,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 							memLocSort, mHeapArrays, edgeToIndexToStoreIndexInfo);
 			IIcfg<OUTLOC> icfgWithMemlocUpdates = mauit.getResult();
 
-//			edgeToIndexToStoreIndexInfo = mauit.getEdgeToIndexToStoreIndexInfo();
 			storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
 
 			mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
@@ -339,8 +337,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mLogger.info("  array groups: " + DataStructureUtils.prettyPrint(
 				new HashSet<>(heapSepPreanalysis.getArrayToArrayGroup().values())));
 		mLogger.info("  select infos: " + DataStructureUtils.prettyPrint(heapSepPreanalysis.getSelectInfos()));
-
-//		final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup = heapSepPreanalysis.getArrayToArrayGroup();
 
 		final HeapPartitionManager partitionManager;
 		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
