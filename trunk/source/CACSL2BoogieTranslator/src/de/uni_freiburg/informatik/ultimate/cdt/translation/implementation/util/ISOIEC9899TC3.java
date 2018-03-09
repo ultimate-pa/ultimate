@@ -34,6 +34,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -45,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -126,6 +129,24 @@ public final class ISOIEC9899TC3 {
 					"integer character constants that consist of several characters are not yet supported.");
 		}
 		return value;
+	}
+	
+	/**
+	 * Takes as input a string from the source character set (characters that
+	 * can occur in strings of source file, e.g., no line feed).
+	 * Returns a sequence of numerical values of the corresponding characters
+	 * of the execution character set. Multibyte characters occupy only one
+	 * cell in the resulting list.
+	 */
+	public static List<BigInteger> parseCharacterSequence(final String sourceCharacterSequence) {
+		final List<BigInteger> result = new ArrayList<>();
+		String remainingString = sourceCharacterSequence;
+		while (!remainingString.equals("")) {
+			final Pair<BigInteger, String> pair = parseCharacterSequenceHelper(remainingString);
+			result.add(pair.getFirst());
+			remainingString = pair.getSecond();
+		}
+		return result;
 	}
 
 	/**
@@ -273,6 +294,54 @@ public final class ISOIEC9899TC3 {
 		}
 	}
 	
+	/**
+	 * Convert sequence of characters of the execution alphabet (given as a
+	 * sequence of their numerical values) to a sequence of bytes. This step of
+	 * the translation is largely implementation defined and we try to mimic the
+	 * behavior of GCC.
+	 */
+	public static List<BigInteger> convertCharacterSequenceToByteSequence(final List<BigInteger> characterSequence,
+			final Signedness signednessOfChar) {
+		final List<BigInteger> result = new ArrayList<>();
+		for (final BigInteger character : characterSequence) {
+			BigInteger resultCharacter;
+			if (character.compareTo(BigInteger.valueOf(255)) <= 0) {
+				resultCharacter = convertNumericalValueToByteValue(signednessOfChar, character);
+			} else {
+				throw new UnsupportedOperationException("multibyte characters are not supported yet");
+			}
+			result.add(resultCharacter);
+		}
+		return result;
+	}
+
+	/**
+	 * Although integer character constants have type 'int', C11 says in
+	 * 6.4.4.4.10 that the values for single byte characters have to be in the
+	 * value of 'char'. This means that (as explained in C11 6.4.4.4.13) if char
+	 * is equivalent to unsigned char then \xFF has the value 255 and if char is
+	 * equivalent to signed char then \xFF has the value -1. This methods
+	 * implements a corresponding conversion.
+	 */
+	private static BigInteger convertNumericalValueToByteValue(final Signedness signednessOfChar,
+			final BigInteger numericalValue) throws AssertionError {
+		BigInteger byteValue;
+		switch (signednessOfChar) {
+		case SIGNED:
+			if (numericalValue.compareTo(BigInteger.valueOf(127)) <= 0) {
+				byteValue = numericalValue;
+			} else {
+				byteValue = numericalValue.subtract(BigInteger.valueOf(256));
+			}
+			break;
+		case UNSIGNED:
+			byteValue = numericalValue;
+			break;
+		default:
+			throw new AssertionError("unknown value " + signednessOfChar);
+		}
+		return byteValue;
+	}
 	
 	
 	/**
