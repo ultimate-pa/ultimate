@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -975,18 +976,18 @@ public final class TransFormulaUtils {
 				false, xnfConversionTechnique, tf, negGuard);
 		return markhor;
 	}
-	
+
 	public static UnmodifiableTransFormula computeEncodedBranchFormula(final UnmodifiableTransFormula tf, final UnmodifiableTransFormula altPath,
 			final ManagedScript maScript, final IUltimateServiceProvider services, final ILogger logger,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 
 		final UnmodifiableTransFormula blockEnoded = parallelComposition(logger, services, tf.hashCode(), maScript, null,
-				false, xnfConversionTechnique, tf, altPath); 
+				false, xnfConversionTechnique, tf, altPath);
 		return blockEnoded;
-		
+
 	}
-	
+
 
 	/**
 	 * Add all elements of progConsts to tfb that occur in formula, ignore the those that do not occur in the formula.
@@ -1131,5 +1132,31 @@ public final class TransFormulaUtils {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Pretty print a TransFormula by adding some line breaks to its normal {@link Object#toString()} representation.
+	 * Uses some simple heuristics like "align equality constraints which are argument to the same and/or by the same
+	 *  indentation".
+	 *
+	 * @param tf
+	 * @return
+	 */
+	public static String prettyPrint(final TransFormula tf) {
+		final StringBuilder sb = new StringBuilder();
+
+		// pretty print formula
+		final String prettyPrintedFormula = new SMTPrettyPrinter(tf.getFormula()).toString();
+		sb.append(prettyPrintedFormula);
+		sb.append("\n");
+
+		sb.append("Invars:\n");
+		sb.append(tf.getInVars());
+		sb.append("\n");
+
+		sb.append("Outvars:\n");
+		sb.append(tf.getOutVars());
+
+		return sb.toString();
 	}
 }
