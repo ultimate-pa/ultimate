@@ -34,6 +34,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -96,8 +97,8 @@ public final class ISOIEC9899TC3 {
 	}
 
 	/**
-	 * Parses Integer constants according to <a
-	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
+	 * Parses Integer constants according to
+	 * <a href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.4.
 	 *
 	 * @param val
@@ -107,7 +108,6 @@ public final class ISOIEC9899TC3 {
 	 * @return the parsed value
 	 */
 	public static BigInteger handleCharConstant(String val, final ILocation loc, final Dispatcher dispatch) {
-		int value;
 		if (val.startsWith("L")) {
 			// ignore wide character prefix
 			val = val.substring(1, val.length());
@@ -117,51 +117,65 @@ public final class ISOIEC9899TC3 {
 		if (!val.startsWith("'") || !val.endsWith("'")) {
 			throw new UnsupportedOperationException();
 		}
-
-		if (val.charAt(1) == '\\') {
-			final String backslashSuffix = val.substring(2, val.length() - 1);
-			value = decodeEscapeSequence(backslashSuffix);
-		} else if (val.length() == 3) {
-			value = val.charAt(1);
-		} else {
-			throw new UnsupportedOperationException();
+		final String charSequence = val.substring(1, val.length() - 1);
+		final Pair<BigInteger, String> pair = parseCharacterSequenceHelper(charSequence);
+		final BigInteger value = pair.getFirst();
+		final String remainingString = pair.getSecond();
+		if (!remainingString.equals("")) {
+			throw new UnsupportedOperationException(
+					"integer character constants that consist of several characters are not yet supported.");
 		}
-		return BigInteger.valueOf(value);
+		return value;
 	}
 
 	/**
-	 * Return numeric value of an integer character constant that is representd
-	 * by a backlash that is followed by backslashSuffix.
+	 * Takes as input a string from the source character set (characters that
+	 * can occur in strings of source file, e.g., no line feed). Returns a pair
+	 * where the first element is the numerical value of the first character and
+	 * the second element is the remaining string.
 	 */
-	private static int decodeEscapeSequence(final String backslashSuffix) {
-		final int value;
-		switch (backslashSuffix.charAt(0)) {
+	private static Pair<BigInteger, String> parseCharacterSequenceHelper(final String sourceCharacterSequence) {
+		final int numericalValue;
+		final String remainingCharacterSequence;
+		if (sourceCharacterSequence.charAt(0) != '\\') {
+			numericalValue = sourceCharacterSequence.charAt(0);
+			remainingCharacterSequence = sourceCharacterSequence.substring(1);
+		} else {
+			switch (sourceCharacterSequence.charAt(1)) {
 			case '\'':
 			case '\"':
 			case '?':
 			case '\\':
-				value = backslashSuffix.charAt(0);
+				numericalValue = sourceCharacterSequence.charAt(1);
+				remainingCharacterSequence = sourceCharacterSequence.substring(2);
 				break;
 			case 'a':
-				value = 7;
+				numericalValue = 7;
+				remainingCharacterSequence = sourceCharacterSequence.substring(2);
 				break;
 			case 'b':
-				value = 8;
+				numericalValue = 8;
+				remainingCharacterSequence = sourceCharacterSequence.substring(2);
 				break;
 			case 'f':
-				value = 12;
+				numericalValue = 12;
+				remainingCharacterSequence = sourceCharacterSequence.substring(2);
 				break;
 			case 'n':
-				value = 10;
+				numericalValue = 10;
+				remainingCharacterSequence = sourceCharacterSequence.substring(2);
 				break;
 			case 'r':
-				value = 13;
+				numericalValue = 13;
+				remainingCharacterSequence = sourceCharacterSequence.substring(2);
 				break;
 			case 't':
-				value = 9;
+				numericalValue = 9;
+				remainingCharacterSequence = sourceCharacterSequence.substring(2);
 				break;
 			case 'v':
-				value = 11;
+				numericalValue = 11;
+				remainingCharacterSequence = sourceCharacterSequence.substring(2);
 				break;
 			case '0':
 			case '1':
@@ -171,20 +185,96 @@ public final class ISOIEC9899TC3 {
 			case '5':
 			case '6':
 			case '7':
-				if (backslashSuffix.length() > 3) {
-					throw new IllegalArgumentException("octal representation can have only up to three digits");
+				final int lastSuccessiveOctalCharacter = lastsuccessiveMatchStartingFrom(1, sourceCharacterSequence,
+						c -> isOctalDigit(c));
+				// octal sequences consist only of up to three digits
+				final int lastPositionOfThisOcalSequence;
+				if (lastSuccessiveOctalCharacter >= 4) {
+					lastPositionOfThisOcalSequence = 3;
+				} else {
+					lastPositionOfThisOcalSequence = lastSuccessiveOctalCharacter;
 				}
-				value = Integer.valueOf(backslashSuffix, 8);
+				final String octalSequence = sourceCharacterSequence.substring(1, lastPositionOfThisOcalSequence + 1);
+				numericalValue = Integer.valueOf(octalSequence, 8);
+				remainingCharacterSequence = sourceCharacterSequence.substring(lastPositionOfThisOcalSequence + 1);
 				break;
 			case 'x':
-				value = Integer.valueOf(backslashSuffix.substring(1, backslashSuffix.length()), 16);
+				final int lastSuccessiveHexCharacter = lastsuccessiveMatchStartingFrom(2, sourceCharacterSequence,
+						c -> isHexadecimalDigit(c));
+				final String hexadecimalSequence = sourceCharacterSequence.substring(2, lastSuccessiveHexCharacter + 1);
+				numericalValue = Integer.valueOf(hexadecimalSequence, 16);
+				remainingCharacterSequence = sourceCharacterSequence.substring(lastSuccessiveHexCharacter + 1);
 				break;
 			default:
 				throw new UnsupportedOperationException();
+			}
 		}
-		return value;
+		return new Pair<BigInteger, String>(BigInteger.valueOf(numericalValue), remainingCharacterSequence);
 	}
-
+	
+	
+	/**
+	 * Returns largest index i\>= startPost such all characters between 
+	 * startPos and i (starPos and i included) satisfy the predicate p.
+	 * Returns startpos-1 if the character at startPost does not satisfy p.
+	 */
+	static int lastsuccessiveMatchStartingFrom(final int startPos, final String str, final Predicate<Character> p) {
+		for (int i=startPos; i<str.length(); i++) {
+			if (!p.test(str.charAt(i))) {
+				return i - 1;
+			}
+		}
+		return str.length() - 1;
+	}
+	
+	static boolean isOctalDigit(final char c) {
+		switch (c) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	static boolean isHexadecimalDigit(final char c) {
+		switch (c) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		case 'a':
+		case 'A':
+		case 'b':
+		case 'B':
+		case 'c':
+		case 'C':
+		case 'd':
+		case 'D':
+		case 'e':
+		case 'E':
+		case 'f':
+		case 'F':
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	
+	
 	/**
 	 * Parses FloatingPoint constants according to <a
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
