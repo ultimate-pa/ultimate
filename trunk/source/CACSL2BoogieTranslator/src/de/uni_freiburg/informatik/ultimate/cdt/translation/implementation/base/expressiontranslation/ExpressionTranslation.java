@@ -143,7 +143,7 @@ public abstract class ExpressionTranslation {
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal: {
-			final CStringLiteral stringLiteral = new CStringLiteral(new String(node.getValue()), mTypeSizes.getSignednessOfChar());
+			final CStringLiteral stringLiteral = new CStringLiteral(node.getValue(), mTypeSizes.getSignednessOfChar());
 			final RValue rvalue;
 			final AuxVarInfo auxvar;
 			{

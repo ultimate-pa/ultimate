@@ -68,8 +68,8 @@ public class CStringLiteral {
 	private final Signedness mSignednessOfChar;
 	
 
-	public CStringLiteral(final String quotedSourceCodeStringLiteral, final Signedness signednessOfChar) {
-		mSourceCharacterString = stripQuotes(quotedSourceCodeStringLiteral);
+	public CStringLiteral(final char[] quotedSourceCodeStringLiteral, final Signedness signednessOfChar) {
+		mSourceCharacterString = stripQuotes(new String(quotedSourceCodeStringLiteral));
 		mSignednessOfChar = signednessOfChar;
 		mNumericalValues = ISOIEC9899TC3.parseCharacterSequence(mSourceCharacterString);
 		mByteValues = ISOIEC9899TC3.convertCharacterSequenceToByteSequence(mNumericalValues, mSignednessOfChar);
