@@ -72,6 +72,8 @@ public class CStringLiteral {
 		mSourceCharacterString = stripQuotes(new String(quotedSourceCodeStringLiteral));
 		mSignednessOfChar = signednessOfChar;
 		mNumericalValues = ISOIEC9899TC3.parseCharacterSequence(mSourceCharacterString);
+		// string literals are "nullterminated" i.e., suffixed by 0
+		mNumericalValues.add(BigInteger.ZERO);
 		mByteValues = ISOIEC9899TC3.convertCharacterSequenceToByteSequence(mNumericalValues, mSignednessOfChar);
 	}
 

@@ -2784,15 +2784,14 @@ public class MemoryHandler {
 	/**
 	 * Construct the statements that write a string literal on the heap. (According to 6.4.5 of C11) The first statement
 	 * is a call that allocates the memory The preceding statements write the (integer) values of the string literal to
-	 * the appropriate heap array. Finally we append 0, since string literals in C are null terminated. E.g., for the
-	 * string literal "New" the result is the following.
+	 * the appropriate heap array.
 	 *
 	 * call resultPointer := #Ultimate.alloc(value.length + 1); #memory_int[{ base: resultPointer!base, offset:
 	 * resultPointer!offset + 0 }] := 78; #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 1 }] :=
 	 * 101; #memory_int[{ base: resultPointer!base, offset: resultPointer!offset + 2 }] := 119; #memory_int[{ base:
 	 * resultPointer!base, offset: resultPointer!offset + 3 }] := 0;
 	 *
-	 * 2017-01-06 Matthias: This works for the our default memory model. I might not work for all our memory models.
+	 * 2017-01-06 Matthias: This works for our default memory model. I might not work for all our memory models.
 	 *
 	 * @param writeValues
 	 *            if not set we omit to write values and just allocate memory
@@ -2802,7 +2801,7 @@ public class MemoryHandler {
 			final IASTNode hook) {
 		final Expression size = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(),
-				BigInteger.valueOf(stringLiteral.getByteValues().size() + 1));
+				BigInteger.valueOf(stringLiteral.getByteValues().size()));
 		final CallStatement ultimateAllocCall = getMallocCall(size, resultPointer, loc);
 		final List<Statement> result = new ArrayList<>();
 		result.add(ultimateAllocCall);
@@ -2812,10 +2811,6 @@ public class MemoryHandler {
 				final AssignmentStatement statement = writeCharToHeap(main, loc, resultPointer, i, valueBigInt, hook);
 				result.add(statement);
 			}
-			// string literals are "nullterminated" i.e., suffixed by 0
-			final AssignmentStatement statement = writeCharToHeap(main, loc, resultPointer,
-					stringLiteral.getByteValues().size(), BigInteger.ZERO, hook);
-			result.add(statement);
 		}
 		return result;
 	}

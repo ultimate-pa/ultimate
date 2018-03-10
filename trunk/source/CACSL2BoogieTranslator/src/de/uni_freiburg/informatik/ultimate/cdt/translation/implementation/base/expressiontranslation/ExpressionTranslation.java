@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public abstract class ExpressionTranslation {
 
-	public static final int STRING_OVERAPPROXIMATION_THRESHOLD = 7;
+	public static final int STRING_OVERAPPROXIMATION_THRESHOLD = 8;
 
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
@@ -148,7 +148,7 @@ public abstract class ExpressionTranslation {
 			final AuxVarInfo auxvar;
 			{
 				// subtract two from length for quotes at beginning and end
-				final int arrayLength = stringLiteral.getByteValues().size() + 1;
+				final int arrayLength = stringLiteral.getByteValues().size();
 				final RValue dimension = new RValue(
 						constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),
 								BigInteger.valueOf(arrayLength)),

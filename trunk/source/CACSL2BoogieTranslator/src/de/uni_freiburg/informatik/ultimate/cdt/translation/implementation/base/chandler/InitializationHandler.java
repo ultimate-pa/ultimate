@@ -994,10 +994,6 @@ public class InitializationHandler {
 
 					final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
 
-					// append the '\0'
-					final List<BigInteger> literalString = new ArrayList<>(slr.getLiteralString().getByteValues());
-					literalString.add(BigInteger.ZERO);
-
 					final List<Overapprox> overapproxList;
 					if (slr.overApproximatesLongStringLiteral()) {
 						final Overapprox overapprox = new Overapprox("large string literal", loc);
@@ -1005,14 +1001,16 @@ public class InitializationHandler {
 						overapproxList.add(overapprox);
 						return new InitializerInfo(overapprox);
 					}
-					// make the list (in our case a map because we support sparse lists in other cases)
+					// make the list (in our case a map because we support
+					// sparse lists in other cases)
 					final Map<Integer, InitializerInfo> indexToInitInfo = new HashMap<>();
-					for (int i = 0; i < literalString.size(); i++) {
+					for (int i = 0; i < slr.getLiteralString().getByteValues().size(); i++) {
 						final CPrimitive charCType = new CPrimitive(CPrimitives.CHAR);
 						final Expression charLitExp = main.mCHandler.getExpressionTranslation()
-								.constructLiteralForIntegerType(loc, charCType, literalString.get(i));
-						final ExpressionResult charResult =
-								new ExpressionResultBuilder().setLrVal(new RValue(charLitExp, charCType)).build();
+								.constructLiteralForIntegerType(loc, charCType,
+										slr.getLiteralString().getByteValues().get(i));
+						final ExpressionResult charResult = new ExpressionResultBuilder()
+								.setLrVal(new RValue(charLitExp, charCType)).build();
 						indexToInitInfo.put(i, new InitializerInfo(charResult, Collections.emptyList()));
 					}
 					return new InitializerInfo(indexToInitInfo, Collections.emptyList());
