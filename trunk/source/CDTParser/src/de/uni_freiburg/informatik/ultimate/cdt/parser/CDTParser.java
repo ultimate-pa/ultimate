@@ -39,6 +39,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,6 +49,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.CCorePlugin;
@@ -135,9 +137,12 @@ public class CDTParser implements ISource {
 	 */
 	private static final boolean EXTENDED_DEBUG_OUTPUT = false;
 	/**
-	 * The name of the CDT project for multiple files
+	 * Because filenames need to be normalized and it would be impractical to pass on the CDT project to later
+	 * stages of translation, a special 'flag' directory is included in the path to mark the end of the
+	 * non-relevant path entries.
 	 */
-	private static final String TEMPORARY_CDT_PROJECT_NAME = "TempCDTProject";
+	private static final String CDT_PROJECT_HIERARCHY_FLAG = 
+			"FLAG" + UUID.randomUUID().toString().substring(0, 10).replace("-", "");
 
 	private static final IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
 	private final String[] mFileTypes;
@@ -213,8 +218,8 @@ public class CDTParser implements ISource {
 	 * @return the normalized file name
 	 */
 	public static String normalizeCDTFilename(final String in) {
-		// Let's just assume that this string (TempCDTProject/src/) is unique in the path...
-		final String lookingFor = TEMPORARY_CDT_PROJECT_NAME + File.separator + "src" + File.separator;
+		// Let's just assume that this string (FLAG-.../src/) is unique in the path...
+		final String lookingFor = CDT_PROJECT_HIERARCHY_FLAG + File.separator + "src" + File.separator;
 		final int posInInput = in.indexOf(lookingFor);
 		if(posInInput < 0) {
 			// The name is already normalized
@@ -292,7 +297,7 @@ public class CDTParser implements ISource {
 	// created by Hamiz for entering multiple files
 	private ICProject createCDTProjectFromFiles(final File[] files)
 			throws OperationCanceledException, CoreException, FileNotFoundException {
-		final IProject proj = createCDTProject(TEMPORARY_CDT_PROJECT_NAME);
+		final IProject proj = createCDTProject();
 		mCdtProject = proj;
 		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
 
@@ -482,8 +487,12 @@ public class CDTParser implements ISource {
 		return outerPath.append(innerPath).toOSString();
 	}
 
-	private static IProject createCDTProject(final String projectName)
-			throws OperationCanceledException, CoreException {
+	private static IProject createCDTProject() throws OperationCanceledException, CoreException {
+		// It would be nicer to have the project in a tmp directory, but this seems not to be trivially
+		// possible with the current CDT parsing.
+		final String projectName = CDT_PROJECT_HIERARCHY_FLAG;
+		final String projectNamespace = UUID.randomUUID().toString().replace("-", "");
+		
 		final CCorePlugin cdtCorePlugin = CCorePlugin.getDefault();
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		final IWorkspaceRoot root = workspace.getRoot();
@@ -492,6 +501,9 @@ public class CDTParser implements ISource {
 		IndexerPreferences.set(project, IndexerPreferences.KEY_INDEX_ALL_FILES, IPDOMManager.ID_FAST_INDEXER);
 
 		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
+		prjDescription.setLocation(root.getLocation().append(projectNamespace + File.separator + projectName));
+		final File namespaceDiretory = new File(prjDescription.getLocationURI()).getParentFile();
+		namespaceDiretory.deleteOnExit();
 
 		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
 		project.open(null);
