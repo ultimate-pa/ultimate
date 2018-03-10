@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
  */
 public class StringLiteralResult extends ExpressionResult {
 
-	private final char[] mString;
+	private final CStringLiteral mStringLiteral;
 	private final boolean mOverapproximatesLongStringLiteral;
 	private final AuxVarInfo mAuxVarName;
 
@@ -82,24 +82,24 @@ public class StringLiteralResult extends ExpressionResult {
 	 * @param lrVal
 	 * @param overapproxList
 	 * @param auxVarName
-	 * @param string
+	 * @param stringLiteral
 	 * @param overAppLongLiteral
 	 */
 	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList,
-			final AuxVarInfo auxVarName, final char[] string, final boolean overAppLongLiteral) {
+			final AuxVarInfo auxVarName, final CStringLiteral stringLiteral, final boolean overAppLongLiteral) {
 		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptySet(), overapproxList);
 		mAuxVarName = auxVarName;
-		mString = string;
+		mStringLiteral = stringLiteral;
 		mOverapproximatesLongStringLiteral = overAppLongLiteral;
 	}
 
-	public char[] getLiteralString() {
-		return mString;
+	public CStringLiteral getLiteralString() {
+		return mStringLiteral;
 	}
 
 	@Override
 	public String toString() {
-		return "StringLiteralResult: " + Arrays.toString(mString);
+		return "StringLiteralResult: " + mStringLiteral;
 	}
 
 	/**

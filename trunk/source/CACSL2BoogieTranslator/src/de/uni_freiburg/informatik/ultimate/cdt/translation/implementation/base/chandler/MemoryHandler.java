@@ -2798,21 +2798,23 @@ public class MemoryHandler {
 	 *            if not set we omit to write values and just allocate memory
 	 */
 	public List<Statement> writeStringToHeap(final Dispatcher main, final ILocation loc,
-			final VariableLHS resultPointer, final char[] value, final boolean writeValues, final IASTNode hook) {
+			final VariableLHS resultPointer, final CStringLiteral stringLiteral, final boolean writeValues,
+			final IASTNode hook) {
 		final Expression size = mExpressionTranslation.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(value.length + 1));
+				mExpressionTranslation.getCTypeOfPointerComponents(),
+				BigInteger.valueOf(stringLiteral.getByteValues().size() + 1));
 		final CallStatement ultimateAllocCall = getMallocCall(size, resultPointer, loc);
 		final List<Statement> result = new ArrayList<>();
 		result.add(ultimateAllocCall);
 		if (writeValues) {
-			for (int i = 0; i < value.length; i++) {
-				final BigInteger valueBigInt = BigInteger.valueOf(value[i]);
+			for (int i = 0; i < stringLiteral.getByteValues().size(); i++) {
+				final BigInteger valueBigInt = stringLiteral.getByteValues().get(i);
 				final AssignmentStatement statement = writeCharToHeap(main, loc, resultPointer, i, valueBigInt, hook);
 				result.add(statement);
 			}
 			// string literals are "nullterminated" i.e., suffixed by 0
-			final AssignmentStatement statement =
-					writeCharToHeap(main, loc, resultPointer, value.length, BigInteger.ZERO, hook);
+			final AssignmentStatement statement = writeCharToHeap(main, loc, resultPointer,
+					stringLiteral.getByteValues().size(), BigInteger.ZERO, hook);
 			result.add(statement);
 		}
 		return result;

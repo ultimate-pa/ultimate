@@ -30,7 +30,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -996,9 +995,8 @@ public class InitializationHandler {
 					final StringLiteralResult slr = (StringLiteralResult) initializerResult.getRootExpressionResult();
 
 					// append the '\0'
-					final char[] literalString =
-							Arrays.copyOf(slr.getLiteralString(), slr.getLiteralString().length + 1);
-					literalString[literalString.length - 1] = '\0';
+					final List<BigInteger> literalString = new ArrayList<>(slr.getLiteralString().getByteValues());
+					literalString.add(BigInteger.ZERO);
 
 					final List<Overapprox> overapproxList;
 					if (slr.overApproximatesLongStringLiteral()) {
@@ -1009,10 +1007,10 @@ public class InitializationHandler {
 					}
 					// make the list (in our case a map because we support sparse lists in other cases)
 					final Map<Integer, InitializerInfo> indexToInitInfo = new HashMap<>();
-					for (int i = 0; i < literalString.length; i++) {
+					for (int i = 0; i < literalString.size(); i++) {
 						final CPrimitive charCType = new CPrimitive(CPrimitives.CHAR);
 						final Expression charLitExp = main.mCHandler.getExpressionTranslation()
-								.constructLiteralForIntegerType(loc, charCType, BigInteger.valueOf(literalString[i]));
+								.constructLiteralForIntegerType(loc, charCType, literalString.get(i));
 						final ExpressionResult charResult =
 								new ExpressionResultBuilder().setLrVal(new RValue(charLitExp, charCType)).build();
 						indexToInitInfo.put(i, new InitializerInfo(charResult, Collections.emptyList()));

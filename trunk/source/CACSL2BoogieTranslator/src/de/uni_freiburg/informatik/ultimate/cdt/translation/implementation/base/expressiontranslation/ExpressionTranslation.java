@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -143,11 +143,12 @@ public abstract class ExpressionTranslation {
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal: {
+			final CStringLiteral stringLiteral = new CStringLiteral(new String(node.getValue()), mTypeSizes.getSignednessOfChar());
 			final RValue rvalue;
 			final AuxVarInfo auxvar;
 			{
 				// subtract two from length for quotes at beginning and end
-				final int arrayLength = node.getValue().length - 2;
+				final int arrayLength = stringLiteral.getByteValues().size() + 1;
 				final RValue dimension = new RValue(
 						constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),
 								BigInteger.valueOf(arrayLength)),
@@ -161,26 +162,14 @@ public abstract class ExpressionTranslation {
 			main.mCHandler.getStaticObjectsHandler()//.addGlobalDeclarations(decls);
 				.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
 
-			/*
-			 * construct a char[] that may be used for intitializing off-heap string variables.
-			 */
-			final char[] charArray;
-			if (node.getValue().length >= 2 && node.getValue()[0] == '\"'
-					&& node.getValue()[node.getValue().length - 1] == '\"') {
-				charArray = Arrays.copyOfRange(node.getValue(), 1, node.getValue().length - 1);
-			} else {
-				throw new UnsupportedOperationException(
-						"unsupported representation of string literal " + Arrays.toString(node.getValue()));
-			}
-
 			// overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
-			final boolean writeValues = charArray.length < STRING_OVERAPPROXIMATION_THRESHOLD;
+			final boolean writeValues = stringLiteral.getByteValues().size() < STRING_OVERAPPROXIMATION_THRESHOLD;
 
 			/*
 			 *
 			 */
 			final List<Statement> statements =
-					main.mCHandler.getMemoryHandler().writeStringToHeap(main, loc, auxvar.getLhs(), charArray,
+					main.mCHandler.getMemoryHandler().writeStringToHeap(main, loc, auxvar.getLhs(), stringLiteral,
 							writeValues, node);
 			main.mCHandler.getStaticObjectsHandler()
 				.addStatementsForUltimateInit(statements);
@@ -193,7 +182,7 @@ public abstract class ExpressionTranslation {
 				overapproxList = new ArrayList<>();
 				overapproxList.add(overapprox);
 			}
-			return new StringLiteralResult(rvalue, overapproxList, auxvar, charArray, !writeValues);
+			return new StringLiteralResult(rvalue, overapproxList, auxvar, stringLiteral, !writeValues);
 		}
 		case IASTLiteralExpression.lk_false:
 			return new ExpressionResult(new RValue(ExpressionFactory.createBooleanLiteral(loc, false),
