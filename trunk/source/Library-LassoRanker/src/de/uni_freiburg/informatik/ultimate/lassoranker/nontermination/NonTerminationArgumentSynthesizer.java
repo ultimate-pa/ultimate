@@ -408,11 +408,18 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// t3: constraints on the lambdas and the nus
 		{
 			final List<Term> conjunction = new ArrayList<>(2 * mSettings.getNumberOfGevs());
-
-			// nu_i = 0 or nu_i = 1
-			for (int i = 0; i < mSettings.getNumberOfGevs() - 1; ++i) {
-				final Term nu = nus.get(i);
-				conjunction.add(SmtUtils.or(mScript, mScript.term("=", nu, zero), mScript.term("=", nu, one)));
+			if (mSettings.isNilpotentComponents()) {
+				// nu_i = 0 or nu_i = 1
+				for (int i = 0; i < mSettings.getNumberOfGevs() - 1; ++i) {
+					final Term nu = nus.get(i);
+					conjunction.add(SmtUtils.or(mScript, mScript.term("=", nu, zero), mScript.term("=", nu, one)));
+				}
+			} else {
+				// nu_i = 0
+				for (int i = 0; i < mSettings.getNumberOfGevs() - 1; ++i) {
+					final Term nu = nus.get(i);
+					conjunction.add(mScript.term("=", nu, zero));
+				}
 			}
 			if (mSettings.isAllowBounded()) {
 				// lambda_i >= 0
