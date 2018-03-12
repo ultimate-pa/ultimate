@@ -2,6 +2,6 @@
 
 const int VERIFIED_RANDOM = 4;
 
-int randomNumber(int c) {
+int randomNumber() {
     return 4; // XKCD 221
 }

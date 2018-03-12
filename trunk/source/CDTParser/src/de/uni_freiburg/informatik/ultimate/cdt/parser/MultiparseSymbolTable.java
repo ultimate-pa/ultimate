@@ -192,6 +192,18 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	}
 	
 	/**
+	 * Fetches the includes for the given file.
+	 * @param normalizedFile The file name, normalized.
+	 * @return The includes as normalized file names.
+	 */
+	public Collection<String> getIncludesFor(final String normalizedFile) {
+		if (!mIncludeMapping.containsKey(normalizedFile)) {
+			return Collections.emptyList();
+		}
+		return Collections.unmodifiableCollection(mIncludeMapping.get(normalizedFile));
+	}
+	
+	/**
 	 * Prints the mappings for debug purposes
 	 */
 	public void printMappings() {

@@ -1,13 +1,8 @@
 #include "foo.h"
 
-int (*src)(int) = randomNumber;
-
 int main() {
     // Use a function from the header
-    int pick = randomNumber(3);
-    
-    // Test function pointers to check their syntax.
-    int otherPick = src(4);
+    int pick = randomNumber();
 
     // Use a constant from the header
     if (pick == VERIFIED_RANDOM) {

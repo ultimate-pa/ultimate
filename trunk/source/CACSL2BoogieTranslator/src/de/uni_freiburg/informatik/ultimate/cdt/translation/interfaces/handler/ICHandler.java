@@ -34,6 +34,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
@@ -154,7 +155,7 @@ public interface ICHandler extends IHandler {
      * 			  the decorator units to visit
      * @return a result object
      */
-    public Result visit(Dispatcher main, Collection<DecoratedUnit> units);
+    public Result visit(Dispatcher main, List<DecoratedUnit> units);
     
     /**
      * Translates an IASTTranslationUnit.

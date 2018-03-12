@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.decorator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -208,7 +209,12 @@ public class ASTDecorator {
 	 *            the acslASTs to provide
 	 */
 	public void provideAcslASTs(final List<ACSLNode> acslASTs) {
-		mAcslASTs = acslASTs;
+		if (mAcslASTs == null) {
+			// Ensure mutability
+			mAcslASTs = new LinkedList<>(acslASTs);
+		} else if (acslASTs != null) {
+			mAcslASTs.addAll(acslASTs);
+		}
 	}
 	
 	/**
@@ -242,8 +248,8 @@ public class ASTDecorator {
 	 * 
 	 * @return all units
 	 */
-	public Collection<DecoratedUnit> getUnits() {
-		return Collections.unmodifiableCollection(mDecoratedUnits);
+	public List<DecoratedUnit> getUnits() {
+		return Collections.unmodifiableList(mDecoratedUnits);
 	}
 	
 	/**

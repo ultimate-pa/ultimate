@@ -40,15 +40,20 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -205,7 +210,7 @@ public class CDTParser implements ISource {
 		// Print the mappings to the logger for debugging purposes
 		mps.printMappings();
 		
-		final ASTDecorator decorator = decorateTranslationUnits(tuCollection);
+		final ASTDecorator decorator = decorateTranslationUnits(mps, tuCollection);
 		decorator.setSymbolTable(mps);
 		
 		return new WrapperNode(null, decorator);
@@ -229,11 +234,11 @@ public class CDTParser implements ISource {
 		return in.substring(posInInput + lookingFor.length());
 	}
 	
-	private ASTDecorator decorateTranslationUnits(
+	private ASTDecorator decorateTranslationUnits(final MultiparseSymbolTable mst,
 			final Collection<IASTTranslationUnit> translationUnits) {
-		int i = 0;
 		final ASTDecorator decorator = new ASTDecorator();
-		for (IASTTranslationUnit tu : translationUnits) {
+		final IncludeSorter sorter = new IncludeSorter(mLogger, translationUnits, mst);
+		for (final IASTTranslationUnit tu : sorter.getResult()) {
 			final FunctionLineVisitor visitor = new FunctionLineVisitor();
 			tu.accept(visitor);
 			final CommentParser parser = 

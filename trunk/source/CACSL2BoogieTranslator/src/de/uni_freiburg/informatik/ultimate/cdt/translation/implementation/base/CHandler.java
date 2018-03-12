@@ -595,7 +595,7 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public Result visit(final Dispatcher main, final Collection<DecoratedUnit> units) {
+	public Result visit(final Dispatcher main, final List<DecoratedUnit> units) {
 		IASTNode globalHook = null;
 		for (final DecoratedUnit du : units) {
 			if (du.getRootNode().getCNode() != null) {

@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -53,12 +54,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionCollector;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.GlobalVariableCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypedefAndStructCollector;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -204,7 +202,7 @@ public abstract class Dispatcher {
 	 *            the node to dispatch
 	 * @return the result for the given node
 	 */
-	public abstract Result dispatch(final Collection<DecoratedUnit> nodes);
+	public abstract Result dispatch(final List<DecoratedUnit> nodes);
 
 	/**
 	 * Dispatch a given C node to a specific handler.
@@ -263,7 +261,7 @@ public abstract class Dispatcher {
 	 *            the root nodes from which the translation should be started
 	 * @return the result for the given node
 	 */
-	public final Result run(final Collection<DecoratedUnit> nodes) {
+	public final Result run(final List<DecoratedUnit> nodes) {
 		preRun(nodes);
 		init();
 		return dispatch(nodes);
@@ -275,7 +273,7 @@ public abstract class Dispatcher {
 	 * @param node
 	 *            the node for which the pre run should be started
 	 */
-	protected void preRun(final Collection<DecoratedUnit> nodes) {
+	protected void preRun(final List<DecoratedUnit> nodes) {
 		assert !nodes.isEmpty();
 
 		// Line Directive mapping doesn't work with multiple TUs right now
@@ -287,16 +285,6 @@ public abstract class Dispatcher {
 		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
 		mLocationFactory = new LocationFactory(lineDirectiveMapping);
 		mBacktranslator.setLocationFactory(mLocationFactory);
-
-		// Collect all type definitions (including structs, unions and enums) - everything that might be needed for
-		// declaring a variable.
-		executePreRun(new TypedefAndStructCollector(mFlatTable), nodes);
-
-		// Collect all global variables
-		executePreRun(new GlobalVariableCollector(mFlatTable), nodes);
-
-		// Collect all functions
-		executePreRun(new FunctionCollector(mFlatTable), nodes);
 	}
 
 	protected <T extends ASTVisitor> void executePreRun(final T preRun, final Collection<DecoratedUnit> units,

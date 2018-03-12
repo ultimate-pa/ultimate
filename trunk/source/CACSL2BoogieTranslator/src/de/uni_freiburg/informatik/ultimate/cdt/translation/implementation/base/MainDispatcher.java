@@ -330,7 +330,7 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	protected void preRun(final Collection<DecoratedUnit> nodes) {
+	protected void preRun(final List<DecoratedUnit> nodes) {
 		super.preRun(nodes);
 		mVariablesOnHeap = new LinkedHashSet<>();
 
@@ -916,9 +916,10 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(final Collection<DecoratedUnit> nodes) {
+	public Result dispatch(final List<DecoratedUnit> nodes) {
 		// Fix these two
-		mDecoratorTree = nodes.stream().findFirst().get().getRootNode();
+		assert !nodes.isEmpty();
+		mDecoratorTree = nodes.get(0).getRootNode();
 		mDecoratorTreeIterator = mDecoratorTree.iterator();
 		return mCHandler.visit(this, nodes);
 		// TODO Make this usable again

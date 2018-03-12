@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -164,7 +165,7 @@ public class PRDispatcher extends Dispatcher {
 	}
 	
 	@Override
-	protected void preRun(Collection<DecoratedUnit> nodes) {
+	protected void preRun(List<DecoratedUnit> nodes) {
 		super.preRun(nodes);
 	}
 
@@ -182,7 +183,7 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(final Collection<DecoratedUnit> nodes) {
+	public Result dispatch(final List<DecoratedUnit> nodes) {
 		// this.decoratorTree = node;
 		// this.decoratorTreeIterator = node.iterator();
 		return mCHandler.visit(this, nodes);
