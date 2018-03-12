@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.HandlerHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CCharacterConstant;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -128,14 +129,12 @@ public abstract class ExpressionTranslation {
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_char_constant: {
-			final BigInteger numericalValue = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			final BigInteger byteValue = ISOIEC9899TC3
-					.convertNumericalValueToByteValue(mTypeSizes.getSignednessOfChar(), numericalValue);
-			// According to C11 6.4.4.4.10 the type of integer character
-			// constants is int
-			final CPrimitive charType = new CPrimitive(CPrimitives.INT);
-			final Expression literal = constructLiteralForIntegerType(loc, charType, byteValue);
-			return new ExpressionResult(new RValue(literal, charType));
+
+			final CCharacterConstant characterConstant = new CCharacterConstant(new String(node.getValue()),
+					mTypeSizes.getSignednessOfChar());
+			final Expression literal = constructLiteralForIntegerType(loc, characterConstant.getType(),
+					characterConstant.getRepresentingValue());
+			return new ExpressionResult(new RValue(literal, characterConstant.getType()));
 		}
 		case IASTLiteralExpression.lk_integer_constant: {
 			final String val = new String(node.getValue());

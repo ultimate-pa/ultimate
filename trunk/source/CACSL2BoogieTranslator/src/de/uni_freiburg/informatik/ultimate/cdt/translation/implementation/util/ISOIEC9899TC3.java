@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.Signedness;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -99,37 +98,6 @@ public final class ISOIEC9899TC3 {
 		}
 	}
 
-	/**
-	 * Parses Integer constants according to
-	 * <a href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
-	 * 9899:TC3</a>, chapter 6.4.4.4.
-	 *
-	 * @param val
-	 *            the value to parse
-	 * @param loc
-	 *            the location
-	 * @return the parsed value
-	 */
-	public static BigInteger handleCharConstant(String val, final ILocation loc, final Dispatcher dispatch) {
-		if (val.startsWith("L")) {
-			// ignore wide character prefix
-			val = val.substring(1, val.length());
-			final String msg = IGNORED_SUFFIX + "Char-Sequence wide character suffix L dropped";
-			dispatch.warn(loc, msg);
-		}
-		if (!val.startsWith("'") || !val.endsWith("'")) {
-			throw new UnsupportedOperationException();
-		}
-		final String charSequence = val.substring(1, val.length() - 1);
-		final Pair<BigInteger, String> pair = parseCharacterSequenceHelper(charSequence);
-		final BigInteger value = pair.getFirst();
-		final String remainingString = pair.getSecond();
-		if (!remainingString.equals("")) {
-			throw new UnsupportedOperationException(
-					"integer character constants that consist of several characters are not yet supported.");
-		}
-		return value;
-	}
 	
 	/**
 	 * Takes as input a string from the source character set (characters that
@@ -155,7 +123,7 @@ public final class ISOIEC9899TC3 {
 	 * where the first element is the numerical value of the first character and
 	 * the second element is the remaining string.
 	 */
-	private static Pair<BigInteger, String> parseCharacterSequenceHelper(final String sourceCharacterSequence) {
+	public static Pair<BigInteger, String> parseCharacterSequenceHelper(final String sourceCharacterSequence) {
 		final int numericalValue;
 		final String remainingCharacterSequence;
 		if (sourceCharacterSequence.charAt(0) != '\\') {
@@ -225,6 +193,18 @@ public final class ISOIEC9899TC3 {
 				final String hexadecimalSequence = sourceCharacterSequence.substring(2, lastSuccessiveHexCharacter + 1);
 				numericalValue = Integer.valueOf(hexadecimalSequence, 16);
 				remainingCharacterSequence = sourceCharacterSequence.substring(lastSuccessiveHexCharacter + 1);
+				break;
+			case 'u':
+				final String uchar16Sequence = sourceCharacterSequence.substring(2, 6);
+				assert uchar16Sequence.length() == 4;
+				numericalValue = Integer.valueOf(uchar16Sequence, 16);
+				remainingCharacterSequence = sourceCharacterSequence.substring(6);
+				break;
+			case 'U':
+				final String uchar32Sequence = sourceCharacterSequence.substring(2, 10);
+				assert uchar32Sequence.length() == 8;
+				numericalValue = Integer.valueOf(uchar32Sequence, 16);
+				remainingCharacterSequence = sourceCharacterSequence.substring(10);
 				break;
 			default:
 				throw new UnsupportedOperationException();
