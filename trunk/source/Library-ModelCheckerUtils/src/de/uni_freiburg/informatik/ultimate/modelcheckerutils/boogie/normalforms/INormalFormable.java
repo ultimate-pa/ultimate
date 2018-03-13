@@ -100,4 +100,8 @@ public interface INormalFormable<E> {
 	boolean isForall(E formula);
 
 	boolean isEqual(E one, E other);
+
+	boolean isTrue(E formula);
+
+	boolean isFalse(E formula);
 }

@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
@@ -360,12 +360,12 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 
 	@Override
 	public boolean isLiteral(final Expression formula) {
-		if (formula instanceof IdentifierExpression) {
+		if (formula instanceof IdentifierExpression || formula instanceof BooleanLiteral) {
 			return true;
 		}
 		if (formula instanceof UnaryExpression) {
-			final UnaryExpression uform = (UnaryExpression) formula;
-			return uform.getExpr() instanceof IdentifierExpression;
+			final Expression innerExpr = ((UnaryExpression) formula).getExpr();
+			return innerExpr instanceof IdentifierExpression || innerExpr instanceof BooleanLiteral;
 		}
 		return false;
 	}
@@ -403,5 +403,15 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 			return isAnyPrimitiveType(ctype.getUnderlyingType());
 		}
 		return false;
+	}
+
+	@Override
+	public boolean isTrue(final Expression formula) {
+		return formula instanceof BooleanLiteral && ((BooleanLiteral) formula).getValue();
+	}
+
+	@Override
+	public boolean isFalse(final Expression formula) {
+		return formula instanceof BooleanLiteral && !((BooleanLiteral) formula).getValue();
 	}
 }

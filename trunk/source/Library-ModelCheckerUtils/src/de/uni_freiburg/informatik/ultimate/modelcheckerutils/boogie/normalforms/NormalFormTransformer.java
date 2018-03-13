@@ -36,6 +36,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+
 /**
  * NormalFormTransformer converts expressions or terms to various other forms (e.g., NNF, DNG, CNF, PNF, etc.). It has
  * to be used together with {@link INormalFormable}, which provides an interface for, e.g., Boogie or SMT s.t. the
@@ -62,9 +65,27 @@ public class NormalFormTransformer<E> {
 		if (mWrapper.isAtom(formula)) {
 			return formula;
 		}
+
+		if (mWrapper.isLiteral(formula)) {
+			if (!mWrapper.isNot(formula)) {
+				return formula;
+			}
+			final E inner = mWrapper.getOperand(formula);
+			if (mWrapper.isTrue(inner)) {
+				return mWrapper.makeFalse();
+			}
+			if (mWrapper.isFalse(inner)) {
+				return mWrapper.makeTrue();
+			}
+			// neither true nor false but literal, so already in NNF
+			return formula;
+		}
+
 		E current = formula;
 		current = makeNnf(current);
 		current = simplify(current);
+		System.out.println("Old: " + BoogiePrettyPrinter.print((Expression) formula));
+		System.out.println("New: " + BoogiePrettyPrinter.print((Expression) current));
 		return current;
 	}
 
@@ -162,7 +183,7 @@ public class NormalFormTransformer<E> {
 		if (mWrapper.isAnd(formula) || mWrapper.isOr(formula)) {
 			return simplifyAndOr(formula);
 		}
-		return formula;
+		return toNnf(formula);
 	}
 
 	private Collection<E> toTermsTopLevel(final E formula) {
@@ -368,7 +389,11 @@ public class NormalFormTransformer<E> {
 			return condition;
 		} else if (mWrapper.isNot(condition)) {
 			final E operand = mWrapper.getOperand(condition);
-			if (mWrapper.isAtom(operand)) {
+			if (mWrapper.isTrue(operand)) {
+				return mWrapper.makeFalse();
+			} else if (mWrapper.isFalse(operand)) {
+				return mWrapper.makeTrue();
+			} else if (mWrapper.isAtom(operand)) {
 				// is already in nnf
 				return condition;
 			} else if (mWrapper.isNot(operand)) {

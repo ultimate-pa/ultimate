@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -204,6 +204,16 @@ public class TermNormalFormTransformer implements INormalFormable<Term> {
 		operands.forEachRemaining(list::add);
 		final Term[] terms = list.toArray(new Term[list.size()]);
 		return terms;
+	}
+
+	@Override
+	public boolean isTrue(final Term formula) {
+		return "true".equals(formula.toString());
+	}
+
+	@Override
+	public boolean isFalse(final Term formula) {
+		return "false".equals(formula.toString());
 	}
 
 }
