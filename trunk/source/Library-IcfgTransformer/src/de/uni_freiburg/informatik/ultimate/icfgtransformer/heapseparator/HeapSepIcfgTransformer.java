@@ -71,8 +71,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	public static final String MEMORY = "#memory";
 
 
-	public static final String MEMLOC = "##memloc";
-	public static final String MEMLOC_SORT_INT = "##mmlc_sort_int";
 
 	/**
 	 * Default constructor.
@@ -166,9 +164,12 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 */
 		final IIcfg<OUTLOC> preprocessedIcfg;
 		final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar;
+
 		final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral;
-		final IProgramNonOldVar memlocArrayInt;
-		final Sort memLocSort;
+//		final IProgramNonOldVar memlocArrayInt;
+//		final Sort memLocSort;
+		final MemlocArrayManager memlocArrayManager;
+
 		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
 			mLogger.info("starting freeze-var-style preprocessing");
 			/*
@@ -247,25 +248,27 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			preprocessedIcfg = icfgWFreezeVarsInitialized;
 
 			storeIndexInfoToLocLiteral = null;
-			memlocArrayInt = null;
+//			dimToMemlocArrayInt = null;
+			memlocArrayManager = null;
 		} else {
 			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
 			mLogger.info("Heap separator: starting memloc-array-style preprocessing");
 
-			/**
-			 * create program variable for memloc array
-			 *  conceptually, we need one memloc array for each index sort that is used in the program, for now we just
-			 *  create one for integer indices
-			 */
+			memlocArrayManager = new MemlocArrayManager(mMgdScript);
 
-			mMgdScript.lock(this);
-			mMgdScript.getScript().declareSort(MEMLOC_SORT_INT, 0);
-			memLocSort = mMgdScript.getScript().sort(MEMLOC_SORT_INT);
-			final Sort intToLocations = SmtSortUtils.getArraySort(mMgdScript.getScript(),
-					SmtSortUtils.getIntSort(mMgdScript), memLocSort);
-			memlocArrayInt = ProgramVarUtils.constructGlobalProgramVarPair(MEMLOC + "_int", intToLocations, mMgdScript,
-					this);
-			mMgdScript.unlock(this);
+//			/**
+//			 * create program variable for memloc array
+//			 *  conceptually, we need one memloc array for each index sort that is used in the program, for now we just
+//			 *  create one for integer indices
+//			 */
+//			mMgdScript.lock(this);
+//			mMgdScript.getScript().declareSort(MEMLOC_SORT_INT, 0);
+//			dimToMemLocSort = mMgdScript.getScript().sort(MEMLOC_SORT_INT);
+//			final Sort intToLocations = SmtSortUtils.getArraySort(mMgdScript.getScript(),
+//					SmtSortUtils.getIntSort(mMgdScript), dimToMemLocSort);
+//			dimToMemlocArrayInt = ProgramVarUtils.constructGlobalProgramVarPair(MEMLOC + "_int", intToLocations, mMgdScript,
+//					this);
+//			mMgdScript.unlock(this);
 
 
 			/*
@@ -274,8 +277,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 */
 			final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
 					new MemlocArrayUpdaterIcfgTransformer<>(mLogger, "icfg_with_memloc_updates",
-							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, memlocArrayInt,
-							memLocSort, mHeapArrays, edgeToIndexToStoreIndexInfo);
+							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, memlocArrayManager,
+							mHeapArrays, edgeToIndexToStoreIndexInfo);
 			IIcfg<OUTLOC> icfgWithMemlocUpdates = mauit.getResult();
 
 			storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
@@ -345,7 +348,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		} else {
 			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
 			partitionManager = new HeapPartitionManager(mLogger, mMgdScript, arrayToArrayGroup, mHeapArrays,
-					mStatistics, memlocArrayInt, storeIndexInfoToLocLiteral);
+					mStatistics, memlocArrayManager, storeIndexInfoToLocLiteral);
 		}
 
 		/*
@@ -765,4 +768,62 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 		}
 
 	}
+}
+
+class MemlocArrayManager {
+
+	public static final String MEMLOC = "##memloc";
+	public static final String MEMLOC_SORT_INT = "##mmlc_sort_int";
+
+	final Map<Integer, IProgramNonOldVar> mDimToMemlocArrayInt = new HashMap<>();
+	final Map<Integer, Sort> mDimToMemLocSort = new HashMap<>();
+
+	boolean mAlreadyDeclaredMemlocSort;
+
+	private final ManagedScript mMgdScript;
+
+	public MemlocArrayManager(final ManagedScript mgdScript) {
+		mMgdScript = mgdScript;
+	}
+
+	IProgramNonOldVar getMemlocArray(final int dim) {
+		IProgramNonOldVar result = mDimToMemlocArrayInt.get(dim);
+		if (result == null) {
+			mMgdScript.lock(this);
+			final Sort intToLocations = SmtSortUtils.getArraySort(mMgdScript.getScript(),
+					SmtSortUtils.getIntSort(mMgdScript), getMemlocSort(dim));
+			result = ProgramVarUtils.constructGlobalProgramVarPair(MEMLOC + "_int_" + dim, intToLocations, mMgdScript,
+					this);
+			mMgdScript.unlock(this);
+
+			mDimToMemlocArrayInt.put(dim, result);
+
+		}
+		return result;
+	}
+
+	Sort getMemlocSort(final int dim) {
+		// TODO: should we have a different sort per dimension?
+		if (!mAlreadyDeclaredMemlocSort) {
+			mMgdScript.getScript().declareSort(MEMLOC_SORT_INT, 0);
+			mAlreadyDeclaredMemlocSort = true;
+		}
+		return mMgdScript.getScript().sort(MEMLOC_SORT_INT);
+	}
+
+//			/**
+//			 * create program variable for memloc array
+//			 *  conceptually, we need one memloc array for each index sort that is used in the program, for now we just
+//			 *  create one for integer indices
+//			 */
+//			mMgdScript.lock(this);
+//			mMgdScript.getScript().declareSort(MEMLOC_SORT_INT, 0);
+//			dimToMemLocSort = mMgdScript.getScript().sort(MEMLOC_SORT_INT);
+//			final Sort intToLocations = SmtSortUtils.getArraySort(mMgdScript.getScript(),
+//					SmtSortUtils.getIntSort(mMgdScript), dimToMemLocSort);
+//			dimToMemlocArrayInt = ProgramVarUtils.constructGlobalProgramVarPair(MEMLOC + "_int", intToLocations, mMgdScript,
+//					this);
+//			mMgdScript.unlock(this);
+
+
 }

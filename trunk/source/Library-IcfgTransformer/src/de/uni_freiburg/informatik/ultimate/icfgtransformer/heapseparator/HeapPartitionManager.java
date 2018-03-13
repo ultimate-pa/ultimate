@@ -6,7 +6,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -61,9 +60,11 @@ class HeapPartitionManager {
 
 	private final ManagedScript mMgdScript;
 
-	private final TermVariable mMemLocArrayTv;
+//	private final TermVariable mMemLocArrayTv;
 
 	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
+
+private final MemlocArrayManager mMemLocArrayManager;
 
 	/**
 	 * for freeze var style
@@ -87,7 +88,8 @@ class HeapPartitionManager {
 		mStatistics = statistics;
 		mPreprocessing = Preprocessing.FREEZE_VARIABLES;
 
-		mMemLocArrayTv = null;
+//		mMemLocArrayTv = null;
+		mMemLocArrayManager = null;
 		mStoreIndexInfoToLocLiteral = null;
 
 		mArrayGroupToDimensionToStoreIndexInfoPartition = new NestedMap2<>();
@@ -109,7 +111,8 @@ class HeapPartitionManager {
 	public HeapPartitionManager(final ILogger logger, final ManagedScript mgdScript,
 			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
-			final IProgramVar memLocArray, final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral) {
+			final MemlocArrayManager memlocArrayManager,
+			final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral) {
 		mPreprocessing = Preprocessing.MEMLOC_ARRAY;
 		mMgdScript = mgdScript;
 
@@ -118,7 +121,8 @@ class HeapPartitionManager {
 		mStoreIndexInfos = storeIndexInfoToLocLiteral.keySet();
 		mHeapArrays = heapArrays;
 		mStatistics = statistics;
-		mMemLocArrayTv = memLocArray.getTermVariable();
+//		mMemLocArrayTv = memLocArray.getTermVariable();
+		mMemLocArrayManager = memlocArrayManager;
 		mStoreIndexInfoToLocLiteral = storeIndexInfoToLocLiteral;
 
 		mStoreIndexInfoToFreezeVar = null;
@@ -162,6 +166,16 @@ class HeapPartitionManager {
 				continue;
 			}
 
+			if (selectInfo.getArrayPvoc() instanceof IProgramNonOldVar &&
+					eps.areEqual(selectInfo.getArrayPvoc().getTerm(),
+							((IProgramNonOldVar) selectInfo.getArrayPvoc()).getOldVar().getTerm())) {
+				/* the array that is read at the current select is in its uninitialized statie -- the current
+				 *  storeIndexInfo (or any other for that matter) does not influence the select, thus cannot trigger
+				 *  a merge of heap partitions.
+				 */
+				continue;
+			}
+
 			for (int dim = 0; dim < selectIndex.size(); dim++) {
 
 				if (!sii.getArrayToAccessDimensions()
@@ -185,12 +199,12 @@ class HeapPartitionManager {
 					}
 				} else {
 					// aliasing question to ask: memloc[selectIndex] (mayequal) locLiteral_sii
-					final Term memlocSelect = SmtUtils.select(mMgdScript.getScript(), mMemLocArrayTv,
+					final Term memlocSelect = SmtUtils.select(mMgdScript.getScript(),
+							mMemLocArrayManager.getMemlocArray(dim).getTermVariable(),
 							selectIndexNormalized);
 					if (eps.areUnequal(memlocSelect, locLit.getTerm())) {
 						// nothing to do
 					} else {
-						// select index and freezeVar may be equal at this location
 						dimensionToMayEqualStoreIndexInfos.addPair(dim, sii);
 					}
 				}
