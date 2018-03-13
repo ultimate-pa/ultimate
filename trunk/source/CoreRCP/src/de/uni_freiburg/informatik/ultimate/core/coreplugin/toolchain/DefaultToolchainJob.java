@@ -228,10 +228,12 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	}
 
 	private IStatus handleException(final Throwable e) {
-		if (mLogger.isDebugEnabled()) {
+		if (e == null) {
+			mLogger.fatal("The toolchain wants to handle an exception, but provided nothing");
+		} else if (mLogger.isDebugEnabled()) {
 			mLogger.fatal("The toolchain threw an exception", e);
 		} else {
-			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
+			mLogger.fatal(String.format("The toolchain threw an exception: %s: %s", e.getClass(), e.getMessage()));
 		}
 		mController.displayException(mToolchain.getCurrentToolchainData(), "The toolchain threw an exception", e);
 		if (mServices != null) {
