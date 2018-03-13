@@ -65,7 +65,9 @@ public class InvariantChecker {
 				final ArrayDeque<IcfgLocation> worklistBackward = new ArrayDeque<>();
 				final Set<IcfgLocation> seenBackward = new HashSet<>();
 				final Set<IcfgLocation> startLocations = new HashSet<>();
-				worklistBackward.add(errorLoc);
+				for (final IcfgLocation predLoc : errorLoc.getIncomingNodes()) {
+					worklistBackward.add(predLoc);
+				}
 				IcfgLocation loc;
 				while (!worklistBackward.isEmpty()) {
 					loc = worklistBackward.removeFirst();
