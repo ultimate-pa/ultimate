@@ -1,0 +1,120 @@
+// Seemingly inconsistent requirement 
+// DD 2018-03-13 
+req1: After "true", it is always the case that if "true" holds, then "false" holds after at most "50" time units
+
+// produces the following encoding: 
+// var delta : real;
+// 
+// var req1_bndResA0_X4 : real;
+// 
+// var pc0 : int;
+// 
+// procedure myProcedure() returns ()
+// modifies req1_bndResA0_X4, pc0, delta;
+// {
+//     havoc pc0;
+//     assume (pc0 == 0 || pc0 == 2) || pc0 == 4;
+//     havoc req1_bndResA0_X4;
+//     assume req1_bndResA0_X4 == 0.0;
+//     while (*)
+//     {
+//         havoc delta;
+//         assume delta > 0.0;
+//         req1_bndResA0_X4 := req1_bndResA0_X4 + delta;
+//         if (pc0 == 4) {
+//             assume req1_bndResA0_X4 <= 50.0;
+//             assume true && !false;
+//         } else if (pc0 == 3) {
+//             assume req1_bndResA0_X4 <= 50.0;
+//             assume !true && !false;
+//         } else if (pc0 == 2) {
+//             assume true;
+//             assume true && false;
+//         } else if (pc0 == 1) {
+//             assume true;
+//             assume !true;
+//         } else if (pc0 == 0) {
+//             assume true;
+//             assume !true;
+//         }
+//         assert (pc0 == 0 || pc0 == 1) || pc0 == 2;
+//         assert false;
+//         if (pc0 == 4) {
+//             if (*) {
+//                 assume req1_bndResA0_X4 < 50.0;
+//                 pc0 := 4;
+//             } else if (*) {
+//                 assume true;
+//                 pc0 := 2;
+//             } else if (*) {
+//                 assume req1_bndResA0_X4 < 50.0;
+//                 pc0 := 3;
+//             } else if (*) {
+//                 assume false;
+//                 pc0 := 1;
+//             } else {
+//                 assume false;
+//             }
+//         } else if (pc0 == 3) {
+//             if (*) {
+//                 assume req1_bndResA0_X4 < 50.0;
+//                 pc0 := 4;
+//             } else if (*) {
+//                 assume true;
+//                 pc0 := 2;
+//             } else if (*) {
+//                 assume req1_bndResA0_X4 < 50.0;
+//                 pc0 := 3;
+//             } else if (*) {
+//                 assume false;
+//                 pc0 := 1;
+//             } else {
+//                 assume false;
+//             }
+//         } else if (pc0 == 2) {
+//             if (*) {
+//                 assume true;
+//                 req1_bndResA0_X4 := 0.0;
+//                 pc0 := 4;
+//             } else if (*) {
+//                 assume true;
+//                 pc0 := 2;
+//             } else if (*) {
+//                 assume true;
+//                 pc0 := 1;
+//             } else {
+//                 assume false;
+//             }
+//         } else if (pc0 == 1) {
+//             if (*) {
+//                 assume true;
+//                 req1_bndResA0_X4 := 0.0;
+//                 pc0 := 4;
+//             } else if (*) {
+//                 assume true;
+//                 pc0 := 2;
+//             } else if (*) {
+//                 assume true;
+//                 pc0 := 1;
+//             } else {
+//                 assume false;
+//             }
+//         } else if (pc0 == 0) {
+//             if (*) {
+//                 assume true;
+//                 req1_bndResA0_X4 := 0.0;
+//                 pc0 := 4;
+//             } else if (*) {
+//                 assume true;
+//                 pc0 := 2;
+//             } else if (*) {
+//                 assume true;
+//                 pc0 := 0;
+//             } else {
+//                 assume false;
+//             }
+//         }
+//     }
+// }
+// 
+// 
