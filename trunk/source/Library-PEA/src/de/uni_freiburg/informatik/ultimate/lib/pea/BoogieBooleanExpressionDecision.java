@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 
 /**
  * {@link Decision} expressed by a BoogieAST Expression.
@@ -24,6 +26,8 @@ public class BoogieBooleanExpressionDecision extends Decision {
 
 	private final Expression mExpression;
 	private final static Expression TRUE = new BooleanLiteral(null, BoogieType.TYPE_BOOL, true);
+	private final static NormalFormTransformer<Expression> TRANSFORMER =
+			new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 	/**
 	 *
@@ -45,11 +49,18 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 *            the condition that must hold.
 	 */
 	public static CDD create(final Expression e) {
-		return CDD.create(new BoogieBooleanExpressionDecision(e), CDD.trueChilds);
+		final Expression simplifiedExpression = TRANSFORMER.simplify(e);
+		if (simplifiedExpression instanceof BooleanLiteral) {
+			if (((BooleanLiteral) simplifiedExpression).getValue()) {
+				return CDD.TRUE;
+			}
+			return CDD.FALSE;
+		}
+		return CDD.create(new BoogieBooleanExpressionDecision(simplifiedExpression), CDD.trueChilds);
 	}
 
 	public static CDD createTrue() {
-		return CDD.create(new BoogieBooleanExpressionDecision(TRUE), CDD.trueChilds);
+		return CDD.TRUE;
 	}
 
 	@Override
