@@ -36,9 +36,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-
 /**
  * NormalFormTransformer converts expressions or terms to various other forms (e.g., NNF, DNG, CNF, PNF, etc.). It has
  * to be used together with {@link INormalFormable}, which provides an interface for, e.g., Boogie or SMT s.t. the
@@ -84,8 +81,6 @@ public class NormalFormTransformer<E> {
 		E current = formula;
 		current = makeNnf(current);
 		current = simplify(current);
-		System.out.println("Old: " + BoogiePrettyPrinter.print((Expression) formula));
-		System.out.println("New: " + BoogiePrettyPrinter.print((Expression) current));
 		return current;
 	}
 
