@@ -166,15 +166,16 @@ private final MemlocArrayManager mMemLocArrayManager;
 				continue;
 			}
 
-			if (selectInfo.getArrayPvoc() instanceof IProgramNonOldVar &&
-					eps.areEqual(selectInfo.getArrayPvoc().getTerm(),
-							((IProgramNonOldVar) selectInfo.getArrayPvoc()).getOldVar().getTerm())) {
-				/* the array that is read at the current select is in its uninitialized statie -- the current
-				 *  storeIndexInfo (or any other for that matter) does not influence the select, thus cannot trigger
-				 *  a merge of heap partitions.
-				 */
-				continue;
-			}
+			// EDIT: this is a hack, commented it
+//			if (selectInfo.getArrayPvoc() instanceof IProgramNonOldVar &&
+//					eps.areEqual(selectInfo.getArrayPvoc().getTerm(),
+//							((IProgramNonOldVar) selectInfo.getArrayPvoc()).getOldVar().getTerm())) {
+//				/* the array that is read at the current select is in its uninitialized state -- the current
+//				 *  storeIndexInfo (or any other for that matter) does not influence the select, thus cannot trigger
+//				 *  a merge of heap partitions.
+//				 */
+//				continue;
+//			}
 
 			for (int dim = 0; dim < selectIndex.size(); dim++) {
 
