@@ -38,6 +38,21 @@ import net.sourceforge.czt.z.util.ZString;
  * upper or lower bound.
  */
 public class CounterTrace {
+
+	public enum BoundTypes {
+		LESS(-2), LESSEQUAL(-1), NONE(0), GREATEREQUAL(1), GREATER(2);
+
+		private int mVal;
+
+		private BoundTypes(final int i) {
+			mVal = i;
+		}
+
+		public int asValue() {
+			return mVal;
+		}
+	}
+
 	public static final int BOUND_LESS = -2;
 	public static final int BOUND_LESSEQUAL = -1;
 	public static final int BOUND_NONE = 0;

@@ -58,6 +58,11 @@ public class PatternToPEA {
 		mCompiler = new Trace2PEACompiler(logger);
 	}
 
+	public PhaseEventAutomata compile(final String id, final CounterTrace ct) {
+		mNameIndex++;
+		return mCompiler.compile(id + "_" + mNameIndex, ct);
+	}
+
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// AbsencePattern
 	// komplett und validiert
@@ -68,7 +73,6 @@ public class PatternToPEA {
 		if (scope.contains("Globally")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { phaseTrue(), phase(P), phaseTrue() });
 			ctA = mCompiler.compile(id + "_AbsenceGlob", ct);
-			// ctA.dump();
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
@@ -438,17 +442,12 @@ public class PatternToPEA {
 	public PhaseEventAutomata minDurationPattern(final String id, final CDD P, final CDD Q, final CDD R,
 			final int timebound, final String scope) {
 		PhaseEventAutomata ctA;
-		final PhaseEventAutomata ctA2;
 		if (scope.contains("Globally")) {
 			final CounterTrace ct =
 					new CounterTrace(new CounterTrace.DCPhase[] { phaseTrue(), new CounterTrace.DCPhase(P.negate()),
 							new CounterTrace.DCPhase(P, CounterTrace.BOUND_LESS, timebound),
 							new CounterTrace.DCPhase(P.negate()), phaseTrue() });
-
-			ctA = mCompiler.compile(id + "_minDurG" + mNameIndex, ct);
-
-			mNameIndex++;
-			return ctA;
+			return compile(id + "_minDurG", ct);
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
 					new CounterTrace.DCPhase(R.negate().and(P.negate())),

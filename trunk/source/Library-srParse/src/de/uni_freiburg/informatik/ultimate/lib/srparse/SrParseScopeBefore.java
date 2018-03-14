@@ -7,6 +7,7 @@ public class SrParseScopeBefore extends SrParseScope {
 
 	public SrParseScopeBefore(final CDD cdd) {
 		super(BooleanDecision.create("DEFQ"), cdd);
+		// TODO: Why is this so strange?
 	}
 
 	@Override

@@ -6,12 +6,14 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 public abstract class PatternType {
-
 	protected static final CDD DEFAULT_Q = BooleanDecision.create("Q");
 	protected static final CDD DEFAULT_R = BooleanDecision.create("R");
 
@@ -38,6 +40,23 @@ public abstract class PatternType {
 		return Collections.unmodifiableList(mCdds);
 	}
 
+	public CDD[] getCddsAsArray() {
+		return getCdds().toArray(new CDD[getCdds().size()]);
+	}
+
+	public String[] getDurationsAsArray() {
+		return getDuration().toArray(new String[getDuration().size()]);
+	}
+
+	public int[] getDurationsAsIntArray(final Map<String, Integer> id2bounds) {
+		final String[] durations = getDurationsAsArray();
+		final int[] rtr = new int[durations.length];
+		for (int i = 0; i < durations.length; ++i) {
+			rtr[i] = parseDuration(durations[i], id2bounds);
+		}
+		return rtr;
+	}
+
 	public String getId() {
 		return mId;
 	}
@@ -55,7 +74,7 @@ public abstract class PatternType {
 		return mPea;
 	}
 
-	protected int parseDuration(final String duration, final Map<String, Integer> id2bounds) {
+	protected static int parseDuration(final String duration, final Map<String, Integer> id2bounds) {
 		if (duration == null) {
 			throw new IllegalArgumentException("Duration cannot be null");
 		}
@@ -72,6 +91,45 @@ public abstract class PatternType {
 			}
 			return actualDuration;
 		}
+	}
+
+	protected PhaseEventAutomata compile(final PatternToPEA peaTrans, final CounterTrace ct) {
+		final String suffix;
+		if (mScope == null) {
+			suffix = "NoScope";
+		} else {
+			suffix = mScope.getClass().getSimpleName().substring(12);
+		}
+		return peaTrans.compile(getId() + "_" + suffix, ct);
+	}
+
+	protected static CounterTrace counterTrace(final CounterTrace.DCPhase... phases) {
+		if (phases == null || phases.length == 0) {
+			throw new IllegalArgumentException("Need at least one phase");
+		}
+		return new CounterTrace(phases);
+	}
+
+	protected static DCPhase phase(final CDD x) {
+		return new CounterTrace.DCPhase(x);
+	}
+
+	protected static DCPhase phase(final CDD x, final BoundTypes boundType, final int duration) {
+		return new CounterTrace.DCPhase(x, boundType.asValue(), duration);
+	}
+
+	/**
+	 * @return A phase with bound that can be empty
+	 */
+	protected static DCPhase phaseE(final CDD x, final BoundTypes boundType, final int duration) {
+		return new CounterTrace.DCPhase(CDD.TRUE, x, boundType.asValue(), duration, Collections.emptySet(), true);
+	}
+
+	/**
+	 * @return A true-{@link DCPhase} that can be empty.
+	 */
+	protected static DCPhase phaseT() {
+		return new CounterTrace.DCPhase();
 	}
 
 	@Override
