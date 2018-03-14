@@ -785,4 +785,25 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	public ErrorLocalizationStatisticsGenerator getStatistics() {
 		return mErrorLocalizationStatisticsGenerator;
 	}
+	
+	/**
+	 * Check if the trace (the assertion failure) is angelically safe, based on our
+	 * definition of angelic safety via aberrant trace elements.
+	 * 
+	 * @return Boolean value, determining if the trace is angelically safe.
+	 */
+	public Boolean getAngelicStatus() {
+		// Check that all elements of the trace are
+		// only error-admitting.
+		// Return false even if a single trace element is error enforcing. 
+		
+		Boolean angelicStatus = false;
+		for(int i = 0; i < mRelevanceOfTrace.length; i++) {
+			if(((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC()) {
+				return false;
+			}
+			angelicStatus |= ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF(); 
+		}
+		return angelicStatus;
+	}
 }

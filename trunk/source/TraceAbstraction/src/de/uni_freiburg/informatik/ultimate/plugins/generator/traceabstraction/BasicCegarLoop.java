@@ -425,7 +425,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
 						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
 						mIcfg.getCfgSmtToolkit().getSymbolTable());
-				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
+				final Boolean angelicStatus = a.getAngelicStatus();
+				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());	
 			}
 		} else {
 			mPathProgramDumpController.reportPathProgram((NestedRun<LETTER, IPredicate>) mCounterexample,
