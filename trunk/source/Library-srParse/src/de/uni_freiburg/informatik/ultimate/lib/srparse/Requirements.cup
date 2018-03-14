@@ -150,7 +150,7 @@ non terminal CDD expression, expr;
 non terminal String atom, cid, duration;
 non terminal PatternType property;
 non terminal PatternType pattern, orderpattern, realtimepattern;
-non terminal srParseScope scope;
+non terminal SrParseScope scope;
 non terminal PatternType[] patternset;
 non terminal Integer num;
 non terminal boolean bool;
@@ -192,15 +192,15 @@ propid ::= ID:id IDSEP
 
 scope ::=
     GLOBALLY
-      {: RESULT = new srParseScopeGlob(); :}
+      {: RESULT = new SrParseScopeGlob(); :}
   | BEFORE expression:p
-      {: RESULT = new srParseScopeBefore(p); :}
+      {: RESULT = new SrParseScopeBefore(p); :}
   | AFTER expression:p
-      {: RESULT = new srParseScopeAfter(p); :}
+      {: RESULT = new SrParseScopeAfter(p); :}
   | BETWEEN expression:p AND expression:q 
-      {: RESULT = new srParseScopeBetween(p,q); :}
+      {: RESULT = new SrParseScopeBetween(p,q); :}
   | AFTER expression:p UNTIL expression:q
-      {: RESULT = new srParseScopeAfterUntil(p,q); :}
+      {: RESULT = new SrParseScopeAfterUntil(p,q); :}
   ;
   
 pattern ::=

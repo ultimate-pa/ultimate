@@ -2,14 +2,14 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
-public class srParseScopeAfter extends srParseScope {
+public class SrParseScopeAfter extends SrParseScope {
 
-	public srParseScopeAfter(final CDD cdd1) {
-		this.cdd1 = cdd1;
+	public SrParseScopeAfter(final CDD cdd1) {
+		super(cdd1, null);
 	}
 
 	@Override
 	public String toString() {
-		return "After \"" + cdd1 + "\", ";
+		return "After \"" + getCdd1() + "\", ";
 	}
 }

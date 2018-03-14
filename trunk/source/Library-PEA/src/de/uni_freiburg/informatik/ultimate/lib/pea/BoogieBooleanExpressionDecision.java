@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 
@@ -25,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.
 public class BoogieBooleanExpressionDecision extends Decision {
 
 	private final Expression mExpression;
-	private final static Expression TRUE = new BooleanLiteral(null, BoogieType.TYPE_BOOL, true);
 	private final static NormalFormTransformer<Expression> TRANSFORMER =
 			new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
@@ -92,12 +90,12 @@ public class BoogieBooleanExpressionDecision extends Decision {
 
 	@Override
 	public Decision prime() {
-		return this.prime(null);
+		return prime(null);
 	}
 
 	@Override
 	public Decision unprime() {
-		return this.unprime(null);
+		return unprime(null);
 	}
 
 	@Override

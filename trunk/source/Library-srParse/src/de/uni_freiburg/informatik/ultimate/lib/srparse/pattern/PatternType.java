@@ -9,10 +9,12 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 public class PatternType {
-	// contains all CDDs from the patter in reverse order
+
+	// contains all CDDs from the pattern in reverse order
+	// TODO: DD: Why in reverse order? Why a list?
 	protected List<CDD> mCdds;
 
 	protected static final CDD DEFAULT_Q = BooleanDecision.create("Q");
@@ -21,7 +23,7 @@ public class PatternType {
 	protected PhaseEventAutomata mPea;
 	protected int mEffectOffset;
 
-	protected srParseScope mScope;
+	protected SrParseScope mScope;
 	protected PatternToPEA mPeaTransformator;
 	protected CDD mEffect;
 
@@ -31,7 +33,7 @@ public class PatternType {
 		this(null);
 	}
 
-	public PatternType(final srParseScope scope) {
+	public PatternType(final SrParseScope scope) {
 		mScope = scope;
 	}
 
@@ -100,9 +102,7 @@ public class PatternType {
 		if (mCdds == null) {
 			mCdds = new ArrayList<>();
 		}
-		for (int i = 0; i < cdds.size(); i++) {
-			mCdds.add(cdds.get(i));
-		}
+		mCdds.addAll(cdds);
 	}
 
 	public PhaseEventAutomata transformToPea(final Map<String, Integer> id2bounds) {
@@ -110,19 +110,15 @@ public class PatternType {
 		return mPea;
 	}
 
-	public PatternToPEA getPeaTransformator() {
-		return mPeaTransformator;
-	}
-
 	public void setPeaTransformator(final PatternToPEA peaTransformator) {
 		mPeaTransformator = peaTransformator;
 	}
 
-	public srParseScope getScope() {
+	public SrParseScope getScope() {
 		return mScope;
 	}
 
-	public void setScope(final srParseScope scope) {
+	public void setScope(final SrParseScope scope) {
 		mScope = scope;
 	}
 

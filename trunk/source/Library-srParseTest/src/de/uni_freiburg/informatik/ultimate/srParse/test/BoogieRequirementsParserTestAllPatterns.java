@@ -16,10 +16,10 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqLexer;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeAfter;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeBefore;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
@@ -73,8 +73,8 @@ public class BoogieRequirementsParserTestAllPatterns {
 		final String[] scope = new String[] { "Globally,", "Before \" x > 0 \", ", "After \" x > 0\", ",
 				"Between \"x > 0\" and \" x < 0\", " };
 		// TODO?:"After <Q> before <R>"
-		final Class<?>[] scopezz = new Class<?>[] { srParseScopeGlob.class, srParseScopeBefore.class,
-				srParseScopeAfter.class, srParseScopeBetween.class };
+		final Class<?>[] scopezz = new Class<?>[] { SrParseScopeGlob.class, SrParseScopeBefore.class,
+				SrParseScopeAfter.class, SrParseScopeBetween.class };
 
 		final String[] pattern = new String[] { "it is never the case that \"y >= 5\" holds",
 				"it is always the case that \"y >= 5\" holds",

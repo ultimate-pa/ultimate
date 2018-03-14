@@ -3,11 +3,11 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeAfter;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeAfterUntil;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeBefore;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeBetween;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParseScopeGlob;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 public class InstAbsPattern extends PatternType {
 	// erwartet cdds rückwärts
@@ -15,7 +15,7 @@ public class InstAbsPattern extends PatternType {
 	public void transform(Map<String, Integer> id2bounds) {
 
 		// Case: GLOBALLY
-		if (mScope instanceof srParseScopeGlob) {
+		if (mScope instanceof SrParseScopeGlob) {
 			if (mCdds.size() != 1) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
@@ -28,7 +28,7 @@ public class InstAbsPattern extends PatternType {
 			mPea = mPeaTransformator.absencePattern(mId, p_cdd, q_cdd, r_cdd, mScope.toString());
 		}
 		// CASE: BEFORE R
-		else if (mScope instanceof srParseScopeBefore) {
+		else if (mScope instanceof SrParseScopeBefore) {
 			if (mCdds.size() != 2) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
@@ -42,7 +42,7 @@ public class InstAbsPattern extends PatternType {
 
 		}
 		// CASE: AFTER Q UNTIL R
-		else if (mScope instanceof srParseScopeAfterUntil) {
+		else if (mScope instanceof SrParseScopeAfterUntil) {
 			if (mCdds.size() != 1) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
@@ -56,7 +56,7 @@ public class InstAbsPattern extends PatternType {
 
 		}
 		// CASE: AFTER Q
-		else if (mScope instanceof srParseScopeAfter) {
+		else if (mScope instanceof SrParseScopeAfter) {
 			if (mCdds.size() != 1) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
@@ -68,7 +68,7 @@ public class InstAbsPattern extends PatternType {
 			mPea = mPeaTransformator.absencePattern(mId, p_cdd, q_cdd, r_cdd, mScope.toString());
 		}
 		// CASE: BETWEEN Q AND R
-		else if (mScope instanceof srParseScopeBetween) {
+		else if (mScope instanceof SrParseScopeBetween) {
 			if (mCdds.size() != 1) {
 				// Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 				System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");

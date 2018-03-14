@@ -5,6 +5,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
 public class BndInvariancePattern extends PatternType {
+
 	@Override
 	public void transform(final Map<String, Integer> id2bounds) {
 		final CDD p_cdd = mCdds.get(1);
