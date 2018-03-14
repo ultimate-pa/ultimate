@@ -67,8 +67,7 @@ public class ReqToPEA {
 				continue;
 			}
 
-			pat.setPeaTransformator(peaTrans);
-			final PhaseEventAutomata pea = pat.transformToPea(id2bounds);
+			final PhaseEventAutomata pea = pat.transformToPea(peaTrans, id2bounds);
 			if (pea.getInit().length == 0) {
 				mLogger.error(pat.getId() + " PEA has no initial phase, ignoring!");
 				continue;
@@ -88,12 +87,11 @@ public class ReqToPEA {
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
 
 		for (final PatternType pat : patterns) {
-			pat.setPeaTransformator(peaTrans);
 			if (pea == null) {
-				pea = pat.transformToPea(id2bounds);
+				pea = pat.transformToPea(peaTrans, id2bounds);
 
 			} else {
-				final PhaseEventAutomata pea2 = pat.transformToPea(id2bounds);
+				final PhaseEventAutomata pea2 = pat.transformToPea(peaTrans, id2bounds);
 				if (pea2 == null) {
 					continue;
 				}

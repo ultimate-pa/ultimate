@@ -1,6 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 
 /**
  *
@@ -24,6 +28,7 @@ public class InitializationPattern extends PatternType {
 
 	public InitializationPattern(final String ident, final String type, final VariableCategory visibility,
 			final Expression expr) {
+		super(null, ident, null, null);
 		mIdent = ident;
 		mType = type;
 		mVisibility = visibility;
@@ -49,5 +54,10 @@ public class InitializationPattern extends PatternType {
 	@Override
 	public String toString() {
 		return mVisibility + " " + mIdent + " : " + mType;
+	}
+
+	@Override
+	protected PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
+		throw new UnsupportedOperationException();
 	}
 }
