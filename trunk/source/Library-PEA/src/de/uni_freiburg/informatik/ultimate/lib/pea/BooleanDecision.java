@@ -26,145 +26,143 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
-import java.util.List;
 import java.util.Vector;
 
 /**
- * BooleanDecision represents a simple boolean statement. It shall not be used
- * for arithmetical expressions like a < b + c anymore. In those cases use
- * RelationDecision instead.
+ * BooleanDecision represents a simple boolean statement. It shall not be used for arithmetical expressions like a < b +
+ * c anymore. In those cases use RelationDecision instead.
  *
  * @author hoenicke
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.RelationDecision
  */
 public class BooleanDecision extends Decision {
-    static Vector<String> allVars = new Vector<>();
-    public static final String PRIME = "'";
-    String var;
-    int globalIdx = -1;
+	static Vector<String> allVars = new Vector<>();
+	public static final String PRIME = "'";
+	String var;
+	int globalIdx = -1;
 
-    public BooleanDecision(final String v) {
-        globalIdx = allVars.indexOf(v);
+	public BooleanDecision(final String v) {
+		globalIdx = allVars.indexOf(v);
 
-        if (globalIdx < 0) {
-            allVars.add(v);
-            globalIdx = allVars.indexOf(v);
-        }
+		if (globalIdx < 0) {
+			allVars.add(v);
+			globalIdx = allVars.indexOf(v);
+		}
 
-        var = v;
-    }
+		var = v;
+	}
 
-    /**
-     * Create an boolean constraint.
-     * @param var the condition that must hold.
-     */
-    public static CDD create(final String var) {
-        return CDD.create(new BooleanDecision(var), CDD.trueChilds);
-    }
+	/**
+	 * Create an boolean constraint.
+	 * 
+	 * @param var
+	 *            the condition that must hold.
+	 */
+	public static CDD create(final String var) {
+		return CDD.create(new BooleanDecision(var), CDD.trueChilds);
+	}
 
-    @Override
+	@Override
 	public boolean equals(final Object o) {
-        if (!(o instanceof BooleanDecision)) {
-            return false;
-        }
+		if (!(o instanceof BooleanDecision)) {
+			return false;
+		}
 
-        return var.equals(((BooleanDecision) o).var);
-    }
+		return var.equals(((BooleanDecision) o).var);
+	}
 
-    @Override
+	@Override
 	public int hashCode() {
-        return var.hashCode();
-    }
+		return var.hashCode();
+	}
 
-    @Override
+	@Override
 	public int compareTo(final Object o) {
-        if (!(o instanceof BooleanDecision)) {
-            return 1;
-        }
+		if (!(o instanceof BooleanDecision)) {
+			return 1;
+		}
 
-        return var.compareTo(((BooleanDecision) o).var);
-    }
+		return var.compareTo(((BooleanDecision) o).var);
+	}
 
-    /**
-     * @return Returns the var.
-     */
-    @Override
+	/**
+	 * @return Returns the var.
+	 */
+	@Override
 	public String getVar() {
-        return var;
-    }
+		return var;
+	}
 
-    @Override
+	@Override
 	public String toString(final int child) {
-        return (child == 0) ? var : ("!" + var);
-    }
+		return (child == 0) ? var : ("!" + var);
+	}
 
-    @Override
+	@Override
 	public String toSmtString(final int child) {
-        return toSmtString(child, -1);
-    }
+		return toSmtString(child, -1);
+	}
 
-    @Override
+	@Override
 	public String toSmtString(final int child, final int index) {
-        if (index < 0) {
-            return (child == 0) ? ("(var_h_" + Math.abs(var.hashCode()) + ")")
-                                : ("(not var_h_" + Math.abs(var.hashCode()) +
-            ")");
-        }
-		return (child == 0)
-			? ("(var_h_" + Math.abs(var.hashCode()) + "_" + index + ")")
-			: ("(not var_h_" + Math.abs(var.hashCode()) + "_" + index + ")");
-    }
+		if (index < 0) {
+			return (child == 0) ? ("(var_h_" + Math.abs(var.hashCode()) + ")")
+					: ("(not var_h_" + Math.abs(var.hashCode()) + ")");
+		}
+		return (child == 0) ? ("(var_h_" + Math.abs(var.hashCode()) + "_" + index + ")")
+				: ("(not var_h_" + Math.abs(var.hashCode()) + "_" + index + ")");
+	}
 
-    @Override
+	@Override
 	public String toTexString(final int child) {
-        return (child == 0) ? var : (" \\neg " + var);
-    }
+		return (child == 0) ? var : (" \\neg " + var);
+	}
 
-    @Override
+	@Override
 	public String toUppaalString(final int child) {
-        //return child == 0 ? var : " \\neg " + var;
-        return "true";
-    }
+		// return child == 0 ? var : " \\neg " + var;
+		return "true";
+	}
 
-    @Override
+	@Override
 	public String toUppaalStringDOM(final int child) {
-        return "true";
-    }
+		return "true";
+	}
 
-    private Decision primeCache;
-    @Override
-    public Decision prime() {
-    	return this.prime(null);
-    } 
-    @Override
-    public Decision prime(String ignore){
-    	if (this.var.equals(ignore)){
-    		return this;
-    	}
-    	if (primeCache != null) {
+	private Decision primeCache;
+
+	@Override
+	public Decision prime() {
+		return this.prime(null);
+	}
+
+	@Override
+	public Decision prime(final String ignore) {
+		if (var.equals(ignore)) {
+			return this;
+		}
+		if (primeCache != null) {
 			return primeCache;
 		}
-        final String decision = var.replaceAll("([a-zA-Z_])(\\w*)",
-                "$1$2" + BooleanDecision.PRIME);
+		final String decision = var.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + BooleanDecision.PRIME);
 
-        primeCache = new BooleanDecision(decision);
-        return primeCache;
-    }
+		primeCache = new BooleanDecision(decision);
+		return primeCache;
+	}
 
-    //by Ami
-    @Override
-    public Decision unprime() {
-    	return this.unprime(null);
-    }
-    
-    @Override
-    public Decision unprime(String ignore){
-    			if(this.var.equals(ignore)){
-    				return this;
-    			}
-    	        final String result = var.replaceAll("([a-zA-Z_])(\\w*)" +
-                BooleanDecision.PRIME, "$1$2"); // SR 2010-08-02
+	// by Ami
+	@Override
+	public Decision unprime() {
+		return this.unprime(null);
+	}
 
-        return (new BooleanDecision(result));
-    }
+	@Override
+	public Decision unprime(final String ignore) {
+		if (var.equals(ignore)) {
+			return this;
+		}
+		final String result = var.replaceAll("([a-zA-Z_])(\\w*)" + BooleanDecision.PRIME, "$1$2"); // SR 2010-08-02
+
+		return (new BooleanDecision(result));
+	}
 }

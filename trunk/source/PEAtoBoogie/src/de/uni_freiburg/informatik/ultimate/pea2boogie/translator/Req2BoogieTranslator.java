@@ -378,10 +378,7 @@ public class Req2BoogieTranslator {
 				final String type = entry.getValue();
 
 				if (type == null) {
-					if (!mStateVars.containsKey(name) && !mConstVars.containsKey(name)) {
-						syntaxError(mBoogieLocations[i + 1],
-								"Variable " + name + " not declared in " + currentAutomaton.getName());
-					}
+					checkVarDeclared(i, currentAutomaton, name);
 					continue;
 				}
 
@@ -389,7 +386,8 @@ public class Req2BoogieTranslator {
 				case "bool":
 				case "real":
 				case "int":
-					throw new AssertionError("Is handled before");
+					checkVarDeclared(i, currentAutomaton, name);
+					break;
 				case "event":
 					mEventVars.put(name, getBoogieType("bool", mBoogieLocations[i + 1]));
 					break;
@@ -397,6 +395,12 @@ public class Req2BoogieTranslator {
 					mLogger.warn("Skipping unknown PEA variable type " + type);
 				}
 			}
+		}
+	}
+
+	private void checkVarDeclared(final int i, final PhaseEventAutomata currentAutomaton, final String name) {
+		if (!mStateVars.containsKey(name) && !mConstVars.containsKey(name)) {
+			syntaxError(mBoogieLocations[i + 1], "Variable " + name + " not declared in " + currentAutomaton.getName());
 		}
 	}
 

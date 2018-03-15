@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,8 +10,10 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
@@ -47,14 +51,15 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 *            the condition that must hold.
 	 */
 	public static CDD create(final Expression e) {
-		final Expression simplifiedExpression = TRANSFORMER.toNnf(e);
-		if (simplifiedExpression instanceof BooleanLiteral) {
-			if (((BooleanLiteral) simplifiedExpression).getValue()) {
-				return CDD.TRUE;
-			}
-			return CDD.FALSE;
-		}
-		return CDD.create(new BoogieBooleanExpressionDecision(simplifiedExpression), CDD.trueChilds);
+		return new BoogieToCdd().createCdd(e);
+		// final Expression simplifiedExpression = TRANSFORMER.toNnf(e);
+		// if (simplifiedExpression instanceof BooleanLiteral) {
+		// if (((BooleanLiteral) simplifiedExpression).getValue()) {
+		// return CDD.TRUE;
+		// }
+		// return CDD.FALSE;
+		// }
+		// return CDD.create(new BoogieBooleanExpressionDecision(simplifiedExpression), CDD.trueChilds);
 	}
 
 	public static CDD createTrue() {
@@ -235,6 +240,123 @@ public class BoogieBooleanExpressionDecision extends Decision {
 						((IdentifierExpression) expr).getIdentifier().replaceAll("([a-zA-Z_])(\\w*)" + "'", "$1$2"));
 			}
 			return super.processExpression(expr);
+		}
+	}
+
+	private static final class BoogieToCdd extends GeneratedBoogieAstVisitor {
+
+		private enum Op {
+			AND, OR, IFF, IF, NOT
+		}
+
+		private Deque<Op> mOpenDecisions;
+		private Deque<CDD> mOpenCDDs;
+
+		public CDD createCdd(final Expression expr) {
+			mOpenDecisions = new ArrayDeque<>();
+			mOpenCDDs = new ArrayDeque<>();
+			final Expression simplifiedExpression = TRANSFORMER.toNnf(expr);
+			simplifiedExpression.accept(this);
+			while (!mOpenDecisions.isEmpty()) {
+				final Op curr = mOpenDecisions.pop();
+				if (curr == Op.NOT) {
+					final CDD oper = mOpenCDDs.pop();
+					mOpenCDDs.push(oper.negate());
+				} else {
+					final CDD left = mOpenCDDs.pop();
+					final CDD right = mOpenCDDs.pop();
+					switch (curr) {
+					case AND:
+						mOpenCDDs.push(left.and(right));
+						break;
+					case IF:
+						mOpenCDDs.push(left.negate().or(right));
+						break;
+					case IFF:
+						mOpenCDDs.push(left.negate().and(right.negate()).or(left.and(right)));
+						break;
+					case OR:
+						mOpenCDDs.push(left.or(right));
+						break;
+					case NOT:
+					default:
+						throw new UnsupportedOperationException();
+					}
+				}
+			}
+			assert mOpenDecisions.isEmpty() && mOpenCDDs.size() == 1;
+			return mOpenCDDs.pop();
+		}
+
+		@Override
+		public boolean visit(final BinaryExpression node) {
+			switch (node.getOperator()) {
+			case ARITHDIV:
+			case ARITHMINUS:
+			case ARITHMOD:
+			case ARITHMUL:
+			case ARITHPLUS:
+			case BITVECCONCAT:
+				throw new AssertionError("The tree root should be boolean");
+			case COMPEQ:
+			case COMPGEQ:
+			case COMPGT:
+			case COMPLEQ:
+			case COMPLT:
+			case COMPNEQ:
+			case COMPPO:
+				// stop descend, take the whole remaining expression as decision
+				mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.trueChilds));
+				return false;
+			case LOGICAND:
+				mOpenDecisions.push(Op.AND);
+				break;
+			case LOGICIFF:
+				mOpenDecisions.push(Op.IFF);
+				break;
+			case LOGICIMPLIES:
+				mOpenDecisions.push(Op.IF);
+				break;
+			case LOGICOR:
+				mOpenDecisions.push(Op.OR);
+				break;
+			default:
+				throw new UnsupportedOperationException();
+			}
+
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(final BooleanLiteral node) {
+			if (node.getValue()) {
+				mOpenCDDs.push(CDD.TRUE);
+			} else {
+				mOpenCDDs.push(CDD.FALSE);
+			}
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(final IdentifierExpression node) {
+			mOpenCDDs.push(CDD.create(new BooleanDecision(node.getIdentifier()), CDD.trueChilds));
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(final UnaryExpression node) {
+			switch (node.getOperator()) {
+			case ARITHNEGATIVE:
+			case OLD:
+				throw new AssertionError("The tree root should be boolean");
+			case LOGICNEG:
+				mOpenDecisions.push(Op.NOT);
+				break;
+			default:
+				throw new UnsupportedOperationException();
+
+			}
+			return super.visit(node);
 		}
 	}
 
