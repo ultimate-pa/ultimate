@@ -2042,7 +2042,7 @@ public class MemoryHandler {
 	 *            name of the calling procedure
 	 */
 	public CallStatement getMallocCall(final LocalLValue resultPointer, final ILocation loc, final IASTNode hook) {
-		return getMallocCall(calculateSizeOf(loc, resultPointer.getCType(), hook), (VariableLHS) resultPointer.getLHS(), 
+		return getMallocCall(calculateSizeOf(loc, resultPointer.getCType(), hook), (VariableLHS) resultPointer.getLHS(),
 				loc);
 	}
 
@@ -2326,7 +2326,7 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCallStruct(final Dispatcher main, final ILocation loc, final HeapLValue hlv,
-			final Expression value, final CStruct valueType, final boolean isStaticInitialization, 
+			final Expression value, final CStruct valueType, final boolean isStaticInitialization,
 			final IASTNode hook) {
 		final List<Statement> stmt = new ArrayList<>();
 		for (final String fieldId : valueType.getFieldIds()) {
@@ -2496,7 +2496,7 @@ public class MemoryHandler {
 	 */
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
 			final RValue integer, final CType valueType, final IASTNode hook) {
-		if (mTypeSizes.getSize(((CPrimitive) integer.getCType()).getType()) != mTypeSizes
+		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
 				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}

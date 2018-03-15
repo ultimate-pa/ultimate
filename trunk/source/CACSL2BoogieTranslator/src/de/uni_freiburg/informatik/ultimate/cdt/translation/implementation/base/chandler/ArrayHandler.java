@@ -247,14 +247,14 @@ public class ArrayHandler {
 		// Probably solved. Now the input is already converted to the type
 		// of the dimension.
 		{
-			final CPrimitive indexType = (CPrimitive) currentIndex.getCType();
+			final CPrimitive indexType = (CPrimitive) currentIndex.getCType().getUnderlyingType();
 			final Expression zero =
 					cHandler.getExpressionTranslation().constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
 			final Expression nonNegative = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(loc,
 					IASTBinaryExpression.op_lessEqual, zero, indexType, currentIndex.getValue(), indexType);
 			final Expression notTooBig = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(loc,
 					IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, currentDimension.getValue(),
-					(CPrimitive) currentDimension.getCType());
+					(CPrimitive) currentDimension.getCType().getUnderlyingType());
 			inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		}
 		switch (mCheckArrayAccessOffHeap) {

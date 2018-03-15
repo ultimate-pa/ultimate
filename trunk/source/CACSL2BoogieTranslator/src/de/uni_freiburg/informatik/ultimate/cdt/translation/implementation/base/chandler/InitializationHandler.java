@@ -439,7 +439,7 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeDefaultOrNondetInitialization(final ILocation loc, final Dispatcher main,
-			final LRValue lhsIfAny, final CType cTypeRaw, final boolean onHeap, final boolean nondet, 
+			final LRValue lhsIfAny, final CType cTypeRaw, final boolean onHeap, final boolean nondet,
 			final IASTNode hook) {
 		assert !onHeap || lhsIfAny != null : "for on-heap initialization we need a start address";
 
@@ -1072,7 +1072,7 @@ public class InitializationHandler {
 					first.getRootExpressionResult().switchToRValueIfNecessary(main, loc, hook);
 			expressionResultSwitched.rexBoolToIntIfNecessary(loc, main.mCHandler.getExpressionTranslation());
 			// 2017-11-19 Matthias: introduced workaround to omit conversion
-			if (expressionResultSwitched.getLrValue().getCType() instanceof CArray) {
+			if (expressionResultSwitched.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				// omit conversion
 			} else {
 				main.mCHandler.convert(loc, expressionResultSwitched, targetCType);
