@@ -178,7 +178,7 @@ public class NormalFormTransformer<E> {
 		if (mWrapper.isAnd(formula) || mWrapper.isOr(formula)) {
 			return simplifyAndOr(formula);
 		}
-		return toNnf(formula);
+		return formula;
 	}
 
 	private Collection<E> toTermsTopLevel(final E formula) {
