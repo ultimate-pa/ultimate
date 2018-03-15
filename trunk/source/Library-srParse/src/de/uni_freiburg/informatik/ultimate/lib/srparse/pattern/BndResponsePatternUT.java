@@ -8,8 +8,8 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
-public class BndResponsePattern extends PatternType {
-	public BndResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+public class BndResponsePatternUT extends PatternType {
+	public BndResponsePatternUT(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}

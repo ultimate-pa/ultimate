@@ -37,30 +37,35 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 /**
+ * {@link PatternBuilder} allows us to keep the state of the single patterns mostly immutable and the parser flexible.
+ * You can collect the parts of a pattern in multiple steps and when you have them all you build the pattern with
+ * {@link PatternBuilder#build()}.
+ *
+ * To avoid many methods that all call the same constructor, we build them using reflection (this might be too
+ * expensive, keep an eye out for it).
+ *
+ * You need to update the PATTERNS list manually when you add new patterns. Just use
+ * <code>ls | sed 's/\.java/\.class,/g' </code> in this package.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class PatternBuilder {
 
-	private static final Class<?>[] PATTERNS = new Class<?>[] { BndEntryConditionPattern.class,
-			BndExistencePattern.class, BndInvariancePattern.class, BndPossResponsePattern.class,
-			BndReccurrencePattern.class, BndResponsePattern.class, ConstrainedChainPattern.class, InstAbsPattern.class,
-			InvariantPattern.class, MaxDurationPattern.class, MinDurationPattern.class, PossibilityPattern.class,
-			PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class, PrecedencePattern.class,
-			ResponseChain12Pattern.class, ResponseChain21Pattern.class, ResponsePattern.class,
-			UniversalityPattern.class, };
+	private static final Class<?>[] PATTERNS = new Class<?>[] { BndDelayedResponsePatternUT.class,
+			BndEntryConditionPattern.class, BndExistencePattern.class, BndInvariancePattern.class,
+			BndPossResponsePattern.class, BndReccurrencePattern.class, BndResponsePatternTT.class,
+			BndResponsePatternTU.class, BndResponsePatternUT.class, ConstrainedChainPattern.class,
+			InitializationPattern.class, InstAbsPattern.class, InvariantPattern.class, MaxDurationPattern.class,
+			MinDurationPattern.class, PossibilityPattern.class, PrecedenceChain12Pattern.class,
+			PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
+			ResponseChain21Pattern.class, ResponsePattern.class, UniversalityPattern.class, };
 
 	private static final Map<Class<? extends PatternType>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
 	static {
+		// TODO: Check if this can be made faster using LambdaMetafactory
 
-		// construct an entry for the constructor map from all static methods with a name starting with "create",
-		// assuming it exists and has the correct type
-
-		// final MethodType constrType =
-		// MethodType.methodType(void.class, SrParseScope.class, String.class, List.class, List.class);
-		// final MethodHandles.Lookup lookup = MethodHandles.lookup();
 		for (final Class<?> clazz : PATTERNS) {
 
 			final PatternTypeConstructor ptc = (a, b, c, d) -> {
@@ -73,22 +78,6 @@ public class PatternBuilder {
 				}
 			};
 			CONSTRUCTORS.put((Class<? extends PatternType>) clazz, ptc);
-
-			//
-			// try {
-			// final MethodType funType =
-			// MethodType.methodType(clazz, SrParseScope.class, String.class, List.class, List.class);
-			// final MethodHandle handle = lookup.findConstructor(clazz, constrType);
-			// final PatternTypeConstructor f =
-			// (PatternTypeConstructor) LambdaMetafactory.metafactory(lookup, "construct",
-			// MethodType.methodType(PatternTypeConstructor.class), funType.generic(), handle, funType)
-			// .getTarget().invokeExact();
-			//
-			// CONSTRUCTORS.put((Class<? extends PatternType>) clazz, f);
-			// } catch (final Throwable e) {
-			// e.printStackTrace();
-			// throw new RuntimeException(e);
-			// }
 		}
 
 	}

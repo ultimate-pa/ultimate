@@ -18,12 +18,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndDelayedResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEntryConditionPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndExistencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndPossResponsePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndReccurrencePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTT;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternTU;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePatternUT;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ConstrainedChainPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
@@ -108,7 +111,7 @@ scan with {: return getScanner().next_token(); :}
 terminal GLOBALLY, BEFORE, AFTER, BETWEEN, AND, UNTIL, INPUT, OUTPUT, INTERNAL, CONST;
 terminal IT, IS, NEVER, ALWAYS, THE, CASE, THAT, INITIALLY;
 terminal IF, HOLD, HOLDS, HELD, EVENTUALLY;
-terminal TRANSITIONS, TO, STATES, IN, WHICH, OCCUR, AT, TWICE;
+terminal TRANSITIONS, TO, STATES, IN, WHICH, OCCUR, AT, TWICE, AFTERWARDS;
 terminal THEN, PREVIOUSLY, AS, WELL;
 terminal WAS, PRECEDED, SUCCEEDED, BY;
 terminal WHERE, DOES, NOT;
@@ -228,7 +231,13 @@ rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 			| expression:p HOLDS AT LEAST EVERY duration:d
 				{: RESULT = new PatternBuilder().setType(BndReccurrencePattern.class).addCdd(p).addDuration(d); :}
   			| IF expression:p HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:d
-				{: RESULT = new PatternBuilder().setType(BndResponsePattern.class).addCdd(s,p).addDuration(d); :}
+				{: RESULT = new PatternBuilder().setType(BndResponsePatternUT.class).addCdd(s,p).addDuration(d); :}
+  			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS FOR AT LEAST duration:c2
+				{: RESULT = new PatternBuilder().setType(BndResponsePatternTT.class).addCdd(s,r).addDuration(c1,c2); :}				
+  			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS
+				{: RESULT = new PatternBuilder().setType(BndResponsePatternTU.class).addCdd(s,r).addDuration(c1); :}
+  			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c1 FOR AT LEAST duration:c2
+				{: RESULT = new PatternBuilder().setType(BndDelayedResponsePatternUT.class).addCdd(s,r).addDuration(c1,c2); :}					
   			| IF expression:p HOLDS COMMA? THEN expression:s HOLDS FOR AT LEAST duration:d
 				{: RESULT = new PatternBuilder().setType(BndInvariancePattern.class).addCdd(s,p).addDuration(d); :}
 			| IF expression:p HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:q HOLDS AFTER AT MOST duration:d

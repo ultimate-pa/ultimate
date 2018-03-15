@@ -48,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BndIntervalResponsePattern extends PatternType {
+public class BndResponsePatternTT extends PatternType {
 
-	public BndIntervalResponsePattern(final SrParseScope scope, final String id, final List<CDD> cdds,
+	public BndResponsePatternTT(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
@@ -90,11 +90,11 @@ public class BndIntervalResponsePattern extends PatternType {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("it is always the case that if \"");
-		sb.append(getCdds().get(1));
+		sb.append(getCdds().get(0));
 		sb.append("\" for at least \"");
 		sb.append(getDuration().get(0));
 		sb.append("\" time units, then \"");
-		sb.append(getCdds().get(2));
+		sb.append(getCdds().get(1));
 		sb.append("\" holds afterwards for at least \"");
 		sb.append(getDuration().get(1));
 		sb.append("\" time units");

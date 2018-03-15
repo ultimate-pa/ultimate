@@ -63,6 +63,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "such"           { return symbol(ReqSymbols.SUCH); }
    "there"          { return symbol(ReqSymbols.THERE); }
    "after"          { return symbol(ReqSymbols.AFTER); }
+   "afterwards"     { return symbol(ReqSymbols.AFTERWARDS); }
    "always"         { return symbol(ReqSymbols.ALWAYS); }
    "and"            { return symbol(ReqSymbols.AND); }
    "as"             { return symbol(ReqSymbols.AS); }
