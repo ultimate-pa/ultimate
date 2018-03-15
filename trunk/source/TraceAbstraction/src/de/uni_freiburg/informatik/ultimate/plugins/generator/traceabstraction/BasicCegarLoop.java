@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -67,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -88,6 +90,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.Subt
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
@@ -426,7 +430,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
 						mIcfg.getCfgSmtToolkit().getSymbolTable());
 				final Boolean angelicStatus = a.getAngelicStatus();
-				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());	
+				List<IRelevanceInformation> relevanceInformation = a.getRelevanceInformation();
+				final boolean doAngelic = false;
+				mRcfgProgramExecution = ((IcfgProgramExecution) mRcfgProgramExecution).addRelevanceInformation(a.getRelevanceInformation());
+				if(doAngelic) {
+						mRcfgProgramExecution = new IcfgAngelicProgramExecution((IcfgProgramExecution) mRcfgProgramExecution, angelicStatus);
+				}
+				
 			}
 		} else {
 			mPathProgramDumpController.reportPathProgram((NestedRun<LETTER, IPredicate>) mCounterexample,

@@ -114,6 +114,13 @@ public class IcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		mOverapproximations = getOverapproximations(trace);
 	}
 
+	public IcfgProgramExecution(IcfgProgramExecution programExecution) {
+		mTrace = programExecution.mTrace;
+		mPartialProgramStateMapping = programExecution.mPartialProgramStateMapping;
+		mBranchEncoders = programExecution.mBranchEncoders;
+		mOverapproximations = programExecution.mOverapproximations;
+	}
+
 	/**
 	 * Returns all overapproximations that were done on this trace.
 	 */
