@@ -368,7 +368,7 @@ public class Req2BoogieTranslator {
 
 	private void extractVariablesFromAutomata() {
 		for (int i = 0; i < mAutomata.length; i++) {
-			mPcIds.add("pc" + i);
+			mPcIds.add(getPcName(i));
 			final PhaseEventAutomata currentAutomaton = mAutomata[i];
 			mClockIds.addAll(currentAutomaton.getClocks());
 			final Map<String, String> varMap = currentAutomaton.getVariables();
@@ -553,13 +553,20 @@ public class Req2BoogieTranslator {
 	 * @param bl
 	 * @return
 	 */
-	private static Expression genComparePhaseCounter(final int phaseIndex, final int autIndex,
-			final BoogieLocation bl) {
-		final IdentifierExpression identifier = new IdentifierExpression(bl, "pc" + autIndex);
+	private Expression genComparePhaseCounter(final int phaseIndex, final int autIndex, final BoogieLocation bl) {
+		final IdentifierExpression identifier = new IdentifierExpression(bl, getPcName(autIndex));
 		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
 		final BinaryExpression ifCon =
 				new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
 		return ifCon;
+	}
+
+	public static String getPcName(final PhaseEventAutomata aut) {
+		return aut.getName() + "_pc";
+	}
+
+	private String getPcName(final int autIndex) {
+		return getPcName(mAutomata[autIndex]);
 	}
 
 	/**
@@ -656,8 +663,8 @@ public class Req2BoogieTranslator {
 		return assignment;
 	}
 
-	private static Statement genPCAssign(final int autIndex, final int phaseIndex, final BoogieLocation bl) {
-		final VariableLHS pc = new VariableLHS(bl, "pc" + autIndex);
+	private Statement genPCAssign(final int autIndex, final int phaseIndex, final BoogieLocation bl) {
+		final VariableLHS pc = new VariableLHS(bl, getPcName(autIndex));
 
 		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
 		final LeftHandSide[] lhs = new LeftHandSide[1];
@@ -915,7 +922,7 @@ public class Req2BoogieTranslator {
 			if (!phases[i].isInit) {
 				continue;
 			}
-			final IdentifierExpression identifier = new IdentifierExpression(bl, "pc" + autIndex);
+			final IdentifierExpression identifier = new IdentifierExpression(bl, getPcName(autIndex));
 			final BinaryExpression current = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier,
 					new IntegerLiteral(bl, Integer.toString(i)));
 			if (acc == null) {
@@ -1054,10 +1061,6 @@ public class Req2BoogieTranslator {
 		for (int i = 0; i < count; i++) {
 			mBoogieLocations[i + 1] = new BoogieLocation(mInputFilePath, i + 1, i + 1, 0, 100);
 		}
-	}
-
-	private void checkAtom() {
-
 	}
 
 	private void syntaxError(final ILocation location, final String description) {

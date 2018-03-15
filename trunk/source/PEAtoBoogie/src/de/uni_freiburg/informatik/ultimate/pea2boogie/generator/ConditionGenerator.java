@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 public class ConditionGenerator {
@@ -86,7 +87,8 @@ public class ConditionGenerator {
 							genStrictInv(transitions.get(k))));
 				}
 				cddOuter = cddOuter.and(cddInner);
-				impliesLHS.add(genPCCompEQ(automataPermutation[j], vector[j], fileName, bl));
+				final String pcName = Req2BoogieTranslator.getPcName(automata[automataPermutation[j]]);
+				impliesLHS.add(genPCCompEQ(pcName, vector[j], fileName, bl));
 			}
 			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, mPrimedVars);
 			if (cdd == CDD.TRUE) {
@@ -136,9 +138,9 @@ public class ConditionGenerator {
 		return cdd;
 	}
 
-	private static Expression genPCCompEQ(final int autIndex, final int phaseIndex, final String fileName,
+	private static Expression genPCCompEQ(final String pcName, final int phaseIndex, final String fileName,
 			final BoogieLocation bl) {
-		final IdentifierExpression identifier = new IdentifierExpression(bl, "pc" + autIndex);
+		final IdentifierExpression identifier = new IdentifierExpression(bl, pcName);
 		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
 		final BinaryExpression binaryExpr =
 				new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
