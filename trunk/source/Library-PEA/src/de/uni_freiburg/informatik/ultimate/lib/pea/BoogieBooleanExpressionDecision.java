@@ -47,7 +47,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 *            the condition that must hold.
 	 */
 	public static CDD create(final Expression e) {
-		final Expression simplifiedExpression = TRANSFORMER.simplify(e);
+		final Expression simplifiedExpression = TRANSFORMER.toNnf(e);
 		if (simplifiedExpression instanceof BooleanLiteral) {
 			if (((BooleanLiteral) simplifiedExpression).getValue()) {
 				return CDD.TRUE;
