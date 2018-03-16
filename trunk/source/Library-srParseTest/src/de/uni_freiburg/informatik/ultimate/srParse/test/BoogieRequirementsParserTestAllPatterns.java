@@ -95,6 +95,11 @@ public class BoogieRequirementsParserTestAllPatterns {
 		for (int i = 0; i < scope.length; i++) {
 			for (int j = 0; j < pattern.length; j++) {
 				final StringBuilder testString = new StringBuilder();
+				testString.append("id_");
+				testString.append(String.valueOf(i));
+				testString.append("_");
+				testString.append(String.valueOf(j));
+				testString.append(": ");
 				testString.append(scope[i]);
 				testString.append(pattern[j]);
 				testString.append(".");
