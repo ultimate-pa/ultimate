@@ -8,7 +8,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
@@ -81,8 +80,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				final TermVariable value = segmentation.getValue(i).getTermVariable();
 				disjuncts.add(SmtUtils.binaryEquality(script, auxVar.getTermVariable(), value));
 			}
-			final AssumeStatement assume = createAssume(SmtUtils.or(script, disjuncts));
-			final STATE newSubState = mToolkit.handleStatementBySubdomain(segmentationPair.getFirst(), assume);
+			final STATE newSubState =
+					mToolkit.handleAssumptionBySubdomain(segmentationPair.getFirst(), SmtUtils.or(script, disjuncts));
 			newState = newState.updateState(newSubState);
 		}
 		return new ExpressionResult<>(newExpr, newState);
@@ -128,8 +127,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			if (TypeUtils.isBoolean(left.getType())) {
 				final BinaryExpression logicIff =
 						new BinaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, Operator.LOGICIFF, left, right);
-				final UnaryExpression negated =
-						new UnaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, logicIff);
+				final UnaryExpression negated = new UnaryExpression(null, BoogiePrimitiveType.TYPE_BOOL,
+						UnaryExpression.Operator.LOGICNEG, logicIff);
 				return processUnaryExpression(negated, state, isAssume);
 			}
 			if (left.getType() instanceof ArrayType) {
@@ -194,8 +193,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				return processQuantifierExpression(quantifier, state, isAssume);
 			}
 			final ExpressionResult<STATE> subResult = process(subExpression, state, isAssume);
-			final Expression newExpr = new UnaryExpression(null, BoogiePrimitiveType.TYPE_BOOL, expression.getOperator(),
-					subResult.getExpression());
+			final Expression newExpr = new UnaryExpression(null, BoogiePrimitiveType.TYPE_BOOL,
+					expression.getOperator(), subResult.getExpression());
 			return new ExpressionResult<>(newExpr, subResult.getState());
 		case OLD:
 			// TODO: How to handle this?
@@ -204,14 +203,14 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		}
 	}
 
-	private QuantifierExpression negateQuantifierExpression(final QuantifierExpression expression) {
+	private static QuantifierExpression negateQuantifierExpression(final QuantifierExpression expression) {
 		final Expression newSubformula =
 				new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, expression.getSubformula());
 		return new QuantifierExpression(null, BoogiePrimitiveType.TYPE_BOOL, expression.isUniversal(),
 				expression.getTypeParams(), expression.getParameters(), expression.getAttributes(), newSubformula);
 	}
 
-	private BinaryExpression negateBinaryExpression(final BinaryExpression expression) {
+	private static BinaryExpression negateBinaryExpression(final BinaryExpression expression) {
 		Operator newOp;
 		Expression newLeft = expression.getLeft();
 		Expression newRight = expression.getRight();
@@ -298,9 +297,5 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		final ArrayDomainState<STATE> rightState = rightResult.getState().addVariables(leftAuxVars);
 		final ArrayDomainState<STATE> newState = leftState.union(rightState);
 		return new ExpressionResult<>(newExpression, newState);
-	}
-
-	private AssumeStatement createAssume(final Term term) {
-		return new AssumeStatement(null, mToolkit.getExpression(term));
 	}
 }

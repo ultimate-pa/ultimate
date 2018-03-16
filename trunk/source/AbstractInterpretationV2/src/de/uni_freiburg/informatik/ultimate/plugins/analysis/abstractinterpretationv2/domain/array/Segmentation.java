@@ -41,7 +41,8 @@ public class Segmentation {
 
 	public Segmentation(final List<IProgramVar> bounds, final List<IProgramVar> values) {
 		if (bounds.size() != values.size() + 1) {
-			throw new IllegalArgumentException("Incompatible sizes of bounds and values");
+			throw new IllegalArgumentException(
+					String.format("Incompatible sizes of bounds (%d) and values (%d)", bounds.size(), values.size()));
 		}
 		mBounds = bounds;
 		mValues = values;

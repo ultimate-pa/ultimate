@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -45,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
@@ -60,10 +60,10 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final TemporaryBoogieVar mMinBound;
 	private final TemporaryBoogieVar mMaxBound;
 	private final TypeSortTranslator mTypeSortTranslator;
-	private final EquivalenceFinder mEquivalenceFinder;
 	private final Set<TemporaryBoogieVar> mCreatedVars;
 	private final MappedTerm2Expression mMappedTerm2Expression;
 	private final Boogie2SmtSymbolTableTmpVars mVariableProvider;
+	private final IUltimateServiceProvider mServices;
 
 	public ArrayDomainToolkit(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
 			final IUltimateServiceProvider services, final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
@@ -77,13 +77,13 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mBoogieVarFactory = new BoogieVarFactory(managedScript);
 		mCallInfoCache = new CallInfoCache(icfg.getCfgSmtToolkit(), boogieSymbolTable);
 		mTypeSortTranslator = new TypeSortTranslator(script, services);
-		mEquivalenceFinder = new EquivalenceFinder(services, managedScript);
 		mMappedTerm2Expression = new MappedTerm2Expression(mBoogie2Smt.getTypeSortTranslator(),
 				mBoogie2Smt.getBoogie2SmtSymbolTable(), managedScript);
 		mVariableProvider = variableProvider;
 		mCreatedVars = new HashSet<>();
-		mMinBound = createBoundVar(BoogiePrimitiveType.TYPE_INT);
-		mMaxBound = createBoundVar(BoogiePrimitiveType.TYPE_INT);
+		mMinBound = createVariable("-inf", BoogiePrimitiveType.TYPE_INT);
+		mMaxBound = createVariable("inf", BoogiePrimitiveType.TYPE_INT);
+		mServices = services;
 	}
 
 	public TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {
@@ -129,7 +129,14 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		return mSubDomain.getWideningOperator();
 	}
 
+	public STATE handleAssumptionBySubdomain(final STATE currentState, final Term assumption) {
+		return handleStatementBySubdomain(currentState, new AssumeStatement(null, getExpression(assumption)));
+	}
+
 	public STATE handleStatementBySubdomain(final STATE currentState, final Statement statement) {
+		if (currentState.isBottom()) {
+			return currentState;
+		}
 		final CodeBlock codeBlock =
 				mCodeBlockFactory.constructStatementSequence(null, null, statement, Origin.IMPLEMENTATION);
 		final List<STATE> newStates = mSubDomain.getPostOperator().apply(currentState, codeBlock);
@@ -182,10 +189,6 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		return mTypeSortTranslator.getType(sort);
 	}
 
-	public UnionFind<Term> getEquivalences(final Term term, final Set<Term> neededEquivalenceClasses) {
-		return mEquivalenceFinder.getEquivalences(term, neededEquivalenceClasses);
-	}
-
 	public Pair<IProgramVar, Segmentation> createTopSegmentation(final IBoogieType type) {
 		final IProgramVar newValue = createValueVar(type);
 		final Segmentation segmentation =
@@ -199,5 +202,9 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 				final BoogieASTNode boogieASTNode) {
 			return getBoogieVar(id, declInfo, isOldContext).getTerm();
 		}
+	}
+
+	public EquivalenceFinder createEquivalenceFinder(final STATE substate) {
+		return new EquivalenceFinder(substate.getTerm(getScript()), mServices, getManagedScript());
 	}
 }

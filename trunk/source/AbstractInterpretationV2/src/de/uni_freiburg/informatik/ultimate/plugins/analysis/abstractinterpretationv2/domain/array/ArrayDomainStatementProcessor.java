@@ -128,7 +128,7 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 		throw new UnsupportedOperationException("Unkonwn type of " + lhs);
 	}
 
-	private AssignmentStatement constructSingleAssignment(final LeftHandSide lhs, final Expression rhs) {
+	private static AssignmentStatement constructSingleAssignment(final LeftHandSide lhs, final Expression rhs) {
 		return new AssignmentStatement(null, new LeftHandSide[] { lhs }, new Expression[] { rhs });
 	}
 

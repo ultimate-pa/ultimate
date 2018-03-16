@@ -168,10 +168,6 @@ public class SegmentationMap {
 		return stringBuilder.toString();
 	}
 
-	public boolean isEmpty() {
-		return mRepresentiveSegmentations.isEmpty();
-	}
-
 	public Segmentation getSegmentation(final IProgramVarOrConst variable) {
 		return mRepresentiveSegmentations.get(mEqualArrays.find(variable));
 	}

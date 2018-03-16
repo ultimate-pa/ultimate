@@ -19,26 +19,26 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class EquivalenceFinder {
-	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mMgdScript;
+	private final Script mScript;
+	private final Set<AffineRelation> mRelations;
 
-	public EquivalenceFinder(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
-		mServices = services;
-		mMgdScript = mgdScript;
+	public EquivalenceFinder(final Term term, final IUltimateServiceProvider services, final ManagedScript mgdScript) {
+		mScript = mgdScript.getScript();
+		final Term cnf =
+				SmtUtils.toCnf(services, mgdScript, term, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mRelations = getEquivalenceRelations(cnf);
 	}
 
-	public UnionFind<Term> getEquivalences(final Term term, final Set<Term> neededEquivalenceClasses) {
-		final Term cnf =
-				SmtUtils.toCnf(mServices, mMgdScript, term, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+	public UnionFind<Term> getEquivalences(final Set<Term> neededEquivalenceClasses) {
 		final UnionFind<Term> result = new UnionFind<>();
-		for (final AffineRelation relation : getEquivalenceRelations(cnf)) {
+		for (final AffineRelation relation : mRelations) {
 			for (final Term var : neededEquivalenceClasses) {
 				if (!relation.isVariable(var)) {
 					continue;
 				}
 				final ApplicationTerm lhsTerm;
 				try {
-					lhsTerm = relation.onLeftHandSideOnly(mMgdScript.getScript(), var);
+					lhsTerm = relation.onLeftHandSideOnly(mScript, var);
 				} catch (final NotAffineException e) {
 					continue;
 				}
@@ -55,11 +55,10 @@ public class EquivalenceFinder {
 	private Set<AffineRelation> getEquivalenceRelations(final Term term) {
 		final Set<AffineRelation> result = new HashSet<>();
 		final Set<AffineTerm> leqTerms = new HashSet<>();
-		final Script script = mMgdScript.getScript();
 		for (final Term conjunct : SmtUtils.getConjuncts(term)) {
 			final AffineRelation relation;
 			try {
-				relation = new AffineRelation(script, conjunct, TransformInequality.STRICT2NONSTRICT);
+				relation = new AffineRelation(mScript, conjunct, TransformInequality.STRICT2NONSTRICT);
 			} catch (final NotAffineException e) {
 				continue;
 			}
@@ -76,7 +75,7 @@ public class EquivalenceFinder {
 				final AffineTerm negative = symbol == RelationSymbol.LEQ ? affine2 : affine1;
 				if (leqTerms.contains(negative)) {
 					leqTerms.remove(negative);
-					result.add(new AffineRelation(script, positive, RelationSymbol.EQ));
+					result.add(new AffineRelation(mScript, positive, RelationSymbol.EQ));
 				} else {
 					leqTerms.add(positive);
 				}
@@ -88,7 +87,7 @@ public class EquivalenceFinder {
 		return result;
 	}
 
-	private AffineTerm normalize(final AffineTerm affineTerm) {
+	private static AffineTerm normalize(final AffineTerm affineTerm) {
 		Rational factor = affineTerm.getConstant();
 		for (final Rational r : affineTerm.getVariable2Coefficient().values()) {
 			factor = factor.gcd(r);
