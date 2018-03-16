@@ -311,7 +311,7 @@ public class TraceAbstractionStarter {
 
 			writeHoareAnnotationToLogger(root);
 		} else {
-			mLogger.debug("Ommiting computation of Hoare annotation");
+			mLogger.debug("Omitting computation of Hoare annotation");
 
 		}
 
