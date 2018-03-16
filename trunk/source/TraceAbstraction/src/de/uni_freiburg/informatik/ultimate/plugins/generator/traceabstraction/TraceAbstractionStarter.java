@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -436,9 +437,19 @@ public class TraceAbstractionStarter {
 		if (!pe.getOverapproximations().isEmpty()) {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
+		} else if (isAngelicallySafe(pe)) {
+			mLogger.info("Ignoring angelically safe counterexample");
+			return;
 		}
 		reportResult(new CounterExampleResult<>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
+	}
+
+	private static boolean isAngelicallySafe(final IcfgProgramExecution pe) {
+		if (pe instanceof IcfgAngelicProgramExecution) {
+			return !((IcfgAngelicProgramExecution) pe).getAngelicStatus();
+		}
+		return false;
 	}
 
 	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs, final IRunningTaskStackProvider rtsp) {

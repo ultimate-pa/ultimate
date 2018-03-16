@@ -102,22 +102,9 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 		}
 		return false;
 	}
-	
-	private boolean getAngelicStatus() {
-		// TODO: Ask Daniel or Matthias about how to add the relevant package for IcfgAngelicProgramExecution.
-		//if(mProgramExecution instanceof IcfgAngelicProgramExecution) {
-		//	return ((IcfgAngelicProgramExecution) mProgramExecution).getAngelicStatus();
-		//} 
-		return true;
-	}
 
 	@Override
 	public String getLongDescription() {
-		if(!getAngelicStatus()) {
-			// If the trace is not angellically safe then we do not want to return
-			// that trace.
-			return "";
-		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getShortDescription());
 		sb.append(CoreUtil.getPlatformLineSeparator());
