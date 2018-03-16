@@ -494,7 +494,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private void convertToIntegerType(final ILocation loc, final ExpressionResult operand,
 			final CPrimitive resultType) {
 		assert resultType.isIntegerType();
-		final CPrimitive oldType = (CPrimitive) operand.mLrVal.getCType();
+		final CPrimitive oldType = (CPrimitive) operand.mLrVal.getCType().getUnderlyingType();
 		if (oldType.isIntegerType()) {
 			final Expression newExpression;
 			if (mTypeSizes.isUnsigned(resultType)) {
