@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.srParse.test;
+package de.uni_freiburg.informatik.ultimate.srparse.test;
 
 import java.io.StringReader;
 import java.util.List;
@@ -46,19 +46,24 @@ public class BoogieRequirementsParserTest {
 	 */
 	@Test
 	public void testGlobalInvariantBoogie() throws Exception {
-		final String testString = "id: Globally, it is always the case that \"ABC_curr.I >=  BCD_MAX\" holds.";
+		final String testString = "id: Globally, it is always the case that \"A >=  B\" holds.";
 		final PatternType[] parsedPatterns = genPatterns(testString);
-		check(parsedPatterns, "ABC_curr.I >= BCD_MAX");
+		check(testString, parsedPatterns, "A >= B");
 	}
 
-	private static void check(final PatternType[] parsedPatterns, final String cddCheck) {
+	private static void check(final String testString, final PatternType[] parsedPatterns, final String cddCheck) {
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
 		Assert.assertThat(parsedPatterns.length, Is.is(1));
-		final PatternType thePattern = parsedPatterns[0];
-		Assert.assertNotNull("Parser did not recognize pattern", thePattern);
-		final List<CDD> ccds = thePattern.getCdds();
-		Assert.assertEquals(cddCheck, ccds.get(0).toString());
-		System.out.println(thePattern.toString());
+		final PatternType pattern = parsedPatterns[0];
+		Assert.assertNotNull("Parser did not recognize pattern", pattern);
+		final List<CDD> cdds = pattern.getCdds();
+		Assert.assertThat(cdds.size(), Is.is(1));
+		final CDD cdd = cdds.get(0);
+
+		System.out.println(testString);
+		System.out.println("Should: " + cddCheck);
+		System.out.println("Is:     " + cdd.toString());
+		Assert.assertEquals(cddCheck, cdd.toString());
 	}
 
 	/**
@@ -70,7 +75,7 @@ public class BoogieRequirementsParserTest {
 	public void testBooleanLiterals() throws Exception {
 		final String testString = "id: Globally, it is always the case that \"true == false\" holds.";
 		final PatternType[] parsedPatterns = genPatterns(testString);
-		check(parsedPatterns, "true == false");
+		check(testString, parsedPatterns, "true == false");
 	}
 
 	/**
@@ -80,20 +85,20 @@ public class BoogieRequirementsParserTest {
 	 */
 	@Test
 	public void testGlobalInvariantBoogieComplexExpression() throws Exception {
-		final String testString = "id: Globally, it is always the case that \"(ABC_curr >=  BCD_MAX &&"
-				+ " diddlidu + 3 == A_bli -3) || a \" holds";
+		final String testString =
+				"id: Globally, it is always the case that \"(A >= B &&" + " C + 3 == D -3) || E \" holds";
 		final PatternType[] parsedPatterns = genPatterns(testString);
-		check(parsedPatterns, "a ∨ ABC_curr >= BCD_MAX ∧ diddlidu + 3 == A_bli - 3");
+		check(testString, parsedPatterns, "E ∨ A >= B ∧ C + 3 == D - 3");
 	}
 
 	@Test
 	public void testListOfRequirements() throws Exception {
-		final String testString = "id1: Globally, it is always the case that \"ABC_curr.I >=  BCD_MAX\" holds.\n"
-				+ "id2: Globally, it is always the case that \"EFG_min >=  X + 3\" holds.\n";
+		final String testString = "id1: Globally, it is always the case that \"A >=  B\" holds.\n"
+				+ "id2: Globally, it is always the case that \"C >= D + 3\" holds.\n";
 		final PatternType[] parsedPatterns = genPatterns(testString);
 
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
-		Assert.assertTrue("Parser did not recognize all Pattern  (2)", parsedPatterns.length == 2);
+		Assert.assertTrue("Parser did not recognize all Pattern (2)", parsedPatterns.length == 2);
 		System.out.println(parsedPatterns[0].toString());
 		System.out.println(parsedPatterns[1].toString());
 	}
@@ -105,7 +110,7 @@ public class BoogieRequirementsParserTest {
 	 */
 	// @Test
 	public void testOldBehaviour() throws Exception {
-		final String testString = "id: Globally, it is always the case that \"a\" holds";
+		final String testString = "id: Globally, it is always the case that \"A\" holds";
 		final PatternType[] parsedPatterns = genPatterns(testString);
 
 		System.out.println(parsedPatterns[0].toString());

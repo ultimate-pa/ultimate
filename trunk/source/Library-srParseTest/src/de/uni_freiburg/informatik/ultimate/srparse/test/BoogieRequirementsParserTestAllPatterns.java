@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.srParse.test;
+package de.uni_freiburg.informatik.ultimate.srparse.test;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -90,7 +90,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"it is always the case that if \"y <= 5\" holds then \"y >= 5\" holds as well" };
 		final String[] patternNames = new String[] { "InstAbsPattern", "UniversalityPattern", "BndExistencePattern",
 				"PrecedencePattern", "MinDurationPattern", "MaxDurationPattern", "BndReccurrencePattern",
-				"BndResponsePattern", "BndInvariancePattern", "BndEntryConditionPattern", "InvariantPattern" };
+				"BndResponsePatternUT", "BndInvariancePattern", "BndEntryConditionPattern", "InvariantPattern" };
 
 		for (int i = 0; i < scope.length; i++) {
 			for (int j = 0; j < pattern.length; j++) {

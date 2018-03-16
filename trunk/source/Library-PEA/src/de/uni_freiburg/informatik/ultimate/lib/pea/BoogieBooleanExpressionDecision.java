@@ -245,46 +245,13 @@ public class BoogieBooleanExpressionDecision extends Decision {
 
 	private static final class BoogieToCdd extends GeneratedBoogieAstVisitor {
 
-		private enum Op {
-			AND, OR, IFF, IF, NOT
-		}
-
-		private Deque<Op> mOpenDecisions;
 		private Deque<CDD> mOpenCDDs;
 
 		public CDD createCdd(final Expression expr) {
-			mOpenDecisions = new ArrayDeque<>();
 			mOpenCDDs = new ArrayDeque<>();
 			final Expression simplifiedExpression = TRANSFORMER.toNnf(expr);
 			simplifiedExpression.accept(this);
-			while (!mOpenDecisions.isEmpty()) {
-				final Op curr = mOpenDecisions.pop();
-				if (curr == Op.NOT) {
-					final CDD oper = mOpenCDDs.pop();
-					mOpenCDDs.push(oper.negate());
-				} else {
-					final CDD left = mOpenCDDs.pop();
-					final CDD right = mOpenCDDs.pop();
-					switch (curr) {
-					case AND:
-						mOpenCDDs.push(left.and(right));
-						break;
-					case IF:
-						mOpenCDDs.push(left.negate().or(right));
-						break;
-					case IFF:
-						mOpenCDDs.push(left.negate().and(right.negate()).or(left.and(right)));
-						break;
-					case OR:
-						mOpenCDDs.push(left.or(right));
-						break;
-					case NOT:
-					default:
-						throw new UnsupportedOperationException();
-					}
-				}
-			}
-			assert mOpenDecisions.isEmpty() && mOpenCDDs.size() == 1;
+			assert mOpenCDDs.size() == 1;
 			return mOpenCDDs.pop();
 		}
 
@@ -309,22 +276,37 @@ public class BoogieBooleanExpressionDecision extends Decision {
 				mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.trueChilds));
 				return false;
 			case LOGICAND:
-				mOpenDecisions.push(Op.AND);
-				break;
 			case LOGICIFF:
-				mOpenDecisions.push(Op.IFF);
-				break;
 			case LOGICIMPLIES:
-				mOpenDecisions.push(Op.IF);
-				break;
 			case LOGICOR:
-				mOpenDecisions.push(Op.OR);
 				break;
 			default:
 				throw new UnsupportedOperationException();
 			}
 
-			return super.visit(node);
+			node.getLeft().accept(this);
+			final CDD left = mOpenCDDs.pop();
+			node.getRight().accept(this);
+			final CDD right = mOpenCDDs.pop();
+
+			switch (node.getOperator()) {
+			case LOGICAND:
+				mOpenCDDs.push(left.and(right));
+				break;
+			case LOGICIMPLIES:
+				mOpenCDDs.push(left.negate().or(right));
+				break;
+			case LOGICIFF:
+				mOpenCDDs.push(left.negate().and(right.negate()).or(left.and(right)));
+				break;
+			case LOGICOR:
+				mOpenCDDs.push(left.or(right));
+				break;
+			default:
+				throw new UnsupportedOperationException();
+			}
+
+			return false;
 		}
 
 		@Override
@@ -350,13 +332,13 @@ public class BoogieBooleanExpressionDecision extends Decision {
 			case OLD:
 				throw new AssertionError("The tree root should be boolean");
 			case LOGICNEG:
-				mOpenDecisions.push(Op.NOT);
-				break;
+				node.getExpr().accept(this);
+				mOpenCDDs.push(mOpenCDDs.pop().negate());
+				return false;
 			default:
 				throw new UnsupportedOperationException();
 
 			}
-			return super.visit(node);
 		}
 	}
 
