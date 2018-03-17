@@ -646,6 +646,19 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				final boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance, false);
 				final boolean relevanceCriterion2uc = relevanceCriterionVariables[0];
 				final boolean relevanceCriterion2gf = relevanceCriterionVariables[1];
+				// Report statistics
+				{
+					mErrorLocalizationStatisticsGenerator.reportIcfgEdge();
+					if (relevanceCriterion2uc) {
+						mErrorLocalizationStatisticsGenerator.reportErrorEnforcingIcfgEdge();
+					}
+					if (relevanceCriterion2gf) {
+						mErrorLocalizationStatisticsGenerator.reportErrorAdmittingIcfgEdge();
+					}
+					if (!relevanceCriterion2uc && !relevanceCriterion2gf) {
+						mErrorLocalizationStatisticsGenerator.reportErrorIrrelevantIcfgEdge();
+					}
+				}
 				final RelevanceInformation ri = new RelevanceInformation(Collections.singletonList(action),
 						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1UC(),
 						((RelevanceInformation) mRelevanceOfTrace[position]).getCriterion1GF(), relevanceCriterion2uc,
@@ -653,6 +666,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				mRelevanceOfTrace[position] = ri;
 			}
 		}
+		mErrorLocalizationStatisticsGenerator.addHoareTripleCheckerStatistics(rc.getHoareTripleCheckerStatistics());
 		return weakestPreconditionLeft;
 	}
 
