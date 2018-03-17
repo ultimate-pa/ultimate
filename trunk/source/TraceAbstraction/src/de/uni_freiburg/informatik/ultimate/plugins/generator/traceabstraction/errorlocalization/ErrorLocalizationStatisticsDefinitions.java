@@ -47,6 +47,8 @@ public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement
 	ErrorAdmittingIcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 	
 	ErrorIrrelevantIcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
+	
+	NumberOfBranches(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	HoareTripleCheckerStatistics(StatisticsData.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 			StatisticsType.KEY_BEFORE_DATA),

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.e
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -713,6 +714,13 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 		final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg = computeInformationFromCfg(counterexample, cfg);
+		// Count branches in the trace.
+		int numberOfBranches = 0;
+		final Collection<Map<Integer, NestedRun<LETTER, IPredicate>>> listOfValues = informationFromCfg.values();
+		for(Map<Integer, NestedRun<LETTER, IPredicate>> onelist : listOfValues) {
+			numberOfBranches += onelist.values().size();
+		}
+		mErrorLocalizationStatisticsGenerator.reportNumberOfBranches(numberOfBranches);
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the
 		// branch.
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(
