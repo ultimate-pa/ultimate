@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.DiffWrapperScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -476,6 +477,26 @@ public class SolverBuilder {
 				}
 			}
 		});
+
+
+		// TODO this is a hack, trigger this according to the Boogie program
+		// (define-fun const-Array-Int-Int ((x Int)) (Array Int Int) ((as const (Array Int Int)) x))
+		//  as far as we know the "const" function is only hardcoded in z3 in the "ALL" logic
+		if ((((solverMode == SolverMode.External_DefaultMode
+				|| solverMode == SolverMode.External_ModelsAndUnsatCoreMode
+				|| solverMode == SolverMode.External_ModelsMode)
+					&& solverSettings.getCommandExternalSolver().trim().startsWith("z3"))
+				|| solverMode == SolverMode.External_Z3InterpolationMode)
+				&& logicForExternalSolver.equals("ALL")) {
+			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
+			final TermVariable argTv = result.variable("x", script.sort("Int"));
+			script.defineFun("const-Array-Int-Int",
+					new TermVariable[] { argTv },
+					arrayIntIntSort,
+					script.term("const", null, arrayIntIntSort, argTv));
+		}
+
+
 		return result;
 	}
 }
