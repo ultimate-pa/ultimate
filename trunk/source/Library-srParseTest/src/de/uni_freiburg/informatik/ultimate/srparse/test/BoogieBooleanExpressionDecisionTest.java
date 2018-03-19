@@ -50,7 +50,7 @@ public class BoogieBooleanExpressionDecisionTest {
 	}
 
 	@Test
-	public void testBoogieBooleanExpressinDecisionIt() {
+	public void testBoogieBooleanExpressionDecisionIt() {
 		final ILocation dummyLocation = new BoogieLocation("test", 0, 0, 0, 0);
 		// signle boolean expression
 		final Expression e = new IdentifierExpression(dummyLocation, "e");
@@ -72,9 +72,9 @@ public class BoogieBooleanExpressionDecisionTest {
 		// conjuction disjunction
 		final Expression e3 = new IdentifierExpression(dummyLocation, "g");
 		cdd = cdd.or(BoogieBooleanExpressionDecision.create(e3));
-		Assert.assertEquals("(g ∨ f ∧ !e)", cdd.toString(true));
+		Assert.assertEquals("(g ∨ !e ∧ (f ∨ g))", cdd.toString(true));
 		cdd = cdd.negate();
-		Assert.assertEquals("!g ∧ (e ∨ !f)", cdd.toString(true));
+		Assert.assertEquals("(e ∧ !g ∨ !f ∧ !g)", cdd.toString(true));
 	}
 
 }
