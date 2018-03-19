@@ -706,19 +706,16 @@ public class Theory {
 	private void createArrayOperators() {
 		final Sort[] generic2 = createSortVariables("X", "Y");
 		final SortSymbol arraySort = declareInternalSort("Array", 2, SortSymbol.ARRAY);
+
+		// (Array X Y)
 		final Sort array = arraySort.getSort(null, generic2);
+		// select : ((Array X Y) X) -> Y
 		declareInternalPolymorphicFunction("select", generic2, new Sort[] { array, generic2[0] }, generic2[1], 0);
+		// store : ((Array X Y) X Y) -> (Array X Y)
 		declareInternalPolymorphicFunction("store", generic2, new Sort[] { array, generic2[0], generic2[1] }, array, 0);
-		defineFunction(new FunctionSymbolFactory("const") {
-			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
-				if (indices != null || paramSorts.length != 1 || resultSort == null || resultSort.getName() != "Array"
-						|| !paramSorts[0].equalsSort(resultSort.getArguments()[1])) {
-					return null;
-				}
-				return resultSort;
-			}
-		});
+		// const : (Y) -> (Array X Y)
+		declareInternalPolymorphicFunction("const", generic2, new Sort[] { generic2[1] },
+				array, FunctionSymbol.INTERNAL | FunctionSymbol.RETURNOVERLOAD);
 	}
 
 	private void createBitVecSort() {
