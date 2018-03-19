@@ -3,11 +3,10 @@ procedure foo() {
   var a : [int] int;
   var i : int;
 
-  //assert @0[i] == 0;
-
-  a := ~defaultArray~0();
+  a := ~const~Array~Int~Int(0);
 
   assert a[i] == 0;
 }
 
-function { :builtin "@0" } ~defaultArray~0() returns (out : [int] int);
+function { :builtin "const-Array-Int-Int" } ~const~Array~Int~Int(in : int) returns (out : [int] int);
+
