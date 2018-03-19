@@ -230,8 +230,8 @@ rtpattern ::= ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 				{: RESULT = new PatternBuilder().setType(MaxDurationPattern.class).addCdd(p).addDuration(d); :}
 			| expression:p HOLDS AT LEAST EVERY duration:d
 				{: RESULT = new PatternBuilder().setType(BndReccurrencePattern.class).addCdd(p).addDuration(d); :}
-  			| IF expression:p HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:d
-				{: RESULT = new PatternBuilder().setType(BndResponsePatternUT.class).addCdd(s,p).addDuration(d); :}
+  			| IF expression:r HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:c1
+				{: RESULT = new PatternBuilder().setType(BndResponsePatternUT.class).addCdd(s,r).addDuration(c1); :}
   			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS FOR AT LEAST duration:c2
 				{: RESULT = new PatternBuilder().setType(BndResponsePatternTT.class).addCdd(s,r).addDuration(c1,c2); :}				
   			| IF expression:r HOLDS FOR AT LEAST duration:c1 COMMA? THEN expression:s HOLDS AFTERWARDS
