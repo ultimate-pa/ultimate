@@ -259,6 +259,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return true;
 		}
 
+
+
+
 		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo = doMergeAndComputePropagations(elem1,
 				elem2);
 		if (propInfo == null) {
@@ -308,6 +311,37 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 */
 	public Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> doMergeAndComputePropagations(final ELEM elem1,
 			final ELEM elem2) {
+
+		{
+			/*
+			 * constant function treatment:
+			 *  <li> we maintain the following invariant: let f ~ g and g be a constant function, then for every function
+			 *  application f(x) that is in our set of tracked element, we also track g(x).
+			 *  <li> here, this means, we have to go through all constant function equivalent to elem1 and for each go
+			 *   through the ccpar's of f to add the corresponding nodes and vice versa
+			 */
+			for (final ELEM equivalentFunction1 : mElementTVER.getEquivalenceClass(elem1)) {
+				if (equivalentFunction1.isConstantFunction()) {
+					for (final ELEM equivalentFunction2 : mElementTVER.getEquivalenceClass(elem2)) {
+						// ccpar is f(x), equivalentFunction1 is g
+						for (final ELEM ccpar : mAuxData.getAfCcPars(equivalentFunction2)) {
+							mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+						}
+					}
+				}
+			}
+			for (final ELEM equivalentFunction1 : mElementTVER.getEquivalenceClass(elem2)) {
+				if (equivalentFunction1.isConstantFunction()) {
+					for (final ELEM equivalentFunction2 : mElementTVER.getEquivalenceClass(elem1)) {
+						// ccpar is f(x), equivalentFunction1 is g
+						for (final ELEM ccpar : mAuxData.getAfCcPars(equivalentFunction2)) {
+							mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+						}
+					}
+				}
+			}
+		}
+
 		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
 		final ELEM e2OldRep = mElementTVER.getRepresentative(elem2);
 
@@ -481,6 +515,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return;
 		}
 
+
 		if (remInfo == null) {
 			// "fast track"
 			mFaAuxData.addAfParent(elem.getAppliedFunction(), elem);
@@ -496,6 +531,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		final HashRelation<ELEM, ELEM> equalitiesToPropagate = getAuxData().registerNewElement(elem);
 
+		// add children elements
 		if (remInfo == null) {
 			mManager.addElement(this, elem.getAppliedFunction(), newEqualityTarget, true, true);
 			mManager.addElement(this, elem.getArgument(), newEqualityTarget, true, true);
@@ -508,6 +544,27 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		}
 
+		{
+			/*
+			 * treatment for constant arrays:
+			 *  <li> if we are adding an element of the form f(x), where f is a constant function, and v is f's
+			 *   constant value then we add the equality "f(x) = v"
+			 *  <li> if we are adding an element the form f(x), where f ~ g and g is a constant function,
+			 *   then we add the element g(x)
+			 */
+			if (elem.getAppliedFunction().isConstantFunction()) {
+				mManager.reportEquality(elem, elem.getAppliedFunction().getConstantFunctionValue(), this, true);
+			}
+			for (final ELEM equivalentFunction : mElementTVER.getEquivalenceClass(elem.getAppliedFunction())) {
+				if (equivalentFunction == elem) {
+					continue;
+				}
+				if (equivalentFunction.isConstantFunction()) {
+					// add element g(x)
+					mManager.addElement(this, elem.replaceAppliedFunction(equivalentFunction), true, true);
+				}
+			}
+		}
 
 		if (remInfo == null) {
 			for (final Entry<ELEM, ELEM> eq : equalitiesToPropagate.entrySet()) {

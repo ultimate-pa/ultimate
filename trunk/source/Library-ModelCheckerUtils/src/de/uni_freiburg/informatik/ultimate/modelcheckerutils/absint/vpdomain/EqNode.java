@@ -164,4 +164,18 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	public boolean isUntrackedArray() {
 		return mIsUntrackedArray;
 	}
+
+//	@Override
+//	public boolean isConstantFunction() {
+//		// default case, override this in the classes that are a constant function
+//		return false;
+//	}
+//
+//	@Override
+//	public EqNode getConstantFunctionValue() {
+//		// default case, override this in the classes that are a constant function
+//		throw new UnsupportedOperationException("not a constant function");
+//	}
+
+
 }

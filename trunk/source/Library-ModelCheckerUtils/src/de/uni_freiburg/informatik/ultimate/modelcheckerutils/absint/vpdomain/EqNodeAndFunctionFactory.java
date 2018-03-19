@@ -218,6 +218,19 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	@Override
 	protected EqNode newBaseElement(final Term term, final boolean isLiteral) {
+		// first, check if we have a constant array
+		if (isConstantArray(term)) {
+			final ApplicationTerm at = (ApplicationTerm) term;
+			final EqNode value = getOrConstructNode(at.getParameters()[0]);
+
+			if (isAtomic(term)) {
+				return new EqAtomicConstantArrayNode(term, value.isLiteral(), this, value);
+			} else {
+				throw new AssertionError("todo: implement");
+			}
+		}
+
+		// no constant array, "normal case"
 		if (isAtomic(term)) {
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
 			// return new EqAtomicBaseNode(term, isTermALiteral(term), this);
@@ -231,6 +244,16 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			}
 			return new EqNonAtomicBaseNode(term, supportingNodes, this, isUntrackedArray(term));
 		}
+	}
+
+	private boolean isConstantArray(final Term term) {
+		if (!(term instanceof ApplicationTerm)) {
+			return false;
+		}
+		final ApplicationTerm at = (ApplicationTerm) term;
+		// TODO: define this string somewhere (also occurs in CfgBuilder and RefinementStrategyFactory, currently)
+		//  also implement a more general solution
+		return at.getFunction().getName().equals("const-Array-Int-Int");
 	}
 
 	private boolean isUntrackedArray(final Term term) {

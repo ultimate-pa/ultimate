@@ -21,6 +21,11 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 
 	boolean isLiteral();
 
+	/**
+	 * (isFunctionApplication must  return false if this is true)
+	 *
+	 * @return true iff this element depends on some other element (i.e., changes to another element may affect this
+	 *  element), <b>and</b> this dependency is not modeled as a function application by us 	 */
 	boolean isDependentNonFunctionApplication();
 
 	/**
@@ -30,5 +35,18 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 	 */
 	Set<ELEM> getSupportingNodes();
 
+	/**
+	 * (isFunctionApplication must  return false if this is true)
+	 *
+	 * @return true if this is a constant function
+	 */
+	default boolean isConstantFunction() {
+		// default case, override this in the classes that are a constant function
+		return false;
+	}
 
+	default ELEM getConstantFunctionValue() {
+		// default case, override this in the classes that are a constant function
+		throw new UnsupportedOperationException("not a constant function");
+	}
 }
