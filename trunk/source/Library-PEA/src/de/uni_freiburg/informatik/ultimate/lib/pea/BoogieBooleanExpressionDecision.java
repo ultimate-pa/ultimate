@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
@@ -52,14 +53,6 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 */
 	public static CDD create(final Expression e) {
 		return new BoogieToCdd().createCdd(e);
-		// final Expression simplifiedExpression = TRANSFORMER.toNnf(e);
-		// if (simplifiedExpression instanceof BooleanLiteral) {
-		// if (((BooleanLiteral) simplifiedExpression).getValue()) {
-		// return CDD.TRUE;
-		// }
-		// return CDD.FALSE;
-		// }
-		// return CDD.create(new BoogieBooleanExpressionDecision(simplifiedExpression), CDD.trueChilds);
 	}
 
 	public static CDD createTrue() {
@@ -253,6 +246,13 @@ public class BoogieBooleanExpressionDecision extends Decision {
 			simplifiedExpression.accept(this);
 			assert mOpenCDDs.size() == 1;
 			return mOpenCDDs.pop();
+		}
+
+		@Override
+		public boolean visit(final QuantifierExpression node) {
+			// stop descend, take the whole remaining expression as decision
+			mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.trueChilds));
+			return false;
 		}
 
 		@Override
