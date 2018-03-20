@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -77,6 +78,9 @@ public final class CDD {
 	 * Hash to keep all equal CDDs identical.
 	 */
 	private static final UnifyHash<CDD> UNIFY_HASH = new UnifyHash<>();
+
+	private static final Comparator<Decision> DECISION_COMPARATOR = Decision.getComparator();
+
 	private final Decision mDecision;
 	private final int mDepth;
 	private final CDD[] mChilds;
@@ -175,7 +179,7 @@ public final class CDD {
 			return false;
 		}
 
-		final int cmpTo = mDecision.compareTo(other.mDecision);
+		final int cmpTo = DECISION_COMPARATOR.compare(mDecision, other.mDecision);
 
 		if (cmpTo < 0) {
 			for (int i = 0; i < mChilds.length; i++) {
@@ -266,7 +270,7 @@ public final class CDD {
 			return result;
 		}
 		CDD[] newchilds;
-		final int cmpTo = mDecision.compareTo(other.mDecision);
+		final int cmpTo = DECISION_COMPARATOR.compare(mDecision, other.mDecision);
 
 		if (cmpTo == 0) {
 			result = mDecision.and(other.mDecision, mChilds, other.mChilds, cache);
@@ -308,7 +312,7 @@ public final class CDD {
 		}
 
 		CDD[] newchilds;
-		final int cmpTo = mDecision.compareTo(other.mDecision);
+		final int cmpTo = DECISION_COMPARATOR.compare(mDecision, other.mDecision);
 
 		if (cmpTo == 0) {
 			return mDecision.or(other.mDecision, mChilds, other.mChilds);
@@ -353,7 +357,9 @@ public final class CDD {
 				return this;
 			}
 
-			if (assumption.mDecision.compareTo(mDecision) < 0) {
+			final int cmp = DECISION_COMPARATOR.compare(assumption.mDecision, mDecision);
+
+			if (cmp < 0) {
 				CDD newass = assumption.mChilds[0];
 
 				for (int i = 1; i < assumption.mChilds.length; i++) {
@@ -361,7 +367,7 @@ public final class CDD {
 				}
 
 				assumption = newass;
-			} else if (assumption.mDecision.compareTo(mDecision) == 0) {
+			} else if (cmp == 0) {
 				return mDecision.assume(assumption.mDecision, mChilds, assumption.mChilds);
 			} else {
 				CDD[] newChilds = null;

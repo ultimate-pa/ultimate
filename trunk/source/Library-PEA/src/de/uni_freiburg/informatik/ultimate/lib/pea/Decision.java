@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -127,6 +128,52 @@ public abstract class Decision {
 
 	public String toSmtString(final int child, final int index) {
 		return toSmtString(child);
+	}
+
+	public static Comparator<Decision> getComparator() {
+		return new DecisionComparator();
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static final class DecisionComparator implements Comparator<Decision> {
+		private static final Map<Class<?>, Integer> ORDER = new HashMap<>();
+		static {
+			ORDER.put(EventDecision.class, 10);
+			ORDER.put(RangeDecision.class, 9);
+			ORDER.put(BooleanDecision.class, 8);
+			ORDER.put(RelationDecision.class, 7);
+			ORDER.put(ZDecision.class, 6);
+			ORDER.put(BoogieBooleanExpressionDecision.class, 5);
+		}
+
+		@Override
+		public int compare(final Decision o1, final Decision o2) {
+			if (o1 == null && o2 == null) {
+				return 0;
+			} else if (o1 == null) {
+				return 1;
+			} else if (o2 == null) {
+				return -1;
+			} else {
+				final Class<? extends Decision> o1class = o1.getClass();
+				final Class<? extends Decision> o2class = o2.getClass();
+				if (o1class != o2class) {
+					final Integer o1prio = ORDER.get(o1class);
+					final Integer o2prio = ORDER.get(o2class);
+					if (o1prio == null || o2prio == null) {
+						throw new UnsupportedOperationException(
+								"Unknown subclass of Decision: " + o1class + " or " + o2class);
+					}
+					return o1prio.compareTo(o2prio);
+				}
+				// alternative: use lexicographic comparison
+				return Integer.compare(o1.hashCode(), o2.hashCode());
+			}
+		}
 	}
 
 }
