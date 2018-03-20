@@ -99,10 +99,10 @@ public class ElevatorInf {
 	}
 
 	public void buildZPart() {
-		final CDD nnewgoal = EventDecision.create('/', "newgoal");
-		final CDD nstart = EventDecision.create('/', "start");
-		final CDD npassed = EventDecision.create('/', "passed");
-		final CDD nstop = EventDecision.create('/', "stop");
+		final CDD nnewgoal = EventDecision.createNeg("newgoal");
+		final CDD nstart = EventDecision.createNeg("start");
+		final CDD npassed = EventDecision.createNeg("passed");
+		final CDD nstop = EventDecision.createNeg("stop");
 		final CDD xicurrent = BooleanDecision.create("current' = current");
 		final CDD xigoal = BooleanDecision.create("goal' = goal");
 		final CDD xidir = BooleanDecision.create("dir' = dir");
@@ -140,26 +140,26 @@ public class ElevatorInf {
 		        new Phase("c2", CDD.TRUE, CDD.TRUE), };
 		CDD ev;
 		for (int i = 0; i < 3; i++) {
-			ev = EventDecision.create('/', "newgoal").and(EventDecision.create('/', "start"))
-			        .and(EventDecision.create('/', "passed")).and(EventDecision.create('/', "stop"));
+			ev = EventDecision.createNeg("newgoal").and(EventDecision.createNeg("start"))
+			        .and(EventDecision.createNeg("passed")).and(EventDecision.createNeg("stop"));
 
 			p[i].addTransition(p[i], ev, noresets);
 		}
 
-		ev = EventDecision.create("newgoal").and(EventDecision.create('/', "start"))
-		        .and(EventDecision.create('/', "passed")).and(EventDecision.create('/', "stop"));
+		ev = EventDecision.create("newgoal").and(EventDecision.createNeg("start"))
+		        .and(EventDecision.createNeg("passed")).and(EventDecision.createNeg("stop"));
 
 		p[0].addTransition(p[1], ev, noresets);
 
-		ev = EventDecision.create('/', "newgoal").and(EventDecision.create("start"))
-		        .and(EventDecision.create('/', "passed")).and(EventDecision.create('/', "stop"));
+		ev = EventDecision.createNeg("newgoal").and(EventDecision.create("start"))
+		        .and(EventDecision.createNeg("passed")).and(EventDecision.createNeg("stop"));
 		p[1].addTransition(p[2], ev, noresets);
 
-		ev = EventDecision.create('/', "newgoal").and(EventDecision.create('/', "start"))
-		        .and(EventDecision.create("passed")).and(EventDecision.create('/', "stop"));
+		ev = EventDecision.createNeg("newgoal").and(EventDecision.createNeg("start"))
+		        .and(EventDecision.create("passed")).and(EventDecision.createNeg("stop"));
 		p[2].addTransition(p[2], ev, noresets);
-		ev = EventDecision.create('/', "newgoal").and(EventDecision.create('/', "start"))
-		        .and(EventDecision.create('/', "passed")).and(EventDecision.create("stop"));
+		ev = EventDecision.createNeg("newgoal").and(EventDecision.createNeg("start"))
+		        .and(EventDecision.createNeg("passed")).and(EventDecision.create("stop"));
 		p[2].addTransition(p[0], ev, noresets);
 		csppart = new PhaseEventAutomata("CSPPart", p, new Phase[] { p[0] });
 	}

@@ -118,7 +118,7 @@ public class BoogieRequirementsParserTest {
 		Assert.assertNotNull("Parser did not recognize Global.universal pattern", parsedPatterns[0]);
 		final List<CDD> ccds = parsedPatterns[0].getCdds();
 		Assert.assertTrue("Parser did not work on old Requirements with only ap-names",
-				ccds.get(0).decision instanceof BooleanDecision);
+				ccds.get(0).getDecision() instanceof BooleanDecision);
 		System.out.println(ccds.get(0).toString());
 	}
 

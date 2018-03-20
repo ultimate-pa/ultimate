@@ -103,7 +103,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 	private static final File ATS_DUMP_DIR = new File("./automata-dump");
 
 	// start with 0 for both params
-	private static final int FIRST_N_PROGRAMS = 0;
+	private static final int FIRST_N_PROGRAMS = Integer.MAX_VALUE;
 	private static final int FIRST_N_REVISIONS_PER_PROGRAM = Integer.MAX_VALUE;
 
 	public RegressionVerificationTestSuite() {
@@ -168,13 +168,13 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 			// run reuse on the whole sequence (dump from rev i is input for rev i+1, rev 0 has no input)
 			runDumpReusePreviousRevision(revisions, urds, SETTINGS_EAGER_REUSE_DUMP);
-			// runDumpReusePreviousRevision(revisions, urds, SETTINGS_LAZY_REUSE_DUMP);
+			runDumpReusePreviousRevision(revisions, urds, SETTINGS_LAZY_REUSE_DUMP);
 
 			// runDumpReusePreviousRevision(revisions, urds, SETTINGS_EAGER_REUSE_DUMP_ONLY_NEW_LETTERS);
 			// runDumpReusePreviousRevision(revisions, urds, SETTINGS_EAGER_REUSE_DUMP_ONLY_NEW_LETTERS_SOLVER);
 
 			// run vanilla for comparison
-			// runNoDumpNoReuse(revisions.iterator(), urds, SETTINGS_VANILLA);
+			runNoDumpNoReuse(revisions.iterator(), urds, SETTINGS_VANILLA);
 			programCount++;
 		}
 

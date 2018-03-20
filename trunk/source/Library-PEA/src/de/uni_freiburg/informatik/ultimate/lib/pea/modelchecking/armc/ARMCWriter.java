@@ -358,7 +358,7 @@ public class ARMCWriter extends TCSWriter {
      */
     protected void writeDecisionSorted(final Decision decision, final int child) throws IOException {
         if(decision instanceof BooleanDecision
-                && ((BooleanDecision)decision).getVar().contains(BooleanDecision.PRIME)){
+                && ((BooleanDecision)decision).getVar().contains(BooleanDecision.PRIME_SUFFIX)){
 
             if(firstPrimedConstraint) {
 				firstPrimedConstraint = false;
@@ -378,7 +378,7 @@ public class ARMCWriter extends TCSWriter {
 //
 //            writeDecision(decision, child, primedWriter);
         }else if  (decision instanceof RangeDecision
-                && ((RangeDecision)decision).getVar().contains(RangeDecision.PRIME)){
+                && ((RangeDecision)decision).getVar().contains(BooleanDecision.PRIME_SUFFIX)){
 
             if(firstPrimedConstraint) {
 				firstPrimedConstraint = false;
@@ -463,7 +463,7 @@ public class ARMCWriter extends TCSWriter {
         }
         
         if(dec instanceof RangeDecision){
-            final String variable = ((RangeDecision)dec).getVar().replace(RangeDecision.PRIME,
+            final String variable = ((RangeDecision)dec).getVar().replace(BooleanDecision.PRIME_SUFFIX,
                     ARMCString.ARMC_PRIME);
             writer.append(ARMCString.ARMC_US + variable);
 
@@ -519,7 +519,7 @@ public class ARMCWriter extends TCSWriter {
                 writer.append(toWrite);
             } else if(dec instanceof BooleanDecision){
                 String toWrite = ((BooleanDecision)dec).getVar().replace(
-                        BooleanDecision.PRIME,
+                        BooleanDecision.PRIME_SUFFIX,
                         ARMCString.ARMC_PRIME);
                 toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", "_$1$2");
                 writer.append(toWrite);
@@ -555,7 +555,7 @@ public class ARMCWriter extends TCSWriter {
             }else if(dec instanceof BooleanDecision){
                 String toWrite = ((BooleanDecision)dec).toString(i);
                 toWrite = toWrite.replaceAll("([a-zA-Z])(\\w*)", ARMCString.ARMC_US + "$1$2");
-                toWrite = toWrite.replace(BooleanDecision.PRIME, ARMCString.ARMC_PRIME);
+                toWrite = toWrite.replace(BooleanDecision.PRIME_SUFFIX, ARMCString.ARMC_PRIME);
                 writer.append(toWrite);
             } else if(dec instanceof EventDecision){
                 final String event = ((EventDecision)dec).getEvent();

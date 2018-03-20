@@ -38,15 +38,14 @@ import net.sourceforge.czt.z.util.ZString;
  *
  */
 public final class ZDecision extends Decision {
-	// private Term term;
-	private String predicate;
+	private String mPredicate;
 
 	/**
 	 *
 	 */
 	private ZDecision(final String predicate) {
 		super();
-		this.predicate = predicate;
+		mPredicate = predicate;
 	}
 
 	/**
@@ -67,7 +66,7 @@ public final class ZDecision extends Decision {
 	 * Creates a CDD without simplifying the predicate any further
 	 */
 	public static CDD create(final String predicate) {
-		return ZDecision.createWithChildren(predicate, CDD.trueChilds);
+		return ZDecision.createWithChildren(predicate, CDD.TRUE_CHILDS);
 	}
 
 	public static CDD createWithChildren(final String predicate, final CDD[] children) {
@@ -82,28 +81,6 @@ public final class ZDecision extends Decision {
 		return CDD.create(new ZDecision(predicate), children);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pea.Decision#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(final Object o) {
-		/* we're 'bigger' than Ranges and Events */
-		if (o instanceof RangeDecision || o instanceof EventDecision) {
-			return 1;
-		}
-
-		/* we're 'smaller' than other decisions */
-		if (!(o instanceof ZDecision)) {
-			return -1;
-		}
-
-		final ZDecision zd = (ZDecision) o;
-
-		return predicate.compareTo(zd.predicate);
-	}
-
 	@Override
 	public boolean equals(final Object o) {
 		if (!(o instanceof ZDecision)) {
@@ -112,28 +89,23 @@ public final class ZDecision extends Decision {
 
 		final ZDecision zd = (ZDecision) o;
 
-		return zd.predicate.equals(predicate);
+		return zd.mPredicate.equals(mPredicate);
 	}
 
 	@Override
 	public int hashCode() {
-		return predicate.hashCode();
+		return mPredicate.hashCode();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pea.Decision#prime()
-	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public Decision prime() {
 		// String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
-		String decision = predicate;
+		String decision = mPredicate;
 
 		try {
 			// decision = OZUtils.computePrimedPredicate(predicate);
-			final ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(predicate);
+			final ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(mPredicate);
 			final PrimeVisitor visitor = new PrimeVisitor();
 			// PrimeVisitor visitor = new PrimeVisitor();
 			// //visitor.accept(predTerm.getTerm());
@@ -150,17 +122,12 @@ public final class ZDecision extends Decision {
 	}
 
 	public String getPredicate() {
-		return predicate;
+		return mPredicate;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pea.Decision#toString(int)
-	 */
 	@Override
 	public String toString(final int child) {
-		return (child == 0) ? predicate : (ZString.NOT + predicate);
+		return (child == 0) ? mPredicate : (ZString.NOT + mPredicate);
 	}
 
 	@Override
@@ -168,11 +135,6 @@ public final class ZDecision extends Decision {
 		return toString(child);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see pea.Decision#toUppaalString(int)
-	 */
 	@Override
 	public String toUppaalString(final int child) {
 		// TODO Auto-generated method stub
@@ -186,46 +148,24 @@ public final class ZDecision extends Decision {
 	}
 
 	/**
-	 * @return Returns the term.
-	 */
-
-	/*
-	 * public Term getTerm() { return term; }
-	 */
-
-	/**
 	 * @return Returns the predicate encoded in ZML.
 	 * @throws ParseException
 	 *             if the Unicode String could not be parsed.
 	 * @throws InstantiationException
 	 */
 	public String getZML() throws ParseException, InstantiationException {
-		return ZWrapper.INSTANCE.predicateToZml(predicate);
+		return ZWrapper.INSTANCE.predicateToZml(mPredicate);
 	}
 
-	/**
-	 * @param term
-	 *            The term to set.
-	 */
-
-	/*
-	 * public void setTerm(Term term) { this.term = term; }
-	 */
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	public boolean equals(final ZDecision z) {
 		// TODO: compare term objects
-		return predicate.equals(z.predicate);
+		return mPredicate.equals(z.mPredicate);
 	}
 
 	public ZDecision negate() {
 		final StringBuilder neg = new StringBuilder(ZString.NOT);
 		neg.append(ZString.LPAREN);
-		neg.append(predicate);
+		neg.append(mPredicate);
 		neg.append(ZString.RPAREN);
 
 		return new ZDecision(neg.toString());
@@ -240,11 +180,11 @@ public final class ZDecision extends Decision {
 			return false;
 		}
 
-		if (cdd.decision instanceof ZDecision && ((ZDecision) cdd.decision).predicate.contains(text)) {
+		if (cdd.getDecision() instanceof ZDecision && ((ZDecision) cdd.getDecision()).mPredicate.contains(text)) {
 			return true;
 		}
 
-		for (final CDD child : cdd.childs) {
+		for (final CDD child : cdd.getChilds()) {
 			if (cddContainsZDecisionWith(child, text)) {
 				return true;
 			}
@@ -259,12 +199,12 @@ public final class ZDecision extends Decision {
 			return;
 		}
 
-		if (cdd.decision instanceof ZDecision) {
-			final ZDecision zd = (ZDecision) cdd.decision;
-			zd.predicate = zd.predicate.replace(oldVar, newVar);
+		if (cdd.getDecision() instanceof ZDecision) {
+			final ZDecision zd = (ZDecision) cdd.getDecision();
+			zd.mPredicate = zd.mPredicate.replace(oldVar, newVar);
 		}
 
-		for (final CDD child : cdd.childs) {
+		for (final CDD child : cdd.getChilds()) {
 			renameVariableInCDD(child, oldVar, newVar);
 		}
 	}
@@ -366,7 +306,7 @@ public final class ZDecision extends Decision {
 
 	@Override
 	public String toTexString(final int child) {
-		return (child == 0) ? predicate : (ZString.NOT + predicate);
+		return (child == 0) ? mPredicate : (ZString.NOT + mPredicate);
 	}
 
 	@Override
@@ -382,11 +322,11 @@ public final class ZDecision extends Decision {
 	@Override
 	public Decision unprime() {
 		// String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
-		String decision = predicate;
+		String decision = mPredicate;
 
 		try {
 			// decision = OZUtils.computePrimedPredicate(predicate);
-			final ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(predicate);
+			final ZTerm predTerm = ZWrapper.INSTANCE.predicateToTerm(mPredicate);
 			final PrimeVisitor visitor = new PrimeVisitor();
 			// PrimeVisitor visitor = new PrimeVisitor();
 			// //visitor.accept(predTerm.getTerm());

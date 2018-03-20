@@ -45,7 +45,6 @@ public class BndResponsePatternUT extends PatternType {
 					phase(S.negate(), BoundTypes.GREATER, c1), phaseT());
 			return compile(peaTrans, ct);
 		} else if (scope instanceof SrParseScopeBefore) {
-			// TODO: Scope was Q before renaming, check if this is correct in the parser
 			final CDD P = scope.getCdd1();
 			final CounterTrace ct = counterTrace(phase(P.negate()), phase(P.negate().and(R).and(S.negate())),
 					phase(S.negate().and(P.negate()), BoundTypes.GREATEREQUAL, c1), phaseT());

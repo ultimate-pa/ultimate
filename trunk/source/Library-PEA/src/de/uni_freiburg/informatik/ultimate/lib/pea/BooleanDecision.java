@@ -36,30 +36,33 @@ import java.util.Vector;
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.RelationDecision
  */
 public class BooleanDecision extends Decision {
-	static Vector<String> allVars = new Vector<>();
-	public static final String PRIME = "'";
-	String var;
-	int globalIdx = -1;
+
+	public static final String PRIME_SUFFIX = "'";
+
+	private static Vector<String> allVars = new Vector<>();
+
+	private final String mVar;
+	private int mGlobalIdx = -1;
 
 	public BooleanDecision(final String v) {
-		globalIdx = allVars.indexOf(v);
+		mGlobalIdx = allVars.indexOf(v);
 
-		if (globalIdx < 0) {
+		if (mGlobalIdx < 0) {
 			allVars.add(v);
-			globalIdx = allVars.indexOf(v);
+			mGlobalIdx = allVars.indexOf(v);
 		}
 
-		var = v;
+		mVar = v;
 	}
 
 	/**
 	 * Create an boolean constraint.
-	 * 
+	 *
 	 * @param var
 	 *            the condition that must hold.
 	 */
 	public static CDD create(final String var) {
-		return CDD.create(new BooleanDecision(var), CDD.trueChilds);
+		return CDD.create(new BooleanDecision(var), CDD.TRUE_CHILDS);
 	}
 
 	@Override
@@ -68,21 +71,12 @@ public class BooleanDecision extends Decision {
 			return false;
 		}
 
-		return var.equals(((BooleanDecision) o).var);
+		return mVar.equals(((BooleanDecision) o).mVar);
 	}
 
 	@Override
 	public int hashCode() {
-		return var.hashCode();
-	}
-
-	@Override
-	public int compareTo(final Object o) {
-		if (!(o instanceof BooleanDecision)) {
-			return 1;
-		}
-
-		return var.compareTo(((BooleanDecision) o).var);
+		return mVar.hashCode();
 	}
 
 	/**
@@ -90,12 +84,12 @@ public class BooleanDecision extends Decision {
 	 */
 	@Override
 	public String getVar() {
-		return var;
+		return mVar;
 	}
 
 	@Override
 	public String toString(final int child) {
-		return (child == 0) ? var : ("!" + var);
+		return (child == 0) ? mVar : ("!" + mVar);
 	}
 
 	@Override
@@ -106,16 +100,16 @@ public class BooleanDecision extends Decision {
 	@Override
 	public String toSmtString(final int child, final int index) {
 		if (index < 0) {
-			return (child == 0) ? ("(var_h_" + Math.abs(var.hashCode()) + ")")
-					: ("(not var_h_" + Math.abs(var.hashCode()) + ")");
+			return (child == 0) ? ("(var_h_" + Math.abs(mVar.hashCode()) + ")")
+					: ("(not var_h_" + Math.abs(mVar.hashCode()) + ")");
 		}
-		return (child == 0) ? ("(var_h_" + Math.abs(var.hashCode()) + "_" + index + ")")
-				: ("(not var_h_" + Math.abs(var.hashCode()) + "_" + index + ")");
+		return (child == 0) ? ("(var_h_" + Math.abs(mVar.hashCode()) + "_" + index + ")")
+				: ("(not var_h_" + Math.abs(mVar.hashCode()) + "_" + index + ")");
 	}
 
 	@Override
 	public String toTexString(final int child) {
-		return (child == 0) ? var : (" \\neg " + var);
+		return (child == 0) ? mVar : (" \\neg " + mVar);
 	}
 
 	@Override
@@ -138,13 +132,13 @@ public class BooleanDecision extends Decision {
 
 	@Override
 	public Decision prime(final String ignore) {
-		if (var.equals(ignore)) {
+		if (mVar.equals(ignore)) {
 			return this;
 		}
 		if (primeCache != null) {
 			return primeCache;
 		}
-		final String decision = var.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + BooleanDecision.PRIME);
+		final String decision = mVar.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + BooleanDecision.PRIME_SUFFIX);
 
 		primeCache = new BooleanDecision(decision);
 		return primeCache;
@@ -158,10 +152,11 @@ public class BooleanDecision extends Decision {
 
 	@Override
 	public Decision unprime(final String ignore) {
-		if (var.equals(ignore)) {
+		if (mVar.equals(ignore)) {
 			return this;
 		}
-		final String result = var.replaceAll("([a-zA-Z_])(\\w*)" + BooleanDecision.PRIME, "$1$2"); // SR 2010-08-02
+		final String result = mVar.replaceAll("([a-zA-Z_])(\\w*)" + BooleanDecision.PRIME_SUFFIX, "$1$2"); // SR
+																											// 2010-08-02
 
 		return (new BooleanDecision(result));
 	}

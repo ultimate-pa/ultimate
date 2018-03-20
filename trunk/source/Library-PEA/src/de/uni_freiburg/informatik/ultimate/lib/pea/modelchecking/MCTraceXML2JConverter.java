@@ -293,7 +293,7 @@ public class MCTraceXML2JConverter {
 			if (getSpecAttribute(actNode)) {
 				missingEvents = missingEvents.and(EventDecision.create(getNameAttribute(actNode)));
 			} else {
-				missingEvents = missingEvents.and(EventDecision.create('/', getNameAttribute(actNode)));
+				missingEvents = missingEvents.and(EventDecision.createNeg(getNameAttribute(actNode)));
 			}
 		}
 		logger.info("MissingEvents   = " + missingEvents);

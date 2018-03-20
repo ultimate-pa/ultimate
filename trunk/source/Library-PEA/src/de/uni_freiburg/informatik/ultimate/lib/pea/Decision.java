@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * TODO : Documentation hoenicke.
@@ -34,10 +35,7 @@ import java.util.HashMap;
  * @author hoenicke
  *
  */
-public abstract class Decision implements Comparable {
-
-	@Override
-	public abstract int compareTo(Object o);
+public abstract class Decision {
 
 	public boolean implies(final Decision other, final CDD[] childs, final CDD[] ochilds) {
 		/* default implementation for boolean decisions */
@@ -46,7 +44,6 @@ public abstract class Decision implements Comparable {
 				return false;
 			}
 		}
-
 		return true;
 	}
 
@@ -56,23 +53,20 @@ public abstract class Decision implements Comparable {
 				return CDD.create(this, childs);
 			}
 		}
-
 		return childs[0];
 	}
 
 	public CDD and(final Decision other, final CDD[] childs, final CDD[] ochilds) {
-		return and(other, childs, ochilds, new HashMap<CDD, HashMap<CDD, CDD>>());
+		return and(other, childs, ochilds, new HashMap<CDD, Map<CDD, CDD>>());
 	}
 
-	public CDD and(final Decision other, final CDD[] childs, final CDD[] ochilds,
-			final HashMap<CDD, HashMap<CDD, CDD>> cache) {
+	public CDD and(final Decision other, final CDD[] childs, final CDD[] ochilds, final Map<CDD, Map<CDD, CDD>> cache) {
 		/* default implementation for boolean decisions */
 		final CDD[] nchilds = new CDD[childs.length];
 
 		for (int i = 0; i < childs.length; i++) {
 			nchilds[i] = childs[i].and(ochilds[i], cache);
 		}
-
 		return simplify(nchilds);
 	}
 
@@ -83,7 +77,6 @@ public abstract class Decision implements Comparable {
 		for (int i = 0; i < childs.length; i++) {
 			nchilds[i] = childs[i].or(ochilds[i]);
 		}
-
 		return simplify(nchilds);
 	}
 

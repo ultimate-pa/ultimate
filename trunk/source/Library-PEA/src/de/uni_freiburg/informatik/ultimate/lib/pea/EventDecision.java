@@ -26,136 +26,120 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
-
 public class EventDecision extends Decision {
-    String event;
 
-    public EventDecision(final String ev) {
-        event = ev;
-    }
+	private final String mEvent;
 
-    /**
-     * Create a new constraint specifying that all must events are in the set
-     * and all forbid events aren't.
-     */
-    public static CDD create(final Set<String> must, final Set<String> forbid) {
-        CDD result = CDD.TRUE;
+	public EventDecision(final String ev) {
+		mEvent = ev;
+	}
 
-        for (final String evt : must) {
+	/**
+	 * Create a new constraint specifying that all must events are in the set and all forbid events aren't.
+	 */
+	public static CDD create(final Set<String> must, final Set<String> forbid) {
+		CDD result = CDD.TRUE;
+
+		for (final String evt : must) {
 			result = result.and(create(evt));
 		}
 
-        for (final String evt : forbid) {
-			result = result.and(create('/', evt));
+		for (final String evt : forbid) {
+			result = result.and(createNeg(evt));
 		}
 
-        return result;
-    }
+		return result;
+	}
 
-    /**
-     * Create an event atom specifying that an event is forbidden.
-     *
-     * @param forbidden
-     *            ignored, should be '/'.
-     * @param event
-     *            the event that is forbidden.
-     */
-    public static CDD create(final char forbidden, final String event) {
-        return CDD.create(new EventDecision(event), CDD.falseChilds);
-    }
+	/**
+	 * Create an event atom specifying that an event is forbidden.
+	 * @param event
+	 *            the event that is forbidden.
+	 */
+	public static CDD createNeg(final String event) {
+		return CDD.create(new EventDecision(event), CDD.FALSE_CHILDS);
+	}
 
-    /**
-     * Create an event atom specifying that an event must occur.
-     *
-     * @param event
-     *            the event that must occur.
-     */
-    public static CDD create(final String event) {
-        return CDD.create(new EventDecision(event), CDD.trueChilds);
-    }
+	/**
+	 * Create an event atom specifying that an event must occur.
+	 *
+	 * @param event
+	 *            the event that must occur.
+	 */
+	public static CDD create(final String event) {
+		return CDD.create(new EventDecision(event), CDD.TRUE_CHILDS);
+	}
 
-    @Override
+	@Override
 	public boolean equals(final Object o) {
-        if (!(o instanceof EventDecision)) {
-            return false;
-        }
+		if (o == null || o.getClass() != getClass()) {
+			return false;
+		}
 
-        return event.equals(((EventDecision) o).event);
-    }
+		return mEvent.equals(((EventDecision) o).mEvent);
+	}
 
-    @Override
+	@Override
 	public int hashCode() {
-        return event.hashCode();
-    }
+		return mEvent.hashCode();
+	}
 
-    @Override
-	public int compareTo(final Object o) {
-        if (!(o instanceof EventDecision)) {
-            return -1;
-        }
-
-        return event.compareTo(((EventDecision) o).event);
-    }
-
-    @Override
+	@Override
 	public String toString(final int child) {
-        return (child == 0) ? event : ("/" + event);
-    }
+		return (child == 0) ? mEvent : ("/" + mEvent);
+	}
 
-    @Override
+	@Override
 	public String toSmtString(final int child) {
-        return toString(child);
-    }
+		return toString(child);
+	}
 
-    @Override
+	@Override
 	public String toUppaalString(final int child) {
-        return "true";
-    }
+		return "true";
+	}
 
-    @Override
+	@Override
 	public String toUppaalStringDOM(final int child) {
-        return "true";
-    }
+		return "true";
+	}
 
-    /**
-     * @return Returns the event.
-     */
-    public String getEvent() {
-        return event;
-    }
+	/**
+	 * @return Returns the event.
+	 */
+	public String getEvent() {
+		return mEvent;
+	}
 
-    @Override
-    public Decision prime() {
-        return this;
-    }
+	@Override
+	public Decision prime() {
+		return this;
+	}
 
-    @Override
-    public Decision unprime() {
-        return this;
-    }
-    
-    @Override
-    public Decision prime(String ignore) {
-        return this;
-    }
+	@Override
+	public Decision unprime() {
+		return this;
+	}
 
-    @Override
-    public Decision unprime(String ignore) {
-        return this;
-    }
+	@Override
+	public Decision prime(final String ignore) {
+		return this;
+	}
 
+	@Override
+	public Decision unprime(final String ignore) {
+		return this;
+	}
 
-    @Override
-    public String toTexString(final int child) {
-        return (child == 0) ? event : ("\\neg" + event);
-    }
+	@Override
+	public String toTexString(final int child) {
+		return (child == 0) ? mEvent : ("\\neg" + mEvent);
+	}
 
-    @Override
+	@Override
 	public String getVar() {
-        return "";
-    }
+		return "";
+	}
 }

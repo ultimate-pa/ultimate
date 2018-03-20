@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
@@ -65,41 +66,42 @@ public final class CDD {
 	/**
 	 * Useful child array to create a boolean decision.
 	 */
-	public static CDD[] trueChilds = new CDD[] { CDD.TRUE, CDD.FALSE };
+	public static final CDD[] TRUE_CHILDS = new CDD[] { CDD.TRUE, CDD.FALSE };
 
 	/**
 	 * Useful child array to create a negated boolean decision.
 	 */
-	public static CDD[] falseChilds = new CDD[] { CDD.FALSE, CDD.TRUE };
+	public static final CDD[] FALSE_CHILDS = new CDD[] { CDD.FALSE, CDD.TRUE };
 
 	/**
 	 * Hash to keep all equal CDDs identical.
 	 */
-	private static UnifyHash<CDD> unifyHash = new UnifyHash<>();
-	public Decision decision;
-	int depth;
-	CDD[] childs;
-	boolean timed = false;
+	private static final UnifyHash<CDD> UNIFY_HASH = new UnifyHash<>();
+	private final Decision mDecision;
+	private final int mDepth;
+	private final CDD[] mChilds;
+	private final boolean mTimed;
 
-	private CDD primeCache;
+	private CDD mPrimeCache;
 
 	/**
 	 * Create a new CDD with the given decision and sub diagrams.
 	 */
 	private CDD(final Decision decision, final CDD[] childs) {
-		this.decision = decision;
-		this.childs = childs;
-		timed = decision instanceof RangeDecision;
+		mDecision = decision;
+		mChilds = childs;
 
-		int i;
-		depth = 0;
+		boolean timed = decision instanceof RangeDecision;
+		int depth = 0;
 
 		if (childs != null) {
-			for (i = 0; i < childs.length; i++) {
-				depth = max(depth, childs[i].depth + 1);
+			for (int i = 0; i < childs.length; i++) {
+				depth = max(depth, childs[i].mDepth + 1);
 				timed = timed || childs[i].isTimed();
 			}
 		}
+		mDepth = depth;
+		mTimed = timed;
 	}
 
 	private static int min(final int a, final int b) {
@@ -111,11 +113,11 @@ public final class CDD {
 	}
 
 	public int getDepth() {
-		return depth;
+		return mDepth;
 	}
 
 	public boolean isTimed() {
-		return timed;
+		return mTimed;
 	}
 
 	/**
@@ -133,15 +135,15 @@ public final class CDD {
 			hashcode = (hashcode * (11 + i)) ^ childs[i].hashCode();
 		}
 
-		final Iterator<CDD> it = unifyHash.iterateHashCode(hashcode).iterator();
+		final Iterator<CDD> it = UNIFY_HASH.iterateHashCode(hashcode).iterator();
 		CDD cdd;
 
 		try_next: while (it.hasNext()) {
 			cdd = it.next();
 
-			if (decision.equals(cdd.decision)) {
+			if (decision.equals(cdd.mDecision)) {
 				for (int i = 0; i < childs.length; i++) {
-					if (cdd.childs[i] != childs[i]) {
+					if (cdd.mChilds[i] != childs[i]) {
 						continue try_next;
 					}
 				}
@@ -151,7 +153,7 @@ public final class CDD {
 		}
 
 		cdd = new CDD(decision, childs);
-		unifyHash.put(hashcode, cdd);
+		UNIFY_HASH.put(hashcode, cdd);
 
 		return cdd;
 	}
@@ -173,26 +175,26 @@ public final class CDD {
 			return false;
 		}
 
-		final int cmpTo = decision.compareTo(other.decision);
+		final int cmpTo = mDecision.compareTo(other.mDecision);
 
 		if (cmpTo < 0) {
-			for (int i = 0; i < childs.length; i++) {
-				if (!childs[i].implies(other)) {
+			for (int i = 0; i < mChilds.length; i++) {
+				if (!mChilds[i].implies(other)) {
 					return false;
 				}
 			}
 
 			return true;
 		} else if (cmpTo > 0) {
-			for (int i = 0; i < other.childs.length; i++) {
-				if (!implies(other.childs[i])) {
+			for (int i = 0; i < other.mChilds.length; i++) {
+				if (!implies(other.mChilds[i])) {
 					return false;
 				}
 			}
 
 			return true;
 		} else {
-			return decision.implies(other.decision, childs, other.childs);
+			return mDecision.implies(other.mDecision, mChilds, other.mChilds);
 		}
 	}
 
@@ -202,20 +204,20 @@ public final class CDD {
 	 * @return the negation of the current CDD.
 	 */
 	public CDD negate() {
-		if (childs == null) {
+		if (mChilds == null) {
 			if (this == TRUE) {
 				return FALSE;
 			}
 			return TRUE;
 		}
 
-		final CDD[] newchilds = new CDD[childs.length];
+		final CDD[] newchilds = new CDD[mChilds.length];
 
-		for (int i = 0; i < childs.length; i++) {
-			newchilds[i] = childs[i].negate();
+		for (int i = 0; i < mChilds.length; i++) {
+			newchilds[i] = mChilds[i].negate();
 		}
 
-		return create(decision, newchilds);
+		return create(mDecision, newchilds);
 	}
 
 	/**
@@ -234,7 +236,7 @@ public final class CDD {
 			return this;
 		}
 
-		final HashMap<CDD, HashMap<CDD, CDD>> cache = new HashMap<>();
+		final Map<CDD, Map<CDD, CDD>> cache = new HashMap<>();
 		return and(other, cache);
 	}
 
@@ -245,7 +247,7 @@ public final class CDD {
 	 *            the other CDD.
 	 * @return the conjunction of the CDDs.
 	 */
-	public CDD and(final CDD other, final HashMap<CDD, HashMap<CDD, CDD>> cache) {
+	public CDD and(final CDD other, final Map<CDD, Map<CDD, CDD>> cache) {
 		if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
 			return other;
 		}
@@ -254,7 +256,7 @@ public final class CDD {
 			return this;
 		}
 
-		HashMap<CDD, CDD> cache2 = cache.get(this);
+		Map<CDD, CDD> cache2 = cache.get(this);
 		if (cache2 == null) {
 			cache2 = new HashMap<>();
 			cache.put(this, cache2);
@@ -264,26 +266,26 @@ public final class CDD {
 			return result;
 		}
 		CDD[] newchilds;
-		final int cmpTo = decision.compareTo(other.decision);
+		final int cmpTo = mDecision.compareTo(other.mDecision);
 
 		if (cmpTo == 0) {
-			result = decision.and(other.decision, childs, other.childs, cache);
+			result = mDecision.and(other.mDecision, mChilds, other.mChilds, cache);
 		} else if (cmpTo < 0) {
-			newchilds = new CDD[childs.length];
+			newchilds = new CDD[mChilds.length];
 
-			for (int i = 0; i < childs.length; i++) {
-				newchilds[i] = childs[i].and(other, cache);
+			for (int i = 0; i < mChilds.length; i++) {
+				newchilds[i] = mChilds[i].and(other, cache);
 			}
 
-			result = decision.simplify(newchilds);
+			result = mDecision.simplify(newchilds);
 		} else {
-			newchilds = new CDD[other.childs.length];
+			newchilds = new CDD[other.mChilds.length];
 
-			for (int i = 0; i < other.childs.length; i++) {
-				newchilds[i] = this.and(other.childs[i], cache);
+			for (int i = 0; i < other.mChilds.length; i++) {
+				newchilds[i] = this.and(other.mChilds[i], cache);
 			}
 
-			result = other.decision.simplify(newchilds);
+			result = other.mDecision.simplify(newchilds);
 		}
 		cache2.put(other, result);
 		return result;
@@ -306,26 +308,26 @@ public final class CDD {
 		}
 
 		CDD[] newchilds;
-		final int cmpTo = decision.compareTo(other.decision);
+		final int cmpTo = mDecision.compareTo(other.mDecision);
 
 		if (cmpTo == 0) {
-			return decision.or(other.decision, childs, other.childs);
+			return mDecision.or(other.mDecision, mChilds, other.mChilds);
 		} else if (cmpTo < 0) {
-			newchilds = new CDD[childs.length];
+			newchilds = new CDD[mChilds.length];
 
-			for (int i = 0; i < childs.length; i++) {
-				newchilds[i] = childs[i].or(other);
+			for (int i = 0; i < mChilds.length; i++) {
+				newchilds[i] = mChilds[i].or(other);
 			}
 
-			return decision.simplify(newchilds);
+			return mDecision.simplify(newchilds);
 		} else {
-			newchilds = new CDD[other.childs.length];
+			newchilds = new CDD[other.mChilds.length];
 
-			for (int i = 0; i < other.childs.length; i++) {
-				newchilds[i] = or(other.childs[i]);
+			for (int i = 0; i < other.mChilds.length; i++) {
+				newchilds[i] = or(other.mChilds[i]);
 			}
 
-			return other.decision.simplify(newchilds);
+			return other.mDecision.simplify(newchilds);
 		}
 	}
 
@@ -351,25 +353,25 @@ public final class CDD {
 				return this;
 			}
 
-			if (assumption.decision.compareTo(decision) < 0) {
-				CDD newass = assumption.childs[0];
+			if (assumption.mDecision.compareTo(mDecision) < 0) {
+				CDD newass = assumption.mChilds[0];
 
-				for (int i = 1; i < assumption.childs.length; i++) {
-					newass = newass.or(assumption.childs[i]);
+				for (int i = 1; i < assumption.mChilds.length; i++) {
+					newass = newass.or(assumption.mChilds[i]);
 				}
 
 				assumption = newass;
-			} else if (assumption.decision.compareTo(decision) == 0) {
-				return decision.assume(assumption.decision, childs, assumption.childs);
+			} else if (assumption.mDecision.compareTo(mDecision) == 0) {
+				return mDecision.assume(assumption.mDecision, mChilds, assumption.mChilds);
 			} else {
 				CDD[] newChilds = null;
 
-				for (int i = 0; i < childs.length; i++) {
-					final CDD newC = childs[i].assume(assumption);
+				for (int i = 0; i < mChilds.length; i++) {
+					final CDD newC = mChilds[i].assume(assumption);
 
-					if ((newChilds == null) && (newC != childs[i])) {
-						newChilds = new CDD[childs.length];
-						System.arraycopy(childs, 0, newChilds, 0, i);
+					if ((newChilds == null) && (newC != mChilds[i])) {
+						newChilds = new CDD[mChilds.length];
+						System.arraycopy(mChilds, 0, newChilds, 0, i);
 					}
 
 					if (newChilds != null) {
@@ -381,7 +383,7 @@ public final class CDD {
 					return this;
 				}
 
-				return decision.simplify(newChilds);
+				return mDecision.simplify(newChilds);
 			}
 		}
 	}
@@ -402,8 +404,8 @@ public final class CDD {
 
 		final ArrayList<CDD> dnf = new ArrayList<>();
 
-		for (int i = 0; i < childs.length; i++) {
-			final CDD[] cdnf = childs[i].toDNF();
+		for (int i = 0; i < mChilds.length; i++) {
+			final CDD[] cdnf = mChilds[i].toDNF();
 
 			// isDominated optimization as in toString
 			if (childDominates(i)) {
@@ -422,7 +424,7 @@ public final class CDD {
 							dnf.add(cdnf[j]);
 						}
 					} else {
-						final CDD[] newchilds = new CDD[childs.length];
+						final CDD[] newchilds = new CDD[mChilds.length];
 
 						for (int k = 0; k < newchilds.length; k++) {
 							newchilds[k] = FALSE;
@@ -430,7 +432,7 @@ public final class CDD {
 
 						newchilds[i] = cdnf[j];
 
-						final CDD newCDD = create(decision, newchilds);
+						final CDD newCDD = create(mDecision, newchilds);
 
 						if (!dnf.contains(newCDD)) {
 							dnf.add(newCDD);
@@ -471,8 +473,8 @@ public final class CDD {
 
 		final ArrayList<CDD> cnf = new ArrayList<>();
 
-		for (int i = 0; i < childs.length; i++) {
-			final CDD[] ccnf = childs[i].toCNF();
+		for (int i = 0; i < mChilds.length; i++) {
+			final CDD[] ccnf = mChilds[i].toCNF();
 
 			// isDominated optimization similar to toString and toCDD
 			if (childIsDominated(i)) {
@@ -493,7 +495,7 @@ public final class CDD {
 					} else {
 						// we construct a CDD for the disjunction of this decision and the
 						// disjunction term ccnf[i].
-						final CDD[] newchilds = new CDD[childs.length];
+						final CDD[] newchilds = new CDD[mChilds.length];
 
 						for (int k = 0; k < newchilds.length; k++) {
 							newchilds[k] = TRUE;
@@ -501,7 +503,7 @@ public final class CDD {
 
 						newchilds[i] = ccnf[j];
 
-						final CDD newCDD = create(decision, newchilds);
+						final CDD newCDD = create(mDecision, newchilds);
 
 						if (!cnf.contains(newCDD)) {
 							cnf.add(newCDD);
@@ -535,7 +537,7 @@ public final class CDD {
 	 * @return true, if childs[i] implies childs[j] for all j.
 	 */
 	public boolean childDominates(final int i) {
-		return cddDominates(i, childs[i]);
+		return cddDominates(i, mChilds[i]);
 	}
 
 	/**
@@ -547,7 +549,7 @@ public final class CDD {
 	 * @return true, if childs[j] implies childs[i] for all j.
 	 */
 	public boolean childIsDominated(final int i) {
-		return cddIsDominated(i, childs[i]);
+		return cddIsDominated(i, mChilds[i]);
 	}
 
 	/**
@@ -561,8 +563,8 @@ public final class CDD {
 	 * @return true, if cdd implies childs[j] for all j != i.
 	 */
 	private boolean cddDominates(final int i, final CDD cdd) {
-		for (int j = 0; j < childs.length; j++) {
-			if ((j != i) && !cdd.implies(childs[j])) {
+		for (int j = 0; j < mChilds.length; j++) {
+			if ((j != i) && !cdd.implies(mChilds[j])) {
 				return false;
 			}
 		}
@@ -581,8 +583,8 @@ public final class CDD {
 	 * @return true, if cdd implies childs[j] for all j != i.
 	 */
 	private boolean cddIsDominated(final int i, final CDD cdd) {
-		for (int j = 0; j < childs.length; j++) {
-			if ((j != i) && !childs[j].implies(cdd)) {
+		for (int j = 0; j < mChilds.length; j++) {
+			if ((j != i) && !mChilds[j].implies(cdd)) {
 				return false;
 			}
 		}
@@ -621,20 +623,20 @@ public final class CDD {
 			return "FALSE";
 		}
 
-		for (int i = 0; i < childs.length; i++) {
-			if (childs[i] == CDD.FALSE) {
+		for (int i = 0; i < mChilds.length; i++) {
+			if (mChilds[i] == CDD.FALSE) {
 				continue;
 			}
 
 			sb.append(ordelim);
 
 			if (childDominates(i)) {
-				sb.append(childs[i]);
+				sb.append(mChilds[i]);
 			} else {
-				sb.append(decision.toString(i));
+				sb.append(mDecision.toString(i));
 
-				if (childs[i] != CDD.TRUE) {
-					sb.append(" \u2227 ").append(childs[i].toString(true));
+				if (mChilds[i] != CDD.TRUE) {
+					sb.append(" \u2227 ").append(mChilds[i].toString(true));
 				}
 			}
 
@@ -663,8 +665,8 @@ public final class CDD {
 
 		int cnt = 0;
 
-		for (int i = 0; i < childs.length; i++) {
-			if (childs[i] == CDD.FALSE) {
+		for (int i = 0; i < mChilds.length; i++) {
+			if (mChilds[i] == CDD.FALSE) {
 				continue;
 			}
 
@@ -672,19 +674,19 @@ public final class CDD {
 			cnt++;
 
 			if (childDominates(i)) {
-				sb.append(childs[i].toSmtString(true, index));
+				sb.append(mChilds[i].toSmtString(true, index));
 			} else {
-				if (childs[i].getChilds() != null) {
+				if (mChilds[i].getChilds() != null) {
 					sb.append("(and ");
 				}
 
-				sb.append(decision.toSmtString(i, index));
+				sb.append(mDecision.toSmtString(i, index));
 
-				if (childs[i] != CDD.TRUE) {
-					sb.append(childs[i].toSmtString(true, index));
+				if (mChilds[i] != CDD.TRUE) {
+					sb.append(mChilds[i].toSmtString(true, index));
 				}
 
-				if (childs[i].getChilds() != null) {
+				if (mChilds[i].getChilds() != null) {
 					sb.append(") ");
 				}
 			}
@@ -704,18 +706,18 @@ public final class CDD {
 
 	/* bei range decisions wird der value der bound zur�ckgegeben - nur f�r einfache decisions */
 	public int getValue() {
-		if (!(decision instanceof RangeDecision)) {
+		if (!(mDecision instanceof RangeDecision)) {
 			return 0;
 		}
 
 		int val = 0;
 
-		for (int i = 0; i < childs.length; i++) {
-			if (childs[i] == CDD.FALSE) {
+		for (int i = 0; i < mChilds.length; i++) {
+			if (mChilds[i] == CDD.FALSE) {
 				continue;
 			}
 
-			val = ((RangeDecision) decision).getVal(i);
+			val = ((RangeDecision) mDecision).getVal(i);
 
 			if (val > 0) {
 				return val;
@@ -726,18 +728,18 @@ public final class CDD {
 	}
 
 	public int getOp() {
-		if (!(decision instanceof RangeDecision)) {
+		if (!(mDecision instanceof RangeDecision)) {
 			return RangeDecision.OP_INVALID;
 		}
 
 		int val = RangeDecision.OP_INVALID;
 
-		for (int i = 0; i < childs.length; i++) {
-			if (childs[i] == CDD.FALSE) {
+		for (int i = 0; i < mChilds.length; i++) {
+			if (mChilds[i] == CDD.FALSE) {
 				continue;
 			}
 
-			val = ((RangeDecision) decision).getOp(i);
+			val = ((RangeDecision) mDecision).getOp(i);
 
 			if (val != RangeDecision.OP_INVALID) {
 				return val;
@@ -766,20 +768,20 @@ public final class CDD {
 			return "FALSE";
 		}
 
-		for (int i = 0; i < childs.length; i++) {
-			if (childs[i] == CDD.FALSE) {
+		for (int i = 0; i < mChilds.length; i++) {
+			if (mChilds[i] == CDD.FALSE) {
 				continue;
 			}
 
 			sb.append(ordelim);
 
 			if (childDominates(i)) {
-				sb.append(childs[i].toTexString(true));
+				sb.append(mChilds[i].toTexString(true));
 			} else {
-				sb.append(decision.toTexString(i));
+				sb.append(mDecision.toTexString(i));
 
-				if (childs[i] != CDD.TRUE) {
-					sb.append(" \\wedge ").append(childs[i].toTexString(true));
+				if (mChilds[i] != CDD.TRUE) {
+					sb.append(" \\wedge ").append(mChilds[i].toTexString(true));
 				}
 			}
 
@@ -814,8 +816,8 @@ public final class CDD {
 			return "FALSE";
 		}
 
-		for (int i = 0; i < childs.length; i++) {
-			if (childs[i] == CDD.FALSE) {
+		for (int i = 0; i < mChilds.length; i++) {
+			if (mChilds[i] == CDD.FALSE) {
 				continue;
 			}
 
@@ -823,38 +825,38 @@ public final class CDD {
 
 			if (childDominates(i)) {
 				if (format.matches("tex")) {
-					sb.append(childs[i].toString("tex", true));
+					sb.append(mChilds[i].toString("tex", true));
 				}
 
 				if (format.matches("uppaal")) {
-					sb.append(childs[i].toString("uppaal", true));
+					sb.append(mChilds[i].toString("uppaal", true));
 				}
 
 				if (format.matches("general")) {
-					sb.append(childs[i].toString("general", true));
+					sb.append(mChilds[i].toString("general", true));
 				}
 			} else {
 				if (format.matches("tex")) {
-					sb.append(decision.toTexString(i));
+					sb.append(mDecision.toTexString(i));
 
-					if (childs[i] != CDD.TRUE) {
-						sb.append(" \\wedge ").append(childs[i].toString("tex", true));
+					if (mChilds[i] != CDD.TRUE) {
+						sb.append(" \\wedge ").append(mChilds[i].toString("tex", true));
 					}
 				}
 
 				if (format.matches("uppaal")) {
-					sb.append(decision.toString(i));
+					sb.append(mDecision.toString(i));
 
-					if (childs[i] != CDD.TRUE) {
-						sb.append(" && ").append(childs[i].toString("uppaal", true));
+					if (mChilds[i] != CDD.TRUE) {
+						sb.append(" && ").append(mChilds[i].toString("uppaal", true));
 					}
 				}
 
 				if (format.matches("general")) {
-					sb.append(decision.toString(i));
+					sb.append(mDecision.toString(i));
 
-					if (childs[i] != CDD.TRUE) {
-						sb.append(" \u2227 ").append(childs[i].toString("general", true));
+					if (mChilds[i] != CDD.TRUE) {
+						sb.append(" \u2227 ").append(mChilds[i].toString("general", true));
 					}
 				}
 			}
@@ -891,10 +893,10 @@ public final class CDD {
 			return;
 		}
 
-		System.out.println("Decision=" + decision.toString(i));
+		System.out.println("Decision=" + mDecision.toString(i));
 
-		for (int j = 0; j < childs.length; j++) {
-			childs[j].printCDD(j);
+		for (int j = 0; j < mChilds.length; j++) {
+			mChilds[j].printCDD(j);
 		}
 	}
 
@@ -902,14 +904,14 @@ public final class CDD {
 	 * @return Returns the childs.
 	 */
 	public CDD[] getChilds() {
-		return childs;
+		return mChilds;
 	}
 
 	/**
 	 * @return Returns the decision.
 	 */
 	public Decision getDecision() {
-		return decision;
+		return mDecision;
 	}
 
 	public CDD prime() {
@@ -920,14 +922,14 @@ public final class CDD {
 		if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
 			return this;
 		}
-		if (primeCache != null) {
-			return primeCache;
+		if (mPrimeCache != null) {
+			return mPrimeCache;
 		}
 
-		final Decision ldecision = decision;
+		final Decision ldecision = mDecision;
 		Decision newDecision;
 
-		final CDD[] children = childs;
+		final CDD[] children = mChilds;
 		final CDD[] newChildren = new CDD[children.length];
 
 		for (int i = 0; i < children.length; i++) {
@@ -936,8 +938,8 @@ public final class CDD {
 
 		newDecision = ldecision.prime(ignore);
 
-		primeCache = CDD.create(newDecision, newChildren);
-		return primeCache;
+		mPrimeCache = CDD.create(newDecision, newChildren);
+		return mPrimeCache;
 	}
 
 	// Change by Ami
@@ -961,10 +963,10 @@ public final class CDD {
 			return this;
 		}
 
-		final Decision decision = this.decision;
+		final Decision decision = mDecision;
 		Decision newDecision;
 
-		final CDD[] children = childs;
+		final CDD[] children = mChilds;
 		final CDD[] newChildren = new CDD[children.length];
 
 		for (int i = 0; i < children.length; i++) {
@@ -984,7 +986,7 @@ public final class CDD {
 	 */
 	public Set<String> getIdents() {
 		final Set<String> idents = new HashSet<>();
-		if (childs == null) { // empty cdds may happen
+		if (mChilds == null) { // empty cdds may happen
 			return idents;
 		}
 		for (final CDD child : getChilds()) {
@@ -992,12 +994,12 @@ public final class CDD {
 				idents.addAll(child.getIdents());
 			}
 		}
-		if (decision == null) {
+		if (mDecision == null) {
 			return idents;
-		} else if (decision instanceof BoogieBooleanExpressionDecision) {
-			idents.addAll(((BoogieBooleanExpressionDecision) decision).getVars().keySet());
+		} else if (mDecision instanceof BoogieBooleanExpressionDecision) {
+			idents.addAll(((BoogieBooleanExpressionDecision) mDecision).getVars().keySet());
 		} else {
-			idents.add(decision.getVar());
+			idents.add(mDecision.getVar());
 		}
 		return idents;
 	}
@@ -1060,23 +1062,23 @@ public final class CDD {
 	}
 
 	private int getDecHash() {
-		if (decision == null) {
+		if (mDecision == null) {
 			return 0;
 		}
 
-		return decision.getVar().hashCode();
+		return mDecision.getVar().hashCode();
 	}
 
 	private int getDecHash2() {
-		if (decision == null) {
+		if (mDecision == null) {
 			return 0;
 		}
 
 		int i;
 		int res = 0;
-		final char[] chs = decision.getVar().toCharArray();
+		final char[] chs = mDecision.getVar().toCharArray();
 
-		for (i = 0; i < decision.getVar().length(); i++) {
+		for (i = 0; i < mDecision.getVar().length(); i++) {
 			res += (chs[i] * (((i & 1) == 0) ? 7 : 11));
 		}
 
@@ -1087,14 +1089,14 @@ public final class CDD {
 		int i;
 		final Vector<Integer> res = new Vector<>();
 
-		if (decision != null) {
+		if (mDecision != null) {
 			res.add(getDecHash());
 			res.add(getDecHash2());
 		}
 
-		if (childs != null) {
-			for (i = 0; i < childs.length; i++) {
-				res.addAll(childs[i].getElemHashes());
+		if (mChilds != null) {
+			for (i = 0; i < mChilds.length; i++) {
+				res.addAll(mChilds[i].getElemHashes());
 			}
 		}
 

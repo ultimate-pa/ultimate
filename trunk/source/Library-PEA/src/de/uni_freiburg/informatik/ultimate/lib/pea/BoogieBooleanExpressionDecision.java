@@ -60,17 +60,6 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	}
 
 	@Override
-	public int compareTo(final Object o) {
-		if (!(o instanceof BoogieBooleanExpressionDecision)) {
-			return 1;
-		}
-
-		// TODO: is there somethin better than a string comparison for that
-		return ((BoogieBooleanExpressionDecision) o).getExpression().toString().compareTo(mExpression.toString());
-
-	}
-
-	@Override
 	public boolean equals(final Object o) {
 		if (!(o instanceof BoogieBooleanExpressionDecision)) {
 			return false;
@@ -251,7 +240,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 		@Override
 		public boolean visit(final QuantifierExpression node) {
 			// stop descend, take the whole remaining expression as decision
-			mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.trueChilds));
+			mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.TRUE_CHILDS));
 			return false;
 		}
 
@@ -273,7 +262,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 			case COMPNEQ:
 			case COMPPO:
 				// stop descend, take the whole remaining expression as decision
-				mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.trueChilds));
+				mOpenCDDs.push(CDD.create(new BoogieBooleanExpressionDecision(node), CDD.TRUE_CHILDS));
 				return false;
 			case LOGICAND:
 			case LOGICIFF:
@@ -321,7 +310,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 
 		@Override
 		public boolean visit(final IdentifierExpression node) {
-			mOpenCDDs.push(CDD.create(new BooleanDecision(node.getIdentifier()), CDD.trueChilds));
+			mOpenCDDs.push(CDD.create(new BooleanDecision(node.getIdentifier()), CDD.TRUE_CHILDS));
 			return super.visit(node);
 		}
 
