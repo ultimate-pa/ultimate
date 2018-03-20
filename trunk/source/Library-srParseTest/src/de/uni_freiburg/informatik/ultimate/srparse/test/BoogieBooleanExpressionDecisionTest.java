@@ -43,10 +43,10 @@ public class BoogieBooleanExpressionDecisionTest {
 		cdd = cdd.negate(); // !(crew == 47)
 		cdd = cdd.and(BoogieBooleanExpressionDecision.create(e2)); // !(crew == 47)∧(test <= 5.0)
 		cdd = cdd.or(BoogieBooleanExpressionDecision.create(e3)); // (answer != true)∨(!(crew == 47)∧(test <= 5.0))
-		Assert.assertEquals("(answer != true ∨ test < 5.0 ∧ !(crew == 47))", cdd.toString(true));
+		Assert.assertEquals("(test < 5.0 ∧ (answer != true ∨ !(crew == 47)) ∨ answer != true)", cdd.toString(true));
 
 		cdd = cdd.negate();
-		Assert.assertEquals("!(answer != true) ∧ (crew == 47 ∨ !(test < 5.0))", cdd.toString());
+		Assert.assertEquals("crew == 47 ∧ !(answer != true) ∨ !(test < 5.0) ∧ !(answer != true)", cdd.toString());
 	}
 
 	@Test

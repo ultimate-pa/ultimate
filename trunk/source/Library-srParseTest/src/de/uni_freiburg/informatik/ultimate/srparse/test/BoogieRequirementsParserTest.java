@@ -88,7 +88,7 @@ public class BoogieRequirementsParserTest {
 		final String testString =
 				"id: Globally, it is always the case that \"(A >= B &&" + " C + 3 == D -3) || E \" holds";
 		final PatternType[] parsedPatterns = genPatterns(testString);
-		check(testString, parsedPatterns, "E ∨ A >= B ∧ C + 3 == D - 3");
+		check(testString, parsedPatterns, "A >= B ∧ (C + 3 == D - 3 ∨ E) ∨ E");
 	}
 
 	@Test
