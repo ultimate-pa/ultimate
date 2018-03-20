@@ -235,4 +235,8 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		}
 		return mgdScriptTc;
 	}
+
+	public PathProgramCache<LETTER> getPathProgramCache() {
+		return mPathProgramCache;
+	}
 }

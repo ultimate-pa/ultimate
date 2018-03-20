@@ -133,7 +133,7 @@ public class SolverBuilder {
 
 		@Override
 		public boolean isTerminationRequested() {
-			return !mMonitor.continueProcessing();
+			return !mMonitor.continueProcessingRoot();
 		}
 
 	}
@@ -494,17 +494,13 @@ public class SolverBuilder {
 				(((solverMode == SolverMode.External_DefaultMode
 				|| solverMode == SolverMode.External_ModelsAndUnsatCoreMode
 				|| solverMode == SolverMode.External_ModelsMode)
-					&& solverSettings.getCommandExternalSolver().trim().startsWith("z3"))
-				|| solverMode == SolverMode.External_Z3InterpolationMode)
-				&& logicForExternalSolver.equals("ALL")) {
+				&& solverSettings.getCommandExternalSolver().trim().startsWith("z3"))
+				|| solverMode == SolverMode.External_Z3InterpolationMode) && logicForExternalSolver.equals("ALL")) {
 			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
 			final TermVariable argTv = result.variable("x", script.sort("Int"));
-			script.defineFun("const-Array-Int-Int",
-					new TermVariable[] { argTv },
-					arrayIntIntSort,
+			script.defineFun("const-Array-Int-Int", new TermVariable[] { argTv }, arrayIntIntSort,
 					script.term("const", null, arrayIntIntSort, argTv));
 		}
-
 
 		return result;
 	}

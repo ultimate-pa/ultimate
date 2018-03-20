@@ -137,6 +137,12 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			reportCounterexampleResult(abstractCegarLoop.getRcfgProgramExecution());
 			break;
 		case TIMEOUT:
+		case USER_LIMIT_ITERATIONS:
+		case USER_LIMIT_PATH_PROGRAM:
+		case USER_LIMIT_TIME:
+		case USER_LIMIT_TRACEHISTOGRAM:
+			// TODO: The result handling is similar to that of the normal trace abstraction starter, merge the code and
+			// use the logic from there. Until then, just threat user limits like timeouts
 			reportTimeoutResult(errNodesOfAllProc);
 			break;
 		case UNKNOWN:

@@ -98,7 +98,7 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 
 	protected void constructProcedureAutomata() {
 		final CodeBlockSize codeBlockSize = RcfgPreferenceInitializer.getPreferences(mServices)
-				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, RcfgPreferenceInitializer.CodeBlockSize.class);
+				.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, RcfgPreferenceInitializer.CodeBlockSize.class);
 		if (codeBlockSize != CodeBlockSize.SingleStatement) {
 			throw new IllegalArgumentException("Concurrent programs reqire" + "atomic block encoding.");
 		}

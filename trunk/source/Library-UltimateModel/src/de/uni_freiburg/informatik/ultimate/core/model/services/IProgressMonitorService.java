@@ -39,16 +39,42 @@ public interface IProgressMonitorService extends IProgressAwareTimer, IToolchain
 	 * @param task
 	 *            A name that will be displayed to the user.
 	 */
-	void setSubtask(String task);
+	void setSubtask(final String task);
 
 	/**
 	 * Set a time limit after which the toolchain should be stopped.
 	 *
 	 * A convenient way of setting this deadline is using System.currentTimeMillis() + timelimit (in ms) as value.
 	 *
+	 * This will remove all child timers and only the newly set deadline will be respected. This deadline will also be
+	 * the root deadline.
+	 *
 	 * @param date
 	 *            A date in the future (aka, the difference, measured in milliseconds, between the current time and
 	 *            midnight, January 1, 1970 UTC) after which a running toolchain should be stopped.
 	 */
-	void setDeadline(long date);
+	void setDeadline(final long date);
+
+	/**
+	 * Registers a child timer that will queried instead of the regular timer.
+	 *
+	 * @param timer
+	 *            The timer with which you want to replace the interal timer.
+	 */
+	void addChildTimer(final IProgressAwareTimer timer);
+
+	/**
+	 * Removes and returns a child timer if one was added. If none is present, does nothing.
+	 *
+	 * @return A child timer that was added previously or null.
+	 */
+	IProgressAwareTimer removeChildTimer();
+
+	/**
+	 * Use this instead of {@link #continueProcessing()} if you want to ignore child timers.
+	 *
+	 * @return false iff cancellation of Toolchain is requested or deadline of root timer is exceeded.
+	 */
+	boolean continueProcessingRoot();
+
 }

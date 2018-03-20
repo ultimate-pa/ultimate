@@ -308,7 +308,7 @@ public final class MonitoredProcess implements IStorable {
 		}
 		mLogger.info(String.format("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand));
 		final IProgressMonitorService progressService = mServices.getProgressMonitorService();
-		while (progressService != null && progressService.continueProcessing()) {
+		while (progressService != null && progressService.continueProcessingRoot()) {
 			try {
 				final MonitoredProcessState state = waitfor(WAIT_BETWEEN_CHECKS_MILLIS);
 				if (!state.isRunning()) {

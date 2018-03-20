@@ -104,26 +104,26 @@ public class SpaceExPreferenceManager {
 				de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator.PLUGIN_ID;
 		final IPreferenceProvider traceAbstractionPreferences =
 				mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID);
-		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 		mFakeNonIncrementalScript = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
 		mDumpSmtScriptToFile = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 		mPathOfDumpedScript = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getString(RcfgPreferenceInitializer.LABEL_Path);
+				.getString(RcfgPreferenceInitializer.LABEL_DUMP_PATH);
 
 		mCommandExternalSolver = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+				.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 
 		mDumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
 
 		mDumpMainTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
 		mLogicForExternalSolver = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+				.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC);
 		mSolverSettings = SolverBuilder.constructSolverSettings(mModelFilename, mSolverMode, mFakeNonIncrementalScript,
 				mCommandExternalSolver, mDumpSmtScriptToFile, mPathOfDumpedScript);
 

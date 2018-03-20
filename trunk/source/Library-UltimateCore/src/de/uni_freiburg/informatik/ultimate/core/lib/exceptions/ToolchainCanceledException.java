@@ -28,12 +28,15 @@ package de.uni_freiburg.informatik.ultimate.core.lib.exceptions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 
 /**
  * Exception that can be thrown if a plugin detects that the timeout is overdue or a cancellation of the toolchain was
  * requested.
  *
- * The core will create TimeoutResult if this exception is thrown.
+ * The core will create {@link TimeoutResult} if this exception is thrown.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -42,7 +45,7 @@ public class ToolchainCanceledException extends RuntimeException implements IRun
 	private static final long serialVersionUID = 7090759880566576629L;
 	private static final String MESSAGE = "Timeout or Toolchain cancelled by user";
 
-	private final List<RunningTaskInfo> mRunningTaskInfos = new ArrayList<>();
+	private final List<RunningTaskInfo> mRunningTaskInfos;
 
 	public ToolchainCanceledException(final Class<?> thrower) {
 		this(MESSAGE, new RunningTaskInfo(thrower, null));
@@ -57,9 +60,7 @@ public class ToolchainCanceledException extends RuntimeException implements IRun
 	}
 
 	public ToolchainCanceledException(final IRunningTaskStackProvider rtsp, final RunningTaskInfo runningTaskInfo) {
-		super(MESSAGE);
-		mRunningTaskInfos.addAll(rtsp.getRunningTaskStack());
-		mRunningTaskInfos.add(runningTaskInfo);
+		this(MESSAGE, rtsp, runningTaskInfo);
 	}
 
 	public ToolchainCanceledException(final String message, final Class<?> thrower,
@@ -68,8 +69,17 @@ public class ToolchainCanceledException extends RuntimeException implements IRun
 	}
 
 	public ToolchainCanceledException(final String message, final RunningTaskInfo runningTaskInfo) {
-		super(message);
-		mRunningTaskInfos.add(runningTaskInfo);
+		this(message, null, runningTaskInfo);
+	}
+
+	protected ToolchainCanceledException(final String message, final IRunningTaskStackProvider rtsp,
+			final RunningTaskInfo runningTaskInfo) {
+		super(Objects.requireNonNull(message));
+		mRunningTaskInfos = new ArrayList<>();
+		if (rtsp != null) {
+			mRunningTaskInfos.addAll(rtsp.getRunningTaskStack());
+		}
+		mRunningTaskInfos.add(Objects.requireNonNull(runningTaskInfo));
 	}
 
 	public void addRunningTaskInfo(final RunningTaskInfo runningTaskInfo) {

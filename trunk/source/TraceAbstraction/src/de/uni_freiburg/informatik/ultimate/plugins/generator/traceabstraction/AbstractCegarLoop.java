@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.EnumSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -40,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
@@ -80,16 +83,60 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 	/**
 	 * Result of CEGAR loop iteration
-	 * <ul>
-	 * <li>SAFE: there is no feasible trace to an error location
-	 * <li>UNSAFE: there is a feasible trace to an error location (the underlying program has at least one execution
-	 * which violates its specification)
-	 * <li>UNKNOWN: we found a trace for which we could not decide feasibility or we found an infeasible trace but were
-	 * not able to exclude it in abstraction refinement.
-	 * <li>TIMEOUT:
 	 */
 	public enum Result {
-		SAFE, UNSAFE, TIMEOUT, UNKNOWN
+		/**
+		 * there is no feasible trace to an error location
+		 */
+		SAFE,
+		/**
+		 * there is a feasible trace to an error location (the underlying program has at least one execution which
+		 * violates its specification)
+		 */
+		UNSAFE,
+		/**
+		 * The core timeout was hit or a user canceled the verification
+		 */
+		TIMEOUT,
+		/**
+		 * we found a trace for which we could not decide feasibility or we found an infeasible trace but were not able
+		 * to exclude it in abstraction refinement.
+		 */
+		UNKNOWN,
+		/**
+		 * The user-specified timeout for the analysis was hit
+		 */
+		USER_LIMIT_TIME,
+		/**
+		 * The user-specified limit for the max-size of the trace histogram was hit
+		 */
+		USER_LIMIT_TRACEHISTOGRAM,
+		/**
+		 * The user-specified limit for the amount of CEGAR iterations was hit
+		 */
+		USER_LIMIT_ITERATIONS,
+		/**
+		 * The user-specified limit for the amount of analysis attempts per path program was hit
+		 */
+		USER_LIMIT_PATH_PROGRAM;
+
+		public static final EnumSet<Result> USER_LIMIT_RESULTS =
+				EnumSet.of(USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM);
+
+		public static final Result convert(final TaskCanceledException.UserDefinedLimit limit) {
+			switch (limit) {
+			case ITERATIONS:
+				return Result.USER_LIMIT_ITERATIONS;
+			case PATH_PROGRAM_ATTEMPTS:
+				return Result.USER_LIMIT_PATH_PROGRAM;
+			case TIME_PER_ERROR_LOCATION:
+				return USER_LIMIT_TIME;
+			case TRACE_HISTOGRAM:
+				return Result.USER_LIMIT_TRACEHISTOGRAM;
+			default:
+				throw new UnsupportedOperationException("Unknown UserDefinedLimit " + limit);
+			}
+		}
 	}
 
 	protected final ILogger mLogger;
@@ -340,44 +387,33 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		}
 		try {
 			getInitialAbstraction();
-		} catch (final AutomataOperationCanceledException e) {
-			return performTimeoutActions(e);
-		} catch (final AutomataLibraryException e) {
-			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
-		}
 
-		if (mIteration <= mPref.watchIteration()
-				&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
-			mArtifactAutomaton = mAbstraction;
-		}
-		if (mPref.dumpAutomata()) {
-			final String filename = mName + "Abstraction" + mIteration;
-			writeAutomatonToFile(mAbstraction, filename);
-		}
-		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
-
-		mInteractive.waitIfPaused();
-		boolean initalAbstractionCorrect;
-		try {
-			initalAbstractionCorrect = isAbstractionEmpty();
-		} catch (final AutomataOperationCanceledException e) {
-			return performTimeoutActions(e);
-		}
-		if (initalAbstractionCorrect) {
-			return reportResult(Result.SAFE);
-		}
-
-		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
-			mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
-			mInteractive.reportIteration(mIteration);
-			mInteractive.waitIfPaused();
-			mCegarLoopBenchmark.announceNextIteration();
+			if (mIteration <= mPref.watchIteration()
+					&& (mPref.artifact() == Artifact.ABSTRACTION || mPref.artifact() == Artifact.RCFG)) {
+				mArtifactAutomaton = mAbstraction;
+			}
 			if (mPref.dumpAutomata()) {
-				mDumper = new Dumper(mLogger, mPref, mName, mIteration);
+				final String filename = mName + "Abstraction" + mIteration;
+				writeAutomatonToFile(mAbstraction, filename);
+			}
+			mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+
+			mInteractive.waitIfPaused();
+			final boolean initalAbstractionCorrect = isAbstractionEmpty();
+			if (initalAbstractionCorrect) {
+				return reportResult(Result.SAFE);
 			}
 
-			final String automatonType;
-			try {
+			for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
+				mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
+				mInteractive.reportIteration(mIteration);
+				mInteractive.waitIfPaused();
+				mCegarLoopBenchmark.announceNextIteration();
+				if (mPref.dumpAutomata()) {
+					mDumper = new Dumper(mLogger, mPref, mName, mIteration);
+				}
+
+				final String automatonType;
 				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
 					if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
@@ -401,79 +437,71 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					automatonType = "Interpolant";
 					constructInterpolantAutomaton();
 				}
-			} catch (final AutomataOperationCanceledException | ToolchainCanceledException e) {
-				return performTimeoutActions(e);
-			}
 
-			if (mInterpolAutomaton != null) {
-				mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
-				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
-					mArtifactAutomaton = mInterpolAutomaton;
+				if (mInterpolAutomaton != null) {
+					mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
+					if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
+						mArtifactAutomaton = mInterpolAutomaton;
+					}
+					if (mPref.dumpAutomata()) {
+						writeAutomatonToFile(mInterpolAutomaton, automatonType + "Automaton_Iteration" + mIteration);
+					}
 				}
-				if (mPref.dumpAutomata()) {
-					writeAutomatonToFile(mInterpolAutomaton, automatonType + "Automaton_Iteration" + mIteration);
-				}
-			}
 
-			mInteractive.waitIfPaused();
-			try {
+				mInteractive.waitIfPaused();
 				final boolean progress = refineAbstraction();
 				if (!progress) {
 					mLogger.warn("No progress! Counterexample is still accepted by refined abstraction.");
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
 				}
-			} catch (final ToolchainCanceledException | AutomataOperationCanceledException e) {
-				return performTimeoutActions(e);
-			} catch (final AutomataLibraryException e) {
-				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
-			}
 
-			if (mInterpolAutomaton != null) {
-				mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
-				mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
-				mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
-			}
-
-			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-				assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, false,
-						true, new IncrementalHoareTripleChecker(mCsToolkit)).getResult() : "Not inductive";
-			}
-
-			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
-				mArtifactAutomaton = mAbstraction;
-			}
-
-			if (mPref.dumpAutomata()) {
-				final String filename = "Abstraction" + mIteration;
-				writeAutomatonToFile(mAbstraction, filename);
-			}
-
-			final boolean newMaximumReached =
-					mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
-			if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-				final String filename = mIcfg.getIdentifier();
-				writeAutomatonToFile(mAbstraction, filename);
-			}
-
-			mInteractive.waitIfPaused();
-			boolean isAbstractionCorrect;
-			try {
-				isAbstractionCorrect = isAbstractionEmpty();
-			} catch (final AutomataOperationCanceledException e) {
-				return performTimeoutActions(e);
-			}
-			if (isAbstractionCorrect) {
-				if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.SAFE)) {
-					return reportResult(Result.UNSAFE);
+				if (mInterpolAutomaton != null) {
+					mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
+					mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
+					mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
 				}
-				return reportResult(Result.SAFE);
+
+				if (mPref.computeHoareAnnotation()
+						&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+					assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
+							false, true, new IncrementalHoareTripleChecker(mCsToolkit)).getResult() : "Not inductive";
+				}
+
+				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
+					mArtifactAutomaton = mAbstraction;
+				}
+
+				if (mPref.dumpAutomata()) {
+					final String filename = "Abstraction" + mIteration;
+					writeAutomatonToFile(mAbstraction, filename);
+				}
+
+				final boolean newMaximumReached =
+						mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+				if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
+					final String filename = mIcfg.getIdentifier();
+					writeAutomatonToFile(mAbstraction, filename);
+				}
+
+				mInteractive.waitIfPaused();
+				final boolean isAbstractionCorrect = isAbstractionEmpty();
+				if (isAbstractionCorrect) {
+					if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.SAFE)) {
+						return reportResult(Result.UNSAFE);
+					}
+					return reportResult(Result.SAFE);
+				}
+				mInteractive.send(mCegarLoopBenchmark);
 			}
-			mInteractive.send(mCegarLoopBenchmark);
+			if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.USER_LIMIT_ITERATIONS)) {
+				return reportResult(Result.UNSAFE);
+			}
+			return reportResult(Result.USER_LIMIT_ITERATIONS);
+		} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
+			return performLimitReachedActions(e);
+		} catch (final AutomataLibraryException e) {
+			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 		}
-		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.TIMEOUT)) {
-			return reportResult(Result.UNSAFE);
-		}
-		return reportResult(Result.TIMEOUT);
 	}
 
 	protected Result reportResult(final Result result) {
@@ -486,13 +514,22 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		return result;
 	}
 
-	private Result performTimeoutActions(final IRunningTaskStackProvider e) {
+	private Result performLimitReachedActions(final IRunningTaskStackProvider e) {
 		mRunningTaskStackProvider = e;
 		mLogger.warn(MSG_VERIFICATION_CANCELED);
-		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.TIMEOUT)) {
+
+		final Result res;
+		if (e instanceof TaskCanceledException) {
+			final EnumSet<UserDefinedLimit> limits = ((TaskCanceledException) e).getLimits();
+			res = Result.convert(limits.iterator().next());
+		} else {
+			res = Result.TIMEOUT;
+		}
+
+		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, res)) {
 			return reportResult(Result.UNSAFE);
 		}
-		return reportResult(Result.TIMEOUT);
+		return reportResult(res);
 	}
 
 	protected void writeAutomatonToFile(final IAutomaton<LETTER, IPredicate> automaton, final String filename) {

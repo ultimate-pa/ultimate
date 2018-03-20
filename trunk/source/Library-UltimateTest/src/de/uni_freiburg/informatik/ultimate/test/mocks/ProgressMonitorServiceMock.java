@@ -68,4 +68,35 @@ final class ProgressMonitorServiceMock implements IProgressMonitorService {
 	public CountDownLatch cancelToolchain() {
 		return new CountDownLatch(0);
 	}
+
+	@Override
+	public IProgressAwareTimer getParent() {
+		return null;
+	}
+
+	@Override
+	public long getDeadline() {
+		return 0;
+	}
+
+	@Override
+	public void addChildTimer(final IProgressAwareTimer timer) {
+		// mock
+	}
+
+	@Override
+	public IProgressAwareTimer removeChildTimer() {
+		// mock
+		return null;
+	}
+
+	@Override
+	public IProgressAwareTimer getTimer(final long timeout) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean continueProcessingRoot() {
+		return true;
+	}
 }

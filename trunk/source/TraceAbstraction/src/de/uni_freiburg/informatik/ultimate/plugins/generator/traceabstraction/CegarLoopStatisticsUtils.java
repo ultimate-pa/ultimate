@@ -26,36 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
  * Provides auxiliary methods for aggregating CEGAR loop statistics.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class CegarLoopStatisticsUtils {
-	
+
 	static final Function<Object, Function<Object, Object>> DEFAULT_AGGREGATION_FUN =
 			x -> y -> CegarLoopStatisticsDefinitions.aggregateResult(x, y);
-
-	private static AbstractCegarLoop.Result aggregateResult(final Object value1, final Object value2) {
-		final AbstractCegarLoop.Result result1 = (AbstractCegarLoop.Result) value1;
-		final AbstractCegarLoop.Result result2 = (AbstractCegarLoop.Result) value2;
-		final Set<AbstractCegarLoop.Result> results = new HashSet<>();
-		results.add(result1);
-		results.add(result2);
-		if (results.contains(AbstractCegarLoop.Result.UNSAFE)) {
-			return AbstractCegarLoop.Result.UNSAFE;
-		} else if (results.contains(AbstractCegarLoop.Result.UNKNOWN)) {
-			return AbstractCegarLoop.Result.UNKNOWN;
-		} else if (results.contains(AbstractCegarLoop.Result.TIMEOUT)) {
-			return AbstractCegarLoop.Result.TIMEOUT;
-		} else if (results.contains(AbstractCegarLoop.Result.SAFE)) {
-			return AbstractCegarLoop.Result.SAFE;
-		} else {
-			throw new AssertionError();
-		}
-	}
 }

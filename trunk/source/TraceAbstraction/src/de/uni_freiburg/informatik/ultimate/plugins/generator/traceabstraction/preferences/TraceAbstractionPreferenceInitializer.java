@@ -50,15 +50,37 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceInitializer {
-	/*
-	 * labels for the different preferencess
-	 */
+
+	public static final String LABEL_USERLIMIT_TRACE_HISTOGRAM = "Limit trace histogram size";
+	private static final String DESC_USERLIMIT_TRACE_HISTOGRAM =
+			"Abort the analysis of either a single error location or the whole program if the trace histogram of the "
+					+ "current counterexample is larger than this value. 0 disables this limit.";
+	private static final int DEF_USERLIMIT_TRACE_HISTOGRAM = 0;
+
+	public static final String LABEL_USERLIMIT_TIME = "Limit analysis time";
+	private static final String DESC_USERLIMIT_TIME =
+			"Abort the analysis of either a single error location or the whole program if more time than specified has "
+					+ "elapsed. Time is specified in seconds. 0 disables this limit.";
+	private static final int DEF_USERLIMIT_TIME = 0;
+
+	public static final String LABEL_USERLIMIT_PATH_PROGRAM = "Limit path program analysis attempts";
+	private static final String DESC_USERLIMIT_PATH_PROGRAM =
+			"Abort the analysis of either a single error location or the whole program if the same path program has "
+					+ "been induced by spurious counterexamples more than the specified amount of times. "
+					+ "0 disables this limit.";
+	private static final int DEF_USERLIMIT_PATH_PROGRAM = 0;
+
+	public static final String LABEL_USERLIMIT_ITERATIONS = "Limit iterations";
+	private static final String DESC_USERLIMIT_ITERATIONS =
+			"Abort the analysis of either a single error location or the whole program if more than the specified "
+					+ "amount of iterations occured. 0 disables this limit.";
+	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
+
 	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
 	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Enhance during reuse of Floyd-Hoare automata";
-	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
 	public static final String LABEL_HOARE =
@@ -95,7 +117,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
 			"Highlight relevant statements in error traces";
-	public static final String TOOLTIP_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
+	public static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
 			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or pointers this analysis may take a significant amount of time.";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE =
 			"Flow-sensitive error trace relevance analysis";
@@ -130,7 +152,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
 	private static final FloydHoareAutomataReuseEnhancement DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			FloydHoareAutomataReuseEnhancement.NONE;
-	public static final int DEF_ITERATIONS = 1_000_000;
+
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1_000_000;
 	public static final boolean DEF_HOARE = false;
@@ -188,6 +210,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "the set of reusable interpolant automata.";
 	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Specifies how to compute successors on-demand for re-use interpolant automata.";
+	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
 
 	/**
 	 * Constructor.
@@ -200,7 +223,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_INTERPROCEDUTAL, DEF_INTERPROCEDUTAL, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE, DESC_ALL_ERRORS_AT_ONCE,
+						PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_FLOYD_HOARE_AUTOMATA_REUSE, DEF_FLOYD_HOARE_AUTOMATA_REUSE,
 						DESC_FLOYD_HOARE_AUTOMATA_REUSE, PreferenceType.Combo, FloydHoareAutomataReuse.values()),
@@ -208,8 +232,18 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT, DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT,
 						PreferenceType.Combo, FloydHoareAutomataReuseEnhancement.values()),
 
-				new UltimatePreferenceItem<>(LABEL_ITERATIONS, DEF_ITERATIONS, PreferenceType.Integer,
+				new UltimatePreferenceItem<>(LABEL_USERLIMIT_ITERATIONS, DEF_USERLIMIT_ITERATIONS,
+						DESC_USERLIMIT_ITERATIONS, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
+				new UltimatePreferenceItem<>(LABEL_USERLIMIT_TIME, DEF_USERLIMIT_TIME, DESC_USERLIMIT_TIME,
+						PreferenceType.Integer, IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+				new UltimatePreferenceItem<>(LABEL_USERLIMIT_PATH_PROGRAM, DEF_USERLIMIT_PATH_PROGRAM,
+						DESC_USERLIMIT_PATH_PROGRAM, PreferenceType.Integer,
+						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+				new UltimatePreferenceItem<>(LABEL_USERLIMIT_TRACE_HISTOGRAM, DEF_USERLIMIT_TRACE_HISTOGRAM,
+						DESC_USERLIMIT_TRACE_HISTOGRAM, PreferenceType.Integer,
+						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+
 				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
 				new UltimatePreferenceItem<>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
@@ -218,18 +252,18 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						HoareAnnotationPositions.values()),
 
 				new UltimatePreferenceItem<>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_Solver, DEF_SOLVER, PreferenceType.Combo,
+				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo,
 						SolverMode.values()),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript,
-						RcfgPreferenceInitializer.DEF_FakeNonIncrementalScript, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_ExtSolverCommand,
+				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT,
+						RcfgPreferenceInitializer.DEF_FAKE_NON_INCREMENTAL_SCRIPT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND,
 						DEF_EXTERNAL_SOLVER_COMMAND, PreferenceType.String),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_ExtSolverLogic,
-						RcfgPreferenceInitializer.DEF_ExtSolverLogic, PreferenceType.String),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DumpToFile, Boolean.FALSE,
+				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC,
+						RcfgPreferenceInitializer.DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
+				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE, Boolean.FALSE,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_Path, RcfgPreferenceInitializer.DEF_Path,
-						PreferenceType.Directory),
+				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DUMP_PATH,
+						RcfgPreferenceInitializer.DEF_DUMP_PATH, PreferenceType.Directory),
 
 				new UltimatePreferenceItem<>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS, PreferenceType.Combo,
 						InterpolationTechnique.values()),
@@ -277,7 +311,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
 						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
-						TOOLTIP_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
+						DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE,
 						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE,
@@ -568,5 +602,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * automaton.
 		 */
 		ONLY_NEW_LETTERS_SOLVER,
+	}
+
+	public enum MultiPropertyMode {
+		STOP_AFTER_FIRST_VIOLATION, CHECK_EACH_PROPERTY_SEPARATELY, CHECK_ALL_PROPERTIES_REFINE_WITH_VIOLATIONS,
 	}
 }

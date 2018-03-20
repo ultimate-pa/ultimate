@@ -63,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -141,7 +143,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
-	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
 
@@ -354,11 +355,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (traceHistogram.getMax() > DEBUG_DANGER_INVARIANTS_THRESHOLD) {
 			checkForDangerInvariantAndReport();
 		}
-		if (TRACE_HISTOGRAMM_BAILOUT && traceHistogram.getMax() > traceHistogram.getVisualizationArray().length) {
-			final String message = "bailout by trace histogram " + traceHistogram.toString();
-			final String taskDescription = "trying to verify (iteration " + mIteration + ")";
-			throw new ToolchainCanceledException(message, getClass(), taskDescription);
+
+		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
+			final String taskDescription =
+					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + mIteration;
+			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
 		}
+
 		// Don't send the histogram: the complete run is sent already.
 		// mInteractive.send(traceHistogram);
 		return false;
@@ -394,6 +397,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final BaseRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(mCounterexample,
 				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()));
 		try {
+			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mRefinementStrategyFactory
+					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
+				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
+				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
+			}
+
 			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
@@ -428,7 +437,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						mIcfg.getCfgSmtToolkit().getSymbolTable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 				final boolean doAngelic = false; // TODO use a setting here
-				if(doAngelic) {
+				if (doAngelic) {
 					mRcfgProgramExecution =
 							new IcfgAngelicProgramExecution(mRcfgProgramExecution, a.getAngelicStatus());
 				}

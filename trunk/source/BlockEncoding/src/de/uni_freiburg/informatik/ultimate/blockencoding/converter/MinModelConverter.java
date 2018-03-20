@@ -95,7 +95,7 @@ public class MinModelConverter {
 		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
 		final boolean simplify = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY);
 		mConvertVisitor = new ConversionVisitor(mBoogie2SMT, root, getRatingHeuristic(), mServices, simplify);
 		for (final IcfgEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {

@@ -65,7 +65,7 @@ public class TransFormulaAdder {
 		mServices = services;
 		mBoogie2smt = boogie2smt;
 		mSimplifyCodeBlocks = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY);
 	}
 
 	/**

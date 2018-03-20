@@ -185,7 +185,7 @@ final class ToolchainWalker implements IToolchainCancel {
 			return true;
 		}
 
-		if (!service.continueProcessing()) {
+		if (!service.continueProcessingRoot()) {
 			final Collection<ITimeoutResult> toResults = ResultUtil.filterResults(
 					data.getToolchain().getServices().getResultService().getResults(), ITimeoutResult.class);
 			if (toResults.isEmpty()) {

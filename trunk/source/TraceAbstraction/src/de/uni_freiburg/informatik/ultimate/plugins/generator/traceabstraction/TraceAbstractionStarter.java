@@ -52,12 +52,14 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UserSpecifiedLimitReachedResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -148,15 +150,23 @@ public class TraceAbstractionStarter {
 			iterate(name, icfg, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errNodesOfAllProc,
 					witnessAutomaton, rawFloydHoareAutomataFromFile);
 		} else {
+			final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
 				final String name = errorLoc.getDebugIdentifier();
 				final List<IcfgLocation> errorLocs = new ArrayList<>(1);
 				errorLocs.add(errorLoc);
+				if (taPrefs.hasLimitAnalysisTime()) {
+					progmon.addChildTimer(progmon.getTimer(taPrefs.getLimitAnalysisTime() * 1000));
+				}
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
-				iterate(name, icfg, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errorLocs,
-						witnessAutomaton, rawFloydHoareAutomataFromFile);
+				final Result result = iterate(name, icfg, taPrefs, csToolkit, predicateFactory,
+						traceAbstractionBenchmark, errorLocs, witnessAutomaton, rawFloydHoareAutomataFromFile);
+				mLogger.info("Result for " + name + " was " + result);
 				reportBenchmarkForErrLocation(traceAbstractionBenchmark, errorLoc.toString());
 				traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
+				if (taPrefs.hasLimitAnalysisTime()) {
+					progmon.removeChildTimer();
+				}
 			}
 		}
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
@@ -170,6 +180,7 @@ public class TraceAbstractionStarter {
 		mLogger.debug("Overall result: " + mOverallResult);
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && mOverallResult != Result.TIMEOUT
+				&& !Result.USER_LIMIT_RESULTS.contains(mOverallResult)
 				&& mServices.getProgressMonitorService().continueProcessing()) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			createInvariantResults(icfg, csToolkit, backTranslatorService);
@@ -281,7 +292,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void iterate(final String name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
+	private Result iterate(final String name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
@@ -321,6 +332,7 @@ public class TraceAbstractionStarter {
 		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 
 		mArtifact = basicCegarLoop.getArtifact();
+		return result;
 	}
 
 	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<IcfgLocation> root,
@@ -374,7 +386,11 @@ public class TraceAbstractionStarter {
 			reportCounterexampleResult(basicCegarLoop.getRcfgProgramExecution());
 			return result;
 		case TIMEOUT:
-			reportTimeoutResult(errorLocs, basicCegarLoop.getRunningTaskStackProvider());
+		case USER_LIMIT_ITERATIONS:
+		case USER_LIMIT_PATH_PROGRAM:
+		case USER_LIMIT_TIME:
+		case USER_LIMIT_TRACEHISTOGRAM:
+			reportLimitResult(result, errorLocs, basicCegarLoop.getRunningTaskStackProvider());
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		case UNKNOWN:
 			final IcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
@@ -452,20 +468,28 @@ public class TraceAbstractionStarter {
 		return false;
 	}
 
-	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs, final IRunningTaskStackProvider rtsp) {
+	private void reportLimitResult(final Result result, final Collection<IcfgLocation> errorLocs,
+			final IRunningTaskStackProvider rtsp) {
 		for (final IcfgLocation errorIpp : errorLocs) {
-			String timeOutMessage = "Unable to prove that ";
-			timeOutMessage += ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
+			String description = "Unable to prove that ";
+			description += ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
 			if (errorIpp instanceof BoogieIcfgLocation) {
 				final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
-				timeOutMessage += " (line " + origin.getStartLine() + ").";
+				description += " (line " + origin.getStartLine() + ").";
 			}
 			if (rtsp != null) {
-				timeOutMessage += " Cancelled " + rtsp.printRunningTaskMessage();
+				description += " Cancelled " + rtsp.printRunningTaskMessage();
 			}
-			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,
-					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
-			reportResult(timeOutRes);
+
+			final IResult res;
+			if (result == Result.TIMEOUT) {
+				res = new TimeoutResultAtElement<>(errorIpp, Activator.PLUGIN_NAME,
+						mServices.getBacktranslationService(), description);
+			} else {
+				res = new UserSpecifiedLimitReachedResultAtElement<IElement>(result.toString(), errorIpp,
+						Activator.PLUGIN_NAME, mServices.getBacktranslationService(), description);
+			}
+			reportResult(res);
 		}
 	}
 
@@ -512,7 +536,7 @@ public class TraceAbstractionStarter {
 
 	private boolean interpolationModeSwitchNeeded() {
 		final SolverMode solver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+				.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 		return solver == SolverMode.External_PrincessInterpolationMode;
 	}
 }

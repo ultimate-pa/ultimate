@@ -57,32 +57,32 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
 	public static final boolean DEF_ASSUME_FOR_ASSERT = !false;
-	public static final String LABEL_Solver = "SMT solver";
-	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
+	public static final String LABEL_SOLVER = "SMT solver";
+	public static final SolverMode DEF_SOLVER = SolverMode.External_ModelsAndUnsatCoreMode;
 	// public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;
 
-	public static final String LABEL_FakeNonIncrementalScript = "Fake non-incremental script";
-	public static final boolean DEF_FakeNonIncrementalScript = false;
+	public static final String LABEL_FAKE_NON_INCREMENTAL_SCRIPT = "Fake non-incremental script";
+	public static final boolean DEF_FAKE_NON_INCREMENTAL_SCRIPT = false;
 
-	public static final String LABEL_ExtSolverCommand = "Command for external solver";
-	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
+	public static final String LABEL_EXT_SOLVER_COMMAND = "Command for external solver";
+	public static final String DEF_EXT_SOLVER_COMMAND = Z3_DEFAULT;
 
-	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
-	public static final String DEF_ExtSolverLogic = "ALL";
+	public static final String LABEL_EXT_SOLVER_LOGIC = "Logic for external solver";
+	public static final String DEF_EXT_SOLVER_LOGIC = "ALL";
 
-	public static final String LABEL_CodeBlockSize = "Size of a code block";
+	public static final String LABEL_CODE_BLOCK_SIZE = "Size of a code block";
 
-	public static final CodeBlockSize DEF_CodeBlockSize = CodeBlockSize.LoopFreeBlock;
-	public static final String LABEL_Simplify = "Simplify code blocks";
+	public static final CodeBlockSize DEF_CODE_BLOCK_SIZE = CodeBlockSize.LoopFreeBlock;
+	public static final String LABEL_SIMPLIFY = "Simplify code blocks";
 	public static final String LABEL_CNF = "Convert code blocks to CNF";
-	public static final String LABEL_RemoveGotoEdges = "Remove goto edges from RCFG";
-	public static final String LABEL_DumpToFile = "Dump SMT script to file";
-	public static final String LABEL_DumpUnsatCoreTrackBenchmark = "Dump unsat core track benchmark to file";
-	public static final String LABEL_DumpMainTrackBenchmark = "Dump main track benchmark to file";
-	public static final String LABEL_Path = "To the following directory";
-	public static final String DEF_Path = "";
-	public static final String LABEL_BitvectorWorkaround = "Translate Boogie integers to SMT bitvectors";
-	
+	public static final String LABEL_REMOVE_GOTO_EDGES = "Remove goto edges from RCFG";
+	public static final String LABEL_DUMP_TO_FILE = "Dump SMT script to file";
+	public static final String LABEL_DUMP_UNSAT_CORE_BENCHMARK = "Dump unsat core track benchmark to file";
+	public static final String LABEL_DUMP_MAIN_TRACK_BENCHMARK = "Dump main track benchmark to file";
+	public static final String LABEL_DUMP_PATH = "To the following directory";
+	public static final String DEF_DUMP_PATH = "";
+	public static final String LABEL_BITVECTOR_WORKAROUND = "Translate Boogie integers to SMT bitvectors";
+
 	/**
 	 * @see Statements2TransFormula#mSimplePartialSkolemization
 	 */
@@ -97,22 +97,23 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_ASSUME_FOR_ASSERT, DEF_ASSUME_FOR_ASSERT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_Solver, DEF_Solver, PreferenceType.Combo, SolverMode.values()),
-				new UltimatePreferenceItem<>(LABEL_FakeNonIncrementalScript, DEF_FakeNonIncrementalScript,
+				new UltimatePreferenceItem<>(LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo, SolverMode.values()),
+				new UltimatePreferenceItem<>(LABEL_FAKE_NON_INCREMENTAL_SCRIPT, DEF_FAKE_NON_INCREMENTAL_SCRIPT,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_BitvectorWorkaround, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CodeBlockSize, DEF_CodeBlockSize, PreferenceType.Combo,
+				new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_COMMAND, DEF_EXT_SOLVER_COMMAND, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_LOGIC, DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_BITVECTOR_WORKAROUND, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CODE_BLOCK_SIZE, DEF_CODE_BLOCK_SIZE, PreferenceType.Combo,
 						CodeBlockSize.values()),
-				new UltimatePreferenceItem<>(LABEL_RemoveGotoEdges, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_Simplify, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REMOVE_GOTO_EDGES, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CNF, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_DumpToFile, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_DumpUnsatCoreTrackBenchmark, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_DumpMainTrackBenchmark, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_Path, DEF_Path, PreferenceType.Directory), };
+				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DUMP_TO_FILE, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DUMP_UNSAT_CORE_BENCHMARK, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DUMP_MAIN_TRACK_BENCHMARK, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DUMP_PATH, DEF_DUMP_PATH, PreferenceType.Directory), };
 	}
 
 	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {

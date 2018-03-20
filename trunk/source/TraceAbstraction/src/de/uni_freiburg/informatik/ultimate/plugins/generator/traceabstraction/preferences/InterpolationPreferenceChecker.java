@@ -46,7 +46,7 @@ public class InterpolationPreferenceChecker {
 	public static void check(final String pluginName, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services) {
 		final SolverMode currentSolverMode = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+				.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 		final Set<SolverMode> legalSolverSettings = new HashSet<>();
 		switch (interpolation) {
 		case Craig_TreeInterpolation:
@@ -70,7 +70,7 @@ public class InterpolationPreferenceChecker {
 		}
 		if (!legalSolverSettings.contains(currentSolverMode)) {
 			final String errorMessage = "Incompatible preferences. You want to use " + interpolation + " in the "
-					+ pluginName + " plugin. This requires that " + RcfgPreferenceInitializer.LABEL_Solver + " in the "
+					+ pluginName + " plugin. This requires that " + RcfgPreferenceInitializer.LABEL_SOLVER + " in the "
 					+ Activator.PLUGIN_ID + " has one of the following values. " + legalSolverSettings.toString();
 			throw new UnsupportedOperationException(errorMessage);
 		}

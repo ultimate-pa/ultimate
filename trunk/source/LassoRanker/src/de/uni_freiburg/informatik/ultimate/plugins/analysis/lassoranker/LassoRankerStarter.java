@@ -552,8 +552,8 @@ public class LassoRankerStarter {
 	// FIXME: allow also Stefans BlockEncoding
 	private void checkRCFGBuilderSettings() {
 		final IPreferenceProvider store = RcfgPreferenceInitializer.getPreferences(mServices);
-		final boolean removeGoto = store.getBoolean(RcfgPreferenceInitializer.LABEL_RemoveGotoEdges);
-		final CodeBlockSize codeBlockSize = store.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize,
+		final boolean removeGoto = store.getBoolean(RcfgPreferenceInitializer.LABEL_REMOVE_GOTO_EDGES);
+		final CodeBlockSize codeBlockSize = store.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE,
 				RcfgPreferenceInitializer.CodeBlockSize.class);
 		if (codeBlockSize != CodeBlockSize.LoopFreeBlock) {
 			throw new UnsupportedOperationException(

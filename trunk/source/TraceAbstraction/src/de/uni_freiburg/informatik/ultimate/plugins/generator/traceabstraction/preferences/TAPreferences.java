@@ -64,6 +64,9 @@ public final class TAPreferences {
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
 	private final boolean mDumpOnlyReuseAutomata;
+	private final int mLimitTraceHistogram;
+	private final int mLimitAnalysisTime;
+	private final int mLimitPathProgramCount;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -84,7 +87,7 @@ public final class TAPreferences {
 
 		mInterprocedural = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPROCEDUTAL);
 
-		mMaxIterations = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_ITERATIONS);
+		mMaxIterations = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_ITERATIONS);
 		mWatchIteration = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_WATCHITERATION);
 
 		mArtifact = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ARTIFACT, Artifact.class);
@@ -117,6 +120,10 @@ public final class TAPreferences {
 		mMinimize = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE, Minimization.class);
 
 		mConcurrency = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_CONCURRENCY, Concurrency.class);
+
+		mLimitTraceHistogram = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TRACE_HISTOGRAM);
+		mLimitAnalysisTime = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
+		mLimitPathProgramCount = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_PATH_PROGRAM);
 
 		if (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			throw new IllegalArgumentException(
@@ -152,23 +159,23 @@ public final class TAPreferences {
 	}
 
 	public SolverMode solverMode() {
-		return mPrefs.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		return mPrefs.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 	}
 
 	public String commandExternalSolver() {
-		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 	}
 
 	public String logicForExternalSolver() {
-		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC);
 	}
 
 	public boolean dumpSmtScriptToFile() {
-		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 	}
 
 	public String pathOfDumpedScript() {
-		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_Path);
+		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_DUMP_PATH);
 	}
 
 	/**
@@ -296,7 +303,7 @@ public final class TAPreferences {
 	}
 
 	public boolean fakeNonIncrementalSolver() {
-		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
+		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 	}
 
 	public RefinementStrategy getRefinementStrategy() {
@@ -307,5 +314,33 @@ public final class TAPreferences {
 	public RefinementStrategyExceptionBlacklist getRefinementStrategyExceptionSpecification() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 				RefinementStrategyExceptionBlacklist.class);
+	}
+
+	public boolean hasLimitTraceHistogram() {
+		return getLimitTraceHistogram() > 0;
+	}
+
+	public int getLimitTraceHistogram() {
+		return mLimitTraceHistogram;
+	}
+
+	public boolean hasLimitAnalysisTime() {
+		return mLimitAnalysisTime > 0;
+	}
+
+	/**
+	 * @return A positive integer that specifies a time limit in seconds for the analysis of an error location or zero
+	 *         if no limit is set.
+	 */
+	public int getLimitAnalysisTime() {
+		return mLimitAnalysisTime;
+	}
+
+	public boolean hasLimitPathProgramCount() {
+		return mLimitPathProgramCount > 0;
+	}
+
+	public int getLimitPathProgramCount() {
+		return mLimitPathProgramCount;
 	}
 }

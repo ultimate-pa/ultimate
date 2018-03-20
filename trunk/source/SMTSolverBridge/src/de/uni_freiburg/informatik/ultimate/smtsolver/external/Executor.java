@@ -119,7 +119,7 @@ class Executor {
 			mWriter.write(in + "\n");
 			mWriter.flush();
 		} catch (final IOException e) {
-			if (mServices.getProgressMonitorService().continueProcessing()) {
+			if (mServices.getProgressMonitorService().continueProcessingRoot()) {
 				throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
 			}
 			throw new ToolchainCanceledException(getClass());

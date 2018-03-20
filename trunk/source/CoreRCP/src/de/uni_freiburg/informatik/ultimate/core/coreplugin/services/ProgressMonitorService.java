@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
@@ -42,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ProgressMonitorService implements IStorable, IProgressMonitorService, IDeadlineProvider {
+public class ProgressMonitorService implements IStorable, IProgressMonitorService, IProgressAwareTimer {
 
 	private static final String STORAGE_KEY = "CancelNotificationService";
 
@@ -50,7 +52,9 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 	private final ILogger mLogger;
 	private final IToolchainCancel mToolchainCancel;
 
-	private IDeadlineProvider mTimer;
+	private final Deque<IProgressAwareTimer> mTimers;
+	private IProgressAwareTimer mActiveTimer;
+	private IProgressAwareTimer mRootTimer;
 	private boolean mCancelRequest;
 
 	public ProgressMonitorService(final IToolchainProgressMonitor monitor, final ILogger logger,
@@ -59,12 +63,23 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 		mLogger = Objects.requireNonNull(logger, "logger may not be null");
 		mToolchainCancel = Objects.requireNonNull(cancel, "cancel may not be null");
 		mCancelRequest = false;
+		mTimers = new ArrayDeque<>();
 	}
 
 	@Override
 	public boolean continueProcessing() {
 		final boolean cancel =
-				mMonitor.isCanceled() || mCancelRequest || (mTimer != null && !mTimer.continueProcessing());
+				mMonitor.isCanceled() || mCancelRequest || (mActiveTimer != null && !mActiveTimer.continueProcessing());
+		if (cancel && mLogger.isDebugEnabled()) {
+			mLogger.debug("Do not continue processing!");
+		}
+		return !cancel;
+	}
+
+	@Override
+	public boolean continueProcessingRoot() {
+		final boolean cancel =
+				mMonitor.isCanceled() || mCancelRequest || (mRootTimer != null && !mRootTimer.continueProcessing());
 		if (cancel && mLogger.isDebugEnabled()) {
 			mLogger.debug("Do not continue processing!");
 		}
@@ -84,10 +99,13 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 							+ "Is this what you intended? Value of date was %,d", deadline));
 
 		}
-		if (mTimer != null) {
+		if (mActiveTimer != null) {
 			mLogger.warn("Replacing old deadline");
 		}
-		mTimer = ProgressAwareTimer.createWithDeadline(null, deadline);
+		mTimers.clear();
+		mActiveTimer = null;
+		mRootTimer = ProgressAwareTimer.createWithDeadline(null, deadline);
+		addChildTimer(mRootTimer);
 	}
 
 	static ProgressMonitorService getService(final IToolchainStorage storage) {
@@ -111,6 +129,11 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 	}
 
 	@Override
+	public IProgressAwareTimer getTimer(final long timeout) {
+		return ProgressAwareTimer.createWithTimeout(null, timeout);
+	}
+
+	@Override
 	public IProgressAwareTimer getChildTimer(final long timeout) {
 		return ProgressAwareTimer.createWithTimeout(this, timeout);
 	}
@@ -122,9 +145,61 @@ public class ProgressMonitorService implements IStorable, IProgressMonitorServic
 
 	@Override
 	public long getDeadline() {
-		if (mTimer == null) {
-			mTimer = ProgressAwareTimer.createWithDeadline(null, Long.MAX_VALUE);
+		if (mActiveTimer == null) {
+			return ProgressAwareTimer.createWithDeadline(null, Long.MAX_VALUE).getDeadline();
 		}
-		return mTimer.getDeadline();
+		return mActiveTimer.getDeadline();
 	}
+
+	@Override
+	public IProgressAwareTimer getParent() {
+		if (mActiveTimer == null) {
+			return null;
+		}
+		return mActiveTimer.getParent();
+	}
+
+	@Override
+	public void addChildTimer(final IProgressAwareTimer timer) {
+		if (timer == null) {
+			throw new IllegalArgumentException("Cannot add null timer");
+		}
+		if (checkParents(timer)) {
+			throw new IllegalArgumentException(
+					"This timer would create a timer cycle, because itself, its parent or its grandparents are this object");
+		}
+		mTimers.push(timer);
+		mActiveTimer = timer;
+	}
+
+	/**
+	 * @return true if the timer or one of its parents are this, thus creating a timer cycle
+	 */
+	private boolean checkParents(final IProgressAwareTimer timer) {
+		IProgressAwareTimer current = timer;
+		while (current != null) {
+			if (current == this) {
+				return true;
+			}
+			current = current.getParent();
+		}
+		return false;
+	}
+
+	@Override
+	public IProgressAwareTimer removeChildTimer() {
+		if (mTimers.isEmpty()) {
+			assert mActiveTimer == null;
+			return null;
+		}
+		final IProgressAwareTimer activeTimer = mTimers.pop();
+		assert mActiveTimer == activeTimer;
+		if (mTimers.isEmpty()) {
+			mActiveTimer = null;
+		} else {
+			mActiveTimer = mTimers.peek();
+		}
+		return activeTimer;
+	}
+
 }

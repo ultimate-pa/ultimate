@@ -146,7 +146,7 @@ public class CfgBuilder {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAddAssumeForEachAssert = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
 
-		mCodeBlockSize = prefs.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
+		mCodeBlockSize = prefs.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
 
 		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
 		final String filename = new File(pathAndFilename).getName();
@@ -154,7 +154,7 @@ public class CfgBuilder {
 		final ManagedScript maScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
-		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
+		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BITVECTOR_WORKAROUND);
 		final boolean simplePartialSkolemization =
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
 		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, bitvectorInsteadInt, mServices,
@@ -174,22 +174,23 @@ public class CfgBuilder {
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		final SolverMode solverMode = prefs.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		final SolverMode solverMode = prefs.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 
 		final boolean fakeNonIncrementalScript =
-				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
+				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
-		final boolean dumpSmtScriptToFile = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		final String pathOfDumpedScript = prefs.getString(RcfgPreferenceInitializer.LABEL_Path);
+		final boolean dumpSmtScriptToFile = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
+		final String pathOfDumpedScript = prefs.getString(RcfgPreferenceInitializer.LABEL_DUMP_PATH);
 
-		final String commandExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+		final String commandExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 
 		final boolean dumpUsatCoreTrackBenchmark =
-				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
+				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
 
-		final boolean dumpMainTrackBenchmark = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+		final boolean dumpMainTrackBenchmark =
+				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
-		final String logicForExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		final String logicForExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC);
 		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
@@ -244,7 +245,7 @@ public class CfgBuilder {
 		// mRootAnnot.mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
 		// mBoogieDeclarations.getModifiedVars(), mBoogie2smt);
 		mCodeBlockSize = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
+				.getEnum(RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, CodeBlockSize.class);
 		if (mCodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 			new LargeBlockEncoding();
 		}
@@ -523,7 +524,7 @@ public class CfgBuilder {
 
 			// Remove auxiliary GotoTransitions
 			final boolean removeGotoEdges = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(RcfgPreferenceInitializer.LABEL_RemoveGotoEdges);
+					.getBoolean(RcfgPreferenceInitializer.LABEL_REMOVE_GOTO_EDGES);
 			if (removeGotoEdges) {
 				mLogger.debug("Starting removal of auxiliaryGotoTransitions");
 				while (!mGotoEdges.isEmpty()) {
@@ -1165,7 +1166,7 @@ public class CfgBuilder {
 
 		public LargeBlockEncoding() {
 			mSimplifyCodeBlocks = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
+					.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY);
 
 			for (final String proc : mIcfg.getProgramPoints().keySet()) {
 				for (final String position : mIcfg.getProgramPoints().get(proc).keySet()) {

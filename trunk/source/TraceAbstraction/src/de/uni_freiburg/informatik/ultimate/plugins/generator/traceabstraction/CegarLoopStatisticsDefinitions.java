@@ -34,6 +34,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
@@ -135,15 +136,19 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	public static AbstractCegarLoop.Result aggregateResult(final Object value1, final Object value2) {
 		final AbstractCegarLoop.Result result1 = (AbstractCegarLoop.Result) value1;
 		final AbstractCegarLoop.Result result2 = (AbstractCegarLoop.Result) value2;
+
 		final Set<AbstractCegarLoop.Result> results = new HashSet<>();
 		results.add(result1);
 		results.add(result2);
+
 		if (results.contains(AbstractCegarLoop.Result.UNSAFE)) {
 			return AbstractCegarLoop.Result.UNSAFE;
 		} else if (results.contains(AbstractCegarLoop.Result.UNKNOWN)) {
 			return AbstractCegarLoop.Result.UNKNOWN;
 		} else if (results.contains(AbstractCegarLoop.Result.TIMEOUT)) {
 			return AbstractCegarLoop.Result.TIMEOUT;
+		} else if (DataStructureUtils.haveNonEmptyIntersection(AbstractCegarLoop.Result.USER_LIMIT_RESULTS, results)) {
+			return DataStructureUtils.getSomeCommonElement(AbstractCegarLoop.Result.USER_LIMIT_RESULTS, results).get();
 		} else if (results.contains(AbstractCegarLoop.Result.SAFE)) {
 			return AbstractCegarLoop.Result.SAFE;
 		} else {
