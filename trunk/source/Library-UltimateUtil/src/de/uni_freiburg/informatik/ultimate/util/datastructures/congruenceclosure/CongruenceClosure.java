@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
@@ -95,6 +96,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	private final CcManager<ELEM> mManager;
 
+	CCLiteralSetConstraints<ELEM> mLiteralSetConstraints;
+
 	/**
 	 * Constructs CongruenceClosure instance without any equalities or
 	 * disequalities.
@@ -108,6 +111,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mFaAuxData = new FuncAppTreeAuxData();
 		mAllLiterals = new HashSet<>();
 		mManager = manager;
+
+		mLiteralSetConstraints = new CCLiteralSetConstraints<>(manager, this);
 	}
 
 	/**
@@ -126,6 +131,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mFaAuxData = null;
 		mAllLiterals = null;
 		mManager = null;
+
+		mLiteralSetConstraints = null;
 	}
 
 	/**
@@ -134,13 +141,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param newElemPartition
 	 */
 	CongruenceClosure(final CcManager<ELEM> manager,
-			final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
+			final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
+			final CCLiteralSetConstraints<ELEM> literalConstraints) {
 		mManager = manager;
 
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData<>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
 		mAllLiterals = new HashSet<>();
+
+		mLiteralSetConstraints = Objects.requireNonNull(literalConstraints);
+		mLiteralSetConstraints.setCongruenceClosure(this);
 
 		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
@@ -159,12 +170,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param remInfo
 	 */
 	CongruenceClosure(final CcManager<ELEM> manager, final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
-			final IRemovalInfo<ELEM> remInfo) {
+			final CCLiteralSetConstraints<ELEM> literalConstraints, final IRemovalInfo<ELEM> remInfo) {
 		mElementTVER = newElemPartition;
 		mAuxData = new CcAuxData<>(this);
 		mFaAuxData = new FuncAppTreeAuxData();
 		mAllLiterals = new HashSet<>();
 		mManager = manager;
+
+		mLiteralSetConstraints = Objects.requireNonNull(literalConstraints);
+		mLiteralSetConstraints.setCongruenceClosure(this);
 
 		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
@@ -176,6 +190,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	/**
+	 * copy constructor
 	 *
 	 * @param original
 	 * @param externalRemovalInfo
@@ -190,6 +205,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mAllLiterals = new HashSet<>(original.mAllLiterals);
 		mExternalRemovalInfo = externalRemovalInfo;
 		mManager = original.mManager;
+		mLiteralSetConstraints = new CCLiteralSetConstraints<>(original.mManager, this,
+				original.getLiteralSetConstraints());
 		assert sanityCheck(externalRemovalInfo); // can be violated during remove (?)
 	}
 
@@ -258,9 +275,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			assert mElementTVER.isInconsistent();
 			return true;
 		}
-
-
-
 
 		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo = doMergeAndComputePropagations(elem1,
 				elem2);
@@ -378,6 +392,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		}
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || assertNoExplicitLiteralDisequalities();
+
+		// literal constraint treatment
+		{
+			mLiteralSetConstraints.reportEquality(elem1, elem2, mElementTVER.getRepresentative(elem1));
+		}
+
 
 		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
 				getAuxData().updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep,
@@ -800,7 +820,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = new ThreeValuedEquivalenceRelation<>(newPartition,
 				newDisequalities);
 
-		return mManager.getCongruenceClosureFromTver(newElemTver, true);
+		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
+				this.mLiteralSetConstraints.join(other.mLiteralSetConstraints, newElemTver);
+
+		return mManager.getCongruenceClosureFromTver(newElemTver, newLiteralSetConstraints, true);
 	}
 
 
@@ -877,6 +900,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			thisAligned = mManager.reportDisequality(deq.getKey(), deq.getValue(), thisAligned, inplace);
 		}
 
+		for (final Entry<ELEM, Set<ELEM>> literalConstraint :
+				other.getLiteralSetConstraints().getConstraints().entrySet()) {
+			thisAligned.getLiteralSetConstraints().reportContains(
+					literalConstraint.getKey(), literalConstraint.getValue());
+		}
+
 		return thisAligned;
 	}
 
@@ -910,9 +939,18 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		if (rep1.equals(rep2)) {
 			return EqualityStatus.EQUAL;
-		} else if (rep1.isLiteral() && rep2.isLiteral()) {
+		}
+//		} else if (rep1.isLiteral() && rep2.isLiteral()) {
+//			return EqualityStatus.NOT_EQUAL;
+//		} else if (rep1.isLiteral() && mLiteralSetConstraints.getConstraint(rep2)) {
+
+		final Set<ELEM> litConstraint1 = mLiteralSetConstraints.getConstraint(rep1);
+		final Set<ELEM> litConstraint2 = mLiteralSetConstraints.getConstraint(rep2);
+		if (litConstraint1 != null && litConstraint2 != null
+				&& !DataStructureUtils.haveNonEmptyIntersection(litConstraint1, litConstraint2)) {
 			return EqualityStatus.NOT_EQUAL;
 		}
+
 		return mElementTVER.getEqualityStatus(elem1, elem2);
 	}
 
@@ -929,9 +967,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				.collect(Collectors.toSet());
 	}
 
+	public CCLiteralSetConstraints<ELEM> getLiteralSetConstraints() {
+		return mLiteralSetConstraints;
+	}
+
 	@Override
 	public boolean isInconsistent() {
-		return mElementTVER == null || mElementTVER.isInconsistent();
+		return mElementTVER == null || mElementTVER.isInconsistent() || mLiteralSetConstraints.isInconsistent();
 	}
 
 	private boolean assertElementsAreSuperset(final Set<ELEM> a, final Set<ELEM> b) {
@@ -1329,6 +1371,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			sb.append(deq.getValue());
 			sb.append("\n");
 		}
+		sb.append(mLiteralSetConstraints.toString());
+
 		sb.append("--CC(end):--\n");
 
 		return sb.toString();
@@ -1344,7 +1388,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (isInconsistent()) {
 			return false;
 		}
-		return mElementTVER.isTautological();
+		return mElementTVER.isTautological() && mLiteralSetConstraints.isTautological();
 	}
 
 	/**
@@ -1538,7 +1582,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
 		 *  we either need a special constructor or do something else..
 		 */
-		return mManager.getCongruenceClosureFromTver(newTver, removeElementInfo, true);
+		return mManager.getCongruenceClosureFromTver(newTver, removeElementInfo,
+				new CCLiteralSetConstraints<>(mManager, null, copy.mLiteralSetConstraints), true);
 	}
 
 	public Collection<ELEM> getAllElementRepresentatives() {

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -35,22 +36,32 @@ public class CongruenceClosureSmtUtils {
 				.map(pair -> script.term("distinct", pair.getKey().getTerm(), pair.getValue().getTerm()))
 				.collect(Collectors.toList());
 
-//		final Set<Term> literalTerms =
-//				pa.getAllLiterals().stream().map(node -> node.getTerm()).collect(Collectors.toSet());
-
-//		final List<Term> nonTheoryLiteralDisequalities = createDisequalityTermsForNonTheoryLiterals(script,
-//				literalTerms);
-
 		final List<Term> result = new ArrayList<>(elementEqualities.size() + elementDisequalities.size());
 		result.addAll(elementEqualities);
 		result.addAll(elementDisequalities);
-//		result.addAll(nonTheoryLiteralDisequalities);
-//		result.add(pa.getManager())
+
 		if (CcSettings.IMPLICIT_LITERAL_DISEQUALITIES) {
-//			result.add(eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities());
 			result.add(literalDisequalities);
 		}
+
+
+		for (final Entry<NODE, Set<NODE>> en : pa.getLiteralSetConstraints().getConstraints().entrySet()) {
+			result.add(literalSetConstraintToTerm(script, en));
+		}
+
 		return result;
+	}
+
+	private static <NODE extends IEqNodeIdentifier<NODE>> Term literalSetConstraintToTerm(final Script script,
+			final Entry<NODE, Set<NODE>> en) {
+		assert !en.getValue().isEmpty();
+		assert !en.getKey().isLiteral();
+
+		final Set<Term> disjuncts = new HashSet<>();
+		for (final NODE lit : en.getValue()) {
+			disjuncts.add(SmtUtils.binaryEquality(script, en.getKey().getTerm(), lit.getTerm()));
+		}
+		return SmtUtils.or(script, disjuncts);
 	}
 
 	/**

@@ -408,8 +408,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver,
+			final CCLiteralSetConstraints<ELEM> literalConstraints,
 			final boolean modifiable) {
-		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver);
+		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver, literalConstraints);
 		if (!modifiable) {
 			result.freeze();
 		}
@@ -417,8 +418,11 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public CongruenceClosure<ELEM> getCongruenceClosureFromTver(final ThreeValuedEquivalenceRelation<ELEM> tver,
-			final IRemovalInfo<ELEM> removeElementInfo, final boolean modifiable) {
-		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver, removeElementInfo);
+			final IRemovalInfo<ELEM> removeElementInfo,
+			final CCLiteralSetConstraints<ELEM> literalConstraints,
+			final boolean modifiable) {
+		final CongruenceClosure<ELEM> result = new CongruenceClosure<>(this, tver, literalConstraints,
+				removeElementInfo);
 		if (!modifiable) {
 			result.freeze();
 		}
@@ -617,6 +621,13 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (!areDisequalitiesStrongerThan(thisAligned, otherAligned)) {
 			return false;
 		}
+
+
+		if (!CCLiteralSetConstraints.isStrongerThan(thisAligned.getLiteralSetConstraints(),
+				otherAligned.getLiteralSetConstraints())) {
+			return false;
+		}
+
 		return true;
 	}
 

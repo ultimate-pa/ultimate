@@ -1378,6 +1378,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			}
 			thisAligned = mManager.reportDisequality(thisAligned, deq.getKey(), deq.getValue(), inplace);
 		}
+		for (final Entry<NODE, Set<NODE>> en : other.getLiteralSetConstraints().getConstraints().entrySet()) {
+			if (thisAligned.isInconsistent()) {
+				return mManager.getInconsistentWeqCc(inplace);
+			}
+			thisAligned.getCongruenceClosure().getLiteralSetConstraints().reportContains(en.getKey(), en.getValue());
+		}
 		assert thisAligned.sanityCheck();
 		return thisAligned;
 	}
