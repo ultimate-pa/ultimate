@@ -39,35 +39,17 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.IPDOMManager;
-import org.eclipse.cdt.core.dom.ast.ASTVisitor;
-import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
-import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
-import org.eclipse.cdt.core.dom.parser.c.GCCScannerExtensionConfiguration;
 import org.eclipse.cdt.core.index.IIndexManager;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModel;
@@ -77,25 +59,11 @@ import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IPathEntry;
 import org.eclipse.cdt.core.model.ISourceRoot;
 import org.eclipse.cdt.core.model.ITranslationUnit;
-import org.eclipse.cdt.core.parser.DefaultLogService;
-import org.eclipse.cdt.core.parser.FileContent;
-import org.eclipse.cdt.core.parser.IParserLogService;
-import org.eclipse.cdt.core.parser.IScannerInfo;
-import org.eclipse.cdt.core.parser.IncludeFileContentProvider;
-import org.eclipse.cdt.core.parser.ParserLanguage;
-import org.eclipse.cdt.core.parser.ParserMode;
-import org.eclipse.cdt.core.parser.ScannerInfo;
 import org.eclipse.cdt.core.parser.util.ASTPrinter;
 import org.eclipse.cdt.core.settings.model.CSourceEntry;
 import org.eclipse.cdt.core.settings.model.ICSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICSourceEntry;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
-import org.eclipse.cdt.internal.core.dom.parser.c.GNUCSourceParser;
-import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFactory;
-import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
-import org.eclipse.cdt.utils.Platform;
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -107,7 +75,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.core.runtime.content.IContentTypeSettings;
@@ -124,7 +91,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -142,11 +108,10 @@ public class CDTParser implements ISource {
 	 */
 	private static final boolean EXTENDED_DEBUG_OUTPUT = false;
 	/**
-	 * Because filenames need to be normalized and it would be impractical to pass on the CDT project to later
-	 * stages of translation, a special 'flag' directory is included in the path to mark the end of the
-	 * non-relevant path entries.
+	 * Because filenames need to be normalized and it would be impractical to pass on the CDT project to later stages of
+	 * translation, a special 'flag' directory is included in the path to mark the end of the non-relevant path entries.
 	 */
-	private static final String CDT_PROJECT_HIERARCHY_FLAG = 
+	private static final String CDT_PROJECT_HIERARCHY_FLAG =
 			"FLAG" + UUID.randomUUID().toString().substring(0, 10).replace("-", "");
 
 	private static final IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
@@ -193,47 +158,48 @@ public class CDTParser implements ISource {
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
 		final Collection<IASTTranslationUnit> tuCollection = performCDTProjectOperations(files);
-		
+
 		if (EXTENDED_DEBUG_OUTPUT) {
 			for (final IASTTranslationUnit tu : tuCollection) {
 				mLogger.info("Printing AST for TU: " + tu.getFilePath());
 				ASTPrinter.print(tu);
-			} 
+			}
 		}
-		
+
 		final MultiparseSymbolTable mps = new MultiparseSymbolTable(mLogger);
 		for (final IASTTranslationUnit tu : tuCollection) {
 			mLogger.info("Scanning " + normalizeCDTFilename(tu.getFilePath()));
 			tu.accept(mps);
 		}
-		
+
 		// Print the mappings to the logger for debugging purposes
 		mps.printMappings();
-		
+
 		final ASTDecorator decorator = decorateTranslationUnits(mps, tuCollection);
 		decorator.setSymbolTable(mps);
-		
+
 		return new WrapperNode(null, decorator);
 	}
-	
+
 	/**
 	 * Normalizes a CDT project file name to the part just after the source folder (/src/<...>)
-	 * 
-	 * @param in the CDT file name
+	 *
+	 * @param in
+	 *            the CDT file name
 	 * @return the normalized file name
 	 */
 	public static String normalizeCDTFilename(final String in) {
 		// Let's just assume that this string (FLAG-.../src/) is unique in the path...
 		final String lookingFor = CDT_PROJECT_HIERARCHY_FLAG + File.separator + "src" + File.separator;
 		final int posInInput = in.indexOf(lookingFor);
-		if(posInInput < 0) {
+		if (posInInput < 0) {
 			// The name is already normalized
 			return in;
 		}
-		
+
 		return in.substring(posInInput + lookingFor.length());
 	}
-	
+
 	private ASTDecorator decorateTranslationUnits(final MultiparseSymbolTable mst,
 			final Collection<IASTTranslationUnit> translationUnits) {
 		final ASTDecorator decorator = new ASTDecorator();
@@ -241,67 +207,22 @@ public class CDTParser implements ISource {
 		for (final IASTTranslationUnit tu : sorter.getResult()) {
 			final FunctionLineVisitor visitor = new FunctionLineVisitor();
 			tu.accept(visitor);
-			final CommentParser parser = 
+			final CommentParser parser =
 					new CommentParser(tu.getComments(), visitor.getLineRange(), mLogger, mServices);
 			final List<ACSLNode> acslNodes = parser.processComments();
-			
+
 			// validateLTLProperty(acslNodes); See comment at method below
 			decorator.provideAcslASTs(acslNodes);
 			final DecoratorNode rootNode = decorator.mapASTs(tu);
-			
+
 			final DecoratedUnit unit = new DecoratedUnit(rootNode, tu);
 			decorator.addDecoratedUnit(unit);
 		}
 		return decorator;
 	}
 
-	// This needs LTLExpressionExtractor which is also needed by CACSL2BoogieTranslator
-	/*private void validateLTLProperty(final List<ACSLNode> acslNodes) {
-		// test "pretty printer"
-		for (final ACSLNode acslNode : acslNodes) {
-			if (acslNode instanceof GlobalLTLInvariant) {
-				final LTLPrettyPrinter printer = new LTLPrettyPrinter();
-				final String orig = printer.print(acslNode);
-				mLogger.info("Original: " + orig);
-
-				final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
-				final String origNormalized = printer.print(extractor.removeWeakUntil(acslNode));
-				mLogger.info("Original normalized: " + origNormalized);
-				if (!extractor.run(acslNode)) {
-					continue;
-				}
-				String extracted = extractor.getLTLFormatString();
-				mLogger.info("Extracted: " + extracted);
-				final Set<String> equivalence = new HashSet<>();
-				for (final Entry<String, Expression> subexp : extractor.getAP2SubExpressionMap().entrySet()) {
-					final String exprAsString = printer.print(subexp.getValue());
-					equivalence.add(exprAsString);
-					mLogger.info(subexp.getKey() + ": " + exprAsString);
-					extracted = extracted.replaceAll(subexp.getKey(), exprAsString);
-				}
-				mLogger.info("Orig from extracted: " + extracted);
-				// the extraction did something weird if this does not hold
-				assert extracted.equals(origNormalized);
-				// our APs are not atomic if this does not hold
-				assert equivalence.size() == extractor.getAP2SubExpressionMap().size();
-
-				// TODO: Alex
-				// List<VariableDeclaration> globalDeclarations = null;
-				// //create this from extractor.getAP2SubExpressionMap()
-				// Map<String, CheckableExpression> ap2expr = null;
-				// LTLPropertyCheck x = new
-				// LTLPropertyCheck(extractor.getLTLFormatString(), ap2expr,
-				// globalDeclarations);
-				// //annotate translation unit with x
-
-			}
-		}
-		// end test
-	}*/
-
 	// created by Hamiz for entering multiple files
-	private ICProject createCDTProjectFromFiles(final File[] files)
-			throws OperationCanceledException, CoreException, FileNotFoundException {
+	private ICProject createCDTProjectFromFiles(final File[] files) throws CoreException, FileNotFoundException {
 		final IProject proj = createCDTProject();
 		mCdtProject = proj;
 		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
@@ -309,23 +230,16 @@ public class CDTParser implements ISource {
 		final IFolder sourceFolder = mCdtProject.getFolder("src");
 		sourceFolder.create(true, true, NULL_MONITOR);
 		final ICSourceEntry entrySrc = new CSourceEntry(sourceFolder, null, ICSettingEntry.RESOLVED);
-		// CDataUtil.createEntry(CDataUtil., String name, String value, IPath[]
-		// exclusionPatterns, int flags)
-		// CDataUtil
-		// entrySrc.
 		for (final File file : files) {
 			createCopyOfFileInProject(mCdtProject, sourceFolder, file);
 		}
 
 		final CoreModel model = CoreModel.getDefault();
 		final ICProject icdtProject = model.create(mCdtProject);
-		// icdtProject.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(mCdtProject.getFullPath()) },
-		// NULL_MONITOR);
 		return icdtProject;
 	}
 
-	public static List<IASTTranslationUnit> getProjectTranslationUnits(final ICProject cproject) 
-			throws CoreException {
+	public static List<IASTTranslationUnit> getProjectTranslationUnits(final ICProject cproject) throws CoreException {
 		final List<IASTTranslationUnit> tuList = new ArrayList<>();
 
 		// get source folders
@@ -360,7 +274,7 @@ public class CDTParser implements ISource {
 	}
 
 	private Collection<IASTTranslationUnit> performCDTProjectOperations(final File[] files)
-			throws OperationCanceledException, FileNotFoundException, CoreException {
+			throws FileNotFoundException, CoreException {
 		final ICProject icdtProject = createCDTProjectFromFiles(files);
 
 		// useful: http://cdt-devel-faq.wikidot.com/#toc23
@@ -369,74 +283,10 @@ public class CDTParser implements ISource {
 		final boolean isIndexed = indexManager.isProjectIndexed(icdtProject);
 		final List<IASTTranslationUnit> listTu = getProjectTranslationUnits(icdtProject);
 
-		// final FunctionTableBuilderDuplicate visitor = new FunctionTableBuilderDuplicate();
-		// for (final ITranslationUnit tu : listTu) {
-		// 	final IASTTranslationUnit actualTU = tu.getAST();
-		// 	actualTU.accept(visitor);
-		// }
-		// for (final Entry<String, IASTNode> entry : visitor.getFunctionTable().entrySet()) {
-		// 	mLogger.info(entry.getKey() + ": " + entry.getValue().getRawSignature());
-		// }
-
 		mLogger.info("IsIndexed: " + isIndexed);
 		mLogger.info("Found " + listTu.size() + " translation units.");
 
 		return listTu;
-	}
-
-	private IASTTranslationUnit parseAST(final File file) throws Exception {
-
-		if (file == null || !file.canRead()) {
-			throw new IllegalArgumentException("Input file does not exist");
-		}
-
-		final IParserLogService log = new DefaultLogService();
-
-		final FileContent fContent = FileContent.createForExternalFileLocation(file.getAbsolutePath());
-
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final String path = prefs.getString(PreferenceInitializer.INCLUDE_PATHS);
-		String[] includePaths;
-		IncludeFileContentProvider includeProvider;
-		if (!path.equals("")) {
-			mLogger.debug("INCLUDE-PATHS:" + path);
-			includePaths = path.split(";");
-			/*
-			 * If there are some paths specified we have to use the this deprecated code. In the used Version of
-			 * EclipseCDT (see CDTLibrary) there is no other way in doing this, maybe in further versions this will be
-			 * improved.
-			 */
-			includeProvider = IncludeFileContentProvider.adapt(new StandaloneIndexerFallbackReaderFactory());
-		} else {
-			includePaths = new String[0];
-			includeProvider = IncludeFileContentProvider.getEmptyFilesProvider();
-		}
-
-		final Map<String, String> definedSymbols = new HashMap<>();
-		final IScannerInfo info = new ScannerInfo(definedSymbols, includePaths);
-
-		final GCCScannerExtensionConfiguration config = GCCScannerExtensionConfiguration.getInstance();
-		final CPreprocessor cprep = new CPreprocessor(fContent, info, ParserLanguage.C, log, config, includeProvider);
-
-		// Here we our defined macros to the preproccessor
-		// Map<String, String> macroMap = defineUserMacros();
-		// for (String key : macroMap.keySet()) {
-		// String value = macroMap.get(key);
-		// cprep.addMacroDefinition(key.toCharArray(), value.toCharArray());
-		// }
-
-		final GCCParserExtensionConfiguration parserConfig = GCCParserExtensionConfiguration.getInstance();
-		final GNUCSourceParser parser = new GNUCSourceParser(cprep, ParserMode.COMPLETE_PARSE, log, parserConfig);
-
-		// The following methods was introduced in CDT8. Before there was the
-		// following method that took a boolean parameter
-		// parser.setSkipTrivialExpressionsInAggregateInitializers(false);
-		// Matthias changed this on 2014-10-01.
-		// If there are no problems you may delete this comment.
-		parser.setMaximumTrivialExpressionsInAggregateInitializers(Integer.MAX_VALUE);
-
-		final IASTTranslationUnit translationUnit = parser.parse();
-		return translationUnit;
 	}
 
 	@Override
@@ -492,12 +342,12 @@ public class CDTParser implements ISource {
 		return outerPath.append(innerPath).toOSString();
 	}
 
-	private static IProject createCDTProject() throws OperationCanceledException, CoreException {
+	private static IProject createCDTProject() throws CoreException {
 		// It would be nicer to have the project in a tmp directory, but this seems not to be trivially
 		// possible with the current CDT parsing.
 		final String projectName = CDT_PROJECT_HIERARCHY_FLAG;
 		final String projectNamespace = UUID.randomUUID().toString().replace("-", "");
-		
+
 		final CCorePlugin cdtCorePlugin = CCorePlugin.getDefault();
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		final IWorkspaceRoot root = workspace.getRoot();
@@ -512,12 +362,12 @@ public class CDTParser implements ISource {
 
 		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
 		project.open(null);
-		
-		final IContentType contentType = org.eclipse.core.runtime.Platform.getContentTypeManager().getContentType(
-				CCorePlugin.CONTENT_TYPE_CSOURCE);
+
+		final IContentType contentType = org.eclipse.core.runtime.Platform.getContentTypeManager()
+				.getContentType(CCorePlugin.CONTENT_TYPE_CSOURCE);
 		try {
 			contentType.addFileSpec("i", IContentTypeSettings.FILE_EXTENSION_SPEC);
-		} catch (CoreException e) {
+		} catch (final CoreException e) {
 			throw new IllegalStateException("Could not add .i to C extensions.", e);
 		}
 
@@ -560,81 +410,6 @@ public class CDTParser implements ISource {
 			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, null);
 		} catch (final Exception e) {
 			// Ignore
-		}
-	}
-
-	/**
-	 * Creates new folder from project root. The folder name can include relative path as a part of the name.
-	 * Nonexistent parent directories are being created.
-	 *
-	 * @param project
-	 *            - project where to create the folder.
-	 * @param name
-	 *            - folder name.
-	 * @return folder handle.
-	 * @throws CoreException
-	 *             if something goes wrong.
-	 */
-	private static IFolder createFolder(final IProject project, final String name) throws CoreException {
-		final IPath p = new Path(name);
-		IContainer folder = project;
-		for (final String seg : p.segments()) {
-			folder = folder.getFolder(new Path(seg));
-			if (!folder.exists()) {
-				((IFolder) folder).create(true, true, NULL_MONITOR);
-			}
-		}
-		return (IFolder) folder;
-	}
-
-	/**
-	 * I copied this over from CACSL2BoogieTranslator and renamed it (from FunctionTableBuilder) for testing purposes.
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	private final static class FunctionTableBuilderDuplicate extends ASTVisitor {
-
-		private final LinkedHashMap<String, IASTNode> mFunMap;
-
-		public FunctionTableBuilderDuplicate() {
-			shouldVisitDeclarations = true;
-			mFunMap = new LinkedHashMap<>();
-		}
-
-		@Override
-		public int visit(final IASTDeclaration declaration) {
-			if (!(declaration.getParent() instanceof IASTTranslationUnit)) {
-				return super.visit(declaration);
-			}
-			if (declaration instanceof CASTSimpleDeclaration) {
-				final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
-				for (final IASTDeclarator d : cd.getDeclarators()) {
-					final String key = d.getName().toString();
-					if (d instanceof IASTFunctionDeclarator) {
-						// we only update the table with a declaration, if there is no entry for that name yet.
-						// otherwise we might only keep the declaration and omit the implementation from
-						// reachableDeclarations.
-						if (!mFunMap.containsKey(key)) {
-							mFunMap.put(key, d);
-						}
-					}
-
-				}
-
-			} else if (declaration instanceof IASTFunctionDefinition) {
-				IASTDeclarator possiblyNestedDeclarator = ((IASTFunctionDefinition) declaration).getDeclarator();
-				while (possiblyNestedDeclarator.getNestedDeclarator() != null) {
-					possiblyNestedDeclarator = possiblyNestedDeclarator.getNestedDeclarator();
-				}
-				final String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
-				mFunMap.put(nameOfInnermostDeclarator, declaration);
-			}
-			return super.visit(declaration);
-		}
-
-		LinkedHashMap<String, IASTNode> getFunctionTable() {
-			return mFunMap;
 		}
 	}
 }
