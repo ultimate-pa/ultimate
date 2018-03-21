@@ -379,6 +379,38 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //			strengthenedEdgeLabel = Collections.emptySet();
 		}
 
+		{
+			mCongruenceClosure.constantFunctionTreatmentOnAddEquality(array1, array2);
+//			/*
+//			 * constant function treatment:
+//			 *  <li> we maintain the following invariant: let f and g be weakly equivalent and g be a constant function,
+//			 *   then for every function application f(x) that is in our set of tracked element, we also track g(x).
+//			 *  <li> here, this means, we have to go through all constant function equivalent to elem1 and for each go
+//			 *   through the ccpar's of f to add the corresponding nodes and vice versa
+//			 */
+//			for (final NODE equivalentFunction1 : mCongruenceClosure.getEquivalenceClass(array1)) {
+//				if (equivalentFunction1.isConstantFunction()) {
+//					for (final NODE equivalentFunction2 : mCongruenceClosure.getEquivalenceClass(array2)) {
+//						// ccpar is f(x), equivalentFunction1 is g
+//						for (final NODE ccpar : mCongruenceClosure.getAuxData().getAfCcPars(equivalentFunction2)) {
+//							mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+//						}
+//					}
+//				}
+//			}
+//			for (final NODE equivalentFunction1 : mCongruenceClosure.getEquivalenceClass(array2)) {
+//				if (equivalentFunction1.isConstantFunction()) {
+//					for (final NODE equivalentFunction2 : mCongruenceClosure.getEquivalenceClass(array1)) {
+//						// ccpar is f(x), equivalentFunction1 is g
+//						for (final NODE ccpar : mCongruenceClosure.getAuxData().getAfCcPars(equivalentFunction2)) {
+//							mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+//						}
+//					}
+//				}
+//			}
+		}
+
+
 		/*
 		 * roweq propagations
 		 *
@@ -1101,7 +1133,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return false;
 	}
 
-	protected void registerNewElement(final NODE elem) {
+	private void registerNewElement(final NODE elem) {
 
 		if (isInconsistent()) {
 			// nothing more to do

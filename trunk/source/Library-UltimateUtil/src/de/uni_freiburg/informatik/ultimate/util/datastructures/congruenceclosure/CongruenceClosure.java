@@ -327,33 +327,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			final ELEM elem2) {
 
 		{
-			/*
-			 * constant function treatment:
-			 *  <li> we maintain the following invariant: let f ~ g and g be a constant function, then for every function
-			 *  application f(x) that is in our set of tracked element, we also track g(x).
-			 *  <li> here, this means, we have to go through all constant function equivalent to elem1 and for each go
-			 *   through the ccpar's of f to add the corresponding nodes and vice versa
-			 */
-			for (final ELEM equivalentFunction1 : mElementTVER.getEquivalenceClass(elem1)) {
-				if (equivalentFunction1.isConstantFunction()) {
-					for (final ELEM equivalentFunction2 : mElementTVER.getEquivalenceClass(elem2)) {
-						// ccpar is f(x), equivalentFunction1 is g
-						for (final ELEM ccpar : mAuxData.getAfCcPars(equivalentFunction2)) {
-							mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
-						}
-					}
-				}
-			}
-			for (final ELEM equivalentFunction1 : mElementTVER.getEquivalenceClass(elem2)) {
-				if (equivalentFunction1.isConstantFunction()) {
-					for (final ELEM equivalentFunction2 : mElementTVER.getEquivalenceClass(elem1)) {
-						// ccpar is f(x), equivalentFunction1 is g
-						for (final ELEM ccpar : mAuxData.getAfCcPars(equivalentFunction2)) {
-							mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
-						}
-					}
-				}
-			}
+			constantFunctionTreatmentOnAddEquality(elem1, elem2);
 		}
 
 		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
@@ -405,19 +379,63 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return propInfo;
 	}
 
+	/**
+	 * Add nodes that trigger instantiation of the axiom for constant arrays.
+	 *
+	 * (weak or strong equalities count)
+	 *
+	 * @param elem1
+	 * @param elem2
+	 */
+	public void constantFunctionTreatmentOnAddEquality(final ELEM elem1, final ELEM elem2) {
+		/*
+		 * constant function treatment:
+		 *  <li> we maintain the following invariant: let f ~ g and g be a constant function, then for every function
+		 *  application f(x) that is in our set of tracked element, we also track g(x).
+		 *  <li> here, this means, we have to go through all constant function equivalent to elem1 and for each go
+		 *   through the ccpar's of f to add the corresponding nodes and vice versa
+		 */
+		for (final ELEM equivalentFunction1 : mElementTVER.getEquivalenceClass(elem1)) {
+			if (equivalentFunction1.isConstantFunction()) {
+				for (final ELEM equivalentFunction2 : mElementTVER.getEquivalenceClass(elem2)) {
+					// ccpar is f(x), equivalentFunction1 is g
+					for (final ELEM ccpar : mAuxData.getAfCcPars(equivalentFunction2)) {
+						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+					}
+				}
+			}
+		}
+		for (final ELEM equivalentFunction1 : mElementTVER.getEquivalenceClass(elem2)) {
+			if (equivalentFunction1.isConstantFunction()) {
+				for (final ELEM equivalentFunction2 : mElementTVER.getEquivalenceClass(elem1)) {
+					// ccpar is f(x), equivalentFunction1 is g
+					for (final ELEM ccpar : mAuxData.getAfCcPars(equivalentFunction2)) {
+						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+					}
+				}
+			}
+		}
+	}
+
 
 	public Set<ELEM> getRepresentativesUnequalTo(final ELEM rep) {
 		assert isRepresentative(rep);
 		final Set<ELEM> result = new HashSet<>(mElementTVER.getRepresentativesUnequalTo(rep));
 
+		/*
+		 * literals are distinct from all other literals
+		 */
 		if (rep.isLiteral()) {
 			for (final ELEM lit : mAllLiterals) {
-				if (!lit.equals(rep)) {
+				// don't track disequalities between different sorts -- they are always implicit
+				if (lit.hasSameTypeAs(rep) && !lit.equals(rep)) {
 					result.add(lit);
 				}
 			}
 		}
 
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || result.stream().allMatch(el -> el.hasSameTypeAs(rep))
+			: "don't track disequalities between different sorts -- they are always implicit";
 		return result;
 	}
 
@@ -566,7 +584,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		{
 			/*
-			 * treatment for constant arrays:
+			 * treatment for constant functions:
 			 *  <li> if we are adding an element of the form f(x), where f is a constant function, and v is f's
 			 *   constant value then we add the equality "f(x) = v"
 			 *  <li> if we are adding an element the form f(x), where f ~ g and g is a constant function,
