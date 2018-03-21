@@ -45,13 +45,13 @@ import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.cdt.parser.Activator;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.cdt.parser.Activator;
 
 /**
  * @author Markus Lindenmann
@@ -105,6 +105,10 @@ public class CommentParser {
 	public List<ACSLNode> processComments() {
 		final ArrayList<ACSLNode> acslList = new ArrayList<>();
 		for (final IASTComment comment : mCommentList) {
+			if (!comment.isPartOfTranslationUnitFile()) {
+				// Only parse ACSL from the current TU.
+				continue;
+			}
 			final String text = new String(comment.getComment());
 			// We check if the comment is a ACSL_Comment
 			if (text.startsWith("//@") || text.startsWith("/*@")) {

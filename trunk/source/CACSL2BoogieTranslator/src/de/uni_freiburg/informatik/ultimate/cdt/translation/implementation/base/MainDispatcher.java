@@ -35,7 +35,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -249,7 +248,7 @@ public class MainDispatcher extends Dispatcher {
 	 * point.
 	 */
 	private boolean mThereAreDereferencedPointerVariables;
-	
+
 	private Set<IASTDeclaration> mReachableDeclarations;
 	/**
 	 * Variables that need some special memory handling.
@@ -310,13 +309,13 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public boolean isReachable(IASTDeclaration decl) {
+	public boolean isReachable(final IASTDeclaration decl) {
 		// Just mimic the main dispatcher.
 		if (mReachableDeclarations == null) {
 			return true;
 		}
 		// Temporary hack, dnd fails for auxvars.c regression test TODO wip/multi
-		//return true;
+		// return true;
 		return mReachableDeclarations.contains(decl);
 	}
 
@@ -335,7 +334,7 @@ public class MainDispatcher extends Dispatcher {
 		mVariablesOnHeap = new LinkedHashSet<>();
 
 		// Build the function table
-		executePreRun(new FunctionTableBuilder(mFlatTable), nodes, 
+		executePreRun(new FunctionTableBuilder(mFlatTable), nodes,
 				ftb -> mFunctionTable.putAll(ftb.getFunctionTable()));
 
 		executePreRun(new PreRunner(mFlatTable, mFunctionTable), nodes, pr -> {
@@ -352,8 +351,8 @@ public class MainDispatcher extends Dispatcher {
 			for (final DecoratedUnit du : nodes) {
 				final String key = du.getRootNode().getCNode().getContainingFilename();
 				reverseSourceMap.put(key, new HashMap<>());
-				for (final IASTDeclaration decl : 
-						((IASTTranslationUnit) du.getRootNode().getCNode()).getDeclarations()) {
+				for (final IASTDeclaration decl : ((IASTTranslationUnit) du.getRootNode().getCNode())
+						.getDeclarations()) {
 					if (decl instanceof IASTSimpleDeclaration) {
 						final IASTSimpleDeclaration cd = (IASTSimpleDeclaration) decl;
 						for (final IASTDeclarator d : cd.getDeclarators()) {
@@ -368,8 +367,8 @@ public class MainDispatcher extends Dispatcher {
 				}
 			}
 			for (final DecoratedUnit du : nodes) {
-				final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(getCheckedMethod(), this,
-						mFunctionTable, mFunctionToIndex);
+				final DetermineNecessaryDeclarations dnd =
+						new DetermineNecessaryDeclarations(getCheckedMethod(), this, mFunctionTable, mFunctionToIndex);
 				du.getRootNode().getCNode().accept(dnd);
 				final Set<IASTDeclaration> decl = dnd.getReachableDeclarationsOrDeclarators();
 				for (final IASTDeclaration d : decl) {
@@ -384,7 +383,7 @@ public class MainDispatcher extends Dispatcher {
 						} else {
 							// Those are not regarded by DND.
 						}
-						
+
 					} else {
 						mReachableDeclarations.add(d);
 					}
@@ -705,7 +704,7 @@ public class MainDispatcher extends Dispatcher {
 		}
 
 	}
-	
+
 	@Override
 	public Result dispatch(final ACSLNode n) {
 		return dispatch(n, mAcslHook);
@@ -919,11 +918,14 @@ public class MainDispatcher extends Dispatcher {
 	public Result dispatch(final List<DecoratedUnit> nodes) {
 		// Fix these two
 		assert !nodes.isEmpty();
-		mDecoratorTree = nodes.get(0).getRootNode();
-		mDecoratorTreeIterator = mDecoratorTree.iterator();
 		return mCHandler.visit(this, nodes);
 		// TODO Make this usable again
 		// return dispatch(node.getAcslNode());
+	}
+
+	public void updateDecoratorTreeAndIterator(final DecoratorNode node) {
+		mDecoratorTree = node;
+		mDecoratorTreeIterator = mDecoratorTree.iterator();
 	}
 
 	@Override
@@ -1018,30 +1020,30 @@ public class MainDispatcher extends Dispatcher {
 		}
 	}
 
-//	@Override
-//	public InferredType dispatch(final IType type) {
-//		// All Known Subinterfaces:
-//		// IArrayType, IBasicType, ICArrayType, ICBasicType, ICompositeType,
-//		// ICPointerType, ICPPBasicType, ICPPClassSpecialization,
-//		// ICPPClassTemplate, ICPPClassTemplatePartialSpecialization,
-//		// ICPPClassTemplatePartialSpecializationSpecialization, ICPPClassType,
-//		// ICPPEnumeration, ICPPFunctionType, ICPPParameterPackType,
-//		// ICPPPointerToMemberType, ICPPReferenceType,
-//		// ICPPTemplateTemplateParameter, ICPPTemplateTypeParameter,
-//		// ICQualifierType, IEnumeration, IFunctionType, IGPPBasicType,
-//		// IGPPPointerToMemberType, IGPPPointerType, IGPPQualifierType,
-//		// IPointerType, IProblemBinding, IProblemType, IQualifierType, ITypedef
-//		if (type instanceof IBasicType) {
-//			return mTypeHandler.visit(this, (IBasicType) type);
-//		}
-//		if (type instanceof ITypedef) {
-//			return mTypeHandler.visit(this, (ITypedef) type);
-//		}
-//		if (type instanceof IArrayType) {
-//			return mTypeHandler.visit(this, (IArrayType) type);
-//		}
-//		return mTypeHandler.visit(this, type);
-//	}
+	// @Override
+	// public InferredType dispatch(final IType type) {
+	// // All Known Subinterfaces:
+	// // IArrayType, IBasicType, ICArrayType, ICBasicType, ICompositeType,
+	// // ICPointerType, ICPPBasicType, ICPPClassSpecialization,
+	// // ICPPClassTemplate, ICPPClassTemplatePartialSpecialization,
+	// // ICPPClassTemplatePartialSpecializationSpecialization, ICPPClassType,
+	// // ICPPEnumeration, ICPPFunctionType, ICPPParameterPackType,
+	// // ICPPPointerToMemberType, ICPPReferenceType,
+	// // ICPPTemplateTemplateParameter, ICPPTemplateTypeParameter,
+	// // ICQualifierType, IEnumeration, IFunctionType, IGPPBasicType,
+	// // IGPPPointerToMemberType, IGPPPointerType, IGPPQualifierType,
+	// // IPointerType, IProblemBinding, IProblemType, IQualifierType, ITypedef
+	// if (type instanceof IBasicType) {
+	// return mTypeHandler.visit(this, (IBasicType) type);
+	// }
+	// if (type instanceof ITypedef) {
+	// return mTypeHandler.visit(this, (ITypedef) type);
+	// }
+	// if (type instanceof IArrayType) {
+	// return mTypeHandler.visit(this, (IArrayType) type);
+	// }
+	// return mTypeHandler.visit(this, type);
+	// }
 
 	@Override
 	public Result dispatch(final IASTPreprocessorStatement n) {

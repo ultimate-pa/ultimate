@@ -546,7 +546,7 @@ public class CHandler implements ICHandler {
 
 		final PointerIntegerConversion pointerIntegerConversion =
 				prefs.getEnum(CACSLPreferenceInitializer.LABEL_POINTER_INTEGER_CONVERSION,
-				CACSLPreferenceInitializer.PointerIntegerConversion.class);
+						CACSLPreferenceInitializer.PointerIntegerConversion.class);
 		if (bitvectorTranslation) {
 			mExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), handlerHandler,
 					pointerIntegerConversion, overapproximateFloatingPointOperations);
@@ -599,6 +599,9 @@ public class CHandler implements ICHandler {
 		IASTNode globalHook = null;
 		for (final DecoratedUnit du : units) {
 			if (du.getRootNode().getCNode() != null) {
+				if (main instanceof MainDispatcher) {
+					((MainDispatcher) main).updateDecoratorTreeAndIterator(du.getRootNode());
+				}
 				visit(main, (IASTTranslationUnit) du.getRootNode().getCNode());
 				globalHook = du.getRootNode().getCNode();
 			}
@@ -607,7 +610,7 @@ public class CHandler implements ICHandler {
 
 		// Generate additional boogie translation that is collected for all files.
 		final ILocation loc = LocationFactory.createIgnoreCLocation();
-		
+
 		// (alex:) new function pointers
 		final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 		for (final Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
@@ -615,15 +618,16 @@ public class CHandler implements ICHandler {
 			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
 			// would unique make sense here?? -- would potentially add lots of axioms
 			mDeclarations.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));
-			
+
 			final Expression funcIdExpr = ExpressionFactory.constructIdentifierExpression(loc,
-					mBoogieTypeHelper.getBoogieTypeForPointerType(),
-					funcId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+					mBoogieTypeHelper.getBoogieTypeForPointerType(), funcId,
+					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 			final BigInteger offsetValue = BigInteger.valueOf(en.getValue());
-			mDeclarations.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc,
-					BinaryExpression.Operator.COMPEQ, funcIdExpr, mExpressionTranslation
-							.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
+			mDeclarations.add(new Axiom(loc, new Attribute[0],
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, funcIdExpr,
+							mExpressionTranslation.constructPointerForIntegerValues(loc,
+									functionPointerPointerBaseValue, offsetValue))));
 		}
 
 		mDeclarations.addAll(mAxioms);
@@ -648,15 +652,15 @@ public class CHandler implements ICHandler {
 				((TypeHandler) mTypeHandler).constructTranslationDefiniedDelarations(loc, mExpressionTranslation));
 
 		/**
-		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}.
-		 * Short version:
-		 *  <li> procedure implementations have already been inserted into the Boogie program by code above
-		 *  <li> procedure declarations have been collected in the FunctionHandler
-		 *  <li> now we recompute the declarations, in order to give them correct modifies clauses and insert them into
-		 *    the Boogie program
+		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}. Short
+		 * version:
+		 * <li>procedure implementations have already been inserted into the Boogie program by code above
+		 * <li>procedure declarations have been collected in the FunctionHandler
+		 * <li>now we recompute the declarations, in order to give them correct modifies clauses and insert them into
+		 * the Boogie program
 		 *
 		 * have to block this in prerun, because there, memory model is not declared which may cause problems with the
-		 *  call graph computation
+		 * call graph computation
 		 */
 		if (!(main instanceof PRDispatcher)) {
 			// handle proc. declaration & resolve their transitive modified globals
@@ -1402,9 +1406,8 @@ public class CHandler implements ICHandler {
 			}
 			return result;
 		}
-		final DeclaratorResult result =
-				new DeclaratorResult(new CDeclaration(newResType.cType, declName,
-						node.getInitializer(), null, newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
+		final DeclaratorResult result = new DeclaratorResult(new CDeclaration(newResType.cType, declName,
+				node.getInitializer(), null, newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
 	}
 
@@ -1993,8 +1996,8 @@ public class CHandler implements ICHandler {
 							if (mProcedureManager.isGlobalScope() && !mTypeHandler.isStructDeclaration()) {
 								// mDeclarationsGlobalInBoogie.remove(mSymbolTable.get(cDec.getName(),
 								// loc).getBoogieDecl());
-								mStaticObjectsHandler.removeDeclaration(
-										mSymbolTable.findCSymbol(d, cDec.getName()).getBoogieDecl());
+								mStaticObjectsHandler
+										.removeDeclaration(mSymbolTable.findCSymbol(d, cDec.getName()).getBoogieDecl());
 							}
 						}
 					}
@@ -2388,7 +2391,7 @@ public class CHandler implements ICHandler {
 		for (final IASTNode funcDef : complexNodes) {
 			processTUchild(main, mDeclarations, funcDef);
 		}
-		
+
 		// handle global ACSL stuff
 		// TODO: do it!
 
@@ -2825,7 +2828,7 @@ public class CHandler implements ICHandler {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
 				rhsWithBitfieldTreatment =
 						mExpressionTranslation.erazeBits(loc, rightHandSideValueWithConversionsApplied.getValue(),
-						(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth, hook);
+								(CPrimitive) hlv.getCType().getUnderlyingType(), bitfieldWidth, hook);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
@@ -2876,10 +2879,9 @@ public class CHandler implements ICHandler {
 				}
 			}
 
-			final ExpressionResultBuilder builderWithUnionFieldAndNeighboursUpdated =
-					assignorHavocUnionNeighbours(main, loc, (RValue) rightHandSide.getLrValue(),
-							rightHandSide.getNeighbourUnionFields(), rightHandSideValueWithConversionsApplied, builder,
-							hook);
+			final ExpressionResultBuilder builderWithUnionFieldAndNeighboursUpdated = assignorHavocUnionNeighbours(main,
+					loc, (RValue) rightHandSide.getLrValue(), rightHandSide.getNeighbourUnionFields(),
+					rightHandSideValueWithConversionsApplied, builder, hook);
 
 			// the following block's functionality has moved to FunctionHandler.constructAssignmentStatement(..)
 			// if (!mFunctionHandler.isGlobalScope()) {
@@ -3740,7 +3742,7 @@ public class CHandler implements ICHandler {
 		final ILocation ignoreLocation = LocationFactory.createIgnoreCLocation(node);
 		final WhileStatement whileStmt =
 				new WhileStatement(ignoreLocation, ExpressionFactory.createBooleanLiteral(ignoreLocation, true), spec,
-				bodyBlock.toArray(new Statement[bodyBlock.size()]));
+						bodyBlock.toArray(new Statement[bodyBlock.size()]));
 		// overappr.stream().forEach(a -> a.annotate(whileStmt));
 		// stmt.add(whileStmt);
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
@@ -4073,7 +4075,7 @@ public class CHandler implements ICHandler {
 			typeOfResult = left.mLrVal.getCType();
 			assert typeOfResult.equals(right.mLrVal.getCType());
 			intermediateResult = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
-			addIntegerBoundsCheck(main, loc, intermediateResult, (CPrimitive) typeOfResult, op, hook, 
+			addIntegerBoundsCheck(main, loc, intermediateResult, (CPrimitive) typeOfResult, op, hook,
 					left.mLrVal.getValue(), right.mLrVal.getValue());
 			expr = mExpressionTranslation.constructArithmeticExpression(loc, op, left.mLrVal.getValue(),
 					(CPrimitive) typeOfResult, right.mLrVal.getValue(), (CPrimitive) typeOfResult);
@@ -4336,17 +4338,17 @@ public class CHandler implements ICHandler {
 		 * the first compares unequal to 0; the third operand is evaluated only if the first compares equal to 0; the
 		 * result is the value of the second or third operand (whichever is evaluated), converted to the type described
 		 * below. 110)
-         *
+		 *
 		 * --> we translate this by a Boogie if-statement, such that the side effects of the evaluation of each C
 		 * expression go into the respective branch of the Boogie if statement.
-         */
+		 */
 
 		/*
 		 * C11 6.5.15.5 If both the second and third operands have arithmetic type, the result type that would be
 		 * determined by the usual arithmetic conversions, were they applied to those two operands, is the type of the
 		 * result. If both the operands have structure or union type, the result has that type. If both operands have
 		 * void type, the result has void type.
-         */
+		 */
 
 		/*
 		 * C11 6.5.15.6 If both the second and third operands are pointers or one is a null pointer constant and the
@@ -4356,9 +4358,9 @@ public class CHandler implements ICHandler {
 		 * qualified version of the composite type; if one operand is a null pointer constant, the result has the type
 		 * of the other operand; otherwise, one operand is a pointer to void or a qualified version of void, in which
 		 * case the result type is a pointer to an appropriately qualified version of void.
-         *
-         *  TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
-         *   currently.
+		 *
+		 * TODO: this is only partially implemented, for example we are not doing anything about the qualifiers,
+		 * currently.
 		 */
 
 		/*
@@ -4367,22 +4369,18 @@ public class CHandler implements ICHandler {
 		 * further.
 		 */
 
-
 		boolean secondArgIsVoid = false;
 		boolean thirdArgIsVoid = false;
 
-
 		if (!opPositive.hasLRValue()) {
-			opPositive.mLrVal = new RValue(
-					ExpressionFactory.createVoidDummyExpression(loc),
-//					dummyVoidAuxVar.getExp(),
+			opPositive.mLrVal = new RValue(ExpressionFactory.createVoidDummyExpression(loc),
+					// dummyVoidAuxVar.getExp(),
 					new CPrimitive(CPrimitives.VOID));
 			secondArgIsVoid = true;
 		}
 		if (!opNegative.hasLRValue()) {
-			opNegative.mLrVal = new RValue(
-					ExpressionFactory.createVoidDummyExpression(loc),
-//					dummyVoidAuxVar.getExp(),
+			opNegative.mLrVal = new RValue(ExpressionFactory.createVoidDummyExpression(loc),
+					// dummyVoidAuxVar.getExp(),
 					new CPrimitive(CPrimitives.VOID));
 			thirdArgIsVoid = true;
 		}
@@ -4424,7 +4422,7 @@ public class CHandler implements ICHandler {
 			if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CPointer) {
 				// convert the "0" to a pointer
 				mExpressionTranslation.convertIntToPointer(loc, opNegative,
-					(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
+						(CPointer) opPositive.mLrVal.getCType().getUnderlyingType());
 				resultCType = opPositive.getLrValue().getCType();
 			} else if (opPositive.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 				/* if one of the branches has pointer type and one has array type, the array decays to a pointer. */
@@ -4443,16 +4441,16 @@ public class CHandler implements ICHandler {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary..
-//		/*
-//		 * the value of this aux var may never be used outside the translation of this conditional operator.
-//		 * Using the aux var in the hope of detecting such errors easier. Otherwise one could just not make the
-//		 * assignment.
-//		 */
-//		final AuxVarInfo dummyVoidAuxVar = AuxVarInfo.constructAuxVarInfo(loc, main, resultCType,
-//				mTypeHandler.cType2AstType(loc, resultCType),
-//				SFO.AUXVAR.DUMMY_VOID);
-//		resultBuilder.addDeclaration(dummyVoidAuxVar.getVarDec());
-//		resultBuilder.addAuxVar(dummyVoidAuxVar);
+		// /*
+		// * the value of this aux var may never be used outside the translation of this conditional operator.
+		// * Using the aux var in the hope of detecting such errors easier. Otherwise one could just not make the
+		// * assignment.
+		// */
+		// final AuxVarInfo dummyVoidAuxVar = AuxVarInfo.constructAuxVarInfo(loc, main, resultCType,
+		// mTypeHandler.cType2AstType(loc, resultCType),
+		// SFO.AUXVAR.DUMMY_VOID);
+		// resultBuilder.addDeclaration(dummyVoidAuxVar.getVarDec());
+		// resultBuilder.addAuxVar(dummyVoidAuxVar);
 
 		resultBuilder.addAllExceptLrValue(opCondition);
 
@@ -4471,7 +4469,7 @@ public class CHandler implements ICHandler {
 		final List<Statement> ifStatements = new ArrayList<>();
 		{
 			ifStatements.addAll(opPositive.mStmt);
-//			if (!resultCType.isVoidType()) {
+			// if (!resultCType.isVoidType()) {
 			if (!resultCType.isVoidType() && !secondArgIsVoid) {
 				final LeftHandSide[] lhs = { auxvar.getLhs() };
 				final Expression assignedVal = opPositive.getLrValue().getValue();
@@ -4513,8 +4511,8 @@ public class CHandler implements ICHandler {
 			/* the result has a value only if the result type is not void.. */
 			resultBuilder.setLrVal(new RValue(auxvar.getExp(), resultCType));
 		} else {
-//			/* for better error detection we give the dummy void value here */ (edit: see the todo above)
-//			resultBuilder.setLrVal(new RValue(dummyVoidAuxVar.getExp(), resultCType));
+			// /* for better error detection we give the dummy void value here */ (edit: see the todo above)
+			// resultBuilder.setLrVal(new RValue(dummyVoidAuxVar.getExp(), resultCType));
 		}
 		return resultBuilder.build();
 	}
