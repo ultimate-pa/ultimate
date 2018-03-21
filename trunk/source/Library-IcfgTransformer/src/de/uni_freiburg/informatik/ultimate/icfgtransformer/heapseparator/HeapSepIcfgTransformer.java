@@ -256,21 +256,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			memlocArrayManager = new MemlocArrayManager(mMgdScript);
 
-//			/**
-//			 * create program variable for memloc array
-//			 *  conceptually, we need one memloc array for each index sort that is used in the program, for now we just
-//			 *  create one for integer indices
-//			 */
-//			mMgdScript.lock(this);
-//			mMgdScript.getScript().declareSort(MEMLOC_SORT_INT, 0);
-//			dimToMemLocSort = mMgdScript.getScript().sort(MEMLOC_SORT_INT);
-//			final Sort intToLocations = SmtSortUtils.getArraySort(mMgdScript.getScript(),
-//					SmtSortUtils.getIntSort(mMgdScript), dimToMemLocSort);
-//			dimToMemlocArrayInt = ProgramVarUtils.constructGlobalProgramVarPair(MEMLOC + "_int", intToLocations, mMgdScript,
-//					this);
-//			mMgdScript.unlock(this);
-
-
 			/*
 			 * add the memloc array updates to each transition with an array update
 			 * the values the memloc array is set to are location literals, those are pairwise different by axiom
@@ -287,7 +272,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					" location literals (each corresponds to one heap write)");
 
 			// make sure the literals are all treated as pairwise unequal
-			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
+//			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
+			final Set<IProgramConst> memlocLiterals = new HashSet<>(mauit.getLocationLiterals());
 
 			final Set<Term> literalTerms = mauit.getLocationLiterals().stream()
 						.map(pvoc -> pvoc.getTerm())
@@ -311,7 +297,25 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 						.getResult();
 			}
 
-			preprocessedIcfg = icfgWithMemlocUpdates;
+//			preprocessedIcfg = icfgWithMemlocUpdates;
+
+			/*
+			 * Add initialization code for the memloc arrays.
+			 * Each memloc array is initialized with a constant array. The value of the constant array is a memloc
+			 * literal that is different from all other memloc literals we use.
+			 */
+			final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
+					"icfg_with_initialized_freeze_vars", outLocationClass, icfgWithMemlocUpdates, outToOutLocFac,
+					backtranslationTracker, memlocArrayManager, validArray, mSettings);
+			final IIcfg<OUTLOC> icfgWMemlocInitialized = mli.getResult();
+
+			memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
+
+			preprocessedIcfg = icfgWMemlocInitialized;
+
+
+			equalityProvider.announceAdditionalLiterals(memlocLiterals);
+
 			storeIndexInfoToFreezeVar = null;
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
@@ -772,6 +776,8 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 
 class MemlocArrayManager {
 
+	private boolean mIsFrozen;
+
 	public static final String MEMLOC = "##memloc";
 	public static final String MEMLOC_SORT_INT = "##mmlc_sort_int";
 
@@ -782,13 +788,19 @@ class MemlocArrayManager {
 
 	private final ManagedScript mMgdScript;
 
+	private Map<IProgramNonOldVar, Term> mMemlocArrayToInitConstArray;
+
+	private Map<IProgramVarOrConst, IProgramConst> mMemlocArrayToLit;
+
 	public MemlocArrayManager(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
+		mIsFrozen = false;
 	}
 
 	IProgramNonOldVar getMemlocArray(final int dim) {
 		IProgramNonOldVar result = mDimToMemlocArrayInt.get(dim);
 		if (result == null) {
+			assert !mIsFrozen;
 			mMgdScript.lock(this);
 			final Sort intToLocations = SmtSortUtils.getArraySort(mMgdScript.getScript(),
 					SmtSortUtils.getIntSort(mMgdScript), getMemlocSort(dim));
@@ -809,6 +821,47 @@ class MemlocArrayManager {
 			mAlreadyDeclaredMemlocSort = true;
 		}
 		return mMgdScript.getScript().sort(MEMLOC_SORT_INT);
+	}
+
+	public Map<IProgramNonOldVar, Term> getMemlocArrayToInitConstantArray() {
+		// this may be called only after all memloc arrays that we need have been created.";
+
+		if (!mIsFrozen){
+			mIsFrozen = true;
+			mMgdScript.lock(this);
+
+			assert mMemlocArrayToInitConstArray == null;
+			mMemlocArrayToInitConstArray = new HashMap<>();
+			assert mMemlocArrayToLit == null;
+			mMemlocArrayToLit = new HashMap<>();
+
+			for (final Entry<Integer, IProgramNonOldVar> en : mDimToMemlocArrayInt.entrySet()) {
+				final Integer dim = en.getKey();
+				final IProgramNonOldVar memlocArray = en.getValue();
+
+				// literal has value sort (the sort of the memloc literals), we will create a constant array from it
+				final String memlocLitName = getMemlocLitName(memlocArray);
+				mMgdScript.declareFun(this, memlocLitName, new Sort[0], getMemlocSort(dim));
+
+				final ApplicationTerm memlocLitTerm = (ApplicationTerm) mMgdScript.term(this, memlocLitName);
+
+				mMemlocArrayToLit.put(memlocArray, new HeapSepProgramConst(memlocLitTerm));
+
+				final Term constArray = mMgdScript.term(this, "const", null, memlocArray.getSort(), memlocLitTerm);
+				mMemlocArrayToInitConstArray.put(memlocArray, constArray);
+			}
+			mMgdScript.unlock(this);
+		}
+		return mMemlocArrayToInitConstArray;
+	}
+
+	private String getMemlocLitName(final IProgramNonOldVar memlocVar) {
+		// TODO make _really_ sure that the new id is unique
+		return memlocVar.getGloballyUniqueId() + "_lit";
+	}
+
+	public Set<IProgramConst> getMemLocLits() {
+		return new HashSet<>(mMemlocArrayToLit.values());
 	}
 
 //			/**

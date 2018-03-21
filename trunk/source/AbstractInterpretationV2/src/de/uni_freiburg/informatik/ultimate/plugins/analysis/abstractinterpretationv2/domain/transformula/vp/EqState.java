@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.EqNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -77,6 +78,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	private boolean assertPvocsAreComplete(final EqConstraint<EqNode> constraint) {
 		final Set<IProgramVarOrConst> set = constraint.getPvocs(mFactory.getSymbolTable()).stream()
 				.filter(pvoc -> !(pvoc instanceof IProgramOldVar))
+				.filter(pvoc -> !(pvoc instanceof HeapSepProgramConst))
 				.filter(pvoc -> !(pvoc instanceof BoogieConst))
 				.filter(pvoc -> !mFactory.getEqConstraintFactory().getNonTheoryLiterals().contains(pvoc))
 				.collect(Collectors.toSet());
