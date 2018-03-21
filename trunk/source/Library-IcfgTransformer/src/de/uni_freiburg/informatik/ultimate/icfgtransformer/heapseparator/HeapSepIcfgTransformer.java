@@ -264,7 +264,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 					new MemlocArrayUpdaterIcfgTransformer<>(mLogger, "icfg_with_memloc_updates",
 							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, memlocArrayManager,
 							mHeapArrays, edgeToIndexToStoreIndexInfo);
-			IIcfg<OUTLOC> icfgWithMemlocUpdates = mauit.getResult();
+			final IIcfg<OUTLOC> icfgWithMemlocUpdates = mauit.getResult();
 
 			storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
 
@@ -275,7 +275,26 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 //			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
 			final Set<IProgramConst> memlocLiterals = new HashSet<>(mauit.getLocationLiterals());
 
-			final Set<Term> literalTerms = mauit.getLocationLiterals().stream()
+
+//			preprocessedIcfg = icfgWithMemlocUpdates;
+
+			/*
+			 * Add initialization code for the memloc arrays.
+			 * Each memloc array is initialized with a constant array. The value of the constant array is a memloc
+			 * literal that is different from all other memloc literals we use.
+			 */
+			final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
+					"icfg_with_initialized_freeze_vars", outLocationClass, icfgWithMemlocUpdates, outToOutLocFac,
+					backtranslationTracker, memlocArrayManager, validArray, mSettings);
+			IIcfg<OUTLOC> icfgWMemlocInitialized = mli.getResult();
+
+			memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
+
+
+
+			equalityProvider.announceAdditionalLiterals(memlocLiterals);
+
+			final Set<Term> literalTerms = memlocLiterals.stream()
 						.map(pvoc -> pvoc.getTerm())
 						.collect(Collectors.toSet());
 			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
@@ -290,31 +309,13 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 				final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
 						CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
 								literalTerms));
-
-				icfgWithMemlocUpdates = new AxiomsAdderIcfgTransformer<>( mLogger,
+				icfgWMemlocInitialized = new AxiomsAdderIcfgTransformer<>( mLogger,
 						"icfg_with_memloc_updates_and_literal_axioms", outLocationClass,
 						icfgWithMemlocUpdates, outToOutLocFac, backtranslationTracker, allLiteralDisequalities)
 						.getResult();
 			}
 
-//			preprocessedIcfg = icfgWithMemlocUpdates;
-
-			/*
-			 * Add initialization code for the memloc arrays.
-			 * Each memloc array is initialized with a constant array. The value of the constant array is a memloc
-			 * literal that is different from all other memloc literals we use.
-			 */
-			final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
-					"icfg_with_initialized_freeze_vars", outLocationClass, icfgWithMemlocUpdates, outToOutLocFac,
-					backtranslationTracker, memlocArrayManager, validArray, mSettings);
-			final IIcfg<OUTLOC> icfgWMemlocInitialized = mli.getResult();
-
-			memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
-
 			preprocessedIcfg = icfgWMemlocInitialized;
-
-
-			equalityProvider.announceAdditionalLiterals(memlocLiterals);
 
 			storeIndexInfoToFreezeVar = null;
 		}
