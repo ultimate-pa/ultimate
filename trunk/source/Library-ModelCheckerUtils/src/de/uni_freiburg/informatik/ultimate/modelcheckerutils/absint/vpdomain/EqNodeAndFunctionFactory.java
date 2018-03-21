@@ -275,31 +275,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			final EqNode value = getOrConstructNode(at.getParameters()[0]);
 			return new EqAtomicConstantArrayNode(term, value.isLiteral(), this, value);
 		}
-
-//				if (isConstantArray(term)) {
-//			final ApplicationTerm at = (ApplicationTerm) term;
-//			final EqNode value = getOrConstructNode(at.getParameters()[0]);
-//
-//			if (isAtomic(term)) {
-//				return new EqAtomicConstantArrayNode(term, value.isLiteral(), this, value);
-//			} else {
-//				throw new AssertionError("todo: implement");
-//			}
-//		}
-
-		// TODO Auto-generated method stub
 		return null;
 	}
-
-//	private boolean isConstantArray(final Term term) {
-//		if (!(term instanceof ApplicationTerm)) {
-//			return false;
-//		}
-//		final ApplicationTerm at = (ApplicationTerm) term;
-//		// TODO: define this string somewhere (also occurs in CfgBuilder and RefinementStrategyFactory, currently)
-//		//  also implement a more general solution
-//		return at.getFunction().getName().equals("const-Array-Int-Int");
-//	}
 
 	private boolean isUntrackedArray(final Term term) {
 		if (mTrackedArraySubstrings == null) {
