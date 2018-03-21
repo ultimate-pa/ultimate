@@ -35,7 +35,7 @@ import java.util.Vector;
  * @author hoenicke
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.RelationDecision
  */
-public class BooleanDecision extends Decision {
+public class BooleanDecision extends Decision<BooleanDecision> {
 
 	public static final String PRIME_SUFFIX = "'";
 
@@ -123,15 +123,15 @@ public class BooleanDecision extends Decision {
 		return "true";
 	}
 
-	private Decision primeCache;
+	private BooleanDecision primeCache;
 
 	@Override
-	public Decision prime() {
+	public BooleanDecision prime() {
 		return this.prime(null);
 	}
 
 	@Override
-	public Decision prime(final String ignore) {
+	public BooleanDecision prime(final String ignore) {
 		if (mVar.equals(ignore)) {
 			return this;
 		}
@@ -146,12 +146,12 @@ public class BooleanDecision extends Decision {
 
 	// by Ami
 	@Override
-	public Decision unprime() {
+	public BooleanDecision unprime() {
 		return this.unprime(null);
 	}
 
 	@Override
-	public Decision unprime(final String ignore) {
+	public BooleanDecision unprime(final String ignore) {
 		if (mVar.equals(ignore)) {
 			return this;
 		}
@@ -159,5 +159,10 @@ public class BooleanDecision extends Decision {
 																											// 2010-08-02
 
 		return (new BooleanDecision(result));
+	}
+
+	@Override
+	public int compareToSimilar(final Decision<?> other) {
+		return mVar.compareTo(((BooleanDecision) other).mVar);
 	}
 }

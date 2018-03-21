@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
@@ -94,21 +96,42 @@ public class VarRemoval {
 			return CDD.FALSE;
 		}
 
+		final Map<CDD, CDD> cache = new HashMap<>();
+		return excludeEventsAndPrimedVars(cdd, primedVars, cache);
+	}
+
+	private CDD excludeEventsAndPrimedVars(final CDD cdd, final Collection<String> primedVars,
+			final Map<CDD, CDD> cache) {
+		if (cdd == CDD.TRUE) {
+			return CDD.TRUE;
+		}
+		if (cdd == CDD.FALSE) {
+			return CDD.FALSE;
+		}
+
+		final CDD cachedResult = cache.get(cdd);
+		if (cachedResult != null) {
+			return cachedResult;
+		}
+
 		final CDD[] childs = cdd.getChilds();
 		final Decision decision = cdd.getDecision();
-		CDD decisionCDD = CDD.TRUE;
+		final CDD result;
 		if (!(decision instanceof BoogieBooleanExpressionDecision) && (decision instanceof RangeDecision
 				|| (decision instanceof BooleanDecision & !primedVars.contains(decision.getVar())))) {
 			final CDD[] newChilds = new CDD[childs.length];
 			for (int i = 0; i < childs.length; i++) {
-				newChilds[i] = excludeEventsAndPrimedVars(childs[i], primedVars);
+				newChilds[i] = excludeEventsAndPrimedVars(childs[i], primedVars, cache);
 			}
-			return cdd.getDecision().simplify(newChilds);
+			result = cdd.getDecision().simplify(newChilds);
+		} else {
+			assert childs.length == 2;
+			result = excludeEventsAndPrimedVars(childs[0], primedVars, cache)
+					.or(excludeEventsAndPrimedVars(childs[1], primedVars, cache));
 		}
-		assert childs.length == 2;
-		decisionCDD =
-				excludeEventsAndPrimedVars(childs[0], primedVars).or(excludeEventsAndPrimedVars(childs[1], primedVars));
-		return decisionCDD;
+		final CDD old = cache.put(cdd, result);
+		assert old == null;
+		return result;
 	}
 
 	public CDD getUnPrimedVars(final CDD cdd, final List<String> stateVars) {

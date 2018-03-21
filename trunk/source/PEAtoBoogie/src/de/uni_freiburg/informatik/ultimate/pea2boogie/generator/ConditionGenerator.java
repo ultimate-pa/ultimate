@@ -61,15 +61,7 @@ public class ConditionGenerator {
 
 	private Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final int[] automataPermutation,
 			final String fileName, final BoogieLocation bl) {
-		final int[][] phases = new int[automataPermutation.length][];
-		for (int i = 0; i < automataPermutation.length; i++) {
-			final PhaseEventAutomata automaton = automata[automataPermutation[i]];
-			final int phaseCount = automaton.getPhases().length;
-			phases[i] = new int[phaseCount];
-			for (int j = 0; j < phaseCount; j++) {
-				phases[i][j] = j;
-			}
-		}
+		final int[][] phases = createPhasePairs(automata, automataPermutation);
 
 		final List<int[]> phasePermutations = CrossProducts.crossProduct(phases);
 		final List<Expression> conditions = new ArrayList<>();
@@ -103,6 +95,19 @@ public class ConditionGenerator {
 			return null;
 		}
 		return buildBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, conditions);
+	}
+
+	private static int[][] createPhasePairs(final PhaseEventAutomata[] automata, final int[] automataPermutation) {
+		final int[][] phases = new int[automataPermutation.length][];
+		for (int i = 0; i < automataPermutation.length; i++) {
+			final PhaseEventAutomata automaton = automata[automataPermutation[i]];
+			final int phaseCount = automaton.getPhases().length;
+			phases[i] = new int[phaseCount];
+			for (int j = 0; j < phaseCount; j++) {
+				phases[i][j] = j;
+			}
+		}
+		return phases;
 	}
 
 	private static Expression buildBinaryExpression(final BoogieLocation bl, final Operator op,

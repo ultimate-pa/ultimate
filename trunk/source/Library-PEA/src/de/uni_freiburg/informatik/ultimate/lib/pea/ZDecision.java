@@ -37,7 +37,7 @@ import net.sourceforge.czt.z.util.ZString;
  * @author jdq, ulli, jfaber
  *
  */
-public final class ZDecision extends Decision {
+public final class ZDecision extends Decision<ZDecision> {
 	private String mPredicate;
 
 	/**
@@ -99,7 +99,7 @@ public final class ZDecision extends Decision {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Decision prime() {
+	public ZDecision prime() {
 		// String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
 		String decision = mPredicate;
 
@@ -310,17 +310,17 @@ public final class ZDecision extends Decision {
 	}
 
 	@Override
-	public Decision unprime(final String ignore) {
+	public ZDecision unprime(final String ignore) {
 		return this.unprime();
 	}
 
 	@Override
-	public Decision prime(final String ignore) {
+	public ZDecision prime(final String ignore) {
 		return this.prime();
 	}
 
 	@Override
-	public Decision unprime() {
+	public ZDecision unprime() {
 		// String decision = predicate.replaceAll("([a-zA-Z_])(\\w*)", "$1$2'");
 		String decision = mPredicate;
 
@@ -345,5 +345,10 @@ public final class ZDecision extends Decision {
 	@Override
 	public String getVar() {
 		return "";
+	}
+
+	@Override
+	public int compareToSimilar(final Decision<?> other) {
+		return mPredicate.compareTo(((ZDecision) other).mPredicate);
 	}
 }

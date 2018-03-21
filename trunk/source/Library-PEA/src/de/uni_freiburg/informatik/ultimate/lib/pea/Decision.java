@@ -36,9 +36,9 @@ import java.util.Map;
  * @author hoenicke
  *
  */
-public abstract class Decision {
+public abstract class Decision<T extends Decision<T>> {
 
-	public boolean implies(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+	public boolean implies(final Decision<?> other, final CDD[] childs, final CDD[] ochilds) {
 		/* default implementation for boolean decisions */
 		for (int i = 0; i < childs.length; i++) {
 			if (!childs[i].implies(ochilds[i])) {
@@ -57,11 +57,8 @@ public abstract class Decision {
 		return childs[0];
 	}
 
-	public CDD and(final Decision other, final CDD[] childs, final CDD[] ochilds) {
-		return and(other, childs, ochilds, new HashMap<CDD, Map<CDD, CDD>>());
-	}
-
-	public CDD and(final Decision other, final CDD[] childs, final CDD[] ochilds, final Map<CDD, Map<CDD, CDD>> cache) {
+	public CDD and(final Decision<?> other, final CDD[] childs, final CDD[] ochilds,
+			final Map<CDD, Map<CDD, CDD>> cache) {
 		/* default implementation for boolean decisions */
 		final CDD[] nchilds = new CDD[childs.length];
 
@@ -71,17 +68,18 @@ public abstract class Decision {
 		return simplify(nchilds);
 	}
 
-	public CDD or(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+	public CDD or(final Decision<?> other, final CDD[] childs, final CDD[] ochilds,
+			final Map<CDD, Map<CDD, CDD>> cache) {
 		/* default implementation for boolean decisions */
 		final CDD[] nchilds = new CDD[childs.length];
 
 		for (int i = 0; i < childs.length; i++) {
-			nchilds[i] = childs[i].or(ochilds[i]);
+			nchilds[i] = childs[i].or(ochilds[i], cache);
 		}
 		return simplify(nchilds);
 	}
 
-	public CDD assume(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+	public CDD assume(final Decision<?> other, final CDD[] childs, final CDD[] ochilds) {
 		/* default implementation for boolean decisions */
 		final CDD[] nchilds = new CDD[childs.length];
 
@@ -97,18 +95,18 @@ public abstract class Decision {
 	 *
 	 * @return the primed version of this Decision.
 	 */
-	public abstract Decision prime();
+	public abstract T prime();
 
-	public abstract Decision prime(String ignore);
+	public abstract T prime(String ignore);
 
 	/**
 	 * Create a Decision where primed variable names occur as unprimed versions.
 	 *
 	 * @return the unprimed version of this Decision.
 	 */
-	public abstract Decision unprime();
+	public abstract T unprime();
 
-	public abstract Decision unprime(String ignore);
+	public abstract T unprime(String ignore);
 
 	public abstract String toString(int child);
 
@@ -130,7 +128,16 @@ public abstract class Decision {
 		return toSmtString(child);
 	}
 
-	public static Comparator<Decision> getComparator() {
+	/**
+	 * Called by the {@link DecisionComparator}.
+	 *
+	 * @param other
+	 *            guaranteed to be non-null and of the same type as the current class
+	 * @return
+	 */
+	public abstract int compareToSimilar(Decision<?> other);
+
+	public static Comparator<Decision<?>> getComparator() {
 		return new DecisionComparator();
 	}
 
@@ -139,7 +146,7 @@ public abstract class Decision {
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	private static final class DecisionComparator implements Comparator<Decision> {
+	private static final class DecisionComparator implements Comparator<Decision<?>> {
 		private static final Map<Class<?>, Integer> ORDER = new HashMap<>();
 		static {
 			ORDER.put(EventDecision.class, 10);
@@ -151,7 +158,7 @@ public abstract class Decision {
 		}
 
 		@Override
-		public int compare(final Decision o1, final Decision o2) {
+		public int compare(final Decision<?> o1, final Decision<?> o2) {
 			if (o1 == null && o2 == null) {
 				return 0;
 			} else if (o1 == null) {
@@ -159,8 +166,8 @@ public abstract class Decision {
 			} else if (o2 == null) {
 				return -1;
 			} else {
-				final Class<? extends Decision> o1class = o1.getClass();
-				final Class<? extends Decision> o2class = o2.getClass();
+				final Class<?> o1class = o1.getClass();
+				final Class<?> o2class = o2.getClass();
 				if (o1class != o2class) {
 					final Integer o1prio = ORDER.get(o1class);
 					final Integer o2prio = ORDER.get(o2class);
@@ -171,9 +178,8 @@ public abstract class Decision {
 					return o1prio.compareTo(o2prio);
 				}
 				// alternative: use lexicographic comparison
-				return Integer.compare(o1.hashCode(), o2.hashCode());
+				return o1.compareToSimilar(o2);
 			}
 		}
 	}
-
 }

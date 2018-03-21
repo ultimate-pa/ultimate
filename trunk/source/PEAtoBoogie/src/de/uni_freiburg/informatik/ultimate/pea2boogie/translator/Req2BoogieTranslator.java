@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
@@ -862,7 +863,17 @@ public class Req2BoogieTranslator {
 		}
 		final List<int[]> subsets = CrossProducts.subArrays(automataIndices,
 				mCombinationNum <= automataIndices.length ? mCombinationNum : automataIndices.length);
+		int subsetsSize = subsets.size();
+		if (subsetsSize > 10000) {
+			mLogger.warn("Computing rt-inconsistency assertions for " + subsetsSize
+					+ " subsets, this might take a while...");
+		}
 		for (final int[] subset : subsets) {
+			subsetsSize--;
+			if (subsetsSize % 1000 == 0 && !mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(),
+						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
+			}
 			final Statement assertStmt = genAssertRTInconsistency(subset, bl);
 			if (assertStmt != null) {
 				stmtList.add(assertStmt);

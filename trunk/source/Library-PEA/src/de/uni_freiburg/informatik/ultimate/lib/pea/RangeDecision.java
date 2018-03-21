@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.Map;
 
-public class RangeDecision extends Decision {
+public class RangeDecision extends Decision<RangeDecision> {
 	public static final int OP_LT = -2;
 	public static final int OP_LTEQ = -1;
 	public static final int OP_EQ = 0;
@@ -115,57 +115,28 @@ public class RangeDecision extends Decision {
 	}
 
 	public static CDD create(final String var, final int op, final int value) {
-		CDD cdd;
-
 		switch (op) {
 		case OP_EQ:
-			cdd = CDD.create(new RangeDecision(var, new int[] { 2 * value, (2 * value) + 1 }), FTF);
-
-			break;
-
+			return CDD.create(new RangeDecision(var, new int[] { 2 * value, (2 * value) + 1 }), FTF);
 		case OP_NEQ:
-			cdd = CDD.create(new RangeDecision(var, new int[] { 2 * value, (2 * value) + 1 }), TFT);
-
-			break;
-
+			return CDD.create(new RangeDecision(var, new int[] { 2 * value, (2 * value) + 1 }), TFT);
 		case OP_LT:
-			cdd = CDD.create(new RangeDecision(var, new int[] { 2 * value }), CDD.TRUE_CHILDS);
-
-			break;
-
+			return CDD.create(new RangeDecision(var, new int[] { 2 * value }), CDD.TRUE_CHILDS);
 		case OP_LTEQ:
-			cdd = CDD.create(new RangeDecision(var, new int[] { (2 * value) + 1 }), CDD.TRUE_CHILDS);
-
-			break;
-
+			return CDD.create(new RangeDecision(var, new int[] { (2 * value) + 1 }), CDD.TRUE_CHILDS);
 		case OP_GT:
-			cdd = CDD.create(new RangeDecision(var, new int[] { (2 * value) + 1 }), CDD.FALSE_CHILDS);
-
-			break;
-
+			return CDD.create(new RangeDecision(var, new int[] { (2 * value) + 1 }), CDD.FALSE_CHILDS);
 		case OP_GTEQ:
-			cdd = CDD.create(new RangeDecision(var, new int[] { 2 * value }), CDD.FALSE_CHILDS);
-
-			break;
-
+			return CDD.create(new RangeDecision(var, new int[] { 2 * value }), CDD.FALSE_CHILDS);
 		default:
 			throw new IllegalArgumentException("op = " + op);
 		}
-
-		return cdd;
 	}
 
 	@Override
-	public CDD and(final Decision other, CDD[] childs, final CDD[] ochilds, final Map<CDD, Map<CDD, CDD>> cache) {
+	public CDD and(final Decision<?> other, final CDD[] childs, final CDD[] ochilds,
+			final Map<CDD, Map<CDD, CDD>> cache) {
 		final int[] olimits = ((RangeDecision) other).mLimits;
-
-		if (childs.length == 1) {
-			// SR2010-08-03
-			final CDD[] t = childs;
-			childs = new CDD[2];
-			childs[0] = t[0];
-			childs[1] = CDD.FALSE;
-		}
 
 		/* intersect all intervals */
 		CDD[] nchilds = new CDD[(childs.length + ochilds.length) - 1];
@@ -217,7 +188,8 @@ public class RangeDecision extends Decision {
 	}
 
 	@Override
-	public CDD or(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+	public CDD or(final Decision<?> other, final CDD[] childs, final CDD[] ochilds,
+			final Map<CDD, Map<CDD, CDD>> cache) {
 		final int[] olimits = ((RangeDecision) other).mLimits;
 
 		/* intersect all intervals */
@@ -229,7 +201,7 @@ public class RangeDecision extends Decision {
 		int tptr = 0;
 
 		while ((optr < olimits.length) || (tptr < mLimits.length)) {
-			nchilds[nptr] = childs[tptr].or(ochilds[optr]);
+			nchilds[nptr] = childs[tptr].or(ochilds[optr], cache);
 
 			if ((nptr > 0) && (nchilds[nptr] == nchilds[nptr - 1])) {
 				nptr--;
@@ -246,7 +218,7 @@ public class RangeDecision extends Decision {
 			}
 		}
 
-		nchilds[nptr] = childs[tptr].or(ochilds[optr]);
+		nchilds[nptr] = childs[tptr].or(ochilds[optr], cache);
 
 		if ((nptr > 0) && (nchilds[nptr] == nchilds[nptr - 1])) {
 			nptr--;
@@ -270,7 +242,7 @@ public class RangeDecision extends Decision {
 	}
 
 	@Override
-	public CDD assume(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+	public CDD assume(final Decision<?> other, final CDD[] childs, final CDD[] ochilds) {
 		final int[] olimits = ((RangeDecision) other).mLimits;
 
 		/* intersect all intervals */
@@ -330,7 +302,7 @@ public class RangeDecision extends Decision {
 	}
 
 	@Override
-	public boolean implies(final Decision other, final CDD[] childs, final CDD[] ochilds) {
+	public boolean implies(final Decision<?> other, final CDD[] childs, final CDD[] ochilds) {
 		final int[] olimits = ((RangeDecision) other).mLimits;
 
 		int tptr = 0;
@@ -492,7 +464,7 @@ public class RangeDecision extends Decision {
 	}
 
 	@Override
-	public Decision prime(final String ignore) {
+	public RangeDecision prime(final String ignore) {
 		if (ignore != null && mVar.equals(ignore)) {
 			return this;
 		}
@@ -503,7 +475,7 @@ public class RangeDecision extends Decision {
 	}
 
 	@Override
-	public Decision unprime(final String ignore) {
+	public RangeDecision unprime(final String ignore) {
 		if (ignore != null && mVar.equals(ignore)) {
 			return this;
 		}
@@ -538,12 +510,17 @@ public class RangeDecision extends Decision {
 	}
 
 	@Override
-	public Decision unprime() {
+	public RangeDecision unprime() {
 		return this.unprime(null);
 	}
 
 	@Override
-	public Decision prime() {
+	public RangeDecision prime() {
 		return this.prime(null);
+	}
+
+	@Override
+	public int compareToSimilar(final Decision<?> other) {
+		return mVar.compareTo(((RangeDecision) other).mVar);
 	}
 }

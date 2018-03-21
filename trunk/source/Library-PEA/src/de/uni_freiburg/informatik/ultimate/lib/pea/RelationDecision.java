@@ -147,14 +147,14 @@ public class RelationDecision extends BooleanDecision {
 	}
 
 	@Override
-	public Decision prime() {
+	public RelationDecision prime() {
 		final String expr1 = leftExpr.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + BooleanDecision.PRIME_SUFFIX);
 		final String expr2 = rightExpr.replaceAll("([a-zA-Z_])(\\w*)", "$1$2" + BooleanDecision.PRIME_SUFFIX);
 		return (new RelationDecision(expr1, op, expr2));
 	}
 
 	@Override
-	public Decision unprime() {
+	public RelationDecision unprime() {
 		String expr1 = leftExpr;
 		String expr2 = rightExpr;
 		if (leftExpr.endsWith(PRIME_SUFFIX)) {

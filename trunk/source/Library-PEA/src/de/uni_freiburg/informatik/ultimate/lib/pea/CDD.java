@@ -79,9 +79,9 @@ public final class CDD {
 	 */
 	private static final UnifyHash<CDD> UNIFY_HASH = new UnifyHash<>();
 
-	private static final Comparator<Decision> DECISION_COMPARATOR = Decision.getComparator();
+	private static final Comparator<Decision<?>> DECISION_COMPARATOR = Decision.getComparator();
 
-	private final Decision mDecision;
+	private final Decision<?> mDecision;
 	private final int mDepth;
 	private final CDD[] mChilds;
 	private final boolean mTimed;
@@ -91,7 +91,7 @@ public final class CDD {
 	/**
 	 * Create a new CDD with the given decision and sub diagrams.
 	 */
-	private CDD(final Decision decision, final CDD[] childs) {
+	private CDD(final Decision<?> decision, final CDD[] childs) {
 		mDecision = decision;
 		mChilds = childs;
 
@@ -132,7 +132,7 @@ public final class CDD {
 	 * @param childs
 	 *            the child formulae for the sub-decisions.
 	 */
-	public static CDD create(final Decision decision, final CDD[] childs) {
+	public static CDD create(final Decision<?> decision, final CDD[] childs) {
 		int hashcode = decision.hashCode();
 
 		for (int i = 0; i < childs.length; i++) {
@@ -311,28 +311,55 @@ public final class CDD {
 			return other;
 		}
 
+		final Map<CDD, Map<CDD, CDD>> cache = new HashMap<>();
+		return or(other, cache);
+	}
+
+	public CDD or(final CDD other, final Map<CDD, Map<CDD, CDD>> cache) {
+		if ((other == CDD.FALSE) || (this == CDD.TRUE)) {
+			return this;
+		}
+
+		if ((other == CDD.TRUE) || (this == CDD.FALSE)) {
+			return other;
+		}
+
+		Map<CDD, CDD> innerCache = cache.get(this);
+		if (innerCache == null) {
+			innerCache = new HashMap<>();
+			cache.put(this, innerCache);
+		}
+		final CDD cachedResult = innerCache.get(other);
+		if (cachedResult != null) {
+			return cachedResult;
+		}
+
 		CDD[] newchilds;
 		final int cmpTo = DECISION_COMPARATOR.compare(mDecision, other.mDecision);
 
+		final CDD result;
 		if (cmpTo == 0) {
-			return mDecision.or(other.mDecision, mChilds, other.mChilds);
+			result = mDecision.or(other.mDecision, mChilds, other.mChilds, cache);
 		} else if (cmpTo < 0) {
 			newchilds = new CDD[mChilds.length];
 
 			for (int i = 0; i < mChilds.length; i++) {
-				newchilds[i] = mChilds[i].or(other);
+				newchilds[i] = mChilds[i].or(other, cache);
 			}
 
-			return mDecision.simplify(newchilds);
+			result = mDecision.simplify(newchilds);
 		} else {
 			newchilds = new CDD[other.mChilds.length];
 
 			for (int i = 0; i < other.mChilds.length; i++) {
-				newchilds[i] = or(other.mChilds[i]);
+				newchilds[i] = or(other.mChilds[i], cache);
 			}
 
-			return other.mDecision.simplify(newchilds);
+			result = other.mDecision.simplify(newchilds);
 		}
+		final CDD old = innerCache.put(other, result);
+		assert old == null;
+		return result;
 	}
 
 	/**
@@ -916,7 +943,7 @@ public final class CDD {
 	/**
 	 * @return Returns the decision.
 	 */
-	public Decision getDecision() {
+	public Decision<?> getDecision() {
 		return mDecision;
 	}
 
@@ -932,8 +959,8 @@ public final class CDD {
 			return mPrimeCache;
 		}
 
-		final Decision ldecision = mDecision;
-		Decision newDecision;
+		final Decision<?> ldecision = mDecision;
+		Decision<?> newDecision;
 
 		final CDD[] children = mChilds;
 		final CDD[] newChildren = new CDD[children.length];
@@ -969,8 +996,8 @@ public final class CDD {
 			return this;
 		}
 
-		final Decision decision = mDecision;
-		Decision newDecision;
+		final Decision<?> decision = mDecision;
+		Decision<?> newDecision;
 
 		final CDD[] children = mChilds;
 		final CDD[] newChildren = new CDD[children.length];

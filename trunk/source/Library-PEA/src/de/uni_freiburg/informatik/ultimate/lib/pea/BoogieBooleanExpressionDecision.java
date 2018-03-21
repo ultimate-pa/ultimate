@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.
  *
  * @author Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
  */
-public class BoogieBooleanExpressionDecision extends Decision {
+public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpressionDecision> {
 
 	private final Expression mExpression;
 	private final static NormalFormTransformer<Expression> TRANSFORMER =
@@ -76,17 +76,17 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	}
 
 	@Override
-	public Decision prime() {
+	public BoogieBooleanExpressionDecision prime() {
 		return prime(null);
 	}
 
 	@Override
-	public Decision unprime() {
+	public BoogieBooleanExpressionDecision unprime() {
 		return unprime(null);
 	}
 
 	@Override
-	public Decision unprime(final String ignore) {
+	public BoogieBooleanExpressionDecision unprime(final String ignore) {
 		final BoogieRemovePrimeIdentifierTransformer bpit = new BoogieRemovePrimeIdentifierTransformer();
 		bpit.setIgnore(ignore);
 		final Expression primed = bpit.processExpression(mExpression);
@@ -94,7 +94,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	}
 
 	@Override
-	public Decision prime(final String ignore) {
+	public BoogieBooleanExpressionDecision prime(final String ignore) {
 		final BoogiePrimeIdentifierTransformer bpit = new BoogiePrimeIdentifierTransformer();
 		bpit.setIgnore(ignore);
 		final Expression primed = bpit.processExpression(mExpression);
@@ -329,6 +329,11 @@ public class BoogieBooleanExpressionDecision extends Decision {
 
 			}
 		}
+	}
+
+	@Override
+	public int compareToSimilar(final Decision<?> other) {
+		return mExpression.toString().compareTo(((BoogieBooleanExpressionDecision) other).mExpression.toString());
 	}
 
 }

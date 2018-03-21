@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.Set;
 
-public class EventDecision extends Decision {
+public class EventDecision extends Decision<EventDecision> {
 
 	private final String mEvent;
 
@@ -55,6 +55,7 @@ public class EventDecision extends Decision {
 
 	/**
 	 * Create an event atom specifying that an event is forbidden.
+	 *
 	 * @param event
 	 *            the event that is forbidden.
 	 */
@@ -114,22 +115,22 @@ public class EventDecision extends Decision {
 	}
 
 	@Override
-	public Decision prime() {
+	public EventDecision prime() {
 		return this;
 	}
 
 	@Override
-	public Decision unprime() {
+	public EventDecision unprime() {
 		return this;
 	}
 
 	@Override
-	public Decision prime(final String ignore) {
+	public EventDecision prime(final String ignore) {
 		return this;
 	}
 
 	@Override
-	public Decision unprime(final String ignore) {
+	public EventDecision unprime(final String ignore) {
 		return this;
 	}
 
@@ -141,5 +142,10 @@ public class EventDecision extends Decision {
 	@Override
 	public String getVar() {
 		return "";
+	}
+
+	@Override
+	public int compareToSimilar(final Decision<?> other) {
+		return mEvent.compareTo(((EventDecision) other).mEvent);
 	}
 }
