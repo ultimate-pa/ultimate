@@ -1473,6 +1473,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mElementTVER.transformElements(elemTransformer);
 		getAuxData().transformElements(elemTransformer);
 		mFaAuxData.transformElements(elemTransformer);
+		mLiteralSetConstraints.transformElements(elemTransformer);
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1 || sanityCheck();
 	}
 
 

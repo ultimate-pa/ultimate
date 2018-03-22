@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
@@ -429,5 +430,23 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			}
 		}
 		return new CCLiteralSetConstraints<>(mCcManager, null, newContainsConstraints);
+	}
+
+	public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
+		final Map<ELEM, Set<ELEM>> copy = new HashMap<>(mContainsConstraints);
+		for (final Entry<ELEM, Set<ELEM>> en : copy.entrySet()) {
+
+			mContainsConstraints.remove(en.getKey());
+
+			final ELEM keyTransformed = elemTransformer.apply(en.getKey());
+
+			final Set<ELEM> valueTransformed = new HashSet<>();
+			for (final ELEM el : en.getValue()) {
+				valueTransformed.add(elemTransformer.apply(el));
+			}
+
+			mContainsConstraints.put(keyTransformed, valueTransformed);
+
+		}
 	}
 }
