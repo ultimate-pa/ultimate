@@ -410,4 +410,24 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			}
 		}
 	}
+
+	/**
+	 *
+	 * @param constraintsToKeepReps
+	 * @return
+	 * 		CCliteralSetconstraints where all constraints constrain an element in the given set. CongrunceClosure field
+	 *   is left at null.
+	 */
+	public CCLiteralSetConstraints<ELEM> filterAndKeepOnlyConstraintsThatIntersectWith(
+			final Set<ELEM> constraintsToKeepReps) {
+		assert !isInconsistent() : "handle this case";
+
+		final Map<ELEM, Set<ELEM>> newContainsConstraints = new HashMap<>();
+		for (final Entry<ELEM, Set<ELEM>> en : mContainsConstraints.entrySet()) {
+			if (constraintsToKeepReps.contains(en.getKey())) {
+				newContainsConstraints.put(en.getKey(), new HashSet<>(en.getValue()));
+			}
+		}
+		return new CCLiteralSetConstraints<>(mCcManager, null, newContainsConstraints);
+	}
 }

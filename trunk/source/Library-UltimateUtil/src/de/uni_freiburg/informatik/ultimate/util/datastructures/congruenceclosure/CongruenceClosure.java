@@ -1646,12 +1646,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		assert assertNoNewElementsIntroduced(this.getAllElements(), newTver.getAllElements(), elemsToKeep)
 			: "no elements may have been introduced that were not present before this operation";
 
+
+		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
+				copy.mLiteralSetConstraints.filterAndKeepOnlyConstraintsThatIntersectWith(constraintsToKeepReps);
+
 		/*
 		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
 		 *  we either need a special constructor or do something else..
 		 */
 		final CongruenceClosure<ELEM> result = mManager.getCongruenceClosureFromTver(newTver, removeElementInfo,
-				new CCLiteralSetConstraints<>(mManager, null, copy.mLiteralSetConstraints), true);
+				newLiteralSetConstraints, true);
 		assert assertNoNewElementsIntroduced(this.getAllElements(), result.getAllElements(), elemsToKeep)
 			: "no elements may have been introduced that were not present before this operation";
 		return result;
