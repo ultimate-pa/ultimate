@@ -159,7 +159,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}
 
-	public void reportInconsistency() {
+	private void reportInconsistency() {
 		mIsInconsistent = true;
 		mContainsConstraints = null;
 	}
@@ -178,7 +178,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	public void reportEquality(final ELEM elem1, final ELEM elem2, final ELEM newRep) {
 		assert mCongruenceClosure.getRepresentativeElement(elem1) == newRep;
 		assert mCongruenceClosure.getRepresentativeElement(elem2) == newRep;
-			assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 
 		if (isInconsistent()) {
 			// nothing to do
@@ -282,7 +281,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		return mIsInconsistent;
 	}
 
-	private boolean sanityCheck() {
+	boolean sanityCheck() {
 		/*
 		 * <li> we only store representatives in our set of constraints, i.e., for each explicitly stored constraint
 		 *  "e in L", e must be a representative in mCongruenceClosure.
@@ -369,5 +368,46 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			return false;
 		}
 		return mContainsConstraints.isEmpty();
+	}
+
+	public void removeConstraint(final ELEM elem) {
+		 mContainsConstraints.remove(elem);
+	}
+
+	public void replaceRepresentative(final ELEM elem, final ELEM newRep) {
+		final Set<ELEM> literalSet = mContainsConstraints.remove(elem);
+		if (literalSet != null && newRep != null) {
+			mContainsConstraints.put(newRep, literalSet);
+		}
+	}
+
+	public void reportDisequality(final ELEM elem1, final ELEM elem2) {
+
+		final ELEM elem1Rep = mCongruenceClosure.getRepresentativeElement(elem1);
+		final ELEM elem2Rep = mCongruenceClosure.getRepresentativeElement(elem2);
+
+		assert !elem1Rep.isLiteral() || !elem2Rep.isLiteral() : "literal disequalities should be implicit and not "
+				+ "reported";
+
+		// rule: e in L /\ e != l --> e in L\{l}
+		if (elem1Rep.isLiteral()) {
+			final Set<ELEM> literalSet = mContainsConstraints.get(elem2Rep);
+			if (literalSet != null) {
+				literalSet.remove(elem1Rep);
+				// rule: e in {} --> \bot
+				if (literalSet.isEmpty()) {
+					reportInconsistency();
+				}
+			}
+		} else if (elem2Rep.isLiteral()) {
+			final Set<ELEM> literalSet = mContainsConstraints.get(elem1Rep);
+			if (literalSet != null) {
+				literalSet.remove(elem2Rep);
+				// rule: e in {} --> \bot
+				if (literalSet.isEmpty()) {
+					reportInconsistency();
+				}
+			}
+		}
 	}
 }

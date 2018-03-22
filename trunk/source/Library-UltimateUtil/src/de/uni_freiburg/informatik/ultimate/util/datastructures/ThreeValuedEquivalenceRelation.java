@@ -249,6 +249,9 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	public boolean isRepresentative(final E elem) {
+		if (!getAllElements().contains(elem)) {
+			throw new IllegalArgumentException("only call this for elements that are present!");
+		}
 		return getRepresentative(elem) == elem;
 	}
 

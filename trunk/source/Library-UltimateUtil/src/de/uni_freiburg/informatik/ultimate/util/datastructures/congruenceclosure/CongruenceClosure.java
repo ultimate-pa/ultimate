@@ -441,6 +441,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		}
 
+		mLiteralSetConstraints.reportDisequality(elem1, elem2);
+		if (mLiteralSetConstraints.isInconsistent()) {
+			return true;
+		}
+
 		final HashRelation<ELEM, ELEM> propDeqs = getAuxData().getPropagationsOnReportDisequality(elem1, elem2);
 
 		for (final Entry<ELEM, ELEM> deq : propDeqs) {
@@ -850,6 +855,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (elem.isFunctionApplication()) {
 			mFaAuxData.removeAfParent(elem.getAppliedFunction(), elem);
 			mFaAuxData.removeArgParent(elem.getArgument(), elem);
+		}
+
+		if (elemWasRepresentative) {
+			if (newRep == null) {
+				mLiteralSetConstraints.removeConstraint(elem);
+			} else {
+				mLiteralSetConstraints.replaceRepresentative(elem, newRep);
+			}
 		}
 
 		return newRep;
@@ -1331,6 +1344,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 
 		if (!assertNoExplicitLiteralDisequalities()) {
+			assert false;
+			return false;
+		}
+
+		if (!mLiteralSetConstraints.sanityCheck()) {
 			assert false;
 			return false;
 		}
