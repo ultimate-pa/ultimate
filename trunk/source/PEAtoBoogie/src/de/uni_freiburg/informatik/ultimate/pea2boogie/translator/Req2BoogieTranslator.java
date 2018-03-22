@@ -583,9 +583,9 @@ public class Req2BoogieTranslator {
 	 * @return the array of (two) statements that check the invariant.
 	 */
 	private Statement[] genCheckPhaseInvariant(final Phase phase, final BoogieLocation bl) {
-		final Expression clInv = new CDDTranslator().CDD_To_Boogie(phase.getClockInvariant(), mBoogieFilePath, bl);
+		final Expression clInv = new CDDTranslator().toBoogie(phase.getClockInvariant(), bl);
 		final AssumeStatement assumeClInv = new AssumeStatement(bl, mNormalFormTransformer.toNnf(clInv));
-		final Expression stateInv = new CDDTranslator().CDD_To_Boogie(phase.getStateInvariant(), mBoogieFilePath, bl);
+		final Expression stateInv = new CDDTranslator().toBoogie(phase.getStateInvariant(), bl);
 		final AssumeStatement assumeStateInv = new AssumeStatement(bl, mNormalFormTransformer.toNnf(stateInv));
 		return new Statement[] { assumeClInv, assumeStateInv };
 	}
@@ -685,7 +685,7 @@ public class Req2BoogieTranslator {
 			final int autIndex, final BoogieLocation bl) {
 
 		final List<Statement> smtList = new ArrayList<>();
-		final Expression expr = new CDDTranslator().CDD_To_Boogie(transition.getGuard(), mBoogieFilePath, bl);
+		final Expression expr = new CDDTranslator().toBoogie(transition.getGuard(), bl);
 		final AssumeStatement assumeGuard = new AssumeStatement(bl, mNormalFormTransformer.toNnf(expr));
 		smtList.add(assumeGuard);
 		if (transition.getResets().length != 0) {

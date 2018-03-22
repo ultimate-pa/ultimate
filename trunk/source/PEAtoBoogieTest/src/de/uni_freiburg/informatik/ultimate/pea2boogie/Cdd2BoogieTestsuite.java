@@ -80,7 +80,7 @@ public class Cdd2BoogieTestsuite {
 	}
 
 	private static void test(final CDD input, final String expected) {
-		final Expression exprNotA = new CDDTranslator().CDD_To_Boogie(input, "", LOC);
+		final Expression exprNotA = new CDDTranslator().toBoogie(input, LOC);
 		Assert.assertThat(BoogiePrettyPrinter.print(exprNotA), Is.is(expected));
 	}
 }

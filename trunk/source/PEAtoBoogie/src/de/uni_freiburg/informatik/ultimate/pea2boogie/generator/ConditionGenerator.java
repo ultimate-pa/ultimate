@@ -86,7 +86,7 @@ public class ConditionGenerator {
 			if (cdd == CDD.TRUE) {
 				continue;
 			}
-			final Expression impliesRHS = new CDDTranslator().CDD_To_Boogie(cdd, fileName, bl);
+			final Expression impliesRHS = new CDDTranslator().toBoogie(cdd, bl);
 			final Expression implies = new BinaryExpression(bl, BinaryExpression.Operator.LOGICIMPLIES,
 					buildBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, impliesLHS), impliesRHS);
 			conditions.add(implies);

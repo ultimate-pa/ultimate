@@ -42,58 +42,50 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 
 public class CDDTranslator {
 
-	public Expression CDD_To_Boogie(CDD cdd, final String fileName, final BoogieLocation bl) {
-		final Expression falseExpr = new BooleanLiteral(bl, false);
-		Expression expr = falseExpr;
-
-		if (cdd == CDD.TRUE) {
-			final BooleanLiteral bLiteral = new BooleanLiteral(bl, true);
-			return bLiteral;
-		}
-		if (cdd == CDD.FALSE) {
-			return falseExpr;
-		}
-		CDD[] childs = cdd.getChilds();
-		Decision decision = cdd.getDecision();
-		cdd = decision.simplify(childs);
+	public Expression toBoogie(final CDD cdd, final BoogieLocation bl) {
 		if (cdd == CDD.TRUE) {
 			return new BooleanLiteral(bl, true);
 		}
 		if (cdd == CDD.FALSE) {
 			return new BooleanLiteral(bl, false);
 		}
-		childs = cdd.getChilds();
-		decision = cdd.getDecision();
+		final CDD simplifiedCdd = cdd.getDecision().simplify(cdd.getChilds());
+		if (simplifiedCdd == CDD.TRUE) {
+			return new BooleanLiteral(bl, true);
+		}
+		if (simplifiedCdd == CDD.FALSE) {
+			return new BooleanLiteral(bl, false);
+		}
+		final CDD[] childs = simplifiedCdd.getChilds();
+		final Decision<?> decision = simplifiedCdd.getDecision();
 
+		Expression rtr = null;
 		for (int i = 0; i < childs.length; i++) {
-
 			if (childs[i] == CDD.FALSE) {
 				continue;
 			}
-			Expression childExpr = CDD_To_Boogie(childs[i], fileName, bl);
-			if (!cdd.childDominates(i)) {
+			Expression childExpr = toBoogie(childs[i], bl);
+			if (!simplifiedCdd.childDominates(i)) {
 				Expression decisionExpr;
 
 				if (decision instanceof RangeDecision) {
-					decisionExpr = toExpressionForRange(i, decision.getVar(), ((RangeDecision) decision).getLimits(),
-							fileName, bl);
+					// TODO: I added negation by restructuring, is this wrong?
+					decisionExpr =
+							toExpressionForRange(i, decision.getVar(), ((RangeDecision) decision).getLimits(), bl);
 				} else if (decision instanceof BoogieBooleanExpressionDecision) {
 					decisionExpr = ((BoogieBooleanExpressionDecision) decision).getExpression();
-					if (i == 1) {
-						decisionExpr = new UnaryExpression(decisionExpr.getLocation(),
-								UnaryExpression.Operator.LOGICNEG, decisionExpr);
-					}
+				} else if (decision instanceof BooleanDecision) {
+					// TODO: This also covers RelationDecisions, is this intended?
+					decisionExpr = new IdentifierExpression(bl, ((BooleanDecision) decision).getVar());
+				} else if (decision instanceof EventDecision) {
+					decisionExpr = new IdentifierExpression(bl, ((EventDecision) decision).getVar());
 				} else {
-					String varName;
-					if (decision instanceof BooleanDecision) {
-						varName = ((BooleanDecision) decision).getVar();
-					} else {
-						varName = ((EventDecision) decision).getEvent();
-					}
-					decisionExpr = new IdentifierExpression(bl, varName);
-					if (i == 1) {
-						decisionExpr = new UnaryExpression(bl, UnaryExpression.Operator.LOGICNEG, decisionExpr);
-					}
+					throw new UnsupportedOperationException("Unknown decision type: " + decision.getClass());
+				}
+
+				if (i == 1) {
+					// negate if right child
+					decisionExpr = new UnaryExpression(bl, UnaryExpression.Operator.LOGICNEG, decisionExpr);
 				}
 
 				if (childExpr instanceof BooleanLiteral && ((BooleanLiteral) childExpr).getValue()) {
@@ -102,64 +94,67 @@ public class CDDTranslator {
 					childExpr = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND, decisionExpr, childExpr);
 				}
 			}
-			if (expr == falseExpr) {
-				expr = childExpr;
+			if (rtr == null) {
+				rtr = childExpr;
 			} else {
-				expr = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR, childExpr, expr);
+				rtr = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR, childExpr, rtr);
 			}
 		}
-		return expr;
+
+		if (rtr == null) {
+			return new BooleanLiteral(bl, false);
+		}
+		return rtr;
 	}
 
 	public static Expression toExpressionForRange(final int childs, final String var, final int[] limits,
-			final String fileName, final BoogieLocation bl) {
+			final BoogieLocation bl) {
 		if (childs == 0) {
-			final IdentifierExpression LHS = new IdentifierExpression(bl, var);
-			final RealLiteral RHS = new RealLiteral(bl, Double.toString(limits[0] / 2));
+			final IdentifierExpression lhs = new IdentifierExpression(bl, var);
+			final RealLiteral rhs = new RealLiteral(bl, Double.toString(limits[0] / 2));
 			if ((limits[0] & 1) == 0) {
-				return new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, LHS, RHS);
+				return new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, lhs, rhs);
 			}
-			return new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, LHS, RHS);
+			return new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, lhs, rhs);
 		}
 
 		if (childs == limits.length) {
-			final IdentifierExpression LHS = new IdentifierExpression(bl, var);
-			final RealLiteral RHS = new RealLiteral(bl, Double.toString(limits[limits.length - 1] / 2));
+			final IdentifierExpression lhs = new IdentifierExpression(bl, var);
+			final RealLiteral rhs = new RealLiteral(bl, Double.toString(limits[limits.length - 1] / 2));
 			if ((limits[limits.length - 1] & 1) == 1) {
-				return new BinaryExpression(bl, BinaryExpression.Operator.COMPGT, LHS, RHS);
+				return new BinaryExpression(bl, BinaryExpression.Operator.COMPGT, lhs, rhs);
 			}
-			return new BinaryExpression(bl, BinaryExpression.Operator.COMPGEQ, LHS, RHS);
+			return new BinaryExpression(bl, BinaryExpression.Operator.COMPGEQ, lhs, rhs);
 		}
 
 		if ((limits[childs - 1] / 2) == (limits[childs] / 2)) {
-			final IdentifierExpression LHS = new IdentifierExpression(bl, var);
-			final RealLiteral RHS = new RealLiteral(bl, Double.toString(limits[childs] / 2));
-			return new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, LHS, RHS);
+			final IdentifierExpression rhs = new IdentifierExpression(bl, var);
+			final RealLiteral lhs = new RealLiteral(bl, Double.toString(limits[childs] / 2));
+			return new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, rhs, lhs);
 		}
-		final RealLiteral LHS = new RealLiteral(bl, Double.toString(limits[childs - 1] / 2));
-		final RealLiteral RHS = new RealLiteral(bl, Double.toString(limits[childs] / 2));
+
+		final RealLiteral lhs = new RealLiteral(bl, Double.toString(limits[childs - 1] / 2));
+		final RealLiteral rhs = new RealLiteral(bl, Double.toString(limits[childs] / 2));
 		final IdentifierExpression varID = new IdentifierExpression(bl, var);
 		BinaryExpression expr = null;
 		if ((limits[childs - 1] & 1) == 1 & (limits[childs] & 1) == 0) {
 
-			final BinaryExpression RHS_LT_LT = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, varID, RHS);
-			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, LHS, RHS_LT_LT);
+			final BinaryExpression rhsLtLt = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, varID, rhs);
+			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, lhs, rhsLtLt);
 
 		} else if ((limits[childs - 1] & 1) == 1 & ((limits[childs] & 1) != 0)) {
 
-			final BinaryExpression RHS_LT_LTEQ =
-					new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, varID, RHS);
-			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, LHS, RHS_LT_LTEQ);
+			final BinaryExpression rhsLtLeq = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, varID, rhs);
+			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, lhs, rhsLtLeq);
 
 		} else if (((limits[childs - 1] & 1) != 1) & ((limits[childs] & 1) == 0)) {
 
-			final BinaryExpression RHS_LTEQ_LT = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, varID, RHS);
-			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, LHS, RHS_LTEQ_LT);
+			final BinaryExpression rhsLeqLt = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, varID, rhs);
+			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, lhs, rhsLeqLt);
 		} else if (((limits[childs - 1] & 1) != 1) & ((limits[childs] & 1) != 0)) {
 
-			final BinaryExpression RHS_LTEQ_LTEQ =
-					new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, varID, RHS);
-			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, LHS, RHS_LTEQ_LTEQ);
+			final BinaryExpression rhsLeqLeq = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, varID, rhs);
+			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, lhs, rhsLeqLeq);
 		}
 		return expr;
 	}
