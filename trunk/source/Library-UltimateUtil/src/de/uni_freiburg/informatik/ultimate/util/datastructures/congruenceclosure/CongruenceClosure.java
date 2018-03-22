@@ -37,7 +37,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -327,7 +329,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			final ELEM elem2) {
 
 		{
-			constantFunctionTreatmentOnAddEquality(elem1, elem2);
+			constantFunctionTreatmentOnAddEquality(elem1, elem2, mElementTVER.getEquivalenceClass(elem1),
+					mElementTVER.getEquivalenceClass(elem2), getAuxData(),
+					e -> mManager.addElement(this, e, true, true));
 		}
 
 		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
@@ -378,45 +382,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 						oldUnequalRepsForElem1, oldUnequalRepsForElem2);
 		return propInfo;
 	}
-
-	/**
-	 * Add nodes that trigger instantiation of the axiom for constant arrays.
-	 *
-	 * (weak or strong equalities count)
-	 *
-	 * @param elem1
-	 * @param elem2
-	 */
-	public void constantFunctionTreatmentOnAddEquality(final ELEM elem1, final ELEM elem2) {
-		/*
-		 * constant function treatment:
-		 *  <li> we maintain the following invariant: let f ~ g and g be a constant function, then for every function
-		 *  application f(x) that is in our set of tracked element, we also track g(x).
-		 *  <li> here, this means, we have to go through all constant function equivalent to elem1 and for each go
-		 *   through the ccpar's of f to add the corresponding nodes and vice versa
-		 */
-		for (final ELEM equivalentFunction1 : mElementTVER.getEquivalenceClass(elem1)) {
-			if (equivalentFunction1.isConstantFunction()) {
-				for (final ELEM equivalentFunction2 : mElementTVER.getEquivalenceClass(elem2)) {
-					// ccpar is f(x), equivalentFunction1 is g
-					for (final ELEM ccpar : mAuxData.getAfCcPars(equivalentFunction2)) {
-						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
-					}
-				}
-			}
-		}
-		for (final ELEM equivalentFunction1 : mElementTVER.getEquivalenceClass(elem2)) {
-			if (equivalentFunction1.isConstantFunction()) {
-				for (final ELEM equivalentFunction2 : mElementTVER.getEquivalenceClass(elem1)) {
-					// ccpar is f(x), equivalentFunction1 is g
-					for (final ELEM ccpar : mAuxData.getAfCcPars(equivalentFunction2)) {
-						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
-					}
-				}
-			}
-		}
-	}
-
 
 	public Set<ELEM> getRepresentativesUnequalTo(final ELEM rep) {
 		assert isRepresentative(rep);
@@ -583,25 +548,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 
 		{
-			/*
-			 * treatment for constant functions:
-			 *  <li> if we are adding an element of the form f(x), where f is a constant function, and v is f's
-			 *   constant value then we add the equality "f(x) = v"
-			 *  <li> if we are adding an element the form f(x), where f ~ g and g is a constant function,
-			 *   then we add the element g(x)
-			 */
-			if (elem.getAppliedFunction().isConstantFunction()) {
-				mManager.reportEquality(elem, elem.getAppliedFunction().getConstantFunctionValue(), this, true);
-			}
-			for (final ELEM equivalentFunction : mElementTVER.getEquivalenceClass(elem.getAppliedFunction())) {
-				if (equivalentFunction == elem) {
-					continue;
-				}
-				if (equivalentFunction.isConstantFunction()) {
-					// add element g(x)
-					mManager.addElement(this, elem.replaceAppliedFunction(equivalentFunction), true, true);
-				}
-			}
+			constantFunctionTreatmentOnAddElement(elem,
+					(e1, e2) -> mManager.reportEquality(e1, e2, this, true),
+					e -> mManager.addElement(this, e, true, true),
+					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()));
 		}
 
 		if (remInfo == null) {
@@ -616,6 +566,83 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		} else {
 			// do nothing in this case, right?..
+		}
+	}
+
+	/**
+	 *
+	 * @param elem elem that is a function application
+	 * @param reportEquality
+	 * @param addElement
+	 * @param weakOrStrongEquivalenceClassOfAppliedFunction set of elements that are equal or weakly equal to the applied function
+	 *   of elem
+	 */
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantFunctionTreatmentOnAddElement(
+			final ELEM elem, final BiConsumer<ELEM, ELEM> reportEquality, final Consumer<ELEM> addElement,
+			final Set<ELEM> weakOrStrongEquivalenceClassOfAppliedFunction) {
+		/*
+		 * treatment for constant functions:
+		 *  <li> if we are adding an element of the form f(x), where f is a constant function, and v is f's
+		 *   constant value then we add the equality "f(x) = v"
+		 *  <li> if we are adding an element the form f(x), where f ~ g and g is a constant function,
+		 *   then we add the element g(x)
+		 */
+		if (elem.getAppliedFunction().isConstantFunction()) {
+//			mManager.reportEquality(elem, elem.getAppliedFunction().getConstantFunctionValue(), this, true);
+			reportEquality.accept(elem, elem.getAppliedFunction().getConstantFunctionValue());
+		}
+//		for (final ELEM equivalentFunction : mElementTVER.getEquivalenceClass(elem.getAppliedFunction())) {
+		for (final ELEM equivalentFunction : weakOrStrongEquivalenceClassOfAppliedFunction) {
+			if (equivalentFunction == elem) {
+				continue;
+			}
+			if (equivalentFunction.isConstantFunction()) {
+				// add element g(x)
+//				mManager.addElement(this, elem.replaceAppliedFunction(equivalentFunction), true, true);
+				addElement.accept(elem.replaceAppliedFunction(equivalentFunction));
+			}
+		}
+	}
+
+	/**
+	 * Add nodes that trigger instantiation of the axiom for constant arrays.
+	 *
+	 * (weak or strong equalities count)
+	 *
+	 * @param elem1
+	 * @param elem2
+	 */
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantFunctionTreatmentOnAddEquality(
+			final ELEM elem1, final ELEM elem2, final Set<ELEM> elem1EquivalenceClass,
+			final Set<ELEM> elem2EquivalenceClass, final CcAuxData<ELEM> auxData, final Consumer<ELEM> addElement) {
+		/*
+		 * constant function treatment:
+		 *  <li> we maintain the following invariant: let f ~ g and g be a constant function, then for every function
+		 *  application f(x) that is in our set of tracked element, we also track g(x).
+		 *  <li> here, this means, we have to go through all constant function equivalent to elem1 and for each go
+		 *   through the ccpar's of f to add the corresponding nodes and vice versa
+		 */
+		for (final ELEM equivalentFunction1 : elem1EquivalenceClass) {
+			if (equivalentFunction1.isConstantFunction()) {
+				for (final ELEM equivalentFunction2 : elem2EquivalenceClass) {
+					// ccpar is f(x), equivalentFunction1 is g
+					for (final ELEM ccpar : auxData.getAfCcPars(equivalentFunction2)) {
+//						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+						addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction1));
+					}
+				}
+			}
+		}
+		for (final ELEM equivalentFunction1 : elem2EquivalenceClass) {
+			if (equivalentFunction1.isConstantFunction()) {
+				for (final ELEM equivalentFunction2 : elem1EquivalenceClass) {
+					// ccpar is f(x), equivalentFunction1 is g
+					for (final ELEM ccpar : auxData.getAfCcPars(equivalentFunction2)) {
+//						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+						addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction1));
+					}
+				}
+			}
 		}
 	}
 

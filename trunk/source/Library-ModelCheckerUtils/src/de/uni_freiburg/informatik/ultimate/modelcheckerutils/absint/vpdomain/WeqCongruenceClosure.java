@@ -380,34 +380,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		{
-			mCongruenceClosure.constantFunctionTreatmentOnAddEquality(array1, array2);
-//			/*
-//			 * constant function treatment:
-//			 *  <li> we maintain the following invariant: let f and g be weakly equivalent and g be a constant function,
-//			 *   then for every function application f(x) that is in our set of tracked element, we also track g(x).
-//			 *  <li> here, this means, we have to go through all constant function equivalent to elem1 and for each go
-//			 *   through the ccpar's of f to add the corresponding nodes and vice versa
-//			 */
-//			for (final NODE equivalentFunction1 : mCongruenceClosure.getEquivalenceClass(array1)) {
-//				if (equivalentFunction1.isConstantFunction()) {
-//					for (final NODE equivalentFunction2 : mCongruenceClosure.getEquivalenceClass(array2)) {
-//						// ccpar is f(x), equivalentFunction1 is g
-//						for (final NODE ccpar : mCongruenceClosure.getAuxData().getAfCcPars(equivalentFunction2)) {
-//							mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
-//						}
-//					}
-//				}
-//			}
-//			for (final NODE equivalentFunction1 : mCongruenceClosure.getEquivalenceClass(array2)) {
-//				if (equivalentFunction1.isConstantFunction()) {
-//					for (final NODE equivalentFunction2 : mCongruenceClosure.getEquivalenceClass(array1)) {
-//						// ccpar is f(x), equivalentFunction1 is g
-//						for (final NODE ccpar : mCongruenceClosure.getAuxData().getAfCcPars(equivalentFunction2)) {
-//							mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
-//						}
-//					}
-//				}
-//			}
+			CongruenceClosure.constantFunctionTreatmentOnAddEquality(array1, array2,
+					mCongruenceClosure.getEquivalenceClass(array1),
+					mCongruenceClosure.getEquivalenceClass(array2), mCongruenceClosure.getAuxData(),
+					n -> mManager.addNode(n, this, true, true));
 		}
 
 
@@ -1151,6 +1127,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (mManager.getSettings().isDeactivateWeakEquivalences() || elem.isUntrackedArray()) {
 			return;
 		}
+
+		CongruenceClosure.constantFunctionTreatmentOnAddElement(elem,
+				(e1, e2) -> mManager.reportEquality(this, e1, e2, true),
+				e -> mManager.addNode(e, this, true, true),
+				getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).keySet());
+
 
 		/*
 		 * roweq
