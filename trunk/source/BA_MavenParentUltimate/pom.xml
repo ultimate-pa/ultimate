@@ -476,6 +476,7 @@
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
+				<module>../PEAtoBoogieTest</module>
 
 				<!-- UltimateRegressionTest contains system tests that are relatively
 					fast -->
@@ -571,6 +572,7 @@
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
+				<module>../PEAtoBoogieTest</module>
 
 
 			</modules>
@@ -652,6 +654,7 @@
 				<module>../SMTInterpolTest</module>
 				<module>../SMTSolverBridgeTest</module>
 				<module>../SpaceExParserTest</module>
+				<module>../PEAtoBoogieTest</module>
 
 				<!-- UltimateRegressionTest contains system tests that are relatively
 					fast -->
