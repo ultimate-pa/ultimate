@@ -37,7 +37,7 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	 * @param expression
 	 *            A Boogie expression which evaluates to boolean but has no boolean expressions as children.
 	 */
-	public BoogieBooleanExpressionDecision(final Expression expression) {
+	private BoogieBooleanExpressionDecision(final Expression expression) {
 		mExpression = expression;
 	}
 
@@ -53,6 +53,13 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	 */
 	public static CDD create(final Expression e) {
 		return new BoogieToCdd().createCdd(e);
+	}
+
+	/**
+	 * Only used for testing, does not reduce the boolean structure.
+	 */
+	public static CDD createWithoutReduction(final Expression e) {
+		return CDD.create(new BoogieBooleanExpressionDecision(e), CDD.TRUE_CHILDS);
 	}
 
 	public static CDD createTrue() {

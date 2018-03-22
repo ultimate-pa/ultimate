@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
 
 /**
@@ -57,19 +58,45 @@ public class Cdd2BoogieTestsuite {
 		final CDD A = CDD.create(new BooleanDecision("A"), CDD.TRUE_CHILDS);
 		final CDD B = CDD.create(new BooleanDecision("B"), CDD.TRUE_CHILDS);
 		final CDD C = CDD.create(new BooleanDecision("C"), CDD.TRUE_CHILDS);
-		final CDD notC =
-				CDD.create(
-						new BoogieBooleanExpressionDecision(
-								ExpressionFactory.constructUnaryExpression(LOC, Operator.LOGICNEG,
-										new IdentifierExpression(LOC, BoogieType.TYPE_BOOL, "C",
-												new DeclarationInformation(StorageClass.GLOBAL, null)))),
-						CDD.TRUE_CHILDS);
+		final CDD notC = BoogieBooleanExpressionDecision.createWithoutReduction(
+				ExpressionFactory.constructUnaryExpression(LOC, Operator.LOGICNEG, new IdentifierExpression(LOC,
+						BoogieType.TYPE_BOOL, "C", new DeclarationInformation(StorageClass.GLOBAL, null))));
+		final CDD notCCreate = BoogieBooleanExpressionDecision
+				.create(ExpressionFactory.constructUnaryExpression(LOC, Operator.LOGICNEG, new IdentifierExpression(LOC,
+						BoogieType.TYPE_BOOL, "C", new DeclarationInformation(StorageClass.GLOBAL, null))));
+
+		final CDD eqAZero = RangeDecision.create("A", RangeDecision.OP_EQ, 0);
+		final CDD gtAOne = RangeDecision.create("A", RangeDecision.OP_GT, 1);
+		final CDD ltAZero = RangeDecision.create("A", RangeDecision.OP_LT, 0);
+		final CDD geqAOne = RangeDecision.create("A", RangeDecision.OP_GTEQ, 1);
+		// final CDD gtAOne = RangeDecision.create("A", RangeDecision.OP_GTEQ, 1);
+
+		test(CDD.TRUE, "true");
+		test(CDD.FALSE, "false");
+		test(eqAZero, "A == 0.0");
+		test(eqAZero.negate(), "A > 0.0 || A < 0.0");
+		test(eqAZero.and(gtAOne), "false");
+		test(gtAOne, "A > 1.0");
+		test(gtAOne.negate(), "A <= 1.0");
+		test(geqAOne, "A >= 1.0");
+		test(ltAZero, "A < 0.0");
+		test(ltAZero.negate(), "A >= 0.0");
+		test(ltAZero.and(gtAOne.negate()), "A < 0.0");
+		test(ltAZero.or(eqAZero), "A <= 0.0");
+		test(ltAZero.negate().and(gtAOne.negate()), "0.0 <= A && A <= 1.0");
+		test(ltAZero.and(B).or(gtAOne.negate()), "A <= 1.0");
+		test(ltAZero.and(B.or(gtAOne.negate())), "A < 0.0");
+		test(ltAZero.or(B.and(gtAOne.negate())), "A < 0.0 || (B && A <= 1.0)");
+		test(geqAOne.negate().and(ltAZero.or(eqAZero).negate()), "0.0 < A && A < 1.0");
+		test(A.and(B).or(B.and(A.negate())), "B");
+		test(A.and(B).or(B.negate().and(A)), "A");
 
 		test(A, "A");
 		test(B, "B");
 		test(notC, "!C");
 		test(notC.and(notC.negate()), "false");
 		test(C.and(notC), "!C && C");
+		test(C.and(notCCreate), "false");
 		test(A.negate(), "!A");
 		test(A.or(B), "B || A");
 		test(A.and(B), "A && B");

@@ -83,7 +83,7 @@ public class CDDTranslator {
 					throw new UnsupportedOperationException("Unknown decision type: " + decision.getClass());
 				}
 
-				if (i == 1) {
+				if (i == 1 && !(decision instanceof RangeDecision)) {
 					// negate if right child
 					decisionExpr = new UnaryExpression(bl, UnaryExpression.Operator.LOGICNEG, decisionExpr);
 				}
@@ -107,18 +107,22 @@ public class CDDTranslator {
 		return rtr;
 	}
 
-	public static Expression toExpressionForRange(final int childs, final String var, final int[] limits,
+	public static Expression toExpressionForRange(final int childIdx, final String var, final int[] limits,
 			final BoogieLocation bl) {
-		if (childs == 0) {
+		if (childIdx == 0) {
+			// only upper bound
 			final IdentifierExpression lhs = new IdentifierExpression(bl, var);
 			final RealLiteral rhs = new RealLiteral(bl, Double.toString(limits[0] / 2));
 			if ((limits[0] & 1) == 0) {
+				// strict because of first bit encoding
 				return new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, lhs, rhs);
 			}
+			// not strict
 			return new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, lhs, rhs);
 		}
 
-		if (childs == limits.length) {
+		if (childIdx == limits.length) {
+			// only lower bound
 			final IdentifierExpression lhs = new IdentifierExpression(bl, var);
 			final RealLiteral rhs = new RealLiteral(bl, Double.toString(limits[limits.length - 1] / 2));
 			if ((limits[limits.length - 1] & 1) == 1) {
@@ -127,35 +131,34 @@ public class CDDTranslator {
 			return new BinaryExpression(bl, BinaryExpression.Operator.COMPGEQ, lhs, rhs);
 		}
 
-		if ((limits[childs - 1] / 2) == (limits[childs] / 2)) {
+		if ((limits[childIdx - 1] / 2) == (limits[childIdx] / 2)) {
+			// we have upper and lower, but they are identical, so its EQ
+			// and they differ in the first bit because first bit encoding and sortedness
 			final IdentifierExpression rhs = new IdentifierExpression(bl, var);
-			final RealLiteral lhs = new RealLiteral(bl, Double.toString(limits[childs] / 2));
+			final RealLiteral lhs = new RealLiteral(bl, Double.toString(limits[childIdx] / 2));
 			return new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, rhs, lhs);
 		}
 
-		final RealLiteral lhs = new RealLiteral(bl, Double.toString(limits[childs - 1] / 2));
-		final RealLiteral rhs = new RealLiteral(bl, Double.toString(limits[childs] / 2));
-		final IdentifierExpression varID = new IdentifierExpression(bl, var);
-		BinaryExpression expr = null;
-		if ((limits[childs - 1] & 1) == 1 & (limits[childs] & 1) == 0) {
-
-			final BinaryExpression rhsLtLt = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, varID, rhs);
-			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, lhs, rhsLtLt);
-
-		} else if ((limits[childs - 1] & 1) == 1 & ((limits[childs] & 1) != 0)) {
-
-			final BinaryExpression rhsLtLeq = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, varID, rhs);
-			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, lhs, rhsLtLeq);
-
-		} else if (((limits[childs - 1] & 1) != 1) & ((limits[childs] & 1) == 0)) {
-
-			final BinaryExpression rhsLeqLt = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, varID, rhs);
-			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, lhs, rhsLeqLt);
-		} else if (((limits[childs - 1] & 1) != 1) & ((limits[childs] & 1) != 0)) {
-
-			final BinaryExpression rhsLeqLeq = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, varID, rhs);
-			expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, lhs, rhsLeqLeq);
+		// we have upper and lower bounds
+		final RealLiteral lb = new RealLiteral(bl, Double.toString(limits[childIdx - 1] / 2));
+		final RealLiteral ub = new RealLiteral(bl, Double.toString(limits[childIdx] / 2));
+		final IdentifierExpression idExpr = new IdentifierExpression(bl, var);
+		final BinaryExpression lbExpr;
+		final BinaryExpression ubExpr;
+		if ((limits[childIdx - 1] & 1) == 1) {
+			// strict lb
+			lbExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, lb, idExpr);
+		} else {
+			lbExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, lb, idExpr);
 		}
-		return expr;
+
+		if ((limits[childIdx] & 1) == 0) {
+			// strict ub
+			ubExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, idExpr, ub);
+		} else {
+			ubExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, idExpr, ub);
+		}
+
+		return new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND, lbExpr, ubExpr);
 	}
 }
