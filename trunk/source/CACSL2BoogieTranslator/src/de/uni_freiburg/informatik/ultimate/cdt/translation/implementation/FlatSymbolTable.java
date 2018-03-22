@@ -50,12 +50,24 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
+ * Multifiles: The flat symbol table is used as a replacement for the old symbol table. The old symbol table used
+ * LinkedScopedHashMaps for symbol scopes and thus created a de facto copy of the AST structure. The new flat symbol
+ * table was created with the goal of eliminating this duplication by leaving all the scope structuring tasks to the AST
+ * and the symbol table merely connecting the scope-possessing AST nodes with their respective scopes.
+ *
+ * Because this does not use context information for translation (i.e. 'which scope was opened last') a different
+ * approach for searching the table was needed. To accomplish this a hook is needed for all operations which access
+ * scopes. This hook acts as a reference to where in the AST the translation process wants to look up symbols. Resolving
+ * a scope is then possible in time logarithmic in the depth of the AST by checking the AST nodes in a direct path from
+ * root to hook for scopes.
+ *
+ * For more details regarding scope resolution check the method's line comments.
+ *
  * @author Yannick Bühler
  * @since 2017-12-09
  */

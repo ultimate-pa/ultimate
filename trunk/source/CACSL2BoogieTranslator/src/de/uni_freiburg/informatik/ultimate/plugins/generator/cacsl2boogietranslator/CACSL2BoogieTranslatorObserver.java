@@ -32,20 +32,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieAstCopier;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
-import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -65,9 +59,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode.ACSLSourceLocation;
-import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
@@ -163,21 +154,27 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private void doTranslation() {
 		// translate to Boogie
 		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mService);
-		final Dispatcher main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger, 
+		final Dispatcher main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger,
 				mInputDecorator.getSymbolTable());
 		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
-		
+
 		// if an additional Annotation was parsed put it into the root node
 		if (mAdditionalAnnotationObserver.getAnnotation() != null) {
 			// (needs a fix probably) attach it to the first root node
 			final DecoratorNode rootNode = mInputDecorator.getUnit(0).getRootNode();
 			final ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
 			node.setLocation(new ACSLSourceLocation(1, 0, 1, 0));
-			rootNode.getChildren().add(0, 
-					new DecoratorNode(rootNode, node));
+			rootNode.getChildren().add(0, new DecoratorNode(rootNode, node));
 		}
 
 		try {
+			/**
+			 * Multifiles: One of the main parts where dispatching has changed is the ability of dispatching a list of
+			 * translation units. This is done via the list-accepting methods of both the Dispatcher and CHandler.
+			 * Internally, the translation units are dispatched as single units with the difference that 'global'
+			 * translation artifacts (i.e. things which only should be created once per multifile project) are only run
+			 * once after all translation units have been dispatched.
+			 */
 			BoogieASTNode outputTU = main.run(mInputDecorator.getUnits()).node;
 			outputTU = new BoogieAstCopier().copy((Unit) outputTU);
 			mRootNode = new WrapperNode(null, outputTU);

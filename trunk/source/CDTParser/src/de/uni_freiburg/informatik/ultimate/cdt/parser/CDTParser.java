@@ -273,6 +273,11 @@ public class CDTParser implements ISource {
 		}
 	}
 
+	/**
+	 * Multifiles: Parsing is now almost completely in the hands of the standard CDT-way of doing it. We create a CDT
+	 * project from the given files and CDT returns a list of translation units for that project. These only need to be
+	 * decorated and can then be passed to the CACSL2BoogieTranslation.
+	 */
 	private Collection<IASTTranslationUnit> performCDTProjectOperations(final File[] files)
 			throws FileNotFoundException, CoreException {
 		final ICProject icdtProject = createCDTProjectFromFiles(files);
