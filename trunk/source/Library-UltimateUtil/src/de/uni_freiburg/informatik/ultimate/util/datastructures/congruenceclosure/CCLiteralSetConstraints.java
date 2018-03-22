@@ -178,6 +178,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	public void reportEquality(final ELEM elem1, final ELEM elem2, final ELEM newRep) {
 		assert mCongruenceClosure.getRepresentativeElement(elem1) == newRep;
 		assert mCongruenceClosure.getRepresentativeElement(elem2) == newRep;
+			assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 
 		if (isInconsistent()) {
 			// nothing to do

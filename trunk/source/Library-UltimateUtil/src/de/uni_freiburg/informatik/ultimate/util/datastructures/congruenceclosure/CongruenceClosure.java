@@ -593,7 +593,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 //		for (final ELEM equivalentFunction : mElementTVER.getEquivalenceClass(elem.getAppliedFunction())) {
 		for (final ELEM equivalentFunction : weakOrStrongEquivalenceClassOfAppliedFunction) {
-			if (equivalentFunction == elem) {
+			if (equivalentFunction == elem.getAppliedFunction()) {
 				continue;
 			}
 			if (equivalentFunction.isConstantFunction()) {
@@ -628,6 +628,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					// ccpar is f(x), equivalentFunction1 is g
 					for (final ELEM ccpar : auxData.getAfCcPars(equivalentFunction2)) {
 //						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+						assert !equivalentFunction1.equals(ccpar.getAppliedFunction());
 						addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction1));
 					}
 				}
@@ -639,6 +640,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					// ccpar is f(x), equivalentFunction1 is g
 					for (final ELEM ccpar : auxData.getAfCcPars(equivalentFunction2)) {
 //						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
+						assert !equivalentFunction1.equals(ccpar.getAppliedFunction());
 						addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction1));
 					}
 				}
@@ -1623,12 +1625,41 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		// TVER does not know about parent/child relationship of nodes, so it is safe
 		final ThreeValuedEquivalenceRelation<ELEM> newTver =
 				copy.mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(constraintsToKeepReps);
+		assert assertNoNewElementsIntroduced(this.getAllElements(), newTver.getAllElements(), elemsToKeep)
+			: "no elements may have been introduced that were not present before this operation";
+
 		/*
 		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore
 		 *  we either need a special constructor or do something else..
 		 */
-		return mManager.getCongruenceClosureFromTver(newTver, removeElementInfo,
+		final CongruenceClosure<ELEM> result = mManager.getCongruenceClosureFromTver(newTver, removeElementInfo,
 				new CCLiteralSetConstraints<>(mManager, null, copy.mLiteralSetConstraints), true);
+		assert assertNoNewElementsIntroduced(this.getAllElements(), result.getAllElements(), elemsToKeep)
+			: "no elements may have been introduced that were not present before this operation";
+		return result;
+	}
+
+	/**
+	 * projectToElements may only introduce fresh elements that depend on one of the elemsToKeep
+	 *
+	 * @param result
+	 * @param elemsToKeep
+	 * @return
+	 */
+	public boolean assertNoNewElementsIntroduced(final Set<ELEM> oldElems, final Set<ELEM> newElems,
+			final Set<ELEM> elemsToKeep) {
+		final Set<ELEM> diff = DataStructureUtils.difference(newElems, oldElems);
+		for (final ELEM d : diff) {
+			if (!dependsOnAny(d, elemsToKeep)) {
+				assert false;
+				return false;
+			}
+		}
+//		if (!diff.isEmpty()) {
+//			assert false;
+//			return false;
+//		}
+		return true;
 	}
 
 	public Collection<ELEM> getAllElementRepresentatives() {

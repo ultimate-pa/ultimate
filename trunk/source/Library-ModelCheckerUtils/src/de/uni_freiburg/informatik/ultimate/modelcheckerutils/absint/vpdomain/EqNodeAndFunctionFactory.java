@@ -75,7 +75,9 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 	@Override
 	public EqNode getOrConstructNode(final Term term) {
-		if (SmtUtils.isFunctionApplication(term, "select")) {
+		if (isConstantArray(term)) {
+			return getOrConstructConstantArray(term);
+		} else if (SmtUtils.isFunctionApplication(term, "select")) {
 			return getOrConstructEqFunctionNode((ApplicationTerm) term);
 		} else if (isAtomic(term)) {
 			return getOrConstructEqAtomicBaseNode(term);
@@ -233,19 +235,19 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 		// no constant array, "normal case"
 		if (isAtomic(term)) {
-			final EqAtomicConstantArrayNode constantArrayNode = checkForConstantArray(term);
-			if (constantArrayNode != null) {
-				return constantArrayNode;
-			}
+//			final EqConstantArrayNode constantArrayNode = checkForConstantArray(term);
+//			if (constantArrayNode != null) {
+//				return constantArrayNode;
+//			}
 
 			// term has no dependencies on other terms --> use an EqAtomicBaseNode
 			// return new EqAtomicBaseNode(term, isTermALiteral(term), this);
 			return new EqAtomicBaseNode(term, isLiteral, this, isUntrackedArray(term));
 		} else {
-			final Object constantArrayNode = checkForConstantArray(term);
-			if (constantArrayNode != null) {
-				throw new AssertionError("todo: implement");
-			}
+//			final Object constantArrayNode = checkForConstantArray(term);
+//			if (constantArrayNode != null) {
+//				throw new AssertionError("todo: implement");
+//			}
 
 
 			assert !isLiteral;
@@ -258,24 +260,48 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		}
 	}
 
-	private EqAtomicConstantArrayNode checkForConstantArray(final Term term) {
+	private boolean isConstantArray(final Term term) {
 		if (!term.getSort().isArraySort()) {
-			return null;
+			return false;
 		}
 		if (!(term instanceof ApplicationTerm)) {
-			return null;
+			return false;
 		}
+
 		final ApplicationTerm at = (ApplicationTerm) term;
-		// TODO: define this string somewhere (also occurs in CfgBuilder and RefinementStrategyFactory, currently)
-		//  also implement a more general solution
-		if (at.getFunction().getName().equals("const-Array-Int-Int")) {
-			final EqNode value = getOrConstructNode(at.getParameters()[0]);
-			return new EqAtomicConstantArrayNode(term, value.isLiteral(), this, value);
-		} else if (at.getFunction().getName().equals("const")) {
-			final EqNode value = getOrConstructNode(at.getParameters()[0]);
-			return new EqAtomicConstantArrayNode(term, value.isLiteral(), this, value);
+
+		final Term def = at.getFunction().getDefinition();
+		if (def != null) {
+			return isConstantArray(def);
 		}
-		return null;
+
+		if (at.getFunction().getName().equals("const")) {
+			return true;
+		}
+		return false;
+	}
+
+	private EqConstantArrayNode getOrConstructConstantArray(final Term term) {
+		assert isConstantArray(term);
+		final EqNode result = mTermToEqNode.get(term);
+		if (result != null) {
+			return (EqConstantArrayNode) result;
+		}
+
+		final ApplicationTerm at = (ApplicationTerm) term;
+
+		final Term def = at.getFunction().getDefinition();
+		if (def != null) {
+			return getOrConstructConstantArray(def);
+		}
+
+		// TODO: define this string somewhere (also occurs in CfgBuilder and RefinementStrategyFactory, currently)
+		assert at.getFunction().getName().equals("const");
+
+		final EqNode value = getOrConstructNode(at.getParameters()[0]);
+		final EqConstantArrayNode newConstArrayNode = new EqConstantArrayNode(term, this, value);
+		mTermToEqNode.put(term, newConstArrayNode);
+		return newConstArrayNode;
 	}
 
 	private boolean isUntrackedArray(final Term term) {
