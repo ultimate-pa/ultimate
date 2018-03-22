@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
 import java.io.IOException;
 import java.io.FileReader;
+import java.math.BigDecimal;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -342,4 +343,5 @@ duration ::= num:n TIME UNITS {: RESULT = String.valueOf(n); :}
            ;
            
 num ::= NUMBER:n {: RESULT = Integer.parseInt(n); :}
+	  | REALNUMBER:n {: RESULT = BigDecimal.valueOf(Double.parseDouble(n)).intValueExact(); :}
       | QUOTE NUMBER:n QUOTE {: RESULT = Integer.parseInt(n); :};
