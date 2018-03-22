@@ -10,6 +10,8 @@ modifies #memory_int, #valid;
 implementation main() {
   var p, q, p1, q1, x, y : int;
 
+  // memloc := const~Array(wl0)
+
   assume #valid[p] == 0;
   #valid[p] := 1;
  
