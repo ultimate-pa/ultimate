@@ -91,7 +91,9 @@ public class CDDTranslator {
 						varName = ((EventDecision) decision).getEvent();
 					}
 					decisionExpr = new IdentifierExpression(bl, varName);
-					decisionExpr = new UnaryExpression(bl, UnaryExpression.Operator.LOGICNEG, decisionExpr);
+					if (i == 1) {
+						decisionExpr = new UnaryExpression(bl, UnaryExpression.Operator.LOGICNEG, decisionExpr);
+					}
 				}
 
 				if (childExpr instanceof BooleanLiteral && ((BooleanLiteral) childExpr).getValue()) {
