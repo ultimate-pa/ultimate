@@ -51,9 +51,6 @@ public class FunctionLineVisitor extends ASTVisitor {
 	 */
 	private final HashMap<Integer, Integer> mLineRange;
 
-	/**
-	 * Standard Constructor.
-	 */
 	public FunctionLineVisitor() {
 		mLineRange = new HashMap<>();
 		shouldVisitDeclarations = true;
