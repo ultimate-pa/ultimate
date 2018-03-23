@@ -495,7 +495,9 @@ public class ThreeValuedEquivalenceRelation<E> {
 				continue;
 			}
 			final Set<E> elemEqc = new HashSet<>(mUnionFind.getEquivalenceClassMembers(elem));
-			newUf.addEquivalenceClass(elemEqc);
+			// retain representatives because otherwise we have to do extra work for literal set constraints
+			newUf.addEquivalenceClass(elemEqc, mUnionFind.find(elem));
+//			newUf.addEquivalenceClass(elemEqc);
 		}
 		final HashRelation<E, E> newDisequalities = new HashRelation<>();
 		for (final Entry<E, E> deq : mDisequalities.entrySet()) {

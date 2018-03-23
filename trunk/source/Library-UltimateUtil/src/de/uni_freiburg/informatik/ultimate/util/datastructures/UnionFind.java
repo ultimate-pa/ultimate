@@ -230,6 +230,8 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		assert mElementComparator == null || newBlockRep != null : "if we don't give a representative for the new block"
 				+ "here, this method might violate the invariant that the representative is always the minimal "
 				+ "element.";
+		assert mElementComparator == null
+				|| mElementComparator.compare(newBlockRep, findMinimalElement(newBlock)) <= 0;
 
 		final CachedHashSet<E> block = new CachedHashSet<>(newBlock);
 
