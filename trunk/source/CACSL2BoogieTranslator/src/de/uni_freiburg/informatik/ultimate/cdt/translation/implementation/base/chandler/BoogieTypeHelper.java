@@ -116,7 +116,7 @@ public class BoogieTypeHelper {
 			final BoogieType valueType = getBoogieTypeForCType(((CArray) cType).getValueType());
 			return BoogieType.createArrayType(0, indexTypes, valueType);
 		} else if (cType instanceof CFunction) {
-			throw new AssertionError("implement if needed");
+			return getBoogieTypeForPointerType();
 		} else if (cType instanceof CStruct) {
 			final CStruct cStructType = (CStruct) cType;
 			final BoogieType [] boogieFieldTypes = new BoogieType[cStructType.getFieldCount()];
