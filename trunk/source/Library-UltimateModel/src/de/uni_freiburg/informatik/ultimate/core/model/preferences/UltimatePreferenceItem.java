@@ -148,6 +148,7 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		 * An {@link IntegerValidator} that allows all values from 0 to Integer.MAX_VALUE
 		 */
 		public static final IntegerValidator ONLY_POSITIVE = new IntegerValidator(0, Integer.MAX_VALUE);
+		public static final IntegerValidator GEQ_TWO = new IntegerValidator(2, Integer.MAX_VALUE);
 
 		public boolean isValid(T value);
 

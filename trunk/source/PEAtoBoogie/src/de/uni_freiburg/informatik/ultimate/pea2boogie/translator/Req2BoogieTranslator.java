@@ -179,6 +179,8 @@ public class Req2BoogieTranslator {
 
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 
+	private final boolean mCheckConsistency;
+
 	/**
 	 *
 	 * @param services
@@ -193,12 +195,14 @@ public class Req2BoogieTranslator {
 	 *            Assign a value to the combinationNum.
 	 */
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
-			final BitSet vacuityChecks, final String path, final int num, final PatternType[] patterns) {
+			final BitSet vacuityChecks, final String path, final int num, final boolean checkConsistency,
+			final PatternType[] patterns) {
 		mLogger = logger;
 		mServices = services;
 		mInputFilePath = path;
 		mVacuityChecks = vacuityChecks;
 		mCombinationNum = num;
+		mCheckConsistency = checkConsistency;
 
 		mClockIds = new ArrayList<>();
 		mPcIds = new ArrayList<>();
@@ -640,7 +644,7 @@ public class Req2BoogieTranslator {
 	 *            The location information to correspond the generated source to the property.
 	 * @return The if statement checking the p
 	 */
-	private Statement genCheckInvariants(final PhaseEventAutomata automaton, final int autIndex,
+	private Statement genInvariantGuards(final PhaseEventAutomata automaton, final int autIndex,
 			final BoogieLocation bl) {
 
 		final Phase[] phases = automaton.getPhases();
@@ -767,12 +771,15 @@ public class Req2BoogieTranslator {
 		return assertSmt;
 	}
 
-	private Statement genAssertConsistency(final BoogieLocation bl) {
+	private List<Statement> genCheckConsistency(final BoogieLocation bl) {
+		if (!mCheckConsistency) {
+			return Collections.emptyList();
+		}
 		final ReqCheck check = createReqCheck(Spec.CONSISTENCY, 0);
 		final ReqLocation loc = new ReqLocation(check);
 		final AssertStatement rtr = new AssertStatement(loc, new BooleanLiteral(bl, false));
 		check.annotate(rtr);
-		return rtr;
+		return Collections.singletonList(rtr);
 	}
 
 	private ReqCheck createReqCheck(final Check.Spec reqSpec, final int... idx) {
@@ -855,12 +862,54 @@ public class Req2BoogieTranslator {
 		stmtList.addAll(Arrays.asList(genDelay(bl)));
 
 		for (int i = 0; i < mAutomata.length; i++) {
-			stmtList.add(genCheckInvariants(mAutomata[i], i, bl));
+			stmtList.add(genInvariantGuards(mAutomata[i], i, bl));
 		}
+
+		stmtList.addAll(genChecksRTInconsistency(bl));
+		stmtList.addAll(genChecksNonVacuity(bl));
+		stmtList.addAll(genCheckConsistency(bl));
+
+		for (int i = 0; i < mAutomata.length; i++) {
+			stmtList.add(genOuterIfTransition(mAutomata[i], i, bl));
+		}
+		if (!mStateVars.isEmpty()) {
+			final List<Statement> stateVarsAssigns = genStateVarsAssign(bl);
+			for (int i = 0; i < stateVarsAssigns.size(); i++) {
+				stmtList.add(stateVarsAssigns.get(i));
+			}
+		}
+
+		return stmtList.toArray(new Statement[stmtList.size()]);
+	}
+
+	private List<Statement> genChecksNonVacuity(final BoogieLocation bl) {
+		if (mVacuityChecks == null) {
+			return Collections.emptyList();
+		}
+
+		final List<Statement> stmtList = new ArrayList<>();
+		for (int i = 0; i < mAutomata.length; i++) {
+			if (checkVacuity(i)) {
+				final Statement assertStmt = genAssertNonVacuous(mAutomata[i], i, bl);
+				if (assertStmt != null) {
+					stmtList.add(assertStmt);
+				}
+			}
+		}
+		return stmtList;
+	}
+
+	private List<Statement> genChecksRTInconsistency(final BoogieLocation bl) {
+		if (mCombinationNum <= 1) {
+			return Collections.emptyList();
+		}
+
 		final int[] automataIndices = new int[mAutomata.length];
 		for (int i = 0; i < mAutomata.length; i++) {
 			automataIndices[i] = i;
 		}
+
+		final List<Statement> stmtList = new ArrayList<>();
 		final List<int[]> subsets = CrossProducts.subArrays(automataIndices,
 				mCombinationNum <= automataIndices.length ? mCombinationNum : automataIndices.length);
 		int subsetsSize = subsets.size();
@@ -879,29 +928,7 @@ public class Req2BoogieTranslator {
 				stmtList.add(assertStmt);
 			}
 		}
-		for (int i = 0; i < mAutomata.length; i++) {
-			if (checkVacuity(i)) {
-				final Statement assertStmt = genAssertNonVacuous(mAutomata[i], i, bl);
-				if (assertStmt != null) {
-					stmtList.add(assertStmt);
-				}
-			}
-		}
-
-		// add a check for consistency
-		stmtList.add(genAssertConsistency(bl));
-
-		for (int i = 0; i < mAutomata.length; i++) {
-			stmtList.add(genOuterIfTransition(mAutomata[i], i, bl));
-		}
-		if (!mStateVars.isEmpty()) {
-			final List<Statement> stateVarsAssigns = genStateVarsAssign(bl);
-			for (int i = 0; i < stateVarsAssigns.size(); i++) {
-				stmtList.add(stateVarsAssigns.get(i));
-			}
-		}
-
-		return stmtList.toArray(new Statement[stmtList.size()]);
+		return stmtList;
 	}
 
 	/**

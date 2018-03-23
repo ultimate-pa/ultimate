@@ -39,10 +39,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 
@@ -97,15 +99,27 @@ public class PeaToBoogie implements ISource {
 		final long patternWithId = Arrays.stream(patterns).filter(a -> a.getId() != null).count();
 		mLogger.info("Successfully parsed " + patterns.length + " requirements (" + patternWithId + " named ones)");
 
-		// TODO: Add options to this cruel program
-		final BitSet vacuityChecks = new BitSet(patterns.length);
-		vacuityChecks.set(0, patterns.length);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		// TODO preference
-		final int combinationNum = Math.min(patterns.length, 2);
-		final Req2BoogieTranslator translator =
-				new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, inputPath, combinationNum, patterns);
-		return translator.getUnit();
+		final BitSet vacuityChecks;
+		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY)) {
+			vacuityChecks = new BitSet(patterns.length);
+			vacuityChecks.set(0, patterns.length);
+		} else {
+			vacuityChecks = null;
+		}
+
+		final int combinationNum;
+		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
+			combinationNum =
+					Math.min(patterns.length, prefs.getInt(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE));
+		} else {
+			combinationNum = -1;
+		}
+		final boolean checkConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
+
+		return new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, inputPath, combinationNum, checkConsistency,
+				patterns).getUnit();
 	}
 
 	@Override
@@ -125,7 +139,7 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return null;
+		return new Pea2BoogiePreferences();
 	}
 
 	@Override
