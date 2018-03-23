@@ -63,13 +63,21 @@ public class ReqToPEA {
 		for (final PatternType pat : patterns) {
 			// ignore patterns with syntax errors
 			if (pat == null) {
-				mLogger.warn("Ignoring pattern with syntax error");
+				mLogger.error("Ignoring pattern with syntax error: unknown ID");
 				continue;
 			}
 
-			final PhaseEventAutomata pea = pat.transformToPea(peaTrans, id2bounds);
+			final PhaseEventAutomata pea;
+			try {
+				pea = pat.transformToPea(peaTrans, id2bounds);
+			} catch (final Exception ex) {
+				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
+				mLogger.error(
+						"Ignoring pattern that could not be transformed: " + pat.getId() + " -- Reason: " + reason);
+				continue;
+			}
 			if (pea.getInit().length == 0) {
-				mLogger.error(pat.getId() + " PEA has no initial phase, ignoring!");
+				mLogger.error("ignoring pattern without initial phase: " + pat.getId());
 				continue;
 			}
 			peaList.add(pea);

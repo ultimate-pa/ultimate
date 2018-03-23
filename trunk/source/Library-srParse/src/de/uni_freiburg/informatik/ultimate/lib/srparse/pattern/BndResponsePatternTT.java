@@ -35,10 +35,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 /**
@@ -72,17 +68,8 @@ public class BndResponsePatternTT extends PatternType {
 			final CounterTrace ct = counterTrace(phaseT(), phase(R, BoundTypes.GREATEREQUAL, c1),
 					phaseE(S, BoundTypes.LESS, c2), phase(S.negate()), phaseT());
 			return compile(peaTrans, ct);
-		} else if (scope instanceof SrParseScopeBefore) {
-			throw new UnsupportedOperationException();
-		} else if (scope instanceof SrParseScopeAfterUntil) {
-			throw new UnsupportedOperationException();
-		} else if (scope instanceof SrParseScopeAfter) {
-			throw new UnsupportedOperationException();
-		} else if (scope instanceof SrParseScopeBetween) {
-			throw new UnsupportedOperationException();
-		} else {
-			throw new UnsupportedOperationException("Unknown scope type");
 		}
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
 	@Override

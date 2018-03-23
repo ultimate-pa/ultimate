@@ -74,7 +74,7 @@ public abstract class PatternType {
 		return mPea;
 	}
 
-	protected static int parseDuration(final String duration, final Map<String, Integer> id2bounds) {
+	protected int parseDuration(final String duration, final Map<String, Integer> id2bounds) {
 		if (duration == null) {
 			throw new IllegalArgumentException("Duration cannot be null");
 		}
@@ -87,7 +87,7 @@ public abstract class PatternType {
 			final Integer actualDuration = id2bounds.get(duration);
 			if (actualDuration == null) {
 				throw new IllegalArgumentException(
-						"Cannot parse duration and alternative bounds do not contain " + duration);
+						mId + ": Cannot parse duration and alternative bounds do not contain " + duration);
 			}
 			return actualDuration;
 		}

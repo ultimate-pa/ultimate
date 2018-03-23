@@ -70,7 +70,7 @@ public class BndResponsePatternUT extends PatternType {
 					phaseT());
 			return compile(peaTrans, ct);
 		} else {
-			throw new UnsupportedOperationException("Unknown scope type");
+			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
 	}
 
