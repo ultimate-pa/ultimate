@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -292,7 +293,14 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 		final Term def = at.getFunction().getDefinition();
 		if (def != null) {
-			return getOrConstructConstantArray(def);
+			assert at.getParameters().length == 1;
+			// we need to substitute the variable in the definition by the argument of at
+			final TermVariable var = at.getFunction().getDefinitionVars()[0];
+			final Term value = at.getParameters()[0];
+			final Term defSubstituted =
+					new Substitution(mMgdScript, Collections.singletonMap(var, value)).transform(def);
+
+			return getOrConstructConstantArray(defSubstituted);
 		}
 
 		// TODO: define this string somewhere (also occurs in CfgBuilder and RefinementStrategyFactory, currently)
