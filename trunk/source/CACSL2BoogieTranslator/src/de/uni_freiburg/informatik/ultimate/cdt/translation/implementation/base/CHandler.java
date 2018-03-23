@@ -2032,8 +2032,7 @@ public class CHandler implements ICHandler {
 				if (storageClass == CStorageClass.TYPEDEF) {
 					boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
 
-					final BoogieType boogieType = (BoogieType) mTypeHandler
-							.cType2AstType(loc, cDec.getType().getUnderlyingType()).getBoogieType();
+					final BoogieType boogieType = mBoogieTypeHelper.getBoogieTypeForCType(cDec.getType());
 
 					mTypeHandler.addDefinedType(bId, new TypesResult(
 							new NamedType(loc, boogieType, cDec.getName(), null), false, false, cDec.getType()));

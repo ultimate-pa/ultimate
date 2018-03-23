@@ -277,11 +277,13 @@ public class TypeHandler implements ITypeHandler {
 				return (new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.VOID))));
 			} else {
-				final String modifiedName = 
+				final String modifiedName =
 						main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 				final SymbolTableValue stv = main.mCHandler.getSymbolTable().findCSymbol(node, modifiedName);
-				final BoogieType boogieType = (BoogieType) cType2AstType(loc, 
-						stv.getCVariable().getUnderlyingType()).getBoogieType();
+				final BoogieType boogieType =
+						mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(stv.getCVariable());
+				//(BoogieType) cType2AstType(loc,
+						//stv.getCVariable().getUnderlyingType()).getBoogieType();
 				final String bId = stv.getBoogieName();
 				// TODO: replace constants "false, false"
 				return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), false, false,
@@ -296,7 +298,7 @@ public class TypeHandler implements ITypeHandler {
 	public Result visit(final Dispatcher main, final IASTEnumerationSpecifier node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final String cId = node.getName().toString();
-		final String rslvName = 
+		final String rslvName =
 				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
@@ -348,7 +350,7 @@ public class TypeHandler implements ITypeHandler {
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
 			final String type = node.getName().toString();
-			final String rslvName = 
+			final String rslvName =
 					main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), type);
 
 			// if (mDefinedTypes.containsKey(type)) {
@@ -433,7 +435,7 @@ public class TypeHandler implements ITypeHandler {
 		mStructCounter--;
 
 		final String cId = node.getName().toString();
-		final String rslvName = 
+		final String rslvName =
 				main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 
 		CStruct cvar;
