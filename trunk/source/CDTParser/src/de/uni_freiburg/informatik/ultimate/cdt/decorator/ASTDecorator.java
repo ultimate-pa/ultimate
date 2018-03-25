@@ -117,8 +117,13 @@ public class ASTDecorator {
 		// there is ACSL ... take care for all the children
 		final DecoratorNode result = new DecoratorNode(parent, node);
 		list.add(result);
+		boolean foundFirstNonIgnored = false;
 		for (int i = 0; i < node.getChildren().length; i++) {
-			if (i == 0) {
+			if (!node.getChildren()[i].isPartOfTranslationUnitFile()) {
+				continue;
+			}
+			if (!foundFirstNonIgnored) {
+				foundFirstNonIgnored = true;
 				mCurrentStartLineNr = node.getFileLocation().getStartingLineNumber();
 			}
 			final List<DecoratorNode> newChildren = mapASTs(node.getChildren()[i], result);
@@ -199,12 +204,8 @@ public class ASTDecorator {
 	 *            the acslASTs to provide
 	 */
 	public void provideAcslASTs(final List<ACSLNode> acslASTs) {
-		if (mAcslASTs == null) {
-			// Ensure mutability
-			mAcslASTs = new LinkedList<>(acslASTs);
-		} else if (acslASTs != null) {
-			mAcslASTs.addAll(acslASTs);
-		}
+		// Ensure mutability
+		mAcslASTs = new LinkedList<>(acslASTs);
 	}
 
 	/**
