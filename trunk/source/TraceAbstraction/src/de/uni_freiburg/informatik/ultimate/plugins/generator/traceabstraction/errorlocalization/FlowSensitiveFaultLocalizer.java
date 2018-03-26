@@ -485,11 +485,11 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			}
 			if (subBranch) {
 				// The current statement is a branch out and it's branch-in is with in the current branch.
-				final UnmodifiableTransFormula subBranchMarkhorFormula =
+				final UnmodifiableTransFormula subBranchEncodedFormula =
 						doBranchEncoding(branchOut, branchIn, subAlternativePath, counterexampleWord, informationFromCfg, csToolkit);
 				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices, csToolkit,
 						false, false, false, mXnfConversionTechnique, mSimplificationTechnique, Arrays.asList(
-								new UnmodifiableTransFormula[] { combinedTransitionFormula, subBranchMarkhorFormula }));
+								new UnmodifiableTransFormula[] { combinedTransitionFormula, subBranchEncodedFormula }));
 			} else {
 				// It is a normal statement.
 				final LETTER statement = counterexampleWord.getSymbol(i);
@@ -525,7 +525,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 * Checks if subtrace from position "startPosition" to position "endPosition" is relevant.
 	 */
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
-			final UnmodifiableTransFormula markhor, final IPredicate weakestPreconditionLeft,
+			final UnmodifiableTransFormula branchEncodedFormula, final IPredicate weakestPreconditionLeft,
 			final IPredicate weakestPreconditionRight, final NestedWord<LETTER> counterexampleWord,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable, 
 			TracePredicates strongestPostconditionSequence) {
@@ -537,7 +537,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		final IPredicate intersection = mPredicateFactory.and(SimplificationTechnique.SIMPLIFY_QUICK, pre,sp);
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
-		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor);
+		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, branchEncodedFormula);
 		// Use the pre SP intersection.
 		final ERelevanceStatus relevance =
 				rc.relevanceInternal(intersection, basic, mPredicateFactory.not(weakestPreconditionRight));
@@ -619,7 +619,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 					// That is why weakestPreconditionLeft is coming from inside the branch now.
 				} else {
 					// Don't do anything.
-					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:" + blockEncodedBranchFormula + " ]");
+					mLogger.debug(" - - Irrelevant Branch - - - [BlockEncodedFormula:" + blockEncodedBranchFormula + " ]");
 				}
 
 			} else {
