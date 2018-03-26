@@ -27,17 +27,22 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 
 /**
  * Check given annotation without inferring invariants.
@@ -88,9 +93,63 @@ public class InvariantChecker {
 					}
 				}
 				for (final IcfgLocation startLoc : startLocations) {
-					
+					final ArrayDeque<IcfgLocation> worklistForward = new ArrayDeque<>();
+					final Set<IcfgLocation> seenForward = new HashSet<>();
+					final Set<IcfgLocation> errorLocations = new HashSet<>();
+					for (final IcfgLocation succLoc : startLoc.getOutgoingNodes()) {
+						worklistForward.add(succLoc);
+					}
+					while (!worklistForward.isEmpty()) {
+						loc = worklistForward.removeFirst();
+						for (final IcfgLocation succLoc : loc.getOutgoingNodes()) {
+							if (!seenForward.contains(succLoc)) {
+								seenForward.add(succLoc);
+								final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(succLoc);
+								if (loa != null) {
+									final IcfgLocation eLoc = getErrorLocForLoopInvariant(succLoc);
+									seenForward.add(eLoc);
+									errorLocations.add(eLoc);
+								} else {
+									final Check check = Check.getAnnotation(succLoc);
+									if (check != null) {
+										seenForward.add(succLoc);
+										errorLocations.add(succLoc);
+									} else {
+										seenForward.add(succLoc);
+										worklistForward.add(succLoc);
+									}
+								}
+							}
+						}
+					}
+					final String identifier = "InductivityChecksStartingFrom_" + startLoc;
+					final PathProgramConstructionResult test = PathProgram.constructPathProgram(identifier, mIcfg, seenForward, seenForward);
 				}
 			}
 		}
+	}
+
+	private IcfgLocation getErrorLocForLoopInvariant(final IcfgLocation succLoc) {
+		IcfgLocation result = null;
+		for (final IcfgLocation loopSucc : succLoc.getOutgoingNodes()) {
+			final Check check = Check.getAnnotation(loopSucc);
+			if (check != null) {
+				final EnumSet<Spec> specs = check.getSpec();
+				if (specs.size() == 1) {
+					specs.contains(Spec.INVARIANT);
+					if (result == null) {
+						result = loopSucc;
+					} else {
+						throw new UnsupportedOperationException("several invariants");
+					}
+				} else {
+					throw new UnsupportedOperationException("several specs");
+				}
+			}
+		}
+		if (result == null) {
+			throw new UnsupportedOperationException("missing invariant error location");
+		}
+		return result;
 	}
 }
