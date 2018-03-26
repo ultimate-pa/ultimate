@@ -224,7 +224,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				final IcfgLocation programPointOfImmediateSucc = ((ISLPredicate) immediateSuccesor).getProgramPoint();
 				if (programPointOfImmediateSucc == programPointOfSuccInCounterexample) {
 					// do nothing, because we want to find an alternative path
-					// (i.e., path that is not in counterexample
+					// (i.e., path that is not in counterexample		
 				} else {
 					// For Branch in Branch Out information.
 					// Path from the successor state not in the counter example
@@ -472,13 +472,15 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			// Find out if the current position is a branchOut position.
 			for (final Entry<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> entry : informationFromCfg.entrySet()) {
 				if (entry.getValue().containsKey(i)) {
-					subBranch = true;
-					branchOut = i;
 					final Integer brachInPosition = entry.getKey();
-					branchIn = brachInPosition;
-					i = branchIn;
-					subAlternativePath = informationFromCfg.get(branchIn).get(branchOut).getWord();
-					break;
+					if(brachInPosition <= endPosition) {    // IF the branch-in position is with in the parent branch. MAKE IT LESS THEN EQUAL
+						subBranch = true;
+						branchOut = i;
+						branchIn = brachInPosition;
+						i = branchIn;
+						subAlternativePath = informationFromCfg.get(branchIn).get(branchOut).getWord();
+						break;
+					}	
 				}
 			}
 			if (subBranch) {
