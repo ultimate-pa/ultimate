@@ -812,7 +812,7 @@ public class CfgBuilder {
 		// return new AssignmentStatement(null,lhs,rhs);
 		// }
 
-		private String getLocName(final Statement stmt) {
+		private String constructLocName(final Statement stmt) {
 			final ILocation location = stmt.getLocation();
 			final int startLine = location.getStartLine();
 			String unprimedName = "L" + startLine;
@@ -912,7 +912,7 @@ public class CfgBuilder {
 					stSeq.addStatement(st);
 					ModelUtils.copyAnnotations(st, stSeq);
 				} else {
-					final String locName = getLocName(st);
+					final String locName = constructLocName(st);
 					final BoogieIcfgLocation locNode =
 							new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 					((CodeBlock) mCurrent).connectTarget(locNode);
@@ -934,7 +934,7 @@ public class CfgBuilder {
 				return;
 			}
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st);
+				final String locName = constructLocName(st);
 				final BoogieIcfgLocation locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -985,7 +985,7 @@ public class CfgBuilder {
 			mLogger.debug("Goto statement with " + targets.length + " targets.");
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st);
+				final String locName = constructLocName(st);
 				locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -1016,7 +1016,7 @@ public class CfgBuilder {
 			}
 			BoogieIcfgLocation locNode;
 			if (mCurrent instanceof CodeBlock) {
-				final String locName = getLocName(st);
+				final String locName = constructLocName(st);
 				locNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 				((CodeBlock) mCurrent).connectTarget(locNode);
 				mProcLocNodes.put(locName, locNode);
@@ -1026,7 +1026,7 @@ public class CfgBuilder {
 				// mcurrent must be either LocNode or TransEdge
 				throw new IllegalArgumentException();
 			}
-			final String locName = getLocName(st);
+			final String locName = constructLocName(st);
 			final BoogieIcfgLocation returnNode = new BoogieIcfgLocation(locName, mCurrentProcedureName, false, st);
 			mProcLocNodes.put(locName, returnNode);
 			// add summary edge
