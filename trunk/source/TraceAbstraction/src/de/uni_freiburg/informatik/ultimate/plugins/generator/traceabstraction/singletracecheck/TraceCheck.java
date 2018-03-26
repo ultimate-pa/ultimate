@@ -333,7 +333,8 @@ public class TraceCheck implements ITraceCheck {
 			if (tc.getToolchainCanceledExpection() != null) {
 				throw tc.getToolchainCanceledExpection();
 			}
-			assert tc.isCorrect() == LBool.SAT : "result of second trace check is " + tc.isCorrect();
+			assert tc.isCorrect() == LBool.SAT : "result of second trace check is " + tc.isCorrect()
+					+ tc.getTraceCheckReasonUnknown().getReason();
 			return tc.getRcfgProgramExecution();
 		}
 		return computeRcfgProgramExecution(mNsb);
