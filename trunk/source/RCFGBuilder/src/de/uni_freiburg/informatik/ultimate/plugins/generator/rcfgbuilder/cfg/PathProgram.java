@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -107,7 +108,33 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	 */
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
 			final IIcfg<?> originalIcfg, final Set<? extends IIcfgTransition<?>> allowedTransitions) {
-		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier).getResult();
+		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, Collections.emptySet()).getResult();
+	}
+	
+	
+	/**
+	 * TODO Matthias
+	 * @param identifier
+	 * @param originalIcfg
+	 * @param allowedLocations
+	 * @param additionalInitialLocations
+	 * @return
+	 */
+	public static <E extends IIcfgTransition<IcfgLocation>> PathProgramConstructionResult constructPathProgram(
+			final String identifier, final IIcfg<IcfgLocation> originalIcfg, final Set<IcfgLocation> allowedLocations,
+			final Set<IcfgLocation> additionalInitialLocations) {
+		final Set<E> allowedTransitions = new HashSet<>();
+		for (final IcfgLocation loc : allowedLocations) {
+			loc.getOutgoingEdges();
+			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+				if (allowedLocations.contains(edge.getTarget())) {
+					allowedTransitions.add((E) edge);
+				}
+			}
+
+		}
+		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, additionalInitialLocations)
+				.getResult();
 	}
 
 	@Override
@@ -202,7 +229,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final PathProgramConstructionResult mResult;
 
 		private PathProgramConstructor(final IIcfg<?> originalIcfg,
-				final Set<? extends IIcfgTransition<?>> allowedTransitions, final String newIdentifier) {
+				final Set<? extends IIcfgTransition<?>> allowedTransitions, final String newIdentifier,
+				final Set<IcfgLocation> additionalInitialLocations) {
 			final String nonNullIdentifier = Objects.requireNonNull(newIdentifier);
 			final Set<? extends IIcfgTransition<?>> nonNullTransitions = Objects.requireNonNull(allowedTransitions);
 			mOriginalIcfg = Objects.requireNonNull(originalIcfg);
@@ -216,7 +244,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			mProcEntries = new HashMap<>();
 			mProcExits = new HashMap<>();
 			mProcError = new HashMap<>();
-			mInitialNodes = new HashSet<>();
+			mInitialNodes = new HashSet<>(additionalInitialLocations);
 			mLoopLocations = new HashSet<>();
 
 			final Predicate<IIcfgTransition<?>> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
