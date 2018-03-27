@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -506,6 +507,10 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 					new HashSet<TermVariable>(computeWeqIndicesForArray(edge.getKey().getOneElement())),
 					SmtUtils.or(script, dnfAsCubeList));
 			result.add(edgeFormula);
+			assert mWeqCcManager.getSettings().omitSanitycheckFineGrained2()
+				|| mWeqCcManager.getAllWeqVariables().stream()
+					.allMatch(weqvar -> !Arrays.asList(edgeFormula.getFreeVars()).contains(weqvar))
+					: "free weqvar in formula";
 		}
 		return result;
 	}
@@ -1244,6 +1249,16 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				return false;
 			}
 		}
+
+
+		for (final Entry<Doubleton<NODE>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> edge : getWeqEdgesEntrySet()) {
+			final int edgedim = new MultiDimensionalSort(edge.getKey().getOneElement().getSort()).getDimension();
+			if (!edge.getValue().assertWeqVarSelectsHaveCorrectVarForDimension(edgedim)) {
+				assert false;
+				return false;
+			}
+		}
+
 		return true;
 	}
 

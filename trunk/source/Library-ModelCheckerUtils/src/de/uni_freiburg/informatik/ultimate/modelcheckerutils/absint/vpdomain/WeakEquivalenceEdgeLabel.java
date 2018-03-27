@@ -857,9 +857,55 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 		if (getDisjuncts().stream().anyMatch(pa -> pa.isInconsistent())) {
 			assert false : "missing normalization: contains 'false' disjuncts";
-		return false;
+			return false;
 		}
 
+//		if (!assertWeqVarSelectsHaveCorrectVarForDimension()) {
+//			assert false;
+//			return false;
+//		}
+
+		return true;
+	}
+
+	/**
+	 * every weq-var q has an associated dimension. At an weq edge a --Phi(q)--b that dimension may never exceed the
+	 * dimensionality of a and b.
+	 *
+	 * @param edgeNodeDimension
+	 * @return
+	 */
+	boolean assertWeqVarSelectsHaveCorrectVarForDimension(final int edgeNodeDimension) {
+		for (final DISJUNCT lab : getDisjuncts()) {
+			for (final NODE el : lab.getAllElements()) {
+//				if (!el.isFunctionApplication()) {
+//					continue;
+//				}
+//				if (!mWeqCcManager.getAllWeqNodes().contains(el.getArgument())) {
+				if (!mWeqCcManager.getAllWeqNodes().contains(el)) {
+					continue;
+				}
+
+
+//				NODE innerMostFunction = el.getAppliedFunction();
+//				while (innerMostFunction.isFunctionApplication()) {
+//					innerMostFunction = innerMostFunction.getAppliedFunction();
+//				}
+//				if (innerMostFunction.toString().contains("rep")) {
+//					// HACK
+//					continue;
+//				}
+//
+//
+//				final int dimensionality =
+//						new MultiDimensionalSort(innerMostFunction.getSort()).getDimension()
+//						- new MultiDimensionalSort(el.getAppliedFunction().getSort()).getDimension();
+				if (mWeqCcManager.getDimensionOfWeqVar(el) > edgeNodeDimension) {
+					assert false;
+					return false;
+				}
+			}
+		}
 		return true;
 	}
 

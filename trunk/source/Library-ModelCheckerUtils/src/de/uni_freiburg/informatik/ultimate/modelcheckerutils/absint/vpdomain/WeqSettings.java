@@ -51,7 +51,7 @@ public class WeqSettings {
 	private final boolean OMIT_SANITYCHECK_FINE_GRAINED_1 = true;
 
 	// still fine grained checks but less
-	private final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = true;
+	private final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = false;
 
 	/**
 	 * if reportChangeInGpa should perform a meet and project of the label

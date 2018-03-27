@@ -983,6 +983,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		allConjuncts.addAll(weakEqConstraints);
 
 		final Term result = SmtUtils.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
+		assert weqCc.getManager().getSettings().omitSanitycheckFineGrained1() ||
+			weqCc.getManager().getAllWeqVariables().stream()
+				.allMatch(weqvar -> !Arrays.asList(result.getFreeVars()).contains(weqvar));
 		return result;
 	}
 
@@ -1512,5 +1515,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 	public WeqSettings getSettings() {
 		return mSettings;
+	}
+
+	public int getDimensionOfWeqVar(final NODE weqVarNode) {
+		for (final Triple<Sort, Integer, NODE> en : mDimensionToWeqVariableNode.entrySet()) {
+			if (en.getThird().equals(weqVarNode)) {
+				return en.getSecond();
+			}
+		}
+		throw new AssertionError("weq var unknown: " + weqVarNode);
 	}
 }
