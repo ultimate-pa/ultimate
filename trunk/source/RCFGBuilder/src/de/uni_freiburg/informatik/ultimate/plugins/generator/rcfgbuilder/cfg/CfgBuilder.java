@@ -850,6 +850,7 @@ public class CfgBuilder {
 						mIcfg.getLoopLocations().add(locNode);
 					}
 				}
+				ModelUtils.copyAnnotations(st, locNode);
 				return locNode;
 			}
 			final BoogieIcfgLocation locNode = new BoogieIcfgLocation(labelName, mCurrentProcedureName, false, st);
@@ -1155,6 +1156,7 @@ public class CfgBuilder {
 				// if the old location was a loop location, the new one is also
 				mIcfg.getLoopLocations().add(newLocNode);
 			}
+			ModelUtils.copyAnnotations(oldLocNode, newLocNode);
 		}
 	}
 
