@@ -101,22 +101,18 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 		mContext = null;
 		mContextIsDisjunctive = true;
 	}
-	
+
 	/**
-	 * Constructor that allows simplification with respect to a given context.
-	 * E.g., (= x y) can be simplified to false if we assume that the term
-	 * (and (= x 0) (= y 1)) is true.
-	 * This can be used to apply the simplification only to subformulas of a
-	 * formula. E.g., if we have the formula
-	 * (and (= x 0) (= y 1) (= x y))
-	 * we can use the first two conjuncts as a (conjunctive) context and 
-	 * simplify only the third conjunct.
-	 * 
-	 * @param context Term that defines under which assumptions the simplification
-	 * is done. 
-	 * @param contextIsDisjunctive If true, we assume that the context or the
-	 * simplification input hold. If false, we assume that the context and
-	 * the simplification input hold.
+	 * Constructor that allows simplification with respect to a given context. E.g., (= x y) can be simplified to false
+	 * if we assume that the term (and (= x 0) (= y 1)) is true. This can be used to apply the simplification only to
+	 * subformulas of a formula. E.g., if we have the formula (and (= x 0) (= y 1) (= x y)) we can use the first two
+	 * conjuncts as a (conjunctive) context and simplify only the third conjunct.
+	 *
+	 * @param context
+	 *            Term that defines under which assumptions the simplification is done.
+	 * @param contextIsDisjunctive
+	 *            If true, we assume that the context or the simplification input hold. If false, we assume that the
+	 *            context and the simplification input hold.
 	 */
 	public SimplifyDDAWithTimeout(final Script script, final boolean simplifyRepeatedly,
 			final IUltimateServiceProvider services, final Term context, final boolean contextIsDisjunctive) {
@@ -166,12 +162,12 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 		mScript.push(1);
 		final Collection<TermVariable> freeVars;
 		if (mContext == null) {
-			freeVars= Arrays.asList(inputTerm.getFreeVars()); 
+			freeVars = Arrays.asList(inputTerm.getFreeVars());
 		} else {
 			freeVars = new HashSet<>(Arrays.asList(inputTerm.getFreeVars()));
 			freeVars.addAll(Arrays.asList(mContext.getFreeVars()));
 		}
-		
+
 		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mScript, freeVars, true);
 		final TermVariable[] vars = new TermVariable[substitutionMapping.size()];
 		final Term[] values = new Term[substitutionMapping.size()];
@@ -181,7 +177,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 			values[offset] = entry.getValue();
 			offset++;
 		}
-		
+
 		if (mContext != null) {
 			final Term contextClosed = new FormulaUnLet().unlet(mScript.let(vars, values, mContext));
 			Term toAssert;
@@ -192,7 +188,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 			}
 			mScript.assertTerm(toAssert);
 		}
-		
+
 		term = mScript.let(vars, values, term);
 
 		term = new FormulaUnLet().unlet(term);
