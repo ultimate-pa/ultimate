@@ -111,7 +111,8 @@ public class InvariantChecker {
 							}
 						}
 					}
-					seenForward.add(startLoc);{
+					seenForward.add(startLoc);
+					{
 						// some code for transforming parts of a CFG into a single statement
 						final String identifier = "InductivityChecksStartingFrom_" + startLoc;
 						final PathProgramConstructionResult test = PathProgram.constructPathProgram(identifier, mIcfg,
