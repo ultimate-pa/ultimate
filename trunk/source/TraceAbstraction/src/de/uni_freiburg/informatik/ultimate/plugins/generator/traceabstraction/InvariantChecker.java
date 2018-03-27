@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 
@@ -117,7 +119,12 @@ public class InvariantChecker {
 						final String identifier = "InductivityChecksStartingFrom_" + startLoc;
 						final PathProgramConstructionResult test = PathProgram.constructPathProgram(identifier, mIcfg,
 								seenForward, Collections.singleton(startLoc));
-						final BlockEncoder be = new BlockEncoder(mLogger, mServices, test.getPathProgram(),
+						final IUltimateServiceProvider beServices =
+								mServices.registerPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
+						final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
+						ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
+						ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
+						final BlockEncoder be = new BlockEncoder(mLogger, beServices, test.getPathProgram(),
 								SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 						final IIcfg<IcfgLocation> encoded = be.getResult();
 						test.toString();
