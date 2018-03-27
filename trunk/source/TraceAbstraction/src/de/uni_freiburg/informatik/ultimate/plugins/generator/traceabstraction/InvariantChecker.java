@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,6 +42,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 
@@ -97,34 +101,47 @@ public class InvariantChecker {
 					final Set<IcfgLocation> seenForward = new HashSet<>();
 					final Set<IcfgLocation> errorLocations = new HashSet<>();
 					for (final IcfgLocation succLoc : startLoc.getOutgoingNodes()) {
-						worklistForward.add(succLoc);
+						processForward(worklistForward, seenForward, errorLocations, succLoc, false);
 					}
 					while (!worklistForward.isEmpty()) {
 						loc = worklistForward.removeFirst();
 						for (final IcfgLocation succLoc : loc.getOutgoingNodes()) {
 							if (!seenForward.contains(succLoc)) {
-								seenForward.add(succLoc);
-								final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(succLoc);
-								if (loa != null) {
-									final IcfgLocation eLoc = getErrorLocForLoopInvariant(succLoc);
-									seenForward.add(eLoc);
-									errorLocations.add(eLoc);
-								} else {
-									final Check check = Check.getAnnotation(succLoc);
-									if (check != null) {
-										seenForward.add(succLoc);
-										errorLocations.add(succLoc);
-									} else {
-										seenForward.add(succLoc);
-										worklistForward.add(succLoc);
-									}
-								}
+								processForward(worklistForward, seenForward, errorLocations, succLoc, true);
 							}
 						}
 					}
-					final String identifier = "InductivityChecksStartingFrom_" + startLoc;
-					final PathProgramConstructionResult test = PathProgram.constructPathProgram(identifier, mIcfg, seenForward, seenForward);
+					seenForward.add(startLoc);{
+						// some code for transforming parts of a CFG into a single statement
+						final String identifier = "InductivityChecksStartingFrom_" + startLoc;
+						final PathProgramConstructionResult test = PathProgram.constructPathProgram(identifier, mIcfg,
+								seenForward, Collections.singleton(startLoc));
+						final BlockEncoder be = new BlockEncoder(mLogger, mServices, test.getPathProgram(),
+								SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+						final IIcfg<IcfgLocation> encoded = be.getResult();
+						test.toString();
+					}
 				}
+			}
+		}
+	}
+
+	private void processForward(final ArrayDeque<IcfgLocation> worklistForward, final Set<IcfgLocation> seenForward,
+			final Set<IcfgLocation> errorLocations, final IcfgLocation succLoc, final boolean checkForErrorLocs) {
+		seenForward.add(succLoc);
+		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(succLoc);
+		if (loa != null) {
+			final IcfgLocation eLoc = getErrorLocForLoopInvariant(succLoc);
+			seenForward.add(eLoc);
+			errorLocations.add(eLoc);
+		} else {
+			final Check check = Check.getAnnotation(succLoc);
+			if (checkForErrorLocs && check != null) {
+				seenForward.add(succLoc);
+				errorLocations.add(succLoc);
+			} else {
+				seenForward.add(succLoc);
+				worklistForward.add(succLoc);
 			}
 		}
 	}
@@ -135,16 +152,16 @@ public class InvariantChecker {
 			final Check check = Check.getAnnotation(loopSucc);
 			if (check != null) {
 				final EnumSet<Spec> specs = check.getSpec();
-				if (specs.size() == 1) {
+//				if (specs.size() == 1) {
 					specs.contains(Spec.INVARIANT);
 					if (result == null) {
 						result = loopSucc;
 					} else {
 						throw new UnsupportedOperationException("several invariants");
 					}
-				} else {
-					throw new UnsupportedOperationException("several specs");
-				}
+//				} else {
+//					throw new UnsupportedOperationException("several specs");
+//				}
 			}
 		}
 		if (result == null) {
