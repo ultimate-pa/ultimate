@@ -612,8 +612,28 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = new WeakEquivalenceEdgeLabel<>(
 					mWeakEquivalenceGraph, filtered);
+
+		assert mWeqCcManager.getSettings().omitSanitycheckFineGrained2()
+			|| assertUnionIntroducesNoNewNodes(this, other, result)
+						: "union of two labels may not introduce any new nodes";
+
 		assert result.sanityCheck();
 		return result;
+	}
+
+	public static <NODE extends IEqNodeIdentifier<NODE>, DISJUNCT extends ICongruenceClosure<NODE>>
+		boolean assertUnionIntroducesNoNewNodes(
+				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> first,
+				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> second,
+			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result) {
+		final Set<NODE> difference = DataStructureUtils.difference(
+				result.getAppearingNodes(),
+				DataStructureUtils.union(first.getAppearingNodes(), second.getAppearingNodes()));
+		if (!difference.isEmpty()) {
+			assert false;
+			return false;
+		}
+		return true;
 	}
 
 	boolean isTautological() {
@@ -878,29 +898,12 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	boolean assertWeqVarSelectsHaveCorrectVarForDimension(final int edgeNodeDimension) {
 		for (final DISJUNCT lab : getDisjuncts()) {
 			for (final NODE el : lab.getAllElements()) {
-//				if (!el.isFunctionApplication()) {
-//					continue;
-//				}
-//				if (!mWeqCcManager.getAllWeqNodes().contains(el.getArgument())) {
 				if (!mWeqCcManager.getAllWeqNodes().contains(el)) {
 					continue;
 				}
 
 
-//				NODE innerMostFunction = el.getAppliedFunction();
-//				while (innerMostFunction.isFunctionApplication()) {
-//					innerMostFunction = innerMostFunction.getAppliedFunction();
-//				}
-//				if (innerMostFunction.toString().contains("rep")) {
-//					// HACK
-//					continue;
-//				}
-//
-//
-//				final int dimensionality =
-//						new MultiDimensionalSort(innerMostFunction.getSort()).getDimension()
-//						- new MultiDimensionalSort(el.getAppliedFunction().getSort()).getDimension();
-				if (mWeqCcManager.getDimensionOfWeqVar(el) > edgeNodeDimension) {
+				if (mWeqCcManager.getDimensionOfWeqVar(el) >= edgeNodeDimension) {
 					assert false;
 					return false;
 				}

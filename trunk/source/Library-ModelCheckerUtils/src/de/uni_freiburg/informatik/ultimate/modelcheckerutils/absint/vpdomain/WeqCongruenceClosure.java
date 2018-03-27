@@ -942,6 +942,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				}
 			}
 			thin();
+//			assert getWeakEquivalenceGraph().sanityCheckWithoutNodesComparison();
 
 			// 2. do floyd-warshall (triangle-rule), report
 			executeFloydWarshallAndReportResultToWeqCc(omitSanityChecks);

@@ -418,7 +418,8 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> plus
-			= cwelpc::union;
+//			= cwelpc::union;
+			= (l1, l2) -> l1.union(l2, null); // TODO: reactivate cache
 		final BiFunction<
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
@@ -1307,7 +1308,12 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 			WeakEquivalenceEdgeLabel<NODE, DISJUNCT> union(final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label1,
 					final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label2) {
-				return label1.union(label2, mCcPoCache);
+				final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result = label1.union(label2, mCcPoCache);
+				assert mWeqCcManager.getSettings().omitSanitycheckFineGrained2()
+					|| DataStructureUtils.union(label1.getAppearingNodes(), label2.getAppearingNodes())
+						.containsAll(result.getAppearingNodes())
+						: "union of two labels may not introduce any new nodes";
+				return result;
 			}
 		}
 

@@ -234,8 +234,10 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		final DISJUNCT sample = ccs.iterator().next();
 		if (sample instanceof CongruenceClosure<?>) {
-			return (Set<DISJUNCT>) filterRedundantCcs((Set<CongruenceClosure<NODE>>) ccs,
+			final Set<DISJUNCT> result = (Set<DISJUNCT>) filterRedundantCcs((Set<CongruenceClosure<NODE>>) ccs,
 					(PartialOrderCache<CongruenceClosure<NODE>>) ccPoCache);
+			assert checkFilterDisjunctionResult(ccs, result, getNonTheoryLiteralDisequalitiesIfNecessary());
+			return result;
 		} else {
 			throw new AssertionError();
 		}
@@ -930,12 +932,33 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return satResult;
 	}
 
-	private <DISJUNCT extends ICongruenceClosure<NODE>> boolean checkFilterDisjunctionResult(final Set<DISJUNCT> ccs1,
-			final Set<DISJUNCT> ccs2, final Term literalDisequalities) {
+	private <DISJUNCT extends ICongruenceClosure<NODE>> boolean checkFilterDisjunctionResult(final Set<DISJUNCT> input,
+			final Set<DISJUNCT> result, final Term literalDisequalities) {
+
+		{
+			if (input.stream().allMatch(d -> d.isInconsistent())
+					&& result.stream().allMatch(d -> d.isInconsistent())) {
+				// the result may not contain any nodes that the input does not
+				final Set<NODE> nodesInput = new HashSet<>();
+				input.stream().forEach(d -> nodesInput.addAll(d.getAllElements()));
+				final Set<NODE> nodesResult = new HashSet<>();
+				result.stream().forEach(d -> nodesResult.addAll(d.getAllElements()));
+				final Set<NODE> difference = DataStructureUtils.difference(nodesResult, nodesInput);
+				if (!difference.isEmpty()) {
+					assert false;
+					return false;
+				}
+			}
+		}
+
+
+		/*
+		 * check that the filtering is an equivalence transformation
+		 */
 		mMgdScript.lock(this);
 		mMgdScript.echo(this, new QuotedObject("WeqCcManager.checkFilterDisjunctionResult (begin)"));
-		final Term term1 = disjunctionToTerm(mMgdScript.getScript(), ccs1, literalDisequalities);
-		final Term term2 = disjunctionToTerm(mMgdScript.getScript(), ccs2, literalDisequalities);
+		final Term term1 = disjunctionToTerm(mMgdScript.getScript(), input, literalDisequalities);
+		final Term term2 = disjunctionToTerm(mMgdScript.getScript(), result, literalDisequalities);
 		final boolean oneImpliesTwo = checkImplicationHolds(mMgdScript.getScript(), term1, term2);
 		assert oneImpliesTwo;
 		final boolean twoImpliesOne = checkImplicationHolds(mMgdScript.getScript(), term2, term1);
