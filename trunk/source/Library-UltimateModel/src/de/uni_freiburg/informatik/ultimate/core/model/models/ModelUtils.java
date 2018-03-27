@@ -28,7 +28,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.model.models;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -36,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -63,26 +63,7 @@ public final class ModelUtils {
 	 *            new {@link IElement} to add annotations to.
 	 */
 	public static void copyAnnotations(final IElement oldE, final IElement newE) {
-		if (oldE == null || newE == null) {
-			return;
-		}
-
-		final Map<String, IAnnotations> oldAnnots = getAnnotations(oldE);
-		if (oldAnnots == null) {
-			return;
-		}
-		final Map<String, IAnnotations> newAnnots = newE.getPayload().getAnnotations();
-		for (final Entry<String, IAnnotations> oldAnnot : oldAnnots.entrySet()) {
-			final IAnnotations replacedValue = newAnnots.put(oldAnnot.getKey(), oldAnnot.getValue());
-			if (replacedValue == null) {
-				continue;
-			}
-			// we would overwrite old annotations, so we merge instead
-			final IAnnotations mergedAnnot = replacedValue.merge(oldAnnot.getValue());
-			if (mergedAnnot != null) {
-				newAnnots.put(oldAnnot.getKey(), mergedAnnot);
-			}
-		}
+		copyAnnotationsFiltered(oldE, newE, a -> true);
 	}
 
 	/**
@@ -143,19 +124,48 @@ public final class ModelUtils {
 		if (oldE == null || newE == null || annotation == null) {
 			return;
 		}
+		copyAnnotationsFiltered(oldE, newE, a -> annotation.isAssignableFrom(a.getClass()));
+	}
+
+	/**
+	 * Takes annotations from one {@link IElement} (if any) and adds them to another {@link IElement} if they are not
+	 * assignable from one of the types specified in clazzes. This is a shallow copy.
+	 *
+	 * @param oldE
+	 *            old {@link IElement} to take annotations from.
+	 * @param newE
+	 *            new {@link IElement} to add annotations to.
+	 */
+	public static void copyAnnotationsExcept(final IElement oldE, final IElement newE, final Class<?>... clazzes) {
+		if (clazzes == null || clazzes.length == 0) {
+			copyAnnotations(oldE, newE);
+			return;
+		}
+		copyAnnotationsFiltered(oldE, newE,
+				a -> !Arrays.stream(clazzes).anyMatch(b -> b.isAssignableFrom(a.getClass())));
+	}
+
+	private static void copyAnnotationsFiltered(final IElement oldE, final IElement newE,
+			final Predicate<IAnnotations> filter) {
 		final Map<String, IAnnotations> oldAnnots = getAnnotations(oldE);
-		if (oldAnnots != null) {
-			final Collection<Entry<String, IAnnotations>> toMerge = new ArrayList<>();
-			for (final Entry<String, IAnnotations> entry : oldAnnots.entrySet()) {
-				if (annotation.isAssignableFrom(entry.getValue().getClass())) {
-					toMerge.add(entry);
-				}
+		if (oldAnnots == null) {
+			return;
+		}
+		final Map<String, IAnnotations> newAnnots = newE.getPayload().getAnnotations();
+		for (final Entry<String, IAnnotations> oldAnnot : oldAnnots.entrySet()) {
+			if (!filter.test(oldAnnot.getValue())) {
+				continue;
 			}
-			if (toMerge.isEmpty()) {
-				return;
+
+			final IAnnotations replacedValue = newAnnots.put(oldAnnot.getKey(), oldAnnot.getValue());
+			if (replacedValue == null) {
+				continue;
 			}
-			final Map<String, IAnnotations> newAnnots = newE.getPayload().getAnnotations();
-			toMerge.forEach(entry -> newAnnots.put(entry.getKey(), entry.getValue()));
+			// we would overwrite old annotations, so we merge instead
+			final IAnnotations mergedAnnot = replacedValue.merge(oldAnnot.getValue());
+			if (mergedAnnot != null) {
+				newAnnots.put(oldAnnot.getKey(), mergedAnnot);
+			}
 		}
 	}
 

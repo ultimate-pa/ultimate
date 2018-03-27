@@ -269,7 +269,7 @@ public class UnstructureCode extends BaseObserver {
 			}
 			final Statement newGotoStmt = new GotoStatement(origStmt.getLocation(), new String[] { dest.destLabel });
 			new LoopExitAnnotation(LoopExitType.BREAK).annotate(newGotoStmt);
-			postCreateStatement(origStmt, newGotoStmt);
+			postCreateStatement(origStmt, newGotoStmt, false);
 			mReachable = false;
 		} else if (origStmt instanceof WhileStatement) {
 			final WhileStatement stmt = (WhileStatement) origStmt;
@@ -296,49 +296,51 @@ public class UnstructureCode extends BaseObserver {
 			addLabel(l);
 			for (final LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
-					postCreateStatement(spec, new AssumeStatement(spec.getLocation(), spec.getFormula()));
+					postCreateStatement(spec, new AssumeStatement(spec.getLocation(), spec.getFormula()), true);
 				} else {
-					postCreateStatement(spec, new AssertStatement(spec.getLocation(), spec.getFormula()));
+					postCreateStatement(spec, new AssertStatement(spec.getLocation(), spec.getFormula()), true);
 				}
 			}
 
-			postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { body, done }));
-			postCreateStatement(origStmt, new Label(origStmt.getLocation(), body));
+			postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { body, done }),
+					false);
+			postCreateStatement(origStmt, new Label(origStmt.getLocation(), body), false);
 			if (stmt.getCondition() instanceof WildcardExpression) {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
 						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.TYPE_BOOL, true));
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
-				postCreateStatementFromCond(origStmt, newCondStmt, false);
+				postCreateStatementFromCond(origStmt, newCondStmt, false, false);
 			} else {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(), stmt.getCondition());
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
-				postCreateStatementFromCond(origStmt, newCondStmt, false);
+				postCreateStatementFromCond(origStmt, newCondStmt, false, false);
 			}
 			outer.breakLabels.add("*");
 			unstructureBlock(stmt.getBody());
 			if (mReachable) {
-				postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { head }));
+				postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { head }), false);
 			}
 			mReachable = false;
 
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				postCreateStatement(origStmt, new Label(origStmt.getLocation(), done));
+				postCreateStatement(origStmt, new Label(origStmt.getLocation(), done), false);
 				final AssumeStatement negatedCondStmt =
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
 								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition()));
 				new LoopExitAnnotation(LoopExitType.WHILE).annotate(negatedCondStmt);
-				postCreateStatementFromCond(origStmt, negatedCondStmt, true);
+				postCreateStatementFromCond(origStmt, negatedCondStmt, true, false);
 				mReachable = true;
 			}
 		} else if (origStmt instanceof IfStatement) {
 			final IfStatement stmt = (IfStatement) origStmt;
 			final String thenLabel = generateLabel();
 			final String elseLabel = generateLabel();
-			postCreateStatement(origStmt, new GotoStatement(stmt.getLocation(), new String[] { thenLabel, elseLabel }));
-			postCreateStatement(origStmt, new Label(origStmt.getLocation(), thenLabel));
+			postCreateStatement(origStmt, new GotoStatement(stmt.getLocation(), new String[] { thenLabel, elseLabel }),
+					true);
+			postCreateStatement(origStmt, new Label(origStmt.getLocation(), thenLabel), true);
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				postCreateStatementFromCond(origStmt, new AssumeStatement(stmt.getLocation(), stmt.getCondition()),
-						false);
+						false, true);
 			}
 			unstructureBlock(stmt.getThenPart());
 			if (mReachable) {
@@ -346,15 +348,15 @@ public class UnstructureCode extends BaseObserver {
 					outer.destLabel = generateLabel();
 				}
 				postCreateStatement(origStmt,
-						new GotoStatement(origStmt.getLocation(), new String[] { outer.destLabel }));
+						new GotoStatement(origStmt.getLocation(), new String[] { outer.destLabel }), true);
 			}
 			mReachable = true;
-			postCreateStatement(origStmt, new Label(origStmt.getLocation(), elseLabel));
+			postCreateStatement(origStmt, new Label(origStmt.getLocation(), elseLabel), true);
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				postCreateStatementFromCond(origStmt,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
 								BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
-						true);
+						true, true);
 			}
 			unstructureBlock(stmt.getElsePart());
 		} else if (origStmt instanceof AssignmentStatement) {
@@ -374,7 +376,7 @@ public class UnstructureCode extends BaseObserver {
 				}
 			}
 			if (changed) {
-				postCreateStatement(assign, new AssignmentStatement(assign.getLocation(), lhs, rhs));
+				postCreateStatement(assign, new AssignmentStatement(assign.getLocation(), lhs, rhs), true);
 			} else {
 				mFlatStatements.add(origStmt);
 			}
@@ -387,9 +389,14 @@ public class UnstructureCode extends BaseObserver {
 	 * Adds a new statement to the list of flat statements, add all annotations of the old statement, and remember it
 	 * for backtranslation.
 	 */
-	private void postCreateStatement(final BoogieASTNode source, final Statement newStmt) {
+	private void postCreateStatement(final BoogieASTNode source, final Statement newStmt,
+			final boolean copyLoopAnnotations) {
 		// adds annotations from old statement to new statement (if any)
-		ModelUtils.copyAnnotations(source, newStmt);
+		if (copyLoopAnnotations) {
+			ModelUtils.copyAnnotations(source, newStmt);
+		} else {
+			ModelUtils.copyAnnotationsExcept(source, newStmt, LoopEntryAnnotation.class, LoopExitAnnotation.class);
+		}
 
 		// adds new statement to list
 		mFlatStatements.add(newStmt);
@@ -399,8 +406,8 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	private void postCreateStatementFromCond(final BoogieASTNode source, final AssumeStatement newStmt,
-			final boolean isNegated) {
-		postCreateStatement(source, newStmt);
+			final boolean isNegated, final boolean copyLoopAnnotations) {
+		postCreateStatement(source, newStmt, copyLoopAnnotations);
 		new ConditionAnnotation(isNegated).annotate(newStmt);
 	}
 
