@@ -871,8 +871,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological();
 
-		final CongruenceClosure<ELEM> thisAligned = mManager.addAllElements(this, other.getAllElements(), null, false);
-		final CongruenceClosure<ELEM> otherAligned = mManager.addAllElements(other, this.getAllElements(), null, false);
+//		final CongruenceClosure<ELEM> thisAligned = mManager.addAllElements(this, other.getAllElements(), null, false);
+//		final CongruenceClosure<ELEM> otherAligned = mManager.addAllElements(other, this.getAllElements(), null, false);
+//
+//		/* this single call is not enough for aligning because constant arrays may introduce elements when other
+//		 * elements are added based on equalities in that constraint
+//		 */
+//		while (!thisAligned.getAllElements().containsAll(otherAligned.getAllElements())
+//				|| !otherAligned.getAllElements().containsAll(thisAligned.getAllElements())) {
+//			mManager.addAllElements(thisAligned, otherAligned.getAllElements(), null, true);
+//			mManager.addAllElements(otherAligned, thisAligned.getAllElements(), null, true);
+//
+//		}
+		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = mManager.alignElements(this, other);
+		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
+		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 
 		final UnionFind<ELEM> newPartition = thisAligned.mElementTVER.joinPartitions(otherAligned.mElementTVER);
 		final HashRelation<ELEM, ELEM> newDisequalities = intersectOrUnionDisequalities(thisAligned, otherAligned, newPartition,

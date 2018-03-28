@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
 public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
@@ -50,6 +52,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	private final CongruenceClosure<ELEM> mEmptyFrozenCc;
 
 	private final PartialOrderCache<CongruenceClosure<ELEM>> mPartialOrderCache;
+
+	private final boolean mBenchmarkMode;
+	private BenchmarkWithCounters mBenchmark;
 
 	public CcManager(final ILogger logger, final IPartialComparator<CongruenceClosure<ELEM>> ccComparator) {
 		mLogger = logger;
@@ -66,6 +71,13 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 	} else {
 	 		mPartialOrderCache = null;
 	 	}
+
+		mBenchmarkMode = true;
+		if (mBenchmarkMode) {
+			mBenchmark = new BenchmarkWithCounters();
+		} else {
+			mBenchmark = null;
+		}
 	}
 
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
@@ -591,16 +603,20 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// we know other != True, and this = True
 			return false;
 		}
-		final CongruenceClosure<ELEM> thisAligned = getCopy(cc1, true);
-		addAllElements(thisAligned, cc2.getAllElements(), null, true);
-		// freeze not necessary but to make clear that thisAligned is closed at this point
-		thisAligned.freeze();
+//		final CongruenceClosure<ELEM> thisAligned = getCopy(cc1, true);
+//		addAllElements(thisAligned, cc2.getAllElements(), null, true);
+//		// freeze not necessary but to make clear that thisAligned is closed at this point
+//		thisAligned.freeze();
+//
+//		assert assertElementsAreSuperset(thisAligned, cc2);
+//		final CongruenceClosure<ELEM> otherAligned = getCopy(cc2, true);
+//		addAllElements(otherAligned, cc1.getAllElements(), null, true);
+//		// freeze not necessary but to make clear that thisAligned is closed at this point
+//		otherAligned.freeze();
+		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2);
+		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
+		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 
-		assert assertElementsAreSuperset(thisAligned, cc2);
-		final CongruenceClosure<ELEM> otherAligned = getCopy(cc2, true);
-		addAllElements(otherAligned, cc1.getAllElements(), null, true);
-		// freeze not necessary but to make clear that thisAligned is closed at this point
-		otherAligned.freeze();
 
 		assert assertElementsAreSuperset(thisAligned, otherAligned);
 		assert assertElementsAreSuperset(otherAligned, thisAligned);
@@ -661,14 +677,44 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			return false;
 		}
 
-		final CongruenceClosure<ELEM> thisAligned =
-				addAllElements(cc1, cc2.getAllElements(), null, false);
-		final CongruenceClosure<ELEM> otherAligned =
-				addAllElements(cc2, cc1.getAllElements(), null, false);
+//		final CongruenceClosure<ELEM> thisAligned =
+//				addAllElements(cc1, cc2.getAllElements(), null, false);
+//		final CongruenceClosure<ELEM> otherAligned =
+//				addAllElements(cc2, cc1.getAllElements(), null, false);
+		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2);
+		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
+		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 		return checkIsStrongerThan(thisAligned, otherAligned) && checkIsStrongerThan(otherAligned, thisAligned);
 	}
 
-//	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,
+	public Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> alignElements(final CongruenceClosure<ELEM> cc1,
+			final CongruenceClosure<ELEM> cc2) {
+		final CongruenceClosure<ELEM> cc1Aligned = copyNoRemInfoUnfrozen(cc1);
+		final CongruenceClosure<ELEM> cc2Aligned = copyNoRemInfoUnfrozen(cc2);
+
+
+//		final CongruenceClosure<ELEM> cc1Aligned = addAllElements(cc1, cc2.getAllElements(), null, false);
+//		final CongruenceClosure<ELEM> cc2Aligned = addAllElements(cc2, cc1.getAllElements(), null, false);
+		addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
+		addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
+
+		/* this single call is not enough for aligning because constant arrays may introduce elements when other
+		 * elements are added based on equalities in that constraint
+		 */
+		while (!cc1Aligned.getAllElements().containsAll(cc2Aligned.getAllElements())
+				|| !cc2Aligned.getAllElements().containsAll(cc1Aligned.getAllElements())) {
+			addAllElements(cc1Aligned, cc2Aligned.getAllElements(), null, true);
+			addAllElements(cc2Aligned, cc1Aligned.getAllElements(), null, true);
+
+		}
+
+		cc1Aligned.freeze();
+		cc2Aligned.freeze();
+
+		return new Pair<>(cc1Aligned, cc2Aligned);
+	}
+
+	//	private static <E> boolean areDisequalitiesStrongerThan(final ThreeValuedEquivalenceRelation<E> thisTVER,
 //			final ThreeValuedEquivalenceRelation<E> otherTVER) {
 	private static <E extends ICongruenceClosureElement<E>>
 			boolean areDisequalitiesStrongerThan(final CongruenceClosure<E> left,
@@ -733,4 +779,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 		return true;
 	}
+
+	public BenchmarkWithCounters getBenchmark() {
+		return mBenchmark;
+	}
+
 }

@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
 public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
@@ -79,6 +80,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	private final AbstractNodeAndFunctionFactory<NODE, Term> mNodeAndFunctionFactory;
 
 	private final WeqSettings mSettings;
+
+	private final boolean mBenchmarkMode = true;
+	private BenchmarkWithCounters mBenchmark;
 
 	final boolean mDebug;
 	final boolean mSkipSolverChecks = true;
@@ -121,6 +125,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		mTautologicalWeqCc.freeze();
 
 		mInconsistentWeqCc = new WeqCongruenceClosure<>(true);
+
+		if (mBenchmarkMode) {
+			mBenchmark = new BenchmarkWithCounters();
+		} else {
+			mBenchmark = null;
+		}
 	}
 
 	public WeqCongruenceClosure<NODE> getEmptyWeqCc(final boolean modifiable) {
@@ -192,32 +202,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	}
 
 
-//	/**
-//	 * Unfreezes the given weqcc and all of its components (transitively)
-//	 *
-//	 * @param origWeqCc
-//	 * @return
-//	 */
-//	WeqCongruenceClosure<NODE> unfreezeDeep(final WeqCongruenceClosure<NODE> origWeqCc) {
-//		assert origWeqCc.isFrozen();
-////		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc, true);
-//		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
-//		assert !result.isFrozen();
-//		assert result.sanityCheck();
-//		assert !result.getCongruenceClosure().isFrozen();
-//		assert result.getWeakEquivalenceGraph().assertLabelsAreUnfrozen();
-//		return result;
-//	}
-
-
 	WeqCongruenceClosure<NODE> unfreeze(final WeqCongruenceClosure<NODE> origWeqCc) {
 		assert origWeqCc.isFrozen();
-//		final WeqCongruenceClosure<NODE> result = new WeqCongruenceClosure<>(origWeqCc);
 		final WeqCongruenceClosure<NODE> result = copyWeqCc(origWeqCc, true);
 		assert !result.isFrozen();
 		assert result.sanityCheck();
-//		assert !result.getCongruenceClosure().isFrozen();
-//		assert result.getWeakEquivalenceGraph().assertLabelsAreUnfrozen();
 		return result;
 	}
 
@@ -1564,4 +1553,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		throw new AssertionError("weq var unknown: " + weqVarNode);
 	}
 
+	public BenchmarkWithCounters getBenchmark() {
+		return mBenchmark;
+	}
+
+	public CcManager<NODE> getCcManager() {
+		return mCcManager;
+	}
 }

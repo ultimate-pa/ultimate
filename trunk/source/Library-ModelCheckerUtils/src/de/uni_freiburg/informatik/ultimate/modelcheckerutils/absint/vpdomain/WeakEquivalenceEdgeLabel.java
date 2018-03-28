@@ -843,7 +843,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 
 	private void setNewLabelContents(final Collection<DISJUNCT> newLabelContents) {
 //		assert MEET_IN_PLACE ||
-		assert newLabelContents.stream().allMatch(cc -> mWeakEquivalenceGraph.isFrozen() == cc.isFrozen());
+		assert newLabelContents.stream().allMatch(cc -> !mWeakEquivalenceGraph.isFrozen() || cc.isFrozen());
 		mDisjuncts.clear();
 		mDisjuncts.addAll(newLabelContents);
 	}
