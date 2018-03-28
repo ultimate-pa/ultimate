@@ -42,13 +42,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructor;
 
 /**
  * Check given annotation without inferring invariants.
@@ -117,7 +119,7 @@ public class InvariantChecker {
 					{
 						// some code for transforming parts of a CFG into a single statement
 						final String identifier = "InductivityChecksStartingFrom_" + startLoc;
-						final PathProgramConstructionResult test = PathProgram.constructPathProgram(identifier, mIcfg,
+						final PathProgramConstructionResult test = constructPathProgram(identifier, mIcfg,
 								seenForward, Collections.singleton(startLoc));
 						final IUltimateServiceProvider beServices =
 								mServices.registerPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
@@ -176,5 +178,37 @@ public class InvariantChecker {
 			throw new UnsupportedOperationException("missing invariant error location");
 		}
 		return result;
+	}
+	
+	
+	
+	/**
+	 * TODO Matthias
+	 * @param identifier
+	 * @param originalIcfg
+	 * @param allowedLocations
+	 * @param additionalInitialLocations
+	 * @return
+	 */
+	public static <E extends IIcfgTransition<IcfgLocation>> PathProgramConstructionResult constructPathProgram(
+			final String identifier, final IIcfg<IcfgLocation> originalIcfg, final Set<IcfgLocation> allowedLocations,
+			final Set<IcfgLocation> additionalInitialLocations) {
+		final Set<E> allowedTransitions = new HashSet<>();
+		for (final IcfgLocation loc : allowedLocations) {
+			loc.getOutgoingEdges();
+			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+				if (allowedLocations.contains(edge.getTarget())) {
+					allowedTransitions.add((E) edge);
+				}
+			}
+		}
+		
+		final PathProgramConstructionResult ppc = new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, additionalInitialLocations)
+				.getResult();
+		final Map<IcfgLocation, IcfgLocation> old2new = ppc.getLocationMapping();
+		for (final IcfgLocation newInit : additionalInitialLocations) {
+			
+		}
+		return ppc;
 	}
 }

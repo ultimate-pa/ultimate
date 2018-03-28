@@ -110,32 +110,6 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final IIcfg<?> originalIcfg, final Set<? extends IIcfgTransition<?>> allowedTransitions) {
 		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, Collections.emptySet()).getResult();
 	}
-	
-	
-	/**
-	 * TODO Matthias
-	 * @param identifier
-	 * @param originalIcfg
-	 * @param allowedLocations
-	 * @param additionalInitialLocations
-	 * @return
-	 */
-	public static <E extends IIcfgTransition<IcfgLocation>> PathProgramConstructionResult constructPathProgram(
-			final String identifier, final IIcfg<IcfgLocation> originalIcfg, final Set<IcfgLocation> allowedLocations,
-			final Set<IcfgLocation> additionalInitialLocations) {
-		final Set<E> allowedTransitions = new HashSet<>();
-		for (final IcfgLocation loc : allowedLocations) {
-			loc.getOutgoingEdges();
-			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-				if (allowedLocations.contains(edge.getTarget())) {
-					allowedTransitions.add((E) edge);
-				}
-			}
-
-		}
-		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, additionalInitialLocations)
-				.getResult();
-	}
 
 	@Override
 	public Map<String, Map<String, IcfgLocation>> getProgramPoints() {
@@ -212,7 +186,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		}
 	}
 
-	private static final class PathProgramConstructor {
+	public static final class PathProgramConstructor {
 
 		private final IIcfg<?> mOriginalIcfg;
 		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
@@ -228,7 +202,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final Set<IcfgLocation> mLoopLocations;
 		private final PathProgramConstructionResult mResult;
 
-		private PathProgramConstructor(final IIcfg<?> originalIcfg,
+		public PathProgramConstructor(final IIcfg<?> originalIcfg,
 				final Set<? extends IIcfgTransition<?>> allowedTransitions, final String newIdentifier,
 				final Set<IcfgLocation> additionalInitialLocations) {
 			final String nonNullIdentifier = Objects.requireNonNull(newIdentifier);
@@ -269,7 +243,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 					.isEmpty() : "You cannot have a path program that does not start at an initial location";
 		}
 
-		private PathProgramConstructionResult getResult() {
+		public PathProgramConstructionResult getResult() {
 			return mResult;
 		}
 
