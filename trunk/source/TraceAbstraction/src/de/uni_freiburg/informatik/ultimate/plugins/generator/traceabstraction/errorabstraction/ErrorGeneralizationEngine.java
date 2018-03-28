@@ -71,12 +71,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.er
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  * Constructs an error automaton for a given error trace.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type in the trace
@@ -217,7 +218,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 
 	/**
 	 * Stops difference time measurement. Also evaluates the automaton.
-	 * 
+	 *
 	 * @param abstraction
 	 *            abstraction
 	 * @param predicateFactoryInterpolantAutomata
@@ -258,7 +259,7 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 	 * In case error traces are not reported immediately, the analysis may terminate with an empty abstraction or may
 	 * run into termination issues, but it has already found out that the program contains errors. This method can be
 	 * used to ask for such results whenever the analysis terminates.
-	 * 
+	 *
 	 * @param abstractResult
 	 *            result that would be reported by {@link AbstractCegarLoop}
 	 * @return {@code true} if at least one feasible counterexample was detected
@@ -364,8 +365,8 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
 			final NestedRun<LETTER, IPredicate> trace) {
 		final FlowSensitiveFaultLocalizer<LETTER> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg,
-				mServices, csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier, true,
-				false, simplificationTechnique, xnfConversionTechnique, symbolTable);
+				mServices, csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier,
+				RelevanceAnalysisMode.SINGLE_TRACE, simplificationTechnique, xnfConversionTechnique, symbolTable);
 		final List<IRelevanceInformation> relevanceInformation = faultLocalizer.getRelevanceInformation();
 		if (faultLocalizerStatistics != null) {
 			faultLocalizerStatistics.add(faultLocalizer.getStatistics());

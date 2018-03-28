@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -116,7 +117,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final INestedWordAutomaton<LETTER, IPredicate> cfg, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IPredicateUnifier predicateUnifier,
-			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
+			final RelevanceAnalysisMode faultLocalizationMode,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable) {
 		mServices = services;
@@ -130,13 +131,14 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 		mErrorLocalizationStatisticsGenerator.continueErrorLocalizationTime();
 		try {
-			if (doNonFlowSensitiveAnalysis) {
-				doNonFlowSensitiveAnalysis(counterexample.getWord(),predicateUnifier.getTruePredicate(),
+			if (faultLocalizationMode == RelevanceAnalysisMode.SINGLE_TRACE
+					|| faultLocalizationMode == RelevanceAnalysisMode.MULTI_TRACE) {
+				doNonFlowSensitiveAnalysis(counterexample.getWord(), predicateUnifier.getTruePredicate(),
 						predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit);
 			}
-
-			if (doFlowSensitiveAnalysis) {
-				doFlowSensitiveAnalysis(counterexample, predicateUnifier.getTruePredicate(), cfg, modifiableGlobalsTable, csToolkit);
+			if (faultLocalizationMode == RelevanceAnalysisMode.MULTI_TRACE) {
+				doFlowSensitiveAnalysis(counterexample, predicateUnifier.getTruePredicate(), cfg,
+						modifiableGlobalsTable, csToolkit);
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();

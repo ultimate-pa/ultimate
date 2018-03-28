@@ -115,12 +115,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
 	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
 	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
-	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
+	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
 			"Highlight relevant statements in error traces";
-	public static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
-			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or pointers this analysis may take a significant amount of time.";
-	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE =
-			"Flow-sensitive error trace relevance analysis";
+	public static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
+			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or"
+			+ " pointers this analysis may take a significant amount of time.";
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
 	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
@@ -183,8 +182,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_PRESERVE_GOTO_EDGES = false;
 	public static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
 	public static final boolean DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION = false;
-	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE = false;
-	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE = false;
+	public static final RelevanceAnalysisMode DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE = RelevanceAnalysisMode.NONE;
 
 	public static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
@@ -309,11 +307,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						AbstractInterpretationMode.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
-						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
-						DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE,
-						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
+						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE, DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
+						PreferenceType.Combo, RelevanceAnalysisMode.values()),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE,
 						PreferenceType.Combo, SimplificationTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_XNF_CONVERSION_TECHNIQUE, DEF_XNF_CONVERSION_TECHNIQUE,
@@ -606,5 +602,25 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum MultiPropertyMode {
 		STOP_AFTER_FIRST_VIOLATION, CHECK_EACH_PROPERTY_SEPARATELY, CHECK_ALL_PROPERTIES_REFINE_WITH_VIOLATIONS,
+	}
+
+	/**
+	 * Relevance analysis mode.
+	 *
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public enum RelevanceAnalysisMode {
+		/**
+		 * No analysis.
+		 */
+		NONE,
+		/**
+		 * Single-trace analysis.
+		 */
+		SINGLE_TRACE,
+		/**
+		 * Multi-trace analysis.
+		 */
+		MULTI_TRACE,
 	}
 }

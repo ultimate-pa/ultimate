@@ -115,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier.CoverageRelation;
@@ -164,8 +165,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected final boolean mComputeHoareAnnotation;
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 
-	private final boolean mDoFaultLocalizationNonFlowSensitive;
-	private final boolean mDoFaultLocalizationFlowSensitive;
+	private final RelevanceAnalysisMode mFaultLocalizationMode;
 	private final Set<IcfgLocation> mHoareAnnotationLocations;
 
 	protected final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> mStoredRawInterpolantAutomata;
@@ -240,10 +240,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mUnsatCores = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		mUseLiveVariables = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		mDoFaultLocalizationNonFlowSensitive = prefs.getBoolean(
-				TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE);
-		mDoFaultLocalizationFlowSensitive = prefs
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE);
+		mFaultLocalizationMode =
+				prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
+						RelevanceAnalysisMode.class);
 
 		final PathProgramCache<LETTER> pathProgramCache = new PathProgramCache<>(mLogger);
 		final CegarAbsIntRunner<LETTER> absIntRunner = new CegarAbsIntRunner<>(services, mCegarLoopBenchmark, rootNode,
@@ -424,17 +423,15 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
 			}
 
-			if ((mDoFaultLocalizationNonFlowSensitive || mDoFaultLocalizationFlowSensitive)
-					&& feasibility == LBool.SAT) {
+			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
 						mPref.interprocedural(), super.mCsToolkit, mPredicateFactory, mLogger);
 				final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer<LETTER> a = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg, mServices, mCsToolkit, mPredicateFactory,
-						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
-						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
-						mIcfg.getCfgSmtToolkit().getSymbolTable());
+						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mFaultLocalizationMode,
+						mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 				final boolean doAngelic = false; // TODO use a setting here
 				if (doAngelic) {
