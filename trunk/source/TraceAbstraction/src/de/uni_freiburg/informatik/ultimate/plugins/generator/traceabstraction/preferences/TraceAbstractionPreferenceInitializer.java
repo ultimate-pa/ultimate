@@ -120,6 +120,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
 			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or"
 			+ " pointers this analysis may take a significant amount of time.";
+	public static final String LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = "Angelic verification mode";
+	public static final String DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE =
+			"Assume that unspecified inputs (e.g., external functions) return \"safe\" values during error trace "
+					+ "relevance analysis.";
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
 	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
@@ -183,6 +187,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
 	public static final boolean DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION = false;
 	public static final RelevanceAnalysisMode DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE = RelevanceAnalysisMode.NONE;
+	public static final boolean DEF_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = false;
 
 	public static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
@@ -310,6 +315,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
 						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE, DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
 						PreferenceType.Combo, RelevanceAnalysisMode.values()),
+				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE,
+						DEF_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE, DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE,
 						PreferenceType.Combo, SimplificationTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_XNF_CONVERSION_TECHNIQUE, DEF_XNF_CONVERSION_TECHNIQUE,

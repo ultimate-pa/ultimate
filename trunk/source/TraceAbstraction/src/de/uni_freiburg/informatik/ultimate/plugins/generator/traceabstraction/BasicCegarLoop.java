@@ -166,6 +166,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 
 	private final RelevanceAnalysisMode mFaultLocalizationMode;
+	private final boolean mFaultLocalizationAngelic;
 	private final Set<IcfgLocation> mHoareAnnotationLocations;
 
 	protected final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> mStoredRawInterpolantAutomata;
@@ -243,6 +244,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mFaultLocalizationMode =
 				prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE,
 						RelevanceAnalysisMode.class);
+		mFaultLocalizationAngelic =
+				prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE);
 
 		final PathProgramCache<LETTER> pathProgramCache = new PathProgramCache<>(mLogger);
 		final CegarAbsIntRunner<LETTER> absIntRunner = new CegarAbsIntRunner<>(services, mCegarLoopBenchmark, rootNode,
@@ -433,8 +436,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mFaultLocalizationMode,
 						mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(fl.getRelevanceInformation());
-				final boolean doAngelic = false; // TODO use a setting here
-				if (doAngelic) {
+				if (mFaultLocalizationAngelic) {
 					mRcfgProgramExecution =
 							new IcfgAngelicProgramExecution(mRcfgProgramExecution, fl.getAngelicStatus());
 				}
