@@ -428,15 +428,15 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						mPref.interprocedural(), super.mCsToolkit, mPredicateFactory, mLogger);
 				final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs);
-				final FlowSensitiveFaultLocalizer<LETTER> a = new FlowSensitiveFaultLocalizer<>(
+				final FlowSensitiveFaultLocalizer<LETTER> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg, mServices, mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mFaultLocalizationMode,
 						mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable());
-				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
+				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(fl.getRelevanceInformation());
 				final boolean doAngelic = false; // TODO use a setting here
 				if (doAngelic) {
 					mRcfgProgramExecution =
-							new IcfgAngelicProgramExecution(mRcfgProgramExecution, a.getAngelicStatus());
+							new IcfgAngelicProgramExecution(mRcfgProgramExecution, fl.getAngelicStatus());
 				}
 			}
 		} else {
