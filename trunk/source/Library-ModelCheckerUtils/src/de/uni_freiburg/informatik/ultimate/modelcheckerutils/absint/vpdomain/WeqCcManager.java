@@ -936,8 +936,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			final Set<DISJUNCT> result, final Term literalDisequalities) {
 
 		{
-			if (input.stream().allMatch(d -> d.isInconsistent())
-					&& result.stream().allMatch(d -> d.isInconsistent())) {
+			if (!input.stream().anyMatch(d -> d.isInconsistent())
+					&& !result.stream().anyMatch(d -> d.isInconsistent())) {
 				// the result may not contain any nodes that the input does not
 				final Set<NODE> nodesInput = new HashSet<>();
 				input.stream().forEach(d -> nodesInput.addAll(d.getAllElements()));
