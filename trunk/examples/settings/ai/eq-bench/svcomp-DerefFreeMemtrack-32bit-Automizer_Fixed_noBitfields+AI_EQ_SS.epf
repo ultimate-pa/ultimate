@@ -145,7 +145,7 @@ file_export_version=3.0
 file_export_version=3.0
 #Wed Mar 28 11:51:59 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstract\ interpretation\ Mode=USE_PATH_PROGRAM
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Abstract\ interpretation\ Mode=NONE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
