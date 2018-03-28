@@ -117,6 +117,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		assert literalSet.stream().allMatch(ELEM::isLiteral);
 
+		mCcManager.addElement(mCongruenceClosure, elementRep, true, false);
+		mCcManager.addAllElements(mCongruenceClosure, literalSet, null, true);
+
 		final Set<ELEM> oldSet = mContainsConstraints.get(elementRep);
 
 		final Set<ELEM> intersection;

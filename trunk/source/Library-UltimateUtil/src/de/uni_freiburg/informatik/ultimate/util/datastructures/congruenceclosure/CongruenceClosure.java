@@ -962,8 +962,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		for (final Entry<ELEM, Set<ELEM>> literalConstraint :
 				other.getLiteralSetConstraints().getConstraints().entrySet()) {
-			thisAligned.getLiteralSetConstraints().reportContains(
-					literalConstraint.getKey(), literalConstraint.getValue());
+			if (thisAligned.isInconsistent()) {
+				if (inplace) {
+					return thisAligned;
+				} else {
+					return mManager.getInconsistentCc();
+				}
+			}
+			thisAligned = mManager.reportContainsConstraint(literalConstraint.getKey(), literalConstraint.getValue(),
+					thisAligned, inplace);
 		}
 
 		return thisAligned;

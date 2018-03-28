@@ -258,6 +258,22 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 //		return unfrozen;
 //	}
 
+	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element, final Set<ELEM> literalSet,
+			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
+		assert !CcSettings.FORBID_INPLACE || !inplace;
+		if (inplace) {
+			origCc.getLiteralSetConstraints().reportContains(element, literalSet);
+			return origCc;
+		} else {
+			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
+			unfrozen.getLiteralSetConstraints().reportContains(element, literalSet);
+			unfrozen.freeze();
+
+			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
+			return resultPp;
+		}
+	}
+
 	public CongruenceClosure<ELEM> removeSimpleElement(final ELEM elem, final CongruenceClosure<ELEM> origCc,
 			final boolean modifiable) {
 

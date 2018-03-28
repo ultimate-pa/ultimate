@@ -824,6 +824,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return true;
 	}
 
+	public void reportContainsConstraint(final NODE elem, final Set<NODE> literalSet) {
+		mCongruenceClosure.getLiteralSetConstraints().reportContains(elem, literalSet);
+		if (mManager.getSettings().isAlwaysReportChangeToGpa()) {
+			throw new AssertionError("not implemented");
+		}
+	}
+
 	/**
 	 * Updates the weq-graph wrt. a change in the ground partial arrangement.
 	 * Immediately propagates array equalities if some have occurred.
@@ -1395,7 +1402,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (thisAligned.isInconsistent()) {
 				return mManager.getInconsistentWeqCc(inplace);
 			}
-			thisAligned.getCongruenceClosure().getLiteralSetConstraints().reportContains(en.getKey(), en.getValue());
+			thisAligned = mManager.reportContainsConstraint(en.getKey(), en.getValue(), thisAligned, inplace);
+//			thisAligned.getCongruenceClosure().getLiteralSetConstraints().reportContains(en.getKey(), en.getValue());
 		}
 		assert thisAligned.sanityCheck();
 		return thisAligned;

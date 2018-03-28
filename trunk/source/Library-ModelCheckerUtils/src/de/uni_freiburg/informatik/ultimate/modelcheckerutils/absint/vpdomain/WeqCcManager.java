@@ -347,6 +347,21 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
+	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
+				final WeqCongruenceClosure<NODE> origWeqCc, final boolean inplace) {
+		if (inplace) {
+			origWeqCc.reportContainsConstraint(elem, literalSet);
+			return origWeqCc;
+		} else {
+			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+			unfrozen.reportContainsConstraint(elem, literalSet);
+			unfrozen.freeze();
+//			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
+//					getNonTheoryLiteralDisequalitiesIfNecessary());
+			return unfrozen;
+		}
+	}
+
 	public WeqCongruenceClosure<NODE> projectAway(final WeqCongruenceClosure<NODE> origWeqCc, final NODE node) {
 		// TODO: unsure about this freezing -- is there a more efficient solution?
 		freezeIfNecessary(origWeqCc);
@@ -1548,4 +1563,5 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 		throw new AssertionError("weq var unknown: " + weqVarNode);
 	}
+
 }
