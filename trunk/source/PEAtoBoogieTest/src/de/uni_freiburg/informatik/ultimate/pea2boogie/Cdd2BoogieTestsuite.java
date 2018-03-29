@@ -26,9 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -49,12 +55,13 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
+@RunWith(Parameterized.class)
 public class Cdd2BoogieTestsuite {
 
 	private static final BoogieLocation LOC = new BoogieLocation("test", 0, 0, 0, 0);
 
-	@Test
-	public void testCdd2Boogie() {
+	@Parameters
+	public static Collection<Object[]> data() {
 		final CDD A = CDD.create(new BooleanDecision("A"), CDD.TRUE_CHILDS);
 		final CDD B = CDD.create(new BooleanDecision("B"), CDD.TRUE_CHILDS);
 		final CDD C = CDD.create(new BooleanDecision("C"), CDD.TRUE_CHILDS);
@@ -69,45 +76,58 @@ public class Cdd2BoogieTestsuite {
 		final CDD gtAOne = RangeDecision.create("A", RangeDecision.OP_GT, 1);
 		final CDD ltAZero = RangeDecision.create("A", RangeDecision.OP_LT, 0);
 		final CDD geqAOne = RangeDecision.create("A", RangeDecision.OP_GTEQ, 1);
-		// final CDD gtAOne = RangeDecision.create("A", RangeDecision.OP_GTEQ, 1);
 
-		test(CDD.TRUE, "true");
-		test(CDD.FALSE, "false");
-		test(eqAZero, "A == 0.0");
-		test(eqAZero.negate(), "A > 0.0 || A < 0.0");
-		test(eqAZero.and(gtAOne), "false");
-		test(gtAOne, "A > 1.0");
-		test(gtAOne.negate(), "A <= 1.0");
-		test(geqAOne, "A >= 1.0");
-		test(ltAZero, "A < 0.0");
-		test(ltAZero.negate(), "A >= 0.0");
-		test(ltAZero.and(gtAOne.negate()), "A < 0.0");
-		test(ltAZero.or(eqAZero), "A <= 0.0");
-		test(ltAZero.negate().and(gtAOne.negate()), "0.0 <= A && A <= 1.0");
-		test(ltAZero.and(B).or(gtAOne.negate()), "A <= 1.0");
-		test(ltAZero.and(B.or(gtAOne.negate())), "A < 0.0");
-		test(ltAZero.or(B.and(gtAOne.negate())), "A < 0.0 || (B && A <= 1.0)");
-		test(geqAOne.negate().and(ltAZero.or(eqAZero).negate()), "0.0 < A && A < 1.0");
-		test(A.and(B).or(B.and(A.negate())), "B");
-		test(A.and(B).or(B.negate().and(A)), "A");
+		//@formatter:off
+		return Arrays.asList(new Object[][] {
+			{ CDD.TRUE, "true" },
+			{ CDD.FALSE, "false" },
+			{ eqAZero, "A == 0.0" },
+			{ eqAZero.negate(), "A > 0.0 || A < 0.0" },
+			{ eqAZero.and(gtAOne), "false" },
+			{ gtAOne, "A > 1.0" },
+			{ gtAOne.negate(), "A <= 1.0" },
+			{ geqAOne, "A >= 1.0" },
+			{ ltAZero, "A < 0.0" },
+			{ ltAZero.negate(), "A >= 0.0" },
+			{ ltAZero.and(gtAOne.negate()), "A < 0.0" },
+			{ ltAZero.or(eqAZero), "A <= 0.0" },
+			{ ltAZero.negate().and(gtAOne.negate()), "0.0 <= A && A <= 1.0" },
+			{ ltAZero.and(B).or(gtAOne.negate()), "A <= 1.0" },
+			{ ltAZero.and(B.or(gtAOne.negate())), "A < 0.0" },
+			{ ltAZero.or(B.and(gtAOne.negate())), "A < 0.0 || (B && A <= 1.0)" },
+			{ geqAOne.negate().and(ltAZero.or(eqAZero).negate()), "0.0 < A && A < 1.0" },
+			{ A.and(B).or(B.and(A.negate())), "B" },
+			{ A.and(B).or(B.negate().and(A)), "A" },
+			{ A, "A" },
+			{ B, "B" },
+			{ notC, "!C" },
+			{ notC.and(notC.negate()), "false" },
+			{ C.and(notC), "!C && C" },
+			{ C.and(notCCreate), "false" },
+			{ A.negate(), "!A" },
+			{ A.or(B), "B || A" },
+			{ A.and(B), "A && B" },
+			{ A.and(B.negate()), "A && !B" },
+			{ A.negate().and(B), "!A && B" },
+			{ A.negate().and(B.negate()), "!A && !B" },
+			{ A.negate().and(B.negate()).negate(), "B || A" },
 
-		test(A, "A");
-		test(B, "B");
-		test(notC, "!C");
-		test(notC.and(notC.negate()), "false");
-		test(C.and(notC), "!C && C");
-		test(C.and(notCCreate), "false");
-		test(A.negate(), "!A");
-		test(A.or(B), "B || A");
-		test(A.and(B), "A && B");
-		test(A.and(B.negate()), "A && !B");
-		test(A.negate().and(B), "!A && B");
-		test(A.negate().and(B.negate()), "!A && !B");
-		test(A.negate().and(B.negate()).negate(), "B || A");
+		});
+		//@formatter:on
 	}
 
-	private static void test(final CDD input, final String expected) {
-		final Expression exprNotA = new CDDTranslator().toBoogie(input, LOC);
-		Assert.assertThat(BoogiePrettyPrinter.print(exprNotA), Is.is(expected));
+	private final CDD mInput;
+	private final String mExpected;
+
+	public Cdd2BoogieTestsuite(final CDD input, final String expected) {
+		mInput = input;
+		mExpected = expected;
 	}
+
+	@Test
+	public void test() {
+		final Expression exprNotA = new CDDTranslator().toBoogie(mInput, LOC);
+		Assert.assertThat(BoogiePrettyPrinter.print(exprNotA), Is.is(mExpected));
+	}
+
 }
