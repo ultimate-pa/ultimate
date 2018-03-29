@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransform
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
@@ -46,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 /**
  * {@link ITransformulaTransformer} that can transform each {@link TransFormula} separately (without knowing the whole
  * {@link IIcfg} and that uses {@link TransitionPreprocessor}s for this transformation.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -58,7 +60,7 @@ public final class LocalTransformer implements ITransformulaTransformer {
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param transitionPreprocessor
 	 *            A single transition preprocessor that should be used.
 	 * @param managedScript
@@ -74,7 +76,7 @@ public final class LocalTransformer implements ITransformulaTransformer {
 
 	/**
 	 * Default constructor using a sequence of {@link TransitionPreprocessor}s.
-	 * 
+	 *
 	 * @param transitionPreprocessors
 	 *            A {@link List} of {@link TransitionPreprocessor}s that should be used in that order.
 	 * @param managedScript
@@ -94,7 +96,8 @@ public final class LocalTransformer implements ITransformulaTransformer {
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
+	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+			final UnmodifiableTransFormula tf) {
 		final ModifiableTransFormula mod =
 				ModifiableTransFormulaUtils.buildTransFormula(tf, mReplacementVarFactory, mManagedScript);
 		try {
@@ -102,8 +105,8 @@ public final class LocalTransformer implements ITransformulaTransformer {
 			for (final TransitionPreprocessor transformer : mTransitionPreprocessors) {
 				final ModifiableTransFormula oldTf = resultMod;
 				resultMod = transformer.process(mManagedScript, oldTf);
-				assert transformer.checkSoundness(mManagedScript.getScript(), oldTf, resultMod) : "Transformation unsound for "
-						+ transformer.getDescription();
+				assert transformer.checkSoundness(mManagedScript.getScript(), oldTf,
+						resultMod) : "Transformation unsound for " + transformer.getDescription();
 			}
 			// local transformations are -- for now -- assumed to be always equivalent
 			return new TransforumlaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, resultMod,

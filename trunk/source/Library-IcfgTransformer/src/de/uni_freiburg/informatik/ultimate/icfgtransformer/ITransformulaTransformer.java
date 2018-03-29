@@ -28,8 +28,12 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * A {@link ITransformulaTransformer} produces {@link UnmodifiableTransFormula}s for a certain {@link IIcfg}.
@@ -42,9 +46,9 @@ public interface ITransformulaTransformer {
 	/**
 	 * Do pre-processing that is required to transform {@link TransFormula}s. By default the preprocessing does not do
 	 * anything.
-	 * 
+	 *
 	 * Note that a preprocessing should always be non-destructive!
-	 * 
+	 *
 	 * @param icfg
 	 *            The {@link IIcfg} instance that contains all the transformulas this {@link ITransformulaTransformer}
 	 *            will see during his life cycle.
@@ -53,12 +57,28 @@ public interface ITransformulaTransformer {
 
 	/**
 	 * Transform an {@link UnmodifiableTransFormula} to another (possibly equivalent) {@link UnmodifiableTransFormula}.
-	 * 
+	 *
+	 * @param oldEdge
+	 *            The {@link IIcfgTransition} from which the transformula is taken.
 	 * @param tf
 	 *            the transformula that should be transformed.
+	 *
 	 * @return The result of the transformation through this transformer.
 	 */
-	TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf);
+	TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+			final UnmodifiableTransFormula tf);
+
+	/**
+	 * Transform the axioms of an {@link IIcfg} s.t. the transformed {@link IIcfg} is consistent.
+	 *
+	 * @param oldAxioms
+	 *            The {@link IPredicate} that represents the axioms of the original {@link IIcfg}.
+	 *
+	 * @return The result of the transformation through this transformer.
+	 */
+	default AxiomTransformationResult transform(final IPredicate oldAxioms) {
+		return new AxiomTransformationResult(oldAxioms);
+	}
 
 	/**
 	 * @return A human-friendly name that can be used during debugging, e.g., if many transformers run after another.
@@ -66,24 +86,24 @@ public interface ITransformulaTransformer {
 	String getName();
 
 	/**
-	 * 
+	 *
 	 * @return Symbol table of the result CFG. Can be obtained only after the translation.
 	 */
 	IIcfgSymbolTable getNewIcfgSymbolTable();
 
 	/**
-	 * The result of an {@link ITransformulaTransformer#transform(UnmodifiableTransFormula)} operation.
-	 * 
+	 * The result of an {@link ITransformulaTransformer#transform(IcfgEdge, UnmodifiableTransFormula)} operation.
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
-	public static class TransforumlaTransformationResult {
+	public static final class TransforumlaTransformationResult {
 		private final UnmodifiableTransFormula mTransformedTransformula;
 		private final boolean mIsOverapproximation;
 
 		/**
 		 * The transformed transformula is equivalent.
-		 * 
+		 *
 		 * @param transformedTransformula
 		 *            the transformula.
 		 */
@@ -94,7 +114,7 @@ public interface ITransformulaTransformer {
 
 		/**
 		 * State that the transformed transformula is an overapproximation or equivalent.
-		 * 
+		 *
 		 * @param transformedTransformula
 		 *            the transformula.
 		 * @param isOverappoximation
@@ -108,6 +128,49 @@ public interface ITransformulaTransformer {
 		}
 
 		public UnmodifiableTransFormula getTransformula() {
+			return mTransformedTransformula;
+		}
+
+		public boolean isOverapproximation() {
+			return mIsOverapproximation;
+		}
+	}
+
+	/**
+	 * The result of an {@link ITransformulaTransformer#transform(IPredicate)} operation.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public static final class AxiomTransformationResult {
+		private final IPredicate mTransformedTransformula;
+		private final boolean mIsOverapproximation;
+
+		/**
+		 * The transformed axioms are preserved or equivalent
+		 *
+		 * @param transformedAxiom
+		 *            the old axioms or equivalent axioms.
+		 */
+		public AxiomTransformationResult(final IPredicate transformedAxiom) {
+			mTransformedTransformula = transformedAxiom;
+			mIsOverapproximation = false;
+		}
+
+		/**
+		 * State if the transformed axioms are an overapproximation or equivalent.
+		 *
+		 * @param transformedAxiom
+		 *            the transformed axioms.
+		 * @param isOverappoximation
+		 *            true iff the axioms represent an overapproximation of the old axioms.
+		 */
+		public AxiomTransformationResult(final IPredicate transformedAxiom, final boolean isOverappoximation) {
+			mTransformedTransformula = transformedAxiom;
+			mIsOverapproximation = isOverappoximation;
+		}
+
+		public IPredicate getAxiom() {
 			return mTransformedTransformula;
 		}
 

@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
@@ -59,7 +61,8 @@ public class IdentityTransformer implements ITransformulaTransformer {
 	}
 
 	@Override
-	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
+	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+			final UnmodifiableTransFormula tf) {
 		return new TransforumlaTransformationResult(tf);
 	}
 
