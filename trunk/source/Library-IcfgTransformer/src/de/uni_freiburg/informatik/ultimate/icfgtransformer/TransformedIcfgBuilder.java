@@ -361,7 +361,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final TransforumlaTransformationResult retAssign =
 				mTransformer.transform(oldTransition, oldTransition.getAssignmentOfReturn());
 		final TransforumlaTransformationResult localVarAssign =
-				mTransformer.transform(oldTransition, oldTransition.getLocalVarsAssignmentOfCall());
+				mTransformer.transform(oldTransition.getCorrespondingCall(),
+						oldTransition.getLocalVarsAssignmentOfCall());
 		final IcfgReturnTransition newTrans = mEdgeFactory.createReturnTransition(source, target, newCorrespondingCall,
 				getPayloadIfAvailable(oldTransition), retAssign.getTransformula(), localVarAssign.getTransformula());
 		if (retAssign.isOverapproximation() || localVarAssign.isOverapproximation()) {
