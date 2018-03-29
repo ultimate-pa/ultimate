@@ -360,6 +360,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 				+ "(found return before having found the corresponding call)";
 		final TransforumlaTransformationResult retAssign =
 				mTransformer.transform(oldTransition, oldTransition.getAssignmentOfReturn());
+		// TODO is instance equivalence with Call an invariant?
 		final TransforumlaTransformationResult localVarAssign =
 				mTransformer.transform(oldTransition.getCorrespondingCall(),
 						oldTransition.getLocalVarsAssignmentOfCall());
