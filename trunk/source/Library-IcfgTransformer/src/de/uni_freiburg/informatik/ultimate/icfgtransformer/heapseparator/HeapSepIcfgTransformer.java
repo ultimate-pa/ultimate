@@ -176,13 +176,24 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			/*
 			 * add the freeze var updates to each transition with an array update
 			 */
-			final StoreIndexFreezerIcfgTransformer<INLOC, OUTLOC> sifit =
-					new StoreIndexFreezerIcfgTransformer<>(mLogger, "icfg_with_uninitialized_freeze_vars",
-							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, mHeapArrays,
-							edgeToIndexToStoreIndexInfo);
-			IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
-
-			storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
+			IIcfg<OUTLOC> icfgWFreezeVarsUninitialized;
+final Set<ConstantTerm> allConstantTerms;
+			{
+				final StoreIndexFreezerIcfgTransformer<INLOC, OUTLOC> sifit =
+						new StoreIndexFreezerIcfgTransformer<>(mLogger, //"icfg_with_uninitialized_freeze_vars",
+								//	outLocationClass, originalIcfg, funLocFac, backtranslationTracker,
+								originalIcfg.getCfgSmtToolkit().getManagedScript(),
+								originalIcfg.getCfgSmtToolkit().getSymbolTable(),
+								originalIcfg.getCfgSmtToolkit().getProcedures(),
+								mHeapArrays,
+								edgeToIndexToStoreIndexInfo);
+				final IcfgTransformer<INLOC, OUTLOC> siftf = new IcfgTransformer<>(originalIcfg, funLocFac,
+						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", sifit);
+				//			IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
+				icfgWFreezeVarsUninitialized = siftf.getResult();
+				storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
+				allConstantTerms = sifit.getAllConstantTerms();
+			}
 
 			mLogger.info("finished StoreIndexFreezer, created " + storeIndexInfoToFreezeVar.size() + " freeze vars and "
 					+ "freeze var literals (each corresponds to one heap write)");
@@ -207,7 +218,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			// make sure the literals are all treated as pairwise unequal
 			final Collection<IProgramConst> freezeVarLits = freezeVarTofreezeVarLit.values();
-			final Set<ConstantTerm> allConstantTerms = sifit.getAllConstantTerms();
 			final Set<Term> literalTerms = new HashSet<>();
 			literalTerms.addAll(freezeVarLits.stream()
 						.map(pvoc -> pvoc.getTerm())
@@ -241,12 +251,25 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 * Each freeze variable is initialized to its corresponding freeze literal.
 			 * Furthermore the valid-array (of the memory model) is assumed to be 1 at each freeze literal.
 			 */
-			final FreezeVarInitializer<OUTLOC, OUTLOC> fvi = new FreezeVarInitializer<>(mLogger,
-					"icfg_with_initialized_freeze_vars", outLocationClass, icfgWFreezeVarsUninitialized, outToOutLocFac,
-					backtranslationTracker, freezeVarTofreezeVarLit, validArray, mSettings);
-			final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = fvi.getResult();
+			{
+				final FreezeVarInitializer<OUTLOC, OUTLOC> fvi = new FreezeVarInitializer<>(mLogger,
+						mMgdScript,
+						//"icfg_with_initialized_freeze_vars", outLocationClass, icfgWFreezeVarsUninitialized, outToOutLocFac,
+						//	backtranslationTracker,
+						freezeVarTofreezeVarLit, validArray, mSettings,
+						icfgWFreezeVarsUninitialized.getInitialNodes(),
+						icfgWFreezeVarsUninitialized.getCfgSmtToolkit().getSymbolTable(),
+						icfgWFreezeVarsUninitialized.getCfgSmtToolkit().getProcedures()
+						);
 
-			preprocessedIcfg = icfgWFreezeVarsInitialized;
+				final IcfgTransformer<INLOC, OUTLOC> icfgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
+						backtranslationTracker, outLocationClass, "icfg_with_initialized_freeze_vars", fvi);
+
+//				final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = fvi.getResult();
+				final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = icfgtf.getResult();
+
+				preprocessedIcfg = icfgWFreezeVarsInitialized;
+			}
 
 			storeIndexInfoToLocLiteral = null;
 //			dimToMemlocArrayInt = null;
@@ -261,20 +284,35 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 * add the memloc array updates to each transition with an array update
 			 * the values the memloc array is set to are location literals, those are pairwise different by axiom
 			 */
-			final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
-					new MemlocArrayUpdaterIcfgTransformer<>(mLogger, "icfg_with_memloc_updates",
-							outLocationClass, originalIcfg, funLocFac, backtranslationTracker, memlocArrayManager,
-							mHeapArrays, edgeToIndexToStoreIndexInfo);
-			final IIcfg<OUTLOC> icfgWithMemlocUpdates = mauit.getResult();
+			final Set<IProgramConst> memlocLiterals = new HashSet<>();
+			final IIcfg<OUTLOC> icfgWithMemlocUpdates;
+			{
+				final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
+						new MemlocArrayUpdaterIcfgTransformer<>(mLogger, //"icfg_with_memloc_updates",
+								mMgdScript,
+								//outLocationClass, originalIcfg, funLocFac, backtranslationTracker,
+								memlocArrayManager,
+								mHeapArrays, edgeToIndexToStoreIndexInfo,
+								originalIcfg.getCfgSmtToolkit().getSymbolTable(),
+								originalIcfg.getCfgSmtToolkit().getProcedures()
+								);
 
-			storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
+				storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
+				// make sure the literals are all treated as pairwise unequal
+				//			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
+				memlocLiterals.addAll(mauit.getLocationLiterals());
 
-			mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
-					" location literals (each corresponds to one heap write)");
 
-			// make sure the literals are all treated as pairwise unequal
-//			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
-			final Set<IProgramConst> memlocLiterals = new HashSet<>(mauit.getLocationLiterals());
+				final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
+						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mauit);
+
+				icfgWithMemlocUpdates = icgtf.getResult();
+
+
+				mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
+						" location literals (each corresponds to one heap write)");
+			}
+
 
 
 //			preprocessedIcfg = icfgWithMemlocUpdates;
@@ -284,36 +322,50 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 * Each memloc array is initialized with a constant array. The value of the constant array is a memloc
 			 * literal that is different from all other memloc literals we use.
 			 */
-			final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
-					"icfg_with_initialized_freeze_vars", outLocationClass, icfgWithMemlocUpdates, outToOutLocFac,
-					backtranslationTracker, memlocArrayManager, validArray, mSettings);
-			IIcfg<OUTLOC> icfgWMemlocInitialized = mli.getResult();
+			IIcfg<OUTLOC> icfgWMemlocInitialized;
+			{
+				final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
+						icfgWithMemlocUpdates.getCfgSmtToolkit(),
+						//"icfg_with_initialized_freeze_vars", outLocationClass, icfgWithMemlocUpdates, outToOutLocFac,
+					//	backtranslationTracker,
+						memlocArrayManager, validArray, mSettings,
+						icfgWithMemlocUpdates.getInitialNodes());
 
-			memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
+
+				final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
+						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mli);
+
+				icfgWMemlocInitialized = icgtf.getResult();
+
+				memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
+			}
 
 
+			// literal handling (different ways)
+			{
 
-			equalityProvider.announceAdditionalLiterals(memlocLiterals);
+				equalityProvider.announceAdditionalLiterals(memlocLiterals);
 
-			final Set<Term> literalTerms = memlocLiterals.stream()
+				final Set<Term> literalTerms = memlocLiterals.stream()
 						.map(pvoc -> pvoc.getTerm())
 						.collect(Collectors.toSet());
-			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
-				/*
-				 * TODO: this is somewhere between inelegant and highly problematic -- make the axiom-style solution
-				 * work!
-				 */
-				assertLiteralDisequalitiesIntoScript(literalTerms);
-			}
-			if (mSettings.isAddLiteralDisequalitiesAsAxioms()) {
+				if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
+					/*
+					 * TODO: this is somewhere between inelegant and highly problematic -- make the axiom-style solution
+					 * work!
+					 */
+					assertLiteralDisequalitiesIntoScript(literalTerms);
+				}
+				if (mSettings.isAddLiteralDisequalitiesAsAxioms()) {
 
-				final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
-						CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
-								literalTerms));
-				icfgWMemlocInitialized = new AxiomsAdderIcfgTransformer<>( mLogger,
-						"icfg_with_memloc_updates_and_literal_axioms", outLocationClass,
-						icfgWithMemlocUpdates, outToOutLocFac, backtranslationTracker, allLiteralDisequalities)
-						.getResult();
+					final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
+							CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
+									literalTerms));
+					icfgWMemlocInitialized = new AxiomsAdderIcfgTransformer<>( mLogger,
+							"icfg_with_memloc_updates_and_literal_axioms", outLocationClass,
+							icfgWithMemlocUpdates, outToOutLocFac, backtranslationTracker, allLiteralDisequalities)
+							.getResult();
+				}
 			}
 
 			preprocessedIcfg = icfgWMemlocInitialized;

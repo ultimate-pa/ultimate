@@ -10,21 +10,24 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -35,7 +38,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
+		implements ITransformulaTransformer {
+//		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
 	private final IProgramVar mValidArray;
 
@@ -43,30 +47,48 @@ public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLo
 
 	private final MemlocArrayManager mMemlocArrayManager;
 
-	public MemlocInitializer(final ILogger logger, //final CfgSmtToolkit csToolkit,
-			final String resultName,
-			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
+	private final ManagedScript mMgdScript;
+
+	private final Set<INLOC> mInitialNodes;
+
+	private final DefaultIcfgSymbolTable mNewSymbolTable;
+
+	public MemlocInitializer(final ILogger logger, final CfgSmtToolkit oldCsToolkit,
+//			final String resultName,
+//			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
+//			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final MemlocArrayManager memlocArrayMananger, final IProgramVar validArray,
-			final HeapSepSettings settings) {
-		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+			final HeapSepSettings settings,
+			final Set<INLOC> initialNodes) {
+//		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 
 		mValidArray = validArray;
 		mMemlocArrayManager = memlocArrayMananger;
 
 		mSettings = settings;
+
+		mMgdScript = oldCsToolkit.getManagedScript();
+
+		mInitialNodes = initialNodes;
+
+		mNewSymbolTable = new DefaultIcfgSymbolTable(oldCsToolkit.getSymbolTable(), oldCsToolkit.getProcedures());
 	}
 
 
 
+//	@Override
+//	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
 	@Override
-	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
+	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldTransition,
+			final UnmodifiableTransFormula tf) {
 
 		final Script script = mMgdScript.getScript();
 
-		if (!mInputIcfg.getInitialNodes().contains(oldTransition.getSource())) {
+//		if (!mInputIcfg.getInitialNodes().contains(oldTransition.getSource())) {
+		if (!mInitialNodes.contains(oldTransition.getSource())) {
 			// not an initial transition, do nothing
-			return super.transform(oldTransition, newSource, newTarget);
+//			return super.transform(oldTransition, newSource, newTarget);
+			return new TransforumlaTransformationResult(tf);
 		}
 
 		/*
@@ -83,9 +105,21 @@ public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLo
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(oldTransformula.getInVars());
 		newInVars.putAll(cit.getFreezeVarInVars());
+		for (final IProgramVar iv : cit.getFreezeVarInVars().keySet()) {
+			if (iv instanceof IProgramOldVar) {
+				continue;
+			}
+			mNewSymbolTable.add(iv);
+		}
 
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(oldTransformula.getOutVars());
 		newOutVars.putAll(cit.getFreezeVarOutVars());
+		for (final IProgramVar iv : cit.getFreezeVarOutVars().keySet()) {
+			if (iv instanceof IProgramOldVar) {
+				continue;
+			}
+			mNewSymbolTable.add(iv);
+		}
 
 		/*
 		 * Note that the symbol table will be automatically updated with the new constants by the
@@ -112,7 +146,8 @@ public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLo
 
 		final UnmodifiableTransFormula newTransformula = newTfBuilder.finishConstruction(mMgdScript);
 
-		return super.transform(oldTransition, newSource, newTarget, newTransformula);
+//		return super.transform(oldTransition, newSource, newTarget, newTransformula);
+		return new TransforumlaTransformationResult(newTransformula);
 	}
 
 	class ComputeInitializingTerm {
@@ -217,5 +252,21 @@ public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLo
 		public Map<IProgramVar, TermVariable> getFreezeVarOutVars() {
 			return mMemlocOutVars;
 		}
+	}
+
+	@Override
+	public void preprocessIcfg(final IIcfg<?> icfg) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public String getName() {
+		return "memlocinitializer";
+	}
+
+	@Override
+	public IIcfgSymbolTable getNewIcfgSymbolTable() {
+		return mNewSymbolTable;
 	}
 }

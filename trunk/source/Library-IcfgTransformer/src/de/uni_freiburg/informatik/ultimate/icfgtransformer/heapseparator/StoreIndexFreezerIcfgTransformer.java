@@ -10,13 +10,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -27,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -46,7 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <OUTLOC>
  */
 public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
+	implements ITransformulaTransformer {
+//		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
 //	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
 //			new NestedMap2<>();
@@ -57,26 +60,43 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	private final Set<ConstantTerm> mAllConstantTerms;
 
+	DefaultIcfgSymbolTable mNewSymbolTable;
+
+	ManagedScript mMgdScript;
+
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
-			final String resultName,
-			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
+			final ManagedScript mgdScript,
+			final IIcfgSymbolTable oldSymbolTable,
+			final Set<String> oldProcs,
+			//final String resultName,
+			//final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
+			//final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final List<IProgramVarOrConst> heapArrays,
 			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
-		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+//		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 		mAllConstantTerms = new HashSet<>();
+		mNewSymbolTable = new DefaultIcfgSymbolTable(oldSymbolTable, oldProcs);
+		mMgdScript = mgdScript;
 	}
 
+//	@Override
+//	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
+//		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
+//				new EdgeInfo(oldTransition));
+//		return super.transform(oldTransition, newSource, newTarget, newTransformula);
+//	}
+
+//	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
+//			final EdgeInfo edgeInfo) {
 	@Override
-	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
-		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
-				new EdgeInfo(oldTransition));
-		return super.transform(oldTransition, newSource, newTarget, newTransformula);
-	}
+	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+			final UnmodifiableTransFormula tf) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
-	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
-			final EdgeInfo edgeInfo) {
+		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
 		/*
 		 * update the all constants tracking
@@ -91,7 +111,7 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		if (mEdgeToIndexToStoreIndexInfo.get(edgeInfo) == null) {
 			// edge does not have any array writes --> return it unchanged
-			return tf;
+			return new TransforumlaTransformationResult(tf);
 		}
 
 		final Map<IProgramVar, TermVariable> extraInVars = new HashMap<>();
@@ -158,7 +178,8 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
 
 
-		return tfBuilder.finishConstruction(mMgdScript);
+		final UnmodifiableTransFormula newTf = tfBuilder.finishConstruction(mMgdScript);
+		return new TransforumlaTransformationResult(newTf);
 	}
 
 	private IProgramNonOldVar getOrConstructFreezeVariable(final StoreIndexInfo storeIndexInfo) {
@@ -174,25 +195,12 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			 *  we don't need to do anything for the symbol table here it seems, because the TransformedIcfgBuilder
 			 *  recognizes new variables in the TransFormula
 			 */
-//			mNewSymbolTable.add(result);
+			mNewSymbolTable.add(result);
 //			mWriteIndexToTfInfoToFreezeVar.put(indexTerm, tfInfo, result);
 			mStoreIndexInfoToFreezeVar.put(storeIndexInfo, result);
 		}
 		return result;
 	}
-
-//	private StoreIndexInfo getStoreIndexInfo(final EdgeInfo tfInfo, final Term indexTerm) {
-//		StoreIndexInfo sii = mEdgeToIndexToStoreIndexInfo.get(tfInfo, indexTerm);
-//		if (sii == null) {
-//			sii = new StoreIndexInfo(tfInfo, indexTerm, mStoreIndexInfoCounter++);
-//			mEdgeToIndexToStoreIndexInfo.put(tfInfo, indexTerm, sii);
-//		}
-//		return sii;
-//	}
-
-//	public NestedMap2<Term, EdgeInfo, IProgramNonOldVar> getWriteIndexToTfInfoToFreezeVar() {
-//		return mWriteIndexToTfInfoToFreezeVar;
-//	}
 
 	public Map<StoreIndexInfo, IProgramNonOldVar> getArrayAccessInfoToFreezeVar() {
 		return mStoreIndexInfoToFreezeVar;
@@ -208,6 +216,22 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	 */
 	public Set<ConstantTerm> getAllConstantTerms() {
 		return mAllConstantTerms;
+	}
+
+	@Override
+	public void preprocessIcfg(final IIcfg<?> icfg) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public String getName() {
+		return "storeIndexFreezeTfTf";
+	}
+
+	@Override
+	public IIcfgSymbolTable getNewIcfgSymbolTable() {
+		return mNewSymbolTable;
 	}
 
 }

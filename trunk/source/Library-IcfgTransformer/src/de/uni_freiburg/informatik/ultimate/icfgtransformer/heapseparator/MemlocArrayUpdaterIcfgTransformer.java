@@ -10,26 +10,29 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -49,7 +52,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <OUTLOC>
  */
 public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
+	implements ITransformulaTransformer {
+//		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
 
 	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
@@ -69,14 +73,22 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	private final MemlocArrayManager mMemlocArrayManager;
 
-	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger, final String resultName,
-			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
+	ManagedScript mMgdScript;
+
+	private final DefaultIcfgSymbolTable mNewSymbolTable;
+
+	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger, //final String resultName,
+			final ManagedScript mgdScript,
+//			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
+//			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 //			final IProgramVar memlocArrayInt, final Sort memLocSort,
 			final MemlocArrayManager memlocArrayManager,
 			final List<IProgramVarOrConst> heapArrays,
-			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
-		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo,
+			final IIcfgSymbolTable oldSymbolTable,
+			final Set<String> procs) {
+//		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+		mMgdScript = mgdScript;
 		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 		mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
 //		mMemlocArrayInt = memlocArrayInt;
@@ -84,17 +96,28 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		mMemlocArrayManager = memlocArrayManager;
 		mStoreIndexInfoToLocLiteral = new HashMap<>();
 		mHeapArrays = heapArrays;
+
+		mNewSymbolTable = new DefaultIcfgSymbolTable(oldSymbolTable, procs);
 	}
+
+//	@Override
+//	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
+//		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
+//				new EdgeInfo(oldTransition));
+//		return super.transform(oldTransition, newSource, newTarget, newTransformula);
+//	}
+
+//	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
+//			final EdgeInfo edgeInfo) {
+
 
 	@Override
-	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
-		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
-				new EdgeInfo(oldTransition));
-		return super.transform(oldTransition, newSource, newTarget, newTransformula);
-	}
-
-	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
-			final EdgeInfo edgeInfo) {
+	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+			final UnmodifiableTransFormula tf) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
 		if (TRACK_CONSTANTS) {
 			/* update the all constants tracking */
@@ -106,7 +129,8 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		if (mEdgeToIndexToStoreIndexInfo.get(edgeInfo) == null) {
 			// edge does not have any array writes --> return it unchanged
-			return tf;
+//			return tf;
+			return new TransforumlaTransformationResult(tf);
 		}
 
 		/*
@@ -183,12 +207,27 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
 		newInVars.putAll(extraInVars);
+		for (final IProgramVar iv : extraInVars.keySet()) {
+			if (iv instanceof IProgramOldVar) {
+				continue;
+			}
+			mNewSymbolTable.add(iv);
+		}
 
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 		newOutVars.putAll(extraOutVars);
+		for (final IProgramVar ov : extraOutVars.keySet()) {
+			if (ov instanceof IProgramOldVar) {
+				continue;
+			}
+			mNewSymbolTable.add(ov);
+		}
 
 		final Set<IProgramConst> newNonTheoryConsts = new HashSet<>(tf.getNonTheoryConsts());
 		newNonTheoryConsts.addAll(extraConstants);
+		for (final IProgramConst pc : extraConstants) {
+			mNewSymbolTable.add(pc);
+		}
 
 		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(newInVars, newOutVars,
 				newNonTheoryConsts.isEmpty(), newNonTheoryConsts, tf.getBranchEncoders().isEmpty(),
@@ -206,7 +245,8 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		tfBuilder.setInfeasibility(tf.isInfeasible());
 		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
 
-		return tfBuilder.finishConstruction(mMgdScript);
+		final UnmodifiableTransFormula newTf = tfBuilder.finishConstruction(mMgdScript);
+		return new TransforumlaTransformationResult(newTf);
 	}
 
 	private IProgramConst getLocationLiteral(final StoreIndexInfo storeIndexInfo) {
@@ -264,6 +304,22 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		return mStoreIndexInfoToLocLiteral;
 	}
 
+	@Override
+	public void preprocessIcfg(final IIcfg<?> icfg) {
+		// TODO Auto-generated method stub
+
+	}
+
+
+	@Override
+	public String getName() {
+		return "withMemlocArrayUpdates";
+	}
+
+	@Override
+	public IIcfgSymbolTable getNewIcfgSymbolTable() {
+		return mNewSymbolTable;
+	}
 }
 
 
