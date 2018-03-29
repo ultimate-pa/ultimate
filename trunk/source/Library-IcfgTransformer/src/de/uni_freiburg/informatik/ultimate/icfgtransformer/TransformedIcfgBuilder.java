@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * input {@link IIcfg}.
  *
  * (Alexander Nutz:) Note that the symbol table is updated automatically according to new program variables or constants
- *  that occur in the newly created TransFormulas.
+ * that occur in the newly created TransFormulas.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -132,7 +132,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 *            The input {@link IIcfg}.
 	 * @param resultIcfg
 	 *            The output {@link IIcfg}.
-	 * @param additionalAxioms axioms that are to be added to the resulting {@link IIcfg}
+	 * @param additionalAxioms
+	 *            axioms that are to be added to the resulting {@link IIcfg}
 	 */
 	public TransformedIcfgBuilder(final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final ITransformulaTransformer transformer,
@@ -204,7 +205,6 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		return newTransition;
 	}
 
-
 	/**
 	 * @return true if the corresponding call was already created and one can safely create a new transition for this
 	 *         return transition.
@@ -216,7 +216,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	}
 
 	/**
-	 * Add a completely new transition to the resulting {@link IIcfg}.
+	 * Add a completely new transition to the resulting {@link IIcfg}. If you use this method, you have to take care of
+	 * the back translation yourself.
 	 *
 	 * @param newSource
 	 * @param newTarget

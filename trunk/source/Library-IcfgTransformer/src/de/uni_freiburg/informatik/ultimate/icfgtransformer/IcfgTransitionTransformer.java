@@ -52,9 +52,8 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 
 	private boolean mProcessed;
 
-	public IcfgTransitionTransformer(final ILogger logger, final String resultName,
-			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac,
+	public IcfgTransitionTransformer(final ILogger logger, final String resultName, final Class<OUTLOC> outLocClazz,
+			final IIcfg<INLOC> inputCfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker) {
 		assert logger != null;
 		mInputCfgCsToolkit = inputCfg.getCfgSmtToolkit();
@@ -75,10 +74,9 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 		final ITransformulaTransformer noopTransformer =
 				new ExampleLoopAccelerationTransformulaTransformer(mLogger, mInputCfgCsToolkit.getManagedScript(),
 						mInputCfgCsToolkit.getSymbolTable(), new ReplacementVarFactory(mInputCfgCsToolkit, false));
-		mTransformedIcfgBuilder = new TransformedIcfgBuilder<>(funLocFac,
-				backtranslationTracker, noopTransformer, mInputIcfg, mResult);
+		mTransformedIcfgBuilder =
+				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, noopTransformer, mInputIcfg, mResult);
 	}
-
 
 	private void process() {
 		assert !mProcessed : "only call this once!";
@@ -107,12 +105,13 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 				final IcfgEdge transformedTransition = transform(oldTransition, newSource, newTarget);
 
 				mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(newSource, newTarget,
-							transformedTransition);
+						transformedTransition);
 			}
 		}
 
 		for (final Triple<OUTLOC, OUTLOC, IcfgEdge> returnTrans : oldReturnTransitions) {
-			final IcfgEdge transformedTransition = transform(returnTrans.getThird(), returnTrans.getFirst(), returnTrans.getSecond());
+			final IcfgEdge transformedTransition =
+					transform(returnTrans.getThird(), returnTrans.getFirst(), returnTrans.getSecond());
 			mTransformedIcfgBuilder.createNewTransitionWithNewProgramVars(returnTrans.getFirst(),
 					returnTrans.getSecond(), transformedTransition);
 		}
@@ -143,25 +142,27 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 			final UnmodifiableTransFormula newTransformula) {
 		if (oldTransition instanceof IIcfgInternalTransition) {
 			// TODO: is this the right payload?
-			final IcfgInternalTransition result = mEdgeFactory.createInternalTransition(newSource, newTarget, oldTransition.getPayload(),
-					newTransformula);
+			final IcfgInternalTransition result = mEdgeFactory.createInternalTransition(newSource, newTarget,
+					oldTransition.getPayload(), newTransformula);
 			log(oldTransition, result);
 			return result;
 		} else if (oldTransition instanceof IIcfgCallTransition) {
 			// TODO: this casting business is ugly like this
-			final IIcfgCallTransition<OUTLOC> newCallTransition = (IIcfgCallTransition<OUTLOC>)
-					mEdgeFactory.createCallTransition(newSource, newTarget, oldTransition.getPayload(), newTransformula);
+			final IIcfgCallTransition<OUTLOC> newCallTransition = (IIcfgCallTransition<OUTLOC>) mEdgeFactory
+					.createCallTransition(newSource, newTarget, oldTransition.getPayload(), newTransformula);
 			mOldCallToNewCall.put((IIcfgCallTransition<INLOC>) oldTransition, newCallTransition);
 			final IcfgEdge result = (IcfgEdge) newCallTransition;
 			return result;
 		} else if (oldTransition instanceof IIcfgReturnTransition) {
 			final IIcfgCallTransition<IcfgLocation> correspondingNewCall =
-					(IIcfgCallTransition<IcfgLocation>) mOldCallToNewCall.get(((IIcfgReturnTransition) oldTransition).getCorrespondingCall());
+					(IIcfgCallTransition<IcfgLocation>) mOldCallToNewCall
+							.get(((IIcfgReturnTransition) oldTransition).getCorrespondingCall());
 			if (correspondingNewCall == null) {
 				throw new AssertionError("attempting to transform a return that we do not know the call for");
 			}
-			final IcfgReturnTransition result = mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
-					oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
+			final IcfgReturnTransition result =
+					mEdgeFactory.createReturnTransition(newSource, newTarget, correspondingNewCall,
+							oldTransition.getPayload(), newTransformula, correspondingNewCall.getLocalVarsAssignment());
 			return result;
 		} else {
 			throw new IllegalArgumentException("unknown transition type");
@@ -211,17 +212,15 @@ public abstract class IcfgTransitionTransformer<INLOC extends IcfgLocation, OUTL
 		}
 		mLogger.debug("");
 
+		// mLogger.debug(String.format("\t tf has changed: %5s", tfHasChanged));
+		// mLogger.debug(String.format("\t invars have changed: %5s", inVarsHaveChanged));
+		// mLogger.debug(String.format("\t outvars have changed: %5s", outVarsHaveChanged));
 
-//		mLogger.debug(String.format("\t tf has changed: %5s", tfHasChanged));
-//		mLogger.debug(String.format("\t invars have changed: %5s", inVarsHaveChanged));
-//		mLogger.debug(String.format("\t outvars have changed: %5s", outVarsHaveChanged));
-
-
-//		mLogger.debug("transformed oldTransition " + oldTransition.hashCode() + " :: " + oldTransition.getTransformula());
-//		mLogger.debug("\t  to : " + newTransition.hashCode() + " :: " +  newTransition.getTransformula());
-//		mLogger.debug("");
+		// mLogger.debug("transformed oldTransition " + oldTransition.hashCode() + " :: " +
+		// oldTransition.getTransformula());
+		// mLogger.debug("\t to : " + newTransition.hashCode() + " :: " + newTransition.getTransformula());
+		// mLogger.debug("");
 	}
-
 
 	/**
 	 * Triggers the necessary computations (once per instance) and returns the result
