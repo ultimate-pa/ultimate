@@ -348,12 +348,7 @@ public class RangeDecision extends Decision<RangeDecision> {
 
 	@Override
 	public String toSmtString(final int childs) {
-		return toSmtString(childs, 0);
-	}
-
-	@Override
-	public String toSmtString(final int childs, final int index) {
-		final String var = "(- T_" + index + " " + mVar + "_" + index + ")";
+		final String var = "(- T_" + " " + mVar + ")";
 
 		if (childs == 0) {
 			return "( " + (((mLimits[0] & 1) == 0) ? " < " : " <= ") + var + " " + (mLimits[0] / 2) + ".0)";

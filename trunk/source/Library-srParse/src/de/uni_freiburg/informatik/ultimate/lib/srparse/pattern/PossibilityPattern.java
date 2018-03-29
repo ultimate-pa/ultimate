@@ -16,12 +16,17 @@ public class PossibilityPattern extends PatternType {
 
 	@Override
 	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		throw new UnsupportedOperationException();
+		throw new PatternScopeNotImplemented(getScope().getClass(), getClass());
 	}
 
 	@Override
 	public String toString() {
 		return "if \"" + getCdds().get(1) + "\" holds, then there is at least one execution sequence such that \""
 				+ getCdds().get(0) + "\" eventually holds";
+	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new PossibilityPattern(getScope(), newName, getCdds(), getDuration());
 	}
 }

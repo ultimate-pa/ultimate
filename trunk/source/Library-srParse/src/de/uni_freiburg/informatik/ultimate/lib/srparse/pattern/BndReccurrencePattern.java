@@ -29,4 +29,9 @@ public class BndReccurrencePattern extends PatternType {
 		return "it is always the case that \"" + getCdds().get(0) + "\" holds at least every \"" + getDuration().get(0)
 				+ "\" time units";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new BndReccurrencePattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

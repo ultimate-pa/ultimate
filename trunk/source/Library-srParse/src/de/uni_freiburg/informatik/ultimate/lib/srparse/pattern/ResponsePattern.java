@@ -28,4 +28,9 @@ public class ResponsePattern extends PatternType {
 		return "it is always the case that if \"" + getCdds().get(1) + "\" holds, then \"" + getCdds().get(0)
 				+ "\" eventually holds";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new ResponsePattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

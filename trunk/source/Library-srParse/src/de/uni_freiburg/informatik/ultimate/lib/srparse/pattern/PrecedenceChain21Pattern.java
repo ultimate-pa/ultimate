@@ -31,4 +31,9 @@ public class PrecedenceChain21Pattern extends PatternType {
 		return "it is always the case that if \"" + getCdds().get(2) + "\" holds, then \"" + getCdds().get(1)
 				+ "\" previously held and was preceded by \"" + getCdds().get(0) + "\"";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new PrecedenceChain21Pattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

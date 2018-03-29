@@ -47,25 +47,22 @@ public class ReqCheck extends Check {
 
 	private final int mStartline;
 	private final int mEndline;
-	private final String mInputFilename;
 
 	private final PatternType[] mReqs;
 
-	public ReqCheck(final Check.Spec type, final int[] reqNrs, final PatternType[] reqs, final String inputFilename) {
-		this(EnumSet.of(type), reqNrs, reqs, inputFilename);
+	public ReqCheck(final Check.Spec type, final int[] reqNrs, final PatternType[] reqs) {
+		this(EnumSet.of(type), reqNrs, reqs);
 	}
 
-	private ReqCheck(final EnumSet<Check.Spec> types, final int[] reqNrs, final PatternType[] reqs,
-			final String inputFilename) {
-		this(types, reqNrs[0] + 1, reqNrs[reqNrs.length - 1] + 1, reqs, inputFilename);
+	private ReqCheck(final EnumSet<Check.Spec> types, final int[] reqNrs, final PatternType[] reqs) {
+		this(types, reqNrs[0] + 1, reqNrs[reqNrs.length - 1] + 1, reqs);
 	}
 
-	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline, final PatternType[] reqs,
-			final String inputFilename) {
+	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline,
+			final PatternType[] reqs) {
 		super(types, a -> ReqCheck.getCustomPositiveMessage(a, reqs), a -> ReqCheck.getCustomNegativeMessage(a, reqs));
 		mStartline = startline;
 		mEndline = endline;
-		mInputFilename = inputFilename;
 		mReqs = reqs;
 	}
 
@@ -75,10 +72,6 @@ public class ReqCheck extends Check {
 
 	public int getEndLine() {
 		return mEndline;
-	}
-
-	public String getFileName() {
-		return mInputFilename;
 	}
 
 	private static String getCustomPositiveMessage(final Spec spec, final PatternType[] types) {
@@ -113,16 +106,13 @@ public class ReqCheck extends Check {
 		if (other == this) {
 			return this;
 		}
-		if (!other.mInputFilename.equals(mInputFilename)) {
-			throw new UnmergeableAnnotationsException(this, other);
-		}
 
 		final EnumSet<Spec> newSpec = EnumSet.copyOf(getSpec());
 		newSpec.addAll(other.getSpec());
 		final int startline = Math.min(mStartline, other.mStartline);
 		final int endline = Math.max(mEndline, other.mEndline);
 		final PatternType[] reqs = DataStructureUtils.concat(mReqs, other.mReqs);
-		return new ReqCheck(newSpec, startline, endline, reqs, mInputFilename);
+		return new ReqCheck(newSpec, startline, endline, reqs);
 	}
 
 	@Override

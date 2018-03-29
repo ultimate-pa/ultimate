@@ -35,4 +35,9 @@ public class BndEntryConditionPattern extends PatternType {
 
 		return res;
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new BndEntryConditionPattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

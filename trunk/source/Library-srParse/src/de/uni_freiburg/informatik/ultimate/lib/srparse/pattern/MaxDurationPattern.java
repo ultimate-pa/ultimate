@@ -29,4 +29,9 @@ public class MaxDurationPattern extends PatternType {
 		return "it is always the case that once \"" + getCdds().get(0)
 				+ "\" becomes satisfied, it holds for less than \"" + getDuration().get(0) + "\" time units";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new MaxDurationPattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

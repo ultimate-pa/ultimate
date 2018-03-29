@@ -67,6 +67,8 @@ public abstract class PatternType {
 
 	protected abstract PhaseEventAutomata transform(PatternToPEA peaTrans, final Map<String, Integer> id2bounds);
 
+	public abstract PatternType rename(String newName);
+
 	public PhaseEventAutomata transformToPea(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
 		if (mPea == null) {
 			mPea = transform(peaTrans, id2bounds);
@@ -139,6 +141,54 @@ public abstract class PatternType {
 			return getClass().toString();
 		}
 		return getScope().toString() + getClass().toString();
+	}
+
+	@Override
+	public int hashCode() {
+		// note that mId and mPea are deliberately not part of the hash code or the equality comparison
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mCdds == null) ? 0 : mCdds.hashCode());
+		result = prime * result + ((mDurations == null) ? 0 : mDurations.hashCode());
+		result = prime * result + ((mScope == null) ? 0 : mScope.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		// note that mId and mPea are deliberately not part of the hash code or the equality comparison
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final PatternType other = (PatternType) obj;
+		if (mDurations == null) {
+			if (other.mDurations != null) {
+				return false;
+			}
+		} else if (!mDurations.equals(other.mDurations)) {
+			return false;
+		}
+		if (mScope == null) {
+			if (other.mScope != null) {
+				return false;
+			}
+		} else if (!mScope.equals(other.mScope)) {
+			return false;
+		}
+		if (mCdds == null) {
+			if (other.mCdds != null) {
+				return false;
+			}
+		} else if (!mCdds.equals(other.mCdds)) {
+			return false;
+		}
+		return true;
 	}
 
 }

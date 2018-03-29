@@ -26,4 +26,9 @@ public class ConstrainedChainPattern extends PatternType {
 				+ "\" eventually holds and is succeeded by \"" + getCdds().get(3) + "\", where \"" + getCdds().get(2)
 				+ "\" does not hold between \"" + getCdds().get(1) + "\" and \"" + getCdds().get(0) + "\"";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new ConstrainedChainPattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

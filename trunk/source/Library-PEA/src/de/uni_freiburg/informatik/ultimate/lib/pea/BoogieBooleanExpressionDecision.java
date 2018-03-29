@@ -52,7 +52,8 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	 *            the condition that must hold.
 	 */
 	public static CDD create(final Expression e) {
-		return new BoogieToCdd().createCdd(e);
+		final CDD rtr = new BoogieToCdd().createCdd(e);
+		return rtr;
 	}
 
 	/**
@@ -64,22 +65,6 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 
 	public static CDD createTrue() {
 		return CDD.TRUE;
-	}
-
-	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof BoogieBooleanExpressionDecision)) {
-			return false;
-		}
-		if (!mExpression.equals(((BoogieBooleanExpressionDecision) o).getExpression())) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		return mExpression.hashCode();
 	}
 
 	@Override
@@ -159,6 +144,56 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 		}
 
 		return vars;
+	}
+
+	@Override
+	public int compareToSimilar(final Decision<?> otherDec) {
+		final BoogieBooleanExpressionDecision other = (BoogieBooleanExpressionDecision) otherDec;
+		if (mExpression == null && other.mExpression == null) {
+			return 0;
+		} else if (mExpression == null && other.mExpression != null) {
+			return -1;
+		} else if (mExpression != null && other.mExpression == null) {
+			return 1;
+		} else {
+			final String expr = BoogiePrettyPrinter.print(mExpression);
+			final String otherExpr = BoogiePrettyPrinter.print(other.mExpression);
+			return expr.compareTo(otherExpr);
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mExpression == null) ? 0 : mExpression.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final BoogieBooleanExpressionDecision other = (BoogieBooleanExpressionDecision) obj;
+		if (mExpression == null) {
+			if (other.mExpression != null) {
+				return false;
+			}
+		} else {
+			final String expr = BoogiePrettyPrinter.print(mExpression);
+			final String otherExpr = BoogiePrettyPrinter.print(other.mExpression);
+			if (!expr.equals(otherExpr)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -336,11 +371,6 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 
 			}
 		}
-	}
-
-	@Override
-	public int compareToSimilar(final Decision<?> other) {
-		return mExpression.toString().compareTo(((BoogieBooleanExpressionDecision) other).mExpression.toString());
 	}
 
 }

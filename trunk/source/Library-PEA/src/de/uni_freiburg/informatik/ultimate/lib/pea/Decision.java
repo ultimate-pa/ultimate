@@ -120,12 +120,14 @@ public abstract class Decision<T extends Decision<T>> {
 
 	public abstract String getVar(); // sr 2010-07-29
 
+	@Override
+	public abstract boolean equals(Object obj);
+
+	@Override
+	public abstract int hashCode();
+
 	public String getSafeVar() {
 		return "var_h_" + Math.abs(getVar().hashCode());
-	}
-
-	public String toSmtString(final int child, final int index) {
-		return toSmtString(child);
 	}
 
 	/**

@@ -84,4 +84,9 @@ public class BndResponsePatternTU extends PatternType {
 
 		return sb.toString();
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new BndResponsePatternTU(getScope(), newName, getCdds(), getDuration());
+	}
 }

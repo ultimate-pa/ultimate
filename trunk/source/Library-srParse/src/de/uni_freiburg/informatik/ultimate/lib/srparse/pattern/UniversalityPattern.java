@@ -34,4 +34,9 @@ public class UniversalityPattern extends PatternType {
 	public String toString() {
 		return "it is always the case that \"" + getCdds().get(0) + "\" holds";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new UniversalityPattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

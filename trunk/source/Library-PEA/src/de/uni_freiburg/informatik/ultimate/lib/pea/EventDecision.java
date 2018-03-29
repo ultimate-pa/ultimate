@@ -74,20 +74,6 @@ public class EventDecision extends Decision<EventDecision> {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (o == null || o.getClass() != getClass()) {
-			return false;
-		}
-
-		return mEvent.equals(((EventDecision) o).mEvent);
-	}
-
-	@Override
-	public int hashCode() {
-		return mEvent.hashCode();
-	}
-
-	@Override
 	public String toString(final int child) {
 		return (child == 0) ? mEvent : ("/" + mEvent);
 	}
@@ -147,5 +133,35 @@ public class EventDecision extends Decision<EventDecision> {
 	@Override
 	public int compareToSimilar(final Decision<?> other) {
 		return mEvent.compareTo(((EventDecision) other).mEvent);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mEvent == null) ? 0 : mEvent.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final EventDecision other = (EventDecision) obj;
+		if (mEvent == null) {
+			if (other.mEvent != null) {
+				return false;
+			}
+		} else if (!mEvent.equals(other.mEvent)) {
+			return false;
+		}
+		return true;
 	}
 }

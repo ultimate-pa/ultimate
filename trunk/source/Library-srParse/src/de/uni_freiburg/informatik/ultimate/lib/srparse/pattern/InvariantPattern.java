@@ -29,4 +29,9 @@ public class InvariantPattern extends PatternType {
 		return "it is always the case that if \"" + getCdds().get(1) + "\" holds, then \"" + getCdds().get(0)
 				+ "\" holds as well";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new InvariantPattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

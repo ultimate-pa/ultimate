@@ -65,20 +65,6 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 		return CDD.create(new BooleanDecision(var), CDD.TRUE_CHILDS);
 	}
 
-	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof BooleanDecision)) {
-			return false;
-		}
-
-		return mVar.equals(((BooleanDecision) o).mVar);
-	}
-
-	@Override
-	public int hashCode() {
-		return mVar.hashCode();
-	}
-
 	/**
 	 * @return Returns the var.
 	 */
@@ -94,17 +80,8 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 
 	@Override
 	public String toSmtString(final int child) {
-		return toSmtString(child, -1);
-	}
-
-	@Override
-	public String toSmtString(final int child, final int index) {
-		if (index < 0) {
-			return (child == 0) ? ("(var_h_" + Math.abs(mVar.hashCode()) + ")")
-					: ("(not var_h_" + Math.abs(mVar.hashCode()) + ")");
-		}
-		return (child == 0) ? ("(var_h_" + Math.abs(mVar.hashCode()) + "_" + index + ")")
-				: ("(not var_h_" + Math.abs(mVar.hashCode()) + "_" + index + ")");
+		return (child == 0) ? ("(var_h_" + Math.abs(mVar.hashCode()) + ")")
+				: ("(not var_h_" + Math.abs(mVar.hashCode()) + ")");
 	}
 
 	@Override
@@ -164,5 +141,35 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 	@Override
 	public int compareToSimilar(final Decision<?> other) {
 		return mVar.compareTo(((BooleanDecision) other).mVar);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mVar == null) ? 0 : mVar.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final BooleanDecision other = (BooleanDecision) obj;
+		if (mVar == null) {
+			if (other.mVar != null) {
+				return false;
+			}
+		} else if (!mVar.equals(other.mVar)) {
+			return false;
+		}
+		return true;
 	}
 }

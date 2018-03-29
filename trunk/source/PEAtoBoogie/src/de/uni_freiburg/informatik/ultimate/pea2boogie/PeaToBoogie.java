@@ -31,10 +31,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -43,10 +49,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class PeaToBoogie implements ISource {
 	private ILogger mLogger;
@@ -80,46 +88,139 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		if (files.length == 1) {
-			return parseAST(files[0]);
+		final List<PatternType> rawPatterns = new ArrayList<>();
+		mFileNames = new ArrayList<>();
+		for (final File file : files) {
+			final String inputPath = file.getAbsolutePath();
+			mFileNames.add(inputPath);
+			mLogger.info("Parsing: '" + inputPath + "'");
+			final List<PatternType> currentPatterns = new ReqToPEA(mServices, mLogger).genPatterns(inputPath);
+			if (currentPatterns.stream().anyMatch(Objects::isNull)) {
+				throw new Exception("The parser failed on some requirements from " + inputPath);
+			}
+			logPatternSize(currentPatterns, "parsed from " + inputPath);
+			rawPatterns.addAll(currentPatterns);
 		}
-		throw new UnsupportedOperationException("Cannot parse more than one file");
+		logPatternSize(rawPatterns, "in total");
+		final List<PatternType> unifiedPatterns = unify(rawPatterns);
+		logPatternSize(unifiedPatterns, "after unification");
+		return generateBoogie(unifiedPatterns);
 	}
 
-	private IElement parseAST(final File file) throws Exception {
-		final String inputPath = file.getAbsolutePath();
-		mFileNames = new ArrayList<>();
-		mFileNames.add(inputPath);
-		mLogger.info("Parsing: '" + inputPath + "'");
-		final PatternType[] patterns = new ReqToPEA(mServices, mLogger).genPatterns(inputPath);
-
-		if (Arrays.stream(patterns).anyMatch(Objects::isNull)) {
-			throw new Exception("The parser had errors but didnt tell anyone");
+	private void logPatternSize(final List<PatternType> patterns, final String suffix) {
+		final long patternWithId = patterns.stream().filter(a -> !(a instanceof InitializationPattern)).count();
+		if (suffix == null) {
+			mLogger.info(String.format("%s requirements (%s non-initialization)", patterns.size(), patternWithId));
+		} else {
+			mLogger.info(String.format("%s requirements (%s non-initialization) %s", patterns.size(), patternWithId,
+					suffix));
 		}
-		final long patternWithId = Arrays.stream(patterns).filter(a -> a.getId() != null).count();
-		mLogger.info("Successfully parsed " + patterns.length + " requirements (" + patternWithId + " named ones)");
+	}
 
+	private List<PatternType> unify(final List<PatternType> patterns) {
+		final List<PatternType> rtr = new ArrayList<>();
+		final List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
+				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
+		final UnionFind<InitializationPattern> uf = createUnionFind(init);
+		checkTypeConflicts(uf.getAllRepresentatives());
+		rtr.addAll(merge(uf));
+
+		final List<PatternType> reqs =
+				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
+		if (reqs.isEmpty()) {
+			return rtr;
+		}
+		final UnionFind<PatternType> ufreq = createUnionFind(reqs);
+		rtr.addAll(merge(ufreq));
+
+		return rtr;
+	}
+
+	private <T extends PatternType> UnionFind<T> createUnionFind(final List<T> patterns) {
+		final UnionFind<T> uf = new UnionFind<>();
+		for (final T pattern : patterns) {
+			final T rep = uf.findAndConstructEquivalenceClassIfNeeded(pattern);
+			if (rep != pattern) {
+				mLogger.warn("Merging requirements " + pattern.getId() + " and " + rep.getId()
+						+ " because they are equivalent");
+			}
+		}
+		return uf;
+	}
+
+	private List<PatternType> merge(final UnionFind<? extends PatternType> ufreq) {
+		final List<PatternType> rtr = new ArrayList<>();
+		for (final Set<? extends PatternType> eqclass : ufreq.getAllEquivalenceClasses()) {
+			if (eqclass.size() == 1) {
+				rtr.addAll(eqclass);
+				continue;
+			}
+			mLogger.warn(
+					"Merging requirements " + eqclass.stream().map(a -> a.getId()).collect(Collectors.joining(", "))
+							+ "because they are equivalent");
+			rtr.add(merge(eqclass));
+		}
+		return rtr;
+	}
+
+	/**
+	 * Create a new pattern from a set of patterns by concatenating their ids.
+	 */
+	private static PatternType merge(final Set<? extends PatternType> eqclass) {
+		assert eqclass != null && eqclass.size() > 1;
+		final StringBuilder newName = new StringBuilder();
+		final Iterator<? extends PatternType> iter = eqclass.iterator();
+
+		PatternType current = iter.next();
+		final Class<?> last = current.getClass();
+		newName.append(current.getId());
+		while (iter.hasNext()) {
+			current = iter.next();
+			if (last != current.getClass()) {
+				throw new AssertionError("Patterns with different types are assumed to be equivalent");
+			}
+			newName.append('_').append(current.getId());
+		}
+		return current.rename(newName.toString());
+	}
+
+	private void checkTypeConflicts(final Collection<InitializationPattern> inits) {
+		final PeaResultUtil results = new PeaResultUtil(mLogger, mServices);
+		final Map<String, InitializationPattern> seen = new HashMap<>();
+		for (final InitializationPattern init : inits) {
+			final InitializationPattern otherInit = seen.put(init.getId(), init);
+			if (otherInit == null) {
+				continue;
+			}
+			if (!Objects.equals(init.getType(), otherInit.getType())) {
+				results.unsupportedSyntaxError(new DummyLocation(),
+						String.format("The initialization patterns %s and %s have conflicting types: %s vs. %s",
+								init.getId(), otherInit.getId(), init.getType(), otherInit.getType()));
+			}
+		}
+	}
+
+	private IElement generateBoogie(final List<PatternType> patterns) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-
+		final int length = patterns.size();
 		final BitSet vacuityChecks;
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY)) {
-			vacuityChecks = new BitSet(patterns.length);
-			vacuityChecks.set(0, patterns.length);
+			vacuityChecks = new BitSet(length);
+			vacuityChecks.set(0, length);
 		} else {
 			vacuityChecks = null;
 		}
 
 		final int combinationNum;
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
-			combinationNum =
-					Math.min(patterns.length, prefs.getInt(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE));
+			combinationNum = Math.min(length, prefs.getInt(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE));
 		} else {
 			combinationNum = -1;
 		}
 		final boolean checkConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 
-		return new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, inputPath, combinationNum, checkConsistency,
-				patterns).getUnit();
+		return new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, combinationNum, checkConsistency, patterns)
+				.getUnit();
 	}
 
 	@Override
@@ -156,5 +257,14 @@ public class PeaToBoogie implements ISource {
 	@Override
 	public void finish() {
 		// not necessary
+	}
+
+	private final class DummyLocation extends DefaultLocation {
+
+		private static final long serialVersionUID = 1L;
+
+		public DummyLocation() {
+			super("", -1, 0, 0, 0);
+		}
 	}
 }

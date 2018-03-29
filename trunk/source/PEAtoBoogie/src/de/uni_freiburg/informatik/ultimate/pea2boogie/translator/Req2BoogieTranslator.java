@@ -78,10 +78,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
@@ -93,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.ConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
@@ -108,15 +105,6 @@ public class Req2BoogieTranslator {
 
 	private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
 
-	/**
-	 * The name of the input file containing the requirements/peas.
-	 */
-	private String mInputFilePath;
-
-	/**
-	 * The address of the Boogie text file.
-	 */
-	private final String mBoogieFilePath;
 	/**
 	 * The unit that contains declarations.
 	 */
@@ -181,6 +169,8 @@ public class Req2BoogieTranslator {
 
 	private final boolean mCheckConsistency;
 
+	private final PeaResultUtil mPeaResultUtil;
+
 	/**
 	 *
 	 * @param services
@@ -188,21 +178,19 @@ public class Req2BoogieTranslator {
 	 * @param vacuityChecks
 	 *            A bitset containing the numbers of the components for which vacuity should be checked. Bit i is set if
 	 *            we should check vacuity for the i-th property.
-	 * @param path
-	 *            The input file name. This is used to annotate the Boogie code with the right file name. The
-	 *            {@link ILocation} object should contain the name of the original file name.
 	 * @param num
 	 *            Assign a value to the combinationNum.
 	 */
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
-			final BitSet vacuityChecks, final String path, final int num, final boolean checkConsistency,
-			final PatternType[] patterns) {
+			final BitSet vacuityChecks, final int num, final boolean checkConsistency,
+			final List<PatternType> patterns) {
 		mLogger = logger;
 		mServices = services;
-		mInputFilePath = path;
 		mVacuityChecks = vacuityChecks;
 		mCombinationNum = num;
 		mCheckConsistency = checkConsistency;
+
+		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
 
 		mClockIds = new ArrayList<>();
 		mPcIds = new ArrayList<>();
@@ -212,12 +200,10 @@ public class Req2BoogieTranslator {
 		mEventVars = new LinkedHashMap<>();
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
-		// TODO: Remove this?
-		mBoogieFilePath = null;
-		mInit = Arrays.stream(patterns).filter(a -> a instanceof InitializationPattern)
-				.map(a -> (InitializationPattern) a).collect(Collectors.toList());
+		mInit = patterns.stream().filter(a -> a instanceof InitializationPattern).map(a -> (InitializationPattern) a)
+				.collect(Collectors.toList());
 		mRequirements =
-				Arrays.stream(patterns).filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
+				patterns.stream().filter(a -> !(a instanceof InitializationPattern)).collect(Collectors.toList());
 		generateBoogie();
 	}
 
@@ -259,13 +245,13 @@ public class Req2BoogieTranslator {
 				val = tryParseInt(((IntegerLiteral) expr).getValue());
 			} else {
 				val = null;
-				syntaxError(mBoogieLocations[0],
+				mPeaResultUtil.syntaxError(mBoogieLocations[0],
 						"Cannot convert CONST with expression " + BoogiePrettyPrinter.print(expr) + " to duration");
 			}
 			if (val == null) {
 				continue;
 			}
-			rtr.put(init.getIdent(), val);
+			rtr.put(init.getId(), val);
 		}
 		return rtr;
 	}
@@ -274,7 +260,7 @@ public class Req2BoogieTranslator {
 		try {
 			return new BigDecimal(val).toBigIntegerExact().intValueExact();
 		} catch (NumberFormatException | ArithmeticException ex) {
-			syntaxError(mBoogieLocations[0],
+			mPeaResultUtil.syntaxError(mBoogieLocations[0],
 					"Cannot convert CONST with value " + val + " to duration (must be integer)");
 			return null;
 		}
@@ -292,7 +278,7 @@ public class Req2BoogieTranslator {
 	private BoogiePrimitiveType toPrimitiveType(final String type, final ILocation loc) {
 		final BoogiePrimitiveType rtr = toPrimitiveTypeNoError(type);
 		if (rtr == BoogieType.TYPE_ERROR) {
-			syntaxError(loc, "Unknown type " + type);
+			mPeaResultUtil.syntaxError(loc, "Unknown type " + type);
 		}
 		return rtr;
 	}
@@ -322,7 +308,7 @@ public class Req2BoogieTranslator {
 		// extract state vars from init pattern
 		for (final InitializationPattern init : mInit) {
 			final ASTType type = toPrimitiveType(init.getType(), loc).toASTType(loc);
-			final String name = init.getIdent();
+			final String name = init.getId();
 			if (type.getBoogieType() == BoogieType.TYPE_ERROR) {
 				mLogger.error(name + " has type None");
 			}
@@ -405,7 +391,8 @@ public class Req2BoogieTranslator {
 
 	private void checkVarDeclared(final int i, final PhaseEventAutomata currentAutomaton, final String name) {
 		if (!mStateVars.containsKey(name) && !mConstVars.containsKey(name)) {
-			syntaxError(mBoogieLocations[i + 1], "Variable " + name + " not declared in " + currentAutomaton.getName());
+			mPeaResultUtil.syntaxError(mBoogieLocations[i + 1],
+					"Variable " + name + " not declared in " + currentAutomaton.getName());
 		}
 	}
 
@@ -429,7 +416,7 @@ public class Req2BoogieTranslator {
 	private void checkMultipleDecls(final String name, final ASTType astType, final ILocation loc,
 			final ASTType oldType) {
 		if (oldType != null && astType != null && !Objects.equals(oldType.getBoogieType(), astType.getBoogieType())) {
-			syntaxError(loc, "Variable declared multiple times with different type: " + name + " : "
+			mPeaResultUtil.syntaxError(loc, "Variable declared multiple times with different type: " + name + " : "
 					+ oldType.getBoogieType() + " vs. " + astType.getBoogieType());
 		}
 	}
@@ -758,8 +745,7 @@ public class Req2BoogieTranslator {
 	}
 
 	private Statement genAssertRTInconsistency(final int[] permutation, final BoogieLocation bl) {
-		final Expression expr =
-				new ConditionGenerator(getPrimedVars(), mAutomata, permutation, mBoogieFilePath, bl).getResult();
+		final Expression expr = new ConditionGenerator(getPrimedVars(), mAutomata, permutation, bl).getResult();
 		if (expr == null) {
 			return null;
 		}
@@ -787,7 +773,7 @@ public class Req2BoogieTranslator {
 		for (int i = 0; i < idx.length; ++i) {
 			reqs[i] = mRequirements.get(idx[i]);
 		}
-		return new ReqCheck(reqSpec, idx, reqs, mInputFilePath);
+		return new ReqCheck(reqSpec, idx, reqs);
 	}
 
 	/**
@@ -1050,7 +1036,7 @@ public class Req2BoogieTranslator {
 		}
 		final List<Statement> statements = new ArrayList<>(constInits.size());
 		for (final InitializationPattern constInit : constInits) {
-			final String id = constInit.getIdent();
+			final String id = constInit.getId();
 			final Expression val = constInit.getExpression();
 			statements.add(genAssignmentStmt(bl, id, val));
 			statements.add(genAssignmentStmt(bl, getPrimedVar(id), val));
@@ -1095,28 +1081,10 @@ public class Req2BoogieTranslator {
 	}
 
 	private void initBoogieLocations(final int count) {
-		if (mInputFilePath == null) {
-			mInputFilePath = mBoogieFilePath;
-		}
 		mBoogieLocations = new BoogieLocation[count + 1];
-		mBoogieLocations[0] = new BoogieLocation(mInputFilePath, 1, count, 0, 100);
+		mBoogieLocations[0] = new BoogieLocation(null, 1, count, 0, 100);
 		for (int i = 0; i < count; i++) {
-			mBoogieLocations[i + 1] = new BoogieLocation(mInputFilePath, i + 1, i + 1, 0, 100);
+			mBoogieLocations[i + 1] = new BoogieLocation(null, i + 1, i + 1, 0, 100);
 		}
-	}
-
-	private void syntaxError(final ILocation location, final String description) {
-		errorAndAbort(location, description, new SyntaxErrorResult(Activator.PLUGIN_ID, location, description));
-	}
-
-	private void unsupportedSyntaxError(final ILocation location, final String description) {
-		errorAndAbort(location, description, new UnsupportedSyntaxResult<>(Activator.PLUGIN_ID, location, description));
-	}
-
-	private void errorAndAbort(final ILocation location, final String description, final IResult error) {
-		final String pluginId = Activator.PLUGIN_ID;
-		mLogger.error(location + ": " + description);
-		mServices.getResultService().reportResult(pluginId, error);
-		mServices.getProgressMonitorService().cancelToolchain();
 	}
 }

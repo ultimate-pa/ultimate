@@ -31,4 +31,9 @@ public class PrecedenceChain12Pattern extends PatternType {
 		return "it is always the case that if \"" + getCdds().get(2) + "\" holds and is succeeded by \""
 				+ getCdds().get(1) + "\", then \"" + getCdds().get(0) + "\" previously held";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new PrecedenceChain12Pattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

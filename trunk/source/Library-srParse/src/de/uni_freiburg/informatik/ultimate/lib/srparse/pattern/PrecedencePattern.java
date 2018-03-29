@@ -30,4 +30,9 @@ public class PrecedencePattern extends PatternType {
 		return "it is always the case that if \"" + getCdds().get(1) + "\" holds, then \"" + getCdds().get(0)
 				+ "\" previously held";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new PrecedencePattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

@@ -27,13 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
@@ -51,7 +50,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
  * created one, the previous CDD is reused. If two CDDs represent the same formula, they are always identical. A CDD
  * that does not equal FALSE is always satisfiable (provided that the decisions are implemented correctly).
  *
+ * Note to maintainers: {@link CDD}s depend on Java's {@link #hashCode()} and {@link #equals(Object)} method. Do not
+ * overwrite it. Look at {@link #create(Decision, CDD[])} to see what the dependency is.
+ *
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.Decision
+ *
  */
 public final class CDD {
 	/**
@@ -133,33 +136,30 @@ public final class CDD {
 	 *            the child formulae for the sub-decisions.
 	 */
 	public static CDD create(final Decision<?> decision, final CDD[] childs) {
+		final CDD cdd = new CDD(decision, childs);
 		int hashcode = decision.hashCode();
 
 		for (int i = 0; i < childs.length; i++) {
 			hashcode = (hashcode * (11 + i)) ^ childs[i].hashCode();
 		}
+		final Iterator<CDD> iter = UNIFY_HASH.iterateHashCode(hashcode).iterator();
 
-		final Iterator<CDD> it = UNIFY_HASH.iterateHashCode(hashcode).iterator();
-		CDD cdd;
-
-		try_next: while (it.hasNext()) {
-			cdd = it.next();
-
-			if (decision.equals(cdd.mDecision)) {
-				for (int i = 0; i < childs.length; i++) {
-					if (cdd.mChilds[i] != childs[i]) {
-						continue try_next;
-					}
-				}
-
-				return cdd;
+		while (iter.hasNext()) {
+			final CDD current = iter.next();
+			if (current.isEqual(cdd)) {
+				return current;
 			}
 		}
 
-		cdd = new CDD(decision, childs);
 		UNIFY_HASH.put(hashcode, cdd);
-
 		return cdd;
+	}
+
+	public boolean isEqual(final CDD cdd) {
+		if (mDecision.equals(cdd.mDecision)) {
+			return Arrays.equals(mChilds, cdd.mChilds);
+		}
+		return false;
 	}
 
 	/**
@@ -625,324 +625,10 @@ public final class CDD {
 		return true;
 	}
 
-	/**
-	 * Creates a string representation of the CDD.
-	 */
-	@Override
-	public String toString() {
-		return toString(false);
-	}
-
-	public String toTexString() {
-		return toTexString(false);
-	}
-
-	/**
-	 * Creates a string representation of the CDD.
-	 *
-	 * @param needsParens
-	 *            true, if disjunctions need to be parenthesised.
-	 */
-	public String toString(final boolean needsParens) {
-		final StringBuffer sb = new StringBuffer();
-		String ordelim = "";
-		int clauses = 0;
-
-		if (this == CDD.TRUE) {
-			return "TRUE";
-		}
-
-		if (this == CDD.FALSE) {
-			return "FALSE";
-		}
-
-		for (int i = 0; i < mChilds.length; i++) {
-			if (mChilds[i] == CDD.FALSE) {
-				continue;
-			}
-
-			sb.append(ordelim);
-
-			if (childDominates(i)) {
-				sb.append(mChilds[i]);
-			} else {
-				sb.append(mDecision.toString(i));
-
-				if (mChilds[i] != CDD.TRUE) {
-					sb.append(" \u2227 ").append(mChilds[i].toString(true));
-				}
-			}
-
-			ordelim = " \u2228 ";
-			clauses++;
-		}
-
-		if (needsParens && (clauses > 1)) {
-			return "(" + sb + ")";
-		}
-		return sb.toString();
-	}
-
-	public String toSmtString(final boolean needsParens, final int index) {
-		final StringBuffer sb = new StringBuffer();
-		final String ordelim = "(or ";
-		int clauses = 0;
-
-		if (this == CDD.TRUE) {
-			return "true";
-		}
-
-		if (this == CDD.FALSE) {
-			return "false";
-		}
-
-		int cnt = 0;
-
-		for (int i = 0; i < mChilds.length; i++) {
-			if (mChilds[i] == CDD.FALSE) {
-				continue;
-			}
-
-			sb.append(ordelim);
-			cnt++;
-
-			if (childDominates(i)) {
-				sb.append(mChilds[i].toSmtString(true, index));
-			} else {
-				if (mChilds[i].getChilds() != null) {
-					sb.append("(and ");
-				}
-
-				sb.append(mDecision.toSmtString(i, index));
-
-				if (mChilds[i] != CDD.TRUE) {
-					sb.append(mChilds[i].toSmtString(true, index));
-				}
-
-				if (mChilds[i].getChilds() != null) {
-					sb.append(") ");
-				}
-			}
-
-			clauses++;
-		}
-
-		for (int i = 0; i < cnt; i++) {
-			sb.append(") ");
-		}
-
-		// if (needsParens && clauses > 1)
-		// return "(" + sb + ")";
-		// else
-		return sb.toString();
-	}
-
-	/* bei range decisions wird der value der bound zur�ckgegeben - nur f�r einfache decisions */
-	public int getValue() {
-		if (!(mDecision instanceof RangeDecision)) {
-			return 0;
-		}
-
-		int val = 0;
-
-		for (int i = 0; i < mChilds.length; i++) {
-			if (mChilds[i] == CDD.FALSE) {
-				continue;
-			}
-
-			val = ((RangeDecision) mDecision).getVal(i);
-
-			if (val > 0) {
-				return val;
-			}
-		}
-
-		return val;
-	}
-
-	public int getOp() {
-		if (!(mDecision instanceof RangeDecision)) {
-			return RangeDecision.OP_INVALID;
-		}
-
-		int val = RangeDecision.OP_INVALID;
-
-		for (int i = 0; i < mChilds.length; i++) {
-			if (mChilds[i] == CDD.FALSE) {
-				continue;
-			}
-
-			val = ((RangeDecision) mDecision).getOp(i);
-
-			if (val != RangeDecision.OP_INVALID) {
-				return val;
-			}
-		}
-
-		return RangeDecision.OP_INVALID;
-	}
-
-	/**
-	 * Creates a string representation of the CDD in tex-format.
-	 *
-	 * @param needsParens
-	 *            true, if disjunctions need to be parenthesised.
-	 */
-	public String toTexString(final boolean needsParens) {
-		final StringBuffer sb = new StringBuffer();
-		String ordelim = "";
-		int clauses = 0;
-
-		if (this == CDD.TRUE) {
-			return "TRUE";
-		}
-
-		if (this == CDD.FALSE) {
-			return "FALSE";
-		}
-
-		for (int i = 0; i < mChilds.length; i++) {
-			if (mChilds[i] == CDD.FALSE) {
-				continue;
-			}
-
-			sb.append(ordelim);
-
-			if (childDominates(i)) {
-				sb.append(mChilds[i].toTexString(true));
-			} else {
-				sb.append(mDecision.toTexString(i));
-
-				if (mChilds[i] != CDD.TRUE) {
-					sb.append(" \\wedge ").append(mChilds[i].toTexString(true));
-				}
-			}
-
-			ordelim = " \\vee ";
-			clauses++;
-		}
-
-		if (needsParens && (clauses > 1)) {
-			return "(" + sb + ")";
-		}
-		return sb.toString();
-	}
-
-	/**
-	 * Creates a string representation of the CDD in tex-format.
-	 *
-	 * @param format
-	 *            in {tex, uppaal, general}
-	 * @param needsParens
-	 *            true, if disjunctions need to be parenthesised.
-	 */
-	public String toString(final String format, final boolean needsParens) {
-		final StringBuffer sb = new StringBuffer();
-		String ordelim = "";
-		int clauses = 0;
-
-		if (this == CDD.TRUE) {
-			return "TRUE";
-		}
-
-		if (this == CDD.FALSE) {
-			return "FALSE";
-		}
-
-		for (int i = 0; i < mChilds.length; i++) {
-			if (mChilds[i] == CDD.FALSE) {
-				continue;
-			}
-
-			sb.append(ordelim);
-
-			if (childDominates(i)) {
-				if (format.matches("tex")) {
-					sb.append(mChilds[i].toString("tex", true));
-				}
-
-				if (format.matches("uppaal")) {
-					sb.append(mChilds[i].toString("uppaal", true));
-				}
-
-				if (format.matches("general")) {
-					sb.append(mChilds[i].toString("general", true));
-				}
-			} else {
-				if (format.matches("tex")) {
-					sb.append(mDecision.toTexString(i));
-
-					if (mChilds[i] != CDD.TRUE) {
-						sb.append(" \\wedge ").append(mChilds[i].toString("tex", true));
-					}
-				}
-
-				if (format.matches("uppaal")) {
-					sb.append(mDecision.toString(i));
-
-					if (mChilds[i] != CDD.TRUE) {
-						sb.append(" && ").append(mChilds[i].toString("uppaal", true));
-					}
-				}
-
-				if (format.matches("general")) {
-					sb.append(mDecision.toString(i));
-
-					if (mChilds[i] != CDD.TRUE) {
-						sb.append(" \u2227 ").append(mChilds[i].toString("general", true));
-					}
-				}
-			}
-
-			if (format.matches("tex")) {
-				ordelim = " \\vee ";
-			}
-
-			if (format.matches("uppaal")) {
-				ordelim = " || ";
-			}
-
-			if (format.matches("general")) {
-				ordelim = " \u2228 ";
-			}
-
-			clauses++;
-		}
-
-		if (needsParens && (clauses > 1)) {
-			return "(" + sb + ")";
-		}
-		return sb.toString();
-	}
-
-	public void printCDD(final int i) {
-		if (this == CDD.TRUE) {
-			System.out.println("CDD=TRUE");
-
-			return;
-		} else if (this == CDD.FALSE) {
-			System.out.println("CDD=FALSE");
-
-			return;
-		}
-
-		System.out.println("Decision=" + mDecision.toString(i));
-
-		for (int j = 0; j < mChilds.length; j++) {
-			mChilds[j].printCDD(j);
-		}
-	}
-
-	/**
-	 * @return Returns the childs.
-	 */
 	public CDD[] getChilds() {
 		return mChilds;
 	}
 
-	/**
-	 * @return Returns the decision.
-	 */
 	public Decision<?> getDecision() {
 		return mDecision;
 	}
@@ -975,16 +661,13 @@ public final class CDD {
 		return mPrimeCache;
 	}
 
-	// Change by Ami
-	// the function returns whether a CDD is an atomic proposition (like A, !A) or a
-	// proposition composed of several variables (e.g., A&B, A||B)
+	/**
+	 * @return whether a CDD is an atomic proposition (like A, !A) or a proposition composed of several variables (e.g.,
+	 *         A&B, A||B)
+	 */
 	public boolean isAtomic() {
 		return ((getChilds()[0] == CDD.TRUE) || (getChilds()[0] == CDD.FALSE))
 				&& ((getChilds()[1] == CDD.TRUE) || (getChilds()[1] == CDD.FALSE));
-	}
-
-	private static void testIsAtomic(final CDD cdd) {
-		System.out.println("The formula " + cdd.toString() + " is atomic: " + cdd.isAtomic());
 	}
 
 	public CDD unprime() {
@@ -1012,127 +695,146 @@ public final class CDD {
 		return CDD.create(newDecision, newChildren);
 	}
 
-	/***
-	 * Collect Identifiers from the whole CDD
-	 *
-	 * @return set containing all variables in the CDD
+	/**
+	 * Creates a string representation of the CDD.
 	 */
-	public Set<String> getIdents() {
-		final Set<String> idents = new HashSet<>();
-		if (mChilds == null) { // empty cdds may happen
-			return idents;
+	@Override
+	public String toString() {
+		return toString(false);
+	}
+
+	public String toTexString() {
+		return toString("tex", false);
+	}
+
+	/**
+	 * Creates a string representation of the CDD.
+	 *
+	 * @param needsParens
+	 *            true, if disjunctions need to be parenthesised.
+	 */
+	public String toString(final boolean needsParens) {
+		return toString("general", needsParens);
+	}
+
+	/**
+	 * Creates a string representation of the CDD in tex-format.
+	 *
+	 * @param format
+	 *            in {tex, uppaal, general}
+	 * @param needsParens
+	 *            true, if disjunctions need to be parenthesised.
+	 */
+	public String toString(final String format, final boolean needsParens) {
+		if (this == CDD.TRUE) {
+			return "true";
 		}
-		for (final CDD child : getChilds()) {
-			if (child != null) {
-				idents.addAll(child.getIdents());
-			}
+
+		if (this == CDD.FALSE) {
+			return "false";
 		}
-		if (mDecision == null) {
-			return idents;
-		} else if (mDecision instanceof BoogieBooleanExpressionDecision) {
-			idents.addAll(((BoogieBooleanExpressionDecision) mDecision).getVars().keySet());
+
+		final Function<CDD, String> funCdd2Str;
+		final Function<Integer, String> funDecision2Str;
+		final String orStr;
+		final String andStr;
+		final boolean isInfix;
+		if ("tex".equalsIgnoreCase(format)) {
+			funCdd2Str = a -> a.toString("tex", true);
+			funDecision2Str = i -> mDecision.toTexString(i);
+			orStr = " \\vee ";
+			andStr = " \\wedge ";
+			isInfix = true;
+		} else if ("uppaal".equalsIgnoreCase(format)) {
+			funCdd2Str = a -> a.toString("uppaal", true);
+			funDecision2Str = i -> mDecision.toUppaalString(i);
+			orStr = " || ";
+			andStr = " && ";
+			isInfix = true;
+		} else if ("general".equalsIgnoreCase(format)) {
+			funCdd2Str = a -> a.toString("general", true);
+			funDecision2Str = i -> mDecision.toString(i);
+			orStr = " \u2228 ";
+			andStr = " \u2227 ";
+			isInfix = true;
+		} else if ("smt".equalsIgnoreCase(format)) {
+			funCdd2Str = a -> a.toString("smt", true);
+			funDecision2Str = i -> mDecision.toSmtString(i);
+			orStr = "(or ";
+			andStr = "(and ";
+			isInfix = false;
 		} else {
-			idents.add(mDecision.getVar());
+			throw new UnsupportedOperationException("Unknown format: " + format);
 		}
-		return idents;
+		if (isInfix) {
+			final String infixStr = toStringInfix(funCdd2Str, funDecision2Str, orStr, andStr);
+			if (needsParens && mChilds.length > 1) {
+				return "(" + infixStr + ")";
+			}
+			return infixStr;
+		}
+		return toStringPrefix(funCdd2Str, funDecision2Str, orStr, andStr);
 	}
 
-	// XXX: Testing
-	public static void main(final String[] args) {
-		final CDD a = BooleanDecision.create("a");
-		final CDD b = BooleanDecision.create("b");
-		final CDD c = BooleanDecision.create("c");
-		final CDD d = BooleanDecision.create("d");
-
-		// CDD main = ((a.and(b)).and(c.or(d))).or(e).or(f.negate());
-		// CDD main2 = ((a.and(b)).or(a.negate().and(b.negate())));
-		// CDD main = main2.or(c.and(d));
-		// CDD main = c.or(main2);
-
-		// CDD teil1 = a.negate().and(b).and(c);
-		// CDD teil2 = a.and(b);
-		// CDD main = teil1.or(teil2);
-
-		// CDD links = a.negate().or(b.or(c));
-		// CDD rechts = a.or(b);
-		// CDD main = links.and(rechts);
-		// CDD links = a.negate().and(b.and(c));
-		// CDD rechts = a.and(d);
-		// CDD main = links.or(rechts);
-		final CDD links = a.negate().and(b);
-		final CDD rechts = a.and(b.or(c)).and(d);
-		final CDD main = links.or(rechts);
-
-		final CDD test = a.negate();
-		final CDD test2 = a.or(b);
-
-		System.out.println("********************************* CDD ********************************* ");
-		System.out.println(main.toString());
-		System.out.println(main.toTexString());
-		testIsAtomic(test);
-		testIsAtomic(test2);
-		testIsAtomic(links);
-		testIsAtomic(main);
-		testIsAtomic(a);
-
-		final CDD[] dnf = main.toDNF();
-		System.out.println("********************************* DNF ********************************* ");
-
-		for (int i = 0; i < dnf.length; i++) {
-			System.out.println("*** Conjunctive term " + i + ": ");
-			System.out.println(dnf[i].toString());
-		}
-
-		final CDD[] cnf = main.toCNF();
-		System.out.println("********************************* CNF ********************************* ");
-
-		for (int i = 0; i < cnf.length; i++) {
-			System.out.println("*** Disjunctive term " + i + ": ");
-			System.out.println(cnf[i].toString());
-		}
-
-		System.out.println("*********************************************************************** ");
+	public String toSmtString(final boolean needsParens) {
+		return toString("smt", needsParens);
 	}
 
-	private int getDecHash() {
-		if (mDecision == null) {
-			return 0;
+	private String toStringPrefix(final Function<CDD, String> funCdd2Str,
+			final Function<Integer, String> funDecision2Str, final String orStr, final String andStr) {
+
+		final long childCount = Arrays.stream(mChilds).filter(a -> a != CDD.FALSE).count();
+		final StringBuilder sb = new StringBuilder();
+		if (childCount > 1) {
+			sb.append(orStr);
 		}
 
-		return mDecision.getVar().hashCode();
-	}
+		for (int i = 0; i < mChilds.length; i++) {
+			if (mChilds[i] == CDD.FALSE) {
+				continue;
+			}
 
-	private int getDecHash2() {
-		if (mDecision == null) {
-			return 0;
-		}
+			if (childDominates(i)) {
+				sb.append(funCdd2Str.apply(mChilds[i]));
+			} else {
+				if (mChilds[i].getChilds() != null) {
+					sb.append(andStr);
+				}
+				sb.append(funDecision2Str.apply(i));
 
-		int i;
-		int res = 0;
-		final char[] chs = mDecision.getVar().toCharArray();
+				if (mChilds[i] != CDD.TRUE) {
+					sb.append(funCdd2Str.apply(mChilds[i]));
+				}
 
-		for (i = 0; i < mDecision.getVar().length(); i++) {
-			res += (chs[i] * (((i & 1) == 0) ? 7 : 11));
-		}
-
-		return res;
-	}
-
-	public Vector<Integer> getElemHashes() {
-		int i;
-		final Vector<Integer> res = new Vector<>();
-
-		if (mDecision != null) {
-			res.add(getDecHash());
-			res.add(getDecHash2());
-		}
-
-		if (mChilds != null) {
-			for (i = 0; i < mChilds.length; i++) {
-				res.addAll(mChilds[i].getElemHashes());
+				if (mChilds[i].getChilds() != null) {
+					sb.append(") ");
+				}
 			}
 		}
-
-		return res;
+		return sb.toString();
 	}
+
+	private String toStringInfix(final Function<CDD, String> funCdd2Str,
+			final Function<Integer, String> funDecision2Str, final String orStr, final String andStr) {
+		final StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < mChilds.length; i++) {
+			if (mChilds[i] == CDD.FALSE) {
+				continue;
+			}
+			if (i != 0) {
+				sb.append(orStr);
+			}
+
+			if (childDominates(i)) {
+				sb.append(funCdd2Str.apply(mChilds[i]));
+			} else {
+				sb.append(funDecision2Str.apply(i));
+				if (mChilds[i] != CDD.TRUE) {
+					sb.append(andStr).append(funCdd2Str.apply(mChilds[i]));
+				}
+			}
+		}
+		return sb.toString();
+	}
+
 }

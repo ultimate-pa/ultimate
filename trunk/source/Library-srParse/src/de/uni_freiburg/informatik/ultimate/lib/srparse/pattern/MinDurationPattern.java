@@ -29,4 +29,9 @@ public class MinDurationPattern extends PatternType {
 		return "it is always the case that once \"" + getCdds().get(0)
 				+ "\" becomes satisfied, it holds for at least \"" + getDuration().get(0) + "\" time units";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new MinDurationPattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

@@ -58,7 +58,7 @@ public class ReqLocation extends DefaultLocation {
 	 *            the type of check/assertion
 	 */
 	public ReqLocation(final ReqCheck checkNode) {
-		super(checkNode.getFileName(), checkNode.getStartLine(), checkNode.getEndLine(), -1, -1);
+		super(null, checkNode.getStartLine(), checkNode.getEndLine(), -1, -1);
 		mCheckedSpecification = checkNode;
 	}
 

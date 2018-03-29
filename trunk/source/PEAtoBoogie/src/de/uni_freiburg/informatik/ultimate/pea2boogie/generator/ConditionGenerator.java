@@ -50,9 +50,9 @@ public class ConditionGenerator {
 	private final Expression mResult;
 
 	public ConditionGenerator(final Collection<String> primedVars, final PhaseEventAutomata[] automata,
-			final int[] automataPermutation, final String fileName, final BoogieLocation bl) {
+			final int[] automataPermutation, final BoogieLocation bl) {
 		mPrimedVars = primedVars;
-		mResult = nonDLCGenerator(automata, automataPermutation, fileName, bl);
+		mResult = nonDLCGenerator(automata, automataPermutation, bl);
 	}
 
 	public Expression getResult() {
@@ -60,7 +60,7 @@ public class ConditionGenerator {
 	}
 
 	private Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final int[] automataPermutation,
-			final String fileName, final BoogieLocation bl) {
+			final BoogieLocation bl) {
 		final int[][] phases = createPhasePairs(automata, automataPermutation);
 
 		final List<int[]> phasePermutations = CrossProducts.crossProduct(phases);
@@ -80,7 +80,7 @@ public class ConditionGenerator {
 				}
 				cddOuter = cddOuter.and(cddInner);
 				final String pcName = Req2BoogieTranslator.getPcName(automata[automataPermutation[j]]);
-				impliesLHS.add(genPCCompEQ(pcName, vector[j], fileName, bl));
+				impliesLHS.add(genPCCompEQ(pcName, vector[j], bl));
 			}
 			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, mPrimedVars);
 			if (cdd == CDD.TRUE) {
@@ -143,8 +143,7 @@ public class ConditionGenerator {
 		return cdd;
 	}
 
-	private static Expression genPCCompEQ(final String pcName, final int phaseIndex, final String fileName,
-			final BoogieLocation bl) {
+	private static Expression genPCCompEQ(final String pcName, final int phaseIndex, final BoogieLocation bl) {
 		final IdentifierExpression identifier = new IdentifierExpression(bl, pcName);
 		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
 		final BinaryExpression binaryExpr =

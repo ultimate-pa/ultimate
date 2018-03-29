@@ -31,4 +31,9 @@ public class BndInvariancePattern extends PatternType {
 		return "it is always the case that if \"" + getCdds().get(1) + "\" holds, then \"" + getCdds().get(0)
 				+ "\" holds for at least \"" + getDuration().get(0) + "\" time units";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new BndInvariancePattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

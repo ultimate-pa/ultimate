@@ -31,4 +31,9 @@ public class ResponseChain21Pattern extends PatternType {
 				+ getCdds().get(2) + "\", then \"" + getCdds().get(1) + "\" eventually holds after \""
 				+ getCdds().get(0) + "\"";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new ResponseChain21Pattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

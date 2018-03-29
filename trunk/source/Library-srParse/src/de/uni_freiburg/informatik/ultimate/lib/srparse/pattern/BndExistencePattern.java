@@ -30,4 +30,9 @@ public class BndExistencePattern extends PatternType {
 		res = "transitions to states in which \"" + getCdds().get(0) + "\" holds occur at most twice";
 		return res;
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new BndExistencePattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

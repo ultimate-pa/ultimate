@@ -25,4 +25,9 @@ public class BndPossResponsePattern extends PatternType {
 		return "if \"" + getCdds().get(1) + "\" holds, then there is at least one execution sequence such that \""
 				+ getCdds().get(0) + "\" holds after at most \"" + getDuration().get(0) + "\" time units";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new BndPossResponsePattern(getScope(), newName, getCdds(), getDuration());
+	}
 }

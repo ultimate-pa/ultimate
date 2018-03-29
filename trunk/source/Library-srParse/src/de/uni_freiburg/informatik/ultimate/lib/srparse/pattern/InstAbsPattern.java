@@ -97,4 +97,9 @@ public class InstAbsPattern extends PatternType {
 	public String toString() {
 		return "it is never the case that \"" + getCdds().get(0) + "\" holds";
 	}
+
+	@Override
+	public PatternType rename(final String newName) {
+		return new InstAbsPattern(getScope(), newName, getCdds(), getDuration());
+	}
 }
