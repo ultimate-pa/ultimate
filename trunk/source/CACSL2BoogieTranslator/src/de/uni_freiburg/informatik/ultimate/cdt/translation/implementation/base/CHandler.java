@@ -3974,7 +3974,7 @@ public class CHandler implements ICHandler {
 		final Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
 
 		Expression oldValue = null;
-		final Integer oldValueInt = -1;
+		Integer oldValueInt = -1;
 
 		// C standard says: "The identifiers in an enumerator list are declared
 		// as constants that have type int ..."
@@ -4006,6 +4006,7 @@ public class CHandler implements ICHandler {
 				newValue = cEnum.getFieldValue(fId);
 			}
 			oldValue = newValue;
+			oldValueInt = newValueInt;
 			enumDomain[i] = newValue;
 			mAxioms.add(new Axiom(loc, new Attribute[0],
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, newValue)));
