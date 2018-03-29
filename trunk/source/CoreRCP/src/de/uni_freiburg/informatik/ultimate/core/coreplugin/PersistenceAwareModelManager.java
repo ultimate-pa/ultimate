@@ -2,22 +2,22 @@
  * Copyright (C) 2009-2015 Björn Buchhold
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -54,18 +54,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * PersistenceAwareModelManager
- * 
+ *
  * Standard implementation of the {@link IModelManager} A {@link PersistenceAwareModelManager} is created using a
  * repository. The default repository is the System's java temporary directory. There should be a property page to set
  * the repository's location in the file system to a desired value
- * 
+ *
  * The ModelManager should be used for any access to models produced by previous tool runs.
- * 
+ *
  * The Application may ask the ModelManager to persist and models and probably drop them from the in-memory map.
  * Subsequent access to such a model is dispatched to the repository and the model is added to the memory-map, again
- * 
+ *
  * @author Björn Buchhold
- * 
+ *
  */
 public class PersistenceAwareModelManager implements IModelManager {
 
@@ -88,7 +88,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	/**
 	 * String createFileNameFromNode
-	 * 
+	 *
 	 * @param node
 	 * @return File name for a given node.
 	 */
@@ -98,7 +98,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 		}
 		String graphName = "";
 		final ILocation loc = ILocation.getAnnotation(node);
-		if (loc != null) {
+		if (loc != null && loc.getFileName() != null) {
 			graphName = loc.getFileName();
 		}
 		if (graphName.contains(", ")) {
@@ -118,7 +118,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	/**
 	 * Adds a new container to the in-memory model store.
-	 * 
+	 *
 	 * @param container
 	 * @return false if model is present in the in-memory store, true otherwise
 	 */
@@ -138,7 +138,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	/**
 	 * Adds a new model to the in-memory model store.
-	 * 
+	 *
 	 * @param rootNode
 	 *            The model represented by an {@link IElement}.
 	 * @param graphtype
