@@ -84,7 +84,7 @@ public class SolverBuilder {
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
-	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = true;
+	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = false;
 
 	private static Script createSMTInterpol(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
