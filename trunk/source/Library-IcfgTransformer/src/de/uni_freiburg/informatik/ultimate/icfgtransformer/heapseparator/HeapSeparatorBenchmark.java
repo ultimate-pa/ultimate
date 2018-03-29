@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2017-2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2017-2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.HashSet;
@@ -8,20 +34,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
 public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
-	//implements ICsvProviderProvider<Number> {
-
-//	private int mTransformulaCounter;
-//	private int mArrayUpdateCounter;
-//	private int mNewlyIntroducedArrayUpdateCounter;
-//	private int mNoArrayGroups;
-//	private int mNoArrays;
-//	private int mNoEquivalenceClasses;
-
-//	final private List<String> mColumnTitles = new ArrayList<>();
-//	final private List<Number> mResults = new ArrayList<>();
-
-//	private boolean mAlreadyGeneratedColumnTitlesAndResults;
-
 	private final Set<ArrayGroup> mHeapArrayGroups = new HashSet<>();
 
 	private final NestedMap3<ArrayGroup, Integer, HeapSeparatorStatistics, Number> mPerArrayAndDimensionInfo =
@@ -29,20 +41,6 @@ public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
 
 	private final NestedMap2<ArrayGroup, HeapSeparatorStatistics, Number> mPerArrayInfo = new NestedMap2<>();
 
-
-//	@Override
-//	public ICsvProvider<Number> createCsvProvider() {
-//
-////		final List<String> columnTitles = new ArrayList<>();
-////		final List<Integer> results = new ArrayList<>();
-//
-//		generateColumnTitlesAndResults();
-//
-////		final ICsvProvider<Number> result = new SimpleCsvProvider<>(mColumnTitles);
-////		result.addRow(mResults);
-//
-//		return result;
-//	}
 
 	@Override
 	protected void generateColumnTitlesAndResults() {
@@ -58,10 +56,6 @@ public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
 					// TODO group enum members..
 					if (v == HeapSeparatorStatistics.COUNT_BLOCKS || v == HeapSeparatorStatistics.COUNT_ARRAY_WRITES) {
 						mColumnTitles.add(v.name() + "_for_" + heapArrayGroup + "_at_dim_" + dim);
-						//					mColumnTitles.add(String.format("%40s for %15 at %4s", v.name(), heapArrayGroup, "t"));
-						//					mColumnTitles.add(String.format("%40s for %15s at %d", v.name(), heapArrayGroup,
-						//							Integer.valueOf(dim)));
-						//							Integer.toString(dim)));
 						mResults.add(mPerArrayAndDimensionInfo.get(heapArrayGroup, dim, v));
 					}
 				}
@@ -102,18 +96,6 @@ public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
 
 	}
 
-//	void incrementTransformulaCounter() {
-//		mTransformulaCounter++;
-//	}
-//
-//	void incrementArrayUpdateCounter() {
-//		mArrayUpdateCounter++;
-//	}
-//
-//	void incrementNewlyIntroducedArrayUpdateCounter() {
-//		mNewlyIntroducedArrayUpdateCounter++;
-//	}
-
 	@Override
 	public String toString() {
 		generateColumnTitlesAndResults();
@@ -131,24 +113,5 @@ public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
 	public void incrementNewArrayVarCounter(final ArrayGroup arrayGroup) {
 		super.incrementCounter(getNewArrayVarCounterName(arrayGroup));
 	}
-
-//	/**
-//	 * Arrays are in one group if they are equated somewhere in the program.
-//	 * @param size
-//	 */
-//	public void setNoArrayGroups(final int size) {
-//		mNoArrayGroups = size;
-//	}
-//
-//	public void setNoArrays(final int size) {
-//		mNoArrays = size;
-//	}
-//
-//	/**
-//	 * the number of overall equivalence classes (when this is equal to NoArrayGroups, no split has taken place)
-//	 */
-//	public void incrementEquivalenceClassCounter() {
-//		mNoEquivalenceClasses++;
-//	}
 
 }

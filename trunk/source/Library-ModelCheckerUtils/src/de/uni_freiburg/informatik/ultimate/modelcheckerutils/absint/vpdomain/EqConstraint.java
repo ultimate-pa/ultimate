@@ -268,6 +268,7 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	public Set<IProgramVarOrConst> getPvocs(final IIcfgSymbolTable symbolTable) {
 		assert mIsFrozen;
 		if (mPvocs != null) {
+			assert !mPvocs.stream().anyMatch(Objects::isNull);
 			return mPvocs;
 		}
 		mPvocs = new HashSet<>();

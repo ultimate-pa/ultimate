@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2017-2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2017-2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
@@ -20,9 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  */
 public class ArrayCellAccess {
 
-//	private final ArraySelect mArraySelect;
-//	private final ArraySelectOverStore mArraySelectOverStore;
-
 	private final MultiDimensionalSelect mMdSelect;
 
 	/**
@@ -30,16 +53,6 @@ public class ArrayCellAccess {
 	 *  (otherwise it's just that array term of mMdSelect)
 	 */
 	private final Term mSimpleArrayTerm;
-
-//	public ArrayCellAccess(final ArraySelect arraySelect) {
-//		mArraySelect = arraySelect;
-//		mArraySelectOverStore = null;
-//	}
-//
-//	public ArrayCellAccess(final ArraySelectOverStore arraySelectOverStore) {
-//		mArraySelect = null;
-//		mArraySelectOverStore = arraySelectOverStore;
-//	}
 
 	public ArrayCellAccess(final MultiDimensionalSelect mdSelect) {
 		mMdSelect = mdSelect;
@@ -59,18 +72,6 @@ public class ArrayCellAccess {
 
 		mdSelects.forEach(mds -> result.add(new ArrayCellAccess(mds)));
 
-//		final Set<String> functionSymbolNames = Collections.singleton("select");
-//
-//		final ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
-//		for (final ApplicationTerm subterm : atf.findMatchingSubterms(formula)) {
-//			final Term firstParam = subterm.getParameters()[0];
-//			if (SmtUtils.isFunctionApplication(firstParam, "store")) {
-//				result.add(new ArrayCellAccess(ArraySelectOverStore.convert(subterm)));
-//			} else {
-//				result.add(new ArrayCellAccess(ArraySelect.convert(subterm)));
-//			}
-//		}
-
 		return result;
 	}
 
@@ -88,52 +89,19 @@ public class ArrayCellAccess {
 	 */
 	public Term getSimpleArray() {
 		return mSimpleArrayTerm;
-//		if (mArraySelect != null) {
-//			return mArraySelect.getArray();
-//		}
-//		if (mArraySelectOverStore != null) {
-//			return mArraySelectOverStore.getArrayStore().getArray();
-//		}
-//		throw new AssertionError();
 	}
 
 	public ArrayIndex getIndex() {
 		return mMdSelect.getIndex();
-//		if (mArraySelect != null) {
-//			return mArraySelect.getIndex();
-//		}
-//		if (mArraySelectOverStore != null) {
-//			return mArraySelectOverStore.getIndex();
-//		}
-//		throw new AssertionError();
 	}
 
 	public Term getTerm() {
-//	public Term getTerm(final Script script) {
 		return mMdSelect.getSelectTerm();
-//		if (mArraySelect != null) {
-//			return mArraySelect.toTerm(script);
-//		}
-//		if (mArraySelectOverStore != null) {
-//			return mArraySelectOverStore.toTerm(script);
-//		}
-//		throw new AssertionError();
 	}
 
 	@Override
 	public String toString() {
 		return mMdSelect.toString();
-
-//		if (mArraySelect != null) {
-//			return mArraySelect.toTerm(script);
-//		}
-//		if (mArraySelectOverStore != null) {
-//			return mArraySelectOverStore.toTerm(script);
-//		}
-//		throw new AssertionError();
-//
-//
-//		return "(array " + getArray() + " at " + getIndex() + ")";
 	}
 
 	public Set<Integer> getDimensionsOfIndexTerm(final Term indexSubterm) {
@@ -175,7 +143,4 @@ public class ArrayCellAccess {
 		}
 		return true;
 	}
-
-
-
 }

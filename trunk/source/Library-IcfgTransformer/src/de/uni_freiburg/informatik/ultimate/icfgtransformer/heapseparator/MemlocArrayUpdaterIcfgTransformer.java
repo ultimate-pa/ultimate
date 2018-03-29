@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2017-2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2017-2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
@@ -77,6 +103,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
+	/**
+	 * info must be queried after all transform calls have been made
+	 */
+	private boolean mQueriedStoreAndLitInfo;
+
 	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger, //final String resultName,
 			final ManagedScript mgdScript,
 //			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
@@ -114,9 +145,8 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	@Override
 	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+		assert !mQueriedStoreAndLitInfo;
+
 		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
 		if (TRACK_CONSTANTS) {
@@ -281,9 +311,9 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 //		return sii;
 //	}
 
-	public NestedMap2<EdgeInfo, Term, StoreIndexInfo> getEdgeToIndexToStoreIndexInfo() {
-		return mEdgeToIndexToStoreIndexInfo;
-	}
+//	public NestedMap2<EdgeInfo, Term, StoreIndexInfo> getEdgeToIndexToStoreIndexInfo() {
+//		return mEdgeToIndexToStoreIndexInfo;
+//	}
 
 	/**
 	 * Not this class's core concern but it also picks up all ConstantTerms in the program.
@@ -297,10 +327,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	}
 
 	public Set<IProgramConst> getLocationLiterals() {
-		return new HashSet<>(mStoreIndexInfoToLocLiteral.values());
+		return new HashSet<>(getStoreIndexInfoToLocLiteral().values());
 	}
 
 	public Map<StoreIndexInfo, IProgramConst> getStoreIndexInfoToLocLiteral() {
+		mQueriedStoreAndLitInfo = true;
 		return mStoreIndexInfoToLocLiteral;
 	}
 

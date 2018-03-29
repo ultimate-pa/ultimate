@@ -83,10 +83,6 @@ public class SubArrayManager {
 		return "NewArrayIdProvider";// + mArrayToPartitionInformation.toString();
 	}
 
-//	public IIcfgSymbolTable getNewSymbolTable() {
-//		return mNewSymbolTable;
-//	}
-
 	public IProgramVarOrConst getSubArray(final IProgramVarOrConst programVar, final List<LocationBlock> projectList) {
 		final ArrayGroup arrayGroup = mArrayIdToArrayGroup.get(programVar);
 		assert Objects.nonNull(arrayGroup);
@@ -96,7 +92,6 @@ public class SubArrayManager {
 
 		IProgramVarOrConst subArray = mArrayToLocationBlockListToSubArray.get(programVar, projectList);
 		if (subArray == null) {
-//			subArray = constructNewPvoc(programVar, projectList);
 			subArray = constructFreshProgramVarsForIndexPartition(programVar, projectList);
 			mArrayToLocationBlockListToSubArray.put(programVar, projectList, subArray);
 
@@ -105,21 +100,6 @@ public class SubArrayManager {
 
 		return subArray;
 	}
-
-
-
-//	private IProgramVarOrConst constructNewPvoc(final IProgramVarOrConst programVar, final List<LocationBlock> projectList) {
-//		if (programVar instanceof IProgramVar) {
-//			ProgramVarUtils.
-//
-//			return null;
-//		} else if (programVar instanceof IProgramConst) {
-//			throw new UnsupportedOperationException("TODO: implement this");
-//		} else {
-//			throw new AssertionError();
-//		}
-//	}
-
 
 	/**
 	 * Given an IndexPartition constructs fresh Terms and ProgramVars for all the arrays in this ParititionInformation's
@@ -183,13 +163,10 @@ public class SubArrayManager {
 			mManagedScript.unlock(this);
 			return freshVar;
 		} else if (arrayPv instanceof IntraproceduralReplacementVar) {
-//			assert false : "TODO: implement";
 			throw new AssertionError("TODO: implement");
 		} else if (arrayPv instanceof BoogieConst) {
-//			assert false : "TODO: implement";
 			throw new AssertionError("TODO: implement");
 		} else {
-//			assert false : "case missing --> add it?";
 			throw new AssertionError("case missing --> add it?");
 		}
 	}

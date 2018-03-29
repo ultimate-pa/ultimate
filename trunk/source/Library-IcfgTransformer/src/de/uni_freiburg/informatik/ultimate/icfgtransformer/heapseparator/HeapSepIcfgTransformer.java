@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2017-2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2017-2018 University of Freiburg
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.Collection;
@@ -167,8 +193,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar;
 
 		final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral;
-//		final IProgramNonOldVar memlocArrayInt;
-//		final Sort memLocSort;
 		final MemlocArrayManager memlocArrayManager;
 
 		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
@@ -177,11 +201,10 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 * add the freeze var updates to each transition with an array update
 			 */
 			IIcfg<OUTLOC> icfgWFreezeVarsUninitialized;
-final Set<ConstantTerm> allConstantTerms;
+			final Set<ConstantTerm> allConstantTerms;
 			{
 				final StoreIndexFreezerIcfgTransformer<INLOC, OUTLOC> sifit =
-						new StoreIndexFreezerIcfgTransformer<>(mLogger, //"icfg_with_uninitialized_freeze_vars",
-								//	outLocationClass, originalIcfg, funLocFac, backtranslationTracker,
+						new StoreIndexFreezerIcfgTransformer<>(mLogger,
 								originalIcfg.getCfgSmtToolkit().getManagedScript(),
 								originalIcfg.getCfgSmtToolkit().getSymbolTable(),
 								originalIcfg.getCfgSmtToolkit().getProcedures(),
@@ -189,7 +212,7 @@ final Set<ConstantTerm> allConstantTerms;
 								edgeToIndexToStoreIndexInfo);
 				final IcfgTransformer<INLOC, OUTLOC> siftf = new IcfgTransformer<>(originalIcfg, funLocFac,
 						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", sifit);
-				//			IIcfg<OUTLOC> icfgWFreezeVarsUninitialized = sifit.getResult();
+
 				icfgWFreezeVarsUninitialized = siftf.getResult();
 				storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
 				allConstantTerms = sifit.getAllConstantTerms();
@@ -254,8 +277,6 @@ final Set<ConstantTerm> allConstantTerms;
 			{
 				final FreezeVarInitializer<OUTLOC, OUTLOC> fvi = new FreezeVarInitializer<>(mLogger,
 						mMgdScript,
-						//"icfg_with_initialized_freeze_vars", outLocationClass, icfgWFreezeVarsUninitialized, outToOutLocFac,
-						//	backtranslationTracker,
 						freezeVarTofreezeVarLit, validArray, mSettings,
 						icfgWFreezeVarsUninitialized.getInitialNodes(),
 						icfgWFreezeVarsUninitialized.getCfgSmtToolkit().getSymbolTable(),
@@ -265,14 +286,12 @@ final Set<ConstantTerm> allConstantTerms;
 				final IcfgTransformer<INLOC, OUTLOC> icfgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
 						backtranslationTracker, outLocationClass, "icfg_with_initialized_freeze_vars", fvi);
 
-//				final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = fvi.getResult();
 				final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = icfgtf.getResult();
 
 				preprocessedIcfg = icfgWFreezeVarsInitialized;
 			}
 
 			storeIndexInfoToLocLiteral = null;
-//			dimToMemlocArrayInt = null;
 			memlocArrayManager = null;
 		} else {
 			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
@@ -288,23 +307,25 @@ final Set<ConstantTerm> allConstantTerms;
 			final IIcfg<OUTLOC> icfgWithMemlocUpdates;
 			{
 				final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
-						new MemlocArrayUpdaterIcfgTransformer<>(mLogger, //"icfg_with_memloc_updates",
+						new MemlocArrayUpdaterIcfgTransformer<>(mLogger,
 								mMgdScript,
-								//outLocationClass, originalIcfg, funLocFac, backtranslationTracker,
 								memlocArrayManager,
 								mHeapArrays, edgeToIndexToStoreIndexInfo,
 								originalIcfg.getCfgSmtToolkit().getSymbolTable(),
 								originalIcfg.getCfgSmtToolkit().getProcedures()
 								);
 
-				storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
-				// make sure the literals are all treated as pairwise unequal
-				//			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
-				memlocLiterals.addAll(mauit.getLocationLiterals());
 
 
 				final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
 						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mauit);
+
+				storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
+				/* make sure the literals are all treated as pairwise unequal
+				 *			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
+				 */
+				memlocLiterals.addAll(mauit.getLocationLiterals());
+
 
 				icfgWithMemlocUpdates = icgtf.getResult();
 
@@ -315,7 +336,6 @@ final Set<ConstantTerm> allConstantTerms;
 
 
 
-//			preprocessedIcfg = icfgWithMemlocUpdates;
 
 			/*
 			 * Add initialization code for the memloc arrays.
@@ -326,14 +346,12 @@ final Set<ConstantTerm> allConstantTerms;
 			{
 				final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
 						icfgWithMemlocUpdates.getCfgSmtToolkit(),
-						//"icfg_with_initialized_freeze_vars", outLocationClass, icfgWithMemlocUpdates, outToOutLocFac,
-					//	backtranslationTracker,
 						memlocArrayManager, validArray, mSettings,
 						icfgWithMemlocUpdates.getInitialNodes());
 
 
-				final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
-						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mli);
+				final IcfgTransformer<OUTLOC, OUTLOC> icgtf = new IcfgTransformer<>(icfgWithMemlocUpdates,
+						outToOutLocFac, backtranslationTracker, outLocationClass, "icfgmemlocinitialized", mli);
 
 				icfgWMemlocInitialized = icgtf.getResult();
 
@@ -425,9 +443,6 @@ final Set<ConstantTerm> allConstantTerms;
 		 */
 		final PartitionProjectionTransitionTransformer<INLOC, OUTLOC> heapSeparatingTransformer =
 				new PartitionProjectionTransitionTransformer<>(mLogger,
-						//"HeapSeparatedIcfg",
-//						outLocationClass,
-						//originalIcfg, funLocFac, backtranslationTracker,
 						partitionManager.getSelectInfoToDimensionToLocationBlock(),
 						edgeToIndexToStoreIndexInfo,
 						arrayToArrayGroup,
@@ -436,7 +451,6 @@ final Set<ConstantTerm> allConstantTerms;
 						originalIcfg.getCfgSmtToolkit());
 		final IcfgTransformer<INLOC, OUTLOC> icfgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
 				backtranslationTracker, outLocationClass, "memPartitionedIcfg", heapSeparatingTransformer);
-//		mResultIcfg = heapSeparatingTransformer.getResult();
 		mResultIcfg = icfgtf.getResult();
 	}
 
@@ -923,20 +937,4 @@ class MemlocArrayManager {
 	public Set<IProgramConst> getMemLocLits() {
 		return new HashSet<>(mMemlocArrayToLit.values());
 	}
-
-//			/**
-//			 * create program variable for memloc array
-//			 *  conceptually, we need one memloc array for each index sort that is used in the program, for now we just
-//			 *  create one for integer indices
-//			 */
-//			mMgdScript.lock(this);
-//			mMgdScript.getScript().declareSort(MEMLOC_SORT_INT, 0);
-//			dimToMemLocSort = mMgdScript.getScript().sort(MEMLOC_SORT_INT);
-//			final Sort intToLocations = SmtSortUtils.getArraySort(mMgdScript.getScript(),
-//					SmtSortUtils.getIntSort(mMgdScript), dimToMemLocSort);
-//			dimToMemlocArrayInt = ProgramVarUtils.constructGlobalProgramVarPair(MEMLOC + "_int", intToLocations, mMgdScript,
-//					this);
-//			mMgdScript.unlock(this);
-
-
 }
