@@ -40,14 +40,17 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConvert
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 
 public class ReqToPEA {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final PeaResultUtil mResult;
 
 	public ReqToPEA(final IUltimateServiceProvider services, final ILogger logger) {
 		mLogger = logger;
 		mServices = services;
+		mResult = new PeaResultUtil(mLogger, mServices);
 	}
 
 	public List<PatternType> genPatterns(final String reqFileName) throws Exception {
@@ -62,23 +65,17 @@ public class ReqToPEA {
 
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
 		for (final PatternType pat : patterns) {
-			// ignore patterns with syntax errors
-			if (pat == null) {
-				mLogger.error("Ignoring pattern with syntax error: unknown ID");
-				continue;
-			}
 
 			final PhaseEventAutomata pea;
 			try {
 				pea = pat.transformToPea(peaTrans, id2bounds);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
-				mLogger.error(
-						"Ignoring pattern that could not be transformed: " + pat.getId() + " -- Reason: " + reason);
+				mResult.transformationError(pat, reason);
 				continue;
 			}
 			if (pea.getInit().length == 0) {
-				mLogger.error("ignoring pattern without initial phase: " + pat.getId());
+				mResult.transformationError(pat, "No initial phase");
 				continue;
 			}
 			peaList.add(pea);

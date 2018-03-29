@@ -60,6 +60,7 @@ public class PeaToBoogie implements ISource {
 	private ILogger mLogger;
 	private List<String> mFileNames = new ArrayList<>();
 	private IUltimateServiceProvider mServices;
+	private PeaResultUtil mReporter;
 
 	@Override
 	public void init() {
@@ -91,15 +92,17 @@ public class PeaToBoogie implements ISource {
 		final List<PatternType> rawPatterns = new ArrayList<>();
 		mFileNames = new ArrayList<>();
 		for (final File file : files) {
-			final String inputPath = file.getAbsolutePath();
-			mFileNames.add(inputPath);
-			mLogger.info("Parsing: '" + inputPath + "'");
-			final List<PatternType> currentPatterns = new ReqToPEA(mServices, mLogger).genPatterns(inputPath);
-			if (currentPatterns.stream().anyMatch(Objects::isNull)) {
-				throw new Exception("The parser failed on some requirements from " + inputPath);
+			final String filePath = file.getAbsolutePath();
+			mFileNames.add(filePath);
+			mLogger.info("Parsing: '" + filePath + "'");
+			final List<PatternType> currentPatterns = new ReqToPEA(mServices, mLogger).genPatterns(filePath);
+			final List<PatternType> nonNullCurrentPatterns =
+					currentPatterns.stream().filter(a -> a != null).collect(Collectors.toList());
+			if (currentPatterns.size() != nonNullCurrentPatterns.size()) {
+				mReporter.unexpectedParserFailure(filePath);
 			}
-			logPatternSize(currentPatterns, "parsed from " + inputPath);
-			rawPatterns.addAll(currentPatterns);
+			logPatternSize(nonNullCurrentPatterns, "parsed from " + filePath);
+			rawPatterns.addAll(nonNullCurrentPatterns);
 		}
 		logPatternSize(rawPatterns, "in total");
 		final List<PatternType> unifiedPatterns = unify(rawPatterns);
@@ -141,8 +144,7 @@ public class PeaToBoogie implements ISource {
 		for (final T pattern : patterns) {
 			final T rep = uf.findAndConstructEquivalenceClassIfNeeded(pattern);
 			if (rep != pattern) {
-				mLogger.warn("Merging requirements " + pattern.getId() + " and " + rep.getId()
-						+ " because they are equivalent");
+				mReporter.mergedRequirements(pattern, rep);
 			}
 		}
 		return uf;
@@ -155,9 +157,7 @@ public class PeaToBoogie implements ISource {
 				rtr.addAll(eqclass);
 				continue;
 			}
-			mLogger.warn(
-					"Merging requirements " + eqclass.stream().map(a -> a.getId()).collect(Collectors.joining(", "))
-							+ "because they are equivalent");
+			mReporter.mergedRequirements(eqclass);
 			rtr.add(merge(eqclass));
 		}
 		return rtr;
@@ -185,7 +185,6 @@ public class PeaToBoogie implements ISource {
 	}
 
 	private void checkTypeConflicts(final Collection<InitializationPattern> inits) {
-		final PeaResultUtil results = new PeaResultUtil(mLogger, mServices);
 		final Map<String, InitializationPattern> seen = new HashMap<>();
 		for (final InitializationPattern init : inits) {
 			final InitializationPattern otherInit = seen.put(init.getId(), init);
@@ -193,7 +192,7 @@ public class PeaToBoogie implements ISource {
 				continue;
 			}
 			if (!Objects.equals(init.getType(), otherInit.getType())) {
-				results.unsupportedSyntaxError(new DummyLocation(),
+				mReporter.unsupportedSyntaxError(new DummyLocation(),
 						String.format("The initialization patterns %s and %s have conflicting types: %s vs. %s",
 								init.getId(), otherInit.getId(), init.getType(), otherInit.getType()));
 			}
@@ -252,6 +251,7 @@ public class PeaToBoogie implements ISource {
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mReporter = new PeaResultUtil(mLogger, mServices);
 	}
 
 	@Override
