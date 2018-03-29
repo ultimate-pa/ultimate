@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -602,7 +603,14 @@ public class ACSLHandler implements IACSLHandler {
 		// EDIT: (alex feb 18:) does this fixme still apply?
 
 		// TODO seems quite hacky, how we obtain storage class and procedure id ..
-		final ASTType astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
+		final ASTType astType;
+		if (stv.getBoogieDecl() instanceof VariableDeclaration) {
+			astType = ((VariableDeclaration) stv.getBoogieDecl()).getVariables()[0].getType();
+		} else if (stv.getBoogieDecl() instanceof ConstDeclaration) {
+			astType = ((ConstDeclaration) stv.getBoogieDecl()).getVarList().getType();
+		} else {
+			throw new UnsupportedOperationException("todo: handle this case");
+		}
 		final StorageClass sc = stv.isBoogieGlobalVar() ? StorageClass.GLOBAL : StorageClass.LOCAL;
 		final String procId = sc == StorageClass.GLOBAL ? null
 				: main.mCHandler.getProcedureManager().getCurrentProcedureID();
@@ -635,7 +643,7 @@ public class ACSLHandler implements IACSLHandler {
 
 		final String rslvId = main.mCHandler.getSymbolTable().applyMultiparseRenaming(
 				main.getAcslHook().getContainingFilename(), node.getIdentifier());
-		
+
 		final SymbolTableValue stv =
 				main.mCHandler.getSymbolTable().findCSymbol(main.getAcslHook(), rslvId);
 		if (stv == null) {
@@ -724,7 +732,7 @@ public class ACSLHandler implements IACSLHandler {
 		final List<IdentifierExpression> identifiers = new ArrayList<>();
 		for (final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression e : node.getLocations()) {
 			if (e instanceof de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression) {
-				final IdentifierExpression dispatched = 
+				final IdentifierExpression dispatched =
 					((IdentifierExpression) main.dispatch(e, main.getAcslHook()).node);
 				// identifiers.add(dispatched.getIdentifier());
 				identifiers.add(dispatched);

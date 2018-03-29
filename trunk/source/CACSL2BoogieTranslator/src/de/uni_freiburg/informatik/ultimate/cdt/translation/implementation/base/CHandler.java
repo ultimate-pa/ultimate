@@ -4003,6 +4003,8 @@ public class CHandler implements ICHandler {
 						new BigInteger(newValueInt.toString()));
 
 			} else {
+				newValueInt = mExpressionTranslation.extractIntegerValue(cEnum.getFieldValue(fId),
+						typeOfEnumIdentifiers, node).intValue();
 				newValue = cEnum.getFieldValue(fId);
 			}
 			oldValue = newValue;
