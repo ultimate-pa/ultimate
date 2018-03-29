@@ -2,20 +2,26 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransitionTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -29,7 +35,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @param <OUTLOC>
  */
 public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
+		implements ITransformulaTransformer {
+//		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
 	/**
 	 * Manager for the separated subarrays.
@@ -53,6 +60,10 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 //	private final Map<StoreIndexInfo, LocationBlock> mStoreIndexInfoToLocationBlock;
 
+	ManagedScript mMgdScript;
+
+	DefaultIcfgSymbolTable mNewSymbolTable;
+
 	/**
 	 *
 	 * @param logger
@@ -72,16 +83,23 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 	 * @param heapArrays
 	 * @param statistics
 	 */
-	public PartitionProjectionTransitionTransformer(final ILogger logger, final String resultName,
-			final Class<OUTLOC> outLocClazz,
-			final IIcfg<INLOC> inputCfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
-			final IBacktranslationTracker backtranslationTracker,
+	public PartitionProjectionTransitionTransformer(final ILogger logger,
+//			final String resultName,
+//			final Class<OUTLOC> outLocClazz,
+//			final IIcfg<INLOC> inputCfg,
+//			final ILocationFactory<INLOC, OUTLOC> funLocFac,
+//			final IBacktranslationTracker backtranslationTracker,
 			final NestedMap2<SelectInfo, Integer, LocationBlock> selectInfoToDimensionToLocationBlock,
 			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo,
 			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
-			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics) {
+			final List<IProgramVarOrConst> heapArrays,
+			final HeapSeparatorBenchmark statistics,
+			final CfgSmtToolkit inputCfgCsToolkit) {
+//			final ManagedScript mgdScript) {
 //			final Map<StoreIndexInfo, LocationBlock> storeIndexInfoToLocationBlock) {
-		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+//		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
+
+		mMgdScript = inputCfgCsToolkit.getManagedScript();
 
 		logger.info("executing heap partitioning transformation");
 
@@ -114,17 +132,26 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		mArrayToArrayGroup = arrayToArrayGroup;
 
-		mSubArrayManager = new SubArrayManager(mInputCfgCsToolkit, mStatistics, arrayToArrayGroup);
+//		mSubArrayManager = new SubArrayManager(mInputCfgCsToolkit, mStatistics, arrayToArrayGroup);
+		mSubArrayManager = new SubArrayManager(inputCfgCsToolkit, mStatistics, arrayToArrayGroup);
 
 		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
+
+		mNewSymbolTable = new DefaultIcfgSymbolTable();
 	}
 
+//	@Override
+//	public IcfgEdge transform(final IcfgEdge edge, final OUTLOC newSource, final OUTLOC newTarget) {
 	@Override
-	public IcfgEdge transform(final IcfgEdge edge, final OUTLOC newSource, final OUTLOC newTarget) {
+	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
+			final UnmodifiableTransFormula tf) {
+//		return new TransforumlaTransformationResult(transformedTransformula);
+//	}
 
-		final UnmodifiableTransFormula tf = edge.getTransformula();
+//		final UnmodifiableTransFormula tf = edge.getTransformula();
 
-		final EdgeInfo edgeInfo = new EdgeInfo(edge);
+//		final EdgeInfo edgeInfo = new EdgeInfo(edge);
+		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
 		final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToDimensionToLocationBlock =
 				mEdgeInfoToArrayCellAccessToDimensionToLocationBlock.get(edgeInfo);
@@ -140,6 +167,27 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		final Map<IProgramVar, TermVariable> inVars = ppttf.getNewInVars();
 		final Map<IProgramVar, TermVariable> outVars = ppttf.getNewOutVars();
 
+		{
+			for (final Entry<IProgramVar, TermVariable> en : inVars.entrySet()) {
+				if (en.getKey() instanceof IProgramOldVar) {
+					// only add non-oldvar (oldvar is added implicitly, then)
+					continue;
+				}
+				mNewSymbolTable.add(en.getKey());
+			}
+			for (final Entry<IProgramVar, TermVariable> en : outVars.entrySet()) {
+				if (en.getKey() instanceof IProgramOldVar) {
+					// only add non-oldvar (oldvar is added implicitly, then)
+					continue;
+				}
+				mNewSymbolTable.add(en.getKey());
+			}
+			for (final IProgramConst ntc : tf.getNonTheoryConsts()) {
+				mNewSymbolTable.add(ntc);
+			}
+		}
+
+
 		final TransFormulaBuilder tfBuilder = new TransFormulaBuilder(inVars, outVars,
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(),
 				tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
@@ -150,7 +198,26 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		final UnmodifiableTransFormula newTransformula = tfBuilder.finishConstruction(mMgdScript);
 
-		return transform(edge, newSource, newTarget, newTransformula);
+//		return transform(edge, newSource, newTarget, newTransformula);
+		return new TransforumlaTransformationResult(newTransformula);
+	}
+
+	@Override
+	public void preprocessIcfg(final IIcfg<?> icfg) {
+		// TODO Auto-generated method stub
+
+	}
+
+
+
+	@Override
+	public String getName() {
+		return "HeapPartitionedCfg";
+	}
+
+	@Override
+	public IIcfgSymbolTable getNewIcfgSymbolTable() {
+		return mNewSymbolTable;
 	}
 
 }

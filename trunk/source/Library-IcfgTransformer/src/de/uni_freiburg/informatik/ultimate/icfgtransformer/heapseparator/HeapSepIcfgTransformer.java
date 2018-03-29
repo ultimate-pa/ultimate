@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.AxiomsAdderIcfgTransf
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -371,14 +372,20 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 *  ArrayIndexExposer, which we ran the equality analysis on.
 		 */
 		final PartitionProjectionTransitionTransformer<INLOC, OUTLOC> heapSeparatingTransformer =
-				new PartitionProjectionTransitionTransformer<>(mLogger, "HeapSeparatedIcfg", outLocationClass,
-						originalIcfg, funLocFac, backtranslationTracker,
+				new PartitionProjectionTransitionTransformer<>(mLogger,
+						//"HeapSeparatedIcfg",
+//						outLocationClass,
+						//originalIcfg, funLocFac, backtranslationTracker,
 						partitionManager.getSelectInfoToDimensionToLocationBlock(),
 						edgeToIndexToStoreIndexInfo,
 						arrayToArrayGroup,
 						mHeapArrays,
-						mStatistics);
-		mResultIcfg = heapSeparatingTransformer.getResult();
+						mStatistics,
+						originalIcfg.getCfgSmtToolkit());
+		final IcfgTransformer<INLOC, OUTLOC> icfgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
+				backtranslationTracker, outLocationClass, "memPartitionedIcfg", heapSeparatingTransformer);
+//		mResultIcfg = heapSeparatingTransformer.getResult();
+		mResultIcfg = icfgtf.getResult();
 	}
 
 
