@@ -1082,7 +1082,7 @@ public class Req2BoogieTranslator {
 
 	private void initBoogieLocations(final int count) {
 		mBoogieLocations = new BoogieLocation[count + 1];
-		mBoogieLocations[0] = new BoogieLocation(null, 1, count, 0, 100);
+		mBoogieLocations[0] = new BoogieLocation("", 1, count, 0, 100);
 		for (int i = 0; i < count; i++) {
 			mBoogieLocations[i + 1] = new BoogieLocation("", i + 1, i + 1, 0, 100);
 		}
