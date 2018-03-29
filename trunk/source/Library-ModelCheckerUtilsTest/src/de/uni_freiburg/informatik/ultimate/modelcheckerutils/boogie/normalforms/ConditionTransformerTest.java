@@ -184,6 +184,15 @@ public class ConditionTransformerTest {
 	}
 
 	@Test
+	public void testNNF() {
+		final Expression input = not(mA);
+		final Expression nnf = input;
+		final Expression dnf = input;
+		test(input, nnf, dnf);
+		testSimplify(input, input);
+	}
+
+	@Test
 	public void testA() {
 		final Expression input = not(mExp1);
 		final Expression nnf = and(not(mB), not(mC));
