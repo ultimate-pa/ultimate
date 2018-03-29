@@ -586,7 +586,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return mBenchmark;
 	}
 
-	static enum BmNames {
+	private static enum BmNames {
 
 		PROJECTAWAY, UNFREEZE, ADD_EQUALITY, ADD_DISEQUALITY, ADD_WEAK_EQUALITY, CONJOIN, CONJOIN_DISJUNCTIVE, DISJOIN,
 		DISJOIN_DISJUNCTIVE, RENAME_VARIABLES, RENAME_VARIABLES_DISJUNCTIVE;

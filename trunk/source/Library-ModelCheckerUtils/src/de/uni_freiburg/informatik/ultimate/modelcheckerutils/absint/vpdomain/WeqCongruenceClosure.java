@@ -36,6 +36,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.WeqCcManager.WeqCcBmNames;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
@@ -213,6 +214,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	@Override
 	public void freeze() {
+		mManager.bmStart(WeqCcBmNames.FREEZE);
 		assert !mIsFrozen;
 		/*
 		 *  Do all possible propagations that were delayed.
@@ -230,6 +232,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			getWeakEquivalenceGraph().freezeIfNecessary();
 		}
 		mIsFrozen = true;
+		mManager.bmEnd(WeqCcBmNames.FREEZE);
 	}
 
 	@Override
