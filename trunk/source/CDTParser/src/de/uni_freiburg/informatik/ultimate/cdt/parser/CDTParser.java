@@ -60,9 +60,6 @@ import org.eclipse.cdt.core.model.IPathEntry;
 import org.eclipse.cdt.core.model.ISourceRoot;
 import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.core.parser.util.ASTPrinter;
-import org.eclipse.cdt.core.settings.model.CSourceEntry;
-import org.eclipse.cdt.core.settings.model.ICSettingEntry;
-import org.eclipse.cdt.core.settings.model.ICSourceEntry;
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -229,7 +226,6 @@ public class CDTParser implements ISource {
 
 		final IFolder sourceFolder = mCdtProject.getFolder("src");
 		sourceFolder.create(true, true, NULL_MONITOR);
-		final ICSourceEntry entrySrc = new CSourceEntry(sourceFolder, null, ICSettingEntry.RESOLVED);
 		for (final File file : files) {
 			createCopyOfFileInProject(mCdtProject, sourceFolder, file);
 		}
