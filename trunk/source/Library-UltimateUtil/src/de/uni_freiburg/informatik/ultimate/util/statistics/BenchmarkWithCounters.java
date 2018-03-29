@@ -32,11 +32,11 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 	}
 
 	public void startWatch(final String watchName) {
-		mWatchBenchmark.start(watchName);
+		mWatchBenchmark.unpause(watchName);
 	}
 
 	public void stopWatch(final String watchName) {
-		mWatchBenchmark.stop(watchName);
+		mWatchBenchmark.pause(watchName);
 	}
 
 	public void registerCounter(final String counterName) {
@@ -73,6 +73,7 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 			return;
 		}
 		final TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+//		final TimeUnit timeUnit = TimeUnit.SECONDS;
 		for (final String watchName : mWatchBenchmark.getTitles()) {
 			mColumnTitles.add(watchName + "(" + timeUnit + ")");
 			mResults.add(mWatchBenchmark.getElapsedTime(watchName, timeUnit));
@@ -97,9 +98,10 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 			final Number result = mResults.get(i);
 			final String formatString;
 			if (result instanceof Double) {
-				formatString = "%-40s : %4f %n";
+				formatString = "%-40s : %15.2f %n";
+//				formatString = "%-40s : %s %n";
 			} else if (result instanceof Integer) {
-				formatString = "%-40s : %7d %n";
+				formatString = "%-40s : %15d %n";
 			} else {
 				throw new AssertionError("missed benchmark result case?");
 			}
