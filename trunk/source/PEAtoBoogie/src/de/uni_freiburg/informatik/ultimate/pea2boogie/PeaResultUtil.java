@@ -67,8 +67,9 @@ public class PeaResultUtil {
 	public void mergedRequirements(final Collection<? extends PatternType> reqIds) {
 		assert reqIds != null && reqIds.size() > 1;
 		final String reqIdStr = reqIds.stream().map(a -> a.getId()).collect(Collectors.joining(", "));
-		mLogger.warn("Merging requirements " + reqIdStr + "because they are equivalent");
-		report(new MergedRequirementsResult(reqIdStr));
+		final MergedRequirementsResult result = new MergedRequirementsResult(reqIdStr);
+		mLogger.warn(result.getLongDescription());
+		report(result);
 	}
 
 	public void transformationError(final PatternType req, final String reason) {
