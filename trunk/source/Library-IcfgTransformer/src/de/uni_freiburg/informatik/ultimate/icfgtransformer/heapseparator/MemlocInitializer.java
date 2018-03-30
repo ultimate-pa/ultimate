@@ -130,8 +130,8 @@ public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLo
 				new ComputeInitializingTerm(mMemlocArrayManager, mValidArray, oldTransformula, mSettings);
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(oldTransformula.getInVars());
-		newInVars.putAll(cit.getFreezeVarInVars());
-		for (final IProgramVar iv : cit.getFreezeVarInVars().keySet()) {
+		newInVars.putAll(cit.getMemlocInVars());
+		for (final IProgramVar iv : cit.getMemlocInVars().keySet()) {
 			if (iv instanceof IProgramOldVar) {
 				continue;
 			}
@@ -139,8 +139,8 @@ public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLo
 		}
 
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(oldTransformula.getOutVars());
-		newOutVars.putAll(cit.getFreezeVarOutVars());
-		for (final IProgramVar iv : cit.getFreezeVarOutVars().keySet()) {
+		newOutVars.putAll(cit.getMemlocOutVars());
+		for (final IProgramVar iv : cit.getMemlocOutVars().keySet()) {
 			if (iv instanceof IProgramOldVar) {
 				continue;
 			}
@@ -202,65 +202,44 @@ public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLo
 			mMemlocInVars = new HashMap<>();
 			mMemlocOutVars = new HashMap<>();
 
-
-			TermVariable validArrayTv = originalTransFormula.getOutVars().get(validArray);
-			if (validArrayTv == null) {
-				// originalTransFormula does not constrain valid
-				assert originalTransFormula.getInVars().get(validArray) == null : "#valid is havocced in an initial "
-						+ "transformula -- somewhat unexpected.. --> TODO: treat this case";
-				validArrayTv = mMgdScript.constructFreshTermVariable(validArray.getGloballyUniqueId(),
-						validArray.getSort());
-				mMemlocInVars.put(validArray, validArrayTv);
-				mMemlocOutVars.put(validArray, validArrayTv);
-			}
-
-//			final Map<IProgramNonOldVar, IProgramConst> memlocArrayToInitiLit = memlocArrayManager.getMemlocArrayToInitConstantArray();
-			final Map<IProgramNonOldVar, Term> memlocArrayToInitiLit = memlocArrayManager.getMemlocArrayToInitConstantArray();
+			final Map<IProgramNonOldVar, Term> memlocArrayToInitiLit =
+					memlocArrayManager.getMemlocArrayToInitConstantArray();
 
 			// is this locking necessary? the script is used for creating Terms only
 			mMgdScript.lock(this);
 
 			final List<Term> initializingEquations = new ArrayList<>();
-//			for (final Entry<IProgramNonOldVar, IProgramConst> en : freezeVarTofreezeVarLit.entrySet()) {
-//			for (final Entry<IProgramNonOldVar, IProgramConst> en :
 			for (final Entry<IProgramNonOldVar, Term> en : memlocArrayToInitiLit.entrySet()) {
+
 				// variable for memloc array "memmloc_dim_sort"
-				final TermVariable memlocArrayTv = mMgdScript.constructFreshTermVariable(en.getKey().getGloballyUniqueId(),
-						en.getKey().getSort());
+				final TermVariable memlocArrayTv;
+				boolean memlocUpdateInTf;
+				if (originalTransFormula.getInVars().containsKey(en.getKey())) {
+					// invar already present (i.e. there already is an memloc update in this transformula)
+					memlocUpdateInTf = true;
+					memlocArrayTv = originalTransFormula.getInVars().get(en.getKey());
+				} else {
+					memlocUpdateInTf = false;
+					memlocArrayTv = mMgdScript.constructFreshTermVariable(en.getKey().getGloballyUniqueId(),
+							en.getKey().getSort());
+				}
 
 				// constant array (const-Array-sort1-sort2 memmloc_dim_sort_lit)
 				final Term initConstArray = en.getValue();
 
-				// "memloc_dim_sort = (const-Array-Int-Sort memloc_dim_sort_lit)"
+				// "memloc_dim_sort = (const-Array-Int-Sort memloc_dim_sort_lit)" (assume statement so to say)
 				initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), memlocArrayTv, initConstArray));
-				mMemlocInVars.put(en.getKey(), memlocArrayTv);
-				mMemlocOutVars.put(en.getKey(), memlocArrayTv);
 
-//				/*
-//				 *  "valid[lit_frz_l_x] = 1"
-//				 */
-//				// TODO have to get the valid Termvariable from the Transformula or make a new one!
-//				final Term select = SmtUtils.select(mMgdScript.getScript(), validArrayTv, frzLit);
-//				final Term one = SmtUtils.constructIntValue(mMgdScript.getScript(), BigInteger.ONE);
-//
-//				initializingEquations.add(SmtUtils.binaryEquality(mMgdScript.getScript(), select, one));
+				if (!memlocUpdateInTf) {
+					mMemlocInVars.put(en.getKey(), memlocArrayTv);
+					mMemlocOutVars.put(en.getKey(), memlocArrayTv);
+				}
 			}
-
 
 			/*
 			 * furthermore add disequalities between all freeze var literals
 			 */
 			final List<Term> freezeLitDisequalities = new ArrayList<>();
-
-//			if (mSettings.isAssumeFreezeVarLitDisequalitiesAtInitEdges()) {
-//				for (final Entry<IProgramConst, IProgramConst> en : CrossProducts.binarySelectiveCrossProduct(
-//						new HashSet<>(memlocArrayManager.getMemlocArrayToInitConstantArray().values()), false, false)) {
-////						new HashSet<>(freezeVarTofreezeVarLit.values()), false, false)) {
-//					freezeLitDisequalities.add(
-//							mMgdScript.getScript().term("not",
-//									mMgdScript.term(this, "=", en.getKey().getTerm(), en.getValue().getTerm())));
-//				}
-//			}
 
 			mInitializingTerm = SmtUtils.and(mMgdScript.getScript(),
 					SmtUtils.and(mMgdScript.getScript(), initializingEquations),
@@ -274,11 +253,11 @@ public class MemlocInitializer<INLOC extends IcfgLocation, OUTLOC extends IcfgLo
 			return mInitializingTerm;
 		}
 
-		public Map<IProgramVar, TermVariable> getFreezeVarInVars() {
+		public Map<IProgramVar, TermVariable> getMemlocInVars() {
 			return mMemlocInVars;
 		}
 
-		public Map<IProgramVar, TermVariable> getFreezeVarOutVars() {
+		public Map<IProgramVar, TermVariable> getMemlocOutVars() {
 			return mMemlocOutVars;
 		}
 	}

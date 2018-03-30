@@ -267,8 +267,6 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		final List<Term> newFormulaConjuncts = new ArrayList<>();
 		newFormulaConjuncts.add(tf.getFormula());
-//		newFormulaConjuncts.addAll(memlocUpdates);
-//		newFormulaConjuncts.add(memlocUpdateConjunct);
 		newFormulaConjuncts.addAll(memlocUpdateConjuncts);
 
 		tfBuilder.setFormula(SmtUtils.and(mMgdScript.getScript(), newFormulaConjuncts));
