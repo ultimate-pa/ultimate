@@ -171,7 +171,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 
 		if (getEqualityStatus(elem1, elem2) == EqualityStatus.NOT_EQUAL) {
-			mIsInconsistent = true;
+			reportInconsistency();
 			return true;
 		}
 
@@ -199,6 +199,13 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	/**
+	 * Sets the state of this TVER to "inconsistent".
+	 */
+	private void reportInconsistency() {
+		mIsInconsistent = true;
+	}
+
+	/**
 	 *
 	 * @param elem1
 	 * @param elem2
@@ -223,7 +230,7 @@ public class ThreeValuedEquivalenceRelation<E> {
 		}
 
 		if (rep1 == rep2) {
-			mIsInconsistent = true;
+			reportInconsistency();
 			return true;
 		}
 
