@@ -128,7 +128,19 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 		}
 	}
 
+	/**
+	 * @return Map from new locations to old locations.
+	 */
 	public Map<IcfgLocation, IcfgLocation> getLocationMapping() {
 		return Collections.unmodifiableMap(mLocationMapping);
 	}
+
+	/**
+	 * @return Map from new edges to old edges.
+	 */
+	public Map<IcfgEdge, IcfgEdge> getEdgeMapping() {
+		return Collections.unmodifiableMap(mEdgeMapping);
+	}
+	
+	
 }
