@@ -328,14 +328,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> doMergeAndComputePropagations(final ELEM elem1,
 			final ELEM elem2) {
 
+		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
+		final ELEM e2OldRep = mElementTVER.getRepresentative(elem2);
+
 		{
-			constantFunctionTreatmentOnAddEquality(elem1, elem2, mElementTVER.getEquivalenceClass(elem1),
+//			constantFunctionTreatmentOnAddEquality(elem1, elem2, mElementTVER.getEquivalenceClass(elem1),
+			constantFunctionTreatmentOnAddEquality(e1OldRep, e2OldRep, mElementTVER.getEquivalenceClass(elem1),
 					mElementTVER.getEquivalenceClass(elem2), getAuxData(),
 					e -> mManager.addElement(this, e, true, true));
 		}
 
-		final ELEM e1OldRep = mElementTVER.getRepresentative(elem1);
-		final ELEM e2OldRep = mElementTVER.getRepresentative(elem2);
 
 		/*
 		 * These sets are used for bwcc propagations, there the special case for the disequalities introduced through
@@ -611,43 +613,38 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	/**
 	 * Add nodes that trigger instantiation of the axiom for constant arrays.
+	 * <p>
+	 * This method is triggered on the addition of both weak and strong equalities.
+	 * <p>
+	 * background:
+	 * <li> We maintain the following invariant: let f and g be (strongly or weakly) equal and let g be a constant
+	 *  function. Then, for every function application f(x) that is in our set of tracked elements, we also track g(x).
+	 * <li> For this method, this means, we have to go through all constant function equivalent to elem1 and for each
+	 *   go through the ccpar's of f to add the corresponding nodes and vice versa.
 	 *
-	 * (weak or strong equalities count)
-	 *
-	 * @param elem1
-	 * @param elem2
+	 * @param elemRep1 (must be a representative because we will query its afCcPars from auxdata)
+	 * @param elemRep2  "
+	 * @param elem1EquivalenceClass set of elements that are equal or weakly equal to elemRep1
+	 * @param elem2EquivalenceClass set of elements that are equal or weakly equal to elemRep2
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantFunctionTreatmentOnAddEquality(
-			final ELEM elem1, final ELEM elem2, final Set<ELEM> elem1EquivalenceClass,
+			final ELEM elemRep1, final ELEM elemRep2, final Set<ELEM> elem1EquivalenceClass,
 			final Set<ELEM> elem2EquivalenceClass, final CcAuxData<ELEM> auxData, final Consumer<ELEM> addElement) {
-		/*
-		 * constant function treatment:
-		 *  <li> we maintain the following invariant: let f ~ g and g be a constant function, then for every function
-		 *  application f(x) that is in our set of tracked element, we also track g(x).
-		 *  <li> here, this means, we have to go through all constant function equivalent to elem1 and for each go
-		 *   through the ccpar's of f to add the corresponding nodes and vice versa
-		 */
 		for (final ELEM equivalentFunction1 : elem1EquivalenceClass) {
 			if (equivalentFunction1.isConstantFunction()) {
-				for (final ELEM equivalentFunction2 : elem2EquivalenceClass) {
-					// ccpar is f(x), equivalentFunction1 is g
-					for (final ELEM ccpar : auxData.getAfCcPars(equivalentFunction2)) {
-//						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
-						assert !equivalentFunction1.equals(ccpar.getAppliedFunction());
-						addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction1));
-					}
+				// ccpar is f(x), equivalentFunction1 is g
+				for (final ELEM ccpar : auxData.getAfCcPars(elemRep2)) {
+					assert !equivalentFunction1.equals(ccpar.getAppliedFunction());
+					addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction1));
 				}
 			}
 		}
-		for (final ELEM equivalentFunction1 : elem2EquivalenceClass) {
-			if (equivalentFunction1.isConstantFunction()) {
-				for (final ELEM equivalentFunction2 : elem1EquivalenceClass) {
-					// ccpar is f(x), equivalentFunction1 is g
-					for (final ELEM ccpar : auxData.getAfCcPars(equivalentFunction2)) {
-//						mManager.addElement(this, ccpar.replaceAppliedFunction(equivalentFunction1), true, true);
-						assert !equivalentFunction1.equals(ccpar.getAppliedFunction());
-						addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction1));
-					}
+		for (final ELEM equivalentFunction2 : elem2EquivalenceClass) {
+			if (equivalentFunction2.isConstantFunction()) {
+				// ccpar is f(x), equivalentFunction2 is g
+				for (final ELEM ccpar : auxData.getAfCcPars(elemRep1)) {
+					assert !equivalentFunction2.equals(ccpar.getAppliedFunction());
+					addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction2));
 				}
 			}
 		}
@@ -871,18 +868,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> other) {
 		assert !this.isInconsistent() && !other.isInconsistent() && !this.isTautological() && !other.isTautological();
 
-//		final CongruenceClosure<ELEM> thisAligned = mManager.addAllElements(this, other.getAllElements(), null, false);
-//		final CongruenceClosure<ELEM> otherAligned = mManager.addAllElements(other, this.getAllElements(), null, false);
-//
-//		/* this single call is not enough for aligning because constant arrays may introduce elements when other
-//		 * elements are added based on equalities in that constraint
-//		 */
-//		while (!thisAligned.getAllElements().containsAll(otherAligned.getAllElements())
-//				|| !otherAligned.getAllElements().containsAll(thisAligned.getAllElements())) {
-//			mManager.addAllElements(thisAligned, otherAligned.getAllElements(), null, true);
-//			mManager.addAllElements(otherAligned, thisAligned.getAllElements(), null, true);
-//
-//		}
 		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = mManager.alignElements(this, other);
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
@@ -1020,9 +1005,6 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (rep1.equals(rep2)) {
 			return EqualityStatus.EQUAL;
 		}
-//		} else if (rep1.isLiteral() && rep2.isLiteral()) {
-//			return EqualityStatus.NOT_EQUAL;
-//		} else if (rep1.isLiteral() && mLiteralSetConstraints.getConstraint(rep2)) {
 
 		final Set<ELEM> litConstraint1 = mLiteralSetConstraints.getConstraint(rep1);
 		final Set<ELEM> litConstraint2 = mLiteralSetConstraints.getConstraint(rep2);

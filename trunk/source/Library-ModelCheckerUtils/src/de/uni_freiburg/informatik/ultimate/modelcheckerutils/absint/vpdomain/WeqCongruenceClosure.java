@@ -383,7 +383,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		{
-			CongruenceClosure.constantFunctionTreatmentOnAddEquality(array1, array2,
+			CongruenceClosure.constantFunctionTreatmentOnAddEquality(array1Rep, array2Rep,
 					mCongruenceClosure.getEquivalenceClass(array1),
 					mCongruenceClosure.getEquivalenceClass(array2), mCongruenceClosure.getAuxData(),
 					n -> mManager.addNode(n, this, true, true));
