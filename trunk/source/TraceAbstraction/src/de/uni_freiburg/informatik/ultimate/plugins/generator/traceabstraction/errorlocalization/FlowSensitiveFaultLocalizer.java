@@ -130,8 +130,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 		mErrorLocalizationStatisticsGenerator.continueErrorLocalizationTime();
 		try {
-			if (faultLocalizationMode == RelevanceAnalysisMode.SINGLE_TRACE
-					|| faultLocalizationMode == RelevanceAnalysisMode.MULTI_TRACE) {
+			if (faultLocalizationMode == RelevanceAnalysisMode.SINGLE_TRACE) {
 				doNonFlowSensitiveAnalysis(counterexample.getWord(), predicateUnifier.getTruePredicate(),
 						predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit);
 			}
@@ -173,22 +172,24 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 	/**
 	 * Compute branch-in and branch-out information from cfg.
+	 * @param csToolkit 
 	 *
 	 * @return List of pairs, where each pair encodes an alternative path (a path of cfg that is not part of the trace).
 	 *         If the pair (k,j) is in the list this means that there is an alternative path from position k to position
 	 *         j in the trace.
 	 */
-	private Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> computeInformationFromCfg(
-			final NestedRun<LETTER, IPredicate> counterexample, final INestedWordAutomaton<LETTER, IPredicate> cfg) {
-		// TODO: result of alternative computation, only used for debugging
-		final List<int[]> resultOld = new ArrayList<>();
+	private Map<Integer, Map<Integer, UnmodifiableTransFormula>> computeInformationFromCfg(
+			final NestedRun<LETTER, IPredicate> counterexample, final INestedWordAutomaton<LETTER, IPredicate> cfg, 
+			final ManagedScript csToolkit, final Boolean isAlternativePath) {
+		final List<LETTER> traceElements = new ArrayList<>();
+		for(int i = 0; i < counterexample.getLength() -1 ; i++) {
+			traceElements.add(counterexample.getSymbol(i));
+		}
 
-		// Using Better Data Structure to save graph information.
-		final Map<Integer, List<Integer>> result = new HashMap<>();
-
+		
 		// A Data Structure that saves the branching information
 		// along with the alternative paths.
-		final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> result2 = new HashMap<>();
+		final Map<Integer, Map<Integer, UnmodifiableTransFormula>> result2 = new HashMap<>();
 		// Create a Map of Programpoints in the CFG to States of the CFG.
 		final Map<IcfgLocation, IPredicate> programPointToState = new HashMap<>();
 		for (final IPredicate cfgState : cfg.getStates()) {
@@ -215,15 +216,23 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final Set<IPredicate> possibleEndPoints =
 					computePossibleEndpoints(counterexample, programPointToState, posOfStartState);
 
-			final IcfgLocation programPointOfSuccInCounterexample =
-					((ISLPredicate) counterexample.getStateAtPosition(posOfStartState + 1)).getProgramPoint();
+//			final IcfgLocation programPointOfSuccInCounterexample =
+//					((ISLPredicate) counterexample.getStateAtPosition(posOfStartState + 1)).getProgramPoint();
 			// Immediate successors of of the state in CFG
 			final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> immediateSuccesors =
 					cfg.internalSuccessors(startStateInCfg);
 			for (final OutgoingInternalTransition<LETTER, IPredicate> transition : immediateSuccesors) {
 				final IPredicate immediateSuccesor = transition.getSucc();
-				final IcfgLocation programPointOfImmediateSucc = ((ISLPredicate) immediateSuccesor).getProgramPoint();
-				if (programPointOfImmediateSucc == programPointOfSuccInCounterexample) {
+//				final IcfgLocation programPointOfImmediateSucc = ((ISLPredicate) immediateSuccesor).getProgramPoint();
+				//if (programPointOfImmediateSucc == programPointOfSuccInCounterexample) {
+				if(traceElements.contains(transition.getLetter())) {
+					// We should check if the transition is in the path or not
+					// why were we checking the successor state.
+					// That will now work when the if branch and the else branches are empty.
+					// For example
+//					if(x==1) {
+//					}		
+					
 					// do nothing, because we want to find an alternative path
 					// (i.e., path that is not in counterexample
 				} else {
@@ -243,8 +252,28 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 						// If such a path exists. Then that means that there is a path from the successor state
 						// that comes back to the counter example
 						// THAT MEANS WE HAVE FOUND AN out-BRANCH AT POSITION "COUNTER"
-
+						
 						alternativePath = alternativePath.concatenate(remainingPath);
+						// Compute the combined transition formula of the alternative path.
+						UnmodifiableTransFormula blockEncodedTransitionFormulaAlternativePath = 
+								alternativePath.getWord().getSymbolAt(0).getTransformula();
+						
+						if(alternativePath != null) {
+							for(int i = 1; i < alternativePath.getWord().length(); i++) {
+								final UnmodifiableTransFormula transitionFormulaAlternPathElement =
+										alternativePath.getWord().getSymbolAt(i).getTransformula();
+								blockEncodedTransitionFormulaAlternativePath = TransFormulaUtils.sequentialComposition(
+										mLogger, mServices, csToolkit, false, false, false, mXnfConversionTechnique, 
+										mSimplificationTechnique, Arrays.asList(new UnmodifiableTransFormula[] { 
+												blockEncodedTransitionFormulaAlternativePath, 
+													transitionFormulaAlternPathElement }));
+							}
+						}
+						
+						// TODO: Construct a subgraph of the CFG. Based on the branching infromation.
+						// Return the transition formula of the block encoded CFG.
+						
+			
 						final IPredicate lastStateOfAlternativePath =
 								alternativePath.getStateAtPosition(alternativePath.getLength() - 1);
 
@@ -252,36 +281,28 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 								posOfStartState, lastStateOfAlternativePath);
 
 						for (final Integer i : endPosition) {
-							final int[] pair = new int[2];
-							// position OUT-BRANCH in the counterexample.
-							pair[0] = posOfStartState;
-							pair[1] = i - 1;
-							resultOld.add(pair);
-
 							// If the Branch-In Location is not in the map, then add it.
-							if (result.get(i - 1) == null) {
-								final List<Integer> branchInPosArray = new ArrayList<>();
-								branchInPosArray.add(posOfStartState);
-								result.put(i - 1, branchInPosArray);
+							if (result2.get(i - 1) == null) {
 								// add to the result2
-								final Map<Integer, NestedRun<LETTER, IPredicate>> branchInPosMap = new HashMap<>();
-								branchInPosMap.put(posOfStartState, alternativePath);
-								result2.put(i - 1, branchInPosMap);
+								final Map<Integer, UnmodifiableTransFormula> branchInPosMap = new HashMap<>();
+								// Since in the alternative path, we do not include the first element,
+								// hence we have to add 1 on all locations.
+									branchInPosMap.put(posOfStartState, blockEncodedTransitionFormulaAlternativePath);
+									result2.put(i - 1, branchInPosMap);
 							} else {
 								// It is in the map,
-								result.get(i - 1).add(posOfStartState);
-								// The array should be in descending order, so we can delete
-								// the elements from this array more efficiently.
-								result.get(i - 1).sort(Collections.reverseOrder());
 								// add to result2
-								result2.get(i - 1).put(posOfStartState, alternativePath);
+								// Since in the alternative path, we do not include the first element,
+								// hence we have to add 1 on all locations.
+									result2.get(i - 1).put(posOfStartState, blockEncodedTransitionFormulaAlternativePath);
 							}
 						}
 					}
 				}
 			}
 		}
-		return result2; // result2 returns branching information + alternative paths
+		// return branching information + trans forumlas of alternative paths
+		return result2;
 	}
 
 	/**
@@ -463,19 +484,19 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 *            - Alternative path in the CFG
 	 */
 	private UnmodifiableTransFormula doBranchEncoding(final int startPosition, final int endPosition,
-			final NestedWord<LETTER> alternativePath, final NestedWord<LETTER> counterexampleWord,
-			final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg,
+			final UnmodifiableTransFormula alternativePath, final NestedWord<LETTER> counterexampleWord,
+			final Map<Integer, Map<Integer, UnmodifiableTransFormula>> informationFromCfg,
 			final ManagedScript csToolkit) {
 		UnmodifiableTransFormula combinedTransitionFormula =
 				counterexampleWord.getSymbolAt(startPosition).getTransformula();
-		NestedWord<LETTER> subAlternativePath = null;
+		UnmodifiableTransFormula subAlternativePath = null;
 
 		for (int i = startPosition + 1; i <= endPosition; i++) {
 			boolean subBranch = false;
 			int branchOut = 0;
 			int branchIn = 0;
 			// Find out if the current position is a branchOut position.
-			for (final Entry<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> entry : informationFromCfg
+			for (final Entry<Integer, Map<Integer, UnmodifiableTransFormula>> entry : informationFromCfg
 					.entrySet()) {
 				if (entry.getValue().containsKey(i)) {
 					final Integer brachInPosition = entry.getKey();
@@ -484,7 +505,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 						branchOut = i;
 						branchIn = brachInPosition;
 						i = branchIn;
-						subAlternativePath = informationFromCfg.get(branchIn).get(branchOut).getWord();
+						subAlternativePath = informationFromCfg.get(branchIn).get(branchOut);
 						break;
 					}
 				}
@@ -505,33 +526,20 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 						Arrays.asList(new UnmodifiableTransFormula[] { combinedTransitionFormula, transitionFormula }));
 			}
 		}
-
-		UnmodifiableTransFormula combineTransitionFormulaAlternativePath =
-				alternativePath.getSymbolAt(0).getTransformula();
-		// Compute the combined transition formula for the alternative path
-		if (alternativePath != null) {
-			for (int i = 1; i < alternativePath.length(); i++) {
-				final UnmodifiableTransFormula transitionFormulaAlternPathElement =
-						alternativePath.getSymbol(i).getTransformula();
-				combineTransitionFormulaAlternativePath = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						csToolkit, false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
-						Arrays.asList(new UnmodifiableTransFormula[] { combineTransitionFormulaAlternativePath,
-								transitionFormulaAlternPathElement }));
-			}
-		}
-
-		//UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula, csToolkit, mServices, mLogger,
-		//		mXnfConversionTechnique, mSimplificationTechnique);
-
-		final UnmodifiableTransFormula blockEncodedFormula = TransFormulaUtils.computeEncodedBranchFormula(
-				combinedTransitionFormula, combineTransitionFormulaAlternativePath, csToolkit, mServices, mLogger,
-				mXnfConversionTechnique, mSimplificationTechnique);
-
+//		 UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula, csToolkit, mServices, mLogger,
+//				mXnfConversionTechnique, mSimplificationTechnique);
+		
+		final UnmodifiableTransFormula blockEncodedFormula = (alternativePath != null) ? 
+				TransFormulaUtils.computeEncodedBranchFormula(
+						combinedTransitionFormula, alternativePath, csToolkit, mServices, mLogger,
+						mXnfConversionTechnique, mSimplificationTechnique) :
+							combinedTransitionFormula;
+		
 		return blockEncodedFormula;
 	}
 
 	/**
-	 * Checks if subtrace from position "startPosition" to position "endPosition" is relevant.
+	 * Checks if sub trace from position "startPosition" to position "endPosition" is relevant.
 	 */
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
 			final UnmodifiableTransFormula branchEncodedFormula, final IPredicate weakestPreconditionLeft,
@@ -582,13 +590,13 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer<Term, IPredicate, TransFormula> pt, final FaultLocalizationRelevanceChecker rc,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
-			final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg,
+			final Map<Integer, Map<Integer, UnmodifiableTransFormula>> informationFromCfg,
 			final TracePredicates strongestPostconditionSequence) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--) {
 			final LETTER statement = counterexampleWord.getSymbol(position);
 			// final List<Integer> branchIn = informationFromCfg.get(position);
-			final Map<Integer, NestedRun<LETTER, IPredicate>> branchIn = informationFromCfg.get(position);
+			final Map<Integer, UnmodifiableTransFormula> branchIn = informationFromCfg.get(position);
 
 			final Integer branchOutPosition;
 			if (branchIn != null && !branchIn.isEmpty()) {
@@ -601,13 +609,13 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			}
 			final IPredicate weakestPreconditionRight = weakestPreconditionLeft;
 			if (branchOutPosition != null) {
-				final NestedRun<LETTER, IPredicate> alternativePath = branchIn.get(branchOutPosition);
+				final UnmodifiableTransFormula alternativePath = branchIn.get(branchOutPosition);
 				branchIn.remove(branchOutPosition);
 				final int positionBranchIn = position;
 				position = branchOutPosition;
 				// block encoding for the branch
 				final UnmodifiableTransFormula blockEncodedBranchFormula =
-						doBranchEncoding(branchOutPosition, positionBranchIn, alternativePath.getWord(),
+						doBranchEncoding(branchOutPosition, positionBranchIn, alternativePath,
 								counterexampleWord, informationFromCfg, csToolkit.getManagedScript());
 				//final UnmodifiableTransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn,
 				//		counterexampleWord, informationFromCfg, csToolkit.getManagedScript());
@@ -738,12 +746,12 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final IPredicate truePredicate, final INestedWordAutomaton<LETTER, IPredicate> cfg,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
-		final Map<Integer, Map<Integer, NestedRun<LETTER, IPredicate>>> informationFromCfg =
-				computeInformationFromCfg(counterexample, cfg);
+		final Map<Integer, Map<Integer, UnmodifiableTransFormula>> informationFromCfg =
+				computeInformationFromCfg(counterexample, cfg, csToolkit.getManagedScript(), false);
 		// Count branches in the trace.
 		int numberOfBranches = 0;
-		final Collection<Map<Integer, NestedRun<LETTER, IPredicate>>> listOfValues = informationFromCfg.values();
-		for (final Map<Integer, NestedRun<LETTER, IPredicate>> onelist : listOfValues) {
+		final Collection<Map<Integer, UnmodifiableTransFormula>> listOfValues = informationFromCfg.values();
+		for (final Map<Integer, UnmodifiableTransFormula> onelist : listOfValues) {
 			numberOfBranches += onelist.values().size();
 		}
 		mErrorLocalizationStatisticsGenerator.reportNumberOfBranches(numberOfBranches);

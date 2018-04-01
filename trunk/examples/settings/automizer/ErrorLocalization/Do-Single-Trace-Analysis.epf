@@ -1,4 +1,4 @@
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
 /instance/de.uni_freiburg.informatik.ultimate.core/Append\ to\ exisiting\ log\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.core/Create\ a\ Logfile=false
@@ -26,13 +26,13 @@
 /instance/de.uni_freiburg.informatik.ultimate.core/ultimate.logging.details=
 @de.uni_freiburg.informatik.ultimate.core=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=/home/numair/Downloads/faultlocalization/Related Research/Aberrant Trace Elements/review3_example.bpl
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=/home/numair/Downloads/ultimate/trunk/examples/toolchains/AutomizerBpl.xml
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=/home/numair/Downloads/ultimate/trunk/examples/programs/toy/errorLocalization/branching/testForBlockEncoding2.bpl
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=/home/numair/Downloads/ultimate/trunk/examples/toolchains/AutomizerBplInline.xml
 @de.uni_freiburg.informatik.ultimate.gui=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Entry\ procedures=ULTIMATE.start
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Fallback\ to\ processing\ everything=true
@@ -49,12 +49,12 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/with\ 'forall'\ modifier=true
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions/View\ every\ procedure\ as\ a\ thread,\ and\ compute\ a\ parallel\ DFG?=false
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain=EmptyDomain
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain\ for\ RCFG-of-the-future=EmptyDomain
@@ -82,7 +82,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Use\ the\ RCFG-of-the-future\ interface=false
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Add\ annotations\ to\ SMT\ terms=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Affine\ template=true
@@ -115,13 +115,13 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=true
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Show\ all\ Annotations=false
 /instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Show\ backtranslation\ warnings=true
 @de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Apply\ optimizations\ until\ nothing\ changes=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ interprocedural\ compositions=true
@@ -129,7 +129,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Iterate\ optimizations\ for\ n\ times\ (<\=0\ means\ until\ nothing\ changes)=0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Maximize\ final\ states=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ using\ LBE\ with\ the\ strategy=MULTI
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Remove\ infeasible\ edges=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Remove\ sink\ states=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Rewrite\ not-equals=false
@@ -137,7 +136,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE=false
 @de.uni_freiburg.informatik.ultimate.plugins.blockencoding=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ live\ variables\ in\ FP/BP\ interpolation=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ unsat\ cores\ in\ FP/BP\ interpolation=CONJUNCT_LEVEL
@@ -163,7 +162,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/write\ dot\ graph\ files\ here\ (empty\ for\ don't\ write)=
 @de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Assume\ nondeterminstic\ values\ are\ in\ range=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Bitprecise\ bitfields=false
@@ -193,7 +192,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ short=2
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/FastUPR\ replacement\ mode=REPLACE_EXIT_EDGE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/Loopacceleration\ Biesenbach\ Mode=MARK_AS_OVERAPPROX
@@ -205,20 +204,20 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/TransformationType=LOOP_ACCELERATION_EXAMPLE
 @de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/DifferenceSenwa\ operation\ instead\ classical\ Difference=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Fake\ non-incremental\ script=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Highlight\ relevant\ statements\ in\ error\ traces=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Flow-sensitive\ error\ trace\ relevance\ analysis=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Highlight\ relevant\ statements\ in\ error\ traces=SINGLE_TRACE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interprocedural\ analysis\ (Nested\ Interpolants)=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Iterations\ until\ the\ model\ checker\ surrenders=1000000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ iteration\ whose\ artifact\ is\ visualized=1000000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Refine\ always\ when\ using\ abstract\ interpretation=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Stop\ after\ first\ violation\ was\ found=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ abstract\ interpretation\ in\ PathInvariants=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ live\ variables=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ nonlinear\ constraints\ in\ PathInvariants=false
@@ -229,7 +228,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/use\ unfolding\ as\ abstraction=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Add\ implications\ only\ for\ indices\ occuring\ in\ the\ current\ formula=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Add\ inequalities\ as\ additional\ conjuncts\ to\ the\ transformula=false
@@ -266,7 +265,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ only\ trivial\ implications\ for\ index\ assignments=true
 @de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.ltl2aut=
 /instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Command\ line\ string\ ($1\ will\ be\ replaced\ with\ the\ property)=\!($1)
 /instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Path\ to\ LTL*BA\ executable\ (LTL2BA,\ LTL3BA)=ltl2ba
@@ -276,13 +275,13 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Use\ small\ block\ encoding=false
 @de.uni_freiburg.informatik.ultimate.ltl2aut=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter/Ignore\ all\ commands\ and\ only\ execute\ below\ command=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter/Write\ results\ of\ print\ operation\ to\ file=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
@@ -297,7 +296,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Translate\ Boogie\ integers\ to\ SMT\ bitvectors=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.witnessprinter=
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Command\ to\ execute\ witness\ verifier=
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Delete\ the\ .graphml\ file\ after\ verification=false
@@ -317,7 +316,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Write\ witness\ besides\ input\ file=true
 @de.uni_freiburg.informatik.ultimate.witnessprinter=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=/tmp
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/File\ name\:=boogiePrinter.bpl
@@ -325,7 +324,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=false
 @de.uni_freiburg.informatik.ultimate.boogie.printer=0.1.23
 file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
+#Sat Mar 31 21:31:32 CEST 2018
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Annotate\ edges=None
 /instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Annotate\ nodes=true
@@ -337,9 +336,4 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/SVG\ Export\ directory\:=.
 /instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Which\ models\ should\ be\ visualized?=LAST
 @de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=0.1.23
-file_export_version=3.0
-#Fri Mar 16 16:02:33 CET 2018
-\!/instance/de.uni_freiburg.informatik.ultimate.witnessparser=
-/instance/de.uni_freiburg.informatik.ultimate.witnessparser/Only\ consider\ loop\ invariants=true
-@de.uni_freiburg.informatik.ultimate.witnessparser=0.1.23
 file_export_version=3.0
