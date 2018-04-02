@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Provides information which global variables are modifiable by which procedure.
- * 
+ *
  * @author Matthias Heizmann
  */
 public class ModifiableGlobalsTable {
@@ -101,4 +101,13 @@ public class ModifiableGlobalsTable {
 		return script.term("=", oldConstant, nonOldConstant);
 	}
 
+
+	/**
+	 * @return
+	 * 		the contents of this ModifiedGlobalsTable as a hash relation
+	 */
+	public HashRelation<String, IProgramNonOldVar> getProcToGlobals() {
+		// if we have an unmodifiableHashRelation some day, use that
+		return new HashRelation<>(mProc2Globals);
+	}
 }
