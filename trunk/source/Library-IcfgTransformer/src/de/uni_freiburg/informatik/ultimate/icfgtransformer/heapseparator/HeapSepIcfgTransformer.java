@@ -205,9 +205,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			{
 				final StoreIndexFreezerIcfgTransformer<INLOC, OUTLOC> sifit =
 						new StoreIndexFreezerIcfgTransformer<>(mLogger,
-								originalIcfg.getCfgSmtToolkit().getManagedScript(),
-								originalIcfg.getCfgSmtToolkit().getSymbolTable(),
-								originalIcfg.getCfgSmtToolkit().getProcedures(),
+								originalIcfg.getCfgSmtToolkit(),
 								mHeapArrays,
 								edgeToIndexToStoreIndexInfo);
 				final IcfgTransformer<INLOC, OUTLOC> siftf = new IcfgTransformer<>(originalIcfg, funLocFac,
@@ -275,18 +273,21 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 * Furthermore the valid-array (of the memory model) is assumed to be 1 at each freeze literal.
 			 */
 			{
-				final FreezeVarInitializer<OUTLOC, OUTLOC> fvi = new FreezeVarInitializer<>(mLogger,
-						mMgdScript,
-						freezeVarTofreezeVarLit, validArray, mSettings,
-						icfgWFreezeVarsUninitialized.getInitialNodes(),
-						icfgWFreezeVarsUninitialized.getCfgSmtToolkit().getSymbolTable(),
-						icfgWFreezeVarsUninitialized.getCfgSmtToolkit().getProcedures()
-						);
+				final FreezeVarInitializingTransformulaBuilder fvtfb =
+						new FreezeVarInitializingTransformulaBuilder(mMgdScript, freezeVarTofreezeVarLit, validArray,
+								mSettings);
 
-				final IcfgTransformer<INLOC, OUTLOC> icfgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
-						backtranslationTracker, outLocationClass, "icfg_with_initialized_freeze_vars", fvi);
+				final AddInitializingEdgesIcfgTransformer<OUTLOC, OUTLOC> initTf =
+						new AddInitializingEdgesIcfgTransformer<>(mLogger,
+								icfgWFreezeVarsUninitialized.getCfgSmtToolkit(),
+								outToOutLocFac,
+								backtranslationTracker,
+								outLocationClass,
+								icfgWFreezeVarsUninitialized,
+								fvtfb.getInitializingTransformula(),
+								"icfg_with_initialized_freeze_vars");
 
-				final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = icfgtf.getResult();
+				final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = initTf.getResult();
 
 				preprocessedIcfg = icfgWFreezeVarsInitialized;
 			}
@@ -308,12 +309,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			{
 				final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
 						new MemlocArrayUpdaterIcfgTransformer<>(mLogger,
-								mMgdScript,
+								originalIcfg.getCfgSmtToolkit(),
 								memlocArrayManager,
-								mHeapArrays, edgeToIndexToStoreIndexInfo,
-								originalIcfg.getCfgSmtToolkit().getSymbolTable(),
-								originalIcfg.getCfgSmtToolkit().getProcedures()
-								);
+								mHeapArrays, edgeToIndexToStoreIndexInfo);
 
 
 
@@ -321,7 +319,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mauit);
 
 				storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
-				/* make sure the literals are all treated as pairwise unequal
+				/*
+				 * make sure the literals are all treated as pairwise unequal
 				 *			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
 				 */
 				memlocLiterals.addAll(mauit.getLocationLiterals());
@@ -344,16 +343,36 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			 */
 			IIcfg<OUTLOC> icfgWMemlocInitialized;
 			{
-				final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
-						icfgWithMemlocUpdates.getCfgSmtToolkit(),
-						memlocArrayManager, validArray, mSettings,
-						icfgWithMemlocUpdates.getInitialNodes());
+
+//				final FreezeVarInitializingTransformulaBuilder fvtfb =
+//						new FreezeVarInitializingTransformulaBuilder(mMgdScript, freezeVarTofreezeVarLit, validArray,
+//								mSettings);
+				final ComputeMemlocInitializingTransformula mlit =
+						new ComputeMemlocInitializingTransformula(memlocArrayManager, validArray, mSettings,
+						mMgdScript);
+
+				final AddInitializingEdgesIcfgTransformer<OUTLOC, OUTLOC> initTf =
+						new AddInitializingEdgesIcfgTransformer<>(mLogger,
+								icfgWithMemlocUpdates.getCfgSmtToolkit(),
+								outToOutLocFac,
+								backtranslationTracker,
+								outLocationClass,
+								icfgWithMemlocUpdates,
+								mlit.getResult(),
+								"icfg_with_initialized_freeze_vars");
+
+				icfgWMemlocInitialized = initTf.getResult();
+
+//				final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
+//						icfgWithMemlocUpdates.getCfgSmtToolkit(),
+//						memlocArrayManager, validArray, mSettings,
+//						icfgWithMemlocUpdates.getInitialNodes());
 
 
-				final IcfgTransformer<OUTLOC, OUTLOC> icgtf = new IcfgTransformer<>(icfgWithMemlocUpdates,
-						outToOutLocFac, backtranslationTracker, outLocationClass, "icfgmemlocinitialized", mli);
+//				final IcfgTransformer<OUTLOC, OUTLOC> icgtf = new IcfgTransformer<>(icfgWithMemlocUpdates,
+//						outToOutLocFac, backtranslationTracker, outLocationClass, "icfgmemlocinitialized", mli);
 
-				icfgWMemlocInitialized = icgtf.getResult();
+//				icfgWMemlocInitialized = icgtf.getResult();
 
 				memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
 			}
