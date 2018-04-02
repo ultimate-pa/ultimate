@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -113,5 +114,13 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 	@Override
 	public IIcfgSymbolTable getNewIcfgSymbolTable() {
 		return mReplacementVarFactory.constructIIcfgSymbolTable();
+	}
+
+	@Override
+	public ModifiableGlobalsTable getNewModifiedGlobals() {
+		// TODO
+		throw new UnsupportedOperationException("TODO");
+		// perhaps:
+//		return mReplacementVarFactory.constructModifiableGlobalsTable();
 	}
 }

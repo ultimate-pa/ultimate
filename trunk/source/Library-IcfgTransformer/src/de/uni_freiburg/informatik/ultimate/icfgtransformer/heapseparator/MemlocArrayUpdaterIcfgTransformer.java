@@ -43,8 +43,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.HeapSepProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -59,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -78,9 +81,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <OUTLOC>
  */
 public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-	implements ITransformulaTransformer {
-//		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
-
+		implements ITransformulaTransformer {
 
 	private final Map<StoreIndexInfo, IProgramConst> mStoreIndexInfoToLocLiteral;
 
@@ -89,9 +90,6 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	private final static boolean TRACK_CONSTANTS = false;
 	private final Set<ConstantTerm> mAllConstantTerms;
 
-
-//	private final IProgramVar mMemlocArrayInt;
-//	private final Sort mMemLocSort;
 
 	private int mMemLocLitCounter = 0;
 
@@ -108,39 +106,23 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	 */
 	private boolean mQueriedStoreAndLitInfo;
 
-	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger, //final String resultName,
-			final ManagedScript mgdScript,
-//			final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-//			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
-//			final IProgramVar memlocArrayInt, final Sort memLocSort,
+	private final HashRelation<String, IProgramNonOldVar> mNewModifiableGlobals;
+
+	public MemlocArrayUpdaterIcfgTransformer(final ILogger logger,
+			final CfgSmtToolkit oldCsToolkit,
 			final MemlocArrayManager memlocArrayManager,
 			final List<IProgramVarOrConst> heapArrays,
-			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo,
-			final IIcfgSymbolTable oldSymbolTable,
-			final Set<String> procs) {
-//		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
-		mMgdScript = mgdScript;
+			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
+		mMgdScript = oldCsToolkit.getManagedScript();
 		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 		mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
-//		mMemlocArrayInt = memlocArrayInt;
-//		mMemLocSort = memLocSort;
 		mMemlocArrayManager = memlocArrayManager;
 		mStoreIndexInfoToLocLiteral = new HashMap<>();
 		mHeapArrays = heapArrays;
 
-		mNewSymbolTable = new DefaultIcfgSymbolTable(oldSymbolTable, procs);
+		mNewSymbolTable = new DefaultIcfgSymbolTable(oldCsToolkit.getSymbolTable(), oldCsToolkit.getProcedures());
+		mNewModifiableGlobals = new HashRelation<>(oldCsToolkit.getModifiableGlobalsTable().getProcToGlobals());
 	}
-
-//	@Override
-//	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
-//		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
-//				new EdgeInfo(oldTransition));
-//		return super.transform(oldTransition, newSource, newTarget, newTransformula);
-//	}
-
-//	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
-//			final EdgeInfo edgeInfo) {
-
 
 	@Override
 	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
@@ -159,7 +141,6 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		if (mEdgeToIndexToStoreIndexInfo.get(edgeInfo) == null) {
 			// edge does not have any array writes --> return it unchanged
-//			return tf;
 			return new TransforumlaTransformationResult(tf);
 		}
 
@@ -173,7 +154,6 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 
 		mMgdScript.lock(this);
 
-//		final Map<Term, Term> memlocUpdates = new HashMap<>();
 		final NestedMap2<Integer, Term, Term> memlocUpdatesPerDim = new NestedMap2<>();
 
 		for (final Entry<Term, StoreIndexInfo> en : mEdgeToIndexToStoreIndexInfo.get(edgeInfo).entrySet()) {
@@ -202,14 +182,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 		}
 
 		// construct a store chain for the memlocUpdates
-//		Term memlocUpdateConjunct;// = mMgdScript.term(this, "true");
 		final List<Term> memlocUpdateConjuncts = new ArrayList<>();
 		for (int dim = 0; memlocUpdatesPerDim.get(dim) != null; dim++) {
 //		{
 			final TermVariable memlocIntInVar;
 			final TermVariable memlocIntOutVar;
-//			if (!extraOutVars.containsKey(mMemlocArrayManager.getMemlocArray()) {
-//							assert !extraOutVars.containsKey(mMemlocArrayInt);
 			{
 				// TODO not nice, with the locking..
 				mMgdScript.unlock(this);
@@ -221,12 +198,12 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 				memlocIntOutVar = mMgdScript.constructFreshCopy(currentMemlocArrayInt.getTermVariable());
 				extraInVars.put(currentMemlocArrayInt, memlocIntInVar);
 				extraOutVars.put(currentMemlocArrayInt, memlocIntOutVar);
+
+				assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure());
+				mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), currentMemlocArrayInt);
 			}
 
 			Term storeChain = memlocIntInVar;
-//			for (final Entry<Term, Term> en : memlocUpdates.entrySet()) {
-//			for (final Triple<Integer, Term, Term> en : memlocUpdates.entrySet()) {
-//				dim = en.getFirst();
 			for (final Entry<Term, Term> en : memlocUpdatesPerDim.get(dim).entrySet()) {
 				storeChain = SmtUtils.store(mMgdScript.getScript(), storeChain, en.getKey(), en.getValue());
 			}
@@ -348,6 +325,11 @@ public class MemlocArrayUpdaterIcfgTransformer<INLOC extends IcfgLocation, OUTLO
 	@Override
 	public IIcfgSymbolTable getNewIcfgSymbolTable() {
 		return mNewSymbolTable;
+	}
+
+	@Override
+	public ModifiableGlobalsTable getNewModifiedGlobals() {
+		return new ModifiableGlobalsTable(mNewModifiableGlobals);
 	}
 }
 

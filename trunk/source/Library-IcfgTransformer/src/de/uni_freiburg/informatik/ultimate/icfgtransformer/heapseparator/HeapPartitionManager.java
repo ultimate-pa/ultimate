@@ -172,6 +172,11 @@ private final MemlocArrayManager mMemLocArrayManager;
 	void processSelect(final SelectInfo selectInfo, final IEqualityProvidingIntermediateState eps) {
 		final HashRelation<Integer, StoreIndexInfo> dimensionToMayEqualStoreIndexInfos = new HashRelation<>();
 
+		if (eps.isBottom()) {
+			mLogger.warn("equality analysis on preprocessed graph computed array read to be unreachable: "
+					+ selectInfo);
+		}
+
 		final ArrayIndex selectIndex = selectInfo.getIndex();
 
 		for (final StoreIndexInfo sii : mStoreIndexInfos) {
@@ -190,17 +195,6 @@ private final MemlocArrayManager mMemLocArrayManager;
 				// arrays don't match (coarse check failed..)
 				continue;
 			}
-
-			// EDIT: this is a hack, commented it
-//			if (selectInfo.getArrayPvoc() instanceof IProgramNonOldVar &&
-//					eps.areEqual(selectInfo.getArrayPvoc().getTerm(),
-//							((IProgramNonOldVar) selectInfo.getArrayPvoc()).getOldVar().getTerm())) {
-//				/* the array that is read at the current select is in its uninitialized state -- the current
-//				 *  storeIndexInfo (or any other for that matter) does not influence the select, thus cannot trigger
-//				 *  a merge of heap partitions.
-//				 */
-//				continue;
-//			}
 
 			for (int dim = 0; dim < selectIndex.size(); dim++) {
 

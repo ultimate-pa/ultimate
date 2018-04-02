@@ -207,9 +207,6 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				final Term lhs = at.getParameters()[0];
 				final Term rhs = at.getParameters()[1];
 
-//				final Term lhsSimpleArray = extractSimpleArrayTerm(lhs);
-//				final Term rhsSimpleArray = extractSimpleArrayTerm(rhs);
-
 				final IProgramVarOrConst lhsPvoc = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(lhs));
 				final IProgramVarOrConst rhsPvoc = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(rhs));
 
@@ -219,18 +216,11 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				}
 
 				final IProgramVarOrConst lhsArray = mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(lhs));
-//				final ArrayGroup arrayGroup = getArrayGroup(extractSimpleArrayTerm(lhs));
 				final ArrayGroup arrayGroup = mArrayToArrayGroup.get(lhsArray);
 				assert arrayGroup.equals(getArrayGroup(extractSimpleArrayTerm(rhs)));
 
-//				final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
-//
-//				final Sort arraySort = at.getParameters()[0].getSort();
-////				final MultiDimensionalSort mdSort = new MultiDimensionalSort(arraySort);
 //
 //				// holds the combinations of L1i .. Lni we will build a conjunct for each
-//				final List<List<LocationBlock>> locationBlockTuples =
-//						CrossProducts.crossProductOfSets(locationBlocks);
 				final List<List<LocationBlock>> locationBlockTuples = getAllLocationBlockTuplesForHeapArray(lhsArray);
 
 				enqueueWalker(new BuildConjunction(locationBlockTuples.size(), mMgdScript.getScript()));
@@ -247,7 +237,6 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 			} else if (functionName.equals("select")) {
 
 				final Term array = at.getParameters()[0];
-//				final Term index = at.getParameters()[1];
 
 				final IProgramVarOrConst arrayPvoc =
 						mEdgeInfo.getProgramVarOrConstForTerm(extractSimpleArrayTerm(array));

@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -134,6 +135,12 @@ public final class LocalTransformer implements ITransformulaTransformer {
 	@Override
 	public void preprocessIcfg(final IIcfg<?> icfg) {
 		// A LocalTransformer needs no knowledge about the icfg.
+	}
+
+	@Override
+	public ModifiableGlobalsTable getNewModifiedGlobals() {
+		// TODO
+		throw new UnsupportedOperationException("TODO");
 	}
 
 }

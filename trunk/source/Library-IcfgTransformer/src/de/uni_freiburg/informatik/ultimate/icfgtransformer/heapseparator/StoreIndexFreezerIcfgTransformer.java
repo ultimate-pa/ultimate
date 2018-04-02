@@ -40,11 +40,14 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransfor
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -55,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.Progr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -74,11 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @param <OUTLOC>
  */
 public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-	implements ITransformulaTransformer {
-//		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
-
-//	private final NestedMap2<Term, EdgeInfo, IProgramNonOldVar> mWriteIndexToTfInfoToFreezeVar =
-//			new NestedMap2<>();
+		implements ITransformulaTransformer {
 
 	private final Map<StoreIndexInfo, IProgramNonOldVar> mStoreIndexInfoToFreezeVar = new HashMap<>();
 
@@ -90,38 +90,21 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 	ManagedScript mMgdScript;
 
+	private final HashRelation<String, IProgramNonOldVar> mNewModifiedGlobals;
+
 	public StoreIndexFreezerIcfgTransformer(final ILogger logger,
-			final ManagedScript mgdScript,
-			final IIcfgSymbolTable oldSymbolTable,
-			final Set<String> oldProcs,
-			//final String resultName,
-			//final Class<OUTLOC> outLocClazz, final IIcfg<INLOC> inputCfg,
-			//final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
+			final CfgSmtToolkit oldCsToolkit,
 			final List<IProgramVarOrConst> heapArrays,
 			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo) {
-//		super(logger, resultName, outLocClazz, inputCfg, funLocFac, backtranslationTracker);
 		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 		mAllConstantTerms = new HashSet<>();
-		mNewSymbolTable = new DefaultIcfgSymbolTable(oldSymbolTable, oldProcs);
-		mMgdScript = mgdScript;
+		mNewSymbolTable = new DefaultIcfgSymbolTable(oldCsToolkit.getSymbolTable(), oldCsToolkit.getProcedures());
+		mNewModifiedGlobals = new HashRelation<>(oldCsToolkit.getModifiableGlobalsTable().getProcToGlobals());
 	}
 
-//	@Override
-//	protected IcfgEdge transform(final IcfgEdge oldTransition, final OUTLOC newSource, final OUTLOC newTarget) {
-//		final UnmodifiableTransFormula newTransformula = transformTransformula(oldTransition.getTransformula(),
-//				new EdgeInfo(oldTransition));
-//		return super.transform(oldTransition, newSource, newTarget, newTransformula);
-//	}
-
-//	public final UnmodifiableTransFormula transformTransformula(final UnmodifiableTransFormula tf,
-//			final EdgeInfo edgeInfo) {
 	@Override
 	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-
 		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
 		/*
@@ -134,7 +117,6 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		/*
 		 * core business from here on..
 		 */
-
 		if (mEdgeToIndexToStoreIndexInfo.get(edgeInfo) == null) {
 			// edge does not have any array writes --> return it unchanged
 			return new TransforumlaTransformationResult(tf);
@@ -144,8 +126,6 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		final Map<IProgramVar, TermVariable> extraOutVars = new HashMap<>();
 
 		mMgdScript.lock(this);
-
-
 
 		final List<Term> freezeVarUpdates = new ArrayList<>();
 		for (final Entry<Term, StoreIndexInfo> en : mEdgeToIndexToStoreIndexInfo.get(edgeInfo).entrySet()) {
@@ -170,6 +150,9 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 			}
 			assert extraInVars.containsKey(freezeVar) && extraOutVars.containsKey(freezeVar);
 
+			assert oldEdge instanceof IcfgInternalTransition;
+			mNewModifiedGlobals.addPair(oldEdge.getPrecedingProcedure(), freezeVar);
+
 			/*
 			 * construct the nondeterministic update "freezeIndex' = freezeIndex \/ freezeIndex' = storeIndex"
 			 */
@@ -193,16 +176,13 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 
 		final List<Term> newFormulaConjuncts = new ArrayList<>();
 		newFormulaConjuncts.add(tf.getFormula());
-//		newFormulaConjuncts.addAll(indexUpdateFormula);
 		newFormulaConjuncts.addAll(freezeVarUpdates);
 
 		tfBuilder.setFormula(SmtUtils.and(mMgdScript.getScript(), newFormulaConjuncts));
 
 		tfBuilder.setInfeasibility(tf.isInfeasible());
 
-//		tf.getAuxVars().forEach(tfBuilder::addAuxVar);
 		tfBuilder.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mMgdScript);
-
 
 		final UnmodifiableTransFormula newTf = tfBuilder.finishConstruction(mMgdScript);
 		return new TransforumlaTransformationResult(newTf);
@@ -247,7 +227,6 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 	@Override
 	public void preprocessIcfg(final IIcfg<?> icfg) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -260,5 +239,9 @@ public class StoreIndexFreezerIcfgTransformer<INLOC extends IcfgLocation, OUTLOC
 		return mNewSymbolTable;
 	}
 
+	@Override
+	public ModifiableGlobalsTable getNewModifiedGlobals() {
+		return new ModifiableGlobalsTable(mNewModifiedGlobals);
+	}
 }
 

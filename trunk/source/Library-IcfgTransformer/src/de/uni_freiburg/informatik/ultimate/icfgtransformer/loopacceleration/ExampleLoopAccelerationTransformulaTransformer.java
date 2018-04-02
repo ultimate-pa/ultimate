@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -101,6 +102,12 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	@Override
 	public void preprocessIcfg(final IIcfg<?> icfg) {
 		// this transformer does not need any knowledge about the icfg
+	}
+
+	@Override
+	public ModifiableGlobalsTable getNewModifiedGlobals() {
+		// TODO
+		throw new UnsupportedOperationException("TODO");
 	}
 
 }

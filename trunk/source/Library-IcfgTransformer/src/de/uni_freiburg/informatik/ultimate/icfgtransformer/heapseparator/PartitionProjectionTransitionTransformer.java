@@ -37,17 +37,21 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -84,13 +88,15 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 	private final HeapSeparatorBenchmark mStatistics;
 
-//	private final Map<StoreIndexInfo, LocationBlock> mStoreIndexInfoToLocationBlock;
-
 	ManagedScript mMgdScript;
 
 	DefaultIcfgSymbolTable mNewSymbolTable;
 
 	private final ILogger mLogger;
+
+	private final CfgSmtToolkit mOldCsToolkit;
+
+	private final HashRelation<String, IProgramNonOldVar> mNewModifiableGlobals;
 
 	/**
 	 *
@@ -121,6 +127,8 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		mMgdScript = inputCfgCsToolkit.getManagedScript();
 
+		mOldCsToolkit = inputCfgCsToolkit;
+
 		logger.info("executing heap partitioning transformation");
 		mLogger = logger;
 
@@ -149,29 +157,21 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 			mArrayGroupToDimensionToLocationBlocks.addTriple(arrayGroup, dim, triple.getThird());
 		}
 
-//		mStoreIndexInfoToLocationBlock = storeIndexInfoToLocationBlock;
-
 		mArrayToArrayGroup = arrayToArrayGroup;
 
-//		mSubArrayManager = new SubArrayManager(mInputCfgCsToolkit, mStatistics, arrayToArrayGroup);
 		mSubArrayManager = new SubArrayManager(inputCfgCsToolkit, mStatistics, arrayToArrayGroup);
 
 		mEdgeToIndexToStoreIndexInfo = edgeToIndexToStoreIndexInfo;
 
 		mNewSymbolTable = new DefaultIcfgSymbolTable();
+
+		mNewModifiableGlobals = new HashRelation<>(mOldCsToolkit.getModifiableGlobalsTable().getProcToGlobals());
 	}
 
-//	@Override
-//	public IcfgEdge transform(final IcfgEdge edge, final OUTLOC newSource, final OUTLOC newTarget) {
 	@Override
 	public TransforumlaTransformationResult transform(final IIcfgTransition<? extends IcfgLocation> oldEdge,
 			final UnmodifiableTransFormula tf) {
-//		return new TransforumlaTransformationResult(transformedTransformula);
-//	}
 
-//		final UnmodifiableTransFormula tf = edge.getTransformula();
-
-//		final EdgeInfo edgeInfo = new EdgeInfo(edge);
 		final EdgeInfo edgeInfo = new EdgeInfo((IcfgEdge) oldEdge);
 
 		final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToDimensionToLocationBlock =
@@ -202,10 +202,21 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 					continue;
 				}
 				mNewSymbolTable.add(en.getKey());
+
+				if (oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure())
+						&& en.getKey() instanceof IProgramNonOldVar
+						&& !en.getValue().equals(inVars.get(en.getKey()))) {
+					/*
+					 * we have and internal transition or summary and a global assigned var
+					 * --> make sure it is tracked in modifiable globals
+					 */
+					mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), (IProgramNonOldVar) en.getKey());
+				}
 			}
 			for (final IProgramConst ntc : tf.getNonTheoryConsts()) {
 				mNewSymbolTable.add(ntc);
 			}
+
 		}
 
 
@@ -219,9 +230,26 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 		final UnmodifiableTransFormula newTransformula = tfBuilder.finishConstruction(mMgdScript);
 
+
+		assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure())
+				|| newTransformula.getAssignedVars().stream().allMatch(pv -> (pv instanceof ILocalProgramVar))
+				: "how to deal with a call or return transition that modifies a global variable??";
+
+//		assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure())
+//			|| DataStructureUtils.difference(
+//					newTransformula.getAssignedVars(),
+//					mNewModifiableGlobals.getImage(oldEdge.getPrecedingProcedure()).stream()
+//						.map(pv -> (IProgramVar) pv).collect(Collectors.toSet())
+//					)
+//				.isEmpty();
+//		for (final IProgramVar av : newTransformula.getAssignedVars()) {
+//			if (av instanceof IProgramNonOldVar) {
+//				mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), (IProgramNonOldVar) av);
+//			}
+//		}
+
 		log(tf, newTransformula);
 
-//		return transform(edge, newSource, newTarget, newTransformula);
 		return new TransforumlaTransformationResult(newTransformula);
 	}
 
@@ -230,8 +258,6 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		// TODO Auto-generated method stub
 
 	}
-
-
 
 	@Override
 	public String getName() {
@@ -243,14 +269,11 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		return mNewSymbolTable;
 	}
 
-//	private void log(final IcfgEdge oldTransition, final IcfgEdge newTransition) {
 	private void log(final UnmodifiableTransFormula oldTf, final UnmodifiableTransFormula newTf) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
 
-//		final UnmodifiableTransFormula oldTf = oldTransition.getTransformula();
-//		final UnmodifiableTransFormula newTf = newTransition.getTransformula();
 		final boolean formulaHasChanged = !oldTf.getFormula().equals(newTf.getFormula());
 		final boolean inVarsHaveChanged = !oldTf.getInVars().equals(newTf.getInVars());
 		final boolean outVarsHaveChanged = !oldTf.getOutVars().equals(newTf.getOutVars());
@@ -286,15 +309,11 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 			mLogger.debug(newTf.getOutVars());
 		}
 		mLogger.debug("");
+	}
 
-		// mLogger.debug(String.format("\t tf has changed: %5s", tfHasChanged));
-		// mLogger.debug(String.format("\t invars have changed: %5s", inVarsHaveChanged));
-		// mLogger.debug(String.format("\t outvars have changed: %5s", outVarsHaveChanged));
-
-		// mLogger.debug("transformed oldTransition " + oldTransition.hashCode() + " :: " +
-		// oldTransition.getTransformula());
-		// mLogger.debug("\t to : " + newTransition.hashCode() + " :: " + newTransition.getTransformula());
-		// mLogger.debug("");
+	@Override
+	public ModifiableGlobalsTable getNewModifiedGlobals() {
+		return new ModifiableGlobalsTable(mNewModifiableGlobals);
 	}
 
 }

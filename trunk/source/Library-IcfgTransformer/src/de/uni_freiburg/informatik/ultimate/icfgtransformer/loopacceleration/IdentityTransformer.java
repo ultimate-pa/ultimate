@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -74,6 +75,12 @@ public class IdentityTransformer implements ITransformulaTransformer {
 	@Override
 	public IIcfgSymbolTable getNewIcfgSymbolTable() {
 		return mOldSymbolTable;
+	}
+
+	@Override
+	public ModifiableGlobalsTable getNewModifiedGlobals() {
+		// TODO
+		throw new UnsupportedOperationException("TODO");
 	}
 
 }

@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -76,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * input {@link IIcfg}.
  *
  * (Alexander Nutz:) Note that the symbol table is updated automatically according to new program variables or constants
- * that occur in the newly created TransFormulas.
+ * that occur in the newly created TransFormulas. (if _some_ of the methods are used..)
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -301,6 +302,19 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 * @return A new location.
 	 */
 	public OUTLOC createNewLocation(final INLOC oldLoc) {
+		final boolean isInitial = mOriginalIcfg.getInitialNodes().contains(oldLoc);
+		return createNewLocation(oldLoc, isInitial);
+	}
+
+	/**
+	 * Like {@link #createNewLocation(IcfgLocation)}, but allows to specify whether the created location should be
+	 *  marked as initial.
+	 *
+	 * @param oldLoc
+	 * @param isInitial
+	 * @return
+	 */
+	public OUTLOC createNewLocation(final INLOC oldLoc, final boolean isInitial) {
 		assert !mIsFinished;
 		final OUTLOC alreadyCreated = mOldLoc2NewLoc.get(oldLoc);
 		if (alreadyCreated != null) {
@@ -312,7 +326,6 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final OUTLOC freshLoc = mLocationFactory.createLocation(oldLoc, oldLoc.getDebugIdentifier(), proc);
 
 		// determine attributes of location
-		final boolean isInitial = mOriginalIcfg.getInitialNodes().contains(oldLoc);
 		final Set<INLOC> errorLocs = mOriginalIcfg.getProcedureErrorNodes().get(proc);
 		final boolean isError = errorLocs != null && errorLocs.contains(oldLoc);
 		final boolean isProcEntry = oldLoc.equals(mOriginalIcfg.getProcedureEntryNodes().get(proc));
@@ -335,19 +348,23 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		mIsFinished = true;
 		final CfgSmtToolkit oldToolkit = mOriginalIcfg.getCfgSmtToolkit();
 		final IIcfgSymbolTable newSymbolTable;
+		final ModifiableGlobalsTable newModifiedGlobals;
 
 		if (mNewVars.isEmpty()) {
 			newSymbolTable = mTransformer.getNewIcfgSymbolTable();
+			newModifiedGlobals = mTransformer.getNewModifiedGlobals();
 		} else {
 			final DefaultIcfgSymbolTable result =
 					new DefaultIcfgSymbolTable(mTransformer.getNewIcfgSymbolTable(), oldToolkit.getProcedures());
 			mNewVars.forEach(result::add);
 			newSymbolTable = result;
+
+			newModifiedGlobals = oldToolkit.getModifiableGlobalsTable();
 		}
 
 		final IPredicate transformedAxioms = transformAxioms(oldToolkit.getAxioms());
 		final CfgSmtToolkit csToolkit =
-				new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(), oldToolkit.getManagedScript(), newSymbolTable,
+				new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(), newSymbolTable,
 						transformedAxioms, oldToolkit.getProcedures(), oldToolkit.getIcfgEdgeFactory());
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
 	}
@@ -440,6 +457,10 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final String[] procedures = new String[0];
 		return new BasicPredicate(serialNumber, procedures, newAxioms, Collections.emptySet(), newAxioms);
 
+	}
+
+	public OUTLOC getNewLoc(final INLOC oldLoc) {
+		return mOldLoc2NewLoc.get(oldLoc);
 	}
 
 }
