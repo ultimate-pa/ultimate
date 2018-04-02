@@ -595,17 +595,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *   then we add the element g(x)
 		 */
 		if (elem.getAppliedFunction().isConstantFunction()) {
-//			mManager.reportEquality(elem, elem.getAppliedFunction().getConstantFunctionValue(), this, true);
 			reportEquality.accept(elem, elem.getAppliedFunction().getConstantFunctionValue());
 		}
-//		for (final ELEM equivalentFunction : mElementTVER.getEquivalenceClass(elem.getAppliedFunction())) {
 		for (final ELEM equivalentFunction : weakOrStrongEquivalenceClassOfAppliedFunction) {
 			if (equivalentFunction == elem.getAppliedFunction()) {
 				continue;
 			}
 			if (equivalentFunction.isConstantFunction()) {
 				// add element g(x)
-//				mManager.addElement(this, elem.replaceAppliedFunction(equivalentFunction), true, true);
 				addElement.accept(elem.replaceAppliedFunction(equivalentFunction));
 			}
 		}
