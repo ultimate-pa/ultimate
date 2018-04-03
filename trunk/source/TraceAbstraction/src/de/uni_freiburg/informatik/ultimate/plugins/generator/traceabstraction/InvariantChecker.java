@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +37,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -45,12 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructor;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 
 /**
  * Check given annotation without inferring invariants.
@@ -64,6 +58,9 @@ public class InvariantChecker {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
 	private final IIcfg<IcfgLocation> mIcfg;
+	
+	private final Map<IcfgLocation, IcfgEdge> mLoopLoc2errorEdge = new HashMap<>();
+	private final Map<IcfgLocation, IcfgEdge> mLoopErrorLoc2errorEdge = new HashMap<>();
 
 	public InvariantChecker(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> icfg) {
@@ -71,69 +68,112 @@ public class InvariantChecker {
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mIcfg = icfg;
+		
+		for (final IcfgLocation loopLoc : mIcfg.getLoopLocations()) {
+			final IcfgEdge errorEdge = getErrorEdgeForLoopInvariant(loopLoc);
+			if (errorEdge == null) {
+				throw new UnsupportedOperationException("No invariant at loop " + loopLoc);
+			} else {
+				mLoopLoc2errorEdge.put(loopLoc, errorEdge);
+				mLoopErrorLoc2errorEdge.put(errorEdge.getTarget(), errorEdge);
+			}
+		}
+		
+		final Set<IcfgLocation> loopLocsAndNonLoopErrorLocs = new HashSet<>();
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
 		for (final Entry<String, Set<IcfgLocation>> entry : proc2errNodes.entrySet()) {
 			for (final IcfgLocation errorLoc : entry.getValue()) {
-				
-				final ArrayDeque<IcfgLocation> worklistBackward = new ArrayDeque<>();
-				final Set<IcfgLocation> seenBackward = new HashSet<>();
-				final Set<IcfgLocation> startLocations = new HashSet<>();
-				for (final IcfgLocation predLoc : errorLoc.getIncomingNodes()) {
-					worklistBackward.add(predLoc);
-				}
-				IcfgLocation loc;
-				while (!worklistBackward.isEmpty()) {
-					loc = worklistBackward.removeFirst();
-					for (final IcfgLocation predLoc : loc.getIncomingNodes()) {
-						if (!seenBackward.contains(predLoc)) {
-							seenBackward.add(predLoc);
-							final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(predLoc);
-							if (loa != null) {
-								startLocations.add(predLoc);
-							} else {
-								if (icfg.getInitialNodes().contains(predLoc)) {
-									startLocations.add(predLoc);
-								} else {
-									worklistBackward.add(predLoc);
-								}
-							}
-						}
-					}
-				}
-				for (final IcfgLocation startLoc : startLocations) {
-					final ArrayDeque<IcfgLocation> worklistForward = new ArrayDeque<>();
-					final Set<IcfgLocation> seenForward = new HashSet<>();
-					final Set<IcfgLocation> errorLocations = new HashSet<>();
-					for (final IcfgLocation succLoc : startLoc.getOutgoingNodes()) {
-						processForward(worklistForward, seenForward, errorLocations, succLoc, false);
-					}
-					while (!worklistForward.isEmpty()) {
-						loc = worklistForward.removeFirst();
-						for (final IcfgLocation succLoc : loc.getOutgoingNodes()) {
-							if (!seenForward.contains(succLoc)) {
-								processForward(worklistForward, seenForward, errorLocations, succLoc, true);
-							}
-						}
-					}
-					seenForward.add(startLoc);
-					{
-						// some code for transforming parts of a CFG into a single statement
-						final String identifier = "InductivityChecksStartingFrom_" + startLoc;
-						final PathProgramConstructionResult test = constructPathProgram(identifier, mIcfg,
-								seenForward, Collections.singleton(startLoc));
-						final IUltimateServiceProvider beServices =
-								mServices.registerPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
-						final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
-						ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
-						ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
-						final BlockEncoder be = new BlockEncoder(mLogger, beServices, test.getPathProgram(),
-								SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-						final IIcfg<IcfgLocation> encoded = be.getResult();
-						test.toString();
-					}
+				final IcfgEdge loopErrorEdge = mLoopErrorLoc2errorEdge.get(errorLoc);
+				if (loopErrorEdge != null) {
+					loopLocsAndNonLoopErrorLocs.add(loopErrorEdge.getSource());
+				} else {
+					loopLocsAndNonLoopErrorLocs.add(errorLoc);
 				}
 			}
 		}
+		
+		for (final IcfgLocation backwardStartLoc : loopLocsAndNonLoopErrorLocs) {
+			final ArrayDeque<IcfgLocation> worklistBackward = new ArrayDeque<>();
+			final Set<IcfgLocation> seenBackward = new HashSet<>();
+			final Set<IcfgLocation> startLocations = new HashSet<>();
+			worklistBackward.add(backwardStartLoc);
+			seenBackward.add(backwardStartLoc);
+			while (!worklistBackward.isEmpty()) {
+				final IcfgLocation loc = worklistBackward.removeFirst();
+				for (final IcfgLocation pred : loc.getIncomingNodes()) {
+					if (icfg.getInitialNodes().contains(pred) || icfg.getLoopLocations().contains(pred)) {
+						startLocations.add(pred);
+					}
+					if (!seenBackward.contains(pred)) {
+						worklistBackward.add(pred);
+						seenBackward.add(pred);
+					}
+				}
+			}
+			for (final IcfgLocation startLoc : startLocations) {
+				final ArrayDeque<IcfgLocation> worklistForward = new ArrayDeque<>();
+				final Set<IcfgEdge> subgraphEdges = new HashSet<>();
+				final Set<IcfgLocation> seenForward = new HashSet<>();
+				final Set<IcfgLocation> errorLocations = new HashSet<>();
+				worklistForward.add(startLoc);
+				seenForward.add(startLoc);
+				while (!worklistForward.isEmpty()) {
+					final IcfgLocation loc = worklistForward.removeFirst();
+					for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+						final IcfgEdge loopErrorEdge = mLoopErrorLoc2errorEdge.get(loc);
+						if (loopErrorEdge != null && edge == loopErrorEdge) {
+							// this is edge to error loc for invariant
+							continue;
+						}
+						final IcfgLocation succLoc = edge.getTarget();
+						if (!seenBackward.contains(succLoc)) {
+							// does not belong to search space
+							continue;
+						}
+						subgraphEdges.add(edge);
+						if (icfg.getLoopLocations().contains(succLoc)) {
+							final IcfgEdge loopErrorEdgeOfSucc = mLoopLoc2errorEdge.get(succLoc);
+							if (loopErrorEdgeOfSucc != null) {
+								// succ of edge is loop location
+								subgraphEdges.add(edge);
+								errorLocations.add(loopErrorEdgeOfSucc.getTarget());
+								if (!loopErrorEdgeOfSucc.getTarget().getSuccessors().isEmpty()) {
+									throw new UnsupportedOperationException("we presume that error locations do not have successors");
+								}
+							}
+						}
+						
+						if (mIcfg.getProcedureErrorNodes().get(succLoc.getProcedure()).contains(succLoc)) {
+							// succLoc is other error location
+							errorLocations.add(succLoc);
+						}
+						if (!seenForward.contains(succLoc)) {
+							worklistForward.add(succLoc);
+							seenForward.add(succLoc);
+						}
+					}
+				}
+				assert !errorLocations.isEmpty();
+				final AcyclicSubgraphMerger asm = new AcyclicSubgraphMerger(mServices, mIcfg, subgraphEdges, startLoc, errorLocations);
+				for (final IcfgLocation errorLoc : errorLocations) {
+					final TransFormula tf = asm.getTransFormula(errorLoc);
+				}
+			}
+		}
+	}
+	
+	public static <E extends IIcfgTransition<IcfgLocation>> Set<E> collectAdjacentEdges(final IIcfg<IcfgLocation> icfg,
+			final Set<IcfgLocation> locations) {
+		final Set<E> result = new HashSet<>();
+		for (final IcfgLocation loc : locations) {
+			loc.getOutgoingEdges();
+			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+				if (locations.contains(edge.getTarget())) {
+					result.add((E) edge);
+				}
+			}
+		}
+		return result;
 	}
 
 	private void processForward(final ArrayDeque<IcfgLocation> worklistForward, final Set<IcfgLocation> seenForward,
@@ -141,7 +181,7 @@ public class InvariantChecker {
 		seenForward.add(succLoc);
 		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(succLoc);
 		if (loa != null) {
-			final IcfgLocation eLoc = getErrorLocForLoopInvariant(succLoc);
+			final IcfgLocation eLoc = getErrorEdgeForLoopInvariant(succLoc).getTarget();
 			seenForward.add(eLoc);
 			errorLocations.add(eLoc);
 		} else {
@@ -156,16 +196,17 @@ public class InvariantChecker {
 		}
 	}
 
-	private IcfgLocation getErrorLocForLoopInvariant(final IcfgLocation succLoc) {
-		IcfgLocation result = null;
-		for (final IcfgLocation loopSucc : succLoc.getOutgoingNodes()) {
-			final Check check = Check.getAnnotation(loopSucc);
+	private IcfgEdge getErrorEdgeForLoopInvariant(final IcfgLocation loopLoc) {
+		IcfgEdge result = null;
+		for (final IcfgEdge succEdge : loopLoc.getOutgoingEdges()) {
+			final IcfgLocation succLoc = succEdge.getTarget();
+			final Check check = Check.getAnnotation(succLoc);
 			if (check != null) {
 				final EnumSet<Spec> specs = check.getSpec();
 //				if (specs.size() == 1) {
 					specs.contains(Spec.INVARIANT);
 					if (result == null) {
-						result = loopSucc;
+						result = succEdge;
 					} else {
 						throw new UnsupportedOperationException("several invariants");
 					}
@@ -181,34 +222,6 @@ public class InvariantChecker {
 	}
 	
 	
+
 	
-	/**
-	 * TODO Matthias
-	 * @param identifier
-	 * @param originalIcfg
-	 * @param allowedLocations
-	 * @param additionalInitialLocations
-	 * @return
-	 */
-	public static <E extends IIcfgTransition<IcfgLocation>> PathProgramConstructionResult constructPathProgram(
-			final String identifier, final IIcfg<IcfgLocation> originalIcfg, final Set<IcfgLocation> allowedLocations,
-			final Set<IcfgLocation> additionalInitialLocations) {
-		final Set<E> allowedTransitions = new HashSet<>();
-		for (final IcfgLocation loc : allowedLocations) {
-			loc.getOutgoingEdges();
-			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-				if (allowedLocations.contains(edge.getTarget())) {
-					allowedTransitions.add((E) edge);
-				}
-			}
-		}
-		
-		final PathProgramConstructionResult ppc = new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, additionalInitialLocations)
-				.getResult();
-		final Map<IcfgLocation, IcfgLocation> old2new = ppc.getLocationMapping();
-		for (final IcfgLocation newInit : additionalInitialLocations) {
-			
-		}
-		return ppc;
-	}
 }
