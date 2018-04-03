@@ -186,7 +186,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		}
 	}
 
-	public static final class PathProgramConstructor {
+	private static final class PathProgramConstructor {
 
 		private final IIcfg<?> mOriginalIcfg;
 		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
@@ -202,7 +202,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final Set<IcfgLocation> mLoopLocations;
 		private final PathProgramConstructionResult mResult;
 
-		public PathProgramConstructor(final IIcfg<?> originalIcfg,
+		private PathProgramConstructor(final IIcfg<?> originalIcfg,
 				final Set<? extends IIcfgTransition<?>> allowedTransitions, final String newIdentifier,
 				final Set<IcfgLocation> additionalInitialLocations) {
 			final String nonNullIdentifier = Objects.requireNonNull(newIdentifier);
@@ -243,7 +243,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 					.isEmpty() : "You cannot have a path program that does not start at an initial location";
 		}
 
-		public PathProgramConstructionResult getResult() {
+		private PathProgramConstructionResult getResult() {
 			return mResult;
 		}
 
