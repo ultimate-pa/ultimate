@@ -410,10 +410,11 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 
 		//(the following variable are declared just to make their types clear, and detect type errors easier)
 
-		final CachingWeqEdgeLabelPoComparator cwelpc = new CachingWeqEdgeLabelPoComparator();
+//		final CachingWeqEdgeLabelPoComparator cwelpc = new CachingWeqEdgeLabelPoComparator();
 
 		final BiPredicate<WeakEquivalenceEdgeLabel<NODE, DISJUNCT>, WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> smallerThan =
-				cwelpc::isStrongerOrEqual;
+//				cwelpc::isStrongerOrEqual;
+				(label1, label2) -> mWeqCcManager.isStrongerThan(label1, label2, mWeqCcManager::isStrongerThan);
 		final BiFunction<
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
