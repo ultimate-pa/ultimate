@@ -172,6 +172,20 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return getWeqMeet(weqcc, cc, null, inplace);
 	}
 
+//	/**
+//	 * Add a node in a Cc. Let the CcManager decide about inplace.
+//	 *
+//	 * @param node
+//	 * @param congruenceClosure
+//	 * @param newEqualityTarget where the equalities should be reported to
+//	 * @return
+//	 */
+//	public CongruenceClosure<NODE> addNode(final NODE node, final CongruenceClosure<NODE> congruenceClosure,
+//			final WeqCongruenceClosure<NODE> newEqualityTarget) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+
 	public WeqCongruenceClosure<NODE> addNode(final NODE node, final WeqCongruenceClosure<NODE> origWeqCc,
 			final boolean inplace, final boolean omitSanityChecks) {
 		if (origWeqCc.hasElement(node)) {
@@ -193,6 +207,12 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		assert omitSanityChecks || origWeqCc.sanityCheck();
 
 		return result;
+	}
+
+	public CongruenceClosure<NODE> addNode(final NODE node, final CongruenceClosure<NODE> congruenceClosure,
+			final WeqCongruenceClosure<NODE> newEqualityTarget,
+			final boolean inplace, final boolean omitSanityChecks) {
+		return mCcManager.addElement(congruenceClosure, node, newEqualityTarget, inplace, omitSanityChecks);
 	}
 
 	/**
@@ -227,19 +247,22 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return;
 		}
 		mBenchmark.incrementCounter(watch.name());
-		mBenchmark.startWatch(watch.name());
+		mBenchmark.unpauseWatch(watch.name());
 	}
 
 	void bmEnd(final WeqCcBmNames watch) {
 		if (!mBenchmarkMode) {
 			return;
 		}
-		mBenchmark.stopWatch(watch.name());
+		mBenchmark.pauseWatch(watch.name());
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> WeakEquivalenceEdgeLabel<NODE, DISJUNCT> filterRedundantICcs(
 			final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> label) {
-		return new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), filterRedundantICcs(label.getDisjuncts()));
+		final WeakEquivalenceEdgeLabel<NODE, DISJUNCT> result =
+				new WeakEquivalenceEdgeLabel<>(label.getWeqGraph(), filterRedundantICcs(label.getDisjuncts()));
+//		assert !result.isTautological() || result.getDisjuncts().size() == 1;
+		return result;
 	}
 
 	public <DISJUNCT extends ICongruenceClosure<NODE>> Set<DISJUNCT> filterRedundantICcs(final Set<DISJUNCT> ccs,
@@ -675,11 +698,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return new WeakEquivalenceEdgeLabel<>(weakEquivalenceGraph, Collections.singleton(disjunct));
 	}
 
-	public CongruenceClosure<NODE> addNode(final NODE node, final CongruenceClosure<NODE> congruenceClosure,
-			final WeqCongruenceClosure<NODE> newEqualityTarget,
-			final boolean inplace, final boolean omitSanityChecks) {
-		return mCcManager.addElement(congruenceClosure, node, newEqualityTarget, inplace, omitSanityChecks);
-	}
+
 
 //	public Pair<CongruenceClosure<NODE>, HashRelation<NODE, NODE>>
 //			addNodeAndGetNewEqualities(final NODE node, final CongruenceClosure<NODE> congruenceClosure,

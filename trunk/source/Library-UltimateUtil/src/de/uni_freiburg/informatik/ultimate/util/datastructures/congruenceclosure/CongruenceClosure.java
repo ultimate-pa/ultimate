@@ -556,7 +556,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		{
 			constantFunctionTreatmentOnAddElement(elem,
-					(e1, e2) -> mManager.reportEquality(e1, e2, this, true),
+//					(e1, e2) -> mManager.reportEquality(e1, e2, this, true),
+					(e1, e2) -> newEqualityTarget.reportEqualityRec(e1, e2),
 					e -> mManager.addElement(this, e, true, true),
 					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()));
 		}
@@ -981,11 +982,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return meetRec(other, null, inplace);
 	}
 
-	public boolean isStrongerThan(final CongruenceClosure<ELEM> other) {
+	public boolean isStrongerThanNoCaching(final CongruenceClosure<ELEM> other) {
 		if (isInconsistent()) {
+			// mManager may be null in this case, so catch it here..
 			return true;
 		}
-		return mManager.isStrongerThan(this, other);
+		return mManager.isStrongerThanNoCaching(this, other);
 	}
 
 	public EqualityStatus getEqualityStatus(final ELEM elem1, final ELEM elem2) {

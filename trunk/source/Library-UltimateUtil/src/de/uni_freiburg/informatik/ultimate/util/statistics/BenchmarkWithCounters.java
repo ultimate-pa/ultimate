@@ -31,11 +31,11 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 		mWatchBenchmark.register(watchName);
 	}
 
-	public void startWatch(final String watchName) {
+	public void unpauseWatch(final String watchName) {
 		mWatchBenchmark.unpause(watchName);
 	}
 
-	public void stopWatch(final String watchName) {
+	public void pauseWatch(final String watchName) {
 		mWatchBenchmark.pause(watchName);
 	}
 

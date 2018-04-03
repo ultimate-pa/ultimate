@@ -43,8 +43,8 @@ public class CongruenceClosureComparator<E extends ICongruenceClosureElement<E>>
 		if (o1.equals(o2)) {
 			return ComparisonResult.EQUAL;
 		}
-		final boolean o1Stronger = o1.isStrongerThan(o2);
-		final boolean o2Stronger = o2.isStrongerThan(o1);
+		final boolean o1Stronger = o1.isStrongerThanNoCaching(o2);
+		final boolean o2Stronger = o2.isStrongerThanNoCaching(o1);
 		if (o1Stronger && o2Stronger) {
 			return ComparisonResult.EQUAL;
 		} else if (o1Stronger) {

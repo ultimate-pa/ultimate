@@ -218,6 +218,11 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new StatisticsResult<>(Activator.PLUGIN_ID, "CcManagerStatistics",
 						mEqConstraintFactory.getWeqCcManager().getCcManager().getBenchmark()));
+		if (mEqConstraintFactory.getWeqCcManager().getCcManager().hasPartialOrderCacheBenchmark()) {
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new StatisticsResult<>(Activator.PLUGIN_ID, "CcManagerStatistics",
+						mEqConstraintFactory.getWeqCcManager().getCcManager().getPartialOrderCacheBenchmark()));
+		}
 
 
 	}

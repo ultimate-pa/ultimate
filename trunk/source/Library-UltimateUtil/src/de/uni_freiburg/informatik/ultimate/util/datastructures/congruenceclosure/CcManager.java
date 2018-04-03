@@ -75,10 +75,24 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mBenchmarkMode = true;
 		if (mBenchmarkMode) {
 			mBenchmark = new BenchmarkWithCounters();
-			mBenchmark.registerCountersAndWatches(BmNames.getNames());
+			mBenchmark.registerCountersAndWatches(CcBmNames.getNames());
 		} else {
 			mBenchmark = null;
 		}
+	}
+
+	private CongruenceClosure<ELEM> addToPartialOrderCache(final CongruenceClosure<ELEM> cc) {
+		assert mPartialOrderCache != null;
+//		assert cc.isFrozen();
+		freezeIfNecessary(cc);
+		final CongruenceClosure<ELEM> result = mPartialOrderCache.addElement(cc);
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_1
+			|| (result.isStrongerThanNoCaching(cc) && cc.isStrongerThanNoCaching(result));
+		/*
+		 *  TODO: we do not work with/return the representative here because it might have a different expset!
+		 *   (should make this method void probably)
+		 */
+		return cc;
 	}
 
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
@@ -89,10 +103,13 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return result;
 	}
 
-	private CongruenceClosure<ELEM> postProcessCcResult(CongruenceClosure<ELEM> result) {
+	private CongruenceClosure<ELEM> postProcessCcResult(final CongruenceClosure<ELEM> cc) {
+		CongruenceClosure<ELEM> result = cc;
 		if (CcSettings.UNIFY_CCS) {
-			assert result.isFrozen();
-			result = mPartialOrderCache.addElement(result);
+//			assert result.isFrozen();
+			if (cc.isFrozen()) {
+				result = addToPartialOrderCache(cc);
+			}
 		}
 		return result;
 	}
@@ -108,7 +125,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public CongruenceClosure<ELEM> meet(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
 			final IRemovalInfo<ELEM> remInfo, final boolean inplace) {
-		bmStart(BmNames.MEET);
+		bmStart(CcBmNames.MEET);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (!inplace) {
 			freezeIfNecessary(cc1);
@@ -123,19 +140,19 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (cc1.isTautological() && !inplace) {
 //			assert cc1.isFrozen() && cc2.isFrozen() : "unforeseen case, when does this happen?";
 			freezeIfNecessary(cc2);
-			bmEnd(BmNames.MEET);
+			bmEnd(CcBmNames.MEET);
 			return cc2;
 		}
 		if (cc2.isTautological()) {
-			bmEnd(BmNames.MEET);
+			bmEnd(CcBmNames.MEET);
 			return cc1;
 		}
 		if (cc1.isInconsistent()) {
-			bmEnd(BmNames.MEET);
+			bmEnd(CcBmNames.MEET);
 			return cc1;
 		}
 		if (cc2.isInconsistent() && !inplace) {
-			bmEnd(BmNames.MEET);
+			bmEnd(CcBmNames.MEET);
 			return getInconsistentCc();
 		}
 
@@ -149,7 +166,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || result.sanityCheck();
 
 		final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
-		bmEnd(BmNames.MEET);
+		bmEnd(CcBmNames.MEET);
 		return resultPp;
 	}
 
@@ -168,7 +185,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public CongruenceClosure<ELEM> join(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2,
 			final boolean modifiable) {
-		bmStart(BmNames.JOIN);
+		bmStart(CcBmNames.JOIN);
 		/*
 		 * Freeze-before-join politics.. -- might not be strictly necessary here, because CongruenceClosure-freeze
 		 * triggers no propagations
@@ -178,15 +195,15 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 
 		if (cc1.isInconsistent()) {
-			bmEnd(BmNames.JOIN);
+			bmEnd(CcBmNames.JOIN);
 			return cc2;
 		}
 		if (cc2.isInconsistent()) {
-			bmEnd(BmNames.JOIN);
+			bmEnd(CcBmNames.JOIN);
 			return cc1;
 		}
 		if (cc1.isTautological() || cc2.isTautological()) {
-			bmEnd(BmNames.JOIN);
+			bmEnd(CcBmNames.JOIN);
 			return getEmptyCc(modifiable);
 		}
 
@@ -198,7 +215,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert modifiable != result.isFrozen();
 
 		final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
-		bmEnd(BmNames.JOIN);
+		bmEnd(CcBmNames.JOIN);
 		return resultPp;
 	}
 
@@ -232,26 +249,26 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public Set<CongruenceClosure<ELEM>> filterRedundantCcs(final Set<CongruenceClosure<ELEM>> unionList,
 			final PartialOrderCache<CongruenceClosure<ELEM>> ccPoCache) {
-		bmStart(BmNames.FILTERREDUNDANT);
+		bmStart(CcBmNames.FILTERREDUNDANT);
 		final Set<CongruenceClosure<ELEM>> maxReps = ccPoCache.getMaximalRepresentatives(unionList);
 		// some additional processing: if maxReps is {False}, return the empty set
 		assert !maxReps.stream().anyMatch(cc -> cc.isInconsistent()) || maxReps.size() == 1;
 		if (maxReps.iterator().next().isInconsistent()) {
-			bmEnd(BmNames.FILTERREDUNDANT);
+			bmEnd(CcBmNames.FILTERREDUNDANT);
 			return Collections.emptySet();
 		}
 
-		bmEnd(BmNames.FILTERREDUNDANT);
+		bmEnd(CcBmNames.FILTERREDUNDANT);
 		return maxReps;
 	}
 
 	public CongruenceClosure<ELEM> reportEquality(final ELEM node1, final ELEM node2,
 			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
-		bmStart(BmNames.REPORT_EQUALITY);
+		bmStart(CcBmNames.REPORT_EQUALITY);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (inplace) {
 			origCc.reportEquality(node1, node2);
-			bmEnd(BmNames.REPORT_EQUALITY);
+			bmEnd(CcBmNames.REPORT_EQUALITY);
 			return origCc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
@@ -259,18 +276,18 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			unfrozen.freeze();
 
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
-			bmEnd(BmNames.REPORT_EQUALITY);
+			bmEnd(CcBmNames.REPORT_EQUALITY);
 			return resultPp;
 		}
 	}
 
 	public CongruenceClosure<ELEM> reportDisequality(final ELEM node1, final ELEM node2,
 			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
-		bmStart(BmNames.REPORT_DISEQUALITY);
+		bmStart(CcBmNames.REPORT_DISEQUALITY);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (inplace) {
 			origCc.reportDisequality(node1, node2);
-			bmEnd(BmNames.REPORT_DISEQUALITY);
+			bmEnd(CcBmNames.REPORT_DISEQUALITY);
 			return origCc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
@@ -280,18 +297,18 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			assert unfrozen.isInconsistent()
 				|| unfrozen.getEqualityStatus(node1, node2) == EqualityStatus.NOT_EQUAL;
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
-			bmEnd(BmNames.REPORT_DISEQUALITY);
+			bmEnd(CcBmNames.REPORT_DISEQUALITY);
 			return resultPp;
 		}
 	}
 
 	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element, final Set<ELEM> literalSet,
 			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
-		bmStart(BmNames.REPORTCONTAINS);
+		bmStart(CcBmNames.REPORTCONTAINS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (inplace) {
 			origCc.getLiteralSetConstraints().reportContains(element, literalSet);
-			bmEnd(BmNames.REPORTCONTAINS);
+			bmEnd(CcBmNames.REPORTCONTAINS);
 			return origCc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
@@ -299,7 +316,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			unfrozen.freeze();
 
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
-			bmEnd(BmNames.REPORTCONTAINS);
+			bmEnd(CcBmNames.REPORTCONTAINS);
 			return resultPp;
 		}
 	}
@@ -507,7 +524,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public CongruenceClosure<ELEM> projectToElements(final CongruenceClosure<ELEM> cc, final Set<ELEM> nodesToKeep,
 			final IRemovalInfo<ELEM> remInfo) {
-		bmStart(BmNames.PROJECT_TO_ELEMENTS);
+		bmStart(CcBmNames.PROJECT_TO_ELEMENTS);
 		if (CcSettings.PROJECTTOELEMENTS_INPLACE) {
 			throw new AssertionError("CongruenceClosure.projectToElements is currently not suited for inplace "
 					+ "operation");
@@ -526,14 +543,14 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			result.freeze();
 			// TODO: implement a result check here?
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
-			bmEnd(BmNames.PROJECT_TO_ELEMENTS);
+			bmEnd(CcBmNames.PROJECT_TO_ELEMENTS);
 			return resultPp;
 		}
 	}
 
 	public CongruenceClosure<ELEM> addAllElements(final CongruenceClosure<ELEM> cc, final Set<ELEM> elemsToAdd,
 			final IRemovalInfo<ELEM> remInfo, final boolean inplace) {
-		bmStart(BmNames.ADD_ALL_ELEMENTS);
+		bmStart(CcBmNames.ADD_ALL_ELEMENTS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		assert !cc.isInconsistent();
 
@@ -557,7 +574,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
-		bmEnd(BmNames.ADD_ALL_ELEMENTS);
+		bmEnd(CcBmNames.ADD_ALL_ELEMENTS);
 		return resultPp;
 	}
 
@@ -586,36 +603,54 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 		return copy;
 	}
-//	public boolean isStrongerThan(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
-//			final BiPredicate<CongruenceClosure<NODE>, CongruenceClosure<NODE>> lowerOrEqual) {
 
 	public boolean isStrongerThan(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
-		bmStart(BmNames.IS_STRONGER_THAN);
 		if (CcSettings.UNIFY_CCS) {
-//			if (!mPartialOrderCache.knowsElement(cc1)) {
-//				mPartialOrderCache.addElement(cc1);
-//			}
-			final boolean result = mPartialOrderCache.lowerEqual(cc1, cc2);
-			bmEnd(BmNames.IS_STRONGER_THAN);
+			bmStart(CcBmNames.IS_STRONGER_THAN_W_CACHING);
+			final CongruenceClosure<ELEM> cc1Cached = addToPartialOrderCache(cc1);
+			final CongruenceClosure<ELEM> cc2Cached = addToPartialOrderCache(cc2);
+			final boolean result = mPartialOrderCache.lowerEqual(cc1Cached, cc2Cached);
+			bmEnd(CcBmNames.IS_STRONGER_THAN_W_CACHING);
 			return result;
 		}
+		return isStrongerThanNoCaching(cc1, cc2);
+	}
+
+	/**
+		 * This is the "base" isStrongerThan insofar it is the backend to the cache, and does not use the cache!
+	 *
+	 * @param cc1
+	 * @param cc2
+	 * @return
+	 */
+	public boolean isStrongerThanNoCaching(final CongruenceClosure<ELEM> cc1, final CongruenceClosure<ELEM> cc2) {
+		bmStart(CcBmNames.IS_STRONGER_THAN_NO_CACHING);
+//		if (CcSettings.UNIFY_CCS) {
+////			freezeIfNecessary(cc1);
+////			freezeIfNecessary(cc2);
+//			final CongruenceClosure<ELEM> cc1Cached = addToPartialOrderCache(cc1);
+//			final CongruenceClosure<ELEM> cc2Cached = addToPartialOrderCache(cc1);
+//			final boolean result = mPartialOrderCache.lowerEqual(cc1Cached, cc2Cached);
+//			bmEnd(BmNames.IS_STRONGER_THAN);
+//			return result;
+//		}
 
 		if (cc1.isInconsistent()) {
-			bmEnd(BmNames.IS_STRONGER_THAN);
+			bmEnd(CcBmNames.IS_STRONGER_THAN_NO_CACHING);
 			return true;
 		}
 		if (cc2.isInconsistent()) {
 			// we know this != False, and other = False
-			bmEnd(BmNames.IS_STRONGER_THAN);
+			bmEnd(CcBmNames.IS_STRONGER_THAN_NO_CACHING);
 			return false;
 		}
 		if (cc2.isTautological()) {
-			bmEnd(BmNames.IS_STRONGER_THAN);
+			bmEnd(CcBmNames.IS_STRONGER_THAN_NO_CACHING);
 			return true;
 		}
 		if (cc1.isTautological()) {
 			// we know other != True, and this = True
-			bmEnd(BmNames.IS_STRONGER_THAN);
+			bmEnd(CcBmNames.IS_STRONGER_THAN_NO_CACHING);
 			return false;
 		}
 		final Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> aligned = alignElements(cc1, cc2);
@@ -627,7 +662,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		assert assertElementsAreSuperset(otherAligned, thisAligned);
 
 		final boolean result = checkIsStrongerThan(thisAligned, otherAligned);
-		bmEnd(BmNames.IS_STRONGER_THAN);
+		bmEnd(CcBmNames.IS_STRONGER_THAN_NO_CACHING);
 		return result;
 	}
 
@@ -696,7 +731,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public Pair<CongruenceClosure<ELEM>, CongruenceClosure<ELEM>> alignElements(final CongruenceClosure<ELEM> cc1,
 			final CongruenceClosure<ELEM> cc2) {
-		bmStart(BmNames.ALIGN_ELEMENTS);
+		bmStart(CcBmNames.ALIGN_ELEMENTS);
 		final CongruenceClosure<ELEM> cc1Aligned = copyNoRemInfoUnfrozen(cc1);
 		final CongruenceClosure<ELEM> cc2Aligned = copyNoRemInfoUnfrozen(cc2);
 
@@ -719,7 +754,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		cc1Aligned.freeze();
 		cc2Aligned.freeze();
 
-		bmEnd(BmNames.ALIGN_ELEMENTS);
+		bmEnd(CcBmNames.ALIGN_ELEMENTS);
 		return new Pair<>(cc1Aligned, cc2Aligned);
 	}
 
@@ -795,38 +830,39 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		if (!mBenchmarkMode) {
 			return;
 		}
-		mBenchmark.incrementCounter(BmNames.OVERALL.name());
-		mBenchmark.startWatch(BmNames.OVERALL.name());
+		mBenchmark.incrementCounter(CcBmNames.OVERALL.name());
+		mBenchmark.unpauseWatch(CcBmNames.OVERALL.name());
 	}
 
 	private void bmEndOverall() {
 		if (!mBenchmarkMode) {
 			return;
 		}
-		mBenchmark.stopWatch(BmNames.OVERALL.name());
+		mBenchmark.pauseWatch(CcBmNames.OVERALL.name());
 	}
 
-	private void bmStart(final BmNames watch) {
+	private void bmStart(final CcBmNames watch) {
 		if (!mBenchmarkMode) {
 			return;
 		}
 		bmStartOverall();
 		mBenchmark.incrementCounter(watch.name());
-		mBenchmark.startWatch(watch.name());
+		mBenchmark.unpauseWatch(watch.name());
 	}
 
-	private void bmEnd(final BmNames watch) {
+	private void bmEnd(final CcBmNames watch) {
 		if (!mBenchmarkMode) {
 			return;
 		}
 		bmEndOverall();
-		mBenchmark.stopWatch(watch.name());
+		mBenchmark.pauseWatch(watch.name());
 	}
 
-	private static enum BmNames {
+	private static enum CcBmNames {
 
-		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, REMOVE, IS_STRONGER_THAN, ADDNODE, REPORTCONTAINS, REPORT_EQUALITY,
-	 	REPORT_DISEQUALITY, PROJECT_TO_ELEMENTS, ADD_ALL_ELEMENTS, ALIGN_ELEMENTS, OVERALL;
+		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, REMOVE, IS_STRONGER_THAN_NO_CACHING, ADDNODE, REPORTCONTAINS,
+		REPORT_EQUALITY, REPORT_DISEQUALITY, PROJECT_TO_ELEMENTS, ADD_ALL_ELEMENTS, ALIGN_ELEMENTS, OVERALL,
+		IS_STRONGER_THAN_W_CACHING;
 
 		static String[] getNames() {
 			final String[] result = new String[values().length];
@@ -835,5 +871,16 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			}
 			return result;
 		}
+	}
+
+	public boolean hasPartialOrderCacheBenchmark() {
+		if (mPartialOrderCache == null) {
+			return false;
+		}
+		return mPartialOrderCache.hasBenchmark();
+	}
+
+	public BenchmarkWithCounters getPartialOrderCacheBenchmark() {
+		return mPartialOrderCache.getBenchmark();
 	}
 }

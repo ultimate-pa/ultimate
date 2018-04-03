@@ -678,9 +678,9 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		if (mWeakEquivalenceGraph.getWeqCcManager() == null) {
 			return true;
 		}
-		if (mWeakEquivalenceGraph.isEmpty()) {
-			return true;
-		}
+//		if (mWeakEquivalenceGraph.isEmpty()) {
+//			return true;
+//		}
 
 		if (getDisjuncts().stream().anyMatch(l -> l.isTautological()) && getDisjuncts().size() > 1) {
 			// not normalized

@@ -212,6 +212,22 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 	}
 
+	/**
+	 * Call this, when you are sure that this WeqCc is already closed.
+	 */
+	public void freezeOmitPropagations() {
+		// set the flags
+		if (mCongruenceClosure != null) {
+			mCongruenceClosure.freezeIfNecessary();;
+		}
+//		if (mWeakEquivalenceGraph != null) {
+		if (!isInconsistent()) {
+			getWeakEquivalenceGraph().freezeIfNecessary();
+		}
+		mIsFrozen = true;
+
+	}
+
 	@Override
 	public void freeze() {
 		mManager.bmStart(WeqCcBmNames.FREEZE);
@@ -223,15 +239,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 		extAndTriangleClosure(false);
 
-		// set the flags
-		if (mCongruenceClosure != null) {
-			mCongruenceClosure.freezeIfNecessary();;
-		}
-//		if (mWeakEquivalenceGraph != null) {
-		if (!isInconsistent()) {
-			getWeakEquivalenceGraph().freezeIfNecessary();
-		}
-		mIsFrozen = true;
+		freezeOmitPropagations();
 		mManager.bmEnd(WeqCcBmNames.FREEZE);
 	}
 
@@ -953,6 +961,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			}
 			thin();
 //			assert getWeakEquivalenceGraph().sanityCheckWithoutNodesComparison();
+			assert sanityCheck();
 
 			// 2. do floyd-warshall (triangle-rule), report
 			executeFloydWarshallAndReportResultToWeqCc(omitSanityChecks);
@@ -1206,6 +1215,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		} else {
 			getWeakEquivalenceGraph().transformElementsAndFunctions(elemTransformer);
 		}
+		assert sanityCheck();
 	}
 
 	private <DISJUNCT extends ICongruenceClosure<NODE>> void updateWeqGraph(
@@ -1538,6 +1548,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	public boolean addElementRec(final NODE node) {
 		final boolean newlyAdded = !mCongruenceClosure.hasElement(node);
 		mManager.addNode(node, mCongruenceClosure, this, true, true);
+//		mCongruenceClosure = mManager.addNode(node, mCongruenceClosure, this);
 
 		if (!newlyAdded) {
 			return false;

@@ -34,7 +34,8 @@ public class CcSettings {
 	public static final boolean UNIFY_CCS = false;
 
 	// if we want to use unification, we have to forbid in place computations (copy-on-write)
-	public static final boolean FORBID_INPLACE = UNIFY_CCS;
+//	public static final boolean FORBID_INPLACE = UNIFY_CCS;
+	public static final boolean FORBID_INPLACE = false;
 
 	public static final boolean IMPLICIT_LITERAL_DISEQUALITIES = true;
 
