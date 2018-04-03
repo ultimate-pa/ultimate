@@ -641,7 +641,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(weqCc);
 			unfrozen.transformElementsAndFunctions(e -> e.renameVariables(substitutionMapping));
-			unfrozen.freeze();
+			unfrozen.freezeOmitPropagations();
 			// TODO: implement a result check here?
 			bmEnd(WeqCcBmNames.RENAMEVARS);
 			return unfrozen;
