@@ -30,17 +30,20 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.AxiomTransformationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransforumlaTransformationResult;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -62,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -70,6 +74,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.TransitiveClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 
 /**
  *
@@ -98,6 +105,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private final IcfgEdgeFactory mEdgeFactory;
 	private final Collection<IPredicate> mAdditionalAxioms;
 	private boolean mIsFinished;
+	private ILogger mLogger;
 
 	/**
 	 * Default constructor of {@link TransformedIcfgBuilder}.
@@ -114,10 +122,10 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 * @param resultIcfg
 	 *            The output {@link IIcfg}.
 	 */
-	public TransformedIcfgBuilder(final ILocationFactory<INLOC, OUTLOC> funLocFac,
+	public TransformedIcfgBuilder(final ILogger logger, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final ITransformulaTransformer transformer,
 			final IIcfg<INLOC> originalIcfg, final BasicIcfg<OUTLOC> resultIcfg) {
-		this(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg, Collections.emptySet());
+		this(logger, funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg, Collections.emptySet());
 	}
 
 	/**
@@ -137,10 +145,11 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 * @param additionalAxioms
 	 *            axioms that are to be added to the resulting {@link IIcfg}
 	 */
-	public TransformedIcfgBuilder(final ILocationFactory<INLOC, OUTLOC> funLocFac,
+	public TransformedIcfgBuilder(final ILogger logger, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final ITransformulaTransformer transformer,
 			final IIcfg<INLOC> originalIcfg, final BasicIcfg<OUTLOC> resultIcfg,
 			final Collection<IPredicate> additionalAxioms) {
+		mLogger = Objects.requireNonNull(logger);
 		mLocationFactory = Objects.requireNonNull(funLocFac);
 		mBacktranslationTracker = Objects.requireNonNull(backtranslationTracker);
 		mTransformer = Objects.requireNonNull(transformer);
@@ -352,7 +361,10 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		if (mNewVars.isEmpty()) {
 			newSymbolTable = mTransformer.getNewIcfgSymbolTable();
-			newModifiedGlobals = mTransformer.getNewModifiedGlobals();
+			newModifiedGlobals = new ModifiableGlobalsTable(
+					computeClosure(mTransformer.getNewModifiedGlobals(),
+							computeCallGraph(),
+							oldToolkit.getProcedures()));
 		} else {
 			final DefaultIcfgSymbolTable result =
 					new DefaultIcfgSymbolTable(mTransformer.getNewIcfgSymbolTable(), oldToolkit.getProcedures());
@@ -367,6 +379,50 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 				new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(), newSymbolTable,
 						transformedAxioms, oldToolkit.getProcedures(), oldToolkit.getIcfgEdgeFactory());
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
+	}
+
+	private HashRelation<String, IProgramNonOldVar> computeClosure(
+			final HashRelation<String, IProgramNonOldVar> newModifiedGlobals,
+			final HashRelation<String, String> callGraph,
+			final Set<String> allProcedures) {
+		assert mIsFinished;
+
+		// revert call graph
+		final HashRelation<String, String> invertedCallGraph = new HashRelation<>();
+		for (final Entry<String, String> en : callGraph) {
+			invertedCallGraph.addPair(en.getValue(), en.getKey());
+		}
+
+		final ISuccessorProvider<String> successorProvider = new ISuccessorProvider<String>() {
+			@Override
+			public Iterator<String> getSuccessors(final String node) {
+				return invertedCallGraph.getImage(node).iterator();
+			}
+		};
+		final Function<String, Set<IProgramNonOldVar>> f = p -> newModifiedGlobals.getImage(p);
+
+				final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
+		final Map<String, Set<IProgramNonOldVar>> closed =
+				TransitiveClosure.computeClosure(mLogger, allProcedures, f, successorProvider);
+		for (final Entry<String, Set<IProgramNonOldVar>> en : closed.entrySet()) {
+			for (final IProgramNonOldVar pv : en.getValue()) {
+				result.addPair(en.getKey(), pv);
+			}
+		}
+
+		return result;
+	}
+
+	private HashRelation<String, String> computeCallGraph() {
+		assert mIsFinished;
+		final HashRelation<String, String> result = new HashRelation<>();
+		for (final Entry<String, OUTLOC> en : mResultIcfg.getProcedureEntryNodes().entrySet()) {
+			for (final IcfgEdge callEdge : en.getValue().getIncomingEdges()) {
+				assert callEdge instanceof IcfgCallTransition;
+				result.addPair(callEdge.getPrecedingProcedure(), callEdge.getSucceedingProcedure());
+			}
+		}
+		return result;
 	}
 
 	private IcfgReturnTransition createNewReturnTransition(final IcfgLocation source, final IcfgLocation target,
