@@ -94,6 +94,14 @@ public interface ITransformulaTransformer {
 	IIcfgSymbolTable getNewIcfgSymbolTable();
 
 	/**
+	 *
+	 * @return
+	 * 		Modified globals of the result CFG. Does not have to be transitively closed. Can be obtained only after the
+	 * 		 translation.
+	 */
+	HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals();
+
+	/**
 	 * The result of an {@link ITransformulaTransformer#transform(IcfgEdge, UnmodifiableTransFormula)} operation.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -180,6 +188,4 @@ public interface ITransformulaTransformer {
 			return mIsOverapproximation;
 		}
 	}
-
-	HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals();
 }

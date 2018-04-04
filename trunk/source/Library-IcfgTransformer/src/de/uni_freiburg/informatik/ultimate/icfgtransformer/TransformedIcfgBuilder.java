@@ -388,22 +388,22 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		assert mIsFinished;
 
 		// revert call graph
-		final HashRelation<String, String> invertedCallGraph = new HashRelation<>();
+		final HashRelation<String, String> revertedCallGraph = new HashRelation<>();
 		for (final Entry<String, String> en : callGraph) {
-			invertedCallGraph.addPair(en.getValue(), en.getKey());
+			revertedCallGraph.addPair(en.getValue(), en.getKey());
 		}
 
 		final ISuccessorProvider<String> successorProvider = new ISuccessorProvider<String>() {
 			@Override
 			public Iterator<String> getSuccessors(final String node) {
-				return invertedCallGraph.getImage(node).iterator();
+				return revertedCallGraph.getImage(node).iterator();
 			}
 		};
-		final Function<String, Set<IProgramNonOldVar>> f = p -> newModifiedGlobals.getImage(p);
+		final Function<String, Set<IProgramNonOldVar>> procToModGlobals = p -> newModifiedGlobals.getImage(p);
 
 				final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		final Map<String, Set<IProgramNonOldVar>> closed =
-				TransitiveClosure.computeClosure(mLogger, allProcedures, f, successorProvider);
+				TransitiveClosure.computeClosure(mLogger, allProcedures, procToModGlobals, successorProvider);
 		for (final Entry<String, Set<IProgramNonOldVar>> en : closed.entrySet()) {
 			for (final IProgramNonOldVar pv : en.getValue()) {
 				result.addPair(en.getKey(), pv);
