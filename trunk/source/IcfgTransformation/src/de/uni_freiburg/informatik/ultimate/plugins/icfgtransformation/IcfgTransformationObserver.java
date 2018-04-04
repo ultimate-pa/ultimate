@@ -178,9 +178,9 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac,
 					new AbsIntEqualityProvider(mServices));
 		case REMOVE_DIV_MOD:
-			return applyRemoveDivMod(icfg, locFac, outlocClass, backtranslationTracker, fac);
+			return applyRemoveDivMod(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
-			return applyModuloNeighbor(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
+			return applyModuloNeighbor(mLogger, icfg, locFac, outlocClass, backtranslationTracker, fac, mServices);
 		case HEAP_SEPARATOR:
 			return applyHeapSeparator(icfg, locFac, outlocClass, backtranslationTracker, fac, mServices,
 					new AbsIntEqualityProvider(mServices));
@@ -216,7 +216,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		}
 		if (validArray == null) {
 			mLogger.warn("HeapSeparator: input icfg has no '#valid' array -- returning unchanged Icfg!");
-			return new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass,
+			return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
 					icfg.getIdentifier() + "left_unchanged_by_heapseparator",
 					new ExampleLoopAccelerationTransformulaTransformer(
 							mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
@@ -299,23 +299,25 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
-		return new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass,
+		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
 				icfg.getIdentifier() + "IcfgDuplicate", transformer).getResult();
 	}
 
 	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyRemoveDivMod(
-			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
-			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
+			final Class<OUTLOC> outlocClass, final IBacktranslationTracker backtranslationTracker,
+			final ReplacementVarFactory fac) {
 		IIcfg<OUTLOC> result;
 		final ITransformulaTransformer transformer =
 				new LocalTransformer(new RewriteDivision(fac), icfg.getCfgSmtToolkit().getManagedScript(), fac);
-		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(icfg, locFac,
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		result = icfgTransformer.getResult();
 		return result;
 	}
 
 	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyModuloNeighbor(
+			final ILogger logger,
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac,
 			final IUltimateServiceProvider services) {
@@ -328,7 +330,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 
 		final ITransformulaTransformer transformer =
 				new LocalTransformer(transitionPreprocessors, icfg.getCfgSmtToolkit().getManagedScript(), fac);
-		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(icfg, locFac,
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		result = icfgTransformer.getResult();
 		return result;
@@ -346,7 +348,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final MapEliminationSettings settings = getMapElimSettings();
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
 				icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings, equalityProvider));
-		return new IcfgTransformerSequence<>(icfg, locFac, (ILocationFactory<OUTLOC, OUTLOC>) locFac,
+		return new IcfgTransformerSequence<>(mLogger, icfg, locFac, (ILocationFactory<OUTLOC, OUTLOC>) locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "IcfgWithMapElim", transformers)
 						.getResult();
 	}

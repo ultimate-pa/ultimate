@@ -28,8 +28,10 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -54,6 +56,7 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		implements IIcfgTransformer<OUTLOC> {
 
 	private final IIcfg<OUTLOC> mResultIcfg;
+	private final ILogger mLogger;
 
 	/**
 	 * Default constructor.
@@ -72,9 +75,11 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	 *            The transformer that should be applied to each transformula of each transition of the input
 	 *            {@link IIcfg} to create a new {@link IIcfg}.
 	 */
-	public IcfgTransformer(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+	public IcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+			final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
+		mLogger = Objects.requireNonNull(logger);
 		mResultIcfg = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier,
 				transformer);
 	}
@@ -86,7 +91,8 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+				new TransformedIcfgBuilder<>(mLogger, funLocFac, backtranslationTracker, transformer, originalIcfg,
+						resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 		return resultIcfg;

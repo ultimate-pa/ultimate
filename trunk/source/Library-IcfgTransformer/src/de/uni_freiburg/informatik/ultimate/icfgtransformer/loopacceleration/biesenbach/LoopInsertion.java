@@ -174,7 +174,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mFunLocFac,
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, mFunLocFac,
 				mBacktranslationTracker, mTransformer, mOriginalIcfg, resultIcfg);
 		processLocations(mOriginalIcfg.getInitialNodes(), lst, loopHead, loopExits);
 		lst.finish();
@@ -246,7 +246,7 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(mNewIcfgIdentifier, mOriginalIcfg.getCfgSmtToolkit(), mOutLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mFunLocFac,
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, mFunLocFac,
 				mBacktranslationTracker, mTransformer, mOriginalIcfg, resultIcfg);
 		processLocations(mOriginalIcfg.getInitialNodes(), lst, loopHead, loopExits);
 		lst.finish();

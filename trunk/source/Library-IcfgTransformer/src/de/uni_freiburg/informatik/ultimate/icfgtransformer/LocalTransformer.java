@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -44,7 +43,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Mod
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * {@link ITransformulaTransformer} that can transform each {@link TransFormula} separately (without knowing the whole
@@ -138,7 +139,7 @@ public final class LocalTransformer implements ITransformulaTransformer {
 	}
 
 	@Override
-	public ModifiableGlobalsTable getNewModifiedGlobals() {
+	public HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals() {
 		// TODO
 		throw new UnsupportedOperationException("TODO");
 	}

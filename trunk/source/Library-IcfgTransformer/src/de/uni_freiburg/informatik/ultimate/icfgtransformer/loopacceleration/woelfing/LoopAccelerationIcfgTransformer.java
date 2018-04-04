@@ -147,7 +147,8 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, origIcfg, resultIcfg);
+				new TransformedIcfgBuilder<>(mLogger, funLocFac, backtranslationTracker, transformer, origIcfg,
+						resultIcfg);
 		mResultIcfg = transform(origIcfg, resultIcfg, lst, backtranslationTracker);
 		lst.finish();
 	}

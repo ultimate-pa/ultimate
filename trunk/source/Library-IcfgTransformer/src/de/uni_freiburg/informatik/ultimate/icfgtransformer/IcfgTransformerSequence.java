@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
 
+	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
 	private final String mIdentifier;
 
@@ -81,17 +83,19 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 	 *            The sequence of transformers that should be applied to each transformula of each transition of the
 	 *            input {@link IIcfg} to create a new {@link IIcfg}.
 	 */
-	public IcfgTransformerSequence(final IIcfg<INLOC> originalIcfg,
+	public IcfgTransformerSequence(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFacFirst, final ILocationFactory<OUTLOC, OUTLOC> funLocFacRest,
 			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
 			final String newIcfgIdentifier, final List<ITransformulaTransformer> transformers) {
+		mLogger = Objects.requireNonNull(logger);
 		mIdentifier = newIcfgIdentifier;
 		final Iterator<ITransformulaTransformer> iter = Objects.requireNonNull(transformers).iterator();
 		if (iter.hasNext()) {
 			final ITransformulaTransformer first = iter.next();
 			final String ident = getIdentifier(iter, 1);
 			final BasicIcfg<OUTLOC> intermediateIcfg =
-					transform(originalIcfg, funLocFacFirst, backtranslationTracker, outLocationClass, ident, first);
+					transform(logger, originalIcfg, funLocFacFirst, backtranslationTracker, outLocationClass, ident,
+							first);
 			mResultIcfg =
 					transformRest(intermediateIcfg, funLocFacRest, backtranslationTracker, outLocationClass, iter);
 		} else {
@@ -107,13 +111,13 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 		while (transformerIter.hasNext()) {
 			final ITransformulaTransformer transformer = transformerIter.next();
 			iteration++;
-			currentIcfg = transform(currentIcfg, funLocFac, backtranslationTracker, outLocationClass,
+			currentIcfg = transform(mLogger, currentIcfg, funLocFac, backtranslationTracker, outLocationClass,
 					getIdentifier(transformerIter, iteration), transformer);
 		}
 		return currentIcfg;
 	}
 
-	private static <IN extends IcfgLocation, OUT extends IcfgLocation> BasicIcfg<OUT> transform(
+	private static <IN extends IcfgLocation, OUT extends IcfgLocation> BasicIcfg<OUT> transform(final ILogger logger,
 			final IIcfg<IN> originalIcfg, final ILocationFactory<IN, OUT> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final Class<OUT> outLocationClass,
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
@@ -121,7 +125,8 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 		final BasicIcfg<OUT> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 		final TransformedIcfgBuilder<IN, OUT> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+				new TransformedIcfgBuilder<>(logger, funLocFac, backtranslationTracker, transformer, originalIcfg,
+						resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 		return resultIcfg;

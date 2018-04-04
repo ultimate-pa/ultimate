@@ -28,12 +28,13 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * {@link IdentityTransformer} is an implementation of {@link ITransformulaTransformer} that does not create new
@@ -78,7 +79,7 @@ public class IdentityTransformer implements ITransformulaTransformer {
 	}
 
 	@Override
-	public ModifiableGlobalsTable getNewModifiedGlobals() {
+	public HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals() {
 		// TODO
 		throw new UnsupportedOperationException("TODO");
 	}

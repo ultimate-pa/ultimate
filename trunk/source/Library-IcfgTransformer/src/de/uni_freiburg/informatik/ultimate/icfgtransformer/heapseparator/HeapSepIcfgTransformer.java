@@ -208,7 +208,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 								originalIcfg.getCfgSmtToolkit(),
 								mHeapArrays,
 								edgeToIndexToStoreIndexInfo);
-				final IcfgTransformer<INLOC, OUTLOC> siftf = new IcfgTransformer<>(originalIcfg, funLocFac,
+				final IcfgTransformer<INLOC, OUTLOC> siftf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", sifit);
 
 				icfgWFreezeVarsUninitialized = siftf.getResult();
@@ -315,7 +315,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 
 
-				final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
+				final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mauit);
 
 				storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
@@ -468,7 +468,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 						mHeapArrays,
 						mStatistics,
 						originalIcfg.getCfgSmtToolkit());
-		final IcfgTransformer<INLOC, OUTLOC> icfgtf = new IcfgTransformer<>(originalIcfg, funLocFac,
+		final IcfgTransformer<INLOC, OUTLOC> icfgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 				backtranslationTracker, outLocationClass, "memPartitionedIcfg", heapSeparatingTransformer);
 		mResultIcfg = icfgtf.getResult();
 	}

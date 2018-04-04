@@ -93,7 +93,8 @@ public class AhmedLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OU
 		// perform transformation last
 		mResultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> icfgBuilder =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, origIcfg, mResultIcfg);
+				new TransformedIcfgBuilder<>(logger, funLocFac, backtranslationTracker, transformer, origIcfg,
+						mResultIcfg);
 		processLocations(origIcfg.getInitialNodes(), icfgBuilder);
 		icfgBuilder.finish();
 	}

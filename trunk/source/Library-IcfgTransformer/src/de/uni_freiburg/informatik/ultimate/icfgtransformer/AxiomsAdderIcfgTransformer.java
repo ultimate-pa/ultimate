@@ -52,7 +52,7 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 		final ITransformulaTransformer noopTransformulaTransformer =
 				new ExampleLoopAccelerationTransformulaTransformer(logger, mgdScript,
 						inputCfgCsToolkit.getSymbolTable(), new ReplacementVarFactory(inputCfgCsToolkit, false));
-		final IcfgTransformer<INLOC, OUTLOC> noopIcfgTransformer = new IcfgTransformer<>(inputCfg, funLocFac,
+		final IcfgTransformer<INLOC, OUTLOC> noopIcfgTransformer = new IcfgTransformer<>(logger, inputCfg, funLocFac,
 				backtranslationTracker, outLocClazz, resultName, noopTransformulaTransformer);
 		final BasicIcfg<OUTLOC> copiedIcfg = (BasicIcfg<OUTLOC>) noopIcfgTransformer.getResult();
 		copiedIcfg.setCfgSmtToolkit(newToolkit);

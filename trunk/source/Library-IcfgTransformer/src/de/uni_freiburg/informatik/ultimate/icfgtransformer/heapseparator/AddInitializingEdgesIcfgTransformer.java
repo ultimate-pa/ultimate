@@ -84,7 +84,8 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 				new BasicIcfg<>(newIcfgName, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 
 		mBuilder =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, mResultIcfg);
+				new TransformedIcfgBuilder<>(logger, funLocFac, backtranslationTracker, transformer, originalIcfg,
+						mResultIcfg);
 
 		process(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, //"freezeVarsFrozen",
 				transformer);

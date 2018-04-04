@@ -97,14 +97,14 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private final Map<IcfgLocation, Boolean> mOverApproximation;
 	private final DealingWithArraysTypes mDealingWithArrays;
 	private Set<INLOC> mLoopHeads;
-	private Set<Loop> mAcceleratedLoops;
+	private final Set<Loop> mAcceleratedLoops;
 
 	private final IBacktranslationTracker mBackTranslationTracker;
 
 	/**
 	 * How to deal with arrays, either throw an exception or skip the loop
 	 * entirely
-	 * 
+	 *
 	 * @author Jonas Werner (jonaswerner95@gmail.com)
 	 *
 	 */
@@ -114,7 +114,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 	/**
 	 * Construct a new Loop Accelerator
-	 * 
+	 *
 	 * @param logger
 	 *            An {@link ILogger}
 	 * @param originalIcfg
@@ -180,7 +180,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
 				outLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(funLocFac,
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLogger, funLocFac,
 				backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
@@ -304,7 +304,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 	/**
 	 * Execute backbone once to get a symbolic memory.
-	 * 
+	 *
 	 * @param backbone
 	 * @param loop
 	 */
@@ -358,7 +358,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	/**
 	 * If there is a path that leads to an ErrorLocation in the loop calculate
 	 * an accelerated path.
-	 * 
+	 *
 	 * @param loop
 	 * @param loopSummary
 	 */
@@ -386,7 +386,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 	/**
 	 * return a {@link UnmodifiableTransFormula} of the given term.
-	 * 
+	 *
 	 * @param script
 	 *            {@link ManagedScript}
 	 * @param term
@@ -412,10 +412,10 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 	/**
 	 * check for arrays in the icfg
-	 * 
+	 *
 	 * @param init
 	 */
-	private void preprocessIcfg(Set<INLOC> init) {
+	private void preprocessIcfg(final Set<INLOC> init) {
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 		final Set<INLOC> closed = new HashSet<>();
 
@@ -490,7 +490,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 					if (loop.getPath().contains(oldTransition)) {
 						final OUTLOC loopExit = lst.createNewLocation((INLOC) loop.getLoopExit());
-						for (UnmodifiableTransFormula exitTransition : loop.getExitConditions()) {
+						for (final UnmodifiableTransFormula exitTransition : loop.getExitConditions()) {
 							final IcfgEdge newTransition = lst.createNewInternalTransition(newSource, loopExit,
 									exitTransition, mOverApproximation.get(newSource));
 							mBackTranslationTracker.rememberRelation(oldTransition, newTransition);
