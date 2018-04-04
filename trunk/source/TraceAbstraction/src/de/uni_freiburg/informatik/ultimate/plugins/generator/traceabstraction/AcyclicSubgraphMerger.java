@@ -77,7 +77,7 @@ public class AcyclicSubgraphMerger {
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mEndloc2TransFormula;
 
 	public AcyclicSubgraphMerger(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final Set<IcfgEdge>subgraphEdges, final IcfgLocation subgraphStartLocation,
+			final Set<IcfgEdge> subgraphEdges, final IcfgLocation subgraphStartLocation, final IcfgEdge startLocErrorEdge,
 			final Set<IcfgLocation> subgraphEndLocations) {
 		super();
 		mServices = services;
@@ -90,30 +90,46 @@ public class AcyclicSubgraphMerger {
 		Set<IcfgEdge>subgraphEdgesInCopy;
 		{
 			// construct a copy of the cfg
+			final Subgraph initialCopyWithOldStartLoc;
+			final IcfgEdge startLocErrorEdgeInCopy;
 			{
 				final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class,
 						Term.class, mLogger);
 				final BasicIcfg<IcfgLocation> newCfg = new IcfgDuplicator(mLogger, mServices, icfg.getCfgSmtToolkit().getManagedScript(),
 						backtranslator).copy(icfg);
 				final Map<IcfgLocation, IcfgLocation> newLoc2oldLoc = backtranslator.getLocationMapping();
-				initialCopy = new Subgraph(initialSubgraph, newCfg, newLoc2oldLoc);
+				initialCopyWithOldStartLoc = new Subgraph(initialSubgraph, newCfg, newLoc2oldLoc);
 				final Map<IcfgEdge, IcfgEdge> newEdge2oldEdge = backtranslator.getEdgeMapping();
 				final Map<IcfgEdge, IcfgEdge> oldEdge2newEdge = constructReverseMapping(newEdge2oldEdge);
 				subgraphEdgesInCopy = translate(subgraphEdges, oldEdge2newEdge);
+				if (startLocErrorEdge == null) {
+					startLocErrorEdgeInCopy = null;
+				} else {
+					startLocErrorEdgeInCopy = oldEdge2newEdge.get(startLocErrorEdge);
+					Objects.requireNonNull(startLocErrorEdgeInCopy);
+				}
 			}
 			
+			final String startLocProcedure = initialCopyWithOldStartLoc.getSubgraphStartLocation().getProcedure();
+			final IcfgLocation entryForStartLoc = initialCopyWithOldStartLoc.getIcfg().getProcedureEntryNodes().get(startLocProcedure);
 			// take the entry of the startLocations's procedure and connect entry
 			// and starLocation by TransFormula that is labeled with 'true' (a skip
 			// edge)
 			// one exception: if entry is already start location then we do not add
 			// edges
-			final String startLocProcedure = initialCopy.getSubgraphStartLocation().getProcedure();
-			final IcfgLocation entryForStartLoc = initialCopy.getIcfg().getProcedureEntryNodes().get(startLocProcedure);
-			if (initialCopy.getSubgraphStartLocation() != entryForStartLoc) {
-				final List<IcfgEdge> initOutgoing = new ArrayList<>(initialCopy.getSubgraphStartLocation().getOutgoingEdges());
+			if (initialSubgraph.getSubgraphStartLocation() != entryForStartLoc) {
+				final List<IcfgEdge> initOutgoing = new ArrayList<>(initialCopyWithOldStartLoc.getSubgraphStartLocation().getOutgoingEdges());
 				for (final IcfgEdge edge : initOutgoing) {
-					edge.redirectSource(entryForStartLoc);
+					if (edge != startLocErrorEdgeInCopy) {
+						// hashcode changes, we shoud remove and re-add it
+						subgraphEdgesInCopy.remove(edge);
+						edge.redirectSource(entryForStartLoc);
+						subgraphEdgesInCopy.add(edge);
+					}
 				}
+				initialCopy = new Subgraph(initialCopyWithOldStartLoc, entryForStartLoc);
+			} else {
+				initialCopy = initialCopyWithOldStartLoc;
 			}
 		}
 		
@@ -150,7 +166,7 @@ public class AcyclicSubgraphMerger {
 			final IcfgLocation endLoc = startSucc.getTarget();
 			final IcfgLocation endInProjection = blockEncoded.getBacktranslation().get(endLoc);
 			final IcfgLocation endInInitialCopy = projection.getBacktranslation().get(endInProjection);
-			final IcfgLocation endInInput = initialCopy.getBacktranslation().get(initialCopy);
+			final IcfgLocation endInInput = initialCopy.getBacktranslation().get(endInInitialCopy);
 			mEndloc2TransFormula.put(endInInput, startSucc.getTransformula());
 		}
 		
@@ -194,6 +210,18 @@ public class AcyclicSubgraphMerger {
 			mSubgraphStartLocation = mForwardTranslation.get(oldSubgraph.getSubgraphStartLocation());
 			Objects.requireNonNull(mSubgraphStartLocation);
 			mSubgraphEndLocations = translate(oldSubgraph.getSubgraphEndLocations(), mForwardTranslation);
+		}
+		
+		/**
+		 * Constructor for changing startLocation
+		 */
+		public Subgraph(final Subgraph subgraph, final IcfgLocation newStartLocation) {
+			mIcfg = subgraph.getIcfg();
+			mBacktranslation = subgraph.getBacktranslation();
+			mForwardTranslation = subgraph.getForwardTranslation();
+			mSubgraphStartLocation = newStartLocation;
+			Objects.requireNonNull(mSubgraphStartLocation);
+			mSubgraphEndLocations = subgraph.getSubgraphEndLocations();
 		}
 
 		public IIcfg<IcfgLocation> getIcfg() {

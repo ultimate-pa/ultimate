@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -135,12 +136,13 @@ public class InvariantChecker {
 							final IcfgEdge loopErrorEdgeOfSucc = mLoopLoc2errorEdge.get(succLoc);
 							if (loopErrorEdgeOfSucc != null) {
 								// succ of edge is loop location
-								subgraphEdges.add(edge);
+								subgraphEdges.add(loopErrorEdgeOfSucc);
 								errorLocations.add(loopErrorEdgeOfSucc.getTarget());
 								if (!loopErrorEdgeOfSucc.getTarget().getSuccessors().isEmpty()) {
 									throw new UnsupportedOperationException("we presume that error locations do not have successors");
 								}
 							}
+							continue;
 						}
 						
 						if (mIcfg.getProcedureErrorNodes().get(succLoc.getProcedure()).contains(succLoc)) {
@@ -154,9 +156,11 @@ public class InvariantChecker {
 					}
 				}
 				assert !errorLocations.isEmpty();
-				final AcyclicSubgraphMerger asm = new AcyclicSubgraphMerger(mServices, mIcfg, subgraphEdges, startLoc, errorLocations);
+				final AcyclicSubgraphMerger asm = new AcyclicSubgraphMerger(mServices, mIcfg, subgraphEdges, startLoc, mLoopLoc2errorEdge.get(startLoc), errorLocations);
 				for (final IcfgLocation errorLoc : errorLocations) {
 					final TransFormula tf = asm.getTransFormula(errorLoc);
+					Objects.requireNonNull(tf);
+					tf.toString();
 				}
 			}
 		}
