@@ -29,12 +29,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -42,6 +40,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -80,11 +79,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.util.TransitiveClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
-import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
  * Manages the Boogie procedures of the translated program.
@@ -200,64 +199,19 @@ public class ProcedureManager {
 		 * the inverse call graph. I.e., in the sense of this graph, the successors of a
 		 * procedure are its callers.
 		 */
-		final ISuccessorProvider<BoogieProcedureInfo> successorProvider = new ISuccessorProvider<BoogieProcedureInfo>() {
+		final ISuccessorProvider<BoogieProcedureInfo> successorProvider =
+				new ISuccessorProvider<BoogieProcedureInfo>() {
 			@Override
 			public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
 				return mInverseCallGraph.getImage(node).iterator();
 			}
 		};
 
-		final int numberOfAllNodes = mProcedureNameToProcedureInfo.size();
-		final Set<BoogieProcedureInfo> startNodes = new HashSet<>(mProcedureNameToProcedureInfo.values());
-		final DefaultSccComputation<BoogieProcedureInfo> dssc = new DefaultSccComputation<>(main.getLogger(),
-				successorProvider, numberOfAllNodes, startNodes);
-
-		/*
-		 * Initialize the modified globals for each SCC with the union of each method's
-		 * modified globals. (within an SCC all procedure may call all others (possibly
-		 * transitively) thus all must have the same modifies clause contents)
-		 */
-		final LinkedHashRelation<StronglyConnectedComponent<BoogieProcedureInfo>, VariableLHS> sccToModifiedGlobals = new LinkedHashRelation<>();
-		for (final StronglyConnectedComponent<BoogieProcedureInfo> scc : dssc.getSCCs()) {
-			for (final BoogieProcedureInfo procInfo : scc.getNodes()) {
-				for (final VariableLHS modGlobal : procInfo.getModifiedGlobals()) {
-					sccToModifiedGlobals.addPair(scc, modGlobal);
-				}
-			}
-		}
-
-		/*
-		 * update the modified globals for the sccs according to the edges in the call
-		 * graph that connect different SCCs
-		 *
-		 * algorithmic idea: start with the leafs of the graph and propagate all
-		 * modified globals back along call edges. The frontier is where we have already
-		 * propagated modified globals.
-		 *
-		 */
-		final Deque<StronglyConnectedComponent<BoogieProcedureInfo>> frontier = new ArrayDeque<>();
-		// frontier.addAll(dssc.getLeafComponents());
-		frontier.addAll(dssc.getRootComponents());
-		while (!frontier.isEmpty()) {
-			final StronglyConnectedComponent<BoogieProcedureInfo> currentScc = frontier.pollFirst();
-
-			/*
-			 * Note that we have chosen the ISuccessorProvider for the SccComputation such
-			 * that the caller is the successor of the callee. (i.e., the successor relation
-			 * is the inverse of the call graph)
-			 */
-			final Set<VariableLHS> currentSccModGlobals = sccToModifiedGlobals.getImage(currentScc);
-			final Iterator<StronglyConnectedComponent<BoogieProcedureInfo>> callers = dssc
-					.getComponentsSuccessorsProvider().getSuccessors(currentScc);
-			while (callers.hasNext()) {
-				final StronglyConnectedComponent<BoogieProcedureInfo> caller = callers.next();
-				frontier.add(caller);
-
-				for (final VariableLHS currentSccModGlobal : currentSccModGlobals) {
-					sccToModifiedGlobals.addPair(caller, currentSccModGlobal);
-				}
-			}
-		}
+		final Set<BoogieProcedureInfo> allProcedures = new HashSet<>(mProcedureNameToProcedureInfo.values());
+		final ILogger logger = main.getLogger();
+		final Function<BoogieProcedureInfo, Set<VariableLHS>> initialProcToModGlobals = p -> p.getModifiedGlobals();
+		final Map<BoogieProcedureInfo, Set<VariableLHS>> closedProcToModGlobals =
+				TransitiveClosure.computeClosure(logger, allProcedures, initialProcToModGlobals, successorProvider);
 
 		// update the modifies clauses!
 		final ArrayList<Declaration> updatedDeclarations = new ArrayList<>();
@@ -274,8 +228,8 @@ public class ProcedureManager {
 				newSpec = oldSpec;
 			} else {
 				// case: !procInfo.isModifiedGlobalsIsUsedDefined()
-				final Set<VariableLHS> currModClause = sccToModifiedGlobals
-						.getImage(dssc.getNodeToComponents().get(procInfo));
+				final Set<VariableLHS> currModClause = closedProcToModGlobals.get(procInfo);
+//						sccToModifiedGlobals.getImage(dssc.getNodeToComponents().get(procInfo));
 				assert currModClause != null : "No modifies clause proc " + procedureName;
 
 				procInfo.addModifiedGlobals(currModClause);
