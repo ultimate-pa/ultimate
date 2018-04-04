@@ -57,6 +57,9 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
 	public static final boolean DEF_ASSUME_FOR_ASSERT = !false;
+	
+	private static final String DESC_ASSUME_FOR_ASSERT = "While checking some specification, assume that all other specifications hold. This is only sound in a setting where the verification process stops after the first violated specification was found.";	
+	
 	public static final String LABEL_SOLVER = "SMT solver";
 	public static final SolverMode DEF_SOLVER = SolverMode.External_ModelsAndUnsatCoreMode;
 	// public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;
@@ -96,7 +99,8 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_ASSUME_FOR_ASSERT, DEF_ASSUME_FOR_ASSERT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ASSUME_FOR_ASSERT, DEF_ASSUME_FOR_ASSERT, DESC_ASSUME_FOR_ASSERT,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo, SolverMode.values()),
 				new UltimatePreferenceItem<>(LABEL_FAKE_NON_INCREMENTAL_SCRIPT, DEF_FAKE_NON_INCREMENTAL_SCRIPT,
 						PreferenceType.Boolean),
