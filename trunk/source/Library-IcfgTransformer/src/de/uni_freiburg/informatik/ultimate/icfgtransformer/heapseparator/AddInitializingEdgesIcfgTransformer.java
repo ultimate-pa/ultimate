@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -41,10 +42,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -97,24 +101,35 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 		transformer.preprocessIcfg(originalIcfg);
 
-		processLocations(originalIcfg.getInitialNodes(), mBuilder);
+//		final Set<IcfgEdge>	initEdges = processLocationsOmitInitEdges(originalIcfg.getInitialNodes(), mBuilder);
+		processLocationsOmitInitEdges(originalIcfg.getInitialNodes(), mBuilder);
 
-		/*
-		 * Create a new initial location and add an edge with initialization code to each of the old Icfg's intial
-		 * locations.
-		 */
-		final OUTLOC newInitLoc = createAndAddNewInitLocation();
-		for (final INLOC originalInitNode : originalIcfg.getInitialNodes()) {
-			mBuilder.createNewInternalTransition(newInitLoc, mBuilder.getNewLoc(originalInitNode),
-					mInitializingTransformula,
-					false);
-		}
+
+
+
+//		/*
+//		 * Create a new initial location and add an edge with initialization code to each of the old Icfg's intial
+//		 * locations.
+//		 */
+//		for (final INLOC originalInitNode : originalIcfg.getInitialNodes()) {
+//
+//			final OUTLOC newInitLoc = createAndAddNewInitLocation(originalInitNode);
+//
+//			mBuilder.createNewInternalTransition(newInitLoc, mBuilder.getNewLoc(originalInitNode),
+//					mInitializingTransformula,
+//					false);
+//		}
 
 		mBuilder.finish();
 	}
 
-	private OUTLOC createAndAddNewInitLocation() {
-		final OUTLOC freshLoc = (OUTLOC) new IcfgLocation(this.getClass().toString(), null);
+	private OUTLOC createAndAddNewInitLocation(final INLOC originalInitNode) {
+		// TODO: general solution..
+//		final OUTLOC freshLoc = (OUTLOC) new IcfgLocation(this.getClass().toString(), null);
+//		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(this.getClass().toString(), null, false, null);
+		final String debugString = this.getClass().toString() + "freshInit" + originalInitNode.hashCode();
+		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(debugString, originalInitNode.getProcedure(), false,
+				((BoogieIcfgLocation) originalInitNode).getBoogieASTNode());
 
 		// add fresh location to resultIcfg
 		mResultIcfg.addLocation(freshLoc, true, false, false, false, false);
@@ -122,7 +137,10 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 		return freshLoc;
 	}
 
-	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+	private void processLocationsOmitInitEdges(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+
+		final Set<IcfgEdge> initEdges = new HashSet<>();
+
 		final IcfgLocationIterator<INLOC> iter = new IcfgLocationIterator<>(init);
 
 		// we need to create new return transitions after new call transitions have been created
@@ -130,11 +148,20 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 		while (iter.hasNext()) {
 			final INLOC oldSource = iter.next();
+
+
+
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 				@SuppressWarnings("unchecked")
 				// make copies of the old locations, identical except that they are never initial
 				final OUTLOC newTarget = lst.createNewLocation((INLOC) oldTransition.getTarget(), false);
+
+				if (init.contains(oldSource)) {
+					// collect init edges for later treatment
+					initEdges.add(oldTransition);
+					continue;
+				}
 
 				if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
 					rtrTransitions.add(new Triple<>(newSource, newTarget, oldTransition));
@@ -144,7 +171,35 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 			}
 		}
 
+		for (final IcfgEdge initEdge : initEdges) {
+			if (initEdge instanceof IcfgCallTransition) {
+				// add an edge after the initEdge, split the init edge's target node
+				final OUTLOC newInitEdgeTarget = createAndAddNewInitLocation((INLOC) initEdge.getTarget());
+
+				final OUTLOC initEdgeSource = mBuilder.createNewLocation((INLOC) initEdge.getSource());
+
+				final OUTLOC oldInitEdgeTargetInNewCfg = mBuilder.createNewLocation((INLOC) initEdge.getTarget());
+
+				// the copy of the init edge leads to newInitEdgeTarget
+				mBuilder.createNewTransition(initEdgeSource, newInitEdgeTarget, initEdge);
+
+				/*
+				 * insert the edge carrying the new initialization code between newInitEdgeTarget and
+				 *  oldInitEdgeTargetInNewCfg
+				 */
+				mBuilder.createNewInternalTransition(newInitEdgeTarget, oldInitEdgeTargetInNewCfg,
+					mInitializingTransformula, false);
+			} else if (initEdge instanceof IcfgInternalTransition) {
+				// add an edge before the init edge
+				throw new UnsupportedOperationException("TOOD: implement this case");
+			} else {
+				throw new AssertionError("init edge is neither call nor internal transition");
+			}
+		}
+
+
 		rtrTransitions.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
+//		return result;
 	}
 
 	@Override
