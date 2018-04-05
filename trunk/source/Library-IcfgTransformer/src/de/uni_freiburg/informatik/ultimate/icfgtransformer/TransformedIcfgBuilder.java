@@ -96,7 +96,10 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
 public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 	private final Map<INLOC, OUTLOC> mOldLoc2NewLoc;
 	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
+
 	private final Set<IProgramVarOrConst> mNewVars;
+	private final HashRelation<String, IProgramNonOldVar> mNewModifiedGlobals;
+
 	private final ILocationFactory<INLOC, OUTLOC> mLocationFactory;
 	private final IBacktranslationTracker mBacktranslationTracker;
 	private final ITransformulaTransformer mTransformer;
@@ -158,6 +161,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
 		mNewVars = new HashSet<>();
+		mNewModifiedGlobals = new HashRelation<>();
 		mIsFinished = false;
 		mEdgeFactory = originalIcfg.getCfgSmtToolkit().getIcfgEdgeFactory();
 		mAdditionalAxioms = Objects.requireNonNull(additionalAxioms);
@@ -212,7 +216,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	public IcfgEdge createNewTransitionWithNewProgramVars(final OUTLOC newSource, final OUTLOC newTarget,
 			final IcfgEdge oldTransition) {
 		final IcfgEdge newTransition = createNewTransition(newSource, newTarget, oldTransition);
-		rememberNewVariables(newTransition.getTransformula());
+		rememberNewVariables(newTransition.getTransformula(), newSource.getProcedure());
 		return newTransition;
 	}
 
@@ -247,7 +251,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 				new TransforumlaTransformationResult(transformula, isOverapprox), payload);
 		source.addOutgoing(localTrans);
 		target.addIncoming(localTrans);
-		rememberNewVariables(transformula);
+		rememberNewVariables(transformula, source.getProcedure());
 		return localTrans;
 	}
 
@@ -255,7 +259,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 * Save all variables that are added trough new transformulas so that they can be added to the symbol table of the
 	 * new {@link IIcfg}.
 	 */
-	private void rememberNewVariables(final UnmodifiableTransFormula transformula) {
+	private void rememberNewVariables(final UnmodifiableTransFormula transformula, final String procedure) {
 		final IIcfgSymbolTable symbolTable = mOriginalIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		/**
@@ -293,12 +297,21 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 				continue;
 			}
 			mNewVars.add(entry.getKey());
+
+			/*
+			 * update modified globals if necessary
+			 */
+			if (entry.getKey() instanceof IProgramNonOldVar
+					&& transformula.getAssignedVars().contains(entry.getKey())) {
+				mNewModifiedGlobals.addPair(procedure, (IProgramNonOldVar) entry.getKey());
+			}
 		}
 		final Set<IProgramConst> unknownConsts = new HashSet<>(transformula.getNonTheoryConsts());
 		unknownConsts.removeAll(symbolTable.getConstants());
 		mNewVars.addAll(unknownConsts);
 
 		// TODO: What about transformula.getNonTheoryFunctions() ?
+
 
 	}
 
@@ -371,7 +384,14 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			mNewVars.forEach(result::add);
 			newSymbolTable = result;
 
-			newModifiedGlobals = oldToolkit.getModifiableGlobalsTable();
+			final HashRelation<String, IProgramNonOldVar> modGlob =
+					new HashRelation<>(oldToolkit.getModifiableGlobalsTable().getProcToGlobals());
+			mNewModifiedGlobals.forEach(en -> modGlob.addPair(en.getKey(), en.getValue()));
+			newModifiedGlobals = new ModifiableGlobalsTable(
+					computeClosure(modGlob,
+							computeCallGraph(),
+							oldToolkit.getProcedures()));
+
 		}
 
 		final IPredicate transformedAxioms = transformAxioms(oldToolkit.getAxioms());
@@ -401,7 +421,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		};
 		final Function<String, Set<IProgramNonOldVar>> procToModGlobals = p -> newModifiedGlobals.getImage(p);
 
-				final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
+		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		final Map<String, Set<IProgramNonOldVar>> closed =
 				TransitiveClosure.computeClosure(mLogger, allProcedures, procToModGlobals, successorProvider);
 		for (final Entry<String, Set<IProgramNonOldVar>> en : closed.entrySet()) {
