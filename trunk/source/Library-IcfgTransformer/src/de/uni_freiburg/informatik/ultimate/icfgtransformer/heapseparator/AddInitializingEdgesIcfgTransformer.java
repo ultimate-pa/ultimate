@@ -52,13 +52,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * IcfgTransformer that performs the following changes:
- *  <li> the original initial nodes are no more initial
- *  <li> a new initial node is introduced
- *  <li> new internal edges are introduces leading from the new initial node to the old ones
- *  <li> the new edge has a user-specified TransFormula  (passed in constructor of this class)
- *
- * The purpose is to add global initialization code to an IIcfg.
+ * The purpose of this class is to add initialization code for global program variables to an IIcfg.
+ * <p>
+ * Variant of an IcfgTransformer that adds initialization code to the input icfg, otherwise leaves the cfg as it is
+ *  (IdentityTransformer as ITransformulaTransformer).
+ * <p>
+ * The initialization code is a constructor parameter (Transformula).
+ * New edges are introduces that hold the initialization code.
+ * Where the edge are introduced, depends on the type of each inital edge.
+ * If the initial edge is a call, the new edge is inserted immediately after that call. If the initial edge is an
+ * internal transition, the new edge is introduced before it.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -101,32 +104,13 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 		transformer.preprocessIcfg(originalIcfg);
 
-//		final Set<IcfgEdge>	initEdges = processLocationsOmitInitEdges(originalIcfg.getInitialNodes(), mBuilder);
 		processLocationsOmitInitEdges(originalIcfg.getInitialNodes(), mBuilder);
-
-
-
-
-//		/*
-//		 * Create a new initial location and add an edge with initialization code to each of the old Icfg's intial
-//		 * locations.
-//		 */
-//		for (final INLOC originalInitNode : originalIcfg.getInitialNodes()) {
-//
-//			final OUTLOC newInitLoc = createAndAddNewInitLocation(originalInitNode);
-//
-//			mBuilder.createNewInternalTransition(newInitLoc, mBuilder.getNewLoc(originalInitNode),
-//					mInitializingTransformula,
-//					false);
-//		}
 
 		mBuilder.finish();
 	}
 
 	private OUTLOC createAndAddNewInitLocation(final INLOC originalInitNode) {
-		// TODO: general solution..
-//		final OUTLOC freshLoc = (OUTLOC) new IcfgLocation(this.getClass().toString(), null);
-//		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(this.getClass().toString(), null, false, null);
+		// TODO: general solution.. this one works for BoogieIcfgLocations
 		final String debugString = this.getClass().toString() + "freshInit" + originalInitNode.hashCode();
 		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(debugString, originalInitNode.getProcedure(), false,
 				((BoogieIcfgLocation) originalInitNode).getBoogieASTNode());
@@ -154,8 +138,7 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 				@SuppressWarnings("unchecked")
-				// make copies of the old locations, identical except that they are never initial
-				final OUTLOC newTarget = lst.createNewLocation((INLOC) oldTransition.getTarget(), false);
+				final OUTLOC newTarget = lst.createNewLocation((INLOC) oldTransition.getTarget());
 
 				if (init.contains(oldSource)) {
 					// collect init edges for later treatment
@@ -197,9 +180,11 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 			}
 		}
 
-
+		/*
+		 * Delayed processing of return transitions, als they can only be processed once their corresponding call has
+		 *  been processed
+		 */
 		rtrTransitions.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), a.getThird()));
-//		return result;
 	}
 
 	@Override
