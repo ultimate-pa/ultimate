@@ -125,10 +125,10 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 			final Number result = mResults.get(i);
 			final String formatString;
 			if (result instanceof Double) {
-				formatString = "%-40s : %15.2f %n";
+				formatString = "%-50s : %15.2f %n";
 //				formatString = "%-40s : %s %n";
 			} else if (result instanceof Integer) {
-				formatString = "%-40s : %15d %n";
+				formatString = "%-50s : %15d %n";
 			} else {
 				throw new AssertionError("missed benchmark result case?");
 			}
