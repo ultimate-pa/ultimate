@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Check given annotation without inferring invariants.
@@ -160,12 +161,50 @@ public class InvariantChecker {
 				for (final IcfgLocation errorLoc : errorLocations) {
 					final TransFormula tf = asm.getTransFormula(errorLoc);
 					Objects.requireNonNull(tf);
-					tf.toString();
+					doCheck(startLoc, tf, errorLoc);
 				}
 			}
 		}
 	}
 	
+	private void doCheck(final IcfgLocation startLoc, final TransFormula tf, final IcfgLocation errorLoc) {
+		if (SmtUtils.isFalse(tf.getFormula())) {
+			mLogger.info(generateMessage(startLoc, errorLoc, true));
+		} else {
+			mLogger.info(generateMessage(startLoc, errorLoc, false));
+		}
+	}
+
+	private String generateMessage(final IcfgLocation startLoc, final IcfgLocation errorLoc, final boolean positive) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("The annotation(s) from ");
+		sb.append(getType(startLoc));
+		sb.append(" at line ");
+//		sb.append(startLoc.getStartLine());
+		sb.append(" to ");
+		sb.append(getType(startLoc));
+		sb.append(" at line ");
+//		sb.append(startLoc.getStartLine());
+		sb.append(" is");
+		if (!positive) {
+			sb.append(" NOT");
+		}
+		sb.append(" inductive.");
+		return sb.toString();
+	}
+
+	private String getType(final IcfgLocation startLoc) {
+		if (isInvariant(startLoc)) {
+			return "loop head";
+		} else if (isErrorLoc(startLoc)) {
+			return "error location";
+		} else if (isLoopLoc(startLoc)) {
+			return "loop head";
+		} else {
+			return "entry";
+		}
+	}
+
 	public static <E extends IIcfgTransition<IcfgLocation>> Set<E> collectAdjacentEdges(final IIcfg<IcfgLocation> icfg,
 			final Set<IcfgLocation> locations) {
 		final Set<E> result = new HashSet<>();
@@ -204,19 +243,12 @@ public class InvariantChecker {
 		IcfgEdge result = null;
 		for (final IcfgEdge succEdge : loopLoc.getOutgoingEdges()) {
 			final IcfgLocation succLoc = succEdge.getTarget();
-			final Check check = Check.getAnnotation(succLoc);
-			if (check != null) {
-				final EnumSet<Spec> specs = check.getSpec();
-//				if (specs.size() == 1) {
-					specs.contains(Spec.INVARIANT);
-					if (result == null) {
-						result = succEdge;
-					} else {
-						throw new UnsupportedOperationException("several invariants");
-					}
-//				} else {
-//					throw new UnsupportedOperationException("several specs");
-//				}
+			if (isInvariant(succLoc)) {
+				if (result == null) {
+					result = succEdge;
+				} else {
+					throw new UnsupportedOperationException("several invariants");
+				}
 			}
 		}
 		if (result == null) {
@@ -224,6 +256,31 @@ public class InvariantChecker {
 		}
 		return result;
 	}
+
+	private boolean isInvariant(final IcfgLocation loc) {
+		final Check check = Check.getAnnotation(loc);
+		if (check != null) {
+			final EnumSet<Spec> specs = check.getSpec();
+//				if (specs.size() == 1) {
+				return specs.contains(Spec.INVARIANT);
+//				} else {
+//					throw new UnsupportedOperationException("several specs");
+//				}
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean isErrorLoc(final IcfgLocation loc) {
+		final Check check = Check.getAnnotation(loc);
+		return (check != null);
+	}
+	
+	private boolean isLoopLoc(final IcfgLocation loc) {
+		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(loc);
+		return (loa != null);
+	}
+
 	
 	
 
