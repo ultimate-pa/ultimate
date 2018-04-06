@@ -175,21 +175,21 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	 *    EDIT: this rule is automatically dealt with because we only store representatives here and literals are always
 	 *      the representatives of their equivalence class. We leave the containments l in {l} implicit.
 	 *
-	 * @param elem1
-	 * @param elem2
+	 * @param elem1OldRep
+	 * @param elem2OldRep
 	 * @param newRep
 	 */
-	public void reportEquality(final ELEM elem1, final ELEM elem2, final ELEM newRep) {
-		assert mCongruenceClosure.getRepresentativeElement(elem1) == newRep;
-		assert mCongruenceClosure.getRepresentativeElement(elem2) == newRep;
+	public void reportEquality(final ELEM elem1OldRep, final ELEM elem2OldRep, final ELEM newRep) {
+		assert mCongruenceClosure.getRepresentativeElement(elem1OldRep) == newRep;
+		assert mCongruenceClosure.getRepresentativeElement(elem2OldRep) == newRep;
 
 		if (isInconsistent()) {
 			// nothing to do
 			return;
 		}
 
-		final Set<ELEM> elem1LiteralSet = mContainsConstraints.remove(elem1);
-		final Set<ELEM> elem2LiteralSet = mContainsConstraints.remove(elem2);
+		final Set<ELEM> elem1LiteralSet = mContainsConstraints.remove(elem1OldRep);
+		final Set<ELEM> elem2LiteralSet = mContainsConstraints.remove(elem2OldRep);
 
 		Set<ELEM> intersection = null;
 		if (elem1LiteralSet != null && elem2LiteralSet != null)  {

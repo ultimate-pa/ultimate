@@ -375,7 +375,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		// literal constraint treatment
 		{
-			mLiteralSetConstraints.reportEquality(elem1, elem2, mElementTVER.getRepresentative(elem1));
+			mLiteralSetConstraints.reportEquality(e1OldRep, e2OldRep, mElementTVER.getRepresentative(elem1));
 		}
 
 
