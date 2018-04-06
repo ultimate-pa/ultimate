@@ -89,7 +89,7 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 		mInitializingTransformula = initTf;
 
-		final ITransformulaTransformer transformer = new IdentityTransformer(oldCsToolkit.getSymbolTable());
+		final ITransformulaTransformer transformer = new IdentityTransformer(oldCsToolkit);
 
 		mResultIcfg =
 				new BasicIcfg<>(newIcfgName, originalIcfg.getCfgSmtToolkit(), outLocationClass);

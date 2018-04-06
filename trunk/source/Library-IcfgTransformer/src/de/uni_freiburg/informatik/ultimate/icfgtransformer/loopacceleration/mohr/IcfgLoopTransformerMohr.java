@@ -100,7 +100,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		mSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final IdentityTransformer identityTransformer = new IdentityTransformer(mSymbolTable);
+		final IdentityTransformer identityTransformer = new IdentityTransformer(originalIcfg.getCfgSmtToolkit());
 		mTib = new TransformedIcfgBuilder<>(mLogger, funLocFac, backtranslationTracker, identityTransformer,
 				originalIcfg, resultIcfg);
 

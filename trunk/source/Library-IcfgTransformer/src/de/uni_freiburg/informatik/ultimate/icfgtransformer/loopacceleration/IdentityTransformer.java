@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -46,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class IdentityTransformer implements ITransformulaTransformer {
 
 	private final IIcfgSymbolTable mOldSymbolTable;
+	private final ModifiableGlobalsTable mOldModifiableGlobalsTable;
 
 	/**
 	 * Default constructor.
@@ -53,8 +56,9 @@ public class IdentityTransformer implements ITransformulaTransformer {
 	 * @param oldSymbolTable
 	 *            The symboltable that will be returned when {@link #getNewIcfgSymbolTable()} is called.
 	 */
-	public IdentityTransformer(final IIcfgSymbolTable oldSymbolTable) {
-		mOldSymbolTable = oldSymbolTable;
+	public IdentityTransformer(final CfgSmtToolkit oldCsToolkit) {
+		mOldSymbolTable = oldCsToolkit.getSymbolTable();
+		mOldModifiableGlobalsTable = oldCsToolkit.getModifiableGlobalsTable();
 	}
 
 	@Override
@@ -80,8 +84,7 @@ public class IdentityTransformer implements ITransformulaTransformer {
 
 	@Override
 	public HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals() {
-		// TODO
-		throw new UnsupportedOperationException("TODO");
+		return mOldModifiableGlobalsTable.getProcToGlobals();
 	}
 
 }

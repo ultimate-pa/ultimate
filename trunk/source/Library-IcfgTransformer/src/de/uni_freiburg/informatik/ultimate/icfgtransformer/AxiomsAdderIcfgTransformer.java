@@ -49,7 +49,7 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 
 		// make a copy of the input Icfg
 		final ITransformulaTransformer noopTransformulaTransformer =
-				new IdentityTransformer(inputCfgCsToolkit.getSymbolTable());
+				new IdentityTransformer(inputCfgCsToolkit);
 		final IcfgTransformer<INLOC, OUTLOC> noopIcfgTransformer = new IcfgTransformer<>(logger, inputCfg, funLocFac,
 				backtranslationTracker, outLocClazz, resultName, noopTransformulaTransformer);
 		final BasicIcfg<OUTLOC> copiedIcfg = (BasicIcfg<OUTLOC>) noopIcfgTransformer.getResult();

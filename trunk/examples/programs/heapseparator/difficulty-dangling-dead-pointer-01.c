@@ -30,4 +30,7 @@ int main() {
 
   int x = *p;
   int y = *q;
+
+  free(p);
+  free(q);
 }

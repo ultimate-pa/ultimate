@@ -219,7 +219,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			mLogger.warn("HeapSeparator: input icfg has no '#valid' array -- returning unchanged Icfg!");
 			return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
 					icfg.getIdentifier() + "left_unchanged_by_heapseparator",
-					new IdentityTransformer(icfg.getCfgSmtToolkit().getSymbolTable())).getResult();
+					new IdentityTransformer(icfg.getCfgSmtToolkit())).getResult();
 		}
 
 		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
