@@ -368,11 +368,11 @@ public class TypeHandler implements ITypeHandler {
 			// --> This is a definition of an incomplete struct, enum or union.
 			String incompleteTypeName;
 			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
-				incompleteTypeName = "STRUCT~" + type;
+				incompleteTypeName = "STRUCT~" + rslvName;
 			} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-				incompleteTypeName = "UNION~" + type;
+				incompleteTypeName = "UNION~" + rslvName;
 			} else {
-				incompleteTypeName = "ENUM~" + type;
+				incompleteTypeName = "ENUM~" + rslvName;
 			}
 
 			mIncompleteType.add(incompleteTypeName);
