@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.IcfgLoopAcceleration.LoopAccelerationOptions;
@@ -218,9 +219,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			mLogger.warn("HeapSeparator: input icfg has no '#valid' array -- returning unchanged Icfg!");
 			return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
 					icfg.getIdentifier() + "left_unchanged_by_heapseparator",
-					new ExampleLoopAccelerationTransformulaTransformer(
-							mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
-							icfg.getCfgSmtToolkit().getSymbolTable(), fac)).getResult();
+					new IdentityTransformer(icfg.getCfgSmtToolkit().getSymbolTable())).getResult();
 		}
 
 		final HeapSepIcfgTransformer<INLOC, OUTLOC> icfgTransformer =
