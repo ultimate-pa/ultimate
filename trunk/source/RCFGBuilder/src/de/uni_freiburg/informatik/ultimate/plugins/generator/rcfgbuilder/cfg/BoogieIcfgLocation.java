@@ -58,6 +58,14 @@ public class BoogieIcfgLocation extends IcfgLocation {
 	@Visualizable
 	private final boolean mIsErrorLocation;
 
+	/**
+	 *
+	 * @param debugIdentifier
+	 * 			see {@link IcfgLocation} (must be unique inside its procedure among all the nodes!)
+	 * @param procedure
+	 * @param isErrorLoc
+	 * @param boogieASTNode
+	 */
 	public BoogieIcfgLocation(final String debugIdentifier, final String procedure, final boolean isErrorLoc,
 			final BoogieASTNode boogieASTNode) {
 		super(debugIdentifier, procedure);

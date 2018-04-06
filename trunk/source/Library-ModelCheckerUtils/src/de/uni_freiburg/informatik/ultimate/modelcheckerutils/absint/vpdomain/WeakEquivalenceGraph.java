@@ -419,7 +419,7 @@ public class WeakEquivalenceGraph<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>> plus
-//			= cwelpc::union
+//			= cwelpc::union;
 			= (l1, l2) -> l1.union(l2, null); // TODO: reactivate cache
 		final BiFunction<
 				WeakEquivalenceEdgeLabel<NODE, DISJUNCT>,

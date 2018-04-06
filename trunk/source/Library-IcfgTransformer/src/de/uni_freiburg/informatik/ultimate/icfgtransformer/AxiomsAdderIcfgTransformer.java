@@ -3,14 +3,13 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -50,8 +49,7 @@ public class AxiomsAdderIcfgTransformer<INLOC extends IcfgLocation, OUTLOC exten
 
 		// make a copy of the input Icfg
 		final ITransformulaTransformer noopTransformulaTransformer =
-				new ExampleLoopAccelerationTransformulaTransformer(logger, mgdScript,
-						inputCfgCsToolkit.getSymbolTable(), new ReplacementVarFactory(inputCfgCsToolkit, false));
+				new IdentityTransformer(inputCfgCsToolkit.getSymbolTable());
 		final IcfgTransformer<INLOC, OUTLOC> noopIcfgTransformer = new IcfgTransformer<>(logger, inputCfg, funLocFac,
 				backtranslationTracker, outLocClazz, resultName, noopTransformulaTransformer);
 		final BasicIcfg<OUTLOC> copiedIcfg = (BasicIcfg<OUTLOC>) noopIcfgTransformer.getResult();

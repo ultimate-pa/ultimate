@@ -51,6 +51,14 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 	@Visualizable
 	private final String mDebugIdentifier;
 
+	/**
+	 *
+	 * @param debugIdentifier
+	 * 			Note that this String must uniquely identify the node, inside its procedure, not only for debugging
+	 *			 purposes, but because it is used in hashCode() and equals().
+	 * @param procedure
+	 * @param payload
+	 */
 	public IcfgLocation(final String debugIdentifier, final String procedure, final Payload payload) {
 		super(payload);
 		mProcedure = procedure;

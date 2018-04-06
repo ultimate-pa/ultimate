@@ -498,7 +498,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 */
 	private IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(final EdgeInfo edgeInfo,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
-		return equalityProvider.getEqualityProvidingIntermediateState(edgeInfo.getEdge());
+		final IEqualityProvidingIntermediateState result =
+				equalityProvider.getEqualityProvidingIntermediateState(edgeInfo.getEdge());
+		return result;
 	}
 
 	@Override

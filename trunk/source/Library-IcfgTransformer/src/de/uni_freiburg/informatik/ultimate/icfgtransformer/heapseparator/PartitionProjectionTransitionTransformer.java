@@ -177,7 +177,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 				mEdgeInfoToArrayCellAccessToDimensionToLocationBlock.get(edgeInfo);
 
 		final PartitionProjectionTermTransformer ppttf =
-				new PartitionProjectionTermTransformer(mMgdScript, mSubArrayManager,
+				new PartitionProjectionTermTransformer(mLogger, mMgdScript, mSubArrayManager,
 						arrayCellAccessToDimensionToLocationBlock,
 						edgeInfo, mArrayGroupToDimensionToLocationBlocks, mArrayToArrayGroup,
 						mEdgeToIndexToStoreIndexInfo, mHeapArrays);//,

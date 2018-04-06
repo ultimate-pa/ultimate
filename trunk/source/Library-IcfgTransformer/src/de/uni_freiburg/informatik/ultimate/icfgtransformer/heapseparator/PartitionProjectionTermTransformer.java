@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -89,14 +90,12 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	 * <p>
 	 * Note: this may be null if the edge has no selects to a heap array
 	 */
-//	private final Map<Term, LocationBlock> mTermToLocationBlock;
 	private final NestedMap2<ArrayCellAccess, Integer, LocationBlock> mArrayCellAccessToIntegerToLocationBlock;
 
 	/**
 	 * All the location blocks that belong to one array group, divided by dimension they belong to..
 	 */
 	private final HashRelation3<ArrayGroup, Integer, LocationBlock> mArrayGroupToDimensionToLocationBlocks;
-//	private final Map<ArrayGroup, List<Set<LocationBlock>>> mArrayGroupToDimensionToLocationBlocks;
 
 	private final SubArrayManager mSubArrayManager;
 
@@ -117,6 +116,8 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	private final Set<IProgramVar> mInVarsWithATermVar;
 	private final Set<IProgramVar> mOutVarsWithATermVar;
 
+	private final ILogger mLogger;
+
 	/**
 	 *
 	 * @param mgdScript
@@ -133,20 +134,20 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	 *
 //	 * 			The map StoreIndexInfo -> LocationBlock, projected down to mEdgeInfo
 	 */
-	public PartitionProjectionTermTransformer(final ManagedScript mgdScript, final SubArrayManager subArrayManager,
+	public PartitionProjectionTermTransformer(final ILogger logger, final ManagedScript mgdScript,
+			final SubArrayManager subArrayManager,
 			final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToDimensionToLocationBlock,
 			final EdgeInfo edgeInfo,
 			final HashRelation3<ArrayGroup, Integer, LocationBlock> arrayGroupToDimensionToLocationBlocks,
 			final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final NestedMap2<EdgeInfo, Term, StoreIndexInfo> edgeToIndexToStoreIndexInfo,
 			final List<IProgramVarOrConst> heapArrays) {
-		mMgdScript = mgdScript;
+		mLogger = Objects.requireNonNull(logger);
+		mMgdScript = Objects.requireNonNull(mgdScript);
 
-		mSubArrayManager = subArrayManager;
-
-		mHeapArrays = heapArrays;
-
-		mArrayToArrayGroup = arrayToArrayGroup;
+		mSubArrayManager = Objects.requireNonNull(subArrayManager);
+		mHeapArrays = Objects.requireNonNull(heapArrays);
+		mArrayToArrayGroup = Objects.requireNonNull(arrayToArrayGroup);
 
 		assert Objects.nonNull(arrayCellAccessToDimensionToLocationBlock)
 			|| !ArrayCellAccess.extractArrayCellAccesses(edgeInfo.getEdge().getTransformula().getFormula()).stream()
