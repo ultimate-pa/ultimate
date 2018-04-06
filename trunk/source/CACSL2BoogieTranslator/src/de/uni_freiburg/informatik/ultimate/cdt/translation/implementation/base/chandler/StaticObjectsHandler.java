@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -90,6 +91,7 @@ public class StaticObjectsHandler {
 	}
 
 	public void addGlobalTypeDeclaration(final TypeDeclaration boogieDec, final CDeclaration cDec) {
+		assert Objects.nonNull(boogieDec) && Objects.nonNull(cDec);
 		mGlobalDeclarations.add(boogieDec);
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 	}
@@ -114,9 +116,9 @@ public class StaticObjectsHandler {
 		 * find the CDeclaration that belongs to the given incomplete type
 		 */
 		for (final Entry<TypeDeclaration, CDeclaration> en : mTypeDeclarationToCDeclaration.entrySet()) {
-			oldBooogieDec = en.getKey();
 
 			if (en.getValue().getType().toString().equals(incompleteType.toString())) {
+				oldBooogieDec = en.getKey();
 
 				oldCDec = en.getValue();
 
