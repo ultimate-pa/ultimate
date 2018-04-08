@@ -204,7 +204,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		}
 	}
 
-	public EquivalenceFinder createEquivalenceFinder(final STATE substate) {
-		return new EquivalenceFinder(substate.getTerm(getScript()), mServices, getManagedScript());
+	public EquivalenceFinder createEquivalenceFinder(final Term term) {
+		return new EquivalenceFinder(term, mServices, getManagedScript());
 	}
 }
