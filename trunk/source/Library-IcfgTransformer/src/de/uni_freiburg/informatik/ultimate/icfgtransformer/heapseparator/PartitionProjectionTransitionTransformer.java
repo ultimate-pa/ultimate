@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
@@ -176,16 +180,85 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 		final NestedMap2<ArrayCellAccess, Integer, LocationBlock> arrayCellAccessToDimensionToLocationBlock =
 				mEdgeInfoToArrayCellAccessToDimensionToLocationBlock.get(edgeInfo);
 
-		final PartitionProjectionTermTransformer ppttf =
-				new PartitionProjectionTermTransformer(mLogger, mMgdScript, mSubArrayManager,
-						arrayCellAccessToDimensionToLocationBlock,
-						edgeInfo, mArrayGroupToDimensionToLocationBlocks, mArrayToArrayGroup,
-						mEdgeToIndexToStoreIndexInfo, mHeapArrays);//,
-		final Term transformedFormula = ppttf.transform(tf.getFormula());
-		ppttf.finish();
+		final Term transformedFormula;
+		final Map<IProgramVar, TermVariable> inVars;
+		final Map<IProgramVar, TermVariable> outVars;
+		{
+			final PartitionProjectionTermTransformer ppttf =
+					new PartitionProjectionTermTransformer(mLogger, mMgdScript, mSubArrayManager,
+							arrayCellAccessToDimensionToLocationBlock,
+							edgeInfo, mArrayGroupToDimensionToLocationBlocks, mArrayToArrayGroup,
+							mEdgeToIndexToStoreIndexInfo, mHeapArrays);//,
+			final Term transformedFormulaRaw = ppttf.transform(tf.getFormula());
+			ppttf.finish();
 
-		final Map<IProgramVar, TermVariable> inVars = ppttf.getNewInVars();
-		final Map<IProgramVar, TermVariable> outVars = ppttf.getNewOutVars();
+//			// creating fresh HashMaps just to be safe and make it updatable
+//			inVars = new HashMap<>(ppttf.getNewInVars());
+//			outVars = new HashMap<>(ppttf.getNewOutVars());
+
+			final Map<Term, Term> substitutionMapping = new IdentityHashMap<>();
+			/*
+			 * do an extra post processing that eliminates trivial array updates
+			 * Collect pairs of termVariables, equations between which should be replaced by "true".
+			 */
+			for (final Entry<IProgramVar, TermVariable> ov : ppttf.getNewOutVars().entrySet()) {
+				if (!mSubArrayManager.isSubArray(ov.getKey())) {
+					// not one of the partitioned arrays
+					continue;
+				}
+
+				if (ppttf.getUpdatedSubarrays().contains(ov.getKey())) {
+					// the array is actually updated in the transformula, do nothing
+					continue;
+				}
+
+				final TermVariable inTv = ppttf.getNewInVars().get(ov.getKey());
+				final TermVariable outTv = ov.getValue();
+				if (inTv.equals(outTv)) {
+					// not an assigned var
+					continue;
+				}
+//				/*
+//				 * ov is an assigned var belonging to one of the partitioned arrays that only has pseudo updates in
+//				 *  the transformula --> drop the updates and remove it from
+//				 */
+//				inVars.remove(ov.getKey());
+//				outVars.remove(ov.getKey());
+
+				// don't use SMTUtils.binaryEquality here because it sorts the arguments!
+				final Term eq1 = mMgdScript.getScript().term("=", inTv, outTv);
+				substitutionMapping.put(eq1, mMgdScript.getScript().term("true"));
+				final Term eq2 = mMgdScript.getScript().term("=", outTv, inTv);
+				substitutionMapping.put(eq2, mMgdScript.getScript().term("true"));
+
+			}
+			final SubstitutionWithLocalSimplification subs =
+					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
+//			final Substitution subs =
+//					new Substitution(mMgdScript, substitutionMapping);
+			transformedFormula = subs.transform(transformedFormulaRaw);
+
+			inVars = new HashMap<>(ppttf.getNewInVars());
+			// filter invars and out vars such that only those which have a TermVariable in the formula are left
+			for (final Entry<IProgramVar, TermVariable> iv : ppttf.getNewInVars().entrySet()) {
+				if (!Arrays.asList(transformedFormula.getFreeVars()).contains(iv.getValue())) {
+					inVars.remove(iv.getKey());
+				}
+			}
+			outVars = new HashMap<>(ppttf.getNewOutVars());
+			for (final Entry<IProgramVar, TermVariable> ov : ppttf.getNewOutVars().entrySet()) {
+				if (!Arrays.asList(transformedFormula.getFreeVars()).contains(ov.getValue())) {
+					outVars.remove(ov.getKey());
+				}
+			}
+			// add outvars for invars that remain (case: an array with a pseudo-update is also read)
+			for (final Entry<IProgramVar, TermVariable> iv : inVars.entrySet()) {
+				if (!outVars.containsKey(iv.getKey())) {
+					outVars.put(iv.getKey(), iv.getValue());
+				}
+			}
+		}
+
 
 		{
 			for (final Entry<IProgramVar, TermVariable> en : inVars.entrySet()) {

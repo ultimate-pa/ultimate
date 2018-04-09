@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -65,9 +66,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 /**
  * Note: This TermTransformer is built with respect to a specific TransFormula whose term it should transform. (which is
  *  somewhat against the architecture of TermTransformers)
- *
- * TODO: probably we need to add some  recognition for meaningless equations in order to drop them
- *   (a' = a where a, a' belong to the the same ProgramVariable)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -118,6 +116,16 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 
 	private final ILogger mLogger;
 
+
+	/**
+	 * For an array update "a' = (store a i v)", the projection operator that this transformer implements may create
+	 *  many equations of the form "a_part_x' = a_part_x". We cannot just drop all equations of this sort, because
+	 *  they might be in a disjunction with a real update.
+	 * Thus, we globally track which subarrays (a_part_..) are actually updated anywhere in the formula.
+	 * Afterwards we eliminate them from the formula (and invars/outvars) through a postprocessing.
+	 */
+	private final Set<IProgramVarOrConst> mUpdatedSubarrays;
+
 	/**
 	 *
 	 * @param mgdScript
@@ -149,6 +157,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		mHeapArrays = Objects.requireNonNull(heapArrays);
 		mArrayToArrayGroup = Objects.requireNonNull(arrayToArrayGroup);
 
+
 		assert Objects.nonNull(arrayCellAccessToDimensionToLocationBlock)
 			|| !ArrayCellAccess.extractArrayCellAccesses(edgeInfo.getEdge().getTransformula().getFormula()).stream()
 				.anyMatch(aca -> mHeapArrays.contains(edgeInfo.getProgramVarOrConstForTerm(aca.getSimpleArray())))
@@ -171,6 +180,8 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		mProjectLists.push(Collections.emptyList());
 
 		mOriginalTermToSubArrayToReplacementTerm = new NestedMap2<>();
+
+		mUpdatedSubarrays = new HashSet<>();
 	}
 
 	@Override
@@ -292,6 +303,17 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				if (fallsInto(indexSubterm, projectList.get(0))) {
 					// i in L1 --> keep the store
 
+					/*
+					 * if (and only if) we have an 'outermost' store, i.e. one whose array term is not a select, we
+					 * update the list of arrays which are subject to a real update
+					 */
+					if (baseArray == arraySubterm) {
+						assert new MultiDimensionalSort(baseArray.getSort()).getDimension() == projectList.size();
+						final IProgramVarOrConst subArrayPvoc =
+								mSubArrayManager.getSubArray(baseArrayPvoc, projectList);
+						mUpdatedSubarrays.add(subArrayPvoc);
+					}
+
 					enqueueWalker(new BuildApplicationTerm((ApplicationTerm) term));
 
 					/*
@@ -317,7 +339,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 					enqueueWalker(new BeginScope(projectList));
 
 				} else {
-					// i not in L1 --> drop the store
+					// i not in L1 --> drop the store, convert the array according to current scope
 
 					// no extra scoping needed, right?
 					pushTerm(arraySubterm);
@@ -629,14 +651,14 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		if (!mIsFinished) {
 			throw new IllegalStateException();
 		}
-		return mNewInVars;
+		return Collections.unmodifiableMap(mNewInVars);
 	}
 
 	public Map<IProgramVar, TermVariable> getNewOutVars() {
 		if (!mIsFinished) {
 			throw new IllegalStateException();
 		}
-		return mNewOutVars;
+		return Collections.unmodifiableMap(mNewOutVars);
 	}
 
 	public void finish() {
@@ -738,5 +760,9 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		final List<Set<LocationBlock>> locationBlocks = getLocationBlocksForArrayGroup(arrayGroup);
 		final List<List<LocationBlock>> locationBlockTuples = CrossProducts.crossProductOfSets(locationBlocks);
 		return locationBlockTuples;
+	}
+
+	public Set<IProgramVarOrConst> getUpdatedSubarrays() {
+		return mUpdatedSubarrays;
 	}
 }

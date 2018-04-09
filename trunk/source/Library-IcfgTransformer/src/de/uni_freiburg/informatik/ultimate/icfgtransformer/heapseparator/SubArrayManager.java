@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -39,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -60,6 +63,8 @@ public class SubArrayManager {
 
 	private final Map<IProgramVarOrConst, ArrayGroup> mArrayIdToArrayGroup;
 
+	Set<IProgramVarOrConst> mAllSubArrays;
+
 	private final ManagedScript mManagedScript;
 
 	private final HeapSeparatorBenchmark mStatistics;
@@ -74,6 +79,8 @@ public class SubArrayManager {
 		mArrayIdToArrayGroup = arrayIdToArrayGroup;
 
 		mArrayToLocationBlockListToSubArray = new NestedMap2<>();
+
+		mAllSubArrays = new HashSet<>();
 	}
 
 
@@ -94,6 +101,7 @@ public class SubArrayManager {
 		if (subArray == null) {
 			subArray = constructFreshProgramVarsForIndexPartition(programVar, projectList);
 			mArrayToLocationBlockListToSubArray.put(programVar, projectList, subArray);
+			mAllSubArrays.add(subArray);
 
 			mStatistics.incrementNewArrayVarCounter(arrayGroup);
 		}
@@ -180,6 +188,12 @@ public class SubArrayManager {
 			sep = "_";
 		}
 		return sb.toString();
+	}
+
+
+
+	public boolean isSubArray(final IProgramVar key) {
+		return mAllSubArrays.contains(key);
 	}
 }
 
