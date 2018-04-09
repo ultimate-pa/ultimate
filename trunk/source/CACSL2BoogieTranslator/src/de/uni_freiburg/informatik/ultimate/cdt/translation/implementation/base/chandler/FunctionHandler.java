@@ -223,7 +223,7 @@ public class FunctionHandler {
 
 		definedProcInfo.updateCFunction(returnCType, null, null, false);
 
-		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), definedProcInfo, node);
+		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), definedProcInfo, node, true);
 		if (isInParamVoid(in)) {
 			// in-parameter is "void", as in "int foo(void) .." we normalize this to an empty list of in-parameters
 			in = new VarList[0];
@@ -459,7 +459,7 @@ public class FunctionHandler {
 		if (!(functionName instanceof IASTIdExpression)) {
 			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
 		}
-		
+
 		final String rawName = ((IASTIdExpression) functionName).getName().toString();
 		// Resolve the function name (might be prefixed by multiparse)
 		final String methodName = main.mCHandler.getSymbolTable().applyMultiparseRenaming(
@@ -472,7 +472,7 @@ public class FunctionHandler {
 				return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, arguments);
 			}
 		}
-		
+
 		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, methodName, arguments,
 				functionName);
 	}
@@ -734,10 +734,13 @@ public class FunctionHandler {
 	 * Take the parameter information from the CDeclaration. Make a Varlist from it. Add the parameters to the
 	 * symboltable. Also update procedureToParamCType member.
 	 *
+	 * @param updateSymbolTable
+	 * 			set this to true if the symbol table should be updated, false if only the result of this method is of
+	 * 			interest and side effects are unwanted
 	 * @return
 	 */
 	private VarList[] processInParams(final Dispatcher main, final ILocation loc, final CFunction cFun,
-			final BoogieProcedureInfo procInfo, final IASTNode hook) {
+			final BoogieProcedureInfo procInfo, final IASTNode hook, final boolean updateSymbolTable) {
 		// final String methodName) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final VarList[] in = new VarList[paramDecs.length];
@@ -756,11 +759,13 @@ public class FunctionHandler {
 					main.mNameHandler.getInParamIdentifier(currentParamDec.getName(), currentParamDec.getType());
 			in[i] = new VarList(loc, new String[] { currentParamId }, currentParamType);
 
-			final DeclarationInformation declInformation =
-					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procInfo.getProcedureName());
+			if (updateSymbolTable) {
+				final DeclarationInformation declInformation =
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procInfo.getProcedureName());
 
-			main.mCHandler.getSymbolTable().storeCSymbol(hook, currentParamDec.getName(),
-					new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
+				main.mCHandler.getSymbolTable().storeCSymbol(hook, currentParamDec.getName(),
+						new SymbolTableValue(currentParamId, null, currentParamDec, declInformation, null, false));
+			}
 		}
 		procInfo.updateCFunction(null, paramDecs, null, false);
 		return in;
@@ -892,7 +897,7 @@ public class FunctionHandler {
 
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
-				main.mCHandler.getSymbolTable().storeCSymbol(paramDec, inparamCId, 
+				main.mCHandler.getSymbolTable().storeCSymbol(paramDec, inparamCId,
 						new SymbolTableValue(inparamAuxVarName, inVarDecl,
 								new CDeclaration(cvar, inparamCId), inparamAuxVarDeclInfo, paramDec, false));
 			}
@@ -914,7 +919,7 @@ public class FunctionHandler {
 		// begin new scope for retranslation of ACSL specification
 		main.mCHandler.beginScope();
 
-		final VarList[] in = processInParams(main, loc, funcType, procInfo, hook);
+		final VarList[] in = processInParams(main, loc, funcType, procInfo, hook, false);
 
 		// OUT VARLIST : only one out param in C
 		VarList[] out = new VarList[1];
@@ -1009,10 +1014,10 @@ public class FunctionHandler {
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs },
 						methodName, translatedParameters.toArray(new Expression[translatedParameters.size()]));
 			} else { // unsupported!
-				// String msg = "Cannot handle multiple out params! "
-				// + loc.toString();
-				// throw new IncorrectSyntaxException(loc, msg);
-				return null; // FIXME ..
+				 final String msg = "Cannot handle multiple out params! (makes no sense in the translation of a C "
+				 		+ "program) "
+						 + loc.toString();
+				 throw new AssertionError(msg);
 			}
 		} else {
 			procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);

@@ -560,7 +560,12 @@ public class PostProcessor {
 		} else if (fittingFunctions.size() == 1) {
 			final ExpressionResult rex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
 					fittingFunctions.get(0), new ExpressionResultBuilder(), args);
-			funcCallResult = (IdentifierExpression) rex.mLrVal.getValue();
+
+			final boolean voidReturnType = outParam.length == 0;
+
+			if (!voidReturnType) {
+				funcCallResult = (IdentifierExpression) rex.getLrValue().getValue();
+			}
 			builder.addAllExceptLrValue(rex);
 
 			assert outParam.length <= 1;
@@ -573,9 +578,11 @@ public class PostProcessor {
 								id,
 								new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
 										dispatchingProcedureName));
-				builder.addStatement(StatementFactory.constructAssignmentStatement(loc,
-						new LeftHandSide[] { lhs },
-						new Expression[] { funcCallResult }));
+				if (!voidReturnType) {
+					builder.addStatement(StatementFactory.constructAssignmentStatement(loc,
+							new LeftHandSide[] { lhs },
+							new Expression[] { funcCallResult }));
+				}
 			}
 			builder.addStatements(CTranslationUtil.createHavocsForAuxVars(rex.mAuxVars));
 			builder.addStatement(new ReturnStatement(loc));

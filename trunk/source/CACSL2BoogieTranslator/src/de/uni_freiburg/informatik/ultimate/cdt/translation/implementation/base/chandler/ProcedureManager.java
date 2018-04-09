@@ -698,7 +698,7 @@ public class ProcedureManager {
 
 	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
 			final Statement[] statements, final String procName) {
-		assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
+//		assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
 
 		final BoogieProcedureInfo procInfo = getProcedureInfo(procName);
 
