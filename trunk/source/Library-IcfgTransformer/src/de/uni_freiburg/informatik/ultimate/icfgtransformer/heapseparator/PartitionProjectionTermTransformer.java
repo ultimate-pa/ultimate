@@ -231,8 +231,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 				final ArrayGroup arrayGroup = mArrayToArrayGroup.get(lhsArray);
 				assert arrayGroup.equals(getArrayGroup(extractSimpleArrayTerm(rhs)));
 
-//
-//				// holds the combinations of L1i .. Lni we will build a conjunct for each
+				// holds the combinations of L1i .. Lni we will build a conjunct for each
 				final List<List<LocationBlock>> locationBlockTuples = getAllLocationBlockTuplesForHeapArray(lhsArray);
 
 				enqueueWalker(new BuildConjunction(locationBlockTuples.size(), mMgdScript.getScript()));
@@ -453,10 +452,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		if (!term.getSort().isArraySort()) {
 			return false;
 		}
-//		if (!mHeapArrays.contains(mEdgeInfo.getProgramVarOrConstForTerm(term))) {
-//		if (DataStructureUtils.intersection(new HashSet<>(mHeapArrays),
-//				mArrayToArrayGroup.get(mEdgeInfo.getProgramVarOrConstForTerm(term)).getArrays()).isEmpty()) {
-			// the given array term is not in an array group with one of the heap arrays
+		// the given array term is not in an array group with one of the heap arrays
 		if (!mArrayToArrayGroup.containsKey(mEdgeInfo.getProgramVarOrConstForTerm(term))) {
 			// the given array term is not in an array group with one of the heap arrays
 			return false;
@@ -472,12 +468,10 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 	 * @return
 	 */
 	private List<Set<LocationBlock>> getLocationBlocksForArrayGroup(final ArrayGroup arrayGroup) {
-//	private Set<LocationBlock> getLocationBlocksForArrayGroup(final ArrayGroup arrayGroup, final int dim) {
 		final List<Set<LocationBlock>> result = new ArrayList<>();
 		for (int dim = 0; dim < arrayGroup.getDimensionality(); dim++) {
 			result.add(mArrayGroupToDimensionToLocationBlocks.projectToTrd(arrayGroup, dim));
 		}
-		//		return mArrayGroupToDimensionToLocationBlocks.projectToTrd(arrayGroup, dim);
 		return result;
 	}
 
@@ -499,7 +493,6 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		return Collections.unmodifiableList(newList);
 	}
 
-
 	/**
 	 *
 	 * @param indexSubterm
@@ -513,19 +506,6 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		return locationBlock.contains(sii);
 	}
 
-//	/**
-//	 *
-//	 * @param indexSubterm
-//	 * @param dim
-//	 * @return
-//	 */
-//	private LocationBlock getLocationBlockForIndex(final Term indexSubterm, final int dim) {
-////		return mSelectIndexTermToLocationBlock.get(indexSubterm);
-//		final ArrayCellAccess aca = mSelectIndexTermToArrayCellAccess.get(indexSubterm);
-//		assert aca.getDimensionsOfIndexTerm(indexSubterm).contains(dim);
-//		return mArrayCellAccessToIntegerToLocationBlock.get(aca, dim);
-//	}
-
 	private void pushLocationBlockList(final List<LocationBlock> newList) {
 		assert Objects.nonNull(newList);
 		assert newList.stream().allMatch(Objects::nonNull);
@@ -536,18 +516,7 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		mProjectLists.pop();
 	}
 
-	//	private Term getProjectedSimpleTerm(final Term termToProject, final List<LocationBlock> projectList) {
-//	private IProgramVarOrConst getProjectedArray(final Term termToProject, final List<LocationBlock> projectList) {
-//		final IProgramVarOrConst subArrayPv = mSubArrayManager.getSubArray(getProgramVar(termToProject),
-//				projectList);
-//		return subArrayPv;
-////		final Term subArrayTerm;
-////
-////		return subArrayTerm;
-//	}
 	protected static class BuildArrayCellAccessTerm implements Walker {
-
-
 		// a script to construct the fresh term
 		private final Script mScript;
 
@@ -563,9 +532,6 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 			final PartitionProjectionTermTransformer transformer = (PartitionProjectionTermTransformer) engine;
 
 			final Term[] indexEntries = new Term[mArrayCellAccess.getIndex().size()];
-
-			// TODO check order
-
 
 			for (int i = mArrayCellAccess.getIndex().size() - 1; i >= 0 ; i--) {
 				indexEntries[i] = transformer.getConverted();
@@ -672,14 +638,6 @@ public class PartitionProjectionTermTransformer extends TermTransformer {
 		 *    --> an array equation (which includes updates) in principle introduces all subarrays, however
 		 *      a subarray that is not updated (stored on) in any location (optimization)
 		 */
-
-//		final HashMap<IProgramVar, TermVariable> newInVars = new HashMap<>();
-//		final HashMap<IProgramVar, TermVariable> newOutVars = new HashMap<>();
-
-//		final Set<ArrayGroup> heapArrayArrayGroups = new HashSet<>();
-//		for (final IProgramVarOrConst ha : mHeapArrays) {
-//			heapArrayArrayGroups.add(mArrayToArrayGroup.get(ha));
-//		}
 
 		/*
 		 * deal with non-heap variables

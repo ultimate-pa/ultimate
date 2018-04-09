@@ -69,7 +69,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements ITransformulaTransformer {
-//		extends IcfgTransitionTransformer<INLOC, OUTLOC> {
 
 	/**
 	 * Manager for the separated subarrays.
@@ -192,10 +191,6 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 			final Term transformedFormulaRaw = ppttf.transform(tf.getFormula());
 			ppttf.finish();
 
-//			// creating fresh HashMaps just to be safe and make it updatable
-//			inVars = new HashMap<>(ppttf.getNewInVars());
-//			outVars = new HashMap<>(ppttf.getNewOutVars());
-
 			final Map<Term, Term> substitutionMapping = new IdentityHashMap<>();
 			/*
 			 * do an extra post processing that eliminates trivial array updates
@@ -218,12 +213,10 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 					// not an assigned var
 					continue;
 				}
-//				/*
-//				 * ov is an assigned var belonging to one of the partitioned arrays that only has pseudo updates in
-//				 *  the transformula --> drop the updates and remove it from
-//				 */
-//				inVars.remove(ov.getKey());
-//				outVars.remove(ov.getKey());
+				/*
+				 * ov is an assigned var belonging to one of the partitioned arrays that only has pseudo updates in
+				 *  the transformula --> drop the update
+				 */
 
 				// don't use SMTUtils.binaryEquality here because it sorts the arguments!
 				final Term eq1 = mMgdScript.getScript().term("=", inTv, outTv);
@@ -234,8 +227,6 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 			}
 			final SubstitutionWithLocalSimplification subs =
 					new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
-//			final Substitution subs =
-//					new Substitution(mMgdScript, substitutionMapping);
 			transformedFormula = subs.transform(transformedFormulaRaw);
 
 			inVars = new HashMap<>(ppttf.getNewInVars());
@@ -307,19 +298,6 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 				|| newTransformula.getAssignedVars().stream().allMatch(pv -> (pv instanceof ILocalProgramVar))
 				: "how to deal with a call or return transition that modifies a global variable??";
 
-//		assert oldEdge.getPrecedingProcedure().equals(oldEdge.getSucceedingProcedure())
-//			|| DataStructureUtils.difference(
-//					newTransformula.getAssignedVars(),
-//					mNewModifiableGlobals.getImage(oldEdge.getPrecedingProcedure()).stream()
-//						.map(pv -> (IProgramVar) pv).collect(Collectors.toSet())
-//					)
-//				.isEmpty();
-//		for (final IProgramVar av : newTransformula.getAssignedVars()) {
-//			if (av instanceof IProgramNonOldVar) {
-//				mNewModifiableGlobals.addPair(oldEdge.getPrecedingProcedure(), (IProgramNonOldVar) av);
-//			}
-//		}
-
 		log(tf, newTransformula);
 
 		return new TransforumlaTransformationResult(newTransformula);
@@ -327,8 +305,7 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 
 	@Override
 	public void preprocessIcfg(final IIcfg<?> icfg) {
-		// TODO Auto-generated method stub
-
+		// nothing to do
 	}
 
 	@Override
