@@ -84,7 +84,7 @@ public class SolverBuilder {
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
-	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = true;
+	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = false;
 
 	private static Script createSMTInterpol(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
@@ -480,22 +480,22 @@ public class SolverBuilder {
 		});
 
 		/*
-		 * make the following command in the script, which adds a convenence function for constant arrays
-		 * (define-fun const-Array-Int-Int ((x Int)) (Array Int Int) ((as const (Array Int Int)) x))
+		 * make the following command in the script, which adds a convenence function for constant arrays (define-fun
+		 * const-Array-Int-Int ((x Int)) (Array Int Int) ((as const (Array Int Int)) x))
 		 *
 		 * as far as we know the "const" function is only hardcoded in z3 in the "ALL" logic
 		 *
-		 * TODO this is a hack, because:
-		 *  <li> trigger this only when it is needed
-		 *  <li> not yet that robust, for example z3 versions below 4.6 seem to crash.
-		 *  <li> very particular solution (only works for [Int] Int arrays) --> generalize
+		 * TODO this is a hack, because: <li> trigger this only when it is needed <li> not yet that robust, for example
+		 * z3 versions below 4.6 seem to crash. <li> very particular solution (only works for [Int] Int arrays) -->
+		 * generalize
 		 */
-		if (ENABLE_Z3_CONSTANT_ARRAYS &&
-				(((solverMode == SolverMode.External_DefaultMode
-				|| solverMode == SolverMode.External_ModelsAndUnsatCoreMode
-				|| solverMode == SolverMode.External_ModelsMode)
-				&& solverSettings.getCommandExternalSolver().trim().startsWith("z3"))
-				|| solverMode == SolverMode.External_Z3InterpolationMode) && logicForExternalSolver.equals("ALL")) {
+		if (ENABLE_Z3_CONSTANT_ARRAYS
+				&& (((solverMode == SolverMode.External_DefaultMode
+						|| solverMode == SolverMode.External_ModelsAndUnsatCoreMode
+						|| solverMode == SolverMode.External_ModelsMode)
+						&& solverSettings.getCommandExternalSolver().trim().startsWith("z3"))
+						|| solverMode == SolverMode.External_Z3InterpolationMode)
+				&& logicForExternalSolver.equals("ALL")) {
 			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
 			final TermVariable argTv = result.variable("x", script.sort("Int"));
 			script.defineFun("const-Array-Int-Int", new TermVariable[] { argTv }, arrayIntIntSort,
