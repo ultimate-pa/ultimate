@@ -496,7 +496,7 @@ public class MemoryHandler {
 
 		final IdentifierExpression inParamProductExpr = // new IdentifierExpression(ignoreLoc, inParamProduct);
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mBoogieTypeHelper.getBoogieTypeForSizeT(),
-						inParamProduct, new DeclarationInformation(StorageClass.LOCAL, procName));
+						inParamProduct, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
 		final Expression stepsize;
 		if (mMemoryModel instanceof MemoryModel_SingleBitprecise) {
@@ -507,7 +507,7 @@ public class MemoryHandler {
 			final IdentifierExpression inParamSizeOfFieldsExpr =
 					// new IdentifierExpression(ignoreLoc, inParamSizeOfFields);
 					ExpressionFactory.constructIdentifierExpression(ignoreLoc, BoogieType.TYPE_INT, inParamSizeOfFields,
-							new DeclarationInformation(StorageClass.LOCAL, procName));
+							new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
 			stepsize = inParamSizeOfFieldsExpr;
 		}
