@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="300" hardtimelimit="350" cpuCores="4">
+
+    <option name="--generate-csv" />
+    <option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
+
+    <rundefinition name="AbsInt">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ.epf</option>
+    </rundefinition>
+
+    <rundefinition name="AbsInt_imprecise">
+        <option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationC.xml</option>
+        <option name="-s">../../../trunk/examples/settings/ai/eq-bench/mempurity-32bit-Automizer_Camel+AI_EQ_imprecise.epf</option>
+    </rundefinition>
+    
+    <tasks name="32bitMem">
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Arrays.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Heap.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-LinkedLists.set</includesfile>
+        <includesfile>../../../trunk/examples/svcomp/MemSafety-Other.set</includesfile>
+    </tasks>
+    
+</benchmark>

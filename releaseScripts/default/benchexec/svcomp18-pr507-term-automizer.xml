@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="180" hardtimelimit="200" cpuCores="2">
+
+    <rundefinition name="Automizer">
+        <propertyfile>/storage/ultimate/trunk/examples/svcomp/Termination.prp</propertyfile>
+        <option name="--full-output"/>
+    </rundefinition>
+
+    <tasks name="Term32Bit">
+        <option name="--architecture">32bit</option>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b2_o3_true-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b2_o3_true-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b3_o2_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b3_o2_false-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b3_o5_true-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b3_o5_true-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b5_o10_true-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id2_b5_o10_true-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b2_o3_true-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b2_o3_true-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b3_o2_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b3_o5_true-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_b5_o10_true-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o1000_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o1000_false-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o100_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o100_false-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o10_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o10_false-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o200_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o200_false-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o20_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o20_false-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o3_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/id_o3_false-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_eq_false-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_eq_false-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_eq_true-unreach-call_false-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_eq_true-unreach-call_true-termination_true-no-overflow.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_false-unreach-call_true-termination.c</include>
+        <include>/storage/ultimate/trunk/examples/svcomp/recursive-simple/sum_non_true-unreach-call_true-termination.c</include>
+    </tasks>
+
+</benchmark>

@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.4//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.4.dtd">
+<benchmark tool="ultimateautomizer" timelimit="900 s" memlimit="15 GB" cpuCores="8">
+
+<require cpuModel="Intel Xeon E3-1230 v5 @ 3.40 GHz" cpuCores="8"/>
+
+  <resultfiles>**.graphml</resultfiles>
+  
+  <rundefinition name="sv-comp18"></rundefinition>
+
+  <option name="--full-output"/>
+    
+  <tasks name="ReachSafety-Arrays">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-BitVectors">
+    <includesfile>../sv-benchmarks/c/ReachSafety-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-ControlFlow">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-ECA">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ECA.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Floats">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Floats.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Heap">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Loops">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Loops.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-ProductLines">
+    <includesfile>../sv-benchmarks/c/ReachSafety-ProductLines.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Recursive">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Recursive.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="ReachSafety-Sequentialized">
+    <includesfile>../sv-benchmarks/c/ReachSafety-Sequentialized.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ReachSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="MemSafety-Arrays">
+    <includesfile>../sv-benchmarks/c/MemSafety-Arrays.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/MemSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="MemSafety-Heap">
+    <includesfile>../sv-benchmarks/c/MemSafety-Heap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/MemSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="MemSafety-LinkedLists">
+    <includesfile>../sv-benchmarks/c/MemSafety-LinkedLists.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/MemSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+  <tasks name="MemSafety-Other">
+    <includesfile>../sv-benchmarks/c/MemSafety-Other.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/MemSafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="ConcurrencySafety-Main">
+    <includesfile>../sv-benchmarks/c/ConcurrencySafety-Main.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/ConcurrencySafety.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="NoOverflows-BitVectors">
+    <includesfile>../sv-benchmarks/c/NoOverflows-BitVectors.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/NoOverflows.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="NoOverflows-Other">
+    <includesfile>../sv-benchmarks/c/NoOverflows-Other.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/NoOverflows.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="Termination-MainControlFlow">
+    <includesfile>../sv-benchmarks/c/Termination-MainControlFlow.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/Termination.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="Termination-MainHeap">
+    <includesfile>../sv-benchmarks/c/Termination-MainHeap.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/Termination.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="Termination-Other">
+    <includesfile>../sv-benchmarks/c/Termination-Other.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/Termination.prp</propertyfile>
+    <option name="--architecture">32bit</option>
+  </tasks>
+
+  <tasks name="Systems_BusyBox_MemSafety">
+    <includesfile>../sv-benchmarks/c/Systems_BusyBox_MemSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/Systems_BusyBox_MemSafety.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="Systems_BusyBox_NoOverflows">
+    <includesfile>../sv-benchmarks/c/Systems_BusyBox_NoOverflows.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/Systems_BusyBox_NoOverflows.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+  <tasks name="Systems_DeviceDriversLinux64_ReachSafety">
+    <includesfile>../sv-benchmarks/c/Systems_DeviceDriversLinux64_ReachSafety.set</includesfile>
+    <propertyfile>../sv-benchmarks/c/Systems_DeviceDriversLinux64_ReachSafety.prp</propertyfile>
+    <option name="--architecture">64bit</option>
+  </tasks>
+
+</benchmark>
