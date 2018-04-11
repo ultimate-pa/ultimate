@@ -790,6 +790,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 		computeRelevantStatements_FlowSensitive(counterexample.getWord(), startLocation, endLocation, falsePredicate,
 				pt, rc, csToolkit, modifiableGlobalsTable, informationFromCfg, strongestPostconditionSequence);
+		mErrorLocalizationStatisticsGenerator.reportAngelicScore(getAngelicScore());
 	}
 
 	/**
@@ -847,5 +848,35 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			angelicStatus |= ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF();
 		}
 		return angelicStatus;
+	}
+	
+	/** Return the Angelic score of an error trace and hence
+	 * the assertion violation.
+	 * A score of 1 means it is highly "interesting" for the
+	 * user from a debugging point of view.
+	 * 
+	 * A score of 0 would mean that the assertion violation
+	 * is totally dependent on the values coming from the 
+	 * environment.
+	 * 
+	 * @return Float, The rank of the trace between  0 and 1.
+	 */
+	private double getAngelicScore() {
+		double angelicScore = 0;
+		int numberOfAberrantStatements = 0;
+		int totalNumberofAberrantStatements = 0;
+		for (int i = 0; i < mRelevanceOfTrace.length; i++) {
+			if (((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC()) {
+				numberOfAberrantStatements++;
+				totalNumberofAberrantStatements++;
+			} else if(((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF()) {
+				totalNumberofAberrantStatements++;
+			}
+		}
+		if(totalNumberofAberrantStatements != 0){ 
+			angelicScore = (double) numberOfAberrantStatements / totalNumberofAberrantStatements;
+			 
+			 }
+		return angelicScore;
 	}
 }

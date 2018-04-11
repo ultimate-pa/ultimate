@@ -46,6 +46,7 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 	private int mErrorAdmittingIcfgEdges;
 	private int mErrorIrrelevantIcfgEdges;
 	private int mNumberOfBranches;
+	private double mAngelicScore;
 	private final StatisticsData mHoareTripleCheckerStatistics;
 
 	public ErrorLocalizationStatisticsGenerator() {
@@ -95,6 +96,10 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 		mNumberOfBranches = numberOfBranches;
 	}
 	
+	public void reportAngelicScore(double angelicScore) {
+		mAngelicScore = angelicScore;
+	}
+	
 	public void addHoareTripleCheckerStatistics(final HoareTripleCheckerStatisticsGenerator hoareTripleCheckerStatistics) {
 		mHoareTripleCheckerStatistics.aggregateBenchmarkData(hoareTripleCheckerStatistics);
 	}
@@ -116,6 +121,8 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 			return mErrorIrrelevantIcfgEdges;
 		case NumberOfBranches:
 			return mNumberOfBranches;
+		case AngelicScore:
+			return mAngelicScore;
 		case ErrorLocalizationTime:
 			return getErrorLocalizationTime();
 		case HoareTripleCheckerStatistics:
