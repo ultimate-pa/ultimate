@@ -375,14 +375,44 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	}
 
 	public void removeConstraint(final ELEM elem) {
+		// remove constraints of the form "elem in S"
 		 mContainsConstraints.remove(elem);
+
+		 /*
+		  * remove constraints that have elem on their right hand side
+		  * (a more precise alternative would be to introduce a dummy element, effectively an existentially quantified
+		  *  variable.. but we would have to introduce one for every projected element, right?..)
+		  */
+		 for (final Entry<ELEM, Set<ELEM>> en : new HashSet<>(mContainsConstraints.entrySet())) {
+			 if (en.getValue().contains(elem)) {
+				 mContainsConstraints.remove(en.getKey());
+			 }
+		 }
 	}
 
 	public void replaceRepresentative(final ELEM elem, final ELEM newRep) {
+		// replace elem in constraints of the form "elem in S"
 		final Set<ELEM> literalSet = mContainsConstraints.remove(elem);
 		if (literalSet != null && newRep != null) {
 			mContainsConstraints.put(newRep, literalSet);
 		}
+		// replace elem in any right hand side set of a constraint
+		 for (final Entry<ELEM, Set<ELEM>> en : mContainsConstraints.entrySet()) {
+			 if (!(en.getValue().remove(elem))) {
+				 // elem was not in the set, nothing to replace
+				 continue;
+			 }
+			 if (newRep.isLiteral() && en.getValue().isEmpty()) {
+				 /*
+				  * we leave constraints of the form e in {l} implicit
+				  * (note: a constraint e in l can not occur because l is always the representative of its equivalence
+				  *  class)
+				  */
+				 assert en.getKey().equals(newRep);
+				 continue;
+			 }
+			 en.getValue().add(newRep);
+		 }
 	}
 
 	public void reportDisequality(final ELEM elem1, final ELEM elem2) {

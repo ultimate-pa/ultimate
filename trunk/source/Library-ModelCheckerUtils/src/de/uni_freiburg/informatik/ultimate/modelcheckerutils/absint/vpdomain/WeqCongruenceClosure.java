@@ -955,6 +955,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					 *  cannot fatten to weqcc-fat with current architecture (weq vars on labels become primed currently
 					 *  and we don't account for that e.g. in reportWeakEquivalence..)
 					 */
+					assert omitSanityChecks || sanityCheck();
 					fatten(false);
 					madeChanges = reportAllArrayEqualitiesFromWeqGraph(omitSanityChecks);
 				}
