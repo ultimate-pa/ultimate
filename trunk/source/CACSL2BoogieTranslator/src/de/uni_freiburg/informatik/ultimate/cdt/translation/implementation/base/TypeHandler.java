@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
@@ -167,9 +166,9 @@ public class TypeHandler implements ITypeHandler {
 		mDefinedTypes = new LinkedScopedHashMap<>();
 		mIncompleteType = new LinkedHashSet<>();
 
-//		mBoogiePointerType = BoogieType.createStructType(
-//				new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
-//				new BoogieType[] { BoogieType.TYPE_INT, BoogieType.TYPE_INT });
+		// mBoogiePointerType = BoogieType.createStructType(
+		// new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
+		// new BoogieType[] { BoogieType.TYPE_INT, BoogieType.TYPE_INT });
 	}
 
 	@Override
@@ -224,8 +223,7 @@ public class TypeHandler implements ITypeHandler {
 			// floating point number are not supported by Ultimate,
 			// somehow we treat it here as REALs
 			final CPrimitive cvar = new CPrimitive(node);
-			return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-					cvar);
+			return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false, cvar);
 		}
 		case IASTSimpleDeclSpecifier.t_typeof: {
 			/*
@@ -282,8 +280,8 @@ public class TypeHandler implements ITypeHandler {
 				final SymbolTableValue stv = main.mCHandler.getSymbolTable().findCSymbol(node, modifiedName);
 				final BoogieType boogieType =
 						mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(stv.getCVariable());
-				//(BoogieType) cType2AstType(loc,
-						//stv.getCVariable().getUnderlyingType()).getBoogieType();
+				// (BoogieType) cType2AstType(loc,
+				// stv.getCVariable().getUnderlyingType()).getBoogieType();
 				final String bId = stv.getBoogieName();
 				// TODO: replace constants "false, false"
 				return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), false, false,
@@ -387,9 +385,8 @@ public class TypeHandler implements ITypeHandler {
 			} else {
 				ctype = new CEnum(type);
 			}
-			final TypesResult r =
-					new TypesResult(new NamedType(loc, BoogieType.TYPE_ERROR, incompleteTypeName, new ASTType[0]),
-							false, false, ctype);
+			final TypesResult r = new TypesResult(
+					new NamedType(loc, BoogieType.TYPE_ERROR, incompleteTypeName, new ASTType[0]), false, false, ctype);
 
 			mDefinedTypes.put(rslvName, r);
 
@@ -402,7 +399,7 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTCompositeTypeSpecifier node) {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
-		@Deprecated // 2016-12-08 Matthias: it seems like field is never used.
+		// 2016-12-08 Matthias: it seems like field is never used.
 		final ArrayList<VarList> fields = new ArrayList<>();
 		// TODO : include inactives? what are inactives?
 		final ArrayList<String> fNames = new ArrayList<>();
@@ -420,7 +417,7 @@ public class TypeHandler implements ITypeHandler {
 							cType2AstType(loc, declaration.getType())));
 					if (main.getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITPRECISE_BITFIELDS)) {
 						if (declaration.getBitfieldSize() != -1) {
-							final String msg = "bitfield implementation not yet bitprecisse (soundness first)";
+							final String msg = "bitfield implementation not yet bitprecise (soundness first)";
 							throw new UnsupportedSyntaxException(loc, msg);
 						}
 					}
@@ -452,7 +449,7 @@ public class TypeHandler implements ITypeHandler {
 			throw new UnsupportedOperationException();
 		}
 
-		//TODO : boogie type
+		// TODO : boogie type
 		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, name, new ASTType[0]);
 		final ASTType type = namedType;
 		final TypesResult result = new TypesResult(type, false, false, cvar);
@@ -474,52 +471,52 @@ public class TypeHandler implements ITypeHandler {
 		return result;
 	}
 
-//	@Override
-//	public InferredType visit(final Dispatcher main, final org.eclipse.cdt.core.dom.ast.IType type) {
-//		if (type instanceof CPointerType) {
-//			return new InferredType(Type.Pointer);
-//		}
-//		// Handle the generic case of IType, if the specific case is not yet
-//		// implemented
-//		final String msg = "TypeHandler: Not yet implemented: " + type.getClass().toString();
-//		// TODO : no idea what location should be set to ...
-//		main.unsupportedSyntax(null, msg);
-//		return new InferredType(Type.Unknown);
-//	}
-//
-//	@Override
-//	public InferredType visit(final Dispatcher main, final ITypedef type) {
-//		assert false : "I don't think this should still be used";
-//		if (!mDefinedTypes.containsKey(type.getName())) {
-//			final String msg = "Unknown C typedef: " + type.getName();
-//			// TODO : no idea what location should be set to ...
-//			throw new IncorrectSyntaxException(null, msg);
-//		}
-//		return new InferredType(mDefinedTypes.get(type.getName()).getType());
-//	}
-//
-//	@Override
-//	public InferredType visit(final Dispatcher main, final IBasicType type) {
-//		switch (type.getKind()) {
-//		case eBoolean:
-//			return new InferredType(Type.Boolean);
-//		case eChar:
-//		case eChar16:
-//		case eChar32:
-//		case eInt:
-//			return new InferredType(Type.Integer);
-//		case eDouble:
-//		case eFloat:
-//			return new InferredType(Type.Real);
-//		case eWChar: // TODO : verify! Not sure what WChar means!
-//			return new InferredType(Type.String);
-//		case eVoid:
-//			return new InferredType(Type.Void);
-//		case eUnspecified:
-//		default:
-//			return new InferredType(Type.Unknown);
-//		}
-//	}
+	// @Override
+	// public InferredType visit(final Dispatcher main, final org.eclipse.cdt.core.dom.ast.IType type) {
+	// if (type instanceof CPointerType) {
+	// return new InferredType(Type.Pointer);
+	// }
+	// // Handle the generic case of IType, if the specific case is not yet
+	// // implemented
+	// final String msg = "TypeHandler: Not yet implemented: " + type.getClass().toString();
+	// // TODO : no idea what location should be set to ...
+	// main.unsupportedSyntax(null, msg);
+	// return new InferredType(Type.Unknown);
+	// }
+	//
+	// @Override
+	// public InferredType visit(final Dispatcher main, final ITypedef type) {
+	// assert false : "I don't think this should still be used";
+	// if (!mDefinedTypes.containsKey(type.getName())) {
+	// final String msg = "Unknown C typedef: " + type.getName();
+	// // TODO : no idea what location should be set to ...
+	// throw new IncorrectSyntaxException(null, msg);
+	// }
+	// return new InferredType(mDefinedTypes.get(type.getName()).getType());
+	// }
+	//
+	// @Override
+	// public InferredType visit(final Dispatcher main, final IBasicType type) {
+	// switch (type.getKind()) {
+	// case eBoolean:
+	// return new InferredType(Type.Boolean);
+	// case eChar:
+	// case eChar16:
+	// case eChar32:
+	// case eInt:
+	// return new InferredType(Type.Integer);
+	// case eDouble:
+	// case eFloat:
+	// return new InferredType(Type.Real);
+	// case eWChar: // TODO : verify! Not sure what WChar means!
+	// return new InferredType(Type.String);
+	// case eVoid:
+	// return new InferredType(Type.Void);
+	// case eUnspecified:
+	// default:
+	// return new InferredType(Type.Unknown);
+	// }
+	// }
 
 	@Override
 	public ASTType getTypeOfStructLHS(final FlatSymbolTable sT, final ILocation loc, final StructLHS lhs,
@@ -571,10 +568,10 @@ public class TypeHandler implements ITypeHandler {
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
-//	@Override
-//	public InferredType visit(final Dispatcher main, final IArrayType type) {
-//		return main.dispatch(type.getType());
-//	}
+	// @Override
+	// public InferredType visit(final Dispatcher main, final IArrayType type) {
+	// return main.dispatch(type.getType());
+	// }
 
 	@Override
 	public LinkedScopedHashMap<String, TypesResult> getDefinedTypes() {
@@ -595,30 +592,30 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CArray) {
 			/*
 			 * note: we are using nested Boogie array types (thus the Boogie ArrayType we use will always have a
-			 *  one-element array for the index types
+			 * one-element array for the index types
 			 */
 			final CArray cArrayType = (CArray) cType;
 			final ASTType indexType = cType2AstType(loc, cArrayType.getBound().getCType());
 			final ASTType valueType = cType2AstType(loc, cArrayType.getValueType());
-			final BoogieArrayType boogieType = BoogieType.createArrayType(0,
-					new BoogieType[] { (BoogieType) indexType.getBoogieType() },
-					(BoogieType) valueType.getBoogieType());
+			final BoogieArrayType boogieType =
+					BoogieType.createArrayType(0, new BoogieType[] { (BoogieType) indexType.getBoogieType() },
+							(BoogieType) valueType.getBoogieType());
 			return new ArrayType(loc, boogieType, new String[0], new ASTType[] { indexType }, valueType);
 
-//			final CArray cart = (CArray) cType;
-//			final ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
-//			final String[] typeParams = new String[0]; // new String[cart.getDimensions().length];
-//
-//			for (int i = 0; i < cart.getDimensions().length; i++) {
-//				indexTypes[i] = cType2AstType(loc, cart.getDimensions()[i].getCType());
-//			}
-//			// return new ArrayType(loc, typeParams, indexTypes, cType2AstType(loc, cart.getValueType()));
-//
-//			ASTType arrayType = cType2AstType(loc, cart.getValueType());
-//			for (int i = 0; i < cart.getDimensions().length; i++) {
-//				arrayType = new ArrayType(loc, typeParams, new ASTType[] { indexTypes[i] }, arrayType);
-//			}
-//			return arrayType;
+			// final CArray cart = (CArray) cType;
+			// final ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
+			// final String[] typeParams = new String[0]; // new String[cart.getDimensions().length];
+			//
+			// for (int i = 0; i < cart.getDimensions().length; i++) {
+			// indexTypes[i] = cType2AstType(loc, cart.getDimensions()[i].getCType());
+			// }
+			// // return new ArrayType(loc, typeParams, indexTypes, cType2AstType(loc, cart.getValueType()));
+			//
+			// ASTType arrayType = cType2AstType(loc, cart.getValueType());
+			// for (int i = 0; i < cart.getDimensions().length; i++) {
+			// arrayType = new ArrayType(loc, typeParams, new ASTType[] { indexTypes[i] }, arrayType);
+			// }
+			// return arrayType;
 		} else if (cType instanceof CStruct) {
 			final CStruct cstruct = (CStruct) cType;
 			if (cstruct.isIncomplete()) {
@@ -671,17 +668,17 @@ public class TypeHandler implements ITypeHandler {
 			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 		}
 	}
-//
-//	/**
-//	 *
-//	 *  (alex:) it is unclear to me if this is a) unsound b) a valid workaround c) a valid solution
-//	 *
-//	 * @param cPrimitive
-//	 * @return
-//	 */
-//	public BoogieType getBitVectorTranslationBoogieTypeForCPrimitive(final CPrimitive cPrimitive) {
-//		return mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(cPrimitive);
-//	}
+	//
+	// /**
+	// *
+	// * (alex:) it is unclear to me if this is a) unsound b) a valid workaround c) a valid solution
+	// *
+	// * @param cPrimitive
+	// * @return
+	// */
+	// public BoogieType getBitVectorTranslationBoogieTypeForCPrimitive(final CPrimitive cPrimitive) {
+	// return mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(cPrimitive);
+	// }
 
 	public ASTType bytesize2asttype(final ILocation loc, final CPrimitiveCategory generalprimitive,
 			final int bytesize) {
@@ -692,7 +689,7 @@ public class TypeHandler implements ITypeHandler {
 			if (mBitvectorTranslation) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
-				final ASTType astType = new PrimitiveType(loc, BoogiePrimitiveType.createBitvectorType(bitsize), name);
+				final ASTType astType = new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
 				return astType;
 			}
 			return new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
@@ -701,7 +698,7 @@ public class TypeHandler implements ITypeHandler {
 			if (mBitvectorTranslation) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
-				final ASTType astType = new PrimitiveType(loc, BoogiePrimitiveType.createBitvectorType(bitsize), name);
+				final ASTType astType = new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
 				return astType;
 			}
 			return new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
@@ -736,8 +733,9 @@ public class TypeHandler implements ITypeHandler {
 	public BoogieType getBoogiePointerType() {
 		// the type of pointer components currently (feb 18) is always int, but we are keeping all options..
 		if (mBoogiePointerType == null) {
-			final BoogieType componentType = (BoogieType)
-					cType2AstType(null, mExpressionTranslation.getCTypeOfPointerComponents()).getBoogieType();
+			final BoogieType componentType =
+					(BoogieType) cType2AstType(null, mExpressionTranslation.getCTypeOfPointerComponents())
+							.getBoogieType();
 			mBoogiePointerType = BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
 					new BoogieType[] { componentType, componentType });
 		}
@@ -766,9 +764,10 @@ public class TypeHandler implements ITypeHandler {
 			final VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET },
 					cType2AstType(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
 			final VarList[] fields = new VarList[] { fBase, fOffset };
-			final BoogieType boogieType = BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
-					new BoogieType[] { (BoogieType) fBase.getType().getBoogieType(),
-							(BoogieType) fOffset.getType().getBoogieType() } );
+			final BoogieType boogieType =
+					BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
+							new BoogieType[] { (BoogieType) fBase.getType().getBoogieType(),
+									(BoogieType) fOffset.getType().getBoogieType() });
 			final ASTType pointerType = new StructType(tuLoc, boogieType, fields);
 			// Pointer is non-finite, right? (ZxZ)..
 			decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false, SFO.POINTER, new String[0], pointerType));
