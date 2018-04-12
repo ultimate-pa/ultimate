@@ -462,7 +462,7 @@ exprImplies ::= expr2NI:e1 IMPLIES exprImplies:e2
           ;
 expr2 ::= expr3NI:e1 AND exprAnd:e2
            {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2);:}
-        | expr3NI:e1 OR  exprOr:e2
+        | expr3NI:e1 OR exprOr:e2
            {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2);:}
         | expr3:e
         ;

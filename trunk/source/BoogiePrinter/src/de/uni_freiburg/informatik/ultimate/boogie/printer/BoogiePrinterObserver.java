@@ -74,7 +74,6 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	}
 
 	private PrintWriter openTempFile(final IElement root) {
-
 		String path;
 		String filename;
 		File file;

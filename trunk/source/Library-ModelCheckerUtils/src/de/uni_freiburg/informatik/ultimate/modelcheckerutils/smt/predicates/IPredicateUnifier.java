@@ -72,7 +72,7 @@ public interface IPredicateUnifier {
 	String collectPredicateUnifierStatistics();
 
 	/**
-	 * We call a predicate "intricate" if we were unable to find our if it is equivalent to "true" or if we were unable
+	 * We call a predicate "intricate" if we were unable to find out if it is equivalent to "true" or if we were unable
 	 * to find out it it is equivalent to "false".
 	 */
 	boolean isIntricatePredicate(IPredicate pred);

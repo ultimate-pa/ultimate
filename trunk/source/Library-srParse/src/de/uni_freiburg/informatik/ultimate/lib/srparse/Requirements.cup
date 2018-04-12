@@ -50,47 +50,48 @@ option java15, compact_red, newpositions;
 
 parser code {:
 
-	private IUltimateServiceProvider mServices;	
+	private IUltimateServiceProvider mServices;
 	private String mFilename;
 	private ILogger mLogger;
-	private Symbol lookahead;
 
-	
-	public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final String filename) throws IOException {
+	public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final String filename)
+			throws IOException {
 		this(new ReqLexer(new FileReader(filename)));
 		mServices = services;
 		mLogger = logger;
 		mFilename = filename;
 	}
-	
-		public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final ReqLexer lexer) throws IOException {
+
+	public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final ReqLexer lexer)
+			throws IOException {
 		this(lexer);
 		mServices = services;
 		mLogger = logger;
 		mFilename = null;
 	}
-	
-	public void report_error(String s, Object sym) {
+
+	@Override
+	public void report_error(final String s, final Object sym) {
 		String location;
 		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
-			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+			final MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
 			location = bsym.getLocation();
-	    } else if ((sym instanceof Symbol) 
-	    	       && ((Symbol)sym).sym == ReqSymbols.EOF) {
-	    	location = "EOF";
-	    } else {
-	        location = "UNKNOWN";
-	    }
-	    final String filename = mFilename == null ? "" : (mFilename+":");
-	    mLogger.error(filename + location + ": " + s);
+		} else if ((sym instanceof Symbol) && ((Symbol) sym).sym == ReqSymbols.EOF) {
+			location = "EOF";
+		} else {
+			location = "UNKNOWN";
+		}
+		final String filename = mFilename == null ? "" : (mFilename + ":");
+		mLogger.error(filename + location + ": " + s);
 	}
 
-	public void report_error(String s) {	
+	public void report_error(final String s) {
 		report_error(s, cur_token);
 	}
-	
-	public void syntax_error(Symbol sym) {
-	    report_error("Syntax Error", sym);
+
+	@Override
+	public void syntax_error(final Symbol sym) {
+		report_error("Syntax Error", sym);
 	}
 :}
 
@@ -266,7 +267,7 @@ exprImpliesNI ::= expr2NI:e1 LIMPLIES exprImpliesNI:e2
           
 expr2NI ::= expr3NI:e1 LAND exprAndNI:e2
            {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2);:}
-        | expr3NI:e1 LOR  exprOrNI:e2
+        | expr3NI:e1 LOR exprOrNI:e2
            {:RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2);:}
         | expr3NI:e {:RESULT = e;:}
         ;
@@ -344,4 +345,6 @@ duration ::= num:n TIME UNITS {: RESULT = String.valueOf(n); :}
            
 num ::= NUMBER:n {: RESULT = Integer.parseInt(n); :}
 	  | REALNUMBER:n {: RESULT = BigDecimal.valueOf(Double.parseDouble(n)).intValueExact(); :}
-      | QUOTE NUMBER:n QUOTE {: RESULT = Integer.parseInt(n); :};
+      | QUOTE NUMBER:n QUOTE {: RESULT = Integer.parseInt(n); :}
+      | QUOTE REALNUMBER:n QUOTE {: RESULT = BigDecimal.valueOf(Double.parseDouble(n)).intValueExact(); :}
+      ;
