@@ -28,9 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -197,6 +199,25 @@ public class DataStructureUtils {
 		System.arraycopy(a1, 0, dest, 0, a1.length);
 		System.arraycopy(a2, 0, dest, a1.length, a2.length);
 		return dest;
+	}
+
+	public static <T> List<T> concat(final List<T> a1, final List<T> a2) {
+		if (a1 == null) {
+			return a2;
+		}
+		if (a2 == null) {
+			return a1;
+		}
+		if (a1.isEmpty()) {
+			return a2;
+		}
+		if (a2.isEmpty()) {
+			return a1;
+		}
+		final List<T> rtr = new ArrayList<>(a1.size() + a2.size() + 1);
+		rtr.addAll(a1);
+		rtr.addAll(a2);
+		return rtr;
 	}
 
 }
