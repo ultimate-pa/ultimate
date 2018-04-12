@@ -85,6 +85,11 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 	}
 
 	@Override
+	public String toBoogieString(final int child) {
+		return toString(child);
+	}
+
+	@Override
 	public String toTexString(final int child) {
 		return (child == 0) ? mVar : (" \\neg " + mVar);
 	}
@@ -92,12 +97,14 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 	@Override
 	public String toUppaalString(final int child) {
 		// return child == 0 ? var : " \\neg " + var;
-		return "true";
+		// return "true";
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String toUppaalStringDOM(final int child) {
-		return "true";
+		// return "true";
+		throw new UnsupportedOperationException();
 	}
 
 	private BooleanDecision primeCache;
@@ -172,4 +179,5 @@ public class BooleanDecision extends Decision<BooleanDecision> {
 		}
 		return true;
 	}
+
 }

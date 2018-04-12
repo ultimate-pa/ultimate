@@ -26,8 +26,20 @@ public class BndReccurrencePattern extends PatternType {
 
 	@Override
 	public String toString() {
-		return "it is always the case that \"" + getCdds().get(0) + "\" holds at least every \"" + getDuration().get(0)
-				+ "\" time units";
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("it is always the case that \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds at least every \"");
+		sb.append(getDuration().get(0));
+		sb.append("\" time units");
+		return sb.toString();
 	}
 
 	@Override

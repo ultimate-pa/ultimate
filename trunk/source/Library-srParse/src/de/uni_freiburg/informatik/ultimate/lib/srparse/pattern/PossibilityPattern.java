@@ -21,8 +21,20 @@ public class PossibilityPattern extends PatternType {
 
 	@Override
 	public String toString() {
-		return "if \"" + getCdds().get(1) + "\" holds, then there is at least one execution sequence such that \""
-				+ getCdds().get(0) + "\" eventually holds";
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("if \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" holds, then there is at least one execution sequence such that \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" eventually holds");
+		return sb.toString();
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 
@@ -15,7 +16,17 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 public class InitializationPattern extends PatternType {
 
 	public enum VariableCategory {
-		IN, OUT, HIDDEN, CONST
+		IN("Input"), OUT("Output"), HIDDEN("???"), CONST("CONST");
+
+		private final String mKeyword;
+
+		private VariableCategory(final String keyword) {
+			mKeyword = keyword;
+		}
+
+		public String getKeyword() {
+			return mKeyword;
+		}
 	}
 
 	private final String mType;
@@ -48,7 +59,11 @@ public class InitializationPattern extends PatternType {
 
 	@Override
 	public String toString() {
-		return mVisibility + " " + getId() + " : " + mType;
+		final String prefix = mVisibility.getKeyword() + " " + getId() + " IS ";
+		if (mVisibility == VariableCategory.CONST) {
+			return prefix + BoogiePrettyPrinter.print(getExpression());
+		}
+		return prefix + mType;
 	}
 
 	@Override

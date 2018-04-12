@@ -26,9 +26,18 @@ public class BndExistencePattern extends PatternType {
 
 	@Override
 	public String toString() {
-		String res = new String();
-		res = "transitions to states in which \"" + getCdds().get(0) + "\" holds occur at most twice";
-		return res;
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("transitions to states in which \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds occur at most twice");
+		return sb.toString();
 	}
 
 	@Override

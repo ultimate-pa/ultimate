@@ -26,8 +26,20 @@ public class MaxDurationPattern extends PatternType {
 
 	@Override
 	public String toString() {
-		return "it is always the case that once \"" + getCdds().get(0)
-				+ "\" becomes satisfied, it holds for less than \"" + getDuration().get(0) + "\" time units";
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("it is always the case that once \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" becomes satisfied, it holds for less than \"");
+		sb.append(getDuration().get(0));
+		sb.append("\" time units");
+		return sb.toString();
 	}
 
 	@Override

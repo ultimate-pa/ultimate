@@ -116,6 +116,8 @@ public abstract class Decision<T extends Decision<T>> {
 
 	public abstract String toUppaalString(int child);
 
+	public abstract String toBoogieString(int child);
+
 	public abstract String toUppaalStringDOM(int child);
 
 	public abstract String getVar(); // sr 2010-07-29

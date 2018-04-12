@@ -391,6 +391,7 @@
 		<module>../TreeAutomizer</module>
 		<module>../UltimateDeltaDebugger</module>
 		<module>../InvariantSynthesis</module>
+		<module>../ReqPrinter</module>
 
 	</modules>
 

@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2013-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE PEAtoBoogie plug-in.
  *
@@ -40,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -107,6 +108,10 @@ public class PeaToBoogie implements ISource {
 		logPatternSize(rawPatterns, "in total");
 		final List<PatternType> unifiedPatterns = unify(rawPatterns);
 		logPatternSize(unifiedPatterns, "after unification");
+
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			return null;
+		}
 		return generateBoogie(unifiedPatterns);
 	}
 
@@ -218,8 +223,11 @@ public class PeaToBoogie implements ISource {
 		}
 		final boolean checkConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 
-		return new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, combinationNum, checkConsistency, patterns)
-				.getUnit();
+		final Unit unit =
+				new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, combinationNum, checkConsistency, patterns)
+						.getUnit();
+		new PatternContainer(patterns).annotate(unit);
+		return unit;
 	}
 
 	@Override
@@ -259,7 +267,7 @@ public class PeaToBoogie implements ISource {
 		// not necessary
 	}
 
-	private final class DummyLocation extends DefaultLocation {
+	private static final class DummyLocation extends DefaultLocation {
 
 		private static final long serialVersionUID = 1L;
 

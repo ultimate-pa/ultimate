@@ -22,9 +22,28 @@ public class ConstrainedChainPattern extends PatternType {
 
 	@Override
 	public String toString() {
-		return "it is always the case that if \"" + getCdds().get(5) + "\" holds, then \"" + getCdds().get(4)
-				+ "\" eventually holds and is succeeded by \"" + getCdds().get(3) + "\", where \"" + getCdds().get(2)
-				+ "\" does not hold between \"" + getCdds().get(1) + "\" and \"" + getCdds().get(0) + "\"";
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("it is always the case that if \"");
+		sb.append(getCdds().get(5).toBoogieString());
+		sb.append("\" holds, then \"");
+		sb.append(getCdds().get(4).toBoogieString());
+		sb.append("\" eventually holds and is succeeded by \"");
+		sb.append(getCdds().get(3).toBoogieString());
+		sb.append("\", where \"");
+		sb.append(getCdds().get(2).toBoogieString());
+		sb.append("\" does not hold between \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" and \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\"");
+		return sb.toString();
 	}
 
 	@Override

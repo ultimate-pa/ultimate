@@ -32,7 +32,18 @@ public class UniversalityPattern extends PatternType {
 
 	@Override
 	public String toString() {
-		return "it is always the case that \"" + getCdds().get(0) + "\" holds";
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("it is always the case that \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds");
+		return sb.toString();
 	}
 
 	@Override

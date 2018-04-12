@@ -76,8 +76,22 @@ public class BndResponsePatternUT extends PatternType {
 
 	@Override
 	public String toString() {
-		return "it is always the case that if \"" + getCdds().get(1) + "\" holds, then \"" + getCdds().get(0)
-				+ "\" holds after at most \"" + getDuration().get(0) + "\" time units";
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("it is always the case that if \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" holds, then \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds after at most \"");
+		sb.append(getDuration().get(0));
+		sb.append("\" time units");
+		return sb.toString();
 	}
 
 	@Override

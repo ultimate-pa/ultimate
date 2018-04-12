@@ -131,20 +131,28 @@ public final class ZDecision extends Decision<ZDecision> {
 	}
 
 	@Override
+	public String toTexString(final int child) {
+		return toString(child);
+	}
+
+	@Override
+	public String toBoogieString(final int child) {
+		return (child == 0) ? mPredicate : ("!" + mPredicate);
+	}
+
+	@Override
 	public String toSmtString(final int child) {
 		return toString(child);
 	}
 
 	@Override
 	public String toUppaalString(final int child) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String toUppaalStringDOM(final int child) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -305,11 +313,6 @@ public final class ZDecision extends Decision<ZDecision> {
 	}
 
 	@Override
-	public String toTexString(final int child) {
-		return (child == 0) ? mPredicate : (ZString.NOT + mPredicate);
-	}
-
-	@Override
 	public ZDecision unprime(final String ignore) {
 		return this.unprime();
 	}
@@ -351,4 +354,5 @@ public final class ZDecision extends Decision<ZDecision> {
 	public int compareToSimilar(final Decision<?> other) {
 		return mPredicate.compareTo(((ZDecision) other).mPredicate);
 	}
+
 }

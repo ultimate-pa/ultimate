@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -740,25 +741,31 @@ public final class CDD {
 		final String andStr;
 		final boolean isInfix;
 		if ("tex".equalsIgnoreCase(format)) {
-			funCdd2Str = a -> a.toString("tex", true);
+			funCdd2Str = a -> a.toString("tex", needsParens);
 			funDecision2Str = i -> mDecision.toTexString(i);
 			orStr = " \\vee ";
 			andStr = " \\wedge ";
 			isInfix = true;
 		} else if ("uppaal".equalsIgnoreCase(format)) {
-			funCdd2Str = a -> a.toString("uppaal", true);
+			funCdd2Str = a -> a.toString("uppaal", needsParens);
 			funDecision2Str = i -> mDecision.toUppaalString(i);
 			orStr = " || ";
 			andStr = " && ";
 			isInfix = true;
+		} else if ("boogie".equalsIgnoreCase(format)) {
+			funCdd2Str = a -> a.toString("boogie", needsParens);
+			funDecision2Str = i -> mDecision.toBoogieString(i);
+			orStr = " || ";
+			andStr = " && ";
+			isInfix = true;
 		} else if ("general".equalsIgnoreCase(format)) {
-			funCdd2Str = a -> a.toString("general", true);
+			funCdd2Str = a -> a.toString("general", needsParens);
 			funDecision2Str = i -> mDecision.toString(i);
 			orStr = " \u2228 ";
 			andStr = " \u2227 ";
 			isInfix = true;
 		} else if ("smt".equalsIgnoreCase(format)) {
-			funCdd2Str = a -> a.toString("smt", true);
+			funCdd2Str = a -> a.toString("smt", needsParens);
 			funDecision2Str = i -> mDecision.toSmtString(i);
 			orStr = "(or ";
 			andStr = "(and ";
@@ -767,17 +774,21 @@ public final class CDD {
 			throw new UnsupportedOperationException("Unknown format: " + format);
 		}
 		if (isInfix) {
-			final String infixStr = toStringInfix(funCdd2Str, funDecision2Str, orStr, andStr);
-			if (needsParens && mChilds.length > 1) {
-				return "(" + infixStr + ")";
-			}
-			return infixStr;
+			return toStringInfix(funCdd2Str, funDecision2Str, orStr, andStr);
 		}
 		return toStringPrefix(funCdd2Str, funDecision2Str, orStr, andStr);
 	}
 
-	public String toSmtString(final boolean needsParens) {
-		return toString("smt", needsParens);
+	public String toSmtString() {
+		return toString("smt", true);
+	}
+
+	public String toBoogieString() {
+		return toString("boogie", true);
+	}
+
+	public String toUppaalString() {
+		return toString("uppaal", true);
 	}
 
 	private String toStringPrefix(final Function<CDD, String> funCdd2Str,
@@ -816,24 +827,34 @@ public final class CDD {
 
 	private String toStringInfix(final Function<CDD, String> funCdd2Str,
 			final Function<Integer, String> funDecision2Str, final String orStr, final String andStr) {
-		final StringBuilder sb = new StringBuilder();
+		final List<String> disjuncts = new ArrayList<>();
 		for (int i = 0; i < mChilds.length; i++) {
 			if (mChilds[i] == CDD.FALSE) {
 				continue;
 			}
-			if (i != 0) {
-				sb.append(orStr);
-			}
 
 			if (childDominates(i)) {
-				sb.append(funCdd2Str.apply(mChilds[i]));
+				disjuncts.add(funCdd2Str.apply(mChilds[i]));
 			} else {
-				sb.append(funDecision2Str.apply(i));
 				if (mChilds[i] != CDD.TRUE) {
-					sb.append(andStr).append(funCdd2Str.apply(mChilds[i]));
+					disjuncts.add("(" + funDecision2Str.apply(i) + andStr + funCdd2Str.apply(mChilds[i]) + ")");
+				} else {
+					disjuncts.add(funDecision2Str.apply(i));
 				}
 			}
 		}
+		if (disjuncts.size() == 1) {
+			return disjuncts.get(0);
+		}
+		final StringBuilder sb = new StringBuilder();
+		final Iterator<String> iter = disjuncts.iterator();
+		sb.append("(");
+		sb.append(iter.next());
+		while (iter.hasNext()) {
+			sb.append(orStr);
+			sb.append(iter.next());
+		}
+		sb.append(")");
 		return sb.toString();
 	}
 

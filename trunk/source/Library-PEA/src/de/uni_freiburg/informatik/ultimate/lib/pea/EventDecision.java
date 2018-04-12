@@ -84,13 +84,18 @@ public class EventDecision extends Decision<EventDecision> {
 	}
 
 	@Override
+	public String toBoogieString(final int child) {
+		return (child == 0) ? mEvent : ("!" + mEvent);
+	}
+
+	@Override
 	public String toUppaalString(final int child) {
-		return "true";
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String toUppaalStringDOM(final int child) {
-		return "true";
+		throw new UnsupportedOperationException();
 	}
 
 	/**

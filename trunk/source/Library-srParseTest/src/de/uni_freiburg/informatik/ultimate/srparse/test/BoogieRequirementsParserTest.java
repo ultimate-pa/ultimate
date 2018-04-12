@@ -47,23 +47,7 @@ public class BoogieRequirementsParserTest {
 	@Test
 	public void testGlobalInvariantBoogie() throws Exception {
 		final String testString = "id: Globally, it is always the case that \"A >=  B\" holds.";
-		final PatternType[] parsedPatterns = genPatterns(testString);
-		check(testString, parsedPatterns, "A >= B");
-	}
-
-	private static void check(final String testString, final PatternType[] parsedPatterns, final String cddCheck) {
-		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
-		Assert.assertThat(parsedPatterns.length, Is.is(1));
-		final PatternType pattern = parsedPatterns[0];
-		Assert.assertNotNull("Parser did not recognize pattern", pattern);
-		final List<CDD> cdds = pattern.getCdds();
-		Assert.assertThat(cdds.size(), Is.is(1));
-		final CDD cdd = cdds.get(0);
-
-		System.out.println(testString);
-		System.out.println("Should: " + cddCheck);
-		System.out.println("Is:     " + cdd.toString());
-		Assert.assertEquals(cddCheck, cdd.toString());
+		check(testString, "A >= B");
 	}
 
 	/**
@@ -74,8 +58,7 @@ public class BoogieRequirementsParserTest {
 	@Test
 	public void testBooleanLiterals() throws Exception {
 		final String testString = "id: Globally, it is always the case that \"true == false\" holds.";
-		final PatternType[] parsedPatterns = genPatterns(testString);
-		check(testString, parsedPatterns, "true == false");
+		check(testString, "true == false");
 	}
 
 	/**
@@ -87,8 +70,7 @@ public class BoogieRequirementsParserTest {
 	public void testGlobalInvariantBoogieComplexExpression() throws Exception {
 		final String testString =
 				"id: Globally, it is always the case that \"(A >= B &&" + " C + 3 == D -3) || E \" holds";
-		final PatternType[] parsedPatterns = genPatterns(testString);
-		check(testString, parsedPatterns, "A >= B ∧ (C + 3 == D - 3 ∨ E) ∨ E");
+		check(testString, "((A >= B ∧ (C + 3 == D - 3 ∨ E)) ∨ E)");
 	}
 
 	@Test
@@ -120,6 +102,29 @@ public class BoogieRequirementsParserTest {
 		Assert.assertTrue("Parser did not work on old Requirements with only ap-names",
 				ccds.get(0).getDecision() instanceof BooleanDecision);
 		System.out.println(ccds.get(0).toString());
+	}
+
+	@Test
+	public void orAndNested() throws Exception {
+		final String testString =
+				"id: Globally, it is always the case that \"A == 0 && (B == 0 || !C || B == 1)\" holds";
+		check(testString, "(A == 0 ∧ (B == 0 ∨ (B == 1 ∨ !C)))");
+	}
+
+	private void check(final String testString, final String cddCheck) throws Exception {
+		final PatternType[] parsedPatterns = genPatterns(testString);
+		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
+		Assert.assertThat(parsedPatterns.length, Is.is(1));
+		final PatternType pattern = parsedPatterns[0];
+		Assert.assertNotNull("Parser did not recognize pattern", pattern);
+		final List<CDD> cdds = pattern.getCdds();
+		Assert.assertThat(cdds.size(), Is.is(1));
+		final CDD cdd = cdds.get(0);
+
+		System.out.println(testString);
+		System.out.println("Should: " + cddCheck);
+		System.out.println("Is:     " + cdd.toString());
+		Assert.assertEquals(cddCheck, cdd.toString());
 	}
 
 }

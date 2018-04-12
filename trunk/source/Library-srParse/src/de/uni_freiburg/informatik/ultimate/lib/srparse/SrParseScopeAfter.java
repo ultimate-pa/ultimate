@@ -10,6 +10,6 @@ public class SrParseScopeAfter extends SrParseScope {
 
 	@Override
 	public String toString() {
-		return "After \"" + getCdd1() + "\", ";
+		return "After \"" + getCdd1().toBoogieString() + "\", ";
 	}
 }

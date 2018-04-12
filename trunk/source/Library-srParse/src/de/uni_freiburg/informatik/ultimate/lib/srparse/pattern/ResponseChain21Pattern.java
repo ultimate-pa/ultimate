@@ -27,9 +27,24 @@ public class ResponseChain21Pattern extends PatternType {
 
 	@Override
 	public String toString() {
-		return "it is always the case that if \"" + getCdds().get(3) + "\" holds and is succeeded by \""
-				+ getCdds().get(2) + "\", then \"" + getCdds().get(1) + "\" eventually holds after \""
-				+ getCdds().get(0) + "\"";
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("it is always the case that if \"");
+		sb.append(getCdds().get(3).toBoogieString());
+		sb.append("\" holds and is succeeded by \"");
+		sb.append(getCdds().get(2).toBoogieString());
+		sb.append("\", then \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" eventually holds after \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\"");
+		return sb.toString();
 	}
 
 	@Override

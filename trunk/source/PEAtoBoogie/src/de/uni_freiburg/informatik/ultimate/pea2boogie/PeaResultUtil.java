@@ -151,7 +151,7 @@ public class PeaResultUtil {
 
 		public UnexpectedRequirementsParserFailureResult(final String filename) {
 			super(Activator.PLUGIN_ID);
-			mMessage = "The parser failed silently on some requirements from " + filename;
+			mMessage = "The parser failed on some requirements from " + filename;
 		}
 
 		@Override

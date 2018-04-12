@@ -14,3 +14,4 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
+Export-Package: de.uni_freiburg.informatik.ultimate.pea2boogie

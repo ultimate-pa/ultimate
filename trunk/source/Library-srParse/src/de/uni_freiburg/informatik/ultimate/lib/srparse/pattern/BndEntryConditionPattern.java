@@ -28,12 +28,22 @@ public class BndEntryConditionPattern extends PatternType {
 
 	@Override
 	public String toString() {
-		String res = new String();
-
-		res = "it is always the case that after \"" + getCdds().get(1) + "\" holds for \"" + getDuration().get(0)
-				+ "\" time units, then \"" + getCdds().get(0) + "\" holds";
-
-		return res;
+		final StringBuilder sb = new StringBuilder();
+		if (getId() != null) {
+			sb.append(getId());
+			sb.append(": ");
+		}
+		if (getScope() != null) {
+			sb.append(getScope());
+		}
+		sb.append("it is always the case that after \"");
+		sb.append(getCdds().get(1).toBoogieString());
+		sb.append("\" holds for \"");
+		sb.append(getDuration().get(0));
+		sb.append("\" time units, then \"");
+		sb.append(getCdds().get(0).toBoogieString());
+		sb.append("\" holds");
+		return sb.toString();
 	}
 
 	@Override

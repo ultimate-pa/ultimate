@@ -329,21 +329,57 @@ public class RangeDecision extends Decision<RangeDecision> {
 
 	@Override
 	public String toString(final int childs) {
+		return getInfixString(mVar, " \u2264 ", " < ", " \u2265 ", " > ", " == ", " \u02C4 ", childs);
+	}
+
+	@Override
+	public String toBoogieString(final int child) {
+		return getInfixString(mVar, " <= ", " < ", " >= ", " > ", " == ", " && ", child);
+	}
+
+	@Override
+	public String toUppaalString(final int childs) {
+		String var = mVar;
+
+		if (var.charAt(var.length() - 1) == '\'') {
+			var = var.substring(0, var.length() - 1);
+		}
+
+		return getInfixString(var, " &lt;= ", " &lt; ", " &gt;= ", " &gt; ", " == ", " &amp;&amp;", childs);
+	}
+
+	@Override
+	public String toUppaalStringDOM(final int childs) {
+		String var = mVar;
+
+		if (var.charAt(var.length() - 1) == '\'') {
+			var = var.substring(0, var.length() - 1);
+		}
+
+		return getInfixString(var, " <= ", " < ", " >= ", " > ", " == ", " && ", childs);
+	}
+
+	@Override
+	public String toTexString(final int childs) {
+		return getInfixString(mVar, " \\leq ", " < ", " \\geq ", " > ", " == ", " \\land ", childs);
+	}
+
+	private String getInfixString(final String var, final String leqOp, final String leOp, final String geqOp,
+			final String geOp, final String eqOp, final String andOp, final int childs) {
 		if (childs == 0) {
-			return mVar + (((mLimits[0] & 1) == 0) ? " < " : " \u2264 ") + (mLimits[0] / 2);
+			return var + (((mLimits[0] & 1) == 0) ? leOp : leqOp) + (mLimits[0] / 2);
 		}
 
 		if (childs == mLimits.length) {
-			return mVar + (((mLimits[mLimits.length - 1] & 1) == 1) ? " > " : " \u2265 ")
-					+ (mLimits[mLimits.length - 1] / 2);
+			return var + (((mLimits[mLimits.length - 1] & 1) == 1) ? geOp : geqOp) + (mLimits[mLimits.length - 1] / 2);
 		}
 
 		if ((mLimits[childs - 1] / 2) == (mLimits[childs] / 2)) {
-			return mVar + " == " + (mLimits[childs] / 2);
+			return var + eqOp + (mLimits[childs] / 2);
 		}
 
-		return (mLimits[childs - 1] / 2) + (((mLimits[childs - 1] & 1) == 1) ? " < " : " \u2264 ") + mVar
-				+ (((mLimits[childs] & 1) == 0) ? " < " : " \u2264 ") + (mLimits[childs] / 2);
+		return var + (((mLimits[childs - 1] & 1) == 1) ? geOp : geqOp) + (mLimits[childs - 1] / 2) + andOp + var
+				+ (((mLimits[childs] & 1) == 0) ? leOp : leqOp) + (mLimits[childs] / 2);
 	}
 
 	@Override
@@ -393,56 +429,6 @@ public class RangeDecision extends Decision<RangeDecision> {
 		return OP_INVALID;
 	}
 
-	@Override
-	public String toUppaalString(final int childs) {
-		String var = mVar;
-
-		if (var.charAt(var.length() - 1) == '\'') {
-			var = var.substring(0, var.length() - 1);
-		}
-
-		if (childs == 0) {
-			return var + (((mLimits[0] & 1) == 0) ? " &lt; " : " &lt;= ") + (mLimits[0] / 2);
-		}
-
-		if (childs == mLimits.length) {
-			return var + (((mLimits[mLimits.length - 1] & 1) == 1) ? " &gt; " : " &gt;= ")
-					+ (mLimits[mLimits.length - 1] / 2);
-		}
-
-		if ((mLimits[childs - 1] / 2) == (mLimits[childs] / 2)) {
-			return var + " == " + (mLimits[childs] / 2);
-		}
-
-		return var + (((mLimits[childs - 1] & 1) == 1) ? " &gt; " : " &gt;= ") + (mLimits[childs - 1] / 2)
-				+ " &amp;&amp; " + var + (((mLimits[childs] & 1) == 0) ? " &lt; " : " &lt;= ") + (mLimits[childs] / 2);
-	}
-
-	@Override
-	public String toUppaalStringDOM(final int childs) {
-		String var = mVar;
-
-		if (var.charAt(var.length() - 1) == '\'') {
-			var = var.substring(0, var.length() - 1);
-		}
-
-		if (childs == 0) {
-			return var + (((mLimits[0] & 1) == 0) ? " < " : " <= ") + (mLimits[0] / 2);
-		}
-
-		if (childs == mLimits.length) {
-			return var + (((mLimits[mLimits.length - 1] & 1) == 1) ? " > " : " >= ")
-					+ (mLimits[mLimits.length - 1] / 2);
-		}
-
-		if ((mLimits[childs - 1] / 2) == (mLimits[childs] / 2)) {
-			return var + " == " + (mLimits[childs] / 2);
-		}
-
-		return var + (((mLimits[childs - 1] & 1) == 1) ? " > " : " >= ") + (mLimits[childs - 1] / 2) + " && " + var
-				+ (((mLimits[childs] & 1) == 0) ? " < " : " <= ") + (mLimits[childs] / 2);
-	}
-
 	/**
 	 * @return Returns the var.
 	 */
@@ -486,25 +472,6 @@ public class RangeDecision extends Decision<RangeDecision> {
 	}
 
 	@Override
-	public String toTexString(final int childs) {
-		if (childs == 0) {
-			return mVar + (((mLimits[0] & 1) == 0) ? " < " : " \\leq ") + (mLimits[0] / 2);
-		}
-
-		if (childs == mLimits.length) {
-			return mVar + (((mLimits[mLimits.length - 1] & 1) == 1) ? " > " : " \\geq ")
-					+ (mLimits[mLimits.length - 1] / 2);
-		}
-
-		if ((mLimits[childs - 1] / 2) == (mLimits[childs] / 2)) {
-			return mVar + " == " + (mLimits[childs] / 2);
-		}
-
-		return (mLimits[childs - 1] / 2) + (((mLimits[childs - 1] & 1) == 1) ? " < " : " \\leq ") + mVar
-				+ (((mLimits[childs] & 1) == 0) ? " < " : " \\leq ") + (mLimits[childs] / 2);
-	}
-
-	@Override
 	public RangeDecision unprime() {
 		return this.unprime(null);
 	}
@@ -518,4 +485,5 @@ public class RangeDecision extends Decision<RangeDecision> {
 	public int compareToSimilar(final Decision<?> other) {
 		return mVar.compareTo(((RangeDecision) other).mVar);
 	}
+
 }
