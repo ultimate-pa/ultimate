@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -112,47 +113,65 @@ public final class SmtUtils {
 		// Prevent instantiation of this utility class
 	}
 
-	public static Term simplify(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique) {
+	public static Term simplify(final ManagedScript mgScript, final Term formula,
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}
 		final long startTime = System.nanoTime();
-		final Term simplified;
-		switch (simplificationTechnique) {
-		case SIMPLIFY_BDD_PROP:
-			simplified = new SimplifyBdd(services, script).transform(formula);
-			break;
-		case SIMPLIFY_BDD_FIRST_ORDER:
-			simplified = new SimplifyBdd(services, script).transformWithImplications(formula);
-			break;
-		case SIMPLIFY_DDA:
-			simplified = new SimplifyDDAWithTimeout(script.getScript(), services).getSimplifiedTerm(formula);
-			break;
-		case SIMPLIFY_QUICK:
-			simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
-			break;
-		case NONE:
-			return formula;
-		default:
-			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
-		}
-		if (logger.isDebugEnabled()) {
-			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
-					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
-		}
-		final long endTime = System.nanoTime();
-		final long overallTimeMs = (endTime - startTime) / 1_000_000;
-		if (formula.equals(simplified) && overallTimeMs >= 100) {
-			logger.warn("Spent " + overallTimeMs + "ms on a formula simplification that was a NOOP. DAG size: "
-					+ new DagSizePrinter(formula));
-		} else if (overallTimeMs >= 100) {
-			logger.warn("Spent " + overallTimeMs + "ms on a formula simplification. DAG size of input: "
-					+ new DagSizePrinter(formula) + " DAG size of output " + new DagSizePrinter(simplified));
+		final UndoableWrapperScript undoableScript = new UndoableWrapperScript(mgScript.getScript());
+		final ManagedScript script = new ManagedScript(services, undoableScript);
+		try {
+			final Term simplified;
+			switch (simplificationTechnique) {
+			case SIMPLIFY_BDD_PROP:
+				simplified = new SimplifyBdd(services, script).transform(formula);
+				break;
+			case SIMPLIFY_BDD_FIRST_ORDER:
+				simplified = new SimplifyBdd(services, script).transformWithImplications(formula);
+				break;
+			case SIMPLIFY_DDA:
+				simplified = new SimplifyDDAWithTimeout(script.getScript(), services).getSimplifiedTerm(formula);
+				break;
+			case SIMPLIFY_QUICK:
+				simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
+				break;
+			case NONE:
+				return formula;
+			default:
+				throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
+						new DagSizePrinter(formula), new DagSizePrinter(simplified)));
+			}
+			final long endTime = System.nanoTime();
+			final long overallTimeMs = (endTime - startTime) / 1_000_000;
+			if (overallTimeMs >= 100) {
+				final StringBuilder sb = new StringBuilder();
+				sb.append("Spent ").append(overallTimeMs).append("ms on a formula simplification");
+				if (formula.equals(simplified)) {
+					sb.append(" that was a NOOP. DAG size: ");
+					sb.append(new DagSizePrinter(formula));
+				} else {
+					sb.append(". DAG size of input: ");
+					sb.append(new DagSizePrinter(formula));
+					sb.append(" DAG size of output: ");
+					sb.append(new DagSizePrinter(simplified));
+				}
+				logger.warn(sb);
+			}
 
+			return simplified;
+		} catch (final ToolchainCanceledException t) {
+			// we try to preserve the script if a timeout occurred
+			final int dirtyLevels = undoableScript.restore();
+			if (dirtyLevels > 0) {
+				logger.warn("Removed " + dirtyLevels + " from assertion stack");
+			}
+			throw t;
 		}
-		return simplified;
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
@@ -1352,17 +1371,13 @@ public final class SmtUtils {
 
 	/**
 	 * Takes a Term with array sort and unwraps all select and store terms until it hits the TermVariable or
-	 *  ConstantTerm that can no longer be unwrapped.
-	 * Examples:
-	 *  let a be an array variable, i1, i2, v some terms
-	 *  a returns a
-	 *  (store a i v) returns a
-	 *  (store (select a i1) i2 v) returns a
+	 * ConstantTerm that can no longer be unwrapped. Examples: let a be an array variable, i1, i2, v some terms a
+	 * returns a (store a i v) returns a (store (select a i1) i2 v) returns a
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
-	 * @return the simple array term inside the given array term that is obtained by taking the first argument of
-	 * 	store and select terms exhaustively.
+	 * @return the simple array term inside the given array term that is obtained by taking the first argument of store
+	 *         and select terms exhaustively.
 	 */
 	public final static Term getBasicArrayTerm(final Term possiblyComplexArrayTerm) {
 		assert possiblyComplexArrayTerm.getSort().isArraySort();
