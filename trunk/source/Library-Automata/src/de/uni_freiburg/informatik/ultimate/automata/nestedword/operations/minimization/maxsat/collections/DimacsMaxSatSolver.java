@@ -116,7 +116,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		mWriter = createWriter();
 		mVar2NumberString = new HashMap<>();
 		mNumber2Var = new ArrayList<>();
-		mMaxWeight = Integer.toString(Integer.MAX_VALUE) + BLANK;
+		mMaxWeight = Integer.toString(Integer.MAX_VALUE);
 	}
 
 	@Override
@@ -143,7 +143,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		try {
 			mWriter.append(mMaxWeight);
 			for (final V var : negativeAtoms) {
-				mWriter.append(NEG).append(mVar2NumberString.get(var));
+				mWriter.append(BLANK).append(NEG).append(mVar2NumberString.get(var));
 			}
 			for (final V var : positiveAtoms) {
 				mWriter.append(BLANK).append(mVar2NumberString.get(var));
