@@ -84,22 +84,13 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	private final Term mContext;
 	private final boolean mContextIsDisjunctive;
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public SimplifyDDAWithTimeout(final Script script, final IUltimateServiceProvider services) {
 		this(script, true, services);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public SimplifyDDAWithTimeout(final Script script, final boolean simplifyRepeatedly,
 			final IUltimateServiceProvider services) {
-		super(script, simplifyRepeatedly);
-		mServices = services;
-		mContext = null;
-		mContextIsDisjunctive = true;
+		this(script, simplifyRepeatedly, services, null, true);
 	}
 
 	/**
