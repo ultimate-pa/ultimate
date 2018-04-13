@@ -61,8 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
  * smaller than 2^63. Hard clauses have weight greater or equal to <i>W</i> and soft clauses have weight 1. <i>W</i> is
  * always greater than the sum of the weights of violated soft clauses in the solution.
  * <p>
- * TODO Christian: At the moment the solver and output files are hard-coded and must reside in the home folder. Make
- * this more general.
+ * Note that the solver is hard-coded and must reside in the home folder.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <V>
@@ -71,10 +70,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private static final String LINE_SEPARATOR = System.lineSeparator();
 	private static final String FILE_NAME_TMP = "dimacs.wcnf.tmp";
+	private static final String EXTENSION = ".wcnf";
+	private static final String FILE_NAME_DEFAULT = "dimacs";
 	private static final String ENCODING = "UTF-8";
 	private static final boolean WRITE_TO_STD_OUT = false;
-
-	private static final String FILE_NAME = "dimacs.wcnf";
 
 	private static final String AHMAXSAT_COMMAND = "./ahmaxsat-ls-1.68";
 
@@ -89,6 +88,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 
 	private static final Object[] EMPTY_ARRAY = new Object[0];
 
+	private final String mFilename;
 	private final Appendable mWriter;
 	private final Map<V, String> mVar2NumberString;
 	private final ArrayList<V> mNumber2Var;
@@ -101,7 +101,18 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	 *            Ultimate services.
 	 */
 	public DimacsMaxSatSolver(final AutomataLibraryServices services) {
+		this(services, FILE_NAME_DEFAULT);
+	}
+
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 * @param filename
+	 *            file name
+	 */
+	public DimacsMaxSatSolver(final AutomataLibraryServices services, final String filename) {
 		super(services);
+		mFilename = filename + EXTENSION;
 		mWriter = createWriter();
 		mVar2NumberString = new HashMap<>();
 		mNumber2Var = new ArrayList<>();
@@ -156,7 +167,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		// run external Max-SAT solver
 		final ArrayList<String> commands = new ArrayList<>(1);
 		commands.add(AHMAXSAT_COMMAND);
-		commands.add(FILE_NAME);
+		commands.add(mFilename);
 		final ProcessBuilder pb = new ProcessBuilder(commands);
 		/* we could set the path via "pb.directory(...)" */
 		// run solver
@@ -185,7 +196,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	@SuppressWarnings("squid:S1141")
 	private void fixFile() {
 		// new, final file
-		try (Writer writer = new OutputStreamWriter(new FileOutputStream(FILE_NAME), ENCODING)) {
+		try (Writer writer = new OutputStreamWriter(new FileOutputStream(mFilename), ENCODING)) {
 			// add header
 			// @formatter:off
 			writer.append(HEADER)
