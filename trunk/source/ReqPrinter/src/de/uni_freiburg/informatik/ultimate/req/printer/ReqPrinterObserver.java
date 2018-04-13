@@ -36,6 +36,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -44,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PatternContainer;
 import de.uni_freiburg.informatik.ultimate.req.printer.preferences.PreferenceInitializer;
@@ -73,7 +78,30 @@ public class ReqPrinterObserver implements IUnmanagedObserver {
 			if (writer == null) {
 				return false;
 			}
-			for (final PatternType pattern : container.getPatterns()) {
+
+			final List<PatternType> sortedPatterns = new ArrayList<>(container.getPatterns());
+			sortedPatterns.sort(new Comparator<PatternType>() {
+
+				@Override
+				public int compare(final PatternType o1, final PatternType o2) {
+					if (o1 instanceof InitializationPattern) {
+						if (o2 instanceof InitializationPattern) {
+							final VariableCategory o1cat = ((InitializationPattern) o1).getCategory();
+							final VariableCategory o2cat = ((InitializationPattern) o2).getCategory();
+							if (o1cat == VariableCategory.CONST && o2cat != VariableCategory.CONST) {
+								return -1;
+							} else if (o2cat == VariableCategory.CONST && o1cat != VariableCategory.CONST) {
+								return 1;
+							}
+						} else {
+							return -1;
+						}
+					}
+					return o1.getId().compareToIgnoreCase(o2.getId());
+				}
+			});
+
+			for (final PatternType pattern : sortedPatterns) {
 				writer.println(pattern.toString());
 			}
 			writer.close();
