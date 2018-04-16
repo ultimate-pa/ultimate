@@ -28,8 +28,12 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
@@ -44,16 +48,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
  */
 public final class ResultService implements IStorable, IResultService {
 
-	private final HashMap<String, List<IResult>> mResults;
+	private final Map<String, List<IResult>> mResults;
+	private final Map<String, Function<IResult, IResult>> mTransformers;
 	private static final String KEY = "ResultService";
 
 	private ResultService() {
 		mResults = new HashMap<>();
+		mTransformers = new LinkedHashMap<>();
 	}
 
 	@Override
 	public void destroy() {
 		mResults.clear();
+		mTransformers.clear();
 	}
 
 	@Override
@@ -62,24 +69,45 @@ public final class ResultService implements IStorable, IResultService {
 	}
 
 	@Override
-	public void reportResult(final String id, final IResult result) {
-		if (result instanceof IResultWithLocation) {
-			if (((IResultWithLocation) result).getLocation() == null) {
+	public void reportResult(final String id, final IResult origResult) {
+		final IResult transformedResult = applyTransformers(origResult);
+		if (transformedResult == null) {
+			return;
+		}
+		if (transformedResult instanceof IResultWithLocation) {
+			if (((IResultWithLocation) transformedResult).getLocation() == null) {
 				throw new IllegalArgumentException("Location is null");
 			}
 		}
-		if (result.getShortDescription() == null) {
+		if (transformedResult.getShortDescription() == null) {
 			throw new IllegalArgumentException("ShortDescription is null");
 		}
-		if (result.getLongDescription() == null) {
+		if (transformedResult.getLongDescription() == null) {
 			throw new IllegalArgumentException("LongDescription is null");
 		}
 		List<IResult> list = mResults.get(id);
 		if (list == null) {
 			list = new ArrayList<>();
 		}
-		list.add(result);
+		list.add(transformedResult);
 		mResults.put(id, list);
+	}
+
+	private IResult applyTransformers(final IResult origResult) {
+		if (mTransformers.isEmpty()) {
+			return origResult;
+		}
+
+		final Iterator<Entry<String, Function<IResult, IResult>>> iter = mTransformers.entrySet().iterator();
+		IResult current = origResult;
+		while (current != null && iter.hasNext()) {
+			final Entry<String, Function<IResult, IResult>> currentTransformer = iter.next();
+			if (currentTransformer.getValue() == null) {
+				continue;
+			}
+			current = currentTransformer.getValue().apply(current);
+		}
+		return current;
 	}
 
 	static IResultService getService(final IToolchainStorage storage) {
@@ -98,6 +126,11 @@ public final class ResultService implements IStorable, IResultService {
 			return "No Results";
 		}
 		return mResults.toString();
+	}
+
+	@Override
+	public void registerTransformer(final String name, final Function<IResult, IResult> resultTransformer) {
+		mTransformers.put(name, resultTransformer);
 	}
 
 }

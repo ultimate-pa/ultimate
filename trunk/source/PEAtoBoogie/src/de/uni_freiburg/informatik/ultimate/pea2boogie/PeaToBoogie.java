@@ -38,15 +38,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -112,6 +115,11 @@ public class PeaToBoogie implements ISource {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return null;
 		}
+
+		// register CEX transformer that removes program executions from CEX.
+		final Function<IResult, IResult> resultTransformer = this::removeProgramExecutionFromCex;
+		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
+
 		return generateBoogie(unifiedPatterns);
 	}
 
@@ -228,6 +236,14 @@ public class PeaToBoogie implements ISource {
 						.getUnit();
 		new PatternContainer(patterns).annotate(unit);
 		return unit;
+	}
+
+	private IResult removeProgramExecutionFromCex(final IResult result) {
+		if (result instanceof CounterExampleResult<?, ?, ?>) {
+			final CounterExampleResult<?, ?, ?> cex = (CounterExampleResult<?, ?, ?>) result;
+			return cex.createCounterExampleResultWithoutTrace();
+		}
+		return result;
 	}
 
 	@Override

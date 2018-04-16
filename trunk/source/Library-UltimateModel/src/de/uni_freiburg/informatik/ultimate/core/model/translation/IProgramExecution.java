@@ -97,6 +97,46 @@ public interface IProgramExecution<TE, E> {
 	 */
 	IBacktranslationValueProvider<TE, E> getBacktranslationValueProvider();
 
+	public static <TE, E> IProgramExecution<TE, E> emptyExecution(final Class<E> exprClass, final Class<TE> teClass) {
+		return new IProgramExecution<TE, E>() {
+
+			@Override
+			public int getLength() {
+				return 0;
+			}
+
+			@Override
+			public AtomicTraceElement<TE> getTraceElement(final int index) {
+				return null;
+			}
+
+			@Override
+			public ProgramState<E> getProgramState(final int index) {
+				return null;
+			}
+
+			@Override
+			public ProgramState<E> getInitialProgramState() {
+				return null;
+			}
+
+			@Override
+			public Class<E> getExpressionClass() {
+				return exprClass;
+			}
+
+			@Override
+			public Class<TE> getTraceElementClass() {
+				return teClass;
+			}
+
+			@Override
+			public IBacktranslationValueProvider<TE, E> getBacktranslationValueProvider() {
+				return null;
+			}
+		};
+	}
+
 	/**
 	 * Program state that is can be defined only partially. This class defines for some variables of the program a
 	 * Collection of possible values. Variables and values are expressions of type E. We use a map to assign to each

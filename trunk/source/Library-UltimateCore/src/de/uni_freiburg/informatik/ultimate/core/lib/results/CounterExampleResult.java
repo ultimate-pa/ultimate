@@ -84,6 +84,19 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 		mFailurePath = ResultUtil.getLocationSequence(pe);
 	}
 
+	/**
+	 * Create a copy of an {@link CounterExampleResult} that does not contain the program execution, effectively
+	 * minimizing the memory footprint.
+	 */
+	private CounterExampleResult(final CounterExampleResult<ELEM, TE, E> old) {
+		super(old.getElement(), old.getPlugin(), old.mTranslatorSequence);
+		mCheckedSpecification = old.mCheckedSpecification;
+		mProgramExecution = IProgramExecution.emptyExecution(old.mProgramExecution.getExpressionClass(),
+				old.mProgramExecution.getTraceElementClass());
+		mFailurePath = old.mFailurePath;
+		mProgramExecutionAsString = "";
+	}
+
 	@Override
 	public String getShortDescription() {
 		if (mCheckedSpecification == null) {
@@ -141,5 +154,9 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 			mProgramExecutionAsString = mTranslatorSequence.translateProgramExecution(mProgramExecution).toString();
 		}
 		return mProgramExecutionAsString;
+	}
+
+	public CounterExampleResult<ELEM, TE, E> createCounterExampleResultWithoutTrace() {
+		return new CounterExampleResult<>(this);
 	}
 }
