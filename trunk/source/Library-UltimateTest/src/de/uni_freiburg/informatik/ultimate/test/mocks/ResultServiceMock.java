@@ -48,7 +48,7 @@ final class ResultServiceMock implements IResultService {
 	}
 
 	@Override
-	public void registerTransformer(final Function<IResult, IResult> resultTransformer) {
+	public void registerTransformer(final String name, final Function<IResult, IResult> resultTransformer) {
 		// do nothing
 	}
 }
