@@ -96,6 +96,8 @@ public class ReqPrinterObserver implements IUnmanagedObserver {
 						} else {
 							return -1;
 						}
+					} else if (o2 instanceof InitializationPattern) {
+						return 1;
 					}
 					return o1.getId().compareToIgnoreCase(o2.getId());
 				}
