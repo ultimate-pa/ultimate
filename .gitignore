@@ -246,6 +246,12 @@ hs_err_pid*
 /trunk/source/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse/ReqLexer.java
 /trunk/source/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse/ReqSymbols.java
 
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocLexer.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocLexer.java~
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocParser.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocSymbols.java
+
+
 /trunk/source/JavaCup/bootstrap/java_cup/*
 /trunk/source/JavaCup/classes/java_cup
 /trunk/source/JavaCup/dist

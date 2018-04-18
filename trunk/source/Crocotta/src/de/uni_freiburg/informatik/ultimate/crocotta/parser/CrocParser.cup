@@ -1,0 +1,41 @@
+/* 
+(constraints
+   (pair u1 v1)   (concat (ev "a") (pair u2 v2))
+   (pair u2 v2)   (concat (pair u1 v1) (union (ev "b") (pair u2 v2)))
+)
+*/
+
+package de.uni_freiburg.informatik.ultimate.crocotta.parser;
+
+parser CrocParser;
+option symbols = CrocSymbols;
+option java15, compact_red, newpositions;
+
+//parser code {: :}
+//action code {: :}  
+scan with {: return getScanner().next_token(); :}
+    
+terminal String EQUALS, PAIR, CONCAT, UNION, ISECT, CONSTRAINTS, EV;
+terminal int NUMERAL;
+terminal LPAR, RPAR, QUOTE;
+terminal String SYMBOL, KEYWORD, STRING;
+terminal String ID;
+
+non terminal String keyword, symbol;
+non terminal Object specConstant;
+non terminal Object langExpr;
+non terminal goal, script;
+
+goal ::= script;
+
+specConstant ::= NUMERAL:n {: RESULT = String.valueOf(n); :}
+             | STRING:n {: RESULT = n; :};
+langExpr ::= specConstant
+    | symbol
+    | KEYWORD
+    | LPAR langExpr*:s RPAR {: RESULT = s; :};
+
+script ::= langExpr;
+
+// string20, string25
+// ev -> strings

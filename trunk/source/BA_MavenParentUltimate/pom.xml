@@ -53,6 +53,7 @@
 		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
 		<ltl2autParserDir>${workspaceDir}/LTL2aut/src/de/uni_freiburg/informatik/ultimate/ltl2aut </ltl2autParserDir>
 		<srparseparserDir>${workspaceDir}/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse</srparseparserDir>
+		<crocottaDir>${workspaceDir}/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser</crocottaDir>
 		<examplesDir>${workspaceDir}/../examples</examplesDir>
 		<websiteExamplesDir>${workspaceDir}/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples</websiteExamplesDir>
 
@@ -345,6 +346,7 @@
 		<module>../AutomataScriptInterpreter</module>
 		<module>../BlockEncoding</module>
 		<module>../BuchiAutomizer</module>
+		<module>../Crocotta</module>
 		<module>../PEAtoBoogie</module>
 		<module>../Library-log4j</module>
 		<module>../Library-Log4j2</module>

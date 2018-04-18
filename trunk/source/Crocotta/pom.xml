@@ -38,4 +38,56 @@
   <artifactId>de.uni_freiburg.informatik.ultimate.crocotta</artifactId>
   <version>0.1.23</version>
   <packaging>eclipse-plugin</packaging>
+  
+  <build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>${maven-antrun-version}</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>Crocotta: workspaceDir is ${workspaceDir}</echo>
+								<echo>Crocotta: cupDir is ${cupDir}</echo>
+								<echo>Crocotta: crocottaDir is ${crocottaDir}</echo>
+								<echo>Crocotta: flexBinary is ${flexBinary}</echo>
+
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
+									dir="${crocottaDir}" failonerror="true">
+									<arg value="CrocParser.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${crocottaDir}" failonerror="true">
+									<arg value="CrocParser.flex" />
+								</java>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>${maven-clean-version}</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${crocottaDir}</directory>
+							<includes>
+								<include>CrocParser.java</include>
+								<include>CrocLexer.java</include>
+								<include>CrocLexer.java~</include>
+								<include>CrocSymbols.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+  
 </project>
