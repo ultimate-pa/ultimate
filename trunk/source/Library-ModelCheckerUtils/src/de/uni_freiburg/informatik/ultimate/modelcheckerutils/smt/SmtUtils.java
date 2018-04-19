@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
@@ -72,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -151,7 +153,8 @@ public final class SmtUtils {
 			final long overallTimeMs = (endTime - startTime) / 1_000_000;
 			if (overallTimeMs >= 100) {
 				final StringBuilder sb = new StringBuilder();
-				sb.append("Spent ").append(overallTimeMs).append("ms on a formula simplification");
+				sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
+						.append(" on a formula simplification");
 				if (formula.equals(simplified)) {
 					sb.append(" that was a NOOP. DAG size: ");
 					sb.append(new DagSizePrinter(formula));
