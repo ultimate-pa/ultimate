@@ -53,7 +53,7 @@
 		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
 		<ltl2autParserDir>${workspaceDir}/LTL2aut/src/de/uni_freiburg/informatik/ultimate/ltl2aut </ltl2autParserDir>
 		<srparseparserDir>${workspaceDir}/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse</srparseparserDir>
-		<crocottaDir>${workspaceDir}/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser</crocottaDir>
+		<crocottaDir>${workspaceDir}/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta</crocottaDir>
 		<examplesDir>${workspaceDir}/../examples</examplesDir>
 		<websiteExamplesDir>${workspaceDir}/WebUltimateBridge/src/de/uni_freiburg/informatik/ultimate/webbridge/resources/examples</websiteExamplesDir>
 

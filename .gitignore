@@ -251,6 +251,19 @@ hs_err_pid*
 /trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocParser.java
 /trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocSymbols.java
 
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Concatenation.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/CrocottaAstTransformer.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/CrocottaAstVisitor.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Event.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/FinInfExpression.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/FixpointQuery.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/InclusionQuery.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Intersection.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/LanguageExpression.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Numeral.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Query.java
+/trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Union.java
+
 
 /trunk/source/JavaCup/bootstrap/java_cup/*
 /trunk/source/JavaCup/classes/java_cup
@@ -260,3 +273,4 @@ hs_err_pid*
 /releaseScripts/default/adds/.idea
 /releaseScripts/svcomp2018/adds/.idea
 /trunk/source/UltimateTest/automata-dump
+

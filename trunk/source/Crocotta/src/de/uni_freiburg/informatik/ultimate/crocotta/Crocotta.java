@@ -27,10 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.crocotta;
 
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -39,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Query;
+import de.uni_freiburg.informatik.ultimate.crocotta.parser.CrocParser;
 
 public class Crocotta implements ISource {
 	private ILogger mLogger;
@@ -72,6 +77,21 @@ public class Crocotta implements ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
+		if (files == null) {
+			throw new AssertionError();
+		}
+		if (files.length != 1) {
+			throw new UnsupportedOperationException(
+					"Cannot parse more or less than one .croc file. You supplied " + files.length);
+		}
+
+		final FileReader reader = new FileReader(files[0]);
+		final CrocParser parser = new CrocParser(mServices, mLogger, reader, files[0].getAbsolutePath());
+		final Symbol goal = parser.parse();
+		final Query[] patterns = (Query[]) goal.value;
+
+		// process these queries or make a model out of them
+
 		return null;
 	}
 

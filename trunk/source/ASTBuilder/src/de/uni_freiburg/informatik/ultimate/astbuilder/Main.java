@@ -61,6 +61,9 @@ public final class Main {
 			if ("-debug".equals(param[idx])) {
 				idx++;
 				debug = true;
+			} else if ("-crocotta".equals(param[idx])) {
+				idx++;
+				emitter = new CrocottaEmit();
 			} else if ("-ultimatenew".equals(param[idx])) {
 				idx++;
 				emitter = new NewUltimateEmit();
