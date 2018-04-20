@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -70,8 +72,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IAbstractState<ArrayDomainState<STATE>> {
 	private final STATE mSubState;
 	private final SegmentationMap mSegmentationMap;
-	private ArrayDomainToolkit<STATE> mToolkit;
-	private Set<IProgramVarOrConst> mVariables;
+	private final ArrayDomainToolkit<STATE> mToolkit;
+	private final Set<IProgramVarOrConst> mVariables;
+	private Term mCachedTerm;
+	private EquivalenceFinder mEquivalenceFinder;
 
 	private ArrayDomainState(final STATE subState, final SegmentationMap segmentationMap,
 			final Set<IProgramVarOrConst> variables, final ArrayDomainToolkit<STATE> toolkit) {
@@ -389,27 +393,204 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return (IProgramVar) old2newVars.get(oldVar);
 	}
 
-	@Override
-	public ArrayDomainState<STATE> union(final ArrayDomainState<STATE> other) {
+	private UnificationResult<STATE> unify(final ArrayDomainState<STATE> otherState, final Segmentation segmentation,
+			final Segmentation otherSegmentation) {
+		final Script script = mToolkit.getScript();
+		final Set<Term> thisBounds = new HashSet<>(getTermVars(mSegmentationMap.getBoundVars()));
+		final Set<Term> otherBounds = new HashSet<>(getTermVars(otherState.mSegmentationMap.getBoundVars()));
+		final EquivalenceFinder eqThis = getEquivalenceFinder();
+		final EquivalenceFinder eqOther = otherState.getEquivalenceFinder();
+		final UnionFind<Term> eqClassesThis = eqThis.getEquivalences(thisBounds);
+		final UnionFind<Term> eqClassesOther = eqOther.getEquivalences(otherBounds);
+		STATE substateThis = mSubState;
+		STATE substateOther = otherState.mSubState;
+		final Set<TermVariable> oldBoundTermsThis = getTermVars(segmentation.getBounds());
+		final Set<TermVariable> oldBoundTermsOther = getTermVars(otherSegmentation.getBounds());
+		final Set<TermVariable> excludedVars = new HashSet<>();
+		excludedVars.addAll(oldBoundTermsThis);
+		excludedVars.addAll(oldBoundTermsOther);
+		excludedVars.addAll(getTermVars(segmentation.getValues()));
+		excludedVars.addAll(getTermVars(otherSegmentation.getValues()));
+		final List<Set<Term>> boundsThisOld =
+				transformSegmentation(eqClassesThis, segmentation, Collections.emptySet(), false).getFirst();
+		final List<Set<Term>> boundsOtherOld =
+				transformSegmentation(eqClassesOther, otherSegmentation, Collections.emptySet(), false).getFirst();
+		final Set<Term> allBounds = unionSets(boundsThisOld);
+		allBounds.addAll(unionSets(boundsOtherOld));
+		final UnionFind<Term> eqClassesThisExtended = eqThis.getEquivalences(allBounds);
+		final UnionFind<Term> eqClassesOtherExtended = eqOther.getEquivalences(allBounds);
+		final Pair<List<Set<Term>>, List<IProgramVar>> transformedThis =
+				transformSegmentation(eqClassesThisExtended, segmentation, excludedVars, true);
+		final Pair<List<Set<Term>>, List<IProgramVar>> transformedOther =
+				otherState.transformSegmentation(eqClassesOtherExtended, otherSegmentation, excludedVars, true);
+		final List<Set<Term>> boundsThis = transformedThis.getFirst();
+		final List<Set<Term>> boundsOther = transformedOther.getFirst();
+		final List<IProgramVar> valuesThis = transformedThis.getSecond();
+		final List<IProgramVar> valuesOther = transformedOther.getSecond();
+		final Set<Term> boundsThisTodo = unionSets(boundsThis);
+		final Set<Term> boundsOtherTodo = unionSets(boundsOther);
+		// Here unification starts
+		final List<Set<Term>> newBounds = new ArrayList<>();
+		final List<IProgramVar> newValuesThis = new ArrayList<>();
+		final List<IProgramVar> newValuesOther = new ArrayList<>();
+		final IProgramVar thisValue0 = valuesThis.get(0);
+		final IProgramVar otherValue0 = valuesOther.get(0);
+		final IBoogieType valueType = mToolkit.getType(thisValue0.getSort());
+		final IProgramVar newValue0 = mToolkit.createValueVar(valueType);
+		newValuesThis.add(newValue0);
+		newValuesOther.add(newValue0);
+		substateThis = mToolkit.handleAssumptionBySubdomain(substateThis, getEquality(newValue0, thisValue0));
+		substateOther =
+				mToolkit.handleAssumptionBySubdomain(substateOther, otherState.getEquality(newValue0, otherValue0));
+		int idxThis = 1;
+		int idxOther = 1;
+		while (idxThis < valuesThis.size() && idxOther < valuesOther.size()) {
+			final IProgramVar thisValue = valuesThis.get(idxThis);
+			final IProgramVar otherValue = valuesOther.get(idxOther);
+			final Set<Term> eqClassThis = boundsThis.get(idxThis);
+			final Set<Term> eqClassOther = boundsOther.get(idxOther);
+			boundsThisTodo.removeAll(eqClassThis);
+			boundsOtherTodo.removeAll(eqClassOther);
+			final Set<Term> thisExclusive = DataStructureUtils.difference(eqClassThis, eqClassOther);
+			final Set<Term> otherExclusive = DataStructureUtils.difference(eqClassOther, eqClassThis);
+			final IProgramVar newValue = mToolkit.createValueVar(valueType);
+			Term thisAssumption = script.term("true");
+			Term otherAssumption = script.term("true");
+			if (otherExclusive.isEmpty()) {
+				// case 2
+				newBounds.add(eqClassOther);
+				newValuesOther.add(newValue);
+				otherAssumption = otherState.getEquality(newValue, otherValue);
+				if (!DataStructureUtils.haveNonEmptyIntersection(eqClassThis, boundsOtherTodo)) {
+					// case 1 + 2.1
+					newValuesThis.add(newValue);
+					thisAssumption = getEquality(newValue, thisValue);
+					idxThis++;
+				} else {
+					// case 2.2
+					newValuesThis.add(null);
+				}
+				idxOther++;
+			} else if (thisExclusive.isEmpty()) {
+				// case 3
+				newBounds.add(eqClassThis);
+				newValuesThis.add(newValue);
+				thisAssumption = getEquality(newValue, thisValue);
+				if (!DataStructureUtils.haveNonEmptyIntersection(eqClassOther, boundsThisTodo)) {
+					// case 3.1
+					newValuesOther.add(newValue);
+					otherAssumption = otherState.getEquality(newValue, otherValue);
+					idxOther++;
+				} else {
+					// case 3.2
+					newValuesOther.add(null);
+				}
+				idxThis++;
+			} else if (DataStructureUtils.haveNonEmptyIntersection(eqClassThis, eqClassOther)) {
+				// case 4
+				final Set<Term> intersectionWithNextThis =
+						DataStructureUtils.intersection(eqClassThis, boundsOtherTodo);
+				final Set<Term> intersectionWithNextOther =
+						DataStructureUtils.intersection(eqClassOther, boundsThisTodo);
+				newBounds.add(DataStructureUtils.intersection(eqClassThis, eqClassOther));
+				if (intersectionWithNextThis.isEmpty() && intersectionWithNextOther.isEmpty()) {
+					// case 4.1
+					newValuesThis.add(newValue);
+					newValuesOther.add(newValue);
+					thisAssumption = getEquality(newValue, thisValue);
+					otherAssumption = otherState.getEquality(newValue, otherValue);
+					idxThis++;
+					idxOther++;
+				} else if (intersectionWithNextThis.isEmpty()) {
+					// case 4.2
+					newValuesThis.add(newValue);
+					newValuesOther.add(null);
+					thisAssumption = getEquality(newValue, thisValue);
+					boundsOther.set(idxOther, intersectionWithNextOther);
+					idxThis++;
+				} else if (intersectionWithNextOther.isEmpty()) {
+					// case 4.3
+					newValuesThis.add(null);
+					newValuesOther.add(newValue);
+					otherAssumption = otherState.getEquality(newValue, otherValue);
+					boundsThis.set(idxThis, intersectionWithNextThis);
+					idxOther++;
+				} else {
+					// case 4.4
+					newValuesThis.add(null);
+					newValuesOther.add(null);
+					boundsOther.set(idxOther, intersectionWithNextOther);
+					boundsThis.set(idxThis, intersectionWithNextThis);
+				}
+			} else {
+				// case 5
+				// TODO: Is this correct?
+				if (!newBounds.isEmpty()) {
+					newBounds.remove(newBounds.size() - 1);
+				}
+				final IProgramVar oldValueThis = newValuesThis.remove(newValuesThis.size() - 1);
+				final IProgramVar oldValueOther = newValuesOther.remove(newValuesOther.size() - 1);
+				thisAssumption = getEqualities(newValue, Arrays.asList(thisValue, oldValueThis), Operator.LOGICOR);
+				otherAssumption =
+						otherState.getEqualities(newValue, Arrays.asList(otherValue, oldValueOther), Operator.LOGICOR);
+				newValuesThis.add(newValue);
+				newValuesOther.add(newValue);
+			}
+			substateThis = mToolkit.handleAssumptionBySubdomain(substateThis.addVariable(newValue), thisAssumption);
+			substateOther = mToolkit.handleAssumptionBySubdomain(substateOther.addVariable(newValue), otherAssumption);
+		}
+		// Insert the remaining bounds and values
+		final int thisSize = valuesThis.size();
+		final int otherSize = valuesOther.size();
+		while (idxThis < thisSize) {
+			final IProgramVar newValue = mToolkit.createValueVar(valueType);
+			newBounds.add(boundsThis.get(idxThis));
+			newValuesThis.add(newValue);
+			newValuesOther.add(newValue);
+			substateThis = mToolkit.handleAssumptionBySubdomain(substateThis.addVariable(newValue),
+					getEquality(newValue, segmentation.getValue(idxThis)));
+			substateOther = mToolkit.handleAssumptionBySubdomain(substateOther.addVariable(newValue),
+					otherState.getEquality(newValue, otherSegmentation.getValue(otherSize - 1)));
+			idxThis++;
+
+		}
+		while (idxOther < otherSize) {
+			final IProgramVar newValue = mToolkit.createValueVar(valueType);
+			newBounds.add(boundsOther.get(idxOther));
+			newValuesThis.add(newValue);
+			newValuesOther.add(newValue);
+			substateThis = mToolkit.handleAssumptionBySubdomain(substateThis.addVariable(newValue),
+					getEquality(newValue, segmentation.getValue(thisSize - 1)));
+			substateOther = mToolkit.handleAssumptionBySubdomain(substateOther.addVariable(newValue),
+					otherState.getEquality(newValue, otherSegmentation.getValue(idxOther)));
+			idxOther++;
+		}
+		return new UnificationResult<>(substateThis, substateOther, newBounds, newValuesThis, newValuesOther);
+	}
+
+	private static <T> Set<T> unionSets(final Collection<Set<T>> sets) {
+		return sets.stream().reduce(Collections.emptySet(), DataStructureUtils::union);
+	}
+
+	private ArrayDomainState<STATE> applyDisjunctiveOperator(final ArrayDomainState<STATE> other,
+			final IAbstractStateBinaryOperator<STATE> operator) {
 		if (isBottom()) {
 			return other;
 		}
 		if (other.isBottom()) {
 			return this;
 		}
-		final Script script = mToolkit.getScript();
-		final ArrayDomainState<STATE> otherRenamed = other.renameSegmentations(this, false);
-		final Set<Term> thisBounds = new HashSet<>(getTermVars(mSegmentationMap.getBoundVars()));
-		final Set<Term> otherBounds = new HashSet<>(getTermVars(otherRenamed.mSegmentationMap.getBoundVars()));
-		final Term thisTerm = mSubState.getTerm(script);
-		final Term otherTerm = otherRenamed.mSubState.getTerm(script);
-		final EquivalenceFinder eqThis = mToolkit.createEquivalenceFinder(thisTerm);
-		final EquivalenceFinder eqOther = mToolkit.createEquivalenceFinder(otherTerm);
-		final UnionFind<Term> eqClassesThis = eqThis.getEquivalences(thisBounds);
-		final UnionFind<Term> eqClassesOther = eqOther.getEquivalences(otherBounds);
-		STATE subState = unionWithoutBounds(mSubState, otherRenamed.mSubState);
 		final SegmentationMap segmentationMap = new SegmentationMap();
 		final Set<IProgramVarOrConst> processedArrays = new HashSet<>();
+		final List<Term> constraints = new ArrayList<>();
+		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
+		final Set<IProgramVarOrConst> removedVarsThis = new HashSet<>();
+		final Set<IProgramVarOrConst> removedVarsOther = new HashSet<>();
+		final Script script = mToolkit.getScript();
+		STATE substateThis = mSubState;
+		STATE substateOther = other.mSubState;
+		final Term thisTerm = substateThis.getTerm(script);
+		final Term otherTerm = substateOther.getTerm(script);
 		for (final IProgramVarOrConst array : mSegmentationMap.getArrays()) {
 			if (processedArrays.contains(array)) {
 				continue;
@@ -418,175 +599,68 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			final IBoogieType boundType = mToolkit.getType(TypeUtils.getIndexSort(sort));
 			final IBoogieType valueType = mToolkit.getType(TypeUtils.getInnermostArrayValueSort(sort));
 			processedArrays.add(array);
-			final Set<IProgramVarOrConst> equivalenceClass = new HashSet<>();
-			equivalenceClass.addAll(getEqualArrays(array));
+			final Set<IProgramVarOrConst> equivalenceClass = new HashSet<>(getEqualArrays(array));
 			equivalenceClass.retainAll(other.getEqualArrays(array));
 			processedArrays.addAll(equivalenceClass);
-			final Segmentation thisSegmentation = mSegmentationMap.getSegmentation(array);
-			final Segmentation otherSegmentation = otherRenamed.mSegmentationMap.getSegmentation(array);
-			final Set<TermVariable> oldBoundTermsThis = getTermVars(thisSegmentation.getBounds());
-			final Set<TermVariable> oldBoundTermsOther = getTermVars(otherSegmentation.getBounds());
-			final Set<TermVariable> excludedVars = new HashSet<>();
-			excludedVars.addAll(oldBoundTermsThis);
-			excludedVars.addAll(oldBoundTermsOther);
-			excludedVars.addAll(getTermVars(thisSegmentation.getValues()));
-			excludedVars.addAll(getTermVars(otherSegmentation.getValues()));
-			int idxThis = 1;
-			int idxOther = 1;
 			final List<IProgramVar> newBounds = new ArrayList<>();
-			final List<IProgramVar> newValues = new ArrayList<>();
 			newBounds.add(mToolkit.getMinBound());
-			final IProgramVar thisValue0 = thisSegmentation.getValue(0);
-			final IProgramVar otherValue0 = otherSegmentation.getValue(0);
-			final IProgramVar newValueVar0 = mToolkit.createValueVar(valueType);
-			newValues.add(newValueVar0);
-			subState = mToolkit.handleAssumptionBySubdomain(subState.addVariable(newValueVar0),
-					getEqualities(newValueVar0, Arrays.asList(thisValue0, otherValue0), Operator.LOGICOR));
-			final Set<Term> allBounds = new HashSet<>();
-			final List<Set<Term>> boundsThisOld =
-					transformSegmentation(eqClassesThis, thisSegmentation, Collections.emptySet(), false).getFirst();
-			final List<Set<Term>> boundsOtherOld =
-					transformSegmentation(eqClassesOther, otherSegmentation, Collections.emptySet(), false).getFirst();
-			for (final Set<Term> s : boundsThisOld) {
-				allBounds.addAll(s);
-			}
-			for (final Set<Term> s : boundsOtherOld) {
-				allBounds.addAll(s);
-			}
-			final UnionFind<Term> eqClassesThisExtended = eqThis.getEquivalences(allBounds);
-			final UnionFind<Term> eqClassesOtherExtended = eqOther.getEquivalences(allBounds);
-			final Pair<List<Set<Term>>, List<IProgramVar>> transformedThis =
-					transformSegmentation(eqClassesThisExtended, thisSegmentation, excludedVars, true);
-			final Pair<List<Set<Term>>, List<IProgramVar>> transformedOther =
-					otherRenamed.transformSegmentation(eqClassesOtherExtended, otherSegmentation, excludedVars, true);
-			final List<Set<Term>> boundsThis = transformedThis.getFirst();
-			final List<Set<Term>> boundsOther = transformedOther.getFirst();
-			final List<IProgramVar> valuesThis = transformedThis.getSecond();
-			final List<IProgramVar> valuesOther = transformedOther.getSecond();
-			final Set<Term> boundsThisTodo =
-					boundsThis.stream().reduce(Collections.emptySet(), DataStructureUtils::union);
-			final Set<Term> boundsOtherTodo =
-					boundsOther.stream().reduce(Collections.emptySet(), DataStructureUtils::union);
-			while (idxThis < valuesThis.size() && idxOther < valuesOther.size()) {
-				final IProgramVar thisValue = valuesThis.get(idxThis);
-				final IProgramVar otherValue = valuesOther.get(idxOther);
-				final Set<Term> eqClassThis = boundsThis.get(idxThis);
-				final Set<Term> eqClassOther = boundsOther.get(idxOther);
-				boundsThisTodo.removeAll(eqClassThis);
-				boundsOtherTodo.removeAll(eqClassOther);
-				final Set<Term> thisExclusive = DataStructureUtils.difference(eqClassThis, eqClassOther);
-				final Set<Term> otherExclusive = DataStructureUtils.difference(eqClassOther, eqClassThis);
+			final List<IProgramVar> newValues = new ArrayList<>();
+			final UnificationResult<STATE> unificationResult = unify(other, mSegmentationMap.getSegmentation(array),
+					other.mSegmentationMap.getSegmentation(array));
+			for (final Set<Term> eqClass : unificationResult.getBounds()) {
 				final IProgramVar newBoundVar = mToolkit.createBoundVar(boundType);
-				final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
+				newVariables.add(newBoundVar);
 				newBounds.add(newBoundVar);
-				newValues.add(newValueVar);
-				subState = subState.addVariable(newBoundVar).addVariable(newValueVar);
-				Term valueAssumption;
-				Term boundAssumption;
-				if (otherExclusive.isEmpty()) {
-					// case 2
-					boundAssumption = SmtUtils.binaryEquality(script, newBoundVar.getTermVariable(),
-							eqClassOther.iterator().next());
-					if (!DataStructureUtils.haveNonEmptyIntersection(eqClassThis, boundsOtherTodo)) {
-						// case 1 + 2.1
-						valueAssumption =
-								getEqualities(newValueVar, Arrays.asList(thisValue, otherValue), Operator.LOGICOR);
-						idxThis++;
-					} else {
-						// case 2.2
-						valueAssumption = getEquality(newValueVar, otherValue);
+				constraints
+						.add(SmtUtils.binaryEquality(script, newBoundVar.getTermVariable(), eqClass.iterator().next()));
+			}
+			final List<IProgramVar> valuesThis = unificationResult.getFirstValues();
+			final List<IProgramVar> valuesOther = unificationResult.getSecondValues();
+			for (int i = 0; i < valuesThis.size(); i++) {
+				final IProgramVar thisValue = valuesThis.get(i);
+				final IProgramVar otherValue = valuesOther.get(i);
+				if (thisValue != null && otherValue != null) {
+					if (!thisValue.equals(otherValue)) {
+						throw new InvalidParameterException("Unification should have returned the same value here.");
 					}
-					idxOther++;
-				} else if (thisExclusive.isEmpty()) {
-					// case 3
-					boundAssumption = SmtUtils.binaryEquality(script, newBoundVar.getTermVariable(),
-							eqClassThis.iterator().next());
-					if (!DataStructureUtils.haveNonEmptyIntersection(eqClassOther, boundsThisTodo)) {
-						// case 3.1
-						valueAssumption =
-								getEqualities(newValueVar, Arrays.asList(thisValue, otherValue), Operator.LOGICOR);
-						idxOther++;
-					} else {
-						// case 3.2
-						valueAssumption = getEquality(newValueVar, thisValue);
-					}
-					idxThis++;
-				} else if (DataStructureUtils.haveNonEmptyIntersection(eqClassThis, eqClassOther)) {
-					// case 4
-					final Set<Term> intersectionWithNextThis =
-							DataStructureUtils.intersection(eqClassThis, boundsOtherTodo);
-					final Set<Term> intersectionWithNextOther =
-							DataStructureUtils.intersection(eqClassOther, boundsThisTodo);
-					final Set<Term> intersection = DataStructureUtils.intersection(eqClassThis, eqClassOther);
-					boundAssumption = SmtUtils.binaryEquality(script, newBoundVar.getTermVariable(),
-							intersection.iterator().next());
-					if (intersectionWithNextThis.isEmpty() && intersectionWithNextOther.isEmpty()) {
-						// case 4.1
-						valueAssumption =
-								getEqualities(newValueVar, Arrays.asList(thisValue, otherValue), Operator.LOGICOR);
-						idxThis++;
-						idxOther++;
-					} else if (intersectionWithNextThis.isEmpty()) {
-						// case 4.2
-						valueAssumption = getEquality(newValueVar, thisValue);
-						boundsOther.set(idxOther, intersectionWithNextOther);
-						idxThis++;
-					} else if (intersectionWithNextOther.isEmpty()) {
-						// case 4.3
-						valueAssumption = getEquality(newValueVar, otherValue);
-						boundsThis.set(idxThis, intersectionWithNextThis);
-						idxOther++;
-					} else {
-						// case 4.4
-						valueAssumption = script.term("true");
-						boundsOther.set(idxOther, intersectionWithNextOther);
-						boundsThis.set(idxThis, intersectionWithNextThis);
-					}
+					newValues.add(thisValue);
+				} else if (thisValue != null) {
+					final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
+					constraints.add(getEquality(newValueVar, thisValue, thisTerm, false));
+					newVariables.add(newValueVar);
+					removedVarsThis.add(thisValue);
+					newValues.add(newValueVar);
+				} else if (otherValue != null) {
+					final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
+					constraints.add(getEquality(newValueVar, otherValue, otherTerm, false));
+					newVariables.add(newValueVar);
+					removedVarsOther.add(otherValue);
+					newValues.add(newValueVar);
 				} else {
-					// case 5
-					newBounds.remove(newBounds.size() - 1);
-					final IProgramVar oldValue = newValues.remove(newValues.size() - 2);
-					valueAssumption = getEqualities(newValueVar, Arrays.asList(oldValue, thisValue, otherValue),
-							Operator.LOGICOR);
-					boundAssumption = script.term("true");
+					final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
+					newVariables.add(newValueVar);
+					newValues.add(newValueVar);
 				}
-				final Term assumption = Util.and(script, valueAssumption, boundAssumption);
-				subState = mToolkit.handleAssumptionBySubdomain(subState, assumption);
-			}
-			// Insert the remaining bounds and values
-			final int thisSize = valuesThis.size();
-			final int otherSize = valuesOther.size();
-			while (idxThis < thisSize) {
-				final IProgramVar boundVar = thisSegmentation.getBound(idxThis);
-				final IProgramVar thisValue = thisSegmentation.getValue(idxThis);
-				final IProgramVar otherValue = otherSegmentation.getValue(otherSize - 1);
-				final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
-				newBounds.add(boundVar);
-				newValues.add(newValueVar);
-				final Term assumption =
-						getEqualities(newValueVar, Arrays.asList(thisValue, otherValue), Operator.LOGICOR);
-				subState = mToolkit.handleAssumptionBySubdomain(subState.addVariable(newValueVar), assumption);
-				idxThis++;
-
-			}
-			while (idxOther < otherSize) {
-				final IProgramVar boundVar = otherSegmentation.getBound(idxOther);
-				final IProgramVar thisValue = thisSegmentation.getValue(thisSize - 1);
-				final IProgramVar otherValue = otherSegmentation.getValue(idxOther);
-				final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
-				newBounds.add(boundVar);
-				newValues.add(newValueVar);
-				final Term assumption =
-						getEqualities(newValueVar, Arrays.asList(thisValue, otherValue), Operator.LOGICOR);
-				subState = mToolkit.handleAssumptionBySubdomain(subState.addVariable(newValueVar), assumption);
-				idxOther++;
 			}
 			newBounds.add(mToolkit.getMaxBound());
-			final Segmentation newSegmentation = simplifySegmentation(subState, new Segmentation(newBounds, newValues));
-			segmentationMap.add(array, newSegmentation);
+			segmentationMap.addEquivalenceClass(equivalenceClass, new Segmentation(newBounds, newValues));
 		}
-		return new ArrayDomainState<>(subState, segmentationMap, mVariables, mToolkit).removeUnusedAuxVars();
+		substateThis = substateThis.removeVariables(removedVarsThis);
+		substateOther = substateOther.removeVariables(removedVarsOther);
+		final STATE commonSubstate = operator.apply(substateThis, substateOther);
+		final STATE resultingSubstate = mToolkit.handleAssumptionBySubdomain(commonSubstate.addVariables(newVariables),
+				SmtUtils.and(script, constraints));
+		// TODO: Simplify segmentations
+		return updateState(resultingSubstate, segmentationMap).removeUnusedAuxVars();
+	}
 
+	@Override
+	public ArrayDomainState<STATE> union(final ArrayDomainState<STATE> other) {
+		return applyDisjunctiveOperator(other, (a, b) -> a.union(b));
+	}
+
+	public ArrayDomainState<STATE> applyWidening(final ArrayDomainState<STATE> other) {
+		return applyDisjunctiveOperator(other, mToolkit.getWideningOperator());
 	}
 
 	private Pair<List<Set<Term>>, List<IProgramVar>> transformSegmentation(final UnionFind<Term> unionFind,
@@ -648,34 +722,6 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return new Pair<>(eqClasses, values);
 	}
 
-	// TODO: Exclude state2 bounds
-	private STATE unionWithoutBounds(final STATE state1, final STATE state2) {
-		final Map<IProgramVarOrConst, IProgramVarOrConst> map1 = new HashMap<>();
-		final Map<IProgramVarOrConst, IProgramVarOrConst> map2 = new HashMap<>();
-		for (final IProgramVarOrConst var : mVariables) {
-			final String varName = var.getGloballyUniqueId();
-			final IBoogieType type = mToolkit.getType(var.getSort());
-			map1.put(var, mToolkit.createVariable(varName, type));
-			map2.put(var, mToolkit.createVariable(varName, type));
-		}
-		final STATE renamedState1 = state1.renameVariables(map1);
-		final STATE renamedState2 = state2.renameVariables(map2);
-		final STATE completeState1 = renamedState1.addVariables(renamedState2.getVariables());
-		final STATE completeState2 = renamedState2.addVariables(renamedState1.getVariables());
-		STATE result = completeState1.intersect(completeState2).addVariables(mVariables);
-		for (final IProgramVarOrConst var : mVariables) {
-			final Term term = getEqualities(var,
-					Arrays.asList((IProgramVar) map1.get(var), (IProgramVar) map2.get(var)), Operator.LOGICOR);
-			result = mToolkit.handleAssumptionBySubdomain(result, term);
-		}
-		return result.removeVariables(map1.values()).removeVariables(map2.values());
-	}
-
-	public ArrayDomainState<STATE> applyWidening(final ArrayDomainState<STATE> other) {
-		// TODO: Implement proper widenning!
-		return union(other);
-	}
-
 	@Override
 	public boolean isEmpty() {
 		return mSubState.isEmpty();
@@ -693,8 +739,30 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 
 	@Override
 	public SubsetResult isSubsetOf(final ArrayDomainState<STATE> other) {
-		// TODO: Implement this (using unification)
-		return SubsetResult.NONE;
+		// TODO: Check for compatible array equalities
+		final Set<IProgramVarOrConst> thisRemoved = new HashSet<>();
+		final Set<IProgramVarOrConst> otherRemoved = new HashSet<>();
+		for (final IProgramVarOrConst array : mSegmentationMap.getArrays()) {
+			final UnificationResult<STATE> unificationResult = unify(other, mSegmentationMap.getSegmentation(array),
+					other.mSegmentationMap.getSegmentation(array));
+			final List<IProgramVar> thisValues = unificationResult.getFirstValues();
+			final List<IProgramVar> otherValues = unificationResult.getSecondValues();
+			for (int i = 0; i < thisValues.size(); i++) {
+				final IProgramVar thisValue = thisValues.get(i);
+				final IProgramVar otherValue = otherValues.get(i);
+				if (thisValue == null && otherValue != null) {
+					otherRemoved.add(otherValue);
+				}
+				if (otherValue == null && thisValue != null) {
+					thisRemoved.add(thisValue);
+				}
+			}
+		}
+		thisRemoved.addAll(mSegmentationMap.getAuxVars());
+		otherRemoved.addAll(other.mSegmentationMap.getAuxVars());
+		final STATE substateThis = mSubState.removeVariables(thisRemoved);
+		final STATE substateOther = other.mSubState.removeVariables(otherRemoved);
+		return substateThis.isSubsetOf(substateOther);
 	}
 
 	@Override
@@ -722,7 +790,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			return false;
 		}
 		final TermVariable value = segmentation.getValue(0).getTermVariable();
-		final Term valueConstraints = SmtUtils.filterFormula(term, Collections.singleton(value), mToolkit.getScript());
+		final Term valueConstraints =
+				SmtUtils.filterFormula(term, Collections.singleton(value), mToolkit.getScript(), true);
 		return SmtUtils.isTrue(valueConstraints);
 
 	}
@@ -735,7 +804,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Term term = mSubState.getTerm(script);
 		final Set<TermVariable> bounds = getTermVars(mSegmentationMap.getBoundVars());
 		final Set<TermVariable> values = getTermVars(mSegmentationMap.getValueVars());
-		final Term valueTerm = SmtUtils.filterFormula(term, values, script);
+		final Term valueTerm = SmtUtils.filterFormula(term, values, script, true);
 		final Term arrayTerm = mSegmentationMap.getTerm(mToolkit.getManagedScript(), valueTerm);
 		final Term conjunction = Util.and(script, term, arrayTerm);
 		final Set<TermVariable> auxVars = DataStructureUtils.union(bounds, values);
@@ -841,28 +910,30 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return mSegmentationMap.getEquivalenceClass(array);
 	}
 
-	// TODO: Make term a parameter
 	private Term getEqualities(final IProgramVarOrConst var, final List<IProgramVar> others, final Operator op) {
 		assert op == Operator.LOGICAND || op == Operator.LOGICOR;
 		final Script script = mToolkit.getScript();
-		final Term term = mSubState.getTerm(script);
 		final List<Term> xjuncts = new ArrayList<>();
-		final Term varTerm = NonrelationalTermUtils.getTermVar(var);
 		for (final IProgramVar v : others) {
-			final TermVariable other = v.getTermVariable();
-			final Term constraint = SmtUtils.filterFormula(term, Collections.singleton(other), script);
-			final Term equivalentConstraint =
-					new Substitution(script, Collections.singletonMap(other, varTerm)).transform(constraint);
-			xjuncts.add(equivalentConstraint);
+			if (v != null) {
+				xjuncts.add(getEquality(var, v));
+			}
 		}
 		return op == Operator.LOGICOR ? SmtUtils.or(script, xjuncts) : SmtUtils.and(script, xjuncts);
 	}
 
-	// TODO: Use Substitution instead
-	private Term getEquality(final IProgramVarOrConst var1, final IProgramVarOrConst var2) {
-		final Term t1 = NonrelationalTermUtils.getTermVar(var1);
-		final Term t2 = NonrelationalTermUtils.getTermVar(var2);
-		return SmtUtils.binaryEquality(mToolkit.getScript(), t1, t2);
+	private Term getEquality(final IProgramVarOrConst newVariable, final IProgramVar oldVariable) {
+		return getEquality(newVariable, oldVariable, getSubTerm(), true);
+	}
+
+	private Term getEquality(final IProgramVarOrConst newVariable, final IProgramVar oldVariable, final Term baseTerm,
+			final boolean allowOtherVariables) {
+		final Script script = mToolkit.getScript();
+		final Term newTerm = NonrelationalTermUtils.getTermVar(newVariable);
+		final TermVariable oldTerm = oldVariable.getTermVariable();
+		final Term constraint =
+				SmtUtils.filterFormula(baseTerm, Collections.singleton(oldTerm), script, allowOtherVariables);
+		return new Substitution(script, Collections.singletonMap(oldTerm, newTerm)).transform(constraint);
 	}
 
 	@Override
@@ -916,11 +987,15 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return new Pair<>(min, max);
 	}
 
-	public Set<IProgramVarOrConst> getUnusedAuxVars() {
-		final Set<IProgramVarOrConst> vars = new HashSet<>(mSubState.getVariables());
+	private Set<IProgramVarOrConst> getUnusedVars(final STATE substate, final SegmentationMap segmentationMap) {
+		final Set<IProgramVarOrConst> vars = new HashSet<>(substate.getVariables());
 		vars.removeAll(mVariables);
-		vars.removeAll(mSegmentationMap.getAuxVars());
+		vars.removeAll(segmentationMap.getAuxVars());
 		return vars;
+	}
+
+	public Set<IProgramVarOrConst> getUnusedAuxVars() {
+		return getUnusedVars(mSubState, mSegmentationMap);
 	}
 
 	public ArrayDomainState<STATE> removeUnusedAuxVars() {
@@ -938,8 +1013,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		while (next < segmentation.size()) {
 			final TermVariable currentValueVar = segmentation.getValue(current).getTermVariable();
 			final TermVariable nextValueVar = segmentation.getValue(next).getTermVariable();
-			final Term currentTerm = SmtUtils.filterFormula(term, Collections.singleton(currentValueVar), script);
-			final Term nextTerm = SmtUtils.filterFormula(term, Collections.singleton(nextValueVar), script);
+			final Term currentTerm = SmtUtils.filterFormula(term, Collections.singleton(currentValueVar), script, true);
+			final Term nextTerm = SmtUtils.filterFormula(term, Collections.singleton(nextValueVar), script, true);
 			final Substitution substitution = new Substitution(mToolkit.getManagedScript(),
 					Collections.singletonMap(nextValueVar, currentValueVar));
 			final Term currentSubstitutedTerm = substitution.transform(currentTerm);
@@ -956,5 +1031,19 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		newValues.add(segmentation.getValue(current));
 		newBounds.add(mToolkit.getMaxBound());
 		return new Segmentation(newBounds, newValues);
+	}
+
+	private Term getSubTerm() {
+		if (mCachedTerm == null) {
+			mCachedTerm = mSubState.getTerm(mToolkit.getScript());
+		}
+		return mCachedTerm;
+	}
+
+	private EquivalenceFinder getEquivalenceFinder() {
+		if (mEquivalenceFinder == null) {
+			mEquivalenceFinder = mToolkit.createEquivalenceFinder(getSubTerm());
+		}
+		return mEquivalenceFinder;
 	}
 }

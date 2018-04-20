@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  *
@@ -1854,13 +1855,14 @@ public final class SmtUtils {
 	 * Returns a filtered Term of {@code formula} w.r.t to the given {@code variables}. This means, all conjuncts of
 	 * {@code formula}, that do not contain any of {@code variables} are discarded and the other ones returned.
 	 */
-	public static Term filterFormula(final Term formula, final Set<TermVariable> variables, final Script script) {
+	public static Term filterFormula(final Term formula, final Set<TermVariable> variables, final Script script,
+			final boolean allowOtherVariables) {
 		final Term[] oldConjuncts = getConjuncts(formula);
 		final List<Term> newConjuncts = new ArrayList<>(oldConjuncts.length);
 		for (final Term c : oldConjuncts) {
 			final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(c.getFreeVars()));
-			freeVars.retainAll(variables);
-			if (!freeVars.isEmpty()) {
+			if (DataStructureUtils.haveNonEmptyIntersection(freeVars, variables)
+					&& (allowOtherVariables || variables.containsAll(freeVars))) {
 				newConjuncts.add(c);
 			}
 		}
