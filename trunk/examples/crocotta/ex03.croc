@@ -1,0 +1,3 @@
+constraints
+   [pair u1 v1 = (concat "a" (pair u2 v2))]
+   [pair u2 v2 = (concat "b" (pair u1 v1))]
