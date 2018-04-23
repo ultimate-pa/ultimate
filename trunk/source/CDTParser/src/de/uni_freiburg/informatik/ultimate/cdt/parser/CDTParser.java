@@ -119,7 +119,7 @@ public class CDTParser implements ISource {
 	private IProject mCdtProject;
 
 	public CDTParser() {
-		mFileTypes = new String[] { "c", "i", "h" };
+		mFileTypes = new String[] { ".c", ".i", ".h" };
 	}
 
 	@Override
