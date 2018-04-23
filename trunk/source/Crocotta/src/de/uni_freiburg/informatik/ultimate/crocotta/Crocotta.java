@@ -42,7 +42,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Concatenation;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.CrocottaAstVisitor;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Event;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.FinInfExpression;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.FixpointQuery;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.InclusionQuery;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Intersection;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.LanguageExpression;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Numeral;
 import de.uni_freiburg.informatik.ultimate.crocotta.ast.Query;
+import de.uni_freiburg.informatik.ultimate.crocotta.ast.Union;
 import de.uni_freiburg.informatik.ultimate.crocotta.parser.CrocParser;
 
 public class Crocotta implements ISource {
@@ -88,7 +98,11 @@ public class Crocotta implements ISource {
 		final FileReader reader = new FileReader(files[0]);
 		final CrocParser parser = new CrocParser(mServices, mLogger, reader, files[0].getAbsolutePath());
 		final Symbol goal = parser.parse();
-		final Query[] patterns = (Query[]) goal.value;
+		final Query[] queries = (Query[]) goal.value;
+
+		for (final Query query : queries) {
+			mLogger.info(new CrocottaQueryPrinter(query));
+		}
 
 		// process these queries or make a model out of them
 
@@ -129,5 +143,88 @@ public class Crocotta implements ISource {
 	@Override
 	public void finish() {
 		// not necessary
+	}
+
+	private class CrocottaQueryPrinter extends CrocottaAstVisitor {
+
+		private final StringBuilder mBuilder;
+
+		public CrocottaQueryPrinter() {
+			mBuilder = new StringBuilder();
+		}
+
+		public CrocottaQueryPrinter(final Query query) {
+			this();
+			query.accept(this);
+		}
+
+		@Override
+		public boolean visit(final Concatenation node) {
+			return printNAryOp("concat", node.getExpr());
+		}
+
+		private boolean printNAryOp(final String op, final LanguageExpression[] exprs) {
+			mBuilder.append("(").append(op).append(" ");
+			Arrays.stream(exprs).forEach(a -> a.accept(this));
+			mBuilder.append("");
+			return false;
+		}
+
+		@Override
+		public boolean visit(final Event node) {
+			mBuilder.append("\"").append(node.getName()).append("\"");
+			return false;
+		}
+
+		@Override
+		public boolean visit(final FinInfExpression node) {
+			mBuilder.append("(pair ");
+			mBuilder.append(node.getFinite());
+			mBuilder.append(", ");
+			mBuilder.append(node.getInfinite());
+			mBuilder.append(")");
+			return false;
+		}
+
+		@Override
+		public boolean visit(final FixpointQuery node) {
+			mBuilder.append("[");
+			node.getFinInfExpr().accept(this);
+			mBuilder.append(" = ");
+			node.getExpr().accept(this);
+			mBuilder.append("]");
+			return false;
+		}
+
+		@Override
+		public boolean visit(final Intersection node) {
+			return printNAryOp("intersect", node.getExpr());
+		}
+
+		@Override
+		public boolean visit(final Union node) {
+			return printNAryOp("union", node.getExpr());
+		}
+
+		@Override
+		public boolean visit(final Numeral node) {
+			mBuilder.append(node.getValue());
+			return false;
+		}
+
+		@Override
+		public boolean visit(final InclusionQuery node) {
+			mBuilder.append("[");
+			node.getLeft().accept(this);
+			mBuilder.append(" <= ");
+			node.getRight().accept(this);
+			mBuilder.append("]");
+			return super.visit(node);
+		}
+
+		@Override
+		public String toString() {
+			return mBuilder.toString();
+		}
 	}
 }
