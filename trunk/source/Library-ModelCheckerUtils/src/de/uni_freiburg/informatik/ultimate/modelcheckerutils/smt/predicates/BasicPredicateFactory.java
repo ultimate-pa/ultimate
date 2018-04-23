@@ -125,7 +125,8 @@ public class BasicPredicateFactory {
 	}
 
 	public BasicPredicate newPredicate(final Term term) {
-		assert term == mDontCareTerm || UltimateNormalFormUtils.respectsUltimateNormalForm(term) : "Term not in UltimateNormalForm";
+		assert term == mDontCareTerm
+				|| UltimateNormalFormUtils.respectsUltimateNormalForm(term) : "Term not in UltimateNormalForm";
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		final BasicPredicate predicate = new BasicPredicate(constructFreshSerialNumber(), termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
