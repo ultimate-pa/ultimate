@@ -34,6 +34,7 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -214,6 +215,42 @@ class ModelTranslationContainer implements IBacktranslationService {
 		final ITranslator<STE, TTE, SE, TE, ?, ?> translator = (ITranslator<STE, TTE, SE, TE, ?, ?>) remaining.pop();
 		final IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
 		return translateProgramExecution(remaining, translated);
+	}
+	
+	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
+		final Stack<ITranslator<?, ?, ?, ?, ?, ?>> current = new Stack<>();
+		boolean canTranslate = false;
+		for (final ITranslator<?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
+			current.push(trans);
+			// TODO: check if we can translate
+			canTranslate = true;
+//			if (trans.getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
+//					&& trans.getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
+//				canTranslate = true;
+//			}
+		}
+		if (!canTranslate) {
+			throw new IllegalArgumentException("You cannot translate " + programState
+					+ " with this backtranslation service, as there is no compatible ITranslator available");
+		}
+
+//		if (!current.peek().getSourceTraceElementClass().isAssignableFrom(programExecution.getTraceElementClass())
+//				|| !current.peek().getSourceExpressionClass().isAssignableFrom(programExecution.getExpressionClass())) {
+//			throw new IllegalArgumentException("You cannot translate " + programExecution
+//					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
+//		}
+		return translateProgramState(current, programState);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <SE, TE> ProgramState<TE> translateProgramState(final Stack<ITranslator<?, ?, ?, ?, ?, ?>> remaining,
+			final ProgramState<SE> programState) {
+		if (remaining.isEmpty()) {
+			return (ProgramState<TE>) programState;
+		}
+		final ITranslator<?, ?, SE, TE, ?, ?> translator = (ITranslator<?, ?, SE, TE, ?, ?>) remaining.pop();
+		final ProgramState<TE> translated = translator.translateProgramState(programState);
+		return translateProgramState(remaining, translated);
 	}
 
 	@Override
