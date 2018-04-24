@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -348,25 +349,26 @@ public class ErrorGeneralizationEngine<LETTER extends IIcfgTransition<?>> implem
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
 			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
-			final NestedRun<LETTER, IPredicate> trace) {
+			final NestedRun<LETTER, IPredicate> trace, IIcfg<IcfgLocation> Icfg) {
 		final List<ErrorLocalizationStatisticsGenerator> realFaultLocalizerStatistics =
 				(faultLocalizerStatistics == null) ? mFaultLocalizerStatistics : faultLocalizerStatistics;
 		mRelevantStatements.add(faultLocalization(cfg, csToolkit, predicateFactory, predicateUnifier,
-				simplificationTechnique, xnfConversionTechnique, symbolTable, realFaultLocalizerStatistics, trace));
+				simplificationTechnique, xnfConversionTechnique, symbolTable, realFaultLocalizerStatistics, trace, Icfg));
 	}
 
 	/**
 	 * Fault localization of single trace.
+	 * @param icfg 
 	 */
 	private Collection<LETTER> faultLocalization(final INestedWordAutomaton<LETTER, IPredicate> cfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
 			final List<ErrorLocalizationStatisticsGenerator> faultLocalizerStatistics,
-			final NestedRun<LETTER, IPredicate> trace) {
+			final NestedRun<LETTER, IPredicate> trace, IIcfg<IcfgLocation> icfg) {
 		final FlowSensitiveFaultLocalizer<LETTER> faultLocalizer = new FlowSensitiveFaultLocalizer<>(trace, cfg,
 				mServices, csToolkit, predicateFactory, csToolkit.getModifiableGlobalsTable(), predicateUnifier,
-				RelevanceAnalysisMode.SINGLE_TRACE, simplificationTechnique, xnfConversionTechnique, symbolTable);
+				RelevanceAnalysisMode.SINGLE_TRACE, simplificationTechnique, xnfConversionTechnique, symbolTable, icfg);
 		final List<IRelevanceInformation> relevanceInformation = faultLocalizer.getRelevanceInformation();
 		if (faultLocalizerStatistics != null) {
 			faultLocalizerStatistics.add(faultLocalizer.getStatistics());

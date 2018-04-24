@@ -434,7 +434,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				final FlowSensitiveFaultLocalizer<LETTER> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg, mServices, mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mFaultLocalizationMode,
-						mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable());
+						mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
+						(IIcfg<IcfgLocation>) mIcfg);
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(fl.getRelevanceInformation());
 				if (mFaultLocalizationAngelic) {
 					mRcfgProgramExecution =
@@ -621,7 +622,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
 						mTraceCheckAndRefinementEngine.getPredicateUnifier(), mSimplificationTechnique,
 						mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(), null,
-						(NestedRun<LETTER, IPredicate>) mCounterexample);
+						(NestedRun<LETTER, IPredicate>) mCounterexample, (IIcfg<IcfgLocation>) mIcfg);
 			}
 
 			dumpAutomatonIfEnabled(subtrahend, "", automatonType);

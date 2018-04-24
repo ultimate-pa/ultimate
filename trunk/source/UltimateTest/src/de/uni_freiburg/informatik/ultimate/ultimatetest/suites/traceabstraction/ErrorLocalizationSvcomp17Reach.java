@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 public class ErrorLocalizationSvcomp17Reach extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static final int FILES_PER_DIR_LIMIT = 5; // Integer.MAX_VALUE;
+	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
 	// private static final int FILES_PER_DIR_LIMIT = 3;
 	private static final int FILE_OFFSET = 0;
 
@@ -97,22 +97,22 @@ public class ErrorLocalizationSvcomp17Reach extends AbstractTraceAbstractionTest
 //		new DirectoryFileEndingsPair("examples/svcomp/floats-esbmc-regression/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //
 //		/*** Subcategory   ReachSafety-Loops ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-industry-pattern/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/loops/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/loop-acceleration/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/loop-invgen/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/loop-lit/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/loop-new/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/loop-industry-pattern/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		
 //		/*** Subcategory   ReachSafety-ProductLines ***/
 //		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //
 //		/*** Subcategory   ReachSafety-Recursive ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-//		new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/recursive/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/recursive-simple/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		
 //		/*** Subcategory   ReachSafety-Sequentialized ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/c/systemc/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ STANDARD_DOT_C_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ STANDARD_DOT_I_PATTERN_FALSE }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		
@@ -154,8 +154,9 @@ public class ErrorLocalizationSvcomp17Reach extends AbstractTraceAbstractionTest
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS = {
-		"automizer/ErrorLocalization/Do-Multi-Trace-Analysis.epf",
-		"automizer/ErrorLocalization/Do-Single-Trace-Analysis.epf"
+		"automizer/ErrorLocalization/Get-Angelic-Score.epf",
+		//"automizer/ErrorLocalization/Do-Multi-Trace-Analysis.epf",
+		//"automizer/ErrorLocalization/Do-Single-Trace-Analysis.epf"
 		//"automizer/ErrorLocalization/Reach-Automizer_Default.epf",
 		//"automizer/ErrorLocalization/Reach-Automizer_Bitvector.epf",
 		//"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
