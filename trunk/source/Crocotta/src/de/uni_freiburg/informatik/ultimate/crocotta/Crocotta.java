@@ -164,9 +164,12 @@ public class Crocotta implements ISource {
 		}
 
 		private boolean printNAryOp(final String op, final LanguageExpression[] exprs) {
-			mBuilder.append("(").append(op).append(" ");
-			Arrays.stream(exprs).forEach(a -> a.accept(this));
-			mBuilder.append("");
+			mBuilder.append("(").append(op);
+			Arrays.stream(exprs).forEach(a -> {
+				mBuilder.append(" ");
+				a.accept(this);
+			});
+			mBuilder.append(")");
 			return false;
 		}
 
