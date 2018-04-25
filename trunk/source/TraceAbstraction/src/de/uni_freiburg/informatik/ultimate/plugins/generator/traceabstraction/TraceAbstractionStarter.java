@@ -92,10 +92,12 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 public class TraceAbstractionStarter {
 
 	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
+	private static final boolean INVARIANT_CHECKING = false; 
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
+	
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
@@ -115,6 +117,10 @@ public class TraceAbstractionStarter {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		if (INVARIANT_CHECKING) {
+			new InvariantChecker(mServices, mToolchainStorage, rcfgRootNode);
+			return;
+		}
 		runCegarLoops(rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile);
 	}
 
