@@ -1,2 +1,5 @@
-Globally, it is always the case that if "x0000" holds, then  "x0001" holds after at most 10 time units.
-Globally, it is never the case that "x0000" holds.
+Input x is bool
+Input y is bool 
+
+req1: Globally, it is always the case that if "x" holds, then  "y" holds after at most 10 time units.
+req2: Globally, it is never the case that "x" holds.

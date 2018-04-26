@@ -1,2 +1,5 @@
-Globally, it is never the case that "D" holds.
-Globally, it is always the case that "D" holds.
+
+Input D is bool
+
+req1: Globally, it is never the case that "D" holds.
+req2: Globally, it is always the case that "D" holds.

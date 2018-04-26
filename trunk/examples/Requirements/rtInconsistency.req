@@ -1,2 +1,6 @@
-Globally, it is always the case that if "A" holds then "!C" holds for at least "10" time units.
-Globally, it is always the case that if "B" holds then "C" holds after at most "5" time units.
+Input A is bool
+Input B is bool
+Input C is bool
+
+req1: Globally, it is always the case that if "A" holds then "!C" holds for at least "10" time units.
+req2: Globally, it is always the case that if "B" holds then "C" holds after at most "5" time units.
