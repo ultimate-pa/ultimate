@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
 import java.io.IOException;
-import java.io.FileReader;
+import java.io.InputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
+
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -44,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain21Pa
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponsePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 
+
 parser ReqParser;
 option symbols = ReqSymbols;
 option java15, compact_red, newpositions;
@@ -54,20 +57,20 @@ parser code {:
 	private String mFilename;
 	private ILogger mLogger;
 
-	public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final String filename)
-			throws IOException {
-		this(new ReqLexer(new FileReader(filename)));
+	public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final Reader reader,
+			final String filename) throws IOException {
+		this(new ReqLexer(reader));
 		mServices = services;
 		mLogger = logger;
 		mFilename = filename;
 	}
 
-	public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final ReqLexer lexer)
-			throws IOException {
-		this(lexer);
+	public ReqParser(final IUltimateServiceProvider services, final ILogger logger, final InputStream stream,
+			final String filename) throws IOException {
+		this(new ReqLexer(stream));
 		mServices = services;
 		mLogger = logger;
-		mFilename = null;
+		mFilename = filename;
 	}
 
 	@Override

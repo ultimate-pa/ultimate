@@ -12,7 +12,6 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqLexer;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -31,8 +30,7 @@ public class BoogieRequirementsParserTest {
 		final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 
 		final StringReader sr = new StringReader(testInput);
-		final ReqLexer lexer = new ReqLexer(sr);
-		final ReqParser parser = new ReqParser(services, services.getLoggingService().getLogger(getClass()), lexer);
+		final ReqParser parser = new ReqParser(services, services.getLoggingService().getLogger(getClass()), sr, "");
 		final Symbol goal = parser.parse();
 		final PatternType[] patterns = (PatternType[]) goal.value;
 

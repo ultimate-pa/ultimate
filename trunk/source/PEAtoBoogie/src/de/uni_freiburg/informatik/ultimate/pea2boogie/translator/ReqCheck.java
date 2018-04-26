@@ -88,7 +88,7 @@ public class ReqCheck extends Check {
 
 	private static String getRequirementTexts(final PatternType[] types) {
 		if (types.length == 0) {
-			return "All requirements are ";
+			return "All requirements are";
 		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Requirement");

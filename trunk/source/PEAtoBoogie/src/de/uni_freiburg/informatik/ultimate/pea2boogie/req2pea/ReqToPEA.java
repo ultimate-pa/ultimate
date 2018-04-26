@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,10 +55,16 @@ public class ReqToPEA {
 	}
 
 	public List<PatternType> genPatterns(final String reqFileName) throws Exception {
-		final ReqParser parser = new ReqParser(mServices, mLogger, reqFileName);
-		final Symbol goal = parser.parse();
-		final PatternType[] patterns = (PatternType[]) goal.value;
-		return Arrays.asList(patterns);
+		final FileInputStream fis = new FileInputStream(reqFileName);
+		try {
+			final ReqParser parser = new ReqParser(mServices, mLogger, fis, reqFileName);
+			final Symbol goal = parser.parse();
+			final PatternType[] patterns = (PatternType[]) goal.value;
+
+			return Arrays.asList(patterns);
+		} finally {
+			fis.close();
+		}
 	}
 
 	public PhaseEventAutomata[] genPEA(final List<PatternType> patterns, final Map<String, Integer> id2bounds) {
