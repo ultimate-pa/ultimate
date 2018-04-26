@@ -247,9 +247,9 @@ public class Check extends ModernAnnotations {
 		case RTINCONSISTENT:
 			return "rt-consistent";
 		case VACUOUS:
-			return "vacuous";
+			return "non-vacuous";
 		case CONSISTENCY:
-			return "inconsistent";
+			return "consistent";
 		case INCOMPLETE:
 			return "incomplete";
 		default:
@@ -296,9 +296,9 @@ public class Check extends ModernAnnotations {
 		case RTINCONSISTENT:
 			return "rt-inconsistent";
 		case VACUOUS:
-			return "non-vacuous";
+			return "vacuous";
 		case CONSISTENCY:
-			return "consistent";
+			return "inconsistent";
 		case INCOMPLETE:
 			return "incomplete";
 		default:

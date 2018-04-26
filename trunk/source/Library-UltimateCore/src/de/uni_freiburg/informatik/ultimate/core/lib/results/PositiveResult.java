@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  * @author Oleksii Saukh
  * @date 27.03.2012
  */
-public class PositiveResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> {
+public class PositiveResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> implements IResultWithCheck {
 	private final Check mCheckedSpecification;
 
 	/**
@@ -76,5 +76,10 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 		sb.append(mCheckedSpecification.getPositiveMessage());
 		sb.append(" at this location");
 		return sb.toString();
+	}
+
+	@Override
+	public Check getCheckedSpecification() {
+		return mCheckedSpecification;
 	}
 }

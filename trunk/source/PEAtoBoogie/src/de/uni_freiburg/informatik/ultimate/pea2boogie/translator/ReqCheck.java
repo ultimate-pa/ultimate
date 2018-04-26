@@ -50,6 +50,10 @@ public class ReqCheck extends Check {
 
 	private final PatternType[] mReqs;
 
+	public ReqCheck(final Check.Spec type) {
+		this(EnumSet.of(type), 0, 0, new PatternType[0]);
+	}
+
 	public ReqCheck(final Check.Spec type, final int[] reqNrs, final PatternType[] reqs) {
 		this(EnumSet.of(type), reqNrs, reqs);
 	}
@@ -83,6 +87,9 @@ public class ReqCheck extends Check {
 	}
 
 	private static String getRequirementTexts(final PatternType[] types) {
+		if (types.length == 0) {
+			return "All requirements are ";
+		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Requirement");
 		if (types.length != 1) {
@@ -117,6 +124,9 @@ public class ReqCheck extends Check {
 
 	@Override
 	public String toString() {
+		if (mReqs.length == 0) {
+			return super.toString() + " for all requirements";
+		}
 		return super.toString() + " for " + Arrays.stream(mReqs).map(a -> a.getId()).collect(Collectors.joining(", "));
 	}
 

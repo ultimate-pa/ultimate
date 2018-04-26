@@ -761,7 +761,7 @@ public class Req2BoogieTranslator {
 		if (!mCheckConsistency) {
 			return Collections.emptyList();
 		}
-		final ReqCheck check = createReqCheck(Spec.CONSISTENCY, 0);
+		final ReqCheck check = new ReqCheck(Spec.CONSISTENCY);
 		final ReqLocation loc = new ReqLocation(check);
 		final AssertStatement rtr = new AssertStatement(loc, new BooleanLiteral(bl, false));
 		check.annotate(rtr);

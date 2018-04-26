@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *            Type of expression
  */
 public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
-		implements IResultWithFiniteTrace<TE, E> {
+		implements IResultWithFiniteTrace<TE, E>, IResultWithCheck {
 	private final Check mCheckedSpecification;
 	private String mProgramExecutionAsString;
 	private final List<ILocation> mFailurePath;
@@ -105,6 +105,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 		return mCheckedSpecification.getNegativeMessage();
 	}
 
+	@Override
 	public Check getCheckedSpecification() {
 		return mCheckedSpecification;
 	}
