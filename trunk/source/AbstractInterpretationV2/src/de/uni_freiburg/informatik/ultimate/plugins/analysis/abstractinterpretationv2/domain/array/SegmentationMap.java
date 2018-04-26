@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -174,6 +175,10 @@ public class SegmentationMap {
 
 	public Set<IProgramVarOrConst> getEquivalenceClass(final IProgramVarOrConst variable) {
 		return mEqualArrays.getEquivalenceClassMembers(variable);
+	}
+
+	public Collection<IProgramVarOrConst> getAllRepresentatives() {
+		return mEqualArrays.getAllRepresentatives();
 	}
 
 	// TODO: Different segmentations can share value-variables, how to handle this?
