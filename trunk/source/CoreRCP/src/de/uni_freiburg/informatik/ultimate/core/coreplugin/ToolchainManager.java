@@ -441,11 +441,6 @@ public class ToolchainManager {
 			} catch (final Exception e) {
 				mLogger.fatal(getLogPrefix() + ": Exception during parsing: ", e);
 				resetModelManager();
-				// DD 2018-02-07: hacky way to release the files that are held by a failed parser
-				mFiles2Parser.clear();
-				System.gc();
-				initializeParsers();
-				// end hack
 				throw e;
 			} finally {
 				parser.finish();
