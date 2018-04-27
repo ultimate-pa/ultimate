@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.translator;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -95,8 +96,10 @@ public class ReqCheck extends Check {
 		if (types.length != 1) {
 			sb.append("s");
 		}
-		for (final PatternType type : types) {
-			sb.append(" ").append(type.getId());
+		final Iterator<PatternType> iter = Arrays.stream(types).iterator();
+		sb.append(" ").append(iter.next().getId());
+		while (iter.hasNext()) {
+			sb.append(", ").append(iter.next().getId());
 		}
 		if (types.length != 1) {
 			sb.append(" are");

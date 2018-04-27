@@ -902,6 +902,8 @@ public class Req2BoogieTranslator {
 		if (subsetsSize > 10000) {
 			mLogger.warn("Computing rt-inconsistency assertions for " + subsetsSize
 					+ " subsets, this might take a while...");
+		} else {
+			mLogger.info("Computing rt-inconsistency assertions for " + subsetsSize + " subsets");
 		}
 		for (final int[] subset : subsets) {
 			subsetsSize--;
