@@ -37,7 +37,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
@@ -47,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.AxiomTransformationResult;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransforumlaTransformationResult;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
@@ -256,66 +254,6 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	}
 
 	/**
-	 * Save all variables that are added trough new transformulas so that they can be added to the symbol table of the
-	 * new {@link IIcfg}.
-	 */
-	private void rememberNewVariables(final UnmodifiableTransFormula transformula, final String procedure) {
-		final IIcfgSymbolTable symbolTable = mOriginalIcfg.getCfgSmtToolkit().getSymbolTable();
-
-		/**
-		 * Checks if a given IProgramVar is already present in the symbolTable.
-		 */
-		final Predicate<Entry<IProgramVar, TermVariable>> checkVar = a -> {
-			final IProgramVar invar = a.getKey();
-
-			if (invar instanceof IProgramOldVar) {
-				// oldvars are not added to the symbol table
-				return true;
-			}
-
-			if (invar.getProcedure() == null) {
-				// should be a global
-				if (symbolTable.getGlobals().contains(invar)) {
-					return true;
-				}
-			} else {
-				// should be a local
-				if (symbolTable.getLocals(invar.getProcedure()).contains(invar)) {
-					return true;
-				}
-			}
-			return false;
-		};
-		for (final Entry<IProgramVar, TermVariable> entry : transformula.getInVars().entrySet()) {
-			if (checkVar.test(entry)) {
-				continue;
-			}
-			mNewVars.add(entry.getKey());
-		}
-		for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
-			if (checkVar.test(entry)) {
-				continue;
-			}
-			mNewVars.add(entry.getKey());
-
-			/*
-			 * update modified globals if necessary
-			 */
-			if (entry.getKey() instanceof IProgramNonOldVar
-					&& transformula.getAssignedVars().contains(entry.getKey())) {
-				mNewModifiedGlobals.addPair(procedure, (IProgramNonOldVar) entry.getKey());
-			}
-		}
-		final Set<IProgramConst> unknownConsts = new HashSet<>(transformula.getNonTheoryConsts());
-		unknownConsts.removeAll(symbolTable.getConstants());
-		mNewVars.addAll(unknownConsts);
-
-		// TODO: What about transformula.getNonTheoryFunctions() ?
-
-
-	}
-
-	/**
 	 * Create a new location in the new {@link IIcfg} based on the old location's attributes in the original
 	 * {@link IIcfg}
 	 *
@@ -330,7 +268,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 	/**
 	 * Like {@link #createNewLocation(IcfgLocation)}, but allows to specify whether the created location should be
-	 *  marked as initial.
+	 * marked as initial.
 	 *
 	 * @param oldLoc
 	 * @param isInitial
@@ -364,6 +302,17 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	}
 
 	/**
+	 * Debug method that allows you to check if for a certain location a new location has been created.
+	 *
+	 * @param oldLoc
+	 *            A old location.
+	 * @return true iff a new location has been created for the old location
+	 */
+	public boolean hasNewLoc(final INLOC oldLoc) {
+		return mOldLoc2NewLoc.get(oldLoc) == null;
+	}
+
+	/**
 	 * Finalize the creation of the new {@link IIcfg}.
 	 */
 	public void finish() {
@@ -374,10 +323,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		if (mNewVars.isEmpty()) {
 			newSymbolTable = mTransformer.getNewIcfgSymbolTable();
-			newModifiedGlobals = new ModifiableGlobalsTable(
-					computeClosure(mTransformer.getNewModifiedGlobals(),
-							computeCallGraph(),
-							oldToolkit.getProcedures()));
+			newModifiedGlobals = new ModifiableGlobalsTable(computeClosure(mTransformer.getNewModifiedGlobals(),
+					computeCallGraph(), oldToolkit.getProcedures()));
 		} else {
 			final DefaultIcfgSymbolTable result =
 					new DefaultIcfgSymbolTable(mTransformer.getNewIcfgSymbolTable(), oldToolkit.getProcedures());
@@ -387,24 +334,66 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			final HashRelation<String, IProgramNonOldVar> modGlob =
 					new HashRelation<>(oldToolkit.getModifiableGlobalsTable().getProcToGlobals());
 			mNewModifiedGlobals.forEach(en -> modGlob.addPair(en.getKey(), en.getValue()));
-			newModifiedGlobals = new ModifiableGlobalsTable(
-					computeClosure(modGlob,
-							computeCallGraph(),
-							oldToolkit.getProcedures()));
+			newModifiedGlobals =
+					new ModifiableGlobalsTable(computeClosure(modGlob, computeCallGraph(), oldToolkit.getProcedures()));
 
 		}
 
 		final IPredicate transformedAxioms = transformAxioms(oldToolkit.getAxioms());
-		final CfgSmtToolkit csToolkit =
-				new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(), newSymbolTable,
-						transformedAxioms, oldToolkit.getProcedures(), oldToolkit.getIcfgEdgeFactory());
+		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(newModifiedGlobals, oldToolkit.getManagedScript(),
+				newSymbolTable, transformedAxioms, oldToolkit.getProcedures(), oldToolkit.getIcfgEdgeFactory());
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
+	}
+
+	/**
+	 * Save all variables that are added trough new transformulas so that they can be added to the symbol table of the
+	 * new {@link IIcfg}.
+	 */
+	private void rememberNewVariables(final UnmodifiableTransFormula transformula, final String procedure) {
+
+		transformula.getInVars().entrySet().stream().map(a -> a.getKey()).filter(a -> !oldSymbolTableContains(a))
+				.forEach(mNewVars::add);
+		final Iterator<IProgramVar> iter = transformula.getOutVars().entrySet().stream().map(a -> a.getKey())
+				.filter(a -> !oldSymbolTableContains(a)).iterator();
+
+		while (iter.hasNext()) {
+			final IProgramVarOrConst var = iter.next();
+			mNewVars.add(var);
+			// update modified globals if necessary
+			if (var instanceof IProgramNonOldVar && transformula.getAssignedVars().contains(var)) {
+				mNewModifiedGlobals.addPair(procedure, (IProgramNonOldVar) var);
+			}
+		}
+
+		final Set<IProgramConst> unknownConsts = new HashSet<>(transformula.getNonTheoryConsts());
+		unknownConsts.removeAll(mOriginalIcfg.getCfgSmtToolkit().getSymbolTable().getConstants());
+		mNewVars.addAll(unknownConsts);
+
+		// TODO: What about transformula.getNonTheoryFunctions() ?
+
+	}
+
+	/**
+	 * Checks if a {@link IProgramVar} is in the old symboltable. Note that it will always return true for old-vars,
+	 * although they are not in the symbol table.
+	 */
+	private boolean oldSymbolTableContains(final IProgramVar invar) {
+		if (invar instanceof IProgramOldVar) {
+			// oldvars are not added to the symbol table
+			return true;
+		}
+		final IIcfgSymbolTable symbolTable = mOriginalIcfg.getCfgSmtToolkit().getSymbolTable();
+		if (invar.getProcedure() == null) {
+			// should be a global
+			return symbolTable.getGlobals().contains(invar);
+		}
+		// should be a local
+		return symbolTable.getLocals(invar.getProcedure()).contains(invar);
 	}
 
 	private HashRelation<String, IProgramNonOldVar> computeClosure(
 			final HashRelation<String, IProgramNonOldVar> newModifiedGlobals,
-			final HashRelation<String, String> callGraph,
-			final Set<String> allProcedures) {
+			final HashRelation<String, String> callGraph, final Set<String> allProcedures) {
 		assert mIsFinished;
 
 		// revert call graph
@@ -533,10 +522,6 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final String[] procedures = new String[0];
 		return new BasicPredicate(serialNumber, procedures, newAxioms, Collections.emptySet(), newAxioms);
 
-	}
-
-	public OUTLOC getNewLoc(final INLOC oldLoc) {
-		return mOldLoc2NewLoc.get(oldLoc);
 	}
 
 }

@@ -119,9 +119,6 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 
 	@Override
 	public HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals() {
-		// TODO
-		throw new UnsupportedOperationException("TODO");
-		// perhaps:
-//		return mReplacementVarFactory.constructModifiableGlobalsTable();
+		return mReplacementVarFactory.constructModifiableGlobalsTable().getProcToGlobals();
 	}
 }
