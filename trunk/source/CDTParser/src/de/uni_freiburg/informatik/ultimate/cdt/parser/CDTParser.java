@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -349,14 +348,6 @@ public class CDTParser implements ISource {
 		} catch (final BackingStoreException e) {
 			mLogger.fatal("Failed to reset indexer setting for temporary CDT project:", e);
 		}
-	}
-
-	private void printProps() throws CoreException {
-		final Map<QualifiedName, Object> sprops = mCdtProject.getSessionProperties();
-		final Map<QualifiedName, String> pprops = mCdtProject.getPersistentProperties();
-
-		System.out.println(sprops);
-		System.out.println(pprops);
 	}
 
 	private static String getFullPath(final IProject project) {
