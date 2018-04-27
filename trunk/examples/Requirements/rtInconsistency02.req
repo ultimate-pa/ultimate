@@ -1,0 +1,12 @@
+// req1 and req2 are rt-inconsistent because of req3 and req4
+Input A is bool
+Input B is bool
+Input C is bool
+Input D is bool
+Input E is bool
+
+req1: Globally, it is always the case that if "A" holds then "!E" holds for at least "10" time units.
+req2: Globally, it is always the case that if "B" holds then "C" holds after at most "5" time units.
+req3: Globally, it is always the case that if "C" holds then "D" holds as well.
+req4: Globally, it is always the case that if "D" holds then "E" holds as well.
+
