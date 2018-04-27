@@ -30,10 +30,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
-import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
-import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
-import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
@@ -42,17 +45,13 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
+import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
-import de.uni_freiburg.informatik.ultimate.cdt.parser.CDTParser;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 
 /**
  * @author Yannick Bühler
@@ -64,8 +63,8 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	 */
 	private final ILogger mLogger;
 	/**
-	 * A mapping (File Name, Identifier) -> Function definition
-	 * (Not to a declaration, because only definitions have to be unique!)
+	 * A mapping (File Name, Identifier) -> Function definition (Not to a declaration, because only definitions have to
+	 * be unique!)
 	 */
 	private final Map<Pair<String, String>, IASTFunctionDefinition> mFunctionMapping;
 	/**
@@ -77,17 +76,20 @@ public class MultiparseSymbolTable extends ASTVisitor {
 	 */
 	private final Map<Pair<String, String>, String> mNamePrefixMapping;
 	/**
-	 * A mapping File Name -> List<File Name>
-	 * which maps the files to the lists of files they include
+	 * A mapping File Name -> List<File Name> which maps the files to the lists of files they include
 	 */
 	private final Map<String, List<String>> mIncludeMapping;
-	
+	private final String mCdtPProjectHierachyFlag;
+
 	/**
 	 * Constructs an empty symbol table
-	 * 
-	 * @param logger a logger
+	 *
+	 * @param logger
+	 *            a logger
+	 * @param cdtPProjectHierachyFlag
 	 */
-	public MultiparseSymbolTable(final ILogger logger) {
+	public MultiparseSymbolTable(final ILogger logger, final String cdtPProjectHierachyFlag) {
+		mCdtPProjectHierachyFlag = cdtPProjectHierachyFlag;
 		shouldVisitDeclarations = true;
 		shouldVisitTranslationUnit = true;
 		mLogger = logger;
@@ -96,32 +98,31 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		mNamePrefixMapping = new HashMap<>();
 		mIncludeMapping = new HashMap<>();
 	}
-	
+
 	@Override
-	public int visit(IASTTranslationUnit tu) {
-		final String fileName = CDTParser.normalizeCDTFilename(tu.getFilePath());
+	public int visit(final IASTTranslationUnit tu) {
+		final String fileName = normalizeCDTFilename(tu.getFilePath());
 		for (final IASTPreprocessorStatement stmt : tu.getAllPreprocessorStatements()) {
 			if (stmt instanceof IASTPreprocessorIncludeStatement) {
-				final IASTPreprocessorIncludeStatement include =
-						(IASTPreprocessorIncludeStatement) stmt;
-				
+				final IASTPreprocessorIncludeStatement include = (IASTPreprocessorIncludeStatement) stmt;
+
 				if (include.isSystemInclude()) {
 					// Ignore system includes for now
 					mLogger.info("Ignoring system include " + include.getName());
 					continue;
 				}
-				
+
 				if (!include.isResolved()) {
 					throw new UnsupportedOperationException("Includes need to be present in the multiparse project.");
 				}
-				final String includedFile = CDTParser.normalizeCDTFilename(include.getPath());
-				
-				mIncludeMapping.computeIfAbsent(fileName, x -> new ArrayList<>()).add(includedFile); 
+				final String includedFile = normalizeCDTFilename(include.getPath());
+
+				mIncludeMapping.computeIfAbsent(fileName, x -> new ArrayList<>()).add(includedFile);
 			}
 		}
 		return super.visit(tu);
 	}
-	
+
 	@Override
 	public int visit(final IASTDeclaration declaration) {
 		// Ignore non-top-level declarations
@@ -130,36 +131,36 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		}
 
 		final String fileNameRaw = ((IASTTranslationUnit) declaration.getParent()).getFilePath();
-		final String fileName = CDTParser.normalizeCDTFilename(fileNameRaw);
+		final String fileName = normalizeCDTFilename(fileNameRaw);
 		if (declaration instanceof IASTFunctionDefinition) {
 			visitFunctionDefinition(fileName, (IASTFunctionDefinition) declaration);
 		} else if (declaration instanceof IASTSimpleDeclaration) {
 			for (final IASTDeclarator decl : ((IASTSimpleDeclaration) declaration).getDeclarators()) {
 				if (!(decl instanceof IASTFunctionDeclarator)) {
-					visitNonFunctionDeclarator(fileName, (IASTDeclarator) decl);
+					visitNonFunctionDeclarator(fileName, decl);
 				}
 			}
 			if (declaration.isPartOfTranslationUnitFile()) {
 				final IASTDeclSpecifier spec = ((IASTSimpleDeclaration) declaration).getDeclSpecifier();
 				if (spec instanceof IASTEnumerationSpecifier) {
-					final Pair<String, String> entry = new Pair<>(fileName, 
-							((IASTEnumerationSpecifier) spec).getName().toString());
-					final String rId = generatePrefixedIdentifier(fileName, 
+					final Pair<String, String> entry =
+							new Pair<>(fileName, ((IASTEnumerationSpecifier) spec).getName().toString());
+					final String rId = generatePrefixedIdentifier(fileName,
 							((IASTEnumerationSpecifier) spec).getName().toString());
 					mNamePrefixMapping.put(entry, rId);
 				} else if (spec instanceof IASTCompositeTypeSpecifier) {
-					final Pair<String, String> entry = new Pair<>(fileName, 
-							((IASTCompositeTypeSpecifier) spec).getName().toString());
-					final String rId = generatePrefixedIdentifier(fileName, 
+					final Pair<String, String> entry =
+							new Pair<>(fileName, ((IASTCompositeTypeSpecifier) spec).getName().toString());
+					final String rId = generatePrefixedIdentifier(fileName,
 							((IASTCompositeTypeSpecifier) spec).getName().toString());
 					mNamePrefixMapping.put(entry, rId);
 				}
 			}
 		}
-		
+
 		return super.visit(declaration);
 	}
-	
+
 	private void visitNonFunctionDeclarator(final String inFile, final IASTDeclarator decl) {
 		if (!decl.isPartOfTranslationUnitFile()) {
 			// This indicates that the declaration comes from a resolved include
@@ -170,7 +171,7 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		mGlobalsMapping.put(entry, decl);
 		mNamePrefixMapping.put(entry, generatePrefixedIdentifier(inFile, decl.getName().toString()));
 	}
-	
+
 	private void visitFunctionDefinition(final String inFile, final IASTFunctionDefinition fdef) {
 		if (!fdef.isPartOfTranslationUnitFile()) {
 			// This indicates that the definition comes from a resolved include
@@ -180,20 +181,22 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		final IASTDeclarator fdecl = fdef.getDeclarator();
 		final Pair<String, String> entry = new Pair<>(inFile, fdecl.getName().toString());
 		mFunctionMapping.put(entry, fdef);
-		
+
 		// Don't rename the main method. There only may be one in the whole project.
 		if (!fdecl.getName().toString().equals("main")) {
 			mNamePrefixMapping.put(entry, generatePrefixedIdentifier(inFile, fdecl.getName().toString()));
 		}
 	}
-	
+
 	private static String generatePrefixedIdentifier(final String file, final String id) {
 		return "__U_MULTI_f" + file.replaceAll("[^a-zA-Z_]", "_") + "__" + id;
 	}
-	
+
 	/**
 	 * Fetches the includes for the given file.
-	 * @param normalizedFile The file name, normalized.
+	 *
+	 * @param normalizedFile
+	 *            The file name, normalized.
 	 * @return The includes as normalized file names.
 	 */
 	public Collection<String> getIncludesFor(final String normalizedFile) {
@@ -202,30 +205,30 @@ public class MultiparseSymbolTable extends ASTVisitor {
 		}
 		return Collections.unmodifiableCollection(mIncludeMapping.get(normalizedFile));
 	}
-	
+
 	/**
 	 * Prints the mappings for debug purposes
 	 */
 	public void printMappings() {
 		mLogger.info("Include resolver:");
-		for (Map.Entry<String, List<String>> entry : mIncludeMapping.entrySet()) {
+		for (final Map.Entry<String, List<String>> entry : mIncludeMapping.entrySet()) {
 			mLogger.info("File " + entry.getKey() + " includes: " + String.join(", ", entry.getValue()));
 		}
 		if (mIncludeMapping.isEmpty()) {
 			mLogger.info("<empty include resolver>");
 		}
-		
+
 		mLogger.info("Function table:");
-		for (Pair<String, String> key : mFunctionMapping.keySet()) {
+		for (final Pair<String, String> key : mFunctionMapping.keySet()) {
 			final String newName = mNamePrefixMapping.get(key);
 			mLogger.info("Function definition of " + newName + " ('" + key.getSecond() + "') in " + key.getFirst());
 		}
 		if (mFunctionMapping.isEmpty()) {
 			mLogger.info("<empty function table>");
 		}
-		
+
 		mLogger.info("Global variable table:");
-		for (Pair<String, String> key : mGlobalsMapping.keySet()) {
+		for (final Pair<String, String> key : mGlobalsMapping.keySet()) {
 			final String newName = mNamePrefixMapping.get(key);
 			mLogger.info("Global variable declaration of " + newName + " in " + key.getFirst());
 		}
@@ -233,18 +236,20 @@ public class MultiparseSymbolTable extends ASTVisitor {
 			mLogger.info("<empty global variable table>");
 		}
 	}
-	
+
 	/**
 	 * Applies a mapping of a unprefixed name to a prefixed name given the file the name was used in
-	 * 
-	 * @param filePath the file the name was used in. this is needed for include resolving / 'file-scopes'
-	 * @param name the name that has to be mapped
+	 *
+	 * @param filePath
+	 *            the file the name was used in. this is needed for include resolving / 'file-scopes'
+	 * @param name
+	 *            the name that has to be mapped
 	 * @return either the mapping of the name or the name itself if there is no such mapping
 	 */
 	public String getNameMappingIfExists(final String filePath, final String name) {
-		final String normalizedFile = CDTParser.normalizeCDTFilename(filePath);
+		final String normalizedFile = normalizeCDTFilename(filePath);
 		final Pair<String, String> key = new Pair<>(normalizedFile, name);
-		
+
 		if (!mNamePrefixMapping.containsKey(key) && mIncludeMapping.containsKey(normalizedFile)) {
 			// This name might be defined in an included file
 			// So we need to resolve the includes of the current file and check all included files too
@@ -257,9 +262,13 @@ public class MultiparseSymbolTable extends ASTVisitor {
 				}
 			}
 		}
-		
+
 		// Fallback: Check the defined names in the file itself & if no definition is found, just use the original name,
 		// i.e. no mapping of the name is performed.
 		return mNamePrefixMapping.getOrDefault(key, name);
+	}
+
+	public String normalizeCDTFilename(final String filePath) {
+		return CDTParser.normalizeCDTFilename(mCdtPProjectHierachyFlag, filePath);
 	}
 }

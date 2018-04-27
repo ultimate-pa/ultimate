@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -73,9 +74,14 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.core.runtime.content.IContentTypeSettings;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.osgi.service.prefs.BackingStoreException;
+import org.osgi.service.prefs.Preferences;
 
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
@@ -108,8 +114,7 @@ public class CDTParser implements ISource {
 	 * Because filenames need to be normalized and it would be impractical to pass on the CDT project to later stages of
 	 * translation, a special 'flag' directory is included in the path to mark the end of the non-relevant path entries.
 	 */
-	private static final String CDT_PROJECT_HIERARCHY_FLAG =
-			"FLAG" + UUID.randomUUID().toString().substring(0, 10).replace("-", "");
+	private final String mCdtPProjectHierachyFlag;
 
 	private static final IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
 	private final String[] mFileTypes;
@@ -120,6 +125,7 @@ public class CDTParser implements ISource {
 
 	public CDTParser() {
 		mFileTypes = new String[] { ".c", ".i", ".h" };
+		mCdtPProjectHierachyFlag = "FLAG" + UUID.randomUUID().toString().substring(0, 10).replace("-", "");
 	}
 
 	@Override
@@ -163,9 +169,9 @@ public class CDTParser implements ISource {
 			}
 		}
 
-		final MultiparseSymbolTable mps = new MultiparseSymbolTable(mLogger);
+		final MultiparseSymbolTable mps = new MultiparseSymbolTable(mLogger, mCdtPProjectHierachyFlag);
 		for (final IASTTranslationUnit tu : tuCollection) {
-			mLogger.info("Scanning " + normalizeCDTFilename(tu.getFilePath()));
+			mLogger.info("Scanning " + normalizeCDTFilename(mCdtPProjectHierachyFlag, tu.getFilePath()));
 			tu.accept(mps);
 		}
 
@@ -181,13 +187,15 @@ public class CDTParser implements ISource {
 	/**
 	 * Normalizes a CDT project file name to the part just after the source folder (/src/<...>)
 	 *
+	 * @param prefix
+	 *            The current project prefix
 	 * @param in
 	 *            the CDT file name
 	 * @return the normalized file name
 	 */
-	public static String normalizeCDTFilename(final String in) {
+	public static String normalizeCDTFilename(final String prefix, final String in) {
 		// Let's just assume that this string (FLAG-.../src/) is unique in the path...
-		final String lookingFor = CDT_PROJECT_HIERARCHY_FLAG + File.separator + "src" + File.separator;
+		final String lookingFor = prefix + File.separator + "src" + File.separator;
 		final int posInInput = in.indexOf(lookingFor);
 		if (posInInput < 0) {
 			// The name is already normalized
@@ -324,14 +332,31 @@ public class CDTParser implements ISource {
 
 	@Override
 	public void finish() {
-		if (mCdtProject != null) {
-			try {
-				mCdtProject.delete(true, true, null);
-				mLogger.info("Deleted temporary CDT project at " + getFullPath(mCdtProject));
-			} catch (final CoreException e) {
-				mLogger.fatal("Failed to delete temporary CDT project:", e);
-			}
+		if (mCdtProject == null) {
+			return;
 		}
+		try {
+			// remove cryptic config remains that may lead to issues during parallel execution
+			final IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(CCorePlugin.PLUGIN_ID);
+			final Preferences indexerNode = prefs.node("indexer");
+			indexerNode.removeNode();
+			mCdtProject.setPersistentProperty(new QualifiedName("org.eclipse.cdt.core", "pdomName"), null);
+			// then, remove the project
+			mCdtProject.delete(true, true, null);
+			mLogger.info("Deleted temporary CDT project at " + getFullPath(mCdtProject));
+		} catch (final CoreException e) {
+			mLogger.fatal("Failed to delete temporary CDT project:", e);
+		} catch (final BackingStoreException e) {
+			mLogger.fatal("Failed to reset indexer setting for temporary CDT project:", e);
+		}
+	}
+
+	private void printProps() throws CoreException {
+		final Map<QualifiedName, Object> sprops = mCdtProject.getSessionProperties();
+		final Map<QualifiedName, String> pprops = mCdtProject.getPersistentProperties();
+
+		System.out.println(sprops);
+		System.out.println(pprops);
 	}
 
 	private static String getFullPath(final IProject project) {
@@ -343,10 +368,10 @@ public class CDTParser implements ISource {
 		return outerPath.append(innerPath).toOSString();
 	}
 
-	private static IProject createCDTProject() throws CoreException {
+	private IProject createCDTProject() throws CoreException {
 		// It would be nicer to have the project in a tmp directory, but this seems not to be trivially
 		// possible with the current CDT parsing.
-		final String projectName = CDT_PROJECT_HIERARCHY_FLAG;
+		final String projectName = mCdtPProjectHierachyFlag;
 		final String projectNamespace = UUID.randomUUID().toString().replace("-", "");
 
 		final CCorePlugin cdtCorePlugin = CCorePlugin.getDefault();
@@ -394,10 +419,12 @@ public class CDTParser implements ISource {
 		final IPath relativeFilePath = sourceFolder.getProjectRelativePath().append(filePath);
 
 		// TODO: Do not copy file, use links instead
-		final String content = new Scanner(file).useDelimiter("\\Z").next();
+		final Scanner scanner = new Scanner(file);
+		final String content = scanner.useDelimiter("\\Z").next();
 		final IFile file1 = project.getFile(relativeFilePath);
 		final InputStream inputStream = new ByteArrayInputStream(content.getBytes());
 		file1.create(inputStream, true, NULL_MONITOR);
+		scanner.close();
 		return file1;
 	}
 

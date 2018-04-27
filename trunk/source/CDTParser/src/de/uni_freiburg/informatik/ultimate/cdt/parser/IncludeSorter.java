@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @since 2018-03-12
  */
 public class IncludeSorter {
-	
+
 	/**
 	 * The logger for emitting warnings about include cycles.
 	 */
@@ -53,41 +53,41 @@ public class IncludeSorter {
 	 * The symbol table to retrieve the include information from.
 	 */
 	private final MultiparseSymbolTable mSymTab;
-	
+
 	/**
 	 * A map resolving normalized file names to translation units.
 	 */
 	private final Map<String, IASTTranslationUnit> mResolver;
-	
+
 	/**
 	 * The units that already have been visited.
 	 */
 	private final Set<String> mVisited;
-	
+
 	/**
 	 * The units that are currently in the subtree and have not been visited yet.
 	 */
 	private final Set<String> mOpen;
-	
+
 	/**
 	 * The resulting sorted list.
 	 */
 	private final List<IASTTranslationUnit> mResult;
-	
-	public IncludeSorter(final ILogger logger, final Collection<IASTTranslationUnit> units, 
+
+	public IncludeSorter(final ILogger logger, final Collection<IASTTranslationUnit> units,
 			final MultiparseSymbolTable symTab) {
 		mLogger = logger;
 		mSymTab = symTab;
 		mResolver = new HashMap<>();
 		for (final IASTTranslationUnit unit : units) {
-			mResolver.put(CDTParser.normalizeCDTFilename(unit.getFilePath()), unit);
+			mResolver.put(symTab.normalizeCDTFilename(unit.getFilePath()), unit);
 		}
 		mVisited = new HashSet<>();
 		mOpen = new HashSet<>();
 		mResult = new ArrayList<>();
 		sort();
 	}
-	
+
 	/**
 	 * Sorts the translation units.
 	 */
@@ -101,16 +101,18 @@ public class IncludeSorter {
 			traverse(unit);
 		}
 	}
-	
+
 	/**
 	 * Traverses translation units in post order and detects cycles.
-	 * @param unit The unit, identified by its normalized file path.
+	 * 
+	 * @param unit
+	 *            The unit, identified by its normalized file path.
 	 */
 	private void traverse(final String unit) {
 		if (mOpen.contains(unit)) {
 			mLogger.warn("Cycle detected: Second visit in path for " + unit);
 			mLogger.warn("This might happen because include guards ('#ifndef #define...') or other mechanisms were not"
-					+ " handled."); 
+					+ " handled.");
 			return;
 		}
 		mOpen.add(unit);
@@ -125,15 +127,17 @@ public class IncludeSorter {
 		mOpen.remove(unit);
 		visit(unit);
 	}
-	
+
 	/**
 	 * Adds a translation unit to the result - all includes have been processed.
-	 * @param unit The unit, identified by its normalized file path.
+	 * 
+	 * @param unit
+	 *            The unit, identified by its normalized file path.
 	 */
 	private void visit(final String unit) {
 		mResult.add(mResolver.get(unit));
 	}
-	
+
 	public List<IASTTranslationUnit> getResult() {
 		return mResult;
 	}
