@@ -154,28 +154,54 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	public static Term computeClosedFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars, final ManagedScript script) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Entry<IProgramVar, TermVariable> bv : inVars.entrySet()) {
-			final IProgramVar inVar = bv.getKey();
-			final TermVariable inTermVar = bv.getValue();
+		for (final Entry<IProgramVar, TermVariable> entry : inVars.entrySet()) {
+			final IProgramVar inVar = entry.getKey();
+			final TermVariable inTermVar = entry.getValue();
 			assert !substitutionMapping.containsKey(inTermVar);
-			substitutionMapping.put(inTermVar, inVar.getDefaultConstant());
+			substitutionMapping.put(inTermVar, getConstantForInVar(entry.getKey()));
 		}
-		for (final Entry<IProgramVar, TermVariable> bv : outVars.entrySet()) {
-			final IProgramVar outVar = bv.getKey();
-			final TermVariable outTermVar = bv.getValue();
+		for (final Entry<IProgramVar, TermVariable> entry : outVars.entrySet()) {
+			final IProgramVar outVar = entry.getKey();
+			final TermVariable outTermVar = entry.getValue();
 			if (inVars.get(outVar) == outTermVar) {
 				// is assigned var
 				continue;
 			}
-			substitutionMapping.put(outTermVar, outVar.getPrimedConstant());
+			substitutionMapping.put(outTermVar, getConstantForOutVar(entry.getKey(), inVars, outVars));
 		}
 		for (final TermVariable auxVarTv : auxVars) {
-//			final Term auxVarConst = SmtUtils.termVariable2constant(script.getScript(), auxVarTv, true);
 			final Term auxVarConst = ProgramVarUtils.constructConstantForAuxVar(script, auxVarTv);
 			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
 		final Term closedTerm = new Substitution(script, substitutionMapping).transform(formula);
 		return closedTerm;
+	}
+	
+	/**
+	 * Return the constant (resp. 0-ary function symbol) that represents the
+	 * inVar of the {@link IProgramVar} pv in the closed form of the formula of
+	 * an {@link UnmodifiableTransFormula}.
+	 * 
+	 */
+	public static Term getConstantForInVar(final IProgramVar pv) {
+		return pv.getDefaultConstant();
+	}
+
+	/**
+	 * Return the constant (resp. 0-ary function symbol) that represents the
+	 * outVar of the {@link IProgramVar} pv in the closed form of the formula of
+	 * an {@link UnmodifiableTransFormula}.
+	 * 
+	 */
+	public static Term getConstantForOutVar(final IProgramVar pv, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
+		final Term inVar = inVars.get(pv);
+		final Term outVar = outVars.get(pv);
+		if (inVar == outVar) {
+			return pv.getDefaultConstant();
+		} else {
+			return pv.getPrimedConstant();
+		}
 	}
 
 	/**
