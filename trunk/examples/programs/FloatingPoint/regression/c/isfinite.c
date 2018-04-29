@@ -14,8 +14,8 @@ extern int __finitef (float __value) __attribute__ ((__nothrow__ , __leaf__)) __
 
 int main() {
 	float f = 0.1;
-	printf("%f", f); 
-	printf("%d", __finitef(f)); 
+// 	printf("%f", f); 
+// 	printf("%d", __finitef(f)); 
 	if (!__finitef(f)) {
 		//@ assert \false;
 	}

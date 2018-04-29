@@ -12,8 +12,8 @@
 
 int main() {
 	float f = 0.1;
-	printf("%f", f); 
-	printf("%d", fpclassify(f)); 
+// 	printf("%f", f); 
+// 	printf("%d", fpclassify(f)); 
 	if (fpclassify(f) != FP_NORMAL) {
 		//@ assert \false;
 	}

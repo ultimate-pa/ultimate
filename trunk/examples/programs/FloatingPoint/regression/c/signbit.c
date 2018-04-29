@@ -12,8 +12,8 @@
 
 int main() {
 	float f = 0.1;
-	printf("%f", f); 
-	printf("%d", signbit(f)); 
+// 	printf("%f", f); 
+// 	printf("%d", signbit(f)); 
 	if (signbit(f) != 0) {
 		//@ assert \false;
 	}
