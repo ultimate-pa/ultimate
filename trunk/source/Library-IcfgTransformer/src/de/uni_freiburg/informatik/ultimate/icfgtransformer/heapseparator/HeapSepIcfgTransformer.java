@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain.CongruenceClosureSmtUtils;
@@ -195,106 +193,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral;
 		final MemlocArrayManager memlocArrayManager;
 
-		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
-			mLogger.info("starting freeze-var-style preprocessing");
-			/*
-			 * add the freeze var updates to each transition with an array update
-			 */
-			IIcfg<OUTLOC> icfgWFreezeVarsUninitialized;
-			final Set<ConstantTerm> allConstantTerms;
-			{
-				final StoreIndexFreezerIcfgTransformer<INLOC, OUTLOC> sifit =
-						new StoreIndexFreezerIcfgTransformer<>(mLogger,
-								originalIcfg.getCfgSmtToolkit(),
-								mHeapArrays,
-								edgeToIndexToStoreIndexInfo);
-				final IcfgTransformer<INLOC, OUTLOC> siftf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
-						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", sifit);
-
-				icfgWFreezeVarsUninitialized = siftf.getResult();
-				storeIndexInfoToFreezeVar = sifit.getArrayAccessInfoToFreezeVar();
-				allConstantTerms = sifit.getAllConstantTerms();
-			}
-
-			mLogger.info("finished StoreIndexFreezer, created " + storeIndexInfoToFreezeVar.size() + " freeze vars and "
-					+ "freeze var literals (each corresponds to one heap write)");
-
-			/*
-			 * Create a fresh literal/constant for each freeze variable that was introduced, we call them freeze
-			 * literals.
-			 * Announce them to the equality analysis as special literals, which are, by axiom, pairwise disjoint.
-			 */
-			final Map<IProgramNonOldVar, IProgramConst> freezeVarTofreezeVarLit = new HashMap<>();
-
-			mMgdScript.lock(this);
-			for (final IProgramNonOldVar freezeVar : storeIndexInfoToFreezeVar.values()) {
-
-				final String freezeVarLitName = getFreezeVarLitName(freezeVar);
-				mMgdScript.declareFun(this, freezeVarLitName, new Sort[0], freezeVar.getSort());
-				final ApplicationTerm freezeVarLitTerm = (ApplicationTerm) mMgdScript.term(this, freezeVarLitName);
-
-				freezeVarTofreezeVarLit.put(freezeVar, new HeapSepProgramConst(freezeVarLitTerm));
-			}
-			mMgdScript.unlock(this);
-
-			// make sure the literals are all treated as pairwise unequal
-			final Collection<IProgramConst> freezeVarLits = freezeVarTofreezeVarLit.values();
-			final Set<Term> literalTerms = new HashSet<>();
-			literalTerms.addAll(freezeVarLits.stream()
-						.map(pvoc -> pvoc.getTerm())
-						.collect(Collectors.toList()));
-			literalTerms.addAll(allConstantTerms);
-
-
-			equalityProvider.announceAdditionalLiterals(freezeVarLits);
-			if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
-				/*
-				 * TODO: this is something between non-elegant and highly problematic -- make the axiom-style solution
-				 * work!
-				 */
-				assertLiteralDisequalitiesIntoScript(literalTerms);
-			}
-
-			if (mSettings.isAddLiteralDisequalitiesAsAxioms()) {
-
-				final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
-						CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
-								literalTerms));
-
-				icfgWFreezeVarsUninitialized = new AxiomsAdderIcfgTransformer<>( mLogger,
-						"icfg_with_uninitialized_freeze_vars_and_literal_axioms", outLocationClass,
-						icfgWFreezeVarsUninitialized, outToOutLocFac, backtranslationTracker, allLiteralDisequalities)
-						.getResult();
-			}
-
-			/*
-			 * Add initialization code for each of the newly introduced freeze variables.
-			 * Each freeze variable is initialized to its corresponding freeze literal.
-			 * Furthermore the valid-array (of the memory model) is assumed to be 1 at each freeze literal.
-			 */
-			{
-				final FreezeVarInitializingTransformulaBuilder fvtfb =
-						new FreezeVarInitializingTransformulaBuilder(mMgdScript, freezeVarTofreezeVarLit, validArray,
-								mSettings);
-
-				final AddInitializingEdgesIcfgTransformer<OUTLOC, OUTLOC> initTf =
-						new AddInitializingEdgesIcfgTransformer<>(mLogger,
-								icfgWFreezeVarsUninitialized.getCfgSmtToolkit(),
-								outToOutLocFac,
-								backtranslationTracker,
-								outLocationClass,
-								icfgWFreezeVarsUninitialized,
-								fvtfb.getInitializingTransformula(),
-								"icfg_with_initialized_freeze_vars");
-
-				final IIcfg<OUTLOC> icfgWFreezeVarsInitialized = initTf.getResult();
-
-				preprocessedIcfg = icfgWFreezeVarsInitialized;
-			}
-
-			storeIndexInfoToLocLiteral = null;
-			memlocArrayManager = null;
-		} else {
 			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
 			mLogger.info("Heap separator: starting memloc-array-style preprocessing");
 
@@ -375,7 +273,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 //				icfgWMemlocInitialized = icgtf.getResult();
 
 				memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
-			}
+//			}
 
 
 			// literal handling (different ways)
@@ -410,11 +308,11 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			storeIndexInfoToFreezeVar = null;
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
-		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
-			mLogger.debug("storeIndexInfoToFreezeVar: " + DataStructureUtils.prettyPrint(storeIndexInfoToFreezeVar));
-		} else {
+//		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
+//			mLogger.debug("storeIndexInfoToFreezeVar: " + DataStructureUtils.prettyPrint(storeIndexInfoToFreezeVar));
+//		} else {
 			mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
-		}
+//		}
 		mLogger.debug("edgeToIndexToStoreIndexInfo: " + DataStructureUtils.prettyPrint(edgeToIndexToStoreIndexInfo));
 
 		/*
@@ -437,14 +335,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mLogger.info("  select infos: " + DataStructureUtils.prettyPrint(heapSepPreanalysis.getSelectInfos()));
 
 		final HeapPartitionManager partitionManager;
-		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
-			partitionManager = new HeapPartitionManager(mLogger, arrayToArrayGroup, storeIndexInfoToFreezeVar,
-					mHeapArrays, mStatistics, mMgdScript);
-		} else {
+//		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
+//			partitionManager = new HeapPartitionManager(mLogger, arrayToArrayGroup, storeIndexInfoToFreezeVar,
+//					mHeapArrays, mStatistics, mMgdScript);
+//		} else {
 			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
 			partitionManager = new HeapPartitionManager(mLogger, mMgdScript, arrayToArrayGroup, mHeapArrays,
 					mStatistics, memlocArrayManager, storeIndexInfoToLocLiteral);
-		}
+//		}
 
 		/*
 		 * 3b. compute an array partitioning
@@ -530,7 +428,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 }
 
 enum Preprocessing {
-	FREEZE_VARIABLES, MEMLOC_ARRAY;
+	FREEZE_VARIABLES, MEMLOC_ARRAY; // edit: FREEZE_VARIABLES is deprecated
 }
 
 class HeapSepSettings {

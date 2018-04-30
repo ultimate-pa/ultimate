@@ -100,6 +100,7 @@ private final MemlocArrayManager mMemLocArrayManager;
 	 * @param statistics
 	 * @param mgdScript
 	 */
+	@Deprecated
 	public HeapPartitionManager(final ILogger logger, final Map<IProgramVarOrConst, ArrayGroup> arrayToArrayGroup,
 			final Map<StoreIndexInfo, IProgramNonOldVar> storeIndexInfoToFreezeVar,
 			final List<IProgramVarOrConst> heapArrays, final HeapSeparatorBenchmark statistics,
