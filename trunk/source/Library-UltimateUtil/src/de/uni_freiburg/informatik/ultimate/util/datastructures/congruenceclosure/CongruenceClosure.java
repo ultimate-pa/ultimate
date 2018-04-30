@@ -162,7 +162,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 		mConstructorInitializationPhase = false;
 
-		assert sanityCheck();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}
 
 	/**
@@ -188,7 +188,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			registerNewElement(elem, this, remInfo);
 		}
 		mConstructorInitializationPhase = false;
-		assert sanityCheck(remInfo);
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck(remInfo);
 	}
 
 	/**
@@ -209,7 +209,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mManager = original.mManager;
 		mLiteralSetConstraints = new CCLiteralSetConstraints<>(original.mManager, this,
 				original.getLiteralSetConstraints());
-		assert sanityCheck(externalRemovalInfo); // can be violated during remove (?)
+		// can be violated during remove (?)
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck(externalRemovalInfo);
 	}
 
 	/**

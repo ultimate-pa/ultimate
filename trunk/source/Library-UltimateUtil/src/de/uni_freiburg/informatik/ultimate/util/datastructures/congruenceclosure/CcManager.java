@@ -517,7 +517,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			// TODO: implement a result check here?
 			result = unfrozen;
 		}
-		assert result.sanityCheck();
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || result.sanityCheck();
 		final CongruenceClosure<ELEM> resultPp = postProcessCcResult(result);
 		return resultPp;
 	}

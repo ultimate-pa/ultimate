@@ -232,18 +232,34 @@ public class PartitionProjectionTransitionTransformer<INLOC extends IcfgLocation
 			inVars = new HashMap<>(ppttf.getNewInVars());
 			// filter invars and out vars such that only those which have a TermVariable in the formula are left
 			for (final Entry<IProgramVar, TermVariable> iv : ppttf.getNewInVars().entrySet()) {
+				if (!mSubArrayManager.isSubArray(iv.getKey())) {
+					// not one of the partitioned arrays
+					continue;
+				}
+
 				if (!Arrays.asList(transformedFormula.getFreeVars()).contains(iv.getValue())) {
 					inVars.remove(iv.getKey());
 				}
 			}
 			outVars = new HashMap<>(ppttf.getNewOutVars());
 			for (final Entry<IProgramVar, TermVariable> ov : ppttf.getNewOutVars().entrySet()) {
+				if (!mSubArrayManager.isSubArray(ov.getKey())) {
+					// not one of the partitioned arrays
+					continue;
+				}
+
 				if (!Arrays.asList(transformedFormula.getFreeVars()).contains(ov.getValue())) {
 					outVars.remove(ov.getKey());
 				}
 			}
 			// add outvars for invars that remain (case: an array with a pseudo-update is also read)
 			for (final Entry<IProgramVar, TermVariable> iv : inVars.entrySet()) {
+				if (!mSubArrayManager.isSubArray(iv.getKey())) {
+					// not one of the partitioned arrays
+					continue;
+				}
+
+
 				if (!outVars.containsKey(iv.getKey())) {
 					outVars.put(iv.getKey(), iv.getValue());
 				}

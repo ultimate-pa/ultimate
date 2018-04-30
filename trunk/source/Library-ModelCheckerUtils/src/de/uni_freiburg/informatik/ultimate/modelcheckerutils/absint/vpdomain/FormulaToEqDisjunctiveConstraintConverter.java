@@ -214,7 +214,6 @@ public class FormulaToEqDisjunctiveConstraintConverter extends NonRecursive {
 					return;
 				}
 
-				// MultiDimensionalStore mds;
 				ApplicationTerm storeTerm;
 				EqNode simpleArray;
 				EqNode otherSimpleArray;

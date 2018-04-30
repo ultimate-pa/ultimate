@@ -1014,6 +1014,9 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 
 
+		if (mSkipSolverChecks) {
+			return true;
+		}
 		/*
 		 * check that the filtering is an equivalence transformation
 		 */
