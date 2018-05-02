@@ -50,7 +50,6 @@ import java.util.stream.Collectors;
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.IPDOMManager;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
-import org.eclipse.cdt.core.index.IIndexManager;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ICContainer;
@@ -59,12 +58,12 @@ import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.model.IPathEntry;
 import org.eclipse.cdt.core.model.ISourceRoot;
 import org.eclipse.cdt.core.model.ITranslationUnit;
-import org.eclipse.cdt.core.parser.util.ASTPrinter;
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -105,10 +104,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  * @date 02.02.2012
  */
 public class CDTParser implements ISource {
-	/**
-	 * Whether to print the AST and some debug information for the parsed translation units, or not.
-	 */
-	private static final boolean EXTENDED_DEBUG_OUTPUT = false;
 	/**
 	 * Because filenames need to be normalized and it would be impractical to pass on the CDT project to later stages of
 	 * translation, a special 'flag' directory is included in the path to mark the end of the non-relevant path entries.
@@ -161,21 +156,15 @@ public class CDTParser implements ISource {
 	public IElement parseAST(final File[] files) throws Exception {
 		final Collection<IASTTranslationUnit> tuCollection = performCDTProjectOperations(files);
 
-		if (EXTENDED_DEBUG_OUTPUT) {
-			for (final IASTTranslationUnit tu : tuCollection) {
-				mLogger.info("Printing AST for TU: " + tu.getFilePath());
-				ASTPrinter.print(tu);
-			}
-		}
-
 		final MultiparseSymbolTable mps = new MultiparseSymbolTable(mLogger, mCdtPProjectHierachyFlag);
 		for (final IASTTranslationUnit tu : tuCollection) {
-			mLogger.info("Scanning " + normalizeCDTFilename(mCdtPProjectHierachyFlag, tu.getFilePath()));
+			mLogger.info("Scanning " + normalizeCDTFilename(tu.getFilePath()));
 			tu.accept(mps);
 		}
 
-		// Print the mappings to the logger for debugging purposes
-		mps.printMappings();
+		if (mLogger.isDebugEnabled()) {
+			mps.printMappings();
+		}
 
 		final ASTDecorator decorator = decorateTranslationUnits(mps, tuCollection);
 		decorator.setSymbolTable(mps);
@@ -204,6 +193,10 @@ public class CDTParser implements ISource {
 		return in.substring(posInInput + lookingFor.length());
 	}
 
+	private String normalizeCDTFilename(final String filename) {
+		return normalizeCDTFilename(mCdtPProjectHierachyFlag, filename);
+	}
+
 	private ASTDecorator decorateTranslationUnits(final MultiparseSymbolTable mst,
 			final Collection<IASTTranslationUnit> translationUnits) {
 		final ASTDecorator decorator = new ASTDecorator();
@@ -225,13 +218,12 @@ public class CDTParser implements ISource {
 		return decorator;
 	}
 
-	// created by Hamiz for entering multiple files
 	private ICProject createCDTProjectFromFiles(final File[] files) throws CoreException, FileNotFoundException {
-		final IProject proj = createCDTProject();
-		mCdtProject = proj;
+		mCdtProject = createCDTProject();
 		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
 
 		final IFolder sourceFolder = mCdtProject.getFolder("src");
+
 		sourceFolder.create(true, true, NULL_MONITOR);
 		for (final File file : files) {
 			createCopyOfFileInProject(mCdtProject, sourceFolder, file);
@@ -284,16 +276,8 @@ public class CDTParser implements ISource {
 	private Collection<IASTTranslationUnit> performCDTProjectOperations(final File[] files)
 			throws FileNotFoundException, CoreException {
 		final ICProject icdtProject = createCDTProjectFromFiles(files);
-
-		// useful: http://cdt-devel-faq.wikidot.com/#toc23
-
-		final IIndexManager indexManager = CCorePlugin.getIndexManager();
-		final boolean isIndexed = indexManager.isProjectIndexed(icdtProject);
 		final List<IASTTranslationUnit> listTu = getProjectTranslationUnits(icdtProject);
-
-		mLogger.info("IsIndexed: " + isIndexed);
 		mLogger.info("Found " + listTu.size() + " translation units.");
-
 		return listTu;
 	}
 
@@ -341,8 +325,15 @@ public class CDTParser implements ISource {
 			indexerNode.removeNode();
 			mCdtProject.setPersistentProperty(new QualifiedName("org.eclipse.cdt.core", "pdomName"), null);
 			// then, remove the project
-			mCdtProject.delete(true, true, null);
-			mLogger.info("Deleted temporary CDT project at " + getFullPath(mCdtProject));
+			mLogger.info("About to delete temporary CDT project at " + getFullPath(mCdtProject));
+			final IWorkspace workspace = mCdtProject.getWorkspace();
+			final File parentFolder = mCdtProject.getLocation().removeLastSegments(1).toFile();
+			workspace.getRoot().delete(IResource.FORCE | IResource.ALWAYS_DELETE_PROJECT_CONTENT, null);
+			if (parentFolder.exists()) {
+				parentFolder.delete();
+			}
+			waitForProjectRefreshToFinish();
+			mLogger.info("Successfully deleted " + parentFolder.getAbsolutePath());
 		} catch (final CoreException e) {
 			mLogger.fatal("Failed to delete temporary CDT project:", e);
 		} catch (final BackingStoreException e) {
@@ -354,9 +345,14 @@ public class CDTParser implements ISource {
 		if (project == null) {
 			return "NULL";
 		}
-		final IPath outerPath = project.getWorkspace().getRoot().getLocation();
-		final IPath innerPath = project.getFullPath();
-		return outerPath.append(innerPath).toOSString();
+		final IPath loc = project.getLocation();
+		if (loc == null) {
+			return "UNKNOWN LOCATION";
+		}
+		return loc.toOSString();
+		// final IPath outerPath = project.getWorkspace().getRoot().getLocation();
+		// final IPath innerPath = project.getFullPath();
+		// return outerPath.append(innerPath).toOSString();
 	}
 
 	private IProject createCDTProject() throws CoreException {
@@ -374,9 +370,6 @@ public class CDTParser implements ISource {
 
 		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
 		prjDescription.setLocation(root.getLocation().append(projectNamespace + File.separator + projectName));
-		final File namespaceDiretory = new File(prjDescription.getLocationURI()).getParentFile();
-		namespaceDiretory.deleteOnExit();
-
 		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
 		project.open(null);
 
@@ -392,10 +385,6 @@ public class CDTParser implements ISource {
 				.setRawPathEntries(new IPathEntry[] { CoreModel.newSourceEntry(project.getFullPath()) }, NULL_MONITOR);
 
 		waitForProjectRefreshToFinish();
-		// Assert.assertNotNull(project);
-
-		// Assert.assertTrue(project.isOpen());
-
 		return project;
 	}
 
@@ -418,6 +407,26 @@ public class CDTParser implements ISource {
 		scanner.close();
 		return file1;
 	}
+
+	/*
+	 * IContainer createContainersFor(IPath path) throws CoreException {
+	 *
+	 * IContainer currentFolder = destinationContainer;
+	 *
+	 * int segmentCount = path.segmentCount();
+	 *
+	 * //No containers to create if (segmentCount == 0) { return currentFolder; }
+	 *
+	 * //Needs to be handles differently at the root if (currentFolder.getType() == IResource.ROOT) { return
+	 * createFromRoot(path); }
+	 *
+	 * for (int i = 0; i < segmentCount; i++) { currentFolder = currentFolder.getFolder(new Path(path.segment(i))); if
+	 * (!currentFolder.exists()) { if (createVirtualFolder) ((IFolder) currentFolder).create(IResource.VIRTUAL, true,
+	 * null); else if (createLinks) ((IFolder) currentFolder).createLink(createRelativePath( path, currentFolder), 0,
+	 * null); else ((IFolder) currentFolder).create(false, true, null); } }
+	 *
+	 * return currentFolder; }
+	 */
 
 	private static void waitForProjectRefreshToFinish() {
 		try {
