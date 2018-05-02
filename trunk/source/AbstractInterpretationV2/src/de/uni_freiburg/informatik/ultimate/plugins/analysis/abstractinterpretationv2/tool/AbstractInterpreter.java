@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
@@ -205,7 +204,7 @@ public final class AbstractInterpreter {
 	public static IAbstractInterpretationResult<EqState, IcfgEdge, IcfgLocation> runFutureEqualityDomain(
 			final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 			final boolean isSilent, final ILogger logger, final Set<IProgramConst> additionalLiterals,
-			final List<String> trackedArrays, final Set<FunctionSymbol> mixArrayFunctions) {
+			final List<String> trackedArrays, final Set<String> mixArrayFunctions) {
 		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,

@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -53,7 +52,7 @@ public class DefaultEqualityAnalysisProvider<LOC, CFG> implements IEqualityAnaly
 	}
 
 	@Override
-	public void addMixArrayFunctions(final Collection<FunctionSymbol> mixArrayFunctions) {
+	public void addMixArrayFunctions(final Collection<String> mixArrayFunctions) {
 		throw new UnsupportedOperationException("do we need to implement this?");
 	}
 }

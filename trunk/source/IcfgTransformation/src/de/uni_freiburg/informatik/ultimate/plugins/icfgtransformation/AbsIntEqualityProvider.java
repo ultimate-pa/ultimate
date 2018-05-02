@@ -36,7 +36,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -69,7 +68,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 
 	private final Set<IProgramConst> mAdditionalLiterals;
 	private List<String> mTrackedArrays;
-	private final Set<FunctionSymbol> mMixArrayFunctions;
+	private final Set<String> mMixArrayFunctions;
 
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -85,7 +84,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	}
 
 	@Override
-	public void addMixArrayFunctions(final Collection<FunctionSymbol> mixArrayFunctions) {
+	public void addMixArrayFunctions(final Collection<String> mixArrayFunctions) {
 		mMixArrayFunctions.addAll(mixArrayFunctions);
 	}
 
