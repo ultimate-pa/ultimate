@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.DiffWrapperScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
@@ -84,7 +85,17 @@ public class SolverBuilder {
 	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
 	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
+
+	/**
+	 * Only used for when we want to use the function const-Array-Int-Int from Boogie (via "builtin" attribute).
+	 * Other uses of constant arrays use the z3 (const ..) syntax directly right now.
+	 */
 	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = false;
+	/**
+	 * Only used for when we want to use the function mix-Array-Int-Int from Boogie (via "builtin" attribute).
+	 * Other uses of the mix function trigger the declarations and axiomatization themselves.
+	 */
+	public static final boolean ENABLE_ARRAY_MIX_FUNCTION = false;
 
 	private static Script createSMTInterpol(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
@@ -480,26 +491,76 @@ public class SolverBuilder {
 		});
 
 		/*
-		 * make the following command in the script, which adds a convenence function for constant arrays (define-fun
-		 * const-Array-Int-Int ((x Int)) (Array Int Int) ((as const (Array Int Int)) x))
-		 *
-		 * as far as we know the "const" function is only hardcoded in z3 in the "ALL" logic
-		 *
-		 * TODO this is a hack, because: <li> trigger this only when it is needed <li> not yet that robust, for example
-		 * z3 versions below 4.6 seem to crash. <li> very particular solution (only works for [Int] Int arrays) -->
-		 * generalize
+		 * make the following command in the script, which adds a convenience function for constant arrays
+		 * <p>
+		 * (define-fun const-Array-Int-Int ((x Int)) (Array Int Int) ((as const (Array Int Int)) x))
+		 * <p>
+		 * as far as we know the "const" function is contained in z3 only in the "ALL" logic
+		 * <p>
+		 * TODO this is a hack, because:
+		 *  <li> trigger this only when it is needed
+		 *  <li> not yet that robust, for example z3 versions below 4.6 seem to crash.
+		 *  <li> very particular solution (only works for [Int] Int arrays) --> generalize
 		 */
-		if (ENABLE_Z3_CONSTANT_ARRAYS
-				&& (((solverMode == SolverMode.External_DefaultMode
+		final boolean solverIsZ3 = (((solverMode == SolverMode.External_DefaultMode
 						|| solverMode == SolverMode.External_ModelsAndUnsatCoreMode
 						|| solverMode == SolverMode.External_ModelsMode)
 						&& solverSettings.getCommandExternalSolver().trim().startsWith("z3"))
-						|| solverMode == SolverMode.External_Z3InterpolationMode)
+						|| solverMode == SolverMode.External_Z3InterpolationMode);
+		if (ENABLE_Z3_CONSTANT_ARRAYS
+				&& solverIsZ3
 				&& logicForExternalSolver.equals("ALL")) {
 			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
 			final TermVariable argTv = result.variable("x", script.sort("Int"));
 			script.defineFun("const-Array-Int-Int", new TermVariable[] { argTv }, arrayIntIntSort,
 					script.term("const", null, arrayIntIntSort, argTv));
+		}
+		/*
+		 * Declare and axiomatize the "mix"-function for arrays.
+		 * The mix-function takes two arrays a,b of the same type an an array s with the same index type as the others but
+		 *  with Boolean value type.
+		 * It builds a new array whose value at index i is the value of a[i] if s[i]=true, and b[i] otherwise.
+		 * <p>
+		 * (declare-fun mix-Array-Int-Int ((Array Int Int) (Array Int Int) (Array Int Bool)) (Array Int Int))
+		 * (assert (forall (
+		 *    (i Int)
+		 *    (a (Array Int Int))
+		 *    (b (Array Int Int))
+		 *    (s (Array Int Bool)))
+		 *      (=
+		 *        (select (mix-Array-Int-Int a b s))
+		 *        (ite (select s i) (select a i) (select b i)))))
+		 * <p>
+		 * TODO this is a hack, because:
+		 *  <li> trigger this only when it is needed
+		 *  <li> very particular solution (only works for [Int] Int arrays) --> generalize
+
+		 */
+		if (ENABLE_ARRAY_MIX_FUNCTION) {
+			assert solverIsZ3 : "other cases are unsupported right now (but may work..)";
+
+			final String mixIntIntName = "mix-Array-Int-Int";
+
+			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
+			final Sort arrayIntBoolSort = script.sort("Array", script.sort("Int"), script.sort("Bool"));
+
+			script.declareFun(mixIntIntName,
+					new Sort[] { arrayIntIntSort, arrayIntIntSort, arrayIntBoolSort} , arrayIntIntSort);
+
+			final TermVariable iTv = result.variable("i", script.sort("Int"));
+			final TermVariable aTv = result.variable("a", arrayIntIntSort);
+			final TermVariable bTv = result.variable("b", arrayIntIntSort);
+			final TermVariable sTv = result.variable("s", arrayIntBoolSort);
+
+			final Term selectMix = script.term("select", script.term(mixIntIntName, aTv, bTv, sTv), iTv);
+			final Term ite = script.term("ite",
+					script.term("select", sTv, iTv),
+					script.term("select", aTv, iTv),
+					script.term("select", bTv, iTv));
+
+			script.assertTerm(
+					script.quantifier(Script.FORALL, new TermVariable[] { iTv, aTv, bTv, sTv },
+							script.term("=", selectMix, ite)));
 		}
 
 		return result;
