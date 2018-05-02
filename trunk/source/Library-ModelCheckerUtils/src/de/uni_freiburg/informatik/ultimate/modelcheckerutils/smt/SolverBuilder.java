@@ -534,7 +534,6 @@ public class SolverBuilder {
 		 * TODO this is a hack, because:
 		 *  <li> trigger this only when it is needed
 		 *  <li> very particular solution (only works for [Int] Int arrays) --> generalize
-
 		 */
 		if (ENABLE_ARRAY_MIX_FUNCTION) {
 			assert solverIsZ3 : "other cases are unsupported right now (but may work..)";
