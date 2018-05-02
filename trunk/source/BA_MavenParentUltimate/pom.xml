@@ -530,6 +530,7 @@
 		<module>../Library-Jung</module>
 		<module>../Library-xerces</module>
 		<module>../Library-srParse</module>
+		<module>../Library-PDR</module>
 		<module>../Library-PEA</module>
 		<module>../Library-CZT</module>
 		<module>../Library-jdom</module>
