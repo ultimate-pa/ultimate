@@ -49,4 +49,26 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 		// default case, override this in the classes that are a constant function
 		throw new UnsupportedOperationException("not a constant function");
 	}
+
+	/**
+	 * (isFunctionApplication must  return false if this is true)
+	 *
+	 * @return true if this is a mix function (i.e. a function that nondeterministically has the value of one or
+	 *  another function).
+	 */
+	default boolean isMixFunction() {
+		// default case, override this in the classes that are a constant function
+		return false;
+	}
+
+	default ELEM getMixFunction1() {
+		// default case, override this in the classes that are a constant function
+		throw new UnsupportedOperationException("not a constant function");
+	}
+
+	default ELEM getMixFunction2() {
+		// default case, override this in the classes that are a constant function
+		throw new UnsupportedOperationException("not a constant function");
+	}
+
 }

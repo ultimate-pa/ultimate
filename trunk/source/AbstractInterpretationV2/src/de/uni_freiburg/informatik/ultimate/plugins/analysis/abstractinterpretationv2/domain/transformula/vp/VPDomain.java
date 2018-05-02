@@ -89,9 +89,11 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	 * 			This set of program constants will be viewed as "literals" by the analysis. Literals are constants that
 	 *          are unequal from all other constants.
 	 * @param trackedArrays
+	 * @param mixArrayFunctions
 	 */
 	public VPDomain(final ILogger logger, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final Set<IProgramConst> nonTheoryLiterals, final List<String> trackedArrays) {
+			final Set<IProgramConst> nonTheoryLiterals, final List<String> trackedArrays,
+			final Set<String> mixArrayFunctions) {
 		mLogger = logger;
 		mManagedScript = csToolkit.getManagedScript();
 		mMerge = new VPMergeOperator();
@@ -106,7 +108,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mSettings = new VPDomainSettings(ups);
 
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(services, mManagedScript, nonTheoryLiterals,
-				trackedArrays);
+				trackedArrays, mixArrayFunctions);
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, mServices, mManagedScript,
 				prepareWeqSettings(ups), mDebugMode, nonTheoryLiterals);
 		mEqStateFactory = new EqStateFactory(mEqNodeAndFunctionFactory, mEqConstraintFactory, mSymboltable,

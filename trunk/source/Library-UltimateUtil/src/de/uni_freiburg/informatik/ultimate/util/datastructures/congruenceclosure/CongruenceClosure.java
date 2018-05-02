@@ -334,7 +334,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		{
 //			constantFunctionTreatmentOnAddEquality(elem1, elem2, mElementTVER.getEquivalenceClass(elem1),
-			constantFunctionTreatmentOnAddEquality(e1OldRep, e2OldRep, mElementTVER.getEquivalenceClass(elem1),
+			constantAndMixFunctionTreatmentOnAddEquality(e1OldRep, e2OldRep, mElementTVER.getEquivalenceClass(elem1),
 					mElementTVER.getEquivalenceClass(elem2), getAuxData(),
 					e -> mManager.addElement(this, e, true, true));
 		}
@@ -557,8 +557,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		{
 			constantFunctionTreatmentOnAddElement(elem,
-//					(e1, e2) -> mManager.reportEquality(e1, e2, this, true),
 					(e1, e2) -> newEqualityTarget.reportEqualityRec(e1, e2),
+					e -> mManager.addElement(this, e, true, true),
+					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()));
+			mixFunctionTreatmentOnAddElement(elem,
+					(e, set) -> newEqualityTarget.reportContainsConstraint(e, set),
 					e -> mManager.addElement(this, e, true, true),
 					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()));
 		}
@@ -611,14 +614,56 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	/**
-	 * Add nodes that trigger instantiation of the axiom for constant arrays.
+	 *
+	 * @param elem elem that is a function application
+	 * @param reportContainsConstraint
+	 * @param addElement
+	 * @param weakOrStrongEquivalenceClassOfAppliedFunction set of elements that are equal or weakly equal to the applied function
+	 *   of elem
+	 */
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void mixFunctionTreatmentOnAddElement(
+			final ELEM elem, final BiConsumer<ELEM, Set<ELEM>> reportContainsConstraint,
+			final Consumer<ELEM> addElement, final Set<ELEM> weakOrStrongEquivalenceClassOfAppliedFunction) {
+		/*
+		 * treatment for constant functions:
+		 *  <li> if we are adding an element of the form m(x), where m is a mix function, and a and b are m's
+		 *   mix functions then we add the literal set constraint "m(x) in {a(x), b(x)}"
+		 *  <li> if we are adding an element the form f(x), where f ~ g and g is a constant function,
+		 *   then we add the element g(x)
+		 */
+		if (elem.getAppliedFunction().isMixFunction()) {
+			final ELEM mixArray1 = elem.getAppliedFunction().getMixFunction1();
+			final ELEM mixArray2 = elem.getAppliedFunction().getMixFunction2();
+
+			final HashSet<ELEM> set = new HashSet<>();
+			set.add(elem.replaceAppliedFunction(mixArray1));
+			set.add(elem.replaceAppliedFunction(mixArray2));
+
+			reportContainsConstraint.accept(elem, set);
+		}
+		for (final ELEM equivalentFunction : weakOrStrongEquivalenceClassOfAppliedFunction) {
+			if (equivalentFunction == elem.getAppliedFunction()) {
+				continue;
+			}
+			if (equivalentFunction.isConstantFunction()) {
+				// add element g(x)
+				addElement.accept(elem.replaceAppliedFunction(equivalentFunction));
+			}
+		}
+	}
+
+	/**
+	 * Constant or mix arrays can trigger addNode calls when an (possibly weak) equality is added.
+	 * This method checks for nodes that trigger instantiation of the axiom for constant arrays and mix arrays.
 	 * <p>
 	 * This method is triggered on the addition of both weak and strong equalities.
 	 * <p>
 	 * background:
-	 * <li> We maintain the following invariant: let f and g be (strongly or weakly) equal and let g be a constant
-	 *  function. Then, for every function application f(x) that is in our set of tracked elements, we also track g(x).
-	 * <li> For this method, this means, we have to go through all constant function equivalent to elem1 and for each
+	 * <li> We maintain the following invariant: let f and g be (strongly or weakly) equal and let g be a constant or
+	 *  mix function. Then, for every function application f(x) that is in our set of tracked elements, we also track
+	 *  g(x).
+	 * <li> For this method, this means, we have to go through all constant or mix function equivalent to elem1 and for
+	 *   each
 	 *   go through the ccpar's of f to add the corresponding nodes and vice versa.
 	 *
 	 * @param elemRep1 (must be a representative because we will query its afCcPars from auxdata)
@@ -626,11 +671,12 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param elem1EquivalenceClass set of elements that are equal or weakly equal to elemRep1
 	 * @param elem2EquivalenceClass set of elements that are equal or weakly equal to elemRep2
 	 */
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantFunctionTreatmentOnAddEquality(
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantAndMixFunctionTreatmentOnAddEquality(
 			final ELEM elemRep1, final ELEM elemRep2, final Set<ELEM> elem1EquivalenceClass,
 			final Set<ELEM> elem2EquivalenceClass, final CcAuxData<ELEM> auxData, final Consumer<ELEM> addElement) {
 		for (final ELEM equivalentFunction1 : elem1EquivalenceClass) {
-			if (equivalentFunction1.isConstantFunction()) {
+			if (equivalentFunction1.isMixFunction() ||
+					equivalentFunction1.isConstantFunction()) {
 				// ccpar is f(x), equivalentFunction1 is g
 				for (final ELEM ccpar : auxData.getAfCcPars(elemRep2)) {
 					assert !equivalentFunction1.equals(ccpar.getAppliedFunction());
@@ -639,7 +685,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		}
 		for (final ELEM equivalentFunction2 : elem2EquivalenceClass) {
-			if (equivalentFunction2.isConstantFunction()) {
+			if (equivalentFunction2.isMixFunction() ||
+					equivalentFunction2.isConstantFunction()) {
 				// ccpar is f(x), equivalentFunction2 is g
 				for (final ELEM ccpar : auxData.getAfCcPars(elemRep1)) {
 					assert !equivalentFunction2.equals(ccpar.getAppliedFunction());
@@ -1866,5 +1913,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	public CcManager<ELEM> getManager() {
 		return mManager;
+	}
+
+	@Override
+	public void reportContainsConstraint(final ELEM elem, final Set<ELEM> literalSet) {
+		mLiteralSetConstraints.reportContains(elem, literalSet);
 	}
 }

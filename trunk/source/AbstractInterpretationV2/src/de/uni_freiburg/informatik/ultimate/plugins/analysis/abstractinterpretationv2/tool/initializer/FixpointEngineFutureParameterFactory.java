@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
@@ -113,9 +114,15 @@ public class FixpointEngineFutureParameterFactory {
 					final ITransitionProvider<IcfgEdge, IcfgLocation> transitionProvider,
 					final ILoopDetector<IcfgEdge> loopDetector) {
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+
+		final Set<String> mixFunctions = SolverBuilder.ENABLE_ARRAY_MIX_FUNCTION ?
+				Collections.singleton(SolverBuilder.MIX_ARRAY_INT_INT_NAME) :
+				Collections.emptySet();
+
 		final IAbstractDomain<STATE, IcfgEdge> domain =
 				(IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger, mRoot, mServices,
-						Collections.emptySet(), null);
+						Collections.emptySet(), null, mixFunctions);
+
 		final IAbstractStateStorage<STATE, IcfgEdge, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge> variableProvider =
@@ -144,8 +151,11 @@ public class FixpointEngineFutureParameterFactory {
 		} else if (DataflowDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) new DataflowDomain<IcfgEdge>(logger);
 		} else if (VPDomain.class.getSimpleName().equals(domainName)) {
+			final Set<String> mixFunctions = SolverBuilder.ENABLE_ARRAY_MIX_FUNCTION ?
+				Collections.singleton(SolverBuilder.MIX_ARRAY_INT_INT_NAME) :
+				Collections.emptySet();
 			return (IAbstractDomain<STATE, IcfgEdge>) createEqualityDomain(logger, root, services,
-					Collections.emptySet(), null);
+					Collections.emptySet(), null, mixFunctions);
 		} else if (SMTTheoryDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) new SMTTheoryDomain(services, root.getCfgSmtToolkit());
 		} else if (LiveVariableDomain.class.getSimpleName().equals(domainName)) {
@@ -167,10 +177,9 @@ public class FixpointEngineFutureParameterFactory {
 
 	public static VPDomain<IcfgEdge> createEqualityDomain(final ILogger logger, final IIcfg<?> root,
 			final IUltimateServiceProvider services, final Set<IProgramConst> additionalLiterals,
-			final List<String> trackedArrays) {
-		// final VPTfStateBuilderPreparer tfPreparer =
-		// new VPTfStateBuilderPreparer(preAnalysis, root, logger);
-		return new VPDomain<>(logger, services, root.getCfgSmtToolkit(), additionalLiterals, trackedArrays);
+			final List<String> trackedArrays, final Set<String> mixArrayFunctions) {
+		return new VPDomain<>(logger, services, root.getCfgSmtToolkit(), additionalLiterals, trackedArrays,
+				mixArrayFunctions);
 	}
 
 	private static String getFailureString(final String selectedDomain) {

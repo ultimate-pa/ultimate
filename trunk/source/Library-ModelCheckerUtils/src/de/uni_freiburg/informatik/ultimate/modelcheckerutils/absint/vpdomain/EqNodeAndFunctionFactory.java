@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -61,13 +62,16 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 	private final Map<Term, Term> mNormalizationCache = new HashMap<>();
 	private final List<String> mTrackedArraySubstrings;
+	private final Set<String> mMixArrayFunctions;
 
 	public EqNodeAndFunctionFactory(final IUltimateServiceProvider services, final ManagedScript script,
-			final Set<IProgramConst> additionalLiterals, final List<String> trackedArraySubstrings) {
+			final Set<IProgramConst> additionalLiterals, final List<String> trackedArraySubstrings,
+			final Set<String> mixArrayFunctions) {
 		mServices = services;
 		mMgdScript = script;
 		mNonTheoryLiteralTerms = additionalLiterals.stream().map(pc -> pc.getTerm()).collect(Collectors.toSet());
 		mTrackedArraySubstrings = trackedArraySubstrings;
+		mMixArrayFunctions = mixArrayFunctions;
 	}
 
 	public ManagedScript getScript() {
@@ -78,6 +82,8 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 	public EqNode getOrConstructNode(final Term term) {
 		if (isConstantArray(term)) {
 			return getOrConstructConstantArray(term);
+		} else if (isMixArray(term)) {
+			return getOrConstructMixArray(term);
 		} else if (SmtUtils.isFunctionApplication(term, "select")) {
 			return getOrConstructEqFunctionNode((ApplicationTerm) term);
 		} else if (isAtomic(term)) {
@@ -282,6 +288,65 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		return false;
 	}
 
+	private boolean isMixArray(final Term term) {
+		if (!term.getSort().isArraySort()) {
+			return false;
+		}
+		if (!(term instanceof ApplicationTerm)) {
+			return false;
+		}
+
+		final ApplicationTerm at = (ApplicationTerm) term;
+
+		final Term def = at.getFunction().getDefinition();
+		if (def != null) {
+			return isMixArray(def);
+		}
+
+		if (mMixArrayFunctions.contains(at.getFunction().getName())) {
+			return true;
+		}
+		return false;
+	}
+
+	private EqMixArrayNode getOrConstructMixArray(final Term term) {
+		assert isMixArray(term);
+		final EqNode result = mTermToEqNode.get(term);
+		if (result != null) {
+			return (EqMixArrayNode) result;
+		}
+
+		final ApplicationTerm at = (ApplicationTerm) term;
+
+		final Term def = at.getFunction().getDefinition();
+		if (def != null) {
+			throw new AssertionError("not yet implemented");
+//			assert at.getParameters().length == 3;
+//			// we need to substitute the variable in the definition by the argument of at
+//			final TermVariable var = at.getFunction().getDefinitionVars()[0];
+//			final Term value = at.getParameters()[0];
+//			final Term defSubstituted =
+//					new Substitution(mMgdScript, Collections.singletonMap(var, value)).transform(def);
+//
+//			return getOrConstructMixArray(defSubstituted);
+		}
+
+		/*
+		 * expecting this to have the form (mix-Array.. a b nondet) where nondet is an array with boolean value type
+		 * that is unconstrained (it being constrained would not make our treatment unsound, though..)
+		 */
+		assert at.getParameters().length == 3;
+		assert at.getParameters()[2].getSort().isArraySort()
+			&& new MultiDimensionalSort(at.getParameters()[2].getSort()).getArrayValueSort().getName().equals("Bool");
+		assert mMixArrayFunctions.contains(at.getFunction().getName());
+
+		final EqNode array1 = getOrConstructNode(at.getParameters()[0]);
+		final EqNode array2 = getOrConstructNode(at.getParameters()[1]);
+		final EqMixArrayNode newMixArrayNode = new EqMixArrayNode(term, this, array1, array2);
+		mTermToEqNode.put(term, newMixArrayNode);
+		return newMixArrayNode;
+	}
+
 	private EqConstantArrayNode getOrConstructConstantArray(final Term term) {
 		assert isConstantArray(term);
 		final EqNode result = mTermToEqNode.get(term);
@@ -303,7 +368,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 			return getOrConstructConstantArray(defSubstituted);
 		}
 
-		// TODO: define this string somewhere (also occurs in CfgBuilder and RefinementStrategyFactory, currently)
+		// TODO: define this string somewhere (also occurs in SolverBuilder, currently)
 		assert at.getFunction().getName().equals("const");
 
 		final EqNode value = getOrConstructNode(at.getParameters()[0]);

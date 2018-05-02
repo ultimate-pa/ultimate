@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
@@ -198,17 +199,18 @@ public final class AbstractInterpreter {
 	 *
 	 * @param logger
 	 * @param additionalLiterals
+	 * @param mixArrayFunctions
 	 *
 	 */
 	public static IAbstractInterpretationResult<EqState, IcfgEdge, IcfgLocation> runFutureEqualityDomain(
 			final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 			final boolean isSilent, final ILogger logger, final Set<IProgramConst> additionalLiterals,
-			final List<String> trackedArrays) {
+			final List<String> trackedArrays, final Set<FunctionSymbol> mixArrayFunctions) {
 		final FixpointEngineParameters<EqState, IcfgEdge, IProgramVarOrConst, IcfgLocation> params =
 				new FixpointEngineParameters<>(services, IProgramVarOrConst.class);
 		return runFuture(root, services, logger, isSilent,
 				params.setDomain(FixpointEngineFutureParameterFactory.createEqualityDomain(
-						logger, root, services, additionalLiterals, trackedArrays))
+						logger, root, services, additionalLiterals, trackedArrays, mixArrayFunctions))
 						.setTimer(timer),
 				p -> new FixpointEngine<>(p));
 	}

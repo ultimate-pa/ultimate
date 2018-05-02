@@ -94,14 +94,38 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	}
 
 
-	public void reportContains(final ELEM element, final Set<ELEM> literalSet) {
+	public void reportContains(final ELEM element, final Set<ELEM> elements) {
 
 		if (isInconsistent()) {
 			// nothing to do
 			return;
 		}
 
+
+		mCcManager.addElement(mCongruenceClosure, element, true, false);
+		mCcManager.addAllElements(mCongruenceClosure, elements, null, true);
+
 		final ELEM elementRep = mCongruenceClosure.getRepresentativeElement(element);
+
+		/*
+		 * elements does not need to be a set of literals, however it must expand to such a set that is:
+		 *   for each e in elements one of the following must hold:
+		 *  <li> e ~ l, where l is a literal
+		 *  <li> e in s, where s is a set of literals
+		 */
+		final HashSet<ELEM> literalSet = new HashSet<>();
+		for (final ELEM elem : elements) {
+			final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
+			if (rep.isLiteral()) {
+				literalSet.add(rep);
+			} else {
+				final Set<ELEM> literals = mContainsConstraints.get(rep);
+				if (literals == null) {
+					throw new AssertionError("cannot expand given element set to a set of literals");
+				}
+				literalSet.addAll(literals);
+			}
+		}
 
 		if (elementRep.isLiteral()) {
 			// element is already equal to a literal (x ~ l), thus we implicitly have the constraint x in {l}
@@ -116,9 +140,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		}
 
 		assert literalSet.stream().allMatch(ELEM::isLiteral);
-
-		mCcManager.addElement(mCongruenceClosure, elementRep, true, false);
-		mCcManager.addAllElements(mCongruenceClosure, literalSet, null, true);
 
 		final Set<ELEM> oldSet = mContainsConstraints.get(elementRep);
 

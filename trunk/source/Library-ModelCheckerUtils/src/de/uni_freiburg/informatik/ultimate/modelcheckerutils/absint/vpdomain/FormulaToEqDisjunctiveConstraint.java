@@ -24,7 +24,7 @@ public class FormulaToEqDisjunctiveConstraint {
 		mMgdScript = mgdScript;
 
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(mServices, mMgdScript, Collections.emptySet(),
-				null);
+				null, Collections.emptySet());
 		mEqConstraintFactory = new EqConstraintFactory<>(mEqNodeAndFunctionFactory, services, mMgdScript, settings,
 				false, Collections.emptySet());
 	}

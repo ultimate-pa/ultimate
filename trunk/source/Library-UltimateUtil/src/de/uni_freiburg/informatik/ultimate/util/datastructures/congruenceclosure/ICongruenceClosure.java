@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.function.Function;
 
 public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>> {
@@ -37,4 +38,5 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 	boolean reportDisequalityRec(ELEM key, ELEM value);
 
+	void reportContainsConstraint(ELEM elem, Set<ELEM> literals);
 }

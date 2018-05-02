@@ -912,6 +912,128 @@ public class CongruenceClosureTest {
 		assertTrue(cc.getEqualityStatus(a_x, l1) == EqualityStatus.EQUAL);
 	}
 
+	@Test
+	public void testContainsConstraints01() {
+		final ILogger logger = new ConsoleLogger();
+		final CongruenceClosureComparator<StringCcElement> ccComparator =
+				new CongruenceClosureComparator<StringCcElement>();
+		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
+
+		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement x = factory.getBaseElement("x");
+		cc = manager.addElement(cc, x, mInPlace, false);
+		final StringCcElement f_x = factory.getFuncAppElement(f, x);
+		cc = manager.addElement(cc, f_x, mInPlace, false);
+		final StringCcElement g_x = factory.getFuncAppElement(g, x);
+		cc = manager.addElement(cc, g_x, mInPlace, false);
+
+		final StringCcElement y = factory.getBaseElement("y");
+		cc = manager.addElement(cc, y, mInPlace, false);
+		final StringCcElement f_y = factory.getFuncAppElement(f, y);
+		cc = manager.addElement(cc, f_y, mInPlace, false);
+		final StringCcElement g_y = factory.getFuncAppElement(g, y);
+		cc = manager.addElement(cc, g_y, mInPlace, false);
+
+		final StringCcElement z = factory.getBaseElement("z");
+		cc = manager.addElement(cc, z, mInPlace, false);
+		final StringCcElement f_z = factory.getFuncAppElement(f, z);
+		cc = manager.addElement(cc, f_z, mInPlace, false);
+		final StringCcElement g_z = factory.getFuncAppElement(g, z);
+		cc = manager.addElement(cc, g_z, mInPlace, false);
+
+		// create some literals
+		final StringCcElement l1 = factory.getBaseElement("l1", true);
+		cc = manager.addElement(cc, l1, mInPlace, false);
+		final StringCcElement l2 = factory.getBaseElement("l2", true);
+		cc = manager.addElement(cc, l2, mInPlace, false);
+		final StringCcElement l3 = factory.getBaseElement("l3", true);
+		cc = manager.addElement(cc, l3, mInPlace, false);
+
+		final Set<StringCcElement> l1AndL2 = new HashSet<>();
+		{
+			l1AndL2.add(l1);
+			l1AndL2.add(l2);
+		}
+
+		cc = manager.reportContainsConstraint(x, l1AndL2, cc, mInPlace);
+
+		assertTrue(cc.getEqualityStatus(x, l3) == EqualityStatus.NOT_EQUAL);
+	}
+
+	@Test
+	public void testContainsConstraints02() {
+		final ILogger logger = new ConsoleLogger();
+		final CongruenceClosureComparator<StringCcElement> ccComparator =
+				new CongruenceClosureComparator<StringCcElement>();
+		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
+
+		CongruenceClosure<StringCcElement> cc = manager.getEmptyCc(mInPlace);
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement x = factory.getBaseElement("x");
+		cc = manager.addElement(cc, x, mInPlace, false);
+		final StringCcElement f_x = factory.getFuncAppElement(f, x);
+		cc = manager.addElement(cc, f_x, mInPlace, false);
+		final StringCcElement g_x = factory.getFuncAppElement(g, x);
+		cc = manager.addElement(cc, g_x, mInPlace, false);
+
+		final StringCcElement y = factory.getBaseElement("y");
+		cc = manager.addElement(cc, y, mInPlace, false);
+		final StringCcElement f_y = factory.getFuncAppElement(f, y);
+		cc = manager.addElement(cc, f_y, mInPlace, false);
+		final StringCcElement g_y = factory.getFuncAppElement(g, y);
+		cc = manager.addElement(cc, g_y, mInPlace, false);
+
+		final StringCcElement z = factory.getBaseElement("z");
+		cc = manager.addElement(cc, z, mInPlace, false);
+		final StringCcElement f_z = factory.getFuncAppElement(f, z);
+		cc = manager.addElement(cc, f_z, mInPlace, false);
+		final StringCcElement g_z = factory.getFuncAppElement(g, z);
+		cc = manager.addElement(cc, g_z, mInPlace, false);
+
+		// create some literals
+		final StringCcElement l1 = factory.getBaseElement("l1", true);
+		cc = manager.addElement(cc, l1, mInPlace, false);
+		final StringCcElement l2 = factory.getBaseElement("l2", true);
+		cc = manager.addElement(cc, l2, mInPlace, false);
+		final StringCcElement l3 = factory.getBaseElement("l3", true);
+		cc = manager.addElement(cc, l3, mInPlace, false);
+		final StringCcElement l4 = factory.getBaseElement("l4", true);
+		cc = manager.addElement(cc, l4, mInPlace, false);
+
+		final Set<StringCcElement> l1AndL2 = new HashSet<>();
+		{
+			l1AndL2.add(l1);
+			l1AndL2.add(l2);
+		}
+
+		cc = manager.reportContainsConstraint(x, l1AndL2, cc, mInPlace);
+
+		final Set<StringCcElement> l3AndX = new HashSet<>();
+		{
+			l3AndX.add(l3);
+			l3AndX.add(x);
+		}
+
+		// report y in { l3, x }
+		cc = manager.reportContainsConstraint(y, l3AndX, cc, mInPlace);
+//		cc = manager.reportContainsConstraint(y, Collections.singleton(l3), cc, mInPlace);
+
+		// y in { l1, l2, l3 } should hold now
+
+		assertTrue(cc.getEqualityStatus(x, l4) == EqualityStatus.NOT_EQUAL);
+	}
+
 
 	// TODO test transformer
 

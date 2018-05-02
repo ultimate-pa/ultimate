@@ -1,5 +1,8 @@
-
 //#Safe
+/*
+ * Note that we currently cannot handle this test case because we require all 
+ *  set constraints to be only about literals.
+ */
 procedure foo() {
   var a, b, mixed : [int] int;
   var nondet : [int] bool;

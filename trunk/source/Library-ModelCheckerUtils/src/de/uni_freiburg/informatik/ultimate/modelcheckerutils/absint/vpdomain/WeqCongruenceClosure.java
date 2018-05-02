@@ -391,7 +391,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		}
 
 		{
-			CongruenceClosure.constantFunctionTreatmentOnAddEquality(array1Rep, array2Rep,
+			CongruenceClosure.constantAndMixFunctionTreatmentOnAddEquality(array1Rep, array2Rep,
 					mCongruenceClosure.getEquivalenceClass(array1),
 					mCongruenceClosure.getEquivalenceClass(array2), mCongruenceClosure.getAuxData(),
 					n -> mManager.addNode(n, this, true, true));
@@ -835,8 +835,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		return true;
 	}
 
+	@Override
 	public void reportContainsConstraint(final NODE elem, final Set<NODE> literalSet) {
-		mCongruenceClosure.getLiteralSetConstraints().reportContains(elem, literalSet);
+		mCongruenceClosure.reportContainsConstraint(elem, literalSet);
 		if (mManager.getSettings().isAlwaysReportChangeToGpa()) {
 			throw new AssertionError("not implemented");
 		}
@@ -1149,10 +1150,16 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			return;
 		}
 
-		CongruenceClosure.constantFunctionTreatmentOnAddElement(elem,
-				(e1, e2) -> mManager.reportEquality(this, e1, e2, true),
-				e -> mManager.addNode(e, this, true, true),
-				getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).keySet());
+		{
+			CongruenceClosure.constantFunctionTreatmentOnAddElement(elem,
+					(e1, e2) -> mManager.reportEquality(this, e1, e2, true),
+					e -> mManager.addNode(e, this, true, true),
+					getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).keySet());
+			CongruenceClosure.mixFunctionTreatmentOnAddElement(elem,
+					(e, lits) -> mManager.reportContainsConstraint(e, lits, this, true),
+					e -> mManager.addNode(e, this, true, true),
+					getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).keySet());
+		}
 
 
 		/*

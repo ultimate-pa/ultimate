@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -64,5 +65,7 @@ public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 	 * @param trackedArrays
 	 */
 	void setTrackedArrays(List<String> trackedArrays);
+
+	void addMixArrayFunctions(Collection<FunctionSymbol> mixArrayFunctions);
 
 }

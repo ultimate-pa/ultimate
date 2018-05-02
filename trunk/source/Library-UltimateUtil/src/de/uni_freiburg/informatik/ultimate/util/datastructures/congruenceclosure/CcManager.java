@@ -307,12 +307,12 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		bmStart(CcBmNames.REPORTCONTAINS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (inplace) {
-			origCc.getLiteralSetConstraints().reportContains(element, literalSet);
+			origCc.reportContainsConstraint(element, literalSet);
 			bmEnd(CcBmNames.REPORTCONTAINS);
 			return origCc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-			unfrozen.getLiteralSetConstraints().reportContains(element, literalSet);
+			unfrozen.reportContainsConstraint(element, literalSet);
 			unfrozen.freeze();
 
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);

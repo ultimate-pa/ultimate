@@ -36,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -68,18 +69,26 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 
 	private final Set<IProgramConst> mAdditionalLiterals;
 	private List<String> mTrackedArrays;
+	private final Set<FunctionSymbol> mMixArrayFunctions;
 
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		mAdditionalLiterals = new HashSet<>();
+		mMixArrayFunctions = new HashSet<>();
 	}
 
 	@Override
 	public void announceAdditionalLiterals(final Collection<IProgramConst> literals) {
 		mAdditionalLiterals.addAll(literals);
 	}
+
+	@Override
+	public void addMixArrayFunctions(final Collection<FunctionSymbol> mixArrayFunctions) {
+		mMixArrayFunctions.addAll(mixArrayFunctions);
+	}
+
 
 	@Override
 	public void setTrackedArrays(final List<String> trackedArrays) {
@@ -93,7 +102,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		final IAbstractInterpretationResult<? extends IEqualityProvidingState, IcfgEdge, IcfgLocation> absIntResult =
 				// AbstractInterpreter.runFutureSMTDomain(icfg, timer, mServices, true, mLogger);
 				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, true, mLogger, mAdditionalLiterals,
-						mTrackedArrays);
+						mTrackedArrays, mMixArrayFunctions);
 		final Map<IcfgLocation, ?> loc2states = absIntResult.getLoc2States();
 		mTopState = absIntResult.getUsedDomain().createTopState();
 		mBotState = absIntResult.getUsedDomain().createBottomState();

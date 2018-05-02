@@ -90,12 +90,15 @@ public class SolverBuilder {
 	 * Only used for when we want to use the function const-Array-Int-Int from Boogie (via "builtin" attribute).
 	 * Other uses of constant arrays use the z3 (const ..) syntax directly right now.
 	 */
-	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = false;
+	public static final boolean ENABLE_Z3_CONSTANT_ARRAYS = true;
 	/**
 	 * Only used for when we want to use the function mix-Array-Int-Int from Boogie (via "builtin" attribute).
 	 * Other uses of the mix function trigger the declarations and axiomatization themselves.
 	 */
-	public static final boolean ENABLE_ARRAY_MIX_FUNCTION = false;
+	public static final boolean ENABLE_ARRAY_MIX_FUNCTION = true;
+	public static final String MIX_ARRAY_INT_INT_NAME = "mix-Array-Int-Int";
+
+
 
 	private static Script createSMTInterpol(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
@@ -538,12 +541,10 @@ public class SolverBuilder {
 		if (ENABLE_ARRAY_MIX_FUNCTION) {
 			assert solverIsZ3 : "other cases are unsupported right now (but may work..)";
 
-			final String mixIntIntName = "mix-Array-Int-Int";
-
 			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
 			final Sort arrayIntBoolSort = script.sort("Array", script.sort("Int"), script.sort("Bool"));
 
-			script.declareFun(mixIntIntName,
+			script.declareFun(MIX_ARRAY_INT_INT_NAME,
 					new Sort[] { arrayIntIntSort, arrayIntIntSort, arrayIntBoolSort} , arrayIntIntSort);
 
 			final TermVariable iTv = result.variable("i", script.sort("Int"));
@@ -551,7 +552,7 @@ public class SolverBuilder {
 			final TermVariable bTv = result.variable("b", arrayIntIntSort);
 			final TermVariable sTv = result.variable("s", arrayIntBoolSort);
 
-			final Term selectMix = script.term("select", script.term(mixIntIntName, aTv, bTv, sTv), iTv);
+			final Term selectMix = script.term("select", script.term(MIX_ARRAY_INT_INT_NAME, aTv, bTv, sTv), iTv);
 			final Term ite = script.term("ite",
 					script.term("select", sTv, iTv),
 					script.term("select", aTv, iTv),
@@ -561,7 +562,6 @@ public class SolverBuilder {
 					script.quantifier(Script.FORALL, new TermVariable[] { iTv, aTv, bTv, sTv },
 							script.term("=", selectMix, ite)));
 		}
-
 		return result;
 	}
 }

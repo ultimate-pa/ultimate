@@ -26,44 +26,42 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public class EqConstantArrayNode extends EqNode {
+public class EqMixArrayNode extends EqNode {
 
-	private final EqNode mValue;
+	private final EqNode mArray1;
+	private final EqNode mArray2;
+	private final Set<EqNode> mSupportingNodes;
 
-	public EqConstantArrayNode(final Term term,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqNode value) {
+	public EqMixArrayNode(final Term term,
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqNode array1, final EqNode array2) {
 		super(term, eqNodeAndFunctionFactory, false);
-		mValue = value;
+		mArray1 = array1;
+		mArray2 = array2;
+		mSupportingNodes = Collections.unmodifiableSet(
+				new HashSet<>(Arrays.asList(new EqNode[] { array1, array2 })));
 	}
 
 	@Override
-	public boolean isConstantFunction() {
+	public boolean isMixFunction() {
 		return true;
 	}
 
-	/**
-	 *
-	 * @return the value that this constant array has at every index
-	 */
 	@Override
-	public EqNode getConstantFunctionValue() {
-		return mValue;
+	public EqNode getMixFunction1() {
+		return mArray1;
 	}
 
 	@Override
-	public boolean isFunctionApplication() {
-		return false;
-	}
-
-	@Override
-	public EqNode getAppliedFunction() {
-		throw new AssertionError();
+	public EqNode getMixFunction2() {
+		return mArray2;
 	}
 
 	@Override
@@ -83,7 +81,17 @@ public class EqConstantArrayNode extends EqNode {
 
 	@Override
 	public Set<EqNode> getSupportingNodes() {
-		return Collections.singleton(getConstantFunctionValue());
+		return mSupportingNodes;
+	}
+
+	@Override
+	public boolean isFunctionApplication() {
+		return false;
+	}
+
+	@Override
+	public EqNode getAppliedFunction() {
+		throw new AssertionError();
 	}
 
 
