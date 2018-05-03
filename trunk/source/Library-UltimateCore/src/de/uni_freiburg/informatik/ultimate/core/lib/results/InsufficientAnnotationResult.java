@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Result that tells us that an annotation of a program with loop invariants and
@@ -41,8 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <ELEM>
  *            Type of position
- * @param <TE>
- *            Type of trace element
  * @param <E>
  *            Type of expression
  */
@@ -58,13 +57,13 @@ public class InsufficientAnnotationResult<ELEM extends IElement, E>
 	 * Constructs a {@link InsufficientAnnotationResult}.
 	 *
 	 * @param positionBefore
-	 *            At which location did the error occur?
+	 *            Location of pre annotation
+	 * @param positionAfter
+	 *            Location of post annotation
 	 * @param plugin
 	 *            Which plugin (PluginId) found the error location=
 	 * @param translatorSequence
 	 *            The current backtranslator service (obtained from {@link IUltimateServiceProvider}).
-	 * @param pe
-	 *            A program execution leading to this error.
 	 */
 	public InsufficientAnnotationResult(final ELEM positionBefore, final String plugin,
 			final IBacktranslationService translatorSequence, final ELEM positionAfter,
@@ -90,23 +89,15 @@ public class InsufficientAnnotationResult<ELEM extends IElement, E>
 
 	@Override
 	public String getLongDescription() {
-		// TODO: implement
-//		mTranslatorSequence.translateProgramState(mStateBefore).toString();
-//		final StringBuilder sb = new StringBuilder();
-//		sb.append(getShortDescription());
-//		sb.append(CoreUtil.getPlatformLineSeparator());
-//		sb.append("We found a FailurePath: ");
-//		sb.append(CoreUtil.getPlatformLineSeparator());
-//		if (isRelevanceInformationIncluded()) {
-//			sb.append("(The third column contains information about the relevance of the program statement.");
-//			sb.append(" The asterisk (*) means that the statement's code block is 'error enforcing'.");
-//			sb.append(" The at sign (@) means that the statement's code block is 'error admitting'.");
-//			sb.append(" The dash (-) means that the statement's code block is irrelevant.)");
-//			sb.append(CoreUtil.getPlatformLineSeparator());
-//		}
-//		sb.append(getProgramExecutionAsString());
-//		return sb.toString();
-		return null;
+		final StringBuilder sb = new StringBuilder();
+		sb.append(getShortDescription());
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append("Counterexample state before: ");
+		sb.append(mTranslatorSequence.translateProgramState(mStateBefore));
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append("Counterexample state after: ");
+		sb.append(mTranslatorSequence.translateProgramState(mStateAfter));
+		return sb.toString();
 	}
 
 }
