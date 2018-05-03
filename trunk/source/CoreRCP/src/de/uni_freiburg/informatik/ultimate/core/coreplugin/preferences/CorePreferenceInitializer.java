@@ -56,6 +56,8 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String PLUGINID = Activator.PLUGIN_ID;
 	public static final String PLUGINNAME = Activator.PLUGIN_NAME;
 
+	public static final String RANDOM_WORKSPACE_CLI_OPTION_NAME = "ultimatedata";
+	public static final String RANDOM_WORKSPACE_CLI_OPTION = "-" + RANDOM_WORKSPACE_CLI_OPTION_NAME;
 	/**
 	 * Preference Label/Value pairs
 	 */

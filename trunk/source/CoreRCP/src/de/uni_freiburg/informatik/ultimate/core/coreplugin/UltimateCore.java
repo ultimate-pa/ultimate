@@ -29,21 +29,28 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Dictionary;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.xml.bind.JAXBException;
 
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.eclipse.osgi.service.datalocation.Location;
+import org.eclipse.osgi.service.environment.EnvironmentInfo;
 import org.osgi.framework.Bundle;
 import org.xml.sax.SAXException;
 
@@ -60,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -134,6 +142,34 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 		// applied
 		mLoggingService.reloadLoggers();
 
+		// check if we need to create a temporary sub-workspace
+		final String workspaceLoc;
+		try {
+			workspaceLoc = getCliWorkspaceLoc();
+		} catch (final IllegalArgumentException ex) {
+			mLogger.fatal(ex.getMessage());
+			return -2;
+		}
+
+		final String randomWorkspaceLoc;
+		if (workspaceLoc != null) {
+			final Location instanceLocation = Platform.getInstanceLocation();
+			if (instanceLocation == null) {
+				mLogger.fatal("Specifying -data @none is not supported");
+				return -2;
+			}
+			if (instanceLocation.isSet()) {
+				mLogger.fatal("You did specify " + CorePreferenceInitializer.RANDOM_WORKSPACE_CLI_OPTION
+						+ " without specifying -data @noDefault");
+				return -2;
+			}
+			final String randomSubDir = UUID.randomUUID().toString().substring(0, 10).replace("-", "");
+			randomWorkspaceLoc = Path.fromOSString(workspaceLoc).append(randomSubDir).toOSString();
+			instanceLocation.set(new URL("file", null, randomWorkspaceLoc), false);
+		} else {
+			randomWorkspaceLoc = null;
+		}
+
 		// loading classes exported by plugins
 		mPluginFactory = new PluginFactory(mSettingsManager, mLogger);
 		setCurrentController(mPluginFactory.getController());
@@ -156,7 +192,47 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			Job.getJobManager().removeJobChangeListener(mJobChangeAdapter);
 			mJobChangeAdapter = null;
 			mCoreStorage.clear();
+			Platform.getInstanceLocation().release();
+			final File toDelete = new File(randomWorkspaceLoc);
+			if (randomWorkspaceLoc != null) {
+				final Thread deleteWorkspaceThread = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						CoreUtil.deleteDirectory(toDelete);
+					}
+				}, "DeleteRandomWorkspace");
+				Runtime.getRuntime().addShutdownHook(deleteWorkspaceThread);
+			}
 		}
+	}
+
+	private static String getCliWorkspaceLoc() {
+		final EnvironmentInfo envInfo = RcpUtils.getEnvironmentInfo();
+		final Iterator<String> iter = Arrays.stream(envInfo.getCommandLineArgs()).iterator();
+		String workspaceloc = null;
+		while (iter.hasNext()) {
+			final String current = iter.next();
+			if (CorePreferenceInitializer.RANDOM_WORKSPACE_CLI_OPTION.equals(current)) {
+				if (!iter.hasNext()) {
+					throw new IllegalArgumentException(
+							CorePreferenceInitializer.RANDOM_WORKSPACE_CLI_OPTION + " has no argument");
+				}
+				workspaceloc = iter.next();
+				break;
+			}
+		}
+		if (workspaceloc == null) {
+			return null;
+		}
+
+		final String[] recognizedProperties = new String[] { "@user.home" };
+		for (final String recognizedProperty : recognizedProperties) {
+			if (workspaceloc.contains(recognizedProperty)) {
+				workspaceloc =
+						workspaceloc.replace(recognizedProperty, envInfo.getProperty(recognizedProperty.substring(1)));
+			}
+		}
+		return workspaceloc;
 	}
 
 	/**

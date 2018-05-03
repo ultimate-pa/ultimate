@@ -34,8 +34,12 @@ import java.util.Dictionary;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.osgi.service.datalocation.Location;
+import org.eclipse.osgi.service.environment.EnvironmentInfo;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.UncheckedURISyntaxException;
 
 /**
@@ -77,5 +81,28 @@ public final class RcpUtils {
 			}
 		}
 		return null;
+	}
+
+	public static String[] getFrameworkArguments() {
+		final EnvironmentInfo envInfo = getEnvironmentInfo();
+		return envInfo.getFrameworkArgs();
+	}
+
+	public static EnvironmentInfo getEnvironmentInfo() {
+		final BundleContext bc = Platform.getBundle(Activator.PLUGIN_ID).getBundleContext();
+		if (bc == null) {
+			return null;
+		}
+		final ServiceReference<EnvironmentInfo> infoRef =
+				(ServiceReference<EnvironmentInfo>) bc.getServiceReference(EnvironmentInfo.class.getName());
+		if (infoRef == null) {
+			return null;
+		}
+		final EnvironmentInfo envInfo = bc.getService(infoRef);
+		if (envInfo == null) {
+			return null;
+		}
+		bc.ungetService(infoRef);
+		return envInfo;
 	}
 }

@@ -36,6 +36,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Option.Builder;
 import org.apache.commons.cli.Options;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
@@ -198,6 +199,8 @@ public class OptionBuilder {
 		op.addOption(Option.builder("application").hasArg().type(String.class).build());
 		op.addOption(Option.builder().longOpt("console").type(Boolean.class).build());
 		op.addOption(Option.builder().longOpt("launcher.suppressErrors").type(Boolean.class).build());
+		op.addOption(
+				Option.builder(CorePreferenceInitializer.RANDOM_WORKSPACE_CLI_OPTION_NAME).type(String.class).build());
 		return op;
 	}
 
