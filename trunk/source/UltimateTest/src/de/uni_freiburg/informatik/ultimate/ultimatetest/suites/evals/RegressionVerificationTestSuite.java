@@ -291,7 +291,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 			final Path target = getAtsFile(currentProgram, marker).toPath();
 			try {
 				Files.move(atsFile.toPath(), target, StandardCopyOption.REPLACE_EXISTING);
-				TestUtil.deleteDirectoryContents(ATS_DUMP_DIR);
+				CoreUtil.deleteDirectoryContents(ATS_DUMP_DIR);
 			} catch (final IOException e) {
 				e.printStackTrace();
 			}
@@ -376,7 +376,7 @@ public class RegressionVerificationTestSuite extends AbstractEvalTestSuite {
 
 	@AfterClass
 	public void removeDumpedAts() {
-		TestUtil.deleteDirectory(ATS_DUMP_DIR);
+		CoreUtil.deleteDirectory(ATS_DUMP_DIR);
 		// TestUtil.deleteDirectoryContentsIf(new File(TestUtil.getPathFromTrunk(BENCHMARK_DIR)),
 		// file -> !file.isDirectory() && file.getName().endsWith(".ats"));
 	}

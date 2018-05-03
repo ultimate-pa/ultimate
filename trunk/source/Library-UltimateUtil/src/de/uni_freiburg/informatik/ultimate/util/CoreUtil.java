@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -670,6 +671,58 @@ public class CoreUtil {
 			}
 		}
 		return filteredList;
+	}
+
+	/**
+	 * Recursively delete the specified folder and all of its contents.
+	 */
+	public static void deleteDirectory(final File folder) {
+		deleteDirectoryContents(folder);
+		if (!folder.delete()) {
+			folder.deleteOnExit();
+		}
+	}
+
+	/**
+	 * Recursively delete the contents of the specified folder.
+	 */
+	public static void deleteDirectoryContents(final File folder) {
+		final File[] files = folder.listFiles();
+		if (files != null) {
+			// some JVMs return null for empty dirs
+			for (final File f : files) {
+				if (f.isDirectory()) {
+					deleteDirectory(f);
+				} else {
+					if (!f.delete()) {
+						f.deleteOnExit();
+					}
+
+				}
+			}
+		}
+	}
+
+	/**
+	 * Recursively delete the contents of the specified folder if the filter accepts them.
+	 */
+	public static void deleteDirectoryContentsIf(final File folder, final FileFilter filter) {
+		final File[] files = folder.listFiles();
+		if (files != null) {
+			// some JVMs return null for empty dirs
+			for (final File f : files) {
+				final boolean shouldDelete = filter.accept(f);
+				if (f.isDirectory()) {
+					if (shouldDelete) {
+						deleteDirectory(f);
+					} else {
+						deleteDirectoryContentsIf(f, filter);
+					}
+				} else if (shouldDelete) {
+					f.delete();
+				}
+			}
+		}
 	}
 
 	@FunctionalInterface
