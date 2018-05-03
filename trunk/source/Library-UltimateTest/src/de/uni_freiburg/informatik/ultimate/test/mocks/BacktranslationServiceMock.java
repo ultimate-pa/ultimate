@@ -33,6 +33,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 
 /**
@@ -72,6 +73,11 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 			translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
 		return new ProgramExecutionMock<>(null, null);
 	}
+	
+	@Override
+	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
+		return null;
+	}
 
 	@Override
 	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(final IBacktranslatedCFG<?, STE> cfg) {
@@ -82,4 +88,6 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	public IBacktranslationService getTranslationServiceCopy() {
 		return this;
 	}
+
+
 }

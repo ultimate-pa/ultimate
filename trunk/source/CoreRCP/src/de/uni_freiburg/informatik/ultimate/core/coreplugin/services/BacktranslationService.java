@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 
 /**
@@ -68,6 +69,12 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	public <STE, SE> IProgramExecution<?, ?>
 			translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
 		return mTranslatorSequence.translateProgramExecution(programExecution);
+	}
+	
+	@Override
+	public <SE> ProgramState<?>
+			translateProgramState(final ProgramState<SE> programState) {
+		return mTranslatorSequence.translateProgramState(programState);
 	}
 
 	@Override

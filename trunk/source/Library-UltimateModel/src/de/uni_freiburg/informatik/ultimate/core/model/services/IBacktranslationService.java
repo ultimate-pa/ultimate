@@ -30,6 +30,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 
 /**
@@ -64,6 +65,8 @@ public interface IBacktranslationService {
 	public <STE> List<String> translateTraceToHumanReadableString(List<STE> trace, Class<STE> clazz);
 
 	public <STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
+	
+	public <SE> ProgramState<?> translateProgramState(ProgramState<SE> programState);
 
 	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
 
