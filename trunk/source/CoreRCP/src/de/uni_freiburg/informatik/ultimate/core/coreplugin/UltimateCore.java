@@ -166,6 +166,14 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			final String randomSubDir = UUID.randomUUID().toString().substring(0, 10).replace("-", "");
 			randomWorkspaceLoc = Path.fromOSString(workspaceLoc).append(randomSubDir).toOSString();
 			instanceLocation.set(new URL("file", null, randomWorkspaceLoc), false);
+			final File toDelete = new File(randomWorkspaceLoc);
+			final Thread deleteWorkspaceThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					CoreUtil.deleteDirectory(toDelete);
+				}
+			}, "DeleteRandomWorkspace");
+			Runtime.getRuntime().addShutdownHook(deleteWorkspaceThread);
 		} else {
 			randomWorkspaceLoc = null;
 		}
@@ -193,16 +201,6 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 			mJobChangeAdapter = null;
 			mCoreStorage.clear();
 			Platform.getInstanceLocation().release();
-			final File toDelete = new File(randomWorkspaceLoc);
-			if (randomWorkspaceLoc != null) {
-				final Thread deleteWorkspaceThread = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						CoreUtil.deleteDirectory(toDelete);
-					}
-				}, "DeleteRandomWorkspace");
-				Runtime.getRuntime().addShutdownHook(deleteWorkspaceThread);
-			}
 		}
 	}
 
