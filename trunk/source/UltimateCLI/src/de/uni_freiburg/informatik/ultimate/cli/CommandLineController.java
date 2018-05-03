@@ -49,7 +49,6 @@ import org.eclipse.equinox.app.IApplication;
 
 import de.uni_freiburg.informatik.ultimate.cli.exceptions.InvalidFileArgumentException;
 import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
-import de.uni_freiburg.informatik.ultimate.cli.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
@@ -66,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;

@@ -263,7 +263,7 @@ public class ToolchainManager {
 				return false;
 			}
 
-			mLogger.info(getLogPrefix() + ": Parser(s) successfully (re)initialized");
+			mLogger.info(getLogPrefix() + ": Applicable parser(s) successfully (re)initialized");
 			return true;
 		}
 
@@ -472,10 +472,7 @@ public class ToolchainManager {
 			for (final String parserId : parserIds) {
 				final ISource parser = mPluginFactory.createTool(parserId);
 				if (parser == null) {
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug(getLogPrefix() + ": Parser with ID " + parserId
-								+ " is registered but cannot be created");
-					}
+					mLogger.warn(getLogPrefix() + ": Parser with ID " + parserId + " could not be created");
 					continue;
 				}
 				rtr.add(parser);

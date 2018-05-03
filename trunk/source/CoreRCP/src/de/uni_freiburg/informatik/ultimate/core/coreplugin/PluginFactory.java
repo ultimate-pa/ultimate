@@ -76,6 +76,8 @@ final class PluginFactory implements IServiceFactoryFactory {
 	private final Map<String, String> mPluginIDToClassName;
 	private final Map<Class<?>, IServiceFactory<?>> mAvailableServicesByClassName;
 
+	private final Set<IConfigurationElement> mFailedTools;
+
 	private boolean mGuiMode;
 	private final IController<RunDefinition> mController;
 	private List<IToolchainPlugin> mToolchainPluginCache;
@@ -88,6 +90,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mAvailableToolsByClassName = new HashMap<>();
 		mPluginIDToClassName = new HashMap<>();
 		mAvailableServicesByClassName = new HashMap<>();
+		mFailedTools = new HashSet<>();
 		mSettingsManager = settingsManager;
 
 		mLogger.debug("--------------------------------------------------------------------------------");
@@ -293,10 +296,15 @@ final class PluginFactory implements IServiceFactoryFactory {
 		if (element == null) {
 			return null;
 		}
+		if (mFailedTools.contains(element)) {
+			mLogger.warn("Will not retry already failed Ultimate plugin " + element.getAttribute("class"));
+			return null;
+		}
 		try {
 			return (T) element.createExecutableExtension("class");
 		} catch (final CoreException ex) {
-			mLogger.fatal("Exception during instantiation of ultimate plugin " + element.getAttribute("class"), ex);
+			mLogger.fatal("Exception during instantiation of Ultimate plugin " + element.getAttribute("class"), ex);
+			mFailedTools.add(element);
 			return null;
 		}
 	}

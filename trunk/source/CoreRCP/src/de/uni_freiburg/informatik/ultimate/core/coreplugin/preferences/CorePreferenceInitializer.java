@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 
 import java.util.Arrays;
 
-import org.eclipse.core.runtime.Platform;
-
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -38,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 
 /**
  * CorePreferenceInitializer implements UltimatePreferenceStore for UltimateCore. It initializes the default values for
@@ -99,7 +98,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String VALUE_LOGFILE_NAME = "ultimate.log";
 
 	public static final String LABEL_LOGFILE_DIR = "Directory (default: instance location)";
-	public static final String VALUE_LOGFILE_DIR = Platform.getInstanceLocation().getURL().getPath();
+	public static final String VALUE_LOGFILE_DIR;
 
 	// Log colours
 	public static final String LABEL_COLOR_DEBUG = "Debug log message color";
@@ -122,7 +121,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final boolean VALUE_DROP_MODELS = true;
 
 	public static final String LABEL_TMP_DIRECTORY = "Repository directory";
-	public static final String VALUE_TMP_DIRECTORY = System.getProperty("java.io.tmpdir");
+	public static final String VALUE_TMP_DIRECTORY;
 
 	public static final String LABEL_LOGLEVEL_ROOT = "ultimate.logging.root";
 	public static final String LABEL_LOGLEVEL_CORE = "ultimate.logging.core";
@@ -173,6 +172,17 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String ALL_PLUGINS_PRESENT = "All entered plugins are in fact present!";
 	public static final String PLUGINS_NOT_PRESENT = "The following plugins are not present at the moment: \n";
 	public static final String EMPTY_STRING = "";
+
+	static {
+		final String tmpDir = System.getProperty("java.io.tmpdir");
+		final String instLoc = RcpUtils.getInstanceLocationPath();
+		if (instLoc == null) {
+			VALUE_LOGFILE_DIR = tmpDir;
+		} else {
+			VALUE_LOGFILE_DIR = instLoc;
+		}
+		VALUE_TMP_DIRECTORY = tmpDir;
+	}
 
 	public CorePreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "General");

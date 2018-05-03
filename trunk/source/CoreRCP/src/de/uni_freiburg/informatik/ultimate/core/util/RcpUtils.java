@@ -24,17 +24,19 @@
  * licensors of the ULTIMATE CLI plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cli.util;
+package de.uni_freiburg.informatik.ultimate.core.util;
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Dictionary;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.Bundle;
 
-import de.uni_freiburg.informatik.ultimate.cli.exceptions.UncheckedURISyntaxException;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.UncheckedURISyntaxException;
 
 /**
  *
@@ -64,5 +66,16 @@ public final class RcpUtils {
 		} catch (final URISyntaxException e) {
 			throw new UncheckedURISyntaxException(e);
 		}
+	}
+
+	public static String getInstanceLocationPath() {
+		final Location instloc = Platform.getInstanceLocation();
+		if (instloc != null) {
+			final URL url = instloc.getURL();
+			if (url != null) {
+				return url.getPath();
+			}
+		}
+		return null;
 	}
 }

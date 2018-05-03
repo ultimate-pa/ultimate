@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE CLI plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cli.exceptions;
+package de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

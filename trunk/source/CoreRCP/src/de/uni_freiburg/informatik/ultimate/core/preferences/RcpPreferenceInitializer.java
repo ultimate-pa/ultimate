@@ -33,7 +33,6 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.util.RcpPreferenceBinder;
 
 /**
  * UltimatePreferenceInitializer implements an AbstractPreferenceInitializer for Ultimate. It initializes the default
