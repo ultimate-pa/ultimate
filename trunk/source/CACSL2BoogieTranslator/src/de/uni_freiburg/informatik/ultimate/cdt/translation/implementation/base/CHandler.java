@@ -4003,8 +4003,12 @@ public class CHandler implements ICHandler {
 						new BigInteger(newValueInt.toString()));
 
 			} else {
-				newValueInt = mExpressionTranslation.extractIntegerValue(cEnum.getFieldValue(fId),
-						typeOfEnumIdentifiers, node).intValue();
+				final BigInteger bi = mExpressionTranslation.extractIntegerValue(cEnum.getFieldValue(fId),
+						typeOfEnumIdentifiers, node);
+				if (bi == null) {
+					throw new AssertionError("not an integer constant: " + cEnum.getFieldValue(fId));
+				}
+				newValueInt = bi.intValue();
 				newValue = cEnum.getFieldValue(fId);
 			}
 			oldValue = newValue;
