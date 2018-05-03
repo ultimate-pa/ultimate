@@ -175,7 +175,12 @@ public class ManagedScript {
 		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
 		return mScript.echo(msg);
 	}
-	
+		
+	public Map<Term, Term> getValue(final Object lockOwner, final Term[] terms)  {
+		assert lockOwner == mLockOwner : MANAGED_SCRIPT_LOCKED_BY + mLockOwner;
+		return mScript.getValue(terms);
+	}
+
 	public Script getScript() {
 		return mScript;
 	}
