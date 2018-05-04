@@ -370,14 +370,11 @@ public class CHandler implements ICHandler {
 		assert main.mCHandler.isPreRunMode();
 		if (lrValue instanceof HeapLValue) {
 			throw new AssertionError("does this occur??");
-			// return ((HeapLValue) lrValue).getAddressAsPointerRValue(pointerType);
-		} else {
-			//
-			final Expression oldValue = lrValue.getValue();
-			final Expression convertedValue = ExpressionFactory.replaceBoogieType(oldValue, pointerType);
-
-			return new RValue(convertedValue, new CPointer(lrValue.getCType()));
 		}
+		final Expression oldValue = lrValue.getValue();
+		final Expression convertedValue = ExpressionFactory.replaceBoogieType(oldValue, pointerType);
+
+		return new RValue(convertedValue, new CPointer(lrValue.getCType()));
 	}
 
 	/**
@@ -1062,14 +1059,12 @@ public class CHandler implements ICHandler {
 				// address = new RValue(oldAddress,
 				// new CPointer(((CArray) rightLrVal.getCType()).getValueType()));
 				throw new AssertionError("does this occur??");
-			} else {
-				final Expression oldValue = rightLrVal.getValue();
-				/*
-				 * circumvents Boogie type checking during preprocessing TODO: use type error instead of pointer type?
-				 */
-				newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
-
 			}
+			final Expression oldValue = rightLrVal.getValue();
+			/*
+			 * circumvents Boogie type checking during preprocessing TODO: use type error instead of pointer type?
+			 */
+			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
 			((PRDispatcher) mMainDispatcher).moveArrayAndStructIdsOnHeap(loc, rightLrVal.getValue(),
 					Collections.emptySet(), hook);
 		} else {
@@ -1121,14 +1116,6 @@ public class CHandler implements ICHandler {
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
 		if (expr.mLrVal.getCType().getUnderlyingType() instanceof CArray
 				&& newCType.getUnderlyingType() instanceof CPointer) {
-			final CType valueType =
-					((CArray) expr.mLrVal.getCType().getUnderlyingType()).getValueType().getUnderlyingType();
-			// if (expr.mLrVal instanceof HeapLValue) {
-			// expr.mLrVal = new RValue(((HeapLValue) expr.mLrVal).getAddress(), new
-			// CPointer(valueType));
-			// } else {
-			// expr.mLrVal = new RValue(expr.mLrVal.getValue(), new CPointer(valueType));
-			// }
 			final RValue newRval = decayArrayLrValToPointer(loc, expr.getLrValue(), node);
 			expr.mLrVal = newRval;
 		} else {
@@ -2193,8 +2180,6 @@ public class CHandler implements ICHandler {
 		final AuxVarInfo switchAuxvar = AuxVarInfo.constructAuxVarInfo(loc, main, intType,
 				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.SWITCH);
 
-		final ASTType flagType = new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL);
-
 		resultBuilder.addDeclaration(switchAuxvar.getVarDec());
 		resultBuilder.addAuxVar(switchAuxvar);
 
@@ -2618,9 +2603,7 @@ public class CHandler implements ICHandler {
 		final BoogieType oldBoogieType = (BoogieType) rexp.getLrValue().getValue().getType();
 		final BoogieType newBoogieType = mBoogieTypeHelper.getBoogieTypeForCType(newTypeRaw);
 
-		if (TypeHandler.areMatchingTypes(newType, oldType)
-				// oldBoogieType.isUnifiableTo(other)
-				&& oldBoogieType.equals(newBoogieType)) {
+		if (TypeHandler.areMatchingTypes(newType, oldType) && oldBoogieType.equals(newBoogieType)) {
 			// types are already identical -- nothing to do
 			return;
 		}
@@ -3244,7 +3227,7 @@ public class CHandler implements ICHandler {
 						} else if (parent.getFileLocation().getEndingLineNumber() >= acslNode.getEndingLineNumber()
 								&& parent.getFileLocation().getStartingLineNumber() <= acslNode
 										.getStartingLineNumber()) {
-							final Result acslResult = main.dispatch(acslNode, next == null ? parent : next);
+							final Result acslResult = main.dispatch(acslNode, parent);
 							if (acslResult instanceof ExpressionResult) {
 								resultBuilder.addDeclarations(((ExpressionResult) acslResult).mDecl);
 								resultBuilder.addStatements(((ExpressionResult) acslResult).mStmt);
@@ -3524,8 +3507,8 @@ public class CHandler implements ICHandler {
 	 * Handle the indirection operator according to Section 6.5.3.2 of C11. (The indirection operator is the star for
 	 * pointer dereference.)
 	 */
-	private Result handleIndirectionOperator(final Dispatcher main, final ExpressionResult er, final ILocation loc,
-			final IASTNode hook) {
+	private static Result handleIndirectionOperator(final Dispatcher main, final ExpressionResult er,
+			final ILocation loc, final IASTNode hook) {
 		final ExpressionResult rop = er.switchToRValueIfNecessary(main, loc, hook);
 		final RValue rValue = (RValue) rop.mLrVal;
 		if (!(rValue.getCType().getUnderlyingType() instanceof CPointer)) {
