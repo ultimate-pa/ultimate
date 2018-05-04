@@ -1546,8 +1546,8 @@ public class CHandler implements ICHandler {
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		// Apply multifile input prefixing transformations to the ID
-		final String cId =
-				mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
+		final String cId = node.getName().toString();
+		final String cIdMp = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 
 		// deal with builtin constants
 		if ("NULL".equals(cId)) {
@@ -1570,14 +1570,14 @@ public class CHandler implements ICHandler {
 			// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 			// auxVars.put(auxvar.getVarDec(), loc);
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, Collections.singleton(auxvar));
-		} else if (!mSymbolTable.containsCSymbol(node, cId)
+		} else if (!mSymbolTable.containsCSymbol(node, cIdMp)
 				&& ("NAN".equals(cId) || "INFINITY".equals(cId) || "inf".equals(cId))) {
 			final ExpressionResult result = mExpressionTranslation.createNanOrInfinity(loc, cId);
 			return result;
 		} else if (mExpressionTranslation.isNumberClassificationMacro(cId)) {
 			final RValue rvalue = mExpressionTranslation.handleNumberClassificationMacro(loc, cId);
 			return new ExpressionResult(rvalue);
-		} else if ("__func__".equals(node.getName().toString())) {
+		} else if ("__func__".equals(cId)) {
 			final CType cType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 			// final String tId = mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
 			// final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new
@@ -1599,29 +1599,30 @@ public class CHandler implements ICHandler {
 		final boolean intFromPtr;
 		DeclarationInformation declarationInformation;
 
-		if (mSymbolTable.containsCSymbol(node, cId) && !mProcedureManager.hasProcedure(cId)) {
+		if (mSymbolTable.containsCSymbol(node, cIdMp) && !mProcedureManager.hasProcedure(cIdMp)) {
 			// we have a normal variable
-			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cId);
+			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cIdMp);
 			bId = stv.getBoogieName();
 			cType = stv.getCVariable();
 			useHeap = isHeapVar(bId);
 			intFromPtr = stv.isIntFromPointer();
 			declarationInformation = stv.getDeclarationInformation();
 			// } else if (mFunctionHandler.getProcedures().keySet().contains(cId)) {
-		} else if (mProcedureManager.hasProcedure(cId)) {
+		} else if (mProcedureManager.hasProcedure(cIdMp)) {
 			// C11 6.3.2.1.4 says: A function designator is an expression that
 			// has function type.
-			final CFunction cFunction = mProcedureManager.getCFunctionType(cId);
+			final CFunction cFunction = mProcedureManager.getCFunctionType(cIdMp);
 			cType = cFunction;
-			bId = SFO.FUNCTION_ADDRESS + cId;
+			bId = SFO.FUNCTION_ADDRESS + cIdMp;
 			useHeap = true;
 			intFromPtr = false;
 			declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
-		} else if (main.getFunctionToIndex().containsKey(cId)) {
+		} else if (main.getFunctionToIndex().containsKey(cIdMp)) {
 			throw new AssertionError("function not known to function handler");
 		} else {
 			throw new UnsupportedSyntaxException(loc,
-					"identifier is not declared (neither a variable nor a function name): " + cId);
+					"identifier is not declared (neither a variable nor a function name): " + cId + " in file "
+							+ node.getContainingFilename());
 		}
 
 		BoogieType boogieType;
