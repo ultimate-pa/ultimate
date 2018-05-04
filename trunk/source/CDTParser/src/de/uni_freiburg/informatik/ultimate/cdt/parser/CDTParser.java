@@ -35,15 +35,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Scanner;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -223,10 +220,9 @@ public class CDTParser implements ISource {
 		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
 
 		final IFolder sourceFolder = mCdtProject.getFolder("src");
-
-		sourceFolder.create(true, true, NULL_MONITOR);
+		sourceFolder.create(IResource.VIRTUAL, true, NULL_MONITOR);
 		for (final File file : files) {
-			createCopyOfFileInProject(mCdtProject, sourceFolder, file);
+			addFilesToProject(mCdtProject, sourceFolder, file);
 		}
 
 		final CoreModel model = CoreModel.getDefault();
@@ -388,7 +384,7 @@ public class CDTParser implements ISource {
 		return project;
 	}
 
-	public static IFile createCopyOfFileInProject(final IProject project, final IFolder sourceFolder, final File file)
+	public static IFile addFilesToProject(final IProject project, final IFolder sourceFolder, final File file)
 			throws CoreException, FileNotFoundException {
 
 		final Path filePath = new Path(file.getName());
@@ -396,37 +392,10 @@ public class CDTParser implements ISource {
 			throw new IllegalArgumentException("File has to be a single file");
 		}
 
-		final IPath relativeFilePath = sourceFolder.getProjectRelativePath().append(filePath);
-
-		// TODO: Do not copy file, use links instead
-		final Scanner scanner = new Scanner(file);
-		final String content = scanner.useDelimiter("\\Z").next();
-		final IFile file1 = project.getFile(relativeFilePath);
-		final InputStream inputStream = new ByteArrayInputStream(content.getBytes());
-		file1.create(inputStream, true, NULL_MONITOR);
-		scanner.close();
-		return file1;
+		final IFile fileResource = sourceFolder.getFile(filePath);
+		fileResource.createLink(file.toURI(), 0, NULL_MONITOR);
+		return fileResource;
 	}
-
-	/*
-	 * IContainer createContainersFor(IPath path) throws CoreException {
-	 *
-	 * IContainer currentFolder = destinationContainer;
-	 *
-	 * int segmentCount = path.segmentCount();
-	 *
-	 * //No containers to create if (segmentCount == 0) { return currentFolder; }
-	 *
-	 * //Needs to be handles differently at the root if (currentFolder.getType() == IResource.ROOT) { return
-	 * createFromRoot(path); }
-	 *
-	 * for (int i = 0; i < segmentCount; i++) { currentFolder = currentFolder.getFolder(new Path(path.segment(i))); if
-	 * (!currentFolder.exists()) { if (createVirtualFolder) ((IFolder) currentFolder).create(IResource.VIRTUAL, true,
-	 * null); else if (createLinks) ((IFolder) currentFolder).createLink(createRelativePath( path, currentFolder), 0,
-	 * null); else ((IFolder) currentFolder).create(false, true, null); } }
-	 *
-	 * return currentFolder; }
-	 */
 
 	private static void waitForProjectRefreshToFinish() {
 		try {
