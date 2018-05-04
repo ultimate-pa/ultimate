@@ -818,6 +818,11 @@ public class TypeHandler implements ITypeHandler {
 			return false;
 		}
 
+		if (visitedPairs.containsPair(type1, type2)) {
+			// found a cycle in the c type --> types match
+			return true;
+		}
+
 		if (ulType1.getClass().equals(CPrimitive.class)) {
 			return areMatchingTypes((CPrimitive) ulType1, (CPrimitive) ulType2, visitedPairs);
 		} else if (ulType1.getClass().equals(CEnum.class)) {
@@ -866,52 +871,61 @@ public class TypeHandler implements ITypeHandler {
 
 	private static boolean areMatchingTypes(final CFunction type1, final CFunction type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
-		if (visitedPairs.containsPair(type1, type2)) {
-			// found a cycle in the c type --> types match
-			return true;
-		}
-		final SymmetricHashRelation<CType> visitedPairsNew = new SymmetricHashRelation<>(visitedPairs);
-		visitedPairsNew.addPair(type1, type2);
 
+		visitedPairs.addPair(type1, type2);
+
+		// function have different number of arguments
 		if (type1.getParameterTypes().length != type2.getParameterTypes().length) {
 			return false;
 		}
-		if (!areMatchingTypes(type1.getResultType(), type2.getResultType(), visitedPairsNew)) {
-			return false;
-		}
-		for (int i = 0; i < type1.getParameterTypes().length; i++) {
-			if (!areMatchingTypes(type1.getParameterTypes()[i].getType(), type2.getParameterTypes()[i].getType())) {
-				return false;
-			}
-		}
+
+		// one function takes varargs, the other does not
 		if (type1.takesVarArgs() != type2.takesVarArgs()) {
 			return false;
+		}
+
+		// function result types are different
+		if (!areMatchingTypes(type1.getResultType(), type2.getResultType(), visitedPairs)) {
+			return false;
+		}
+
+		// function parameter types are different
+		for (int i = 0; i < type1.getParameterTypes().length; i++) {
+			if (!areMatchingTypes(type1.getParameterTypes()[i].getType(), type2.getParameterTypes()[i].getType(),
+					visitedPairs)) {
+				return false;
+			}
 		}
 		return true;
 	}
 
 	private static boolean areMatchingTypes(final CStruct type1, final CStruct type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
-		if (visitedPairs.containsPair(type1, type2)) {
-			// found a cycle in the c type --> types match
-			return true;
-		}
-		final SymmetricHashRelation<CType> visitedPairsNew = new SymmetricHashRelation<>(visitedPairs);
-		visitedPairsNew.addPair(type1, type2);
 
+		visitedPairs.addPair(type1, type2);
+
+		// different number of fields means structs dont match
 		if (type1.getFieldIds().length != type2.getFieldIds().length) {
 			return false;
 		}
+
+		// different number of field types mean structs dont match
+		// DD: this looks like it should be an invariant in CStruct, or is it possible to have unnamed fields? If yes,
+		// how are they matched to their type?
+		if (type1.getFieldTypes().length != type2.getFieldTypes().length) {
+			return false;
+		}
+
+		// TODO: DD: Do field names really impact type matching? I am not so sure that this is always the case
 		for (int i = 0; i < type1.getFieldIds().length - 1; i++) {
 			if (!(type1.getFieldIds()[i].equals(type2.getFieldIds()[i]))) {
 				return false;
 			}
 		}
-		if (type1.getFieldTypes().length != type2.getFieldTypes().length) {
-			return false;
-		}
+
+		// check if the types of the field match
 		for (int i = 0; i < type1.getFieldTypes().length; i++) {
-			if (!areMatchingTypes(type1.getFieldTypes()[i], type2.getFieldTypes()[i], visitedPairsNew)) {
+			if (!areMatchingTypes(type1.getFieldTypes()[i], type2.getFieldTypes()[i], visitedPairs)) {
 				return false;
 			}
 		}
@@ -920,13 +934,14 @@ public class TypeHandler implements ITypeHandler {
 
 	private static boolean areMatchingTypes(final CArray type1, final CArray type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
-		if (!areMatchingTypes(type1.getValueType(), type2.getValueType(), visitedPairs)) {
-			return false;
-		}
+		// if dimensions dont match, array dont match
 		if (!type1.getBound().toString().equals(type2.getBound().toString())) {
 			return false;
 		}
-
+		// compare value types
+		if (!areMatchingTypes(type1.getValueType(), type2.getValueType(), visitedPairs)) {
+			return false;
+		}
 		return true;
 	}
 
