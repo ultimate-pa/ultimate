@@ -175,7 +175,6 @@ public class CommandLineController implements IController<RunDefinition> {
 			// from now on, use the shutdown hook that disables the toolchain if the user presses CTRL+C (hopefully)
 			Runtime.getRuntime().addShutdownHook(new Thread(new SigIntTrap(currentToolchain, mLogger), "SigIntTrap"));
 			startExecutingToolchain(core, fullParams, mLogger, currentToolchain);
-
 		} catch (final ParseException pex) {
 			printParseException(args, pex);
 			fullParser.printHelp();

@@ -28,6 +28,10 @@ package de.uni_freiburg.informatik.ultimate.cli;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -160,7 +164,13 @@ public class ParsedParameter {
 	}
 
 	public File[] getInputFiles() throws InvalidFileArgumentException, ParseException {
-		final File[] inputFilesArgument = getInputFileArgument();
+		final File[] inputFilesArgument;
+		try {
+			inputFilesArgument = getInputFileArgument();
+		} catch (final IOException ex) {
+			throw new InvalidFileArgumentException(ex.getMessage(), ex);
+		}
+
 		if (inputFilesArgument == null || inputFilesArgument.length == 0) {
 			throw new InvalidFileArgumentException("No input file specified");
 		}
@@ -185,15 +195,24 @@ public class ParsedParameter {
 		return Paths.get(dir, joinednames).toString();
 	}
 
-	private File[] getInputFileArgument() {
+	private File[] getInputFileArgument() throws IOException {
 		final String[] values = mCli.getOptionValues(CommandLineOptions.OPTION_NAME_INPUTFILES);
-		final File[] files = new File[values.length];
+		final List<File> files = new ArrayList<>();
 
 		for (int i = 0; i < values.length; ++i) {
-			files[i] = new File(values[i]);
+			final String value = values[i];
+			if (value.contains("*")) {
+				final int first = value.indexOf("*");
+				try (DirectoryStream<Path> dirStream =
+						Files.newDirectoryStream(Paths.get(value.substring(0, first - 1)), value.substring(first))) {
+					dirStream.forEach(path -> files.add(path.toFile()));
+				}
+			} else {
+				files.add(new File(values[i]));
+			}
 		}
 
-		return files;
+		return files.toArray(new File[files.size()]);
 	}
 
 	private static void checkFileReadable(final File file, final String argumentName)
