@@ -4,6 +4,7 @@
  
   <rundefinition name="Bitvector">
           <option name="-tc">../../../trunk/examples/toolchains/C-BPP.xml</option>
+          <option name="-ea" />
   </rundefinition>
     
   <tasks name="ReachSafety32">
