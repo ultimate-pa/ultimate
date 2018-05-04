@@ -32,7 +32,6 @@ import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -71,17 +70,16 @@ public class TypeHelper {
 			return new CStruct(rslvName);
 		} else if (ds instanceof IASTElaboratedTypeSpecifier) {
 			final IASTElaboratedTypeSpecifier elab = (IASTElaboratedTypeSpecifier) ds;
-			if (elab.getKind() == IASTElaboratedTypeSpecifier.k_struct 
+			if (elab.getKind() == IASTElaboratedTypeSpecifier.k_struct
 					|| elab.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-				final String rslvStructName = 
+				final String rslvStructName =
 						fs.applyMultiparseRenaming(ds.getContainingFilename(), elab.getName().toString());
 				if (!fs.containsCSymbol(ds, rslvStructName)) {
 					throw new UnsupportedSyntaxException(null, "Struct used before collected");
 				}
 				return fs.findCSymbol(ds, rslvStructName).getCDecl().getType();
-			} else {
-				throw new UnsupportedOperationException("unknown elab kind");
 			}
+			throw new UnsupportedOperationException("unknown elab kind");
 		}
 		throw new UnsupportedOperationException("only simple decl specifiers are currently supported");
 	}
