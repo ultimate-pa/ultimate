@@ -28,10 +28,13 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
@@ -84,13 +87,30 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	public final boolean mUseNamedTerms = true;
 
 	protected final HoareTripleCheckerStatisticsGenerator mEdgeCheckerBenchmark;
+	private final boolean mConstructCounterexamples;
+	private ProgramState<Term> mCounterexampleStatePrecond;
+	private ProgramState<Term> mCounterexampleStatePostcond;
 
+	/**
+	 * @deprecated state explicitly if you want counterexamples
+	 */
+	@Deprecated
 	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit) {
 		mManagedScript = csToolkit.getManagedScript();
 		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
 		mOldVarsAssignmentCache = csToolkit.getOldVarsAssignmentCache();
 		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
+		mConstructCounterexamples = false;
 	}
+	
+	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit, final boolean constructCounterexamples) {
+		mManagedScript = csToolkit.getManagedScript();
+		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
+		mOldVarsAssignmentCache = csToolkit.getOldVarsAssignmentCache();
+		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
+		mConstructCounterexamples = true;
+	}
+
 
 	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
@@ -632,6 +652,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		assert mAssertedPrecond != null : "Assert precond first!";
 		assert mAssertedPostcond != null : "Assert postcond first!";
 		mAssertedPostcond = null;
+		mCounterexampleStatePrecond = null;
+		mCounterexampleStatePostcond = null;
 		mManagedScript.pop(this, 1);
 		if (mAssertedAction instanceof IReturnAction) {
 			assert mHierConstants != null : "Assert hierPred first!";
@@ -649,6 +671,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final LBool isSat = mManagedScript.checkSat(this);
 		switch (isSat) {
 		case SAT:
+			if (mConstructCounterexamples) {
+				mCounterexampleStatePrecond = constructCounterexampleStateForPrecondition();
+				mCounterexampleStatePostcond = constructCounterexampleStateForPostcondition();
+			}
 			mEdgeCheckerBenchmark.getSolverCounterSat().incRe();
 			break;
 		case UNKNOWN:
@@ -663,6 +689,36 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return IHoareTripleChecker.convertLBool2Validity(isSat);
 	}
+	
+	private ProgramState<Term> constructCounterexampleStateForPrecondition() {
+		final Map<Term, Collection<Term>> ctxPrecondition = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : mAssertedAction.getTransformula().getInVars().entrySet()) {
+			if (SmtUtils.isSortForWhichWeCanGetValues(entry.getKey().getTermVariable().getSort())) {
+				final Term inVarConst = UnmodifiableTransFormula.getConstantForInVar(entry.getKey());
+				final Map<Term, Term> values = mManagedScript.getValue(this, new Term[] { inVarConst });
+				final Term value = values.get(inVarConst);
+				ctxPrecondition.put(entry.getKey().getTermVariable(), Collections.singletonList(value));
+			}
+		}
+		return new ProgramState<>(ctxPrecondition);
+	}
+
+	private ProgramState<Term> constructCounterexampleStateForPostcondition() {
+		final Map<Term, Collection<Term>> ctxPostcondition = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : mAssertedAction.getTransformula().getOutVars().entrySet()) {
+			if (SmtUtils.isSortForWhichWeCanGetValues(entry.getKey().getTermVariable().getSort())) {
+				final Term outVarConst = UnmodifiableTransFormula.getConstantForOutVar(entry.getKey(),
+						mAssertedAction.getTransformula().getInVars(),
+						mAssertedAction.getTransformula().getOutVars());
+				final Map<Term, Term> values = mManagedScript.getValue(this, new Term[] { outVarConst });
+				final Term value = values.get(outVarConst);
+				ctxPostcondition.put(entry.getKey().getTermVariable(), Collections.singletonList(value));
+			}
+		}
+		return new ProgramState<>(ctxPostcondition);
+	}
+
+
 
 	private static Term renameVarsToDefaultConstants(final Set<? extends IProgramVar> set, final Term formula, 
 			final ManagedScript managedScript, final Object lock) {
@@ -855,4 +911,25 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		return false;
 	}
 
+	public ProgramState<Term> getCounterexampleStatePrecond() {
+		if (!mConstructCounterexamples) {
+			throw new IllegalStateException("Construction of counterexamples is not enabled.");
+		}
+		if (mCounterexampleStatePrecond == null) {
+			throw new IllegalStateException("Last response was valid or assertion stack has been altered.");
+		} else {
+			return mCounterexampleStatePrecond;
+		}
+	}
+
+	public ProgramState<Term> getCounterexampleStatePostcond() {
+		if (!mConstructCounterexamples) {
+			throw new IllegalStateException("Construction of counterexamples is not enabled.");
+		}
+		if (mCounterexampleStatePrecond == null) {
+			throw new IllegalStateException("Last response was valid or assertion stack has been altered.");
+		} else {
+			return mCounterexampleStatePostcond;
+		}
+	}
 }
