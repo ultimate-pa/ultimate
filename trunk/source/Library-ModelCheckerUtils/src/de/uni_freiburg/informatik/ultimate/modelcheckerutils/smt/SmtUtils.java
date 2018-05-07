@@ -1858,14 +1858,12 @@ public final class SmtUtils {
 	 * Returns a filtered Term of {@code formula} w.r.t to the given {@code variables}. This means, all conjuncts of
 	 * {@code formula}, that do not contain any of {@code variables} are discarded and the other ones returned.
 	 */
-	public static Term filterFormula(final Term formula, final Set<TermVariable> variables, final Script script,
-			final boolean allowOtherVariables) {
+	public static Term filterFormula(final Term formula, final Set<TermVariable> variables, final Script script) {
 		final Term[] oldConjuncts = getConjuncts(formula);
 		final List<Term> newConjuncts = new ArrayList<>(oldConjuncts.length);
 		for (final Term c : oldConjuncts) {
 			final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(c.getFreeVars()));
-			if (DataStructureUtils.haveNonEmptyIntersection(freeVars, variables)
-					&& (allowOtherVariables || variables.containsAll(freeVars))) {
+			if (DataStructureUtils.haveNonEmptyIntersection(freeVars, variables)) {
 				newConjuncts.add(c);
 			}
 		}

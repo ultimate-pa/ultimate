@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.Boogie2SmtSymbolTableTmpVars;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -64,6 +66,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final MappedTerm2Expression mMappedTerm2Expression;
 	private final Boogie2SmtSymbolTableTmpVars mVariableProvider;
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
 	public ArrayDomainToolkit(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
 			final IUltimateServiceProvider services, final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
@@ -84,6 +87,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mMinBound = createVariable("-inf", BoogiePrimitiveType.TYPE_INT);
 		mMaxBound = createVariable("inf", BoogiePrimitiveType.TYPE_INT);
 		mServices = services;
+		mLogger = logger;
 	}
 
 	public TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {
@@ -140,6 +144,9 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		final CodeBlock codeBlock =
 				mCodeBlockFactory.constructStatementSequence(null, null, statement, Origin.IMPLEMENTATION);
 		final List<STATE> newStates = mSubDomain.getPostOperator().apply(currentState, codeBlock);
+		if (newStates.isEmpty()) {
+			return mSubDomain.createBottomState();
+		}
 		STATE result = newStates.get(0);
 		for (int i = 1; i < newStates.size(); i++) {
 			result = result.union(newStates.get(i));
@@ -206,5 +213,9 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 
 	public EquivalenceFinder createEquivalenceFinder(final Term term) {
 		return new EquivalenceFinder(term, mServices, getManagedScript());
+	}
+
+	public Term applyQuantifierElimination(final Term term) {
+		return new QuantifierPusher(getManagedScript(), mServices, false, PqeTechniques.ALL_LOCAL).transform(term);
 	}
 }

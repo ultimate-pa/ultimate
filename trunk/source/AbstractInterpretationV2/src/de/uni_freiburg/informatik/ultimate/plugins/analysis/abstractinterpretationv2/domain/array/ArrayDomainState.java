@@ -595,8 +595,6 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Set<IProgramVarOrConst> removedVarsThis = new HashSet<>();
 		final Set<IProgramVarOrConst> removedVarsOther = new HashSet<>();
 		final Script script = mToolkit.getScript();
-		final Term thisTerm = getSubTerm();
-		final Term otherTerm = other.getSubTerm();
 		ArrayDomainState<STATE> thisState = this;
 		ArrayDomainState<STATE> otherState = other;
 		for (final IProgramVarOrConst array : mSegmentationMap.getArrays()) {
@@ -636,13 +634,13 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 					newValues.add(thisValue);
 				} else if (thisValue != null) {
 					final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
-					constraints.add(connstructEquivalentConstraint(newValueVar, thisValue, thisTerm, false));
+					constraints.add(project(newValueVar, thisValue, thisState.getSubTerm()));
 					newVariables.add(newValueVar);
 					removedVarsThis.add(thisValue);
 					newValues.add(newValueVar);
 				} else if (otherValue != null) {
 					final IProgramVar newValueVar = mToolkit.createValueVar(valueType);
-					constraints.add(connstructEquivalentConstraint(newValueVar, otherValue, otherTerm, false));
+					constraints.add(project(newValueVar, otherValue, otherState.getSubTerm()));
 					newVariables.add(newValueVar);
 					removedVarsOther.add(otherValue);
 					newValues.add(newValueVar);
@@ -664,6 +662,18 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final STATE resultingSubstate = mToolkit.handleAssumptionBySubdomain(commonSubstate.addVariables(newVariables),
 				SmtUtils.and(script, constraints));
 		return updateState(resultingSubstate, segmentationMap).simplify();
+	}
+
+	private Term project(final IProgramVar newVar, final IProgramVar oldVar, final Term baseTerm) {
+		final TermVariable newTv = newVar.getTermVariable();
+		final Term substituted =
+				new Substitution(mToolkit.getManagedScript(), Collections.singletonMap(oldVar.getTermVariable(), newTv))
+						.transform(baseTerm);
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(substituted.getFreeVars()));
+		freeVars.remove(newTv);
+		final Term quantified =
+				SmtUtils.quantifier(mToolkit.getScript(), QuantifiedFormula.EXISTS, freeVars, substituted);
+		return mToolkit.applyQuantifierElimination(quantified);
 	}
 
 	@Override
@@ -806,8 +816,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			return false;
 		}
 		final TermVariable value = segmentation.getValue(0).getTermVariable();
-		final Term valueConstraints =
-				SmtUtils.filterFormula(term, Collections.singleton(value), mToolkit.getScript(), true);
+		final Term valueConstraints = SmtUtils.filterFormula(term, Collections.singleton(value), mToolkit.getScript());
 		return SmtUtils.isTrue(valueConstraints);
 
 	}
@@ -820,7 +829,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Term term = mSubState.getTerm(script);
 		final Set<TermVariable> bounds = getTermVars(mSegmentationMap.getBoundVars());
 		final Set<TermVariable> values = getTermVars(mSegmentationMap.getValueVars());
-		final Term valueTerm = SmtUtils.filterFormula(term, values, script, true);
+		final Term valueTerm = SmtUtils.filterFormula(term, values, script);
 		final Term arrayTerm = mSegmentationMap.getTerm(mToolkit.getManagedScript(), valueTerm);
 		final Term conjunction = Util.and(script, term, arrayTerm);
 		final Set<TermVariable> auxVars = DataStructureUtils.union(bounds, values);
@@ -942,16 +951,15 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 	}
 
 	private Term connstructEquivalentConstraint(final IProgramVarOrConst newVariable, final IProgramVar oldVariable) {
-		return connstructEquivalentConstraint(newVariable, oldVariable, getSubTerm(), true);
+		return connstructEquivalentConstraint(newVariable, oldVariable, getSubTerm());
 	}
 
 	private Term connstructEquivalentConstraint(final IProgramVarOrConst newVariable, final IProgramVar oldVariable,
-			final Term baseTerm, final boolean allowOtherVariables) {
+			final Term baseTerm) {
 		final Script script = mToolkit.getScript();
 		final Term newTerm = NonrelationalTermUtils.getTermVar(newVariable);
 		final TermVariable oldTerm = oldVariable.getTermVariable();
-		final Term constraint =
-				SmtUtils.filterFormula(baseTerm, Collections.singleton(oldTerm), script, allowOtherVariables);
+		final Term constraint = SmtUtils.filterFormula(baseTerm, Collections.singleton(oldTerm), script);
 		return new Substitution(script, Collections.singletonMap(oldTerm, newTerm)).transform(constraint);
 	}
 
@@ -1031,8 +1039,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		while (next < segmentation.size()) {
 			final TermVariable currentValue = segmentation.getValue(current).getTermVariable();
 			final TermVariable nextValue = segmentation.getValue(next).getTermVariable();
-			final Term currentTerm = SmtUtils.filterFormula(term, Collections.singleton(currentValue), script, true);
-			final Term nextTerm = SmtUtils.filterFormula(term, Collections.singleton(nextValue), script, true);
+			final Term currentTerm = SmtUtils.filterFormula(term, Collections.singleton(currentValue), script);
+			final Term nextTerm = SmtUtils.filterFormula(term, Collections.singleton(nextValue), script);
 			final Substitution substitution =
 					new Substitution(mToolkit.getManagedScript(), Collections.singletonMap(nextValue, currentValue));
 			final Term currentSubstitutedTerm = substitution.transform(currentTerm);
