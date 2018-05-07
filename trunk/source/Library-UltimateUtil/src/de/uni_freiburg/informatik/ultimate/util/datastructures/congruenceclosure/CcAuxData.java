@@ -392,7 +392,8 @@ public class CcAuxData<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	private void addPropIfOneIsEqualOneIsUnconstrained(final ELEM af1,
 			final ELEM arg1, final ELEM af2, final ELEM arg2,final HashRelation<ELEM, ELEM> result) {
-		if (!mCongruenceClosure.hasElement(af1) || !mCongruenceClosure.hasElement(af2) || !mCongruenceClosure.hasElement(arg1) || !mCongruenceClosure.hasElement(arg2)) {
+		if (!mCongruenceClosure.hasElement(af1) || !mCongruenceClosure.hasElement(af2)
+				|| !mCongruenceClosure.hasElement(arg1) || !mCongruenceClosure.hasElement(arg2)) {
 			/*
 			 *  it may happen that during a remove element we reach here and some map still has an element that is
 			 *  being removed (if we added a propagation here, we would add the element back..)

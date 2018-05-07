@@ -150,12 +150,16 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			intersection = literalSet;
 		}
 
-		final Set<ELEM> newLiteralSet = new HashSet<>(intersection);
-		for (final ELEM lit : intersection) {
+		updateContainsConstraintApplyPropagations(elementRep, intersection);
+	}
+
+	private void updateContainsConstraintApplyPropagations(final ELEM elemRep, final Set<ELEM> literals) {
+		final Set<ELEM> newLiteralSet = new HashSet<>(literals);
+		for (final ELEM lit : literals) {
 			/*
 			 * rule: e in L /\ e != l --> e in L\{l}
 			 */
-			if (mCongruenceClosure.getEqualityStatus(elementRep, lit) == EqualityStatus.NOT_EQUAL) {
+			if (mCongruenceClosure.getEqualityStatus(elemRep, lit) == EqualityStatus.NOT_EQUAL) {
 				newLiteralSet.remove(lit);
 			}
 		}
@@ -173,12 +177,12 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			 * rule: e in {l} --> e ~ l
 			 * (containsConstraint is implicit in this case)
 			 */
-			mCcManager.reportEquality(elementRep, intersection.iterator().next(), mCongruenceClosure, true);
+			mCcManager.reportEquality(elemRep, literals.iterator().next(), mCongruenceClosure, true);
 		} else {
 			/*
 			 * rule: e in L /\ l in L' --> e in intersect(L, L')
 			 */
-			mContainsConstraints.put(elementRep, intersection);
+			mContainsConstraints.put(elemRep, literals);
 		}
 
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
@@ -195,6 +199,12 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	 * <li> applies the rule "e ~ l --> e in {l}" (if one of the elements is a literal)
 	 *    EDIT: this rule is automatically dealt with because we only store representatives here and literals are always
 	 *      the representatives of their equivalence class. We leave the containments l in {l} implicit.
+	 *
+	 * <li> EDIT (may18): what was not dealt with before:
+	 *   updating representatives may not be enough, because some propagation rules might trigger:
+	 *     e.g., if one of the newly equated elements has a disequality constraint, and one has a set constraint, they
+	 *      might interact
+	 *      (example: e1 in {l1, l2}, e2 != l1, e2 != l2 && e1 = e2 --> bottom)
 	 *
 	 * @param elem1OldRep
 	 * @param elem2OldRep
@@ -225,15 +235,17 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			return;
 		}
 
-		// rule: e in {} --> \bot
-		if (intersection.isEmpty()) {
-			reportInconsistency();
-			assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
-			return;
-		}
+		updateContainsConstraintApplyPropagations(newRep, intersection);
 
-		mContainsConstraints.put(newRep, intersection);
-		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
+//		// rule: e in {} --> \bot
+//		if (intersection.isEmpty()) {
+//			reportInconsistency();
+//			assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
+//			return;
+//		}
+//
+//		mContainsConstraints.put(newRep, intersection);
+//		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}
 
 	public CCLiteralSetConstraints<ELEM> join(final CCLiteralSetConstraints<ELEM> other,
