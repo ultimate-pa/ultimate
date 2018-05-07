@@ -44,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public final class BitvectorUtils {
 
 	private enum SupportedBitvectorOperations {
-		zero_extend, extract, bvadd, bvsub, bvmul, bvudiv, bvurem, bvsdiv, bvsrem, bvand, bvor, bvxor, bvnot, bvneg, bvshl, bvlshr, bvashr, bvult, bvule, bvugt, bvuge, bvslt, bvsle, bvsgt, bvsge,
+		zero_extend, extract, bvadd, bvsub, bvmul, bvudiv, bvurem, bvsdiv, bvsrem, bvand, bvor, bvxor, bvnot, bvneg,
+		bvshl, bvlshr, bvashr, bvult, bvule, bvugt, bvuge, bvslt, bvsle, bvsgt, bvsge,
 	}
 
 	private BitvectorUtils() {
@@ -56,19 +57,17 @@ public final class BitvectorUtils {
 	public static boolean isBitvectorConstant(final FunctionSymbol symb) {
 		return symb.isIntern() && symb.getName().matches(BITVEC_CONST_PATTERN);
 	}
-	
 
 	/**
-	 * @return true iff term is some bitvector constant (we do not care about 
-	 * the index) whose value is the input number.
+	 * @return true iff term is some bitvector constant (we do not care about the index) whose value is the input
+	 *         number.
 	 */
 	public static boolean isBitvectorConstant(final BigInteger number, final Term term) {
 		final BitvectorConstant bvConst = constructBitvectorConstant(term);
 		if (bvConst == null) {
 			return false;
-		} else {
-			return bvConst.getValue().equals(number);
 		}
+		return bvConst.getValue().equals(number);
 	}
 
 	/**
@@ -441,13 +440,13 @@ public final class BitvectorUtils {
 		}
 
 	}
-	
+
 	private static class Bvand extends RegularBitvectorOperation_BitvectorResult {
 
 		public Bvand() {
 			super("bvand", x -> y -> BitvectorConstant.bvand(x, y));
 		}
-		
+
 		@Override
 		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
 				final BitvectorConstant[] bvs) {

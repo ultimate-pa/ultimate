@@ -120,19 +120,19 @@ public class ExpressionFactory {
 	public static Expression newBinaryExpression(final ILocation loc, final Operator operator, final Expression left,
 			final Expression right) {
 		if (left instanceof BooleanLiteral) {
-			return constructBinaryExpression_Bool(loc, operator, (BooleanLiteral) left, (BooleanLiteral) right);
+			return constructBinExprWithLiteralOps_Bool(loc, operator, (BooleanLiteral) left, (BooleanLiteral) right);
 		} else if (left instanceof IntegerLiteral) {
-			return constructBinaryExpression_Integer(loc, operator, (IntegerLiteral) left, (IntegerLiteral) right);
+			return constructBinExprWithLiteralOps_Integer(loc, operator, (IntegerLiteral) left, (IntegerLiteral) right);
 		} else if (left instanceof RealLiteral) {
-			return constructBinaryExpression_Real(loc, operator, (RealLiteral) left, (RealLiteral) right);
+			return constructBinExprWithLiteralOps_Real(loc, operator, (RealLiteral) left, (RealLiteral) right);
 		} else if (left instanceof BitvecLiteral) {
-			return constructBinaryExpression_Bitvector(loc, operator, (BitvecLiteral) left, (BitvecLiteral) right);
+			return constructBinExprWithLiteralOps_Bitvector(loc, operator, (BitvecLiteral) left, (BitvecLiteral) right);
 		} else {
 			return constructBinaryExpression(loc, operator, left, right);
 		}
 	}
 
-	private static BooleanLiteral constructBinaryExpression_Bool(final ILocation loc, final Operator operator,
+	private static BooleanLiteral constructBinExprWithLiteralOps_Bool(final ILocation loc, final Operator operator,
 			final BooleanLiteral leftLiteral, final BooleanLiteral rightLiteral) {
 		final boolean leftValue = leftLiteral.getValue();
 		final boolean rightValue = rightLiteral.getValue();
@@ -174,7 +174,7 @@ public class ExpressionFactory {
 		return createBooleanLiteral(loc, result);
 	}
 
-	private static Expression constructBinaryExpression_Integer(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOps_Integer(final ILocation loc, final Operator operator,
 			final IntegerLiteral leftLiteral, final IntegerLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
@@ -235,7 +235,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	private static Expression constructBinaryExpression_Real(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOps_Real(final ILocation loc, final Operator operator,
 			final RealLiteral leftLiteral, final RealLiteral rightLiteral) {
 		final BigDecimal leftValue = new BigDecimal(leftLiteral.getValue());
 		final BigDecimal rightValue = new BigDecimal(rightLiteral.getValue());
@@ -293,7 +293,7 @@ public class ExpressionFactory {
 		}
 	}
 
-	private static Expression constructBinaryExpression_Bitvector(final ILocation loc, final Operator operator,
+	private static Expression constructBinExprWithLiteralOps_Bitvector(final ILocation loc, final Operator operator,
 			final BitvecLiteral leftLiteral, final BitvecLiteral rightLiteral) {
 		final BigInteger leftValue = new BigInteger(leftLiteral.getValue());
 		final BigInteger rightValue = new BigInteger(rightLiteral.getValue());
