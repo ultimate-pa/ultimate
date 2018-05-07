@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -539,8 +538,8 @@ public class StandardFunctionHandler {
 					IASTBinaryExpression.op_equals, MemoryHandler.getPointerOffset(tmpExpr, loc),
 					mExpressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(nullExpr, loc),
 					mExpressionTranslation.getCTypeOfPointerComponents());
-			final BinaryExpression equalsNull = ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND,
-					baseEqualsNull, offsetEqualsNull);
+			final Expression equalsNull =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
 			// old solution did not work quickly..
 			// final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc,
 			// new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
@@ -565,12 +564,12 @@ public class StandardFunctionHandler {
 							new Expression[] { MemoryHandler.getPointerBaseAddress(argS.mLrVal.getValue(), loc) }),
 					mExpressionTranslation.getCTypeOfPointerComponents());
 			// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
-			final BinaryExpression inRange =
-					ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND, baseEquals, ExpressionFactory
-							.constructBinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
+			final Expression inRange =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquals, ExpressionFactory
+							.newBinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
 			// assume equalsNull or inRange
 			final AssumeStatement assume = new AssumeStatement(loc,
-					ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
 			builder.addStatement(assume);
 		}
 
@@ -902,14 +901,13 @@ public class StandardFunctionHandler {
 		final ExpressionResult nanRResult = mExpressionTranslation.createNanOrInfinity(loc, "NAN");
 
 		mExpressionTranslation.usualArithmeticConversions(loc, nanLResult, leftRvaluedResult);
-		final BinaryExpression leftExpr = ExpressionFactory.constructBinaryExpression(loc, Operator.COMPEQ,
+		final Expression leftExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 				leftRvaluedResult.getLrValue().getValue(), nanLResult.getLrValue().getValue());
 
 		mExpressionTranslation.usualArithmeticConversions(loc, nanRResult, rightRvaluedResult);
-		final BinaryExpression rightExpr = ExpressionFactory.constructBinaryExpression(loc, Operator.COMPEQ,
+		final Expression rightExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 				rightRvaluedResult.getLrValue().getValue(), nanRResult.getLrValue().getValue());
-		final BinaryExpression expr =
-				ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
+		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
 		final ExpressionResult rtr =
 				combineExpressionResults(lrVal, leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult);
@@ -947,7 +945,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult greaterThan = mCHandler.handleRelationalOperators(main, loc,
 				IASTBinaryExpression.op_greaterThan, leftRvaluedResult, rightRvaluedResult);
 
-		final BinaryExpression expr = ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICOR,
+		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 				lessThan.getLrValue().getValue(), greaterThan.getLrValue().getValue());
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
 		final ExpressionResult rtr = combineExpressionResults(lrVal, lessThan, greaterThan);
@@ -1181,7 +1179,7 @@ public class StandardFunctionHandler {
 
 			final Expression aAndB =
 					// new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
-					ExpressionFactory.constructBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
 							offsetNonnegative);
 			if (memoryHandler.getPointerBaseValidityCheckMode() == PointerCheckMode.ASSERTandASSUME) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);

@@ -421,7 +421,7 @@ public class ExpressionFactory {
 		final Iterator<Expression> iter = exprs.iterator();
 		Expression current = iter.next();
 		while (iter.hasNext()) {
-			current = constructBinaryExpression(loc, op, current, iter.next());
+			current = newBinaryExpression(loc, op, current, iter.next());
 		}
 		return current;
 	}
@@ -536,7 +536,7 @@ public class ExpressionFactory {
 		return new ArrayStoreExpression(loc, type, array, indices, value);
 	}
 
-	public static BinaryExpression constructBinaryExpression(final ILocation loc, final Operator operator,
+	private static BinaryExpression constructBinaryExpression(final ILocation loc, final Operator operator,
 			final Expression operand1, final Expression operand2) {
 		final BoogieType type = TypeCheckHelper.typeCheckBinaryExpression(operator, (BoogieType) operand1.getType(),
 				(BoogieType) operand2.getType(), new TypeErrorReporter(loc));
