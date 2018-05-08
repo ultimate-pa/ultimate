@@ -11,14 +11,14 @@ procedure foo() {
 
   a[j] := 3;
 
-  havoc nondet;
+  // havoc nondet;
   mixed1 := ~mix~Array~Int~Int(a, b, nondet);
 
   mixed1[k] := 4;
 
   assert mixed1[i] == 0 || mixed1[i] == 1 || mixed1[i] == 3 || mixed1[i] == 4;
 
-  havoc nondet;
+  // havoc nondet;
   mixed2 := ~mix~Array~Int~Int(mixed1, c, nondet);
 
   mixed1[l] := 5;

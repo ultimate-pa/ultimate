@@ -11,7 +11,7 @@ procedure foo() {
 
   a[j] := 2;
 
-  havoc nondet;
+  // havoc nondet;
   mixed1 := ~mix~Array~Int~Int(a, b, nondet);
 
   assert mixed1[i] == 0 || mixed1[i] == 1 || mixed1[i] == 2;

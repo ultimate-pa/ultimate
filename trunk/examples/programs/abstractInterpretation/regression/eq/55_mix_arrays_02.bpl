@@ -7,7 +7,7 @@ procedure foo() {
   a := ~const~Array~Int~Int(0);
   b := ~const~Array~Int~Int(1);
 
-  havoc nondet;
+  //havoc nondet;
   mixed := ~mix~Array~Int~Int(a, b, nondet);
 
   assert mixed[i] == 0 || mixed [i] == 1;

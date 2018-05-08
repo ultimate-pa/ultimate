@@ -9,10 +9,12 @@ procedure foo() {
   b := ~const~Array~Int~Int(1);
   c := ~const~Array~Int~Int(2);
 
-  havoc nondet;
+  // havoc nondet;
+
   mixed1 := ~mix~Array~Int~Int(a, b, nondet);
 
-  havoc nondet;
+  // havoc nondet;
+
   mixed2 := ~mix~Array~Int~Int(mixed1, c, nondet);
 
   assert mixed2[i] == 0 || mixed2[i] == 1 || mixed2[i] == 2;
