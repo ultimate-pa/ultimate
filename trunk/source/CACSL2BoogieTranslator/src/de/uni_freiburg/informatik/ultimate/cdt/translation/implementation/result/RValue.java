@@ -46,9 +46,9 @@ public class RValue extends LRValue {
 	public Expression value;
 
 	/**
-	 * The Value in a ResultExpression that may only be used on the
-	 * right-hand side of an assignment, i.e. its corresponding
-	 * memory cell may only be read.
+	 * The Value in a ResultExpression that may only be used on the right-hand side of an assignment, i.e. its
+	 * corresponding memory cell may only be read.
+	 *
 	 * @param value
 	 */
 	public RValue(final Expression value, final CType cType) {
@@ -57,9 +57,9 @@ public class RValue extends LRValue {
 	}
 
 	/**
-	 * The Value in a ResultExpression that may only be used on the
-	 * right-hand side of an assignment, i.e. its corresponding
-	 * memory cell may only be read.
+	 * The Value in a ResultExpression that may only be used on the right-hand side of an assignment, i.e. its
+	 * corresponding memory cell may only be read.
+	 *
 	 * @param value
 	 */
 	public RValue(final Expression value, final CType cType, final boolean boogieBool) {
@@ -71,8 +71,8 @@ public class RValue extends LRValue {
 		this(rval.value, rval.getCType(), rval.isBoogieBool(), rval.isIntFromPointer());
 	}
 
-	public RValue(final Expression value, final CType cType,
-			final boolean isBoogieBool, final boolean isIntFromPointer) {
+	public RValue(final Expression value, final CType cType, final boolean isBoogieBool,
+			final boolean isIntFromPointer) {
 		super(cType, isBoogieBool, isIntFromPointer);
 		this.value = value;
 		checkType(cType);
@@ -91,24 +91,24 @@ public class RValue extends LRValue {
 			throw new IllegalArgumentException("RValues cannot have function type");
 		}
 		if (!areBoogieAndCTypeCompatible(type, value.getType())) {
-			throw new IllegalArgumentException("The value of the constructed RValue has a BoogieType that is "
-					+ "incompatible with its CType.");
+			throw new IllegalArgumentException(
+					String.format("The value of the constructed RValue has a BoogieType (%s) that is "
+							+ "incompatible with its CType (%s).", value.getType(), type));
 		}
 	}
 
-	static RValue boolToInt(final ILocation loc, final RValue rVal,
-			final ExpressionTranslation expressionTranslation) {
+	static RValue boolToInt(final ILocation loc, final RValue rVal, final ExpressionTranslation expressionTranslation) {
 		assert rVal.isBoogieBool();
 		final Expression one = expressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ONE);
 		final Expression zero = expressionTranslation.constructLiteralForIntegerType(loc,
 				new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero), rVal.getCType(),
-				false);
+		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
+				rVal.getCType(), false);
 	}
 
 	static boolean areBoogieAndCTypeCompatible(final CType cType, final IBoogieType bType) {
-//		final BoogieType bType = (BoogieType) iBoogieType;
+		// final BoogieType bType = (BoogieType) iBoogieType;
 		if (cType instanceof CPointer) {
 			if (!(bType instanceof BoogieStructType)) {
 				return false;
