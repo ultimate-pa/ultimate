@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**

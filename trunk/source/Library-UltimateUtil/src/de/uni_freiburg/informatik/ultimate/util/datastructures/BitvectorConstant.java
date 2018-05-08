@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
+package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.math.BigInteger;
 import java.util.function.Function;
@@ -36,6 +36,12 @@ import java.util.function.Function;
  *
  */
 public class BitvectorConstant {
+
+	public enum SupportedBitvectorOperations {
+		zero_extend, extract, bvadd, bvsub, bvmul, bvudiv, bvurem, bvsdiv, bvsrem, bvand, bvor, bvxor, bvnot, bvneg,
+		bvshl, bvlshr, bvashr, bvult, bvule, bvugt, bvuge, bvslt, bvsle, bvsgt, bvsge,
+	}
+
 	private final BigInteger mValue;
 	private final BigInteger mIndex;
 

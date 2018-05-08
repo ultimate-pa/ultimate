@@ -34,6 +34,8 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 
 /**
  * Provides auxiliary methods for SMT bitvectors.
@@ -42,11 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public final class BitvectorUtils {
-
-	private enum SupportedBitvectorOperations {
-		zero_extend, extract, bvadd, bvsub, bvmul, bvudiv, bvurem, bvsdiv, bvsrem, bvand, bvor, bvxor, bvnot, bvneg,
-		bvshl, bvlshr, bvashr, bvult, bvule, bvugt, bvuge, bvslt, bvsle, bvsgt, bvsge,
-	}
 
 	private BitvectorUtils() {
 		// Prevent instantiation of this utility class
