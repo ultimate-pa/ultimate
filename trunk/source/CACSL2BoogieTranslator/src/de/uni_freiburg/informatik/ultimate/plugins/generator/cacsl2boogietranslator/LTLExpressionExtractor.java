@@ -107,7 +107,7 @@ public class LTLExpressionExtractor {
 	private class LTLReplaceWeakUntil extends ACSLTransformer {
 
 		@Override
-		public BinaryExpression transform(final BinaryExpression node) {
+		public Expression transform(final BinaryExpression node) {
 
 			if (node.getOperator().equals(Operator.LTLWEAKUNTIL)) {
 				// a WU b == (a U b) || (G a)
