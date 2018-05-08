@@ -649,7 +649,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			if (equivalentFunction == elem.getAppliedFunction()) {
 				continue;
 			}
-			if (equivalentFunction.isConstantFunction()) {
+			if (equivalentFunction.isMixFunction()) {
 				// add element g(x)
 				addElement.accept(elem.replaceAppliedFunction(equivalentFunction));
 			}
