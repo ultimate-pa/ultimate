@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -59,10 +62,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.SupportedBitvectorOperations;
 
 /**
  * Construct Boogie Expressions (and LeftHandSides), use this instead of the constructors. Functionalities:
@@ -552,10 +558,27 @@ public class ExpressionFactory {
 	 *            the BoogieType of the result of the function application.
 	 * @return
 	 */
-	public static FunctionApplication constructFunctionApplication(final ILocation loc, final String identifier,
+	public static Expression constructFunctionApplication(final ILocation loc, final String identifier,
 			final Expression[] arguments, final BoogieType resultBoogieType) {
-		// final BoogieType type = (BoogieType) declaration.getOutParam().getType().getBoogieType();
+		final String smtIdentifier = getBitvectorSmtFunctionNameFromCFunctionName(identifier);
+		final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(smtIdentifier);
+		final FunctionApplication origFunApp = new FunctionApplication(loc, resultBoogieType, identifier, arguments);
+		if (sbo != null) {
+			final Expression smtFunApp = origFunApp.accept(new BitvectorCFunctionNames2SmtFunctionNames());
+			final Expression smtSimplifiedFunApp = smtFunApp.accept(new ComputeConstantBitvectorExpression());
+			final Expression cSimplifiedFunApp =
+					smtSimplifiedFunApp.accept(new BitvectorSmtFunctionNames2CFunctionNames());
+			return cSimplifiedFunApp;
+		}
 		return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
+	}
+
+	private static SupportedBitvectorOperations getSupportedBitvectorOperation(final String identifier) {
+		try {
+			return BitvectorConstant.SupportedBitvectorOperations.valueOf(identifier);
+		} catch (final IllegalArgumentException iae) {
+			return null;
+		}
 	}
 
 	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,
@@ -649,6 +672,372 @@ public class ExpressionFactory {
 	public static IdentifierExpression createVoidDummyExpression(final ILocation loc) {
 		return constructIdentifierExpression(loc, BoogieType.TYPE_ERROR, DUMMY_VOID,
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+	}
+
+	private static Expression newFunctionApplication(final FunctionApplication node, final boolean isChanged,
+			final List<Expression> newArgs) {
+		if (isChanged) {
+			return new FunctionApplication(node.getLoc(), node.getType(), node.getIdentifier(),
+					newArgs.toArray(new Expression[newArgs.size()]));
+		}
+		return node;
+	}
+
+	/**
+	 * Fills newArgs with either transformed or original parameters of the FunctionApplication.
+	 *
+	 * @return true iff some of the parameters changed during the transformation, false otherwise
+	 */
+	private static boolean handleFunctionApplicationParams(final FunctionApplication node,
+			final List<Expression> newArgs, final GeneratedBoogieAstTransformer transformer) {
+		boolean isChanged = false;
+		if (node.getArguments() != null && node.getArguments().length > 0) {
+			for (final Expression oldArg : node.getArguments()) {
+				final Expression newArg = oldArg.accept(transformer);
+				isChanged = isChanged || newArg != oldArg;
+				newArgs.add(newArg);
+			}
+		}
+		return isChanged;
+	}
+
+	private static String getBitvectorSmtFunctionNameFromCFunctionName(final String name) {
+		return name.substring(1).replaceAll("\\d+", "");
+	}
+
+	private final static class BitvectorCFunctionNames2SmtFunctionNames extends GeneratedBoogieAstTransformer {
+		@Override
+		public Expression transform(final FunctionApplication node) {
+			final String smtIdentifier = getBitvectorSmtFunctionNameFromCFunctionName(node.getIdentifier());
+			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(smtIdentifier);
+
+			final List<Expression> newArgs = new ArrayList<>();
+			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
+			if (sbo == null) {
+				return newFunctionApplication(node, isChanged, newArgs);
+			}
+			if (newArgs.isEmpty()) {
+				return new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier, new Expression[0]);
+			}
+			return new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier,
+					newArgs.toArray(new Expression[newArgs.size()]));
+		}
+	}
+
+	private final static class BitvectorSmtFunctionNames2CFunctionNames extends GeneratedBoogieAstTransformer {
+		@Override
+		public Expression transform(final FunctionApplication node) {
+
+			final List<Expression> newArgs = new ArrayList<>();
+			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(node.getIdentifier());
+			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
+			if (sbo == null) {
+				return newFunctionApplication(node, isChanged, newArgs);
+			}
+
+			if (newArgs.isEmpty()) {
+				throw new AssertionError("This should not happen");
+			}
+			// bitvector types should be primitives and their value is the length of the bitvector
+			final BoogiePrimitiveType btype = (BoogiePrimitiveType) newArgs.get(0).getType();
+			final String newName = "~" + node.getIdentifier() + String.valueOf(btype.getTypeCode());
+			return new FunctionApplication(node.getLoc(), node.getType(), newName,
+					newArgs.toArray(new Expression[newArgs.size()]));
+		}
+
+	}
+
+	private final static class ComputeConstantBitvectorExpression extends GeneratedBoogieAstTransformer {
+
+		@Override
+		public Expression transform(final FunctionApplication node) {
+
+			final List<Expression> newArgs = new ArrayList<>();
+			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(node.getIdentifier());
+			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
+			if (newArgs.isEmpty()) {
+				return node;
+			}
+
+			if (sbo == null) {
+				return newFunctionApplication(node, isChanged, newArgs);
+			}
+
+			if (newArgs.stream().anyMatch(a -> !(a instanceof BitvecLiteral))) {
+				return newFunctionApplication(node, isChanged, newArgs);
+			}
+
+			if (isBinaryBitvec(sbo)) {
+				final BinaryOperator<BitvectorConstant> accumulator = getAccumulator(sbo);
+				return toBitvectorLiteral(node, newArgs.stream().map(a -> (BitvecLiteral) a).map(
+						a -> new BitvectorConstant(new BigInteger(a.getValue()), BigInteger.valueOf(a.getLength())))
+						.reduce(accumulator).get());
+			} else if (isBinaryBoolean(sbo)) {
+				final List<BitvectorConstant> list = newArgs.stream().map(a -> (BitvecLiteral) a).map(
+						a -> new BitvectorConstant(new BigInteger(a.getValue()), BigInteger.valueOf(a.getLength())))
+						.collect(Collectors.toList());
+				if (list.size() != 2) {
+					throw new AssertionError();
+				}
+				final BiFunction<BitvectorConstant, BitvectorConstant, Boolean> op = getBooleanOp(sbo);
+				return toBooleanLiteral(node, op.apply(list.get(0), list.get(1)));
+			} else if (isUnaryBitvec(sbo)) {
+				if (newArgs.size() != 1) {
+					throw new AssertionError();
+				}
+				final BitvectorConstant param = newArgs.stream().map(a -> (BitvecLiteral) a).map(
+						a -> new BitvectorConstant(new BigInteger(a.getValue()), BigInteger.valueOf(a.getLength())))
+						.findAny().get();
+				final Function<BitvectorConstant, BitvectorConstant> op = getUnaryOp(sbo);
+				return toBitvectorLiteral(node, op.apply(param));
+			}
+
+			// TODO: Handle special ones
+
+			return super.transform(node);
+		}
+
+		private static boolean isUnaryBitvec(final SupportedBitvectorOperations sbo) {
+			switch (sbo) {
+			case bvadd:
+			case bvand:
+			case bvashr:
+			case bvlshr:
+			case bvmul:
+			case bvor:
+			case bvsdiv:
+			case bvshl:
+			case bvsrem:
+			case bvsub:
+			case bvudiv:
+			case bvurem:
+			case bvxor:
+			case extract:
+			case zero_extend:
+			case bvsle:
+			case bvslt:
+			case bvuge:
+			case bvugt:
+			case bvule:
+			case bvsge:
+			case bvsgt:
+			case bvult:
+				return false;
+			case bvneg:
+			case bvnot:
+				return true;
+			default:
+				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+			}
+		}
+
+		private static boolean isBinaryBoolean(final SupportedBitvectorOperations sbo) {
+			switch (sbo) {
+			case bvadd:
+			case bvand:
+			case bvashr:
+			case bvlshr:
+			case bvmul:
+			case bvor:
+			case bvsdiv:
+			case bvshl:
+			case bvsrem:
+			case bvsub:
+			case bvudiv:
+			case bvurem:
+			case bvxor:
+			case extract:
+			case zero_extend:
+			case bvneg:
+			case bvnot:
+				return false;
+			case bvsle:
+			case bvslt:
+			case bvuge:
+			case bvugt:
+			case bvule:
+			case bvsge:
+			case bvsgt:
+			case bvult:
+				return true;
+			default:
+				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+			}
+		}
+
+		private static BinaryOperator<BitvectorConstant> getAccumulator(final SupportedBitvectorOperations sbo) {
+			switch (sbo) {
+			case bvadd:
+				return BitvectorConstant::bvadd;
+			case bvand:
+				return BitvectorConstant::bvand;
+			case bvashr:
+				return BitvectorConstant::bvashr;
+			case bvlshr:
+				return BitvectorConstant::bvlshr;
+			case bvmul:
+				return BitvectorConstant::bvmul;
+			case bvor:
+				return BitvectorConstant::bvor;
+			case bvsdiv:
+				return BitvectorConstant::bvsdiv;
+			case bvshl:
+				return BitvectorConstant::bvshl;
+			case bvsrem:
+				return BitvectorConstant::bvsrem;
+			case bvsub:
+				return BitvectorConstant::bvsub;
+			case bvudiv:
+				return BitvectorConstant::bvudiv;
+			case bvurem:
+				return BitvectorConstant::bvurem;
+			case bvxor:
+				return BitvectorConstant::bvxor;
+			case extract:
+			case zero_extend:
+				throw new AssertionError("Has wrong signature: " + sbo);
+			case bvsle:
+			case bvslt:
+			case bvuge:
+			case bvugt:
+			case bvule:
+			case bvsge:
+			case bvsgt:
+			case bvult:
+				throw new AssertionError("Has wrong signature (is boolean): " + sbo);
+			case bvneg:
+			case bvnot:
+				throw new AssertionError("Has wrong signature (is unary): " + sbo);
+			default:
+				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+			}
+		}
+
+		private static Function<BitvectorConstant, BitvectorConstant>
+				getUnaryOp(final SupportedBitvectorOperations sbo) {
+			switch (sbo) {
+			case bvadd:
+			case bvand:
+			case bvashr:
+			case bvlshr:
+			case bvmul:
+			case bvor:
+			case bvsdiv:
+			case bvshl:
+			case bvsrem:
+			case bvsub:
+			case bvudiv:
+			case bvurem:
+			case bvxor:
+				throw new AssertionError("Has wrong signature (is binary): " + sbo);
+			case extract:
+			case zero_extend:
+				throw new AssertionError("Has wrong signature: " + sbo);
+			case bvsle:
+			case bvslt:
+			case bvuge:
+			case bvugt:
+			case bvule:
+			case bvsge:
+			case bvsgt:
+			case bvult:
+				throw new AssertionError("Has wrong signature (is boolean): " + sbo);
+			case bvneg:
+				return BitvectorConstant::bvneg;
+			case bvnot:
+				return BitvectorConstant::bvnot;
+			default:
+				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+			}
+		}
+
+		private static BiFunction<BitvectorConstant, BitvectorConstant, Boolean>
+				getBooleanOp(final SupportedBitvectorOperations sbo) {
+			switch (sbo) {
+			case bvadd:
+			case bvand:
+			case bvashr:
+			case bvlshr:
+			case bvmul:
+			case bvor:
+			case bvsdiv:
+			case bvshl:
+			case bvsrem:
+			case bvsub:
+			case bvudiv:
+			case bvurem:
+			case bvxor:
+				throw new AssertionError("Has wrong signature (is binary): " + sbo);
+			case extract:
+			case zero_extend:
+				throw new AssertionError("Has wrong signature: " + sbo);
+			case bvsle:
+				return BitvectorConstant::bvsle;
+			case bvslt:
+				return BitvectorConstant::bvslt;
+			case bvuge:
+				return BitvectorConstant::bvuge;
+			case bvugt:
+				return BitvectorConstant::bvugt;
+			case bvule:
+				return BitvectorConstant::bvule;
+			case bvsge:
+				return BitvectorConstant::bvsge;
+			case bvsgt:
+				return BitvectorConstant::bvsgt;
+			case bvult:
+				return BitvectorConstant::bvult;
+			case bvneg:
+			case bvnot:
+				throw new AssertionError("Has wrong signature (is unary): " + sbo);
+			default:
+				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+			}
+		}
+
+		private static boolean isBinaryBitvec(final SupportedBitvectorOperations sbo) {
+			switch (sbo) {
+			case bvadd:
+			case bvand:
+			case bvashr:
+			case bvlshr:
+			case bvmul:
+			case bvor:
+			case bvsdiv:
+			case bvshl:
+			case bvsrem:
+			case bvsub:
+			case bvudiv:
+			case bvurem:
+			case bvxor:
+				return true;
+			case extract:
+			case zero_extend:
+			case bvsle:
+			case bvslt:
+			case bvuge:
+			case bvugt:
+			case bvule:
+			case bvsge:
+			case bvsgt:
+			case bvult:
+			case bvneg:
+			case bvnot:
+				return false;
+			default:
+				throw new UnsupportedOperationException("Currently unsupported: " + sbo);
+			}
+		}
+
+		private static BitvecLiteral toBitvectorLiteral(final FunctionApplication node,
+				final BitvectorConstant bitvectorConstant) {
+			return new BitvecLiteral(node.getLoc(), node.getType(), bitvectorConstant.getValue().toString(),
+					bitvectorConstant.getIndex().intValueExact());
+		}
+
+		private static BooleanLiteral toBooleanLiteral(final FunctionApplication node, final boolean value) {
+			return new BooleanLiteral(node.getLoc(), node.getType(), value);
+		}
 	}
 
 }
