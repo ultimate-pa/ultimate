@@ -191,11 +191,28 @@ public abstract class EmitAstWithVisitors extends Emit {
 			if (getNonClassicNode().contains(n.getName())) {
 				continue;
 			}
+			final String parent = getAbstractParentName(n);
 			mWriter.println();
-			mWriter.println("    public " + n.name + " transform(" + n.name + " node) {");
+			mWriter.println("    public " + parent + " transform(" + n.name + " node) {");
 			mWriter.println("        return node;");
 			mWriter.println("    }");
 		}
+	}
+
+	private String getAbstractParentName(final Node n) {
+		final Node parentNode = getAbstractParent(n);
+
+		if (parentNode == null) {
+			return n.name;
+		}
+		return parentNode.name;
+	}
+
+	private Node getAbstractParent(final Node n) {
+		if (n == null || n.isAbstract) {
+			return n;
+		}
+		return getAbstractParent(n.parent);
 	}
 
 	private void emitVisitorHook() {
@@ -271,11 +288,12 @@ public abstract class EmitAstWithVisitors extends Emit {
 				.anyMatch(EmitAstWithVisitors::isArray);
 	}
 
-	private void writeTransformerAcceptMethod(final Node node, final List<Parameter> allAcslParameters) {
+	private void writeTransformerAcceptMethod(final Node node, final List<Parameter> params) {
 		// accept method for transformer
+		final String parent = getAbstractParentName(node);
 		mWriter.println();
-		mWriter.println("    public " + node.name + " accept(" + getTransformerName() + " visitor) {");
-		mWriter.println("        " + node.name + " node = visitor.transform(this);");
+		mWriter.println("    public " + parent + " accept(" + getTransformerName() + " visitor) {");
+		mWriter.println("        " + parent + " node = visitor.transform(this);");
 		mWriter.println("        if(node != this){");
 		mWriter.println("            return node;");
 		mWriter.println("        }");
@@ -283,34 +301,42 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 		boolean isChangedPrinted = false;
 
-		for (final Parameter p : allAcslParameters) {
+		for (final Parameter p : params) {
 			final String newName = NEW + p.getName();
 			final String listName = "tmpList" + newName;
+			final boolean isArrayType = isArrayType(p);
+			final String type;
+			if (isArrayType) {
+				type = getBaseType(p);
+			} else {
+				type = p.type;
+			}
+
 			// declarations
-			if (isArrayType(p)) {
+			if (isArrayType) {
 				if (!isChangedPrinted) {
 					mWriter.println("        boolean isChanged=false;");
 					isChangedPrinted = true;
 				}
-				mWriter.println("            ArrayList<" + getBaseType(p) + "> " + listName + " = new ArrayList<>();");
+				mWriter.println("            ArrayList<" + type + "> " + listName + " = new ArrayList<>();");
 			} else {
-				mWriter.println("            " + p.type + BLANK + newName + " = null;");
+				mWriter.println("            " + type + BLANK + newName + " = null;");
 			}
 
 			mWriter.println("        if(" + p.getName() + " != null){");
-			if (isArrayType(p)) {
-				mWriter.println("            for(" + getBaseType(p) + " elem : " + p.getName() + "){");
-				mWriter.println("                " + getBaseType(p) + BLANK + newName + " = elem.accept(visitor);");
+			if (isArrayType) {
+				mWriter.println("            for(" + type + " elem : " + p.getName() + "){");
+				mWriter.println("                " + type + BLANK + newName + " = (" + type + ")elem.accept(visitor);");
 				mWriter.println("                isChanged = isChanged || " + newName + " != elem;");
-				mWriter.println("                " + listName + ".add(elem.accept(visitor));");
+				mWriter.println("                " + listName + ".add(" + newName + ");");
 				mWriter.println("            }");
 			} else {
-				mWriter.println("            " + newName + " = " + p.getName() + ".accept(visitor);");
+				mWriter.println("            " + newName + " = (" + type + ")" + p.getName() + ".accept(visitor);");
 			}
 			mWriter.println("        }");
 		}
 
-		if (!allAcslParameters.isEmpty()) {
+		if (!params.isEmpty()) {
 
 			final StringBuilder builder = new StringBuilder();
 			builder.append("        if(");
@@ -319,7 +345,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 				builder.append("isChanged || ");
 			}
 
-			for (final Parameter p : allAcslParameters) {
+			for (final Parameter p : params) {
 				if (isArrayType(p)) {
 					continue;
 				}
