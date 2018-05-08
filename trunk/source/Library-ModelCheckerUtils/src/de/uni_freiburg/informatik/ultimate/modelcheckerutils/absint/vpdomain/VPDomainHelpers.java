@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayInd
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -291,27 +292,46 @@ public class VPDomainHelpers {
 		if (varsToProjectAway.isEmpty()) {
 			return true;
 		}
-		if (varsToProjectAway.stream().map(tv ->
-			unfrozen.getAllNodes().stream()
-				.anyMatch(node ->
-					VPDomainHelpers.arrayContains(node.getTerm().getFreeVars(), tv)))
-//					Arrays.asList(node.getTerm().getFreeVars()).contains(tv)))
-				.reduce((a, b) -> a || b)
-			.get()) {
-			assert false;
-			return false;
+
+		final Set<Term> mixArrayThirdArgs = new HashSet<>();
+
+		for (final NODE node : unfrozen.getAllNodes()) {
+			if (node.isMixFunction()) {
+				// a mix function has a third argument but does not depend on it!
+				if (varsToProjectAway.contains(node.getMixFunction1())) {
+					assert false;
+					return false;
+				}
+				if (varsToProjectAway.contains(node.getMixFunction2())) {
+					assert false;
+					return false;
+				}
+				mixArrayThirdArgs.add(((ApplicationTerm) node.getTerm()).getParameters()[2]);
+			} else {
+				final Set<Term> intersection = DataStructureUtils.intersection(
+						new HashSet<Term>(Arrays.asList(node.getTerm().getFreeVars())),
+						new HashSet<Term>(varsToProjectAway));
+				if (!intersection.isEmpty()) {
+					assert false;
+					return false;
+				}
+
+			}
 		}
+
 //		if (varsToProjectAway.stream().map(tv ->
-//			unfrozen.getAllFunctions().stream()
-//				.anyMatch(func ->
-//					Arrays.asList(func.getTerm().getFreeVars()).contains(tv)))
+//			unfrozen.getAllNodes().stream()
+//				.anyMatch(node ->
+//					VPDomainHelpers.arrayContains(node.getTerm().getFreeVars(), tv)))
 //				.reduce((a, b) -> a || b)
 //			.get()) {
 //			assert false;
 //			return false;
 //		}
 		if (script != null && Arrays.asList(unfrozen.getTerm(script)
-				.getFreeVars()).stream().anyMatch(fv -> varsToProjectAway.contains(fv))) {
+				.getFreeVars()).stream()
+				.anyMatch(fv -> varsToProjectAway.contains(fv)
+						&& !mixArrayThirdArgs.contains(fv))) {
 			assert false;
 			return false;
 		}

@@ -331,8 +331,20 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<NODE>> {
 	 */
 	public Collection<TermVariable> getAllTermVariables() {
 		final Set<TermVariable> allTvs = new HashSet<>();
-		mWeqCc.getAllElements().stream()
-				.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
+//		mWeqCc.getAllElements().stream()
+//				.forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
+		for (final NODE node : mWeqCc.getAllElements()) {
+			if (node.isMixFunction()) {
+				if (node.getMixFunction1() instanceof TermVariable) {
+					allTvs.add((TermVariable) node.getMixFunction1());
+				}
+				if (node.getMixFunction2() instanceof TermVariable) {
+					allTvs.add((TermVariable) node.getMixFunction2());
+				}
+			} else {
+				allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars()));
+			}
+		}
 		return allTvs;
 	}
 

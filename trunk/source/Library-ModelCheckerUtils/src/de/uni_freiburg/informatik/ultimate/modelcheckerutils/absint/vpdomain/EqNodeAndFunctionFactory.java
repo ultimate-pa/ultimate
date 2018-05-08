@@ -342,6 +342,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 
 		final EqNode array1 = getOrConstructNode(at.getParameters()[0]);
 		final EqNode array2 = getOrConstructNode(at.getParameters()[1]);
+
 		final EqMixArrayNode newMixArrayNode = new EqMixArrayNode(term, this, array1, array2);
 		mTermToEqNode.put(term, newMixArrayNode);
 		return newMixArrayNode;
