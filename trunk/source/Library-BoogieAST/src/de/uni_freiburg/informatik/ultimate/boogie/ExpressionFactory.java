@@ -125,17 +125,23 @@ public class ExpressionFactory {
 
 	public static Expression newBinaryExpression(final ILocation loc, final Operator operator, final Expression left,
 			final Expression right) {
-		if (left instanceof BooleanLiteral) {
-			return constructBinExprWithLiteralOps_Bool(loc, operator, (BooleanLiteral) left, (BooleanLiteral) right);
-		} else if (left instanceof IntegerLiteral) {
-			return constructBinExprWithLiteralOps_Integer(loc, operator, (IntegerLiteral) left, (IntegerLiteral) right);
-		} else if (left instanceof RealLiteral) {
-			return constructBinExprWithLiteralOps_Real(loc, operator, (RealLiteral) left, (RealLiteral) right);
-		} else if (left instanceof BitvecLiteral) {
-			return constructBinExprWithLiteralOps_Bitvector(loc, operator, (BitvecLiteral) left, (BitvecLiteral) right);
-		} else {
-			return constructBinaryExpression(loc, operator, left, right);
+		if (isLiteral(left) && isLiteral(right)) {
+			if (left instanceof BooleanLiteral) {
+				return constructBinExprWithLiteralOps_Bool(loc, operator, (BooleanLiteral) left,
+						(BooleanLiteral) right);
+			} else if (left instanceof IntegerLiteral) {
+				return constructBinExprWithLiteralOps_Integer(loc, operator, (IntegerLiteral) left,
+						(IntegerLiteral) right);
+			} else if (left instanceof RealLiteral) {
+				return constructBinExprWithLiteralOps_Real(loc, operator, (RealLiteral) left, (RealLiteral) right);
+			} else if (left instanceof BitvecLiteral) {
+				return constructBinExprWithLiteralOps_Bitvector(loc, operator, (BitvecLiteral) left,
+						(BitvecLiteral) right);
+			} else {
+				throw new UnsupportedOperationException("Unknown literal: " + left.getClass());
+			}
 		}
+		return constructBinaryExpression(loc, operator, left, right);
 	}
 
 	private static BooleanLiteral constructBinExprWithLiteralOps_Bool(final ILocation loc, final Operator operator,
