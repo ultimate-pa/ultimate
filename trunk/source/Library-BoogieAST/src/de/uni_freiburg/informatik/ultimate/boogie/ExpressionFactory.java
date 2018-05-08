@@ -651,8 +651,6 @@ public class ExpressionFactory {
 		} else if (oe instanceof BitVectorAccessExpression) {
 			return new BitVectorAccessExpression(newLoc, newType, ((BitVectorAccessExpression) oe).getBitvec(),
 					((BitVectorAccessExpression) oe).getStart(), ((BitVectorAccessExpression) oe).getEnd());
-			// } else if (oe instanceof BooleanLiteral) {
-			// return createBooleanLiteral(newLoc, newType, ((BooleanLiteral) oe).getValue());
 		} else if (oe instanceof FunctionApplication) {
 			return new FunctionApplication(newLoc, newType, ((FunctionApplication) oe).getIdentifier(),
 					((FunctionApplication) oe).getArguments());
@@ -662,16 +660,19 @@ public class ExpressionFactory {
 		} else if (oe instanceof StructConstructor) {
 			return new StructConstructor(newLoc, newType, ((StructConstructor) oe).getFieldIdentifiers(),
 					((StructConstructor) oe).getFieldValues());
+		} else if (oe instanceof StructAccessExpression) {
+			return new StructAccessExpression(newLoc, newType, ((StructAccessExpression) oe).getStruct(),
+					((StructAccessExpression) oe).getField());
 			// TODO implement these if needed
 			// } else if (oe instanceof IfThenElseExpression) {
 			// } else if (oe instanceof IntegerLiteral) {
 			// } else if (oe instanceof QuantifierExpression) {
 			// } else if (oe instanceof RealLiteral) {
 			// } else if (oe instanceof StringLiteral) {
-			// } else if (oe instanceof StructAccessExpression) {
+			// } else if (oe instanceof BooleanLiteral) {
 			// } else if (oe instanceof UnaryExpression) {
 		} else {
-			throw new AssertionError("unexpected expression type");
+			throw new AssertionError("unexpected expression type: " + oe.getClass());
 		}
 	}
 
