@@ -138,4 +138,25 @@ public class IcfgUtils {
 		}
 		return result;
 	}
+	
+	
+	/**
+	 * Compute a hashcode for the graph structure of an ICFG. The hashcode is is
+	 * only based on the hashcode of locations and edges and ignores
+	 * {@link IProgramVar}s and other objects that come along with an ICFG. The
+	 * method can help while debugging in order to find nondeterminism in our
+	 * implementation.
+	 */
+	public static <LOC extends IcfgLocation> int computeIcfgHashCode(final IIcfg<LOC> icfg) {
+		final IcfgLocationIterator<LOC> locIt = new IcfgLocationIterator<>(icfg);
+		int result = 0;
+		while (locIt.hasNext()) {
+			final LOC loc = locIt.next();
+			result += loc.hashCode();
+			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
+				result += edge.hashCode();
+			}
+		}
+		return result;
+	}
 }
