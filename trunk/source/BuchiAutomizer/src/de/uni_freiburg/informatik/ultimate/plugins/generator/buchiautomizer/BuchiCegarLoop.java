@@ -1001,7 +1001,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		}
 		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars)).getResult();
+				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars, false)).getResult();
 		// If no machine.conf file is in UltimateTest directory, then this flag is false
 		// by default, NO machine.conf
 		final boolean pldiDump = BenchmarkRecord.canDump();

@@ -126,7 +126,7 @@ public class TraceAbstractionUtils {
 			solverHtc = new MonolithicHoareTripleChecker(csToolkit);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(csToolkit);
+			solverHtc = new IncrementalHoareTripleChecker(csToolkit, false);
 			break;
 		default:
 			throw new AssertionError("unknown value");

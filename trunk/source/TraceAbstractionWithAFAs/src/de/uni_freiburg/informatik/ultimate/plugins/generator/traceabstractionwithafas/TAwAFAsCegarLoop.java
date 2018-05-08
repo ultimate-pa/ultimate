@@ -497,7 +497,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit)).getResult();
+				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
@@ -548,7 +548,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			solverHtc = new MonolithicHoareTripleChecker(mCsToolkit);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(mCsToolkit);
+			solverHtc = new IncrementalHoareTripleChecker(mCsToolkit, false);
 			break;
 		default:
 			throw new AssertionError("unknown value");

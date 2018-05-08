@@ -202,7 +202,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 		if (mComputeHoareAnnotation) {
 			assert new InductivityCheck<>(mServices, dia, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult() : "Not inductive";
+					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult() : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;

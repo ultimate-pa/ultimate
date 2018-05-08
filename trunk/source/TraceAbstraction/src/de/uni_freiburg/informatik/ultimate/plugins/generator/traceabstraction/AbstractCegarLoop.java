@@ -464,7 +464,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				if (mPref.computeHoareAnnotation()
 						&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 					assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
-							false, true, new IncrementalHoareTripleChecker(mCsToolkit)).getResult() : "Not inductive";
+							false, true, new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
 				}
 
 				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {

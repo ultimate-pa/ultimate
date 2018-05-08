@@ -328,7 +328,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 		mEpimorphism.print();
 
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mCsToolkit)).getResult() : "Not inductive";
+				new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;

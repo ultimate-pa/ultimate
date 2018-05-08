@@ -145,7 +145,7 @@ public class EagerReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends Reus
 		// Check if all edges of the Floyd-Hoare automaton are indeed inductive.
 		assert new InductivityCheck<>(mServices,
 				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), reuseAut).getResult(), false, true,
-				new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 
 		if (mPref.dumpAutomata()) {
 			final String filename = "DiffAfterEagerReuse" + oneBasedi;

@@ -50,7 +50,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 		mSymbolTable = symbolTable;
 		mMgdScript = csToolkit.getManagedScript();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mHTC = new IncrementalHoareTripleChecker(csToolkit);
+		mHTC = new IncrementalHoareTripleChecker(csToolkit, false);
 	}
 
 	@Override

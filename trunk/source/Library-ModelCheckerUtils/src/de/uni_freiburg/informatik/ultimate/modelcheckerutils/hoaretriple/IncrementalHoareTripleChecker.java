@@ -92,25 +92,22 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	private ProgramState<Term> mCounterexampleStatePostcond;
 
 	/**
-	 * @deprecated state explicitly if you want counterexamples
+	 * @param constructCounterexamples
+	 *            if a Hoare triple was invalid, then construct a pair of
+	 *            {@link ProgramState}s. This pair constitutes a counterexample
+	 *            to validity. One {@link ProgramState} represents a state
+	 *            before executing the transition, the other represents a state
+	 *            after executing the transition. TODO: Return a third
+	 *            {@link ProgramState} in counterexamples to validity of return
+	 *            transitions (will represent state before call)
 	 */
-	@Deprecated
-	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit) {
-		mManagedScript = csToolkit.getManagedScript();
-		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
-		mOldVarsAssignmentCache = csToolkit.getOldVarsAssignmentCache();
-		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
-		mConstructCounterexamples = false;
-	}
-	
 	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit, final boolean constructCounterexamples) {
 		mManagedScript = csToolkit.getManagedScript();
 		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
 		mOldVarsAssignmentCache = csToolkit.getOldVarsAssignmentCache();
 		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
-		mConstructCounterexamples = true;
+		mConstructCounterexamples = constructCounterexamples;
 	}
-
 
 	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {

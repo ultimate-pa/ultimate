@@ -465,7 +465,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		if (NON_EA_INDUCTIVITY_CHECK) {
 			final boolean inductive = new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+					new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 
 			if (!inductive) {
 				throw new AssertionError("not inductive");
@@ -474,7 +474,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+				new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 	}
 
 	private static boolean
@@ -748,7 +748,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult());
 		assert new InductivityCheck<>(mServices,
 				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(),
-				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit, false)).getResult();
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(
