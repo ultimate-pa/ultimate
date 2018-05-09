@@ -1887,6 +1887,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		return mAuxData.getArgCcPars(elem);
 	}
 
+	public Collection<ELEM> getFuncAppsWithFunc(final ELEM func) {
+		return mFaAuxData.getAfParents(func);
+	}
+
 	public void setElementCurrentlyBeingRemoved(final IRemovalInfo<ELEM> re) {
 		assert re == null || mElementCurrentlyBeingRemoved == null;
 		mElementCurrentlyBeingRemoved = re;
@@ -1922,5 +1926,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	@Override
 	public void reportContainsConstraint(final ELEM elem, final Set<ELEM> literalSet) {
 		mLiteralSetConstraints.reportContains(elem, literalSet);
+	}
+
+	@Override
+	public Set<ELEM> getContainsConstraintForElement(final ELEM elem) {
+		return mLiteralSetConstraints.getConstraint(elem);
 	}
 }

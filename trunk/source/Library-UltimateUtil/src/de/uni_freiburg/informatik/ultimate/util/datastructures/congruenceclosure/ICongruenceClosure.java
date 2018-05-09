@@ -39,4 +39,6 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 	boolean reportDisequalityRec(ELEM key, ELEM value);
 
 	void reportContainsConstraint(ELEM elem, Set<ELEM> literals);
+
+	Set<ELEM> getContainsConstraintForElement(ELEM elem);
 }

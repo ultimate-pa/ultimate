@@ -454,7 +454,69 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				reportWeakEquivalenceDoOnlyRoweqPropagations(ccc1.getKey(), ccc2.getKey(),
 						shiftedLabelWithException, omitSanityChecks);
 			}
+
 		}
+
+
+		/*
+		 * propagation rule:
+		 *  a--(a[q] in L)--(const l), a[i] in exp
+		 *   ==>
+		 *   a[i] in L cup {l}
+		 */
+		{
+			final NODE nonConstantArray;
+			final NODE constantArray;
+			if (array1Rep.isConstantFunction()) {
+				assert !array2Rep.isConstantFunction() : "?";
+				constantArray = array1Rep;
+				nonConstantArray = array2Rep;
+			} else if (array2Rep.isConstantFunction()) {
+				assert !array1Rep.isConstantFunction() : "?";
+				constantArray = array2Rep;
+				nonConstantArray = array1Rep;
+			} else {
+				constantArray = null;
+				nonConstantArray = null;
+			}
+
+
+			// collect nodes of the form a[i] according to the rule that are present currently
+			Collection<NODE> aIs = null;
+			Set<NODE> containsConstraint = null;
+			if (nonConstantArray != null) {
+				aIs = mCongruenceClosure.getFuncAppsWithFunc(nonConstantArray);
+
+
+				if (aIs != null) {
+					final NODE sampleAi = aIs.iterator().next();
+					// node that corresponds to a[q] in the rule
+					final NODE aQ = sampleAi.replaceArgument(
+							mManager.getWeqVariableNodeForDimension(0, sampleAi.getArgument().getSort()));
+
+					containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
+					assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
+					+ "literals --> unexpected..";
+					assert !containsConstraint.isEmpty() : "uncaught inconsistent case";
+				}
+			}
+
+			if (constantArray != null && !aIs.isEmpty() && containsConstraint != null) {
+
+				final NODE constantArrayConstant = constantArray.getConstantFunctionValue();
+				assert constantArrayConstant.isLiteral();
+
+				// construct L cup {l}
+				final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
+				newLiteralSet.add(constantArrayConstant);
+
+				// do propagations
+				for (final NODE aI : aIs) {
+					mCongruenceClosure.reportContainsConstraint(aI, newLiteralSet);
+				}
+			}
+		}
+
 
 //		assert sanityCheck();
 		return true;
@@ -841,6 +903,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 		if (mManager.getSettings().isAlwaysReportChangeToGpa()) {
 			throw new AssertionError("not implemented");
 		}
+
 	}
 
 	/**
@@ -1190,6 +1253,51 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 							mManager.getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
 
 			madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem, ccp, projectedLabel, true);
+		}
+
+
+		/*
+		 * propagation rule:
+		 *  a--(a[q] in L)--(const l), a[i] in exp
+		 *   ==>
+		 *   a[i] in L cup {l}
+		 */
+		for (final Entry<NODE, WeakEquivalenceEdgeLabel<NODE, ICongruenceClosure<NODE>>>  adjacentEdge
+				: getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).entrySet()) {
+			// is weakly equal array a constant function?
+			final NODE weaklyEqualArray = adjacentEdge.getKey();
+			if (!weaklyEqualArray.isConstantFunction() || !weaklyEqualArray.getConstantFunctionValue().isLiteral()) {
+				// other array is not a constant literal array --> do nothing
+				continue;
+			}
+			// other array is a constant array
+			// the "l" from the rule
+			final NODE constantArrayConstant = weaklyEqualArray.getConstantFunctionValue();
+			assert weaklyEqualArray.getConstantFunctionValue().isLiteral();
+
+			// node that corresponds to a[q] in the rule
+			final NODE aQ =
+					elem.replaceArgument(mManager.getWeqVariableNodeForDimension(0, elem.getArgument().getSort()));
+
+			final WeakEquivalenceEdgeLabel<NODE, ICongruenceClosure<NODE>> edgeLabel = adjacentEdge.getValue();
+			final Set<NODE> containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
+			assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
+					+ "literals --> unexpected..";
+			if (containsConstraint == null) {
+				// there is no literal set constraint on a[q] --> do nothing
+				continue;
+			}
+			// there is a literal set constraint on a[q]
+
+
+			// construct L cup {l}
+			final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
+			newLiteralSet.add(constantArrayConstant);
+
+			// do propagation
+			mCongruenceClosure.reportContainsConstraint(elem, newLiteralSet);
+			// TODO: overapproximating..
+			madeChanges = true;
 		}
 
 		if (madeChanges && !CcSettings.DELAY_EXT_AND_DELTA_CLOSURE) {
@@ -1745,6 +1853,11 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	public Set<NODE> getAllLiterals() {
 		return mCongruenceClosure.getAllLiterals();
+	}
+
+	@Override
+	public Set<NODE> getContainsConstraintForElement(final NODE elem) {
+		return mCongruenceClosure.getContainsConstraintForElement(elem);
 	}
 }
 

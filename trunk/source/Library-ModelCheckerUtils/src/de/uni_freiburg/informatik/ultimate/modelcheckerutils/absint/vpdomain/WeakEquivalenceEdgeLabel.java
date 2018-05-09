@@ -1039,5 +1039,26 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 		return true;
 	}
 
+	/**
+	 *
+	 * @param elem
+	 * @return a set of elements that the given elem is guaranteed to be contained in by all disjuncts; null means
+	 *   unconstrained
+	 */
+	public Set<NODE> getContainsConstraintForElement(final NODE elem) {
+		final Set<NODE> resultConstraint = new HashSet<>();
+
+		// joining through union..
+		for (final DISJUNCT d : mDisjuncts) {
+			final Set<NODE> cc = d.getContainsConstraintForElement(elem);
+			if (cc == null) {
+				// unconstrained in one disjunct --> unconstrained overall
+				return null;
+			}
+			resultConstraint.addAll(cc);
+		}
+
+		return resultConstraint;
+	}
 
 }

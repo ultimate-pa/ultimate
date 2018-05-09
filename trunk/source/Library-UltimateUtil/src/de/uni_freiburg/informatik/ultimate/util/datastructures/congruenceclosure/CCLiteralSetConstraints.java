@@ -362,6 +362,15 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		return Collections.unmodifiableMap(mContainsConstraints);
 	}
 
+	/**
+	 * Return the constraint of the form elem in L that mCongrunenceClosure puts on elem.
+	 * If elem is equal to something, return a singleton.
+	 * If there is a set constraint, return the set.
+	 * Otherwise return null (for "unconstrained")
+	 *
+	 * @param elem
+	 * @return
+	 */
 	Set<ELEM> getConstraint(final ELEM elem) {
 		if (!mCongruenceClosure.hasElement(elem)) {
 			return null;
