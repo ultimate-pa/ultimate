@@ -25,11 +25,48 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+
 /**
  *
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
-public class Pdr {
+public class Pdr<LOC extends IcfgLocation> {
+
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
+
+	public Pdr(final ILogger logger, final IUltimateServiceProvider services, final Object settings) {
+		mLogger = logger;
+		mServices = services;
+	}
+
+	PdrResult computePdr(final IIcfg<LOC> icfg, final IPredicateUnifier predicateUnifier) {
+		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
+		final ManagedScript mgdScript = csToolkit.getManagedScript();
+		final BasicPredicateFactory predicateFac = predicateUnifier.getPredicateFactory();
+		final PredicateTransformer predTrans =
+				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(mServices, mgdScript));
+		return null;
+	}
+
+	private final class PdrResult {
+		Map<LOC, Map<LOC, IPredicate>> mPredicates;
+		Map<LOC, IcfgProgramExecution> mCounterexamples;
+	}
 
 }
