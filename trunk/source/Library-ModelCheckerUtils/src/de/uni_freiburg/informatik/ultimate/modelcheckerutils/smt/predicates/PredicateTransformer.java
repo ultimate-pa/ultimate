@@ -40,6 +40,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -48,10 +49,17 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
- * Computes SP and WP. TODO: use domain specific
- * {@link IDomainSpecificOperationProvider} for all operations
- * 
- * @author musab@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
+ * Computes SP and WP. TODO: use domain specific {@link IDomainSpecificOperationProvider} for all operations.
+ *
+ * @param <C>
+ *            The type of constraint the various methods produce, e.g., {@link Term}
+ * @param <P>
+ *            The type of predicates the various methods expect, e.g., {@link IPredicate}
+ * @param <R>
+ *            The type of transition the various methods expect, e.g., {@link TransFormula}
+ *
+ * @author musab@informatik.uni-freiburg.de
+ * @author heizmann@informatik.uni-freiburg.de
  *
  */
 public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITransitionRelation> {
@@ -70,14 +78,12 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 	}
 
 	/**
-	 * Computes the strongest postcondition of the given predicate p and the
-	 * {@link ITransitionRelation} transRel. - invars of the given relation,
-	 * which don't occur in the outvars or are mapped to different values are
-	 * renamed to fresh variables. The corresponding term variables in the given
-	 * predicate p, are renamed to the same fresh variables. - outvars are
-	 * renamed to corresponding term variables. If an outvar doesn't occur in
-	 * the invars, its occurrence in the given predicate is substituted by a
-	 * fresh variable. All fresh variables are existentially quantified.
+	 * Computes the strongest postcondition of the given predicate p and the {@link ITransitionRelation} transRel. -
+	 * invars of the given relation, which don't occur in the outvars or are mapped to different values are renamed to
+	 * fresh variables. The corresponding term variables in the given predicate p, are renamed to the same fresh
+	 * variables. - outvars are renamed to corresponding term variables. If an outvar doesn't occur in the invars, its
+	 * occurrence in the given predicate is substituted by a fresh variable. All fresh variables are existentially
+	 * quantified.
 	 */
 	public C strongestPostcondition(final P p, final R transRel) {
 		final C constraint = mOperationProvider.getConstraint(p);
@@ -85,18 +91,19 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 			return constraint;
 		}
 		final Set<TermVariable> varsToProject = new HashSet<>();
-		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
+		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
+				new IValueConstruction<IProgramVar, TermVariable>() {
 
-			@Override
-			public TermVariable constructValue(final IProgramVar pv) {
-				final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
-				varsToProject.add(result);
-				return result;
-			}
+					@Override
+					public TermVariable constructValue(final IProgramVar pv) {
+						final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
+						varsToProject.add(result);
+						return result;
+					}
 
-		};
-		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor = new ConstructionCache<>(
-				substituentConstruction);
+				};
+		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor =
+				new ConstructionCache<>(substituentConstruction);
 
 		final Map<Term, Term> substitutionForTransFormula = new HashMap<>();
 		final Map<Term, Term> substitutionForPredecessor = new HashMap<>();
@@ -126,8 +133,8 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 				mOperationProvider.getConstaintFromTransitionRelation(transRel));
 		final C renamedPredecessor = mOperationProvider.renameVariables(substitutionForPredecessor, constraint);
 
-		final C conjunction = mOperationProvider
-				.constructConjunction(toList(renamedRelationConstraint, renamedPredecessor));
+		final C conjunction =
+				mOperationProvider.constructConjunction(toList(renamedRelationConstraint, renamedPredecessor));
 
 		// Add aux vars to varsToQuantify
 		varsToProject.addAll(transRel.getAuxVars());
@@ -137,16 +144,16 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 	public C strongestPostconditionCall(final P callPred, final R localVarAssignments, final R globalVarAssignments,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
 
-		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
-				Collections.emptySet(), localVarAssignments.getAssignedVars(), modifiableGlobalsOfCalledProcedure,
-				Instance.AFTER_CALL);
+		final CallReturnPyramideInstanceProvider crpip =
+				new CallReturnPyramideInstanceProvider(mMgdScript, Collections.emptySet(),
+						localVarAssignments.getAssignedVars(), modifiableGlobalsOfCalledProcedure, Instance.AFTER_CALL);
 		final C callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
-		final C localVarAssignmentsTerm = renameRelationToInstances(localVarAssignments, Instance.BEFORE_CALL,
-				Instance.AFTER_CALL, crpip);
-		final C oldVarsAssignmentTerm = renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL,
-				Instance.AFTER_CALL, crpip);
-		final C globalVarsAssignmentTerm = renameRelationToInstances(globalVarAssignments, Instance.AFTER_CALL,
-				Instance.AFTER_CALL, crpip);
+		final C localVarAssignmentsTerm =
+				renameRelationToInstances(localVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final C oldVarsAssignmentTerm =
+				renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final C globalVarsAssignmentTerm =
+				renameRelationToInstances(globalVarAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
 
 		final C result = mOperationProvider.constructConjunction(
 				toList(localVarAssignmentsTerm, oldVarsAssignmentTerm, globalVarsAssignmentTerm, callPredTerm));
@@ -154,18 +161,17 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 	}
 
 	/**
-	 * Special post operator that we use to obtain a modular (interprocedural)
-	 * sequence of inductive interpolants.
+	 * Special post operator that we use to obtain a modular (interprocedural) sequence of inductive interpolants.
 	 */
 	public C modularPostconditionCall(final P callPred, final R globalVarAssignments,
 			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
 
-		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
-				Collections.emptySet(), Collections.emptySet(), modifiableGlobalsOfCalledProcedure,
-				Instance.AFTER_CALL);
+		final CallReturnPyramideInstanceProvider crpip =
+				new CallReturnPyramideInstanceProvider(mMgdScript, Collections.emptySet(), Collections.emptySet(),
+						modifiableGlobalsOfCalledProcedure, Instance.AFTER_CALL);
 		final C callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
-		final C globalVarsAssignmentTerm = renameRelationToInstances(globalVarAssignments, Instance.AFTER_CALL,
-				Instance.AFTER_CALL, crpip);
+		final C globalVarsAssignmentTerm =
+				renameRelationToInstances(globalVarAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
 
 		final C result = mOperationProvider.constructConjunction(toList(globalVarsAssignmentTerm, callPredTerm));
 		return mOperationProvider.projectExistentially(crpip.getFreshTermVariables(), result);
@@ -179,10 +185,10 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		final C callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
 		final C returnPredTerm = renamePredicateToInstance(returnPred, Instance.BEFORE_RETURN, crpip);
 		final C callTfTerm = renameRelationToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final C oldVarsAssignmentTerm = renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL,
-				Instance.AFTER_CALL, crpip);
-		final C returnTfTerm = renameRelationToInstances(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN,
-				crpip);
+		final C oldVarsAssignmentTerm =
+				renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final C returnTfTerm =
+				renameRelationToInstances(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN, crpip);
 
 		final C result = mOperationProvider.constructConjunction(
 				toList(callTfTerm, oldVarsAssignmentTerm, returnTfTerm, callPredTerm, returnPredTerm));
@@ -195,18 +201,19 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 			return constraint;
 		}
 		final Set<TermVariable> varsToProject = new HashSet<>();
-		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
+		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
+				new IValueConstruction<IProgramVar, TermVariable>() {
 
-			@Override
-			public TermVariable constructValue(final IProgramVar pv) {
-				final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
-				varsToProject.add(result);
-				return result;
-			}
+					@Override
+					public TermVariable constructValue(final IProgramVar pv) {
+						final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
+						varsToProject.add(result);
+						return result;
+					}
 
-		};
-		final ConstructionCache<IProgramVar, TermVariable> termVariablesForSuccessor = new ConstructionCache<>(
-				substituentConstruction);
+				};
+		final ConstructionCache<IProgramVar, TermVariable> termVariablesForSuccessor =
+				new ConstructionCache<>(substituentConstruction);
 
 		final Map<Term, Term> substitutionForRelation = new HashMap<>();
 		final Map<Term, Term> substitutionForSuccessor = new HashMap<>();
@@ -252,13 +259,13 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 				Collections.emptySet(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_CALL);
 		final C callSuccTerm = renamePredicateToInstance(callSucc, Instance.AFTER_CALL, crpip);
 		final C callTfTerm = renameRelationToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final C oldVarsAssignmentTerm = renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL,
-				Instance.AFTER_CALL, crpip);
-		final C globalVarsAssignmentTerm = renameRelationToInstances(globalVarsAssignments, Instance.AFTER_CALL,
-				Instance.AFTER_CALL, crpip);
+		final C oldVarsAssignmentTerm =
+				renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final C globalVarsAssignmentTerm =
+				renameRelationToInstances(globalVarsAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
 
-		final C result = mOperationProvider
-				.constructDisjunction(toList(mOperationProvider.constructNegation(callTfTerm),
+		final C result =
+				mOperationProvider.constructDisjunction(toList(mOperationProvider.constructNegation(callTfTerm),
 						mOperationProvider.constructNegation(oldVarsAssignmentTerm),
 						mOperationProvider.constructNegation(globalVarsAssignmentTerm), callSuccTerm));
 		return mOperationProvider.projectUniversally(crpip.getFreshTermVariables(), result);
@@ -272,13 +279,13 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		final C callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
 		final C returnSuccTerm = renamePredicateToInstance(returnSucc, Instance.AFTER_RETURN, crpip);
 		final C callTfTerm = renameRelationToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final C oldVarsAssignmentTerm = renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL,
-				Instance.AFTER_CALL, crpip);
-		final C returnTfTerm = renameRelationToInstances(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN,
-				crpip);
+		final C oldVarsAssignmentTerm =
+				renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final C returnTfTerm =
+				renameRelationToInstances(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN, crpip);
 
-		final C result = mOperationProvider
-				.constructDisjunction(toList(mOperationProvider.constructNegation(callTfTerm),
+		final C result =
+				mOperationProvider.constructDisjunction(toList(mOperationProvider.constructNegation(callTfTerm),
 						mOperationProvider.constructNegation(oldVarsAssignmentTerm),
 						mOperationProvider.constructNegation(returnTfTerm),
 						mOperationProvider.constructNegation(callPredTerm), returnSuccTerm));
