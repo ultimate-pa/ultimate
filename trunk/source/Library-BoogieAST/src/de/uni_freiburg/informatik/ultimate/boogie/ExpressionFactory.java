@@ -32,8 +32,10 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -62,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
@@ -570,10 +571,11 @@ public class ExpressionFactory {
 		final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(smtIdentifier);
 		final FunctionApplication origFunApp = new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 		if (sbo != null) {
-			final Expression smtFunApp = origFunApp.accept(new BitvectorCFunctionNames2SmtFunctionNames());
+			final BitvectorCFunctionNames2SmtFunctionNames c2smt = new BitvectorCFunctionNames2SmtFunctionNames();
+			final Expression smtFunApp = origFunApp.accept(c2smt);
 			final Expression smtSimplifiedFunApp = smtFunApp.accept(new ComputeConstantBitvectorExpression());
-			final Expression cSimplifiedFunApp =
-					smtSimplifiedFunApp.accept(new BitvectorSmtFunctionNames2CFunctionNames());
+			final Expression cSimplifiedFunApp = smtSimplifiedFunApp
+					.accept(new BitvectorSmtFunctionNames2CFunctionNames(c2smt.mSmtFunction2CFunctionNames));
 			return cSimplifiedFunApp;
 		}
 		return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
@@ -635,6 +637,9 @@ public class ExpressionFactory {
 
 		final ILocation newLoc = oldToNewLoc.apply(oe.getLoc());
 		final BoogieType newType = oldToNewType.apply((BoogieType) oe.getType());
+
+		assert newType != null;
+		assert newLoc != null;
 
 		if (oe instanceof ArrayAccessExpression) {
 			return new ArrayAccessExpression(newLoc, newType, ((ArrayAccessExpression) oe).getArray(),
@@ -713,25 +718,37 @@ public class ExpressionFactory {
 	}
 
 	private final static class BitvectorCFunctionNames2SmtFunctionNames extends GeneratedBoogieAstTransformer {
+
+		private final Map<Expression, String> mSmtFunction2CFunctionNames = new HashMap<>();
+
 		@Override
 		public Expression transform(final FunctionApplication node) {
 			final String smtIdentifier = getBitvectorSmtFunctionNameFromCFunctionName(node.getIdentifier());
 			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(smtIdentifier);
-
 			final List<Expression> newArgs = new ArrayList<>();
 			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
+			final Expression rtr;
 			if (sbo == null) {
-				return newFunctionApplication(node, isChanged, newArgs);
+				rtr = newFunctionApplication(node, isChanged, newArgs);
+			} else if (newArgs.isEmpty()) {
+				rtr = new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier, new Expression[0]);
+			} else {
+				rtr = new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier,
+						newArgs.toArray(new Expression[newArgs.size()]));
 			}
-			if (newArgs.isEmpty()) {
-				return new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier, new Expression[0]);
-			}
-			return new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier,
-					newArgs.toArray(new Expression[newArgs.size()]));
+			mSmtFunction2CFunctionNames.put(rtr, node.getIdentifier());
+			return rtr;
 		}
 	}
 
 	private final static class BitvectorSmtFunctionNames2CFunctionNames extends GeneratedBoogieAstTransformer {
+
+		private final Map<Expression, String> mSmtFunction2CFunctionNames;
+
+		public BitvectorSmtFunctionNames2CFunctionNames(final Map<Expression, String> smtFunction2CFunctionNames) {
+			mSmtFunction2CFunctionNames = smtFunction2CFunctionNames;
+		}
+
 		@Override
 		public Expression transform(final FunctionApplication node) {
 
@@ -739,15 +756,17 @@ public class ExpressionFactory {
 			final SupportedBitvectorOperations sbo = getSupportedBitvectorOperation(node.getIdentifier());
 			final boolean isChanged = handleFunctionApplicationParams(node, newArgs, this);
 			if (sbo == null) {
+				assert !mSmtFunction2CFunctionNames.containsKey(node) : "renamed a non-bv method";
 				return newFunctionApplication(node, isChanged, newArgs);
 			}
 
 			if (newArgs.isEmpty()) {
-				throw new AssertionError("This should not happen");
+				throw new AssertionError("Bitvector functions always have parameters");
 			}
-			// bitvector types should be primitives and their value is the length of the bitvector
-			final BoogiePrimitiveType btype = (BoogiePrimitiveType) newArgs.get(0).getType();
-			final String newName = "~" + node.getIdentifier() + String.valueOf(btype.getTypeCode());
+			final String newName = mSmtFunction2CFunctionNames.get(node);
+			if (newName == null) {
+				throw new AssertionError("No name for this function recorded: " + node.getIdentifier());
+			}
 			return new FunctionApplication(node.getLoc(), node.getType(), newName,
 					newArgs.toArray(new Expression[newArgs.size()]));
 		}
@@ -800,8 +819,7 @@ public class ExpressionFactory {
 			}
 
 			// TODO: Handle special ones
-
-			return super.transform(node);
+			return node;
 		}
 
 		private static boolean isUnaryBitvec(final SupportedBitvectorOperations sbo) {
