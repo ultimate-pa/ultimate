@@ -732,11 +732,12 @@ public class ExpressionFactory {
 				rtr = newFunctionApplication(node, isChanged, newArgs);
 			} else if (newArgs.isEmpty()) {
 				rtr = new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier, new Expression[0]);
+				mSmtFunction2CFunctionNames.put(rtr, node.getIdentifier());
 			} else {
 				rtr = new FunctionApplication(node.getLoc(), node.getType(), smtIdentifier,
 						newArgs.toArray(new Expression[newArgs.size()]));
+				mSmtFunction2CFunctionNames.put(rtr, node.getIdentifier());
 			}
-			mSmtFunction2CFunctionNames.put(rtr, node.getIdentifier());
 			return rtr;
 		}
 	}
