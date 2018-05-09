@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -109,8 +110,8 @@ public abstract class ExpressionTranslation {
 		case NutzBijection:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
 		case Overapproximate:
-			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler,
-					mHandlerHandler);
+			mPointerIntegerConversion =
+					new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mHandlerHandler);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown value " + pointerIntegerConversion);
@@ -130,8 +131,8 @@ public abstract class ExpressionTranslation {
 		}
 		case IASTLiteralExpression.lk_char_constant: {
 
-			final CCharacterConstant characterConstant = new CCharacterConstant(new String(node.getValue()),
-					mTypeSizes.getSignednessOfChar());
+			final CCharacterConstant characterConstant =
+					new CCharacterConstant(new String(node.getValue()), mTypeSizes.getSignednessOfChar());
 			final Expression literal = constructLiteralForIntegerType(loc, characterConstant.getType(),
 					characterConstant.getRepresentingValue());
 			return new ExpressionResult(new RValue(literal, characterConstant.getType()));
@@ -148,18 +149,16 @@ public abstract class ExpressionTranslation {
 			{
 				// subtract two from length for quotes at beginning and end
 				final int arrayLength = stringLiteral.getByteValues().size();
-				final RValue dimension = new RValue(
-						constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),
-								BigInteger.valueOf(arrayLength)),
-						getCTypeOfPointerComponents());
+				final RValue dimension = new RValue(constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(),
+						BigInteger.valueOf(arrayLength)), getCTypeOfPointerComponents());
 				final CArray arrayType = new CArray(dimension, new CPrimitive(CPrimitives.CHAR));
-				 final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+				final CPointer pointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 				auxvar = AuxVarInfo.constructGlobalAuxVarInfo(loc, main, pointerType, SFO.AUXVAR.STRINGLITERAL);
 				rvalue = new RValueForArrays(auxvar.getExp(), arrayType);
 			}
 			// the declaration of the variable that corresponds to a string literal has to be made globally
-			main.mCHandler.getStaticObjectsHandler()//.addGlobalDeclarations(decls);
-				.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
+			main.mCHandler.getStaticObjectsHandler()// .addGlobalDeclarations(decls);
+					.addGlobalVarDeclarationWithoutCDeclaration(auxvar.getVarDec());
 
 			// overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD or longer
 			final boolean writeValues = stringLiteral.getByteValues().size() < STRING_OVERAPPROXIMATION_THRESHOLD;
@@ -167,11 +166,9 @@ public abstract class ExpressionTranslation {
 			/*
 			 *
 			 */
-			final List<Statement> statements =
-					main.mCHandler.getMemoryHandler().writeStringToHeap(main, loc, auxvar.getLhs(), stringLiteral,
-							writeValues, node);
-			main.mCHandler.getStaticObjectsHandler()
-				.addStatementsForUltimateInit(statements);
+			final List<Statement> statements = main.mCHandler.getMemoryHandler().writeStringToHeap(main, loc,
+					auxvar.getLhs(), stringLiteral, writeValues, node);
+			main.mCHandler.getStaticObjectsHandler().addStatementsForUltimateInit(statements);
 
 			final List<Overapprox> overapproxList;
 			if (writeValues) {
@@ -184,11 +181,11 @@ public abstract class ExpressionTranslation {
 			return new StringLiteralResult(rvalue, overapproxList, auxvar, stringLiteral, !writeValues);
 		}
 		case IASTLiteralExpression.lk_false:
-			return new ExpressionResult(new RValue(ExpressionFactory.createBooleanLiteral(loc, false),
-					new CPrimitive(CPrimitives.INT)));
+			return new ExpressionResult(
+					new RValue(ExpressionFactory.createBooleanLiteral(loc, false), new CPrimitive(CPrimitives.INT)));
 		case IASTLiteralExpression.lk_true:
-			return new ExpressionResult(new RValue(ExpressionFactory.createBooleanLiteral(loc, true),
-					new CPrimitive(CPrimitives.INT)));
+			return new ExpressionResult(
+					new RValue(ExpressionFactory.createBooleanLiteral(loc, true), new CPrimitive(CPrimitives.INT)));
 		default:
 			final String msg = "Unknown or unsupported kind of IASTLiteralExpression";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -227,11 +224,21 @@ public abstract class ExpressionTranslation {
 	public final Expression constructArithmeticExpression(final ILocation loc, final int nodeOperator,
 			final Expression exp1, final CPrimitive type1, final Expression exp2, final CPrimitive type2) {
 		// TODO: Check that types coincide
-		if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE
-				|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
-			return constructArithmeticFloatingPointExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		try {
+			if (type1.getGeneralType() == CPrimitiveCategory.FLOATTYPE
+					|| type2.getGeneralType() == CPrimitiveCategory.FLOATTYPE) {
+				return constructArithmeticFloatingPointExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+			}
+			return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		} catch (final ArithmeticException ex) {
+			String msg;
+			if (ex.getMessage().contains("divide by zero")) {
+				msg = "Division by zero";
+			} else {
+				msg = ex.getMessage();
+			}
+			throw new IncorrectSyntaxException(loc, msg);
 		}
-		return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 	}
 
 	public abstract Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator,
@@ -588,7 +595,8 @@ public abstract class ExpressionTranslation {
 				constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO);
 		final Expression oneBool =
 				constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ONE);
-		final Expression resultExpression = ExpressionFactory.constructIfThenElseExpression(loc, isZero, zeroBool, oneBool);
+		final Expression resultExpression =
+				ExpressionFactory.constructIfThenElseExpression(loc, isZero, zeroBool, oneBool);
 		final RValue rValue = new RValue(resultExpression, new CPrimitive(CPrimitives.BOOL), false, false);
 		rexp.mLrVal = rValue;
 	}
@@ -641,12 +649,9 @@ public abstract class ExpressionTranslation {
 	public abstract Expression extractBits(ILocation loc, Expression operand, int high, int low);
 
 	/**
-	 * Presume that the input represents an integer that has inputWidth bit.
-	 * Set all most significant bits to zero except the remainingWith least
-	 * significant bits.
-	 * I.e., the result is input representation that consists only of the bits.
-	 * low-1, low-2, ..., 0
-	 * If inputWidth and remainingWith are different the result is always positive.
+	 * Presume that the input represents an integer that has inputWidth bit. Set all most significant bits to zero
+	 * except the remainingWith least significant bits. I.e., the result is input representation that consists only of
+	 * the bits. low-1, low-2, ..., 0 If inputWidth and remainingWith are different the result is always positive.
 	 */
 	public abstract Expression erazeBits(ILocation loc, Expression value, CPrimitive cType, int remainingWith,
 			IASTNode hook);
@@ -764,7 +769,5 @@ public abstract class ExpressionTranslation {
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
 
 	public abstract Expression transformFloatToBitvector(ILocation loc, Expression value, CPrimitives cprimitive);
-
-
 
 }

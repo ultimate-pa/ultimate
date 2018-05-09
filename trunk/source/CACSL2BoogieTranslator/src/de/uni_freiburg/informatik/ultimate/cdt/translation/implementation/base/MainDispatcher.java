@@ -419,6 +419,7 @@ public class MainDispatcher extends Dispatcher {
 		mBacktranslator.setExpressionTranslation(((CHandler) mCHandler).getExpressionTranslation());
 		mPreprocessorHandler = new PreprocessorHandler(isSvcomp());
 		mReportWarnings = true;
+		mLogger.info("Starting main dispatcher" + (isSvcomp() ? " in SV-COMP mode " : " in normal mode"));
 	}
 
 	@Override

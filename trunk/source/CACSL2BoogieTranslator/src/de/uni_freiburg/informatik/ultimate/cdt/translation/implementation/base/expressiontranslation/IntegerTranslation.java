@@ -86,8 +86,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private final UnsignedTreatment mUnsignedTreatment;
 
 	/**
-	 * Add assume statements that state that values of signed integer types are in
-	 * range.
+	 * Add assume statements that state that values of signed integer types are in range.
 	 */
 	private final boolean mAssumeThatSignedValuesAreInRange;
 
@@ -307,8 +306,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				rightExpr = applyWraparound(loc, mTypeSizes, rightType, rightExpr);
 			}
 		}
-		final boolean bothAreIntegerLiterals = leftExpr instanceof IntegerLiteral
-				&& rightExpr instanceof IntegerLiteral;
+		final boolean bothAreIntegerLiterals =
+				leftExpr instanceof IntegerLiteral && rightExpr instanceof IntegerLiteral;
 		BigInteger leftValue = null;
 		BigInteger rightValue = null;
 		// TODO: add checks for UnaryExpression (otherwise we don't catch negative
@@ -348,9 +347,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final BinaryExpression.Operator operator;
 		operator = Operator.ARITHDIV;
 		/*
-		 * In C the semantics of integer division is "rounding towards zero". In Boogie
-		 * euclidian division is used. We translate a / b into (a < 0 && a%b != 0) ? (
-		 * (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
+		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
+		 * translate a / b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
 		 */
 		if (bothAreIntegerLiterals) {
 			final String constantResult = leftValue.divide(rightValue).toString();
@@ -374,15 +372,17 @@ public class IntegerTranslation extends ExpressionTranslation {
 			}
 		} else if (exp2 instanceof IntegerLiteral) {
 			if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-				return ExpressionFactory.constructIfThenElseExpression(
-						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
-								BinaryExpression.Operator.ARITHPLUS, normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
-						normalDivision);
+				return ExpressionFactory
+						.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS,
+										normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
+								normalDivision);
 			} else if (rightValue.signum() == -1) {
-				return ExpressionFactory.constructIfThenElseExpression(
-						loc, leftSmallerZeroAndThereIsRemainder, ExpressionFactory.newBinaryExpression(loc,
-								BinaryExpression.Operator.ARITHMINUS, normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
-						normalDivision);
+				return ExpressionFactory
+						.constructIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder,
+								ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS,
+										normalDivision, ExpressionFactory.createIntegerLiteral(loc, SFO.NR1)),
+								normalDivision);
 			}
 			throw new UnsupportedOperationException("Is it expected that this is a fall-through switch?");
 		} else {
@@ -401,9 +401,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 		final BinaryExpression.Operator operator;
 		operator = Operator.ARITHMOD;
 		/*
-		 * In C the semantics of integer division is "rounding towards zero". In Boogie
-		 * euclidian division is used. We translate a % b into (a < 0 && a%b != 0) ? (
-		 * (b < 0) ? (a%b)-b : (a%b)+b) : a%b
+		 * In C the semantics of integer division is "rounding towards zero". In Boogie euclidian division is used. We
+		 * translate a % b into (a < 0 && a%b != 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
 		 */
 		// modulo on bigInteger does not seem to follow the "multiply, add, and get the
 		// result back"-rule, together
@@ -508,8 +507,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 					oldWrappedIfNeeded = operand.mLrVal.getValue();
 				}
 				if (mUnsignedTreatment == UnsignedTreatment.ASSERT) {
-					final BigInteger maxValuePlusOne = mTypeSizes.getMaxValueOfPrimitiveType(resultType)
-							.add(BigInteger.ONE);
+					final BigInteger maxValuePlusOne =
+							mTypeSizes.getMaxValueOfPrimitiveType(resultType).add(BigInteger.ONE);
 					final AssertStatement assertGeq0 = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
 									oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, SFO.NR0)));
@@ -519,7 +518,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 					final AssertStatement assertLtMax = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-									oldWrappedIfNeeded, ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
+									oldWrappedIfNeeded,
+									ExpressionFactory.createIntegerLiteral(loc, maxValuePlusOne.toString())));
 					final Check chk2 = new Check(Spec.UINT_OVERFLOW);
 					chk2.annotate(assertLtMax);
 					operand.mStmt.add(assertLtMax);
@@ -551,12 +551,12 @@ public class IntegerTranslation extends ExpressionTranslation {
 					// If the number is strictly larger than MAX_VALUE we
 					// subtract the cardinality of the data range.
 					final CPrimitive correspondingUnsignedType = mTypeSizes.getCorrespondingUnsignedType(resultType);
-					final Expression wrapped = applyWraparound(loc, mTypeSizes, correspondingUnsignedType,
-							oldWrappedIfUnsigned);
+					final Expression wrapped =
+							applyWraparound(loc, mTypeSizes, correspondingUnsignedType, oldWrappedIfUnsigned);
 					final Expression maxValue = constructLiteralForIntegerType(loc, oldType,
 							mTypeSizes.getMaxValueOfPrimitiveType(resultType));
-					final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped,
-							maxValue);
+					final Expression condition =
+							ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
 					final Expression range = constructLiteralForIntegerType(loc, oldType,
 							mTypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
 					newExpression = ExpressionFactory.constructIfThenElseExpression(loc, condition, wrapped,
@@ -581,7 +581,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression intExpression;
 			if (mTypeSizes.useFixedTypeSizes()) {
 				final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
-				final IntegerLiteral maxPointer = ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
+				final IntegerLiteral maxPointer =
+						ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
 				intExpression = constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 						constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
 								MemoryHandler.getPointerBaseAddress(pointerExpression, loc), newType, maxPointer,
@@ -604,7 +605,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final Expression offsetAdress;
 			if (mTypeSizes.useFixedTypeSizes()) {
 				final BigInteger maxPtrValuePlusOne = mTypeSizes.getMaxValueOfPointer().add(BigInteger.ONE);
-				final IntegerLiteral maxPointer = ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
+				final IntegerLiteral maxPointer =
+						ExpressionFactory.createIntegerLiteral(loc, maxPtrValuePlusOne.toString());
 				baseAdress = constructArithmeticExpression(loc, IASTBinaryExpression.op_divide, intExpression,
 						getCTypeOfPointerComponents(), maxPointer, getCTypeOfPointerComponents());
 				offsetAdress = constructArithmeticExpression(loc, IASTBinaryExpression.op_modulo, intExpression,
@@ -613,8 +615,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 				baseAdress = constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
 				offsetAdress = intExpression;
 			}
-			final Expression pointerExpression = MemoryHandler.constructPointerFromBaseAndOffset(baseAdress,
-					offsetAdress, loc);
+			final Expression pointerExpression =
+					MemoryHandler.constructPointerFromBaseAndOffset(baseAdress, offsetAdress, loc);
 			final RValue rValue = new RValue(pointerExpression, newType, false, false);
 			rexp.mLrVal = rValue;
 		}
@@ -678,15 +680,15 @@ public class IntegerTranslation extends ExpressionTranslation {
 	 */
 	private AssumeStatement constructAssumeInRangeStatement(final TypeSizes typeSizes, final ILocation loc,
 			final Expression expr, final CPrimitive type) {
-		final Expression minValue = constructLiteralForIntegerType(loc, type,
-				typeSizes.getMinValueOfPrimitiveType(type));
-		final Expression maxValue = constructLiteralForIntegerType(loc, type,
-				typeSizes.getMaxValueOfPrimitiveType(type));
+		final Expression minValue =
+				constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type));
+		final Expression maxValue =
+				constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
 
-		final Expression biggerMinInt = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
-				minValue, type, expr, type);
-		final Expression smallerMaxValue = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
-				expr, type, maxValue, type);
+		final Expression biggerMinInt =
+				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
+		final Expression smallerMaxValue =
+				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, expr, type, maxValue, type);
 		final AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc,
 				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
 		return inRange;
@@ -917,8 +919,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	private void doFloatIntAndIntFloatConversion(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
-		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(),
-				newType);
+		final String prefixedFunctionName =
+				declareConversionFunction(loc, (CPrimitive) rexp.mLrVal.getCType(), newType);
 		final Expression oldExpression = rexp.mLrVal.getValue();
 		final Expression resultExpression = ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
 				new Expression[] { oldExpression },

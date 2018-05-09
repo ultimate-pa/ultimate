@@ -37,7 +37,6 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -163,9 +162,6 @@ public abstract class Dispatcher {
 		mFunctionTable = functionTable;
 
 		mUseSvcompSettings = getSvcompMode();
-		if (mUseSvcompSettings) {
-			mLogger.info("Using SV-COMP mode");
-		}
 	}
 
 	private boolean getSvcompMode() {
@@ -222,14 +218,14 @@ public abstract class Dispatcher {
 	 */
 	public abstract Result dispatch(IASTPreprocessorStatement node);
 
-//	/**
-//	 * Dispatch a given IType to a specific handler.
-//	 *
-//	 * @param type
-//	 *            the type to dispatch
-//	 * @return the result for the given type.
-//	 */
-//	public abstract InferredType dispatch(IType type);
+	// /**
+	// * Dispatch a given IType to a specific handler.
+	// *
+	// * @param type
+	// * the type to dispatch
+	// * @return the result for the given type.
+	// */
+	// public abstract InferredType dispatch(IType type);
 
 	/**
 	 * Dispatch a given ACSL node to the specific handler.
@@ -243,8 +239,7 @@ public abstract class Dispatcher {
 	public abstract Result dispatch(ACSLNode node, IASTNode cHook);
 
 	/**
-	 * Dispatch a given ACSL node to the specific handler.
-	 * Shortcut for methods where the hook does not change.
+	 * Dispatch a given ACSL node to the specific handler. Shortcut for methods where the hook does not change.
 	 *
 	 * @param node
 	 *            the node to dispatch
@@ -412,10 +407,12 @@ public abstract class Dispatcher {
 	public TranslationSettings getTranslationSettings() {
 		return mTranslationSettings;
 	}
-	
+
 	/**
 	 * Checks whether a declaration is reachable.
-	 * @param decl The declaration
+	 * 
+	 * @param decl
+	 *            The declaration
 	 * @return Whether it is reachable
 	 */
 	public abstract boolean isReachable(IASTDeclaration decl);

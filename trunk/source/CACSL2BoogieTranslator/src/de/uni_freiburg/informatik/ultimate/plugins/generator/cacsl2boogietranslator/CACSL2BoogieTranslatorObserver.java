@@ -198,7 +198,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	private void commonDoTranslationExceptionHandling(final IResult result) {
 		mService.getResultService().reportResult(Activator.PLUGIN_ID, result);
-		mLogger.warn(result.getShortDescription() + ' ' + result.getLongDescription());
+		mLogger.warn(result.getShortDescription() + ": " + result.getLongDescription());
 		mService.getProgressMonitorService().cancelToolchain();
 	}
 

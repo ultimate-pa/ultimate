@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -111,12 +110,10 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
-import cern.colt.Arrays;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
-import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -125,7 +122,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
@@ -163,9 +159,9 @@ public class PRDispatcher extends Dispatcher {
 	public void addToVariablesOnHeap(final IASTNode var) {
 		mVariablesOnHeap.add(var);
 	}
-	
+
 	@Override
-	protected void preRun(List<DecoratedUnit> nodes) {
+	protected void preRun(final List<DecoratedUnit> nodes) {
 		super.preRun(nodes);
 	}
 
@@ -180,6 +176,7 @@ public class PRDispatcher extends Dispatcher {
 
 		mCHandler = new CHandler(this, mHandlerHandler, mBacktranslator, false, mLogger, bitvectorTranslation,
 				overapproximateFloatingPointOperations, mFlatTable);
+		mLogger.info("Starting pre-run dispatcher" + (isSvcomp() ? " in SV-COMP mode " : " in normal mode"));
 	}
 
 	@Override
@@ -439,26 +436,26 @@ public class PRDispatcher extends Dispatcher {
 	public Result dispatch(final IASTPreprocessorStatement node) {
 		return new SkipResult();
 	}
-	
+
 	@Override
-	public Result dispatch(ACSLNode node) {
+	public Result dispatch(final ACSLNode node) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-//	@Override
-//	public InferredType dispatch(final IType type) {
-//		if (type instanceof IBasicType) {
-//			return mTypeHandler.visit(this, (IBasicType) type);
-//		}
-//		if (type instanceof ITypedef) {
-//			return mTypeHandler.visit(this, (ITypedef) type);
-//		}
-//		if (type instanceof IArrayType) {
-//			return mTypeHandler.visit(this, (IArrayType) type);
-//		}
-//		return mTypeHandler.visit(this, type);
-//	}
+	// @Override
+	// public InferredType dispatch(final IType type) {
+	// if (type instanceof IBasicType) {
+	// return mTypeHandler.visit(this, (IBasicType) type);
+	// }
+	// if (type instanceof ITypedef) {
+	// return mTypeHandler.visit(this, (ITypedef) type);
+	// }
+	// if (type instanceof IArrayType) {
+	// return mTypeHandler.visit(this, (IArrayType) type);
+	// }
+	// return mTypeHandler.visit(this, type);
+	// }
 
 	@Override
 	public Result dispatch(final ACSLNode node, final IASTNode cHook) {
@@ -479,7 +476,7 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public boolean isReachable(IASTDeclaration decl) {
+	public boolean isReachable(final IASTDeclaration decl) {
 		// Just mimic the main dispatcher.
 		if (mReachableDeclarations == null) {
 			return true;
@@ -489,38 +486,38 @@ public class PRDispatcher extends Dispatcher {
 		return mReachableDeclarations.contains(decl);
 	}
 
-	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr,
-			final Set<AuxVarInfo> auxVars, final IASTNode hook) {
-//		final Set<String> auxVarIds = new HashSet<>();
-////		for (final VariableDeclaration decl : auxVars.keySet()) {
-//		for (final AuxVarInfo auxvar : auxVars) {
-////			final VariableDeclaration decl = auxvar.getVarDec();
-////			for (final VarList varList : decl.getVariables()) {
-////				for (final String id : varList.getIdentifiers()) {
-////					auxVarIds.add(id);
-////				}
-////			}
-//			auxVarIds.add(auxvar.getExp().getIdentifier());
-//		}
+	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr, final Set<AuxVarInfo> auxVars,
+			final IASTNode hook) {
+		// final Set<String> auxVarIds = new HashSet<>();
+		//// for (final VariableDeclaration decl : auxVars.keySet()) {
+		// for (final AuxVarInfo auxvar : auxVars) {
+		//// final VariableDeclaration decl = auxvar.getVarDec();
+		//// for (final VarList varList : decl.getVariables()) {
+		//// for (final String id : varList.getIdentifiers()) {
+		//// auxVarIds.add(id);
+		//// }
+		//// }
+		// auxVarIds.add(auxvar.getExp().getIdentifier());
+		// }
 		final BoogieIdExtractor bie = new BoogieIdExtractor();
 		bie.processExpression(expr);
 		for (final String id : bie.getIds()) {
 			// auxVars do not have a corresponding C var, hence we move nothing
 			// onto the heap
-//			if (!auxVarIds.contains(id)) {
-				final FlatSymbolTable st = mCHandler.getSymbolTable();
-				final String cid = st.getCIdForBoogieId(id);
-				if (cid == null) {
-					// expression does not have a corresponding c identifier --> nothing to move on heap
-					continue;
-				}
-				final SymbolTableValue value = st.findCSymbol(hook, cid);
-				final CType type = value.getCVariable().getUnderlyingType();
-				if (type instanceof CArray || type instanceof CStruct) {
-//					getVariablesOnHeap().add(value.getDeclarationNode());
-					addToVariablesOnHeap(value.getDeclarationNode());
-				}
-//			}
+			// if (!auxVarIds.contains(id)) {
+			final FlatSymbolTable st = mCHandler.getSymbolTable();
+			final String cid = st.getCIdForBoogieId(id);
+			if (cid == null) {
+				// expression does not have a corresponding c identifier --> nothing to move on heap
+				continue;
+			}
+			final SymbolTableValue value = st.findCSymbol(hook, cid);
+			final CType type = value.getCVariable().getUnderlyingType();
+			if (type instanceof CArray || type instanceof CStruct) {
+				// getVariablesOnHeap().add(value.getDeclarationNode());
+				addToVariablesOnHeap(value.getDeclarationNode());
+			}
+			// }
 		}
 	}
 
@@ -529,7 +526,7 @@ public class PRDispatcher extends Dispatcher {
 		final FlatSymbolTable st = mCHandler.getSymbolTable();
 		final String cid = st.getCIdForBoogieId(id);
 		final SymbolTableValue value = st.findCSymbol(hook, cid);
-//		getVariablesOnHeap().add(value.getDeclarationNode());
+		// getVariablesOnHeap().add(value.getDeclarationNode());
 		addToVariablesOnHeap(value.getDeclarationNode());
 	}
 }
