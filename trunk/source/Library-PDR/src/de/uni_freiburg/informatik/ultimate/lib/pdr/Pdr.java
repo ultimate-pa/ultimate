@@ -40,10 +40,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -78,8 +76,8 @@ public class Pdr<LOC extends IcfgLocation> {
 
 		mScript = csToolkit.getManagedScript();
 
-		final PredicateTransformer predTrans = new PredicateTransformer<>(mScript,
-				new TermDomainOperationProvider(mServices, mScript));
+		final PredicateTransformer predTrans =
+				new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		final Set<LOC> init = icfg.getInitialNodes();
 		final Set<LOC> error = IcfgUtils.getErrorLocations(icfg);
@@ -98,7 +96,7 @@ public class Pdr<LOC extends IcfgLocation> {
 		 */
 		final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(icfg);
 		while (iter.hasNext()) {
-			IcfgLocation loc = iter.next();
+			final IcfgLocation loc = iter.next();
 			mFrames.put(loc, new ArrayList<>());
 			if (init.contains(loc)) {
 				mFrames.get(loc).add(mScript.getScript().term("true"));
@@ -111,7 +109,7 @@ public class Pdr<LOC extends IcfgLocation> {
 			/**
 			 * Initialize new level.
 			 */
-			for (Entry<IcfgLocation, ArrayList<Term>> trace : mFrames.entrySet()) {
+			for (final Entry<IcfgLocation, ArrayList<Term>> trace : mFrames.entrySet()) {
 				trace.getValue().add(mScript.getScript().term("true"));
 			}
 
@@ -120,15 +118,15 @@ public class Pdr<LOC extends IcfgLocation> {
 			/**
 			 * Error Access violation:
 			 */
-//			for (final IcfgEdge edge : error.iterator().next().getIncomingEdges()) {
-//				Term proofObligationTerm = edge.getTransformula().getFormula();
-//			}
+			for (final IcfgEdge edge : error.iterator().next().getIncomingEdges()) {
+				final Term proofObligationTerm = edge.getTransformula().getFormula();
+			}
 
 			/**
 			 * Generated proof-obligation on level 0 -> error is reachable
 			 */
 			if (!blockingPhase(proofObligations)) {
-				PdrResult result = new PdrResult();
+				final PdrResult result = new PdrResult();
 				return result;
 			}
 
@@ -136,7 +134,7 @@ public class Pdr<LOC extends IcfgLocation> {
 			 * Found invariant -> error is not reachable
 			 */
 			if (propagationPhase()) {
-				PdrResult result = new PdrResult();
+				final PdrResult result = new PdrResult();
 				return result;
 			}
 		}
@@ -145,21 +143,19 @@ public class Pdr<LOC extends IcfgLocation> {
 	/**
 	 * Blocking-phase, for blocking proof-obligations.
 	 * 
-	 * @return false, if proof-obligation on level 0 is created true, if there
-	 *         is no proof-obligation left
+	 * @return false, if proof-obligation on level 0 is created true, if there is no proof-obligation left
 	 */
 	private boolean blockingPhase(final ArrayList<Triple<Term, IcfgLocation, Integer>> initialProofObligations) {
-		Deque<Triple<Term, IcfgLocation, Integer>> proofObligations = new ArrayDeque<>(initialProofObligations);
+		final Deque<Triple<Term, IcfgLocation, Integer>> proofObligations = new ArrayDeque<>(initialProofObligations);
 
 		while (!proofObligations.isEmpty()) {
-			Triple<Term, IcfgLocation, Integer> proofObligation = proofObligations.pop();
+			final Triple<Term, IcfgLocation, Integer> proofObligation = proofObligations.pop();
 			final Term toBeBlocked = proofObligation.getFirst();
 			final IcfgLocation location = proofObligation.getSecond();
 			final int level = proofObligation.getThird();
 
 			/**
-			 * for (final IcfgLocation predecessor :
-			 * location.getIncomingNodes()) {
+			 * for (final IcfgLocation predecessor : location.getIncomingNodes()) {
 			 * 
 			 * }
 			 */

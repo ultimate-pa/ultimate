@@ -8,5 +8,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.pdr
