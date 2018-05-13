@@ -310,7 +310,7 @@ public class Trace2PEACompiler {
 		// may be demanded to be able to neglect the phase.
 		lastphase = countertrace.getPhases().length - 1;
 		while (!buildTotal && lastphase > 0 && countertrace.getPhases()[lastphase].isAllowEmpty()
-				&& (canPossiblySeep & (1 << lastphase)) != 0) {
+				&& (canPossiblySeep & 1 << lastphase) != 0) {
 			lastphase = lastphase - 1;
 		}
 		mLogger.debug("Lastphase = " + lastphase);
@@ -384,7 +384,7 @@ public class Trace2PEACompiler {
 			CDD clockInv = CDD.TRUE;
 			for (int p = 0, pbit = 1; pbit <= destBits.active; p++, pbit += pbit) {
 				if ((destBits.waiting & pbit) != 0
-						|| (countertrace.getPhases()[p].getBoundType() < 0 && (canseep(destBits) & pbit) == 0)) {
+						|| countertrace.getPhases()[p].getBoundType() < 0 && (canseep(destBits) & pbit) == 0) {
 					/*
 					 * Phase invariants only apply to waiting states and states with upper bounds that cannot be
 					 * reentered immediately.
@@ -462,7 +462,7 @@ public class Trace2PEACompiler {
 			// formula is omitted. Building test automata
 			// (this.buildTotal==true)
 			// the phase needs to be constructed.
-			if (buildTotal || ((active & (1 << (p - 1))) == 0)) {
+			if (buildTotal || (active & 1 << p - 1) == 0) {
 				mLogger.debug("Adding new transition");
 				buildNewTrans(srcBits, src, guard, stateInv, resets, new PhaseBits(active, exactbound, waiting));
 			}
@@ -475,7 +475,7 @@ public class Trace2PEACompiler {
 		 * For each dc-phase we have three different choices: We can keep it, we can enter it, and we can seep in it.
 		 */
 
-		final boolean canseepdest = (((active & ~waiting) << 1) & canPossiblySeep & pbit) != 0;
+		final boolean canseepdest = ((active & ~waiting) << 1 & canPossiblySeep & pbit) != 0;
 
 		/*
 		 * First we determine the condition under which phase p is not activated.
@@ -518,7 +518,7 @@ public class Trace2PEACompiler {
 					 * if previous state was waiting, we can either keep waiting, or enter non-waiting state.
 					 */
 					recursiveBuildTrans(srcBits, src, keep.and(cless[p]), stateInv, resets, active | pbit,
-							waiting | pbit, exactbound | (srcBits.exactbound & pbit), p + 1);
+							waiting | pbit, exactbound | srcBits.exactbound & pbit, p + 1);
 
 					recursiveBuildTrans(srcBits, src, keep.and(cless[p].negate()), stateInv, resets, active | pbit,
 							waiting, exactbound, p + 1);
@@ -606,7 +606,7 @@ public class Trace2PEACompiler {
 				}
 				if (keep != CDD.FALSE) {
 					recursiveBuildTrans(srcBits, src, keep, stateInv, resets, active | pbit, waiting,
-							exactbound | (srcBits.exactbound & pbit), p + 1);
+							exactbound | srcBits.exactbound & pbit, p + 1);
 				}
 
 			}
@@ -691,7 +691,7 @@ public class Trace2PEACompiler {
 			start = new Phase(Trace2PEACompiler.START + "_" + name, CDD.TRUE, CDD.TRUE);
 			start.addTransition(start, noSyncEvent.prime(), new String[0]);
 			for (int i = 0; i < countertrace.getPhases().length; i++) {
-				if ((canPossiblySeep & (1 << i)) == 0) {
+				if ((canPossiblySeep & 1 << i) == 0) {
 					break;
 				}
 
@@ -713,7 +713,7 @@ public class Trace2PEACompiler {
 			 * requires entry events.
 			 */
 			for (int i = 0; i < countertrace.getPhases().length; i++) {
-				if ((canPossiblySeep & (1 << i)) == 0) {
+				if ((canPossiblySeep & 1 << i) == 0) {
 					break;
 				}
 
@@ -732,7 +732,7 @@ public class Trace2PEACompiler {
 			final int initSize = initTrans.size();
 			init = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
-				final Transition trans = (initTrans.get(i));
+				final Transition trans = initTrans.get(i);
 				if (trans.dest.getName().equals("st")) {
 					/*
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
@@ -763,7 +763,7 @@ public class Trace2PEACompiler {
 
 		final Phase[] phases = new Phase[(start != null ? 1 : 0) + allPhases.size() + (exitSync != null ? 1 : 0)];
 
-		final Phase[] finalPhases = (exitSync != null ? new Phase[1] : null);
+		final Phase[] finalPhases = exitSync != null ? new Phase[1] : null;
 
 		int phaseNr = 0;
 		if (start != null) {
@@ -815,11 +815,17 @@ public class Trace2PEACompiler {
 		} else if (dec instanceof BoogieBooleanExpressionDecision) {
 			final BoogieBooleanExpressionDecision bbedec = (BoogieBooleanExpressionDecision) dec;
 			for (final Entry<String, String> entry : bbedec.getVars().entrySet()) {
-				final String oldType = variables.put(entry.getKey(), entry.getValue());
-				if (oldType != null && !oldType.equals(entry.getValue())) {
+				final String oldType = variables.get(entry.getKey());
+				final String newType = entry.getValue();
+				if (oldType != null && newType != null && !oldType.equals(entry.getValue())) {
 					throw new IllegalArgumentException(name + " Variable with conflicting type declared: "
 							+ entry.getKey() + " : " + oldType + " vs. " + entry.getValue());
 				}
+				if (oldType != null && newType == null) {
+					// ignore types hidden in nested expressions
+					continue;
+				}
+				variables.put(entry.getKey(), newType);
 			}
 		} else {
 			throw new UnsupportedOperationException("Unknown decision type: " + dec.getClass());
