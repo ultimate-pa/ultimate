@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.
 public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpressionDecision> {
 
 	private final Expression mExpression;
-	private final static NormalFormTransformer<Expression> TRANSFORMER =
+	private static final NormalFormTransformer<Expression> TRANSFORMER =
 			new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 	/**
@@ -171,7 +171,7 @@ public class BoogieBooleanExpressionDecision extends Decision<BoogieBooleanExpre
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mExpression == null) ? 0 : mExpression.hashCode());
+		result = prime * result + (mExpression == null ? 0 : mExpression.hashCode());
 		return result;
 	}
 
