@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -402,8 +403,11 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
-	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
-				final WeqCongruenceClosure<NODE> origWeqCc, final boolean inplace) {
+//	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
+	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem,
+			final SetConstraintConjunction<NODE> literalSet,
+			final WeqCongruenceClosure<NODE> origWeqCc,
+			final boolean inplace) {
 		bmStart(WeqCcBmNames.REPORTCONTAINS);
 		if (inplace) {
 			origWeqCc.reportContainsConstraint(elem, literalSet);

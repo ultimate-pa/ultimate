@@ -906,7 +906,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 		if (elemWasRepresentative) {
 			if (newRep == null) {
-				mLiteralSetConstraints.removeConstraint(elem);
+				mLiteralSetConstraints.projectAway(elem);
 			} else {
 				mLiteralSetConstraints.replaceRepresentative(elem, newRep);
 			}
@@ -1925,6 +1925,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	@Override
 	public void reportContainsConstraint(final ELEM elem, final Set<ELEM> literalSet) {
+		mLiteralSetConstraints.reportContains(elem, literalSet);
+	}
+
+	@Override
+	public void reportContainsConstraint(final ELEM elem, final SetConstraintConjunction<ELEM> literalSet) {
 		mLiteralSetConstraints.reportContains(elem, literalSet);
 	}
 

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -906,6 +907,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	}
 
+	public void reportContainsConstraint(final NODE elem, final SetConstraintConjunction<NODE> literalSet) {
+		mCongruenceClosure.reportContainsConstraint(elem, literalSet);
+		if (mManager.getSettings().isAlwaysReportChangeToGpa()) {
+			throw new AssertionError("not implemented");
+		}
+
+	}
+
+
 	/**
 	 * Updates the weq-graph wrt. a change in the ground partial arrangement.
 	 * Immediately propagates array equalities if some have occurred.
@@ -1527,7 +1537,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			}
 			thisAligned = mManager.reportDisequality(thisAligned, deq.getKey(), deq.getValue(), inplace);
 		}
-		for (final Entry<NODE, Set<NODE>> en : other.getLiteralSetConstraints().getConstraints().entrySet()) {
+		for (final Entry<NODE, SetConstraintConjunction<NODE>> en :
+				other.getLiteralSetConstraints().getConstraints().entrySet()) {
 			if (thisAligned.isInconsistent()) {
 				return mManager.getInconsistentWeqCc(inplace);
 			}
