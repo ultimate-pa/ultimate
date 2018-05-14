@@ -17,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -35,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends IAction, VARDECL, LOCATION>
 		implements IDebugHelper<STATE, ACTION, VARDECL, LOCATION> {
+
+	private static final boolean SIMPLIFY_IF_ASSERTION_FAILS = false;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -103,6 +107,22 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 		}
 		mLogger.fatal(getTransformulaDebugString(transition) + " (" + transition + ")");
 		mLogger.fatal("Post: {" + postcond + "}");
+
+		if (SIMPLIFY_IF_ASSERTION_FAILS) {
+			mLogger.fatal("Simplified triple ");
+			final Term simplifiedPrecond = SmtUtils.simplify(mMgdScript, precond.getFormula(), mServices,
+					SimplificationTechnique.SIMPLIFY_DDA);
+			if (precondHier == null) {
+				mLogger.fatal("Pre: {" + simplifiedPrecond + "}");
+			} else {
+				mLogger.fatal("Pre: {" + simplifiedPrecond + "}");
+				mLogger.fatal("PreHier: {" + SmtUtils.simplify(mMgdScript, precondHier.getFormula(), mServices,
+						SimplificationTechnique.SIMPLIFY_DDA) + "}");
+			}
+			mLogger.fatal(getTransformulaDebugString(transition) + " (" + transition + ")");
+			mLogger.fatal("Post: {" + SmtUtils.simplify(mMgdScript, postcond.getFormula(), mServices,
+					SimplificationTechnique.SIMPLIFY_DDA) + "}");
+		}
 	}
 
 	private String getTransformulaDebugString(final ACTION action) {
