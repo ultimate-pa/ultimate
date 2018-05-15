@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CcSettings;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
 
 public class CongruenceClosureSmtUtils {
 	public static <NODE extends IEqNodeIdentifier<NODE>> Term congruenceClosureToTerm(final Script script,
@@ -45,23 +46,36 @@ public class CongruenceClosureSmtUtils {
 		}
 
 
-		for (final Entry<NODE, Set<NODE>> en : pa.getLiteralSetConstraints().getConstraints().entrySet()) {
-			result.add(literalSetConstraintToTerm(script, en));
+		for (final Entry<NODE, SetConstraintConjunction<NODE>> en :
+				pa.getLiteralSetConstraints().getConstraints().entrySet()) {
+			result.add(literalSetConstraintToTerm(script, en.getValue()));
 		}
 
 		return result;
 	}
 
 	private static <NODE extends IEqNodeIdentifier<NODE>> Term literalSetConstraintToTerm(final Script script,
-			final Entry<NODE, Set<NODE>> en) {
-		assert !en.getValue().isEmpty();
-		assert !en.getKey().isLiteral();
+//			final Entry<NODE, Set<NODE>> en) {
+			final SetConstraintConjunction<NODE> constraint) {
+//		assert !en.getValue().isEmpty();
+//		assert !en.getKey().isLiteral();
 
-		final Set<Term> disjuncts = new HashSet<>();
-		for (final NODE lit : en.getValue()) {
-			disjuncts.add(SmtUtils.binaryEquality(script, en.getKey().getTerm(), lit.getTerm()));
+		final Set<Term> conjuncts = new HashSet<>();
+		for (final Set<NODE> set : constraint.getSets()) {
+			final Set<Term> disjuncts = new HashSet<>();
+			for (final NODE node : set) {
+				disjuncts.add(SmtUtils.binaryEquality(script,
+						constraint.getConstrainedElement().getTerm(),
+						node.getTerm()));
+			}
+			conjuncts.add(SmtUtils.or(script, disjuncts));
 		}
-		return SmtUtils.or(script, disjuncts);
+		return SmtUtils.and(script, conjuncts);
+//		final Set<Term> disjuncts = new HashSet<>();
+//		for (final NODE lit : constraint.) {
+//			disjuncts.add(SmtUtils.binaryEquality(script, en.getKey().getTerm(), lit.getTerm()));
+//		}
+//		return SmtUtils.or(script, disjuncts);
 	}
 
 	/**

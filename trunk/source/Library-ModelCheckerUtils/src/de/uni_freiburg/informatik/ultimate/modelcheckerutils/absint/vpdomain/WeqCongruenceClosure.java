@@ -484,7 +484,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			// collect nodes of the form a[i] according to the rule that are present currently
 			Collection<NODE> aIs = null;
-			Set<NODE> containsConstraint = null;
+			SetConstraintConjunction<NODE> containsConstraint = null;
 			if (nonConstantArray != null) {
 				aIs = mCongruenceClosure.getFuncAppsWithFunc(nonConstantArray);
 
@@ -496,9 +496,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 							mManager.getWeqVariableNodeForDimension(0, sampleAi.getArgument().getSort()));
 
 					containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
-					assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
-					+ "literals --> unexpected..";
-					assert !containsConstraint.isEmpty() : "uncaught inconsistent case";
+//					assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
+//					+ "literals --> unexpected..";
+//					assert !containsConstraint.isEmpty() : "uncaught inconsistent case";
+					assert !containsConstraint.isInconsistent() : "uncaught inconsistent case";
 				}
 			}
 
@@ -508,8 +509,14 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				assert constantArrayConstant.isLiteral();
 
 				// construct L cup {l}
-				final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
-				newLiteralSet.add(constantArrayConstant);
+				final SetConstraintConjunction<NODE> newLiteralSet =
+						SetConstraintConjunction.join(containsConstraint,
+								new SetConstraintConjunction<>(
+										null,
+										containsConstraint.getConstrainedElement(),
+										Collections.singleton(constantArrayConstant)));
+//				final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
+//				newLiteralSet.add(constantArrayConstant);
 
 				// do propagations
 				for (final NODE aI : aIs) {
@@ -907,6 +914,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 	}
 
+	@Override
 	public void reportContainsConstraint(final NODE elem, final SetConstraintConjunction<NODE> literalSet) {
 		mCongruenceClosure.reportContainsConstraint(elem, literalSet);
 		if (mManager.getSettings().isAlwaysReportChangeToGpa()) {
@@ -1290,9 +1298,9 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					elem.replaceArgument(mManager.getWeqVariableNodeForDimension(0, elem.getArgument().getSort()));
 
 			final WeakEquivalenceEdgeLabel<NODE, ICongruenceClosure<NODE>> edgeLabel = adjacentEdge.getValue();
-			final Set<NODE> containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
-			assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
-					+ "literals --> unexpected..";
+			final SetConstraintConjunction<NODE> containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
+//			assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
+//					+ "literals --> unexpected..";
 			if (containsConstraint == null) {
 				// there is no literal set constraint on a[q] --> do nothing
 				continue;
@@ -1301,12 +1309,17 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 
 			// construct L cup {l}
-			final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
-			newLiteralSet.add(constantArrayConstant);
+			final SetConstraintConjunction<NODE> newLiteralSet =
+					SetConstraintConjunction.join(containsConstraint,
+							new SetConstraintConjunction<>(
+									null, aQ, Collections.singleton(constantArrayConstant)));
+//			newLiteralSet.add(constantArrayConstant);
+//			final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
+//			newLiteralSet.add(constantArrayConstant);
 
 			// do propagation
 			mCongruenceClosure.reportContainsConstraint(elem, newLiteralSet);
-			// TODO: overapproximating..
+			// TODO: overapproximating here.. --> do something more precise?
 			madeChanges = true;
 		}
 
@@ -1867,7 +1880,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	public Set<NODE> getContainsConstraintForElement(final NODE elem) {
+	public SetConstraintConjunction<NODE> getContainsConstraintForElement(final NODE elem) {
 		return mCongruenceClosure.getContainsConstraintForElement(elem);
 	}
 }

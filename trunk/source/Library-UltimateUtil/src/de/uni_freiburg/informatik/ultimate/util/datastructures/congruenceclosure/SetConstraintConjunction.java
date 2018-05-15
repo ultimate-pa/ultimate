@@ -112,6 +112,13 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		return null;
 	}
 
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean meetIsInconsistent(
+			final SetConstraintConjunction<ELEM> litConstraint1,
+			final SetConstraintConjunction<ELEM> litConstraint2) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isStrongerThan(
 			final SetConstraintConjunction<ELEM> firstConstraint,
 			final SetConstraintConjunction<ELEM> secondConstraint) {
@@ -214,5 +221,10 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 
 			return true;
 		}
+	}
+
+	public Set<Set<ELEM>> getSets() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

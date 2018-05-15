@@ -403,6 +403,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		}
 	}
 
+	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
+			final WeqCongruenceClosure<NODE> origWeqCc,
+			final boolean inplace) {
+		return reportContainsConstraint(elem,
+				new SetConstraintConjunction<>(null, elem, literalSet),
+				origWeqCc, inplace);
+	}
+
 //	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
 	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem,
 			final SetConstraintConjunction<NODE> literalSet,

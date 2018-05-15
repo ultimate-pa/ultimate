@@ -302,7 +302,16 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element, final Set<ELEM> literalSet,
+	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Set<ELEM> literalSet,
+			final CongruenceClosure<ELEM> origWeqCc,
+			final boolean inplace) {
+		return reportContainsConstraint(elem,
+				new SetConstraintConjunction<>(null, elem, literalSet),
+				origWeqCc, inplace);
+	}
+
+	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element,
+			final SetConstraintConjunction<ELEM> literalSet,
 			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
 		bmStart(CcBmNames.REPORTCONTAINS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;

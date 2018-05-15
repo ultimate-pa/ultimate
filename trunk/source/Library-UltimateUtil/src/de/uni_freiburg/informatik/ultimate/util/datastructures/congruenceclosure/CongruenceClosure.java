@@ -1008,7 +1008,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			thisAligned = mManager.reportDisequality(deq.getKey(), deq.getValue(), thisAligned, inplace);
 		}
 
-		for (final Entry<ELEM, Set<ELEM>> literalConstraint :
+		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> literalConstraint :
 				other.getLiteralSetConstraints().getConstraints().entrySet()) {
 			if (thisAligned.isInconsistent()) {
 				if (inplace) {
@@ -1057,10 +1057,17 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return EqualityStatus.EQUAL;
 		}
 
-		final Set<ELEM> litConstraint1 = mLiteralSetConstraints.getConstraint(rep1);
-		final Set<ELEM> litConstraint2 = mLiteralSetConstraints.getConstraint(rep2);
+		final SetConstraintConjunction<ELEM> litConstraint1 = mLiteralSetConstraints.getConstraint(rep1);
+		final SetConstraintConjunction<ELEM> litConstraint2 = mLiteralSetConstraints.getConstraint(rep2);
+
+
 		if (litConstraint1 != null && litConstraint2 != null
-				&& !DataStructureUtils.haveNonEmptyIntersection(litConstraint1, litConstraint2)) {
+				&& SetConstraintConjunction.meetIsInconsistent(litConstraint1, litConstraint2)) {
+//				&& !DataStructureUtils.haveNonEmptyIntersection(litConstraint1, litConstraint2)) {
+//			final SetConstraintConjunction<ELEM> meet = SetConstraintConjunction.meet(litConstraint1, litConstraint2);
+//			if (meet.isInconsistent()) {
+//				return EqualityStatus.NOT_EQUAL;
+//			}
 			return EqualityStatus.NOT_EQUAL;
 		}
 
@@ -1934,7 +1941,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	@Override
-	public Set<ELEM> getContainsConstraintForElement(final ELEM elem) {
+	public SetConstraintConjunction<ELEM> getContainsConstraintForElement(final ELEM elem) {
 		return mLiteralSetConstraints.getConstraint(elem);
 	}
 }
