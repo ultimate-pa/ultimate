@@ -92,12 +92,11 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 public class TraceAbstractionStarter {
 
 	private static final boolean EXTENDED_HOARE_ANNOTATION_LOGGING = true;
-	private static final boolean INVARIANT_CHECKING = false; 
+	private static final boolean INVARIANT_CHECKING = false;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
-	
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
@@ -157,6 +156,8 @@ public class TraceAbstractionStarter {
 					witnessAutomaton, rawFloydHoareAutomataFromFile);
 		} else {
 			final IProgressMonitorService progmon = mServices.getProgressMonitorService();
+			final int numberOfErrorLocs = errNodesOfAllProc.size();
+			int finishedErrorLocs = 1;
 			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
 				final String name = errorLoc.getDebugIdentifier();
 				final List<IcfgLocation> errorLocs = new ArrayList<>(1);
@@ -167,12 +168,14 @@ public class TraceAbstractionStarter {
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				final Result result = iterate(name, icfg, taPrefs, csToolkit, predicateFactory,
 						traceAbstractionBenchmark, errorLocs, witnessAutomaton, rawFloydHoareAutomataFromFile);
-				mLogger.info("Result for " + name + " was " + result);
+				mLogger.info(String.format("Result for error location %s was %s (%s/%s)", name, result,
+						finishedErrorLocs, numberOfErrorLocs));
 				reportBenchmarkForErrLocation(traceAbstractionBenchmark, errorLoc.toString());
 				traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 				if (taPrefs.hasLimitAnalysisTime()) {
 					progmon.removeChildTimer();
 				}
+				finishedErrorLocs++;
 			}
 		}
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
