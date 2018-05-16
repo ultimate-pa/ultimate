@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosur
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -31,13 +32,27 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 
 	private boolean mIsInconsistent;
 
+	/**
+	 * special constructor for an inconsistent SetCc
+	 *
+	 * @param isInconsistent
+	 */
+	private SetConstraintConjunction(final boolean isInconsistent) {
+		assert isInconsistent : "use other constructor in this case!!";
+		mConstrainedElement = null;
+		mIsInconsistent = true;
+		mSetConstraints = null;
+		mSurroundingCCSetConstraints = null;
+		assert sanityCheck();
+	}
 
 	private SetConstraintConjunction(final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
 			final ELEM constrainedElement,
 			final Collection<SetConstraint<ELEM>> setConstraints) {
 		mConstrainedElement = constrainedElement;
 		mSurroundingCCSetConstraints = surroundingSetConstraints;
-		mSetConstraints = new HashSet<>();
+		mSetConstraints = new HashSet<>(setConstraints);
+		assert sanityCheck();
 	}
 
 	public SetConstraintConjunction(final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
@@ -47,15 +62,39 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		mSurroundingCCSetConstraints = surroundingSetConstraints;
 		mSetConstraints = new HashSet<>();
 		mSetConstraints.add(new SetConstraint<>(this, elements));
+		assert sanityCheck(); // surrounding constraint does not have this constraint yet..
 	}
 
 	/**
-	 * copy constructor
+	 * copy constructor that may change surroundingCC..
 	 *
 	 * @param original
+	 * @param surroundingCCSetConstraints
 	 */
-	public SetConstraintConjunction(final SetConstraintConjunction<ELEM> original) {
+	public SetConstraintConjunction(final CCLiteralSetConstraints<ELEM> surroundingCCSetConstraints,
+			final SetConstraintConjunction<ELEM> original) {
+		mSurroundingCCSetConstraints = surroundingCCSetConstraints;
 		mConstrainedElement = original.mConstrainedElement;
+		// deep copy..
+		mSetConstraints = new HashSet<>();
+		for (final SetConstraint<ELEM> sc : original.mSetConstraints) {
+			mSetConstraints.add(new SetConstraint<>(this, sc));
+		}
+		assert sanityCheck();
+	}
+
+	/**
+	 * for singletons
+	 *
+	 * @param surroundingCCSetConstraints
+	 * @param original
+	 */
+	public SetConstraintConjunction(final CCLiteralSetConstraints<ELEM> surroundingCCSetConstraints,
+			final ELEM constrainedElement, final ELEM singletonElement) {
+		mSurroundingCCSetConstraints = surroundingCCSetConstraints;
+		mConstrainedElement = constrainedElement;
+		mSetConstraints = Collections.singleton(new SingletonSetConstraint<>(this, singletonElement));
+		assert sanityCheck();
 	}
 
 	/**
@@ -105,6 +144,7 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 	}
 
 	public boolean isInconsistent() {
+		assert sanityCheck();
 		return mIsInconsistent;
 	}
 
@@ -152,10 +192,35 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 			final ELEM constrainedElement,
 			final Collection<SetConstraint<ELEM>> setConstraints) {
 
-		//TODO: only instantiate SetConstraintComparator once??
 
+		//TODO: only instantiate SetConstraintComparator once??
+		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(new SetConstraintComparator<>());
+		final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(setConstraints);
+
+		// check for inconsistency
+		for (final SetConstraint<ELEM> sc : setConstraints) {
+			if (sc.isInconsistent()) {
+				return new SetConstraintConjunction<>(true);
+			}
+
+		}
+
+		final Set<SetConstraint<ELEM>> all = new HashSet<>();
+
+		for (final Set<SetConstraint<ELEM>> subSet : DataStructureUtils.powerSet(filtered1)) {
+			final SetConstraint<ELEM> meet = SetConstraint.meet(subSet);
+
+			if (meet.isInconsistent()) {
+				// created inconsistent constraint
+				return new SetConstraintConjunction<>(true);
+			}
+
+			all.add(meet);
+		}
+
+		//TODO: only instantiate SetConstraintComparator once??
 		final PartialOrderCache<SetConstraint<ELEM>> poc = new PartialOrderCache<>(new SetConstraintComparator<>());
-		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(setConstraints);
+		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(all);
 
 		return new SetConstraintConjunction<>(surroundingSetConstraints, constrainedElement, filtered);
 	}
@@ -188,10 +253,45 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		return buildSetConstraintConjunction(surroundingConstraint, constrainedElement, newSetConstraints);
 	}
 
+	/**
+	 * Check if the two constraints would contradict "if they were about the same element".
+	 * (Used in getEqualityStatus..)
+	 *
+	 * @param constraintConjunction1
+	 * @param constraintConjunction2
+	 * @return
+	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean meetIsInconsistent(
-			final SetConstraintConjunction<ELEM> litConstraint1,
-			final SetConstraintConjunction<ELEM> litConstraint2) {
-		return meet(litConstraint1, litConstraint2).isInconsistent();
+			final SetConstraintConjunction<ELEM> constraintConjunction1,
+			final SetConstraintConjunction<ELEM> constraintConjunction2) {
+		if (constraintConjunction1 == null) {
+			return constraintConjunction2.isInconsistent();
+		}
+		if (constraintConjunction2 == null) {
+			return constraintConjunction1.isInconsistent();
+		}
+		if (constraintConjunction1.isInconsistent()) {
+			return true;
+		}
+		if (constraintConjunction2.isInconsistent()) {
+			return true;
+		}
+
+		assert constraintConjunction1.mSurroundingCCSetConstraints
+			== constraintConjunction2.mSurroundingCCSetConstraints;
+		final CCLiteralSetConstraints<ELEM> surroundingConstraint = constraintConjunction1.mSurroundingCCSetConstraints;
+
+//		final ELEM constrainedElement = constraintConjunction1.mConstrainedElement;
+		final Collection<SetConstraint<ELEM>> newSetConstraints =
+				DataStructureUtils.union(constraintConjunction1.mSetConstraints,
+						constraintConjunction2.mSetConstraints);
+
+		// does not matter which we pick here
+		final ELEM constrainedElement = constraintConjunction1.mConstrainedElement;
+		final SetConstraintConjunction<ELEM> setcc =
+				buildSetConstraintConjunction(surroundingConstraint, constrainedElement, newSetConstraints);
+		return setcc.isInconsistent();
+//		return meet(litConstraint1, litConstraint2).isInconsistent();
 	}
 
 	/**
@@ -285,6 +385,35 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 	}
 
 	public boolean sanityCheck() {
+		if (mIsInconsistent) {
+			if (mSurroundingCCSetConstraints == null) {
+				// fine in this case, no further checks needed
+				return true;
+			}
+			// check that inconsistency flag is set correctly
+			if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3) {
+				if (!mSetConstraints.stream().anyMatch(sc -> sc.isInconsistent())) {
+						assert false;
+						return false;
+				}
+			}
+		} else {
+			// check that inconsistency flag is set correctly
+			if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3) {
+				for (final SetConstraint<ELEM> sc : mSetConstraints) {
+					if (sc.isInconsistent()) {
+						assert false;
+						return false;
+					}
+				}
+			}
+		}
+
+		if (mSurroundingCCSetConstraints == null) {
+				assert false;
+				return false;
+		}
+
 		for (final SetConstraint<ELEM> conjunct : mSetConstraints) {
 			if (!conjunct.sanityCheck()) {
 				assert false;
@@ -292,10 +421,28 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 			}
 		}
 
-		if (mSurroundingCCSetConstraints.getConstraint(mConstrainedElement) != this) {
-				assert false;
-				return false;
+//		if (mSurroundingCCSetConstraints.getConstraint(mConstrainedElement) != this) {
+//				assert false;
+//				return false;
+//		}
+
+		// check minimality of conjunction :; all must be incomparable!
+		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3) {
+			for (final SetConstraint<ELEM> sc1 : mSetConstraints) {
+				for (final SetConstraint<ELEM> sc2 : mSetConstraints) {
+					if (sc1 == sc2) {
+						continue;
+					}
+
+					if (SetConstraint.isStrongerThan(sc1, sc2)) {
+						assert false;
+						return false;
+					}
+				}
+			}
 		}
+
+
 
 		return true;
 	}
@@ -308,6 +455,37 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		}
 
 		return Collections.unmodifiableSet(result);
+	}
+
+	@Override
+	public String toString() {
+		if (mIsInconsistent) {
+			return "SetCc: False";
+		}
+
+		return "SetConstraintConjunction [ConstrainedElement=" + mConstrainedElement + ", mSetConstraints="
+				+ mSetConstraints + "]";
+	}
+
+
+}
+
+class SingletonSetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELEM>>
+	extends SetConstraintConjunction<ELEM> {
+
+	public SingletonSetConstraintConjunction(final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
+			final ELEM constrainedElement,
+			final ELEM singletonElement) {
+		super(surroundingSetConstraints, constrainedElement, singletonElement);
+	}
+}
+
+class SingletonSetConstraint<ELEM extends ICongruenceClosureElement<ELEM>>
+ 	extends SetConstraint<ELEM> {
+
+	public SingletonSetConstraint(final SetConstraintConjunction<ELEM> surroundingSetConstraints,
+			final ELEM singletonElement) {
+		super(surroundingSetConstraints, Collections.singleton(singletonElement));
 	}
 }
 
@@ -344,6 +522,11 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 //				mNonLiterals.add(e);
 //			}
 //		}
+		assert sanityCheck();
+	}
+
+	public boolean isInconsistent() {
+		return mLiterals.isEmpty() && mNonLiterals.isEmpty();
 	}
 
 	private SetConstraint(final SetConstraintConjunction<ELEM> surroundingSetCc, final Set<ELEM> literals,
@@ -352,6 +535,16 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mLiterals = new HashSet<>(literals);
 		mNonLiterals = new HashSet<>(nonLiterals);
 		assert sanityCheck();
+	}
+
+	/**
+	 * copy constructor that may change surrounding set constraints
+	 *
+	 * @param surroundingSetCc
+	 * @param sc
+	 */
+	public SetConstraint(final SetConstraintConjunction<ELEM> surroundingSetCc, final SetConstraint<ELEM> sc) {
+		this(surroundingSetCc, sc.mLiterals, sc.mNonLiterals);
 	}
 
 	public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
@@ -470,6 +663,57 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
+
+	/**
+	 * note this constructs "some" meet over the input constraints
+	 *
+	 * the one that is strongest on literals and weakest on non-literals
+	 *
+	 * @param scs
+	 * @return
+	 */
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> SetConstraint<ELEM> meet(
+			final Collection<SetConstraint<ELEM>> scs) {
+		assert !scs.isEmpty();
+
+		final Iterator<SetConstraint<ELEM>> scIt = scs.iterator();
+
+		final SetConstraint<ELEM> firstSc = scIt.next();
+
+		Set<ELEM> literals = new HashSet<>(firstSc.mLiterals);
+		final Set<ELEM> nonLiterals = new HashSet<>(firstSc.mNonLiterals);
+
+		while (scIt.hasNext()) {
+			final SetConstraint<ELEM> current = scIt.next();
+
+			// TODO: is this a good implementation of intersection??
+			final Set<ELEM> newLiterals = new HashSet<>();
+			for (final ELEM l : literals) {
+				if (current.mLiterals.contains(l)) {
+					newLiterals.add(l);
+				}
+			}
+			literals = newLiterals;
+
+
+			nonLiterals.addAll(current.mNonLiterals);
+		}
+
+		final SetConstraintConjunction<ELEM> surroundingSetCc = firstSc.mSurroundingScConjunction;
+		return SetConstraint.buildSetConstraint(surroundingSetCc, literals, nonLiterals);
+	}
+
+	private static <ELEM extends ICongruenceClosureElement<ELEM>> SetConstraint<ELEM> buildSetConstraint(
+			final SetConstraintConjunction<ELEM> surroundingSetCc, final Set<ELEM> literals,
+			final Set<ELEM> nonLiterals) {
+
+		if (literals.size() == 1 && nonLiterals.isEmpty()) {
+			return new SingletonSetConstraint<>(surroundingSetCc, literals.iterator().next());
+		}
+
+		return new SetConstraint<>(surroundingSetCc, literals, nonLiterals);
+	}
+
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> SetConstraint<ELEM> join(
 			final SetConstraint<ELEM> sc1, final SetConstraint<ELEM> sc2) {
 		assert sc1.mSurroundingScConjunction == sc2.mSurroundingScConjunction;
@@ -478,8 +722,13 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 				DataStructureUtils.union(sc1.mNonLiterals, sc2.mNonLiterals));
 	}
 
+	@Override
+	public String toString() {
+		return "SetConstraint " + mLiterals + " U " + mNonLiterals + "";
+	}
+
 	public boolean sanityCheck() {
-		if (mLiterals.size() == 1 && mNonLiterals.isEmpty()) {
+		if (!(this instanceof SingletonSetConstraint) && mLiterals.size() == 1 && mNonLiterals.isEmpty()) {
 			// we leave constraints of the form l in {l} implicit
 			assert false;
 			return false;

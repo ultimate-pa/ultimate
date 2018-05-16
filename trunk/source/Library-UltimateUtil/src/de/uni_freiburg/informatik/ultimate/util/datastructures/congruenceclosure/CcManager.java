@@ -302,26 +302,42 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Set<ELEM> literalSet,
-			final CongruenceClosure<ELEM> origWeqCc,
+	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Set<ELEM> elementSet,
+			final CongruenceClosure<ELEM> origCc,
 			final boolean inplace) {
-		return reportContainsConstraint(elem,
-				new SetConstraintConjunction<>(null, elem, literalSet),
-				origWeqCc, inplace);
-	}
-
-	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element,
-			final SetConstraintConjunction<ELEM> literalSet,
-			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
 		bmStart(CcBmNames.REPORTCONTAINS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (inplace) {
-			origCc.reportContainsConstraint(element, literalSet);
+			final SetConstraintConjunction<ELEM> newSetCc = new SetConstraintConjunction<>(
+					origCc.getLiteralSetConstraints(), elem, elementSet);
+			origCc.reportContainsConstraint(elem, newSetCc);
 			bmEnd(CcBmNames.REPORTCONTAINS);
 			return origCc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-			unfrozen.reportContainsConstraint(element, literalSet);
+			final SetConstraintConjunction<ELEM> newSetCc = new SetConstraintConjunction<>(
+					unfrozen.getLiteralSetConstraints(), elem, elementSet);
+			unfrozen.reportContainsConstraint(elem, newSetCc);
+			unfrozen.freeze();
+
+			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
+			bmEnd(CcBmNames.REPORTCONTAINS);
+			return resultPp;
+		}
+	}
+
+	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element,
+			final SetConstraintConjunction<ELEM> setCc,
+			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
+		bmStart(CcBmNames.REPORTCONTAINS);
+		assert !CcSettings.FORBID_INPLACE || !inplace;
+		if (inplace) {
+			origCc.reportContainsConstraint(element, setCc);
+			bmEnd(CcBmNames.REPORTCONTAINS);
+			return origCc;
+		} else {
+			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
+			unfrozen.reportContainsConstraint(element, setCc);
 			unfrozen.freeze();
 
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);

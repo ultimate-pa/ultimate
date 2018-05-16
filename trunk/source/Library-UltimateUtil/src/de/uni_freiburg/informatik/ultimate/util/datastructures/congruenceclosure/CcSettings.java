@@ -25,7 +25,7 @@ public class CcSettings {
 	/**
 	 * omit the third-finest grained class of sanity checks
 	 */
-	public static final boolean OMIT_SANITYCHECK_FINE_GRAINED_3 = true;
+	public static final boolean OMIT_SANITYCHECK_FINE_GRAINED_3 = false;
 
 	/*
 	 * settings related to caching in CcManager

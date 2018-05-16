@@ -86,7 +86,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		mContainsConstraints = new HashMap<>();
 		// deep copy
 		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : litSetConstraints.getConstraints().entrySet()) {
-			mContainsConstraints.put(en.getKey(), new SetConstraintConjunction<>(en.getValue()));
+			mContainsConstraints.put(en.getKey(), new SetConstraintConjunction<>(this, en.getValue()));
 		}
 		mIsInconsistent = false;
 	}
@@ -238,8 +238,12 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final SetConstraintConjunction<ELEM> elem1LiteralSet = mContainsConstraints.remove(elem1OldRep);
 		final SetConstraintConjunction<ELEM> elem2LiteralSet = mContainsConstraints.remove(elem2OldRep);
 
-		elem1LiteralSet.updateOnChangedRepresentative(elem1OldRep, elem2OldRep, newRep);
-		elem2LiteralSet.updateOnChangedRepresentative(elem1OldRep, elem2OldRep, newRep);
+		if (elem1LiteralSet != null) {
+			elem1LiteralSet.updateOnChangedRepresentative(elem1OldRep, elem2OldRep, newRep);
+		}
+		if (elem2LiteralSet != null) {
+			elem2LiteralSet.updateOnChangedRepresentative(elem1OldRep, elem2OldRep, newRep);
+		}
 
 		SetConstraintConjunction<ELEM> newConstraint = null;
 		if (elem1LiteralSet != null && elem2LiteralSet != null)  {
@@ -349,6 +353,11 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 				assert false;
 				return false;
 			}
+
+			if (constraint.mSurroundingCCSetConstraints != this) {
+				assert false;
+				return false;
+			}
 //			if (literalSet.size() == 1) {
 //				// we leave constraints of the form l in {l} implicit
 //				assert false;
@@ -389,17 +398,10 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
 
 		if (rep.isLiteral()) {
-			return new SetConstraintConjunction<>(this, rep, Collections.singleton(rep));
+			return new SingletonSetConstraintConjunction<>(this, rep, rep);
 		}
 
 		return mContainsConstraints.get(rep);
-
-//		final Set<ELEM> literalSet = mContainsConstraints.get(rep);
-//
-//		if (literalSet == null) {
-//			return null;
-//		}
-//		return Collections.unmodifiableSet(literalSet);
 	}
 
 	public void setCongruenceClosure(final CongruenceClosure<ELEM> congruenceClosure) {
@@ -526,7 +528,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : mContainsConstraints.entrySet()) {
 			if (constraintsToKeepReps.contains(en.getKey())) {
 //				newContainsConstraints.put(en.getKey(), new HashSet<>(en.getValue()));
-				newContainsConstraints.put(en.getKey(), new SetConstraintConjunction<>(en.getValue()));
+				newContainsConstraints.put(en.getKey(), new SetConstraintConjunction<>(this, en.getValue()));
 			}
 		}
 		return new CCLiteralSetConstraints<>(mCcManager, null, newContainsConstraints);

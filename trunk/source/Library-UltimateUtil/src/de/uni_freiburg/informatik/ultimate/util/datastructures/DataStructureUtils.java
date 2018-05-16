@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -218,6 +219,34 @@ public class DataStructureUtils {
 		rtr.addAll(a1);
 		rtr.addAll(a2);
 		return rtr;
+	}
+
+	/**
+	 * Rather naive powerset implementation
+	 *
+	 * @param baseSet
+	 * @return
+	 */
+	public static <T> Collection<Set<T>> powerSet(final Set<T> baseSet) {
+		final Collection<Set<T>> result = new ArrayList<>();
+
+		final List<T> baseList = new ArrayList<>(baseSet);
+
+		for (int setSize = 1; setSize <= baseList.size(); setSize++) {
+			// construct all subsets of size setSize
+			for (int start = 0; start <= baseList.size() - setSize; start++) {
+
+				final Set<T> subset = new HashSet<>();
+
+				for (int i = start; i < start + setSize; i ++) {
+					subset.add(baseList.get(i));
+				}
+
+				result.add(subset);
+			}
+		}
+
+		return result;
 	}
 
 }
