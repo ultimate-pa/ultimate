@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosur
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -90,9 +91,20 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		mIsInconsistent = false;
 	}
 
-	public void reportContains(final ELEM element, final SetConstraintConjunction<ELEM> elements) {
-		// TODO implement
-		assert false;
+	public void reportContains(final ELEM element, final SetConstraintConjunction<ELEM> constraint) {
+		final ELEM elementRep = mCongruenceClosure.getRepresentativeElement(element);
+
+
+		final SetConstraintConjunction<ELEM> oldConstraint = mContainsConstraints.get(elementRep);
+
+		SetConstraintConjunction<ELEM> newConstraint;
+		if (oldConstraint != null) {
+			newConstraint = SetConstraintConjunction.meet(oldConstraint, constraint);
+		} else {
+			newConstraint = constraint;
+		}
+
+		updateContainsConstraintApplyPropagations(elementRep, newConstraint);
 	}
 
 	public void reportContains(final ELEM element, final Set<ELEM> elements) {
@@ -148,15 +160,17 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final SetConstraintConjunction<ELEM> additionalConstraint = new SetConstraintConjunction<>(this, elementRep,
 				elements);
 
-		final SetConstraintConjunction<ELEM> newConstraint;
-		if (oldConstraint != null) {
-//			intersection = DataStructureUtils.intersection(oldSet, literalSet);
-			newConstraint = SetConstraintConjunction.meet(oldConstraint, additionalConstraint);
-		} else {
-			newConstraint = new SetConstraintConjunction<>(this, elementRep, elements);
-		}
+		reportContains(elementRep, additionalConstraint);
 
-		updateContainsConstraintApplyPropagations(elementRep, newConstraint);
+//		final SetConstraintConjunction<ELEM> newConstraint;
+//		if (oldConstraint != null) {
+////			intersection = DataStructureUtils.intersection(oldSet, literalSet);
+//			newConstraint = SetConstraintConjunction.meet(oldConstraint, additionalConstraint);
+//		} else {
+//			newConstraint = new SetConstraintConjunction<>(this, elementRep, elements);
+//		}
+//
+//		updateContainsConstraintApplyPropagations(elementRep, newConstraint);
 	}
 
 	private void updateContainsConstraintApplyPropagations(final ELEM elemRep,
@@ -290,22 +304,16 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			final CCLiteralSetConstraints<ELEM> first,
 			final CCLiteralSetConstraints<ELEM> second) {
 
-		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : first.getConstraints().entrySet()) {
-			final ELEM firstElem = en.getKey();
-			final SetConstraintConjunction<ELEM> secondConstraint = second.getConstraint(firstElem);
-			if (secondConstraint == null) {
-				// second has no constraint, inclusion holds, for firstElem
-				continue;
-			}
-			final SetConstraintConjunction<ELEM> firstConstraint = en.getValue();
-			if (firstConstraint == null) {
-				// second has a constraint, first has not --> inclusion violated
-				return false;
-			}
+		final Set<ELEM> constrainedElements = new HashSet<>();
+		constrainedElements.addAll(first.mContainsConstraints.keySet());
+		constrainedElements.addAll(second.mContainsConstraints.keySet());
 
-//			if (!secondConstraint.containsAll(firstConstraint)) {
+		for (final ELEM elem : constrainedElements) {
+
+			final SetConstraintConjunction<ELEM> firstConstraint = first.getConstraint(elem);
+			final SetConstraintConjunction<ELEM> secondConstraint = second.getConstraint(elem);
+
 			if (!SetConstraintConjunction.isStrongerThan(firstConstraint, secondConstraint)) {
-				// second's constraint is not a superset --> inclusion violated
 				return false;
 			}
 		}
@@ -532,15 +540,17 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 			final ELEM keyTransformed = elemTransformer.apply(en.getKey());
 
-			final SetConstraintConjunction<ELEM> valueTransformed =
-					SetConstraintConjunction.transformElements(en.getValue(), elemTransformer);
+//			final SetConstraintConjunction<ELEM> valueTransformed =
+//					SetConstraintConjunction.transformElements(en.getValue(), elemTransformer);
+			en.getValue().transformElements(elemTransformer);
 
 //			final Set<ELEM> valueTransformed = new HashSet<>();
 //			for (final ELEM el : en.getValue()) {
 //				valueTransformed.add(elemTransformer.apply(el));
 //			}
 
-			mContainsConstraints.put(keyTransformed, valueTransformed);
+//			mContainsConstraints.put(keyTransformed, valueTransformed);
+			mContainsConstraints.put(keyTransformed, en.getValue());
 
 		}
 	}

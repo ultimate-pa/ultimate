@@ -61,7 +61,7 @@ public class CongruenceClosureSmtUtils {
 //		assert !en.getKey().isLiteral();
 
 		final Set<Term> conjuncts = new HashSet<>();
-		for (final Set<NODE> set : constraint.getSets()) {
+		for (final Set<NODE> set : constraint.getElementSets()) {
 			final Set<Term> disjuncts = new HashSet<>();
 			for (final NODE node : set) {
 				disjuncts.add(SmtUtils.binaryEquality(script,
