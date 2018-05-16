@@ -170,21 +170,6 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	public abstract RefinementEngineStatisticsGenerator getRefinementEngineStatistics();
 
 	/**
-	 * @param list1
-	 *            First list.
-	 * @param list2
-	 *            second list
-	 * @return new list containing all elements from the two lists
-	 */
-	public static List<TracePredicates> wrapTwoListsInOne(final List<TracePredicates> list1,
-			final List<TracePredicates> list2) {
-		final List<TracePredicates> allIpps = new ArrayList<>(list1.size() + list2.size());
-		allIpps.addAll(list1);
-		allIpps.addAll(list2);
-		return allIpps;
-	}
-
-	/**
 	 * This method is the heart of the refinement engine.<br>
 	 * It first checks feasibility of the counterexample. If infeasible, the method tries to find a perfect interpolant
 	 * sequence. If unsuccessful, it collects all tested sequences. In the end an interpolant automaton is created.

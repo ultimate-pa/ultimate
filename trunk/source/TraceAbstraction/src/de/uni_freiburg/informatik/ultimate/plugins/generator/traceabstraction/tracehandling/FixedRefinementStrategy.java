@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * {@link IRefinementStrategy} that provides only one element, namely the one selected in the Ultimate preferences.
@@ -56,8 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>>
-		extends BaseRefinementStrategy<LETTER> {
+public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BaseRefinementStrategy<LETTER> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
@@ -95,12 +95,11 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	 * @param cegarLoopBenchmarks
 	 *            benchmark
 	 */
-	public FixedRefinementStrategy(final ILogger logger,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
-			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
-			final IAutomaton<LETTER, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
-			final TaskIdentifier taskIdentifier) {
+	public FixedRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
+			final ManagedScript managedScript, final IUltimateServiceProvider services,
+			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
+			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
+			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier) {
 		super(logger);
 		mServices = services;
 		mLogger = logger;
@@ -159,7 +158,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>>
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		// use all interpolant sequences
-		final List<TracePredicates> allIpps = BaseRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+		final List<TracePredicates> allIpps = DataStructureUtils.concat(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder = constructInterpolantAutomatonBuilder(getInterpolantGenerator(), allIpps);

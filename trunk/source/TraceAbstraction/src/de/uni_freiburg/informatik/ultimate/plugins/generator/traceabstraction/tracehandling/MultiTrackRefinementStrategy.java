@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * {@link IRefinementStrategy} that uses different {@link Track}s.
@@ -168,10 +169,10 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	 *            benchmark
 	 */
 	@SuppressWarnings("squid:S1699")
-	protected MultiTrackRefinementStrategy(final ILogger logger,
-			final TaCheckAndRefinementPreferences<LETTER> prefs, final IUltimateServiceProvider services,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
+	protected MultiTrackRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
+			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
+			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
+			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier) {
 		super(logger);
@@ -271,7 +272,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		// current policy: use all interpolant sequences
-		final List<TracePredicates> allIpps = BaseRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
+		final List<TracePredicates> allIpps = DataStructureUtils.concat(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
