@@ -42,7 +42,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -62,22 +65,24 @@ public class Pdr<LOC extends IcfgLocation> {
 	private final IUltimateServiceProvider mServices;
 	private final Map<IcfgLocation, ArrayList<Term>> mFrames;
 	private ManagedScript mScript;
+	private BasicPredicateFactory mPredicateFac;
+	private PredicateTransformer mPredTrans;
 
 	public Pdr(final ILogger logger, final IUltimateServiceProvider services, final Object settings) {
 		mLogger = logger;
 		mServices = services;
 		mFrames = new HashMap<>();
 		mScript = null;
+		mPredicateFac = null;
+		mPredTrans = null;
 	}
 
 	PdrResult computePdr(final IIcfg<LOC> icfg, final IPredicateUnifier predicateUnifier) {
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
-		final BasicPredicateFactory predicateFac = predicateUnifier.getPredicateFactory();
 
 		mScript = csToolkit.getManagedScript();
-
-		final PredicateTransformer predTrans =
-				new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
+		mPredicateFac = predicateUnifier.getPredicateFactory();
+		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
 		final Set<LOC> init = icfg.getInitialNodes();
 		final Set<LOC> error = IcfgUtils.getErrorLocations(icfg);
@@ -105,6 +110,8 @@ public class Pdr<LOC extends IcfgLocation> {
 			}
 		}
 
+		Integer level = 1;
+
 		while (true) {
 			/**
 			 * Initialize new level.
@@ -113,13 +120,18 @@ public class Pdr<LOC extends IcfgLocation> {
 				trace.getValue().add(mScript.getScript().term("true"));
 			}
 
+			level += 1;
+
 			final ArrayList<Triple<Term, IcfgLocation, Integer>> proofObligations = new ArrayList<>();
 
 			/**
-			 * Error Access violation:
+			 * Generate the initial proof-obligations
 			 */
 			for (final IcfgEdge edge : error.iterator().next().getIncomingEdges()) {
 				final Term proofObligationTerm = edge.getTransformula().getFormula();
+				final Triple<Term, IcfgLocation, Integer> initialProofObligation = new Triple<>(proofObligationTerm,
+						edge.getSource(), level);
+				proofObligations.add(initialProofObligation);
 			}
 
 			/**
@@ -143,26 +155,48 @@ public class Pdr<LOC extends IcfgLocation> {
 	/**
 	 * Blocking-phase, for blocking proof-obligations.
 	 * 
-	 * @return false, if proof-obligation on level 0 is created true, if there is no proof-obligation left
+	 * @return false, if proof-obligation on level 0 is created true, if there
+	 *         is no proof-obligation left
 	 */
+	@SuppressWarnings("unchecked")
 	private boolean blockingPhase(final ArrayList<Triple<Term, IcfgLocation, Integer>> initialProofObligations) {
-		final Deque<Triple<Term, IcfgLocation, Integer>> proofObligations = new ArrayDeque<>(initialProofObligations);
 
+		final Deque<Triple<Term, IcfgLocation, Integer>> proofObligations = new ArrayDeque<>(initialProofObligations);
 		while (!proofObligations.isEmpty()) {
 			final Triple<Term, IcfgLocation, Integer> proofObligation = proofObligations.pop();
 			final Term toBeBlocked = proofObligation.getFirst();
 			final IcfgLocation location = proofObligation.getSecond();
 			final int level = proofObligation.getThird();
 
-			/**
-			 * for (final IcfgLocation predecessor : location.getIncomingNodes()) {
-			 * 
-			 * }
-			 */
+			for (final IcfgEdge predecessorTransition : location.getIncomingEdges()) {
+				final IcfgLocation predecessor = predecessorTransition.getSource();
+				final Term predecessorFrame = mFrames.get(predecessor).get(level - 1);
+				final Term transition = predecessorTransition.getTransformula().getFormula();
+				final Term primedtoBeBlocked = getPrimedTerm(toBeBlocked);
 
+				if (SmtUtils.checkSatTerm(mScript.getScript(),
+						SmtUtils.and(mScript.getScript(), predecessorFrame, transition, primedtoBeBlocked)) != null) {
+					/**
+					 * Found Error trace
+					 */
+					if (level - 1 == 0) {
+						return false;
+					}
+
+					final BasicPredicate pred = mPredicateFac.newPredicate(primedtoBeBlocked);
+					/*
+					 * How does the weakest Precondition work?
+					 */
+					final Term preCondition = (Term) mPredTrans.weakestPrecondition(pred,
+							(ITransitionRelation) predecessorTransition);
+
+					final Triple<Term, IcfgLocation, Integer> newProofObligation = new Triple<>(preCondition,
+							predecessor, level - 1);
+					proofObligations.addFirst(newProofObligation);
+				}
+			}
 		}
-
-		return false;
+		return true;
 	}
 
 	/**
@@ -180,6 +214,10 @@ public class Pdr<LOC extends IcfgLocation> {
 			}
 		}
 		return false;
+	}
+
+	private Term getPrimedTerm(final Term term) {
+		return term;
 	}
 
 	private final class PdrResult {
