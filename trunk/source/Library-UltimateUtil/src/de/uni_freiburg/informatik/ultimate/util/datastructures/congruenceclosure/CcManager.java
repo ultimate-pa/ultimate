@@ -309,14 +309,14 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		bmStart(CcBmNames.REPORTCONTAINS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (inplace) {
-			final SetConstraintConjunction<ELEM> newSetCc = new SetConstraintConjunction<>(
+			final SetConstraintConjunction<ELEM> newSetCc = buildSetConstraintConjunction(
 					origCc.getLiteralSetConstraints(), elem, elementSet);
 			origCc.reportContainsConstraint(elem, newSetCc);
 			bmEnd(CcBmNames.REPORTCONTAINS);
 			return origCc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-			final SetConstraintConjunction<ELEM> newSetCc = new SetConstraintConjunction<>(
+			final SetConstraintConjunction<ELEM> newSetCc = buildSetConstraintConjunction(
 					unfrozen.getLiteralSetConstraints(), elem, elementSet);
 			unfrozen.reportContainsConstraint(elem, newSetCc);
 			unfrozen.freeze();
@@ -847,6 +847,17 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 		return true;
 	}
+
+	public SetConstraintConjunction<ELEM> buildSetConstraintConjunction(
+			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
+			final ELEM constrainedElement,
+			final Set<ELEM> elements) {
+		// note: it's ok to pass null here, because the constructor of SetConstraintConjunction will reset the field
+		final SetConstraint<ELEM> sc = SetConstraint.buildSetConstraint(surroundingSetConstraints, elements);
+		return buildSetConstraintConjunction(surroundingSetConstraints, constrainedElement,
+				Collections.singleton(sc));
+	}
+
 
 
 //	public static <ELEM extends ICongruenceClosureElement<ELEM>> SetConstraintConjunction<ELEM>

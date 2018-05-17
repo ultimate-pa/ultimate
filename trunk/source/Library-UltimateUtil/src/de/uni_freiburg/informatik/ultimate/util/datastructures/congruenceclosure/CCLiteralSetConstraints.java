@@ -132,8 +132,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			}
 		}
 
-		final SetConstraintConjunction<ELEM> additionalConstraint = new SetConstraintConjunction<>(this, elementRep,
-				elements);
+		final SetConstraintConjunction<ELEM> additionalConstraint =
+				mCcManager.buildSetConstraintConjunction(this, elementRep, elements);
 
 		reportContains(elementRep, additionalConstraint);
 	}

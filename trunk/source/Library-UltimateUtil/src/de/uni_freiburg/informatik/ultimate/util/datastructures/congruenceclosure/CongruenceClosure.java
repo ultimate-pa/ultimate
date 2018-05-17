@@ -1936,8 +1936,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	@Override
-	public void reportContainsConstraint(final ELEM elem, final SetConstraintConjunction<ELEM> literalSet) {
-		mLiteralSetConstraints.reportContains(elem, literalSet);
+	public void reportContainsConstraint(final ELEM elem, final SetConstraintConjunction<ELEM> setCc) {
+		mLiteralSetConstraints.reportContains(elem, setCc);
 	}
 
 	@Override

@@ -406,9 +406,23 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
 			final WeqCongruenceClosure<NODE> origWeqCc,
 			final boolean inplace) {
-		return reportContainsConstraint(elem,
-				new SetConstraintConjunction<>(null, elem, literalSet),
-				origWeqCc, inplace);
+		bmStart(WeqCcBmNames.REPORTCONTAINS);
+		if (inplace) {
+			origWeqCc.reportContainsConstraint(elem, literalSet);
+			bmEnd(WeqCcBmNames.REPORTCONTAINS);
+			return origWeqCc;
+		} else {
+			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
+			unfrozen.reportContainsConstraint(elem, literalSet);
+			unfrozen.freeze();
+//			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
+//					getNonTheoryLiteralDisequalitiesIfNecessary());
+			bmEnd(WeqCcBmNames.REPORTCONTAINS);
+			return unfrozen;
+		}
+//		return reportContainsConstraint(elem,
+//				mCcManager.buildSetConstraintConjunction(null, elem, literalSet),
+//				origWeqCc, inplace);
 	}
 
 //	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,

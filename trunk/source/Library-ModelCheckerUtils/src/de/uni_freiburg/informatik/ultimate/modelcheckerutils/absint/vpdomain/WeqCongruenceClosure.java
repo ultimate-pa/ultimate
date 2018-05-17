@@ -514,7 +514,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 								new SetConstraintConjunction<>(
 										null,
 										containsConstraint.getConstrainedElement(),
-										Collections.singleton(constantArrayConstant)));
+										constantArrayConstant));
 //				final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
 //				newLiteralSet.add(constantArrayConstant);
 
@@ -915,8 +915,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	public void reportContainsConstraint(final NODE elem, final SetConstraintConjunction<NODE> literalSet) {
-		mCongruenceClosure.reportContainsConstraint(elem, literalSet);
+	public void reportContainsConstraint(final NODE elem, final SetConstraintConjunction<NODE> setCc) {
+		mCongruenceClosure.reportContainsConstraint(elem, setCc);
 		if (mManager.getSettings().isAlwaysReportChangeToGpa()) {
 			throw new AssertionError("not implemented");
 		}
@@ -1312,7 +1312,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			final SetConstraintConjunction<NODE> newLiteralSet =
 					SetConstraintConjunction.join(containsConstraint,
 							new SetConstraintConjunction<>(
-									null, aQ, Collections.singleton(constantArrayConstant)));
+									null, aQ, constantArrayConstant));
 //			newLiteralSet.add(constantArrayConstant);
 //			final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
 //			newLiteralSet.add(constantArrayConstant);
