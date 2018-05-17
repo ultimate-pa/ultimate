@@ -394,7 +394,7 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 //				return false;
 //		}
 
-		// check minimality of conjunction :; all must be incomparable!
+		// check minimality of conjunction : all must be incomparable!
 		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3) {
 			for (final SetConstraint<ELEM> sc1 : mSetConstraints) {
 				for (final SetConstraint<ELEM> sc2 : mSetConstraints) {
@@ -787,14 +787,33 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 			assert false;
 			return false;
 		}
+		// all elements of mLiterals must be literals
 		if (!mLiterals.stream().allMatch(ELEM::isLiteral)) {
 			assert false;
 			return false;
 		}
 
+		// all elements of mNonLiterals must be literals
 		if (mNonLiterals.stream().anyMatch(ELEM::isLiteral)) {
 			assert false;
 			return false;
+		}
+
+		final CongruenceClosure<ELEM> surrCc = mSurroundingScConjunction.getCongruenceClosure();
+
+		// all elements of mNonLiterals must be representatives
+		if (mNonLiterals.stream().anyMatch(nl -> !surrCc.isRepresentative(nl))) {
+			assert false;
+			return false;
+		}
+
+		// all expandable elements of mNonLiterals must have been expanded
+		for (final ELEM nl : mNonLiterals) {
+			final SetConstraintConjunction<ELEM> contCons = surrCc.getContainsConstraintForElement(nl);
+			if (contCons.hasOnlyLiterals()) {
+				assert false;
+				return false;
+			}
 		}
 
 		return true;
