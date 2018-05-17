@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
@@ -190,5 +191,10 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			newLayers.put(pluginId, newLayer);
 		}
 		return new ToolchainStorage(mToolchainStorage, newLayers);
+	}
+
+	@Override
+	public Set<String> keys() {
+		return Collections.unmodifiableSet(mToolchainStorage.keySet());
 	}
 }

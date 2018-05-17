@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2014-2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.model.services;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
 
@@ -38,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchainPlugin;
  *
  * Ultimate's {@link MonitoredProcess} already uses the {@link IToolchainStorage}, so you don't need to care for that.
  *
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public interface IToolchainStorage {
@@ -50,7 +52,7 @@ public interface IToolchainStorage {
 	 * @param key
 	 *            The key under which the {@link IStorable} is saved.
 	 */
-	void destroyStorable(String key);
+	void destroyStorable(final String key);
 
 	/**
 	 * Try to remove a single {@link IStorable} and return it.
@@ -59,7 +61,7 @@ public interface IToolchainStorage {
 	 *            The key of the {@link IStorable}.
 	 * @return Either the {@link IStorable} that was saved under the key or null.
 	 */
-	IStorable removeStorable(String key);
+	IStorable removeStorable(final String key);
 
 	/**
 	 * Try to retrieve (not remove) a single {@link IStorable}.
@@ -69,7 +71,7 @@ public interface IToolchainStorage {
 	 * @return Either the {@link IStorable} that is saved under the key or null if there is nothing (or null) saved
 	 *         under this key.
 	 */
-	IStorable getStorable(String key);
+	IStorable getStorable(final String key);
 
 	/**
 	 * Save a {@link IStorable} under the given key. If there is already an {@link IStorable} saved under the key, it
@@ -81,12 +83,17 @@ public interface IToolchainStorage {
 	 *            The {@link IStorable}
 	 * @return An {@link IStorable} if there was already one in that place or null
 	 */
-	IStorable putStorable(String key, IStorable value);
+	IStorable putStorable(final String key, final IStorable value);
 
 	/**
 	 * This method clears the {@link IToolchainStorage} and destroys every {@link IStorable} by calling
 	 * {@link IStorable#destroy()} on it. Possible exceptions should be caught, logged, and otherwise ignored.
 	 */
 	void clear();
+
+	/**
+	 * List all keys currently in storage
+	 */
+	Set<String> keys();
 
 }
