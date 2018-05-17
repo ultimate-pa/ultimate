@@ -232,18 +232,24 @@ public class DataStructureUtils {
 
 		final List<T> baseList = new ArrayList<>(baseSet);
 
-		for (int setSize = 1; setSize <= baseList.size(); setSize++) {
-			// construct all subsets of size setSize
-			for (int start = 0; start <= baseList.size() - setSize; start++) {
+		final double pow = Math.pow(2, baseSet.size());
 
-				final Set<T> subset = new HashSet<>();
+		for (int bin = 0; bin < pow; bin++) {
 
-				for (int i = start; i < start + setSize; i ++) {
-					subset.add(baseList.get(i));
+			final Set<T> subset = new HashSet<>();
+
+			// note that this char array always starts with a 1 (obviously) somehow, so we have to "fill up" leading 0s
+			final char[] binS = Integer.toBinaryString(bin).toCharArray();
+
+			for (int pos = 0; pos < binS.length; pos++) {
+				if (binS[pos] == '1') {
+					subset.add(baseList.get(pos + baseSet.size() - binS.length));
+
+				} else {
+					assert binS[pos] == '0';
 				}
-
-				result.add(subset);
 			}
+			result.add(subset);
 		}
 
 		return result;
