@@ -31,10 +31,14 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 /**
+ * An {@link ITraceCheck} is used to determine whether a trace satisfies a postcondition under a given precondition.
+ *
+ * A trace is specified as sequence of {@link IcfgEdge}s.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -57,7 +61,7 @@ public interface ITraceCheck {
 	IPredicate getPostcondition();
 
 	Map<Integer, IPredicate> getPendingContexts();
-	
+
 	boolean providesRcfgProgramExecution();
 
 	/**
@@ -72,5 +76,19 @@ public interface ITraceCheck {
 	 * computation was not cancelled, we return null.
 	 */
 	ToolchainCanceledException getToolchainCanceledExpection();
+
+	/**
+	 * If the result of {@link #isCorrect()} is {@link LBool#UNKNOWN}m this method can be called to obtain more
+	 * information about the result.
+	 *
+	 * @return A {@link TraceCheckReasonUnknown} instance.
+	 */
+	TraceCheckReasonUnknown getTraceCheckReasonUnknown();
+
+	/**
+	 * @return true iff trace check was successfully finished. Examples for a not successfully finished trace check are:
+	 *         Crash of solver, Toolchain cancelled, etc.
+	 */
+	boolean wasTracecheckFinishedNormally();
 
 }

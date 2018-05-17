@@ -12,4 +12,5 @@ Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.datastructures.poset,
  de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
  de.uni_freiburg.informatik.ultimate.util.scc,
- de.uni_freiburg.informatik.ultimate.util.statistics
+ de.uni_freiburg.informatik.ultimate.util.statistics,
+ de.uni_freiburg.informatik.ultimate.util.simplifier
