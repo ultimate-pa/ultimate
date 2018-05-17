@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosur
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -847,6 +848,74 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
+
+//	public static <ELEM extends ICongruenceClosureElement<ELEM>> SetConstraintConjunction<ELEM>
+	public SetConstraintConjunction<ELEM> buildSetConstraintConjunction(
+			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
+			final ELEM constrainedElement,
+			final Collection<SetConstraint<ELEM>> setConstraints) {
+		bmStart(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
+
+		final Set<SetConstraint<ELEM>> filtered = normalizeSetConstraintConjunction(setConstraints);
+
+		assert !filtered.stream().anyMatch(sc -> sc.isInconsistent()) || filtered.size() == 1
+				: "not correctly normalized: there is a 'false' conjunct, but it is not the only conjunct";
+
+		if (filtered.size() == 1 && filtered.iterator().next().isInconsistent()) {
+			bmEnd(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
+			return new SetConstraintConjunction<>(true);
+		}
+
+		final SetConstraintConjunction<ELEM> result =
+				new SetConstraintConjunction<>(surroundingSetConstraints, constrainedElement, filtered);
+
+		bmEnd(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
+		return  result;
+	}
+
+	public Set<SetConstraint<ELEM>> normalizeSetConstraintConjunction(
+			final Collection<SetConstraint<ELEM>> setConstraints) {
+		//TODO: only instantiate SetConstraintComparator once??
+		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(new SetConstraintComparator<>());
+		final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(setConstraints);
+
+		// check for inconsistency
+		for (final SetConstraint<ELEM> sc : setConstraints) {
+			if (sc.isInconsistent()) {
+//				return new SetConstraintConjunction<>(true);
+//				return Collections.singleton(new SetConstraint<>(true));
+				return Collections.singleton(sc);
+			}
+		}
+
+		final Set<SetConstraint<ELEM>> all = new HashSet<>();
+
+		// introduce all the conjunctive constraints according to all the subsets..
+		for (final Set<SetConstraint<ELEM>> subSet : DataStructureUtils.powerSet(filtered1)) {
+			final SetConstraint<ELEM> meet = SetConstraint.meet(subSet);
+
+			if (meet == null) {
+				// "Top" constraint, represented by "null", no need to add to a conjunction
+				continue;
+			}
+
+			if (meet.isInconsistent()) {
+				// created inconsistent constraint
+//				return new SetConstraintConjunction<>(true);
+//				return new SetConstraintConjunction<>(true);
+				return Collections.singleton(meet);
+			}
+
+			all.add(meet);
+		}
+
+		//TODO: only instantiate SetConstraintComparator once??
+		final PartialOrderCache<SetConstraint<ELEM>> poc = new PartialOrderCache<>(new SetConstraintComparator<>());
+		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(all);
+		return filtered;
+	}
+
+
 	public BenchmarkWithCounters getBenchmark() {
 		return mBenchmark;
 	}
@@ -887,7 +956,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, REMOVE, IS_STRONGER_THAN_NO_CACHING, ADDNODE, REPORTCONTAINS,
 		REPORT_EQUALITY, REPORT_DISEQUALITY, PROJECT_TO_ELEMENTS, ADD_ALL_ELEMENTS, ALIGN_ELEMENTS, OVERALL,
-		IS_STRONGER_THAN_W_CACHING;
+		IS_STRONGER_THAN_W_CACHING, BUILD_SET_CONSTRAINT_CONJUNCTION;
 
 		static String[] getNames() {
 			final String[] result = new String[values().length];

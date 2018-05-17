@@ -120,29 +120,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		final ELEM elementRep = mCongruenceClosure.getRepresentativeElement(element);
 
-//		/*
-//		 * elements does not need to be a set of literals, however it must expand to such a set that is:
-//		 *   for each e in elements one of the following must hold:
-//		 *  <li> e ~ l, where l is a literal
-//		 *  <li> e in s, where s is a set of literals
-//		 */
-//		final HashSet<ELEM> literalSet = new HashSet<>();
-//		for (final ELEM elem : elements) {
-//			final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
-//			if (rep.isLiteral()) {
-//				literalSet.add(rep);
-//			} else {
-//				final Set<ELEM> literals = mContainsConstraints.get(rep);
-//				if (literals == null) {
-//					throw new AssertionError("cannot expand given element set to a set of literals");
-//				}
-//				literalSet.addAll(literals);
-//			}
-//		}
-
 		if (elementRep.isLiteral()) {
 			// element is already equal to a literal (x ~ l), thus we implicitly have the constraint x in {l}
-//			if (literalSet.contains(elementRep)) {
 			if (elements.contains(elementRep)) {
 				// the new constraint is weaker than the existing one, do nothing
 				return;
@@ -153,24 +132,10 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			}
 		}
 
-//		assert literalSet.stream().allMatch(ELEM::isLiteral);
-
-		final SetConstraintConjunction<ELEM> oldConstraint = mContainsConstraints.remove(elementRep);
-
 		final SetConstraintConjunction<ELEM> additionalConstraint = new SetConstraintConjunction<>(this, elementRep,
 				elements);
 
 		reportContains(elementRep, additionalConstraint);
-
-//		final SetConstraintConjunction<ELEM> newConstraint;
-//		if (oldConstraint != null) {
-////			intersection = DataStructureUtils.intersection(oldSet, literalSet);
-//			newConstraint = SetConstraintConjunction.meet(oldConstraint, additionalConstraint);
-//		} else {
-//			newConstraint = new SetConstraintConjunction<>(this, elementRep, elements);
-//		}
-//
-//		updateContainsConstraintApplyPropagations(elementRep, newConstraint);
 	}
 
 	private void updateContainsConstraintApplyPropagations(final ELEM elemRep,
@@ -199,6 +164,13 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			 * rule: e in L /\ l in L' --> e in intersect(L, L')
 			 */
 			mContainsConstraints.put(elemRep, newConstraint);
+		}
+
+		// variable/literal expansion rule
+		if (newConstraint.hasOnlyLiterals()) {
+			for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : mContainsConstraints.entrySet()) {
+				en.getValue().expandVariableToLiterals(elemRep, newConstraint.getLiterals());
+			}
 		}
 
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
@@ -255,10 +227,16 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		} else {
 			// no contains-constraints on either element present --> nothing to do
 			assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
-			return;
 		}
 
-		updateContainsConstraintApplyPropagations(newRep, newConstraint);
+		// update the other set constraints according to the change in representatives
+		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : mContainsConstraints.entrySet()) {
+			en.getValue().updateOnChangedRepresentative(elem1OldRep, elem2OldRep, newRep);
+		}
+
+		if (newConstraint != null) {
+			updateContainsConstraintApplyPropagations(newRep, newConstraint);
+		}
 	}
 
 	public CCLiteralSetConstraints<ELEM> join(final CCLiteralSetConstraints<ELEM> other,
