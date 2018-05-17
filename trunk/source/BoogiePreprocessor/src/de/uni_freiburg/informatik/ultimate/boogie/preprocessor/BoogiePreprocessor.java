@@ -2,22 +2,22 @@
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 /**
  * This class initializes the boogie preprocessor.
- * 
+ *
  * @author hoenicke
  * @author dietsch@informatik.uni-freiburg.de (for backtranslation)
- * 
+ *
  */
 public class BoogiePreprocessor implements IAnalysis {
 
@@ -99,7 +99,8 @@ public class BoogiePreprocessor implements IAnalysis {
 	public List<IObserver> getObservers() {
 		final BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
 		mServices.getBacktranslationService().addTranslator(backTranslator);
-
+		final boolean useSimplifier =
+				mServices.getPreferenceProvider(getPluginID()).getBoolean(PreferenceInitializer.LABEL_USE_SIMPLIFIER);
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		final BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
@@ -113,6 +114,9 @@ public class BoogiePreprocessor implements IAnalysis {
 		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));
 		observers.add(new FunctionInliner());
+		if (useSimplifier) {
+			observers.add(new Simplifier(backTranslator));
+		}
 		observers.add(symb);
 		return observers;
 	}
