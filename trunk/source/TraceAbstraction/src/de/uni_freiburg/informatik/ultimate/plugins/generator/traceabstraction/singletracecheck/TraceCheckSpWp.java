@@ -175,8 +175,7 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 			mLogger.info("Timeout while computing interpolants");
 			mToolchainCanceledException = tce;
 		} finally {
-			mTraceCheckBenchmarkGenerator
-					.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
+			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
 		mTraceCheckFinished = true;
 	}
@@ -291,8 +290,7 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 					mCfgManagedScript) : "invalid Hoare triple in FP";
 
 			mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
-			mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp,
-					InterpolantType.Forward);
+			mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp, InterpolantType.Forward);
 			mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
 			if (mControlLocationSequence != null) {
 				final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,

@@ -191,7 +191,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 
 		final Map<Integer, Set<Integer>> depth2Statements = partitionStatementsAccordingDepth(mTrace, rwt, pps);
 		// Report benchmark
-		mTcbg.reportnewCodeBlocks(mTrace.length());
+		mTcbg.reportNewCodeBlocks(mTrace.length());
 
 		// Apply 1. heuristic
 		if (mAssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1) {
@@ -204,8 +204,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			countCheckSat();
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
-			mTcbg.reportnewCheckSat();
-			mTcbg.reportnewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(stmtsOutsideOfLoop.size());
 			// If the statements outside of a loop are not unsatisfiable, then annotate and assert also
 			// the rest of the statements
 			if (mSatisfiable != LBool.UNSAT && stmtsOutsideOfLoop.size() != mTrace.length()) {
@@ -217,8 +217,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 				countCheckSat();
 				mSatisfiable = mMgdScriptTc.getScript().checkSat();
 				// Report benchmarks
-				mTcbg.reportnewCheckSat();
-				mTcbg.reportnewAssertedCodeBlocks(stmtsWithinLoop.size());
+				mTcbg.reportNewCheckSat();
+				mTcbg.reportNewAssertedCodeBlocks(stmtsWithinLoop.size());
 			}
 		}
 		// Apply 2. heuristic
@@ -262,8 +262,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
-			mTcbg.reportnewCheckSat();
-			mTcbg.reportnewAssertedCodeBlocks(depth2Statements.get(key).size());
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(depth2Statements.get(key).size());
 			if (sat == LBool.UNSAT) {
 				return sat;
 			}
@@ -286,8 +286,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
-			mTcbg.reportnewCheckSat();
-			mTcbg.reportnewAssertedCodeBlocks(depth2Statements.get(key).size());
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(depth2Statements.get(key).size());
 			if (sat == LBool.UNSAT) {
 				return sat;
 			}
@@ -318,8 +318,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			countCheckSat();
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
-			mTcbg.reportnewCheckSat();
-			mTcbg.reportnewAssertedCodeBlocks(depth2Statements.get(currentDepth).size());
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(depth2Statements.get(currentDepth).size());
 			if (sat == LBool.UNSAT) {
 				return sat;
 			}
@@ -385,8 +385,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert);
 		LBool sat = mMgdScriptTc.getScript().checkSat();
 		// Report benchmarks
-		mTcbg.reportnewCheckSat();
-		mTcbg.reportnewAssertedCodeBlocks(stmtsToAssert.size());
+		mTcbg.reportNewCheckSat();
+		mTcbg.reportNewAssertedCodeBlocks(stmtsToAssert.size());
 		if (sat == LBool.UNSAT) {
 			return sat;
 		}
@@ -396,8 +396,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, remainingStmts);
 		sat = mMgdScriptTc.getScript().checkSat();
 		// Report benchmarks
-		mTcbg.reportnewCheckSat();
-		mTcbg.reportnewAssertedCodeBlocks(remainingStmts.size());
+		mTcbg.reportNewCheckSat();
+		mTcbg.reportNewAssertedCodeBlocks(remainingStmts.size());
 		return sat;
 	}
 

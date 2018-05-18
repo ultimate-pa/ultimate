@@ -130,9 +130,9 @@ public class AnnotateAndAsserter {
 		mSatisfiable = mMgdScriptTc.getScript().checkSat();
 
 		// Report benchmarks
-		mTcbg.reportnewCheckSat();
-		mTcbg.reportnewCodeBlocks(mTrace.length());
-		mTcbg.reportnewAssertedCodeBlocks(mTrace.length());
+		mTcbg.reportNewCheckSat();
+		mTcbg.reportNewCodeBlocks(mTrace.length());
+		mTcbg.reportNewAssertedCodeBlocks(mTrace.length());
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
 

@@ -66,21 +66,21 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 	/**
 	 * Tell the Benchmark that the checked trace has n CodeBlocks
 	 */
-	public void reportnewCodeBlocks(final int n) {
+	public void reportNewCodeBlocks(final int n) {
 		mNumberOfCodeBlocks = mNumberOfCodeBlocks + n;
 	}
 
 	/**
 	 * Tell the Benchmark that n CodeBlocks have been asserted additionally
 	 */
-	public void reportnewAssertedCodeBlocks(final int n) {
+	public void reportNewAssertedCodeBlocks(final int n) {
 		mNumberOfCodeBlocksAsserted = mNumberOfCodeBlocksAsserted + n;
 	}
 
 	/**
 	 * Tell the Benchmark we did another check sat
 	 */
-	public void reportnewCheckSat() {
+	public void reportNewCheckSat() {
 		mNumberOfCheckSat++;
 	}
 

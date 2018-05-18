@@ -474,7 +474,7 @@ public class TraceCheck implements ITraceCheck {
 	 * @return true iff trace check was successfully finished. Examples for a not successfully finished trace check are:
 	 *         Crash of solver, Toolchain cancelled,
 	 */
-	public boolean wasTracecheckFinished() {
+	public boolean wasTracecheckFinishedNormally() {
 		return mTraceCheckFinished;
 	}
 
