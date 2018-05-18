@@ -81,7 +81,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseVarsFromUnsatCoreForPathInvariants;
 	private final boolean mUseWeakestPreconditionForPathInvariants;
-	private boolean mUseAbstractInterpretationPredicates;
+	private final boolean mUseAbstractInterpretationPredicates;
+	private final boolean mComputeCounterexample;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -138,7 +139,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 						AssertCodeBlockOrder.class);
 		mUnsatCores = ultimatePrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		mUseLiveVariables = ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		mUseAbstractInterpretationPredicates = ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS);
+		mUseAbstractInterpretationPredicates = ultimatePrefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSTRACT_INTERPRETATION_FOR_PATH_INVARIANTS);
 		mUseInterpolantConsolidation =
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
 		mUseNonlinearConstraints = ultimatePrefs
@@ -147,6 +149,8 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
 		mUseWeakestPreconditionForPathInvariants = ultimatePrefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_WEAKEST_PRECONDITION_IN_PATHINVARIANTS);
+		mComputeCounterexample =
+				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_COUNTEREXAMPLE);
 	}
 
 	public RefinementStrategy getRefinementStrategy() {
@@ -224,7 +228,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	public boolean getUseLiveVariables() {
 		return mUseLiveVariables;
 	}
-	
+
 	public boolean getUseAbstractInterpretation() {
 		return mUseAbstractInterpretationPredicates;
 	}
@@ -243,6 +247,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public boolean getUseWeakestPreconditionForPathInvariants() {
 		return mUseWeakestPreconditionForPathInvariants;
+	}
+
+	public boolean computeCounterexample() {
+		return mComputeCounterexample;
 	}
 
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {

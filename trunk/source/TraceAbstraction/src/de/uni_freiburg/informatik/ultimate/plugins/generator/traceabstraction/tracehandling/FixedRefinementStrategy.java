@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -70,7 +70,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
 
 	private final TraceCheckConstructor<LETTER> mFunConstructFromPrefs;
-	private TraceCheck mTraceCheck;
+	private ITraceCheck mTraceCheck;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
@@ -125,7 +125,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	}
 
 	@Override
-	public TraceCheck getTraceCheck() {
+	public ITraceCheck getTraceCheck() {
 		if (mTraceCheck == null) {
 			mTraceCheck = mFunConstructFromPrefs.get();
 			mRefinementEngineStatisticsGenerator.addTraceCheckStatistics(mTraceCheck);

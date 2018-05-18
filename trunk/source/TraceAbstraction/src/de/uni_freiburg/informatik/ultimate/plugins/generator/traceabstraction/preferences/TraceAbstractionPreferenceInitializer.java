@@ -115,11 +115,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
 	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
 	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
+	public static final String LABEL_COMPUTE_COUNTEREXAMPLE = "Compute trace for counterexample result";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
 			"Highlight relevant statements in error traces";
 	public static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
 			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or"
-			+ " pointers this analysis may take a significant amount of time.";
+					+ " pointers this analysis may take a significant amount of time.";
 	public static final String LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = "Angelic verification mode";
 	public static final String DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE =
 			"Assume that unspecified inputs (e.g., external functions) return \"safe\" values during error trace "
@@ -193,8 +194,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	private static final Boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
+	private static final boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
 	private static final boolean DEF_ONLY_REUSE = false;
+	private static final boolean DEF_COMPUTE_COUNTEREXAMPLE = true;
 
 	private static final String DESC_DUMP_ONLY_REUSE =
 			"When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it "
@@ -213,7 +215,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "the set of reusable interpolant automata.";
 	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Specifies how to compute successors on-demand for re-use interpolant automata.";
+
 	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
+	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
 
 	/**
 	 * Constructor.
@@ -246,6 +250,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_USERLIMIT_TRACE_HISTOGRAM, DEF_USERLIMIT_TRACE_HISTOGRAM,
 						DESC_USERLIMIT_TRACE_HISTOGRAM, PreferenceType.Integer,
 						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+
+				new UltimatePreferenceItem<>(LABEL_COMPUTE_COUNTEREXAMPLE, DEF_COMPUTE_COUNTEREXAMPLE,
+						DESC_COMPUTE_COUNTEREXAMPLE, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
 				new UltimatePreferenceItem<>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
@@ -350,7 +357,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 */
 	public enum InterpolationTechnique {
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandBP,
-		FPandBPonlyIfFpWasNotPerfect, PathInvariants
+		FPandBPonlyIfFpWasNotPerfect, PathInvariants, PDR
 	}
 
 	/**

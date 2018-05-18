@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
@@ -75,7 +76,8 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BaseRefinementStrategy<LETTER> {
+public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
+		extends BaseRefinementStrategy<LETTER> {
 	protected static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	private final IUltimateServiceProvider mServices;
@@ -96,7 +98,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private TraceCheckConstructor<LETTER> mTcConstructor;
 	private TraceCheckConstructor<LETTER> mPrevTcConstructor;
 
-	private TraceCheck mTraceCheck;
+	private ITraceCheck mTraceCheck;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final TaskIdentifier mTaskIdentifier;
@@ -205,7 +207,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	@Override
-	public TraceCheck getTraceCheck() {
+	public ITraceCheck getTraceCheck() {
 		if (mTraceCheck == null) {
 			if (mTcConstructor == null) {
 				mTcConstructor = constructTraceCheckConstructor();
@@ -385,7 +387,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	private IInterpolantGenerator castTraceCheck() {
-		final TraceCheck traceCheck = getTraceCheck();
+		final ITraceCheck traceCheck = getTraceCheck();
 		assert traceCheck != null && traceCheck instanceof InterpolatingTraceCheck;
 		return (InterpolatingTraceCheck) traceCheck;
 	}

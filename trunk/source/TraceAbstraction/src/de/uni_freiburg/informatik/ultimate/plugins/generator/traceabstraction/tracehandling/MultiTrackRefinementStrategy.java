@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
@@ -114,6 +114,11 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		 * MathSAT with forward predicates.
 		 */
 		MATHSAT_FP,
+
+		/**
+		 * PDR with hard-coded solver
+		 */
+		PDR
 	}
 
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
@@ -141,7 +146,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	// store if the trace has already been shown to be infeasible in a previous attempt
 	private boolean mHasShownInfeasibilityBefore;
 
-	private TraceCheck mTraceCheck;
+	private ITraceCheck mTraceCheck;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	protected final TaskIdentifier mTaskIdentifier;
@@ -215,7 +220,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	@Override
-	public TraceCheck getTraceCheck() {
+	public ITraceCheck getTraceCheck() {
 		if (mTraceCheck == null) {
 			if (mTcConstructor == null) {
 				mTcConstructor = constructTraceCheckConstructor();
@@ -329,6 +334,8 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case MATHSAT_FP:
 			interpolationTechnique = InterpolationTechnique.ForwardPredicates;
 			break;
+		case PDR:
+			interpolationTechnique = InterpolationTechnique.PDR;
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
@@ -392,6 +399,14 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 			logicForExternalSolver = RefinementStrategyUtils.LOGIC_MATHSAT;
+			break;
+		case PDR:
+			command = useTimeout ? RefinementStrategyUtils.COMMAND_Z3_TIMEOUT
+					: RefinementStrategyUtils.COMMAND_Z3_NO_TIMEOUT;
+			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+					baseNameOfDumpedScript);
+			solverMode = SolverMode.External_ModelsMode;
+			logicForExternalSolver = RefinementStrategyUtils.LOGIC_Z3;
 			break;
 		default:
 			throw new IllegalArgumentException(
