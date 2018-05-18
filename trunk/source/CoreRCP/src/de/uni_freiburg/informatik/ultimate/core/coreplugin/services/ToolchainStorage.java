@@ -28,9 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Simple implementation of {@link IToolchainStorage} and {@link IUltimateServiceProvider}
@@ -59,17 +64,20 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
  */
 public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProvider {
 
+	private final Deque<Pair<Object, Set<String>>> mMarker;
 	private final Map<String, IStorable> mToolchainStorage;
 	private final Map<String, PreferenceLayer> mPreferenceLayers;
 
 	public ToolchainStorage() {
-		mToolchainStorage = new LinkedHashMap<>();
-		mPreferenceLayers = new HashMap<>();
+		this(new LinkedHashMap<>(), new HashMap<>(), new ArrayDeque<>());
+		pushMarker(this);
 	}
 
-	private ToolchainStorage(final Map<String, IStorable> storage, final Map<String, PreferenceLayer> layers) {
+	private ToolchainStorage(final Map<String, IStorable> storage, final Map<String, PreferenceLayer> layers,
+			final Deque<Pair<Object, Set<String>>> marker) {
 		mToolchainStorage = Objects.requireNonNull(storage);
 		mPreferenceLayers = Objects.requireNonNull(layers);
+		mMarker = Objects.requireNonNull(marker);
 	}
 
 	@Override
@@ -82,6 +90,8 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		if (value == null || key == null) {
 			throw new IllegalArgumentException("Cannot store nothing");
 		}
+		final Pair<Object, Set<String>> currentMarker = mMarker.peek();
+		currentMarker.getSecond().add(key);
 		return mToolchainStorage.put(key, value);
 	}
 
@@ -124,14 +134,18 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			}
 		}
 		mToolchainStorage.clear();
+		mMarker.clear();
+		pushMarker(this);
 	}
 
 	@Override
-	public void destroyStorable(final String key) {
-		final IStorable storable = mToolchainStorage.remove(key);
+	public boolean destroyStorable(final String key) {
+		final IStorable storable = removeStorable(key);
 		if (storable != null) {
 			storable.destroy();
+			return true;
 		}
+		return false;
 	}
 
 	@Override
@@ -178,7 +192,7 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	public IUltimateServiceProvider registerPreferenceLayer(final Class<?> creator, final String... pluginIds) {
 		final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
 		if (pluginIds == null || pluginIds.length == 0) {
-			return new ToolchainStorage(mToolchainStorage, newLayers);
+			return new ToolchainStorage(mToolchainStorage, newLayers, mMarker);
 		}
 		for (final String pluginId : pluginIds) {
 			final PreferenceLayer existingLayer = newLayers.get(pluginId);
@@ -190,11 +204,49 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			}
 			newLayers.put(pluginId, newLayer);
 		}
-		return new ToolchainStorage(mToolchainStorage, newLayers);
+		return new ToolchainStorage(mToolchainStorage, newLayers, mMarker);
 	}
 
 	@Override
 	public Set<String> keys() {
 		return Collections.unmodifiableSet(mToolchainStorage.keySet());
+	}
+
+	@Override
+	public void pushMarker(final Object marker) throws IllegalArgumentException {
+		if (marker == null) {
+			throw new IllegalArgumentException("marker may not be null");
+		}
+		if (hasMarker(marker)) {
+			throw new IllegalArgumentException("duplicate marker");
+		}
+		mMarker.push(new Pair<>(marker, new HashSet<>()));
+	}
+
+	@Override
+	public Set<String> destroyMarker(final Object marker) {
+		if (mMarker.isEmpty() || !hasMarker(marker)) {
+			return Collections.emptySet();
+		}
+		final Set<String> rtr = new HashSet<>();
+		final Iterator<Pair<Object, Set<String>>> iter = mMarker.iterator();
+		while (iter.hasNext()) {
+			final Pair<Object, Set<String>> markerPair = iter.next();
+			iter.remove();
+			for (final String key : markerPair.getSecond()) {
+				if (destroyStorable(key)) {
+					rtr.add(key);
+				}
+			}
+			if (markerPair.getFirst() == marker) {
+				return rtr;
+			}
+		}
+		return rtr;
+	}
+
+	private boolean hasMarker(final Object marker) {
+		assert marker != null;
+		return mMarker.stream().map(a -> a.getFirst()).anyMatch(a -> a == marker);
 	}
 }

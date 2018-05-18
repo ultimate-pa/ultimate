@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.io.File;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -375,8 +377,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("Minimize is " + mPref.getMinimization());
 
 		mInteractive.reportStartCegar(mPref);
-
 		mIteration = 0;
+
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
 		mInteractive.reportIteration(mIteration);
@@ -405,93 +407,110 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			}
 
 			for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
-				mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
-				mInteractive.reportIteration(mIteration);
-				mInteractive.waitIfPaused();
-				mCegarLoopBenchmark.announceNextIteration();
-				if (mPref.dumpAutomata()) {
-					mDumper = new Dumper(mLogger, mPref, mName, mIteration);
-				}
+				final String msg = "=== Iteration " + mIteration + " === " + errorLocs() + "===";
+				mToolchainStorage.pushMarker(msg);
+				mLogger.info(msg);
+				try {
 
-				final String automatonType;
-				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
-				if (isCounterexampleFeasible == Script.LBool.SAT) {
-					if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
-						if (mLogger.isInfoEnabled()) {
-							mLogger.info("Generalizing and excluding counterexample to continue analysis");
-						}
-						mInteractive.waitIfPaused();
-						automatonType = "Error";
-						constructErrorAutomaton();
-					} else {
-						return reportResult(Result.UNSAFE);
-					}
-				} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
-					if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.UNKNOWN)) {
-						return reportResult(Result.UNSAFE);
-					}
-					mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
-					return reportResult(Result.UNKNOWN);
-				} else {
+					mInteractive.reportIteration(mIteration);
 					mInteractive.waitIfPaused();
-					automatonType = "Interpolant";
-					constructInterpolantAutomaton();
-				}
-
-				if (mInterpolAutomaton != null) {
-					mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
-					if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
-						mArtifactAutomaton = mInterpolAutomaton;
-					}
+					mCegarLoopBenchmark.announceNextIteration();
 					if (mPref.dumpAutomata()) {
-						writeAutomatonToFile(mInterpolAutomaton, automatonType + "Automaton_Iteration" + mIteration);
+						mDumper = new Dumper(mLogger, mPref, mName, mIteration);
+					}
+
+					final String automatonType;
+					final LBool isCounterexampleFeasible = isCounterexampleFeasible();
+					if (isCounterexampleFeasible == Script.LBool.SAT) {
+						if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
+							if (mLogger.isInfoEnabled()) {
+								mLogger.info("Generalizing and excluding counterexample to continue analysis");
+							}
+							mInteractive.waitIfPaused();
+							automatonType = "Error";
+							constructErrorAutomaton();
+						} else {
+							return reportResult(Result.UNSAFE);
+						}
+					} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
+						if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.UNKNOWN)) {
+							return reportResult(Result.UNSAFE);
+						}
+						mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
+						return reportResult(Result.UNKNOWN);
+					} else {
+						mInteractive.waitIfPaused();
+						automatonType = "Interpolant";
+						constructInterpolantAutomaton();
+					}
+
+					if (mInterpolAutomaton != null) {
+						mLogger.info(
+								automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
+						if (mIteration <= mPref.watchIteration()
+								&& mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
+							mArtifactAutomaton = mInterpolAutomaton;
+						}
+						if (mPref.dumpAutomata()) {
+							writeAutomatonToFile(mInterpolAutomaton,
+									automatonType + "Automaton_Iteration" + mIteration);
+						}
+					}
+
+					mInteractive.waitIfPaused();
+					final boolean progress = refineAbstraction();
+					if (!progress) {
+						mLogger.warn("No progress! Counterexample is still accepted by refined abstraction.");
+						throw new AssertionError(
+								"No progress! Counterexample is still accepted by refined abstraction.");
+					}
+
+					if (mInterpolAutomaton != null) {
+						mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
+						mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
+						mInteractive.reportSizeInfo(mAbstraction.sizeInformation(),
+								mInterpolAutomaton.sizeInformation());
+					}
+
+					if (mPref.computeHoareAnnotation()
+							&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+						assert new InductivityCheck<>(mServices,
+								(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, false, true,
+								new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
+					}
+
+					if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
+						mArtifactAutomaton = mAbstraction;
+					}
+
+					if (mPref.dumpAutomata()) {
+						final String filename = "Abstraction" + mIteration;
+						writeAutomatonToFile(mAbstraction, filename);
+					}
+
+					final boolean newMaximumReached =
+							mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+					if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
+						final String filename = mIcfg.getIdentifier();
+						writeAutomatonToFile(mAbstraction, filename);
+					}
+
+					mInteractive.waitIfPaused();
+					final boolean isAbstractionCorrect = isAbstractionEmpty();
+					if (isAbstractionCorrect) {
+						if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.SAFE)) {
+							return reportResult(Result.UNSAFE);
+						}
+						return reportResult(Result.SAFE);
+					}
+					mInteractive.send(mCegarLoopBenchmark);
+				} finally {
+					final Set<String> destroyedStorables = mToolchainStorage.destroyMarker(msg);
+					if (!destroyedStorables.isEmpty()) {
+						mLogger.warn("Destroyed unattended storables created during the last iteration: "
+								+ destroyedStorables.stream().collect(Collectors.joining(",")));
 					}
 				}
-
-				mInteractive.waitIfPaused();
-				final boolean progress = refineAbstraction();
-				if (!progress) {
-					mLogger.warn("No progress! Counterexample is still accepted by refined abstraction.");
-					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
-				}
-
-				if (mInterpolAutomaton != null) {
-					mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
-					mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
-					mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
-				}
-
-				if (mPref.computeHoareAnnotation()
-						&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
-					assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction,
-							false, true, new IncrementalHoareTripleChecker(mCsToolkit, false)).getResult() : "Not inductive";
-				}
-
-				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
-					mArtifactAutomaton = mAbstraction;
-				}
-
-				if (mPref.dumpAutomata()) {
-					final String filename = "Abstraction" + mIteration;
-					writeAutomatonToFile(mAbstraction, filename);
-				}
-
-				final boolean newMaximumReached =
-						mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
-				if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-					final String filename = mIcfg.getIdentifier();
-					writeAutomatonToFile(mAbstraction, filename);
-				}
-
-				mInteractive.waitIfPaused();
-				final boolean isAbstractionCorrect = isAbstractionEmpty();
-				if (isAbstractionCorrect) {
-					if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.SAFE)) {
-						return reportResult(Result.UNSAFE);
-					}
-					return reportResult(Result.SAFE);
-				}
-				mInteractive.send(mCegarLoopBenchmark);
 			}
 			if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.USER_LIMIT_ITERATIONS)) {
 				return reportResult(Result.UNSAFE);

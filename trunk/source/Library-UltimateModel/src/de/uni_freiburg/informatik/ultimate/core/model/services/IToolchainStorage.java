@@ -51,8 +51,10 @@ public interface IToolchainStorage {
 	 *
 	 * @param key
 	 *            The key under which the {@link IStorable} is saved.
+	 * @return true iff there was a {@link IStorable} associated with the supplied key and its destroy() method has been
+	 *         called.
 	 */
-	void destroyStorable(final String key);
+	boolean destroyStorable(final String key);
 
 	/**
 	 * Try to remove a single {@link IStorable} and return it.
@@ -95,5 +97,26 @@ public interface IToolchainStorage {
 	 * List all keys currently in storage
 	 */
 	Set<String> keys();
+
+	/**
+	 * Register a marker with the {@link IToolchainStorage} that allows you to destroy all {@link IStorable}s that were
+	 * registered after the marker has been pushed.
+	 *
+	 * @param marker
+	 *            The marker.
+	 * @throws IllegalArgumentException
+	 *             iff this markerId is already registered.
+	 */
+	void pushMarker(final Object marker) throws IllegalArgumentException;
+
+	/**
+	 * Remove all {@link IStorable}s and markers registered after and including the supplied marker. The
+	 * {@link IStorable#destroy()} method will be called for the removed {@link IStorable}.
+	 *
+	 * @param marker
+	 *            The name of the marker that should be removed.
+	 * @return A list of keys of {@link IStorable}s that have been removed and destroyed.
+	 */
+	Set<String> destroyMarker(final Object marker);
 
 }
