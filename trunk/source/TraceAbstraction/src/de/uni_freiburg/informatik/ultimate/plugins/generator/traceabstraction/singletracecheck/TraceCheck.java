@@ -101,9 +101,9 @@ public class TraceCheck implements ITraceCheck {
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	/**
-	 * After constructing a new traceCheck satisfiability of the trace was checked. However, the trace check is not
-	 * yet finished, and the SmtManager is still locked by this traceCheck to allow the computation of an interpolants
-	 * or an execution. The trace check is only finished after the unlockSmtManager() method was called.
+	 * After constructing a new traceCheck satisfiability of the trace was checked. However, the trace check is not yet
+	 * finished, and the SmtManager is still locked by this traceCheck to allow the computation of an interpolants or an
+	 * execution. The trace check is only finished after the unlockSmtManager() method was called.
 	 */
 	protected boolean mTraceCheckFinished;
 	protected final CfgSmtToolkit mCsToolkit;
@@ -133,8 +133,7 @@ public class TraceCheck implements ITraceCheck {
 	protected final IcfgProgramExecution mRcfgProgramExecution;
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	protected NestedSsaBuilder mNsb;
-	protected final TraceCheckStatisticsGenerator mTraceCheckBenchmarkGenerator =
-			new TraceCheckStatisticsGenerator();
+	protected final TraceCheckStatisticsGenerator mTraceCheckBenchmarkGenerator;
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
@@ -200,6 +199,8 @@ public class TraceCheck implements ITraceCheck {
 		mPendingContexts = pendingContexts;
 		mNestedFormulas = rv;
 		mAssertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
+		mTraceCheckBenchmarkGenerator = new TraceCheckStatisticsGenerator();
+
 		boolean providesIcfgProgramExecution = false;
 		IcfgProgramExecution icfgProgramExecution = null;
 		FeasibilityCheckResult feasibilityResult = null;
@@ -242,15 +243,12 @@ public class TraceCheck implements ITraceCheck {
 		}
 	}
 
-	protected TraceCheckStatisticsGenerator getBenchmarkGenerator() {
-		return new TraceCheckStatisticsGenerator();
-	}
-
 	@Override
 	public LBool isCorrect() {
 		return mFeasibilityResult.getLBool();
 	}
 
+	@Override
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
 		if (isCorrect() == LBool.UNKNOWN) {
 			return mFeasibilityResult.getReasonUnknown();
@@ -303,8 +301,7 @@ public class TraceCheck implements ITraceCheck {
 				result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckUtils.constructReasonUnknown(e), true);
 			}
 		} finally {
-			mTraceCheckBenchmarkGenerator
-					.stop(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
+			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		}
 		return result;
 	}
@@ -314,7 +311,7 @@ public class TraceCheck implements ITraceCheck {
 	 * trace check is SAT), we compute a program execution that contains program states that witness the violation of
 	 * the specification (however, this can still be partial program states e.g., no values assigned to arrays) and that
 	 * contains information which branch of a parallel composed CodeBlock violates the specification.
-	 * 
+	 *
 	 * @return
 	 */
 	private IcfgProgramExecution computeRcfgProgramExecutionAndDecodeBranches() {
@@ -327,9 +324,9 @@ public class TraceCheck implements ITraceCheck {
 			final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
-			final TraceCheck tc = new TraceCheck(mNestedFormulas.getPrecondition(),
-					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), mCsToolkit,
-					withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, mTcSmtManager);
+			final TraceCheck tc = new TraceCheck(mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(),
+					mPendingContexts, mNestedFormulas.getTrace(), mCsToolkit, withBE,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, mTcSmtManager);
 			if (tc.getToolchainCanceledExpection() != null) {
 				throw tc.getToolchainCanceledExpection();
 			}
@@ -474,6 +471,7 @@ public class TraceCheck implements ITraceCheck {
 	 * @return true iff trace check was successfully finished. Examples for a not successfully finished trace check are:
 	 *         Crash of solver, Toolchain cancelled,
 	 */
+	@Override
 	public boolean wasTracecheckFinishedNormally() {
 		return mTraceCheckFinished;
 	}
