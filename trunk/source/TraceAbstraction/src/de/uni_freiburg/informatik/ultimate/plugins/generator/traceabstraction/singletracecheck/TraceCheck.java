@@ -144,32 +144,36 @@ public class TraceCheck implements ITraceCheck {
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
 	 * the context to which the return leads the trace.
 	 *
+	 * @param services
+	 *            Ultimate services
 	 * @param assertCodeBlocksIncrementally
 	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betim's
 	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
 	 *            result to a check-sat is UNSAT.
-	 * @param services
-	 *            Ultimate services
 	 * @param logger
 	 *            logger
 	 */
 	public TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
-			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution) {
-		this(precondition, postcondition, pendingContexts, trace, csToolkit,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final boolean computeRcfgProgramExecution,
+			final boolean collectInterpolatSequenceStatistics) {
+		this(precondition, postcondition, pendingContexts, trace,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
 						csToolkit.getOldVarsAssignmentCache(), false),
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true);
+				services, csToolkit, assertCodeBlocksIncrementally, computeRcfgProgramExecution,
+				collectInterpolatSequenceStatistics, true);
 	}
 
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
-			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat) {
-		this(precondition, postcondition, pendingContexts, trace, csToolkit, rv, assertCodeBlocksIncrementally,
-				services, computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat, csToolkit.getManagedScript());
+			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
+			final boolean unlockSmtSolverAlsoIfUnsat) {
+		this(precondition, postcondition, pendingContexts, trace, rv, services, csToolkit, csToolkit.getManagedScript(),
+				assertCodeBlocksIncrementally, computeRcfgProgramExecution, collectInterpolatSequenceStatistics,
+				unlockSmtSolverAlsoIfUnsat);
 	}
 
 	/**
@@ -179,10 +183,10 @@ public class TraceCheck implements ITraceCheck {
 	 */
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
-			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat,
-			final ManagedScript managedScriptTc) {
+			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final ManagedScript managedScriptTc,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final boolean computeRcfgProgramExecution,
+			final boolean collectInterpolatSequenceStatistics, final boolean unlockSmtSolverAlsoIfUnsat) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCfgManagedScript = csToolkit.getManagedScript();
@@ -199,7 +203,7 @@ public class TraceCheck implements ITraceCheck {
 		mPendingContexts = pendingContexts;
 		mNestedFormulas = rv;
 		mAssertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
-		mTraceCheckBenchmarkGenerator = new TraceCheckStatisticsGenerator();
+		mTraceCheckBenchmarkGenerator = new TraceCheckStatisticsGenerator(collectInterpolatSequenceStatistics);
 
 		boolean providesIcfgProgramExecution = false;
 		IcfgProgramExecution icfgProgramExecution = null;
@@ -325,8 +329,8 @@ public class TraceCheck implements ITraceCheck {
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
 			final TraceCheck tc = new TraceCheck(mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(),
-					mPendingContexts, mNestedFormulas.getTrace(), mCsToolkit, withBE,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, mTcSmtManager);
+					mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices, mCsToolkit, mTcSmtManager,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
 			if (tc.getToolchainCanceledExpection() != null) {
 				throw tc.getToolchainCanceledExpection();
 			}
@@ -504,6 +508,5 @@ public class TraceCheck implements ITraceCheck {
 		public boolean isSolverCrashed() {
 			return mSolverCrashed;
 		}
-
 	}
 }

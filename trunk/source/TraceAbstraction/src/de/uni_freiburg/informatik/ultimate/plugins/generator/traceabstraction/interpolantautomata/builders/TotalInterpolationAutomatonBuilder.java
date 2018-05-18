@@ -109,6 +109,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IIcfgSymbolTable mSymbolTable;
+	private final boolean mCollectInterpolantStatistics;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
 			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator,
@@ -116,11 +117,12 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfgSymbolTable symbolTable) throws AutomataOperationCanceledException {
-		super();
+			final IIcfgSymbolTable symbolTable, final boolean collectInterpolantStatistics)
+			throws AutomataOperationCanceledException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+		mCollectInterpolantStatistics = collectInterpolantStatistics;
 		mSymbolTable = symbolTable;
 		mStateSequence = stateSequence;
 		// mTraceCheck = traceCheck;
@@ -331,19 +333,19 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			tc = new InterpolatingTraceCheckCraig(precondition, postcondition, pendingContexts, run.getWord(),
-					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateFactory,
-					mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique,
-					run.getStateSequence());
+					run.getStateSequence(), mServices, mCsToolkit, mPredicateFactory, mPredicateUnifier,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, mCollectInterpolantStatistics, mInterpolation, true,
+					mXnfConversionTechnique, mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 			tc = new TraceCheckSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(),
-					mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence());
-
+					mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence(),
+					mCollectInterpolantStatistics);
 			break;
 		case PathInvariants:
 		default:

@@ -546,10 +546,14 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		if (gbaDiff == null) {
 			assert diff.checkResult(mStateFactoryInterpolAutom);
 			newAbstraction = diff.getResult();
-			if(BenchmarkRecord.canDump()) BenchmarkRecord.addComplementAutomaton(mIteration, diff.getSndComplemented().size(), 0);
+			if (BenchmarkRecord.canDump()) {
+				BenchmarkRecord.addComplementAutomaton(mIteration, diff.getSndComplemented().size(), 0);
+			}
 		} else {
 			newAbstraction = gbaDiff.getResult();
-			if(BenchmarkRecord.canDump()) BenchmarkRecord.addComplementAutomaton(mIteration, gbaDiff.getSndComplemented().size(), 0);
+			if (BenchmarkRecord.canDump()) {
+				BenchmarkRecord.addComplementAutomaton(mIteration, gbaDiff.getSndComplemented().size(), 0);
+			}
 		}
 
 		return newAbstraction;
@@ -565,24 +569,25 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		GeneralizedBuchiDifferenceFKV<LETTER, IPredicate> gbaDiff = null;
 		BuchiDifferenceFKV<LETTER, IPredicate> diff = null;
 		if (abstraction instanceof IGeneralizedNwaOutgoingLetterAndTransitionProvider) {
-			IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction =
+			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> gbaAbstraction =
 					(IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) abstraction;
-			gbaDiff = new GeneralizedBuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, gbaAbstraction,
-					mInterpolAutomatonUsedInRefinement, stateDeterminizer, optimization, Integer.MAX_VALUE);
-		}else {
-			diff = new BuchiDifferenceFKV<>(
-					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, abstraction,
-					mInterpolAutomatonUsedInRefinement, stateDeterminizer, optimization, Integer.MAX_VALUE);
+			gbaDiff = new GeneralizedBuchiDifferenceFKV<>(new AutomataLibraryServices(mServices),
+					mStateFactoryForRefinement, gbaAbstraction, mInterpolAutomatonUsedInRefinement, stateDeterminizer,
+					optimization, Integer.MAX_VALUE);
+		} else {
+			diff = new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					abstraction, mInterpolAutomatonUsedInRefinement, stateDeterminizer, optimization,
+					Integer.MAX_VALUE);
 		}
 		finishComputation(mInterpolAutomatonUsedInRefinement, setting);
-		if(gbaDiff == null) {
+		if (gbaDiff == null) {
 			benchmarkGenerator.reportHighestRank(diff.getHighestRank());
 			assert diff.checkResult(mStateFactoryInterpolAutom);
 			newAbstraction = diff.getResult();
-		}else {
+		} else {
 			newAbstraction = gbaDiff.getResult();
 		}
-		
+
 		return newAbstraction;
 	}
 
@@ -593,9 +598,9 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
-			itc = new InterpolatingTraceCheckCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
-					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory, pu,
-					interpolation, true, mXnfConversionTechnique, mSimplificationTechnique, null);
+			itc = new InterpolatingTraceCheckCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word, null,
+					mServices, mCsToolkit, mPredicateFactory, pu, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
+					interpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
 			break;
 		}
 		case ForwardPredicates:
@@ -605,7 +610,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			itc = new TraceCheckSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 					mPredicateFactory, pu, interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
-					mSimplificationTechnique, null);
+					mSimplificationTechnique, null, false);
 			break;
 		}
 		default:

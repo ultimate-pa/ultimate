@@ -583,12 +583,9 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 		}
 		// test if we found a new path which can be added
 		final InterpolatingTraceCheckCraig traceCheck =
-				new InterpolatingTraceCheckCraig(pre, post, pendingContexts, word, mCsToolkit,
-						/*
-						 * TODO: When Matthias introduced this parameter he set the argument to
-						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to another value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory, mPredicateUnifier,
-						mPref.interpolation(), true, mXnfConversionTechnique, mSimplificationTechnique, null);
+				new InterpolatingTraceCheckCraig(pre, post, pendingContexts, word, null, mServices, mCsToolkit,
+						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
+						mPref.interpolation(), false, mXnfConversionTechnique, mSimplificationTechnique);
 
 		mInterpolantGenerator = traceCheck;
 		if (traceCheck.isCorrect() == LBool.UNSAT) {
@@ -711,8 +708,9 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 */
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final SuperDifference<LETTER, IPredicate, PredicateFactoryRefinement> diff = new SuperDifference<>(new AutomataLibraryServices(mServices),
-				mStateFactoryForRefinement,	mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
+		final SuperDifference<LETTER, IPredicate, PredicateFactoryRefinement> diff =
+				new SuperDifference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+						mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
 
 		mAbstraction = diff.getResult();
 

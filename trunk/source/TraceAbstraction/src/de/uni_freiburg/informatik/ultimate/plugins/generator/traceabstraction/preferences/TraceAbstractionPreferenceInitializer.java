@@ -116,6 +116,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
 	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
 	public static final String LABEL_COMPUTE_COUNTEREXAMPLE = "Compute trace for counterexample result";
+	public static final String LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS =
+			"Compute statistics for interpolant sequences";
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
 			"Highlight relevant statements in error traces";
 	public static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
@@ -197,6 +199,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
 	private static final boolean DEF_ONLY_REUSE = false;
 	private static final boolean DEF_COMPUTE_COUNTEREXAMPLE = true;
+	private static final boolean DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = true;
 
 	private static final String DESC_DUMP_ONLY_REUSE =
 			"When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it "
@@ -218,6 +221,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	private static final String DESC_ALL_ERRORS_AT_ONCE = null;
 	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
+	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
 
 	/**
 	 * Constructor.
@@ -253,6 +257,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 				new UltimatePreferenceItem<>(LABEL_COMPUTE_COUNTEREXAMPLE, DEF_COMPUTE_COUNTEREXAMPLE,
 						DESC_COMPUTE_COUNTEREXAMPLE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS,
+						DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS, DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS,
+						PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
 				new UltimatePreferenceItem<>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,

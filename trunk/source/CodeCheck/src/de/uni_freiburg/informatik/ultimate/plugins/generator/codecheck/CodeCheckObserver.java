@@ -589,11 +589,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			try {
 				final InterpolatingTraceCheck tc = new InterpolatingTraceCheckCraig(
 						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateFactory, mPredicateUnifier,
-						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, true, XNF_CONVERSION_TECHNIQUE,
-						SIMPLIFICATION_TECHNIQUE,
-						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), false);
+						new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
+						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())),
+						mServices, mCsToolkit, mgdScriptTracechecks, mPredicateFactory, mPredicateUnifier,
+						AssertCodeBlockOrder.NOT_INCREMENTALLY, true, true, mGlobalSettings.getInterpolationMode(),
+						true, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, false);
 				if (tc.getInterpolantComputationStatus().wasComputationSuccesful()) {
 					return tc;
 				}
@@ -614,7 +614,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 					mPredicateFactory, mPredicateUnifier, InterpolationTechnique.ForwardPredicates,
 					mCsToolkit.getManagedScript(), XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
-					TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
+					TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), true);
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
@@ -627,7 +627,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mGlobalSettings.isUseLiveVariables(), mServices, true, mPredicateFactory, mPredicateUnifier,
 						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, XNF_CONVERSION_TECHNIQUE,
 						SIMPLIFICATION_TECHNIQUE,
-						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
+						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), true);
 			} catch (final Exception e) {
 				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
 					throw e;
@@ -638,7 +638,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(),
 						mCsToolkit.getManagedScript(), XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
-						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
+						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), true);
 			}
 		default:
 			throw new UnsupportedOperationException(

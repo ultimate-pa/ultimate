@@ -83,6 +83,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 	private final boolean mUseWeakestPreconditionForPathInvariants;
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final boolean mComputeCounterexample;
+	private final boolean mCollectInterpolantStatistics;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -132,6 +133,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		mPathOfDumpedScript = taPrefs.pathOfDumpedScript();
 		mLogicForExternalSolver = taPrefs.logicForExternalSolver();
 		mExceptionBlacklist = taPrefs.getRefinementStrategyExceptionSpecification();
+		mCollectInterpolantStatistics = taPrefs.collectInterpolantStatistics();
 
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAssertCodeBlocksOrder =
@@ -255,5 +257,9 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
 		return mExceptionBlacklist;
+	}
+
+	public boolean collectInterpolantStatistics() {
+		return mCollectInterpolantStatistics;
 	}
 }

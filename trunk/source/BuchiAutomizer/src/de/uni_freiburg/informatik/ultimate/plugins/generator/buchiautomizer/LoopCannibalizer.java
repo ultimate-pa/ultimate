@@ -149,9 +149,9 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceCheck = new InterpolatingTraceCheckCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					mServices, false, mPredicateFactory, mPredicateUnifier, interpolation, true, mXnfConversionTechnique,
-					mSimplificationTechnique, null);
+					new TreeMap<Integer, IPredicate>(), shifted, null, mServices, mCsToolkit, mPredicateFactory,
+					mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, interpolation, true,
+					mXnfConversionTechnique, mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -159,8 +159,9 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case FPandBPonlyIfFpWasNotPerfect:
 			traceCheck = new TraceCheckSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, mPredicateUnifier, interpolation,
-					mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null);
+					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, mPredicateUnifier,
+					interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique,
+					null, false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

@@ -81,6 +81,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 	private final InterpolantAutomaton mInterpolantAutomatonStyle;
 
 	private final IBuilderFunction<LETTER> mBuilderFunction;
+	private final boolean mCollectInterpolantStatistics;
 
 	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predFac, final IIcfg<?> icfg,
@@ -103,6 +104,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 		mHoareTripleChecks = taPrefs.getHoareTripleChecks();
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
+		mCollectInterpolantStatistics = taPrefs.collectInterpolantStatistics();
 
 		mBuilderFunction = determineBuilder(abstractInterpretationRunner, mInterpolantAutomatonStyle);
 	}
@@ -207,7 +209,8 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 		final TotalInterpolationAutomatonBuilder<LETTER> iab = new TotalInterpolationAutomatonBuilder<>(
 				castedAbstraction, castedCex.getStateSequence(), interpolGenerator, mCsToolkit, mPredicateFactory,
 				mCsToolkit.getModifiableGlobalsTable(), mInterpolationTechnique, mServices, mHoareTripleChecks,
-				mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable());
+				mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
+				mCollectInterpolantStatistics);
 		mBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		return iab;
 	}

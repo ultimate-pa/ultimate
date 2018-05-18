@@ -61,7 +61,7 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback extends Interpola
 	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
 	private final IIcfg<?> mIcfg;
 	private PathInvariantsStatisticsGenerator mPathInvariantsStats;
-	
+
 	private InterpolantComputationStatus mInterpolantComputationStatus;
 	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
 
@@ -73,10 +73,11 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback extends Interpola
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final InvariantSynthesisSettings invariantSynthesisSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final IIcfg<?> icfgContainer) {
-		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit, assertCodeBlocksIncrementally,
-				services, computeRcfgProgramExecution, predicateFactory, predicateUnifier, csToolkit.getManagedScript(),
-				simplificationTechnique, xnfConversionTechnique, run.getStateSequence());
+			final IIcfg<?> icfgContainer, final boolean collectInterpolantStatistics) {
+		super(precondition, postcondition, pendingContexts, run.getWord(), run.getStateSequence(), services, csToolkit,
+				csToolkit.getManagedScript(), predicateFactory, predicateUnifier, assertCodeBlocksIncrementally,
+				computeRcfgProgramExecution, collectInterpolantStatistics, simplificationTechnique,
+				xnfConversionTechnique);
 		mStorage = storage;
 		mNestedRun = run;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
@@ -87,11 +88,12 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback extends Interpola
 			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
 			if (!mInterpolantComputationStatus.wasComputationSuccesful()) {
 				final String message = "invariant synthesis failed";
-				final String taskDescription = "trying to synthesize invariant for path program " + mPathInvariantsStats;
+				final String taskDescription =
+						"trying to synthesize invariant for path program " + mPathInvariantsStats;
 				throw new ToolchainCanceledException(message, getClass(), taskDescription);
 			}
 		}
-		
+
 	}
 
 	@Override
@@ -99,20 +101,20 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback extends Interpola
 			final InterpolationTechnique interpolation) {
 
 		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage,
-				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateFactory, mPredicateUnifier, mIcfg,
-				mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
+				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateFactory, mPredicateUnifier,
+				mIcfg, mInvariantSynthesisSettings, mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
-			assert !pathInvariantsGenerator.getInterpolantComputationStatus().wasComputationSuccesful() : 
-				"null only allowed if computation was not successful";
+			assert !pathInvariantsGenerator.getInterpolantComputationStatus()
+					.wasComputationSuccesful() : "null only allowed if computation was not successful";
 		} else {
 			if (interpolants.length != mTrace.length() - 1) {
 				throw new AssertionError("inkorrekt number of interpolants. "
 						+ "There should be one interpolant between each " + "two successive CodeBlocks");
 			}
-			assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace, mPrecondition,
-					mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger,
+			assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace,
+					mPrecondition, mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger,
 					mCfgManagedScript) : "invalid Hoare triple in invariant map";
 		}
 		mInterpolants = interpolants;
@@ -128,7 +130,5 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback extends Interpola
 	public PathInvariantsStatisticsGenerator getPathInvariantsStats() {
 		return mPathInvariantsStats;
 	}
-	
-	
 
 }

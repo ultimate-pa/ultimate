@@ -208,8 +208,8 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 
 		return new TraceCheck(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
-				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices,
-				mPrefs.computeCounterexample());
+				NestedWord.nestedWord(mCounterexample.getWord()), mServices, mPrefs.getCfgSmtToolkit(), mAssertionOrder,
+				mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics());
 	}
 
 	private TraceCheck constructCraig() {
@@ -219,10 +219,11 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 
 		return new InterpolatingTraceCheckCraig(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
-				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices,
-				mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier, mInterpolationTechnique,
-				mManagedScript, true, xnfConversionTechnique, simplificationTechnique,
-				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), false);
+				NestedWord.nestedWord(mCounterexample.getWord()),
+				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), mServices,
+				mPrefs.getCfgSmtToolkit(), mManagedScript, mPredicateFactory, mPredicateUnifier, mAssertionOrder,
+				mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics(), mInterpolationTechnique, true,
+				xnfConversionTechnique, simplificationTechnique, false);
 	}
 
 	private TraceCheck constructForwardBackward() {
@@ -236,7 +237,8 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 				mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(),
 				mPredicateFactory, mPredicateUnifier, mInterpolationTechnique, mManagedScript, xnfConversionTechnique,
 				simplificationTechnique,
-				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())));
+				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())),
+				mPrefs.collectInterpolantStatistics());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -276,7 +278,7 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(),
 				mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings,
-				xnfConversionTechnique, simplificationTechnique, icfgContainer);
+				xnfConversionTechnique, simplificationTechnique, icfgContainer, mPrefs.collectInterpolantStatistics());
 	}
 
 }

@@ -71,10 +71,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 
 /**
- * Transform an {@link Icfg} using large block encoding.
- * (Back)transform a proof for the large block encoded {@link Icfg} to a
- * proof for the original {@link Icfg} by computing {@link IPredicate}s for
- * the intermediate locations using interpolation or a SP-based wordaround.
+ * Transform an {@link Icfg} using large block encoding. (Back)transform a proof for the large block encoded
+ * {@link Icfg} to a proof for the original {@link Icfg} by computing {@link IPredicate}s for the intermediate locations
+ * using interpolation or a SP-based wordaround.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -97,7 +96,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 	}
-	
+
 	public IIcfg<IcfgLocation> transform(final IIcfg<IcfgLocation> inputIcfg) {
 		mInputIcfg = inputIcfg;
 		final IUltimateServiceProvider beServices =
@@ -105,9 +104,9 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
 		ups.put(BlockEncodingPreferences.FXP_INTERPROCEDURAL_COMPOSITION, false);
 		ups.put(BlockEncodingPreferences.FXP_MINIMIZE_STATES, MinimizeStates.MULTI);
-//		ups.put(BlockEncodingPreferences.PRE_SBE, true);
-//		ups.put(BlockEncodingPreferences.POST_USE_PARALLEL_COMPOSITION, false);
-		
+		// ups.put(BlockEncodingPreferences.PRE_SBE, true);
+		// ups.put(BlockEncodingPreferences.POST_USE_PARALLEL_COMPOSITION, false);
+
 		// TODO: If you remove infeasible edges, you may end up with an empty program. Either disable this or deal
 		// with it.
 		ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
@@ -118,9 +117,10 @@ public final class LargeBlockEncodingIcfgTransformer {
 		mLbeBacktranslation = blockEncoder.getBacktranslator().getLocationMapping();
 		return outputIcfg;
 	}
-	
+
 	public Map<IcfgLocation, IPredicate> transform(final Map<IcfgLocation, IPredicate> hoareAnnotation) {
-		final Map<IcfgLocation, IPredicate> result = computeIntermediateInvariants(mInputIcfg, hoareAnnotation, mLbeBacktranslation, mPredicateUnifier, mInputIcfg.getCfgSmtToolkit());
+		final Map<IcfgLocation, IPredicate> result = computeIntermediateInvariants(mInputIcfg, hoareAnnotation,
+				mLbeBacktranslation, mPredicateUnifier, mInputIcfg.getCfgSmtToolkit());
 		mLbeBacktranslation = null;
 		mInputIcfg = null;
 		return result;
@@ -129,7 +129,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 	/**
 	 * Given invariants for an LBE encoded {@link Icfg}, compute invariants for the original {@link Icfg} by filling the
 	 * gaps using interpolation or an SP-based workaround.
-	 * 
+	 *
 	 * @param inputIcfg
 	 *            {@link Icfg} for which we want to compute invariants.
 	 * @param lbeInvariants
@@ -221,8 +221,9 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		final XnfConversionTechnique xnfConversionTechnique =
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<Term, IPredicate, TransFormula>(
-				mgdScript, new TermDomainOperationProvider(mServices, mgdScript));
+		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
+				new PredicateTransformer<>(mgdScript,
+						new TermDomainOperationProvider(mServices, mgdScript));
 		final List<Term> disjuncts = new ArrayList<>();
 		for (final IcfgEdge edge : loc.getIncomingEdges()) {
 			final IcfgLocation pred = edge.getSource();
@@ -264,8 +265,9 @@ public final class LargeBlockEncodingIcfgTransformer {
 		@SuppressWarnings("unchecked")
 		final TraceCheckSpWp tc = new TraceCheckSpWp(precondition, postcondition, pendingContexts,
 				(NestedWord<? extends IIcfgTransition<?>>) run.getWord(), csToolkit, assertCodeBlocksIncrementally,
-				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation,
-				mgdScriptTc, xnfConversionTechnique, simplificationTechnique, run.getStateSequence());
+				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, mPredicateFactory,
+				predicateUnifier, interpolation, mgdScriptTc, xnfConversionTechnique, simplificationTechnique,
+				run.getStateSequence(), false);
 		return tc.getInterpolants();
 	}
 
@@ -285,7 +287,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 				final IcfgEdge edge = currentLoc.getOutgoingEdges().get(0);
 				@SuppressWarnings("unchecked")
 				final NestedRun<T, IcfgLocation> suffix =
-				new NestedRun<>(edge.getSource(), (T) edge, NestedWord.INTERNAL_POSITION, edge.getTarget());
+						new NestedRun<>(edge.getSource(), (T) edge, NestedWord.INTERNAL_POSITION, edge.getTarget());
 				run = run.concatenate(suffix);
 				currentLoc = edge.getTarget();
 				if (goalLocs.contains(currentLoc)) {

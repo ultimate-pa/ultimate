@@ -124,12 +124,13 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
 			final ManagedScript mgdScriptTc, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique,
-			final List<? extends Object> controlLocationSequence) {
+			final SimplificationTechnique simplificationTechnique, final List<? extends Object> controlLocationSequence,
+			final boolean collectInterpolatSequenceStatistics) {
 		// superclass does feasibility check
-		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
-				computeRcfgProgramExecution, predicateFactory, predicateUnifier, mgdScriptTc, simplificationTechnique,
-				xnfConversionTechnique, controlLocationSequence);
+		super(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
+				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlocksIncrementally,
+				computeRcfgProgramExecution, collectInterpolatSequenceStatistics, simplificationTechnique,
+				xnfConversionTechnique);
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;
 		switch (interpolation) {
@@ -460,9 +461,9 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 	 * @return true iff result of infeasiblity check is unsat or unknown
 	 */
 	private boolean stillInfeasible(final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv) {
-		final TraceCheck tc =
-				new TraceCheck(rv.getPrecondition(), rv.getPostcondition(), new TreeMap<Integer, IPredicate>(),
-						rv.getTrace(), mCsToolkit, rv, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
+		final TraceCheck tc = new TraceCheck(rv.getPrecondition(), rv.getPostcondition(),
+				new TreeMap<Integer, IPredicate>(), rv.getTrace(), rv, mServices, mCsToolkit,
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, false);
 		if (tc.getToolchainCanceledExpection() != null) {
 			throw tc.getToolchainCanceledExpection();
 		}

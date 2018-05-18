@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiAutomizer plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 
 public class BinaryStatePredicateManager {
@@ -349,7 +350,7 @@ public class BinaryStatePredicateManager {
 	/**
 	 * Returns an array that contains all elements of list with index greater than or equal to i and all elements of the
 	 * list additionalList.
-	 * 
+	 *
 	 * @return
 	 */
 	static Term[] startingFromIPlusList(final List<Term> list, final int i, final List<Term> additionalList) {
@@ -501,27 +502,23 @@ public class BinaryStatePredicateManager {
 	}
 
 	private Term getRankGeq0(final IProgramVar oldRankVariable) {
-		final Term geq = mScript.term(">=", oldRankVariable.getTermVariable(), SmtUtils.constructIntValue(mScript, BigInteger.ZERO));
+		final Term geq = mScript.term(">=", oldRankVariable.getTermVariable(),
+				SmtUtils.constructIntValue(mScript, BigInteger.ZERO));
 		return geq;
 	}
 
 	public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<? extends IIcfgTransition<?>> stem,
 			final NestedWord<? extends IAction> loop, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		boolean result = true;
-		TraceCheck traceCheck;
 		final IPredicate truePredicate = mPredicateFactory.newPredicate(mManagedScript.getScript().term("true"));
 		if (isTrue(siPredicate)) {
 			siPredicate = truePredicate;
 		}
-		traceCheck = new TraceCheck(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool stemCheck = traceCheck.isCorrect();
+		final LBool stemCheck = createTraceCheck(truePredicate, siPredicate, stem).isCorrect();
 		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
-		traceCheck = new TraceCheck(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem, mCsToolkit,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool loopCheck = traceCheck.isCorrect();
+		final LBool loopCheck = createTraceCheck(siPredicate, siPredicate, stem).isCorrect();
 		if (loopCheck != LBool.UNSAT) {
 			result = false;
 		}
@@ -530,11 +527,14 @@ public class BinaryStatePredicateManager {
 
 	public boolean checkRankDecrease(final NestedWord<? extends IIcfgTransition<?>> loop,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
-		final TraceCheck traceCheck =
-				new TraceCheck(mRankEqualityAndSi, mRankDecreaseAndBound, new TreeMap<Integer, IPredicate>(), loop,
-						mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
-		final LBool loopCheck = traceCheck.isCorrect();
-		return loopCheck == LBool.UNSAT;
+		return createTraceCheck(mRankEqualityAndSi, mRankDecreaseAndBound, loop).isCorrect() == LBool.UNSAT;
+	}
+
+	private ITraceCheck createTraceCheck(final IPredicate preCond, final IPredicate postCond,
+			final NestedWord<? extends IIcfgTransition<?>> trace) {
+		return new TraceCheck(preCond, postCond, new TreeMap<Integer, IPredicate>(), trace, mServices,
+				mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false);
+
 	}
 
 	private static boolean isTrue(final IPredicate pred) {

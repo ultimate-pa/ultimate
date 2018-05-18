@@ -67,6 +67,7 @@ public final class TAPreferences {
 	private final int mLimitTraceHistogram;
 	private final int mLimitAnalysisTime;
 	private final int mLimitPathProgramCount;
+	private final boolean mCollectInterpolantStatistics;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -124,6 +125,9 @@ public final class TAPreferences {
 		mLimitTraceHistogram = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TRACE_HISTOGRAM);
 		mLimitAnalysisTime = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
 		mLimitPathProgramCount = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_PATH_PROGRAM);
+
+		mCollectInterpolantStatistics =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS);
 
 		if (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			throw new IllegalArgumentException(
@@ -342,5 +346,9 @@ public final class TAPreferences {
 
 	public int getLimitPathProgramCount() {
 		return mLimitPathProgramCount;
+	}
+
+	public boolean collectInterpolantStatistics() {
+		return mCollectInterpolantStatistics;
 	}
 }
