@@ -212,7 +212,12 @@ public final class MonitoredProcess implements IStorable {
 
 	private void start(final String workingDir, final IToolchainStorage storage, final String oneLineCmd) {
 		mID = sInstanceCounter.incrementAndGet();
-		storage.putStorable(getKey(mID, oneLineCmd), this);
+		final String key = getKey(mID, oneLineCmd);
+		final IStorable old = storage.putStorable(key, this);
+		if (old != null) {
+			mLogger.warn("Destroyed unexpected old storable " + key);
+			old.destroy();
+		}
 
 		mMonitor = new Thread(new ProcessRunner(this), "MonitoredProcess " + mID + " " + oneLineCmd);
 		mLogger.info(String.format("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID,
