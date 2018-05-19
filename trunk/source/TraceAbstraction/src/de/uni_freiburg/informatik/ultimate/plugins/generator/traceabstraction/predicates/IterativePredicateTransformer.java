@@ -73,9 +73,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 
  */
 public class IterativePredicateTransformer {
-	
-	private enum BackwardSequence { PRE, WP };
-	
+
+	private enum BackwardSequence {
+		PRE, WP
+	};
+
 	private final ModifiableGlobalsTable mModifiedGlobals;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -99,9 +101,9 @@ public class IterativePredicateTransformer {
 
 	/**
 	 * 
-	 * @param truePredicate only required if you want to compute the 
-	 * non-inductive wp sequence in which the call predecessor is always
-	 * the true predicate
+	 * @param truePredicate
+	 *            only required if you want to compute the non-inductive wp sequence in which the call predecessor is
+	 *            always the true predicate
 	 */
 	public IterativePredicateTransformer(final PredicateFactory predicateFactory, final ManagedScript mgdScript,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IUltimateServiceProvider services,
@@ -115,7 +117,8 @@ public class IterativePredicateTransformer {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mMgdScript = mgdScript;
 		mModifiedGlobals = modifiableGlobalsTable;
-		mPredicateTransformer = new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(mServices, mMgdScript));
+		mPredicateTransformer =
+				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(mServices, mMgdScript));
 		mPredicateFactory = predicateFactory;
 		mTrace = trace;
 		mPrecondition = precondition;
@@ -150,9 +153,8 @@ public class IterativePredicateTransformer {
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs) {
 		final IPredicate[] spSequence = new IPredicate[mTrace.length() - 1];
-		final TracePredicates ipp =
-				new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(spSequence));
-		
+		final TracePredicates ipp = new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(spSequence));
+
 		final boolean computePostcondition = mPostcondition == null;
 		final int positionOfLastPredicate = computePostcondition ? mTrace.length() : mTrace.length() - 1;
 
@@ -267,21 +269,17 @@ public class IterativePredicateTransformer {
 	 *            representation of the trace along which we compute the WP sequence
 	 * @param postprocs
 	 *            List of postprocessors that apply to each IPredicate after it was constructed via WP. May be empty.
-	 *            
- 	 * @param useTrueAsCallPredecessor
- 	 * In our interprocedural setting, a return has two predecessor a linear
- 	 * predecessor (predicate before return) and a hierarchical predecessor 
- 	 * (predicate before the call). A consequence is that the weakest 
- 	 * precondition(s) of a return is/are not unique. The stronger the call 
- 	 * predecessor the weaker the return predecessor and vice versa.
- 	 * Only a carefully chosen compromise between both extremes ensures that
- 	 * the resulting sequence is inductive.
- 	 * If this option is set to true, we compute the return predecessor without
- 	 * any "help" from the call predecessor (i.e., under the assumption that the
- 	 * call predecessor is true).
- 	 * If this option is set to false, the resulting sequence will be inductive.
- 	 * For most applications you should pick "false".
- 	 * 
+	 * 
+	 * @param useTrueAsCallPredecessor
+	 *            In our interprocedural setting, a return has two predecessor a linear predecessor (predicate before
+	 *            return) and a hierarchical predecessor (predicate before the call). A consequence is that the weakest
+	 *            precondition(s) of a return is/are not unique. The stronger the call predecessor the weaker the return
+	 *            predecessor and vice versa. Only a carefully chosen compromise between both extremes ensures that the
+	 *            resulting sequence is inductive. If this option is set to true, we compute the return predecessor
+	 *            without any "help" from the call predecessor (i.e., under the assumption that the call predecessor is
+	 *            true). If this option is set to false, the resulting sequence will be inductive. For most applications
+	 *            you should pick "false".
+	 * 
 	 * @throws TraceInterpolationException
 	 * 
 	 */
@@ -292,28 +290,24 @@ public class IterativePredicateTransformer {
 		return computeBackwardSequence(nf, postprocs, useTrueAsCallPredecessor, alternatingQuantifierBailout,
 				BackwardSequence.WP);
 	}
-	
-	public TracePredicates computePreSequence(
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
-			final List<IPredicatePostprocessor> postprocs,
-			final boolean alternatingQuantifierBailout) throws TraceInterpolationException {
-		return computeBackwardSequence(nf, postprocs, true, alternatingQuantifierBailout,
-				BackwardSequence.PRE);
+
+	public TracePredicates computePreSequence(final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
+			final List<IPredicatePostprocessor> postprocs, final boolean alternatingQuantifierBailout)
+			throws TraceInterpolationException {
+		return computeBackwardSequence(nf, postprocs, true, alternatingQuantifierBailout, BackwardSequence.PRE);
 	}
-	
-	public TracePredicates computeBackwardSequence(
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
+
+	public TracePredicates computeBackwardSequence(final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs, final boolean useTrueAsCallPredecessor,
 			final boolean alternatingQuantifierBailout, final BackwardSequence bs) throws TraceInterpolationException {
 		final IPredicate[] backwardSequence = new IPredicate[mTrace.length() - 1];
 		final TracePredicates ipp;
 		if (bs == BackwardSequence.WP) {
-			ipp = new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(backwardSequence)); 
+			ipp = new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(backwardSequence));
 		} else {
 			ipp = new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(backwardSequence));
 		}
 
-				
 		/**
 		 * Contains the predicates, which are computed during a Return with the second method, where the callerPred is
 		 * computed as wp(returnerPred, summaryOfCalledProcedure).
@@ -338,8 +332,9 @@ public class IterativePredicateTransformer {
 					final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(i);
 					final String calledMethod = call.getSucceedingProcedure();
 					final Set<IProgramNonOldVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
-					backwardTerm = mPredicateTransformer.weakestPreconditionCall(successorWp, nf.getLocalVarAssignment(i),
-							nf.getGlobalVarAssignment(i), nf.getOldVarAssignment(i), modifiedGlobals);
+					backwardTerm =
+							mPredicateTransformer.weakestPreconditionCall(successorWp, nf.getLocalVarAssignment(i),
+									nf.getGlobalVarAssignment(i), nf.getOldVarAssignment(i), modifiedGlobals);
 				} else {
 					// Call predecessor of non-pending calls are computed at
 					// while processing the return
@@ -376,14 +371,16 @@ public class IterativePredicateTransformer {
 
 					final Term preOrWpOfSummaryTerm;
 					if (bs == BackwardSequence.WP) {
-						preOrWpOfSummaryTerm = mPredicateTransformer.weakestPrecondition(successorWp, summary.getWithCallAndReturn());
+						preOrWpOfSummaryTerm =
+								mPredicateTransformer.weakestPrecondition(successorWp, summary.getWithCallAndReturn());
 					} else {
 						preOrWpOfSummaryTerm = SmtUtils.not(mMgdScript.getScript(),
 								mPredicateTransformer.weakestPrecondition(successorWp, summary.getWithCallAndReturn()));
 					}
-							
+
 					final IPredicate preOrWpOfSummaryPredicate = constructPredicate(preOrWpOfSummaryTerm);
-					final IPredicate preOrWpOfSummary = applyPostprocessors(postprocs, callPos, preOrWpOfSummaryPredicate);
+					final IPredicate preOrWpOfSummary =
+							applyPostprocessors(postprocs, callPos, preOrWpOfSummaryPredicate);
 
 					if (alternatingQuantifierBailout) {
 						final Term pnf = new PrenexNormalForm(mMgdScript).transform(preOrWpOfSummary.getFormula());
@@ -428,12 +425,9 @@ public class IterativePredicateTransformer {
 		}
 		if (computePrecondition) {
 			if (bs == BackwardSequence.WP) {
-				return new TracePredicates(computedPrecondition, mPostcondition,
-						Arrays.asList(backwardSequence));
-			} else {
-				return new TracePredicates(computedPrecondition, mPostcondition,
-						Arrays.asList(backwardSequence));
+				return new TracePredicates(computedPrecondition, mPostcondition, Arrays.asList(backwardSequence));
 			}
+			return new TracePredicates(computedPrecondition, mPostcondition, Arrays.asList(backwardSequence));
 		}
 		return ipp;
 	}
@@ -570,24 +564,23 @@ public class IterativePredicateTransformer {
 				TRANSFORM_SUMMARY_TO_CNF, mXnfConversionTechnique, mSimplificationTechnique,
 				transformulasToComputeSummaryFor);
 	}
-	
-	
-//	/**
-//	 * TODO: documentation (short, refer to WP computation)
-//	 */
-//	public TracePredicates computePreSequence(final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
-//			final List<IPredicatePostprocessor> postprocs, final boolean alternatingQuantifierBailout)
-//			throws TraceInterpolationException {
-//		final TracePredicates wpSequence = computeWeakestPreconditionSequence(nf, postprocs, true,
-//				alternatingQuantifierBailout);
-//		final IPredicate precondition = mPredicateFactory.not(wpSequence.getPrecondition());
-//		final IPredicate postcondition = mPredicateFactory.not(wpSequence.getPostcondition());
-//		final List<IPredicate> predicates = new ArrayList<>(wpSequence.getPredicates().size());
-//		for (final IPredicate wpPredicate : wpSequence.getPredicates()) {
-//			predicates.add(mPredicateFactory.not(wpPredicate));
-//		}
-//		return new TracePredicates(precondition, postcondition, predicates);
-//	}
+
+	// /**
+	// * TODO: documentation (short, refer to WP computation)
+	// */
+	// public TracePredicates computePreSequence(final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
+	// final List<IPredicatePostprocessor> postprocs, final boolean alternatingQuantifierBailout)
+	// throws TraceInterpolationException {
+	// final TracePredicates wpSequence = computeWeakestPreconditionSequence(nf, postprocs, true,
+	// alternatingQuantifierBailout);
+	// final IPredicate precondition = mPredicateFactory.not(wpSequence.getPrecondition());
+	// final IPredicate postcondition = mPredicateFactory.not(wpSequence.getPostcondition());
+	// final List<IPredicate> predicates = new ArrayList<>(wpSequence.getPredicates().size());
+	// for (final IPredicate wpPredicate : wpSequence.getPredicates()) {
+	// predicates.add(mPredicateFactory.not(wpPredicate));
+	// }
+	// return new TracePredicates(precondition, postcondition, predicates);
+	// }
 
 	public static class TraceInterpolationException extends Exception {
 		private static final long serialVersionUID = -3626917726747958448L;
