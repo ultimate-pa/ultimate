@@ -245,8 +245,10 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 			} else {
 				numberOfConjunctsInUnsatCore = unsatCore.size();
 			}
-			mLogger.debug("Total number of conjuncts in trace: " + numberOfConjunctsInTrace);
-			mLogger.debug("Number of conjuncts in unsatisfiable core: " + unsatCore.size());
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Total number of conjuncts in trace: " + numberOfConjunctsInTrace);
+				mLogger.debug("Number of conjuncts in unsatisfiable core: " + unsatCore.size());
+			}
 			mTraceCheckBenchmarkGenerator.setConjunctsInSSA(numberOfConjunctsInTrace, numberOfConjunctsInUnsatCore);
 		}
 
@@ -463,7 +465,7 @@ public class TraceCheckSpWp extends InterpolatingTraceCheck {
 	private boolean stillInfeasible(final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv) {
 		final TraceCheck tc = new TraceCheck(rv.getPrecondition(), rv.getPostcondition(),
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), rv, mServices, mCsToolkit,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, false);
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, true);
 		if (tc.getToolchainCanceledExpection() != null) {
 			throw tc.getToolchainCanceledExpection();
 		}
