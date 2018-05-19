@@ -882,6 +882,14 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		if (!lineqs.isEmpty() && locs.size() >= 1) {
 			mLinearInequalities2Locations.put(lineqsAsSet, locs);
+			// TODO: 2018-05-19 Matthias: The following code was used while analyzing
+			// unsolved problems that we had with invariant synthesis
+//			final List<IcfgLocation> locsOfLineqs = mLinearInequalities2Locations.get(lineqsAsSet);
+//			if (locsOfLineqs != null) {
+//				locs.addAll(locsOfLineqs);
+//			} else {
+//				mLinearInequalities2Locations.put(lineqsAsSet, locs);
+//			}
 		}
 	}
 
@@ -1067,7 +1075,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            - the Term to be annotated and asserted
 	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
 	 */
-	private void annotateAndAssertTermAndStoreMapping(final Term term, Set<IcfgLocation> transitionLocs) {
+	private void annotateAndAssertTermAndStoreMapping(final Term term, final Set<IcfgLocation> transitionLocs) {
 		assert term.getFreeVars().length == 0 : "Term has free vars";
 		// Annotate and assert the conjuncts of the term one by one
 		final Term[] conjunctsOfTerm = SmtUtils.getConjuncts(term);
@@ -1113,7 +1121,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Set<TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>>> transitionIngredients =
 					successorIngredient.buildTransitionConstraintIngredients();
 			for (final TransitionConstraintIngredients<Dnf<AbstractLinearInvariantPattern>> transitionIngredient : transitionIngredients) {
-				Set<IcfgLocation> transitionLocs = new HashSet<>(Arrays.asList(transitionIngredient.getSourceLocation(),
+				final Set<IcfgLocation> transitionLocs = new HashSet<>(Arrays.asList(transitionIngredient.getSourceLocation(),
 						transitionIngredient.getTargetLocation()));
 				annotateAndAssertTermAndStoreMapping(
 						buildPredicateTerm(transitionIngredient, programVarsRecentlyOccurred), transitionLocs);
