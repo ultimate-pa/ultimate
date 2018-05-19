@@ -1,0 +1,24 @@
+/*
+ * Small example to check if parsing and printing 
+ * EpsilonNestedWordAutomaton works.
+ * (Note that at the moment no other operations for
+ * EpsilonNestedWordAutomaton are implemented)
+ * 
+ * Date: 2018-05-19
+ * Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ */
+
+EpsilonNestedWordAutomaton someEpsNwa = (
+  callAlphabet = {},
+  internalAlphabet = {a b c},
+  returnAlphabet = {},
+  states = {q0 q1 q2},
+  initialStates = {q0},
+  finalStates = {q2},
+  callTransitions = {},
+  internalTransitions = { (q1 a q2) },
+  returnTransitions = {},
+  epsilonTransitions = { (q0 q1) }
+);
+
+print(someEpsNwa);
