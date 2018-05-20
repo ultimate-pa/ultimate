@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -86,9 +87,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 				result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
 			}
 
-			if (result != Validity.VALID) {
-				logUnsoundness(transition, precond, postcond, precondHier);
-			}
+			logUnsoundness(transition, precond, postcond, precondHier, result);
 			return result != Validity.INVALID;
 		} finally {
 			mHTC.releaseLock();
@@ -96,31 +95,39 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE>, ACTION extends
 	}
 
 	private void logUnsoundness(final ACTION transition, final IPredicate precond, final IPredicate postcond,
-			final IPredicate precondHier) {
-		mLogger.fatal("Soundness check failed for the following triple:");
+			final IPredicate precondHier, final Validity validity) {
+		final Consumer<Object> log;
+		if (validity == Validity.INVALID) {
+			log = mLogger::fatal;
+		} else if (validity == Validity.UNKNOWN) {
+			log = mLogger::warn;
+		} else {
+			return;
+		}
+		log.accept("Soundness check failed for the following triple (with result " + validity + "):");
 
 		if (precondHier == null) {
-			mLogger.fatal("Pre: {" + precond + "}");
+			log.accept("Pre: {" + precond + "}");
 		} else {
-			mLogger.fatal("Pre: {" + precond + "}");
-			mLogger.fatal("PreHier: {" + precondHier + "}");
+			log.accept("Pre: {" + precond + "}");
+			log.accept("PreHier: {" + precondHier + "}");
 		}
-		mLogger.fatal(getTransformulaDebugString(transition) + " (" + transition + ")");
-		mLogger.fatal("Post: {" + postcond + "}");
+		log.accept(getTransformulaDebugString(transition) + " (" + transition + ")");
+		log.accept("Post: {" + postcond + "}");
 
 		if (SIMPLIFY_IF_ASSERTION_FAILS) {
-			mLogger.fatal("Simplified triple ");
+			log.accept("Simplified triple ");
 			final Term simplifiedPrecond = SmtUtils.simplify(mMgdScript, precond.getFormula(), mServices,
 					SimplificationTechnique.SIMPLIFY_DDA);
 			if (precondHier == null) {
-				mLogger.fatal("Pre: {" + simplifiedPrecond + "}");
+				log.accept("Pre: {" + simplifiedPrecond + "}");
 			} else {
-				mLogger.fatal("Pre: {" + simplifiedPrecond + "}");
-				mLogger.fatal("PreHier: {" + SmtUtils.simplify(mMgdScript, precondHier.getFormula(), mServices,
+				log.accept("Pre: {" + simplifiedPrecond + "}");
+				log.accept("PreHier: {" + SmtUtils.simplify(mMgdScript, precondHier.getFormula(), mServices,
 						SimplificationTechnique.SIMPLIFY_DDA) + "}");
 			}
-			mLogger.fatal(getTransformulaDebugString(transition) + " (" + transition + ")");
-			mLogger.fatal("Post: {" + SmtUtils.simplify(mMgdScript, postcond.getFormula(), mServices,
+			log.accept(getTransformulaDebugString(transition) + " (" + transition + ")");
+			log.accept("Post: {" + SmtUtils.simplify(mMgdScript, postcond.getFormula(), mServices,
 					SimplificationTechnique.SIMPLIFY_DDA) + "}");
 		}
 	}
