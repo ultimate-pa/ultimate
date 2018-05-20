@@ -46,6 +46,8 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -63,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
@@ -462,11 +465,11 @@ public class Req2BoogieTranslator {
 	private Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {
 		final Iterator<Expression> it = exprs.iterator();
 		if (!it.hasNext()) {
-			return new BooleanLiteral(bl, false);
+			return ExpressionFactory.createBooleanLiteral(bl, false);
 		}
 		Expression cnf = it.next();
 		while (it.hasNext()) {
-			cnf = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR, cnf, it.next());
+			cnf = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, cnf, it.next());
 		}
 		return mNormalFormTransformer.toNnf(cnf);
 	}
@@ -491,9 +494,7 @@ public class Req2BoogieTranslator {
 		lhs[0] = clockVar;
 		final Expression[] expr = new Expression[1];
 		expr[0] = binaryExpr;
-		final AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
-
-		return assignment;
+		return new AssignmentStatement(bl, lhs, expr);
 	}
 
 	/**
@@ -550,11 +551,10 @@ public class Req2BoogieTranslator {
 	 * @return
 	 */
 	private Expression genComparePhaseCounter(final int phaseIndex, final int autIndex, final BoogieLocation bl) {
-		final IdentifierExpression identifier = new IdentifierExpression(bl, getPcName(autIndex));
-		final IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
-		final BinaryExpression ifCon =
-				new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
-		return ifCon;
+		final IdentifierExpression identifier = ExpressionFactory.constructIdentifierExpression(bl, BoogieType.TYPE_INT,
+				getPcName(autIndex), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		final IntegerLiteral intLiteral = ExpressionFactory.createIntegerLiteral(bl, Integer.toString(phaseIndex));
+		return ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier, intLiteral);
 	}
 
 	public static String getPcName(final PhaseEventAutomata aut) {
@@ -744,17 +744,12 @@ public class Req2BoogieTranslator {
 		return statements;
 	}
 
-	private Statement genAssertRTInconsistency(final int[] permutation, final BoogieLocation bl) {
-		final Expression expr = new ConditionGenerator(getPrimedVars(), mAutomata, permutation, bl).getResult();
-		if (expr == null) {
-			return null;
+	private ReqCheck createReqCheck(final Check.Spec reqSpec, final int... idx) {
+		final PatternType[] reqs = new PatternType[idx.length];
+		for (int i = 0; i < idx.length; ++i) {
+			reqs[i] = mRequirements.get(idx[i]);
 		}
-
-		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, permutation);
-		final ReqLocation loc = new ReqLocation(check);
-		final AssertStatement assertSmt = new AssertStatement(loc, expr);
-		check.annotate(assertSmt);
-		return assertSmt;
+		return new ReqCheck(reqSpec, idx, reqs);
 	}
 
 	private List<Statement> genCheckConsistency(final BoogieLocation bl) {
@@ -762,18 +757,26 @@ public class Req2BoogieTranslator {
 			return Collections.emptyList();
 		}
 		final ReqCheck check = new ReqCheck(Spec.CONSISTENCY);
-		final ReqLocation loc = new ReqLocation(check);
-		final AssertStatement rtr = new AssertStatement(loc, new BooleanLiteral(bl, false));
-		check.annotate(rtr);
-		return Collections.singletonList(rtr);
+		final Expression expr = ExpressionFactory.createBooleanLiteral(bl, false);
+		return Collections.singletonList(createAssert(expr, check, "CONSISTENCY"));
 	}
 
-	private ReqCheck createReqCheck(final Check.Spec reqSpec, final int... idx) {
-		final PatternType[] reqs = new PatternType[idx.length];
-		for (int i = 0; i < idx.length; ++i) {
-			reqs[i] = mRequirements.get(idx[i]);
+	private Statement genAssertRTInconsistency(final int[] permutation, final BoogieLocation bl) {
+		final Expression expr = new ConditionGenerator(getPrimedVars(), mAutomata, permutation, bl).getResult();
+		if (expr == null) {
+			return null;
 		}
-		return new ReqCheck(reqSpec, idx, reqs);
+
+		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, permutation);
+		return createAssert(expr, check, "RTINCONSISTENT_" + getAssertLabel(permutation));
+	}
+
+	private String getAssertLabel(final int[] permutation) {
+		final StringBuilder sb = new StringBuilder();
+		for (final int idx : permutation) {
+			sb.append(mAutomata[idx].getName() + "_");
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -806,7 +809,7 @@ public class Req2BoogieTranslator {
 			}
 		}
 		int pnr = 0;
-		while ((1 << pnr) <= maxBits) {
+		while (1 << pnr <= maxBits) {
 			pnr++;
 		}
 
@@ -814,7 +817,7 @@ public class Req2BoogieTranslator {
 		final List<Expression> checkReached = new ArrayList<>();
 		for (int i = 0; i < phases.length; i++) {
 			final PhaseBits bits = phases[i].getPhaseBits();
-			if (bits == null || (bits.getActive() & (1 << (pnr - 1))) == 0) {
+			if (bits == null || (bits.getActive() & 1 << pnr - 1) == 0) {
 				checkReached.add(genComparePhaseCounter(i, automatonIndex, bl));
 			}
 		}
@@ -823,8 +826,15 @@ public class Req2BoogieTranslator {
 		}
 		final Expression disjunction = genDisjunction(checkReached, bl);
 		final ReqCheck check = createReqCheck(Spec.VACUOUS, automatonIndex);
+		final String label = "VACUOUS_" + mAutomata[automatonIndex].getName();
+		return createAssert(disjunction, check, label);
+	}
+
+	private static AssertStatement createAssert(final Expression expr, final ReqCheck check, final String label) {
 		final ReqLocation loc = new ReqLocation(check);
-		final AssertStatement rtr = new AssertStatement(loc, disjunction);
+		final NamedAttribute[] attr =
+				new NamedAttribute[] { new NamedAttribute(loc, "check_" + label, new Expression[] {}) };
+		final AssertStatement rtr = new AssertStatement(loc, attr, expr);
 		check.annotate(rtr);
 		return rtr;
 	}
