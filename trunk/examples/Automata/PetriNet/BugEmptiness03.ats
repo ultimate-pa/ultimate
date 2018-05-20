@@ -1,7 +1,7 @@
 // Testfile dumped by Ultimate at 2011/11/28 01:11:40
 
+assert(numberOfConditions(finitePrefix(net)) == 376);
 assert(!isEmpty(net));
-//print(finitePrefix(net));
 
 PetriNet net = (
 	alphabet = {"[critical = 0;]258" "[assume critical == 0;]238" "[critical = 0;]191" "[flag0 = 0;]90" "[assume !(critical == 0);]103" "[critical = 0;]14" "[assume true;]159" "[assume true;]81" "[assume !(critical == 0);]110" "[assume !true;]262" "[assume true;]94" "[flag0 = 1;]2" "[flag1 = 0;]169" "[turn = 1;]307" "[assume flag0 == 0 || turn == 1;]77" "[turn = 0;]1" "[assume true;]86" "[assume flag1 == 0 || turn == 0;]264" "[assume true;]269" "[flag1 = 1;]186" "[assume !true;]238" "[critical = 1;]78" "[critical = 1;]181" "[assume critical == 0;]42" },

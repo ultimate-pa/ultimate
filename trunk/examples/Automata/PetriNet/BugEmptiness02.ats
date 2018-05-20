@@ -1,5 +1,6 @@
 // Testfile dumped by Ultimate at 2011/10/31 13:20:53
 
+assert(numberOfConditions(finitePrefix(net)) == 48);
 assert(!isEmpty(net));
 
 PetriNet net = (

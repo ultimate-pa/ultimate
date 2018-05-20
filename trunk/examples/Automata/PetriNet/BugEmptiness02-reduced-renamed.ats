@@ -1,6 +1,7 @@
 // Testfile dumped by Ultimate at 2011/10/31 13:20:53
 
-print(finitePrefix( net ));
+assert(numberOfConditions(finitePrefix(net)) == 21);
+assert(!isEmpty(net));
 
 PetriNet net = (
 	alphabet = {"t9_nr07" "t5_nr03" "t6_nr06" "t10_nr09"  "t2_nr01" "t11_nr10" "t12" "t7_nr08" "t3_nr02" "t1_nr00" "t8_nr05" "t4_nr04" },

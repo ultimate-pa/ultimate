@@ -1,7 +1,7 @@
 // Testfile dumped by Ultimate at 2011/10/31 13:20:53
 
-print(finitePrefix(net));
-//print(net);
+assert(numberOfConditions(finitePrefix(net)) == 32);
+assert(!isEmpty(net));
 
 
 PetriNet net = (
