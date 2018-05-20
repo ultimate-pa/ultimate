@@ -452,7 +452,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 
 	@Override
 	public int size() {
-		throw new UnsupportedOperationException();
+		return mConditions.size();
 	}
 
 	@Override
