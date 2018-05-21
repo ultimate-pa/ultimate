@@ -427,17 +427,22 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 //	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
 	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem,
-			final SetConstraintConjunction<NODE> literalSet,
+			final SetConstraintConjunction<NODE> containsConstraintRaw,
 			final WeqCongruenceClosure<NODE> origWeqCc,
 			final boolean inplace) {
+
+		// we are reporting this SetCc into a possibly new constraint --> remove surrounding constraint
+		final SetConstraintConjunction<NODE> containsConstraint =
+				new SetConstraintConjunction<>(null, containsConstraintRaw);
+
 		bmStart(WeqCcBmNames.REPORTCONTAINS);
 		if (inplace) {
-			origWeqCc.reportContainsConstraint(elem, literalSet);
+			origWeqCc.reportContainsConstraint(elem, containsConstraint);
 			bmEnd(WeqCcBmNames.REPORTCONTAINS);
 			return origWeqCc;
 		} else {
 			final WeqCongruenceClosure<NODE> unfrozen = unfreeze(origWeqCc);
-			unfrozen.reportContainsConstraint(elem, literalSet);
+			unfrozen.reportContainsConstraint(elem, containsConstraint);
 			unfrozen.freeze();
 //			assert checkReportDisequalityResult(origWeqCc, node1, node2, unfrozen,
 //					getNonTheoryLiteralDisequalitiesIfNecessary());

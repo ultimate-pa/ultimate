@@ -508,18 +508,33 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				final NODE constantArrayConstant = constantArray.getConstantFunctionValue();
 				assert constantArrayConstant.isLiteral();
 
-				// construct L cup {l}
-				final SetConstraintConjunction<NODE> newLiteralSet =
-						SetConstraintConjunction.join(containsConstraint,
-								new SetConstraintConjunction<>(
-										null,
-										containsConstraint.getConstrainedElement(),
-										constantArrayConstant));
+//				// construct L cup {l}
+//				final SetConstraintConjunction<NODE> newLiteralSet =
+//						SetConstraintConjunction.join(
+//								mCongruenceClosure.getLiteralSetConstraints(),
+//
+//								containsConstraint,
+//								new SetConstraintConjunction<>(
+//										null,
+//										containsConstraint.getConstrainedElement(),
+//										constantArrayConstant));
 //				final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
 //				newLiteralSet.add(constantArrayConstant);
 
 				// do propagations
 				for (final NODE aI : aIs) {
+					// construct L cup {l}
+					final SetConstraintConjunction<NODE> newLiteralSet =
+							SetConstraintConjunction.join(
+									mCongruenceClosure.getLiteralSetConstraints(),
+									aI,
+									containsConstraint,
+									new SetConstraintConjunction<>(
+											null,
+											containsConstraint.getConstrainedElement(),
+											constantArrayConstant));
+
+
 					mCongruenceClosure.reportContainsConstraint(aI, newLiteralSet);
 				}
 			}
@@ -1310,9 +1325,15 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			// construct L cup {l}
 			final SetConstraintConjunction<NODE> newLiteralSet =
-					SetConstraintConjunction.join(containsConstraint,
-							new SetConstraintConjunction<>(
-									null, aQ, constantArrayConstant));
+					SetConstraintConjunction.join(
+							mCongruenceClosure.getLiteralSetConstraints(),
+							aQ,
+							containsConstraint,
+							mManager.getCcManager().buildSetConstraintConjunction(
+									mCongruenceClosure.getLiteralSetConstraints(),
+									 aQ, Collections.singleton(constantArrayConstant)));
+//							new SetConstraintConjunction<>(
+//									null, aQ, constantArrayConstant));
 //			newLiteralSet.add(constantArrayConstant);
 //			final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
 //			newLiteralSet.add(constantArrayConstant);

@@ -143,8 +143,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param newElemPartition
 	 */
 	CongruenceClosure(final CcManager<ELEM> manager,
-			final ThreeValuedEquivalenceRelation<ELEM> newElemPartition,
-			final CCLiteralSetConstraints<ELEM> literalConstraints) {
+			final ThreeValuedEquivalenceRelation<ELEM> newElemPartition) {
+//			final CCLiteralSetConstraints<ELEM> literalConstraints) {
 		mManager = manager;
 
 		mElementTVER = newElemPartition;
@@ -152,8 +152,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		mFaAuxData = new FuncAppTreeAuxData();
 		mAllLiterals = new HashSet<>();
 
-		mLiteralSetConstraints = Objects.requireNonNull(literalConstraints);
-		mLiteralSetConstraints.setCongruenceClosure(this);
+//		mLiteralSetConstraints = Objects.requireNonNull(literalConstraints);
+		mLiteralSetConstraints = new CCLiteralSetConstraints<>(mManager, this);
+//		mLiteralSetConstraints.setCongruenceClosure(this);
 
 		mConstructorInitializationPhase = true;
 		// initialize the helper mappings according to mElementTVER
@@ -928,12 +929,23 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = new ThreeValuedEquivalenceRelation<>(newPartition,
 				newDisequalities);
 
-		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
-				this.mLiteralSetConstraints.join(other.mLiteralSetConstraints, newElemTver);
 
-		return mManager.getCongruenceClosureFromTver(newElemTver, newLiteralSetConstraints, true);
+		final CongruenceClosure<ELEM> newCc = mManager.getCongruenceClosureFromTver(newElemTver, true);
+
+		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
+				this.mLiteralSetConstraints.join(newCc, other.mLiteralSetConstraints);
+//				this.mLiteralSetConstraints.join(other.mLiteralSetConstraints, newElemTver);
+		newCc.resetCcLiteralSetConstraints(newLiteralSetConstraints);
+
+		return newCc;
+//		return mManager.getCongruenceClosureFromTver(newElemTver, newLiteralSetConstraints, true);
 	}
 
+
+	private void resetCcLiteralSetConstraints(final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints) {
+		assert newLiteralSetConstraints.getCongruenceClosure() == this;
+		mLiteralSetConstraints = newLiteralSetConstraints;
+	}
 
 	/**
 	 * Conjoin or disjoin two disequality relations.

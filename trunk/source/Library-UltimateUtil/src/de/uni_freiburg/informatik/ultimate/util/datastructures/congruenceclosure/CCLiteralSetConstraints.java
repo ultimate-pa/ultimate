@@ -34,8 +34,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
-
 /**
  * Handles "literal set" constraints. In addition to equalities and disequalities, A CongruenceClosure may have
  * constraints of the form "l in L", where l is a literal and L is a set of literals.
@@ -92,6 +90,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	}
 
 	public void reportContains(final ELEM element, final SetConstraintConjunction<ELEM> constraint) {
+		assert constraint.mSurroundingCCSetConstraints == this ||
+				constraint.mSurroundingCCSetConstraints == null;
 		final ELEM elementRep = mCongruenceClosure.getRepresentativeElement(element);
 
 
@@ -142,6 +142,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			final SetConstraintConjunction<ELEM> newConstraint) {
 		assert !mContainsConstraints.containsKey(elemRep) : "assuming this has been removed before";
 
+		assert newConstraint.mSurroundingCCSetConstraints == this
+				|| newConstraint.mSurroundingCCSetConstraints == null;
+		newConstraint.mSurroundingCCSetConstraints = this;
 
 		newConstraint.filterWithDisequalities(mCongruenceClosure);
 
@@ -243,8 +246,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		}
 	}
 
-	public CCLiteralSetConstraints<ELEM> join(final CCLiteralSetConstraints<ELEM> other,
-			final ThreeValuedEquivalenceRelation<ELEM> newTVER) {
+	public CCLiteralSetConstraints<ELEM> join(final CongruenceClosure<ELEM> newCc,
+			final CCLiteralSetConstraints<ELEM> other) {
+//			final ThreeValuedEquivalenceRelation<ELEM> newTVER) {
 		if (this.isInconsistent()) {
 			return other;
 		}
@@ -252,20 +256,20 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			return this;
 		}
 
+
+
+		final CCLiteralSetConstraints<ELEM> newSetConstraints = new CCLiteralSetConstraints<>(mCcManager, newCc);
+
 		final Map<ELEM, SetConstraintConjunction<ELEM>> newContainsConstraints = new HashMap<>();
 
-		for (final ELEM rep : newTVER.getAllRepresentatives()) {
+		for (final ELEM rep : newCc.getAllElementRepresentatives()) {
 			final SetConstraintConjunction<ELEM> thisConstraint = this.getConstraint(rep);
 			final SetConstraintConjunction<ELEM> otherConstraint = other.getConstraint(rep);
 
 			SetConstraintConjunction<ELEM> newConstraint;
 			if (thisConstraint != null && otherConstraint != null) {
 //				union = DataStructureUtils.union(thisConstraint, otherConstraint);
-				newConstraint = SetConstraintConjunction.join(thisConstraint, otherConstraint);
-//			} else if (thisConstraint != null) {
-//				union = thisConstraint;
-//			} else if (otherConstraint != null) {
-//				union = otherConstraint;
+				newConstraint = SetConstraintConjunction.join(newSetConstraints, rep, thisConstraint, otherConstraint);
 			} else {
 				// at least one side has no constraint on rep
 				continue;
@@ -283,7 +287,14 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		}
 
-		return new CCLiteralSetConstraints<>(mCcManager, null, newContainsConstraints);
+		newSetConstraints.setContainsConstraints(newContainsConstraints);
+
+		return newSetConstraints;
+//		return new CCLiteralSetConstraints<>(mCcManager, null, newContainsConstraints);
+	}
+
+	private void setContainsConstraints(final Map<ELEM, SetConstraintConjunction<ELEM>> newContainsConstraints) {
+		mContainsConstraints = newContainsConstraints;
 	}
 
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isStrongerThan(
@@ -414,6 +425,11 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	}
 
 	public void projectAway(final ELEM elem) {
+		if (!mCongruenceClosure.hasElement(elem)) {
+			// element not present, do nothing
+			return;
+		}
+
 		assert mCongruenceClosure.isRepresentative(elem) : "right?..";
 
 		// remove constraints of the form "elem in S"

@@ -1062,7 +1062,10 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			if (resultConstraint == null) {
 				resultConstraint = cc;
 			} else {
-				resultConstraint = SetConstraintConjunction.join(resultConstraint, cc);
+				resultConstraint = SetConstraintConjunction.join(
+						mWeakEquivalenceGraph.mWeqCc.getCongruenceClosure().getLiteralSetConstraints(),
+						elem,
+						resultConstraint, cc);
 			}
 		}
 
