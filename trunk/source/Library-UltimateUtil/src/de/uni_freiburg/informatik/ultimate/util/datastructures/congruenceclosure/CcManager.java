@@ -866,7 +866,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final Collection<SetConstraint<ELEM>> setConstraints) {
 		bmStart(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
 
-		final Set<SetConstraint<ELEM>> filtered = normalizeSetConstraintConjunction(setConstraints);
+		final Set<SetConstraint<ELEM>> filtered = normalizeSetConstraintConjunction(surroundingSetConstraints,
+				setConstraints);
 
 		assert !filtered.stream().anyMatch(sc -> sc.isInconsistent()) || filtered.size() == 1
 				: "not correctly normalized: there is a 'false' conjunct, but it is not the only conjunct";
@@ -884,6 +885,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	public Set<SetConstraint<ELEM>> normalizeSetConstraintConjunction(
+			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
 			final Collection<SetConstraint<ELEM>> setConstraints) {
 		//TODO: only instantiate SetConstraintComparator once??
 		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(new SetConstraintComparator<>());
@@ -902,7 +904,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		// introduce all the conjunctive constraints according to all the subsets..
 		for (final Set<SetConstraint<ELEM>> subSet : DataStructureUtils.powerSet(filtered1)) {
-			final SetConstraint<ELEM> meet = SetConstraint.meet(subSet);
+			final SetConstraint<ELEM> meet = SetConstraint.meet(surroundingSetConstraints, subSet);
 
 			if (meet == null) {
 				// "Top" constraint, represented by "null", no need to add to a conjunction

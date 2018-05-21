@@ -169,12 +169,13 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		// variable/literal expansion rule
 		if (newConstraint.hasOnlyLiterals()) {
 			for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : mContainsConstraints.entrySet()) {
-				en.getValue().expandVariableToLiterals(elemRep, newConstraint.getLiterals());
+				en.getValue().expandVariableToLiterals(this, elemRep, newConstraint.getLiterals());
 			}
 		}
 
 		// filter after expand
-		newConstraint.mSetConstraints = mCcManager.normalizeSetConstraintConjunction(newConstraint.mSetConstraints);
+		newConstraint.mSetConstraints = mCcManager.normalizeSetConstraintConjunction(this,
+				newConstraint.mSetConstraints);
 
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}

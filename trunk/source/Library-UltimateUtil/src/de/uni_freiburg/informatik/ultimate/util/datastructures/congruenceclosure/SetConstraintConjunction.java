@@ -443,7 +443,9 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		return mSetConstraints.iterator().next().getLiterals();
 	}
 
-	public void expandVariableToLiterals(final ELEM elem, final Set<ELEM> literals) {
+	public void expandVariableToLiterals(
+			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
+			final ELEM elem, final Set<ELEM> literals) {
 		assert !elem.isLiteral();
 		assert getCongruenceClosure().isRepresentative(elem);
 
@@ -454,7 +456,7 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 
 		if (madeChanges) {
 			mSetConstraints = mSurroundingCCSetConstraints.getCongruenceClosure().getManager()
-				.normalizeSetConstraintConjunction(mSetConstraints);
+				.normalizeSetConstraintConjunction(surroundingSetConstraints, mSetConstraints);
 		}
 	}
 
@@ -689,6 +691,7 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @return
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> SetConstraint<ELEM> meet(
+			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
 			final Collection<SetConstraint<ELEM>> scs) {
 		if (scs.isEmpty()) {
 			// empty meet --> "Top" constraint --> represented by "null"
@@ -719,9 +722,9 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 //		final SetConstraintConjunction<ELEM> surroundingSetCc = firstSc.mSurroundingScConjunction;
-		final CCLiteralSetConstraints<ELEM> surroundingSetCc =
-				firstSc.mSurroundingScConjunction.mSurroundingCCSetConstraints;
-		return SetConstraint.buildSetConstraint(surroundingSetCc, literals, nonLiterals);
+//		final CCLiteralSetConstraints<ELEM> surroundingSetCc =
+//				firstSc.mSurroundingScConjunction.mSurroundingCCSetConstraints;
+		return SetConstraint.buildSetConstraint(surroundingSetConstraints, literals, nonLiterals);
 	}
 
 	static <ELEM extends ICongruenceClosureElement<ELEM>> SetConstraint<ELEM> buildSetConstraint(
