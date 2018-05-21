@@ -852,7 +852,6 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
 			final ELEM constrainedElement,
 			final Set<ELEM> elements) {
-		// note: it's ok to pass null here, because the constructor of SetConstraintConjunction will reset the field
 		final SetConstraint<ELEM> sc = SetConstraint.buildSetConstraint(surroundingSetConstraints, elements);
 		return buildSetConstraintConjunction(surroundingSetConstraints, constrainedElement,
 				Collections.singleton(sc));

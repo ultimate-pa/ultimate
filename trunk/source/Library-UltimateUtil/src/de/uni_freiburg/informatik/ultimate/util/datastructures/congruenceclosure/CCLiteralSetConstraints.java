@@ -173,6 +173,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			}
 		}
 
+		// filter after expand
+		newConstraint.mSetConstraints = mCcManager.normalizeSetConstraintConjunction(newConstraint.mSetConstraints);
+
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}
 

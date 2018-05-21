@@ -66,16 +66,6 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		assert sanityCheck();
 	}
 
-//	public SetConstraintConjunction(final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
-//			final ELEM constrainedElement,
-//			final Set<ELEM> elements) {
-//		mConstrainedElement = constrainedElement;
-//		mSurroundingCCSetConstraints = surroundingSetConstraints;
-//		mSetConstraints = new HashSet<>();
-//		mSetConstraints.add(SetConstraint.buildSetConstraint(this, elements));//new SetConstraint<>(this, elements));
-//		assert sanityCheck(); // surrounding constraint does not have this constraint yet..
-//	}
-
 	/**
 	 * copy constructor that may change surroundingCC..
 	 *
@@ -195,8 +185,6 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		}
 	}
 
-//	public static <ELEM extends ICongruenceClosureElement<ELEM>> SetConstraintConjunction<ELEM> transformElements(
-	//				final SetConstraintConjunction<ELEM> value,
 	public void transformElements(final Function<ELEM, ELEM> elemTransformer) {
 		for (final SetConstraint<ELEM> setConstraint : mSetConstraints) {
 			setConstraint.transformElements(elemTransformer);
@@ -406,11 +394,6 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 			}
 		}
 
-//		if (mSurroundingCCSetConstraints.getConstraint(mConstrainedElement) != this) {
-//				assert false;
-//				return false;
-//		}
-
 		// check minimality of conjunction : all must be incomparable!
 		if (!CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3) {
 			for (final SetConstraint<ELEM> sc1 : mSetConstraints) {
@@ -426,9 +409,6 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 				}
 			}
 		}
-
-
-
 		return true;
 	}
 
@@ -527,27 +507,6 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 	private final Set<ELEM> mLiterals;
 	private final Set<ELEM> mNonLiterals;
 
-//	public SetConstraint(final SetConstraintConjunction<ELEM> surroundingSetCc, final Set<ELEM> unsortedElements) {
-//		this(surroundingSetCc,
-//				unsortedElements.stream().filter(ELEM::isLiteral).collect(Collectors.toSet()),
-//				unsortedElements.stream().filter(e -> !e.isLiteral()).collect(Collectors.toSet()));
-////		mSurroundingScConjunction = surroundingSetCc;
-////		mLiterals = new HashSet<>();
-////		mNonLiterals = new HashSet<>();
-////		for (final ELEM e : unsortedElements) {
-////			if (e.isLiteral()) {
-////				mLiterals.add(e);
-////			} else {
-////				mNonLiterals.add(e);
-////			}
-////		}
-//		assert sanityCheck();
-//	}
-
-//	SetConstraint(final boolean inconsistent) {
-//		this(Collections.emptySet(), Collections.emptySet());
-//	}
-
 	/**
 	 * Construct a SetConstraint that has not yet been added to a SetConstraintConjunction.
 	 *
@@ -560,8 +519,6 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mSurroundingScConjunction = null;
 		mLiterals = literals;
 		mNonLiterals = nonLiterals;
-//		mLiterals = new HashSet<>(literals);
-//		mNonLiterals = new HashSet<>(nonLiterals);
 		assert sanityCheck();
 	}
 
@@ -572,36 +529,16 @@ class SetConstraint<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 * @param sc
 	 */
 	SetConstraint(final SetConstraintConjunction<ELEM> surroundingSetCc, final SetConstraint<ELEM> sc) {
-//		this(surroundingSetCc,
 		mSurroundingScConjunction = surroundingSetCc;
 		mLiterals = new HashSet<>(sc.mLiterals);
 		mNonLiterals = new HashSet<>(sc.mNonLiterals);
-//		mLiterals = literals;
-//		mNonLiterals = nonLiterals;
 		assert sanityCheck();
 	}
 
-	//	public SetConstraint(final SetConstraintConjunction<ELEM> surroundingSetCc, final Set<ELEM> unsortedElements) {
-	//		this(surroundingSetCc,
-	//				unsortedElements.stream().filter(ELEM::isLiteral).collect(Collectors.toSet()),
-	//				unsortedElements.stream().filter(e -> !e.isLiteral()).collect(Collectors.toSet()));
-	////		mSurroundingScConjunction = surroundingSetCc;
-	////		mLiterals = new HashSet<>();
-	////		mNonLiterals = new HashSet<>();
-	////		for (final ELEM e : unsortedElements) {
-	////			if (e.isLiteral()) {
-	////				mLiterals.add(e);
-	////			} else {
-	////				mNonLiterals.add(e);
-	////			}
-	////		}
-	//		assert sanityCheck();
-	//	}
-
-		public Set<ELEM> getLiterals() {
-			assert hasOnlyLiterals();
-			return Collections.unmodifiableSet(mLiterals);
-		}
+	public Set<ELEM> getLiterals() {
+		assert hasOnlyLiterals();
+		return Collections.unmodifiableSet(mLiterals);
+	}
 
 	/**
 	 *
