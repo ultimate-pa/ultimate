@@ -3,8 +3,8 @@
 
 // Reveals bug in unfolding.
 
+assert(numberOfConditions(finitePrefix(ReservoirDogs)) == 8);
 assert(!isEmpty(ReservoirDogs));
-print(finitePrefix( ReservoirDogs ));
 
 
 PetriNet ReservoirDogs = (

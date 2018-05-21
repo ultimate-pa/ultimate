@@ -3,8 +3,8 @@
 
 // Reveals bug in unfolding.
 
+assert(numberOfConditions(finitePrefix(WalkTheLine)) == 3);
 assert(!isEmpty(WalkTheLine));
-print(finitePrefix( WalkTheLine ));
 
 
 PetriNet WalkTheLine = (

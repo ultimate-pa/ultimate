@@ -1,7 +1,7 @@
 // Testfile dumped by Ultimate at 2011/12/20 14:10:35
 
+assert(numberOfConditions(finitePrefix(net)) == 372);
 assert(!isEmpty(net));
-//print(net);
 
 PetriNet net = (
 	alphabet = {a0 a1 a5 a4 a3 a2 a6 a8 a7 a9 a10 a11 },
