@@ -4,6 +4,8 @@
 // Reveals bug in revision 3767.
 // Acceptance test says [a c] is accepted which is wrong.
 
+parseAutomata("../../Se7en.ats");
+
 assert(!accepts(se7en, [a c]));
 
 PetriNet se7en = (
