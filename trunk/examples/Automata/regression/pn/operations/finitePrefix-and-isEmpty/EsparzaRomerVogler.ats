@@ -3,8 +3,8 @@
 // Example taken from Figure 3 of the following publication
 // 1996TACAS - Esparza,Römer,Vogler - An Improvement of McMillan's Unfolding Algorithm
 
-assert(!isEmpty(javier));
-print(finitePrefix( javier));
+assert(numberOfConditions(finitePrefix(esrovo)) == 18);
+assert(!isEmpty(esrovo));
 
 
 PetriNet esrovo = (

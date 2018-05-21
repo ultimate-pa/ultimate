@@ -11,8 +11,8 @@
 // <_R is the total order suggested in TACAS 1996 paper.
 
 
-//assert(!isEmpty(equalphi));
-print(finitePrefix( equalphi ));
+assert(numberOfConditions(finitePrefix(equalphi)) == 11);
+assert(!isEmpty(equalphi));
 
 
 PetriNet equalphi = (
