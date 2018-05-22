@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
@@ -520,11 +521,34 @@ public class Req2BoogieTranslator {
 	 * @return the array of (two) statements that check the invariant.
 	 */
 	private Statement[] genCheckPhaseInvariant(final Phase phase, final BoogieLocation bl) {
-		final Expression clInv = new CDDTranslator().toBoogie(phase.getClockInvariant(), bl);
-		final AssumeStatement assumeClInv = new AssumeStatement(bl, mNormalFormTransformer.toNnf(clInv));
-		final Expression stateInv = new CDDTranslator().toBoogie(phase.getStateInvariant(), bl);
-		final AssumeStatement assumeStateInv = new AssumeStatement(bl, mNormalFormTransformer.toNnf(stateInv));
-		return new Statement[] { assumeClInv, assumeStateInv };
+		final CDD clockInvCdd = phase.getClockInvariant();
+		final AssumeStatement assumeClInv;
+		if (clockInvCdd != CDD.TRUE) {
+			final Expression clInv = new CDDTranslator().toBoogie(clockInvCdd, bl);
+			assumeClInv = new AssumeStatement(bl, mNormalFormTransformer.toNnf(clInv));
+		} else {
+			assumeClInv = null;
+		}
+		final CDD stateInvCdd = phase.getStateInvariant();
+		final AssumeStatement assumeStateInv;
+		if (stateInvCdd != CDD.TRUE) {
+			final Expression stateInv = new CDDTranslator().toBoogie(stateInvCdd, bl);
+			assumeStateInv = new AssumeStatement(bl, mNormalFormTransformer.toNnf(stateInv));
+		} else {
+			assumeStateInv = null;
+		}
+		return concatStmt(assumeClInv, assumeStateInv);
+	}
+
+	private static Statement[] concatStmt(final Statement... stmts) {
+		if (stmts == null || stmts.length == 0) {
+			throw new IllegalArgumentException();
+		}
+		final List<Statement> stmtList = Arrays.stream(stmts).filter(a -> a != null).collect(Collectors.toList());
+		if (stmtList.isEmpty()) {
+			throw new IllegalArgumentException();
+		}
+		return stmtList.toArray(new Statement[stmtList.size()]);
 	}
 
 	private static Statement joinIfSmts(final Statement[] statements, final BoogieLocation bl) {
@@ -575,18 +599,22 @@ public class Req2BoogieTranslator {
 	 *            The location information to correspond the generated source to the property.
 	 * @return The if statement checking the p
 	 */
-	private Statement genInvariantGuards(final PhaseEventAutomata automaton, final String pcName,
+	private List<Statement> genInvariantGuards(final PhaseEventAutomata automaton, final String pcName,
 			final BoogieLocation bl) {
 		final Phase[] phases = automaton.getPhases();
+		assert phases.length > 0;
+		// TODO: Keep the if in this case; may be helpful for vacuity reason extraction
+		// if (phases.length == 1) {
+		// return Arrays.asList(genCheckPhaseInvariant(phases[0], bl));
+		// }
+
 		final Statement[] statements = new Statement[phases.length];
 		final Statement[] emptyArray = new Statement[0];
 		for (int i = 0; i < phases.length; i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
-			final IfStatement ifStatement =
-					new IfStatement(bl, ifCon, genCheckPhaseInvariant(phases[i], bl), emptyArray);
-			statements[i] = ifStatement;
+			statements[i] = new IfStatement(bl, ifCon, genCheckPhaseInvariant(phases[i], bl), emptyArray);
 		}
-		return joinIfSmts(statements, bl);
+		return Collections.singletonList(joinIfSmts(statements, bl));
 	}
 
 	private static Statement genReset(final String resetVar, final BoogieLocation bl) {
@@ -619,9 +647,13 @@ public class Req2BoogieTranslator {
 			final Transition transition, final BoogieLocation bl) {
 
 		final List<Statement> smtList = new ArrayList<>();
-		final Expression expr = new CDDTranslator().toBoogie(transition.getGuard(), bl);
-		final AssumeStatement assumeGuard = new AssumeStatement(bl, mNormalFormTransformer.toNnf(expr));
-		smtList.add(assumeGuard);
+		final CDD guardCdd = transition.getGuard();
+		if (guardCdd != CDD.TRUE) {
+			final Expression expr = new CDDTranslator().toBoogie(guardCdd, bl);
+			final AssumeStatement assumeGuard = new AssumeStatement(bl, mNormalFormTransformer.toNnf(expr));
+			smtList.add(assumeGuard);
+		}
+
 		if (transition.getResets().length != 0) {
 			final String[] resets = transition.getResets();
 			for (int i = 0; i < resets.length; i++) {
@@ -812,7 +844,7 @@ public class Req2BoogieTranslator {
 		stmtList.addAll(Arrays.asList(genDelay(bl)));
 
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			stmtList.add(genInvariantGuards(entry.getValue(), getPcName(entry.getValue()), bl));
+			stmtList.addAll(genInvariantGuards(entry.getValue(), getPcName(entry.getValue()), bl));
 		}
 
 		stmtList.addAll(genChecksRTInconsistency(bl));
@@ -893,10 +925,7 @@ public class Req2BoogieTranslator {
 	 * @return The while-statement.
 	 */
 	private Statement genWhileStmt(final BoogieLocation bl) {
-		final WildcardExpression wce = new WildcardExpression(bl);
-		final LoopInvariantSpecification[] invariants = new LoopInvariantSpecification[0];
-		final WhileStatement whileStatement = new WhileStatement(bl, wce, invariants, genWhileBody(bl));
-		return whileStatement;
+		return new WhileStatement(bl, new WildcardExpression(bl), new LoopInvariantSpecification[0], genWhileBody(bl));
 	}
 
 	private Expression genPcExpr(final PhaseEventAutomata aut, final BoogieLocation bl) {
