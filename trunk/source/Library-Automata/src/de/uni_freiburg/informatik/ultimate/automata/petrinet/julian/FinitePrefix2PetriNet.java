@@ -63,21 +63,23 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 	private final BranchingProcess<L, C> mInput;
 	private final PetriNetJulian<L, C> mNet;
 	private final UnionFind<Condition<L, C>> mRepresentatives;
-	private IFinitePrefix2PetriNetStateFactory<C> mContentFactory;
+	private final IFinitePrefix2PetriNetStateFactory<C> mStateFactory;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory 
 	 * @param bp
 	 *            branching process
 	 * @throws AutomataLibraryException
 	 *             if two nets do not have the same alphabet.
 	 */
-	public FinitePrefix2PetriNet(final AutomataLibraryServices services, final BranchingProcess<L, C> bp)
+	public FinitePrefix2PetriNet(final AutomataLibraryServices services, IFinitePrefix2PetriNetStateFactory<C> stateFactory, final BranchingProcess<L, C> bp)
 			throws AutomataLibraryException {
 		super(services);
+		mStateFactory = stateFactory;
 		// TODO implement merging for markings?
 		mInput = bp;
 
@@ -176,7 +178,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 			assert mRepresentatives.find(c) != null;
 			// equality intended here
 			if (c == mRepresentatives.find(c)) {
-				final Place<L, C> place = mNet.addPlace(mContentFactory.finitePrefix2net(c),
+				final Place<L, C> place = mNet.addPlace(mStateFactory.finitePrefix2net(c),
 						bp.initialConditions().contains(c), bp.isAccepting(c));
 				placeMap.put(c, place);
 			}

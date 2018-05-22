@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import java.util.Collection;
 
+import javax.naming.spi.StateFactory;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -49,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -135,7 +138,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		PetriNetJulian<LETTER, IPredicate> abstraction = (PetriNetJulian<LETTER, IPredicate>) mAbstraction;
 		if (mPref.unfoldingToNet()) {
-			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), mUnfolding).getResult();
+			// TODO: Find/implement appropriate stateFactory.
+			IFinitePrefix2PetriNetStateFactory<IPredicate> stateFactory = null;
+			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding).getResult();
 		}
 
 		// Determinize the interpolant automaton
