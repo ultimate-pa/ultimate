@@ -144,7 +144,7 @@ public class Trace2PEACompiler {
 	 */
 	public PhaseEventAutomata compile(final String name, final CounterTrace ct) {
 		resetAll();
-		this.mName = name;
+		mName = name;
 		mCountertrace = ct;
 		mBuildTotal = false;
 		return buildAut();
@@ -164,7 +164,7 @@ public class Trace2PEACompiler {
 	 */
 	public PEATestAutomaton compile(final String name, final MCTrace mcTrace) {
 		resetAll();
-		this.mName = name;
+		mName = name;
 		mCountertrace = mcTrace.getTrace();
 		mEntrySync = mcTrace.getEntrySync();
 		mExitSync = mcTrace.getExitSync();
@@ -268,7 +268,8 @@ public class Trace2PEACompiler {
 
 			if (mCountertrace.getPhases()[p].getBoundType() != 0) {
 				mClock[p] = mName + "_X" + p;
-				mCless[p] = RangeDecision.create(mClock[p], RangeDecision.OP_LT, mCountertrace.getPhases()[p].getBound());
+				mCless[p] =
+						RangeDecision.create(mClock[p], RangeDecision.OP_LT, mCountertrace.getPhases()[p].getBound());
 				mClessEq[p] =
 						RangeDecision.create(mClock[p], RangeDecision.OP_LTEQ, mCountertrace.getPhases()[p].getBound());
 			}
@@ -491,8 +492,8 @@ public class Trace2PEACompiler {
 			/*
 			 * Make sure that the phase can neither be kept nor entered.
 			 */
-			final CDD leave =
-					guard.and(mCEnter[p].or(mCKeep[p]).and(mCountertrace.getPhases()[p].getInvariant().prime()).negate());
+			final CDD leave = guard
+					.and(mCEnter[p].or(mCKeep[p]).and(mCountertrace.getPhases()[p].getInvariant().prime()).negate());
 			if (leave != CDD.FALSE) {
 				recursiveBuildTrans(srcBits, src, leave, stateInv, resets, active, waiting, exactbound, p + 1);
 			}
@@ -701,7 +702,8 @@ public class Trace2PEACompiler {
 					break;
 				}
 			}
-			recursiveBuildTrans(initHash, start, mEntrySync.and(mExitSync.negate()), CDD.TRUE, new String[0], 0, 0, 0, 0);
+			recursiveBuildTrans(initHash, start, mEntrySync.and(mExitSync.negate()), CDD.TRUE, new String[0], 0, 0, 0,
+					0);
 
 			mInit = new Phase[] { start };
 			mLogger.debug("Adding transitions from start state successful");

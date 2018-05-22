@@ -77,25 +77,25 @@ public class PatternToPEA {
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
 					new CounterTrace.DCPhase(P.and(R.negate())), new CounterTrace.DCPhase(R.negate()), phaseTrue() });
-			ctA = mCompiler.compile(id + "_TAbsenceBefore", ct); // ctA.dump();
+			ctA = mCompiler.compile(id + "_AbsenceBefore", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { phaseTrue(),
 					new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 					new CounterTrace.DCPhase(P.and(R.negate())), phaseTrue() });
-			ctA = mCompiler.compile(id + "_TAbsenceUntil", ct); // ctA.dump();
+			ctA = mCompiler.compile(id + "_AbsenceUntil", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			final CounterTrace ct = new CounterTrace(
 					new CounterTrace.DCPhase[] { phaseTrue(), phase(Q), phaseTrue(), phase(P), phaseTrue() });
-			ctA = mCompiler.compile(id + "_TAbsenceAfter", ct); // ctA.dump();
+			ctA = mCompiler.compile(id + "_AbsenceAfter", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
 			final CounterTrace ct = new CounterTrace(
 					new CounterTrace.DCPhase[] { phaseTrue(), new CounterTrace.DCPhase(Q.and(R.negate())),
 							new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(P.and(R.negate())),
 							new CounterTrace.DCPhase(R.negate()), phase(R), phaseTrue() });
-			ctA = mCompiler.compile(id + "_TAbsBet", ct); // ctA.dump();
+			ctA = mCompiler.compile(id + "_AbsenceBetween", ct); // ctA.dump();
 			return ctA;
 		}
 		final CounterTrace ct = counterTrace(phaseTrue());

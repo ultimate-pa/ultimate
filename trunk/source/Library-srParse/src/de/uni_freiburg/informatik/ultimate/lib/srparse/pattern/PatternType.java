@@ -96,13 +96,19 @@ public abstract class PatternType {
 	}
 
 	protected PhaseEventAutomata compile(final PatternToPEA peaTrans, final CounterTrace ct) {
+		return peaTrans.compile(getId() + "_" + createPeaSuffix(), ct);
+	}
+
+	private String createPeaSuffix() {
 		final String suffix;
 		if (mScope == null) {
 			suffix = "NoScope";
 		} else {
+			// remove SrParseScope from scope class name
 			suffix = mScope.getClass().getSimpleName().substring(12);
 		}
-		return peaTrans.compile(getId() + "_" + suffix, ct);
+		final String className = getClass().getSimpleName();
+		return suffix + "_" + className.replaceAll("Pattern", "");
 	}
 
 	protected static CounterTrace counterTrace(final CounterTrace.DCPhase... phases) {
