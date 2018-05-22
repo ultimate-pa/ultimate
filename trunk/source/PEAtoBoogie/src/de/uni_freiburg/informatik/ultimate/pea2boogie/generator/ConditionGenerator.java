@@ -50,16 +50,17 @@ public class ConditionGenerator {
 	private final Expression mResult;
 
 	public ConditionGenerator(final Collection<String> primedVars, final PhaseEventAutomata[] automata,
-			final BoogieLocation bl) {
+			final BoogieLocation bl, final CDD primedInvariant) {
 		mPrimedVars = primedVars;
-		mResult = nonDLCGenerator(automata, bl);
+		mResult = nonDLCGenerator(automata, bl, primedInvariant);
 	}
 
 	public Expression getResult() {
 		return mResult;
 	}
 
-	private Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final BoogieLocation bl) {
+	private Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final BoogieLocation bl,
+			final CDD primedInvariant) {
 		final int[][] phases = createPhasePairs(automata);
 
 		final List<int[]> phasePermutations = CrossProducts.crossProduct(phases);
@@ -82,8 +83,9 @@ public class ConditionGenerator {
 				final String pcName = Req2BoogieTranslator.getPcName(automaton);
 				impliesLHS.add(genPCCompEQ(pcName, vector[j], bl));
 			}
+
 			// TODO: ccdOther.and primed state invariants from invariant patterns
-			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, mPrimedVars);
+			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter.and(primedInvariant), mPrimedVars);
 			if (cdd == CDD.TRUE) {
 				continue;
 			}

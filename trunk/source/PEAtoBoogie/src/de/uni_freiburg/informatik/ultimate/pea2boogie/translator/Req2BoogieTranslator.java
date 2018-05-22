@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -385,27 +386,6 @@ public class Req2BoogieTranslator {
 	}
 
 	/**
-	 * Generate the conjunction of a list of expressions.
-	 *
-	 * @param exprs
-	 *            list of expressions.
-	 * @param bl
-	 *            Boogie location.
-	 * @return the CNF of a list of expressions.
-	 */
-	private Expression genConjunction(final List<Expression> exprs, final BoogieLocation bl) {
-		final Iterator<Expression> it = exprs.iterator();
-		if (!it.hasNext()) {
-			return new BooleanLiteral(bl, true);
-		}
-		Expression cnf = it.next();
-		while (it.hasNext()) {
-			cnf = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND, cnf, it.next());
-		}
-		return mNormalFormTransformer.toNnf(cnf);
-	}
-
-	/**
 	 * Generate the disjunction of a list of expressions.
 	 *
 	 * @param exprs
@@ -745,12 +725,12 @@ public class Req2BoogieTranslator {
 	}
 
 	private Statement genAssertRTInconsistency(final Entry<PatternType, PhaseEventAutomata>[] subset,
-			final BoogieLocation bl) {
+			final BoogieLocation bl, final CDD primedInvariant) {
 		final Set<PhaseEventAutomata> automataSet =
 				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
 		assert automataSet.size() == subset.length;
 		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
-		final Expression expr = new ConditionGenerator(getPrimedVars(), automata, bl).getResult();
+		final Expression expr = new ConditionGenerator(getPrimedVars(), automata, bl, primedInvariant).getResult();
 		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, subset);
 
 		if (expr == null) {
@@ -894,9 +874,15 @@ public class Req2BoogieTranslator {
 			return Collections.emptyList();
 		}
 
-		final List<Entry<PatternType, PhaseEventAutomata>> entries =
-				mReq2Automata.entrySet().stream().collect(Collectors.toList());
+		// get all automata that are invariant, prime their state invariant and conjugate the primed state invariant
+		final CDD primedStateInvariant = getPrimedStateInvariant();
+
+		// get all automata that are not invariant, i.e. have more than 1 phase
+		final List<Entry<PatternType, PhaseEventAutomata>> entries = mReq2Automata.entrySet().stream()
+				.filter(a -> a.getValue().getPhases().length != 1).collect(Collectors.toList());
+
 		final int count = entries.size();
+		mLogger.info((mReq2Automata.size() - count) + " requirements are invariant");
 		final int actualCombinationNum = mCombinationNum <= count ? mCombinationNum : count;
 		final List<Statement> stmtList = new ArrayList<>();
 		@SuppressWarnings("unchecked")
@@ -916,12 +902,25 @@ public class Req2BoogieTranslator {
 				throw new ToolchainCanceledException(getClass(),
 						"Computing rt-inconsistency assertions, still " + subsetsSize + " left");
 			}
-			final Statement assertStmt = genAssertRTInconsistency(subset, bl);
+			final Statement assertStmt = genAssertRTInconsistency(subset, bl, primedStateInvariant);
 			if (assertStmt != null) {
 				stmtList.add(assertStmt);
 			}
 		}
 		return stmtList;
+	}
+
+	private CDD getPrimedStateInvariant() {
+		final Optional<CDD> possiblePrimedStateInvariant =
+				mReq2Automata.entrySet().stream().filter(a -> a.getValue().getPhases().length == 1)
+						.map(a -> a.getValue().getPhases()[0].getStateInvariant().prime()).reduce((a, b) -> a.and(b));
+		final CDD actualPrimedStateInvariant;
+		if (possiblePrimedStateInvariant.isPresent()) {
+			actualPrimedStateInvariant = possiblePrimedStateInvariant.get();
+		} else {
+			actualPrimedStateInvariant = CDD.TRUE;
+		}
+		return actualPrimedStateInvariant;
 	}
 
 	/**
