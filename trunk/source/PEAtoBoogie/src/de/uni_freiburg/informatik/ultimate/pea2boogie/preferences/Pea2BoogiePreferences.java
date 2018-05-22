@@ -59,6 +59,9 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			"How many requirements should be checked for rt-inconsistency at the same time? "
 					+ "Allows only values larger or equal to 2. "
 					+ "Note: This value increases the runtime exponentially!";
+	public static final String LABEL_REPORT_TRIVIAL_RT_CONSISTENCY = "Report trivial rt-consistency";
+	private static final boolean DEF_REPORT_TRIVIAL_RT_CONSISTENCY = false;
+	private static final String DESC_REPORT_TRIVIAL_RT_CONSISTENCY = null;
 
 	public Pea2BoogiePreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -74,6 +77,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
+						DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
 						DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer,
 						IUltimatePreferenceItemValidator.GEQ_TWO), };

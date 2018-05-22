@@ -41,21 +41,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -64,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class PeaToBoogie implements ISource {
@@ -124,7 +115,7 @@ public class PeaToBoogie implements ISource {
 		}
 
 		// register CEX transformer that removes program executions from CEX.
-		final Function<IResult, IResult> resultTransformer = this::convertResults;
+		final Function<IResult, IResult> resultTransformer = mReporter::convertTraceAbstractionResult;
 		mServices.getResultService().registerTransformer("CexReducer", resultTransformer);
 
 		return generateBoogie(unifiedPatterns);
@@ -231,58 +222,13 @@ public class PeaToBoogie implements ISource {
 			combinationNum = -1;
 		}
 		final boolean checkConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
+		final boolean reportTrivialRtConsistency =
+				prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 
-		final Unit unit =
-				new Req2BoogieTranslator(mServices, mLogger, vacuityCheck, combinationNum, checkConsistency, patterns)
-						.getUnit();
+		final Unit unit = new Req2BoogieTranslator(mServices, mLogger, vacuityCheck, combinationNum, checkConsistency,
+				reportTrivialRtConsistency, patterns).getUnit();
 		new PatternContainer(patterns).annotate(unit);
 		return unit;
-	}
-
-	private IResult convertResults(final IResult result) {
-		final AbstractResultAtElement<?> oldRes;
-		final ReqCheck reqCheck;
-		boolean isPositive;
-		if (result instanceof CounterExampleResult<?, ?, ?>) {
-			oldRes = (AbstractResultAtElement<?>) result;
-			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
-			isPositive = false;
-		} else if (result instanceof PositiveResult<?>) {
-			oldRes = (AbstractResultAtElement<?>) result;
-			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
-			isPositive = true;
-		} else if (result instanceof AllSpecificationsHoldResult) {
-			// makes no sense in our context, suppress it
-			return null;
-		} else {
-			return result;
-		}
-
-		if (reqCheck.getSpec() == null || reqCheck.getSpec().isEmpty()) {
-			mLogger.error("Ignoring illegal empty check");
-			return result;
-		} else if (reqCheck.getSpec().size() == 1) {
-			final Spec spec = reqCheck.getSpec().iterator().next();
-			// a counterexample for consistency and vacuity means that the requirements are consistent or non-vacuous
-			switch (spec) {
-			case CONSISTENCY:
-			case VACUOUS:
-				// fall-through is deliberately
-				isPositive = !isPositive;
-			case RTINCONSISTENT:
-				final IElement element = oldRes.getElement();
-				final String plugin = oldRes.getPlugin();
-				final IBacktranslationService translatorSequence = oldRes.getCurrentBacktranslation();
-				return isPositive ? new ReqCheckSuccessResult<>(element, plugin, translatorSequence)
-						: new ReqCheckFailResult<>(element, plugin, translatorSequence);
-			default:
-				mLogger.error("Ignoring illegal check type " + spec);
-				return result;
-			}
-		} else {
-			mLogger.error("Ignoring multi-check");
-			return result;
-		}
 	}
 
 	@Override
@@ -331,47 +277,4 @@ public class PeaToBoogie implements ISource {
 		}
 	}
 
-	private static final class ReqCheckSuccessResult<E extends IElement> extends AbstractResultAtElement<E> {
-
-		private final ReqCheck mReqCheck;
-
-		public ReqCheckSuccessResult(final E element, final String plugin,
-				final IBacktranslationService translatorSequence) {
-			super(element, plugin, translatorSequence);
-			mReqCheck = (ReqCheck) ResultUtil.getCheckedSpecification(element);
-		}
-
-		@Override
-		public String getShortDescription() {
-			return mReqCheck.getPositiveMessage();
-		}
-
-		@Override
-		public String getLongDescription() {
-			return mReqCheck.getPositiveMessage();
-		}
-
-	}
-
-	private static final class ReqCheckFailResult<E extends IElement> extends AbstractResultAtElement<E> {
-
-		private final ReqCheck mReqCheck;
-
-		public ReqCheckFailResult(final E element, final String plugin,
-				final IBacktranslationService translatorSequence) {
-			super(element, plugin, translatorSequence);
-			mReqCheck = (ReqCheck) ResultUtil.getCheckedSpecification(element);
-		}
-
-		@Override
-		public String getShortDescription() {
-			return mReqCheck.getNegativeMessage();
-		}
-
-		@Override
-		public String getLongDescription() {
-			return mReqCheck.getNegativeMessage();
-		}
-
-	}
 }

@@ -30,17 +30,27 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqCheck;
 
 /**
  * Utility class that helps with reporting results.
@@ -89,6 +99,58 @@ public class PeaResultUtil {
 
 	public void unexpectedParserFailure(final String filename) {
 		errorAndAbort(new UnexpectedRequirementsParserFailureResult(filename));
+	}
+
+	public void intrinsicRtConsistencySuccess(final IElement element) {
+		final String plugin = Activator.PLUGIN_ID;
+		final IBacktranslationService translatorSequence = mServices.getBacktranslationService();
+		report(new ReqCheckSuccessResult<>(element, plugin, translatorSequence));
+	}
+
+	public IResult convertTraceAbstractionResult(final IResult result) {
+		final AbstractResultAtElement<?> oldRes;
+		final ReqCheck reqCheck;
+		boolean isPositive;
+		if (result instanceof CounterExampleResult<?, ?, ?>) {
+			oldRes = (AbstractResultAtElement<?>) result;
+			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
+			isPositive = false;
+		} else if (result instanceof PositiveResult<?>) {
+			oldRes = (AbstractResultAtElement<?>) result;
+			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
+			isPositive = true;
+		} else if (result instanceof AllSpecificationsHoldResult) {
+			// makes no sense in our context, suppress it
+			return null;
+		} else {
+			return result;
+		}
+
+		if (reqCheck.getSpec() == null || reqCheck.getSpec().isEmpty()) {
+			mLogger.error("Ignoring illegal empty check");
+			return result;
+		} else if (reqCheck.getSpec().size() == 1) {
+			final Spec spec = reqCheck.getSpec().iterator().next();
+			// a counterexample for consistency and vacuity means that the requirements are consistent or non-vacuous
+			switch (spec) {
+			case CONSISTENCY:
+			case VACUOUS:
+				// fall-through is deliberately
+				isPositive = !isPositive;
+			case RTINCONSISTENT:
+				final IElement element = oldRes.getElement();
+				final String plugin = oldRes.getPlugin();
+				final IBacktranslationService translatorSequence = oldRes.getCurrentBacktranslation();
+				return isPositive ? new ReqCheckSuccessResult<>(element, plugin, translatorSequence)
+						: new ReqCheckFailResult<>(element, plugin, translatorSequence);
+			default:
+				mLogger.error("Ignoring illegal check type " + spec);
+				return result;
+			}
+		} else {
+			mLogger.error("Ignoring multi-check");
+			return result;
+		}
 	}
 
 	private void errorAndAbort(final ILocation location, final String description, final IResult result) {
@@ -163,6 +225,50 @@ public class PeaResultUtil {
 		public String getLongDescription() {
 			return mMessage;
 		}
+	}
+
+	private static final class ReqCheckSuccessResult<E extends IElement> extends AbstractResultAtElement<E> {
+
+		private final ReqCheck mReqCheck;
+
+		public ReqCheckSuccessResult(final E element, final String plugin,
+				final IBacktranslationService translatorSequence) {
+			super(element, plugin, translatorSequence);
+			mReqCheck = (ReqCheck) ResultUtil.getCheckedSpecification(element);
+		}
+
+		@Override
+		public String getShortDescription() {
+			return mReqCheck.getPositiveMessage();
+		}
+
+		@Override
+		public String getLongDescription() {
+			return mReqCheck.getPositiveMessage();
+		}
+
+	}
+
+	private static final class ReqCheckFailResult<E extends IElement> extends AbstractResultAtElement<E> {
+
+		private final ReqCheck mReqCheck;
+
+		public ReqCheckFailResult(final E element, final String plugin,
+				final IBacktranslationService translatorSequence) {
+			super(element, plugin, translatorSequence);
+			mReqCheck = (ReqCheck) ResultUtil.getCheckedSpecification(element);
+		}
+
+		@Override
+		public String getShortDescription() {
+			return mReqCheck.getNegativeMessage();
+		}
+
+		@Override
+		public String getLongDescription() {
+			return mReqCheck.getNegativeMessage();
+		}
+
 	}
 
 }

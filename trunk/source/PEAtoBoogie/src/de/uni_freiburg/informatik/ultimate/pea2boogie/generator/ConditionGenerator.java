@@ -78,9 +78,11 @@ public class ConditionGenerator {
 							genStrictInv(transitions.get(k))));
 				}
 				cddOuter = cddOuter.and(cddInner);
+
 				final String pcName = Req2BoogieTranslator.getPcName(automaton);
 				impliesLHS.add(genPCCompEQ(pcName, vector[j], bl));
 			}
+			// TODO: ccdOther.and primed state invariants from invariant patterns
 			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, mPrimedVars);
 			if (cdd == CDD.TRUE) {
 				continue;

@@ -122,6 +122,7 @@ public class Req2BoogieTranslator {
 	private final boolean mCheckVacuity;
 	private final int mCombinationNum;
 	private final boolean mCheckConsistency;
+	private final boolean mReportTrivialConsistency;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -132,10 +133,11 @@ public class Req2BoogieTranslator {
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final boolean vacuityCheck, final int num, final boolean checkConsistency,
-			final List<PatternType> patterns) {
+			final boolean reportTrivialRtConsistency, final List<PatternType> patterns) {
 		mLogger = logger;
 		mServices = services;
 		mCheckVacuity = vacuityCheck;
+		mReportTrivialConsistency = reportTrivialRtConsistency;
 		mCombinationNum = num;
 		mCheckConsistency = checkConsistency;
 
@@ -749,11 +751,17 @@ public class Req2BoogieTranslator {
 		assert automataSet.size() == subset.length;
 		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
 		final Expression expr = new ConditionGenerator(getPrimedVars(), automata, bl).getResult();
+		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, subset);
+
 		if (expr == null) {
+			if (mReportTrivialConsistency) {
+				final AssertStatement fakeElem = createAssert(ExpressionFactory.createBooleanLiteral(bl, true), check,
+						"RTINCONSISTENT_" + getAssertLabel(subset));
+				mPeaResultUtil.intrinsicRtConsistencySuccess(fakeElem);
+			}
 			return null;
 		}
 
-		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, subset);
 		return createAssert(expr, check, "RTINCONSISTENT_" + getAssertLabel(subset));
 	}
 
