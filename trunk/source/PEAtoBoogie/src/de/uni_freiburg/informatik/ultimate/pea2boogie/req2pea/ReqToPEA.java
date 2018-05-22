@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
 import java.io.FileInputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,9 +67,9 @@ public class ReqToPEA {
 		}
 	}
 
-	public PhaseEventAutomata[] genPEA(final List<PatternType> patterns, final Map<String, Integer> id2bounds) {
-		final List<PhaseEventAutomata> peaList = new ArrayList<>();
-
+	public Map<PatternType, PhaseEventAutomata> genPEA(final List<PatternType> patterns,
+			final Map<String, Integer> id2bounds) {
+		final Map<PatternType, PhaseEventAutomata> req2automata = new LinkedHashMap<>();
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
 		for (final PatternType pat : patterns) {
 
@@ -85,11 +85,13 @@ public class ReqToPEA {
 				mResult.transformationError(pat, "No initial phase");
 				continue;
 			}
-			peaList.add(pea);
+			final PhaseEventAutomata old = req2automata.put(pat, pea);
+			if (old != null) {
+				throw new AssertionError();
+			}
 		}
 
-		final PhaseEventAutomata[] peaArray = peaList.toArray(new PhaseEventAutomata[peaList.size()]);
-		return peaArray;
+		return req2automata;
 	}
 
 	public void genPEAforUPPAAL(final PatternType[] patterns, final String xmlFilePath,

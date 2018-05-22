@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -223,13 +222,7 @@ public class PeaToBoogie implements ISource {
 	private IElement generateBoogie(final List<PatternType> patterns) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final int length = patterns.size();
-		final BitSet vacuityChecks;
-		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY)) {
-			vacuityChecks = new BitSet(length);
-			vacuityChecks.set(0, length);
-		} else {
-			vacuityChecks = null;
-		}
+		final boolean vacuityCheck = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
 
 		final int combinationNum;
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
@@ -240,7 +233,7 @@ public class PeaToBoogie implements ISource {
 		final boolean checkConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 
 		final Unit unit =
-				new Req2BoogieTranslator(mServices, mLogger, vacuityChecks, combinationNum, checkConsistency, patterns)
+				new Req2BoogieTranslator(mServices, mLogger, vacuityCheck, combinationNum, checkConsistency, patterns)
 						.getUnit();
 		new PatternContainer(patterns).annotate(unit);
 		return unit;

@@ -158,10 +158,24 @@ public final class CrossProducts {
 	 *            The number of elements in the subarrays.
 	 * @return the list of all subarrays.
 	 */
-	public static List<int[]> subArrays(final int[] input, final int combinationNum) {
+	public static <T> List<int[]> subArrays(final int[] input, final int combinationNum) {
 		assert (combinationNum <= input.length);
 		final List<int[]> result = new ArrayList<>();
 		sublistHelper(result, input, new int[combinationNum], 0, 0);
+		return result;
+	}
+
+	/**
+	 * Same as {@link #subArrays(int[], int)}, but for generic types.
+	 *
+	 * @param intermediateArray
+	 *            you need to supply an array of type T with length combinationNum
+	 */
+	public static <T> List<T[]> subArrays(final T[] input, final int combinationNum, final T[] intermediateArray) {
+		assert (input != null && combinationNum <= input.length);
+		assert intermediateArray != null && intermediateArray.length == combinationNum;
+		final List<T[]> result = new ArrayList<>();
+		sublistHelper(result, input, intermediateArray, 0, 0);
 		return result;
 	}
 
@@ -195,15 +209,33 @@ public final class CrossProducts {
 	}
 
 	/**
-	 * Computes the cross product of the given set with itself and returns it.
-	 * Can be parameterized in two ways:
-	 *  <li> to return only one of the "symmetric" pairs (i.e. for any two elements a, b only include either (a,b) or
-	 *     (b,a) in the result).
-	 *  <li> to return "reflexive" pairs or not, i.e., pairs of the form (a,a) can be omitted
+	 * same as {@link #sublistHelper(List, int[], int[], int, int)} but for generic type.
+	 */
+	private static <T> void sublistHelper(final List<T[]> result, final T[] input, final T[] output,
+			final int offsetInput, final int offsetOutput) {
+		if (offsetOutput == output.length) {
+			result.add(output.clone());
+		} else {
+			final int todo = output.length - offsetOutput;
+			for (int i = offsetInput; i <= input.length - todo; i++) {
+				output[offsetOutput] = input[i];
+				sublistHelper(result, input, output, i + 1, offsetOutput + 1);
+			}
+		}
+	}
+
+	/**
+	 * Computes the cross product of the given set with itself and returns it. Can be parameterized in two ways:
+	 * <li>to return only one of the "symmetric" pairs (i.e. for any two elements a, b only include either (a,b) or
+	 * (b,a) in the result).
+	 * <li>to return "reflexive" pairs or not, i.e., pairs of the form (a,a) can be omitted
 	 *
-	 * @param set the result (if the two next parameters are false) is a HashRelation containing "set x set"
-	 * @param returnReflexivePairs include reflexive pairs in the result
-	 * @param returnSymmetricPairs include both versions of two symmetric pairs in the result
+	 * @param set
+	 *            the result (if the two next parameters are false) is a HashRelation containing "set x set"
+	 * @param returnReflexivePairs
+	 *            include reflexive pairs in the result
+	 * @param returnSymmetricPairs
+	 *            include both versions of two symmetric pairs in the result
 	 * @return a HashRelation with the cross product (possibly restricted according to the two flags)
 	 */
 	public static <E> HashRelation<E, E> binarySelectiveCrossProduct(final Collection<E> set,
@@ -227,13 +259,12 @@ public final class CrossProducts {
 		return result;
 	}
 
-
 	/**
 	 *
 	 * @param set
 	 * @param returnSymmetricPairs
 	 * @param pairSelector
-	 * 			we add a pair to our cross product only if test evaluates to true on it
+	 *            we add a pair to our cross product only if test evaluates to true on it
 	 * @return
 	 */
 	public static <E> HashRelation<E, E> binarySelectiveCrossProduct(final Collection<E> set,
@@ -258,9 +289,7 @@ public final class CrossProducts {
 	}
 
 	/**
-	 * Example:
-	 *  input: [2, 2, 3]
-	 *  output: {0, 1} X {0, 1} X {0, 1, 2} = {(0, 0, 0), (0, 0, 1), (0, 0, 2), (0, 1, 0), ...}
+	 * Example: input: [2, 2, 3] output: {0, 1} X {0, 1} X {0, 1, 2} = {(0, 0, 0), (0, 0, 1), (0, 0, 2), (0, 1, 0), ...}
 	 *
 	 * @param exclusiveBounds
 	 * @return
@@ -275,20 +304,20 @@ public final class CrossProducts {
 			firstN.add(fn);
 		}
 		return crossProduct(firstN);
-//		List<List<Integer>> result = new ArrayList<>();
-//		for (final Integer bound : bounds) {
-//			final List<List<Integer>> newResult = new ArrayList<>(result);
-//			for (final List<Integer> initialList : result) {
-//				for (int i = 0; i < bound; i++) {
-//					List<Integer> appended = new ArrayList<>(initialList);
-//					appended.add(i);
-//
-//				}
-//			}
-////			oldResult = result;
-//			result = newResult;
-//		}
-//		return result;
+		// List<List<Integer>> result = new ArrayList<>();
+		// for (final Integer bound : bounds) {
+		// final List<List<Integer>> newResult = new ArrayList<>(result);
+		// for (final List<Integer> initialList : result) {
+		// for (int i = 0; i < bound; i++) {
+		// List<Integer> appended = new ArrayList<>(initialList);
+		// appended.add(i);
+		//
+		// }
+		// }
+		//// oldResult = result;
+		// result = newResult;
+		// }
+		// return result;
 	}
 
 	public static <E> List<List<E>> crossProductNTimes(final int n, final Set<E> baseSet) {

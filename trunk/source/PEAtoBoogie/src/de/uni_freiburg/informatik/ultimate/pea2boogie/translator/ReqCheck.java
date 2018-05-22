@@ -55,12 +55,12 @@ public class ReqCheck extends Check {
 		this(EnumSet.of(type), 0, 0, new PatternType[0]);
 	}
 
-	public ReqCheck(final Check.Spec type, final int[] reqNrs, final PatternType[] reqs) {
-		this(EnumSet.of(type), reqNrs, reqs);
+	public ReqCheck(final Check.Spec type, final PatternType[] reqs) {
+		this(EnumSet.of(type), reqs);
 	}
 
-	private ReqCheck(final EnumSet<Check.Spec> types, final int[] reqNrs, final PatternType[] reqs) {
-		this(types, reqNrs[0] + 1, reqNrs[reqNrs.length - 1] + 1, reqs);
+	private ReqCheck(final EnumSet<Check.Spec> types, final PatternType[] reqs) {
+		this(types, -1, -1, reqs);
 	}
 
 	private ReqCheck(final EnumSet<Check.Spec> types, final int startline, final int endline,

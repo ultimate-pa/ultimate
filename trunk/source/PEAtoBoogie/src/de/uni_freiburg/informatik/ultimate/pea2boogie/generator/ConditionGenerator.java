@@ -50,28 +50,27 @@ public class ConditionGenerator {
 	private final Expression mResult;
 
 	public ConditionGenerator(final Collection<String> primedVars, final PhaseEventAutomata[] automata,
-			final int[] automataPermutation, final BoogieLocation bl) {
+			final BoogieLocation bl) {
 		mPrimedVars = primedVars;
-		mResult = nonDLCGenerator(automata, automataPermutation, bl);
+		mResult = nonDLCGenerator(automata, bl);
 	}
 
 	public Expression getResult() {
 		return mResult;
 	}
 
-	private Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final int[] automataPermutation,
-			final BoogieLocation bl) {
-		final int[][] phases = createPhasePairs(automata, automataPermutation);
+	private Expression nonDLCGenerator(final PhaseEventAutomata[] automata, final BoogieLocation bl) {
+		final int[][] phases = createPhasePairs(automata);
 
 		final List<int[]> phasePermutations = CrossProducts.crossProduct(phases);
 		final List<Expression> conditions = new ArrayList<>();
 		for (final int[] vector : phasePermutations) {
-			assert (vector.length == automataPermutation.length);
+			assert (vector.length == automata.length);
 			CDD cddOuter = CDD.TRUE;
 			final List<Expression> impliesLHS = new ArrayList<>();
 			for (int j = 0; j < vector.length; j++) {
 				CDD cddInner = CDD.FALSE;
-				final PhaseEventAutomata automaton = automata[automataPermutation[j]];
+				final PhaseEventAutomata automaton = automata[j];
 				final Phase phase = automaton.getPhases()[vector[j]];
 				final List<Transition> transitions = phase.getTransitions();
 				for (int k = 0; k < transitions.size(); k++) {
@@ -79,7 +78,7 @@ public class ConditionGenerator {
 							genStrictInv(transitions.get(k))));
 				}
 				cddOuter = cddOuter.and(cddInner);
-				final String pcName = Req2BoogieTranslator.getPcName(automata[automataPermutation[j]]);
+				final String pcName = Req2BoogieTranslator.getPcName(automaton);
 				impliesLHS.add(genPCCompEQ(pcName, vector[j], bl));
 			}
 			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, mPrimedVars);
@@ -97,10 +96,10 @@ public class ConditionGenerator {
 		return buildBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, conditions);
 	}
 
-	private static int[][] createPhasePairs(final PhaseEventAutomata[] automata, final int[] automataPermutation) {
-		final int[][] phases = new int[automataPermutation.length][];
-		for (int i = 0; i < automataPermutation.length; i++) {
-			final PhaseEventAutomata automaton = automata[automataPermutation[i]];
+	private static int[][] createPhasePairs(final PhaseEventAutomata[] automata) {
+		final int[][] phases = new int[automata.length][];
+		for (int i = 0; i < automata.length; i++) {
+			final PhaseEventAutomata automaton = automata[i];
 			final int phaseCount = automaton.getPhases().length;
 			phases[i] = new int[phaseCount];
 			for (int j = 0; j < phaseCount; j++) {
