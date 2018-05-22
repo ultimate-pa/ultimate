@@ -914,71 +914,48 @@ public class Req2BoogieTranslator {
 		}
 		final String pcName = getPcName(aut);
 		// construct or over initial phases
-		BinaryExpression acc = null;
+		Expression acc = null;
 		for (int i = 0; i < phases.length; i++) {
 			if (!phases[i].isInit) {
 				continue;
 			}
-			final IdentifierExpression identifier = new IdentifierExpression(bl, pcName);
-			final BinaryExpression current = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ, identifier,
-					new IntegerLiteral(bl, Integer.toString(i)));
+			final IdentifierExpression identifier = ExpressionFactory.constructIdentifierExpression(bl,
+					BoogieType.TYPE_INT, pcName, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			final Expression current = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
+					identifier, ExpressionFactory.createIntegerLiteral(bl, Integer.toString(i)));
 			if (acc == null) {
 				acc = current;
 			} else {
-				acc = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR, acc, current);
+				acc = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, acc, current);
 			}
 		}
 		return mNormalFormTransformer.toNnf(acc);
 	}
 
 	private List<Statement> genInitialPhasesStmts(final BoogieLocation bl) {
-		final VariableLHS[] ids = new VariableLHS[mPcIds.size()];
-		for (int i = 0; i < mPcIds.size(); i++) {
-			ids[i] = new VariableLHS(bl, mPcIds.get(i));
-		}
-		final HavocStatement pcHavoc = new HavocStatement(bl, ids);
-
-		final List<Expression> pcExprs = new ArrayList<>();
+		final List<Statement> stmts = new ArrayList<>();
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			pcExprs.add(genPcExpr(entry.getValue(), bl));
+			final PhaseEventAutomata aut = entry.getValue();
+			stmts.add(new HavocStatement(bl, new VariableLHS[] { new VariableLHS(bl, getPcName(aut)) }));
+			stmts.add(new AssumeStatement(bl, genPcExpr(aut, bl)));
 		}
-
-		final AssumeStatement assumeSmt = new AssumeStatement(bl, genConjunction(pcExprs, bl));
-
-		final List<Statement> statements = new ArrayList<>();
-		statements.add(pcHavoc);
-		statements.add(assumeSmt);
-		return statements;
-	}
-
-	private Expression genClockInit(final BoogieLocation bl) {
-		Expression acc = new BooleanLiteral(bl, true);
-		for (int i = 0; i < mClockIds.size(); i++) {
-			final BinaryExpression current = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
-					new IdentifierExpression(bl, mClockIds.get(i)), new RealLiteral(bl, Double.toString(0)));
-			acc = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND, acc, current);
-		}
-		return mNormalFormTransformer.toNnf(acc);
+		return stmts;
 	}
 
 	private List<Statement> genClockInitStmts(final BoogieLocation bl) {
 		if (mClockIds.isEmpty()) {
 			return Collections.emptyList();
 		}
-		final VariableLHS[] clocks = new VariableLHS[mClockIds.size()];
-		int i = 0;
+		final List<Statement> stmts = new ArrayList<>();
 		for (final String clkId : mClockIds) {
-			clocks[i] = new VariableLHS(bl, clkId);
-			i++;
+			final IdentifierExpression id = ExpressionFactory.constructIdentifierExpression(bl, BoogieType.TYPE_REAL,
+					clkId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			final RealLiteral real = ExpressionFactory.createRealLiteral(bl, "0.0");
+			stmts.add(new HavocStatement(bl, new VariableLHS[] { new VariableLHS(bl, clkId) }));
+			stmts.add(new AssumeStatement(bl,
+					ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.COMPEQ, id, real)));
 		}
-		final HavocStatement clockHavoc = new HavocStatement(bl, clocks);
-		final AssumeStatement assumeSmt = new AssumeStatement(bl, genClockInit(bl));
-
-		final List<Statement> statements = new ArrayList<>();
-		statements.add(clockHavoc);
-		statements.add(assumeSmt);
-
-		return statements;
+		return stmts;
 	}
 
 	/**
