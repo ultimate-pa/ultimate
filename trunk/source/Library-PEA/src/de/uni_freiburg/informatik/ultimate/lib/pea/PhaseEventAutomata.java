@@ -57,11 +57,7 @@ public class PhaseEventAutomata implements Comparable<Object> {
 	Set<String> events;
 
 	// Additional declarations needed when processing this PEA.
-	List<String> declarations;
-
-	public PhaseEventAutomata(final PhaseEventAutomata pea) {
-		this(pea.name, pea.phases, pea.init, pea.clocks, pea.variables, pea.events, pea.declarations);
-	}
+	protected List<String> declarations;
 
 	public PhaseEventAutomata(final String name, final Phase[] phases, final Phase[] init) {
 		this(name, phases, init, new ArrayList<String>());

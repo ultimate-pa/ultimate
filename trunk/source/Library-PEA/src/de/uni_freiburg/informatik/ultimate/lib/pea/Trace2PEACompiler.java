@@ -62,34 +62,34 @@ public class Trace2PEACompiler {
 
 	private ILogger mLogger = null;
 
-	private String name;
+	private String mName;
 
-	private CounterTrace countertrace;
+	private CounterTrace mCountertrace;
 
-	private String[] clock;
+	private String[] mClock;
 
-	private int canPossiblySeep;
-	private CDD[] keep, enter, cless, clesseq;
-	private CDD[] cKeep, cEnter;
+	private int mCanPossiblySeep;
+	private CDD[] mKeep, mEnter, mCless, mClessEq;
+	private CDD[] mCKeep, mCEnter;
 
-	private int lastphase;
+	private int mLastphase;
 
-	private final Map<PhaseBits, Phase> allPhases;
-	private Phase[] init;
-	private final List<PhaseBits> todo;
+	private final Map<PhaseBits, Phase> mAllPhases;
+	private Phase[] mInit;
+	private final List<PhaseBits> mTodo;
 
-	private CDD noSyncEvent;
-	private CDD entrySync, exitSync, missingEvents;
-	private boolean spec;
+	private CDD mNoSyncEvent;
+	private CDD mEntrySync, mExitSync, mMissingEvents;
+	private boolean mSpec;
 
 	/*
 	 * a flag indicating whether a test automaton or a countertrace automaton has to be built. In the latter case,
 	 * builtTotal is set to false.
 	 */
-	private boolean buildTotal;
+	private boolean mBuildTotal;
 
 	/* for ARMC export */
-	private HashMap<Transition, PhaseBits> trans2phases;
+	private HashMap<Transition, PhaseBits> mTrans2phases;
 
 	/**
 	 * Initialises the Trace2PEACompiler object. Takes as parameter a string that defines the loggername for the built
@@ -104,10 +104,10 @@ public class Trace2PEACompiler {
 	public Trace2PEACompiler(final ILogger logger, final String loggerName) {
 		mLogger = logger;
 
-		allPhases = new TreeMap<>();
-		todo = new LinkedList<>();
+		mAllPhases = new TreeMap<>();
+		mTodo = new LinkedList<>();
 
-		trans2phases = new HashMap<>();
+		mTrans2phases = new HashMap<>();
 	}
 
 	/**
@@ -124,8 +124,8 @@ public class Trace2PEACompiler {
 	 */
 	public HashMap<Transition, PhaseSet> getTrans2Phases(final DCPhase phases[]) {
 		final HashMap<Transition, PhaseSet> pea2ph = new HashMap<>();
-		for (final Transition t : trans2phases.keySet()) {
-			final PhaseBits pb = trans2phases.get(t);
+		for (final Transition t : mTrans2phases.keySet()) {
+			final PhaseBits pb = mTrans2phases.get(t);
 			pea2ph.put(t, pb.getPhaseSet(phases));
 		}
 		return pea2ph;
@@ -144,9 +144,9 @@ public class Trace2PEACompiler {
 	 */
 	public PhaseEventAutomata compile(final String name, final CounterTrace ct) {
 		resetAll();
-		this.name = name;
-		countertrace = ct;
-		buildTotal = false;
+		this.mName = name;
+		mCountertrace = ct;
+		mBuildTotal = false;
 		return buildAut();
 	}
 
@@ -164,13 +164,13 @@ public class Trace2PEACompiler {
 	 */
 	public PEATestAutomaton compile(final String name, final MCTrace mcTrace) {
 		resetAll();
-		this.name = name;
-		countertrace = mcTrace.getTrace();
-		entrySync = mcTrace.getEntrySync();
-		exitSync = mcTrace.getExitSync();
-		missingEvents = mcTrace.getMissingEvents();
-		spec = mcTrace.getSpec();
-		buildTotal = true;
+		this.mName = name;
+		mCountertrace = mcTrace.getTrace();
+		mEntrySync = mcTrace.getEntrySync();
+		mExitSync = mcTrace.getExitSync();
+		mMissingEvents = mcTrace.getMissingEvents();
+		mSpec = mcTrace.getSpec();
+		mBuildTotal = true;
 		return (PEATestAutomaton) buildAut();
 	}
 
@@ -178,26 +178,26 @@ public class Trace2PEACompiler {
 	 * Sets all attributes to initial values.
 	 */
 	private void resetAll() {
-		allPhases.clear();
-		todo.clear();
-		buildTotal = false;
-		canPossiblySeep = 0;
-		cEnter = null;
-		cKeep = null;
-		cless = null;
-		clesseq = null;
-		clock = null;
-		countertrace = null;
-		enter = null;
-		entrySync = null;
-		exitSync = null;
-		init = null;
-		keep = null;
-		lastphase = 0;
-		missingEvents = null;
-		name = null;
-		spec = false;
-		trans2phases = new HashMap<>();
+		mAllPhases.clear();
+		mTodo.clear();
+		mBuildTotal = false;
+		mCanPossiblySeep = 0;
+		mCEnter = null;
+		mCKeep = null;
+		mCless = null;
+		mClessEq = null;
+		mClock = null;
+		mCountertrace = null;
+		mEnter = null;
+		mEntrySync = null;
+		mExitSync = null;
+		mInit = null;
+		mKeep = null;
+		mLastphase = 0;
+		mMissingEvents = null;
+		mName = null;
+		mSpec = false;
+		mTrans2phases = new HashMap<>();
 	}
 
 	/**
@@ -215,8 +215,8 @@ public class Trace2PEACompiler {
 		 * A "allowEmpty" phase can be complete if the predecessor is, the entryEvents are fulfilled and this phase
 		 * matches on an empty interval.
 		 */
-		if (i > 0 && countertrace.getPhases()[i].isAllowEmpty()) {
-			result = complete(state, i - 1).and(countertrace.getPhases()[i].getEntryEvents());
+		if (i > 0 && mCountertrace.getPhases()[i].isAllowEmpty()) {
+			result = complete(state, i - 1).and(mCountertrace.getPhases()[i].getEntryEvents());
 		} else {
 			result = CDD.FALSE;
 		}
@@ -229,16 +229,16 @@ public class Trace2PEACompiler {
 				 * exact bound.
 				 */
 				if ((state.exactbound & ibit) != 0) {
-					return result.or(cless[i].negate());
+					return result.or(mCless[i].negate());
 				}
 				return result;
 			}
-			if (countertrace.getPhases()[i].getBoundType() < 0 && (canseep(state) & ibit) == 0
+			if (mCountertrace.getPhases()[i].getBoundType() < 0 && (canseep(state) & ibit) == 0
 					&& (state.exactbound & ibit) == 0) {
 				/*
 				 * The phase has a strict upper bound. It is only complete if that bound has not yet been reached.
 				 */
-				return result.or(cless[i]);
+				return result.or(mCless[i]);
 			}
 			/*
 			 * Normal case: phase is active, non-waiting, no strict upper bound.
@@ -252,46 +252,46 @@ public class Trace2PEACompiler {
 	 * Internal method to precompute most CDDs used in this automaton.
 	 */
 	private void precomputeCDDs() {
-		clock = new String[countertrace.getPhases().length];
-		keep = new CDD[countertrace.getPhases().length];
-		enter = new CDD[countertrace.getPhases().length];
-		cless = new CDD[countertrace.getPhases().length];
-		clesseq = new CDD[countertrace.getPhases().length];
+		mClock = new String[mCountertrace.getPhases().length];
+		mKeep = new CDD[mCountertrace.getPhases().length];
+		mEnter = new CDD[mCountertrace.getPhases().length];
+		mCless = new CDD[mCountertrace.getPhases().length];
+		mClessEq = new CDD[mCountertrace.getPhases().length];
 
-		cKeep = new CDD[countertrace.getPhases().length];
-		cEnter = new CDD[countertrace.getPhases().length];
-		canPossiblySeep = 0;
+		mCKeep = new CDD[mCountertrace.getPhases().length];
+		mCEnter = new CDD[mCountertrace.getPhases().length];
+		mCanPossiblySeep = 0;
 
-		for (int p = 0; p < countertrace.getPhases().length; p++) {
-			cless[p] = null;
-			clesseq[p] = CDD.TRUE;
+		for (int p = 0; p < mCountertrace.getPhases().length; p++) {
+			mCless[p] = null;
+			mClessEq[p] = CDD.TRUE;
 
-			if (countertrace.getPhases()[p].getBoundType() != 0) {
-				clock[p] = name + "_X" + p;
-				cless[p] = RangeDecision.create(clock[p], RangeDecision.OP_LT, countertrace.getPhases()[p].getBound());
-				clesseq[p] =
-						RangeDecision.create(clock[p], RangeDecision.OP_LTEQ, countertrace.getPhases()[p].getBound());
+			if (mCountertrace.getPhases()[p].getBoundType() != 0) {
+				mClock[p] = mName + "_X" + p;
+				mCless[p] = RangeDecision.create(mClock[p], RangeDecision.OP_LT, mCountertrace.getPhases()[p].getBound());
+				mClessEq[p] =
+						RangeDecision.create(mClock[p], RangeDecision.OP_LTEQ, mCountertrace.getPhases()[p].getBound());
 			}
 
-			keep[p] = CDD.TRUE;
-			if (countertrace.getPhases()[p].getForbid().size() > 0) {
+			mKeep[p] = CDD.TRUE;
+			if (mCountertrace.getPhases()[p].getForbid().size() > 0) {
 				/*
 				 * We can only keep the state if event is not in forbid set.
 				 */
 				@SuppressWarnings("unchecked")
 				final Set<String> empty = Collections.EMPTY_SET;
 				@SuppressWarnings("unchecked")
-				final Set<String> forbid = countertrace.getPhases()[p].getForbid();
+				final Set<String> forbid = mCountertrace.getPhases()[p].getForbid();
 				final CDD atom = EventDecision.create(empty, forbid);
-				keep[p] = keep[p].and(atom);
+				mKeep[p] = mKeep[p].and(atom);
 			}
 
-			enter[p] = countertrace.getPhases()[p].getEntryEvents();
+			mEnter[p] = mCountertrace.getPhases()[p].getEntryEvents();
 			/*
 			 * determine the value of entryEvents if no event occurs (always take the second child in each boolean
 			 * decision). This assumes that entryEvents only uses event decisions.
 			 */
-			CDD value = countertrace.getPhases()[p].getEntryEvents();
+			CDD value = mCountertrace.getPhases()[p].getEntryEvents();
 			while (value.getDecision() instanceof EventDecision) {
 				value = value.getChilds()[1];
 			}
@@ -300,7 +300,7 @@ public class Trace2PEACompiler {
 			 * If entryEvents evaluates to true, when no event occurs, we can seep through.
 			 */
 			if (value == CDD.TRUE) {
-				canPossiblySeep |= 1 << p;
+				mCanPossiblySeep |= 1 << p;
 			}
 		}
 
@@ -308,46 +308,46 @@ public class Trace2PEACompiler {
 		// The last phase that needs to be considered is the last phase
 		// that is not satisfied by an empty interval. Furthermore no events
 		// may be demanded to be able to neglect the phase.
-		lastphase = countertrace.getPhases().length - 1;
-		while (!buildTotal && lastphase > 0 && countertrace.getPhases()[lastphase].isAllowEmpty()
-				&& (canPossiblySeep & 1 << lastphase) != 0) {
-			lastphase = lastphase - 1;
+		mLastphase = mCountertrace.getPhases().length - 1;
+		while (!mBuildTotal && mLastphase > 0 && mCountertrace.getPhases()[mLastphase].isAllowEmpty()
+				&& (mCanPossiblySeep & 1 << mLastphase) != 0) {
+			mLastphase = mLastphase - 1;
 		}
-		mLogger.debug("Lastphase = " + lastphase);
+		mLogger.debug("Lastphase = " + mLastphase);
 	}
 
 	/**
 	 * Compute for each phase whether we can seep through from the predecessor phase.
 	 */
 	private final int canseep(final PhaseBits p) {
-		return (p.active & ~p.waiting) << 1 & canPossiblySeep;
+		return (p.active & ~p.waiting) << 1 & mCanPossiblySeep;
 	}
 
 	/**
 	 * Precompute the CDDs further using the current state information.
 	 */
 	private void initTrans(final PhaseBits srcBits) {
-		for (int p = 0, pbit = 1; p < countertrace.getPhases().length; p++, pbit += pbit) {
+		for (int p = 0, pbit = 1; p < mCountertrace.getPhases().length; p++, pbit += pbit) {
 			/*
 			 * Now calculate the condition under which we can keep the current state.
 			 */
 			if ((srcBits.active & pbit) != 0) {
-				cKeep[p] = keep[p];
-				if (countertrace.getPhases()[p].getBoundType() < 0 && (canseep(srcBits) & pbit) == 0) {
+				mCKeep[p] = mKeep[p];
+				if (mCountertrace.getPhases()[p].getBoundType() < 0 && (canseep(srcBits) & pbit) == 0) {
 					/*
 					 * phase has < or <= bound and can't be reentered. We can only stay in this state if clock hasn't
 					 * reached its maximum.
 					 */
-					cKeep[p] = cKeep[p].and(cless[p]);
+					mCKeep[p] = mCKeep[p].and(mCless[p]);
 				}
 			} else {
 				/* phase is not active and thus can't be kept */
-				cKeep[p] = CDD.FALSE;
+				mCKeep[p] = CDD.FALSE;
 			}
 
-			cEnter[p] = p > 0 ? complete(srcBits, p - 1).and(enter[p]) : CDD.FALSE;
+			mCEnter[p] = p > 0 ? complete(srcBits, p - 1).and(mEnter[p]) : CDD.FALSE;
 			mLogger.debug("initTrans for " + srcBits + "," + p + ": complete: " + complete(srcBits, p) + " enter: "
-					+ cEnter[p] + "  keep: " + cKeep[p]);
+					+ mCEnter[p] + "  keep: " + mCKeep[p]);
 		}
 	}
 
@@ -377,29 +377,29 @@ public class Trace2PEACompiler {
 	private void buildNewTrans(final PhaseBits srcBits, final Phase src, CDD guard, final CDD stateInv,
 			final String[] resets, final PhaseBits destBits) {
 		Phase dest;
-		if (allPhases.containsKey(destBits)) {
+		if (mAllPhases.containsKey(destBits)) {
 			mLogger.debug("Destination phase already exists");
-			dest = allPhases.get(destBits);
+			dest = mAllPhases.get(destBits);
 		} else {
 			CDD clockInv = CDD.TRUE;
 			for (int p = 0, pbit = 1; pbit <= destBits.active; p++, pbit += pbit) {
 				if ((destBits.waiting & pbit) != 0
-						|| countertrace.getPhases()[p].getBoundType() < 0 && (canseep(destBits) & pbit) == 0) {
+						|| mCountertrace.getPhases()[p].getBoundType() < 0 && (canseep(destBits) & pbit) == 0) {
 					/*
 					 * Phase invariants only apply to waiting states and states with upper bounds that cannot be
 					 * reentered immediately.
 					 */
-					if (!buildTotal && p == lastphase && countertrace.getPhases()[p].getBoundType() > 0
+					if (!mBuildTotal && p == mLastphase && mCountertrace.getPhases()[p].getBoundType() > 0
 							&& (destBits.exactbound & pbit) != 0) {
 
 						// There is a very special case in which clock invariant
 						// must be strict. It only occurs, if countertrace
 						// automata are built. This is indicated by
 						// !this.buildTotal
-						clockInv = clockInv.and(cless[p]);
+						clockInv = clockInv.and(mCless[p]);
 
 					} else {
-						clockInv = clockInv.and(clesseq[p]);
+						clockInv = clockInv.and(mClessEq[p]);
 					}
 				}
 			}
@@ -407,8 +407,8 @@ public class Trace2PEACompiler {
 			mLogger.debug("Creating destination phase");
 			dest = new Phase(destBits.toString(), stateInv, clockInv);
 			dest.phaseBits = destBits;
-			allPhases.put(destBits, dest);
-			todo.add(destBits);
+			mAllPhases.put(destBits, dest);
+			mTodo.add(destBits);
 		}
 		guard = guard.assume(dest.getStateInvariant().prime());
 		guard = guard.assume(src.getClockInvariant());
@@ -418,7 +418,7 @@ public class Trace2PEACompiler {
 		// invariants in recursiveBuildTrans.
 		// Transition t = src.addTransition(dest, guard.prime(), resets);
 		final Transition t = src.addTransition(dest, guard, resets);
-		trans2phases.put(t, destBits);
+		mTrans2phases.put(t, destBits);
 	}
 
 	/**
@@ -457,12 +457,12 @@ public class Trace2PEACompiler {
 		}
 		mLogger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " (" + p
 				+ ") partial guards: " + guard + " inv: " + stateInv);
-		if (p == countertrace.getPhases().length) {
+		if (p == mCountertrace.getPhases().length) {
 			// If countertrace automata are built, the phase satisfying the
 			// formula is omitted. Building test automata
 			// (this.buildTotal==true)
 			// the phase needs to be constructed.
-			if (buildTotal || (active & 1 << p - 1) == 0) {
+			if (mBuildTotal || (active & 1 << p - 1) == 0) {
 				mLogger.debug("Adding new transition");
 				buildNewTrans(srcBits, src, guard, stateInv, resets, new PhaseBits(active, exactbound, waiting));
 			}
@@ -475,7 +475,7 @@ public class Trace2PEACompiler {
 		 * For each dc-phase we have three different choices: We can keep it, we can enter it, and we can seep in it.
 		 */
 
-		final boolean canseepdest = ((active & ~waiting) << 1 & canPossiblySeep & pbit) != 0;
+		final boolean canseepdest = ((active & ~waiting) << 1 & mCanPossiblySeep & pbit) != 0;
 
 		/*
 		 * First we determine the condition under which phase p is not activated.
@@ -485,42 +485,42 @@ public class Trace2PEACompiler {
 			 * As we can enter this phase any time the phase predicate holds, we must make sure that the phase predicate
 			 * doesn't hold in the state invariant.
 			 */
-			recursiveBuildTrans(srcBits, src, guard, stateInv.and(countertrace.getPhases()[p].getInvariant().negate()),
+			recursiveBuildTrans(srcBits, src, guard, stateInv.and(mCountertrace.getPhases()[p].getInvariant().negate()),
 					resets, active, waiting, exactbound, p + 1);
 		} else {
 			/*
 			 * Make sure that the phase can neither be kept nor entered.
 			 */
 			final CDD leave =
-					guard.and(cEnter[p].or(cKeep[p]).and(countertrace.getPhases()[p].getInvariant().prime()).negate());
+					guard.and(mCEnter[p].or(mCKeep[p]).and(mCountertrace.getPhases()[p].getInvariant().prime()).negate());
 			if (leave != CDD.FALSE) {
 				recursiveBuildTrans(srcBits, src, leave, stateInv, resets, active, waiting, exactbound, p + 1);
 			}
 		}
 
 		/* As we activate the phase make sure that its predicate holds */
-		stateInv = stateInv.and(countertrace.getPhases()[p].getInvariant());
+		stateInv = stateInv.and(mCountertrace.getPhases()[p].getInvariant());
 
 		final String[] resetsPlus = new String[resets.length + 1];
 		System.arraycopy(resets, 0, resetsPlus, 0, resets.length);
-		resetsPlus[resets.length] = clock[p];
+		resetsPlus[resets.length] = mClock[p];
 
-		if (countertrace.getPhases()[p].getBoundType() > 0) {
+		if (mCountertrace.getPhases()[p].getBoundType() > 0) {
 			/*
 			 * This phase has a lower bound (> or >=):
 			 *
 			 * If we can keep it we should do so.
 			 */
-			final CDD keep = guard.and(cKeep[p]);
+			final CDD keep = guard.and(mCKeep[p]);
 			if (keep != CDD.FALSE) {
 				if ((srcBits.waiting & pbit) != 0) {
 					/*
 					 * if previous state was waiting, we can either keep waiting, or enter non-waiting state.
 					 */
-					recursiveBuildTrans(srcBits, src, keep.and(cless[p]), stateInv, resets, active | pbit,
+					recursiveBuildTrans(srcBits, src, keep.and(mCless[p]), stateInv, resets, active | pbit,
 							waiting | pbit, exactbound | srcBits.exactbound & pbit, p + 1);
 
-					recursiveBuildTrans(srcBits, src, keep.and(cless[p].negate()), stateInv, resets, active | pbit,
+					recursiveBuildTrans(srcBits, src, keep.and(mCless[p].negate()), stateInv, resets, active | pbit,
 							waiting, exactbound, p + 1);
 				} else {
 					/* We can keep it in non-waiting state. */
@@ -536,16 +536,16 @@ public class Trace2PEACompiler {
 			 * We must not reenter the state if we can stay in it. We must enter it through the waiting phase. If this
 			 * is a greater equal phase we need to set the exactbound if we enter directly, (not via seep through rule).
 			 */
-			if (countertrace.getPhases()[p].getBoundType() == CounterTrace.BOUND_GREATEREQUAL) {
-				final CDD enterExact = remaining.and(cEnter[p]);
+			if (mCountertrace.getPhases()[p].getBoundType() == CounterTrace.BOUND_GREATEREQUAL) {
+				final CDD enterExact = remaining.and(mCEnter[p]);
 				if (enterExact != CDD.FALSE) {
 					mLogger.debug("Phase " + p + " can be entered exact");
 					recursiveBuildTrans(srcBits, src, enterExact, stateInv, resetsPlus, active | pbit, waiting | pbit,
 							exactbound | pbit, p + 1);
 				}
-				enterStrict = canseepdest ? remaining.and(cEnter[p].negate()) : CDD.FALSE;
+				enterStrict = canseepdest ? remaining.and(mCEnter[p].negate()) : CDD.FALSE;
 			} else {
-				enterStrict = canseepdest ? remaining : remaining.and(cEnter[p]);
+				enterStrict = canseepdest ? remaining : remaining.and(mCEnter[p]);
 			}
 
 			/*
@@ -555,7 +555,7 @@ public class Trace2PEACompiler {
 				recursiveBuildTrans(srcBits, src, enterStrict, stateInv, resetsPlus, active | pbit, waiting | pbit,
 						exactbound, p + 1);
 			}
-		} else if (countertrace.getPhases()[p].getBoundType() < 0) {
+		} else if (mCountertrace.getPhases()[p].getBoundType() < 0) {
 			/*
 			 * This phase has an upper bound ( < or <=):
 			 *
@@ -570,7 +570,7 @@ public class Trace2PEACompiler {
 				CDD enterNormal, enterExact, keep;
 
 				if ((canseep(srcBits) & pbit) != 0) {
-					if (countertrace.getPhases()[p].getBoundType() == CounterTrace.BOUND_LESS) {
+					if (mCountertrace.getPhases()[p].getBoundType() == CounterTrace.BOUND_LESS) {
 						/*
 						 * For less bounds this phase never has an exact bound.
 						 */
@@ -580,19 +580,19 @@ public class Trace2PEACompiler {
 						/*
 						 * For lessequal bounds this phase has an exact bound iff all forbidden events are satisfied.
 						 */
-						enterNormal = guard.and(cEnter[p].negate());
-						enterExact = guard.and(cEnter[p]);
+						enterNormal = guard.and(mCEnter[p].negate());
+						enterExact = guard.and(mCEnter[p]);
 					}
 					keep = CDD.FALSE;
 				} else {
-					if (countertrace.getPhases()[p].getBoundType() == CounterTrace.BOUND_LESS) {
-						enterNormal = guard.and(cEnter[p]);
+					if (mCountertrace.getPhases()[p].getBoundType() == CounterTrace.BOUND_LESS) {
+						enterNormal = guard.and(mCEnter[p]);
 						enterExact = CDD.FALSE;
 					} else {
 						enterNormal = CDD.FALSE;
-						enterExact = guard.and(cEnter[p]);
+						enterExact = guard.and(mCEnter[p]);
 					}
-					keep = guard.and(cKeep[p].and(cEnter[p].negate()));
+					keep = guard.and(mCKeep[p].and(mCEnter[p].negate()));
 				}
 
 				if (enterNormal != CDD.FALSE) {
@@ -617,7 +617,7 @@ public class Trace2PEACompiler {
 
 			CDD enterKeep = guard;
 			if (!canseepdest) {
-				enterKeep = guard.and(cKeep[p].or(cEnter[p]));
+				enterKeep = guard.and(mCKeep[p].or(mCEnter[p]));
 			}
 			if (enterKeep != CDD.FALSE) {
 				recursiveBuildTrans(srcBits, src, enterKeep, stateInv, resets, active | pbit, waiting, exactbound,
@@ -640,7 +640,7 @@ public class Trace2PEACompiler {
 	 */
 	private void findTrans(final PhaseBits srcBits, final Phase src) {
 		initTrans(srcBits);
-		recursiveBuildTrans(srcBits, src, noSyncEvent, CDD.TRUE, new String[0], 0, 0, 0, 0);
+		recursiveBuildTrans(srcBits, src, mNoSyncEvent, CDD.TRUE, new String[0], 0, 0, 0, 0);
 	}
 
 	/**
@@ -662,20 +662,20 @@ public class Trace2PEACompiler {
 		final PhaseBits initHash = new PhaseBits(0, 0, 0);
 		Phase start = null;
 
-		noSyncEvent = CDD.TRUE;
-		if (entrySync != null) {
-			noSyncEvent = noSyncEvent.and(entrySync.negate());
+		mNoSyncEvent = CDD.TRUE;
+		if (mEntrySync != null) {
+			mNoSyncEvent = mNoSyncEvent.and(mEntrySync.negate());
 		}
-		if (exitSync != null) {
-			noSyncEvent = noSyncEvent.and(exitSync.negate());
+		if (mExitSync != null) {
+			mNoSyncEvent = mNoSyncEvent.and(mExitSync.negate());
 		}
 
 		precomputeCDDs();
-		for (int i = 0; i < countertrace.getPhases().length; i++) {
-			cEnter[i] = cKeep[i] = CDD.FALSE;
+		for (int i = 0; i < mCountertrace.getPhases().length; i++) {
+			mCEnter[i] = mCKeep[i] = CDD.FALSE;
 		}
 
-		if (entrySync != null) {
+		if (mEntrySync != null) {
 			/*
 			 * Test automata method <p>
 			 *
@@ -688,22 +688,22 @@ public class Trace2PEACompiler {
 			 */
 
 			mLogger.debug("Trying to add transitions from start state");
-			start = new Phase(Trace2PEACompiler.START + "_" + name, CDD.TRUE, CDD.TRUE);
-			start.addTransition(start, noSyncEvent.prime(), new String[0]);
-			for (int i = 0; i < countertrace.getPhases().length; i++) {
-				if ((canPossiblySeep & 1 << i) == 0) {
+			start = new Phase(Trace2PEACompiler.START + "_" + mName, CDD.TRUE, CDD.TRUE);
+			start.addTransition(start, mNoSyncEvent.prime(), new String[0]);
+			for (int i = 0; i < mCountertrace.getPhases().length; i++) {
+				if ((mCanPossiblySeep & 1 << i) == 0) {
 					break;
 				}
 
-				cEnter[i] = enter[i];
+				mCEnter[i] = mEnter[i];
 
-				if (!countertrace.getPhases()[i].isAllowEmpty()) {
+				if (!mCountertrace.getPhases()[i].isAllowEmpty()) {
 					break;
 				}
 			}
-			recursiveBuildTrans(initHash, start, entrySync.and(exitSync.negate()), CDD.TRUE, new String[0], 0, 0, 0, 0);
+			recursiveBuildTrans(initHash, start, mEntrySync.and(mExitSync.negate()), CDD.TRUE, new String[0], 0, 0, 0, 0);
 
-			init = new Phase[] { start };
+			mInit = new Phase[] { start };
 			mLogger.debug("Adding transitions from start state successful");
 		} else {
 			mLogger.debug("Bulding initial transitions");
@@ -712,25 +712,25 @@ public class Trace2PEACompiler {
 			 * Special case: Initially we can enter the first phases, up to the first one that does not allowEnter or
 			 * requires entry events.
 			 */
-			for (int i = 0; i < countertrace.getPhases().length; i++) {
-				if ((canPossiblySeep & 1 << i) == 0) {
+			for (int i = 0; i < mCountertrace.getPhases().length; i++) {
+				if ((mCanPossiblySeep & 1 << i) == 0) {
 					break;
 				}
 
 				/*
 				 * set cEnter[i] to TRUE instead of enter[i], as there cannot be an entry event at the start.
 				 */
-				cEnter[i] = CDD.TRUE;
+				mCEnter[i] = CDD.TRUE;
 
-				if (!countertrace.getPhases()[i].isAllowEmpty()) {
+				if (!mCountertrace.getPhases()[i].isAllowEmpty()) {
 					break;
 				}
 			}
-			recursiveBuildTrans(initHash, dummyinit, noSyncEvent, CDD.TRUE, new String[0], 0, 0, 0, 0);
+			recursiveBuildTrans(initHash, dummyinit, mNoSyncEvent, CDD.TRUE, new String[0], 0, 0, 0, 0);
 
 			final List<Transition> initTrans = dummyinit.getTransitions();
 			final int initSize = initTrans.size();
-			init = new Phase[initSize];
+			mInit = new Phase[initSize];
 			for (int i = 0; i < initSize; i++) {
 				final Transition trans = initTrans.get(i);
 				if (trans.dest.getName().equals("st")) {
@@ -738,67 +738,67 @@ public class Trace2PEACompiler {
 					 * If the first phase is not a true phase we need a special state to enter the garbage state "st"
 					 * only if the predicate of the first phase does not hold.
 					 */
-					start = new Phase("stinit", countertrace.getPhases()[0].getInvariant().negate(), CDD.TRUE);
-					start.addTransition(trans.dest, noSyncEvent.prime(), new String[0]);
+					start = new Phase("stinit", mCountertrace.getPhases()[0].getInvariant().negate(), CDD.TRUE);
+					start.addTransition(trans.dest, mNoSyncEvent.prime(), new String[0]);
 					/* for completeness add stutter-step edge */
-					start.addTransition(start, noSyncEvent.prime(), new String[0]);
-					init[i] = start;
+					start.addTransition(start, mNoSyncEvent.prime(), new String[0]);
+					mInit[i] = start;
 				} else {
 					/*
 					 * For all other states the guard of trans should already equal the state invariant, so we do not
 					 * need to add an extra state
 					 */
-					init[i] = trans.dest;
+					mInit[i] = trans.dest;
 				}
 			}
 		}
 
 		mLogger.debug("Building automaton");
-		while (!todo.isEmpty()) {
-			final PhaseBits srcBits = todo.remove(0);
-			final Phase src = allPhases.get(srcBits);
+		while (!mTodo.isEmpty()) {
+			final PhaseBits srcBits = mTodo.remove(0);
+			final Phase src = mAllPhases.get(srcBits);
 			findTrans(srcBits, src);
 		}
 		mLogger.debug("Automaton complete");
 
-		final Phase[] phases = new Phase[(start != null ? 1 : 0) + allPhases.size() + (exitSync != null ? 1 : 0)];
+		final Phase[] phases = new Phase[(start != null ? 1 : 0) + mAllPhases.size() + (mExitSync != null ? 1 : 0)];
 
-		final Phase[] finalPhases = exitSync != null ? new Phase[1] : null;
+		final Phase[] finalPhases = mExitSync != null ? new Phase[1] : null;
 
 		int phaseNr = 0;
 		if (start != null) {
 			phases[phaseNr++] = start;
 		}
-		final Iterator<Phase> iter = allPhases.values().iterator();
+		final Iterator<Phase> iter = mAllPhases.values().iterator();
 		while (iter.hasNext()) {
 			phases[phaseNr++] = iter.next();
 		}
-		if (exitSync != null) {
+		if (mExitSync != null) {
 			mLogger.debug("Trying to add transitions to final state");
 			phases[phaseNr++] = buildExitSyncTransitions();
 			finalPhases[0] = phases[phaseNr - 1];
 		}
 		final ArrayList<String> peaClocks = new ArrayList<>();
-		for (int i = 0; i < clock.length; i++) {
-			if (clock[i] != null) {
-				if (!clock[i].equals("")) {
-					peaClocks.add(clock[i]);
+		for (int i = 0; i < mClock.length; i++) {
+			if (mClock[i] != null) {
+				if (!mClock[i].equals("")) {
+					peaClocks.add(mClock[i]);
 				}
 			}
 		}
 		final HashMap<String, String> variables = new HashMap<>();
 		final HashSet<String> events = new HashSet<>();
-		for (int i = 0; i < countertrace.getPhases().length; i++) {
-			addVariables(countertrace.getPhases()[i].getEntryEvents(), variables, events);
-			addVariables(countertrace.getPhases()[i].getInvariant(), variables, events);
-			events.addAll(countertrace.getPhases()[i].getForbid());
+		for (int i = 0; i < mCountertrace.getPhases().length; i++) {
+			addVariables(mCountertrace.getPhases()[i].getEntryEvents(), variables, events);
+			addVariables(mCountertrace.getPhases()[i].getInvariant(), variables, events);
+			events.addAll(mCountertrace.getPhases()[i].getForbid());
 		}
 
 		PhaseEventAutomata pea;
-		if (exitSync != null) {
-			pea = new PEATestAutomaton(name, phases, init, peaClocks, finalPhases).removeUnreachableLocations();
+		if (mExitSync != null) {
+			pea = new PEATestAutomaton(mName, phases, mInit, peaClocks, finalPhases).removeUnreachableLocations();
 		} else {
-			pea = new PhaseEventAutomata(name, phases, init, peaClocks, variables, events, null);
+			pea = new PhaseEventAutomata(mName, phases, mInit, peaClocks, variables, events, null);
 		}
 
 		return pea;
@@ -818,7 +818,7 @@ public class Trace2PEACompiler {
 				final String oldType = variables.get(entry.getKey());
 				final String newType = entry.getValue();
 				if (oldType != null && newType != null && !oldType.equals(entry.getValue())) {
-					throw new IllegalArgumentException(name + " Variable with conflicting type declared: "
+					throw new IllegalArgumentException(mName + " Variable with conflicting type declared: "
 							+ entry.getKey() + " : " + oldType + " vs. " + entry.getValue());
 				}
 				if (oldType != null && newType == null) {
@@ -853,27 +853,27 @@ public class Trace2PEACompiler {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace
 	 */
 	private Phase buildExitSyncTransitions() {
-		final Phase exit = new Phase(Trace2PEACompiler.FINAL + "_" + name, CDD.TRUE, CDD.TRUE);
+		final Phase exit = new Phase(Trace2PEACompiler.FINAL + "_" + mName, CDD.TRUE, CDD.TRUE);
 		final String[] noResets = {};
-		exit.addTransition(exit, noSyncEvent.prime(), noResets);
+		exit.addTransition(exit, mNoSyncEvent.prime(), noResets);
 
-		CDD exitGuard = exitSync;
-		if (entrySync != null) {
-			exitGuard = exitGuard.and(entrySync.negate());
+		CDD exitGuard = mExitSync;
+		if (mEntrySync != null) {
+			exitGuard = exitGuard.and(mEntrySync.negate());
 		}
 
-		final Iterator<PhaseBits> iter = allPhases.keySet().iterator();
+		final Iterator<PhaseBits> iter = mAllPhases.keySet().iterator();
 		while (iter.hasNext()) {
 			final PhaseBits pBits = iter.next();
-			final Phase ph = allPhases.get(pBits);
+			final Phase ph = mAllPhases.get(pBits);
 
-			CDD guard = complete(pBits, countertrace.getPhases().length - 1).and(missingEvents);
-			if (!spec) {
+			CDD guard = complete(pBits, mCountertrace.getPhases().length - 1).and(mMissingEvents);
+			if (!mSpec) {
 				guard = guard.negate();
 			}
 			if (guard != CDD.FALSE) {
 				final Transition t = ph.addTransition(exit, guard.and(exitGuard).prime(), noResets);
-				trans2phases.put(t, new PhaseBits(0, 0, 0));
+				mTrans2phases.put(t, new PhaseBits(0, 0, 0));
 			}
 		}
 		return exit;
@@ -883,14 +883,14 @@ public class Trace2PEACompiler {
 	 * @return Returns the entrySync.
 	 */
 	public CDD getEntrySync() {
-		return entrySync;
+		return mEntrySync;
 	}
 
 	/**
 	 * @return Returns the exitSync.
 	 */
 	public CDD getExitSync() {
-		return exitSync;
+		return mExitSync;
 	}
 
 }
