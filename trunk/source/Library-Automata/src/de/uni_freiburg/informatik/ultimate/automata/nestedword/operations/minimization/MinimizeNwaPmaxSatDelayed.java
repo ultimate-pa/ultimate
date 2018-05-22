@@ -5,16 +5,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2.Settings;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.IAssignmentCheckerAndGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.InteractiveMaxSatSolver;
@@ -29,8 +26,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Pair<STATE, STATE>> {
-
-	
 	public enum PreprocessingMode {
 		/**
 		 * Initial partition.
@@ -45,18 +40,17 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 		 */
 		NONE
 	}
-	
+
 	final BiPredicate<STATE, STATE> nothingMergedYet = new BiPredicate<STATE, STATE>() {
-		
-		public boolean test(STATE t, STATE u) {
+		@Override
+		public boolean test(final STATE t, final STATE u) {
 			return false;
 		}
-		
 	};
-	
+
 	/**
 	 * Constructor that should be called by the automata script interpreter.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -72,10 +66,10 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 		this(services, stateFactory, operand, createAtsInitialPairs(services, operand),
 				new Settings<STATE>().setLibraryMode(false));
 	}
-	
+
 	/**
 	 * Constructor with initial pairs.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -96,19 +90,21 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 		this(services, stateFactory, operand, createNestedMapWithInitialPairs(initialPairs), settings);
 	}
 
-	public MinimizeNwaPmaxSatDelayed(AutomataLibraryServices services, IMinimizationStateFactory<STATE> stateFactory,
-			IDoubleDeckerAutomaton<LETTER, STATE> operand, NestedMap2<STATE, STATE, Pair<STATE, STATE>> statePair2Var,
-			de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2.Settings<STATE> settings) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings, statePair2Var);
-		
+	public MinimizeNwaPmaxSatDelayed(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> statePair2Var, final Settings<STATE> settings)
+			throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand, settings, statePair2Var, null);
+
 		mEmptyStackState = mOperand.getEmptyStackState();
 
 		mSettings.setUseInternalCallConstraints(false);
-		NwaApproximateDelayedSimulation<LETTER,STATE> approximateSimulation = new NwaApproximateDelayedSimulation<LETTER, STATE>(mServices, mOperand, nothingMergedYet);
+		final NwaApproximateDelayedSimulation<LETTER, STATE> approximateSimulation =
+				new NwaApproximateDelayedSimulation<>(mServices, mOperand, nothingMergedYet);
 		mSpoilerWinnings = approximateSimulation.getSpoilerWinningStates();
 		mDuplicatorFollowing = approximateSimulation.getDuplicatorEventuallyAcceptingStates();
 		mSimulation = approximateSimulation.computeOrdinarySimulation();
-		
+
 		printStartMessage();
 
 		run();
@@ -123,7 +119,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 	private static final Pair[] EMPTY_LITERALS = new Pair[0];
 	private STATE mEmptyStackState;
 	private ScopedConsistencyGeneratorDelayedSimulationPair<STATE, LETTER, STATE> mConsistencyGenerator;
-	
+
 	final ISetOfPairs<STATE, ?> mSpoilerWinnings;
 	final ISetOfPairs<STATE, ?> mDuplicatorFollowing;
 	final ISetOfPairs<STATE, ?> mSimulation;
@@ -132,21 +128,21 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		switch (PREPROCESSING_STANDALONE) {
-		//FIXME: The partition part should probably look different
-		case PARTITION:
-			return createPairs(operand.getStates());
-		case PAIRS:
-			return createPairs(operand.getStates());
-		case NONE:
-			return createPairs(operand.getStates());
-		default:
-			throw new IllegalArgumentException("Unknown mode: " + PREPROCESSING_STANDALONE);
+			//FIXME: The partition part should probably look different
+			case PARTITION:
+				return createPairs(operand.getStates());
+			case PAIRS:
+				return createPairs(operand.getStates());
+			case NONE:
+				return createPairs(operand.getStates());
+			default:
+				throw new IllegalArgumentException("Unknown mode: " + PREPROCESSING_STANDALONE);
+		}
+
 	}
-			
-	}
-	
+
 	//FIXME: This should be used for pair creation, but the static reference to mSpoilerWinnings is an issue
-/*	
+/*
 	private static <STATE, LETTER> Iterable<Pair<STATE, STATE>> createPairsWithSpoilerWinning(final AutomataLibraryServices services, IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		Set<STATE> states = operand.getStates();
 		final List<Pair<STATE, STATE>> result = new ArrayList<>(states.size() * states.size());
@@ -154,19 +150,20 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 		for (final STATE state1 : states) {
 			for (final STATE state2 : states) {
 				if(mSpoilerWinnings.containsPair(state1, state2)) {
-					result.add(new Pair<>(state1, state2));	
+					result.add(new Pair<>(state1, state2));
 				}
 			}
 		}
-		
+
 		return result;
 	}
 */
-	
+
 	@Override
 	protected AbstractMaxSatSolver<Pair<STATE, STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorPair<>(mSettings.isUsePathCompression());
-		mConsistencyGenerator = new ScopedConsistencyGeneratorDelayedSimulationPair<STATE, LETTER, STATE>(mSettings.isUsePathCompression(), mServices, mOperand);
+		mConsistencyGenerator = new ScopedConsistencyGeneratorDelayedSimulationPair<>(mSettings.isUsePathCompression(),
+				mServices, mOperand);
 		final List<IAssignmentCheckerAndGenerator<Pair<STATE, STATE>>> assignmentCheckerAndGeneratorList =
 				new ArrayList<>();
 		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
@@ -176,17 +173,16 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 
 	@Override
 	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
-		Set<STATE> stateSet = computeDuplicatorComplement(mDuplicatorFollowing, mSimulation);
+		final Set<STATE> stateSet = computeDuplicatorComplement(mDuplicatorFollowing, mSimulation);
 		final STATE[] states = constructStateArray(stateSet);
 		generateVariablesHelper(states);
 		checkTimeout(GENERATING_VARIABLES);
 	}
-	
+
 	protected void generateVariablesHelper(final STATE[] states) {
 		if (states.length <= 1) {
 			return;
 		}
-		
 
 		for (int i = 0; i < states.length; i++) {
 			final STATE stateI = states[i];
@@ -195,7 +191,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 			if (mTransitivityGenerator != null) {
 				mTransitivityGenerator.addContent(stateI);
 			}
-			
+
 			// add to consistency generator
 			if (mConsistencyGenerator != null) {
 				mConsistencyGenerator.addContent(stateI);
@@ -203,39 +199,40 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 
 			for (int j = 0; j < i; j++) {
 				final STATE stateJ = states[j];
-				final Pair<STATE, STATE> pair1 = new Pair<STATE, STATE>(stateI, stateJ);
-				final Pair<STATE, STATE> pair2 = new Pair<STATE, STATE>(stateJ, stateI);
+				final Pair<STATE, STATE> pair1 = new Pair<>(stateI, stateJ);
+				final Pair<STATE, STATE> pair2 = new Pair<>(stateJ, stateI);
 				mStatePair2Var.put(stateI, stateJ, pair1);
 				mStatePair2Var.put(stateJ, stateI, pair2);
 				mSolver.addVariable(pair1);
 				mSolver.addVariable(pair2);
-				
-				if(!mSpoilerWinnings.containsPair(stateI, stateJ)) {
+
+				if (!mSpoilerWinnings.containsPair(stateI, stateJ)) {
 					setVariableFalse(pair1);
 				}
-				
-				if(!mSpoilerWinnings.containsPair(stateJ, stateI)) {
+
+				if (!mSpoilerWinnings.containsPair(stateJ, stateI)) {
 					setVariableFalse(pair2);
 				}
 			}
 		}
 	}
-		
-	private Set<STATE> computeDuplicatorComplement(ISetOfPairs<STATE, ?> duplicatorFollowing, ISetOfPairs<STATE, ?> allPairs) {
-			Set<STATE> complement = new HashSet<STATE>();
-			
-		for(Pair<STATE, STATE> pair : allPairs) {
-			if(!duplicatorFollowing.containsPair(pair.getFirst(), pair.getSecond())) {
+
+	private Set<STATE> computeDuplicatorComplement(final ISetOfPairs<STATE, ?> duplicatorFollowing,
+			final ISetOfPairs<STATE, ?> allPairs) {
+		final Set<STATE> complement = new HashSet<>();
+
+		for (final Pair<STATE, STATE> pair : allPairs) {
+			if (!duplicatorFollowing.containsPair(pair.getFirst(), pair.getSecond())) {
 				complement.add(pair.getFirst());
 				complement.add(pair.getSecond());
 			}
 		}
-			
+
 		return complement;
 	}
 
 	@Override
-	protected boolean isInitialPair(STATE state1, STATE state2) {
+	protected boolean isInitialPair(final STATE state1, final STATE state2) {
 		if (state1.equals(mEmptyStackState) || state2.equals(mEmptyStackState)) {
 			return false;
 		}
@@ -248,24 +245,23 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 
 		return rhsStates.containsKey(state2);
 	}
-	
-	
+
 	//TODO: All methods below are identical in MinimizeNwaPmaxSatDirect, so there could be a common superclass
-	
+
 	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
-	createNestedMapWithInitialPairs(final Iterable<Pair<STATE, STATE>> initialPairs) {
-			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
-			for (final Pair<STATE, STATE> pair : initialPairs) {
-				if (!pair.getFirst().equals(pair.getSecond())) {
-					// only include non-reflexive pairs
-					result.put(pair.getFirst(), pair.getSecond(), pair);
-					}
+			createNestedMapWithInitialPairs(final Iterable<Pair<STATE, STATE>> initialPairs) {
+		final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
+		for (final Pair<STATE, STATE> pair : initialPairs) {
+			if (!pair.getFirst().equals(pair.getSecond())) {
+				// only include non-reflexive pairs
+				result.put(pair.getFirst(), pair.getSecond(), pair);
 			}
-			return result;
+		}
+		return result;
 	}
-	
+
 	@Override
-	protected void generateTransitionAndTransitivityConstraints(boolean addTransitivityConstraints)
+	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException {
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePair2Var.entrySet()) {
 			checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
@@ -288,7 +284,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 			generateTransitionConstraintsHelperReturnSameLinPred(state, getDownStatesArray(state));
 		}
 	}
-	
+
 	private void generateTransitivityConstraints(final Pair<STATE, STATE> pair12) {
 		final Map<STATE, Pair<STATE, STATE>> state2to3s = mStatePair2Var.get(pair12.getSecond());
 		if (state2to3s == null) {
@@ -343,7 +339,7 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 	}
 
 	@Override
-	protected boolean isInitialPair(Pair<STATE, STATE> pair) {
+	protected boolean isInitialPair(final Pair<STATE, STATE> pair) {
 		return isInitialPair(pair.getFirst(), pair.getSecond());
 	}
 
@@ -358,22 +354,22 @@ public class MinimizeNwaPmaxSatDelayed<LETTER, STATE> extends MinimizeNwaMaxSat2
 	}
 
 	@Override
-	protected void generateTransitionConstraintGeneralInternalCallHelper(Pair<STATE, STATE> predPair, Set<STATE> succs1,
-			Set<STATE> succs2) {
-		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, null);		
+	protected void generateTransitionConstraintGeneralInternalCallHelper(final Pair<STATE, STATE> predPair,
+			final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, null);
 	}
 
 	@Override
-	protected void generateTransitionConstraintGeneralReturnHelper(Pair<STATE, STATE> linPredPair, Pair<STATE, STATE> hierPredPair, Set<STATE> succs1,
-			Set<STATE> succs2) {
-		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2, null);		
+	protected void generateTransitionConstraintGeneralReturnHelper(final Pair<STATE, STATE> linPredPair,
+			final Pair<STATE, STATE> hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2, null);
 	}
 
 	@Override
-	protected boolean testOutgoingSymbols(Set<LETTER> letters1, Set<LETTER> letters2) {
+	protected boolean testOutgoingSymbols(final Set<LETTER> letters1, final Set<LETTER> letters2) {
 		return letters2.containsAll(letters1);
 	}
-	
+
 	private static <STATE> Iterable<Pair<STATE, STATE>> createPairs(final Set<STATE> states) {
 		final List<Pair<STATE, STATE>> result = new ArrayList<>(states.size() * states.size());
 		for (final STATE state1 : states) {

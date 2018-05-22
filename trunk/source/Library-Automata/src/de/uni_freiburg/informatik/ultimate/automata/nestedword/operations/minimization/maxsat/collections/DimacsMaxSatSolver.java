@@ -68,6 +68,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
  *            variable type
  */
 public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
+	// flag for not actually using the solver but only producing an output file
+	public static final boolean ONLY_PRODUCE_OUTPUT_FILE = false;
+
 	private static final String LINE_SEPARATOR = System.lineSeparator();
 	private static final String FILE_NAME_TMP = "dimacs.wcnf.tmp";
 	private static final String EXTENSION = ".wcnf";
@@ -79,7 +82,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 
 	private static final String RESULT_OUTPUT_BEGINNING = "s OPTIMUM FOUND";
 
-	private static final String HEADER = "c CNF\np wcnf ";
+	private static final String HEADER = getHeader(ONLY_PRODUCE_OUTPUT_FILE);
 	private static final char BLANK = ' ';
 	private static final char NEG = '-';
 	private static final String END_LINE = " 0" + LINE_SEPARATOR;
@@ -93,8 +96,6 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private final Map<V, String> mVar2NumberString;
 	private final ArrayList<V> mNumber2Var;
 	private Map<V, Boolean> mVar2Assignment;
-
-	private final String mMaxWeight;
 
 	/**
 	 * @param services
@@ -116,12 +117,11 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		mWriter = createWriter();
 		mVar2NumberString = new HashMap<>();
 		mNumber2Var = new ArrayList<>();
-		mMaxWeight = Integer.toString(Integer.MAX_VALUE);
 	}
 
 	@Override
 	public void addVariable(final V var) {
-		mVar2NumberString.put(var, Integer.toString(mVar2NumberString.size() + 1));
+		mVar2NumberString.put(var, Integer.toString(getNumberOfVariables() + 1));
 		mNumber2Var.add(var);
 	}
 
@@ -141,7 +141,8 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
 		++mClauses;
 		try {
-			mWriter.append(mMaxWeight);
+			// do not add the weight here, this will be done in a later stage
+
 			for (final V var : negativeAtoms) {
 				mWriter.append(BLANK).append(NEG).append(mVar2NumberString.get(var));
 			}
@@ -164,6 +165,9 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 
 		fixFile();
 
+		if (ONLY_PRODUCE_OUTPUT_FILE) {
+			return true;
+		}
 		// run external Max-SAT solver
 		final ArrayList<String> commands = new ArrayList<>(1);
 		commands.add(AHMAXSAT_COMMAND);
@@ -196,15 +200,16 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	@SuppressWarnings("squid:S1141")
 	private void fixFile() {
 		// new, final file
+		final String hardClauseWeight = Integer.toString(getNumberOfVariables() + 1);
 		try (Writer writer = new OutputStreamWriter(new FileOutputStream(mFilename), ENCODING)) {
 			// add header
 			// @formatter:off
 			writer.append(HEADER)
-					.append(Integer.toString(mVar2NumberString.size()))
+					.append(Integer.toString(getNumberOfVariables()))
 					.append(BLANK)
 					.append(Integer.toString(mClauses))
 					.append(BLANK)
-					.append(mMaxWeight)
+					.append(hardClauseWeight)
 					.append(LINE_SEPARATOR);
 			// @formatter:on
 
@@ -213,7 +218,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 				scanner.useDelimiter(LINE_SEPARATOR);
 				while (scanner.hasNext()) {
 					final String line = scanner.next();
-					writer.append(line).append(LINE_SEPARATOR);
+					writer.append(hardClauseWeight).append(line).append(LINE_SEPARATOR);
 				}
 			} catch (final FileNotFoundException e) {
 				throw new AssertionError(e);
@@ -327,5 +332,38 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	@Override
 	protected void decideOne() {
 		throw new UnsupportedOperationException();
+	}
+
+	private static String getHeader(final boolean onlyProduceOutputFile) {
+		final String header;
+		if (onlyProduceOutputFile) {
+			// add benchmark header
+			header = "c This file belongs to a set of benchmarks that was produced by a minimization \n"
+					+ "c of visibly pushdown automata [1, 2]. This minimization encodes the existence \n"
+					+ "c of an equivalence relation that is suitable for quotienting. The more soft \n"
+					+ "c clauses can be set to true, the more pairs of states can be merged. The \n"
+					+ "c input automata were produced by applying the software verifier Ultimate \n"
+					+ "c Automizer [3, 4] to C programs from the SV-COMP 2016 [5].\n" + "c\n"
+					+ "c License \"https://creativecommons.org/licenses/by/4.0/\"\n" + "c\n" + "c 2017-05-22, \n"
+					+ "c Matthias Heizmann (heizmann@informatik.uni-freiburg.de)\n"
+					+ "c Christian Schilling (schillic@informatik.uni-freiburg.de)\n" + "c\n"
+					+ "c [1] Matthias Heizmann, Christian Schilling, Daniel Tischner:\n"
+					+ "c Minimization of Visibly Pushdown Automata Using Partial Max-SAT.\n"
+					+ "c TACAS (1) 2017: 461-478\n"
+					+ "c [2] https://ultimate.informatik.uni-freiburg.de/automata_library\n"
+					+ "c [3] Matthias Heizmann, Jochen Hoenicke, Andreas Podelski:\n"
+					+ "c Software Model Checking for People Who Love Automata.\n" + "c CAV 2013:36-52\n"
+					+ "c [4] Matthias Heizmann, Yu-Wen Chen, Daniel Dietsch, Marius Greitschus, \n"
+					+ "c Alexander Nutz, Betim Musa, Claus Schätzle, Christian Schilling, Frank \n"
+					+ "c Schüssele, Andreas Podelski: Ultimate Automizer with an On-Demand \n"
+					+ "c Construction of Floyd-Hoare Automata - (Competition Contribution).\n"
+					+ "c TACAS (2) 2017: 394-398\n"
+					+ "c [5] Dirk Beyer: Reliable and Reproducible Competition Results with \n"
+					+ "c BenchExec and Witnesses (Report on SV-COMP 2016).\n" + "c TACAS 2016: 887-904\n" + "c\n"
+					+ "c CNF\np wcnf ";
+		} else {
+			header = "c CNF\np wcnf ";
+		}
+		return header;
 	}
 }

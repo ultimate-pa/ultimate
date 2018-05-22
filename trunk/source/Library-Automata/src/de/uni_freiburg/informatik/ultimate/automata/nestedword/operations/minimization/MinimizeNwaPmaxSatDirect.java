@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * Partial Max-SAT based minimization of NWA using (asymmetric) {@link Pair}s of states as variable type.<br>
  * In contrast to {@link MinimizeNwaPmaxSat}, this class works for simulation rather than bisimulation. Accrodingly, a
  * pair (q0, q1) means that the state q1 simulates the state q0.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Pair<STATE, STATE>> {
 	/**
 	 * Preprocessing mode.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public enum PreprocessingMode {
@@ -96,7 +96,7 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -115,7 +115,7 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 
 	/**
 	 * Constructor with initial pairs.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -138,7 +138,7 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 
 	/**
 	 * Constructor with initial pairs in internal data structure (publicly available for efficiency reasons).
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -156,7 +156,7 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialPairs, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings.setSolverModeGeneral(), removeReflexivePairs(initialPairs));
+		super(services, stateFactory, operand, settings.setSolverModeGeneral(), removeReflexivePairs(initialPairs), null);
 		mEmptyStackState = mOperand.getEmptyStackState();
 
 		// statistics
@@ -189,7 +189,7 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 	 * Creates the initial pairs for the automata script interpreter constructor.
 	 * <p>
 	 * The method allows for fast policy switching.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */

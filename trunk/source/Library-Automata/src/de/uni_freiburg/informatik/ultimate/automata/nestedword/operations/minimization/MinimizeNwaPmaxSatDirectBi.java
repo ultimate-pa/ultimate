@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,16 +46,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.IAssignmentCheckerAndGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.InteractiveMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableFactory.MergeDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
 /**
- * Partial Max-SAT based minimization of NWA using {@link MergeDoubleton} as variable type. 
+ * Partial Max-SAT based minimization of NWA using {@link MergeDoubleton} as variable type.
  * Minimization is done using direct simulation.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * 
+ *
  * @param <LETTER>
  *            letter type
  * @param <STATE>
@@ -75,7 +76,7 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -85,16 +86,16 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	
+
 	public MinimizeNwaPmaxSatDirectBi(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 				this(services, stateFactory, operand, new NwaApproximateBisimulation<>(services, operand, SimulationType.DIRECT).getResult(), new Settings<STATE>().setLibraryMode(false));
 	}
-	
+
 	/**
 	 * Full constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -112,15 +113,15 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	
+
 	public MinimizeNwaPmaxSatDirectBi(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-			super(services, stateFactory, operand, settings);
-			
-			printStartMessage(); 
-			
+			super(services, stateFactory, operand, settings, null);
+
+			printStartMessage();
+
 			mInitialPartition = initialPartition.getRelation();
 			mState2EquivalenceClass = new HashMap<>();
 			int largestBlockInitialPartition = 0;
@@ -145,7 +146,7 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 			printExitMessage();
 
 	}
-	
+
 	@Override
 	protected String createTaskDescription() {
 		return NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(getOperationName(), mOperand,
@@ -172,7 +173,7 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 					mNumberOfInitialPairs);
 		}
 	}
-	
+
 	@Override
 	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
 		for (final Set<STATE> equivalenceClass : mInitialPartition) {
@@ -198,14 +199,14 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 			}
 		}
 	}
-	
+
 	@Override
 	@SuppressWarnings("squid:S1698")
 	protected boolean isInitialPair(final STATE state1, final STATE state2) {
 		// equality intended here
 		return mState2EquivalenceClass.get(state1) == mState2EquivalenceClass.get(state2);
 	}
-	
+
 	@Override
 	protected void generateVariablesHelper(final STATE[] states) {
 		if (states.length <= 1) {
@@ -237,7 +238,7 @@ public class MinimizeNwaPmaxSatDirectBi<LETTER, STATE> extends MinimizeNwaPmaxSa
 			}
 		}
 	}
-	
+
 	@Override
 	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());

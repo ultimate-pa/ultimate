@@ -2,22 +2,22 @@
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * TODO For generating nondeterministic clauses, the order of the arguments is not specified. Hence we might want to
  * rearrange state1 and state2 such that we have either few long clauses or many short clauses (for all types of
  * transitions).
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
@@ -123,7 +123,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 */
 	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePair2Var)
+			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePair2Var, final String filename)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mTimer = System.currentTimeMillis();
@@ -131,7 +131,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		mStatePair2Var = statePair2Var;
 		mSettings = settings;
 		mSettings.validate(mOperand);
-		mSolver = createSolver();
+		mSolver = createSolver(filename);
 	}
 
 	@Override
@@ -139,10 +139,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		return mOperand;
 	}
 
-	private AbstractMaxSatSolver<T> createSolver() {
+	private AbstractMaxSatSolver<T> createSolver(final String filename) {
 		switch (mSettings.getSolverMode()) {
 			case EXTERNAL:
-				return new DimacsMaxSatSolver<>(mServices);
+				return new DimacsMaxSatSolver<>(mServices, filename);
 			case HORN:
 				return new HornMaxSatSolver<>(mServices);
 			case TRANSITIVITY:
@@ -704,7 +704,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 	/**
 	 * Getter for a {@link T}.
-	 * 
+	 *
 	 * @param state1
 	 *            state 1
 	 * @param state2
@@ -810,7 +810,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 	/**
 	 * Settings wrapper that allows a lean constructor for the user.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 * @param <STATE>
 	 *            state type
@@ -818,7 +818,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	public static class Settings<STATE> {
 		/**
 		 * Solver mode.
-		 * 
+		 *
 		 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 		 */
 		public enum SolverMode {
@@ -875,7 +875,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 		/**
 		 * Validates the settings object for inconsistencies.
-		 * 
+		 *
 		 * @param operand
 		 *            operand
 		 * @param <LETTER>
@@ -920,7 +920,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 		/**
 		 * Sets the solver mode to {@link SolverMode#EXTERNAL}.
-		 * 
+		 *
 		 * @return this
 		 */
 		public Settings<STATE> setSolverModeExternal() {
@@ -930,7 +930,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 		/**
 		 * Sets the solver mode to {@link SolverMode#TRANSITIVITY}.
-		 * 
+		 *
 		 * @return this
 		 */
 		public Settings<STATE> setSolverModeTransitivity() {
@@ -940,7 +940,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 		/**
 		 * Sets the solver mode to {@link SolverMode#GENERAL}.
-		 * 
+		 *
 		 * @return this
 		 */
 		public Settings<STATE> setSolverModeGeneral() {
@@ -973,7 +973,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 	/**
 	 * Given a pair of states, returns {@code true}.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public static class TrueBiPredicate<STATE> implements BiPredicate<STATE, STATE> {
@@ -985,7 +985,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 	/**
 	 * Given a pair of states, returns {@code true} iff the pair is in the backing relation.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public static class RelationBackedBiPredicate<STATE> implements BiPredicate<STATE, STATE> {

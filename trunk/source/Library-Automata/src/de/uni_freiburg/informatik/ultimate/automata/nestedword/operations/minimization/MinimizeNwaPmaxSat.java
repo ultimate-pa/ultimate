@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -28,25 +28,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
-import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.IAssignmentCheckerAndGenerator;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.InteractiveMaxSatSolver;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
-import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.DimacsMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.IPartition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -54,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * Partial Max-SAT based minimization of NWA using {@link Doubleton}s (symmetric pairs) of states as variable type.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -66,10 +56,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
 	@SuppressWarnings("rawtypes")
 	private static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
-	
+
 	/**
 	 * Constructor that should be called by the automata script interpreter.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -82,12 +72,12 @@ public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSa
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, new Settings<STATE>().setLibraryMode(false));
+		this(services, stateFactory, operand, new Settings<STATE>().setLibraryMode(false), null);
 	}
 
 	/**
 	 * Full constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -104,21 +94,26 @@ public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSa
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Settings<STATE> settings)
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final Settings<STATE> settings, final String filename)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings, new NestedMap2<>());
+		super(services, stateFactory, operand, settings, new NestedMap2<>(), filename);
 	}
 
+	@Override
 	protected abstract String createTaskDescription();
 
+	@Override
 	public void addStatistics(final AutomataOperationStatistics statistics) {
 		super.addStatistics(statistics);
 	}
 
+	@Override
 	protected abstract void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException;
 
 	protected abstract void generateVariablesHelper(final STATE[] states);
 
+	@Override
 	protected abstract void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints) throws AutomataOperationCanceledException;
 
 	protected void generateTransitionConstraints(final STATE[] states, final int firstStateIndex) {
@@ -197,6 +192,10 @@ public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSa
 		final UnionFind<STATE> resultingEquivalenceClasses = new UnionFind<>();
 		for (final STATE state : mOperand.getStates()) {
 			resultingEquivalenceClasses.makeEquivalenceClass(state);
+		}
+		if (mSolver instanceof DimacsMaxSatSolver && DimacsMaxSatSolver.ONLY_PRODUCE_OUTPUT_FILE) {
+			// early termination, only produce output file
+			return resultingEquivalenceClasses;
 		}
 		for (final Entry<Doubleton<STATE>, Boolean> entry : mSolver.getValues().entrySet()) {
 			if (entry.getValue() == null) {

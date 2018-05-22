@@ -22,38 +22,32 @@ import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-
 /**
- * Partial Max-SAT based minimization of NWA using {@link MergeDoubleton} as variable type. 
- * Minimization is done using delayed simulation.
- * 
+ * Partial Max-SAT based minimization of NWA using {@link MergeDoubleton} as variable type. Minimization is done using
+ * delayed simulation.
+ *
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  * @see MinimizeNwaMaxSat2
  */
-
-public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxSat<LETTER, STATE>{
-	
+public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxSat<LETTER, STATE> {
 	protected ScopedConsistencyGeneratorDelayedSimulation<Doubleton<STATE>, LETTER, STATE> mConsistencyGenerator;
 	final ISetOfPairs<STATE, ?> mSpoilerWinnings;
 	final ISetOfPairs<STATE, ?> mDuplicatorFollowing;
 	final ISetOfPairs<STATE, ?> mSimulation;
-	
-
 
 	final BiPredicate<STATE, STATE> nothingMergedYet = new BiPredicate<STATE, STATE>() {
-		
-		public boolean test(STATE t, STATE u) {
+		@Override
+		public boolean test(final STATE t, final STATE u) {
 			return false;
 		}
-		
 	};
-	
+
 	/**
 	 * Constructor that should be called by the automata script interpreter.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -71,7 +65,7 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 
 	/**
 	 * Full constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -89,48 +83,50 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	
-	public MinimizeNwaPmaxSatDelayedBi(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand, final Settings<STATE> settings) throws AutomataOperationCanceledException {
-		
-			super(services, stateFactory, operand, settings);
-			
-			printStartMessage();
-			
-			mSettings.setUseInternalCallConstraints(false);
-			NwaApproximateDelayedSimulation<LETTER,STATE> approximateSimulation = new NwaApproximateDelayedSimulation<LETTER, STATE>(mServices, mOperand, nothingMergedYet);
-			mSpoilerWinnings = approximateSimulation.getSpoilerWinningStates();
-			mDuplicatorFollowing = approximateSimulation.getDuplicatorEventuallyAcceptingStates();
-			mSimulation = approximateSimulation.computeOrdinarySimulation();
-					
-			run();
 
-			printExitMessage();
+	public MinimizeNwaPmaxSatDelayedBi(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final Settings<STATE> settings) throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand, settings, null);
+
+		printStartMessage();
+
+		mSettings.setUseInternalCallConstraints(false);
+		final NwaApproximateDelayedSimulation<LETTER, STATE> approximateSimulation =
+				new NwaApproximateDelayedSimulation<>(mServices, mOperand, nothingMergedYet);
+		mSpoilerWinnings = approximateSimulation.getSpoilerWinningStates();
+		mDuplicatorFollowing = approximateSimulation.getDuplicatorEventuallyAcceptingStates();
+		mSimulation = approximateSimulation.computeOrdinarySimulation();
+
+		run();
+
+		printExitMessage();
 	}
-	
+
 	@Override
 	public void addStatistics(final AutomataOperationStatistics statistics) {
 		super.addStatistics(statistics);
 	}
-	
+
 	@Override
 	protected String createTaskDescription() {
 		return null;
 	}
-	
+
+	@Override
 	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
-		
-		Set<STATE> stateSet = computeDuplicatorComplement(mDuplicatorFollowing, mSimulation);
+		final Set<STATE> stateSet = computeDuplicatorComplement(mDuplicatorFollowing, mSimulation);
 		final STATE[] states = constructStateArray(stateSet);
 		generateVariablesHelper(states);
 		checkTimeout(GENERATING_VARIABLES);
 	}
-	
-	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints) throws AutomataOperationCanceledException {
-		
-		Set<STATE> stateSet = computeDuplicatorComplement(mDuplicatorFollowing, mSimulation);
+
+	@Override
+	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
+			throws AutomataOperationCanceledException {
+		final Set<STATE> stateSet = computeDuplicatorComplement(mDuplicatorFollowing, mSimulation);
 		final STATE[] states = constructStateArray(stateSet);
-		
+
 		for (int i = 0; i < states.length; i++) {
 			generateTransitionConstraints(states, i);
 			checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
@@ -140,13 +136,12 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 			generateTransitivityConstraints(states);
 		}
 	}
-	
+
 	@Override
 	protected void generateVariablesHelper(final STATE[] states) {
 		if (states.length <= 1) {
 			return;
 		}
-		
 
 		for (int i = 0; i < states.length; i++) {
 			final STATE stateI = states[i];
@@ -155,7 +150,7 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 			if (mTransitivityGenerator != null) {
 				mTransitivityGenerator.addContent(stateI);
 			}
-			
+
 			// add to consistency generator
 			if (mConsistencyGenerator != null) {
 				mConsistencyGenerator.addContent(stateI);
@@ -167,18 +162,19 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 				mStatePair2Var.put(stateI, stateJ, doubleton);
 				mStatePair2Var.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
-				
-				if(!mSpoilerWinnings.containsPair(stateI, stateJ) || !mSpoilerWinnings.containsPair(stateJ, stateI)) {
+
+				if (!mSpoilerWinnings.containsPair(stateI, stateJ) || !mSpoilerWinnings.containsPair(stateJ, stateI)) {
 					setVariableFalse(doubleton);
 				}
 			}
 		}
 	}
-	
+
 	@Override
 	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());
-		mConsistencyGenerator = new ScopedConsistencyGeneratorDelayedSimulationDoubleton<STATE, LETTER, STATE>(mSettings.isUsePathCompression(), mServices, mOperand);
+		mConsistencyGenerator = new ScopedConsistencyGeneratorDelayedSimulationDoubleton<>(
+				mSettings.isUsePathCompression(), mServices, mOperand);
 		final List<IAssignmentCheckerAndGenerator<Doubleton<STATE>>> assignmentCheckerAndGeneratorList =
 				new ArrayList<>();
 		assignmentCheckerAndGeneratorList.add(mConsistencyGenerator);
@@ -187,27 +183,22 @@ public class MinimizeNwaPmaxSatDelayedBi<LETTER, STATE> extends MinimizeNwaPmaxS
 	}
 
 	@Override
-	protected boolean isInitialPair(STATE state1, STATE state2) {
-		
-		if(mSpoilerWinnings.containsPair(state1, state2) && mSpoilerWinnings.containsPair(state2, state1)) {
+	protected boolean isInitialPair(final STATE state1, final STATE state2) {
+		if (mSpoilerWinnings.containsPair(state1, state2) && mSpoilerWinnings.containsPair(state2, state1)) {
 			return true;
 		}
-		else {
-			return false;
-		}
+		return false;
 	}
-	
-	private Set<STATE> computeDuplicatorComplement(ISetOfPairs<STATE, ?> duplicatorFollowing, ISetOfPairs<STATE, ?> allPairs) {
-		Set<STATE> complement = new HashSet<STATE>();
-		
-		for(Pair<STATE, STATE> pair : allPairs) {
-			if(!duplicatorFollowing.containsPair(pair.getFirst(), pair.getSecond())) {
+
+	private Set<STATE> computeDuplicatorComplement(final ISetOfPairs<STATE, ?> duplicatorFollowing,
+			final ISetOfPairs<STATE, ?> allPairs) {
+		final Set<STATE> complement = new HashSet<>();
+		for (final Pair<STATE, STATE> pair : allPairs) {
+			if (!duplicatorFollowing.containsPair(pair.getFirst(), pair.getSecond())) {
 				complement.add(pair.getFirst());
 				complement.add(pair.getSecond());
 			}
 		}
-		
 		return complement;
 	}
-
 }
