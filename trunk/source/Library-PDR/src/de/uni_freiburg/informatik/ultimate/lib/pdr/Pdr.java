@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -72,6 +73,8 @@ public class Pdr<LOC extends IcfgLocation> {
 	private ManagedScript mScript;
 	private BasicPredicateFactory mPredicateFac;
 	private PredicateTransformer<Term, IPredicate, TransFormula> mPredTrans;
+	private IIcfg<LOC> mIcfg;
+	private CfgSmtToolkit mCsToolkit;
 
 	public Pdr(final ILogger logger, final IUltimateServiceProvider services, final Object settings) {
 		mLogger = logger;
@@ -80,14 +83,16 @@ public class Pdr<LOC extends IcfgLocation> {
 		mScript = null;
 		mPredicateFac = null;
 		mPredTrans = null;
+		mIcfg = null;
+		mCsToolkit = null;
 	}
 
 	PdrResult computePdr(final IIcfg<LOC> icfg, final IPredicateUnifier predicateUnifier) {
-		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
-
-		mScript = csToolkit.getManagedScript();
+		mCsToolkit = icfg.getCfgSmtToolkit();
+		mScript = mCsToolkit.getManagedScript();
 		mPredicateFac = predicateUnifier.getPredicateFactory();
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
+		mIcfg = icfg;
 
 		final Set<LOC> init = icfg.getInitialNodes();
 		final Set<LOC> error = IcfgUtils.getErrorLocations(icfg);
@@ -115,7 +120,7 @@ public class Pdr<LOC extends IcfgLocation> {
 			}
 		}
 
-		Integer level = 1;
+		Integer level = 0;
 
 		while (true) {
 			/**
@@ -134,8 +139,8 @@ public class Pdr<LOC extends IcfgLocation> {
 			 */
 			for (final IcfgEdge edge : error.iterator().next().getIncomingEdges()) {
 				final Term proofObligationTerm = edge.getTransformula().getFormula();
-				final Triple<Term, IcfgLocation, Integer> initialProofObligation =
-						new Triple<>(proofObligationTerm, edge.getSource(), level);
+				final Triple<Term, IcfgLocation, Integer> initialProofObligation = new Triple<>(proofObligationTerm,
+						edge.getSource(), level);
 				proofObligations.add(initialProofObligation);
 			}
 
@@ -160,12 +165,13 @@ public class Pdr<LOC extends IcfgLocation> {
 	/**
 	 * Blocking-phase, for blocking proof-obligations.
 	 *
-	 * @return false, if proof-obligation on level 0 is created true, if there is no proof-obligation left
+	 * @return false, if proof-obligation on level 0 is created true, if there
+	 *         is no proof-obligation left
 	 */
-	@SuppressWarnings("unchecked")
 	private boolean blockingPhase(final ArrayList<Triple<Term, IcfgLocation, Integer>> initialProofObligations) {
 
 		final Deque<Triple<Term, IcfgLocation, Integer>> proofObligations = new ArrayDeque<>(initialProofObligations);
+
 		while (!proofObligations.isEmpty()) {
 			final Triple<Term, IcfgLocation, Integer> proofObligation = proofObligations.pop();
 			final Term toBeBlocked = proofObligation.getFirst();
@@ -179,7 +185,9 @@ public class Pdr<LOC extends IcfgLocation> {
 				final Term primedtoBeBlocked = getPrimedTerm(toBeBlocked);
 				final LBool result = SmtUtils.checkSatTerm(mScript.getScript(),
 						SmtUtils.and(mScript.getScript(), predecessorFrame, transition, primedtoBeBlocked));
-				// TODO: Handle result
+				/**
+				 * If Sat generate new proof-obligation
+				 */
 				if (result == LBool.SAT) {
 					/**
 					 * Found Error trace
@@ -189,29 +197,50 @@ public class Pdr<LOC extends IcfgLocation> {
 					}
 
 					final BasicPredicate pred = mPredicateFac.newPredicate(primedtoBeBlocked);
-					/*
-					 * How does the weakest Precondition work?
-					 */
+
 					final Term preCondition;
+
 					if (predecessorTransition instanceof IIcfgInternalTransition) {
 						preCondition = mPredTrans.weakestPrecondition(pred, predecessorTransition.getTransformula());
+
 					} else if (predecessorTransition instanceof IIcfgCallTransition) {
-						// TODO: get the stuff from the Icfg
-						final TransFormula globalVarsAssignments = null;
-						final TransFormula oldVarAssignments = null;
-						final Set<IProgramNonOldVar> modifiableGlobals = null;
+						final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
+								.getGlobalVarsAssignment(predecessorTransition.getSucceedingProcedure());
+						final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
+								.getOldVarsAssignment(predecessorTransition.getSucceedingProcedure());
+						final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
+								.getModifiedBoogieVars(predecessorTransition.getSucceedingProcedure());
 						preCondition = mPredTrans.weakestPreconditionCall(pred, predecessorTransition.getTransformula(),
 								globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+
 					} else if (predecessorTransition instanceof IIcfgReturnTransition) {
 						throw new UnsupportedOperationException();
+
 					} else {
 						throw new UnsupportedOperationException(
 								"Unknown transition type: " + predecessorTransition.getClass().toString());
 					}
 
-					final Triple<Term, IcfgLocation, Integer> newProofObligation =
-							new Triple<>(preCondition, predecessor, level - 1);
+					final Triple<Term, IcfgLocation, Integer> newProofObligation = new Triple<>(preCondition,
+							predecessor, level - 1);
 					proofObligations.addFirst(newProofObligation);
+
+					/**
+					 * If Unsat strengthen the frames of the location
+					 */
+				} else if (result == LBool.UNSAT) {
+					for (int i = 0; i <= level; i++) {
+						Term fTerm = mFrames.get(location).get(i);
+						final Term negToBeBlocked = SmtUtils.neg(mScript.getScript(), toBeBlocked);
+						fTerm = SmtUtils.and(mScript.getScript(), fTerm, negToBeBlocked);
+						mFrames.get(location).set(i, fTerm);
+					}
+				} else{
+					/**
+					 * What do if unknown?
+					 * 
+					 */
+					throw new UnsupportedOperationException("what to do with unknown?");
 				}
 			}
 		}
