@@ -50,13 +50,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -228,9 +230,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
-	private void reportCounterexampleResult(final IcfgProgramExecution pe) {
-		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
+	private void reportCounterexampleResult(final IProgramExecution<IcfgEdge, Term> pe) {
+		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
+		if (!upreasons.isEmpty()) {
+			reportUnproveableResult(pe, upreasons);
 			return;
 		}
 		reportResult(new CounterExampleResult<>(getErrorPP(pe), Activator.PLUGIN_NAME,
@@ -251,7 +254,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportUnproveableResult(final IcfgProgramExecution pe,
+	private void reportUnproveableResult(final IProgramExecution<IcfgEdge, Term> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
@@ -292,9 +295,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	public static IcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
-		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+	public static IcfgLocation getErrorPP(final IProgramExecution<IcfgEdge, Term> pe) {
+		final int lastPosition = pe.getLength() - 1;
+		final IIcfgTransition<?> last = pe.getTraceElement(lastPosition).getTraceElement();
 		final IcfgLocation errorPP = last.getTarget();
 		return errorPP;
 	}

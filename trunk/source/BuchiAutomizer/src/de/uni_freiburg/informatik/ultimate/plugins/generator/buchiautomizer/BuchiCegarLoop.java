@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -100,7 +101,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.NcsbImplementation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -657,8 +657,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 		final NestedWord<LETTER> stem = mCounterexample.getStem().getWord();
 		final NestedWord<LETTER> loop = mCounterexample.getLoop().getWord();
 		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(stem.asList()));
-		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(loop.asList()));
+		overapproximations.putAll(Overapprox.getOverapproximations(stem.asList()));
+		overapproximations.putAll(Overapprox.getOverapproximations(loop.asList()));
 		return overapproximations;
 	}
 

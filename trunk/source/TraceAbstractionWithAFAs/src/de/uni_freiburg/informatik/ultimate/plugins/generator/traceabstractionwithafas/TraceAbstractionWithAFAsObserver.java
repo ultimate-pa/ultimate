@@ -37,25 +37,22 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHol
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -103,9 +100,9 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootAnnot, csToolkit, predicateFactory,
-				taBenchmarks, taPrefs, errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(),
-				mServices, mToolchainStorage);
+		final TAwAFAsCegarLoop<IcfgEdge> cegarLoop = new TAwAFAsCegarLoop<>("bla", rootAnnot, csToolkit,
+				predicateFactory, taBenchmarks, taPrefs, errNodesOfAllProc, taPrefs.interpolation(),
+				taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 
 		final Result result = cegarLoop.iterate();
 
@@ -153,17 +150,17 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
-	private void reportCounterexampleResult(final IcfgProgramExecution pe) {
-		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
+	private void reportCounterexampleResult(final IProgramExecution<IcfgEdge, Term> pe) {
+		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
+		if (!upreasons.isEmpty()) {
+			reportUnproveableResult(pe, upreasons);
 			return;
 		}
-
 		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportUnproveableResult(final IcfgProgramExecution pe,
+	private void reportUnproveableResult(final IProgramExecution<IcfgEdge, Term> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final BoogieIcfgLocation errorPP = getErrorPP(pe);
 		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
@@ -171,24 +168,11 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		reportResult(uknRes);
 	}
 
-	public BoogieIcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
-		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+	public BoogieIcfgLocation getErrorPP(final IProgramExecution<IcfgEdge, Term> pe) {
+		final int lastPosition = pe.getLength() - 1;
+		final IcfgEdge last = pe.getTraceElement(lastPosition).getTraceElement();
 		final BoogieIcfgLocation errorPP = (BoogieIcfgLocation) last.getTarget();
 		return errorPP;
-	}
-
-	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs) {
-		for (final BoogieIcfgLocation errorIpp : errorLocs) {
-			final BoogieIcfgLocation errorLoc = errorIpp;
-			final ILocation origin = errorLoc.getBoogieASTNode().getLocation();
-			String timeOutMessage =
-					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
-			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
-					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
-			reportResult(timeOutRes);
-		}
 	}
 
 	private void reportResult(final IResult res) {

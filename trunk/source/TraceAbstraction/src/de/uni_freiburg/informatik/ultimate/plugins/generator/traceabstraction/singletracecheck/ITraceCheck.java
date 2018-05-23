@@ -30,10 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 /**
  * An {@link ITraceCheck} is used to determine whether a trace satisfies a postcondition under a given precondition.
@@ -67,7 +68,7 @@ public interface ITraceCheck {
 	/**
 	 * Return the RcfgProgramExecution that has been computed by computeRcfgProgramExecution().
 	 */
-	IcfgProgramExecution getRcfgProgramExecution();
+	IProgramExecution<IcfgEdge, Term> getRcfgProgramExecution();
 
 	TraceCheckStatisticsGenerator getTraceCheckBenchmark();
 

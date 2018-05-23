@@ -767,8 +767,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportCounterexampleResult(final IcfgProgramExecution pe) {
-		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
+		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
+		if (!upreasons.isEmpty()) {
+			reportUnproveableResult(pe, upreasons);
 			return;
 		}
 		reportResult(new CounterExampleResult<>(getErrorPP(pe), Activator.PLUGIN_NAME,

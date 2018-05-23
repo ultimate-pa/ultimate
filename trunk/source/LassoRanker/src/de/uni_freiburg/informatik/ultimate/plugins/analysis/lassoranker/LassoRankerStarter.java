@@ -41,6 +41,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
@@ -266,8 +267,8 @@ public class LassoRankerStarter {
 
 	private Map<String, ILocation> lassoWasOverapproximated() {
 		final Map<String, ILocation> overapproximations = new HashMap<>();
-		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(mStem.asList()));
-		overapproximations.putAll(IcfgProgramExecution.getOverapproximations(mLoop.asList()));
+		overapproximations.putAll(Overapprox.getOverapproximations(mStem.asList()));
+		overapproximations.putAll(Overapprox.getOverapproximations(mLoop.asList()));
 		return overapproximations;
 	}
 
@@ -375,10 +376,10 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTf) {
 
-		
-		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mRankVarConstructor.getCsToolkitWithRankVariables(), mPredicateFactory,
-				mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
-				mSimplificationTechnique, mXnfConversionTechnique);
+		final BinaryStatePredicateManager bspm =
+				new BinaryStatePredicateManager(mRankVarConstructor.getCsToolkitWithRankVariables(), mPredicateFactory,
+						mRankVarConstructor.getUnseededVariable(), mRankVarConstructor.getOldRankVariables(), mServices,
+						mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
@@ -438,13 +439,15 @@ public class LassoRankerStarter {
 
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
-	 * @param loop 
-	 * @param stem 
+	 * 
+	 * @param loop
+	 * @param stem
 	 *
 	 * @param arg
 	 */
 	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta,
-			final NestedWord<IIcfgTransition<IcfgLocation>> stem, final NestedWord<IIcfgTransition<IcfgLocation>> loop) {
+			final NestedWord<IIcfgTransition<IcfgLocation>> stem,
+			final NestedWord<IIcfgTransition<IcfgLocation>> loop) {
 		final IcfgProgramExecution stemExecution = new IcfgProgramExecution(stem.asList(), Collections.emptyMap());
 		final IcfgProgramExecution loopExecution = new IcfgProgramExecution(loop.asList(), Collections.emptyMap());
 		final IcfgEdge hondaEdge = (IcfgEdge) loop.getSymbol(0);
