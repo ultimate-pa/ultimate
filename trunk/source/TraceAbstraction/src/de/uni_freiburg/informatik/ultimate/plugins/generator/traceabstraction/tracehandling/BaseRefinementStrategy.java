@@ -40,11 +40,13 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbsIntBaseInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
@@ -89,7 +91,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	/* outputs */
 	private NestedWordAutomaton<LETTER, IPredicate> mInterpolantAutomaton;
 	private boolean mProvidesIcfgProgramExecution;
-	private IcfgProgramExecution mIcfgProgramExecution;
+	private IProgramExecution<IcfgEdge, Term> mIcfgProgramExecution;
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	private boolean mSomePerfectSequenceFound = false;
 
@@ -452,7 +454,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 		return mProvidesIcfgProgramExecution;
 	}
 
-	protected IcfgProgramExecution getIcfgProgramExecution() {
+	protected IProgramExecution<IcfgEdge, Term> getIcfgProgramExecution() {
 		return mIcfgProgramExecution;
 	}
 

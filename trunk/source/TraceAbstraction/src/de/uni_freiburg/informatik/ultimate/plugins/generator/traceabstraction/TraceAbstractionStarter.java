@@ -62,19 +62,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
@@ -402,10 +403,10 @@ public class TraceAbstractionStarter {
 			reportLimitResult(result, errorLocs, basicCegarLoop.getRunningTaskStackProvider());
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		case UNKNOWN:
-			final IcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
+			final IProgramExecution<IcfgEdge, Term> pe = basicCegarLoop.getRcfgProgramExecution();
 			final List<UnprovabilityReason> unprovabilityReasons = new ArrayList<>();
 			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
-			unprovabilityReasons.addAll(pe.getUnprovabilityReasons());
+			unprovabilityReasons.addAll(UnprovabilityReason.getUnprovabilityReasons(pe));
 			reportUnproveableResult(pe, unprovabilityReasons);
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		default:
@@ -458,9 +459,10 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void reportCounterexampleResult(final IcfgProgramExecution pe) {
-		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
+	private void reportCounterexampleResult(final IProgramExecution<IcfgEdge, Term> pe) {
+		final List<UnprovabilityReason> upreasons = UnprovabilityReason.getUnprovabilityReasons(pe);
+		if (!upreasons.isEmpty()) {
+			reportUnproveableResult(pe, upreasons);
 			return;
 		} else if (isAngelicallySafe(pe)) {
 			mLogger.info("Ignoring angelically safe counterexample");
@@ -470,7 +472,7 @@ public class TraceAbstractionStarter {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private static boolean isAngelicallySafe(final IcfgProgramExecution pe) {
+	private static boolean isAngelicallySafe(final IProgramExecution<IcfgEdge, Term> pe) {
 		if (pe instanceof IcfgAngelicProgramExecution) {
 			return !((IcfgAngelicProgramExecution) pe).getAngelicStatus();
 		}
@@ -502,7 +504,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void reportUnproveableResult(final IcfgProgramExecution pe,
+	private void reportUnproveableResult(final IProgramExecution<IcfgEdge, Term> pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
@@ -537,9 +539,9 @@ public class TraceAbstractionStarter {
 		return mRootOfNewModel;
 	}
 
-	public static IcfgLocation getErrorPP(final IcfgProgramExecution rcfgProgramExecution) {
-		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+	public static IcfgLocation getErrorPP(final IProgramExecution<IcfgEdge, Term> pe) {
+		final int lastPosition = pe.getLength() - 1;
+		final IIcfgTransition<?> last = pe.getTraceElement(lastPosition).getTraceElement();
 		return last.getTarget();
 	}
 

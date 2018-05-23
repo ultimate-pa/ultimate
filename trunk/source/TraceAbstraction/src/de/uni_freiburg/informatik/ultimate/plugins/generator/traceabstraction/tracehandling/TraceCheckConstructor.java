@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Supplier<ITraceCheck> {
-	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
+public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Supplier<ITraceCheck> {
+	private final ITraceCheckPreferences<LETTER> mPrefs;
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
@@ -86,7 +86,7 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 	 * @param cegarLoopBenchmark
 	 *            CEGAR loop benchmark
 	 */
-	public TraceCheckConstructor(final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
+	public TraceCheckConstructor(final ITraceCheckPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique, final TaskIdentifier taskIdentifier) {
@@ -95,24 +95,7 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 	}
 
 	/**
-	 * Copy constructor.
-	 *
-	 * @param other
-	 *            other object to copy fields from
-	 * @param managedScript
-	 *            managed script
-	 * @param interpolationTechnique
-	 *            new interpolation technique
-	 * @param benchmark
-	 *            CEGAR loop benchmark
-	 */
-	public TraceCheckConstructor(final TraceCheckConstructor<LETTER> other, final ManagedScript managedScript,
-			final InterpolationTechnique interpolationTechnique) {
-		this(other, managedScript, other.mAssertionOrder, interpolationTechnique);
-	}
-
-	/**
-	 * Copy constructor with assertion order.
+	 * Copy constructor with different assertion order and interpolation technique
 	 *
 	 * @param other
 	 *            other object to copy fields from
@@ -153,7 +136,7 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 	 * @param cegarLoopBenchmark
 	 *            CEGAR loop benchmark
 	 */
-	public TraceCheckConstructor(final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
+	public TraceCheckConstructor(final ITraceCheckPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique,
@@ -171,28 +154,7 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 
 	@Override
 	public ITraceCheck get() {
-		final TraceCheck traceCheck;
-		if (mInterpolationTechnique == null) {
-			traceCheck = constructDefault();
-		} else {
-			switch (mInterpolationTechnique) {
-			case Craig_NestedInterpolation:
-			case Craig_TreeInterpolation:
-				traceCheck = constructCraig();
-				break;
-			case ForwardPredicates:
-			case BackwardPredicates:
-			case FPandBP:
-			case FPandBPonlyIfFpWasNotPerfect:
-				traceCheck = constructForwardBackward();
-				break;
-			case PathInvariants:
-				traceCheck = constructPathInvariants();
-				break;
-			default:
-				throw new UnsupportedOperationException("unsupported interpolation");
-			}
-		}
+		final ITraceCheck traceCheck = constructTraceCheck();
 
 		if (traceCheck.getToolchainCanceledExpection() != null) {
 			throw traceCheck.getToolchainCanceledExpection();
@@ -201,6 +163,28 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 		}
 
 		return traceCheck;
+	}
+
+	private ITraceCheck constructTraceCheck() {
+		if (mInterpolationTechnique == null) {
+			return constructDefault();
+		}
+		switch (mInterpolationTechnique) {
+		case Craig_NestedInterpolation:
+		case Craig_TreeInterpolation:
+			return constructCraig();
+		case ForwardPredicates:
+		case BackwardPredicates:
+		case FPandBP:
+		case FPandBPonlyIfFpWasNotPerfect:
+			return constructForwardBackward();
+		case PathInvariants:
+			return constructPathInvariants();
+		case PDR:
+			return constructPdr();
+		default:
+			throw new UnsupportedOperationException("unsupported interpolation: " + mInterpolationTechnique);
+		}
 	}
 
 	private TraceCheck constructDefault() {
@@ -279,6 +263,11 @@ class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Suppli
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(),
 				mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings,
 				xnfConversionTechnique, simplificationTechnique, icfgContainer, mPrefs.collectInterpolantStatistics());
+	}
+
+	private ITraceCheck constructPdr() {
+		// final Pdr pdr;
+		throw new UnsupportedOperationException();
 	}
 
 }

@@ -91,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.Task
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
@@ -436,7 +437,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mFaultLocalizationMode,
 						mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
 						(IIcfg<IcfgLocation>) mIcfg);
-				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(fl.getRelevanceInformation());
+				if (mRcfgProgramExecution instanceof IcfgProgramExecution) {
+					mRcfgProgramExecution = ((IcfgProgramExecution) mRcfgProgramExecution)
+							.addRelevanceInformation(fl.getRelevanceInformation());
+				} else {
+					throw new UnsupportedOperationException("Program execution is not " + IcfgProgramExecution.class);
+				}
+
 				if (mFaultLocalizationAngelic) {
 					mRcfgProgramExecution =
 							new IcfgAngelicProgramExecution(mRcfgProgramExecution, fl.getAngelicStatus());

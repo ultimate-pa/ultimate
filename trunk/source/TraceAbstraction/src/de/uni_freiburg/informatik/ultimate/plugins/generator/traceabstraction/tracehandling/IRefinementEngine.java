@@ -27,10 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
@@ -63,7 +65,7 @@ public interface IRefinementEngine<T> {
 	/**
 	 * @return RCFG program execution.
 	 */
-	IcfgProgramExecution getIcfgProgramExecution();
+	IProgramExecution<IcfgEdge, Term> getIcfgProgramExecution();
 
 	/**
 	 * @return Hoare triple checker.

@@ -51,7 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> {
+public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>>
+		implements ITraceCheckPreferences<LETTER> {
 	// fields that are provided in the constructor
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
@@ -159,6 +160,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mRefinementStrategy;
 	}
 
+	@Override
 	public boolean getUseSeparateSolverForTracechecks() {
 		return mUseSeparateSolverForTracechecks;
 	}
@@ -175,10 +177,12 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mCommandExternalSolver;
 	}
 
+	@Override
 	public boolean getDumpSmtScriptToFile() {
 		return mDumpSmtScriptToFile;
 	}
 
+	@Override
 	public String getPathOfDumpedScript() {
 		return mPathOfDumpedScript;
 	}
@@ -191,14 +195,17 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mInterpolationTechnique;
 	}
 
+	@Override
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mSimplificationTechnique;
 	}
 
+	@Override
 	public XnfConversionTechnique getXnfConversionTechnique() {
 		return mXnfConversionTechnique;
 	}
 
+	@Override
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
@@ -207,10 +214,12 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mPredicateFactory;
 	}
 
+	@Override
 	public IIcfg<?> getIcfgContainer() {
 		return mIcfgContainer;
 	}
 
+	@Override
 	public IToolchainStorage getToolchainStorage() {
 		return mToolchainStorage;
 	}
@@ -219,18 +228,22 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mInterpolantAutomatonBuilderFactory;
 	}
 
+	@Override
 	public AssertCodeBlockOrder getAssertCodeBlocksOrder() {
 		return mAssertCodeBlocksOrder;
 	}
 
+	@Override
 	public UnsatCores getUnsatCores() {
 		return mUnsatCores;
 	}
 
+	@Override
 	public boolean getUseLiveVariables() {
 		return mUseLiveVariables;
 	}
 
+	@Override
 	public boolean getUseAbstractInterpretation() {
 		return mUseAbstractInterpretationPredicates;
 	}
@@ -239,18 +252,22 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mUseInterpolantConsolidation;
 	}
 
+	@Override
 	public boolean getUseNonlinearConstraints() {
 		return mUseNonlinearConstraints;
 	}
 
+	@Override
 	public boolean getUseVarsFromUnsatCore() {
 		return mUseVarsFromUnsatCoreForPathInvariants;
 	}
 
+	@Override
 	public boolean getUseWeakestPreconditionForPathInvariants() {
 		return mUseWeakestPreconditionForPathInvariants;
 	}
 
+	@Override
 	public boolean computeCounterexample() {
 		return mComputeCounterexample;
 	}
@@ -259,6 +276,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 		return mExceptionBlacklist;
 	}
 
+	@Override
 	public boolean collectInterpolantStatistics() {
 		return mCollectInterpolantStatistics;
 	}

@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,7 +49,7 @@ import java.util.Set;
  * @param <E>
  *            Type of the expressions that are used to denote program variables and their values.
  */
-public interface IProgramExecution<TE, E> {
+public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE>> {
 
 	/**
 	 * Returns the length of this program execution. The length of a program execution is the length of the sequence of
@@ -91,6 +92,25 @@ public interface IProgramExecution<TE, E> {
 	 */
 	@Override
 	String toString();
+
+	@Override
+	default Iterator<AtomicTraceElement<TE>> iterator() {
+		return new Iterator<AtomicTraceElement<TE>>() {
+
+			private final int max = getLength();
+			private int current = 0;
+
+			@Override
+			public boolean hasNext() {
+				return current < max;
+			}
+
+			@Override
+			public AtomicTraceElement<TE> next() {
+				return getTraceElement(current++);
+			}
+		};
+	}
 
 	/**
 	 * @return an {@link IBacktranslationValueProvider} for this type.
