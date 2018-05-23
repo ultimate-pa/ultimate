@@ -87,7 +87,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 	 */
 	public C strongestPostcondition(final P p, final R transRel) {
 		final C constraint = mOperationProvider.getConstraint(p);
-		if (mOperationProvider.isConstaintUnsatisfiable(constraint)) {
+		if (mOperationProvider.isConstraintUnsatisfiable(constraint)) {
 			return constraint;
 		}
 		final Set<TermVariable> varsToProject = new HashSet<>();
@@ -130,7 +130,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		}
 
 		final C renamedRelationConstraint = mOperationProvider.renameVariables(substitutionForTransFormula,
-				mOperationProvider.getConstaintFromTransitionRelation(transRel));
+				mOperationProvider.getConstraintFromTransitionRelation(transRel));
 		final C renamedPredecessor = mOperationProvider.renameVariables(substitutionForPredecessor, constraint);
 
 		final C conjunction =
@@ -197,7 +197,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 
 	public C weakestPrecondition(final P p, final R tf) {
 		final C constraint = mOperationProvider.getConstraint(p);
-		if (mOperationProvider.isConstaintValid(constraint)) {
+		if (mOperationProvider.isConstraintValid(constraint)) {
 			return constraint;
 		}
 		final Set<TermVariable> varsToProject = new HashSet<>();
@@ -241,7 +241,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		}
 
 		final C renamedRelationConstraint = mOperationProvider.renameVariables(substitutionForRelation,
-				mOperationProvider.getConstaintFromTransitionRelation(tf));
+				mOperationProvider.getConstraintFromTransitionRelation(tf));
 		final C renamedPredecessor = mOperationProvider.renameVariables(substitutionForSuccessor, constraint);
 
 		final C disjunction = mOperationProvider.constructDisjunction(
@@ -313,7 +313,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 			substitutionMapping.put(entry.getValue(), crpip.getInstance(entry.getKey(), preInstance));
 		}
 		final C result = mOperationProvider.renameVariables(substitutionMapping,
-				mOperationProvider.getConstaintFromTransitionRelation(tf));
+				mOperationProvider.getConstraintFromTransitionRelation(tf));
 		return result;
 	}
 

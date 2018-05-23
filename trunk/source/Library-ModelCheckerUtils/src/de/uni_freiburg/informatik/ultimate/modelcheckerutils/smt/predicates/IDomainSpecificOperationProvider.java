@@ -53,7 +53,7 @@ public interface IDomainSpecificOperationProvider<C,P extends IAbstractPredicate
 	 *         value can only bring some speedup.
 	 * 
 	 */
-	boolean isConstaintUnsatisfiable(C constraint);
+	boolean isConstraintUnsatisfiable(C constraint);
 
 	/**
 	 * This operation is needed for wp but not for post.
@@ -64,9 +64,9 @@ public interface IDomainSpecificOperationProvider<C,P extends IAbstractPredicate
 	 *         bring some speedup.
 	 * 
 	 */
-	boolean isConstaintValid(C constraint);
+	boolean isConstraintValid(C constraint);
 
-	C getConstaintFromTransitionRelation(R transRel);
+	C getConstraintFromTransitionRelation(R transRel);
 
 	/**
 	 * @param substitutionMapping

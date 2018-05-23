@@ -62,17 +62,17 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	}
 
 	@Override
-	public boolean isConstaintUnsatisfiable(final Term constraint) {
+	public boolean isConstraintUnsatisfiable(final Term constraint) {
 		return SmtUtils.isFalse(constraint);
 	}
 
 	@Override
-	public boolean isConstaintValid(final Term constraint) {
+	public boolean isConstraintValid(final Term constraint) {
 		return SmtUtils.isTrue(constraint);
 	}
 
 	@Override
-	public Term getConstaintFromTransitionRelation(final TransFormula tf) {
+	public Term getConstraintFromTransitionRelation(final TransFormula tf) {
 		return tf.getFormula();
 	}
 

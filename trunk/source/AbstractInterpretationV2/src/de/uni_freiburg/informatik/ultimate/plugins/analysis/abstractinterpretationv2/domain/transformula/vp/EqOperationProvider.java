@@ -61,12 +61,12 @@ public class EqOperationProvider implements
 	}
 
 	@Override
-	public boolean isConstaintUnsatisfiable(final EqDisjunctiveConstraint<EqNode> constraint) {
+	public boolean isConstraintUnsatisfiable(final EqDisjunctiveConstraint<EqNode> constraint) {
 		return constraint.isBottom();
 	}
 
 	@Override
-	public EqDisjunctiveConstraint<EqNode> getConstaintFromTransitionRelation(
+	public EqDisjunctiveConstraint<EqNode> getConstraintFromTransitionRelation(
 			final EqTransitionRelation transRel) {
 		return transRel.getEqConstraint();
 	}
@@ -97,7 +97,7 @@ public class EqOperationProvider implements
 
 
 	@Override
-	public boolean isConstaintValid(final EqDisjunctiveConstraint<EqNode> constraint) {
+	public boolean isConstraintValid(final EqDisjunctiveConstraint<EqNode> constraint) {
 		// TODO Auto-generated method stub
 		return false;
 	}
