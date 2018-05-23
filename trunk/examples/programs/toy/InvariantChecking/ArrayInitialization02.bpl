@@ -1,6 +1,6 @@
 //#Safe
-/* Multiplication of natural numbers implemented via iterative
- * addition.
+/* Initialize array from 0 to n with the integer 23
+ * and checks for some j\in{0,...,n} if a[j] is indeed 23.
  * 
  * Author: Matthias Heizmann
  * Date: 2018-05-08
