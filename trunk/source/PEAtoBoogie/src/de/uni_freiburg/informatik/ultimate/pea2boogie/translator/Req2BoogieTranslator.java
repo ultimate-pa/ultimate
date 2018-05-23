@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -84,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
@@ -109,6 +109,8 @@ public class Req2BoogieTranslator {
 
 	private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
 
+	private static final int SOLVER_TIMOUT_IN_SECONDS = 30;
+
 	private final Unit mUnit;
 	private final List<String> mClockIds;
 	private final List<String> mPcIds;
@@ -131,6 +133,8 @@ public class Req2BoogieTranslator {
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 
 	private final PeaResultUtil mPeaResultUtil;
+
+	private IToolchainStorage mStorage;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final boolean vacuityCheck, final int num, final boolean checkConsistency,
@@ -911,16 +915,30 @@ public class Req2BoogieTranslator {
 	}
 
 	private CDD getPrimedStateInvariant() {
-		final Optional<CDD> possiblePrimedStateInvariant =
+
+		final List<CDD> primedStateInvariants =
 				mReq2Automata.entrySet().stream().filter(a -> a.getValue().getPhases().length == 1)
-						.map(a -> a.getValue().getPhases()[0].getStateInvariant().prime()).reduce((a, b) -> a.and(b));
-		final CDD actualPrimedStateInvariant;
-		if (possiblePrimedStateInvariant.isPresent()) {
-			actualPrimedStateInvariant = possiblePrimedStateInvariant.get();
+						.map(a -> a.getValue().getPhases()[0].getStateInvariant().prime()).collect(Collectors.toList());
+		if (primedStateInvariants.isEmpty()) {
+			return CDD.TRUE;
+		} else if (primedStateInvariants.size() == 1) {
+			return primedStateInvariants.get(0);
 		} else {
-			actualPrimedStateInvariant = CDD.TRUE;
+			final Map<CDD, Map<CDD, CDD>> cache = new HashMap<>();
+			CDD conj = null;
+			for (final CDD primedStateInvariant : primedStateInvariants) {
+				if (conj == null) {
+					conj = primedStateInvariant;
+				} else {
+					conj = conj.and(primedStateInvariant, cache);
+				}
+			}
+			// final Settings settings = new SolverBuilder.Settings(false, false, "", SOLVER_TIMOUT_IN_SECONDS * 1000,
+			// null, false, null, null);
+			// final SolverBuilder sb = new SolverBuilder();
+			// SolverBuilder.buildScript(mServices, mStorage, settings);
+			return conj;
 		}
-		return actualPrimedStateInvariant;
 	}
 
 	/**
