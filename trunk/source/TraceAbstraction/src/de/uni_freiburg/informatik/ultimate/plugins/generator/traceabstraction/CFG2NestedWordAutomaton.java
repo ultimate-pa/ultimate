@@ -95,47 +95,15 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
+		boolean interprocedural = mInterprocedural;
 
-		mLogger.debug("Step: determine the alphabet");
-		// determine the alphabet
-		final Set<LETTER> internalAlphabet = new HashSet<>();
-		final Set<LETTER> callAlphabet = new HashSet<>();
-		final Set<LETTER> returnAlphabet = new HashSet<>();
-
-		for (final IcfgLocation locNode : allNodes) {
-			if (locNode.getOutgoingNodes() != null) {
-				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
-					if (edge instanceof IIcfgCallTransition) {
-						if (mInterprocedural) {
-							callAlphabet.add((LETTER) edge);
-						}
-					} else if (edge instanceof IIcfgReturnTransition) {
-						if (mInterprocedural) {
-							returnAlphabet.add((LETTER) edge);
-						}
-					} else if (edge instanceof Summary) {
-						final Summary summary = (Summary) edge;
-						if (summary.calledProcedureHasImplementation()) {
-							// do nothing if analysis is interprocedural
-							// add summary otherwise
-							if (!mInterprocedural) {
-								internalAlphabet.add((LETTER) summary);
-							}
-						} else {
-							internalAlphabet.add((LETTER) summary);
-						}
-					} else {
-						internalAlphabet.add((LETTER) edge);
-					}
-				}
-			}
-		}
+		VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
 
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
-						new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet), tAContentFactory);
+						vpAlphabet, tAContentFactory);
 
 		mLogger.debug("Step: add states");
 		// add states
@@ -179,11 +147,11 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					final IcfgLocation succLoc = edge.getTarget();
 					final IPredicate succState = nodes2States.get(succLoc);
 					if (edge instanceof IIcfgCallTransition<?>) {
-						if (mInterprocedural) {
+						if (interprocedural) {
 							nwa.addCallTransition(state, (LETTER) edge, succState);
 						}
 					} else if (edge instanceof IIcfgReturnTransition<?, ?>) {
-						if (mInterprocedural) {
+						if (interprocedural) {
 							final IIcfgReturnTransition<?, ?> returnEdge = (IIcfgReturnTransition<?, ?>) edge;
 							final IcfgLocation callerLocNode = returnEdge.getCallerProgramPoint();
 							if (nodes2States.containsKey(callerLocNode)) {
@@ -197,7 +165,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					} else if (edge instanceof Summary) {
 						final Summary summaryEdge = (Summary) edge;
 						if (summaryEdge.calledProcedureHasImplementation()) {
-							if (!mInterprocedural) {
+							if (!interprocedural) {
 								nwa.addInternalTransition(state, (LETTER) summaryEdge, succState);
 							}
 						} else {
@@ -210,5 +178,58 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 		return nwa;
+	}
+
+	/**
+	 * Extract from an ICFG the alphabet that is needed for an trace
+	 * abstraction-based analysis.
+	 * 
+	 * @param icfg
+	 * @param intraproceduralAnalysis
+	 *            In an intraprocedural analysis we ignore call and return
+	 *            statements. Instead we add summary edges between the call
+	 *            predecessor and the return successor. If a specification of the
+	 *            procedure is given, this specification is used here. If no
+	 *            specifiation is given we use the trivial ("true") specification.
+	 * @return
+	 */
+	public VpAlphabet<LETTER> extractVpAlphabet(final IIcfg<? extends IcfgLocation> icfg,
+			boolean intraproceduralAnalysis) {
+		final Set<LETTER> internalAlphabet = new HashSet<>();
+		final Set<LETTER> callAlphabet = new HashSet<>();
+		final Set<LETTER> returnAlphabet = new HashSet<>();
+
+		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
+
+		while (iter.hasNext()) {
+			IcfgLocation locNode = iter.next();
+			if (locNode.getOutgoingNodes() != null) {
+				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
+					if (edge instanceof IIcfgCallTransition) {
+						if (!intraproceduralAnalysis) {
+							callAlphabet.add((LETTER) edge);
+						}
+					} else if (edge instanceof IIcfgReturnTransition) {
+						if (!intraproceduralAnalysis) {
+							returnAlphabet.add((LETTER) edge);
+						}
+					} else if (edge instanceof Summary) {
+						final Summary summary = (Summary) edge;
+						if (summary.calledProcedureHasImplementation()) {
+							// do nothing if analysis is interprocedural
+							// add summary otherwise
+							if (intraproceduralAnalysis) {
+								internalAlphabet.add((LETTER) summary);
+							}
+						} else {
+							internalAlphabet.add((LETTER) summary);
+						}
+					} else {
+						internalAlphabet.add((LETTER) edge);
+					}
+				}
+			}
+		}
+		return new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet);
 	}
 }
