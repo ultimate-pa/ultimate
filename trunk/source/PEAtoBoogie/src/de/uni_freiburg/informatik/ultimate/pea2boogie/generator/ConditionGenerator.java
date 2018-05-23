@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -69,23 +71,26 @@ public class ConditionGenerator {
 			assert (vector.length == automata.length);
 			CDD cddOuter = CDD.TRUE;
 			final List<Expression> impliesLHS = new ArrayList<>();
+			final Map<CDD, Map<CDD, CDD>> andCache = new HashMap<>();
 			for (int j = 0; j < vector.length; j++) {
 				CDD cddInner = CDD.FALSE;
 				final PhaseEventAutomata automaton = automata[j];
 				final Phase phase = automaton.getPhases()[vector[j]];
 				final List<Transition> transitions = phase.getTransitions();
 				for (int k = 0; k < transitions.size(); k++) {
-					cddInner = cddInner.or(genIntersectionAll(genGuardANDPrimedStInv(transitions.get(k)),
-							genStrictInv(transitions.get(k))));
+					cddInner = cddInner.or((genGuardANDPrimedStInv(transitions.get(k), andCache)
+							.and(genStrictInv(transitions.get(k)), andCache)));
 				}
-				cddOuter = cddOuter.and(cddInner);
+
+				cddOuter = cddOuter.and(cddInner, andCache);
 
 				final String pcName = Req2BoogieTranslator.getPcName(automaton);
 				impliesLHS.add(genPCCompEQ(pcName, vector[j], bl));
 			}
 
 			// TODO: ccdOther.and primed state invariants from invariant patterns
-			final CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter.and(primedInvariant), mPrimedVars);
+			final CDD cdd =
+					new VarRemoval().excludeEventsAndPrimedVars(cddOuter.and(primedInvariant, andCache), mPrimedVars);
 			if (cdd == CDD.TRUE) {
 				continue;
 			}
@@ -125,10 +130,6 @@ public class ConditionGenerator {
 		return result;
 	}
 
-	private static CDD genIntersectionAll(final CDD cdd1, final CDD cdd2) {
-		return (cdd1.and(cdd2));
-	}
-
 	private static CDD genStrictInv(final Transition transition) {
 		final Phase phase = transition.getDest();
 		final String[] resetVars = transition.getResets();
@@ -137,11 +138,11 @@ public class ConditionGenerator {
 		return cdd;
 	}
 
-	private static CDD genGuardANDPrimedStInv(final Transition transition) {
+	private static CDD genGuardANDPrimedStInv(final Transition transition, final Map<CDD, Map<CDD, CDD>> andCache) {
 		final CDD guard = transition.getGuard();
 		final Phase phase = transition.getDest();
 		final CDD primedStInv = phase.getStateInvariant().prime();
-		final CDD cdd = guard.and(primedStInv);
+		final CDD cdd = guard.and(primedStInv, andCache);
 		// cdd = new VarRemoval().varRemoval(cdd, this.translator.primedVars, this.translator.eventVars);
 		return cdd;
 	}
