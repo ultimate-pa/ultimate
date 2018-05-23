@@ -25,10 +25,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> {
 	private final ArrayDomainExpressionProcessor<STATE> mExpressionProcessor;
 	private final ArrayDomainToolkit<STATE> mToolkit;
+	private final ArrayDomainAssumeProcessor<STATE> mAssumeProcessor;
 
 	public ArrayDomainStatementProcessor(final ArrayDomainToolkit<STATE> toolkit) {
 		mToolkit = toolkit;
 		mExpressionProcessor = new ArrayDomainExpressionProcessor<>(toolkit);
+		mAssumeProcessor = new ArrayDomainAssumeProcessor<>(toolkit);
 	}
 
 	public ArrayDomainState<STATE> process(final ArrayDomainState<STATE> state, final Statement statement) {
@@ -52,13 +54,7 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 
 	private ArrayDomainState<STATE> processAssume(final ArrayDomainState<STATE> state,
 			final AssumeStatement statement) {
-		// final Expression expression = statement.getFormula();
-		// final ExpressionResult<STATE> result = mExpressionProcessor.process(expression, state, true);
-		// final ArrayDomainState<STATE> resultingState = result.getState();
-		// return resultingState.removeUnusedAuxVars();
-		// TODO: For now just handle it by the subdomain
-		final STATE newSubState = mToolkit.handleStatementBySubdomain(state.getSubState(), statement);
-		return state.updateState(newSubState);
+		return mAssumeProcessor.process(state, statement.getFormula());
 	}
 
 	private ArrayDomainState<STATE> processAssignment(final ArrayDomainState<STATE> state,
@@ -89,9 +85,9 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 
 	private ArrayDomainState<STATE> processSingleAssignment(final LeftHandSide lhs, final Expression rhs,
 			final ArrayDomainState<STATE> oldstate) {
-		final ExpressionResult<STATE> processed = mExpressionProcessor.process(rhs, oldstate, false);
-		final Expression newExpr = processed.getExpression();
-		final ArrayDomainState<STATE> tmpState = processed.getState();
+		final Pair<ArrayDomainState<STATE>, Expression> processed = mExpressionProcessor.process(oldstate, rhs);
+		final ArrayDomainState<STATE> tmpState = processed.getFirst();
+		final Expression newExpr = processed.getSecond();
 		if (lhs instanceof VariableLHS) {
 			STATE newSubState = tmpState.getSubState();
 			final SegmentationMap newSegmentationMap = tmpState.getSegmentationMap();

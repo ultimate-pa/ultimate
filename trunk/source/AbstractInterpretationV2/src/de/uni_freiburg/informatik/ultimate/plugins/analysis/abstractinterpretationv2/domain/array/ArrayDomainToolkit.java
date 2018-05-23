@@ -18,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -36,9 +35,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.Boogie2SmtSymbolTableTmpVars;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.BoogieVarFactory;
@@ -66,10 +66,9 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	private final MappedTerm2Expression mMappedTerm2Expression;
 	private final Boogie2SmtSymbolTableTmpVars mVariableProvider;
 	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 
 	public ArrayDomainToolkit(final IAbstractDomain<STATE, IcfgEdge> subDomain, final IIcfg<?> icfg,
-			final IUltimateServiceProvider services, final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
+			final IUltimateServiceProvider services, final BoogieSymbolTable boogieSymbolTable,
 			final Boogie2SmtSymbolTableTmpVars variableProvider) {
 		mSubDomain = subDomain;
 		final BoogieIcfgContainer rootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
@@ -87,7 +86,6 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		mMinBound = createVariable("-inf", BoogiePrimitiveType.TYPE_INT);
 		mMaxBound = createVariable("inf", BoogiePrimitiveType.TYPE_INT);
 		mServices = services;
-		mLogger = logger;
 	}
 
 	public TemporaryBoogieVar createVariable(final String name, final IBoogieType type) {
@@ -103,10 +101,6 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 
 	public TemporaryBoogieVar createValueVar(final IBoogieType type) {
 		return createVariable(VALUE_NAME, type);
-	}
-
-	public IAbstractDomain<STATE, IcfgEdge> getSubDomain() {
-		return mSubDomain;
 	}
 
 	public ManagedScript getManagedScript() {
@@ -131,6 +125,10 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 
 	public IAbstractStateBinaryOperator<STATE> getWideningOperator() {
 		return mSubDomain.getWideningOperator();
+	}
+
+	public IUltimateServiceProvider getServices() {
+		return mServices;
 	}
 
 	public STATE handleAssumptionBySubdomain(final STATE currentState, final Term assumption) {
@@ -211,11 +209,21 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		}
 	}
 
-	public EquivalenceFinder createEquivalenceFinder(final Term term) {
-		return new EquivalenceFinder(term, mServices, getManagedScript());
+	public Term connstructEquivalentConstraint(final IProgramVarOrConst newVariable, final IProgramVar oldVariable,
+			final Term baseTerm) {
+		final Term newTerm = NonrelationalTermUtils.getTermVar(newVariable);
+		final TermVariable oldTerm = oldVariable.getTermVariable();
+		final Term constraint = SmtUtils.filterFormula(baseTerm, Collections.singleton(oldTerm), getScript());
+		return new Substitution(getScript(), Collections.singletonMap(oldTerm, newTerm)).transform(constraint);
 	}
 
-	public Term applyQuantifierElimination(final Term term) {
-		return new QuantifierPusher(getManagedScript(), mServices, false, PqeTechniques.ALL_LOCAL).transform(term);
+	public ArrayDomainState<STATE> createBottomState() {
+		final STATE substate = mSubDomain.createBottomState();
+		return new ArrayDomainState<>(substate, substate.getVariables(), this);
+	}
+
+	public ArrayDomainState<STATE> createTopState() {
+		final STATE substate = mSubDomain.createTopState();
+		return new ArrayDomainState<>(substate, substate.getVariables(), this);
 	}
 }

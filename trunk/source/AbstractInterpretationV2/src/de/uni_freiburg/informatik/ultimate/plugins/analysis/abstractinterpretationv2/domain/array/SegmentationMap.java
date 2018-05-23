@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -161,12 +162,16 @@ public class SegmentationMap {
 	public String toString() {
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append('{');
-		for (final Entry<IProgramVarOrConst, Segmentation> entry : mRepresentiveSegmentations.entrySet()) {
-			stringBuilder.append(mEqualArrays.getEquivalenceClassMembers(entry.getKey()));
-			stringBuilder.append(" -> ").append(entry.getValue()).append(", ");
+		for (final IProgramVarOrConst rep : sortProgramVars(getAllRepresentatives())) {
+			stringBuilder.append(sortProgramVars(mEqualArrays.getEquivalenceClassMembers(rep)));
+			stringBuilder.append(" -> ").append(mRepresentiveSegmentations.get(rep)).append(", ");
 		}
 		stringBuilder.append('}');
 		return stringBuilder.toString();
+	}
+
+	private static List<IProgramVarOrConst> sortProgramVars(final Collection<IProgramVarOrConst> programVars) {
+		return programVars.stream().sorted((x, y) -> x.toString().compareTo(y.toString())).collect(Collectors.toList());
 	}
 
 	public Segmentation getSegmentation(final IProgramVarOrConst variable) {

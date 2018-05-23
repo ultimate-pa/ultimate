@@ -50,20 +50,18 @@ public class ArrayDomain<STATE extends IAbstractState<STATE>>
 			final IUltimateServiceProvider services, final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
 			final IBoogieSymbolTableVariableProvider variableProvider) {
 		assert variableProvider instanceof Boogie2SmtSymbolTableTmpVars;
-		mToolkit = new ArrayDomainToolkit<>(subDomain, icfg, services, logger, boogieSymbolTable,
+		mToolkit = new ArrayDomainToolkit<>(subDomain, icfg, services, boogieSymbolTable,
 				(Boogie2SmtSymbolTableTmpVars) variableProvider);
 	}
 
 	@Override
 	public ArrayDomainState<STATE> createTopState() {
-		final STATE substate = mToolkit.getSubDomain().createTopState();
-		return new ArrayDomainState<>(substate, substate.getVariables(), mToolkit);
+		return mToolkit.createTopState();
 	}
 
 	@Override
 	public ArrayDomainState<STATE> createBottomState() {
-		final STATE substate = mToolkit.getSubDomain().createBottomState();
-		return new ArrayDomainState<>(substate, substate.getVariables(), mToolkit);
+		return mToolkit.createBottomState();
 	}
 
 	@Override
