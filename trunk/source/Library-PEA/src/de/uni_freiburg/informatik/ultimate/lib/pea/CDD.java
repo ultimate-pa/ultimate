@@ -241,8 +241,7 @@ public final class CDD {
 			return this;
 		}
 
-		final Map<CDD, Map<CDD, CDD>> cache = new HashMap<>();
-		return and(other, cache);
+		return and(other, new HashMap<>());
 	}
 
 	/**
