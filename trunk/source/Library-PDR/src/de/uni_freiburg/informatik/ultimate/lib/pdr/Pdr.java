@@ -34,11 +34,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -52,6 +56,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -59,44 +65,52 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
  *
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
-public class Pdr<LOC extends IcfgLocation> {
+public class Pdr<LETTER extends IAction> implements ITraceCheck, IInterpolantGenerator<LETTER> {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final Map<IcfgLocation, List<Term>> mFrames;
 	private final ManagedScript mScript;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTrans;
-	private final IIcfg<LOC> mIcfg;
+	private final IIcfg<? extends IcfgLocation> mIcfg;
 	private final CfgSmtToolkit mCsToolkit;
 	private final IHoareTripleChecker mHtc;
 	private final IPredicateUnifier mPredicateUnifier;
 
-	public Pdr(final ILogger logger, final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
-			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc, final Object settings) {
+	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
+			final IHoareTripleChecker htc, final List<LETTER> counterexample) {
+		// from params
 		mLogger = logger;
-		mServices = services;
-		mFrames = new HashMap<>();
-		mCsToolkit = icfg.getCfgSmtToolkit();
-		mScript = mCsToolkit.getManagedScript();
 		mPredicateUnifier = predicateUnifier;
-		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
-		mIcfg = icfg;
 		mHtc = htc;
+
+		// stuff from prefs
+		mServices = prefs.getUltimateServices();
+		mIcfg = prefs.getIcfgContainer();
+		mCsToolkit = prefs.getCfgSmtToolkit();
+		mScript = mCsToolkit.getManagedScript();
+
+		mFrames = new HashMap<>();
+		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
+
 		computePdr();
 	}
 
-	private PdrResult computePdr() {
+	private Object computePdr() {
 
-		final Set<LOC> init = mIcfg.getInitialNodes();
-		final Set<LOC> error = IcfgUtils.getErrorLocations(mIcfg);
+		final Set<? extends IcfgLocation> init = mIcfg.getInitialNodes();
+		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mIcfg);
 
 		/**
 		 * Check for 0-Counter-Example
@@ -110,7 +124,7 @@ public class Pdr<LOC extends IcfgLocation> {
 		/**
 		 * Initialize level 0.
 		 */
-		final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(mIcfg);
+		final IcfgLocationIterator<? extends IcfgLocation> iter = new IcfgLocationIterator<>(mIcfg);
 		while (iter.hasNext()) {
 			final IcfgLocation loc = iter.next();
 			mFrames.put(loc, new ArrayList<>());
@@ -149,16 +163,14 @@ public class Pdr<LOC extends IcfgLocation> {
 			 * Generated proof-obligation on level 0 -> error is reachable
 			 */
 			if (!blockingPhase(proofObligations)) {
-				final PdrResult result = new PdrResult();
-				return result;
+				throw new UnsupportedOperationException("error reachable");
 			}
 
 			/**
 			 * Found invariant -> error is not reachable
 			 */
 			if (propagationPhase()) {
-				final PdrResult result = new PdrResult();
-				return result;
+				throw new UnsupportedOperationException("error not reachable");
 			}
 		}
 	}
@@ -271,9 +283,98 @@ public class Pdr<LOC extends IcfgLocation> {
 		return false;
 	}
 
-	private final class PdrResult {
-		Map<LOC, Map<LOC, IPredicate>> mPredicates;
-		Map<LOC, IcfgProgramExecution> mCounterexamples;
+	// TODO: Implement ITraceCheck interface
+
+	@Override
+	public LBool isCorrect() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IPredicate getPrecondition() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IPredicate getPostcondition() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<Integer, IPredicate> getPendingContexts() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean providesRcfgProgramExecution() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public IProgramExecution<IcfgEdge, Term> getRcfgProgramExecution() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IStatisticsDataProvider getTraceCheckBenchmark() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ToolchainCanceledException getToolchainCanceledExpection() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean wasTracecheckFinishedNormally() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	// TODO: Implement iInterpolantGenerator interface
+
+	@Override
+	public List<LETTER> getTrace() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IPredicate[] getInterpolants() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IPredicateUnifier getPredicateUnifier() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isPerfectSequence() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public InterpolantComputationStatus getInterpolantComputationStatus() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
