@@ -302,53 +302,55 @@ public class CcAuxData<ELEM extends ICongruenceClosureElement<ELEM>> {
 		final ELEM afRep = mCongruenceClosure.hasElement(elem.getAppliedFunction()) ?
 				mCongruenceClosure.mElementTVER.getRepresentative(elem.getAppliedFunction()) :
 					elem.getAppliedFunction();
-				final ELEM argRep = mCongruenceClosure.hasElement(elem.getArgument()) ?
-						mCongruenceClosure.mElementTVER.getRepresentative(elem.getArgument()) :
-							elem.getArgument();
+		final ELEM argRep = mCongruenceClosure.hasElement(elem.getArgument()) ?
+				mCongruenceClosure.mElementTVER.getRepresentative(elem.getArgument()) :
+					elem.getArgument();
 
 
-						final HashRelation<ELEM, ELEM> equalitiesToPropagate = new HashRelation<>();
-						final Set<ELEM> afCcPars = mAfCcPars.getImage(afRep);
-						final Set<ELEM> candidates = afCcPars.stream()
-								.filter(afccpar ->
-								(mCongruenceClosure.hasElement(argRep) &&
-										mCongruenceClosure.hasElement(afccpar.getArgument()) &&
-										mCongruenceClosure.getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL)
-										)
-								.collect(Collectors.toSet());
+		final HashRelation<ELEM, ELEM> equalitiesToPropagate = new HashRelation<>();
+		if (!mCongruenceClosure.isInconsistent()) {
+			final Set<ELEM> afCcPars = mAfCcPars.getImage(afRep);
+			final Set<ELEM> candidates = afCcPars.stream()
+					.filter(afccpar ->
+					(mCongruenceClosure.hasElement(argRep) &&
+							mCongruenceClosure.hasElement(afccpar.getArgument()) &&
+							mCongruenceClosure.getEqualityStatus(argRep, afccpar.getArgument()) == EqualityStatus.EQUAL)
+							)
+					.collect(Collectors.toSet());
 
-						/*
-						 * we have to make sure to not add an equality for propagation where an element contains the element
-						 *  currently being removed EDIT: no we don't.. --> those might be the propagations for one of the elements
-						 *  we added to conserve information..
-						 */
-						for (final ELEM c : candidates) {
-							assert c.isFunctionApplication();
-							equalitiesToPropagate.addPair(elem, c);
+			/*
+			 * we have to make sure to not add an equality for propagation where an element contains the element
+			 *  currently being removed EDIT: no we don't.. --> those might be the propagations for one of the elements
+			 *  we added to conserve information..
+			 */
+			for (final ELEM c : candidates) {
+				assert c.isFunctionApplication();
+				equalitiesToPropagate.addPair(elem, c);
 
-							//				final ELEM cReplaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(c);
-							//
-							//				if (cReplaced != null) {
-							//					equalitiesToPropagate.addPair(elem, cReplaced);
-							//				}
-						}
+				//				final ELEM cReplaced = replaceFuncAppArgsWOtherRepIfNecAndPoss(c);
+				//
+				//				if (cReplaced != null) {
+				//					equalitiesToPropagate.addPair(elem, cReplaced);
+				//				}
+			}
+		}
 
 
-						//			assert mElementCurrentlyBeingRemoved == null
-						//					|| !equalitiesToPropagate.entrySet().stream().map(en -> en.getValue())
-						//						.anyMatch(c -> c.isFunctionApplication()
-						//					&& (c.getAppliedFunction().equals(mElementCurrentlyBeingRemoved.getElem())
-						//							|| c.getArgument().equals(mElementCurrentlyBeingRemoved.getElem())));
+		//			assert mElementCurrentlyBeingRemoved == null
+		//					|| !equalitiesToPropagate.entrySet().stream().map(en -> en.getValue())
+		//						.anyMatch(c -> c.isFunctionApplication()
+		//					&& (c.getAppliedFunction().equals(mElementCurrentlyBeingRemoved.getElem())
+		//							|| c.getArgument().equals(mElementCurrentlyBeingRemoved.getElem())));
 
-						mAfCcPars.addPair(afRep, elem);
-						mArgCcPars.addPair(argRep, elem);
+		mAfCcPars.addPair(afRep, elem);
+		mArgCcPars.addPair(argRep, elem);
 
-						// is it even possible that elem is not its own representative at this point??
-						final ELEM elemRep = mCongruenceClosure.mElementTVER.getRepresentative(elem);
+		// is it even possible that elem is not its own representative at this point??
+		final ELEM elemRep = mCongruenceClosure.mElementTVER.getRepresentative(elem);
 
-						updateCcChild(elemRep, elem.getAppliedFunction(), elem.getArgument());
+		updateCcChild(elemRep, elem.getAppliedFunction(), elem.getArgument());
 
-						return equalitiesToPropagate;
+		return equalitiesToPropagate;
 	}
 
 	private void updateCcChild(final ELEM elemRep, final ELEM appliedFunction,

@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.RemoveCcElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraint;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 
@@ -1048,12 +1049,12 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 	 * @return a set of elements that the given elem is guaranteed to be contained in by all disjuncts; null means
 	 *   unconstrained
 	 */
-	public SetConstraintConjunction<NODE> getContainsConstraintForElement(final NODE elem) {
-		SetConstraintConjunction<NODE> resultConstraint = null;
+	public Set<SetConstraint<NODE>> getContainsConstraintForElement(final NODE elem) {
+		Set<SetConstraint<NODE>> resultConstraint = null;
 
 		// joining through union..
 		for (final DISJUNCT d : mDisjuncts) {
-			final SetConstraintConjunction<NODE> cc = d.getContainsConstraintForElement(elem);
+			final Set<SetConstraint<NODE>> cc = d.getContainsConstraintForElement(elem);
 			if (cc == null) {
 				// unconstrained in one disjunct --> unconstrained overall
 				return null;
@@ -1064,7 +1065,6 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			} else {
 				resultConstraint = SetConstraintConjunction.join(
 						mWeakEquivalenceGraph.mWeqCc.getCongruenceClosure().getLiteralSetConstraints(),
-						elem,
 						resultConstraint, cc);
 			}
 		}

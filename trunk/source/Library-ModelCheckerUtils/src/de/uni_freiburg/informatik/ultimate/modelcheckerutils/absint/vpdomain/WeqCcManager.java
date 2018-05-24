@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.vpdomain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraint;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -427,13 +428,14 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 
 //	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem, final Set<NODE> literalSet,
 	public WeqCongruenceClosure<NODE> reportContainsConstraint(final NODE elem,
-			final SetConstraintConjunction<NODE> containsConstraintRaw,
+//			final SetConstraintConjunction<NODE> containsConstraintRaw,
+			final Collection<SetConstraint<NODE>> containsConstraint,
 			final WeqCongruenceClosure<NODE> origWeqCc,
 			final boolean inplace) {
 
-		// we are reporting this SetCc into a possibly new constraint --> remove surrounding constraint
-		final SetConstraintConjunction<NODE> containsConstraint =
-				new SetConstraintConjunction<>(null, containsConstraintRaw);
+//		// we are reporting this SetCc into a possibly new constraint --> remove surrounding constraint
+//		final SetConstraintConjunction<NODE> containsConstraint =
+//				new SetConstraintConjunction<>(null, containsConstraintRaw);
 
 		bmStart(WeqCcBmNames.REPORTCONTAINS);
 		if (inplace) {

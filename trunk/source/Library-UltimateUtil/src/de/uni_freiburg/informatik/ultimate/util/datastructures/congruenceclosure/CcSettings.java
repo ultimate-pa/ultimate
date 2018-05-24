@@ -21,7 +21,7 @@ public class CcSettings {
 	/**
 	 * omit the second-finest grained class of sanity checks
 	 */
-	public static final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = true;
+	public static final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = false;
 	/**
 	 * omit the third-finest grained class of sanity checks
 	 */

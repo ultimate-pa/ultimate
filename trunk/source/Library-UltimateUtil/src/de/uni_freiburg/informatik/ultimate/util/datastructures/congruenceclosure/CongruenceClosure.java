@@ -248,6 +248,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	}
 
 	boolean reportEquality(final ELEM elem1, final ELEM elem2) {
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || sanityCheck();
 		final boolean result = reportEqualityRec(elem1, elem2);
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || sanityCheck();
 		return result;
@@ -255,6 +256,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	@Override
 	public boolean reportEqualityRec(final ELEM elem1, final ELEM elem2) {
+//		assert !elem1.isLiteral() || !elem2.isLiteral() || elem1.equals(elem2);
+//		assert !hasElement(elem1) || !getRepresentativeElement(elem1).isLiteral()
+//			|| !hasElement(elem2) || !getRepresentativeElement(elem2).isLiteral()
+//			|| getRepresentativeElement(elem1).equals(getRepresentativeElement(elem2));
 		assert !mIsFrozen;
 		if (isInconsistent()) {
 			throw new IllegalStateException();
@@ -280,12 +285,16 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return true;
 		}
 
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || assertAtMostOneLiteralPerEquivalenceClass();
+
 		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo = doMergeAndComputePropagations(elem1,
 				elem2);
 		if (propInfo == null) {
 			// this became inconsistent through the merge
 			return true;
 		}
+
+		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || assertAtMostOneLiteralPerEquivalenceClass();
 
 		doFwccAndBwccPropagationsFromMerge(propInfo, this);
 
@@ -337,7 +346,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 //			constantFunctionTreatmentOnAddEquality(elem1, elem2, mElementTVER.getEquivalenceClass(elem1),
 			constantAndMixFunctionTreatmentOnAddEquality(e1OldRep, e2OldRep, mElementTVER.getEquivalenceClass(elem1),
 					mElementTVER.getEquivalenceClass(elem2), getAuxData(),
-					e -> mManager.addElement(this, e, true, true));
+					e -> mManager.addElement(this, e, true, true), this);
 		}
 
 
@@ -375,9 +384,15 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_2 || assertNoExplicitLiteralDisequalities();
 
+		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
+				new Pair<>(new HashRelation<>(), new HashRelation<>());
 		// literal constraint treatment
 		{
-			mLiteralSetConstraints.reportEquality(e1OldRep, e2OldRep, mElementTVER.getRepresentative(elem1));
+			final Pair<ELEM, ELEM> eqToProp =
+					mLiteralSetConstraints.reportEquality(e1OldRep, e2OldRep, mElementTVER.getRepresentative(elem1));
+			if (eqToProp != null) {
+				propInfo.getFirst().addPair(eqToProp.getFirst(), eqToProp.getSecond());
+			}
 
 			if (mLiteralSetConstraints.isInconsistent()) {
 				return null;
@@ -385,9 +400,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		}
 
 
-		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> propInfo =
+		final Pair<HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> mergePropInfo =
 				getAuxData().updateAndGetPropagationsOnMerge(elem1, elem2, e1OldRep, e2OldRep,
 						oldUnequalRepsForElem1, oldUnequalRepsForElem2);
+		propInfo.getFirst().addAll(mergePropInfo.getFirst());
+		propInfo.getSecond().addAll(mergePropInfo.getSecond());
 		return propInfo;
 	}
 
@@ -564,7 +581,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			constantFunctionTreatmentOnAddElement(elem,
 					(e1, e2) -> newEqualityTarget.reportEqualityRec(e1, e2),
 					e -> mManager.addElement(this, e, true, true),
-					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()));
+					mElementTVER.getEquivalenceClass(elem.getAppliedFunction()), this);
 			mixFunctionTreatmentOnAddElement(elem,
 					(e, set) -> newEqualityTarget.reportContainsConstraint(e, set),
 					e -> mManager.addElement(this, e, true, true),
@@ -596,7 +613,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantFunctionTreatmentOnAddElement(
 			final ELEM elem, final BiConsumer<ELEM, ELEM> reportEquality, final Consumer<ELEM> addElement,
-			final Set<ELEM> weakOrStrongEquivalenceClassOfAppliedFunction) {
+			final Set<ELEM> weakOrStrongEquivalenceClassOfAppliedFunction,
+			final ICongruenceClosure<ELEM> congruenceClosure) {
 		/*
 		 * treatment for constant functions:
 		 *  <li> if we are adding an element of the form f(x), where f is a constant function, and v is f's
@@ -604,10 +622,13 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		 *  <li> if we are adding an element the form f(x), where f ~ g and g is a constant function,
 		 *   then we add the element g(x)
 		 */
-		if (elem.getAppliedFunction().isConstantFunction()) {
+		if (elem.getAppliedFunction().isConstantFunction() && !congruenceClosure.isInconsistent()) {
 			reportEquality.accept(elem, elem.getAppliedFunction().getConstantFunctionValue());
 		}
 		for (final ELEM equivalentFunction : weakOrStrongEquivalenceClassOfAppliedFunction) {
+			if (congruenceClosure.isInconsistent()) {
+				return;
+			}
 			if (equivalentFunction == elem.getAppliedFunction()) {
 				continue;
 			}
@@ -675,15 +696,20 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	 * @param elemRep2  "
 	 * @param elem1EquivalenceClass set of elements that are equal or weakly equal to elemRep1
 	 * @param elem2EquivalenceClass set of elements that are equal or weakly equal to elemRep2
+	 * @param congruenceClosure the congruence closure that is modified by this method (which elements are added to)
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> void constantAndMixFunctionTreatmentOnAddEquality(
 			final ELEM elemRep1, final ELEM elemRep2, final Set<ELEM> elem1EquivalenceClass,
-			final Set<ELEM> elem2EquivalenceClass, final CcAuxData<ELEM> auxData, final Consumer<ELEM> addElement) {
+			final Set<ELEM> elem2EquivalenceClass, final CcAuxData<ELEM> auxData, final Consumer<ELEM> addElement,
+			final ICongruenceClosure<ELEM> congruenceClosure) {
 		for (final ELEM equivalentFunction1 : elem1EquivalenceClass) {
 			if (equivalentFunction1.isMixFunction() ||
 					equivalentFunction1.isConstantFunction()) {
 				// ccpar is f(x), equivalentFunction1 is g
 				for (final ELEM ccpar : auxData.getAfCcPars(elemRep2)) {
+					if (congruenceClosure.isInconsistent()) {
+						return;
+					}
 					assert !equivalentFunction1.equals(ccpar.getAppliedFunction());
 					addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction1));
 				}
@@ -694,6 +720,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					equivalentFunction2.isConstantFunction()) {
 				// ccpar is f(x), equivalentFunction2 is g
 				for (final ELEM ccpar : auxData.getAfCcPars(elemRep1)) {
+					if (congruenceClosure.isInconsistent()) {
+						return;
+					}
 					assert !equivalentFunction2.equals(ccpar.getAppliedFunction());
 					addElement.accept(ccpar.replaceAppliedFunction(equivalentFunction2));
 				}
@@ -1029,7 +1058,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					return mManager.getInconsistentCc();
 				}
 			}
-			thisAligned = mManager.reportContainsConstraint(literalConstraint.getKey(), literalConstraint.getValue(),
+			thisAligned = mManager.reportContainsConstraint(literalConstraint.getKey(),
+					literalConstraint.getValue().getSetConstraints(),
 					thisAligned, inplace);
 		}
 
@@ -1069,17 +1099,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			return EqualityStatus.EQUAL;
 		}
 
-		final SetConstraintConjunction<ELEM> litConstraint1 = mLiteralSetConstraints.getConstraint(rep1);
-		final SetConstraintConjunction<ELEM> litConstraint2 = mLiteralSetConstraints.getConstraint(rep2);
+		final Set<SetConstraint<ELEM>> litConstraint1 = mLiteralSetConstraints.getConstraint(rep1);
+		final Set<SetConstraint<ELEM>> litConstraint2 = mLiteralSetConstraints.getConstraint(rep2);
 
 
 		if (litConstraint1 != null && litConstraint2 != null
-				&& SetConstraintConjunction.meetIsInconsistent(litConstraint1, litConstraint2)) {
-//				&& !DataStructureUtils.haveNonEmptyIntersection(litConstraint1, litConstraint2)) {
-//			final SetConstraintConjunction<ELEM> meet = SetConstraintConjunction.meet(litConstraint1, litConstraint2);
-//			if (meet.isInconsistent()) {
-//				return EqualityStatus.NOT_EQUAL;
-//			}
+				&& SetConstraintConjunction.meetIsInconsistent(getLiteralSetConstraints(),
+						litConstraint1,
+						litConstraint2)) {
 			return EqualityStatus.NOT_EQUAL;
 		}
 
@@ -1243,8 +1270,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (this.isInconsistent()) {
 			if (mElementTVER != null) {
 				// transitory CClosure instance which will later be replaced by the "bottom" variant
-				if (!mElementTVER.isInconsistent()) {
-					assert false : "fields are null, but Cc is not inconsistent";
+				if (!mElementTVER.isInconsistent() && !mLiteralSetConstraints.isInconsistent()) {
+					assert false : "cc reports as inconsistent, but why?..";
 					return false;
 				}
 			}
@@ -1732,6 +1759,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				newLiteralSetConstraints, true);
 		assert assertNoNewElementsIntroduced(this.getAllElements(), result.getAllElements(), elemsToKeep)
 			: "no elements may have been introduced that were not present before this operation";
+		assert !result.isInconsistent() : "cannot go from a consistent input to an inconsisten output during projectTo";
 		return result;
 	}
 
@@ -1944,16 +1972,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	@Override
 	public void reportContainsConstraint(final ELEM elem, final Set<ELEM> literalSet) {
-		mLiteralSetConstraints.reportContains(elem, literalSet);
+		final Pair<ELEM, ELEM> eqToProp = mLiteralSetConstraints.reportContains(elem, literalSet);
+		if (eqToProp != null) {
+			mManager.reportEquality(eqToProp.getFirst(), eqToProp.getSecond(), this, true);
+		}
 	}
 
 	@Override
-	public void reportContainsConstraint(final ELEM elem, final SetConstraintConjunction<ELEM> setCc) {
-		mLiteralSetConstraints.reportContains(elem, setCc);
+//	public void reportContainsConstraint(final ELEM elem, final SetConstraintConjunction<ELEM> setCc) {
+	public void reportContainsConstraint(final ELEM elem, final Collection<SetConstraint<ELEM>> setCc) {
+		mLiteralSetConstraints.reportContains(elem, new HashSet<>(setCc));
 	}
 
 	@Override
-	public SetConstraintConjunction<ELEM> getContainsConstraintForElement(final ELEM elem) {
+//	public SetConstraintConjunction<ELEM> getContainsConstraintForElement(final ELEM elem) {
+	public Set<SetConstraint<ELEM>> getContainsConstraintForElement(final ELEM elem) {
 		return mLiteralSetConstraints.getConstraint(elem);
 	}
 }

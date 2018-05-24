@@ -40,7 +40,9 @@ public interface ICongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>
 
 	void reportContainsConstraint(ELEM elem, Set<ELEM> literals);
 
-	SetConstraintConjunction<ELEM> getContainsConstraintForElement(ELEM elem);
+//	SetConstraintConjunction<ELEM> getContainsConstraintForElement(ELEM elem);
+	Set<SetConstraint<ELEM>> getContainsConstraintForElement(ELEM elem);
 
-	void reportContainsConstraint(ELEM elem, SetConstraintConjunction<ELEM> literalSet);
+//	void reportContainsConstraint(ELEM elem, SetConstraintConjunction<ELEM> literalSet);
+	void reportContainsConstraint(ELEM elem, Collection<SetConstraint<ELEM>> literalSet);
 }

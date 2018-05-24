@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.CongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.ICongruenceClosure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraint;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -391,11 +392,16 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //			strengthenedEdgeLabel = Collections.emptySet();
 		}
 
+		if (isInconsistent()) {
+				return true;
+		}
+
+
 		{
 			CongruenceClosure.constantAndMixFunctionTreatmentOnAddEquality(array1Rep, array2Rep,
 					mCongruenceClosure.getEquivalenceClass(array1),
 					mCongruenceClosure.getEquivalenceClass(array2), mCongruenceClosure.getAuxData(),
-					n -> mManager.addNode(n, this, true, true));
+					n -> mManager.addNode(n, this, true, true), this);
 		}
 
 
@@ -443,6 +449,10 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					mCongruenceClosure.getAuxData().getCcChildren(array1Rep).entrySet()) {
 			for (final Entry<NODE, NODE> ccc2 :
 					mCongruenceClosure.getAuxData().getCcChildren(array2Rep).entrySet()) {
+				if (isInconsistent()) {
+					return true;
+				}
+
 				if (mCongruenceClosure.getEqualityStatus(ccc1.getValue(), ccc2.getValue()) != EqualityStatus.EQUAL) {
 					continue;
 				}
@@ -484,7 +494,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			// collect nodes of the form a[i] according to the rule that are present currently
 			Collection<NODE> aIs = null;
-			SetConstraintConjunction<NODE> containsConstraint = null;
+			Set<SetConstraint<NODE>> containsConstraint = null;
 			if (nonConstantArray != null) {
 				aIs = mCongruenceClosure.getFuncAppsWithFunc(nonConstantArray);
 
@@ -495,11 +505,14 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					final NODE aQ = sampleAi.replaceArgument(
 							mManager.getWeqVariableNodeForDimension(0, sampleAi.getArgument().getSort()));
 
+//					edgeLabel.getDisjuncts().forEach(d -> d.addElement(aQ, false));
+
 					containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
 //					assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
 //					+ "literals --> unexpected..";
 //					assert !containsConstraint.isEmpty() : "uncaught inconsistent case";
-					assert !containsConstraint.isInconsistent() : "uncaught inconsistent case";
+					assert containsConstraint == null
+							|| !SetConstraintConjunction.isInconsistent(containsConstraint) : "uncaught inconsistent case";
 				}
 			}
 
@@ -524,15 +537,18 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				// do propagations
 				for (final NODE aI : aIs) {
 					// construct L cup {l}
-					final SetConstraintConjunction<NODE> newLiteralSet =
+					final Set<SetConstraint<NODE>> newLiteralSet =
 							SetConstraintConjunction.join(
 									mCongruenceClosure.getLiteralSetConstraints(),
-									aI,
 									containsConstraint,
-									new SetConstraintConjunction<>(
-											null,
-											containsConstraint.getConstrainedElement(),
-											constantArrayConstant));
+									Collections.singleton(
+											SetConstraint.buildSetConstraint(Collections.singleton(constantArrayConstant))));
+//									aI,
+//									containsConstraint,
+//									new SetConstraintConjunction<>(
+//											null,
+//											containsConstraint.getConstrainedElement(),
+//											constantArrayConstant));
 
 
 					mCongruenceClosure.reportContainsConstraint(aI, newLiteralSet);
@@ -930,7 +946,8 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	public void reportContainsConstraint(final NODE elem, final SetConstraintConjunction<NODE> setCc) {
+//	public void reportContainsConstraint(final NODE elem, final SetConstraintConjunction<NODE> setCc) {
+	public void reportContainsConstraint(final NODE elem, final Collection<SetConstraint<NODE>> setCc) {
 		mCongruenceClosure.reportContainsConstraint(elem, setCc);
 		if (mManager.getSettings().isAlwaysReportChangeToGpa()) {
 			throw new AssertionError("not implemented");
@@ -1250,7 +1267,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			CongruenceClosure.constantFunctionTreatmentOnAddElement(elem,
 					(e1, e2) -> mManager.reportEquality(this, e1, e2, true),
 					e -> mManager.addNode(e, this, true, true),
-					getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).keySet());
+					getWeakEquivalenceGraph().getAdjacentWeqEdges(elem.getAppliedFunction()).keySet(), this);
 			CongruenceClosure.mixFunctionTreatmentOnAddElement(elem,
 					(e, lits) -> mManager.reportContainsConstraint(e, lits, this, true),
 					e -> mManager.addNode(e, this, true, true),
@@ -1286,6 +1303,13 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 							mManager.getAllWeqVarsNodeForFunction(ccp.getAppliedFunction()));
 
 			madeChanges |= reportWeakEquivalenceDoOnlyRoweqPropagations(elem, ccp, projectedLabel, true);
+
+			if (isInconsistent()) {
+				// propagation made this inconsistent --> no more propagations needed
+				return;
+			}
+
+
 		}
 
 
@@ -1313,7 +1337,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 					elem.replaceArgument(mManager.getWeqVariableNodeForDimension(0, elem.getArgument().getSort()));
 
 			final WeakEquivalenceEdgeLabel<NODE, ICongruenceClosure<NODE>> edgeLabel = adjacentEdge.getValue();
-			final SetConstraintConjunction<NODE> containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
+			final Set<SetConstraint<NODE>> containsConstraint = edgeLabel.getContainsConstraintForElement(aQ);
 //			assert containsConstraint.stream().allMatch(n -> n.isLiteral()) : "contains constraint not only over "
 //					+ "literals --> unexpected..";
 			if (containsConstraint == null) {
@@ -1324,19 +1348,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 
 			// construct L cup {l}
-			final SetConstraintConjunction<NODE> newLiteralSet =
+			final Set<SetConstraint<NODE>> newLiteralSet =
 					SetConstraintConjunction.join(
 							mCongruenceClosure.getLiteralSetConstraints(),
-							aQ,
 							containsConstraint,
-							mManager.getCcManager().buildSetConstraintConjunction(
-									mCongruenceClosure.getLiteralSetConstraints(),
-									 aQ, Collections.singleton(constantArrayConstant)));
-//							new SetConstraintConjunction<>(
-//									null, aQ, constantArrayConstant));
-//			newLiteralSet.add(constantArrayConstant);
-//			final Set<NODE> newLiteralSet = new HashSet<>(containsConstraint);
-//			newLiteralSet.add(constantArrayConstant);
+							Collections.singleton(
+									SetConstraint.buildSetConstraint(Collections.singleton(constantArrayConstant))));
 
 			// do propagation
 			mCongruenceClosure.reportContainsConstraint(elem, newLiteralSet);
@@ -1576,7 +1593,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 			if (thisAligned.isInconsistent()) {
 				return mManager.getInconsistentWeqCc(inplace);
 			}
-			thisAligned = mManager.reportContainsConstraint(en.getKey(), en.getValue(), thisAligned, inplace);
+			thisAligned = mManager.reportContainsConstraint(en.getKey(), en.getValue().getSetConstraints(), thisAligned, inplace);
 //			thisAligned.getCongruenceClosure().getLiteralSetConstraints().reportContains(en.getKey(), en.getValue());
 		}
 		assert thisAligned.sanityCheck();
@@ -1901,7 +1918,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 	}
 
 	@Override
-	public SetConstraintConjunction<NODE> getContainsConstraintForElement(final NODE elem) {
+	public Set<SetConstraint<NODE>> getContainsConstraintForElement(final NODE elem) {
 		return mCongruenceClosure.getContainsConstraintForElement(elem);
 	}
 }

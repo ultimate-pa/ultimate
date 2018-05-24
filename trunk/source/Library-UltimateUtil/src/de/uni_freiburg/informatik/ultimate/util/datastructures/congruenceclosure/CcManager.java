@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
 
@@ -303,22 +304,34 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Set<ELEM> elementSet,
+	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Collection<ELEM> elementSet,
+			final CongruenceClosure<ELEM> origCc,
+			final boolean inplace) {
+		return reportContainsConstraint(elem, Collections.singleton(SetConstraint.buildSetConstraint(elementSet)),
+				origCc, inplace);
+	}
+
+
+	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Set<SetConstraint<ELEM>> elementSet,
 			final CongruenceClosure<ELEM> origCc,
 			final boolean inplace) {
 		bmStart(CcBmNames.REPORTCONTAINS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
 		if (inplace) {
 			final SetConstraintConjunction<ELEM> newSetCc = buildSetConstraintConjunction(
-					origCc.getLiteralSetConstraints(), elem, elementSet);
-			origCc.reportContainsConstraint(elem, newSetCc);
+					origCc.getLiteralSetConstraints(), elem,
+					elementSet);
+//					Collections.singleton(SetConstraint.buildSetConstraint(elementSet)));
+			origCc.reportContainsConstraint(elem, newSetCc.getSetConstraints());
 			bmEnd(CcBmNames.REPORTCONTAINS);
 			return origCc;
 		} else {
 			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
 			final SetConstraintConjunction<ELEM> newSetCc = buildSetConstraintConjunction(
-					unfrozen.getLiteralSetConstraints(), elem, elementSet);
-			unfrozen.reportContainsConstraint(elem, newSetCc);
+					unfrozen.getLiteralSetConstraints(), elem,
+					elementSet);
+//					Collections.singleton(SetConstraint.buildSetConstraint(elementSet)));
+			unfrozen.reportContainsConstraint(elem, newSetCc.getSetConstraints());
 			unfrozen.freeze();
 
 			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
@@ -327,31 +340,33 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element,
-			final SetConstraintConjunction<ELEM> containsConstraintRaw,
-			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
-
-
-		// we are reporting this SetCc into a possibly new constraint --> remove surrounding constraint
-		final SetConstraintConjunction<ELEM> setCc =
-				new SetConstraintConjunction<>(null, containsConstraintRaw);
-
-		bmStart(CcBmNames.REPORTCONTAINS);
-		assert !CcSettings.FORBID_INPLACE || !inplace;
-		if (inplace) {
-			origCc.reportContainsConstraint(element, setCc);
-			bmEnd(CcBmNames.REPORTCONTAINS);
-			return origCc;
-		} else {
-			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
-			unfrozen.reportContainsConstraint(element, setCc);
-			unfrozen.freeze();
-
-			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
-			bmEnd(CcBmNames.REPORTCONTAINS);
-			return resultPp;
-		}
-	}
+//	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM element,
+//			final SetConstraintConjunction<ELEM> containsConstraintRaw,
+//			final CongruenceClosure<ELEM> origCc, final boolean inplace) {
+//
+//		final ELEM elementRep = origCc.getRepresentativeElement(element);
+//
+//		// we are reporting this SetCc into a possibly new constraint --> remove surrounding constraint
+//		final SetConstraintConjunction<ELEM> setCc =
+//				new SetConstraintConjunction<>(null, containsConstraintRaw);
+//		setCc.resetConstrainedElement(elementRep);
+//
+//		bmStart(CcBmNames.REPORTCONTAINS);
+//		assert !CcSettings.FORBID_INPLACE || !inplace;
+//		if (inplace) {
+//			origCc.reportContainsConstraint(elementRep, setCc.getSetConstraints());
+//			bmEnd(CcBmNames.REPORTCONTAINS);
+//			return origCc;
+//		} else {
+//			final CongruenceClosure<ELEM> unfrozen = unfreeze(origCc);
+//			unfrozen.reportContainsConstraint(elementRep, setCc.getSetConstraints());
+//			unfrozen.freeze();
+//
+//			final CongruenceClosure<ELEM> resultPp = postProcessCcResult(unfrozen);
+//			bmEnd(CcBmNames.REPORTCONTAINS);
+//			return resultPp;
+//		}
+//	}
 
 	public CongruenceClosure<ELEM> removeSimpleElement(final ELEM elem, final CongruenceClosure<ELEM> origCc,
 			final boolean modifiable) {
@@ -580,7 +595,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 	}
 
-	public CongruenceClosure<ELEM> addAllElements(final CongruenceClosure<ELEM> cc, final Set<ELEM> elemsToAdd,
+	public CongruenceClosure<ELEM> addAllElements(final CongruenceClosure<ELEM> cc, final Collection<ELEM> elemsToAdd,
 			final IRemovalInfo<ELEM> remInfo, final boolean inplace) {
 		bmStart(CcBmNames.ADD_ALL_ELEMENTS);
 		assert !CcSettings.FORBID_INPLACE || !inplace;
@@ -854,15 +869,15 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		return true;
 	}
 
-	public SetConstraintConjunction<ELEM> buildSetConstraintConjunction(
-			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
-			final ELEM constrainedElement,
-			final Set<ELEM> elements) {
-		final SetConstraint<ELEM> sc = SetConstraint.buildSetConstraint(//surroundingSetConstraints,
-				elements);
-		return buildSetConstraintConjunction(surroundingSetConstraints, constrainedElement,
-				Collections.singleton(sc));
-	}
+//	public SetConstraintConjunction<ELEM> buildSetConstraintConjunction(
+//			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
+//			final ELEM constrainedElement,
+//			final Set<ELEM> elements) {
+//		final SetConstraint<ELEM> sc = SetConstraint.buildSetConstraint(//surroundingSetConstraints,
+//				elements);
+//		return buildSetConstraintConjunction(surroundingSetConstraints, constrainedElement,
+//				Collections.singleton(sc));
+//	}
 
 
 
@@ -870,11 +885,22 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public SetConstraintConjunction<ELEM> buildSetConstraintConjunction(
 			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
 			final ELEM constrainedElement,
-			final Collection<SetConstraint<ELEM>> setConstraints) {
+			final Set<SetConstraint<ELEM>> setConstraintsIn) {
 		bmStart(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
 
+		final Set<SetConstraint<ELEM>> setConstraintsUpdRepr =
+				SetConstraintConjunction.updateOnChangedRepresentative(setConstraintsIn,
+						surroundingSetConstraints.getCongruenceClosure());
+		assert setConstraintsUpdRepr == setConstraintsIn : "if this never fails, we can remove that updaterep operation";
+
 		final Set<SetConstraint<ELEM>> filtered = normalizeSetConstraintConjunction(surroundingSetConstraints,
-				setConstraints);
+				setConstraintsUpdRepr);
+
+		// TODO: normalize does not do all filterings because it does not know the constrainedElement
+
+		if (filtered == null) {
+			return null;
+		}
 
 		assert !filtered.stream().anyMatch(sc -> sc.isInconsistent()) || filtered.size() == 1
 				: "not correctly normalized: there is a 'false' conjunct, but it is not the only conjunct";
@@ -892,48 +918,78 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	}
 
 	/**
+	 * note that this normalization is not wrt any constrained element! (e.g. the filtering for x in {x} must happen
+	 * outside of this method)
 	 *
 	 * @param surroundingSetConstraints used to: expand literals, compute meet
-	 * @param setConstraints
+	 * @param setConstraintsIn
 	 * @return
 	 */
 	public Set<SetConstraint<ELEM>> normalizeSetConstraintConjunction(
 			final CCLiteralSetConstraints<ELEM> surroundingSetConstraints,
-			final Collection<SetConstraint<ELEM>> setConstraints) {
+//			final ELEM constrainedElement,
+			final Collection<SetConstraint<ELEM>> setConstraintsIn) {
 
 		// expand non-literals if possible (in-place on SetConstraints)
+		final Set<SetConstraint<ELEM>> expanded = new HashSet<>(setConstraintsIn);
 		{
-			final Set<ELEM> rhsElements = new HashSet<>();
-			setConstraints.forEach(sc -> rhsElements.addAll(sc.getElementSet()));
+			final HashRelation<ELEM, ELEM> elemToExpansion = surroundingSetConstraints.getElemToExpansion();
 
-			for (final ELEM rhselem : rhsElements) {
-				final SetConstraintConjunction<ELEM> scc = surroundingSetConstraints.getConstraint(rhselem);
-
-				if (scc == null) {
-					continue;
-				}
-
-				if (scc.hasOnlyLiterals()) {
-
-					setConstraints.forEach(sc -> sc.expandVariableToLiterals(rhselem, scc.getLiterals()));
+			for (final SetConstraint<ELEM> sc : setConstraintsIn) {
+				for (final ELEM e : sc.getNonLiterals()) {
+					final Set<ELEM> expansion = elemToExpansion.getImage(e);
+					if (!expansion.isEmpty()) {
+						expanded.add(SetConstraint.expandNonLiteral(sc, e, expansion));
+					}
 				}
 			}
+
+
+//			final Set<ELEM> rhsElements = new HashSet<>();
+//			setConstraintsIn.forEach(sc -> rhsElements.addAll(sc.getElementSet()));
+//
+//			for (final ELEM rhselem : rhsElements) {
+//				final Set<SetConstraint<ELEM>> scc = surroundingSetConstraints.getConstraint(rhselem);
+//
+//				if (scc == null) {
+//					continue;
+//				}
+//
+//				if (SetConstraintConjunction.hasOnlyLiterals(scc)) {
+//					setConstraintsIn.forEach(sc -> sc.expandVariableToLiterals(rhselem,
+//							SetConstraintConjunction.getLiterals(scc)));
+//				}
+//			}
 		}
 
 
 		//TODO: only instantiate SetConstraintComparator once??
 		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(new SetConstraintComparator<>());
-		final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(setConstraints);
+		final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(expanded);
+
+//		final Set<SetConstraint<ELEM>> filtered1a = filtered1.stream()
+//				.filter(sc -> !sc.isSingleton() || !sc.getSingletonValue().equals(constrainedElement))
+//				.collect(Collectors.toSet());
+
 
 		// check for inconsistency
-		for (final SetConstraint<ELEM> sc : setConstraints) {
+		for (final SetConstraint<ELEM> sc : filtered1) {
+//			if (sc.isInconsistent() || sc.isSingleton()) {
 			if (sc.isInconsistent()) {
 //				return new SetConstraintConjunction<>(true);
 //				return Collections.singleton(new SetConstraint<>(true));
 				return Collections.singleton(sc);
 			}
+			// bs -- example: x in {1} /\ x in {0}
+//			if (sc.isSingleton()) {
+//				return Collections.singleton(sc);
+//			}
 		}
 
+		// check for tautology
+		if (filtered1.isEmpty()) {
+			return null;
+		}
 
 		final Set<SetConstraint<ELEM>> all = new HashSet<>();
 
@@ -959,6 +1015,14 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		//TODO: only instantiate SetConstraintComparator once??
 		final PartialOrderCache<SetConstraint<ELEM>> poc = new PartialOrderCache<>(new SetConstraintComparator<>());
 		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(all);
+
+		// check for tautology
+		if (filtered.isEmpty()) {
+			return null;
+		}
+
+
+		assert SetConstraintConjunction.sanityCheck(filtered);
 		return filtered;
 	}
 
