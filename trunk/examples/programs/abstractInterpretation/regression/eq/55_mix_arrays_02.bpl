@@ -1,4 +1,5 @@
 //#Safe
+
 procedure foo() {
   var a, b, mixed : [int] int;
   var nondet : [int] bool;
