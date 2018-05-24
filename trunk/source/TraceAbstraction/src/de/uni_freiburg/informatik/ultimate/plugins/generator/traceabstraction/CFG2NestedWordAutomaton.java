@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -81,14 +82,32 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	 */
 	@SuppressWarnings("unchecked")
 	public INestedWordAutomaton<LETTER, IPredicate> getNestedWordAutomaton(final IIcfg<? extends IcfgLocation> icfg,
-			final IStateFactory<IPredicate> automataStateFactory, final Collection<? extends IcfgLocation> acceptingLocations) {
-		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
+			final IStateFactory<IPredicate> automataStateFactory,
+			final Collection<? extends IcfgLocation> acceptingLocations) {
+		final boolean interprocedural = mInterprocedural;
+		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
 
+		Function<IcfgLocation, IPredicate> predicateProvider;
+		final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
+		if (DEBUG_STORE_HISTORY) {
+			predicateProvider = x -> mPredicateFactory.newPredicateWithHistory(x, trueTerm,
+					new HashMap<Integer, Term>());
+		} else {
+			predicateProvider = x -> mPredicateFactory.newSPredicate(x, trueTerm);
+		}
+
+		return constructNwa(icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
+				predicateProvider);
+	}
+
+	private INestedWordAutomaton<LETTER, IPredicate> constructNwa(final IIcfg<? extends IcfgLocation> icfg,
+			final IStateFactory<IPredicate> automataStateFactory,
+			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
+			final VpAlphabet<LETTER> vpAlphabet, Function<IcfgLocation, IPredicate> predicateProvider) {
+		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
-		final boolean interprocedural = mInterprocedural;
 
-		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
 
 		// construct the automaton
 		final NestedWordAutomaton<LETTER, IPredicate> nwa = new NestedWordAutomaton<>(
@@ -100,16 +119,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			for (final IcfgLocation locNode : allNodes) {
 				final boolean isInitial = initialNodes.contains(locNode);
 				final boolean isAccepting = acceptingLocations.contains(locNode);
-
-				final IPredicate automatonState;
-				final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
-				if (DEBUG_STORE_HISTORY) {
-					automatonState =
-							mPredicateFactory.newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
-				} else {
-					automatonState = mPredicateFactory.newSPredicate(locNode, trueTerm);
-				}
-
+				final IPredicate automatonState = predicateProvider.apply(locNode);
 				nwa.addState(isInitial, isAccepting, automatonState);
 				nodes2States.put(locNode, automatonState);
 			}
