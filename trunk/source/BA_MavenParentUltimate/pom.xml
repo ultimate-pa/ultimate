@@ -307,6 +307,7 @@
 
 			src/de/uni_freiburg/informatik/ultimate/interactive/traceabstraction/protobuf/*.java
 			src/de/uni_freiburg/informatik/ultimate/interactive/common/protobuf/*.java
+            src/de/uni_freiburg/informatik/ultimate/servercontroller/protobuf/*.java
 		</sonar.exclusions>
 
 		<!-- Exclude from sonar duplication analysis -->
