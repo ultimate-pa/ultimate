@@ -248,9 +248,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		return mCurrentIteration.getHoareTripleChecker();
 	}
 
-	public IInterpolantGenerator getInterpolantGenerator() {
+	public IInterpolantGenerator<LETTER> getInterpolantGenerator() {
 		if (mCurrentIteration == null) {
-			return new AbsIntFailedInterpolantGenerator(mPredicateUnifierSmt, null, ItpErrorStatus.ALGORITHM_FAILED,
+			return new AbsIntFailedInterpolantGenerator<>(mPredicateUnifierSmt, null, ItpErrorStatus.ALGORITHM_FAILED,
 					createNoFixpointsException());
 		}
 		return mCurrentIteration.getInterpolantGenerator();
@@ -333,7 +333,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private final IRun<LETTER, IPredicate, ?> mCex;
 		private final IAbstractInterpretationResult<STATE, LETTER, ?> mResult;
 
-		private IInterpolantGenerator mInterpolantGenerator;
+		private IInterpolantGenerator<LETTER> mInterpolantGenerator;
 		private CachingHoareTripleChecker mHtc;
 		private final AbsIntPredicate<STATE> mFalsePredicate;
 		private final AbsIntPredicate<STATE> mTruePredicate;
@@ -376,17 +376,17 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifierAbsInt);
 		}
 
-		public IInterpolantGenerator getInterpolantGenerator() {
+		public IInterpolantGenerator<LETTER> getInterpolantGenerator() {
 			if (mInterpolantGenerator == null) {
 				mInterpolantGenerator = createInterpolantGenerator();
 			}
 			return mInterpolantGenerator;
 		}
 
-		private IInterpolantGenerator createInterpolantGenerator() {
+		private IInterpolantGenerator<LETTER> createInterpolantGenerator() {
 			if (mResult.hasReachedError()) {
 				// analysis was not strong enough
-				return new AbsIntFailedInterpolantGenerator(mPredicateUnifierAbsInt, mCex.getWord(),
+				return new AbsIntFailedInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex.getWord(),
 						ItpErrorStatus.ALGORITHM_FAILED, null);
 			}
 			// we were strong enough!
@@ -417,7 +417,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				assert isInductive(mCex.getWord().asList(), interpolants,
 						getHoareTripleChecker()) : "Sequence of interpolants not inductive!";
 				mLogger.info("Finished generation of AbsInt predicates");
-				return new AbsIntInterpolantGenerator(mPredicateUnifierAbsInt, mCex.getWord(),
+				return new AbsIntInterpolantGenerator<>(mPredicateUnifierAbsInt, mCex.getWord(),
 						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker(),
 						mTruePredicate, mFalsePredicate);
 			} catch (final ToolchainCanceledException tce) {
@@ -571,12 +571,13 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private static final class AbsIntInterpolantGenerator extends AbsIntBaseInterpolantGenerator {
+	private static final class AbsIntInterpolantGenerator<LETTER extends IAction>
+			extends AbsIntBaseInterpolantGenerator<LETTER> {
 
 		private final IPredicate[] mInterpolants;
 		private final CachingHoareTripleChecker mHtc;
 
-		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
+		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<LETTER> cex,
 				final IPredicate[] sequence, final CachingHoareTripleChecker htc, final AbsIntPredicate<?> preCond,
 				final AbsIntPredicate<?> postCond) {
 			super(predicateUnifier, cex, preCond, postCond, new InterpolantComputationStatus(true, null, null));
@@ -608,10 +609,11 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	}
 
-	private static final class AbsIntFailedInterpolantGenerator extends AbsIntBaseInterpolantGenerator {
+	private static final class AbsIntFailedInterpolantGenerator<LETTER extends IAction>
+			extends AbsIntBaseInterpolantGenerator<LETTER> {
 
-		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier,
-				final Word<? extends IAction> cex, final ItpErrorStatus status, final Exception ex) {
+		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<LETTER> cex,
+				final ItpErrorStatus status, final Exception ex) {
 			super(predicateUnifier, cex, null, null, new InterpolantComputationStatus(false, status, ex));
 		}
 

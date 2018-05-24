@@ -195,7 +195,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	/**
 	 * IInterpolantGenerator that was used in the current iteration.
 	 */
-	protected IInterpolantGenerator mInterpolantGenerator;
+	protected IInterpolantGenerator<LETTER> mInterpolantGenerator;
 
 	/**
 	 * Interpolant automaton of this iteration.

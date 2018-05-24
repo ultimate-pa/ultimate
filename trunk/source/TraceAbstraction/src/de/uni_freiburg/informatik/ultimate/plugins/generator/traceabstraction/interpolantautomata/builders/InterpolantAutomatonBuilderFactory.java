@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -140,13 +141,13 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> getResult(final IAutomaton<LETTER, IPredicate> abstraction,
-			final IInterpolantGenerator interpolGenerator, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IInterpolantGenerator<LETTER> interpolGenerator, final IRun<LETTER, IPredicate, ?> counterexample,
 			final List<TracePredicates> ipps) throws AutomataOperationCanceledException {
 		return createBuilder(abstraction, interpolGenerator, counterexample, ipps).getResult();
 	}
 
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilder(
-			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
+			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator<LETTER> interpolGenerator,
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps)
 			throws AutomataOperationCanceledException {
 		mBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
@@ -167,7 +168,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderCanonical(
-			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
+			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator<LETTER> interpolGenerator,
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps) {
 		if (ipps.isEmpty()) {
 			throw new IllegalArgumentException("Need at least one sequence of interpolants.");
@@ -175,11 +176,11 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 		// use the first sequence of interpolants
 		final TracePredicates ipp = ipps.get(0);
 
-		@SuppressWarnings("unchecked")
 		final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
 				new CanonicalInterpolantAutomatonBuilder<>(mServices, ipp, counterexample.getStateSequence(),
 						new VpAlphabet<>(abstraction), mCsToolkit, mPredicateFactory, mLogger,
-						interpolGenerator.getPredicateUnifier(), (NestedWord<LETTER>) interpolGenerator.getTrace());
+						interpolGenerator.getPredicateUnifier(),
+						TraceCheckUtils.toNestedWord(interpolGenerator.getTrace()));
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
 		final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices, ipp,
@@ -190,7 +191,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderSingleTrace(
-			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
+			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator<LETTER> interpolGenerator,
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps) {
 		final StraightLineInterpolantAutomatonBuilder<LETTER> iab = new StraightLineInterpolantAutomatonBuilder<>(
 				mServices, new VpAlphabet<>(abstraction), interpolGenerator, mPredicateFactory,
@@ -199,7 +200,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderTotalInterpolation2(
-			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
+			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator<LETTER> interpolGenerator,
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps)
 			throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<LETTER, IPredicate> castedAbstraction =
@@ -216,7 +217,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderTwoTrack(
-			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
+			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator<LETTER> interpolGenerator,
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps)
 			throws AutomataOperationCanceledException {
 		if (!(interpolGenerator instanceof TraceCheckSpWp)
@@ -227,7 +228,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 		final List<IPredicate> predicatesB;
 		boolean build2TrackAutomaton = false;
 		if (interpolGenerator instanceof TraceCheckSpWp) {
-			final TraceCheckSpWp traceCheck = (TraceCheckSpWp) interpolGenerator;
+			final TraceCheckSpWp<LETTER> traceCheck = (TraceCheckSpWp<LETTER>) interpolGenerator;
 			predicatesA = traceCheck.getForwardPredicates();
 			predicatesB = traceCheck.getBackwardPredicates();
 			build2TrackAutomaton = true;
@@ -253,9 +254,9 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 	}
 
 	@FunctionalInterface
-	private interface IBuilderFunction<LETTER> {
+	private interface IBuilderFunction<LETTER extends IAction> {
 		IInterpolantAutomatonBuilder<LETTER, IPredicate> create(final IAutomaton<LETTER, IPredicate> abstraction,
-				final IInterpolantGenerator interpolGenerator, final IRun<LETTER, IPredicate, ?> counterexample,
+				final IInterpolantGenerator<LETTER> interpolGenerator, final IRun<LETTER, IPredicate, ?> counterexample,
 				final List<TracePredicates> ipps) throws AutomataOperationCanceledException;
 	}
 }

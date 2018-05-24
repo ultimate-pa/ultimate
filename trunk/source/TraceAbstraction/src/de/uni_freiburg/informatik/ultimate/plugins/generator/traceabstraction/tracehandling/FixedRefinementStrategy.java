@@ -40,13 +40,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -71,7 +71,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 
 	private final TraceCheckConstructor<LETTER> mFunConstructFromPrefs;
 	private ITraceCheck mTraceCheck;
-	private IInterpolantGenerator mInterpolantGenerator;
+	private IInterpolantGenerator<LETTER> mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
@@ -145,7 +145,7 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	}
 
 	@Override
-	public IInterpolantGenerator getInterpolantGenerator() {
+	public IInterpolantGenerator<LETTER> getInterpolantGenerator() {
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
 					mTaPrefsForInterpolantConsolidation, getTraceCheck(), mPredicateFactory, mPredicateUnifier,
@@ -167,8 +167,8 @@ public class FixedRefinementStrategy<LETTER extends IIcfgTransition<?>> extends 
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> constructInterpolantAutomatonBuilder(
-			final IInterpolantGenerator interpolantGenerator, final List<TracePredicates> ipps) {
-		final IInterpolantGenerator localInterpolantGenerator = Objects.requireNonNull(interpolantGenerator,
+			final IInterpolantGenerator<LETTER> interpolantGenerator, final List<TracePredicates> ipps) {
+		final IInterpolantGenerator<LETTER> localInterpolantGenerator = Objects.requireNonNull(interpolantGenerator,
 				"cannot construct interpolant automaton if no interpolant generator is present");
 		try {
 			if (ipps.isEmpty()) {

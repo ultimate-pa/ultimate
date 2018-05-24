@@ -29,11 +29,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -64,8 +64,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 /**
  * Represents a map of invariants to a run that has been generated using a {@link IInvariantPatternProcessor} on the
@@ -73,9 +73,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
  *
  * @author Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
-public final class PathInvariantsGenerator implements IInterpolantGenerator {
+public final class PathInvariantsGenerator<LETTER extends IAction> implements IInterpolantGenerator<LETTER> {
 
-	private final NestedRun<? extends IAction, IPredicate> mRun;
+	private final NestedRun<LETTER, IPredicate> mRun;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final IPredicate[] mInterpolants;
@@ -109,9 +109,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @param xnfConversionTechnique
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
-			final IPredicate postcondition, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
+			final NestedRun<LETTER, IPredicate> run, final IPredicate precondition, final IPredicate postcondition,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
 			final InvariantSynthesisSettings invSynthSettings, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
@@ -186,8 +185,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	@Override
-	public Word<? extends IAction> getTrace() {
-		return mRun.getWord();
+	public List<LETTER> getTrace() {
+		return mRun.getWord().asList();
 	}
 
 	@Override
@@ -287,11 +286,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		MotzkinTransformationsApproxConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
 				StatisticsType.KEY_BEFORE_DATA),
 		// Number of Motzkin Coefficients needed for normal constraints
-		MotzkinCoefficientsNormalConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
-				StatisticsType.KEY_BEFORE_DATA),
+		MotzkinCoefficientsNormalConstr(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// Number of Motzkin Coefficients needed for constraints of Under- and/or Overapproximations
-		MotzkinCoefficientsApproxConstr(Integer.class, StatisticsType.INTEGER_ADDITION,
-				StatisticsType.KEY_BEFORE_DATA),
+		MotzkinCoefficientsApproxConstr(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of the time needed per round to solve the constraints
 		ConstraintsSolvingTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_DATA),
 		// the sum of the time needed per round to construct the constraints

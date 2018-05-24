@@ -124,7 +124,7 @@ public class ToothlessTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>
 	}
 
 	@Override
-	public IInterpolantGenerator getInterpolantGenerator() {
+	public IInterpolantGenerator<LETTER> getInterpolantGenerator() {
 		return mAbsIntRunner.getInterpolantGenerator();
 	}
 }

@@ -35,12 +35,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
  * Initializer and container of preferences for the trace abstraction plugin.
@@ -379,57 +381,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	/**
-	 * Code block assertion order. Determines in which order the different codeblocks of a trace are asserted during a
-	 * trace check.
-	 */
-	public enum AssertCodeBlockOrder {
-		/**
-		 * Assert all codeblocks at once.
-		 */
-		NOT_INCREMENTALLY,
-
-		/**
-		 * Assert in two steps. First, assert all codeblocks that do not occur in the first loop of the trace. Second,
-		 * assert the rest.
-		 */
-		OUTSIDE_LOOP_FIRST1,
-
-		/**
-		 * Assert codeblocks according to their "depth". Codeblocks outside of loops have depth 0, codeblocks within a
-		 * loop have depth i + 1 where i is the depth of the loop codeblock.
-		 *
-		 * Assert all codeblocks in the order of their depth starting with depth 0.
-		 */
-		OUTSIDE_LOOP_FIRST2,
-
-		/**
-		 * Similar to {@link AssertCodeBlockOrder#OUTSIDE_LOOP_FIRST2}, but in reverse order (start with the deepest
-		 * codeblocks).
-		 */
-		INSIDE_LOOP_FIRST1,
-
-		/**
-		 * Similar to {@link AssertCodeBlockOrder#OUTSIDE_LOOP_FIRST2} and
-		 * {@link AssertCodeBlockOrder#INSIDE_LOOP_FIRST1} in that it also uses the depth of a codeblock. This setting
-		 * alternates between depths, starting with depth 0, then asserting the maximal depth, then depth 1, etc.
-		 */
-		MIX_INSIDE_OUTSIDE,
-
-		/**
-		 * Assert in two steps: First terms with small constants (currently, terms that contain constants smaller than
-		 * 10), then the rest.
-		 */
-		TERMS_WITH_SMALL_CONSTANTS_FIRST
-	}
-
-	/**
-	 * Unsatisfiable core mode.
-	 */
-	public enum UnsatCores {
-		IGNORE, STATEMENT_LEVEL, CONJUNCT_LEVEL
-	}
-
-	/**
 	 * Language operation during refinement.
 	 */
 	public enum LanguageOperation {
@@ -543,31 +494,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * array interpolation, then SMTInterpol with FP.
 		 */
 		SMTINTERPOL
-	}
-
-	/**
-	 * Specifies which categories of exceptions to throw. All other categories are ignored.
-	 *
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 * @see ExceptionHandlingCategory
-	 */
-	public enum RefinementStrategyExceptionBlacklist {
-		/**
-		 * Throw no exceptions.
-		 */
-		NONE,
-		/**
-		 * Throw only unknown exceptions.
-		 */
-		UNKNOWN,
-		/**
-		 * Throw unknown exceptions and known exceptions that are categorized as "sometimes good, sometimes bad".
-		 */
-		DEPENDING,
-		/**
-		 * Throw all exceptions.
-		 */
-		ALL
 	}
 
 	/**

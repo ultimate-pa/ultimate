@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -48,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public interface IInterpolantGenerator {
+public interface IInterpolantGenerator<LETTER extends IAction> {
 
-	Word<? extends IAction> getTrace();
+	List<LETTER> getTrace();
 
 	IPredicate getPrecondition();
 
@@ -69,8 +69,7 @@ public interface IInterpolantGenerator {
 	IPredicateUnifier getPredicateUnifier();
 
 	default TracePredicates getIpp() {
-		return new TracePredicates(getPrecondition(), getPostcondition(),
-				Arrays.asList(getInterpolants()));
+		return new TracePredicates(getPrecondition(), getPostcondition(), Arrays.asList(getInterpolants()));
 	}
 
 	/**

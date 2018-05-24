@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
@@ -45,15 +46,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * check, the result has one state for each interpolant, the result has one transition for each CodeBlock in the trace.
  * The result accepts the word/trace of the trace check. IPredicates may occur several times in the array of
  * interpolants, hence the resulting automaton may also have loops and accept more than a single word.
- * 
+ *
  * @author Matthias Heizmann
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class StraightLineInterpolantAutomatonBuilder<LETTER>
+public class StraightLineInterpolantAutomatonBuilder<LETTER extends IAction>
 		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
 	/**
 	 * Determines which states become initial and accepting in the automaton.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public enum InitialAndAcceptingStateMode {
@@ -66,13 +67,13 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 		 */
 		ALL_INITIAL_ALL_ACCEPTING
 	}
-	
+
 	private final IUltimateServiceProvider mServices;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 
 	/**
 	 * Constructor from a general trace and predicate provider.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param alphabet
@@ -96,7 +97,7 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 
 	/**
 	 * Convenience constructor from interpolants.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param alphabet
@@ -108,7 +109,7 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 	 */
 	@SuppressWarnings("unchecked")
 	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final VpAlphabet<LETTER> alphabet, final IInterpolantGenerator interpolantGenerator,
+			final VpAlphabet<LETTER> alphabet, final IInterpolantGenerator<LETTER> interpolantGenerator,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final InitialAndAcceptingStateMode acceptingStateMode) {
 		this(services, alphabet, predicateFactory, (NestedWord<LETTER>) interpolantGenerator.getTrace(),
@@ -120,16 +121,16 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 		final boolean isInitial;
 		final boolean isAccepting;
 		switch (initAndAcceptStateMode) {
-			case ONLY_FIRST_INITIAL_LAST_ACCEPTING:
-				isInitial = false;
-				isAccepting = false;
-				break;
-			case ALL_INITIAL_ALL_ACCEPTING:
-				isInitial = true;
-				isAccepting = true;
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown mode: " + initAndAcceptStateMode);
+		case ONLY_FIRST_INITIAL_LAST_ACCEPTING:
+			isInitial = false;
+			isAccepting = false;
+			break;
+		case ALL_INITIAL_ALL_ACCEPTING:
+			isInitial = true;
+			isAccepting = true;
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown mode: " + initAndAcceptStateMode);
 		}
 		mResult.addState(true, isAccepting, tracePredicates.getPrecondition());
 		if (tracePredicates.getPrecondition() != tracePredicates.getPostcondition()) {

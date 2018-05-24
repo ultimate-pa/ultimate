@@ -40,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.<br>
@@ -105,52 +104,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 		return mStrategy.somePerfectSequenceFound();
 	}
 
-	public InterpolantConsolidation<LETTER>.InterpolantConsolidationBenchmarkGenerator
-			getInterpolantConsolidationStatistics() {
+	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationStatistics() {
 		return mStrategy.getInterpolantConsolidationStatistics();
-	}
-
-	/**
-	 * Categories for exception handling.
-	 *
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	public enum ExceptionHandlingCategory {
-		/**
-		 * The exception is known and we always want to ignore it.
-		 */
-		KNOWN_IGNORE,
-		/**
-		 * The exception is known and we sometimes want it to be thrown depending on the use case.
-		 */
-		KNOWN_DEPENDING,
-		/**
-		 * The exception is known and we always want it to be thrown.
-		 */
-		KNOWN_THROW,
-		/**
-		 * The exception is unknown and we usually want it to be thrown.
-		 */
-		UNKNOWN;
-
-		/**
-		 * @param throwSpecification
-		 *            Specifies which exception categories should be thrown.
-		 * @return {@code true} iff this exception category should be thrown.
-		 */
-		public boolean throwException(final RefinementStrategyExceptionBlacklist throwSpecification) {
-			switch (throwSpecification) {
-			case ALL:
-				return true;
-			case UNKNOWN:
-				return this == UNKNOWN || this == KNOWN_THROW;
-			case DEPENDING:
-				return this == UNKNOWN || this == KNOWN_THROW || this == KNOWN_DEPENDING;
-			case NONE:
-				return false;
-			default:
-				throw new IllegalArgumentException("Unknown category specification: " + throwSpecification);
-			}
-		}
 	}
 }

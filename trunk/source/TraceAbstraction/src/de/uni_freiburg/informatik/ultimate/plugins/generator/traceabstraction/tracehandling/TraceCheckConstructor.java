@@ -40,13 +40,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -187,22 +187,22 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 		}
 	}
 
-	private TraceCheck constructDefault() {
+	private TraceCheck<LETTER> constructDefault() {
 		final IPredicate precondition = mPredicateUnifier.getTruePredicate();
 		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 
-		return new TraceCheck(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
+		return new TraceCheck<>(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mServices, mPrefs.getCfgSmtToolkit(), mAssertionOrder,
 				mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics());
 	}
 
-	private TraceCheck constructCraig() {
+	private TraceCheck<LETTER> constructCraig() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 
-		return new InterpolatingTraceCheckCraig(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+		return new InterpolatingTraceCheckCraig<>(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()),
 				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(mCounterexample.getWord())), mServices,
 				mPrefs.getCfgSmtToolkit(), mManagedScript, mPredicateFactory, mPredicateUnifier, mAssertionOrder,
@@ -210,13 +210,13 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 				xnfConversionTechnique, simplificationTechnique, false);
 	}
 
-	private TraceCheck constructForwardBackward() {
+	private TraceCheck<LETTER> constructForwardBackward() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 
-		return new TraceCheckSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+		return new TraceCheckSpWp<>(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(), mAssertionOrder,
 				mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(),
 				mPredicateFactory, mPredicateUnifier, mInterpolationTechnique, mManagedScript, xnfConversionTechnique,
@@ -225,8 +225,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 				mPrefs.collectInterpolantStatistics());
 	}
 
-	@SuppressWarnings("unchecked")
-	private TraceCheck constructPathInvariants() {
+	private TraceCheck<LETTER> constructPathInvariants() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
@@ -258,8 +257,8 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 				new InvariantSynthesisSettings(solverSettings, useNonlinearConstraints, useUnsatCores,
 						useAbstractInterpretationPredicates, useWeakestPrecondition, true);
 
-		return new InterpolatingTraceCheckPathInvariantsWithFallback(truePredicate, falsePredicate,
-				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
+		return new InterpolatingTraceCheckPathInvariantsWithFallback<>(truePredicate, falsePredicate,
+				new TreeMap<Integer, IPredicate>(), (NestedRun<LETTER, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(),
 				mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier, invariantSynthesisSettings,
 				xnfConversionTechnique, simplificationTechnique, icfgContainer, mPrefs.collectInterpolantStatistics());

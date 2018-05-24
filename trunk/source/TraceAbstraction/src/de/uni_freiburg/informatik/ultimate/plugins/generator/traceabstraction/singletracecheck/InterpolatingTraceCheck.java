@@ -36,15 +36,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 /**
@@ -54,7 +54,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class InterpolatingTraceCheck extends TraceCheck implements IInterpolantGenerator {
+public abstract class InterpolatingTraceCheck<LETTER extends IAction> extends TraceCheck<LETTER>
+		implements IInterpolantGenerator<LETTER> {
 
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
@@ -73,6 +74,7 @@ public abstract class InterpolatingTraceCheck extends TraceCheck implements IInt
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
 	 * the context to which the return leads the trace.
+	 *
 	 * @param predicateFactory
 	 * @param assertCodeBlocksIncrementally
 	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
@@ -80,12 +82,12 @@ public abstract class InterpolatingTraceCheck extends TraceCheck implements IInt
 	 *            result to a check-sat is UNSAT.
 	 */
 	public InterpolatingTraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final boolean computeRcfgProgramExecution,
-			final boolean collectInterpolatSequenceStatistics, final SimplificationTechnique simplificationTechnique,
+			final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
+			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(precondition, postcondition, pendingContexts, trace,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,

@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGloba
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -61,16 +60,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 /**
  * A trace has single static assignment form (SSA) is each variable is assigned exactly once (
  * http://en.wikipedia.org/wiki/Static_single_assignment_form).
- * 
+ *
  * This class transforms a trace to an SSA representation by renaming variables.
- * 
+ *
  * Roughly variable x is renamed to x_j, where j is the position where j is the last position where x obtained a new
  * value.
- * 
+ *
  * We use the SSA for checking satisfiability with an SMT solver, therefore we represent the indexed variables by
  * constants. Furthermore we replace all auxiliary variables and branch encoders in the TransFormulas by fresh
  * constants.
- * 
+ *
  * We rename inVars of a variable x at trace position i+1 according to the following scheme.
  * <ul>
  * <li>if x is local: we rename the inVar to x_j, where j is the largest position <= i in the same calling context,
@@ -85,9 +84,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
  * </ul>
  * If x is assigned at position i+1, we rename the outVar to x_{x+1}. If x in not assigned at position i+1, the outVar
  * does not exist or coincides with the inVar and was already renamed above.
- * 
+ *
  * @author Matthias Heizmann
- * 
+ *
  */
 public class NestedSsaBuilder {
 
@@ -114,15 +113,7 @@ public class NestedSsaBuilder {
 
 	private final Map<IProgramVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<>();
 
-	public Map<IProgramVar, TreeMap<Integer, Term>> getIndexedVarRepresentative() {
-		return mIndexedVarRepresentative;
-	}
-
 	protected final Map<Term, IProgramVar> mConstants2BoogieVar = new HashMap<>();
-
-	public Map<Term, IProgramVar> getConstants2BoogieVar() {
-		return mConstants2BoogieVar;
-	}
 
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mFormulas;
 
@@ -132,14 +123,6 @@ public class NestedSsaBuilder {
 	private final ModifiableGlobalsTable mModGlobVarManager;
 
 	private final Map<String, Term> mIndexedConstants = new HashMap<>();
-
-	public NestedFormulas<Term, Term> getSsa() {
-		return mSsa;
-	}
-
-	public ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> getVariable2Constant() {
-		return mVariable2Constant;
-	}
 
 	protected String mCurrentProcedure;
 
@@ -160,7 +143,7 @@ public class NestedSsaBuilder {
 	 */
 	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<>();
 
-	public NestedSsaBuilder(final NestedWord<? extends IIcfgTransition<?>> trace, final ManagedScript csToolkit,
+	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript csToolkit,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final ILogger logger,
 			final boolean transferToScriptNeeded) {
@@ -373,90 +356,20 @@ public class NestedSsaBuilder {
 		return name;
 	}
 
-	class VariableVersioneer {
-		private final UnmodifiableTransFormula mTF;
-		private final IPredicate mPred;
-		private final Map<Term, Term> mSubstitutionMapping = new HashMap<>();
-		private final Term mFormula;
+	public Map<Term, IProgramVar> getConstants2BoogieVar() {
+		return mConstants2BoogieVar;
+	}
 
-		public VariableVersioneer(final UnmodifiableTransFormula tf) {
-			mTF = Objects.requireNonNull(tf);
-			mPred = null;
-			mFormula = transferToCurrentScriptIfNecessary(tf.getFormula());
-		}
+	public Map<IProgramVar, TreeMap<Integer, Term>> getIndexedVarRepresentative() {
+		return mIndexedVarRepresentative;
+	}
 
-		public VariableVersioneer(final IPredicate pred) {
-			mTF = null;
-			mPred = pred;
-			mFormula = transferToCurrentScriptIfNecessary(pred.getFormula());
-		}
+	public NestedFormulas<Term, Term> getSsa() {
+		return mSsa;
+	}
 
-		public void versionInVars() {
-			for (final IProgramVar bv : mTF.getInVars().keySet()) {
-				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(bv));
-				final Term versioneered = getCurrentVarVersion(bv);
-				mConstants2BoogieVar.put(versioneered, bv);
-				mSubstitutionMapping.put(tv, versioneered);
-			}
-		}
-
-		public void versionAssignedVars(final int currentPos) {
-			for (final IProgramVar bv : mTF.getAssignedVars()) {
-				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
-				final Term versioneered = setCurrentVarVersion(bv, currentPos);
-				mConstants2BoogieVar.put(versioneered, bv);
-				mSubstitutionMapping.put(tv, versioneered);
-			}
-		}
-
-		public void versionBranchEncoders(final int currentPos) {
-			for (TermVariable tv : mTF.getBranchEncoders()) {
-				tv = transferToCurrentScriptIfNecessary(tv);
-				final String name = branchEncoderConstantName(tv, currentPos);
-				mScript.declareFun(name, new Sort[0], tv.getSort());
-				mSubstitutionMapping.put(tv, mScript.term(name));
-			}
-		}
-
-		public void replaceAuxVars() {
-			for (TermVariable tv : mTF.getAuxVars()) {
-				tv = transferToCurrentScriptIfNecessary(tv);
-				// construct constant only after variable was translated
-				// in order to use the Sort of the right Script for the
-				// construction
-				final Term freshConst = constructFreshConstant(tv);
-				mSubstitutionMapping.put(tv, freshConst);
-			}
-		}
-
-		private Term constructFreshConstant(final TermVariable tv) {
-			final Integer newIndex = mConstForTvCounter.increase(tv);
-			final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
-			final Sort resultSort = tv.getSort();
-			mScript.declareFun(name, new Sort[0], resultSort);
-			return mScript.term(name);
-		}
-
-		public void versionPredicate() {
-			for (final IProgramVar bv : mPred.getVars()) {
-				final TermVariable tv = transferToCurrentScriptIfNecessary(bv.getTermVariable());
-				final Term versioneered = getCurrentVarVersion(bv);
-				mConstants2BoogieVar.put(versioneered, bv);
-				mSubstitutionMapping.put(tv, versioneered);
-			}
-		}
-
-		public Term getVersioneeredTerm() {
-			final Substitution subst = new Substitution(mScript, mSubstitutionMapping);
-			final Term result = subst.transform(mFormula);
-			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + result.getFreeVars();
-			return result;
-		}
-
-		public Map<Term, Term> getSubstitutionMapping() {
-			return mSubstitutionMapping;
-		}
-
+	public ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> getVariable2Constant() {
+		return mVariable2Constant;
 	}
 
 	/**
@@ -605,4 +518,91 @@ public class NestedSsaBuilder {
 		}
 		return result;
 	}
+
+	class VariableVersioneer {
+		private final UnmodifiableTransFormula mTF;
+		private final IPredicate mPred;
+		private final Map<Term, Term> mSubstitutionMapping = new HashMap<>();
+		private final Term mFormula;
+
+		public VariableVersioneer(final UnmodifiableTransFormula tf) {
+			mTF = Objects.requireNonNull(tf);
+			mPred = null;
+			mFormula = transferToCurrentScriptIfNecessary(tf.getFormula());
+		}
+
+		public VariableVersioneer(final IPredicate pred) {
+			mTF = null;
+			mPred = pred;
+			mFormula = transferToCurrentScriptIfNecessary(pred.getFormula());
+		}
+
+		public void versionInVars() {
+			for (final IProgramVar bv : mTF.getInVars().keySet()) {
+				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(bv));
+				final Term versioneered = getCurrentVarVersion(bv);
+				mConstants2BoogieVar.put(versioneered, bv);
+				mSubstitutionMapping.put(tv, versioneered);
+			}
+		}
+
+		public void versionAssignedVars(final int currentPos) {
+			for (final IProgramVar bv : mTF.getAssignedVars()) {
+				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getOutVars().get(bv));
+				final Term versioneered = setCurrentVarVersion(bv, currentPos);
+				mConstants2BoogieVar.put(versioneered, bv);
+				mSubstitutionMapping.put(tv, versioneered);
+			}
+		}
+
+		public void versionBranchEncoders(final int currentPos) {
+			for (TermVariable tv : mTF.getBranchEncoders()) {
+				tv = transferToCurrentScriptIfNecessary(tv);
+				final String name = branchEncoderConstantName(tv, currentPos);
+				mScript.declareFun(name, new Sort[0], tv.getSort());
+				mSubstitutionMapping.put(tv, mScript.term(name));
+			}
+		}
+
+		public void replaceAuxVars() {
+			for (TermVariable tv : mTF.getAuxVars()) {
+				tv = transferToCurrentScriptIfNecessary(tv);
+				// construct constant only after variable was translated
+				// in order to use the Sort of the right Script for the
+				// construction
+				final Term freshConst = constructFreshConstant(tv);
+				mSubstitutionMapping.put(tv, freshConst);
+			}
+		}
+
+		private Term constructFreshConstant(final TermVariable tv) {
+			final Integer newIndex = mConstForTvCounter.increase(tv);
+			final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
+			final Sort resultSort = tv.getSort();
+			mScript.declareFun(name, new Sort[0], resultSort);
+			return mScript.term(name);
+		}
+
+		public void versionPredicate() {
+			for (final IProgramVar bv : mPred.getVars()) {
+				final TermVariable tv = transferToCurrentScriptIfNecessary(bv.getTermVariable());
+				final Term versioneered = getCurrentVarVersion(bv);
+				mConstants2BoogieVar.put(versioneered, bv);
+				mSubstitutionMapping.put(tv, versioneered);
+			}
+		}
+
+		public Term getVersioneeredTerm() {
+			final Substitution subst = new Substitution(mScript, mSubstitutionMapping);
+			final Term result = subst.transform(mFormula);
+			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + result.getFreeVars();
+			return result;
+		}
+
+		public Map<Term, Term> getSubstitutionMapping() {
+			return mSubstitutionMapping;
+		}
+
+	}
+
 }

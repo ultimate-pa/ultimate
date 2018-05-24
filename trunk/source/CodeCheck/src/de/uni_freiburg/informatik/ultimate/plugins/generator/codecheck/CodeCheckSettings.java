@@ -28,12 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.Checker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 
 public final class CodeCheckSettings {
 
@@ -71,8 +71,8 @@ public final class CodeCheckSettings {
 		return mUseFallbackForSeparateSolverForTracechecks;
 	}
 
-	public void setUseFallbackForSeparateSolverForTracechecks(
-	        final boolean useFallbackForSeparateSolverForTracechecks) {
+	public void
+			setUseFallbackForSeparateSolverForTracechecks(final boolean useFallbackForSeparateSolverForTracechecks) {
 		mUseFallbackForSeparateSolverForTracechecks = useFallbackForSeparateSolverForTracechecks;
 	}
 

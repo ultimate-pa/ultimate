@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.List;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -42,15 +43,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public abstract class AbsIntBaseInterpolantGenerator implements IInterpolantGenerator {
+public abstract class AbsIntBaseInterpolantGenerator<LETTER extends IAction> implements IInterpolantGenerator<LETTER> {
 
 	private final IPredicateUnifier mPredicateUnifier;
-	private final Word<? extends IAction> mCex;
+	private final Word<LETTER> mCex;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final InterpolantComputationStatus mStatus;
 
-	AbsIntBaseInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
+	AbsIntBaseInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<LETTER> cex,
 			final AbsIntPredicate<?> precondition, final AbsIntPredicate<?> postcondition,
 			final InterpolantComputationStatus status) {
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifier);
@@ -61,8 +62,8 @@ public abstract class AbsIntBaseInterpolantGenerator implements IInterpolantGene
 	}
 
 	@Override
-	public Word<? extends IAction> getTrace() {
-		return mCex;
+	public List<LETTER> getTrace() {
+		return mCex.asList();
 	}
 
 	@Override

@@ -157,6 +157,7 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            DNFs to conjunct together
 	 * @return DNF representing the conjunction of the DNFs provided, returns NULL if no DNFs were given.
 	 */
+	@SafeVarargs
 	protected static <E> Dnf<E> expandConjunction(final IUltimateServiceProvider services, final Dnf<E>... dnfs) {
 		boolean firstElement = true;
 		Dnf<E> expandedDnf = null;
@@ -226,8 +227,8 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            : the type of Literals in the cnf/dnf
 	 * @return a new dnf equivalent to conjunct /\ dnf
 	 */
-	private static <E> Dnf<E> expandCnfToDnfSingle(final IUltimateServiceProvider services,
-			final Dnf<E> dnf, final Collection<E> conjunct) {
+	private static <E> Dnf<E> expandCnfToDnfSingle(final IUltimateServiceProvider services, final Dnf<E> dnf,
+			final Collection<E> conjunct) {
 		final Dnf<E> result = new Dnf<>();
 		for (final Collection<E> disjunct : dnf) {
 			for (final E item : conjunct) {

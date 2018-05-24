@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Relation
 
 /**
  * TODO: documentation, support for pending contexts
- * 
+ *
  * @author Matthias Heizmann
  */
 public class RelevantVariables {
@@ -389,9 +389,9 @@ public class RelevantVariables {
 		final ConstraintAnalysis localVarAssignmentCa = mNestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
 		final ConstraintAnalysis returnTfCa =
 				mNestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
-		final ConstraintAnalysis oldVarAssignmentCa = mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
+		// final ConstraintAnalysis oldVarAssignmentCa = mNestedConstraintAnalysis.getOldVarAssignment(posOfCall);
 
-		final ConstraintAnalysis globalVarAssignmentCa = mNestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
+		// final ConstraintAnalysis globalVarAssignmentCa = mNestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
 
 		alternativeResult.addAll(localVarAssignmentCa.getConstraintIn());
 		// remove all modifiable (non-old) globals
@@ -590,8 +590,8 @@ public class RelevantVariables {
 			final UnmodifiableTransFormula globalVarAssignment, final String callee, final int posOfCall,
 			final int posOfCorrespondingReturn) {
 		final Set<IProgramVar> alternativeResult = new HashSet<>(returnPredRv);
-		final ConstraintAnalysis returnTfCa =
-				mNestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
+		// final ConstraintAnalysis returnTfCa =
+		// mNestedConstraintAnalysis.getFormulaFromNonCallPos(posOfCorrespondingReturn);
 		// remove all that were reassigned
 		// either explicitly by the return or implicitly as modifiable global
 		alternativeResult.removeAll(returnTF.getAssignedVars());
@@ -832,7 +832,7 @@ public class RelevantVariables {
 	}
 
 	private static class NestedConstraintAnalysis extends ModifiableNestedFormulas<ConstraintAnalysis, IPredicate> {
-		public NestedConstraintAnalysis(final NestedWord<? extends IIcfgTransition<?>> nestedWord,
+		public NestedConstraintAnalysis(final NestedWord<? extends IAction> nestedWord,
 				final SortedMap<Integer, IPredicate> pendingContexts,
 				final NestedFormulas<UnmodifiableTransFormula, IPredicate> traceWithFormulas) {
 			super(nestedWord, pendingContexts);

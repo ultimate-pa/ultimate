@@ -121,7 +121,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER>
 		mReSucComp = new ReturnSuccessorComputationHelper();
 		mAlreadyConstructedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
 				inputInterpolantAutomaton.getVpAlphabet(),
-				(IEmptyStackStateFactory) inputInterpolantAutomaton.getStateFactory());
+				(IEmptyStackStateFactory<IPredicate>) inputInterpolantAutomaton.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
 		} else {

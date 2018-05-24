@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 /**
  * Check given annotation without inferring invariants.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -74,11 +74,13 @@ public class InvariantChecker {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
 	private final IIcfg<IcfgLocation> mIcfg;
-	
+
 	private final Map<IcfgLocation, IcfgEdge> mLoopLoc2errorEdge = new HashMap<>();
 	private final Map<IcfgLocation, IcfgEdge> mLoopErrorLoc2errorEdge = new HashMap<>();
-	
-	public enum LocationType { ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC } 
+
+	public enum LocationType {
+		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC
+	}
 
 	public InvariantChecker(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> icfg) {
@@ -97,18 +99,18 @@ public class InvariantChecker {
 			}
 		}
 		if (!loopLocWithoutInvariant.isEmpty()) {
-			
+
 			final String shortDescription = "Not every loop was annotated with an invariant.";
 			final String longDescription = "Missing invariants at: " + loopLocWithoutInvariant;
 			final Severity severity = Severity.ERROR;
-			final GenericResultAtElement<?> grae = new GenericResultAtElement(loopLocWithoutInvariant.get(0).getOutgoingEdges().get(0), Activator.PLUGIN_ID,
+			final GenericResultAtElement<?> grae = new GenericResultAtElement<>(
+					loopLocWithoutInvariant.get(0).getOutgoingEdges().get(0), Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), shortDescription, longDescription, severity);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, grae);
 			return;
 		}
 		mLogger.info("Found " + mIcfg.getLoopLocations().size() + " loops.");
-		
-		
+
 		final Set<IcfgLocation> loopLocsAndNonLoopErrorLocs = new HashSet<>();
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
 		for (final Entry<String, Set<IcfgLocation>> entry : proc2errNodes.entrySet()) {
@@ -121,7 +123,7 @@ public class InvariantChecker {
 				}
 			}
 		}
-		
+
 		final List<TwoPointSubgraphDefinition> tpsds = new ArrayList<>();
 		for (final IcfgLocation backwardStartLoc : loopLocsAndNonLoopErrorLocs) {
 			tpsds.addAll(findSubgraphGivenError(backwardStartLoc, icfg));
@@ -134,8 +136,7 @@ public class InvariantChecker {
 				omitEdge = null;
 			}
 			final AcyclicSubgraphMerger asm = new AcyclicSubgraphMerger(mServices, mIcfg, tpsd.getSubgraphEdges(),
-					tpsd.getStartLocation(), omitEdge,
-					Collections.singleton(tpsd.getEndLocation()));
+					tpsd.getStartLocation(), omitEdge, Collections.singleton(tpsd.getEndLocation()));
 			final UnmodifiableTransFormula tf = asm.getTransFormula(errorLoc);
 			Objects.requireNonNull(tf);
 			doCheck(startLoc, tf, errorLoc);
@@ -143,7 +144,8 @@ public class InvariantChecker {
 
 	}
 
-	private List<TwoPointSubgraphDefinition> findSubgraphGivenError(final IcfgLocation backwardStartLoc, final IIcfg<IcfgLocation> icfg) {
+	private List<TwoPointSubgraphDefinition> findSubgraphGivenError(final IcfgLocation backwardStartLoc,
+			final IIcfg<IcfgLocation> icfg) {
 		final List<TwoPointSubgraphDefinition> tpsds = new ArrayList<>();
 		final ArrayDeque<IcfgEdge> worklistBackward = new ArrayDeque<>();
 		final Set<IcfgEdge> seenBackward = new HashSet<>();
@@ -164,11 +166,10 @@ public class InvariantChecker {
 				}
 			}
 
-
-				
 		}
 		for (final IcfgLocation startLoc : startLocations) {
-			final List<TwoPointSubgraphDefinition> newTpsds = findSubgraphGivenStart(startLoc, Collections.unmodifiableSet(seenBackward), icfg, backwardStartLoc);
+			final List<TwoPointSubgraphDefinition> newTpsds =
+					findSubgraphGivenStart(startLoc, Collections.unmodifiableSet(seenBackward), icfg, backwardStartLoc);
 			for (final TwoPointSubgraphDefinition tpsd : newTpsds) {
 				if (mLoopLoc2errorEdge.containsKey(backwardStartLoc)) {
 					final IcfgEdge errorEdge = mLoopLoc2errorEdge.get(backwardStartLoc);
@@ -187,8 +188,8 @@ public class InvariantChecker {
 		return tpsds;
 	}
 
-	private List<TwoPointSubgraphDefinition> findSubgraphGivenStart(final IcfgLocation startLoc, final Set<IcfgEdge> seenBackward,
-			final IIcfg<IcfgLocation> icfg, final IcfgLocation backwardStartLoc) {
+	private List<TwoPointSubgraphDefinition> findSubgraphGivenStart(final IcfgLocation startLoc,
+			final Set<IcfgEdge> seenBackward, final IIcfg<IcfgLocation> icfg, final IcfgLocation backwardStartLoc) {
 		final List<TwoPointSubgraphDefinition> result = new ArrayList<>();
 		final ArrayDeque<IcfgEdge> worklistForward = new ArrayDeque<>();
 		final Set<IcfgEdge> seenForward = new HashSet<>();
@@ -230,7 +231,7 @@ public class InvariantChecker {
 		result.add(tpsd);
 		return result;
 	}
-	
+
 	private String message23(final TwoPointSubgraphDefinition tpsd) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Will check inductivity from ");
@@ -262,27 +263,25 @@ public class InvariantChecker {
 			}
 		}
 	}
-	
+
 	private void doCheck(final IcfgLocation startLoc, final UnmodifiableTransFormula tf, final IcfgLocation errorLoc) {
 		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mIcfg.getCfgSmtToolkit(), true);
 		final PredicateFactory pf = new PredicateFactory(mServices, mIcfg.getCfgSmtToolkit().getManagedScript(),
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), SimplificationTechnique.NONE,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final IPredicate truePredicate = pf
-				.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("true"));
-		final IPredicate falsePredicate = pf
-				.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("false"));
+		final IPredicate truePredicate =
+				pf.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("true"));
+		final IPredicate falsePredicate =
+				pf.newPredicate(mIcfg.getCfgSmtToolkit().getManagedScript().getScript().term("false"));
 		final Validity validity = htc.checkInternal(truePredicate,
 				new BasicInternalAction(startLoc.getProcedure(), errorLoc.getProcedure(), tf), falsePredicate);
 		switch (validity) {
 		case INVALID:
 			final ProgramState<Term> ctxPre = htc.getCounterexampleStatePrecond();
 			final ProgramState<Term> ctxPost = htc.getCounterexampleStatePostcond();
-			final InsufficientAnnotationResult<IcfgEdge, Term> iar = new InsufficientAnnotationResult<>(
-					startLoc.getOutgoingEdges().get(0), Activator.PLUGIN_ID, mServices.getBacktranslationService(),
-					errorLoc.getIncomingEdges().get(0),
-					ctxPre,
-					ctxPost);
+			final InsufficientAnnotationResult<IcfgEdge, Term> iar =
+					new InsufficientAnnotationResult<>(startLoc.getOutgoingEdges().get(0), Activator.PLUGIN_ID,
+							mServices.getBacktranslationService(), errorLoc.getIncomingEdges().get(0), ctxPre, ctxPost);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, iar);
 			mLogger.info(iar.getShortDescription());
 			break;
@@ -304,11 +303,11 @@ public class InvariantChecker {
 		sb.append("The annotation(s) from ");
 		sb.append(getType(startLoc));
 		sb.append(" at line ");
-//		sb.append(startLoc.getStartLine());
+		// sb.append(startLoc.getStartLine());
 		sb.append(" to ");
 		sb.append(getType(startLoc));
 		sb.append(" at line ");
-//		sb.append(startLoc.getStartLine());
+		// sb.append(startLoc.getStartLine());
 		sb.append(" is");
 		if (!positive) {
 			sb.append(" NOT");
@@ -382,38 +381,36 @@ public class InvariantChecker {
 		final Check check = Check.getAnnotation(loc);
 		if (check != null) {
 			final EnumSet<Spec> specs = check.getSpec();
-//				if (specs.size() == 1) {
-				return specs.contains(Spec.INVARIANT);
-//				} else {
-//					throw new UnsupportedOperationException("several specs");
-//				}
-		} else {
-			return false;
+			// if (specs.size() == 1) {
+			return specs.contains(Spec.INVARIANT);
+			// } else {
+			// throw new UnsupportedOperationException("several specs");
+			// }
 		}
+		return false;
 	}
-	
+
 	private boolean isErrorLoc(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
 		return (check != null);
 	}
-	
+
 	private boolean isLoopLoc(final IcfgLocation loc) {
 		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(loc);
 		return (loa != null);
 	}
 
-	
-	private class TwoPointSubgraphDefinition {	
+	private class TwoPointSubgraphDefinition {
 		private final IcfgLocation mStartLocation;
 		private final Set<IcfgEdge> mSubgraphEdges;
 		private final IcfgLocation mEndLocation;
-		
+
 		public TwoPointSubgraphDefinition(final IcfgLocation startLocation, final Set<IcfgEdge> subgraphEdges,
 				final IcfgLocation endLocation) {
 			super();
-			this.mStartLocation = startLocation;
-			this.mSubgraphEdges = subgraphEdges;
-			this.mEndLocation = endLocation;
+			mStartLocation = startLocation;
+			mSubgraphEdges = subgraphEdges;
+			mEndLocation = endLocation;
 		}
 
 		public IcfgLocation getStartLocation() {
@@ -427,10 +424,7 @@ public class InvariantChecker {
 		public IcfgLocation getEndLocation() {
 			return mEndLocation;
 		}
-		
-		
-	}
-	
 
-	
+	}
+
 }

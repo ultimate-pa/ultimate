@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.OldVarsAssignmentCache;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -90,11 +89,11 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 	 */
 	private int mSumSizeFormulasInUnsatCore = 0;
 
-	public RelevantTransFormulas(final NestedWord<? extends IIcfgTransition<?>> nestedTrace,
-			final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final Set<IAction> unsatCore,
-			final OldVarsAssignmentCache oldVarsAssignmentCache, final boolean[] localVarAssignmentsAtCallInUnsatCore,
-			final boolean[] oldVarAssignmentAtCallInUnsatCore, final ManagedScript script) {
+	public RelevantTransFormulas(final NestedWord<? extends IAction> nestedTrace, final IPredicate precondition,
+			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
+			final Set<IAction> unsatCore, final OldVarsAssignmentCache oldVarsAssignmentCache,
+			final boolean[] localVarAssignmentsAtCallInUnsatCore, final boolean[] oldVarAssignmentAtCallInUnsatCore,
+			final ManagedScript script) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
@@ -107,11 +106,10 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 
 	}
 
-	public RelevantTransFormulas(final NestedWord<? extends IIcfgTransition<?>> nestedTrace,
-			final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final Set<Term> unsatCore,
-			final OldVarsAssignmentCache modGlobalVarManager, final ManagedScript script, final AnnotateAndAsserter aaa,
-			final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
+	public RelevantTransFormulas(final NestedWord<? extends IAction> nestedTrace, final IPredicate precondition,
+			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
+			final Set<Term> unsatCore, final OldVarsAssignmentCache modGlobalVarManager, final ManagedScript script,
+			final AnnotateAndAsserter aaa, final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
 		super(nestedTrace, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
