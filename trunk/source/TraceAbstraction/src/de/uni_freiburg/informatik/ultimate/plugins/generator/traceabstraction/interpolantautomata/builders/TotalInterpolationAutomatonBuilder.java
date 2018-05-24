@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -69,17 +68,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -112,7 +112,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 	private final boolean mCollectInterpolantStatistics;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator,
+			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator<LETTER> interpolantGenerator,
 			final CfgSmtToolkit csToolkit, final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
@@ -328,11 +328,11 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		final SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 
-		InterpolatingTraceCheck tc;
+		InterpolatingTraceCheck<LETTER> tc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			tc = new InterpolatingTraceCheckCraig(precondition, postcondition, pendingContexts, run.getWord(),
+			tc = new InterpolatingTraceCheckCraig<>(precondition, postcondition, pendingContexts, run.getWord(),
 					run.getStateSequence(), mServices, mCsToolkit, mPredicateFactory, mPredicateUnifier,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, mCollectInterpolantStatistics, mInterpolation, true,
 					mXnfConversionTechnique, mSimplificationTechnique);
@@ -341,7 +341,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			tc = new TraceCheckSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
+			tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(),
 					mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence(),
@@ -389,14 +389,14 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		return null;
 	}
 
-	private void addTransitions(final ArrayList<IPredicate> stateSequence, final InterpolatingTraceCheck tc) {
+	private void addTransitions(final ArrayList<IPredicate> stateSequence, final InterpolatingTraceCheck<LETTER> tc) {
 		final TracePredicates ipp = new TracePredicates(tc);
-		final NestedWord<? extends IAction> nw = NestedWord.nestedWord(tc.getTrace());
+		final NestedWord<LETTER> nw = TraceCheckUtils.toNestedWord(tc.getTrace());
 		for (int i = 0; i < nw.length(); i++) {
 			if (nw.isInternalPosition(i)) {
-				mIA.addInternalTransition(ipp.getPredicate(i), (LETTER) nw.getSymbol(i), ipp.getPredicate(i + 1));
+				mIA.addInternalTransition(ipp.getPredicate(i), nw.getSymbol(i), ipp.getPredicate(i + 1));
 			} else if (nw.isCallPosition(i)) {
-				mIA.addCallTransition(ipp.getPredicate(i), (LETTER) nw.getSymbol(i), ipp.getPredicate(i + 1));
+				mIA.addCallTransition(ipp.getPredicate(i), nw.getSymbol(i), ipp.getPredicate(i + 1));
 			} else if (nw.isReturnPosition(i)) {
 				IPredicate hierPred;
 				if (nw.isPendingReturn(i)) {
@@ -405,8 +405,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 					final int callPredPos = nw.getCallPosition(i);
 					hierPred = ipp.getPredicate(callPredPos);
 				}
-				mIA.addReturnTransition(ipp.getPredicate(i), hierPred, (LETTER) nw.getSymbol(i),
-						ipp.getPredicate(i + 1));
+				mIA.addReturnTransition(ipp.getPredicate(i), hierPred, nw.getSymbol(i), ipp.getPredicate(i + 1));
 			} else {
 				throw new AssertionError();
 			}

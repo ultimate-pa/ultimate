@@ -61,10 +61,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryNumericRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -679,9 +679,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 			throw new AssertionError("PredicateUnifier is in inconsistent state");
 		}
-		
+
 		public HashRelation<IPredicate, IPredicate> getCopyOfImplicationRelation() {
-			return new HashRelation(mImpliedPredicates);
+			return new HashRelation<>(mImpliedPredicates);
 		}
 	}
 
@@ -746,8 +746,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 		DeprecatedPredicates(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		ImplicationChecksByTransitivity(Integer.class, StatisticsType.INTEGER_ADDITION,
-				StatisticsType.DATA_BEFORE_KEY),
+		ImplicationChecksByTransitivity(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 		Time(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),;
 
@@ -800,7 +799,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		private int mSemanticMatches = 0;
 		private int mConstructedPredicates = 0;
 		private int mIntricatePredicates = 0;
-		private int mDeprecatedPredicates = 0;
+		private int mDeprecatedPredicatesCount = 0;
 		private int mImplicationChecksByTransitivity = 0;
 		protected final Benchmark mBenchmark;
 
@@ -836,8 +835,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 
 		public void incrementDeprecatedPredicates() {
-			mDeprecatedPredicates++;
-			assert mDeprecatedPredicates == PredicateUnifier.this.mDeprecatedPredicates
+			mDeprecatedPredicatesCount++;
+			assert mDeprecatedPredicatesCount == mDeprecatedPredicates
 					.size() : "number of deprecated predicates inconsistent";
 		}
 
@@ -885,7 +884,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			case IntricatePredicates:
 				return mIntricatePredicates;
 			case DeprecatedPredicates:
-				return mDeprecatedPredicates;
+				return mDeprecatedPredicatesCount;
 			case ImplicationChecksByTransitivity:
 				return mImplicationChecksByTransitivity;
 			case Time:
@@ -1179,17 +1178,17 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 	}
 
-	
 	/**
 	 * Construct a new predicate for the given term.
-	 * @param term Term for which new predicate is constructed. This term has to
-	 * be simplified (resp. will not be further simplified) and has to be
-	 * different (not semantically equivalent) from all predicates known by
-	 * this predicate unifier.
-	 * @param impliedPredicates Result of the implication (term ==> p) for each
-	 * known predicate p. 
-	 * @param expliedPredicates Result of the implication (p ==> term) for each
-	 * known predicate p. 
+	 * 
+	 * @param term
+	 *            Term for which new predicate is constructed. This term has to be simplified (resp. will not be further
+	 *            simplified) and has to be different (not semantically equivalent) from all predicates known by this
+	 *            predicate unifier.
+	 * @param impliedPredicates
+	 *            Result of the implication (term ==> p) for each known predicate p.
+	 * @param expliedPredicates
+	 *            Result of the implication (p ==> term) for each known predicate p.
 	 * @return The predicate that was constructed for the term p.
 	 */
 	public IPredicate constructNewPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
@@ -1198,10 +1197,12 @@ public class PredicateUnifier implements IPredicateUnifier {
 			throw new AssertionError("PredicateUnifier already knows a predicate for " + term);
 		}
 		if (impliedPredicates.size() != mKnownPredicates.size()) {
-			throw new AssertionError("Inconsistent number of IPredicates known by PredicateUnifier and number of provided implications");
+			throw new AssertionError(
+					"Inconsistent number of IPredicates known by PredicateUnifier and number of provided implications");
 		}
 		if (expliedPredicates.size() != mKnownPredicates.size()) {
-			throw new AssertionError("Inconsistent number of IPredicates known by PredicateUnifier and number of provided explications");
+			throw new AssertionError(
+					"Inconsistent number of IPredicates known by PredicateUnifier and number of provided explications");
 		}
 		final IPredicate predicate = constructNewPredicate(term, null);
 		addNewPredicate(predicate, term, term, impliedPredicates, expliedPredicates);

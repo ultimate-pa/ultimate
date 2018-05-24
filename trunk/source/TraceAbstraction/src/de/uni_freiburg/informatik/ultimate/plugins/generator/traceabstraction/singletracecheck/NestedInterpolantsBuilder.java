@@ -57,11 +57,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
@@ -133,8 +133,9 @@ public class NestedInterpolantsBuilder {
 			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> constants2BoogieVar,
 			final IPredicateUnifier predicateBuilder, final PredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
-			final IUltimateServiceProvider services, final TraceCheck traceCheck, final ManagedScript mgdScriptCfg,
-			final boolean instantiateArrayExt, final SimplificationTechnique simplificationTechnique,
+			final IUltimateServiceProvider services, final TraceCheck<? extends IAction> traceCheck,
+			final ManagedScript mgdScriptCfg, final boolean instantiateArrayExt,
+			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -748,7 +749,6 @@ public class NestedInterpolantsBuilder {
 	private static void dumpInterpolationOutput(final int offset, final Term[] interpolOutput,
 			final List<Integer> indexTranslation, final Word<CodeBlock> run, final PrintWriter pW,
 			final ILogger logger) {
-		@SuppressWarnings("unchecked")
 		final NestedWord<CodeBlock> word = NestedWord.nestedWord(run);
 		assert interpolOutput.length == indexTranslation.size();
 		String line;
@@ -780,7 +780,6 @@ public class NestedInterpolantsBuilder {
 
 	private static void dumpNestedStateFormulas(final IPredicate[] stateFormulas, final Word<CodeBlock> word,
 			final PrintWriter pW, final ILogger logger) {
-		@SuppressWarnings("unchecked")
 		final NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
 		assert stateFormulas.length == word.length() + 1;
 		String line;
@@ -811,9 +810,8 @@ public class NestedInterpolantsBuilder {
 	private static boolean isAtDiffTerm(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			return ((ApplicationTerm) term).getFunction().getName().equals("@diff");
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 }

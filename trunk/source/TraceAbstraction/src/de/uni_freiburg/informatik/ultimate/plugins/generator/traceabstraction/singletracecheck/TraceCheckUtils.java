@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -53,12 +56,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown.Reason;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
@@ -83,15 +87,20 @@ public final class TraceCheckUtils {
 	 *            trace
 	 * @return sequence of program points
 	 */
-	public static List<IcfgLocation> getSequenceOfProgramPoints(final NestedWord<? extends IIcfgTransition<?>> trace) {
+	public static List<IcfgLocation> getSequenceOfProgramPoints(final NestedWord<? extends IAction> trace) {
 		final List<IcfgLocation> result = new ArrayList<>();
-		for (final IIcfgTransition<?> cb : trace) {
-			final IcfgLocation pp = cb.getSource();
-			result.add(pp);
+		final Iterator<? extends IAction> iter = trace.iterator();
+		while (iter.hasNext()) {
+			final IAction currentAction = iter.next();
+			if (!(currentAction instanceof IIcfgTransition<?>)) {
+				throw new IllegalArgumentException("currentAction is no IIcfgTransition");
+			}
+			final IIcfgTransition<?> transition = ((IIcfgTransition<?>) currentAction);
+			result.add(transition.getSource());
+			if (!iter.hasNext()) {
+				result.add(transition.getTarget());
+			}
 		}
-		final IIcfgTransition<?> cb = trace.getSymbol(trace.length() - 1);
-		final IcfgLocation pp = cb.getTarget();
-		result.add(pp);
 		return result;
 	}
 
@@ -109,17 +118,44 @@ public final class TraceCheckUtils {
 	 * @return backward covering information
 	 */
 	public static BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,
-			final IInterpolantGenerator traceCheck, final ILogger logger) {
+			final IInterpolantGenerator<?> traceCheck, final ILogger logger) {
 		@SuppressWarnings("unchecked")
-		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceCheck.getTrace());
+		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) toNestedWord(traceCheck.getTrace());
 		final List<IcfgLocation> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceCheck.getIpp(), programPoints, logger,
 				traceCheck.getPredicateUnifier());
 	}
 
+	/**
+	 * Convert a list of letters to a {@link NestedWord}.
+	 */
+	public static <LETTER extends IAction> NestedWord<LETTER> toNestedWord(final List<LETTER> trace) {
+		final Deque<Integer> callIndices = new ArrayDeque<>();
+		final int[] nestingRelation = new int[trace.size()];
+		final LETTER[] word = (LETTER[]) trace.toArray(new IAction[trace.size()]);
+		int i = 0;
+		for (final LETTER letter : trace) {
+			word[i] = letter;
+			if (letter instanceof ICallAction) {
+				callIndices.push(i);
+				nestingRelation[i] = NestedWord.PLUS_INFINITY;
+			} else if (letter instanceof IReturnAction) {
+				final int lastCall = callIndices.pop();
+				nestingRelation[i] = lastCall;
+				nestingRelation[lastCall] = i;
+			} else if (letter instanceof IInternalAction) {
+				nestingRelation[i] = NestedWord.INTERNAL_POSITION;
+			} else {
+				throw new UnsupportedOperationException("Type of letter is unknown: " + letter.getClass());
+			}
+			++i;
+		}
+		return new NestedWord<>(word, nestingRelation);
+	}
+
 	public static <CL> BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,
-			final TracePredicates ipp, final List<CL> controlLocationSequence,
-			final ILogger logger, final IPredicateUnifier predicateUnifier) {
+			final TracePredicates ipp, final List<CL> controlLocationSequence, final ILogger logger,
+			final IPredicateUnifier predicateUnifier) {
 		final CoverageAnalysis<CL> ca =
 				new CoverageAnalysis<>(services, ipp, controlLocationSequence, logger, predicateUnifier);
 		ca.analyze();
@@ -156,8 +192,7 @@ public final class TraceCheckUtils {
 			final SortedMap<Integer, IPredicate> pendingContexts, final String computation,
 			final CfgSmtToolkit csToolkit, final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
-		final TracePredicates ipp =
-				new TracePredicates(precondition, postcondition, interpolants);
+		final TracePredicates ipp = new TracePredicates(precondition, postcondition, interpolants);
 		Validity result;
 		for (int i = 0; i <= interpolants.size(); i++) {
 			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, htc, logger);
@@ -198,8 +233,7 @@ public final class TraceCheckUtils {
 			final SortedMap<Integer, IPredicate> pendingContexts, final String computation,
 			final CfgSmtToolkit csToolkit, final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
-		final TracePredicates ipp =
-				new TracePredicates(precondition, postcondition, interpolants);
+		final TracePredicates ipp = new TracePredicates(precondition, postcondition, interpolants);
 		for (int i = interpolants.size(); i >= 0; i--) {
 			final Validity result;
 			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, htc, logger);
@@ -256,15 +290,12 @@ public final class TraceCheckUtils {
 		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		return new IcfgProgramExecution(trace.asList(), Collections.emptyMap(), branchEncoders);
 	}
-	
-	
+
 	/**
-	 * Use {@link TermClassifier} to classify set of {@link Term}s that belong
-	 * to a trace, and return the {@link TermClassifier}.
-	 * TODO: Maybe also check local vars assignment and global vars assignment?
+	 * Use {@link TermClassifier} to classify set of {@link Term}s that belong to a trace, and return the
+	 * {@link TermClassifier}. TODO: Maybe also check local vars assignment and global vars assignment?
 	 */
-	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word,
-			final IPredicate axioms) {
+	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word, final IPredicate axioms) {
 
 		final TermClassifier cs = new TermClassifier();
 		cs.checkTerm(axioms.getFormula());
@@ -279,11 +310,10 @@ public final class TraceCheckUtils {
 		}
 		return cs;
 	}
-	
+
 	public static final String SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
 	public static final String CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX = "A non-linear fact";
-	
-	
+
 	public static TraceCheckReasonUnknown constructReasonUnknown(final SMTLIBException e) {
 		final String message = e.getMessage();
 		final Reason reason;

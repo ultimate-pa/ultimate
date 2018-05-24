@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -60,14 +59,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 
 /**
@@ -218,12 +217,8 @@ public final class LargeBlockEncodingIcfgTransformer {
 	 */
 	private IPredicate computeInvariantUsingSp(final IcfgLocation loc, final Map<IcfgLocation, IPredicate> invariants,
 			final ManagedScript mgdScript, final IPredicateUnifier predicateUnifier) {
-		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		final XnfConversionTechnique xnfConversionTechnique =
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
-				new PredicateTransformer<>(mgdScript,
-						new TermDomainOperationProvider(mServices, mgdScript));
+				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(mServices, mgdScript));
 		final List<Term> disjuncts = new ArrayList<>();
 		for (final IcfgEdge edge : loc.getIncomingEdges()) {
 			final IcfgLocation pred = edge.getSource();
@@ -262,12 +257,10 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		final XnfConversionTechnique xnfConversionTechnique =
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-		@SuppressWarnings("unchecked")
-		final TraceCheckSpWp tc = new TraceCheckSpWp(precondition, postcondition, pendingContexts,
-				(NestedWord<? extends IIcfgTransition<?>>) run.getWord(), csToolkit, assertCodeBlocksIncrementally,
-				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, mPredicateFactory,
-				predicateUnifier, interpolation, mgdScriptTc, xnfConversionTechnique, simplificationTechnique,
-				run.getStateSequence(), false);
+		final TraceCheckSpWp<? extends IAction> tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts,
+				run.getWord(), csToolkit, assertCodeBlocksIncrementally, unsatCores, useLiveVariables, mServices,
+				computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation, mgdScriptTc,
+				xnfConversionTechnique, simplificationTechnique, run.getStateSequence(), false);
 		return tc.getInterpolants();
 	}
 

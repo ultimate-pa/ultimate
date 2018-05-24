@@ -46,16 +46,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
@@ -99,7 +99,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	private TraceCheckConstructor<LETTER> mPrevTcConstructor;
 
 	private ITraceCheck mTraceCheck;
-	private IInterpolantGenerator mInterpolantGenerator;
+	private IInterpolantGenerator<LETTER> mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
 	private final TaskIdentifier mTaskIdentifier;
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
@@ -219,7 +219,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	@Override
-	public IInterpolantGenerator getInterpolantGenerator() {
+	public IInterpolantGenerator<LETTER> getInterpolantGenerator() {
 		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = constructInterpolantGenerator(mCurrentMode);
@@ -367,7 +367,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		return result;
 	}
 
-	private IInterpolantGenerator constructInterpolantGenerator(final Mode mode) {
+	private IInterpolantGenerator<LETTER> constructInterpolantGenerator(final Mode mode) {
 		switch (mode) {
 		case SMTINTERPOL:
 		case CVC4_IG:
@@ -386,10 +386,10 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 	}
 
-	private IInterpolantGenerator castTraceCheck() {
+	private IInterpolantGenerator<LETTER> castTraceCheck() {
 		final ITraceCheck traceCheck = getTraceCheck();
 		assert traceCheck != null && traceCheck instanceof InterpolatingTraceCheck;
-		return (InterpolatingTraceCheck) traceCheck;
+		return (InterpolatingTraceCheck<LETTER>) traceCheck;
 	}
 
 	@Override

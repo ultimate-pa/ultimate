@@ -47,20 +47,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbsIntBaseInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation.InterpolantConsolidationBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
  * A {@link BaseRefinementStrategy} allows an {@link IRefinementEngine} to try multiple combinations of
@@ -95,7 +96,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	private boolean mSomePerfectSequenceFound = false;
 
-	private InterpolantConsolidation<LETTER>.InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
+	private InterpolantConsolidationBenchmarkGenerator mInterpolantConsolidationStatistics;
 
 	public BaseRefinementStrategy(final ILogger logger) {
 		mLogger = logger;
@@ -147,7 +148,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	 *
 	 * @return The interpolant generator of the current combination.
 	 */
-	public abstract IInterpolantGenerator getInterpolantGenerator();
+	public abstract IInterpolantGenerator<LETTER> getInterpolantGenerator();
 
 	/**
 	 * @param perfectIpps
@@ -337,8 +338,8 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 	 * <li>there are two sequences of interpolants.</li>
 	 * </ol>
 	 */
-	private static void handleTraceCheckSpWpCase(final List<TracePredicates> perfectIpps,
-			final List<TracePredicates> imperfectIpps, final TraceCheckSpWp traceCheckSpWp) {
+	private void handleTraceCheckSpWpCase(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps, final TraceCheckSpWp<LETTER> traceCheckSpWp) {
 		if (traceCheckSpWp.wasForwardPredicateComputationRequested()) {
 			addForwardPredicates(traceCheckSpWp, perfectIpps, imperfectIpps);
 		}
@@ -347,7 +348,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 		}
 	}
 
-	private static void addForwardPredicates(final TraceCheckSpWp traceCheckSpWp,
+	private void addForwardPredicates(final TraceCheckSpWp<LETTER> traceCheckSpWp,
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		final TracePredicates interpolants = traceCheckSpWp.getForwardIpp();
 		assert interpolants != null;
@@ -358,7 +359,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 		}
 	}
 
-	private static void addBackwardPredicates(final TraceCheckSpWp traceCheckSpWp,
+	private void addBackwardPredicates(final TraceCheckSpWp<LETTER> traceCheckSpWp,
 			final List<TracePredicates> perfectIpps, final List<TracePredicates> imperfectIpps) {
 		final TracePredicates interpolants = traceCheckSpWp.getBackwardIpp();
 		assert interpolants != null;
@@ -369,10 +370,9 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private void extractInterpolants(final List<TracePredicates> perfectIpps,
 			final List<TracePredicates> imperfectIpps) {
-		IInterpolantGenerator interpolantGenerator = null;
+		IInterpolantGenerator<LETTER> interpolantGenerator = null;
 		try {
 			interpolantGenerator = getInterpolantGenerator();
 			if (interpolantGenerator instanceof InterpolantConsolidation) {
@@ -424,11 +424,12 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 			// set Hoare triple checker
 			mHoareTripleChecker = ((InterpolantConsolidation<?>) interpolantGenerator).getHoareTripleChecker();
 		} else if (interpolantGenerator instanceof AbsIntBaseInterpolantGenerator) {
-			mHoareTripleChecker = ((AbsIntBaseInterpolantGenerator) interpolantGenerator).getHoareTripleChecker();
+			mHoareTripleChecker =
+					((AbsIntBaseInterpolantGenerator<LETTER>) interpolantGenerator).getHoareTripleChecker();
 		}
 
 		if (interpolantGenerator instanceof TraceCheckSpWp) {
-			handleTraceCheckSpWpCase(perfectIpps, imperfectIpps, (TraceCheckSpWp) interpolantGenerator);
+			handleTraceCheckSpWpCase(perfectIpps, imperfectIpps, (TraceCheckSpWp<LETTER>) interpolantGenerator);
 			return;
 		}
 
@@ -441,8 +442,7 @@ public abstract class BaseRefinementStrategy<LETTER extends IIcfgTransition<?>> 
 		}
 	}
 
-	protected InterpolantConsolidation<LETTER>.InterpolantConsolidationBenchmarkGenerator
-			getInterpolantConsolidationStatistics() {
+	protected InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationStatistics() {
 		return mInterpolantConsolidationStatistics;
 	}
 

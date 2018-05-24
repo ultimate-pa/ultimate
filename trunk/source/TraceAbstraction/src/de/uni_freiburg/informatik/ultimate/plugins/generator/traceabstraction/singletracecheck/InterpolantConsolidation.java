@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -88,13 +87,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWi
  *
  * @author musab@informatik.uni-freiburg.de
  */
-public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> implements IInterpolantGenerator {
+public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> implements IInterpolantGenerator<LETTER> {
 
 	private static final boolean PRINT_DEBUG_INFORMATION = false;
 	private static final boolean PRINT_DIFFERENCE_AUTOMATA = false;
 	private static final boolean USE_CONSOLIDATION_IN_NON_EMPTY_CASE = false;
 
-	private final InterpolatingTraceCheck mInterpolatingTraceCheck;
+	private final InterpolatingTraceCheck<LETTER> mInterpolatingTraceCheck;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final SortedMap<Integer, IPredicate> mPendingContexts;
@@ -103,7 +102,6 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	private final NestedWord<LETTER> mTrace;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
-	private final ModifiableGlobalsTable mModifiedGlobals;
 	private final PredicateUnifier mPredicateUnifier;
 	private final PredicateFactory mPredicateFactory;
 	private final ILogger mLogger;
@@ -117,14 +115,13 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final IUltimateServiceProvider services, final ILogger logger, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final InterpolatingTraceCheck tc, final TAPreferences taPrefs)
-			throws AutomataOperationCanceledException {
+			final PredicateUnifier predicateUnifier, final InterpolatingTraceCheck<LETTER> tc,
+			final TAPreferences taPrefs) throws AutomataOperationCanceledException {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPendingContexts = pendingContexts;
 		mTrace = trace;
 		mCsToolkit = csToolkit;
-		mModifiedGlobals = modifiableGlobalsTable;
 		mServices = services;
 		mLogger = logger;
 		mPredicateFactory = predicateFactory;
@@ -209,14 +206,12 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 					if (mInterpolatingTraceCheck instanceof TraceCheckSpWp) {
 						// If the forwards predicates is a perfect sequence of interpolants, then use it, otherwise use
 						// the sequence of backwards predicates
-						final boolean forwardsPredicatesPerfect =
-								((TraceCheckSpWp) mInterpolatingTraceCheck).isForwardSequencePerfect();
+						final TraceCheckSpWp<LETTER> tc = ((TraceCheckSpWp<LETTER>) mInterpolatingTraceCheck);
+						final boolean forwardsPredicatesPerfect = tc.isForwardSequencePerfect();
 						if (forwardsPredicatesPerfect) {
-							mConsolidatedInterpolants = ((TraceCheckSpWp) mInterpolatingTraceCheck)
-									.getForwardPredicates().toArray(new IPredicate[0]);
+							mConsolidatedInterpolants = tc.getForwardPredicates().toArray(new IPredicate[0]);
 						} else {
-							mConsolidatedInterpolants = ((TraceCheckSpWp) mInterpolatingTraceCheck)
-									.getBackwardPredicates().toArray(new IPredicate[0]);
+							mConsolidatedInterpolants = tc.getBackwardPredicates().toArray(new IPredicate[0]);
 						}
 					} else {
 						mConsolidatedInterpolants = mInterpolatingTraceCheck.getInterpolants();
@@ -391,7 +386,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 
 	/**
 	 * Create for every location of the path program the disjunction of all predicates associated with that location.
-	 * 
+	 *
 	 * @param pathProgramLocations
 	 * @param locationsToSetOfPredicates
 	 * @param interpolantsBeforeConsolidation
@@ -481,7 +476,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 
 	public List<IPredicate> getInterpolantsOfType_I() {
 		if (mInterpolatingTraceCheck instanceof TraceCheckSpWp) {
-			final TraceCheckSpWp tcspwp = (TraceCheckSpWp) mInterpolatingTraceCheck;
+			final TraceCheckSpWp<LETTER> tcspwp = (TraceCheckSpWp<LETTER>) mInterpolatingTraceCheck;
 			if (tcspwp.wasForwardPredicateComputationRequested()) {
 				return tcspwp.getForwardPredicates();
 			}
@@ -492,7 +487,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 
 	public List<IPredicate> getInterpolantsOfType_II() {
 		if (mInterpolatingTraceCheck instanceof TraceCheckSpWp) {
-			final TraceCheckSpWp tcspwp = (TraceCheckSpWp) mInterpolatingTraceCheck;
+			final TraceCheckSpWp<LETTER> tcspwp = (TraceCheckSpWp<LETTER>) mInterpolatingTraceCheck;
 			if (tcspwp.wasBackwardSequenceConstructed()) {
 				return tcspwp.getBackwardPredicates();
 			}
@@ -516,7 +511,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	 */
 	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(final NestedWord<LETTER> trace,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactor, final TAPreferences taPrefs,
-			final IUltimateServiceProvider services, final InterpolatingTraceCheck traceCheck) {
+			final IUltimateServiceProvider services, final InterpolatingTraceCheck<LETTER> traceCheck) {
 		// Set the alphabet
 		final Set<LETTER> internalAlphabet = new HashSet<>();
 		final Set<LETTER> callAlphabet = new HashSet<>();
@@ -546,7 +541,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 		boolean nwaStatesAndTransitionsAdded = false;
 
 		if (traceCheck instanceof TraceCheckSpWp) {
-			final TraceCheckSpWp tcSpWp = (TraceCheckSpWp) traceCheck;
+			final TraceCheckSpWp<LETTER> tcSpWp = (TraceCheckSpWp<LETTER>) traceCheck;
 			if (tcSpWp.wasForwardPredicateComputationRequested() && tcSpWp.wasBackwardSequenceConstructed()) {
 				nwaStatesAndTransitionsAdded = true;
 				// Add states and transitions corresponding to forwards predicates
@@ -612,8 +607,8 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	@Override
-	public Word<LETTER> getTrace() {
-		return mTrace;
+	public List<LETTER> getTrace() {
+		return mTrace.asList();
 	}
 
 	@Override
@@ -631,7 +626,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 		return mPendingContexts;
 	}
 
-	public InterpolatingTraceCheck getInterpolatingTraceCheck() {
+	public InterpolatingTraceCheck<LETTER> getInterpolatingTraceCheck() {
 		return mInterpolatingTraceCheck;
 	}
 
@@ -754,7 +749,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 
 	}
 
-	public class InterpolantConsolidationBenchmarkGenerator extends StatisticsGeneratorWithStopwatches
+	public static class InterpolantConsolidationBenchmarkGenerator extends StatisticsGeneratorWithStopwatches
 			implements IStatisticsDataProvider {
 		private int mDisjunctionsGreaterOneCounter = 0;
 		private int mDifferenceBeforeAfter = 0;

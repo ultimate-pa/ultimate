@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 
 /**
  * Class that represents a sequence of formulas (of type F) along a trace (given by a NestedWord<CodeBlock>). At
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
  * procedure. The class uses assertions to check that indices for all public getters of this class are valid. Subclasses
  * have to override the methods with the <i>FromValidPos</i> suffix and may assume that validity of the index was
  * checked (in case assertions are enabled)
- * 
+ *
  * @author Matthias Heizmann
  *
  * @param <TF>
@@ -52,19 +52,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
  */
 public abstract class NestedFormulas<TF, SF> {
 
-	private final NestedWord<? extends IIcfgTransition<?>> mNestedWord;
+	private final NestedWord<? extends IAction> mNestedWord;
 	private SF mPrecondition;
 	private SF mPostcondition;
 	private final SortedMap<Integer, SF> mPendingContexts;
 
-	public NestedFormulas(final NestedWord<? extends IIcfgTransition<?>> nestedWord,
+	public NestedFormulas(final NestedWord<? extends IAction> nestedWord,
 			final SortedMap<Integer, SF> pendingContexts) {
 		mNestedWord = nestedWord;
 		assert pendingContexts != null;
 		mPendingContexts = pendingContexts;
 	}
 
-	public final NestedWord<? extends IIcfgTransition<?>> getTrace() {
+	public final NestedWord<? extends IAction> getTrace() {
 		return mNestedWord;
 	}
 

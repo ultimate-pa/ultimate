@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckStatisticsGenerator.InterpolantType;
@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
+public class InterpolatingTraceCheckCraig<LETTER extends IAction> extends InterpolatingTraceCheck<LETTER> {
 
 	private final boolean mInstantiateArrayExt;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
@@ -86,7 +86,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 	 * @param logger
 	 */
 	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript mgdScriptTc, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
@@ -159,7 +159,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 	}
 
 	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
@@ -173,7 +173,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 				xnfConversionTechnique, simplificationTechnique, false);
 	}
 
-	private boolean checkIfMessageMeansSolverCannotInterpolate(final String message) {
+	private static boolean checkIfMessageMeansSolverCannotInterpolate(final String message) {
 		return message.startsWith("Cannot interpolate") || message.equals(NestedInterpolantsBuilder.DIFF_IS_UNSUPPORTED)
 				|| message.startsWith("Unknown lemma type!");
 	}
@@ -309,8 +309,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 		for (final Integer nonPendingCall : nonPendingCallPositions) {
 			// compute subtrace from to call to corresponding return
 			final int returnPosition = mTrace.getReturnPosition(nonPendingCall);
-			final NestedWord<? extends IIcfgTransition<?>> subtrace =
-					mTrace.getSubWord(nonPendingCall + 1, returnPosition);
+			final NestedWord<LETTER> subtrace = mTrace.getSubWord(nonPendingCall + 1, returnPosition);
 
 			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getSucceedingProcedure();
@@ -350,7 +349,7 @@ public class InterpolatingTraceCheckCraig extends InterpolatingTraceCheck {
 
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this traceCheck
-			final InterpolatingTraceCheckCraig tc = new InterpolatingTraceCheckCraig(precondition,
+			final InterpolatingTraceCheckCraig<LETTER> tc = new InterpolatingTraceCheckCraig<>(precondition,
 					interpolantAtReturnPosition, pendingContexts, subtrace, null, mServices, mCsToolkit, mTcSmtManager,
 					mPredicateFactory, mPredicateUnifier, mAssertCodeBlocksIncrementally, false,
 					mTraceCheckBenchmarkGenerator.isCollectingInterpolantSequenceStatistics(),

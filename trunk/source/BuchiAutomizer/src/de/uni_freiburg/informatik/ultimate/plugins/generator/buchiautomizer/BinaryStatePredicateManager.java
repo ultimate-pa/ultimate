@@ -63,9 +63,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheck;
 
 public class BinaryStatePredicateManager {
@@ -532,8 +532,8 @@ public class BinaryStatePredicateManager {
 
 	private ITraceCheck createTraceCheck(final IPredicate preCond, final IPredicate postCond,
 			final NestedWord<? extends IIcfgTransition<?>> trace) {
-		return new TraceCheck(preCond, postCond, new TreeMap<Integer, IPredicate>(), trace, mServices,
-				mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false);
+		return new TraceCheck(preCond, postCond, new TreeMap<Integer, IPredicate>(), trace, mServices, mCsToolkit,
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false);
 
 	}
 

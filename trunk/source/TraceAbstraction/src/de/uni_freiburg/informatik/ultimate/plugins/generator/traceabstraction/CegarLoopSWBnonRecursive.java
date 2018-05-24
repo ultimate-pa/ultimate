@@ -63,10 +63,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
@@ -95,7 +95,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	/**
 	 * Used for computing the interpolants of additional paths
 	 */
-	protected TraceCheck mExtraTraceCheck;
+	protected TraceCheck<LETTER> mExtraTraceCheck;
 
 	/**
 	 * Version of the abstraction, casted as NestedWordAutomaton. It is casted in every call of
@@ -582,8 +582,8 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 			}
 		}
 		// test if we found a new path which can be added
-		final InterpolatingTraceCheckCraig traceCheck =
-				new InterpolatingTraceCheckCraig(pre, post, pendingContexts, word, null, mServices, mCsToolkit,
+		final InterpolatingTraceCheckCraig<LETTER> traceCheck =
+				new InterpolatingTraceCheckCraig<>(pre, post, pendingContexts, word, null, mServices, mCsToolkit,
 						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
 						mPref.interpolation(), false, mXnfConversionTechnique, mSimplificationTechnique);
 

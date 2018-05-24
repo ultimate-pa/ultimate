@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -44,19 +45,20 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown.Reason;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -96,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class TraceCheck implements ITraceCheck {
+public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
@@ -117,7 +119,7 @@ public class TraceCheck implements ITraceCheck {
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
 	 */
-	protected final NestedWord<? extends IIcfgTransition<?>> mTrace;
+	protected final NestedWord<LETTER> mTrace;
 	protected final IPredicate mPrecondition;
 	protected final IPredicate mPostcondition;
 	/**
@@ -154,7 +156,7 @@ public class TraceCheck implements ITraceCheck {
 	 *            logger
 	 */
 	public TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final boolean computeRcfgProgramExecution,
 			final boolean collectInterpolatSequenceStatistics) {
@@ -166,7 +168,7 @@ public class TraceCheck implements ITraceCheck {
 	}
 
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
@@ -182,7 +184,7 @@ public class TraceCheck implements ITraceCheck {
 	 * @param services
 	 */
 	protected TraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final ManagedScript managedScriptTc,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final boolean computeRcfgProgramExecution,
@@ -328,9 +330,9 @@ public class TraceCheck implements ITraceCheck {
 			final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
-			final TraceCheck tc = new TraceCheck(mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(),
-					mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices, mCsToolkit, mTcSmtManager,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
+			final TraceCheck<? extends IAction> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
+					mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), withBE, mServices,
+					mCsToolkit, mTcSmtManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
 			if (tc.getToolchainCanceledExpection() != null) {
 				throw tc.getToolchainCanceledExpection();
 			}
@@ -348,7 +350,7 @@ public class TraceCheck implements ITraceCheck {
 		final RelevantVariables relVars =
 				new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
 		final IcfgProgramExecutionBuilder rpeb = new IcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
-				(NestedWord<IIcfgTransition<?>>) mTrace, relVars, mBoogie2SmtSymbolTable);
+				mTrace, relVars, mBoogie2SmtSymbolTable);
 		for (int i = 0; i < mTrace.length(); i++) {
 			if (mTrace.getSymbolAt(i) instanceof CodeBlock) {
 				final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
@@ -407,8 +409,8 @@ public class TraceCheck implements ITraceCheck {
 		return result;
 	}
 
-	public NestedWord<? extends IAction> getTrace() {
-		return mTrace;
+	public List<LETTER> getTrace() {
+		return mTrace.asList();
 	}
 
 	@Override

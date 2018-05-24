@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -40,8 +41,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -52,15 +54,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
 public class IcfgProgramExecutionBuilder {
 
 	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
-	private final NestedWord<IIcfgTransition<?>> mTrace;
+	private final NestedWord<? extends IAction> mTrace;
 	private final Map<IProgramVar, Map<Integer, Term>> mvar2pos2value;
 	private final RelevantVariables mRelevantVariables;
 	private IcfgProgramExecution mIcfgProgramExecution;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
-	private final IIcfgSymbolTable mSymbolTable;
 
 	public IcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable,
-			final NestedWord<IIcfgTransition<?>> trace, final RelevantVariables relevantVariables,
+			final NestedWord<? extends IAction> trace, final RelevantVariables relevantVariables,
 			final IIcfgSymbolTable symbolTable) {
 		super();
 		mModifiableGlobalVariableManager = modifiableGlobalsTable;
@@ -69,7 +70,6 @@ public class IcfgProgramExecutionBuilder {
 		mRelevantVariables = relevantVariables;
 		mBranchEncoders = new Map[mTrace.length()];
 		mIcfgProgramExecution = null;
-		mSymbolTable = symbolTable;
 	}
 
 	public IcfgProgramExecution getIcfgProgramExecution() {
@@ -174,7 +174,8 @@ public class IcfgProgramExecutionBuilder {
 			final ProgramState<Term> pps = new ProgramState<>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
-		return new IcfgProgramExecution(mTrace.asList(), partialProgramStateMapping, mBranchEncoders);
+		return new IcfgProgramExecution(mTrace.asList().stream().map(a -> (IcfgEdge) a).collect(Collectors.toList()),
+				partialProgramStateMapping, mBranchEncoders);
 	}
 
 }

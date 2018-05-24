@@ -40,11 +40,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -88,7 +88,7 @@ public class RefinementStrategyUtils {
 		return "cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
 	}
 
-	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator constructInterpolantGenerator(
+	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator<LETTER> constructInterpolantGenerator(
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,
 			final ITraceCheck traceCheck, final PredicateFactory predicateFactory,
@@ -97,7 +97,8 @@ public class RefinementStrategyUtils {
 		final ITraceCheck localTraceCheck = Objects.requireNonNull(traceCheck,
 				"cannot construct interpolant generator if no trace checker is present");
 		if (localTraceCheck instanceof InterpolatingTraceCheck) {
-			final InterpolatingTraceCheck interpolatingTraceCheck = (InterpolatingTraceCheck) localTraceCheck;
+			final InterpolatingTraceCheck<LETTER> interpolatingTraceCheck =
+					(InterpolatingTraceCheck<LETTER>) localTraceCheck;
 
 			if (prefs.getUseInterpolantConsolidation()) {
 				try {

@@ -2,22 +2,22 @@
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -39,7 +39,6 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -77,14 +76,15 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 /**
  * Statistics provider for error automaton construction.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvider {
+
 	/**
 	 * Type of enhancement over the {@code StraightLineInterpolantAutomatonBuilder} result.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public enum EnhancementType {
@@ -120,7 +120,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private int mLettersFirstTrace = -1;
 	private int mRelevantStatements;
 	private long mFaultLocalizationTime = 0l;
-	
+
 	public ErrorAutomatonStatisticsGenerator(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -156,7 +156,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		assert mTraceLength == -1 : "Length already reported";
 		mTraceLength = trace.length();
 		for (int i = 0; i < trace.length(); ++i) {
-			mLetters.add((CodeBlock)trace.getSymbol(i));
+			mLetters.add((CodeBlock) trace.getSymbol(i));
 		}
 		if (mLettersFirstTrace == -1) {
 			mLettersFirstTrace = mTraceLength;
@@ -195,15 +195,15 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahend;
 		final AutomataLibraryServices alServices = new AutomataLibraryServices(services);
 		switch (errorAutomatonBuilder.getType()) {
-			case ERROR_AUTOMATON:
-				subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
-				break;
-			case DANGER_AUTOMATON:
-				subtrahend = constructStraightLineAutomaton(services, errorTrace, new VpAlphabet<>(abstraction),
-						predicateFactory);
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown error automaton type: " + errorAutomatonBuilder.getType());
+		case ERROR_AUTOMATON:
+			subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
+			break;
+		case DANGER_AUTOMATON:
+			subtrahend = constructStraightLineAutomaton(services, errorTrace, new VpAlphabet<>(abstraction),
+					predicateFactory);
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown error automaton type: " + errorAutomatonBuilder.getType());
 		}
 		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
 				new RemoveUnreachable<>(alServices, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
@@ -298,34 +298,34 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		final ErrorAutomatonStatisticsDefinitions keyEnum =
 				Enum.valueOf(ErrorAutomatonStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-			case NumberErrorTraces:
-				return getTotalNumber();
-			case NumberStatementsAllTraces:
-				return mLetters.size();
-			case NumberStatementsFirstTrace:
-				return mLettersFirstTrace;
-			case NumberRelevantStatements:
-				return mRelevantStatements;
-			case FaulLocalizationTime:
-				return mFaultLocalizationTime;
-			case TraceLengthAvg:
-				return getAverageTraceLength();
-			case ErrorAutomatonConstructionTimeAvg:
-				return getAverageErrorAutomatonConstructionTime(stats -> stats.mConstructionTime);
-			case ErrorAutomatonConstructionTimeTotal:
-				return getTotalErrorAutomatonConstructionTime(stats -> stats.mConstructionTime);
-			case ErrorAutomatonDifferenceTimeAvg:
-				return getAverageErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
-			case ErrorAutomatonDifferenceTimeTotal:
-				return getTotalErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
-			case NumberOfNoEnhancement:
-				return getNumberOfGivenEnhancementType(EnhancementType.NONE);
-			case NumberOfFiniteEnhancement:
-				return getNumberOfGivenEnhancementType(EnhancementType.FINITE);
-			case NumberOfInfiniteEnhancement:
-				return getNumberOfGivenEnhancementType(EnhancementType.INFINITE);
-			default:
-				throw new AssertionError("Unknown key: " + key);
+		case NumberErrorTraces:
+			return getTotalNumber();
+		case NumberStatementsAllTraces:
+			return mLetters.size();
+		case NumberStatementsFirstTrace:
+			return mLettersFirstTrace;
+		case NumberRelevantStatements:
+			return mRelevantStatements;
+		case FaulLocalizationTime:
+			return mFaultLocalizationTime;
+		case TraceLengthAvg:
+			return getAverageTraceLength();
+		case ErrorAutomatonConstructionTimeAvg:
+			return getAverageErrorAutomatonConstructionTime(stats -> stats.mConstructionTime);
+		case ErrorAutomatonConstructionTimeTotal:
+			return getTotalErrorAutomatonConstructionTime(stats -> stats.mConstructionTime);
+		case ErrorAutomatonDifferenceTimeAvg:
+			return getAverageErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
+		case ErrorAutomatonDifferenceTimeTotal:
+			return getTotalErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
+		case NumberOfNoEnhancement:
+			return getNumberOfGivenEnhancementType(EnhancementType.NONE);
+		case NumberOfFiniteEnhancement:
+			return getNumberOfGivenEnhancementType(EnhancementType.FINITE);
+		case NumberOfInfiniteEnhancement:
+			return getNumberOfGivenEnhancementType(EnhancementType.INFINITE);
+		default:
+			throw new AssertionError("Unknown key: " + key);
 		}
 	}
 
@@ -377,75 +377,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			constructStraightLineAutomaton(final IUltimateServiceProvider services,
 					final IRun<LETTER, IPredicate, ?> errorTrace, final VpAlphabet<LETTER> alphabet,
 					final PredicateFactoryForInterpolantAutomata predicateFactory) {
-		final IInterpolantGenerator ig = new IInterpolantGenerator() {
-			@Override
-			public boolean isPerfectSequence() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public Word<? extends IAction> getTrace() {
-				return errorTrace.getWord();
-			}
-
-			@Override
-			public IPredicateUnifier getPredicateUnifier() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public IPredicate getPrecondition() {
-				return createPredicate();
-			}
-
-			@Override
-			public IPredicate getPostcondition() {
-				return createPredicate();
-			}
-
-			@Override
-			public Map<Integer, IPredicate> getPendingContexts() {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public IPredicate[] getInterpolants() {
-				final IPredicate[] list = new IPredicate[errorTrace.getWord().length() - 1];
-				for (int i = 0; i < list.length; ++i) {
-					list[i] = createPredicate();
-				}
-				return list;
-			}
-
-			@Override
-			public InterpolantComputationStatus getInterpolantComputationStatus() {
-				throw new UnsupportedOperationException();
-			}
-
-			private IPredicate createPredicate() {
-				return new IPredicate() {
-					@Override
-					public Set<IProgramVar> getVars() {
-						throw new UnsupportedOperationException();
-					}
-
-					@Override
-					public String[] getProcedures() {
-						throw new UnsupportedOperationException();
-					}
-
-					@Override
-					public Term getFormula() {
-						throw new UnsupportedOperationException();
-					}
-
-					@Override
-					public Term getClosedFormula() {
-						throw new UnsupportedOperationException();
-					}
-				};
-			}
-		};
+		final IInterpolantGenerator<LETTER> ig = new StraightlineGenerator<>(errorTrace);
 		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, ig, predicateFactory,
 				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING)
 						.getResult();
@@ -453,7 +385,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 
 	/**
 	 * Statistics per error automaton construction.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private static class AutomatonStatisticsEntry {
@@ -468,6 +400,83 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			mConstructionTime = constructionTime;
 			mTraceLength = traceLength;
 			mEnhancement = enhancement;
+		}
+	}
+
+	private static final class StraightlineGenerator<LETTER extends IAction>
+			implements IInterpolantGenerator<LETTER> {
+		private final IRun<LETTER, IPredicate, ?> mErrorTrace;
+
+		private StraightlineGenerator(final IRun<LETTER, IPredicate, ?> errorTrace) {
+			mErrorTrace = errorTrace;
+		}
+
+		@Override
+		public boolean isPerfectSequence() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<LETTER> getTrace() {
+			return mErrorTrace.getWord().asList();
+		}
+
+		@Override
+		public IPredicateUnifier getPredicateUnifier() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public IPredicate getPrecondition() {
+			return createPredicate();
+		}
+
+		@Override
+		public IPredicate getPostcondition() {
+			return createPredicate();
+		}
+
+		@Override
+		public Map<Integer, IPredicate> getPendingContexts() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public IPredicate[] getInterpolants() {
+			final IPredicate[] list = new IPredicate[mErrorTrace.getWord().length() - 1];
+			for (int i = 0; i < list.length; ++i) {
+				list[i] = createPredicate();
+			}
+			return list;
+		}
+
+		@Override
+		public InterpolantComputationStatus getInterpolantComputationStatus() {
+			throw new UnsupportedOperationException();
+		}
+
+		private static IPredicate createPredicate() {
+			return new IPredicate() {
+				@Override
+				public Set<IProgramVar> getVars() {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public String[] getProcedures() {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public Term getFormula() {
+					throw new UnsupportedOperationException();
+				}
+
+				@Override
+				public Term getClosedFormula() {
+					throw new UnsupportedOperationException();
+				}
+			};
 		}
 	}
 }
