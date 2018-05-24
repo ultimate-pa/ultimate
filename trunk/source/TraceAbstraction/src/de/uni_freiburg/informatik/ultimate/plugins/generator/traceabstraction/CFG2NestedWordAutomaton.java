@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
-	private static final boolean STORE_HISTORY = false;
+	private static final boolean DEBUG_STORE_HISTORY = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
@@ -76,66 +76,43 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	 * Construct the control automata (see Trace Abstraction) for the program of rootNode. If mInterprocedural==false we
 	 * construct an automaton for each procedure otherwise we construct one nested word automaton for the whole program.
 	 *
-	 * @param errorLoc
-	 *            error location of the program. If null, each state that corresponds to an error location will be
-	 *            accepting. Otherwise only the state corresponding to errorLoc will be accepting.
+	 * @param acceptingLocations locations for which the corresponding automaton state should be accepting
+	 *
 	 */
 	@SuppressWarnings("unchecked")
 	public INestedWordAutomaton<LETTER, IPredicate> getNestedWordAutomaton(final IIcfg<? extends IcfgLocation> icfg,
-			final IStateFactory<IPredicate> tAContentFactory, final Collection<? extends IcfgLocation> errorLocs) {
-		if (icfg.getInitialNodes().size() == 1) {
-			mLogger.info("Mode: main mode - execution starts in main procedure");
-		} else {
-			mLogger.info("Mode: library - executation can start in any procedure");
-		}
-
-		mLogger.debug("Step: put all LocationNodes into mNodes");
+			final IStateFactory<IPredicate> automataStateFactory, final Collection<? extends IcfgLocation> acceptingLocations) {
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
-		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
-		boolean interprocedural = mInterprocedural;
+		final boolean interprocedural = mInterprocedural;
 
-		VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
+		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
 
-		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
-		final NestedWordAutomaton<LETTER, IPredicate> nwa =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
-						vpAlphabet, tAContentFactory);
+		final NestedWordAutomaton<LETTER, IPredicate> nwa = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), vpAlphabet, automataStateFactory);
+		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
 
-		mLogger.debug("Step: add states");
-		// add states
-		for (final IcfgLocation locNode : allNodes) {
-			final boolean isInitial = initialNodes.contains(locNode);
-			final boolean isErrorLocation = errorLocs.contains(locNode);
+		{
+			// add states
+			for (final IcfgLocation locNode : allNodes) {
+				final boolean isInitial = initialNodes.contains(locNode);
+				final boolean isAccepting = acceptingLocations.contains(locNode);
 
-			IPredicate automatonState;
-			final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
-			if (STORE_HISTORY) {
-				automatonState =
-						mPredicateFactory.newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
-			} else {
-				automatonState = mPredicateFactory.newSPredicate(locNode, trueTerm);
+				final IPredicate automatonState;
+				final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
+				if (DEBUG_STORE_HISTORY) {
+					automatonState =
+							mPredicateFactory.newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
+				} else {
+					automatonState = mPredicateFactory.newSPredicate(locNode, trueTerm);
+				}
+
+				nwa.addState(isInitial, isAccepting, automatonState);
+				nodes2States.put(locNode, automatonState);
 			}
-
-			nwa.addState(isInitial, isErrorLocation, automatonState);
-			nodes2States.put(locNode, automatonState);
-
-			// // add transitions to the error location if correctness of the
-			// // program can be violated at locNode
-			// Map<AssumeStatement, TransFormula> violations =
-			// locNode.getStateAnnot().getViolations();
-			// if (violations !=null) {
-			// for (AssumeStatement st : violations.keySet()) {
-			// TransAnnot transAnnot = new TransAnnot();
-			// transAnnot.addStatement(st);
-			// transAnnot.setTransitionTerm(violations.get(st));
-			// internalAlphabet.add(transAnnot);
-			// nwa.addInternalTransition(automatonState,transAnnot,automatonErrorState);
-			// }
-			// }
 		}
 
 		mLogger.debug("Step: add transitions");
@@ -183,18 +160,18 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * Extract from an ICFG the alphabet that is needed for an trace
 	 * abstraction-based analysis.
-	 * 
+	 *
 	 * @param icfg
 	 * @param intraproceduralAnalysis
 	 *            In an intraprocedural analysis we ignore call and return
 	 *            statements. Instead we add summary edges between the call
 	 *            predecessor and the return successor. If a specification of the
 	 *            procedure is given, this specification is used here. If no
-	 *            specifiation is given we use the trivial ("true") specification.
+	 *            specification is given we use the trivial ("true") specification.
 	 * @return
 	 */
 	public VpAlphabet<LETTER> extractVpAlphabet(final IIcfg<? extends IcfgLocation> icfg,
-			boolean intraproceduralAnalysis) {
+			final boolean intraproceduralAnalysis) {
 		final Set<LETTER> internalAlphabet = new HashSet<>();
 		final Set<LETTER> callAlphabet = new HashSet<>();
 		final Set<LETTER> returnAlphabet = new HashSet<>();
@@ -202,7 +179,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 
 		while (iter.hasNext()) {
-			IcfgLocation locNode = iter.next();
+			final IcfgLocation locNode = iter.next();
 			if (locNode.getOutgoingNodes() != null) {
 				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
 					if (edge instanceof IIcfgCallTransition) {
