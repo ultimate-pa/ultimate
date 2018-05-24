@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe;
 
 import java.util.Set;
 
