@@ -33,8 +33,10 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.pdr.Pdr;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -44,8 +46,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckPathInvariantsWithFallback;
@@ -60,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements Supplier<ITraceCheck> {
-	private final ITraceCheckPreferences<LETTER> mPrefs;
+	private final ITraceCheckPreferences mPrefs;
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
@@ -86,7 +91,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	 * @param cegarLoopBenchmark
 	 *            CEGAR loop benchmark
 	 */
-	public TraceCheckConstructor(final ITraceCheckPreferences<LETTER> prefs, final ManagedScript managedScript,
+	public TraceCheckConstructor(final ITraceCheckPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique, final TaskIdentifier taskIdentifier) {
@@ -136,7 +141,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	 * @param cegarLoopBenchmark
 	 *            CEGAR loop benchmark
 	 */
-	public TraceCheckConstructor(final ITraceCheckPreferences<LETTER> prefs, final ManagedScript managedScript,
+	public TraceCheckConstructor(final ITraceCheckPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final AssertCodeBlockOrder assertOrder, final InterpolationTechnique interpolationTechnique,
@@ -265,8 +270,11 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 	}
 
 	private ITraceCheck constructPdr() {
-		// final Pdr pdr;
-		throw new UnsupportedOperationException();
+		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
+				HoareTripleChecks.MONOLITHIC, mPrefs.getCfgSmtToolkit(), mPredicateUnifier);
+		final Pdr<LETTER> pdr = new Pdr<>(mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mPrefs,
+				mPredicateUnifier, htc, mCounterexample.getWord().asList());
+		return pdr;
 	}
 
 }

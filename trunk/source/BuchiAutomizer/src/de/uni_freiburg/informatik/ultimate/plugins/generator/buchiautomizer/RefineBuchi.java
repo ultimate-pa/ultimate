@@ -189,7 +189,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				bspm.getStemPrecondition(), bspm.getHondaPredicate(), bspm.getRankEqAndSi(),
 				bspm.getStemPostcondition(), bspm.getRankDecreaseAndBound(), bspm.getSiConjunction());
 		IPredicate[] stemInterpolants;
-		InterpolatingTraceCheck traceCheck;
+		InterpolatingTraceCheck<LETTER> traceCheck;
 		if (BuchiCegarLoop.isEmptyStem(mCounterexample)) {
 			stemInterpolants = null;
 		} else {
@@ -591,14 +591,14 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		return newAbstraction;
 	}
 
-	private InterpolatingTraceCheck constructTraceCheck(final IPredicate precond, final IPredicate postcond,
+	private InterpolatingTraceCheck<LETTER> constructTraceCheck(final IPredicate precond, final IPredicate postcond,
 			final NestedWord<LETTER> word, final CfgSmtToolkit csToolkit, final PredicateUnifier pu,
 			final InterpolationTechnique interpolation) {
-		final InterpolatingTraceCheck itc;
+		final InterpolatingTraceCheck<LETTER> itc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
-			itc = new InterpolatingTraceCheckCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word, null,
+			itc = new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<Integer, IPredicate>(), word, null,
 					mServices, mCsToolkit, mPredicateFactory, pu, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false,
 					interpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
 			break;
@@ -607,7 +607,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect: {
-			itc = new TraceCheckSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
+			itc = new TraceCheckSpWp<>(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 					mPredicateFactory, pu, interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
 					mSimplificationTechnique, null, false);
@@ -729,8 +729,8 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		}
 	}
 
-	private IPredicate getPredicateAtPosition(final int pos, final IPredicate before, final IPredicate[] predicates,
-			final IPredicate after) {
+	private static IPredicate getPredicateAtPosition(final int pos, final IPredicate before,
+			final IPredicate[] predicates, final IPredicate after) {
 		assert pos >= -1;
 		assert pos <= predicates.length;
 		if (pos < 0) {

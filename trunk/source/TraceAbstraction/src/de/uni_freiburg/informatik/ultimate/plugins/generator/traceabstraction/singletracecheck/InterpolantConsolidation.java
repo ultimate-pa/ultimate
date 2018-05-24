@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -95,7 +94,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	private static final boolean PRINT_DIFFERENCE_AUTOMATA = false;
 	private static final boolean USE_CONSOLIDATION_IN_NON_EMPTY_CASE = false;
 
-	private final InterpolatingTraceCheck<LETTER> mInterpolatingTraceCheck;
+	private final IInterpolantGenerator<LETTER> mInterpolatingTraceCheck;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final SortedMap<Integer, IPredicate> mPendingContexts;
@@ -117,7 +116,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final IUltimateServiceProvider services, final ILogger logger, final PredicateFactory predicateFactory,
-			final PredicateUnifier predicateUnifier, final InterpolatingTraceCheck<LETTER> tc,
+			final PredicateUnifier predicateUnifier, final IInterpolantGenerator<LETTER> tc,
 			final TAPreferences taPrefs) throws AutomataOperationCanceledException {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -137,10 +136,12 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 				TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
 		mHoareTripleChecker = new CachingHoareTripleCheckerMap(services, ehtc, mPredicateUnifier);
 
-		if (mInterpolatingTraceCheck.isCorrect() == LBool.UNSAT) {
+		final InterpolantComputationStatus status = mInterpolatingTraceCheck.getInterpolantComputationStatus();
+		if (status.wasComputationSuccesful()) {
 			computeInterpolants(new AllIntegers());
+
 		}
-		mInterpolantComputationStatus = new InterpolantComputationStatus(true, null, null);
+		mInterpolantComputationStatus = status;
 	}
 
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions)
@@ -507,13 +508,13 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	 *
 	 * @param trace
 	 *            - the trace from which the automaton is constructed.
-	 * @param traceCheck
+	 * @param interpolantGenerator
 	 *            - contains the Floyd-Hoare annotation (the interpolants) for which the automaton is constructed.
 	 * @return
 	 */
 	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(final NestedWord<LETTER> trace,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactor, final TAPreferences taPrefs,
-			final IUltimateServiceProvider services, final InterpolatingTraceCheck<LETTER> traceCheck) {
+			final IUltimateServiceProvider services, final IInterpolantGenerator<LETTER> interpolantGenerator) {
 		// Set the alphabet
 		final Set<LETTER> internalAlphabet = new HashSet<>();
 		final Set<LETTER> callAlphabet = new HashSet<>();
@@ -538,26 +539,27 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 				new NestedWordAutomaton<>(new AutomataLibraryServices(services),
 						new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet), predicateFactoryFia);
 		// Set the initial and the final state of the automaton
-		nwa.addState(true, false, traceCheck.getPrecondition());
-		nwa.addState(false, true, traceCheck.getPostcondition());
+		nwa.addState(true, false, interpolantGenerator.getPrecondition());
+		nwa.addState(false, true, interpolantGenerator.getPostcondition());
 		boolean nwaStatesAndTransitionsAdded = false;
 
-		if (traceCheck instanceof TraceCheckSpWp) {
-			final TraceCheckSpWp<LETTER> tcSpWp = (TraceCheckSpWp<LETTER>) traceCheck;
+		if (interpolantGenerator instanceof TraceCheckSpWp) {
+			final TraceCheckSpWp<LETTER> tcSpWp = (TraceCheckSpWp<LETTER>) interpolantGenerator;
 			if (tcSpWp.wasForwardPredicateComputationRequested() && tcSpWp.wasBackwardSequenceConstructed()) {
 				nwaStatesAndTransitionsAdded = true;
 				// Add states and transitions corresponding to forwards predicates
-				addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, traceCheck.getPrecondition(),
-						traceCheck.getPostcondition(), tcSpWp.getForwardPredicates(), trace);
+				addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, interpolantGenerator.getPrecondition(),
+						interpolantGenerator.getPostcondition(), tcSpWp.getForwardPredicates(), trace);
 				// Add states and transitions corresponding to backwards predicates
-				addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, traceCheck.getPrecondition(),
-						traceCheck.getPostcondition(), tcSpWp.getBackwardPredicates(), trace);
+				addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, interpolantGenerator.getPrecondition(),
+						interpolantGenerator.getPostcondition(), tcSpWp.getBackwardPredicates(), trace);
 			}
 		}
 
 		if (!nwaStatesAndTransitionsAdded) {
-			addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, traceCheck.getPrecondition(),
-					traceCheck.getPostcondition(), Arrays.asList(traceCheck.getInterpolants()), trace);
+			addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, interpolantGenerator.getPrecondition(),
+					interpolantGenerator.getPostcondition(), Arrays.asList(interpolantGenerator.getInterpolants()),
+					trace);
 		}
 		return nwa;
 	}
@@ -626,10 +628,6 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
 		return mPendingContexts;
-	}
-
-	public InterpolatingTraceCheck<LETTER> getInterpolatingTraceCheck() {
-		return mInterpolatingTraceCheck;
 	}
 
 	@Override

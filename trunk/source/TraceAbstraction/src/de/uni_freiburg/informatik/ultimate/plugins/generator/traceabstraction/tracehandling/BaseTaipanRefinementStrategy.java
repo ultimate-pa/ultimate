@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -388,8 +388,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 
 	private IInterpolantGenerator<LETTER> castTraceCheck() {
 		final ITraceCheck traceCheck = getTraceCheck();
-		assert traceCheck != null && traceCheck instanceof InterpolatingTraceCheck;
-		return (InterpolatingTraceCheck<LETTER>) traceCheck;
+		assert traceCheck != null && traceCheck instanceof IInterpolantGenerator;
+		return (IInterpolantGenerator<LETTER>) traceCheck;
 	}
 
 	@Override

@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface ITraceCheckPreferences<LETTER extends IIcfgTransition<?>> {
+public interface ITraceCheckPreferences {
 
 	/**
 	 * Unsatisfiable core mode.
@@ -98,6 +98,8 @@ public interface ITraceCheckPreferences<LETTER extends IIcfgTransition<?>> {
 	AssertCodeBlockOrder getAssertCodeBlocksOrder();
 
 	IToolchainStorage getToolchainStorage();
+
+	IUltimateServiceProvider getUltimateServices();
 
 	String getPathOfDumpedScript();
 

@@ -50,8 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>>
-		implements ITraceCheckPreferences<LETTER> {
+public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> implements ITraceCheckPreferences {
 	// fields that are provided in the constructor
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
@@ -84,6 +83,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>>
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final boolean mComputeCounterexample;
 	private final boolean mCollectInterpolantStatistics;
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
@@ -115,6 +115,7 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>>
 			final PredicateFactory predicateFactory, final IIcfg<?> icfgContainer,
 			final IToolchainStorage toolchainStorage,
 			final InterpolantAutomatonBuilderFactory<LETTER> interpolantAutomatonBuilderFactory) {
+		mServices = services;
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -278,5 +279,10 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>>
 	@Override
 	public boolean collectInterpolantStatistics() {
 		return mCollectInterpolantStatistics;
+	}
+
+	@Override
+	public IUltimateServiceProvider getUltimateServices() {
+		return mServices;
 	}
 }

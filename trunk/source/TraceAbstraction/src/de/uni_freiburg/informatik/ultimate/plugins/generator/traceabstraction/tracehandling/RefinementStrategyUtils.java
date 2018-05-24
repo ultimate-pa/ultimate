@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -96,9 +95,9 @@ public class RefinementStrategyUtils {
 			final RefinementEngineStatisticsGenerator statistics) {
 		final ITraceCheck localTraceCheck = Objects.requireNonNull(traceCheck,
 				"cannot construct interpolant generator if no trace checker is present");
-		if (localTraceCheck instanceof InterpolatingTraceCheck) {
-			final InterpolatingTraceCheck<LETTER> interpolatingTraceCheck =
-					(InterpolatingTraceCheck<LETTER>) localTraceCheck;
+		if (localTraceCheck instanceof IInterpolantGenerator<?>) {
+			final IInterpolantGenerator<LETTER> interpolatingTraceCheck =
+					(IInterpolantGenerator<LETTER>) localTraceCheck;
 
 			if (prefs.getUseInterpolantConsolidation()) {
 				try {

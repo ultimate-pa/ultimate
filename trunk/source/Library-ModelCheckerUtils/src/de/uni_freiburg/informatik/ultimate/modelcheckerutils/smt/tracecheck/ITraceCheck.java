@@ -74,9 +74,16 @@ public interface ITraceCheck {
 	IStatisticsDataProvider getTraceCheckBenchmark();
 
 	/**
-	 * Returns the {@link ToolchainCanceledException} that was thrown if the computation was cancelled. If the
-	 * computation was not cancelled, we return null.
+	 * If during a trace check a {@link ToolchainCanceledException} occurs, the {@link ITraceCheck} may catch this
+	 * exception and perform cleanup. Users of {@link ITraceCheck} can then call this method to check whether such an
+	 * exception occured and rethrow it if necessary.
+	 *
+	 * @return the {@link ToolchainCanceledException} that was thrown if the computation was cancelled. If the
+	 *         computation was not cancelled, we return null.
+	 * @deprecated DD: cleanup should happen in a finally block inside of ITraceCheck. If callers need to perform
+	 *             cleanup, they themselves can add a finally block.
 	 */
+	@Deprecated
 	ToolchainCanceledException getToolchainCanceledExpection();
 
 	/**
