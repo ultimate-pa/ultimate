@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
@@ -24,44 +24,14 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+public class NotAffineException extends Exception {
 
-/**
- * Objects of this class represent binary equals relations (i.e. terms of the
- * form (= a b)) and their negations (i.e. terms of the form
- * (not (= a b)) resp. (distinct a b)).
- * @author Matthias Heizmann
- *
- */
-public class BinaryEqualityRelation extends BinaryRelation {
+	private static final long serialVersionUID = 1859709088648834946L;
 
-	public BinaryEqualityRelation(Term term)
-			throws NoRelationOfThisKindException {
-		super(term);
-	}
-
-	@Override
-	protected void checkSort(Term[] params)
-			throws NoRelationOfThisKindException {
-		// do nothing, every Sort is ok
-	}
-
-	@Override
-	protected RelationSymbol getRelationSymbol(String functionSymbolName,
-			boolean isNegated) throws NoRelationOfThisKindException {
-		RelationSymbol symb = null;
-		if (functionSymbolName.equals("=")) {
-			symb = RelationSymbol.valueOf("EQ");
-		} else if (functionSymbolName.equals("distinct")) {
-			symb = RelationSymbol.valueOf("DISTINCT");
-		} else {
-			throw new NoRelationOfThisKindException(
-					"no equality relation symbol");
-		}
-		symb = isNegated ? negateRelation(symb) : symb;
-		return symb;
+	public NotAffineException(String message) {
+		super(message);
 	}
 
 }

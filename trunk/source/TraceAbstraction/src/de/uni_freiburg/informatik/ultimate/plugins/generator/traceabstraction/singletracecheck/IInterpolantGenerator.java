@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 
 /**
  * Interface for objects that generate sequences of interpolants. Given
@@ -80,9 +79,10 @@ public interface IInterpolantGenerator {
 
 	/**
 	 * @return {@code true} iff the {@link IInterpolantGenerator} returns a usable interpolant sequence even if it is
-	 *         imperfect. Certain interpolant generators (e.g. {@link CegarAbsIntRunner}) can only deliver perfect
-	 *         sequences.
-	 * @deprecated Matthias: Either your provide a sequence or not, why shouldn't the sequence be usable.
+	 *         imperfect. Certain interpolant generators (e.g. CegarAbsIntRunner in TraceAbstraction) can only deliver
+	 *         perfect sequences.
+	 * @deprecated This method is necessary as long as the trace checking / interpolant generation architecture is not
+	 *             refactored to accommodate algorithms that may produce invariants that are too weak
 	 */
 	@Deprecated
 	default boolean imperfectSequencesUsable() {

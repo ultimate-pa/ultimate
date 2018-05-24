@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms;
 
 import java.util.List;
 
@@ -35,62 +35,65 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Transform Boolean Term into conjunctive normal form.
+ * Transform Boolean Term into disjunctive normal form.
  * @author heizmann@informatik.uni-freiburg.de
  */
 
-public class CnfTransformer extends XnfTransformer {
+public class DnfTransformer extends XnfTransformer {
 	
-	public CnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
-		super(script,services);
+	public DnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
+		super(script, services);
 	}
+	
 	
 	@Override
 	protected NnfTransformerHelper getNnfTransformerHelper(final IUltimateServiceProvider services) {
-		return new CnfTransformerHelper(services);
+		return new DnfTransformerHelper(services);
 	}
 
-	protected class CnfTransformerHelper extends XnfTransformerHelper {
+
+
+	protected class DnfTransformerHelper extends XnfTransformerHelper {
 		
-		protected CnfTransformerHelper(final IUltimateServiceProvider services) {
+		protected DnfTransformerHelper(final IUltimateServiceProvider services) {
 			super(services);
 		}
 
 		@Override
 		public String innerConnectiveSymbol() {
-			return "or";
+			return "and";
 		}
 
 		@Override
 		public String outerConnectiveSymbol() {
-			return "and";
+			return "or";
 		}
 		
 		@Override
 		public String innerJunctionName() {
-			return "disjunction";
-		}
-
-		@Override
-		public String outerJunctionName() {
 			return "conjuction";
 		}
 
 		@Override
-		public Term innerConnective(final Script script, final List<Term> params) {
-			final Term result = SmtUtils.or(mScript, params);
-			return result;
+		public String outerJunctionName() {
+			return "disjunction";
 		}
 
 		@Override
-		public Term outerConnective(final Script script, final List<Term> params) {
+		public Term innerConnective(final Script script, final List<Term> params) {
 			final Term result = SmtUtils.and(mScript, params);
 			return result;
 		}
 
 		@Override
+		public Term outerConnective(final Script script, final List<Term> params) {
+			final Term result = SmtUtils.or(mScript, params);
+			return result;
+		}
+
+		@Override
 		public Term[] getOuterJuncts(final Term term) {
-			return SmtUtils.getConjuncts(term);
+			return SmtUtils.getDisjuncts(term);
 		}
 
 	}

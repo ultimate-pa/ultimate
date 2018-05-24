@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,11 +44,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XjunctPartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfTir;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUpd;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XjunctPartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfDer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfIrd;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfTir;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfUpd;
 
 /**
  * Transform a Term into form where quantifier are pushed as much inwards
