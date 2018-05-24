@@ -1076,7 +1076,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	 *
 	 * @param targetVar
 	 *            Variable to be assumed
-	 * @param constant
+	 * @param mConstant
 	 *            Assumed interval
 	 */
 	protected void assumeNumericVarInterval(final IProgramVarOrConst targetVar, final OctValue min,
@@ -1131,13 +1131,13 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 	 * @return Valid values of the expression as an interval
 	 */
 	public OctInterval projectToInterval(final AffineExpression.TwoVarForm tvf) {
-		int iVar1 = mMapNumericVarToIndex.get(tvf.var1) * 2;
+		int iVar1 = mMapNumericVarToIndex.get(tvf.getVar1()) * 2;
 		// inverted form, because x-(-y) = x+y
-		int iVar2Inv = mMapNumericVarToIndex.get(tvf.var2) * 2 + 1;
-		if (tvf.negVar1) {
+		int iVar2Inv = mMapNumericVarToIndex.get(tvf.getVar2()) * 2 + 1;
+		if (tvf.isNegVar1()) {
 			iVar1 = iVar1 + 1;
 		}
-		if (tvf.negVar2) {
+		if (tvf.isNegVar2()) {
 			iVar2Inv = iVar2Inv - 1;
 		}
 		final OctMatrix m = cachedSelectiveClosure();
@@ -1145,9 +1145,9 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		OctValue max = m.get(iVar2Inv, iVar1);
 		// (-var1) - var2 <= c equivalent -c <= var1 + var2
 		OctValue min = m.get(iVar2Inv ^ 1, iVar1 ^ 1).negateIfNotInfinity();
-		if (tvf.constant.signum() != 0) {
-			max = max.add(tvf.constant);
-			min = min.add(tvf.constant);
+		if (tvf.getConstant().signum() != 0) {
+			max = max.add(tvf.getConstant());
+			min = min.add(tvf.getConstant());
 		}
 		// TODO negate min
 		return new OctInterval(min, max);

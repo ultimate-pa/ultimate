@@ -105,7 +105,8 @@ public class AffineExpression {
 	private void removeZeroSummands() {
 		final Iterator<BigDecimal> iter = mCoefficients.values().iterator();
 		while (iter.hasNext()) {
-			if (iter.next().signum() == 0) { // "signum()" is faster than "compareTo(0)"
+			if (iter.next().signum() == 0) {
+				// "signum()" is faster than "compareTo(0)"
 				iter.remove();
 			}
 		}
@@ -145,12 +146,6 @@ public class AffineExpression {
 	 * @return This affine expression is of the form {@code c}.
 	 */
 	public boolean isConstant() {
-		// for (BigDecimal factor : mCoefficients.values()) {
-		// if (factor.signum() != 0) {
-		// return false;
-		// }
-		// }
-		// return true;
 		return mCoefficients.isEmpty();
 	}
 
@@ -180,12 +175,13 @@ public class AffineExpression {
 			return this;
 		} else if (absCoefficientsAreEqual()) {
 			// compute constant
-			final BigDecimal absCoefficient = mCoefficients.values().iterator().next().abs();
+			final BigDecimal absCoefficient = getFirstAbs();
 			final BigDecimal newConstant;
 			try {
 				newConstant = mConstant.divide(absCoefficient);
 			} catch (final ArithmeticException arithException) {
-				return null; // TODO switch from BigDecimal to rational numbers
+				// TODO switch from BigDecimal to rational numbers
+				return null;
 			}
 			// compute unit coefficients (recall: coefficients in AffineExpression are always != 0)
 			final Map<IProgramVarOrConst, BigDecimal> unitCoefficients = new HashMap<>();
@@ -196,6 +192,13 @@ public class AffineExpression {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * @return A {@link BigDecimal} that represents the absolute value of the first coefficient.
+	 */
+	private BigDecimal getFirstAbs() {
+		return mCoefficients.values().iterator().next().abs();
 	}
 
 	/**
@@ -223,15 +226,17 @@ public class AffineExpression {
 		if (mCoefficients.size() != 1) {
 			return null;
 		}
-		final Entry<IProgramVarOrConst, BigDecimal> entry = mCoefficients.entrySet().iterator().next();
-		if (entry.getValue().abs().compareTo(BigDecimal.ONE) != 0) {
+
+		final AffineExpression normalizedAe = unitCoefficientForm();
+		if (normalizedAe == null) {
 			return null;
 		}
-		final OneVarForm oneVarForm = new OneVarForm();
-		oneVarForm.var = entry.getKey();
-		oneVarForm.negVar = entry.getValue().signum() < 0;
-		oneVarForm.constant = new OctValue(mConstant);
-		return oneVarForm;
+
+		final Entry<IProgramVarOrConst, BigDecimal> entry = normalizedAe.mCoefficients.entrySet().iterator().next();
+		assert entry.getValue().abs().compareTo(BigDecimal.ONE) == 0 : "unit normalization failed";
+
+		return new OneVarForm(getFirstAbs(), entry.getKey(), entry.getValue().signum() < 0,
+				new OctValue(normalizedAe.mConstant));
 	}
 
 	/**
@@ -248,31 +253,27 @@ public class AffineExpression {
 		}
 		final List<IProgramVarOrConst> vars = new ArrayList<>(distinctVars);
 		final List<BigDecimal> coefficients = new ArrayList<>(distinctVars);
-		mCoefficients.entrySet().forEach(entry -> {
+
+		final AffineExpression normalizedAe = unitCoefficientForm();
+		if (normalizedAe == null) {
+			return null;
+		}
+
+		normalizedAe.mCoefficients.entrySet().forEach(entry -> {
 			vars.add(entry.getKey());
 			coefficients.add(entry.getValue());
 		});
-		if (distinctVars == 2) {
-			for (final BigDecimal coefficient : coefficients) {
-				if (coefficient.abs().compareTo(BigDecimal.ONE) != 0) {
-					return null;
-				}
-			}
-		} else if (coefficients.get(0).abs().compareTo(AbsIntUtil.TWO) != 0) { // && distinctVars == 1
-			return null;
-		}
-		final TwoVarForm twoVarForm = new TwoVarForm();
-		twoVarForm.var1 = vars.get(0);
-		twoVarForm.negVar1 = coefficients.get(0).signum() < 0;
+
+		assert vars.size() <= 2 && vars.size() >= 1;
+		assert coefficients.stream()
+				.allMatch(a -> a.abs().compareTo(BigDecimal.ONE) == 0) : "unit normalization failed";
+
 		if (distinctVars == 1) {
-			twoVarForm.var2 = twoVarForm.var1;
-			twoVarForm.negVar2 = twoVarForm.negVar1;
-		} else {
-			twoVarForm.var2 = vars.get(1);
-			twoVarForm.negVar2 = coefficients.get(1).signum() < 0;
+			return new TwoVarForm(getFirstAbs(), vars.get(0), coefficients.get(0).signum() < 0,
+					new OctValue(normalizedAe.mConstant));
 		}
-		twoVarForm.constant = new OctValue(mConstant);
-		return twoVarForm;
+		return new TwoVarForm(getFirstAbs(), vars.get(0), vars.get(1), coefficients.get(0).signum() < 0,
+				coefficients.get(1).signum() < 0, new OctValue(normalizedAe.mConstant));
 	}
 
 	/**
@@ -304,7 +305,8 @@ public class AffineExpression {
 	 * @return {@code this - summand}
 	 */
 	public AffineExpression subtract(final AffineExpression subtrahend) {
-		return add(subtrahend.negate()); // negate() never returns null
+		// negate() never returns null
+		return add(subtrahend.negate());
 	}
 
 	/**
@@ -397,7 +399,8 @@ public class AffineExpression {
 			return new AffineExpression(quotient);
 		}
 		final BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
-				integerDivison ? AbsIntUtil::exactDivison : BigDecimal::divide;
+				// integerDivison ? AbsIntUtil::exactDivison :
+				BigDecimal::divide;
 		final AffineExpression quotient = new AffineExpression();
 		quotient.mConstant = divOp.apply(mConstant, divisor);
 		for (final Entry<IProgramVarOrConst, BigDecimal> entry : mCoefficients.entrySet()) {
@@ -470,16 +473,132 @@ public class AffineExpression {
 	}
 
 	/** @see AffineExpression#getOneVarForm() */
-	public static class OneVarForm {
-		public IProgramVarOrConst var;
-		public boolean negVar;
-		public OctValue constant;
+	public static final class OneVarForm {
+		private final IProgramVarOrConst mVar;
+		private final boolean mNegVar;
+		private final OctValue mConstant;
+		private final BigDecimal mCoefficient;
+
+		public OneVarForm(final BigDecimal coefficient, final IProgramVarOrConst var, final boolean negVar,
+				final OctValue constant) {
+			mCoefficient = coefficient;
+			mVar = var;
+			mNegVar = negVar;
+			mConstant = constant;
+		}
+
+		public BigDecimal getCoefficient() {
+			return mCoefficient;
+		}
+
+		public IProgramVarOrConst getVar() {
+			return mVar;
+		}
+
+		public boolean isNeg() {
+			return mNegVar;
+		}
+
+		public OctValue getConstant() {
+			return mConstant;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+
+			if (isNeg()) {
+				sb.append("-");
+			}
+			if (mCoefficient != BigDecimal.ONE) {
+				sb.append(mCoefficient);
+				// multiplication dot
+				sb.append('\u22C5');
+			}
+			sb.append(getVar());
+			sb.append(" + ");
+			sb.append(getConstant());
+			return sb.toString();
+		}
 	}
 
 	/** @see AffineExpression#getTwoVarForm() */
-	public static class TwoVarForm {
-		public IProgramVarOrConst var1, var2;
-		public boolean negVar2, negVar1;
-		public OctValue constant;
+	public static final class TwoVarForm {
+
+		private final IProgramVarOrConst mVar1;
+		private final IProgramVarOrConst mVar2;
+		private final boolean mNegVar1;
+		private final boolean mNegVar2;
+		private final OctValue mConstant;
+		private final BigDecimal mCoefficient;
+
+		public TwoVarForm(final BigDecimal coefficient, final IProgramVarOrConst var1, final boolean negVar1,
+				final OctValue constant) {
+			this(coefficient, var1, var1, negVar1, negVar1, constant);
+		}
+
+		public TwoVarForm(final BigDecimal coefficient, final IProgramVarOrConst var1, final IProgramVarOrConst var2,
+				final boolean negVar1, final boolean negVar2, final OctValue constant) {
+			mCoefficient = coefficient;
+			mVar1 = var1;
+			mVar2 = var2;
+			mNegVar2 = negVar2;
+			mNegVar1 = negVar1;
+			mConstant = constant;
+		}
+
+		public BigDecimal getCoefficient() {
+			return mCoefficient;
+		}
+
+		public IProgramVarOrConst getVar1() {
+			return mVar1;
+		}
+
+		public IProgramVarOrConst getVar2() {
+			return mVar2;
+		}
+
+		public boolean isNegVar1() {
+			return mNegVar1;
+		}
+
+		public boolean isNegVar2() {
+			return mNegVar2;
+		}
+
+		public OctValue getConstant() {
+			return mConstant;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+
+			if (isNegVar1()) {
+				sb.append("-");
+			}
+			if (mCoefficient != BigDecimal.ONE) {
+				sb.append(mCoefficient);
+				// multiplication dot
+				sb.append('\u22C5');
+			}
+			sb.append(getVar1());
+			if (getVar1() != getVar2()) {
+				sb.append(" + ");
+				if (isNegVar2()) {
+					sb.append("-");
+				}
+				if (mCoefficient != BigDecimal.ONE) {
+					sb.append(mCoefficient);
+					// multiplication dot
+					sb.append('\u22C5');
+				}
+				sb.append(getVar2());
+			}
+			sb.append(" + ");
+			sb.append(getConstant());
+			return sb.toString();
+		}
 	}
 }

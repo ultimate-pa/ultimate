@@ -171,19 +171,19 @@ public class AffineExpressionTest {
 
 		tvf = ae("-1a + z + -1.5").getTwoVarForm();
 		Assert.assertNotNull("TwoVarForm not recognized", tvf);
-		Assert.assertEquals("a", tvf.var1.toString());
-		Assert.assertEquals("z", tvf.var2.toString());
-		Assert.assertEquals(true, tvf.negVar1);
-		Assert.assertEquals(false, tvf.negVar2);
-		Assert.assertTrue(tvf.constant.compareTo(OctValue.parse("-1.5")) == 0);
+		Assert.assertEquals("a", tvf.getVar1().toString());
+		Assert.assertEquals("z", tvf.getVar2().toString());
+		Assert.assertEquals(true, tvf.isNegVar1());
+		Assert.assertEquals(false, tvf.isNegVar2());
+		Assert.assertTrue(tvf.getConstant().compareTo(OctValue.parse("-1.5")) == 0);
 
 		tvf = ae("2y + 4").getTwoVarForm();
 		Assert.assertNotNull("TwoVarForm not recognized", tvf);
-		Assert.assertEquals("y", tvf.var1.toString());
-		Assert.assertEquals("y", tvf.var2.toString());
-		Assert.assertEquals(false, tvf.negVar1);
-		Assert.assertEquals(false, tvf.negVar2);
-		Assert.assertTrue(tvf.constant.compareTo(new OctValue(4)) == 0);
+		Assert.assertEquals("y", tvf.getVar1().toString());
+		Assert.assertEquals("y", tvf.getVar2().toString());
+		Assert.assertEquals(false, tvf.isNegVar1());
+		Assert.assertEquals(false, tvf.isNegVar2());
+		Assert.assertTrue(tvf.getConstant().compareTo(new OctValue(4)) == 0);
 
 		Assert.assertNull(ae("-2.5x").getTwoVarForm());
 

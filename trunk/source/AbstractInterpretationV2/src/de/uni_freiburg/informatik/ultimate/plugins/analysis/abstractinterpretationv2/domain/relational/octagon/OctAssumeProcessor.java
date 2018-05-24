@@ -416,22 +416,22 @@ public class OctAssumeProcessor {
 		final AffineExpression.TwoVarForm tvf;
 		if ((ovf = affExpr.getOneVarForm()) != null) {
 			OctValue geCOct, leCOct;
-			if (ovf.negVar) {
+			if (ovf.isNeg()) {
 				geCOct = new OctValue(leC.negate());
 				leCOct = new OctValue(geC.negate());
 			} else {
 				geCOct = new OctValue(geC);
 				leCOct = new OctValue(leC);
 			}
-			return mPostOp.splitC(oldStates, s -> s.assumeNumericVarInterval(ovf.var, geCOct, OctValue.INFINITY), // v>c
-					s -> s.assumeNumericVarInterval(ovf.var, OctValue.INFINITY, leCOct) // v<c
+			return mPostOp.splitC(oldStates, s -> s.assumeNumericVarInterval(ovf.getVar(), geCOct, OctValue.INFINITY), // v>c
+					s -> s.assumeNumericVarInterval(ovf.getVar(), OctValue.INFINITY, leCOct) // v<c
 			);
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue leCOct = new OctValue(leC);
 			final OctValue leCOct2 = new OctValue(geC.negate()); // (affExpr > c) is equivalent to (-affExpr < -c)
 			return mPostOp.splitC(oldStates,
-					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, leCOct),
-					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, leCOct2));
+					s -> s.assumeNumericVarRelationLeConstant(tvf.getVar1(), tvf.isNegVar1(), tvf.getVar2(), tvf.isNegVar2(), leCOct),
+					s -> s.assumeNumericVarRelationLeConstant(tvf.getVar1(), !tvf.isNegVar1(), tvf.getVar2(), !tvf.isNegVar2(), leCOct2));
 
 		} else {
 			return oldStates; // safe over-approximation
@@ -500,16 +500,16 @@ public class OctAssumeProcessor {
 
 		// Apply the assume to all states that are not bottom and return the result.
 		if ((ovf = affExpr.getOneVarForm()) != null) {
-			final OctValue cOct = new OctValue(ovf.negVar ? c.negate() : c);
-			nonBottomStates.forEach(state -> state.assumeNumericVarInterval(ovf.var, cOct, cOct));
+			final OctValue cOct = new OctValue(ovf.isNeg() ? c.negate() : c);
+			nonBottomStates.forEach(state -> state.assumeNumericVarInterval(ovf.getVar(), cOct, cOct));
 			return nonBottomStates;
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue cOct = new OctValue(c);
 			final OctValue cOctNeg = new OctValue(c.negate());
-			nonBottomStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
-					tvf.negVar2, cOct));
-			nonBottomStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2,
-					!tvf.negVar2, cOctNeg));
+			nonBottomStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.getVar1(), tvf.isNegVar1(), tvf.getVar2(),
+					tvf.isNegVar2(), cOct));
+			nonBottomStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.getVar1(), !tvf.isNegVar1(), tvf.getVar2(),
+					!tvf.isNegVar2(), cOctNeg));
 			return nonBottomStates;
 		} else {
 			return oldStates; // safe over-approximation
@@ -632,7 +632,7 @@ public class OctAssumeProcessor {
 		} else if ((ovf = affExpr.getOneVarForm()) != null) {
 			final OctValue min;
 			final OctValue max;
-			if (ovf.negVar) {
+			if (ovf.isNeg()) {
 				// (-v <= c) is equal to (v >= -c)
 				min = new OctValue(c.negate());
 				max = OctValue.INFINITY;
@@ -640,13 +640,13 @@ public class OctAssumeProcessor {
 				min = OctValue.INFINITY;
 				max = new OctValue(c);
 			}
-			oldStates.forEach(state -> state.assumeNumericVarInterval(ovf.var, min, max));
+			oldStates.forEach(state -> state.assumeNumericVarInterval(ovf.getVar(), min, max));
 			return oldStates;
 
 		} else if ((tvf = affExpr.getTwoVarForm()) != null) {
 			final OctValue cOct = new OctValue(c);
-			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2,
-					tvf.negVar2, cOct));
+			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(tvf.getVar1(), tvf.isNegVar1(), tvf.getVar2(),
+					tvf.isNegVar2(), cOct));
 			return oldStates;
 
 		} else {

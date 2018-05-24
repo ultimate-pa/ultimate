@@ -127,6 +127,10 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		this(new IntervalValue(lower), new IntervalValue(upper));
 	}
 
+	public IntervalDomainValue(final BigDecimal dec) {
+		this(new IntervalValue(dec), new IntervalValue(dec));
+	}
+
 	/**
 	 * Performs a deep copy of <code>this</code>.
 	 *

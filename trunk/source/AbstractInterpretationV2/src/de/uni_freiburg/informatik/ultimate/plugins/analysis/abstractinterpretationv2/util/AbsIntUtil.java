@@ -214,6 +214,10 @@ public final class AbsIntUtil {
 		return d.remainder(BigDecimal.ONE).signum() == 0;
 	}
 
+	public static boolean isIntegerValue(final BigDecimal bd) {
+		return bd.signum() == 0 || bd.scale() <= 0 || bd.stripTrailingZeros().scale() <= 0;
+	}
+
 	/**
 	 * Calculates the euclidean modulo. The result {@code r} is the remainder of the euclidean division
 	 * {@code a / b = q}, satisfying {@code a = bq + r} where {@code 0 ≤ r < |b|} and {@code b ≠ 0}.
@@ -362,8 +366,8 @@ public final class AbsIntUtil {
 		throw new IllegalArgumentException("Cannot extract BoogieIcfgContainer from IICFG");
 	}
 
-	public static <STATE extends IAbstractState<STATE>> STATE
-			synchronizeVariables(final STATE template, final STATE toSynchronize) {
+	public static <STATE extends IAbstractState<STATE>> STATE synchronizeVariables(final STATE template,
+			final STATE toSynchronize) {
 		if (toSynchronize == null) {
 			return null;
 		}
@@ -375,8 +379,7 @@ public final class AbsIntUtil {
 		return rtr;
 	}
 
-	public static <STATE extends IAbstractState<STATE>> Set<STATE>
-			synchronizeVariables(final Set<STATE> states) {
+	public static <STATE extends IAbstractState<STATE>> Set<STATE> synchronizeVariables(final Set<STATE> states) {
 		if (states == null) {
 			return null;
 		}
@@ -388,8 +391,8 @@ public final class AbsIntUtil {
 		return states.stream().map(a -> synchronizeVariables(a, allVars)).collect(Collectors.toSet());
 	}
 
-	public static <STATE extends IAbstractState<STATE>> STATE
-			synchronizeVariables(final STATE state, final Set<IProgramVarOrConst> shouldVars) {
+	public static <STATE extends IAbstractState<STATE>> STATE synchronizeVariables(final STATE state,
+			final Set<IProgramVarOrConst> shouldVars) {
 
 		final Set<IProgramVarOrConst> definedVariables = state.getVariables();
 

@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -199,26 +201,40 @@ public class OctStatementProcessor {
 
 		final AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
 		if (ae != null) {
-			AffineExpression.OneVarForm ovf;
-			AffineExpression.TwoVarForm tvf;
+			final AffineExpression.OneVarForm ovf;
+			final AffineExpression.TwoVarForm tvf;
 			if (ae.isConstant()) {
 				final OctValue value = new OctValue(ae.getConstant());
 				oldStates.forEach(s -> s.assignNumericVarConstant(targetVar, value));
 				return oldStates;
 			} else if ((ovf = ae.getOneVarForm()) != null) {
-				Consumer<OctDomainState> action = s -> s.copyVar(targetVar, ovf.var);
-				if (ovf.negVar) {
+				Consumer<OctDomainState> action = s -> s.copyVar(targetVar, ovf.getVar());
+				if (ovf.getCoefficient() != BigDecimal.ONE) {
+					action = action.andThen(s -> {
+						final OctInterval newOctInt = new OctInterval(s.projectToInterval(ovf.getVar()).toIvlInterval()
+								.multiply(new IntervalDomainValue(ovf.getCoefficient())));
+						s.assignNumericVarInterval(ovf.getVar(), newOctInt);
+					});
+				}
+				if (ovf.isNeg()) {
 					action = action.andThen(s -> s.negateNumericVar(targetVar));
 				}
-				if (ovf.constant.signum() != 0) {
-					action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.constant));
+				if (ovf.getConstant().signum() != 0) {
+					action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.getConstant()));
 				}
 				oldStates.forEach(action);
 				return oldStates;
 			} else if ((tvf = ae.getTwoVarForm()) != null) {
 				for (final OctDomainState oldState : oldStates) {
 					final OctInterval oi = oldState.projectToInterval(tvf);
-					oldState.assignNumericVarInterval(targetVar, oi);
+					if (tvf.getCoefficient() != BigDecimal.ONE) {
+						final OctInterval newOctInt = new OctInterval(
+								oi.toIvlInterval().multiply(new IntervalDomainValue(tvf.getCoefficient())));
+						oldState.assignNumericVarInterval(targetVar, newOctInt);
+					} else {
+						oldState.assignNumericVarInterval(targetVar, oi);
+					}
+
 				}
 				return oldStates;
 			} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) {
