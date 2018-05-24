@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Literal.Polarity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.XJunction.AtomAndNegationException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.XJunction.AtomAndNegationException;
 
 /**
  * Common abstract superclass of Cnf and Dnf.

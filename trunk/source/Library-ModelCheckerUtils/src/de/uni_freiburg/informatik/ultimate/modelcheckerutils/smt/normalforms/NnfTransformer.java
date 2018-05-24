@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
