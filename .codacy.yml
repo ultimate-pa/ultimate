@@ -61,3 +61,4 @@ exclude_paths:
   - **/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java,
   - **/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
   - **/src/de/uni_freiburg/informatik/ultimate/interactive/traceabstraction/protobuf/*.* 
+  - **/src/de/uni_freiburg/informatik/ultimate/servercontroller/protobuf/*.*
