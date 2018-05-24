@@ -88,6 +88,20 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	}
 
 	/**
+	 * For each rangeElem in rangeElems, add a pair (domainElem, rangeElem) to the relation.
+	 *
+	 * @return if the relation has changed through this operation.
+	 */
+	public boolean addAllPairs(final D domainElem, final Collection<R> rangeElems) {
+		Set<R> oldRangeElems = mMap.get(domainElem);
+		if (oldRangeElems == null) {
+			oldRangeElems = newSet();
+			mMap.put(domainElem, oldRangeElems);
+		}
+		return oldRangeElems.addAll(rangeElems);
+	}
+
+	/**
 	 * Remove the pair (domainElem, rangeElem) from the relation.
 	 *
 	 * @return true if the set contained the specified pair.
