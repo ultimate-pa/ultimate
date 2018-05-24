@@ -12,10 +12,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * This is our internal representation of a Horn clause. A Horn clause consists
- * of - a body with -- n uninterpreted predicate symbols (n >= 0) -- a
- * transition formula - a head with either -- an uninterpreted predicate symbol
- * or -- false - a mapping that assigns each of the argument positions of the
- * uninterpreted predicate a free variable in the transition formula
+ * of
+ * <ul>
+ * <li> a body with
+ *  <ul>
+ *   <li> n uninterpreted predicate symbols (n >= 0)
+ *   <li> a transition formula
+ *  </ul>
+ * <li> a head with either
+ *  <ul>
+ *   <li> an uninterpreted predicate symbol  or
+ *   <li> false
+ *  </ul>
+ * <li> a mapping that assigns each of the argument positions of the uninterpreted predicate a free variable in the
+ *   transition formula
+ * </ul>
  *
  * Note that the uninterpreted predicate symbols may only have an arity and a
  * name. If in the formula there was a complex expression in one of the
