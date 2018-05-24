@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBElement;
@@ -53,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * The {@link BenchexecRundefinitionGeneratorPreLog} generates a benchexec rundefinition from a test suite s.t. the
  * testsuite can be run with benchexec.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -64,6 +65,32 @@ public final class BenchexecRundefinitionGeneratorPreLog extends BaseTestLogfile
 	private Benchmark mBenchexecBenchmark;
 
 	public BenchexecRundefinitionGeneratorPreLog(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
+		super(ultimateTestSuite);
+	}
+
+	/**
+	 * Define a function that determines the main input and the additional inputs and their naming convention. You can
+	 * use these variables for benchexec.
+	 * <ul>
+	 * <li>${benchmark_name} Name of benchmark execution
+	 * <li>${benchmark_date} Timestamp of benchmark execution
+	 * <li>${benchmark_path} Directory of benchmark XML file
+	 * <li>${benchmark_path_abs} Directory of benchmark XML file (absolute path)
+	 * <li>${benchmark_file} Name of benchmark XML file (without path)
+	 * <li>${logfile_path} Directory where tool-output files will be stored
+	 * <li>${logfile_path_abs} Directory where tool-output files will be stored (absolute path)
+	 * <li>${rundefinition_name} Name of current run definition
+	 * <li>${inputfile_name} Name of current input file (without path)
+	 * <li>${inputfile_path} Directory of current input file
+	 * <li>${inputfile_path_abs} Directory of current input file (absolute path)
+	 * </ul>
+	 *
+	 *
+	 * @param ultimateTestSuite
+	 * @param bla
+	 */
+	public BenchexecRundefinitionGeneratorPreLog(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Function<String[], String> funGetMainInput, final String[] additionalInputs) {
 		super(ultimateTestSuite);
 	}
 
@@ -99,9 +126,9 @@ public final class BenchexecRundefinitionGeneratorPreLog extends BaseTestLogfile
 		mBenchexecBenchmark = new Benchmark();
 		mBenchexecBenchmark.setTimelimit(String.valueOf(timeoutInS));
 		mBenchexecBenchmark.setHardtimelimit(String.valueOf(hardTimeoutInS));
-		mBenchexecBenchmark.setCpuCores("4");
+		mBenchexecBenchmark.setCpuCores("2");
 		mBenchexecBenchmark.setMemlimit(MAX_MEMORY);
-		mBenchexecBenchmark.setTool("ultimateall");
+		mBenchexecBenchmark.setTool("ultimateautomizer");
 
 		// add rundefinitions to benchmaks
 		final Set<Pair<File, File>> tcSettings =
@@ -143,12 +170,12 @@ public final class BenchexecRundefinitionGeneratorPreLog extends BaseTestLogfile
 
 	}
 
-	private void addFilesToTask(final Set<File> inputs, final Tasks tasks) {
+	private static void addFilesToTask(final Set<File> inputs, final Tasks tasks) {
 		inputs.stream().map(a -> new JAXBElement<>(QNAME_INCLUDE, String.class, getPath(a)))
 				.forEachOrdered(a -> tasks.getIncludeOrIncludesfileOrExclude().add(a));
 	}
 
-	private List<Option> getOptions(final File toolchain, final File setting) {
+	private static List<Option> getOptions(final File toolchain, final File setting) {
 		final List<Option> options = new ArrayList<>(2);
 		final Option tc = new Option();
 		tc.setName("-tc");
@@ -166,5 +193,4 @@ public final class BenchexecRundefinitionGeneratorPreLog extends BaseTestLogfile
 	private static String getPath(final File file) {
 		return file.getAbsolutePath().replaceAll("\\\\", "/");
 	}
-
 }
