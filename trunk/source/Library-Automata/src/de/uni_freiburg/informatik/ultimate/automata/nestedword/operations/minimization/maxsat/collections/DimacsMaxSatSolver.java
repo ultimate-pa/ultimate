@@ -359,10 +359,10 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 					+ "c Construction of Floyd-Hoare Automata - (Competition Contribution).\n"
 					+ "c TACAS (2) 2017: 394-398\n"
 					+ "c [5] Dirk Beyer: Reliable and Reproducible Competition Results with \n"
-					+ "c BenchExec and Witnesses (Report on SV-COMP 2016).\n" + "c TACAS 2016: 887-904\n" + "c\n"
-					+ "c CNF\np wcnf ";
+					+ "c BenchExec and Witnesses (Report on SV-COMP 2016).\n" + "c TACAS 2016: 887-904\n"
+					+ "p wcnf ";
 		} else {
-			header = "c CNF\np wcnf ";
+			header = "p wcnf ";
 		}
 		return header;
 	}
