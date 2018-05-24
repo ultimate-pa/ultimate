@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -62,12 +61,10 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final boolean mInterprocedural;
-	private final ILogger mLogger;
 
 	public CFG2NestedWordAutomaton(final IUltimateServiceProvider services, final boolean interprocedural,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final ILogger logger) {
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory) {
 		mServices = Objects.requireNonNull(services);
-		mLogger = Objects.requireNonNull(logger);
 		mCsToolkit = Objects.requireNonNull(csToolkit);
 		mPredicateFactory = Objects.requireNonNull(predicateFactory);
 		mInterprocedural = interprocedural;
@@ -103,7 +100,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	private INestedWordAutomaton<LETTER, IPredicate> constructNwa(final IIcfg<? extends IcfgLocation> icfg,
 			final IStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
-			final VpAlphabet<LETTER> vpAlphabet, Function<IcfgLocation, IPredicate> predicateProvider) {
+			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider) {
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
@@ -125,7 +122,6 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		mLogger.debug("Step: add transitions");
 		// add transitions
 		for (final IcfgLocation locNode : allNodes) {
 			final IPredicate state = nodes2States.get(locNode);
@@ -145,8 +141,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 								nwa.addReturnTransition(state, nodes2States.get(callerLocNode), (LETTER) returnEdge,
 										succState);
 							} else {
-								mLogger.debug("Ommited insertion of " + returnEdge + " because callerNode "
-										+ callerLocNode + " is deadcode");
+								throw new AssertionError("Cannot add " + returnEdge + ", missing callerNode "
+										+ callerLocNode);
 							}
 						}
 					} else if (edge instanceof Summary) {

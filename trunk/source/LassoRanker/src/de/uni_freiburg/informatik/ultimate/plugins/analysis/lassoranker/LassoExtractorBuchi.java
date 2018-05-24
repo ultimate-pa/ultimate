@@ -115,7 +115,7 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructCfgAutomaton(final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit) {
 		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton =
-				new CFG2NestedWordAutomaton<>(mServices, true, csToolkit, mPredicateFactory, mLogger);
+				new CFG2NestedWordAutomaton<>(mServices, true, csToolkit, mPredicateFactory);
 		final Collection<IcfgLocation> allNodes = new HashSet<>();
 		for (final Map<String, IcfgLocation> prog2pp : rootNode.getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());

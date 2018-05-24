@@ -872,7 +872,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 
 	private void getInitialAbstraction() {
 		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-				mPref.interprocedural(), mCsToolkitWithoutRankVars, mPredicateFactory, mLogger);
+				mPref.interprocedural(), mCsToolkitWithoutRankVars, mPredicateFactory);
 		final Collection<IcfgLocation> acceptingNodes;
 		final Collection<IcfgLocation> allNodes = new HashSet<>();
 		for (final Map<String, ? extends IcfgLocation> prog2pp : mIcfg.getProgramPoints().values()) {

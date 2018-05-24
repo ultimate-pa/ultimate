@@ -293,7 +293,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-				mPref.interprocedural(), super.mCsToolkit, super.mPredicateFactory, mLogger);
+				mPref.interprocedural(), super.mCsToolkit, super.mPredicateFactory);
 
 		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement,
 				super.mErrorLocs);
@@ -429,7 +429,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-						mPref.interprocedural(), super.mCsToolkit, mPredicateFactory, mLogger);
+						mPref.interprocedural(), super.mCsToolkit, mPredicateFactory);
 				final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer<LETTER> fl = new FlowSensitiveFaultLocalizer<>(
@@ -623,7 +623,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
 				final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-						mPref.interprocedural(), super.mCsToolkit, mPredicateFactory, mLogger);
+						mPref.interprocedural(), super.mCsToolkit, mPredicateFactory);
 				final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs);
 				mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
@@ -976,7 +976,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			return false;
 		}
 		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-				mPref.interprocedural(), super.mCsToolkit, mPredicateFactory, mLogger);
+				mPref.interprocedural(), super.mCsToolkit, mPredicateFactory);
 		final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.mIcfg,
 				mStateFactoryForRefinement, super.mErrorLocs);
 		return mErrorGeneralizationEngine.isResultUnsafe(abstractResult, cfg, mCsToolkit, mPredicateFactory,
