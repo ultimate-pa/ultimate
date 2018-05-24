@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
 
 public class InterpolantSequences {
 	public static InterpolantSequences instance = new InterpolantSequences();
