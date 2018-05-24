@@ -93,13 +93,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 
 	/**
 	 * @param constructCounterexamples
-	 *            if a Hoare triple was invalid, then construct a pair of
-	 *            {@link ProgramState}s. This pair constitutes a counterexample
-	 *            to validity. One {@link ProgramState} represents a state
-	 *            before executing the transition, the other represents a state
-	 *            after executing the transition. TODO: Return a third
-	 *            {@link ProgramState} in counterexamples to validity of return
-	 *            transitions (will represent state before call)
+	 *            if a Hoare triple was invalid, then construct a pair of {@link ProgramState}s. This pair constitutes a
+	 *            counterexample to validity. One {@link ProgramState} represents a state before executing the
+	 *            transition, the other represents a state after executing the transition. TODO: Return a third
+	 *            {@link ProgramState} in counterexamples to validity of return transitions (will represent state before
+	 *            call)
 	 */
 	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit, final boolean constructCounterexamples) {
 		mManagedScript = csToolkit.getManagedScript();
@@ -287,11 +285,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		final String predProc = mAssertedAction.getPrecedingProcedure();
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(predProc);
-		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), modifiableGlobals,
-				mManagedScript, this);
+		final Collection<Term> oldVarEqualities =
+				constructNonModOldVarsEquality(p.getVars(), modifiableGlobals, mManagedScript, this);
 		if (!oldVarEqualities.isEmpty()) {
-			Term nonModOldVarsEquality =
-					SmtUtils.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
+			Term nonModOldVarsEquality = SmtUtils.and(mManagedScript.getScript(),
+					oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
 			if (mUseNamedTerms) {
 				final Annotation annot = new Annotation(ANNOT_NAMED, ID_PRECONDITION_NON_MOD_GLOBAL_EQUALITY);
 				nonModOldVarsEquality = mManagedScript.annotate(this, nonModOldVarsEquality, annot);
@@ -308,8 +306,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	 * variable g and c_old(g) is the default constant of old(g).
 	 */
 	protected static Collection<Term> constructNonModOldVarsEquality(final Set<IProgramVar> vars,
-			final Set<IProgramNonOldVar> oldVarsOfModifiableGlobals,
-			final ManagedScript mgdScript, final Object lock) {
+			final Set<IProgramNonOldVar> oldVarsOfModifiableGlobals, final ManagedScript mgdScript, final Object lock) {
 		final Collection<Term> conjunction = new ArrayList<>();
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
@@ -325,8 +322,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	static private Term oldVarsEquality(final IProgramOldVar oldVar, final ManagedScript mgdScript, final Object lock) {
 		assert oldVar.isOldvar();
 		final IProgramVar nonOldVar = oldVar.getNonOldVar();
-		final Term equality =
-				mgdScript.term(lock, "=", oldVar.getDefaultConstant(), nonOldVar.getDefaultConstant());
+		final Term equality = mgdScript.term(lock, "=", oldVar.getDefaultConstant(), nonOldVar.getDefaultConstant());
 		return equality;
 	}
 
@@ -531,7 +527,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		// All variables get index 0
 		// assigned vars (locals and globals) get index 1
 		// other vars get index 0
-		Term renamedFormula = constructPostcondFormula(p, (IInternalAction) mAssertedAction, 
+		Term renamedFormula = constructPostcondFormula(p, (IInternalAction) mAssertedAction,
 				mModifiableGlobalVariableManager, mManagedScript, this);
 		if (UNLET_TERMS) {
 			renamedFormula = (new FormulaUnLet()).unlet(renamedFormula);
@@ -547,7 +543,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		return isSat;
 	}
 
-	public static Term constructPostcondFormula(final IPredicate p, final IInternalAction action, 
+	public static Term constructPostcondFormula(final IPredicate p, final IInternalAction action,
 			final ModifiableGlobalsTable mgt, final ManagedScript mgdScript, final Object lock) {
 		final Set<IProgramVar> assignedVars = action.getTransformula().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula(), mgdScript, lock);
@@ -686,7 +682,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return IHoareTripleChecker.convertLBool2Validity(isSat);
 	}
-	
+
 	private ProgramState<Term> constructCounterexampleStateForPrecondition() {
 		final Map<Term, Collection<Term>> ctxPrecondition = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : mAssertedAction.getTransformula().getInVars().entrySet()) {
@@ -705,8 +701,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		for (final Entry<IProgramVar, TermVariable> entry : mAssertedAction.getTransformula().getOutVars().entrySet()) {
 			if (SmtUtils.isSortForWhichWeCanGetValues(entry.getKey().getTermVariable().getSort())) {
 				final Term outVarConst = UnmodifiableTransFormula.getConstantForOutVar(entry.getKey(),
-						mAssertedAction.getTransformula().getInVars(),
-						mAssertedAction.getTransformula().getOutVars());
+						mAssertedAction.getTransformula().getInVars(), mAssertedAction.getTransformula().getOutVars());
 				final Map<Term, Term> values = mManagedScript.getValue(this, new Term[] { outVarConst });
 				final Term value = values.get(outVarConst);
 				ctxPostcondition.put(entry.getKey().getTermVariable(), Collections.singletonList(value));
@@ -715,9 +710,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		return new ProgramState<>(ctxPostcondition);
 	}
 
-
-
-	private static Term renameVarsToDefaultConstants(final Set<? extends IProgramVar> set, final Term formula, 
+	private static Term renameVarsToDefaultConstants(final Set<? extends IProgramVar> set, final Term formula,
 			final ManagedScript managedScript, final Object lock) {
 		final ArrayList<TermVariable> replacees = new ArrayList<>();
 		final ArrayList<Term> replacers = new ArrayList<>();
@@ -743,7 +736,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		return mManagedScript.let(this, vars, values, formula);
 	}
 
-	private static Term renameVarsToPrimedConstants(final Set<IProgramVar> boogieVars, final Term formula, 
+	private static Term renameVarsToPrimedConstants(final Set<IProgramVar> boogieVars, final Term formula,
 			final ManagedScript managedScript, final Object lock) {
 		final ArrayList<TermVariable> replacees = new ArrayList<>();
 		final ArrayList<Term> replacers = new ArrayList<>();
@@ -829,8 +822,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	 * Rename oldVars old(g) of non-modifiable globals to the default constants of g.
 	 */
 	private static Term renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(final Set<IProgramVar> boogieVars,
-			final Set<IProgramNonOldVar> modifiableGlobalsCaller, final Term formula,
-			final ManagedScript mgdScript, final Object lock) {
+			final Set<IProgramNonOldVar> modifiableGlobalsCaller, final Term formula, final ManagedScript mgdScript,
+			final Object lock) {
 		final ArrayList<TermVariable> replacees = new ArrayList<>();
 		final ArrayList<Term> replacers = new ArrayList<>();
 		for (final IProgramVar bv : boogieVars) {
@@ -914,9 +907,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		}
 		if (mCounterexampleStatePrecond == null) {
 			throw new IllegalStateException("Last response was valid or assertion stack has been altered.");
-		} else {
-			return mCounterexampleStatePrecond;
 		}
+		return mCounterexampleStatePrecond;
 	}
 
 	public ProgramState<Term> getCounterexampleStatePostcond() {
@@ -925,8 +917,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		}
 		if (mCounterexampleStatePrecond == null) {
 			throw new IllegalStateException("Last response was valid or assertion stack has been altered.");
-		} else {
-			return mCounterexampleStatePostcond;
 		}
+		return mCounterexampleStatePostcond;
 	}
 }
