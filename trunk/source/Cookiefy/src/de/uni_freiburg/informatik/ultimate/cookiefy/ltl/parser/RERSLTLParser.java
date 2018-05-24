@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Cookiefy plug-in.
- * 
+ *
  * The ULTIMATE Cookiefy plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Cookiefy plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Cookiefy plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Cookiefy plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -25,6 +25,7 @@
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cookiefy.ltl.parser;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,50 +43,45 @@ import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.Until;
 import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.WeakUntil;
 
 /**
- * Provides a parser for the 'properties'-files from ISOLA 2012 / RERS
- * competition. Those files contain LTL formulas, that are formatted according
- * to the following instructions:
- * 
- * In the LTL formulae, the atomic propositions correspond to input and output
- * symbols, where the prefix i is used for input and o is used for output
- * symbols, to allow a clear distinction.
- * 
- * The LTL formulae are given in a standard syntax, making use of the following
- * temporal operators:
- * 
+ * Provides a parser for the 'properties'-files from ISOLA 2012 / RERS competition. Those files contain LTL formulas,
+ * that are formatted according to the following instructions:
+ *
+ * In the LTL formulae, the atomic propositions correspond to input and output symbols, where the prefix i is used for
+ * input and o is used for output symbols, to allow a clear distinction.
+ *
+ * The LTL formulae are given in a standard syntax, making use of the following temporal operators:
+ *
  * X φ (next): φ has to hold after the next step
- * 
+ *
  * F φ (eventually): φ has to hold at some point in the future (or now)
- * 
+ *
  * G φ (globally): φ has to hold always (including now)
- * 
+ *
  * φ U ψ (until): φ has to hold until ψ holds (which eventually occurs)
- * 
- * φ WU ψ (weak until): φ has to hold until ψ holds (which does not necessarily
- * occur)
- * 
- * φ R ψ (release): φ has to hold until ψ held in the previous step. *
- * Additionally, the boolean operators & (conjunction), | (disjunction) and !
- * (negation) are used.
- * 
+ *
+ * φ WU ψ (weak until): φ has to hold until ψ holds (which does not necessarily occur)
+ *
+ * φ R ψ (release): φ has to hold until ψ held in the previous step. * Additionally, the boolean operators &
+ * (conjunction), | (disjunction) and ! (negation) are used.
+ *
  * Ex.:
- * 
+ *
  * (G (! ((oZ & ! oY) & (F oY)) | (! oW U oY)))
- * 
+ *
  * output W does never occur between output Z and output Y
- * 
+ *
  * ----------------------------------------
- * 
- * 
+ *
+ *
  * @author dietsch
- * 
+ *
  */
 public class RERSLTLParser {
 
 	/**
-	 * Creates a list of LTL formulas from a list of strings. Each string in
-	 * this list of strings is considered a formula when it starts with "(".
-	 * 
+	 * Creates a list of LTL formulas from a list of strings. Each string in this list of strings is considered a
+	 * formula when it starts with "(".
+	 *
 	 * @param input
 	 *            The list of strings.
 	 * @return
@@ -101,12 +97,11 @@ public class RERSLTLParser {
 	}
 
 	/**
-	 * Creates a list of LTL formulas from a list of strings. Each string in
-	 * this list of strings is considered a formula when it starts with "(".
-	 * 
-	 * Also compares original input and pretty printed formulas with each other
-	 * to test if the parser works correctly.
-	 * 
+	 * Creates a list of LTL formulas from a list of strings. Each string in this list of strings is considered a
+	 * formula when it starts with "(".
+	 *
+	 * Also compares original input and pretty printed formulas with each other to test if the parser works correctly.
+	 *
 	 * @param input
 	 *            The list of strings.
 	 * @return
@@ -244,54 +239,35 @@ public class RERSLTLParser {
 
 			for (int i = 0; i < partSize; ++i) {
 				final String s = parts.get(i);
-				if (s.equals("U"))
-				{
+				if (s.equals("U")) {
 					op = i;
 					break;
-				}
-				else if (s.equals("R"))
-				{
+				} else if (s.equals("R")) {
 					op = i;
 					break;
-				}
-				else if (s.equals("WU"))
-				{
+				} else if (s.equals("WU")) {
 					op = i;
 					break;
-				}
-				else if (s.equals("|"))
-				{
+				} else if (s.equals("|")) {
 					op = i;
 					break;
-				}
-				else if (s.equals("&"))
-				{
+				} else if (s.equals("&")) {
 					op = i;
 					break;
-				}
-				else if (s.equals("X"))
-				{
+				} else if (s.equals("X")) {
 					op = i;
 					break;
-				}
-				else if (s.equals("F"))
-				{
+				} else if (s.equals("F")) {
 					op = i;
 					break;
-				}
-				else if (s.equals("G"))
-				{
+				} else if (s.equals("G")) {
 					op = i;
 					break;
-				}
-				else if (s.equals("!"))
-				{
+				} else if (s.equals("!")) {
 					if (op == -1) {
 						op = i;
 					}
-				}
-				else
-				{
+				} else {
 					break;
 				}
 			}
@@ -316,8 +292,7 @@ public class RERSLTLParser {
 		}
 	}
 
-	private Formula constructFormula(final String operator, String operand1,
-			String operand2) {
+	private Formula constructFormula(final String operator, String operand1, String operand2) {
 
 		if (operand1.isEmpty()) {
 			operand1 = operand2;
@@ -348,7 +323,7 @@ public class RERSLTLParser {
 		}
 	}
 
-	private Formula constructLiteral(String literal) {
+	private static Formula constructLiteral(String literal) {
 		if (literal.isEmpty()) {
 			return null;
 		}
@@ -357,20 +332,15 @@ public class RERSLTLParser {
 			literal = literal.replace('!', ' ');
 			literal = literal.trim();
 			if (literal.startsWith("i")) {
-				return new Not(new Literal(literal.substring(1),
-						LiteralType.INPUT));
-			} else {
-				return new Not(new Literal(literal.substring(1),
-						LiteralType.OUTPUT));
+				return new Not(new Literal(literal.substring(1), LiteralType.INPUT));
 			}
-		} else {
-			literal = literal.trim();
-			if (literal.startsWith("i")) {
-				return new Literal(literal.substring(1), LiteralType.INPUT);
-			} else {
-				return new Literal(literal.substring(1), LiteralType.OUTPUT);
-			}
+			return new Not(new Literal(literal.substring(1), LiteralType.OUTPUT));
 		}
+		literal = literal.trim();
+		if (literal.startsWith("i")) {
+			return new Literal(literal.substring(1), LiteralType.INPUT);
+		}
+		return new Literal(literal.substring(1), LiteralType.OUTPUT);
 	}
 
 }

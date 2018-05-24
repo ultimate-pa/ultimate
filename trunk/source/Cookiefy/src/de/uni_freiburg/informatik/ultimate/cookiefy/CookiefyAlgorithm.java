@@ -79,9 +79,6 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 		return root;
 	}
 
-	// public static ILogger logger =
-	// UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
-
 	protected TemplateStore TemplateStore;
 	protected Program InputProgram;
 	private final ILogger mLogger;
@@ -151,17 +148,18 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 		// add program entry point
 		EncodedProgram.addProcedure(TemplateStore.programEntryPointTemplate("main", entryPointInit, globalVarsInit));
 
-		EncodedProgram.Types.add(TemplateStore.bStackType);
-		EncodedProgram.Types.add(TemplateStore.iStackType);
-		EncodedProgram.Types.add(TemplateStore.iArrayType);
+		EncodedProgram.mTypes.add(TemplateStore.mBStackType);
+		EncodedProgram.mTypes.add(TemplateStore.mIStackType);
+		EncodedProgram.mTypes.add(TemplateStore.mIArrayType);
 
 		// TODO: call a 'REAL" sub!
-		mLogger.warn("Currently the Sub-Function is not implemented. Therefore we proceed with the following example temporal property:");
+		mLogger.warn(
+				"Currently the Sub-Function is not implemented. Therefore we proceed with the following example temporal property:");
 		mLogger.warn("AG(!foo)");
 
 		for (final ContextPathNode cp : ContextPath.getAGNotFoo()) {
 			EncodedProgram.addProcedure(TemplateStore.pReturn(cp.getPath()));
-			for (final Procedure p : InputProgram.Procedures.values()) {
+			for (final Procedure p : InputProgram.mProcedures.values()) {
 				// Alg: create procedure header (here postponed to end of loop)
 
 				VarList[] newArg = new VarList[] {};
@@ -187,11 +185,11 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				}
 
 				// generate havoc procedure
-				EncodedProgram.addProcedure(TemplateStore.encodeInitProcedurestateProcedure(p, cp.getPath(),
-						new Expression[] {}));
+				EncodedProgram.addProcedure(
+						TemplateStore.encodeInitProcedurestateProcedure(p, cp.getPath(), new Expression[] {}));
 
 				// create specifications (modifies)
-				final List<Specification> specs = new LinkedList<Specification>();
+				final List<Specification> specs = new LinkedList<>();
 				if (p.getOutParams().length > 0) {
 					final String retValName = "retVal_" + ((PrimitiveType) p.getOutParams()[0].getType()).getName();
 					final VariableLHS retVal = new VariableLHS(LocationProvider.getLocation(), retValName);
@@ -203,10 +201,10 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				EncodedProgram.addProcedure(new Procedure(LocationProvider.getLocation(), new Attribute[0],
 						TemplateStore.methodeNameGen(p, cp.getPath(), ""), new String[0], newArg, // inParams
 						new VarList[] { returnVar }, // outParams
-						specs.toArray(new Specification[specs.size()]), new Body(LocationProvider
-								.getLocation(), cp.isTemporal() // OPTIMIZATION
-																// DONE
-						? TemplateStore.cookifyArgsDeclareLocals(p, true, true)
+						specs.toArray(new Specification[specs.size()]),
+						new Body(LocationProvider.getLocation(), cp.isTemporal() // OPTIMIZATION
+																					// DONE
+								? TemplateStore.cookifyArgsDeclareLocals(p, true, true)
 								: new VariableDeclaration[0], statements)));
 			}
 		}
@@ -224,15 +222,15 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	 * @return
 	 */
 	public Program Cookiefy(final Unit P) {
-		if (!InputProgram.Procedures.containsKey("main")) {
+		if (!InputProgram.mProcedures.containsKey("main")) {
 			mLogger.error("Input program contains no program entry point named 'main'");
 			return null; // TODO??
 		}
 
 		// TODO: input program's parameters should be havoced here or should be
 		// assigned a start value
-		final HashMap<String, Expression> entryPointInit = new HashMap<String, Expression>();
-		final HashMap<String, Expression> globalVarsInit = new HashMap<String, Expression>();
+		final HashMap<String, Expression> entryPointInit = new HashMap<>();
+		final HashMap<String, Expression> globalVarsInit = new HashMap<>();
 
 		return Cookiefy(P, "main", entryPointInit, globalVarsInit);
 	}
@@ -245,9 +243,10 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	 * @param EncodedProgram
 	 * @return
 	 */
-	private Statement[] TemporalProcedureBody(final ContextPathNode cp, final Procedure p, final Program EncodedProgram) {
+	private Statement[] TemporalProcedureBody(final ContextPathNode cp, final Procedure p,
+			final Program EncodedProgram) {
 		int pp = 0;
-		final LinkedList<Statement> statements = new LinkedList<Statement>();
+		final LinkedList<Statement> statements = new LinkedList<>();
 
 		for (final Statement s : p.getBody().getBlock()) {
 			// handle call statements
@@ -263,7 +262,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				// pcall
 				statements.addAll(TemplateStore.stackPush(p, pp + 1));
 				statements.add(TemplateStore.getHavocCallStatement(call.getArguments(),
-						InputProgram.Procedures.get(((CallStatement) s).getMethodName()), cp.getPath()));
+						InputProgram.mProcedures.get(((CallStatement) s).getMethodName()), cp.getPath()));
 				statements.add(new ReturnStatement(LocationProvider.getLocation()));
 				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", ++pp)));
 				// TODO catch value from preturn if more than one
@@ -272,13 +271,14 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 					mLogger.warn("currently only 1-tuple returns supported in calls!");
 				} else if (call.getLhs().length == 1) {
 					// supports currently only one return value
-					final ASTType retType = InputProgram.Procedures.get(call.getMethodName()).getOutParams()[0].getType();
+					final ASTType retType =
+							InputProgram.mProcedures.get(call.getMethodName()).getOutParams()[0].getType();
 					if (retType instanceof PrimitiveType) {
 						final PrimitiveType ptype = (PrimitiveType) retType;
 						final String globVarName = "retVal_" + ptype.getName();
 						statements.add(new AssignmentStatement(LocationProvider.getLocation(),
-								new LeftHandSide[] { call.getLhs()[0] }, new Expression[] { new IdentifierExpression(
-										LocationProvider.getLocation(), globVarName) }));
+								new LeftHandSide[] { call.getLhs()[0] }, new Expression[] {
+										new IdentifierExpression(LocationProvider.getLocation(), globVarName) }));
 					} else {
 						mLogger.warn("currently only primitive data types supported as return value");
 					}
@@ -301,9 +301,9 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 						final String retValName = "retVal_" + ptype.getName();
 						statements.add(new AssignmentStatement(LocationProvider.getLocation(),
 								new LeftHandSide[] { new VariableLHS(LocationProvider.getLocation(), retValName) },
-								new Expression[] { new IdentifierExpression(LocationProvider.getLocation(), p
-										.getOutParams()[0].getIdentifiers()[0]) // TODO
-																				// schoener!
+								new Expression[] { new IdentifierExpression(LocationProvider.getLocation(),
+										p.getOutParams()[0].getIdentifiers()[0]) // TODO
+																					// schoener!
 								}));
 					} else {
 						mLogger.warn("currently only primitive data types supported!");
@@ -341,11 +341,13 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 
 		// Insert gotos
 		for (int i = 2; i <= pp; ++i) {
-			statements.addFirst(new IfStatement(LocationProvider.getLocation(), new BinaryExpression(LocationProvider
-					.getLocation(), Operator.COMPEQ, new IdentifierExpression(LocationProvider.getLocation(), "pp"),
-					new IntegerLiteral(LocationProvider.getLocation(), String.format("%d", i))),
-					new Statement[] { new GotoStatement(LocationProvider.getLocation(), new String[] { String.format(
-							"$Cookiefy##%d", i) }) }, new Statement[0]));
+			statements.addFirst(new IfStatement(LocationProvider.getLocation(),
+					new BinaryExpression(LocationProvider.getLocation(), Operator.COMPEQ,
+							new IdentifierExpression(LocationProvider.getLocation(), "pp"),
+							new IntegerLiteral(LocationProvider.getLocation(), String.format("%d", i))),
+					new Statement[] { new GotoStatement(LocationProvider.getLocation(),
+							new String[] { String.format("$Cookiefy##%d", i) }) },
+					new Statement[0]));
 		}
 
 		return statements.toArray(new Statement[statements.size()]);
@@ -356,9 +358,9 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	 *
 	 */
 	private void create_globalRetVals(final Program encodedProgram) {
-		final Map<String, VariableDeclaration> retVals = new HashMap<String, VariableDeclaration>();
+		final Map<String, VariableDeclaration> retVals = new HashMap<>();
 
-		for (final Procedure p : TemplateStore.getInputProgram().Procedures.values()) {
+		for (final Procedure p : TemplateStore.getInputProgram().mProcedures.values()) {
 			for (final VarList vl : p.getOutParams()) {
 				if (vl.getType() instanceof PrimitiveType) {
 					final PrimitiveType type = (PrimitiveType) vl.getType();
@@ -366,20 +368,21 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 						// OPTIMIZATION DONE: only one retVal for each type
 						continue;
 					}
-					retVals.put(type.getName(), new VariableDeclaration(LocationProvider.getLocation(),
-							new Attribute[0], new VarList[] { new VarList(LocationProvider.getLocation(),
-									new String[] { "retVal_" + type.getName() }, type) }));
+					retVals.put(type.getName(),
+							new VariableDeclaration(LocationProvider.getLocation(), new Attribute[0],
+									new VarList[] { new VarList(LocationProvider.getLocation(),
+											new String[] { "retVal_" + type.getName() }, type) }));
 
 				} else {
-					mLogger.warn(String
-							.format("Currently the generated stack handles only primitive types as return param! Affected procedure: %s type %s",
-									p.getIdentifier(), vl.getType().toString()));
+					mLogger.warn(String.format(
+							"Currently the generated stack handles only primitive types as return param! Affected procedure: %s type %s",
+							p.getIdentifier(), vl.getType().toString()));
 				}
 			}
 		}
 
 		// add retVals to global Variables
-		encodedProgram.Globals.addAll(retVals.values());
+		encodedProgram.mGlobals.addAll(retVals.values());
 	}
 
 }
