@@ -155,7 +155,11 @@ public class AcyclicSubgraphMerger {
 			blockEncoded = new Subgraph(projection, be.getResult(), be.getBacktranslator().getLocationMapping());
 		}
 
-		assert blockEncoded.getSubgraphStartLocation().getOutgoingEdges().size() == initialSubgraph.getSubgraphEndLocations().size();
+		if (blockEncoded.getSubgraphStartLocation().getOutgoingEdges().size() != initialSubgraph
+				.getSubgraphEndLocations().size()) {
+			throw new AssertionError("Either subgraph not acyclic or there is a bug");
+		}
+		
 		mEndloc2TransFormula = new HashMap<>();
 		for (final IcfgEdge startSucc : blockEncoded.getSubgraphStartLocation().getOutgoingEdges()) {
 			if (!blockEncoded.getSubgraphEndLocations().contains(startSucc.getTarget())) {
