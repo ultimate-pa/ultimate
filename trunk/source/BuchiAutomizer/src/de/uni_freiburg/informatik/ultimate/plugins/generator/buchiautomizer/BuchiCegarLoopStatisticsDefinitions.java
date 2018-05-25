@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiAutomizer plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -26,11 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+//Fixme: This was commited accidentally and is work in progress.
+
 //public enum BuchiCegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 //	Result(Result.class, CegarLoopStatisticsUtils.DEFAULT_AGGREGATION_FUN, AStatisticsType.sDataBeforeKey),
-	
-//	
+
+//
 ////	Result = "Result";
 //	HighestRank(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sKeyBeforeData),
 //	NonLiveStateRemoval(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
@@ -49,7 +51,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //	LassoNonterminationAnalysisTIME(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 //	MinimizationsOfDetermnisticAutomatomata(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sDataBeforeKey),
 //	MinimizationsOfNondetermnisticAutomatomata(Integer.class, AStatisticsType.sIntegerMaximum, AStatisticsType.sDataBeforeKey),
-//	
+//
 //
 //	OverallTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 //
@@ -95,10 +97,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //	AbstIntIterations(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
 //
 //	AbstIntStrong(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sDataBeforeKey),
-//	
+//
 //	AutomataMinimizationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
 //			AStatisticsType.sKeyBeforeData),
-//	
+//
 //	HoareAnnotationStatistics(StatisticsData.class, AStatisticsType.sStatisticsDataAggregation,
 //			AStatisticsType.sKeyBeforeData),
 //	;
@@ -134,11 +136,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //
 //
 //public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements IStatisticsType {
-//	
-//	private static final BuchiCegarLoopBenchmark s_Instance = new BuchiCegarLoopBenchmark();
-//	
 //
-//	
+//	private static final BuchiCegarLoopBenchmark s_Instance = new BuchiCegarLoopBenchmark();
+//
+//
+//
 //	public static BuchiCegarLoopBenchmark getInstance() {
 //		return s_Instance;
 //	}
@@ -164,7 +166,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		keyList.add(s_MinimizationsOfNondetermnisticAutomatomata);
 //		return keyList;
 //	}
-//	
+//
 //	@Override
 //	public Object aggregate(final String key, final Object value1, final Object value2) {
 //		switch (key) {
@@ -218,7 +220,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //	@Override
 //	public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
 //		final StringBuilder sb = new StringBuilder();
-//		
+//
 //		sb.append("BüchiAutomizer plugin needed ");
 //		final Long overallTime = (Long) benchmarkData.getValue(BuchiCegarLoopStatisticsDefinitions.OverallTime.toString());
 //		sb.append(prettyprintNanoseconds(overallTime));
@@ -226,12 +228,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		final Integer overallIterations = (Integer) benchmarkData.getValue(BuchiCegarLoopStatisticsDefinitions.OverallIterations.toString());
 //		sb.append(overallIterations);
 //		sb.append(" iterations. ");
-//		
+//
 //		final Long laTime = (Long) benchmarkData.getValue(s_LassoAnalysisTime);
 //		sb.append("Analysis of lassos took ");
 //		sb.append(prettyprintNanoseconds(laTime));
 //		sb.append(". ");
-//		
+//
 //		final StatisticsData ecData =
 //				(StatisticsData) benchmarkData.getValue(BuchiCegarLoopStatisticsDefinitions.HoareTripleCheckerStatistics.toString());
 //		Long ecTime;
@@ -240,7 +242,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		} else {
 //			ecTime = (Long) ecData.getValue(String.valueOf(HoareTripleCheckerStatisticsDefinitions.Time));
 //		}
-//		
+//
 //		sb.append("Construction of modules took ");
 //		sb.append(prettyprintNanoseconds(ecTime));
 //		final Long differenceTime = (Long) benchmarkData.getValue(BuchiCegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -248,25 +250,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		sb.append("Büchi inclusion checks took ");
 //		sb.append(prettyprintNanoseconds(differenceTime - ecTime));
 //		sb.append(". ");
-//		
+//
 //		sb.append("Highest rank in rank-based complementation ");
 //		final Integer highestRank = (Integer) benchmarkData.getValue(s_HighestRank);
 //		sb.append(highestRank);
 //		sb.append(". ");
-//		
+//
 //		sb.append("Minimization of det autom ");
 //		sb.append(benchmarkData.getValue(s_MinimizationsOfDetermnisticAutomatomata.toString()));
 //		sb.append(". ");
-//		
+//
 //		sb.append("Minimization of nondet autom ");
 //		sb.append(benchmarkData.getValue(s_MinimizationsOfNondetermnisticAutomatomata.toString()));
 //		sb.append(". ");
-//		
+//
 //		sb.append("Automata minimization ");
 //		sb.append(benchmarkData.getValue(BuchiCegarLoopStatisticsDefinitions.AutomataMinimizationStatistics.toString()));
 //		sb.append(". ");
-//		
-//	
+//
+//
 //		sb.append("Non-live state removal took ");
 //		final Long nonLiveTime = (Long) benchmarkData.getValue(s_NonLiveStateRemoval);
 //		sb.append(prettyprintNanoseconds(nonLiveTime));
@@ -274,42 +276,42 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		final Long buchiClosureTime = (Long) benchmarkData.getValue(s_BuchiClosure);
 //		sb.append(prettyprintNanoseconds(buchiClosureTime));
 //		sb.append(". ");
-//		
+//
 //		final SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(BuchiCegarLoopStatisticsDefinitions.BiggestAbstraction.toString());
 //		sb.append("Biggest automaton had ");
 //		sb.append(sip.getSize());
 //		sb.append(" states and ocurred in iteration ");
 //		sb.append(sip.getIteration());
 //		sb.append(".\t");
-//		
+//
 //		final int[] stages = (int[]) benchmarkData.getValue(s_NontrivialModuleStages);
 //		sb.append("Nontrivial modules had stage ");
 //		sb.append(Arrays.toString(stages));
 //		sb.append(".\t");
-//		
+//
 //		final BackwardCoveringInformation bcif = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityFinite);
 //		sb.append(s_InterpolantCoveringCapabilityFinite);
 //		sb.append(": ");
 //		sb.append(bcif.toString());
 //		sb.append("\t");
-//		
+//
 //		final BackwardCoveringInformation bcib = (BackwardCoveringInformation) benchmarkData.getValue(s_InterpolantCoveringCapabilityBuchi);
 //		sb.append(s_InterpolantCoveringCapabilityBuchi);
 //		sb.append(": ");
 //		sb.append(bcib.toString());
 //		sb.append("\t");
-//		
+//
 //		sb.append(BuchiCegarLoopStatisticsDefinitions.HoareTripleCheckerStatistics.toString());
 //		sb.append(": ");
 //		sb.append(ecData);
 //		sb.append("\t");
-//		
+//
 //		sb.append(s_LassoAnalysisResults);
 //		sb.append(": ");
 //		final LassoAnalysisResults lar =
 //				(LassoAnalysisResults) benchmarkData.getValue(s_LassoAnalysisResults);
 //		sb.append(lar.toString());
-//		
+//
 //		sb.append(s_LassoPreprocessingBenchmarks);
 //		sb.append(": ");
 //		final List<PreprocessingBenchmark> ppbench = (List<PreprocessingBenchmark>) benchmarkData.getValue(s_LassoPreprocessingBenchmarks);
@@ -320,12 +322,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		sb.append(prettyPrintTerminationAnalysisBenchmark(tabbench));
 //		sb.append(s_LassoTerminationAnalysisBenchmarks);
 //		sb.append(": ");
-//		
+//
 //		sb.append(s_LassoNonterminationAnalysisSAT);
 //		sb.append(": ");
 //		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisSAT));
 //		sb.append("\t");
-//		
+//
 //		sb.append(s_LassoNonterminationAnalysisUNSAT);
 //		sb.append(": ");
 //		sb.append(benchmarkData.getValue(s_LassoNonterminationAnalysisUNSAT));
@@ -341,10 +343,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		sb.append(prettyprintNanoseconds((Long) benchmarkData.getValue(s_LassoNonterminationAnalysisTIME)));
 //		sb.append("\t");
 //
-//		
+//
 //		return sb.toString();
 //	}
-//	
+//
 //	private String prettyPrintTerminationAnalysisBenchmark(final List<TerminationAnalysisBenchmark> benchmarks) {
 //		if (benchmarks.isEmpty()) {
 //			return "not available";
@@ -372,7 +374,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		}
 //		return sb.toString();
 //	}
-//	
+//
 //	private ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
 //		final List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
 //		benchmarks = Collections.singletonList(mostMotzkinButUnknownFirst(benchmarks));
@@ -393,7 +395,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //				TerminationAnalysisBenchmark.s_Label_MotzkinApplications });
 //		return numericColumns;
 //	}
-//	
+//
 //	private TerminationAnalysisBenchmark mostMotzkinButUnknownFirst(final List<TerminationAnalysisBenchmark> benchmarks) {
 //		boolean foundUnknown = false;
 //		int mostMotzkin = 0;
@@ -421,8 +423,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		}
 //		return mostDifficult;
 //	}
-//	
-//	
+//
+//
 //	public static class LassoAnalysisResults implements IStatisticsDataProvider, IStatisticsType {
 //		public static final String s_LassoNonterminating = "nont";
 //		public static final String s_TerminationUnknown = "unkn";
@@ -467,9 +469,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //		 * nonterminating but the lasso is terminating.
 //		 */
 //		public static final String s_LassoTerminating = "lasso";
-//		
+//
 //		public final Map<String, Integer> mMap;
-//		
+//
 //		public LassoAnalysisResults() {
 //			mMap = new LinkedHashMap<String, Integer>();
 //			mMap.put(s_LassoNonterminating, 0);
@@ -484,8 +486,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //			mMap.put(s_StemInfeasibleLoopTerminating, 0);
 //			mMap.put(s_LassoTerminating, 0);
 //		}
-//		
-//		
+//
+//
 //		@Override
 //		public String toString() {
 //			final StringBuilder sb = new StringBuilder();
@@ -496,13 +498,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 //			}
 //			return sb.toString();
 //		}
-//		
+//
 //
 //		public void increment(final String key) {
 //			final int value = mMap.get(key);
 //			mMap.put(key, value + 1);
 //		}
-//		
+//
 ////		public void aggregate(LassoAnalysisResults lassoAnalysisResults) {
 ////			mLassoNonterminating = lassoAnalysisResults.mLassoNonterminating;
 ////			mTerminationUnknown = lassoAnalysisResults.mTerminationUnknown;
