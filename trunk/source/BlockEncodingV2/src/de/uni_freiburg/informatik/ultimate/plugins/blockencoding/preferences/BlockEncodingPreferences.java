@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE BlockEncodingV2 plug-in.
  *
@@ -31,13 +31,31 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
-
-	public static final String PLUGIN_ID = Activator.PLUGIN_ID;
 
 	public enum MinimizeStates {
 		NONE, SINGLE, SINGLE_NODE_MULTI_EDGE, MULTI
 	}
+
+	private static final Boolean PRE_SBE_DEF = Boolean.FALSE;
+	private static final boolean FXP_MAXIMIZE_FINAL_STATES_DEF = true;
+	private static final boolean FXP_REMOVE_INFEASIBLE_EDGES_DEF = true;
+	private static final boolean FXP_REMOVE_SINK_STATES_DEF = true;
+	private static final boolean FXP_INTERPROCEDURAL_COMPOSITION_DEF = true;
+	private static final boolean FXP_UNTIL_FIXPOINT_DEF = true;
+	private static final boolean POST_USE_PARALLEL_COMPOSITION_DEF = true;
+	private static final boolean PRE_REWRITENOTEQUALS_DEF = false;
+	private static final boolean FXP_MINIMIZE_STATES_IGNORE_BLOWUP_DEF = false;
+	private static final boolean POST_SIMPLIFY_TRANSITIONS_DEF = false;
+	private static final MinimizeStates FXP_MINIMIZE_STATES_DEF = MinimizeStates.MULTI;
+	private static final int FXP_MAX_ITERATIONS_DEF = 0;
+
+	public static final String PLUGIN_ID = Activator.PLUGIN_ID;
 
 	public static final String PRE_SBE = "Use SBE";
 	public static final String PRE_REWRITENOTEQUALS = "Rewrite not-equals";
@@ -80,32 +98,33 @@ public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>("Pre-processing", "", PreferenceType.Label),
-				new UltimatePreferenceItem<>(PRE_SBE, Boolean.FALSE, PRE_SBE_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(PRE_REWRITENOTEQUALS, Boolean.FALSE, PRE_SBE_REWRITENOTEQUALS_DESC,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(PRE_SBE, PRE_SBE_DEF, PRE_SBE_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(PRE_REWRITENOTEQUALS, PRE_REWRITENOTEQUALS_DEF,
+						PRE_SBE_REWRITENOTEQUALS_DESC, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>("Iterative encodings", "", PreferenceType.Label),
-				new UltimatePreferenceItem<>(FXP_MAXIMIZE_FINAL_STATES, Boolean.TRUE, FXP_MAXIMIZE_FINAL_STATES_DESC,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_MINIMIZE_STATES, MinimizeStates.MULTI, FXP_MINIMIZE_STATES_DESC,
+				new UltimatePreferenceItem<>(FXP_MAXIMIZE_FINAL_STATES, FXP_MAXIMIZE_FINAL_STATES_DEF,
+						FXP_MAXIMIZE_FINAL_STATES_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_MINIMIZE_STATES, FXP_MINIMIZE_STATES_DEF, FXP_MINIMIZE_STATES_DESC,
 						PreferenceType.Combo, MinimizeStates.values()),
-				new UltimatePreferenceItem<>(FXP_MINIMIZE_STATES_IGNORE_BLOWUP, Boolean.FALSE,
+				new UltimatePreferenceItem<>(FXP_MINIMIZE_STATES_IGNORE_BLOWUP, FXP_MINIMIZE_STATES_IGNORE_BLOWUP_DEF,
 						FXP_MINIMIZE_STATES_IGNORE_BLOWUP_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_REMOVE_INFEASIBLE_EDGES, Boolean.TRUE,
+				new UltimatePreferenceItem<>(FXP_REMOVE_INFEASIBLE_EDGES, FXP_REMOVE_INFEASIBLE_EDGES_DEF,
 						FXP_REMOVE_INFEASIBLE_EDGES_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_REMOVE_SINK_STATES, Boolean.TRUE, FXP_REMOVE_SINK_STATES_DESC,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_INTERPROCEDURAL_COMPOSITION, Boolean.TRUE,
+				new UltimatePreferenceItem<>(FXP_REMOVE_SINK_STATES, FXP_REMOVE_SINK_STATES_DEF,
+						FXP_REMOVE_SINK_STATES_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_INTERPROCEDURAL_COMPOSITION, FXP_INTERPROCEDURAL_COMPOSITION_DEF,
 						FXP_INTERPROCEDURAL_COMPOSITION_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_UNTIL_FIXPOINT, Boolean.TRUE, FXP_UNTIL_FIXPOINT_DESC,
+				new UltimatePreferenceItem<>(FXP_UNTIL_FIXPOINT, FXP_UNTIL_FIXPOINT_DEF, FXP_UNTIL_FIXPOINT_DESC,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_MAX_ITERATIONS, 0, FXP_MAX_ITERATIONS_DESC, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(FXP_MAX_ITERATIONS, FXP_MAX_ITERATIONS_DEF, FXP_MAX_ITERATIONS_DESC,
+						PreferenceType.Integer),
 
 				new UltimatePreferenceItem<>("Post processing", "", PreferenceType.Label),
-				new UltimatePreferenceItem<>(POST_USE_PARALLEL_COMPOSITION, Boolean.TRUE,
+				new UltimatePreferenceItem<>(POST_USE_PARALLEL_COMPOSITION, POST_USE_PARALLEL_COMPOSITION_DEF,
 						POST_USE_PARALLEL_COMPOSITION_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(POST_SIMPLIFY_TRANSITIONS, Boolean.FALSE, POST_SIMPLIFY_TRANSITIONS_DESC,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(POST_SIMPLIFY_TRANSITIONS, POST_SIMPLIFY_TRANSITIONS_DEF,
+						POST_SIMPLIFY_TRANSITIONS_DESC, PreferenceType.Boolean),
 
 		};
 	}
