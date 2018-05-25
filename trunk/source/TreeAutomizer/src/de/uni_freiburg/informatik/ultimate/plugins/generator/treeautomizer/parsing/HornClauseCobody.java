@@ -57,8 +57,8 @@ public class HornClauseCobody {
 
 	private boolean mFinalized = false;
 
-	private final List<HornClausePredicateSymbol> mPredicateSymbols = new ArrayList<>();
-	private final List<List<TermVariable>> mPredicateSymbolToVariables = new ArrayList<>();
+	private final List<HornClausePredicateSymbol> mPredicateSymbols;
+	private final List<List<TermVariable>> mPredicateSymbolToVariables;
 
 	private final HornClauseParserScript mParserScript;
 
@@ -68,8 +68,25 @@ public class HornClauseCobody {
 	 */
 	public HornClauseCobody(final HornClauseParserScript parserScript) {
 		mPredicates = new ArrayList<>();
+		mPredicateSymbols = new ArrayList<>();
+		mPredicateSymbolToVariables = new ArrayList<>();
 		mTransitions = new HashSet<>();
 		mParserScript = parserScript;
+	}
+
+	/**
+	 *
+	 * @param original
+	 */
+	public HornClauseCobody(final HornClauseCobody original) {
+		mPredicates = new ArrayList<>(original.mPredicates);
+		mPredicateSymbols = new ArrayList<>(original.mPredicateSymbols);
+		mPredicateSymbolToVariables = new ArrayList<>();
+		for (final List<TermVariable> l : original.mPredicateSymbolToVariables) {
+			mPredicateSymbolToVariables.add(new ArrayList<>(l));
+		}
+		mTransitions = new HashSet<>(original.mTransitions);
+		mParserScript = original.mParserScript;
 	}
 
 	/***
@@ -171,8 +188,8 @@ public class HornClauseCobody {
 			final List<TermVariable> parameterTermVariables = Arrays.asList(pred.getParameters()).stream()
 					.map(t -> (TermVariable) t)
 					.collect(Collectors.toList());
-			assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
-					+ "duplicate arguments";
+//			assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
+//					+ "duplicate arguments";
 			final List<TermVariable> bodyVars = parameterTermVariables;
 			mPredicateSymbolToVariables.add(bodyVars);
 		}

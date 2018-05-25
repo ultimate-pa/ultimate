@@ -68,6 +68,14 @@ public class HornClauseBody {
 	}
 
 	/***
+	 * Copy constructor
+	 */
+	public HornClauseBody(final HornClauseBody original) {
+		mCobody = new HornClauseCobody(original.mCobody);
+		mParserScript = original.mParserScript;
+	}
+
+	/***
 	 * Add literal to the cobody.
 	 * @param literal
 	 */

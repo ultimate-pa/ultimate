@@ -201,8 +201,8 @@ public class SmtParser implements ISource {
 			final ConstructAndInitializeBackendSmtSolver caibss =
 					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage,
 							"treeAutomizerSolver");
-			script = new HornClauseParserScript(file.getName(), caibss.getScript(), caibss.getLogicForExternalSolver(),
-					caibss.getSolverSettings());
+			script = new HornClauseParserScript(mServices, file.getName(), caibss.getScript(),
+					caibss.getLogicForExternalSolver(), caibss.getSolverSettings());
 		} else {
 			if (useExternalSolver) {
 				mLogger.info("Starting external SMT solver with command " + commandExternalSolver);

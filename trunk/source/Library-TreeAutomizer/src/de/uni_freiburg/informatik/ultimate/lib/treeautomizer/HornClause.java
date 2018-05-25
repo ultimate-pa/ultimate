@@ -209,7 +209,7 @@ public class HornClause implements IRankedLetter {
 		}
 
 		// return mTransitionFormula.getFormula().toString();
-		return mFormula.toString();
+		return mFormula.toStringDirect();
 		// return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ",
 		// cobody, mTransitionFormula, body,
 		// return String.format("(%s) ^^ (%s) ~~> (%s)", cobody,

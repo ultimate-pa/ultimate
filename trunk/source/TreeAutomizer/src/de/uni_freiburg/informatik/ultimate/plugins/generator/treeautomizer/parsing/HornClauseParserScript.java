@@ -31,15 +31,18 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
@@ -57,12 +60,16 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -93,15 +100,26 @@ public class HornClauseParserScript extends NoopScript {
 	private final String mFilename;
 
 	private final Set<TermVariable> mVariablesStack;
+	private final IUltimateServiceProvider mServices;
 
-	public HornClauseParserScript(final String filename, final ManagedScript smtSolverScript, final String logic,
+	/**
+	 * ManagedScript wrapping this HornClauseParserScript instance
+	 */
+	private final ManagedScript mManagedScript;
+	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+
+	public HornClauseParserScript(final IUltimateServiceProvider services, final String filename,
+			final ManagedScript smtSolverScript, final String logic,
 			final Settings settings) {
+		mServices = services;
 		mFilename = filename;
 		mBackendSmtSolver = smtSolverScript;
 		mLogic = logic;
 		mSolverSettings = settings;
 		setupBackendSolver();
 		mDeclaredPredicateSymbols = new HashSet<>();
+
+		mManagedScript = new ManagedScript(services, this);
 
 		mParsedHornClauses = new ArrayList<>();
 
@@ -237,15 +255,33 @@ public class HornClauseParserScript extends NoopScript {
 		}
 	}
 
-	private HornClauseCobody parseCobody(final Term term) throws SMTLIBException {
+	private List<HornClauseCobody> parseCobody(final Term term) throws SMTLIBException {
+		assert assertIsInDnf(term);
 
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("and")) {
+//		final Term term = SmtUtils.toDnf(mServices, mManagedScript, inputTerm,
+//				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+
+		if (SmtUtils.isFunctionApplication(term, "or")) {
+			/*
+			 * We return a cobody for each
+			 * based on the equivalence "(A \/ B) -> C <=> A -> C /\ B -> C"
+			 * (we will copy the head accordingly..
+			 */
+			final ApplicationTerm at = ((ApplicationTerm) term);
+			final List<HornClauseCobody> result = new ArrayList<>();
+			for (final Term p : at.getParameters()) {
+				result.addAll(parseCobody(p));
+			}
+			return result;
+		} else if (SmtUtils.isFunctionApplication(term, "and")) {
 			// t = And (y1 y2 ... yn)
 			final HornClauseCobody tail = new HornClauseCobody(this);
 			for (final Term literal : ((ApplicationTerm) term).getParameters()) {
-				tail.mergeCobody(parseCobody(literal));
+				final List<HornClauseCobody> conjunctCobodies = parseCobody(literal);
+				assert conjunctCobodies.size() == 1 : "all input terms must be in dnf, then this assertion should hold";
+				tail.mergeCobody(conjunctCobodies.get(0));
 			}
-			return tail;
+			return Collections.singletonList(tail);
 		}
 		final HornClauseCobody tail = new HornClauseCobody(this);
 		if (term instanceof ApplicationTerm && isUninterpretedPredicateSymbol(((ApplicationTerm) term).getFunction())) {
@@ -260,7 +296,11 @@ public class HornClauseParserScript extends NoopScript {
 			if (thisTerm.getQuantifier() == FORALL) {
 				final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap(thisTerm);
 				final Substitution subs = new Substitution(this, tempVars);
-				tail.mergeCobody(parseCobody(subs.transform(thisTerm.getSubformula())));
+
+				final List<HornClauseCobody> conjunctCobodies = parseCobody(subs.transform(thisTerm.getSubformula()));
+				assert conjunctCobodies.size() == 1 : "all input terms must be in dnf, then this assertion should hold";
+
+				tail.mergeCobody(conjunctCobodies.get(0));
 				resetTempVariables(thisTerm, tempVars);
 			} else {
 				throw new SMTLIBException("Nested exists quantified, ungrammatical");
@@ -270,19 +310,104 @@ public class HornClauseParserScript extends NoopScript {
 			tail.addTransitionFormula(term);
 		}
 
-		return tail;
+		return Collections.singletonList(tail);
 	}
 
-	private HornClauseBody parseBody(final Term term) throws SMTLIBException {
+	private boolean assertIsInDnf(final Term inputTerm) {
+		final Term dnf = SmtUtils.toDnf(mServices, mManagedScript, inputTerm,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		if (inputTerm != dnf) {
+			assert false;
+			return false;
+		}
+
+		return true;
+	}
+
+
+	private List<HornClauseBody> parseCnf(final Term term) throws SMTLIBException {
+		final List<HornClauseBody> result = new ArrayList<>();
+
+
+		Term quantifiersStripped;
+		if (term instanceof QuantifiedFormula) {
+			quantifiersStripped = ((QuantifiedFormula) term).getSubformula();
+		} else {
+			quantifiersStripped = term;
+		}
+
+		final Term[] clauses = SmtUtils.getConjuncts(quantifiersStripped);
+
+//		final List<Term> positiveUnint = new ArrayList<>();
+//		final List<Term> negativeUnint = new ArrayList<>();
+//		final List<Term> constraint = new ArrayList<>();
+		for (final Term clause : clauses) {
+
+
+			final HornClauseBody head = new HornClauseBody(this);
+
+			for (final Term literal : SmtUtils.getDisjuncts(clause)) {
+				Term literalStripped = literal;
+				boolean polarity = true;
+				if (SmtUtils.isFunctionApplication(literal, "not")) {
+					literalStripped = ((ApplicationTerm) literal).getParameters()[0];
+					polarity = false;
+				}
+
+				if (literalStripped instanceof ApplicationTerm) {
+					final ApplicationTerm lsAt = (ApplicationTerm) literalStripped;
+					final FunctionSymbol fsym = lsAt.getFunction();
+					if (isUninterpretedPredicateSymbol(fsym)) {
+						if (polarity) {
+							// head
+							final boolean headWasNull = head.setHead(lsAt);
+							if (!headWasNull) {
+								throw new AssertionError("two positive literals in a clause --> not Horn!");
+							}
+						} else {
+							// body ("cobody")
+							head.addPredicateToCobody(lsAt);
+						}
+					} else {
+						// the constraint is in the cobody so we have to reverse polarity here
+						if (polarity) {
+							head.addTransitionFormula(term("not", literal));
+						} else {
+							head.addTransitionFormula(lsAt);
+						}
+					}
+				} else {
+					throw new AssertionError("TODO: check this case");
+				}
+			}
+
+			result.add(head);
+		}
+
+		return result;
+	}
+
+	private List<HornClauseBody> parseBody(final Term term) throws SMTLIBException {
 		System.err.println(term);
 
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("=>")) {
 			// implication
-			final HornClauseBody head = parseBody(((ApplicationTerm) term).getParameters()[1]);
-			final HornClauseCobody tail = parseCobody(((ApplicationTerm) term).getParameters()[0]);
+			final List<HornClauseBody> heads = parseBody(((ApplicationTerm) term).getParameters()[1]);
+			assert heads.size() == 1 : "todo: implement: break this up further";
+			final HornClauseBody head = heads.get(0);
 
-			head.mergeCobody(tail);
-			return head;
+			final Term lhs = ((ApplicationTerm) term).getParameters()[0];
+			final Term lhsDnf = SmtUtils.toDnf(mServices, mManagedScript, lhs, mXnfConversionTechnique);
+			final List<HornClauseCobody> tails = parseCobody(lhsDnf);
+
+			final List<HornClauseBody> parsedBodies = new ArrayList<>();
+			for (final HornClauseCobody tail : tails) {
+				final HornClauseBody headCopy = new HornClauseBody(head);
+				headCopy.mergeCobody(tail);
+				parsedBodies.add(headCopy);
+			}
+
+			return parsedBodies;
 		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("or")) {
 			// t = Or (y1 ... yn)
 			final HornClauseBody head = new HornClauseBody(this);
@@ -305,17 +430,18 @@ public class HornClauseParserScript extends NoopScript {
 						}
 					}
 				} else {
-					head.mergeCobody(parseCobody(literal));
+					final HornClauseCobody cobody = parseOneCobody(literal);
+					head.mergeCobody(cobody);
 				}
 			}
-			return head;
+			return Collections.singletonList(head);
 		} else if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap((QuantifiedFormula) term);
 			final Substitution subs = new Substitution(this, tempVars);
-			final HornClauseBody body = parseBody(subs.transform(thisTerm.getSubformula()));
+			final HornClauseBody body = parseOneBody(subs.transform(thisTerm.getSubformula()));
 			resetTempVariables(thisTerm, tempVars);
-			return body;
+			return Collections.singletonList(body);
 		} else if (SmtUtils.isFunctionApplication(term, "not")) {
 			final Term nested = ((ApplicationTerm) term).getParameters()[0];
 			if (nested instanceof QuantifiedFormula) {
@@ -323,10 +449,10 @@ public class HornClauseParserScript extends NoopScript {
 				if (thisTerm.getQuantifier() == EXISTS) {
 					final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap((QuantifiedFormula) term);
 					final Substitution subs = new Substitution(this, tempVars);
-					final HornClauseCobody cobody = parseCobody(subs.transform(thisTerm.getSubformula()));
+					final HornClauseCobody cobody = parseOneCobody(subs.transform(thisTerm.getSubformula()));
 					final HornClauseBody body = cobody.negate();
 					resetTempVariables(thisTerm, tempVars);
-					return body;
+					return Collections.singletonList(body);
 				} else {
 					throw new SMTLIBException("Unhandled nested negated forall expression, ungrammatical");
 				}
@@ -345,7 +471,19 @@ public class HornClauseParserScript extends NoopScript {
 				head.addTransitionFormula(getTheory().not((term)));
 			}
 		}
-		return head;
+		return Collections.singletonList(head);
+	}
+
+	private HornClauseBody parseOneBody(final Term term) {
+		final List<HornClauseBody> parsed = parseBody(term);
+		assert parsed.size() == 1;
+		return parsed.get(0);
+	}
+
+	private HornClauseCobody parseOneCobody(final Term literal) {
+		final List<HornClauseCobody> parsed = parseCobody(literal);
+		assert parsed.size() == 1;
+		return parsed.get(0);
 	}
 
 	private Term mapFormulasToVars(final HornClauseBody head, final Term term) {
@@ -353,10 +491,11 @@ public class HornClauseParserScript extends NoopScript {
 		final Term[] variables = new Term[func.getParameters().length];
 		for (int i = 0; i < variables.length; ++i) {
 			final Term t = func.getParameters()[i];
-			if (t instanceof TermVariable && !Arrays.asList(variables).contains(t)) {
+			final boolean variableHasBeenSeenAlready = Arrays.asList(variables).contains(t);
+			if (t instanceof TermVariable && !variableHasBeenSeenAlready) {
 				// argument is a variable that occurs for the first time in the argument list, leave it as is
 				variables[i] = t;
-			} else if (t instanceof TermVariable && Arrays.asList(variables).contains(t)) {
+			} else if (t instanceof TermVariable && variableHasBeenSeenAlready) {
 				// argument is a variable that occurs not for the first time in the argument list --> substitute it
 				variables[i] = createFreshTermVariable(M_REPEATING_VARS, t.getSort());
 				head.addTransitionFormula(this.term("=", variables[i], t));
@@ -374,8 +513,14 @@ public class HornClauseParserScript extends NoopScript {
 		final Term[] variables = new Term[func.getParameters().length];
 		for (int i = 0; i < variables.length; ++i) {
 			final Term t = func.getParameters()[i];
-			if (t instanceof TermVariable) {
+			final boolean variableHasBeenSeenAlready = Arrays.asList(variables).contains(t);
+			if (t instanceof TermVariable && !variableHasBeenSeenAlready) {
+				// argument is a variable that occurs for the first time in the argument list, leave it as is
 				variables[i] = t;
+			} else if (t instanceof TermVariable && variableHasBeenSeenAlready) {
+				// argument is a variable that occurs not for the first time in the argument list --> substitute it
+				variables[i] = createFreshTermVariable(M_REPEATING_VARS, t.getSort());
+				body.addTransitionFormula(this.term("=", variables[i], t));
 			} else {
 				// TODO this.term
 				variables[i] = createFreshTermVariable(M_CONSTANTS, t.getSort());
@@ -391,18 +536,80 @@ public class HornClauseParserScript extends NoopScript {
 	@Override
 	public LBool assertTerm(final Term rawTerm) throws SMTLIBException {
 
-		final Term term = mUnletter.unlet(rawTerm);
+		final Term term = normalizeInputFormula(rawTerm);
+
 		mVariablesStack.clear();
-		final HornClause parsedQuantification = parseBody(term).convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
-		if (parsedQuantification != null) {
-			mParsedHornClauses.add(parsedQuantification);
-			System.err.println("PARSED: " + parsedQuantification.debugString());
-			//System.err.println("Parsed: " + parsedQuantification.getBodyPredicates() + " " + parsedQuantification.getFormula() + " ~~>" + parsedQuantification.getHeadPredicate());
+
+		final List<HornClauseBody> parsedBodies = parseCnf(term);//parseBody(term);
+		for (final HornClauseBody parsedBody : parsedBodies) {
+			final HornClause parsedQuantification = parsedBody.convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
+			if (parsedQuantification != null) {
+				mParsedHornClauses.add(parsedQuantification);
+				System.err.println("PARSED: " + parsedQuantification.debugString());
+				//System.err.println("Parsed: " + parsedQuantification.getBodyPredicates() + " " + parsedQuantification.getFormula() + " ~~>" + parsedQuantification.getHeadPredicate());
+			}
 		}
 		System.err.println("Parsed so far: " + mParsedHornClauses);
 		System.err.println();
 		// for Horn clause solving we do no checks nothing until check-sat:
 		return LBool.UNKNOWN;
+	}
+
+	public Term normalizeInputFormula(final Term rawTerm) {
+		// TODO: do we need this step?
+		final Term unl = mUnletter.unlet(rawTerm);
+
+		/*
+		 * plan:
+		 * <li> prenex, nnf
+		 * <li> let every subformula that has no uninterpreted predicates
+		 * <li> cnf the body of the let
+		 * <li> unlet
+		 * result: a formula in prenex NF, with a CNF inside
+		 * TODO: a TermCompiler and Clausifier a la SMTInterpol might be more efficient
+		 */
+
+		final Term nnf = SmtUtils.toNnf(mServices, mManagedScript, unl);
+
+		final Term pnfTerm = new PrenexNormalForm(mManagedScript).transform(nnf);
+		Term pnfBody;
+		TermVariable[] pnfVars;
+		if (pnfTerm instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = ((QuantifiedFormula) pnfTerm);
+			pnfBody = qf.getSubformula();
+			pnfVars = qf.getVariables();
+			assert qf.getQuantifier() == FORALL;
+		} else {
+			pnfBody = pnfTerm;
+			pnfVars = null;
+		}
+		final Set<Term> constraints =
+				new SubTermFinder(term -> term.getSort().getName().equals("Bool")
+						&& hasNoUninterpretedPredicates(term), true)
+				.findMatchingSubterms(pnfBody);
+		final Map<Term, Term> subs = new HashMap<>();
+		final Map<Term, Term> subsInverse = new HashMap<>();
+		// replace constraints with a boolean constant
+		for (final Term c : constraints) {
+			final Term freshTv = createFreshTermVariable("cnstrnt", sort("Bool"));
+			subs.put(c, freshTv);
+			assert !subsInverse.containsValue(freshTv);
+			subsInverse.put(freshTv, c);
+		}
+		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(pnfBody);
+
+		final Term cnfWConstraintsReplaced =
+				SmtUtils.toCnf(mServices, mManagedScript, bodyWithConstraintsReplaced, mXnfConversionTechnique);
+
+		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
+
+		Term unlettedTerm;
+		if (pnfTerm instanceof QuantifiedFormula) {
+			unlettedTerm = quantifier(FORALL, pnfVars, cnf);
+		} else {
+			unlettedTerm = cnf;
+		}
+		return unlettedTerm;
 	}
 
 //	/**
@@ -435,6 +642,15 @@ public class HornClauseParserScript extends NoopScript {
 //			return term;
 //		}
 //	}
+
+	private boolean hasNoUninterpretedPredicates(final Term term) {
+		final NoSubtermFulfillsPredicate nfsp = new NoSubtermFulfillsPredicate(
+						t ->
+							((t instanceof ApplicationTerm)
+									&& isUninterpretedPredicateSymbol(((ApplicationTerm) t).getFunction())));
+		nfsp.transform(term);
+		return nfsp.getResult();
+	}
 
 	@Override
 	public LBool checkSat() {
@@ -693,5 +909,28 @@ public class HornClauseParserScript extends NoopScript {
 
 	public TermVariable createFreshTermVariable(final String varname, final Sort sort) {
 		return variable("v_" + varname + "_" + mFreshVarCounter++, sort);
+	}
+
+	class NoSubtermFulfillsPredicate extends TermTransformer {
+
+		boolean mResult;
+
+		Predicate<Term> mPred;
+		public NoSubtermFulfillsPredicate(final Predicate<Term> pred) {
+			mPred = pred;
+			mResult = true;
+		}
+
+		@Override
+		protected void convert(final Term term) {
+			if (mPred.test(term)) {
+				mResult = false;
+			}
+			super.convert(term);
+		}
+
+		boolean getResult() {
+			return mResult;
+		}
 	}
 }
