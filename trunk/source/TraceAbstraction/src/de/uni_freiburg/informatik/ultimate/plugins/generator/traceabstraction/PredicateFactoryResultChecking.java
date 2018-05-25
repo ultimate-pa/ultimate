@@ -36,13 +36,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
 /**
  * StateFactory that should be used for result checking. Supports most operations but constructs always only an
  * auxiliary predicate.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -50,11 +50,11 @@ public class PredicateFactoryResultChecking
 		implements ISenwaStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate>,
 		IMinimizationStateFactory<IPredicate>, IMinimizationCheckResultStateFactory<IPredicate> {
 
-	protected final PredicateFactory mPredicateFactory;
+	protected final SmtFreePredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =
 			"auxiliary predicate that should only be used while checking correctness of automata operations";
 
-	public PredicateFactoryResultChecking(final PredicateFactory predicateFactory) {
+	public PredicateFactoryResultChecking(final SmtFreePredicateFactory predicateFactory) {
 		mPredicateFactory = predicateFactory;
 	}
 
