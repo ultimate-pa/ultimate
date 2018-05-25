@@ -49,12 +49,18 @@ public class SubTermFinder extends NonRecursive {
 
 
 	private final Predicate<Term> mPredicate;
+	private final boolean mOnlyOutermost;
 
 	private HashSet<Term> mResult;
 	private HashSet<Term> mVisitedSubterms;
 
 	public SubTermFinder(final Predicate<Term> predicate) {
+		this(predicate, false);
+	}
+
+	public SubTermFinder(final Predicate<Term> predicate, final boolean onlyOutermost) {
 		mPredicate = predicate;
+		mOnlyOutermost = onlyOutermost;
 	}
 
 	public Set<Term> findMatchingSubterms(final Term term) {
@@ -83,6 +89,10 @@ public class SubTermFinder extends NonRecursive {
 		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			if (mPredicate.test(term)) {
 				mResult.add(term);
+				if (mOnlyOutermost) {
+					// ignore subterms
+					return;
+				}
 			}
 			walker.enqueueWalker(new FindWalker(term.getSubterm()));
 		}
@@ -97,6 +107,10 @@ public class SubTermFinder extends NonRecursive {
 
 			if (mPredicate.test(term)) {
 				mResult.add(term);
+				if (mOnlyOutermost) {
+					// ignore subterms
+					return;
+				}
 			}
 
 			for (final Term t : term.getParameters()) {
@@ -113,6 +127,10 @@ public class SubTermFinder extends NonRecursive {
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			if (mPredicate.test(term)) {
 				mResult.add(term);
+				if (mOnlyOutermost) {
+					// ignore subterms
+					return;
+				}
 			}
 
 			walker.enqueueWalker(new FindWalker(term.getSubformula()));
