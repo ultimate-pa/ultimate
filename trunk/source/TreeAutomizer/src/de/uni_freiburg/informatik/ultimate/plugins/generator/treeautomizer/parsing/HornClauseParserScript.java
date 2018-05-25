@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.pars
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -73,7 +72,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class HornClauseParserScript extends NoopScript {
 
-	private final String M_CONSTANTS = "subst"; 
+	private final String M_CONSTANTS = "sbcnst";
+	private final String M_REPEATING_VARS = "sbrptng";
 	/**
 	 * Interface to the SMT solver that TreeAutomizer (or whoever else will used the HornClauseGraph) will use as a
 	 * backend.
@@ -91,7 +91,7 @@ public class HornClauseParserScript extends NoopScript {
 
 	private int mFreshVarCounter = 0;
 	private final String mFilename;
-	
+
 	private final Set<TermVariable> mVariablesStack;
 
 	public HornClauseParserScript(final String filename, final ManagedScript smtSolverScript, final String logic,
@@ -210,7 +210,7 @@ public class HornClauseParserScript extends NoopScript {
 	 * getTheory().and(terms.toArray(new Term[] {})); else return getTheory().mTrue; } if
 	 * (!predicates.containsKey(term.getFunction().getName())) { return term; } return getTheory().mTrue; }
 	 */
-	
+
 	private Map<TermVariable, TermVariable> getTempVariablesMap(final QuantifiedFormula term) {
 
 		final Map<TermVariable, TermVariable> tempVars = new HashMap<>();
@@ -226,7 +226,7 @@ public class HornClauseParserScript extends NoopScript {
 		}
 		return tempVars;
 	}
-	
+
 	private void resetTempVariables(final QuantifiedFormula term, final Map<TermVariable, TermVariable> tempVars) {
 		for (final TermVariable var : term.getVariables()) {
 			mVariablesStack.remove(var);
@@ -275,10 +275,10 @@ public class HornClauseParserScript extends NoopScript {
 
 	private HornClauseBody parseBody(final Term term) throws SMTLIBException {
 		System.err.println(term);
-		
+
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("=>")) {
 			// implication
-			final HornClauseBody head = parseBody((ApplicationTerm) ((ApplicationTerm) term).getParameters()[1]);
+			final HornClauseBody head = parseBody(((ApplicationTerm) term).getParameters()[1]);
 			final HornClauseCobody tail = parseCobody(((ApplicationTerm) term).getParameters()[0]);
 
 			head.mergeCobody(tail);
@@ -342,19 +342,24 @@ public class HornClauseParserScript extends NoopScript {
 			head.addPredicateToCobody((ApplicationTerm) ((ApplicationTerm) term).getParameters()[0]);
 		} else {
 			if (!((ApplicationTerm) term).equals(getTheory().mFalse)) {
-				head.addTransitionFormula(getTheory().not(((ApplicationTerm) term)));
+				head.addTransitionFormula(getTheory().not((term)));
 			}
 		}
 		return head;
 	}
 
 	private Term mapFormulasToVars(final HornClauseBody head, final Term term) {
-		final ApplicationTerm func = (ApplicationTerm) term; 
+		final ApplicationTerm func = (ApplicationTerm) term;
 		final Term[] variables = new Term[func.getParameters().length];
 		for (int i = 0; i < variables.length; ++i) {
 			final Term t = func.getParameters()[i];
-			if (t instanceof TermVariable) {
+			if (t instanceof TermVariable && !Arrays.asList(variables).contains(t)) {
+				// argument is a variable that occurs for the first time in the argument list, leave it as is
 				variables[i] = t;
+			} else if (t instanceof TermVariable && Arrays.asList(variables).contains(t)) {
+				// argument is a variable that occurs not for the first time in the argument list --> substitute it
+				variables[i] = createFreshTermVariable(M_REPEATING_VARS, t.getSort());
+				head.addTransitionFormula(this.term("=", variables[i], t));
 			} else {
 				// TODO this.term
 				variables[i] = createFreshTermVariable(M_CONSTANTS, t.getSort());
@@ -365,7 +370,7 @@ public class HornClauseParserScript extends NoopScript {
 		return ret;
 	}
 	private Term mapFormulasToVars(final HornClauseCobody body, final Term term) {
-		final ApplicationTerm func = (ApplicationTerm) term; 
+		final ApplicationTerm func = (ApplicationTerm) term;
 		final Term[] variables = new Term[func.getParameters().length];
 		for (int i = 0; i < variables.length; ++i) {
 			final Term t = func.getParameters()[i];
@@ -380,7 +385,7 @@ public class HornClauseParserScript extends NoopScript {
 		}
 
 		final Term ret = this.term(func.getFunction().getName(), variables);
-		
+
 		return ret;
 	}
 	@Override
@@ -471,6 +476,13 @@ public class HornClauseParserScript extends NoopScript {
 	@Override
 	public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
+
+		// workaround to deal with unary and, which occurs in some chc-comp benchmarks (e.g. eldarica..) TODO: ugly!
+		if (funcname.equals("and") && params.length == 1) {
+//			return Util.and(this, params);
+//			return SmtUtils.and(this, params);
+			return term(funcname, params[0], term("true"));
+		}
 
 		final Term result = super.term(funcname, indices, returnSort, params);
 //
