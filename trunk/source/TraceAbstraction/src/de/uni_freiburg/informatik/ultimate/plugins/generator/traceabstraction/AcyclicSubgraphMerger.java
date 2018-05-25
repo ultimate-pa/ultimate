@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pat
  * </ul>
  * construct {@link UnmodifiableTransFormula}s tf_1,...tf_n such that tf_i
  * represents the disjunction of all paths from startLoc to endLoc_i.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -83,8 +83,6 @@ public class AcyclicSubgraphMerger {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final Subgraph initialSubgraph = new Subgraph(icfg, subgraphStartLocation, subgraphEndLocations);
-
-
 
 		final Subgraph initialCopy;
 		Set<IcfgEdge>subgraphEdgesInCopy;
@@ -109,7 +107,7 @@ public class AcyclicSubgraphMerger {
 					Objects.requireNonNull(startLocErrorEdgeInCopy);
 				}
 			}
-			
+
 			final String startLocProcedure = initialCopyWithOldStartLoc.getSubgraphStartLocation().getProcedure();
 			final IcfgLocation entryForStartLoc = initialCopyWithOldStartLoc.getIcfg().getProcedureEntryNodes().get(startLocProcedure);
 			// take the entry of the startLocations's procedure and connect entry
@@ -132,8 +130,8 @@ public class AcyclicSubgraphMerger {
 				initialCopy = initialCopyWithOldStartLoc;
 			}
 		}
-		
-		
+
+
 		final Subgraph projection;
 		{
 			final String identifier = "InductivityChecksStartingFrom_" + initialCopy.getSubgraphStartLocation();
@@ -156,7 +154,7 @@ public class AcyclicSubgraphMerger {
 					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			blockEncoded = new Subgraph(projection, be.getResult(), be.getBacktranslator().getLocationMapping());
 		}
-		
+
 		assert blockEncoded.getSubgraphStartLocation().getOutgoingEdges().size() == initialSubgraph.getSubgraphEndLocations().size();
 		mEndloc2TransFormula = new HashMap<>();
 		for (final IcfgEdge startSucc : blockEncoded.getSubgraphStartLocation().getOutgoingEdges()) {
@@ -169,7 +167,6 @@ public class AcyclicSubgraphMerger {
 			final IcfgLocation endInInput = initialCopy.getBacktranslation().get(endInInitialCopy);
 			mEndloc2TransFormula.put(endInInput, startSucc.getTransformula());
 		}
-		
 	}
 
 	private <K, V> Map<V, K> constructReverseMapping(final Map<K, V> map) {
@@ -211,7 +208,7 @@ public class AcyclicSubgraphMerger {
 			Objects.requireNonNull(mSubgraphStartLocation);
 			mSubgraphEndLocations = translate(oldSubgraph.getSubgraphEndLocations(), mForwardTranslation);
 		}
-		
+
 		/**
 		 * Constructor for changing startLocation
 		 */
@@ -242,6 +239,11 @@ public class AcyclicSubgraphMerger {
 
 		public Map<IcfgLocation, IcfgLocation> getForwardTranslation() {
 			return mForwardTranslation;
+		}
+
+		@Override
+		public String toString() {
+			return CFG2NestedWordAutomaton.printIcfg(mServices, mIcfg);
 		}
 
 	}
