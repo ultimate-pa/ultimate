@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
@@ -113,7 +114,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.au
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
@@ -871,8 +871,6 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private void getInitialAbstraction() {
-		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-				mPref.interprocedural(), mCsToolkitWithoutRankVars, mPredicateFactory);
 		final Collection<IcfgLocation> acceptingNodes;
 		final Collection<IcfgLocation> allNodes = new HashSet<>();
 		for (final Map<String, ? extends IcfgLocation> prog2pp : mIcfg.getProgramPoints().values()) {
@@ -889,7 +887,8 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			mLTLMode = false;
 			acceptingNodes = allNodes;
 		}
-		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(mIcfg, mDefaultStateFactory, acceptingNodes);
+		mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, mIcfg, mDefaultStateFactory,
+				acceptingNodes, mPref.interprocedural(), mPredicateFactory);
 		if (!ALLOW_CALLS && !mAbstraction.getVpAlphabet().getCallAlphabet().isEmpty()) {
 			throw new AssertionError("Calls are not allowed in this debugging mode");
 		}

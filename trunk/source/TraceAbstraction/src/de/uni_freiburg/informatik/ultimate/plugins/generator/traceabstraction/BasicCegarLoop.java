@@ -85,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
@@ -104,7 +105,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DangerInvariantGuesser;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -292,11 +292,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
-		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-				mPref.interprocedural(), super.mCsToolkit, super.mPredicateFactory);
+		mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
+				mServices, super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(),
+				mPredicateFactory);
 
-		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement,
-				super.mErrorLocs);
 		if (mComputeHoareAnnotation
 				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			final INestedWordAutomaton<LETTER, IPredicate> nwa =
@@ -428,10 +427,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 
 			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
-				final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-						mPref.interprocedural(), super.mCsToolkit, mPredicateFactory);
-				final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
-						.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs);
+				final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
+						mServices, super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(),
+						mPredicateFactory);
 				final FlowSensitiveFaultLocalizer<LETTER> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg, mServices, mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mFaultLocalizationMode,
@@ -622,10 +620,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
-				final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-						mPref.interprocedural(), super.mCsToolkit, mPredicateFactory);
-				final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton
-						.getNestedWordAutomaton(super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs);
+				final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
+						mServices, super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(),
+						mPredicateFactory);
 				mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
 						mTraceCheckAndRefinementEngine.getPredicateUnifier(), mSimplificationTechnique,
 						mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(), null,
@@ -975,10 +972,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (!errorGeneralizationEnabled) {
 			return false;
 		}
-		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton<>(mServices,
-				mPref.interprocedural(), super.mCsToolkit, mPredicateFactory);
-		final INestedWordAutomaton<LETTER, IPredicate> cfg = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.mIcfg,
-				mStateFactoryForRefinement, super.mErrorLocs);
+		final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
+				mServices, super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(),
+				mPredicateFactory);
 		return mErrorGeneralizationEngine.isResultUnsafe(abstractResult, cfg, mCsToolkit, mPredicateFactory,
 				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable());

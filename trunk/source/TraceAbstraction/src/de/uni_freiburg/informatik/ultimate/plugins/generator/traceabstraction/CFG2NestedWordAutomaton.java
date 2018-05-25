@@ -27,10 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -50,54 +49,86 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	private static final boolean DEBUG_STORE_HISTORY = false;
 
-	private final IUltimateServiceProvider mServices;
-	private final CfgSmtToolkit mCsToolkit;
-	private final PredicateFactory mPredicateFactory;
-	private final boolean mInterprocedural;
-
-	public CFG2NestedWordAutomaton(final IUltimateServiceProvider services, final boolean interprocedural,
-			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory) {
-		mServices = Objects.requireNonNull(services);
-		mCsToolkit = Objects.requireNonNull(csToolkit);
-		mPredicateFactory = Objects.requireNonNull(predicateFactory);
-		mInterprocedural = interprocedural;
+	private CFG2NestedWordAutomaton() {
+		// do not instantiate
 	}
 
 	/**
-	 * Construct the control automata (see Trace Abstraction) for the program of rootNode. If mInterprocedural==false we
-	 * construct an automaton for each procedure otherwise we construct one nested word automaton for the whole program.
+	 * Construct the control automata (see Trace Abstraction) for the program of
+	 * rootNode. If mInterprocedural==false we construct an automaton for each
+	 * procedure otherwise we construct one nested word automaton for the whole
+	 * program.
 	 *
-	 * @param acceptingLocations locations for which the corresponding automaton state should be accepting
+	 * @param acceptingLocations
+	 *            locations for which the corresponding automaton state should be
+	 *            accepting
 	 *
 	 */
 	@SuppressWarnings("unchecked")
-	public INestedWordAutomaton<LETTER, IPredicate> getNestedWordAutomaton(final IIcfg<? extends IcfgLocation> icfg,
+	public static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomatonWithSPredicates(
+			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
 			final IStateFactory<IPredicate> automataStateFactory,
-			final Collection<? extends IcfgLocation> acceptingLocations) {
-		final boolean interprocedural = mInterprocedural;
+			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
+			final PredicateFactory predicateFactory) {
 		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
 
 		Function<IcfgLocation, IPredicate> predicateProvider;
-		final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
-		if (DEBUG_STORE_HISTORY) {
-			predicateProvider = x -> mPredicateFactory.newPredicateWithHistory(x, trueTerm,
-					new HashMap<Integer, Term>());
-		} else {
-			predicateProvider = x -> mPredicateFactory.newSPredicate(x, trueTerm);
-		}
+		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
+		predicateProvider = constructSPredicateProvider(predicateFactory, mgdScript);
 
-		return constructNwa(icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
+		return constructAutomaton(services, icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
 				predicateProvider);
 	}
 
-	private INestedWordAutomaton<LETTER, IPredicate> constructNwa(final IIcfg<? extends IcfgLocation> icfg,
+	public static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomatonWithDebugPredicates(
+			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
+			final IStateFactory<IPredicate> automataStateFactory,
+			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
+			final VpAlphabet<LETTER> vpAlphabet) {
+		final Function<IcfgLocation, IPredicate> predicateProvider = constructDebugPredicateProvider();
+		return constructAutomaton(services, icfg, automataStateFactory, acceptingLocations, false, vpAlphabet,
+				predicateProvider);
+	}
+
+	public static <LETTER> String printIcfg(final IUltimateServiceProvider services,
+			final IIcfg<? extends IcfgLocation> icfg) {
+		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, false);
+		final INestedWordAutomaton<LETTER, IPredicate> nwa = constructAutomatonWithDebugPredicates(services, icfg,
+				new PredicateFactoryResultChecking(new SmtFreePredicateFactory()), Collections.emptySet(), true,
+				vpAlphabet);
+		return nwa.toString();
+	}
+
+	private static Function<IcfgLocation, IPredicate> constructSPredicateProvider(
+			final PredicateFactory predicateFactory, final ManagedScript mgdScript) {
+		Function<IcfgLocation, IPredicate> predicateProvider;
+		final Term trueTerm = mgdScript.getScript().term("true");
+		if (DEBUG_STORE_HISTORY) {
+			predicateProvider = x -> {
+				return predicateFactory.newPredicateWithHistory(x, trueTerm, new HashMap<Integer, Term>());
+			};
+		} else {
+			predicateProvider = x -> predicateFactory.newSPredicate(x, trueTerm);
+		}
+		return predicateProvider;
+	}
+
+	private static Function<IcfgLocation, IPredicate> constructDebugPredicateProvider() {
+		final SmtFreePredicateFactory pf = new SmtFreePredicateFactory();
+		return x -> pf.newDebugPredicate(x.toString());
+	}
+
+	private static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
+			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
 			final IStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
 			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider) {
@@ -105,10 +136,9 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 
-
 		// construct the automaton
 		final NestedWordAutomaton<LETTER, IPredicate> nwa = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), vpAlphabet, automataStateFactory);
+				new AutomataLibraryServices(services), vpAlphabet, automataStateFactory);
 		final Map<IcfgLocation, IPredicate> nodes2States = new HashMap<>();
 
 		{
@@ -141,8 +171,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 								nwa.addReturnTransition(state, nodes2States.get(callerLocNode), (LETTER) returnEdge,
 										succState);
 							} else {
-								throw new AssertionError("Cannot add " + returnEdge + ", missing callerNode "
-										+ callerLocNode);
+								throw new AssertionError(
+										"Cannot add " + returnEdge + ", missing callerNode " + callerLocNode);
 							}
 						}
 					} else if (edge instanceof Summary) {
@@ -176,7 +206,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	 *            specification is given we use the trivial ("true") specification.
 	 * @return
 	 */
-	public VpAlphabet<LETTER> extractVpAlphabet(final IIcfg<? extends IcfgLocation> icfg,
+	public static <LETTER> VpAlphabet<LETTER> extractVpAlphabet(final IIcfg<? extends IcfgLocation> icfg,
 			final boolean intraproceduralAnalysis) {
 		final Set<LETTER> internalAlphabet = new HashSet<>();
 		final Set<LETTER> callAlphabet = new HashSet<>();

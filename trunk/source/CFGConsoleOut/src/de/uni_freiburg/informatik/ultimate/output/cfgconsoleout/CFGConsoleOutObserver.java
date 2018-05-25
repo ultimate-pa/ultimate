@@ -93,13 +93,11 @@ public class CFGConsoleOutObserver extends BaseObserver {
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, toolkit.getManagedScript(),
 				toolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final CFG2NestedWordAutomaton<IIcfgTransition<?>> cfg2nwa =
-				new CFG2NestedWordAutomaton<>(mServices, true, toolkit, predicateFactory);
 		final IStateFactory<IPredicate> stateFac = new PredicateFactoryRefinement(mServices, toolkit.getManagedScript(),
 				predicateFactory, false, Collections.emptySet());
 
-		final INestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa =
-				cfg2nwa.getNestedWordAutomaton(icfg, stateFac, IcfgUtils.getErrorLocations(icfg));
+		final INestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
+				mServices, icfg, stateFac, IcfgUtils.getErrorLocations(icfg), true, predicateFactory);
 		return nwa;
 	}
 

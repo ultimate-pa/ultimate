@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
@@ -114,12 +114,11 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 
 	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructCfgAutomaton(final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit) {
-		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton =
-				new CFG2NestedWordAutomaton<>(mServices, true, csToolkit, mPredicateFactory);
 		final Collection<IcfgLocation> allNodes = new HashSet<>();
 		for (final Map<String, IcfgLocation> prog2pp : rootNode.getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
-		return cFG2NestedWordAutomaton.getNestedWordAutomaton(rootNode, mPredicateFactoryRc, allNodes);
+		return CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, rootNode, mPredicateFactoryRc, allNodes, true,
+				mPredicateFactory);
 	}
 }
