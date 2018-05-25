@@ -89,6 +89,13 @@ public class ConditionGenerator {
 			}
 
 			// TODO: ccdOther.and primed state invariants from invariant patterns
+			// TODO: make the next line work for Boogie and/or smt
+			// 1 collect all primed variables
+			// (2 ensure that there are no events)
+			// 3 exists primed, events . formula
+			// 4 eliminate quantifiers
+			// 5 profit
+			// 6 if not true, build implication
 			final CDD cdd =
 					new VarRemoval().excludeEventsAndPrimedVars(cddOuter.and(primedInvariant, andCache), mPrimedVars);
 			if (cdd == CDD.TRUE) {
