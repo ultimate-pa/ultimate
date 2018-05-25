@@ -94,7 +94,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.ConditionGenerator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.CddConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
@@ -746,7 +746,7 @@ public class Req2BoogieTranslator {
 				Arrays.stream(subset).map(a -> a.getValue()).collect(Collectors.toSet());
 		assert automataSet.size() == subset.length;
 		final PhaseEventAutomata[] automata = automataSet.toArray(new PhaseEventAutomata[subset.length]);
-		final Expression expr = new ConditionGenerator(getPrimedVars(), automata, bl, primedInvariant).getResult();
+		final Expression expr = new CddConditionGenerator(getPrimedVars(), automata, bl, primedInvariant).getResult();
 		final ReqCheck check = createReqCheck(Spec.RTINCONSISTENT, subset);
 
 		if (expr == null) {

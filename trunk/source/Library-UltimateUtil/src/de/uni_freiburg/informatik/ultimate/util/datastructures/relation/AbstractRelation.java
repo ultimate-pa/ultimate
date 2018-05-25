@@ -266,7 +266,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	/**
 	 * @return the number of pairs (d,r) such that the first entry d coincides with the parameter domainElem.
 	 */
-	public int numberofPairsWithGivenDomainElement(final D domainElem) {
+	public int numberOfPairsWithGivenDomainElement(final D domainElem) {
 		if (getDomain().contains(domainElem)) {
 			return getImage(domainElem).size();
 		}

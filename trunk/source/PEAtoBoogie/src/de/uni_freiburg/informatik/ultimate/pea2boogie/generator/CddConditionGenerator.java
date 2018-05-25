@@ -47,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
-public class ConditionGenerator {
+public class CddConditionGenerator {
 	private final Collection<String> mPrimedVars;
 	private final Expression mResult;
 
-	public ConditionGenerator(final Collection<String> primedVars, final PhaseEventAutomata[] automata,
+	public CddConditionGenerator(final Collection<String> primedVars, final PhaseEventAutomata[] automata,
 			final BoogieLocation bl, final CDD primedInvariant) {
 		mPrimedVars = primedVars;
 		mResult = nonDLCGenerator(automata, bl, primedInvariant);

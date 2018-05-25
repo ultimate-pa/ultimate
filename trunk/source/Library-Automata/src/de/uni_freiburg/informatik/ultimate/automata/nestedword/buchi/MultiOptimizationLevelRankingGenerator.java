@@ -680,7 +680,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 				}
 			}
 			final int unbounded = mUnrestrictedMaxRank2DoubleDeckerWithRankInfo
-					.numberofPairsWithGivenDomainElement(Integer.MAX_VALUE);
+					.numberOfPairsWithGivenDomainElement(Integer.MAX_VALUE);
 			int rank;
 			int surplus;
 			if (LevelRankingState.isEven(highestBound)) {
@@ -693,7 +693,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 					surplus = 0;
 				} else {
 					surplus = mUnrestrictedMaxRank2DoubleDeckerWithRankInfo
-							.numberofPairsWithGivenDomainElement(highestBound);
+							.numberOfPairsWithGivenDomainElement(highestBound);
 				}
 				rank = highestBound - 1;
 			} else {
@@ -703,7 +703,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			while (rank >= i) {
 				assert LevelRankingState.isOdd(rank);
 				final int ddWithRank =
-						mUnrestrictedMaxRank2DoubleDeckerWithRankInfo.numberofPairsWithGivenDomainElement(rank);
+						mUnrestrictedMaxRank2DoubleDeckerWithRankInfo.numberOfPairsWithGivenDomainElement(rank);
 				surplus += (ddWithRank - 1);
 				if (surplus < 0) {
 					assert surplus == -1;

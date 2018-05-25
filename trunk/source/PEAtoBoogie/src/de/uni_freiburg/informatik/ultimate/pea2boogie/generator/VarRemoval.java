@@ -49,7 +49,7 @@ public class VarRemoval {
 		}
 
 		final CDD[] childs = cdd.getChilds();
-		final Decision decision = cdd.getDecision();
+		final Decision<?> decision = cdd.getDecision();
 		CDD decisionCDD = CDD.TRUE;
 		if (decision instanceof RangeDecision) {
 			final CDD[] newChilds = new CDD[childs.length];
@@ -73,7 +73,7 @@ public class VarRemoval {
 		}
 
 		final CDD[] childs = cdd.getChilds();
-		final Decision decision = cdd.getDecision();
+		final Decision<?> decision = cdd.getDecision();
 		CDD decisionCDD = CDD.TRUE;
 		if (decision instanceof RangeDecision) {
 			assert childs.length == 2;
@@ -115,7 +115,7 @@ public class VarRemoval {
 		}
 
 		final CDD[] childs = cdd.getChilds();
-		final Decision decision = cdd.getDecision();
+		final Decision<?> decision = cdd.getDecision();
 		final CDD result;
 		if (!(decision instanceof BoogieBooleanExpressionDecision) && (decision instanceof RangeDecision
 				|| (decision instanceof BooleanDecision & !primedVars.contains(decision.getVar())))) {
@@ -143,7 +143,7 @@ public class VarRemoval {
 		}
 
 		final CDD[] childs = cdd.getChilds();
-		final Decision decision = cdd.getDecision();
+		final Decision<?> decision = cdd.getDecision();
 		CDD decisionCDD = CDD.TRUE;
 		if (decision instanceof BooleanDecision & stateVars.contains(decision.getVar())) {
 			final CDD[] newChilds = new CDD[childs.length];
