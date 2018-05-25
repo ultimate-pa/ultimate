@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,10 +34,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -49,14 +46,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateNormalF
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Factory for construction of {@link IPredicate}s with unique serial numbers. Sometimes we need different
- * {@link IPredicate} objects with the same formulas. The serial number ensures that {@link IPredicate}s can be
- * different, can be used as a hash code and ease debugging.
+ * Factory for construction of {@link IPredicate}s that can also construct
+ * nontrivial predicates.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class BasicPredicateFactory {
+public class BasicPredicateFactory extends SmtFreePredicateFactory {
 
 	protected static final Set<IProgramVar> EMPTY_VARS = Collections.emptySet();
 	protected static final String[] NO_PROCEDURE = new String[0];
@@ -66,37 +62,22 @@ public class BasicPredicateFactory {
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
 
-	/**
-	 * Serial numbers for predicates start with 1, because 0 is reserved for the axioms.
-	 */
-	protected int mSerialNumberCounter = 1;
 
 	protected final IUltimateServiceProvider mServices;
 	protected final ManagedScript mMgdScript;
 	protected final ILogger mLogger;
-	protected final Term mDontCareTerm;
-	protected final Term mEmptyStackTerm;
 
 	public BasicPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
+		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-		mDontCareTerm = new AuxiliaryTerm("don't care");
-		mEmptyStackTerm = new AuxiliaryTerm("emptyStack");
 		mSymbolTable = symbolTable;
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-	}
-
-	protected Term getDontCareTerm() {
-		return mDontCareTerm;
-	}
-
-	protected int constructFreshSerialNumber() {
-		return mSerialNumberCounter++;
 	}
 
 	/**
@@ -116,13 +97,6 @@ public class BasicPredicateFactory {
 		return true;
 	}
 
-	public boolean isDontCare(final IPredicate pred) {
-		return pred.getFormula() == mDontCareTerm;
-	}
-
-	public boolean isDontCare(final Term term) {
-		return term == mDontCareTerm;
-	}
 
 	public BasicPredicate newPredicate(final Term term) {
 		assert term == mDontCareTerm
@@ -147,10 +121,6 @@ public class BasicPredicateFactory {
 		return new TermVarsProc(mDontCareTerm, EMPTY_VARS, NO_PROCEDURE, mDontCareTerm);
 	}
 
-	public DebugPredicate newDebugPredicate(final String debugMessage) {
-		return new DebugPredicate(debugMessage, constructFreshSerialNumber(), mDontCareTerm);
-	}
-
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
 		final Term conjunction = andTerm(inputPreds, SimplificationTechnique.NONE);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
@@ -161,7 +131,7 @@ public class BasicPredicateFactory {
 	public IPredicate and(final IPredicate... preds) {
 		return and(Arrays.asList(preds));
 	}
-	
+
 	public IPredicate and(final SimplificationTechnique st, final IPredicate... preds) {
 		return and(st, Arrays.asList(preds));
 	}
@@ -169,7 +139,7 @@ public class BasicPredicateFactory {
 	public IPredicate and(final Collection<IPredicate> preds) {
 		return newPredicate(andTerm(preds, SimplificationTechnique.NONE));
 	}
-	
+
 	public IPredicate and(final SimplificationTechnique st, final Collection<IPredicate> preds) {
 		return newPredicate(andTerm(preds, st));
 	}
@@ -219,51 +189,6 @@ public class BasicPredicateFactory {
 			return mDontCareTerm;
 		}
 		return SmtUtils.not(mScript, p.getFormula());
-	}
-
-	private static final class AuxiliaryTerm extends Term {
-
-		private final String mName;
-
-		private AuxiliaryTerm(final String name) {
-			super(0);
-			mName = name;
-		}
-
-		@Override
-		public Sort getSort() {
-			throw new UnsupportedOperationException("Auxiliary term has no sort");
-		}
-
-		@Override
-		public void toStringHelper(final ArrayDeque<Object> todo) {
-			throw new UnsupportedOperationException("Auxiliary term must not be subterm of other terms");
-		}
-
-		@Override
-		public TermVariable[] getFreeVars() {
-			throw new UnsupportedOperationException("Auxiliary term has no vars");
-		}
-
-		@Override
-		public Theory getTheory() {
-			throw new UnsupportedOperationException("Auxiliary term has no theory");
-		}
-
-		@Override
-		public String toString() {
-			return mName;
-		}
-
-		@Override
-		public String toStringDirect() {
-			return mName;
-		}
-
-		@Override
-		public int hashCode() {
-			throw new UnsupportedOperationException("Auxiliary term must not be contained in any collection");
-		}
 	}
 
 }
