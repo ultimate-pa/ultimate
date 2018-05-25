@@ -878,12 +878,16 @@ public class Req2BoogieTranslator {
 			return Collections.emptyList();
 		}
 
-		// get all automata that are invariant, prime their state invariant and conjugate the primed state invariant
-		final CDD primedStateInvariant = getPrimedStateInvariant();
+		// disable the usage of state invariants until we fix the CDD blowup
 
-		// get all automata that are not invariant, i.e. have more than 1 phase
-		final List<Entry<PatternType, PhaseEventAutomata>> entries = mReq2Automata.entrySet().stream()
-				.filter(a -> a.getValue().getPhases().length != 1).collect(Collectors.toList());
+		// // get all automata that are invariant, prime their state invariant and conjugate the primed state invariant
+		// final CDD primedStateInvariant = getPrimedStateInvariant();
+		//
+		// // get all automata that are not invariant, i.e. have more than 1 phase
+		// final List<Entry<PatternType, PhaseEventAutomata>> entries = mReq2Automata.entrySet().stream()
+		// .filter(a -> a.getValue().getPhases().length != 1).collect(Collectors.toList());
+		final CDD primedStateInvariant = CDD.TRUE;
+		final Set<Entry<PatternType, PhaseEventAutomata>> entries = mReq2Automata.entrySet();
 
 		final int count = entries.size();
 		mLogger.info((mReq2Automata.size() - count) + " requirements are invariant");
