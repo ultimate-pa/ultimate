@@ -40,6 +40,7 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
@@ -123,6 +124,32 @@ public class ExpressionFactory {
 			}
 		}
 		return new UnaryExpression(loc, resultType, operator, expr);
+	}
+
+	public static Expression newBinaryExpression(final ILocation loc, final Operator op,
+			final List<Expression> conditions) {
+		if (conditions == null || conditions.size() < 2) {
+			throw new IllegalArgumentException("Too few operators");
+		}
+		return newBinaryExpression(loc, op, conditions.stream());
+	}
+
+	public static Expression newBinaryExpression(final ILocation loc, final Operator op,
+			final Expression... conditions) {
+		if (conditions == null || conditions.length < 2) {
+			throw new IllegalArgumentException("Too few operators");
+		}
+		return newBinaryExpression(loc, op, Arrays.stream(conditions));
+	}
+
+	private static Expression newBinaryExpression(final ILocation loc, final Operator op,
+			final Stream<Expression> conditions) {
+		final Iterator<Expression> iter = conditions.iterator();
+		Expression result = iter.next();
+		while (iter.hasNext()) {
+			result = newBinaryExpression(loc, op, result, iter.next());
+		}
+		return result;
 	}
 
 	public static Expression newBinaryExpression(final ILocation loc, final Operator operator, final Expression left,
