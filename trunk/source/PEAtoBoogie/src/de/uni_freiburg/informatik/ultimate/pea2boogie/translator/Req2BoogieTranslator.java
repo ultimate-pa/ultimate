@@ -523,6 +523,11 @@ public class Req2BoogieTranslator {
 		} else {
 			assumeStateInv = null;
 		}
+
+		if (assumeClInv == null && assumeStateInv == null) {
+			return null;
+		}
+
 		return concatStmt(assumeClInv, assumeStateInv);
 	}
 
@@ -579,14 +584,16 @@ public class Req2BoogieTranslator {
 	 * Check the invariants of the given automaton. This is an if statement that first checks in which phase the
 	 * automaton is and then checks the corresponding invariants.
 	 *
+	 * @param patternType
+	 *
 	 * @param automaton
 	 *            the automaton to check.
 	 * @param bl
 	 *            The location information to correspond the generated source to the property.
 	 * @return The if statement checking the p
 	 */
-	private List<Statement> genInvariantGuards(final PhaseEventAutomata automaton, final String pcName,
-			final BoogieLocation bl) {
+	private List<Statement> genInvariantGuards(final PatternType patternType, final PhaseEventAutomata automaton,
+			final String pcName, final BoogieLocation bl) {
 		final Phase[] phases = automaton.getPhases();
 		assert phases.length > 0;
 		// TODO: Keep the if in this case; may be helpful for vacuity reason extraction
@@ -594,13 +601,18 @@ public class Req2BoogieTranslator {
 		// return Arrays.asList(genCheckPhaseInvariant(phases[0], bl));
 		// }
 
-		final Statement[] statements = new Statement[phases.length];
-		final Statement[] emptyArray = new Statement[0];
+		final List<Statement> statements = new ArrayList<>();
+		final Statement[] emptyElseBody = new Statement[0];
 		for (int i = 0; i < phases.length; i++) {
 			final Expression ifCon = genComparePhaseCounter(i, pcName, bl);
-			statements[i] = new IfStatement(bl, ifCon, genCheckPhaseInvariant(phases[i], bl), emptyArray);
+			final Statement[] ifBody = genCheckPhaseInvariant(phases[i], bl);
+			if (ifBody == null) {
+				mLogger.warn("phase without clock or state invariant for " + patternType);
+				continue;
+			}
+			statements.add(new IfStatement(bl, ifCon, ifBody, emptyElseBody));
 		}
-		return Collections.singletonList(joinIfSmts(statements, bl));
+		return Collections.singletonList(joinIfSmts(statements.toArray(new Statement[statements.size()]), bl));
 	}
 
 	private static Statement genReset(final String resetVar, final BoogieLocation bl) {
@@ -836,7 +848,7 @@ public class Req2BoogieTranslator {
 		stmtList.addAll(Arrays.asList(genDelay(bl)));
 
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mReq2Automata.entrySet()) {
-			stmtList.addAll(genInvariantGuards(entry.getValue(), getPcName(entry.getValue()), bl));
+			stmtList.addAll(genInvariantGuards(entry.getKey(), entry.getValue(), getPcName(entry.getValue()), bl));
 		}
 
 		stmtList.addAll(genChecksRTInconsistency(bl));
