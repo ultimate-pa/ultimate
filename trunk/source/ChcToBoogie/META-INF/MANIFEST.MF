@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ChcToBoogie
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.blockencoding;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.chctoboogie;singleton:=true
 Bundle-Version: 0.1.23
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.chctoboogie.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
