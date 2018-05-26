@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
@@ -75,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TaMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TreeAutomizerSettings;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences.TreeAutomizerPreferenceInitializer;
 
 /**
@@ -272,7 +272,7 @@ public class TreeAutomizerCEGAR {
 
 		final TreeRun<HornClause, IPredicate> treeRunWithInterpolants = mChecker
 				.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
-		
+
 		if (TreeAutomizerSettings.USE_RAW_INTERPOLANT_AUTOMATON) {
 			mInterpolAutomaton = treeRunWithInterpolants.getAutomaton(mStateFactory);
 		} else {

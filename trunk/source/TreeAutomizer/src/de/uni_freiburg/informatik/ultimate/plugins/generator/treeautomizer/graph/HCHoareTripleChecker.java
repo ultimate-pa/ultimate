@@ -88,21 +88,22 @@ public class HCHoareTripleChecker {
 	}
 
 
-	private Term getClosedPrecedent(final List<IPredicate> pre, final HornClause hornClause) {
-		mManagedScript.echo(this, new QuotedObject("starting Hoare triple check"));
-
-		Term preConditionFormula = mManagedScript.term(this, "true");
-
-		for (int i = 0; i < pre.size(); i++) {
-			final Term preCondConjunct = unify(pre.get(i), hornClause.getTermVariablesForPredPos(i));
-			final Term closedPreCondConjunct = close(preCondConjunct, mSymbolTable);
-			preConditionFormula = SmtUtils.and(mManagedScript.getScript(), preConditionFormula, closedPreCondConjunct);
-		}
-		mManagedScript.assertTerm(this, preConditionFormula);
-
-		return close(hornClause.getFormula(), mSymbolTable);
-
+	private Term assertPreconditionsAndGetConstraint(final List<IPredicate> pre, final HornClause hornClause) {
+		throw new AssertionError("TODO: rework");
+//		mManagedScript.echo(this, new QuotedObject("starting Hoare triple check"));
+//
+//		Term preConditionFormula = mManagedScript.term(this, "true");
+//
+//		for (int i = 0; i < pre.size(); i++) {
+//			final Term preCondConjunct = unify(pre.get(i), hornClause.getTermVariablesForPredPos(i));
+//			final Term closedPreCondConjunct = close(preCondConjunct, mSymbolTable);
+//			preConditionFormula = SmtUtils.and(mManagedScript.getScript(), preConditionFormula, closedPreCondConjunct);
+//		}
+//		mManagedScript.assertTerm(this, preConditionFormula);
+//
+//		return close(hornClause.getFormula(), mSymbolTable);
 	}
+
 	/**
 	 * Checks the validity of a Hoare triple that is given by a set of HCPredicates (precondition),
 	 * a HornClause (action), and a single HCPredicate (postcondition).
@@ -130,7 +131,7 @@ public class HCHoareTripleChecker {
 		mManagedScript.lock(this);
 		mManagedScript.push(this, 1);
 
-		final Term closedConstraint = getClosedPrecedent(pre, hornClause);
+		final Term closedConstraint = assertPreconditionsAndGetConstraint(pre, hornClause);
 		mManagedScript.assertTerm(this, closedConstraint);
 
 		final Term negatedPostConditionFormula = SmtUtils.not(mManagedScript.getScript(),
@@ -159,14 +160,14 @@ public class HCHoareTripleChecker {
 				 *  the variable was introduced at unification because we could not match all positions (because the
 				 *  predicate symbol in the Horn clause has lower arity than the current pre/postcondition predicate)
 				 */
-				substitution.put(fv, getExtraVar(fv));
+				substitution.put(fv, getExtraConst(fv));
 			}
 		}
 
 		return new Substitution(mManagedScript, substitution).transform(term);
 	}
 
-	private Term  getExtraVar(final TermVariable tv) {
+	private Term  getExtraConst(final TermVariable tv) {
 		Term result = mTvToExtraVar.get(tv);
 		if (result == null) {
 			final String freshConstantName = "c_any_" + tv.toString() /*.substring(2, fv.toString().length())*/ + "_" +

@@ -498,6 +498,7 @@
 		<module>../BoogiePLParser</module>
 		<module>../BoogiePreprocessor</module>
 		<module>../BoogiePrinter</module>
+		<module>../ChcToBoogie</module>
 		<module>../SMTInterpol</module>
 		<module>../TraceAbstraction</module>
 		<module>../TraceAbstractionConcurrent</module>

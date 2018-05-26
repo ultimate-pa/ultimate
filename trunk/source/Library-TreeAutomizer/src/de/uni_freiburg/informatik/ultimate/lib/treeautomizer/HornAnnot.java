@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TreeAutomizer Plugin grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
+package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,8 +33,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 

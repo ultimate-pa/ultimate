@@ -205,43 +205,45 @@ public class HCSSABuilder {
 	}
 
 	private SsaInfo buildSsaInfo(final HornClause rootSymbol, final List<ApplicationTerm> headPredConstants) {
-		final Map<Term, Term> substitution = new HashMap<>();
+		throw new AssertionError("TODO: rework");
 
-
-		for (int i = 0; i < rootSymbol.getTermVariablesForHeadPred().size(); i++) {
-			substitution.put(rootSymbol.getTermVariablesForHeadPred().get(i), headPredConstants.get(i));
-		}
-
-		final List<List<ApplicationTerm>> substitutionForBodyPred = new ArrayList<>();
-
-		for (int i = 0; i < rootSymbol.getBodyPredicates().size(); i++) {
-			final List<ApplicationTerm> subsForCurrentBodyPred = new ArrayList<>();
-			for (int j = 0; j < rootSymbol.getBodyPredToTermVariables().get(i).size(); j++) {
-				final TermVariable bptv = rootSymbol.getBodyPredToTermVariables().get(i).get(j);
-				if (substitution.keySet().contains(bptv)) {
-					// tv already in substitution because already present in head
-					subsForCurrentBodyPred.add((ApplicationTerm) substitution.get(bptv));
-				} else {
-					//
-					final ApplicationTerm fresh = getFreshConstant(bptv);
-					substitution.put(bptv, fresh);
-					subsForCurrentBodyPred.add(fresh);
-				}
-
-			}
-			assert subsForCurrentBodyPred.size() == rootSymbol.getBodyPredicates().get(i).getArity();
-			substitutionForBodyPred.add(Collections.unmodifiableList(subsForCurrentBodyPred));
-		}
-
-
-		/*
-		 *  the substituted formula has the ssa-renaming
-		 *  --> including the closing, i.e., constants instead of variables
-		 *  it contains fresh constants (unless all variabels from the head are unchanged in the body pos)
-		 */
-		final Term substitutedFormula = new Substitution(mScript, substitution).transform(rootSymbol.getFormula());
-
-		return new SsaInfo(rootSymbol, substitution, substitutedFormula, substitutionForBodyPred);
+//		final Map<Term, Term> substitution = new HashMap<>();
+//
+//
+//		for (int i = 0; i < rootSymbol.getTermVariablesForHeadPred().size(); i++) {
+//			substitution.put(rootSymbol.getTermVariablesForHeadPred().get(i), headPredConstants.get(i));
+//		}
+//
+//		final List<List<ApplicationTerm>> substitutionForBodyPred = new ArrayList<>();
+//
+//		for (int i = 0; i < rootSymbol.getBodyPredicates().size(); i++) {
+//			final List<ApplicationTerm> subsForCurrentBodyPred = new ArrayList<>();
+//			for (int j = 0; j < rootSymbol.getBodyPredToTermVariables().get(i).size(); j++) {
+//				final Term bptv = rootSymbol.getBodyPredToTermVariables().get(i).get(j);
+//				if (substitution.keySet().contains(bptv)) {
+//					// tv already in substitution because already present in head
+//					subsForCurrentBodyPred.add((ApplicationTerm) substitution.get(bptv));
+//				} else {
+//					//
+//					final ApplicationTerm fresh = getFreshConstant(bptv);
+//					substitution.put(bptv, fresh);
+//					subsForCurrentBodyPred.add(fresh);
+//				}
+//
+//			}
+//			assert subsForCurrentBodyPred.size() == rootSymbol.getBodyPredicates().get(i).getArity();
+//			substitutionForBodyPred.add(Collections.unmodifiableList(subsForCurrentBodyPred));
+//		}
+//
+//
+//		/*
+//		 *  the substituted formula has the ssa-renaming
+//		 *  --> including the closing, i.e., constants instead of variables
+//		 *  it contains fresh constants (unless all variabels from the head are unchanged in the body pos)
+//		 */
+//		final Term substitutedFormula = new Substitution(mScript, substitution).transform(rootSymbol.getFormula());
+//
+//		return new SsaInfo(rootSymbol, substitution, substitutedFormula, substitutionForBodyPred);
 	}
 
 	/**
