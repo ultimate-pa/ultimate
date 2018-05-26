@@ -32,14 +32,12 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -58,7 +56,7 @@ public class HornClauseCobody {
 	private boolean mFinalized = false;
 
 	private final List<HornClausePredicateSymbol> mPredicateSymbols;
-	private final List<List<TermVariable>> mPredicateSymbolToVariables;
+	private final List<List<Term>> mPredicateSymbolToVariables;
 
 	private final HornClauseParserScript mParserScript;
 
@@ -82,7 +80,7 @@ public class HornClauseCobody {
 		mPredicates = new ArrayList<>(original.mPredicates);
 		mPredicateSymbols = new ArrayList<>(original.mPredicateSymbols);
 		mPredicateSymbolToVariables = new ArrayList<>();
-		for (final List<TermVariable> l : original.mPredicateSymbolToVariables) {
+		for (final List<Term> l : original.mPredicateSymbolToVariables) {
 			mPredicateSymbolToVariables.add(new ArrayList<>(l));
 		}
 		mTransitions = new HashSet<>(original.mTransitions);
@@ -154,7 +152,7 @@ public class HornClauseCobody {
 	 * @param symbolTable
 	 * @return
 	 */
-	public List<List<TermVariable>> getPredicateToVars(final HCSymbolTable symbolTable) {
+	public List<List<Term>> getPredicateToVars(final HCSymbolTable symbolTable) {
 		computePredicates(symbolTable);
 		return mPredicateSymbolToVariables;
 
@@ -182,15 +180,16 @@ public class HornClauseCobody {
 			final HornClausePredicateSymbol bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
 					pred.getFunction().getName(), pred.getFunction().getParameterSorts());
 			mPredicateSymbols.add(bodySymbol);
-			for (final Term par : pred.getParameters()) {
-				assert par instanceof TermVariable;
-			}
-			final List<TermVariable> parameterTermVariables = Arrays.asList(pred.getParameters()).stream()
-					.map(t -> (TermVariable) t)
-					.collect(Collectors.toList());
+//			for (final Term par : pred.getParameters()) {
+//				assert par instanceof TermVariable;
+//			}
+			final List<Term> parameterTermVariables = Arrays.asList(pred.getParameters());
+//					.stream()
+//					.map(t -> (TermVariable) t)
+//					.collect(Collectors.toList());
 //			assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
 //					+ "duplicate arguments";
-			final List<TermVariable> bodyVars = parameterTermVariables;
+			final List<Term> bodyVars = parameterTermVariables;
 			mPredicateSymbolToVariables.add(bodyVars);
 		}
 		mFinalized = true;

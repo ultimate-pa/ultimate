@@ -40,7 +40,7 @@ public class HornClause implements IRankedLetter {
 
 	private final List<HornClausePredicateSymbol> mBodyPreds;
 
-	private final List<List<TermVariable>> mBodyPredToTermVariables;
+	private final List<List<Term>> mBodyPredToTermVariables;
 
 	/**
 	 * Stores for the predicate symbol in the head at every argument position of
@@ -68,13 +68,13 @@ public class HornClause implements IRankedLetter {
 	 * @param bodyPredToTermVariables
 	 */
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables) {
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables) {
 		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToTermVariables, false);
 	}
 
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
 			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables) {
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables) {
 		this(script, symbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToTermVariables, false);
 		assert headPred != null : "use other constructor for '... -> False' case";
 	}
@@ -98,7 +98,7 @@ public class HornClause implements IRankedLetter {
 	 */
 	private HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
 			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<TermVariable>> bodyPredToTermVariables,
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
 			final boolean dummy) {
 
 		mHornClauseSymbolTable = symbolTable;
@@ -111,7 +111,7 @@ public class HornClause implements IRankedLetter {
 		mHeadPredTermVariables = headVars.stream().map(var -> (TermVariable) ttf.transform(var))
 				.collect(Collectors.toList());
 		mBodyPredToTermVariables = bodyPredToTermVariables.stream()
-				.map(list -> list.stream().map(var -> (TermVariable) ttf.transform(var)).collect(Collectors.toList()))
+				.map(list -> list.stream().map(var -> ttf.transform(var)).collect(Collectors.toList()))
 				.collect(Collectors.toList());
 
 		// transfer the transition formula to the solver script
@@ -121,7 +121,15 @@ public class HornClause implements IRankedLetter {
 			mHornClauseSymbolTable.registerTermVariable(fv);
 		}
 		mHeadPredTermVariables.forEach(mHornClauseSymbolTable::registerTermVariable);
-		mBodyPredToTermVariables.forEach(tvs -> tvs.forEach(mHornClauseSymbolTable::registerTermVariable));
+		// TODO unclear
+//		mBodyPredToTermVariables.forEach(tvs -> tvs.forEach(mHornClauseSymbolTable::registerTermVariable));
+		for (final List<Term> ts : mBodyPredToTermVariables) {
+			for (final Term t : ts) {
+				if (t instanceof TermVariable) {
+					mHornClauseSymbolTable.registerTermVariable((TermVariable) t);
+				}
+			}
+		}
 
 		mHeadIsFalse = headPred == null;
 		mHeadPredicate = headPred;
@@ -147,15 +155,15 @@ public class HornClause implements IRankedLetter {
 		return mBodyPreds.size();
 	}
 
-	public TermVariable getPredArgTermVariable(final int predPos, final int argPos) {
+	public Term getPredArgTermVariable(final int predPos, final int argPos) {
 		return mBodyPredToTermVariables.get(predPos).get(argPos);
 	}
 
-	public List<TermVariable> getTermVariablesForPredPos(final int predPos) {
+	public List<Term> getTermVariablesForPredPos(final int predPos) {
 		return mBodyPredToTermVariables.get(predPos);
 	}
 
-	public List<List<TermVariable>> getBodyPredToTermVariables() {
+	public List<List<Term>> getBodyPredToTermVariables() {
 		return Collections.unmodifiableList(mBodyPredToTermVariables);
 	}
 

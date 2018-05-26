@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -360,7 +361,7 @@ public class HornClauseParserScript extends NoopScript {
 					if (isUninterpretedPredicateSymbol(fsym)) {
 						if (polarity) {
 							// head
-							final boolean headWasNull = head.setHead(lsAt);
+							final boolean headWasNull = head.setHead(mapFormulasToVars(head, lsAt));
 							if (!headWasNull) {
 								throw new AssertionError("two positive literals in a clause --> not Horn!");
 							}
@@ -460,7 +461,7 @@ public class HornClauseParserScript extends NoopScript {
 		}
 		final HornClauseBody head = new HornClauseBody(this);
 		if (isUninterpretedPredicateSymbol(((ApplicationTerm) term).getFunction())) {
-			if (!head.setHead(((ApplicationTerm) mapFormulasToVars(head, term)))) {
+			if (!head.setHead((mapFormulasToVars(head, term)))) {
 				throw new SMTLIBException("The head has more than one positive predicate symbols.");
 			}
 		} else if (((ApplicationTerm) term).getFunction().getName().equals("not") &&
@@ -486,7 +487,7 @@ public class HornClauseParserScript extends NoopScript {
 		return parsed.get(0);
 	}
 
-	private Term mapFormulasToVars(final HornClauseBody head, final Term term) {
+	private ApplicationTerm mapFormulasToVars(final HornClauseBody head, final Term term) {
 		final ApplicationTerm func = (ApplicationTerm) term;
 		final Term[] variables = new Term[func.getParameters().length];
 		for (int i = 0; i < variables.length; ++i) {
@@ -505,7 +506,7 @@ public class HornClauseParserScript extends NoopScript {
 				head.addTransitionFormula(this.term("=", variables[i], t));
 			}
 		}
-		final Term ret = this.term(func.getFunction().getName(), variables);
+		final ApplicationTerm ret = (ApplicationTerm) this.term(func.getFunction().getName(), variables);
 		return ret;
 	}
 	private Term mapFormulasToVars(final HornClauseCobody body, final Term term) {

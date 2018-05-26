@@ -97,7 +97,7 @@ public class HornClauseBody {
 //				: symbolTable.getFalseHornClausePredicateSymbol();
 
 		final List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
-		final List<List<TermVariable>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
+		final List<List<Term>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
 
 		if (mHead == null) {
 			return new HornClause(script, symbolTable,
