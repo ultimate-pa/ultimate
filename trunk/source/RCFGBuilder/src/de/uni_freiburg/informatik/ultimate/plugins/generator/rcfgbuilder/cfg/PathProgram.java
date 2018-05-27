@@ -170,11 +170,14 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	public static final class PathProgramConstructionResult {
 		private final PathProgram mPathProgram;
 		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
+		private final Map<IIcfgTransition<?>, IIcfgTransition<?>> mOldTransition2NewTransition;
 
 		private PathProgramConstructionResult(final PathProgram pathprogram,
-				final Map<IcfgLocation, IcfgLocation> oldLoc2NewLoc) {
+				final Map<IcfgLocation, IcfgLocation> oldLoc2NewLoc,
+				final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition) {
 			mPathProgram = pathprogram;
 			mOldLoc2NewLoc = oldLoc2NewLoc;
+			mOldTransition2NewTransition = oldTransition2NewTransition;
 		}
 
 		public PathProgram getPathProgram() {
@@ -182,14 +185,20 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		}
 
 		public Map<IcfgLocation, IcfgLocation> getLocationMapping() {
-			return mOldLoc2NewLoc;
+			return Collections.unmodifiableMap(mOldLoc2NewLoc);
 		}
+
+		public Map<IIcfgTransition<?>, IIcfgTransition<?>> getOldTransition2NewTransition() {
+			return Collections.unmodifiableMap(mOldTransition2NewTransition);
+		}
+
 	}
 
 	private static final class PathProgramConstructor {
 
 		private final IIcfg<?> mOriginalIcfg;
 		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
+		private final Map<IIcfgTransition<?>, IIcfgTransition<?>> mOldTransition2NewTransition;
 		private final Map<IIcfgTransition<?>, PathProgramCallAction<?>> mOldCall2NewCall;
 		private final DefaultIcfgSymbolTable mSymbolTable;
 		private final Set<String> mProcedures;
@@ -210,6 +219,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			mOriginalIcfg = Objects.requireNonNull(originalIcfg);
 
 			mOldLoc2NewLoc = new HashMap<>();
+			mOldTransition2NewTransition = new HashMap<>();
 			mOldCall2NewCall = new HashMap<>();
 			mSymbolTable = new DefaultIcfgSymbolTable();
 			mProcedures = new HashSet<>();
@@ -238,7 +248,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 
 			ModelUtils.copyAnnotations(originalIcfg, pp);
 
-			mResult = new PathProgramConstructionResult(pp, mOldLoc2NewLoc);
+			mResult = new PathProgramConstructionResult(pp, mOldLoc2NewLoc, mOldTransition2NewTransition);
 			assert !mResult.getPathProgram().getInitialNodes()
 					.isEmpty() : "You cannot have a path program that does not start at an initial location";
 		}
@@ -262,23 +272,26 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 
 		private IcfgEdge createPathProgramTransition(final IcfgLocation source, final IcfgLocation target,
 				final IIcfgTransition<?> transition) {
+			final IcfgEdge result;
 			if (transition instanceof IIcfgCallTransition<?>) {
 				final IIcfgCallTransition<?> calltrans = (IIcfgCallTransition<?>) transition;
 				addVarsToSymboltable(calltrans.getLocalVarsAssignment(), transition);
-				return new PathProgramCallAction<>(source, target, (IcfgEdge & ICallAction) transition);
+				result = new PathProgramCallAction<>(source, target, (IcfgEdge & ICallAction) transition);
 			} else if (transition instanceof IIcfgInternalTransition<?>) {
 				final IIcfgInternalTransition<?> intTrans = (IIcfgInternalTransition<?>) transition;
 				addVarsToSymboltable(intTrans.getTransformula(), transition);
-				return new PathProgramInternalAction<>(source, target, (IcfgEdge & IInternalAction) transition);
+				result = new PathProgramInternalAction<>(source, target, (IcfgEdge & IInternalAction) transition);
 			} else if (transition instanceof IIcfgReturnTransition<?, ?>) {
 				final IIcfgReturnTransition<?, ?> retTrans = (IIcfgReturnTransition<?, ?>) transition;
 				addVarsToSymboltable(retTrans.getAssignmentOfReturn(), transition);
 				final PathProgramCallAction<?> corrCall = mOldCall2NewCall.get(retTrans.getCorrespondingCall());
-				return new PathProgramReturnAction<>(source, target, corrCall, (IcfgEdge & IReturnAction) transition);
+				result = new PathProgramReturnAction<>(source, target, corrCall, (IcfgEdge & IReturnAction) transition);
 			} else {
 				throw new UnsupportedOperationException(
 						"Cannot create path program transition for " + transition.getClass().getSimpleName());
 			}
+			mOldTransition2NewTransition.put(transition, result);
+			return result;
 		}
 
 		private void addVarsToSymboltable(final UnmodifiableTransFormula transformula,
