@@ -100,6 +100,7 @@ public final class TraceAbstractionRefinementEngine<LETTER extends IIcfgTransiti
 		return mStrategy.getHoareTripleChecker();
 	}
 
+	@Override
 	public boolean somePerfectSequenceFound() {
 		return mStrategy.somePerfectSequenceFound();
 	}

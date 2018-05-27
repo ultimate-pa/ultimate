@@ -71,4 +71,6 @@ public interface IRefinementEngine<T> {
 	 * @return Hoare triple checker.
 	 */
 	IHoareTripleChecker getHoareTripleChecker();
+
+	boolean somePerfectSequenceFound();
 }
