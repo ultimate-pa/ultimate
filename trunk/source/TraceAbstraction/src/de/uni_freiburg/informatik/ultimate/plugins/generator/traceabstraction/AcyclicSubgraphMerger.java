@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.IcfgDuplicator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Merge an acyclic subgraph into a list of {@link UnmodifiableTransFormula}s.
@@ -98,7 +99,7 @@ public class AcyclicSubgraphMerger {
 				final Map<IcfgLocation, IcfgLocation> newLoc2oldLoc = backtranslator.getLocationMapping();
 				initialCopyWithOldStartLoc = new Subgraph(initialSubgraph, newCfg, newLoc2oldLoc);
 				final Map<IcfgEdge, IcfgEdge> newEdge2oldEdge = backtranslator.getEdgeMapping();
-				final Map<IcfgEdge, IcfgEdge> oldEdge2newEdge = constructReverseMapping(newEdge2oldEdge);
+				final Map<IcfgEdge, IcfgEdge> oldEdge2newEdge = DataStructureUtils.constructReverseMapping(newEdge2oldEdge);
 				subgraphEdgesInCopy = translate(subgraphEdges, oldEdge2newEdge);
 				if (startLocErrorEdge == null) {
 					startLocErrorEdgeInCopy = null;
@@ -138,7 +139,7 @@ public class AcyclicSubgraphMerger {
 			final PathProgramConstructionResult pc = PathProgram.constructPathProgram(identifier, initialCopy.getIcfg(),
 					subgraphEdgesInCopy);
 			final Map<IcfgLocation, IcfgLocation> copy2projection = pc.getLocationMapping();
-			final Map<IcfgLocation, IcfgLocation> projection2copy = constructReverseMapping(copy2projection);
+			final Map<IcfgLocation, IcfgLocation> projection2copy = DataStructureUtils.constructReverseMapping(copy2projection);
 			projection = new Subgraph(initialCopy, pc.getPathProgram(), projection2copy);
 		}
 
@@ -159,7 +160,7 @@ public class AcyclicSubgraphMerger {
 				.getSubgraphEndLocations().size()) {
 			throw new AssertionError("Either subgraph not acyclic or there is a bug");
 		}
-		
+
 		mEndloc2TransFormula = new HashMap<>();
 		for (final IcfgEdge startSucc : blockEncoded.getSubgraphStartLocation().getOutgoingEdges()) {
 			if (!blockEncoded.getSubgraphEndLocations().contains(startSucc.getTarget())) {
@@ -173,9 +174,6 @@ public class AcyclicSubgraphMerger {
 		}
 	}
 
-	private <K, V> Map<V, K> constructReverseMapping(final Map<K, V> map) {
-		return map.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-	}
 
 	/**
 	 * @return {@link UnmodifiableTransFormula} that represents the disjunction
@@ -207,7 +205,7 @@ public class AcyclicSubgraphMerger {
 				final Map<IcfgLocation, IcfgLocation> backtranslation) {
 			mIcfg = newIcfg;
 			mBacktranslation = backtranslation;
-			mForwardTranslation = constructReverseMapping(backtranslation);
+			mForwardTranslation = DataStructureUtils.constructReverseMapping(backtranslation);
 			mSubgraphStartLocation = mForwardTranslation.get(oldSubgraph.getSubgraphStartLocation());
 			Objects.requireNonNull(mSubgraphStartLocation);
 			mSubgraphEndLocations = translate(oldSubgraph.getSubgraphEndLocations(), mForwardTranslation);
