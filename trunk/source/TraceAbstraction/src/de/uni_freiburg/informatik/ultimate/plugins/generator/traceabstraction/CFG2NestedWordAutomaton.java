@@ -84,19 +84,29 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		Function<IcfgLocation, IPredicate> predicateProvider;
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		predicateProvider = constructSPredicateProvider(predicateFactory, mgdScript);
-
+		final Function<IIcfgTransition<?>, LETTER> transitionMapping = constructIdentityTransitionProvider();
 		return constructAutomaton(services, icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
-				predicateProvider);
+				predicateProvider, transitionMapping);
 	}
 
+	/**
+	 * @param newTransition2OldTransition If null then this method uses the identity to map input transitions to
+	 * result transitions.
+	 */
 	public static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomatonWithDebugPredicates(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
 			final IStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
-			final VpAlphabet<LETTER> vpAlphabet) {
+			final VpAlphabet<LETTER> vpAlphabet, final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition) {
 		final Function<IcfgLocation, IPredicate> predicateProvider = constructDebugPredicateProvider();
-		return constructAutomaton(services, icfg, automataStateFactory, acceptingLocations, false, vpAlphabet,
-				predicateProvider);
+		final Function<IIcfgTransition<?>, LETTER> transitionMapping;
+		if (newTransition2OldTransition == null) {
+			transitionMapping = constructIdentityTransitionProvider();
+		} else {
+			transitionMapping = constructMapBasedTransitionProvider(newTransition2OldTransition);
+		}
+		return constructAutomaton(services, icfg, automataStateFactory, acceptingLocations, interprocedural, vpAlphabet,
+				predicateProvider, transitionMapping);
 	}
 
 	public static <LETTER> String printIcfg(final IUltimateServiceProvider services,
@@ -104,7 +114,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, false);
 		final INestedWordAutomaton<LETTER, IPredicate> nwa = constructAutomatonWithDebugPredicates(services, icfg,
 				new PredicateFactoryResultChecking(new SmtFreePredicateFactory()), Collections.emptySet(), true,
-				vpAlphabet);
+				vpAlphabet, null);
 		return nwa.toString();
 	}
 
@@ -127,11 +137,21 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 		return x -> pf.newDebugPredicate(x.toString());
 	}
 
+	private static <LETTER> Function<IIcfgTransition<?>, LETTER> constructIdentityTransitionProvider() {
+		return x -> (LETTER) x;
+	}
+
+	private static <LETTER> Function<IIcfgTransition<?>, LETTER> constructMapBasedTransitionProvider(
+			final Map<IIcfgTransition<?>, IIcfgTransition<?>> mapping) {
+		return x -> (LETTER) mapping.get(x);
+	}
+
 	private static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
 			final IStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
-			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider) {
+			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider,
+			final Function<IIcfgTransition<?>, LETTER> letterProvider) {
 		final IcfgLocationIterator<?> iter = new IcfgLocationIterator<>(icfg);
 		final Set<IcfgLocation> allNodes = iter.asStream().collect(Collectors.toSet());
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
@@ -161,15 +181,15 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 					final IPredicate succState = nodes2States.get(succLoc);
 					if (edge instanceof IIcfgCallTransition<?>) {
 						if (interprocedural) {
-							nwa.addCallTransition(state, (LETTER) edge, succState);
+							nwa.addCallTransition(state, letterProvider.apply(edge), succState);
 						}
 					} else if (edge instanceof IIcfgReturnTransition<?, ?>) {
 						if (interprocedural) {
 							final IIcfgReturnTransition<?, ?> returnEdge = (IIcfgReturnTransition<?, ?>) edge;
 							final IcfgLocation callerLocNode = returnEdge.getCallerProgramPoint();
 							if (nodes2States.containsKey(callerLocNode)) {
-								nwa.addReturnTransition(state, nodes2States.get(callerLocNode), (LETTER) returnEdge,
-										succState);
+								nwa.addReturnTransition(state, nodes2States.get(callerLocNode),
+										letterProvider.apply(returnEdge), succState);
 							} else {
 								throw new AssertionError(
 										"Cannot add " + returnEdge + ", missing callerNode " + callerLocNode);
@@ -179,13 +199,13 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 						final Summary summaryEdge = (Summary) edge;
 						if (summaryEdge.calledProcedureHasImplementation()) {
 							if (!interprocedural) {
-								nwa.addInternalTransition(state, (LETTER) summaryEdge, succState);
+								nwa.addInternalTransition(state, letterProvider.apply(summaryEdge), succState);
 							}
 						} else {
-							nwa.addInternalTransition(state, (LETTER) summaryEdge, succState);
+							nwa.addInternalTransition(state, letterProvider.apply(summaryEdge), succState);
 						}
 					} else {
-						nwa.addInternalTransition(state, (LETTER) edge, succState);
+						nwa.addInternalTransition(state, letterProvider.apply(edge), succState);
 					}
 				}
 			}
