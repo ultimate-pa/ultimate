@@ -255,4 +255,13 @@ public class DataStructureUtils {
 		return result;
 	}
 
+
+	/**
+	 * Construct Map<V, K> that contains a pair (v,k) in the input contained the
+	 * pair (k,v). If the input is not injective the behavior is not specified.
+	 */
+	public static <K, V> Map<V, K> constructReverseMapping(final Map<K, V> map) {
+		return map.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+	}
+
 }
