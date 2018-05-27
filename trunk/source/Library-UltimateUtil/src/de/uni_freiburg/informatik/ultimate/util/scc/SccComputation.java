@@ -116,7 +116,14 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	}
 
 	/***
-	 * Get a successor provider for the SCCs
+	 * Get a successor provider for the SCCs.
+	 *
+	 * The result of this method is the projection of the input graph of this class instance to the SCCs computed by
+	 * this class.
+	 *
+	 * I.e. let G be the input graph for this class instance, the the result of this method represents this graph:
+	 *  { (scc1, scc2) | exists x, y. x in scc1, y in scc2, (x, y) in G, scc1 != scc2 }
+	 *
 	 * @return
 	 */
 	public ISuccessorProvider<COMP> getComponentsSuccessorsProvider() {
@@ -132,7 +139,10 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		for (final NODE source : mIndices.keySet()) {
 			final COMP comp = componentOf.get(source);
 			for (final NODE target : CombinatoricsUtils.iterateAll(mSuccessorProvider.getSuccessors(source))) {
-				adjComp.get(comp).add(componentOf.get(target));
+				final COMP targetComp = componentOf.get(target);
+				if (!comp.equals(targetComp)) {
+					adjComp.get(comp).add(targetComp);
+				}
 			}
 		}
 		return new ISuccessorProvider<COMP>() {

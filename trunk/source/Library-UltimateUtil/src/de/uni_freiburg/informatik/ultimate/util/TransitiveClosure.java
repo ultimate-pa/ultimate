@@ -40,6 +40,14 @@ import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
+/**
+ * Please see {@link TransitiveClosure#computeClosure} for documentation.
+ *
+ * TODO: find a better name for this class.
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class TransitiveClosure {
 
 	/**
@@ -109,6 +117,9 @@ public class TransitiveClosure {
 					.getComponentsSuccessorsProvider().getSuccessors(currentScc);
 			while (callers.hasNext()) {
 				final StronglyConnectedComponent<NODE> caller = callers.next();
+
+				assert !caller.equals(currentScc) : "graph not irreflexive, but must be acyclic";
+
 				frontier.add(caller);
 
 				for (final LABEL currentSccModGlobal : currentSccModGlobals) {
