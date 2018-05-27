@@ -52,8 +52,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -130,6 +132,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -573,6 +576,38 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 
 		minimizeAbstractionIfEnabled();
+
+		final boolean pathProgramShouldHaveBeenRemoved = mTraceCheckAndRefinementEngine.somePerfectSequenceFound()
+				&& mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE;
+		if (pathProgramShouldHaveBeenRemoved) {
+			final Set<LETTER> counterexampleLetters = mCounterexample.getWord().asSet();
+			final PathProgramConstructionResult ppcr = PathProgram.constructPathProgram(
+					"PathprogramSubtractedCheckIteration" + mIteration, mIcfg, counterexampleLetters);
+			final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition = ppcr
+					.getOldTransition2NewTransition();
+			final Map newTransition2OldTransition = DataStructureUtils
+					.constructReverseMapping(oldTransition2NewTransition);
+			final Map<IcfgLocation, IcfgLocation> oldLocation2NewLocation = ppcr.getLocationMapping();
+			final PathProgram pp = ppcr.getPathProgram();
+			final IcfgLocation errorLoc = ((ISLPredicate) mCounterexample.getStateSequence()
+					.get(mCounterexample.getStateSequence().size() - 1)).getProgramPoint();
+			final VpAlphabet<LETTER> newVpAlphabet = CFG2NestedWordAutomaton.extractVpAlphabet(mIcfg,
+					!mPref.interprocedural());
+			final VpAlphabet<LETTER> oldVpAlphabet = new VpAlphabet<>(newVpAlphabet, newTransition2OldTransition);
+			final INestedWordAutomaton<LETTER, IPredicate> pathProgramAutomaton = CFG2NestedWordAutomaton
+					.constructAutomatonWithDebugPredicates(mServices, pp, mPredicateFactoryResultChecking,
+							Collections.singleton(oldLocation2NewLocation.get(errorLoc)), mPref.interprocedural(),
+							newVpAlphabet, newTransition2OldTransition);
+			assert pathProgramAutomaton.getFinalStates().size() == 1 : "incorrect accepting states";
+			final INestedWordAutomaton<LETTER, IPredicate> intersection = new Intersect<LETTER, IPredicate>(
+					new AutomataLibraryServices(mServices), mPredicateFactoryResultChecking,
+					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, pathProgramAutomaton)
+							.getResult();
+			final Boolean isEmpty = new IsEmpty<>(new AutomataLibraryServices(mServices), intersection).getResult();
+			if (!isEmpty) {
+				throw new AssertionError("The path program was not subtracted.");
+			}
+		}
 
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
