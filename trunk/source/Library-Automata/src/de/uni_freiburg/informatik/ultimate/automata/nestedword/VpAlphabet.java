@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 
@@ -66,6 +68,19 @@ public class VpAlphabet<LETTER> {
 		mInternalAlphabet = internalAlphabet;
 		mCallAlphabet = Collections.emptySet();
 		mReturnAlphabet = Collections.emptySet();
+	}
+
+	/**
+	 * Constructor for copy where symbols are replaced according to a given mapping.
+	 *
+	 */
+	public VpAlphabet(final VpAlphabet<LETTER> vpAlphabet, final Map<LETTER, LETTER> mapping) {
+		mInternalAlphabet = vpAlphabet.getInternalAlphabet().stream().map(mapping::get)
+				.collect(Collectors.toSet());
+		mCallAlphabet = vpAlphabet.getCallAlphabet().stream().map(mapping::get)
+				.collect(Collectors.toSet());
+		mReturnAlphabet = vpAlphabet.getReturnAlphabet().stream().map(mapping::get)
+				.collect(Collectors.toSet());
 	}
 
 	/**
