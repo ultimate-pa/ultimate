@@ -105,7 +105,8 @@ public class ChcToBoogie implements IGenerator {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		throw new AssertionError("TODO implement");
+		// no preferences so far
+		return null;
 	}
 
 	@Override

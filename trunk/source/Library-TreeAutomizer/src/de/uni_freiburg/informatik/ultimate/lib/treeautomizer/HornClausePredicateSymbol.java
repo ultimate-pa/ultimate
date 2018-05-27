@@ -35,11 +35,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 /**
  * Represents an uninterpreted predicate symbol that appears in a set of Horn clauses. This class is the node class for
  * the Horn clause graph.
- * 
- * 
+ *
+ *
  * TODO: this effectively is a FunctionSymbol, right?.. (one might think it is theory-independent, but it is not because
  *   it stores the sorts)
- * 
+ *
  * @author nutz, mostafa-mahmoud
  *
  */
@@ -52,10 +52,10 @@ public class HornClausePredicateSymbol {
 	private final String mFunctionName;
 	private final List<Sort> mParameterSorts;
 
-	public HornClausePredicateSymbol(final HCSymbolTable symbolTable, 
+	public HornClausePredicateSymbol(final HCSymbolTable symbolTable,
 			final String functionName, final List<Sort> functionParameters) {
 		mFunctionName = functionName;
-		mParameterSorts = functionParameters;
+		mParameterSorts = Collections.unmodifiableList(functionParameters);
 //		List<HCVar> vars = new ArrayList<>();
 //		for (int i = 0; i < functionParameters.size(); i++) {
 //			vars.add(symbolTable.getOrConstructHCVar(this, i, functionParameters.get(i)));
@@ -71,22 +71,26 @@ public class HornClausePredicateSymbol {
 		return mParameterSorts.size();
 	}
 
+	public List<Sort> getParameterSorts() {
+		return mParameterSorts;
+	}
+
 	@Override
 	public String toString() {
 		return mFunctionName;
 	}
-	
+
 //	public List<HCVar> getHCVars() {
 //		return mVars;
 //	}
-	
+
 	public abstract static class HornClauseConstantPredicateSymbol extends HornClausePredicateSymbol {
 
-		public HornClauseConstantPredicateSymbol(HCSymbolTable symbolTable, String functionName,
-				List<Sort> functionParameters) {
+		public HornClauseConstantPredicateSymbol(final HCSymbolTable symbolTable, final String functionName,
+				final List<Sort> functionParameters) {
 			super(symbolTable, functionName, functionParameters);
 		}
-		
+
 	}
 
 	public static class HornClauseFalsePredicateSymbol extends HornClauseConstantPredicateSymbol {
@@ -131,9 +135,9 @@ public class HornClausePredicateSymbol {
 	}
 
 	public static class HornClauseDontCareSymbol extends HornClauseConstantPredicateSymbol {
-		
+
 		public HornClauseDontCareSymbol nextVersion() {
-			HornClauseDontCareSymbol ret = new HornClauseDontCareSymbol();
+			final HornClauseDontCareSymbol ret = new HornClauseDontCareSymbol();
 			return ret;
 		}
 		public HornClauseDontCareSymbol() {

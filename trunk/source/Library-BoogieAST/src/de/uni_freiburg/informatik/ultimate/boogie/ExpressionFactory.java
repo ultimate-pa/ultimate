@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckHelper;
@@ -1064,6 +1065,10 @@ public class ExpressionFactory {
 		private static BooleanLiteral toBooleanLiteral(final FunctionApplication node, final boolean value) {
 			return new BooleanLiteral(node.getLoc(), node.getType(), value);
 		}
+	}
+
+	public static Expression constructBooleanWildCardExpression(final ILocation loc) {
+		return new WildcardExpression(loc, BoogieType.TYPE_BOOL);
 	}
 
 }

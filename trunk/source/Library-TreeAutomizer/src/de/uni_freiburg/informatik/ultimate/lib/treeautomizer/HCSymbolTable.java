@@ -20,6 +20,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
+/**
+ * Stores runtime information concerning a set of constrained HornClauses centrally.
+ * Eg. to pass information from a parser of a Horn clause format to a plugin like {@link TreeAutomizer} or
+ * {@link ChcToBooge} this could be used.
+ *
+ * FIXME: it is rather dubitable if this should be called a symbol table, and should not extend one either..
+ *
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class HCSymbolTable extends DefaultIcfgSymbolTable {
 
 	private final ManagedScript mManagedScript;
@@ -51,7 +62,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 	}
 
 	final Map<TermVariable, Integer> mVersionsMap;
-	
+
 	public TermVariable createFreshVersion(final TermVariable var) {
 		int ver = 1;
 		if (mVersionsMap.containsKey(var)) {
@@ -59,7 +70,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 		}
 		return mManagedScript.constructFreshTermVariable(var.getName() + ver, var.getSort());
 	}
-	
+
 	public HCOutVar getOrConstructHCOutVar(final int argPos, final Sort sort) {
 		HCOutVar result = mArgPosToSortToHcOutVar.get(argPos, sort);
 
@@ -212,6 +223,10 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable {
 			throw new AssertionError();
 		}
 		return result;
+	}
+
+	public String getHeadVarName(final int i, final Sort sort) {
+		return "headvar_" + i + "_" + sort.getName();
 	}
 
 }

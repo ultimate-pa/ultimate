@@ -28,10 +28,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *   transition formula
  * </ul>
  *
- * Note that the uninterpreted predicate symbols may only have an arity and a
- * name. If in the formula there was a complex expression in one of the
- * arguments of the corresponding atom, this has to be encoded into the
- * transition formula.
+ * This class stores Horn clauses in a certain normal form:
+ * <ul>
+ *  <li> The arguments of the head predicate are a list of variables, which are determined by the argument position and
+ *    the sort of that argument in the head predicate's signature.
+ *      E.g. for two head predicates with the same signature, we have the same arguments.
+ *
+ * </ul>
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -163,7 +166,7 @@ public class HornClause implements IRankedLetter {
 		return mBodyPredToTermVariables.get(predPos);
 	}
 
-	public List<List<Term>> getBodyPredToTermVariables() {
+	public List<List<Term>> getBodyPredToArgs() {
 		return Collections.unmodifiableList(mBodyPredToTermVariables);
 	}
 
@@ -239,7 +242,7 @@ public class HornClause implements IRankedLetter {
 		return mBodyPreds.size();// mTransitionFormula.getInVars().size();
 	}
 
-	public Term getFormula() {
+	public Term getConstraintFormula() {
 		return mFormula;
 	}
 
