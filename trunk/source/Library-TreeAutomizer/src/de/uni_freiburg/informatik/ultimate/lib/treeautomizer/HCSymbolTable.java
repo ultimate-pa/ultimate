@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -299,7 +299,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 	@Override
 	public ILocation getLocation(final IProgramVar pv) {
-		return new DefaultLocation();
+		return new BoogieLocation(pv.getGloballyUniqueId(), 0, 0, 0, 0);
 	}
 
 	@Override

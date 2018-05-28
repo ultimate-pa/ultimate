@@ -28,12 +28,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.chctoboogie;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -54,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -97,12 +98,14 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	private TypeSortTranslator mTypeSortTanslator;
 	private HCSymbolTable mHcSymbolTable;
 	private Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final ILocation mLocation;
 
 	public ChcToBoogieObserver(final ILogger logger, final IUltimateServiceProvider services) {
 			//final ManagedScript managedScript) {
 		mLogger = logger;
 		mServices = services;
 		mNameOfMainEntryPointProc = "Ultimate.START";
+		mLocation = new BoogieLocation(this.getClass().getName(), 0, 0, 0, 0);
 	}
 
 	@Override
@@ -189,17 +192,17 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			final HashRelation<HornClausePredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
 
 		final List<Declaration> declarations = new ArrayList<>();
-		final DefaultLocation loc = new DefaultLocation();
+		final ILocation loc = getLoc();
 
 		for (final HornClausePredicateSymbol headPredSymbol : hornClauseHeadPredicateToHornClauses.getDomain()) {
 
 			List<Statement> nondetSwitch = null;
-			final List<VariableDeclaration> localVarDecs = new ArrayList<>();
+
+			final Set<HcBodyVar> allBodyPredVariables = new HashSet<>();
 
 			for (final HornClause hornClause : hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol)) {
 
-				final Set<HcBodyVar> bpvs = hornClause.getBodyPredVariables();
-				updateLocalVarDecs(localVarDecs, bpvs, loc);
+				allBodyPredVariables.addAll(hornClause.getBodyPredVariables());
 
 				final List<Statement> branchBody = new ArrayList<>();
 				final Statement assume =
@@ -222,6 +225,9 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 			final VarList[] inParams = getInParamsForHeadPredSymbol(loc, headPredSymbol);
 
+
+			final List<VariableDeclaration> localVarDecs = new ArrayList<>();
+			updateLocalVarDecs(localVarDecs, allBodyPredVariables, loc);
 
 			final VariableDeclaration[] localVars;
 			{
@@ -246,6 +252,10 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 		mBoogieUnit = new Unit(loc,
 				declarations.toArray(new Declaration[declarations.size()]));
+	}
+
+	private ILocation getLoc() {
+		return mLocation;
 	}
 
 	private void updateLocalVarDecs(final List<VariableDeclaration> localVarDecs, final Set<HcBodyVar> bpvs,
@@ -276,7 +286,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	 * @param headPredSym
 	 * @return
 	 */
-	private VarList[] getInParamsForHeadPredSymbol(final DefaultLocation loc,
+	private VarList[] getInParamsForHeadPredSymbol(final ILocation loc,
 			final HornClausePredicateSymbol headPredSym) {
 		final VarList[] result = new VarList[headPredSym.getArity()];
 //		for (HcHeadVar hchv : mHcSymbolTable.getHcHeadVarsForPredSym(headPredSym)) {
@@ -342,7 +352,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		if (nondetSwitch == null) {
 			return branchBody;
 		} else if (nondetSwitch.size() == 1 && nondetSwitch.get(0) instanceof IfStatement) {
-			final Statement[] oldIfStm = new Statement[] { nondetSwitch.remove(0)};
+			final Statement[] oldIfStm = new Statement[] { nondetSwitch.get(0)};
 
 			final Statement newIfStm = new IfStatement(loc,
 					ExpressionFactory.constructBooleanWildCardExpression(loc),
@@ -355,7 +365,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			final Statement newIfStm = new IfStatement(loc,
 					ExpressionFactory.constructBooleanWildCardExpression(loc),
 					nondetSwitch.toArray(new Statement[nondetSwitch.size()]),
-					branchBody.toArray(new Statement[nondetSwitch.size()]));
+					branchBody.toArray(new Statement[branchBody.size()]));
 
 			return Collections.singletonList(newIfStm);
 		}

@@ -78,7 +78,7 @@ public class HcHeadVar implements IProgramVar {
 		mProcName = headPredSymProcName;
 		mIndex = index;
 		mSort = sort;
-		mGloballyUniqueId = String.format("hcheadvar%d_%s", index, mSort);
+		mGloballyUniqueId = String.format("hcheadvar%s_%d_%s", headPredSymProcName, index, mSort);
 		mTermVariable = mgdScript.variable(mGloballyUniqueId, sort);
 		mDefaultConstant = ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, mGloballyUniqueId);
 		mPrimedConstant = null; //ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, mGloballyUniqueId);

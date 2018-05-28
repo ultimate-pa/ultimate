@@ -121,7 +121,7 @@ public class HornClauseBody {
 
 		if (mHead == null) {
 			return new HornClause(solverScript, symbolTable,
-				getTransitionFormula(parserScript),
+				getTransitionFormula(solverScript.getScript()),
 				cobodySymbols,
 				cobodyArgs,
 				coBodyVars);
@@ -145,7 +145,7 @@ public class HornClauseBody {
 		final List<HcHeadVar> bodyVars = symbolTable.getHcHeadVarsForPredSym(bodySymbol);
 
 		return new HornClause(solverScript, symbolTable,
-				getTransitionFormula(parserScript),
+				getTransitionFormula(solverScript.getScript()),
 				bodySymbol,
 				bodyVars,
 				cobodySymbols,
