@@ -31,7 +31,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -256,76 +255,6 @@ public class HornClauseParserScript extends NoopScript {
 		}
 	}
 
-	private List<HornClauseCobody> parseCobody(final Term term) throws SMTLIBException {
-		assert assertIsInDnf(term);
-
-//		final Term term = SmtUtils.toDnf(mServices, mManagedScript, inputTerm,
-//				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-
-		if (SmtUtils.isFunctionApplication(term, "or")) {
-			/*
-			 * We return a cobody for each
-			 * based on the equivalence "(A \/ B) -> C <=> A -> C /\ B -> C"
-			 * (we will copy the head accordingly..
-			 */
-			final ApplicationTerm at = ((ApplicationTerm) term);
-			final List<HornClauseCobody> result = new ArrayList<>();
-			for (final Term p : at.getParameters()) {
-				result.addAll(parseCobody(p));
-			}
-			return result;
-		} else if (SmtUtils.isFunctionApplication(term, "and")) {
-			// t = And (y1 y2 ... yn)
-			final HornClauseCobody tail = new HornClauseCobody(this);
-			for (final Term literal : ((ApplicationTerm) term).getParameters()) {
-				final List<HornClauseCobody> conjunctCobodies = parseCobody(literal);
-				assert conjunctCobodies.size() == 1 : "all input terms must be in dnf, then this assertion should hold";
-				tail.mergeCobody(conjunctCobodies.get(0));
-			}
-			return Collections.singletonList(tail);
-		}
-		final HornClauseCobody tail = new HornClauseCobody(this);
-		if (term instanceof ApplicationTerm && isUninterpretedPredicateSymbol(((ApplicationTerm) term).getFunction())) {
-			// yi = I
-			// TODO recheck if we should take function or term
-			tail.addPredicate((ApplicationTerm) mapFormulasToVars(tail, term));
-		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("not") &&
-				isUninterpretedPredicateSymbol((((ApplicationTerm) ((ApplicationTerm) term).getParameters()[0]).getFunction()))) {
-			throw new SMTLIBException("The cobody has a negative predicate.");
-		} else if (term instanceof QuantifiedFormula){
-			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
-			if (thisTerm.getQuantifier() == FORALL) {
-				final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap(thisTerm);
-				final Substitution subs = new Substitution(this, tempVars);
-
-				final List<HornClauseCobody> conjunctCobodies = parseCobody(subs.transform(thisTerm.getSubformula()));
-				assert conjunctCobodies.size() == 1 : "all input terms must be in dnf, then this assertion should hold";
-
-				tail.mergeCobody(conjunctCobodies.get(0));
-				resetTempVariables(thisTerm, tempVars);
-			} else {
-				throw new SMTLIBException("Nested exists quantified, ungrammatical");
-			}
-		} else {
-			// yi = formula
-			tail.addTransitionFormula(term);
-		}
-
-		return Collections.singletonList(tail);
-	}
-
-	private boolean assertIsInDnf(final Term inputTerm) {
-		final Term dnf = SmtUtils.toDnf(mServices, mManagedScript, inputTerm,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		if (inputTerm != dnf) {
-			assert false;
-			return false;
-		}
-
-		return true;
-	}
-
-
 	private List<HornClauseBody> parseCnf(final Term term) throws SMTLIBException {
 		final List<HornClauseBody> result = new ArrayList<>();
 
@@ -386,105 +315,6 @@ public class HornClauseParserScript extends NoopScript {
 		}
 
 		return result;
-	}
-
-	private List<HornClauseBody> parseBody(final Term term) throws SMTLIBException {
-		System.err.println(term);
-
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("=>")) {
-			// implication
-			final List<HornClauseBody> heads = parseBody(((ApplicationTerm) term).getParameters()[1]);
-			assert heads.size() == 1 : "todo: implement: break this up further";
-			final HornClauseBody head = heads.get(0);
-
-			final Term lhs = ((ApplicationTerm) term).getParameters()[0];
-			final Term lhsDnf = SmtUtils.toDnf(mServices, mManagedScript, lhs, mXnfConversionTechnique);
-			final List<HornClauseCobody> tails = parseCobody(lhsDnf);
-
-			final List<HornClauseBody> parsedBodies = new ArrayList<>();
-			for (final HornClauseCobody tail : tails) {
-				final HornClauseBody headCopy = new HornClauseBody(head);
-				headCopy.mergeCobody(tail);
-				parsedBodies.add(headCopy);
-			}
-
-			return parsedBodies;
-		} else if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("or")) {
-			// t = Or (y1 ... yn)
-			final HornClauseBody head = new HornClauseBody(this);
-			for (final Term literal : ((ApplicationTerm) term).getParameters()) {
-				if (literal instanceof ApplicationTerm){
-					final ApplicationTerm par = (ApplicationTerm) literal;
-					if (isUninterpretedPredicateSymbol(par.getFunction())) {
-						// yi = I
-						if (!head.setHead(par)) {
-							throw new SMTLIBException("The head has more than a positive predicate symbol.");
-						}
-					} else if (par.getFunction().getName().equals("not") &&
-							isUninterpretedPredicateSymbol(((ApplicationTerm) par.getParameters()[0]).getFunction())) {
-						// yi = ~I
-						head.addPredicateToCobody((ApplicationTerm) par.getParameters()[0]);
-					} else {
-						// yi = formula
-						if (!par.equals(getTheory().mFalse)) {
-							head.addTransitionFormula(getTheory().not(par));
-						}
-					}
-				} else {
-					final HornClauseCobody cobody = parseOneCobody(literal);
-					head.mergeCobody(cobody);
-				}
-			}
-			return Collections.singletonList(head);
-		} else if (term instanceof QuantifiedFormula) {
-			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
-			final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap((QuantifiedFormula) term);
-			final Substitution subs = new Substitution(this, tempVars);
-			final HornClauseBody body = parseOneBody(subs.transform(thisTerm.getSubformula()));
-			resetTempVariables(thisTerm, tempVars);
-			return Collections.singletonList(body);
-		} else if (SmtUtils.isFunctionApplication(term, "not")) {
-			final Term nested = ((ApplicationTerm) term).getParameters()[0];
-			if (nested instanceof QuantifiedFormula) {
-				final QuantifiedFormula thisTerm = (QuantifiedFormula) nested;
-				if (thisTerm.getQuantifier() == EXISTS) {
-					final Map<TermVariable, TermVariable> tempVars = getTempVariablesMap((QuantifiedFormula) term);
-					final Substitution subs = new Substitution(this, tempVars);
-					final HornClauseCobody cobody = parseOneCobody(subs.transform(thisTerm.getSubformula()));
-					final HornClauseBody body = cobody.negate();
-					resetTempVariables(thisTerm, tempVars);
-					return Collections.singletonList(body);
-				} else {
-					throw new SMTLIBException("Unhandled nested negated forall expression, ungrammatical");
-				}
-			}
-		}
-		final HornClauseBody head = new HornClauseBody(this);
-		if (isUninterpretedPredicateSymbol(((ApplicationTerm) term).getFunction())) {
-			if (!head.setHead((mapFormulasToVars(head, term)))) {
-				throw new SMTLIBException("The head has more than one positive predicate symbols.");
-			}
-		} else if (((ApplicationTerm) term).getFunction().getName().equals("not") &&
-				isUninterpretedPredicateSymbol(((ApplicationTerm) ((ApplicationTerm) term).getParameters()[0]).getFunction())) {
-			head.addPredicateToCobody((ApplicationTerm) ((ApplicationTerm) term).getParameters()[0]);
-		} else {
-			if (!((ApplicationTerm) term).equals(getTheory().mFalse)) {
-				head.addTransitionFormula(getTheory().not((term)));
-			}
-		}
-		return Collections.singletonList(head);
-	}
-
-	private HornClauseBody parseOneBody(final Term term) {
-		final List<HornClauseBody> parsed = parseBody(term);
-		assert parsed.size() == 1;
-		return parsed.get(0);
-	}
-
-	private HornClauseCobody parseOneCobody(final Term literal) {
-		final List<HornClauseCobody> parsed = parseCobody(literal);
-		assert parsed.size() == 1;
-		return parsed.get(0);
 	}
 
 	private ApplicationTerm mapFormulasToVars(final HornClauseBody head, final Term term) {
