@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCOutVar;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -51,30 +50,31 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * A factory for HornClause Predicates.
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
  */
 public class HCPredicateFactory extends PredicateFactory {
 
-	private ManagedScript mBackendSmtSolverScript;
-	private HCPredicate mDontCarePredicate;
-	private HCPredicate mTruePredicate;
-	private HCPredicate mFalsePredicate;
-	private HCSymbolTable mHCSymbolTable;
+	private final ManagedScript mBackendSmtSolverScript;
+	private final HCPredicate mDontCarePredicate;
+	private final HCPredicate mTruePredicate;
+	private final HCPredicate mFalsePredicate;
+	private final HCSymbolTable mHCSymbolTable;
 
 	/**
 	 * The constructor of HornClause Factory
-	 * 
+	 *
 	 * @param services
 	 * @param mgdScript
 	 * @param symbolTable
 	 * @param simplificationTechnique
 	 * @param xnfConversionTechnique
 	 */
-	public HCPredicateFactory(IUltimateServiceProvider services, ManagedScript mgdScript, HCSymbolTable symbolTable,
-			SimplificationTechnique simplificationTechnique, XnfConversionTechnique xnfConversionTechnique) {
+	public HCPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final HCSymbolTable symbolTable,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 		mBackendSmtSolverScript = mgdScript;
 		mHCSymbolTable = symbolTable;
@@ -91,12 +91,12 @@ public class HCPredicateFactory extends PredicateFactory {
 
 	/**
 	 * Create a True predicate with symbol.
-	 * 
+	 *
 	 * @param headPredicate
 	 *            The given symbol
 	 * @return The new true HCPredicate
 	 */
-	public HCPredicate createTruePredicateWithLocation(HornClausePredicateSymbol headPredicate) {
+	public HCPredicate createTruePredicateWithLocation(final HornClausePredicateSymbol headPredicate) {
 		mBackendSmtSolverScript.lock(this);
 		final HCPredicate result = newPredicate(headPredicate, mBackendSmtSolverScript.term(this, "true"),
 				Collections.emptyList());
@@ -126,11 +126,11 @@ public class HCPredicateFactory extends PredicateFactory {
 		return newPredicate(Collections.singleton(loc), serialNumber, term, vars);
 	}
 
-	public HCPredicate newPredicate(final Set<HornClausePredicateSymbol> loc, 
+	public HCPredicate newPredicate(final Set<HornClausePredicateSymbol> loc,
 			final Term term, final List<TermVariable> vars) {
 		return newPredicate(loc, 0, term, vars);
 	}
-	public HCPredicate newPredicate(final Set<HornClausePredicateSymbol> loc, final int serialNumber, 
+	public HCPredicate newPredicate(final Set<HornClausePredicateSymbol> loc, final int serialNumber,
 			final Term term, final List<TermVariable> vars) {
 		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars);
 
@@ -141,7 +141,7 @@ public class HCPredicateFactory extends PredicateFactory {
 
 	/***
 	 * Create a new HCPredicate from a predicate symbol and the formulas.
-	 * 
+	 *
 	 * @param sym
 	 *            The predicate symbol
 	 * @param term
@@ -156,8 +156,8 @@ public class HCPredicateFactory extends PredicateFactory {
 
 	private Term computeClosedFormula(final Term formula) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (TermVariable fv : formula.getFreeVars()) {
-			ApplicationTerm defaultConstantForFv = mSymbolTable.getProgramVar(fv).getDefaultConstant();
+		for (final TermVariable fv : formula.getFreeVars()) {
+			final ApplicationTerm defaultConstantForFv = mSymbolTable.getProgramVar(fv).getDefaultConstant();
 			substitutionMapping.put(fv, defaultConstantForFv);
 		}
 		return new Substitution(mBackendSmtSolverScript, substitutionMapping).transform(formula);
@@ -166,7 +166,7 @@ public class HCPredicateFactory extends PredicateFactory {
 	/**
 	 * When we construct a HCPredicate from a formula, then there are two cases:
 	 * - the formula is already normalized, i.e., each of its free .. TODO..
-	 * 
+	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
 	 */
@@ -174,14 +174,15 @@ public class HCPredicateFactory extends PredicateFactory {
 		private final Term mNormalizedTerm;
 		private final Set<IProgramVar> mProgramVars;
 
-		public ComputeHcOutVarsAndNormalizeTerm(Term formula, List<TermVariable> variables) {
+		public ComputeHcOutVarsAndNormalizeTerm(final Term formula, final List<TermVariable> variables) {
 			final Map<Term, Term> normalizingSubstitution = new HashMap<>();
 			final Set<IProgramVar> hcOutVars = new HashSet<>();
 
 			for (int i = 0; i < variables.size(); i++) {
-				final HCOutVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
-				hcOutVars.add(hcOutVar);
-				normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
+				throw new AssertionError("TODO: rework");
+//				final HcBodyVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
+//				hcOutVars.add(hcOutVar);
+//				normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
 			}
 
 			mNormalizedTerm = new Substitution(mScript, normalizingSubstitution).transform(formula);

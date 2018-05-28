@@ -30,12 +30,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -43,13 +46,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -58,15 +64,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcBodyVar;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -84,29 +90,19 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 	private Unit mBoogieUnit;
 
-	private final Term2Expression mTerm2Expression;
+	private Term2Expression mTerm2Expression;
 	private HornClausePredicateSymbol mBottomPredSym;
-	private String mNameOfMainEntryPointProc;
-	private final ManagedScript mManagedScript;
-	private final TypeSortTranslator mTypeSortTanslator;
+	private final String mNameOfMainEntryPointProc;
+	private ManagedScript mManagedScript;
+	private TypeSortTranslator mTypeSortTanslator;
 	private HCSymbolTable mHcSymbolTable;
+	private Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 
 	public ChcToBoogieObserver(final ILogger logger, final IUltimateServiceProvider services) {
 			//final ManagedScript managedScript) {
 		mLogger = logger;
 		mServices = services;
-
-		mManagedScript = null;
-
-		mTypeSortTanslator = new TypeSortTranslator(Collections.emptySet(),
-				mManagedScript.getScript(), mServices);
-
-
-		final BoogieDeclarations boogieDeclarations = null;//new BoogieDeclarations(unit, logger);
-		final Boogie2SmtSymbolTable boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations,
-				mManagedScript, mTypeSortTanslator);
-
-		mTerm2Expression = new Term2Expression(mTypeSortTanslator, boogie2SmtSymbolTable, mManagedScript);
+		mNameOfMainEntryPointProc = "Ultimate.START";
 	}
 
 	@Override
@@ -144,9 +140,40 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 		mBottomPredSym = mHcSymbolTable.getFalseHornClausePredicateSymbol();
 
+
+		mManagedScript = annot.getScript();
+
+		{
+			final HashRelation<Sort, IBoogieType> sortToType = new HashRelation<>();
+			sortToType.addPair(mManagedScript.getScript().sort("Int"), BoogieType.TYPE_INT);
+			sortToType.addPair(mManagedScript.getScript().sort("Real"), BoogieType.TYPE_REAL);
+			sortToType.addPair(mManagedScript.getScript().sort("Bool"), BoogieType.TYPE_BOOL);
+			mTypeSortTanslator = new TypeSortTranslator(sortToType, mManagedScript.getScript(), mServices);
+		}
+
+
+//		{
+//			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations,
+//					mManagedScript, mTypeSortTanslator);
+//		}
+
+
+//		mTerm2Expression = new Term2Expression(mTypeSortTanslator, mBoogie2SmtSymbolTable, mManagedScript);
+		mTerm2Expression = new Term2Expression(mTypeSortTanslator, mHcSymbolTable, mManagedScript);
+
+
+
+		final HashRelation<HornClausePredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
+				sortHornClausesByHeads(hornClausesRaw);
+
+		generateBoogieAst(hornClauseHeadPredicateToHornClauses);
+
+		return true;
+	}
+
+	public HashRelation<HornClausePredicateSymbol, HornClause> sortHornClausesByHeads(final List<HornClause> hornClausesRaw) {
 		final HashRelation<HornClausePredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
 				new HashRelation<>();
-
 
 		for (final HornClause hc : hornClausesRaw) {
 			if (hc.isHeadFalse()) {
@@ -155,13 +182,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 				hornClauseHeadPredicateToHornClauses.addPair(hc.getHeadPredicate(), hc);
 			}
 		}
-
-
-		generateBoogieAst(hornClauseHeadPredicateToHornClauses);
-
-
-
-		return true;
+		return hornClauseHeadPredicateToHornClauses;
 	}
 
 	private void generateBoogieAst(
@@ -172,11 +193,13 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 		for (final HornClausePredicateSymbol headPredSymbol : hornClauseHeadPredicateToHornClauses.getDomain()) {
 
-
 			List<Statement> nondetSwitch = null;
-			final List<VariableDeclaration> localVarDecs = null;
+			final List<VariableDeclaration> localVarDecs = new ArrayList<>();
 
 			for (final HornClause hornClause : hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol)) {
+
+				final Set<HcBodyVar> bpvs = hornClause.getBodyPredVariables();
+				updateLocalVarDecs(localVarDecs, bpvs, loc);
 
 				final List<Statement> branchBody = new ArrayList<>();
 				final Statement assume =
@@ -187,14 +210,8 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 					final HornClausePredicateSymbol bodyPredSym = hornClause.getBodyPredicates().get(i);
 					final List<Term> bodyPredArgs = hornClause.getBodyPredToArgs().get(i);
 
-//					for (final Term bpa : bodyPredArgs) {
-//						for (final TermVariable fv : bpa.getFreeVars()) {
-//
-//						}
-//					}
-					updateLocalVarDecs(localVarDecs, bodyPredArgs);
-
-					final CallStatement call = new CallStatement(loc, false, null, predSymToMethodName(bodyPredSym),
+					final CallStatement call = new CallStatement(loc, false, new VariableLHS[0],
+							predSymToMethodName(bodyPredSym),
 							bodyPredArgs.stream().map(t -> mTerm2Expression.translate(t)).collect(Collectors.toList())
 								.toArray(new Expression[bodyPredArgs.size()]));
 					branchBody.add(call);
@@ -208,17 +225,19 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 			final VariableDeclaration[] localVars;
 			{
-
-				localVars = localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
+				localVars = localVarDecs == null
+						? new VariableDeclaration[0]
+						: localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
 			}
 
+			assert !nondetSwitch.stream().anyMatch(Objects::isNull);
 			final Statement[] block = nondetSwitch.toArray(new Statement[nondetSwitch.size()]);
 			final Body body = new Body(loc, localVars, block);
 
 			final Procedure proc =
-					new Procedure(loc, null, predSymToMethodName(headPredSymbol), null,
+					new Procedure(loc, new Attribute[0], predSymToMethodName(headPredSymbol), new String[0],
 							inParams, new VarList[0],
-							null, body);
+							new Specification[0], body);
 			declarations.add(proc);
 		}
 
@@ -229,14 +248,24 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 				declarations.toArray(new Declaration[declarations.size()]));
 	}
 
-	private void updateLocalVarDecs(final List<VariableDeclaration> localVarDecs, final List<Term> bodyPredArgs) {
-		for (final Term bpa : bodyPredArgs) {
-			for (final TermVariable fv : bpa.getFreeVars()) {
+	private void updateLocalVarDecs(final List<VariableDeclaration> localVarDecs, final Set<HcBodyVar> bpvs,
+			final ILocation loc) {
+		for (final HcBodyVar bodyPredVar : bpvs) {
+//			final String boogieVarName = bodyPredVar.getName();
+			final String boogieVarName = bodyPredVar.getGloballyUniqueId();
+			final Sort sort = bodyPredVar.getSort();
+			final VarList varList = new VarList(loc, new String[] { boogieVarName }, getCorrespondingAstType(loc, sort));
 
-			}
+//			mManagedScript.lock(mBoogie2SmtSymbolTable);
+//			final LocalBoogieVar boogieVar = mBoogie2SmtSymbolTable.constructLocalBoogieVar(boogieVarName, procName,
+//					mTypeSortTanslator.getType(sort), varList,
+//					new DeclarationInformation(StorageClass.LOCAL, procName));
+//			mManagedScript.unlock(mBoogie2SmtSymbolTable);
+
+			localVarDecs.add(new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList }));
 		}
-
 	}
+
 
 	/**
 	 * For each procedure we create here, the inParams are determined by the signature of the HornClausePredicateSymbol
@@ -249,18 +278,28 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	 */
 	private VarList[] getInParamsForHeadPredSymbol(final DefaultLocation loc,
 			final HornClausePredicateSymbol headPredSym) {
-
 		final VarList[] result = new VarList[headPredSym.getArity()];
-
+//		for (HcHeadVar hchv : mHcSymbolTable.getHcHeadVarsForPredSym(headPredSym)) {
 		for (int i = 0; i < headPredSym.getArity(); i++) {
-			final Sort sort = headPredSym.getParameterSorts().get(i);
+			final HcHeadVar hchv = mHcSymbolTable.getHcHeadVarsForPredSym(headPredSym).get(i);
+			final Sort sort = hchv.getTermVariable().getSort();
 			final ASTType correspondingType = getCorrespondingAstType(loc, sort);
-			final String varName = getHeadVarName(i, sort);
-			final VarList vl = new VarList(loc, new String[] { varName }, correspondingType);
+			final VarList vl = new VarList(loc, new String[] { hchv.getGloballyUniqueId() }, correspondingType);
 			result[i] = vl;
 		}
-
 		return result;
+
+//		final VarList[] result = new VarList[headPredSym.getArity()];
+//
+//		for (int i = 0; i < headPredSym.getArity(); i++) {
+//			final Sort sort = headPredSym.getParameterSorts().get(i);
+//			final ASTType correspondingType = getCorrespondingAstType(loc, sort);
+//			final String varName = getHeadVarName(i, sort);
+//			final VarList vl = new VarList(loc, new String[] { varName }, correspondingType);
+//			result[i] = vl;
+//		}
+//
+//		return result;
 	}
 
 	private ASTType getCorrespondingAstType(final ILocation loc, final Sort sort) {
@@ -282,7 +321,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 	private Declaration constructMainEntryPointProcedure(final ILocation loc) {
 
-		final Statement callToBottomProc = new CallStatement(loc, false, null, predSymToMethodName(mBottomPredSym),
+		final Statement callToBottomProc = new CallStatement(loc, false, new VariableLHS[0], predSymToMethodName(mBottomPredSym),
 				new Expression[0]);
 
 		final Statement assertFalse = new AssertStatement(loc,
@@ -294,7 +333,8 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 						assertFalse
 				});
 
-		return new Procedure(loc, null, mNameOfMainEntryPointProc, null, new VarList[0], new VarList[0], null, body);
+		return new Procedure(loc, new Attribute[0], mNameOfMainEntryPointProc, new String[0],
+				new VarList[0], new VarList[0], new Specification[0], body);
 	}
 
 	private List<Statement> addIteBranch(final ILocation loc, final List<Statement> nondetSwitch,
@@ -322,7 +362,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	}
 
 	private String predSymToMethodName(final HornClausePredicateSymbol predSym) {
-		return predSym.getName();
-
+//		return predSym.getName();
+		return mHcSymbolTable.getMethodNameForPredSymbol(predSym);
 	}
 }

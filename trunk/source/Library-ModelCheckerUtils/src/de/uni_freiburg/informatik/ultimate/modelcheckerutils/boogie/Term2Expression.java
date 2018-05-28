@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
@@ -98,11 +97,12 @@ public final class Term2Expression implements Serializable {
 
 	private final TypeSortTranslator mTypeSortTranslator;
 
-	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final ITerm2ExpressionSymbolTable mBoogie2SmtSymbolTable;
 
 	private final Set<IdentifierExpression> mFreeVariables;
 
-	public Term2Expression(final TypeSortTranslator tsTranslation, final Boogie2SmtSymbolTable boogie2SmtSymbolTable,
+	public Term2Expression(final TypeSortTranslator tsTranslation,
+			final ITerm2ExpressionSymbolTable boogie2SmtSymbolTable,
 			final ManagedScript maScript) {
 		mTypeSortTranslator = tsTranslation;
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
@@ -180,7 +180,7 @@ public final class Term2Expression implements Serializable {
 		} else if ("ite".equals(symb.getName())) {
 			return new IfThenElseExpression(null, type, params[0], params[1], params[2]);
 		} else if (symb.isIntern()) {
-			if (symb.getParameterSorts().length > 0 && 
+			if (symb.getParameterSorts().length > 0 &&
 					(SmtSortUtils.isBitvecSort(symb.getParameterSorts()[0]) || SmtSortUtils.isFloatingpointSort(symb.getReturnSort()))
 					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
@@ -432,9 +432,10 @@ public final class Term2Expression implements Serializable {
 			mFreeVariables.add((IdentifierExpression) result);
 		} else {
 			final IProgramVar pv = mBoogie2SmtSymbolTable.getProgramVar(term);
-			final BoogieASTNode astNode = mBoogie2SmtSymbolTable.getAstNode(pv);
-			assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
-			final ILocation loc = astNode.getLocation();
+//			final BoogieASTNode astNode =
+//			assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
+//			final ILocation loc = astNode.getLocation();
+			final ILocation loc = mBoogie2SmtSymbolTable.getLocation(pv);
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalBoogieVar) {
 				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalBoogieVar) pv).getIdentifier()),
@@ -451,7 +452,15 @@ public final class Term2Expression implements Serializable {
 				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieConst) pv).getIdentifier()),
 						declInfo);
 			} else {
-				throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
+//			} else if (pv instanceof HcHeadVar) {
+				// TODO hack
+				result = new IdentifierExpression(loc, type, pv.getGloballyUniqueId(),
+						declInfo);
+//			} else if (pv instanceof HcBodyVar) {
+//				result = new IdentifierExpression(loc, type, pv.getGloballyUniqueId(),
+//						declInfo);
+//			} else {
+//				throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 			}
 		}
 		return result;

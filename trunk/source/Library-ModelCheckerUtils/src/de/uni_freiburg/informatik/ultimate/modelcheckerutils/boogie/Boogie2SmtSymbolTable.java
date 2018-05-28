@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -69,7 +70,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Matthias Heizmann
  *
  */
-public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTableVariableProvider {
+public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTableVariableProvider,
+		ITerm2ExpressionSymbolTable {
 	/**
 	 * Identifier of attribute that we use to state that
 	 * <ul>
@@ -237,6 +239,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 		// return mSmtVar2BoogieVar.get(tv);
 	}
 
+	@Override
 	public DeclarationInformation getDeclarationInformation(final IProgramVar bv) {
 		return mBoogieVar2DeclarationInformation.get(bv);
 	}
@@ -388,6 +391,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 		return result;
 	}
 
+	@Override
 	public Map<String, String> getSmtFunction2BoogieFunction() {
 		return Collections.unmodifiableMap(mSmtFunction2BoogieFunction);
 	}
@@ -590,7 +594,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 * @param declarationInformation
 	 */
-	private LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure,
+	public LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure,
 			final IBoogieType iType, final VarList varList, final DeclarationInformation declarationInformation) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
@@ -647,6 +651,14 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable, IBoogieSymbolTab
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public ILocation getLocation(final IProgramVar pv) {
+			final BoogieASTNode astNode = getAstNode(pv);
+			assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
+			final ILocation loc = astNode.getLocation();
+			return loc;
 	}
 
 }

@@ -153,8 +153,9 @@ public class HCSSABuilder {
 
 		final Map<Term, Term> hcvarSubstitution = new HashMap<>();
 		for (int i = 0; !currentHornClause.isHeadFalse() &&  i < currentHornClause.getHeadPredicate().getArity(); i++) {
-			final TermVariable tvInHc = currentHornClause.getTermVariablesForHeadPred().get(i);
-			hcvarSubstitution.put(tvInHc, mSymbolTable.getHCOutVar(i, tvInHc.getSort()).getTermVariable());
+			throw new AssertionError("TODO: rework");
+//			final TermVariable tvInHc = currentHornClause.getTermVariablesForHeadPred().get(i);
+//			hcvarSubstitution.put(tvInHc, mSymbolTable.getHCOutVar(i, tvInHc.getSort()).getTermVariable());
 		}
 		// the interpolant term in terms of hcOutVars
 		final Term backSubstitutedTermWithHcVars = new Substitution(mScript, hcvarSubstitution)

@@ -2,12 +2,10 @@ package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -43,14 +41,15 @@ public class HornClause implements IRankedLetter {
 
 	private final List<HornClausePredicateSymbol> mBodyPreds;
 
-	private final List<List<Term>> mBodyPredToTermVariables;
+	private final List<List<Term>> mBodyPredToArgs;
 
 	/**
 	 * Stores for the predicate symbol in the head at every argument position of
 	 * the represented atom, which TermVariable in the transition formula
 	 * represents that argument in the represented atom.
 	 */
-	private final List<TermVariable> mHeadPredTermVariables;
+//	private final List<TermVariable> mHeadPredTermVariables;
+	private final List<HcHeadVar> mHeadPredVariables;
 	private final HornClausePredicateSymbol mHeadPredicate;
 
 	private final HCSymbolTable mHornClauseSymbolTable;
@@ -58,6 +57,10 @@ public class HornClause implements IRankedLetter {
 	private final Term mFormula;
 
 	private final boolean mHeadIsFalse;
+
+//	private final Set<TermVariable> mBodyPredVariables;
+	private final Set<HcBodyVar> mBodyVariables;
+
 
 	/**
 	 * Constructor for a Horn clause of the form b1 /\ ... /\ bn /\ constraint
@@ -71,14 +74,20 @@ public class HornClause implements IRankedLetter {
 	 * @param bodyPredToTermVariables
 	 */
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables) {
-		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToTermVariables, false);
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
+			final Set<HcBodyVar> bodyVars
+			) {
+		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToTermVariables,
+				bodyVars, false);
 	}
 
 	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
-			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables) {
-		this(script, symbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToTermVariables, false);
+//			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
+			final HornClausePredicateSymbol headPred, final List<HcHeadVar> headVars,
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
+			final Set<HcBodyVar> bodyVars
+			) {
+		this(script, symbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToTermVariables, bodyVars, false);
 		assert headPred != null : "use other constructor for '... -> False' case";
 	}
 
@@ -95,48 +104,68 @@ public class HornClause implements IRankedLetter {
 	 * @param headPred
 	 * @param headVars
 	 * @param bodyPreds
-	 * @param bodyPredToTermVariables
+	 * @param bodyPredToArgs
 	 * @param dummy
 	 *            dummy parameter to allow for an extra constructor
 	 */
 	private HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
-			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
+//			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
+			final HornClausePredicateSymbol headPred, final List<HcHeadVar> headVars,
+			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArgs,
+			final Set<HcBodyVar> bodyVars,
 			final boolean dummy) {
 
 		mHornClauseSymbolTable = symbolTable;
 
-		final TermTransferrer ttf = new TermTransferrer(script.getScript());
-
-		/*
-		 * send all the TermVariables through the TermTransferrer
-		 */
-		mHeadPredTermVariables = headVars.stream().map(var -> (TermVariable) ttf.transform(var))
-				.collect(Collectors.toList());
-		mBodyPredToTermVariables = bodyPredToTermVariables.stream()
-				.map(list -> list.stream().map(var -> ttf.transform(var)).collect(Collectors.toList()))
-				.collect(Collectors.toList());
-
-		// transfer the transition formula to the solver script
-		mFormula = ttf.transform(constraint);
-
-		for (final TermVariable fv : mFormula.getFreeVars()) {
-			mHornClauseSymbolTable.registerTermVariable(fv);
-		}
-		mHeadPredTermVariables.forEach(mHornClauseSymbolTable::registerTermVariable);
-		// TODO unclear
-//		mBodyPredToTermVariables.forEach(tvs -> tvs.forEach(mHornClauseSymbolTable::registerTermVariable));
-		for (final List<Term> ts : mBodyPredToTermVariables) {
-			for (final Term t : ts) {
-				if (t instanceof TermVariable) {
-					mHornClauseSymbolTable.registerTermVariable((TermVariable) t);
-				}
-			}
-		}
+		mFormula = constraint;
 
 		mHeadIsFalse = headPred == null;
 		mHeadPredicate = headPred;
-		mBodyPreds = bodyPreds;
+		mHeadPredVariables = mHeadIsFalse ? null : Collections.unmodifiableList(headVars);
+		mBodyPreds = Collections.unmodifiableList(bodyPreds);
+		mBodyPredToArgs = Collections.unmodifiableList(bodyPredToArgs);
+		mBodyVariables = Collections.unmodifiableSet(bodyVars);
+
+//		final TermTransferrer ttf = new TermTransferrer(script.getScript());
+//
+//		/*
+//		 * send all the TermVariables through the TermTransferrer
+//		 */
+//		mHeadPredTermVariables = headVars.stream().map(var -> (TermVariable) ttf.transform(var))
+//				.collect(Collectors.toList());
+//		mBodyPredToTermVariables = bodyPredToTermVariables.stream()
+//				.map(list -> list.stream().map(var -> ttf.transform(var)).collect(Collectors.toList()))
+//				.collect(Collectors.toList());
+//
+//		// transfer the transition formula to the solver script
+//		mFormula = ttf.transform(constraint);
+//
+////		mHeadPredTermVariables.forEach(mHornClauseSymbolTable::registerHeadVariable);
+//		for (int i = 0; i < mHeadPredicate.getArity(); i++) {
+//			final Sort sort = mHeadPredicate.getParameterSorts().get(i);
+////			mHeadPredTermVariables
+//		}
+//
+//		for (final TermVariable fv : mFormula.getFreeVars()) {
+//			mHornClauseSymbolTable.registerTermVariable(fv);
+//		}
+//
+//
+//		mBodyPredVariables = new HashSet<>();
+//		for (final List<Term> ts : mBodyPredToTermVariables) {
+//			for (final Term t : ts) {
+//				if (t instanceof TermVariable) {
+//					mHornClauseSymbolTable.registerTermVariable((TermVariable) t);
+//					if (!mHeadPredTermVariables.contains(t)) {
+//						mBodyPredVariables.add((TermVariable) t);
+//					}
+//				}
+//			}
+//		}
+
+//		mHeadIsFalse = headPred == null;
+//		mHeadPredicate = headPred;
+//		mBodyPreds = bodyPreds;
 	}
 
 	public HornClausePredicateSymbol getHeadPredicate() {
@@ -159,28 +188,29 @@ public class HornClause implements IRankedLetter {
 	}
 
 	public Term getPredArgTermVariable(final int predPos, final int argPos) {
-		return mBodyPredToTermVariables.get(predPos).get(argPos);
+		return mBodyPredToArgs.get(predPos).get(argPos);
 	}
 
 	public List<Term> getTermVariablesForPredPos(final int predPos) {
-		return mBodyPredToTermVariables.get(predPos);
+		return mBodyPredToArgs.get(predPos);
 	}
 
 	public List<List<Term>> getBodyPredToArgs() {
-		return Collections.unmodifiableList(mBodyPredToTermVariables);
+		return Collections.unmodifiableList(mBodyPredToArgs);
 	}
 
-	public List<TermVariable> getTermVariablesForHeadPred() {
-		return mHeadPredTermVariables;
+//	public List<TermVariable> getTermVariablesForHeadPred() {
+	public List<HcHeadVar> getTermVariablesForHeadPred() {
+		return mHeadPredVariables;
 	}
 
 	public String debugString() {
 
 		String cobody = "";
 
-		for (int i = 0; i < mBodyPredToTermVariables.size(); ++i) {
+		for (int i = 0; i < mBodyPredToArgs.size(); ++i) {
 			cobody += " " + mBodyPreds.get(i) + "(";
-			cobody += mBodyPredToTermVariables.get(i);
+			cobody += mBodyPredToArgs.get(i);
 			cobody += ")";
 		}
 		if (cobody.length() > 0) {
@@ -189,7 +219,7 @@ public class HornClause implements IRankedLetter {
 			cobody = "true";
 		}
 
-		final String body = mHeadPredicate != null ? mHeadPredicate.getName() : "false" + mHeadPredTermVariables;
+		final String body = mHeadIsFalse ? "false" : mHeadPredicate.getName() ;
 		if (mFormula == null) {
 			return "unintialized HornClause";
 		}
@@ -244,6 +274,18 @@ public class HornClause implements IRankedLetter {
 
 	public Term getConstraintFormula() {
 		return mFormula;
+	}
+
+	/**
+	 * Retrieve the variables that occur free as an argument in a body predicate. However, exempt the variables that
+	 * are arguments of the head predicate.
+	 * (these variables roughly correspond to the primed variabels in a transition formula..)
+	 *
+	 * @return
+	 */
+//	public Set<TermVariable> getBodyPredVariables() {
+	public Set<HcBodyVar> getBodyPredVariables() {
+		return mBodyVariables;
 	}
 
 }

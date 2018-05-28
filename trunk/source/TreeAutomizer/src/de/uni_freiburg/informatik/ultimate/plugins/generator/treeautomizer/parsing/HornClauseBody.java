@@ -32,17 +32,21 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcBodyVar;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -73,6 +77,7 @@ public class HornClauseBody {
 	public HornClauseBody(final HornClauseBody original) {
 		mCobody = new HornClauseCobody(original.mCobody);
 		mParserScript = original.mParserScript;
+		mHead = original.mHead;
 	}
 
 	/***
@@ -85,25 +90,41 @@ public class HornClauseBody {
 
 	/***
 	 * Convert the body to a HornClause.
-	 * @param script
+	 * @param solverScript
 	 * @param symbolTable
 	 * @return
 	 */
-	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable,
+	public HornClause convertToHornClause(final ManagedScript solverScript, final HCSymbolTable symbolTable,
 			final Script parserScript) {
-//		assert tt.size() <= 1;
-//		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
-//		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
-//				: symbolTable.getFalseHornClausePredicateSymbol();
 
+		/*
+		 *  register all HornClausePredicateSymbols --> this must be done before term transferral, because it declares
+		 *  the functions in the solverScript
+		 */
 		final List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
-		final List<List<Term>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
+		final HornClausePredicateSymbol bodySymbol = mHead == null ? null :
+			symbolTable.getOrConstructHornClausePredicateSymbol(
+				mHead.getFunction().getName(), mHead.getFunction().getParameterSorts());
+
+
+		// transfer all terms
+		{
+			final TermTransferrer termTransferrer = new TermTransferrer(solverScript.getScript());
+			mHead = mHead == null ? null : (ApplicationTerm) termTransferrer.transform(mHead);
+			mCobody.transformTerms(termTransferrer::transform);
+		}
+
+		final Set<HcBodyVar> coBodyVars = normalizeVariables(symbolTable, solverScript);
+
+
+		final List<List<Term>> cobodyArgs = mCobody.getPredicateToVars(symbolTable);
 
 		if (mHead == null) {
-			return new HornClause(script, symbolTable,
+			return new HornClause(solverScript, symbolTable,
 				getTransitionFormula(parserScript),
 				cobodySymbols,
-				cobobodyVars);
+				cobodyArgs,
+				coBodyVars);
 		}
 
 		/*
@@ -113,21 +134,76 @@ public class HornClauseBody {
 		 *   - all parameters of the head predicate are pairwise different (i.e. there are no repeated variables)
 		 *   TODO: lift this assumption by introducing equalities
 		 */
-		final HornClausePredicateSymbol bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
-				mHead.getFunction().getName(), mHead.getFunction().getParameterSorts());
-		final List<TermVariable> parameterTermVariables = Arrays.asList(mHead.getParameters()).stream()
-				.map(t -> (TermVariable) t)
-				.collect(Collectors.toList());
-		assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
-				+ "duplicate arguments";
-		final List<TermVariable> bodyVars = parameterTermVariables;
+//		final HornClausePredicateSymbol bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
+//				mHead.getFunction().getName(), mHead.getFunction().getParameterSorts());
+//		final List<TermVariable> parameterTermVariables = Arrays.asList(mHead.getParameters()).stream()
+//				.map(t -> (TermVariable) t)
+//				.collect(Collectors.toList());
+//		assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
+//				+ "duplicate arguments";
+//		final List<TermVariable> bodyVars = parameterTermVariables;
+		final List<HcHeadVar> bodyVars = symbolTable.getHcHeadVarsForPredSym(bodySymbol);
 
-		return new HornClause(script, symbolTable,
+		return new HornClause(solverScript, symbolTable,
 				getTransitionFormula(parserScript),
 				bodySymbol,
 				bodyVars,
 				cobodySymbols,
-				cobobodyVars);
+				cobodyArgs,
+				coBodyVars);
+	}
+
+	/**
+	 * Bring the head predicate's arguments into normal form.
+	 * (The variables are normalized according to their argument position and sort)
+	 *
+	 * @param symbolTable
+	 * @param script
+	 * @return
+	 */
+	private Set<HcBodyVar> normalizeVariables(final HCSymbolTable symbolTable, final ManagedScript solverScript) {
+
+		final Set<HcBodyVar> bodyVars = new HashSet<>();
+		final String headPredSymbolName = mHead == null ?
+							symbolTable.getMethodNameForPredSymbol(symbolTable.getFalseHornClausePredicateSymbol()) :
+							symbolTable.getMethodNameForPredSymbol(mHead.getFunction());
+
+		// normalize head variables
+		final Map<Term, Term> subs = new HashMap<>();
+		if (mHead != null) {
+//			final Term[] newHeadParams = new Term[mHead.getParameters().length];
+			for (int i = 0; i < mHead.getParameters().length; i++) {
+				final TermVariable pTv = (TermVariable) mHead.getParameters()[i];
+				final Sort sort = pTv.getSort();
+
+				final HcHeadVar headVar = symbolTable.getOrConstructHeadVar(headPredSymbolName, i, sort);
+
+				subs.put(pTv, headVar.getTermVariable());
+//				newHeadParams[i] = headVar.getTermVariable();
+			}
+
+//			mHead = (ApplicationTerm) mParserScript.term(mHead.getFunction().getName(), newHeadParams);
+			// note: it does not seem to matter much, which script we pass here
+			mHead = (ApplicationTerm) new Substitution(solverScript, subs).transform(mHead);
+
+		}
+		// normalize (co)body variables
+		int counter = 1;
+		for (final TermVariable tv : mCobody.getVariables()) {
+			if (subs.containsKey(tv)) {
+				// head var, already normalized, skip it
+				continue;
+			}
+
+			final HcBodyVar bodyVar = symbolTable.getOrConstructBodyVar(headPredSymbolName,
+					counter++, tv.getSort());
+
+			subs.put(tv, bodyVar.getTermVariable());
+			bodyVars.add(bodyVar);
+
+		}
+		mCobody.applySubstitution(subs);
+		return bodyVars;
 	}
 
 	/***
@@ -137,21 +213,26 @@ public class HornClauseBody {
 	 */
 	public boolean setHead(final ApplicationTerm literal) {
 		if (mHead == null) {
-			final Map<Term, Term> subs = new HashMap<>();
-			for (final Term param : literal.getParameters()) {
-				if (param instanceof TermVariable) {
-					// variables are the standard case --> do nothing
-					continue;
-				}
-				if (subs.containsKey(param)) {
-					// already saw this parameter --> we already substitute it --> do nothing
-					continue;
-				}
-				final TermVariable freshTv = mParserScript.createFreshTermVariable("fresh", param.getSort());
-				subs.put(param, freshTv);
-				addTransitionFormula(SmtUtils.binaryEquality(mParserScript, param, freshTv));
-			}
-			mHead = (ApplicationTerm) new Substitution(mParserScript, subs).transform(literal);
+//			final Map<Term, Term> subs = new HashMap<>();
+//			for (final Term param : literal.getParameters()) {
+//				if (param instanceof TermVariable) {
+//					// variables are the standard case --> do nothing
+//					continue;
+//				}
+//				if (subs.containsKey(param)) {
+//					// already saw this parameter --> we already substitute it --> do nothing
+//					continue;
+//				}
+//				final TermVariable freshTv = mParserScript.createFreshTermVariable("fresh", param.getSort());
+//				subs.put(param, freshTv);
+//				addTransitionFormula(SmtUtils.binaryEquality(mParserScript, param, freshTv));
+//			}
+//			mHead = (ApplicationTerm) new Substitution(mParserScript, subs).transform(literal);
+
+			assert Arrays.asList(literal.getParameters()).stream().allMatch(p -> p instanceof TermVariable);
+			assert Arrays.asList(literal.getParameters()).stream().collect(Collectors.toSet()).size()
+				== literal.getParameters().length;
+			mHead = literal;
 			return true;
 		} else {
 			return false;
@@ -160,7 +241,6 @@ public class HornClauseBody {
 
 	/***
 	 * Merge the cobody of the body with the given cobody.
-	 * @param cobody
 	 */
 	public void mergeCobody(final HornClauseCobody cobody) {
 		this.mCobody.mergeCobody(cobody);

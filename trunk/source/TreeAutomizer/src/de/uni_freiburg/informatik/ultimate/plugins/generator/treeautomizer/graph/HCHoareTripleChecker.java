@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCOutVar;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -135,7 +135,8 @@ public class HCHoareTripleChecker {
 		mManagedScript.assertTerm(this, closedConstraint);
 
 		final Term negatedPostConditionFormula = SmtUtils.not(mManagedScript.getScript(),
-				unify(succ, hornClause.getTermVariablesForHeadPred()));
+				unify(null, null));
+//				unify(succ, hornClause.getTermVariablesForHeadPred()));
 		final Term closedNegatedPostConditionFormula = close(negatedPostConditionFormula, mSymbolTable);
 		mManagedScript.assertTerm(this, closedNegatedPostConditionFormula);
 
@@ -181,22 +182,23 @@ public class HCHoareTripleChecker {
 
 
 	private Term unify(final IPredicate iPredicate, final List<TermVariable> termVariablesForPredPos) {
-		final Map<Term, Term> substitution = new HashMap<>();
-		for (final IProgramVar pvar : iPredicate.getVars()) {
-			final HCOutVar hcvar = (HCOutVar) pvar;
-
-			if (termVariablesForPredPos.size() > hcvar.getArgumentPos()) {
-				substitution.put(hcvar.getTermVariable(), termVariablesForPredPos.get(hcvar.getArgumentPos()));
-			} else {
-				/*
-				 *  the predicate we want to unify with has less arguments than the hornClause's head predicate
-				 *   --> introduce a fresh variable
-				 */
-				substitution.put(hcvar.getTermVariable(),
-						mManagedScript.constructFreshTermVariable("any", hcvar.getSort()));
-			}
-		}
-		return new Substitution(mManagedScript, substitution).transform(iPredicate.getFormula());
+		throw new AssertionError("TODO: rework");
+//		final Map<Term, Term> substitution = new HashMap<>();
+//		for (final IProgramVar pvar : iPredicate.getVars()) {
+//			final HcBodyVar hcvar = (HcBodyVar) pvar;
+//
+//			if (termVariablesForPredPos.size() > hcvar.getArgumentPos()) {
+//				substitution.put(hcvar.getTermVariable(), termVariablesForPredPos.get(hcvar.getArgumentPos()));
+//			} else {
+//				/*
+//				 *  the predicate we want to unify with has less arguments than the hornClause's head predicate
+//				 *   --> introduce a fresh variable
+//				 */
+//				substitution.put(hcvar.getTermVariable(),
+//						mManagedScript.constructFreshTermVariable("any", hcvar.getSort()));
+//			}
+//		}
+//		return new Substitution(mManagedScript, substitution).transform(iPredicate.getFormula());
 	}
 
 	/**
@@ -210,12 +212,12 @@ public class HCHoareTripleChecker {
 	 */
 	private Term substitutePredicateFormula(final IPredicate predicate, final List<IProgramVar> programVars) {
 		final int predicateArity = programVars.size();
-		final Map<Integer, HCOutVar> sortedHCOutVars = sortHCOutVars(predicate);//predicate.getVars());
+		final Map<Integer, HcBodyVar> sortedHCOutVars = sortHCOutVars(predicate);//predicate.getVars());
 //		assert programVars.size() >= predicate.getVars().size();
 
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (int argPos = 0; argPos < predicateArity; argPos++) {
-			final HCOutVar predVarAtArgPos = sortedHCOutVars.get(argPos);
+			final HcBodyVar predVarAtArgPos = sortedHCOutVars.get(argPos);
 			if (predVarAtArgPos != null) {
 				substitution.put(
 //						sortedHCOutVars.get(argPos).getTermVariable(),
@@ -240,13 +242,14 @@ public class HCHoareTripleChecker {
 		return new Substitution(mManagedScript, substitution).transform(formula);
 	}
 
-	private Map<Integer, HCOutVar> sortHCOutVars(final IPredicate pred) {
-		final Map<Integer, HCOutVar> result = new HashMap<>();
-		for (final IProgramVar var : pred.getVars()) {
-			final HCOutVar hcOutVar = (HCOutVar) var;
-			result.put(hcOutVar.getArgumentPos(), hcOutVar);
-		}
-		return result;
+	private Map<Integer, HcBodyVar> sortHCOutVars(final IPredicate pred) {
+		throw new AssertionError("TODO: rework");
+//		final Map<Integer, HcBodyVar> result = new HashMap<>();
+//		for (final IProgramVar var : pred.getVars()) {
+//			final HcBodyVar hcOutVar = (HcBodyVar) var;
+//			result.put(hcOutVar.getArgumentPos(), hcOutVar);
+//		}
+//		return result;
 	}
 
 	public Validity check(final TreeAutomatonRule<HornClause, IPredicate> rule) {

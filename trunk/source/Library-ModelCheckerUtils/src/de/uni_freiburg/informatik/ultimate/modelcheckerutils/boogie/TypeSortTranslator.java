@@ -31,21 +31,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Translates Boogie types into SMT sorts and vice versa.
@@ -80,6 +82,34 @@ public class TypeSortTranslator {
 			declareType(typeDecl);
 		}
 	}
+
+	/**
+	 * Constructor for ChcToBoogieTranslation.
+	 * All sort-type pairs are passed as a HashRelation.
+	 *
+	 * @param sortToType
+	 * @param script
+	 * @param services
+	 */
+	public TypeSortTranslator(final HashRelation<Sort, IBoogieType> sortToType, final Script script,
+			final IUltimateServiceProvider services) {
+		mType2Attributes = new HashMap<>();
+		mServices = services;
+		mScript = script;
+//		{
+//			// Add type/sort bool to mapping. We need this in our
+//			// backtranslation in the case where there was no Boolean
+//			// variable in the Boogie program but we translate a boolean
+//			// term e.g., "true".
+//			final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+//			final IBoogieType boolType = BoogieType.TYPE_BOOL;
+//			cacheSort(boolType, boolSort);
+//		}
+		for (final Entry<Sort, IBoogieType> en : sortToType.entrySet()) {
+			cacheSort(en.getValue(), en.getKey());
+		}
+	}
+
 
 	/**
 	 * Constructor is only used in a workaround for the backtranslation while dumping path programs.

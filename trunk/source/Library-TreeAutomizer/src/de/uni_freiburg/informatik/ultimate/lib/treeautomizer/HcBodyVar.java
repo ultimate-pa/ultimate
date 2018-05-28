@@ -31,44 +31,63 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
- * TODO: rework comment
- * A HCVar for a set of HornClausese is what an IProgramVar is for a program.
- * A HCVar consists of an uninterpreted predicate symbol that occurs in the HornClause set together
- * with a position n identifying the n-th variable of that predicate.
- * 
+ *
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
+public class HcBodyVar implements ILocalProgramVar { //IProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
 
 	private final TermVariable mTermVariable;
-	private final int mArgumentPos;
 
 	/**
 	 * The sort of the TermVariable and constants
 	 *  --> this is a field just because it is part of this HCOutVar's identity.
 	 */
 	private final Sort mSort;
-	
+
 	private final ApplicationTerm mDefaultConstant;
 	private final ApplicationTerm mPrimedConstant;
 
 	private final String mGloballyUniqueId;
-	
-	public HCOutVar(int argPos, Sort sort, TermVariable v, 
-			ApplicationTerm defaultConstant, ApplicationTerm primedConstant) {
-		mArgumentPos = argPos;
+
+	private final String mProcName;
+	private final int mIndex;
+
+	/**
+	 * Identified by the first three parameters (headPredSymProcName, index, sort)
+	 *
+	 * @param headPredSymProcName
+	 * @param index
+	 * @param sort
+	 * @param termVar
+	 * @param defaultConstant
+	 * @param primedConstant
+	 */
+	public HcBodyVar(final String headPredSymProcName, final int index, final Sort sort, final ManagedScript script,
+			final Object lockOwner) {
+//			final TermVariable termVar, final ApplicationTerm defaultConstant, final ApplicationTerm primedConstant) {
+		mProcName = headPredSymProcName;
+		mIndex = index;
 		mSort = sort;
-		mTermVariable = v;
-		mDefaultConstant = defaultConstant;
-		mPrimedConstant = primedConstant;
-		mGloballyUniqueId = String.format("HCVar_out_%d_%s", mArgumentPos, mSort);
+//		mTermVariable = termVar;
+//		mDefaultConstant = defaultConstant;
+//		mPrimedConstant = primedConstant;
+//		mGloballyUniqueId = termVar.getName();
+
+		mGloballyUniqueId = String.format("hcbodyvar%s_%d_%s", headPredSymProcName, index, mSort);
+		mTermVariable = script.variable(mGloballyUniqueId, sort);
+		mDefaultConstant = ProgramVarUtils.constructDefaultConstant(script, lockOwner, sort, mGloballyUniqueId);
+		mPrimedConstant = ProgramVarUtils.constructPrimedConstant(script, lockOwner, sort, mGloballyUniqueId);
+//		mGloballyUniqueId = String.format("hcbodyvar%s_%d_%s", headPredSymProcName, index, mSort);
 	}
 
 	@Override
@@ -78,8 +97,6 @@ public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
 
 	@Override
 	public String toString() {
-//		return mPredicateSymbol.getName() + "{" + mIdx + "}" + ":" + mTermVariable.toString();
-//		return "HCVar (TODO)";
 		return getGloballyUniqueId();
 	}
 
@@ -90,12 +107,12 @@ public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
 
 	@Override
 	public String getProcedure() {
-		return null;
+		return mProcName;
 	}
 
 	@Override
 	public boolean isGlobal() {
-		return true;
+		return false;
 	}
 
 	@Override
@@ -125,10 +142,10 @@ public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
 
 
 	@Override
-	public boolean equals(Object arg0) {
+	public boolean equals(final Object arg0) {
 		if (this == arg0) {
 			// just for speedup
-			return true; 
+			return true;
 		}
 		if (arg0 == null) {
 			return false;
@@ -136,41 +153,28 @@ public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
 		if (!(arg0.getClass().equals(this.getClass()))) {
 			return false;
 		}
-		HCOutVar otherHcVar = (HCOutVar) arg0;
-		if (mSort.equals(otherHcVar.mSort)) {
+		final HcBodyVar otherHcVar = (HcBodyVar) arg0;
+		if (!mProcName.equals(otherHcVar.mProcName)) {
 			return false;
 		}
-		if (mArgumentPos != otherHcVar.mArgumentPos) {
+		if (mIndex != otherHcVar.mIndex) {
 			return false;
 		}
+		if (!mSort.equals(otherHcVar.mSort)) {
+			return false;
+		}
+
 		assert mGloballyUniqueId.equals(otherHcVar.mGloballyUniqueId);
 		return true;
 	}
 
-	public int getArgumentPos() {
-		return mArgumentPos;
-	}
-
+	@Override
 	public Sort getSort() {
 		return mSort;
 	}
 
 	@Override
-	public int compareTo(HCOutVar arg0) {
-		return this.mArgumentPos - arg0.mArgumentPos;
+	public String getIdentifier() {
+		return getGloballyUniqueId();
 	}
-
-
-//	@Override
-//	public String getIdentifier() {
-//		return mGloballyUniqueId;
-//	}
-//
-//
-//	@Override
-//	public IProgramOldVar getOldVar() {
-//		// TODO Auto-generated method stub
-//		assert false : "HCVars don't need oldVars, right?..";
-//		return null;
-//	}
 }
