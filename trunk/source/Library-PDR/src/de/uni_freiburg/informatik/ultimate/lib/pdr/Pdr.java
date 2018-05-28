@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -84,6 +86,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private final CfgSmtToolkit mCsToolkit;
 	private final IHoareTripleChecker mHtc;
 	private final IPredicateUnifier mPredicateUnifier;
+	private final IPredicate mTruePred;
+	private final IPredicate mFalsePred;
+	private final List<LETTER> mTrace;
+
+	private LBool mIsTraceCorrect;
+	private IProgramExecution<IcfgEdge, Term> mFeasibleProgramExecution;
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IHoareTripleChecker htc, final List<LETTER> counterexample) {
@@ -91,6 +99,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;
 		mHtc = htc;
+		mTrace = counterexample;
 
 		// stuff from prefs
 		mServices = prefs.getUltimateServices();
@@ -101,6 +110,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mFrames = new HashMap<>();
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
 
+		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
+		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
+
 		mLogger.debug("PDR initialized...");
 		computePdr();
 	}
@@ -109,8 +121,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		final Set<? extends IcfgLocation> init = mIcfg.getInitialNodes();
 		final Set<? extends IcfgLocation> error = IcfgUtils.getErrorLocations(mIcfg);
-		final IPredicate truePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
-		final IPredicate falsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
 
 		/**
 		 * Check for 0-Counter-Example
@@ -132,21 +142,23 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			}
 			mFrames.put(loc, new ArrayList<>());
 			if (init.contains(loc)) {
-				mFrames.get(loc).add(truePred);
+				mFrames.get(loc).add(mTruePred);
 			} else {
-				mFrames.get(loc).add(falsePred);
+				mFrames.get(loc).add(mFalsePred);
 			}
 		}
 
 		int level = 0;
 
 		while (true) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), "Timeout or canceled while running Pdr");
+			}
 			/**
 			 * Initialize new level.
 			 */
 			for (final Entry<IcfgLocation, List<IPredicate>> trace : mFrames.entrySet()) {
-				trace.getValue()
-						.add(mPredicateUnifier.getPredicateFactory().newPredicate(mScript.getScript().term("true")));
+				trace.getValue().add(mTruePred);
 			}
 
 			level += 1;
@@ -160,7 +172,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				/*
 				 * AssertionError: No corresponding IProgramVar for v_main_x_3 ?
 				 */
-				final Term sp = mPredTrans.strongestPostcondition(truePred, edge.getTransformula());
+				final Term sp = mPredTrans.strongestPostcondition(mTruePred, edge.getTransformula());
 				final IPredicate proofObligationPred = mPredicateUnifier.getOrConstructPredicate(sp);
 				final Triple<IPredicate, IcfgLocation, Integer> initialProofObligation =
 						new Triple<>(proofObligationPred, edge.getSource(), level);
@@ -202,20 +214,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				final IcfgLocation predecessor = predecessorTransition.getSource();
 				final IPredicate predecessorFrame = mFrames.get(predecessor).get(level - 1);
 
-				// convert all terms that should be used in htc to predicates
-				// Note: HTC checks P && S && !Q, so we have to negate the
-				// postcondition
-				// negate postcondition with
-				// notP=mPredicateUnifier.getPredicateFactory().not(p) and
-				// mPredicateUnifier.getOrConstruct(notP)
-				//
 				final Validity result =
-						mHtc.checkInternal(predecessorFrame, (IInternalAction) predecessorTransition, toBeBlocked);
+						checkSatInternal(predecessorFrame, (IInternalAction) predecessorTransition, toBeBlocked);
 
-				// final LBool result =
-				// SmtUtils.checkSatTerm(mScript.getScript(),
-				// SmtUtils.and(mScript.getScript(), predecessorFrame,
-				// transition, primedtoBeBlocked));
 				/**
 				 * If Sat generate new proof-obligation
 				 */
@@ -280,6 +281,31 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	/**
+	 * Use a {@link IHoareTripleChecker} to check for satisfiability of pre &and; tf &and; post
+	 *
+	 * This method converts the post condition because an {@link IHoareTripleChecker} checks for P &and; S &and; !Q
+	 *
+	 * @param pre
+	 * @param trans
+	 * @param post
+	 *
+	 * @return {@link Validity#VALID} iff the formula is unsat, {@link Validity#INVALID} iff the formula is sat,
+	 *         {@link Validity#UNKNOWN} iff the solver was not able to find a solution, and {@link Validity#NOT_CHECKED}
+	 *         should not be returned
+	 */
+	private Validity checkSatInternal(final IPredicate pre, final IInternalAction trans, final IPredicate post) {
+		final IPredicate notP = not(post);
+		final Validity result = mHtc.checkInternal(pre, trans, notP);
+		assert result != Validity.NOT_CHECKED;
+		return result;
+
+	}
+
+	private IPredicate not(final IPredicate pred) {
+		return mPredicateUnifier.getOrConstructPredicate(mPredicateUnifier.getPredicateFactory().not(pred));
+	}
+
+	/**
 	 * Propagation-Phase, for finding invariants
 	 */
 	private boolean propagationPhase() {
@@ -296,42 +322,44 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		return false;
 	}
 
+	private IProgramExecution<IcfgEdge, Term> computeProgramExecution() {
+		// note: use IcfgProgramExecutionBuilder when it becomes available
+		throw new UnsupportedOperationException("not yet implemented");
+	}
+
 	// TODO: Implement ITraceCheck interface
 
 	@Override
 	public LBool isCorrect() {
-		// TODO Auto-generated method stub
-		return null;
+		return mIsTraceCorrect;
 	}
 
 	@Override
 	public IPredicate getPrecondition() {
-		// TODO Auto-generated method stub
-		return null;
+		return mTruePred;
 	}
 
 	@Override
 	public IPredicate getPostcondition() {
-		// TODO Auto-generated method stub
-		return null;
+		return mFalsePred;
 	}
 
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.emptyMap();
 	}
 
 	@Override
 	public boolean providesRcfgProgramExecution() {
-		// TODO Auto-generated method stub
-		return false;
+		return mIsTraceCorrect == LBool.SAT;
 	}
 
 	@Override
 	public IProgramExecution<IcfgEdge, Term> getRcfgProgramExecution() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mFeasibleProgramExecution == null) {
+			mFeasibleProgramExecution = computeProgramExecution();
+		}
+		return mFeasibleProgramExecution;
 	}
 
 	@Override
@@ -342,7 +370,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	@Override
 	public ToolchainCanceledException getToolchainCanceledExpection() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -355,15 +382,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	@Override
 	public boolean wasTracecheckFinishedNormally() {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	// TODO: Implement iInterpolantGenerator interface
 
 	@Override
 	public List<LETTER> getTrace() {
-		// TODO Auto-generated method stub
-		return null;
+		return mTrace;
 	}
 
 	@Override
@@ -374,20 +400,24 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier() {
-		// TODO Auto-generated method stub
-		return null;
+		return mPredicateUnifier;
 	}
 
 	@Override
 	public boolean isPerfectSequence() {
-		// TODO Auto-generated method stub
-		return false;
+		// if we analyze path programs, each of our sequences is correct
+		return isCorrect() == LBool.UNSAT;
 	}
 
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
-		// TODO Auto-generated method stub
-		return null;
+		if (isCorrect() == LBool.UNSAT) {
+			return new InterpolantComputationStatus(true, null, null);
+		} else if (isCorrect() == LBool.SAT) {
+			return new InterpolantComputationStatus(false, ItpErrorStatus.TRACE_FEASIBLE, null);
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 }
