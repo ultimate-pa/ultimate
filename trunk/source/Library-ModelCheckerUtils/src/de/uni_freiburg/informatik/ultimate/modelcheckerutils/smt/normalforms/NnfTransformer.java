@@ -70,14 +70,27 @@ public class NnfTransformer {
 
 	protected final QuantifierHandling mQuantifierHandling;
 
+	/**
+	 * Sometimes we need to omit the soundness check which does a checksat on mManagedScript.
+	 * For example, this is the case when mManagedScript.getScript is HornClauseParserScript (in which case the
+	 *  soundness check would lead to nontermination)
+	 */
+	private final boolean mOmitSoundnessCheck;
+
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling) {
+		this(mgdScript, services, quantifierHandling, false);
+	}
+
+	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
+			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck) {
 		super();
 		mQuantifierHandling = quantifierHandling;
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mNnfTransformerHelper = getNnfTransformerHelper(services);
+		mOmitSoundnessCheck = omitSoundnessCheck;
 	}
 
 	protected NnfTransformerHelper getNnfTransformerHelper(final IUltimateServiceProvider services) {
@@ -103,7 +116,7 @@ public class NnfTransformer {
 			}
 			mQuantifiedVariables = null;
 		}
-		assert Util.checkSat(mScript,
+		assert mOmitSoundnessCheck || Util.checkSat(mScript,
 				mScript.term("distinct", term, result)) != LBool.SAT : "Nnf transformation unsound";
 		return result;
 	}
@@ -276,8 +289,8 @@ public class NnfTransformer {
 		}
 
 	}
-	
-	
+
+
 	private static Term[] negateTerms(final Script script, final Term[] terms) {
 		final Term[] newTerms = new Term[terms.length];
 		for (int i = 0; i < terms.length; i++) {
@@ -301,14 +314,14 @@ public class NnfTransformer {
 		newTerms[terms.length - 1] = terms[terms.length - 1];
 		return newTerms;
 	}
-	
+
 	public static Term convertIte(final Script script, final Term condTerm, final Term ifTerm, final Term elseTerm) {
 		final Term condImpliesIf = SmtUtils.or(script, SmtUtils.not(script, condTerm), ifTerm);
 		final Term notCondImpliesElse = SmtUtils.or(script, condTerm, elseTerm);
 		final Term result = SmtUtils.and(script, condImpliesIf, notCondImpliesElse);
 		return result;
 	}
-	
+
 	/**
 	 * A function is an xor if one of the following applies.
 	 * <ul>
@@ -319,8 +332,8 @@ public class NnfTransformer {
 	public static boolean isXor(final ApplicationTerm appTerm, final String functionName) {
 		return functionName.equals("xor") || functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm);
 	}
-	
-	
+
+
 	public static Term pushNot1StepInside(final Script script, final Term notParam) {
 		if (notParam instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) notParam;

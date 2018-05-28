@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms;
@@ -49,19 +49,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.XJu
  * In order to understand the variable names and the documentation
  * replace "outer" by "conjunct" and "inner" by "disjunct" for CNF, and
  * replace "outer" by "disjunct" and "inner" by "conjunct" for DNF.
- * In documentation we use the Greek letter iota 'ι' to denote the inner 
+ * In documentation we use the Greek letter iota 'ι' to denote the inner
  * connective and we use the Greek letter omikron 'o' to denote the outer
  * connective.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
 public abstract class XnfTransformer extends NnfTransformer {
-	
+
 	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services, QuantifierHandling.IS_ATOM);
 	}
-	
+
+	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
+			final boolean omitSoundnessCheck) {
+		super(script, services, QuantifierHandling.IS_ATOM, omitSoundnessCheck);
+	}
+
+
 	protected abstract class XnfTransformerHelper extends NnfTransformerHelper {
 
 		protected XnfTransformerHelper(final IUltimateServiceProvider services) {
@@ -69,15 +75,15 @@ public abstract class XnfTransformer extends NnfTransformer {
 		}
 		public abstract String innerConnectiveSymbol();
 		public abstract String outerConnectiveSymbol();
-		
+
 		public abstract String innerJunctionName();
 		public abstract String outerJunctionName();
-		
+
 		public abstract Term innerConnective(Script script, List<Term> params);
 		public abstract Term outerConnective(Script script, List<Term> params);
-		
+
 		public abstract Term[] getOuterJuncts(Term term);
-		
+
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 			final String functionSymbolName = appTerm.getFunction().getName();
@@ -94,13 +100,13 @@ public abstract class XnfTransformer extends NnfTransformer {
 			}
 			setResult(result);
 		}
-		
-		
+
+
 		/**
 		 * Uses Distributivity to transform an innerJunction (given as an array
-		 * of innerJuncts) to an equivalent outerJunction (given as an array of 
+		 * of innerJuncts) to an equivalent outerJunction (given as an array of
 		 * outerJuncts).
-		 * E.g., ((A o B) ι (C ο D)) is transformed to 
+		 * E.g., ((A o B) ι (C ο D)) is transformed to
 		 * (A ι C) o (A ι D) o (B ι C) o (B ι D)
 		 * In order to keep the result small optimizations are applied.
 		 * @param inputInnerJunction
@@ -110,7 +116,7 @@ public abstract class XnfTransformer extends NnfTransformer {
 
 			ResultInnerJunctions first;
 			{
-				Set<XJunction> innerJunctionOfOuterJunctions = 
+				Set<XJunction> innerJunctionOfOuterJunctions =
 						convertInnerJunctionOfOuterJunctionsToSet(inputInnerJunction);
 				try {
 					first = new ResultInnerJunctions(innerJunctionOfOuterJunctions);
@@ -118,18 +124,18 @@ public abstract class XnfTransformer extends NnfTransformer {
 				} catch (final AtomAndNegationException e1) {
 					// innerJunctionOfOuterJunctions contains the singleton {φ}
 					// and the singleton {¬φ}.
-					// Hence the result is equivalent to the annihilator of the 
-					// innerJunction resp. the neutral element of the 
+					// Hence the result is equivalent to the annihilator of the
+					// innerJunction resp. the neutral element of the
 					// outerJunction (true for ∧, false for ∨)
 					return new Term[0];
 				}
 			}
-			
+
 			final int inputSize = first.numberOfUnprocessedOuterJunctions();
 			if ( inputSize > 5) {
 				mLogger.warn("expecting exponential blowup for input size " + inputSize);
 			}
-			
+
 			// iteratively apply distributivity until we have a set of innerJunctions.
 			final Set<XJunction> resOuterJunction = new HashSet<XJunction>();
 			final Stack<ResultInnerJunctions> todoStack = new Stack<ResultInnerJunctions>();
@@ -146,32 +152,32 @@ public abstract class XnfTransformer extends NnfTransformer {
 							"transforming " + inputSize + " " + innerJunctionName());
 				}
 			}
-			
+
 			final boolean timeConsumingSimplification = (resOuterJunction.size() > 5000);
 			if (timeConsumingSimplification) {
-				mLogger.warn("Simplifying " + outerJunctionName() + " of " 
-						+ resOuterJunction.size() + " " + innerJunctionName() + 
+				mLogger.warn("Simplifying " + outerJunctionName() + " of "
+						+ resOuterJunction.size() + " " + innerJunctionName() +
 						"s. " + "This might take some time...");
 			}
-			
+
 			// Simplify by keeping only minimal (with respect to set inclusion)
 			// outerJunctions.
 			final XJunctionPosetMinimalElements pme = new XJunctionPosetMinimalElements();
 			for (final XJunction resInnerSet : resOuterJunction) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
-							"XNF transformer was simplifying " + resOuterJunction.size() 
+							"XNF transformer was simplifying " + resOuterJunction.size()
 							+ " " + innerJunctionName() + "s. ");
 				}
 				pme.add(resInnerSet);
 			}
-			
+
 			if (timeConsumingSimplification) {
-				mLogger.info("Simplified to " + outerJunctionName() + " of " 
-						+ pme.getElements().size() + " " + innerJunctionName() + 
+				mLogger.info("Simplified to " + outerJunctionName() + " of "
+						+ pme.getElements().size() + " " + innerJunctionName() +
 						"s. ");
 			}
-			
+
 			// Construct terms.
 			final Term[] resInnerTerms = new Term[pme.getElements().size()];
 			int i = 0;
@@ -182,10 +188,10 @@ public abstract class XnfTransformer extends NnfTransformer {
 			assert i==resInnerTerms.length;
 			return resInnerTerms;
 		}
-		
+
 		/**
 		 * Convert an innerJunction of outerJunctions given as an array of terms
-		 * into a Set of XJunctions. 
+		 * into a Set of XJunctions.
 		 */
 		private Set<XJunction> convertInnerJunctionOfOuterJunctionsToSet(
 				final Term[] inputInnerJunction) {
@@ -202,50 +208,50 @@ public abstract class XnfTransformer extends NnfTransformer {
 			}
 			return result;
 		}
-		
+
 		/**
 		 * Represents a an innerJunction of outerJunctions using
-		 * <ul> 
+		 * <ul>
 		 * <li> one innerJunction given as an XJunction (mInnerJuncts) and
-		 * <li> one innerJunction of outerJunctions given as a set of 
+		 * <li> one innerJunction of outerJunctions given as a set of
 		 * XJunctions (mUnprocessedInnerJunctionOfOuterJunctions).
 		 * </ul>
 		 *    (mInnerJuncts ι (outerJunction_1 ι ... ι outerJunction_n))
 		 * This class can be used to successively apply distributivity to
 		 * get rid of the outerJunctions. Therefore objects of this class
 		 * are split into a set of such objects, one for each outerJunct.
-		 * 
+		 *
 		 * @author Matthias Heizmann
 		 *
 		 */
 		private class ResultInnerJunctions {
 			private final XJunction mInnerJuncts;
 			private final Set<XJunction> mUnprocessedInnerJunctionOfOuterJunctions;
-			
+
 			public ResultInnerJunctions(final Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
-				final XJunction innerJuncts = new XJunction(); 
+				final XJunction innerJuncts = new XJunction();
 				mUnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(innerJuncts, innerJunctionOfOuterJunctions);
 				mInnerJuncts = innerJuncts;
 			}
-			
+
 			public ResultInnerJunctions(final XJunction innerJuncts, final Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
 				final XJunction newInnerJuncts = new XJunction();
 				mUnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(newInnerJuncts, innerJunctionOfOuterJunctions);
 				mInnerJuncts = XJunction.disjointUnion(innerJuncts, newInnerJuncts);
 			}
-			
+
 			public boolean isProcessedToInnerJunction() {
 				return mUnprocessedInnerJunctionOfOuterJunctions.isEmpty();
 			}
-			
+
 			public int numberOfUnprocessedOuterJunctions() {
 				return mUnprocessedInnerJunctionOfOuterJunctions.size();
 			}
-			
+
 			public XJunction getInnerJunction() {
 				return mInnerJuncts;
 			}
-			
+
 			public List<ResultInnerJunctions> processOneOuterJunction() {
 				final Iterator<XJunction> it = mUnprocessedInnerJunctionOfOuterJunctions.iterator();
 				final XJunction next = it.next();
@@ -265,18 +271,18 @@ public abstract class XnfTransformer extends NnfTransformer {
 				}
 				return result;
 			}
-			
+
 			/**
-			 * Given an innerJunction and an innerJunction of outerJunctions, we 
+			 * Given an innerJunction and an innerJunction of outerJunctions, we
 			 * consider this an an innerJunction
 			 * (innerJunction ι (outerJunction_1 ι ... ι outerJunction_n))
-			 * and move as many elements as possible to innerJunction by applying 
+			 * and move as many elements as possible to innerJunction by applying
 			 * equivalence transformations.
-			 * 
+			 *
 			 * @param innerJunction input and output of this method. This method
 			 * adds new elements to this XJunction.
 			 * @param innerJunctionOfOuterJunctions input of this method, but also
-			 * used to store intermediate data. It is modified and should not be 
+			 * used to store intermediate data. It is modified and should not be
 			 * used by the caller after calling this method.
 			 * However the XJunction contained in this set are not modified.
 			 * @return and innerJunction of outerJunction that is together with
@@ -285,7 +291,7 @@ public abstract class XnfTransformer extends NnfTransformer {
 			 * is equivalent to the annihilating element of the inner connective
 			 */
 			private Set<XJunction> moveOutwardsAbsorbeAndMpsimplify(
-					final XJunction innerJunction, 
+					final XJunction innerJunction,
 					Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
 				while (true) {
 					final boolean modified = moveSingletonsOutwards(innerJunction, innerJunctionOfOuterJunctions);
@@ -304,9 +310,9 @@ public abstract class XnfTransformer extends NnfTransformer {
 			/**
 			 * Remove from innerJunctionOfOuterJunctions all XJunctions that are
 			 * singletons and move their elements to innerJunction.
-			 * @param innerJunction is modified and used as input and output of 
+			 * @param innerJunction is modified and used as input and output of
 			 * this method
-			 * @param innerJunctionOfOuterJunctions is modified and input and 
+			 * @param innerJunctionOfOuterJunctions is modified and input and
 			 * output of this method
 			 * @return true iff innerJunctionOfOuterJunctions contained a singleton
 			 * (note that if the result is false this means especially that the
@@ -334,7 +340,7 @@ public abstract class XnfTransformer extends NnfTransformer {
 
 
 			/**
-			 * Given an innerJunction and an innerJunction of outerJunctions, we 
+			 * Given an innerJunction and an innerJunction of outerJunctions, we
 			 * consider this an an innerJunction
 			 * (innerJunction ι (outerJunction_1 ι ... ι outerJunction_n))
 			 * and simplify the innerJunction of outerJunctions by applying two
@@ -347,11 +353,11 @@ public abstract class XnfTransformer extends NnfTransformer {
 			 *  outerJunction of outerJunction_i is ¬φ we remove this outerJunction
 			 *  from outerJunction_i.
 			 * </ul>
-			 * @param innerJunction above mentioned innerJunction, not modified by 
+			 * @param innerJunction above mentioned innerJunction, not modified by
 			 * this methods
-			 * @param innerJunctionOfOuterJunctions above mentioned innerJunction 
+			 * @param innerJunctionOfOuterJunctions above mentioned innerJunction
 			 * of outerJunctions, not modified by this method
-			 * @return innerJunction of outerJunctions which is simplified with 
+			 * @return innerJunction of outerJunctions which is simplified with
 			 * respect to innerJunction as mentioned above. If no simplification
 			 * was possible innerJunctionOfOuterJunctions (same Object) is returned
 			 * otherwise a new HashSet is returned.
@@ -386,7 +392,7 @@ public abstract class XnfTransformer extends NnfTransformer {
 			 * inner Junction
 			 *     (innerJunction ι outerJunction)
 			 * and simplify outerJunction with respect to innerJunction.
-			 * If innerJunction and outerJunction share a common literal we 
+			 * If innerJunction and outerJunction share a common literal we
 			 * simplify outerJunction to the neutral element of the innerJunction
 			 * (absorption) and return null to indicate that.
 			 * If there is a literal in outerJunction that occurs with the opposite
@@ -413,27 +419,27 @@ public abstract class XnfTransformer extends NnfTransformer {
 				return resultOuterJunction;
 			}
 		}
-		
-		
+
+
 		/**
 		 * Represents a Set of XJunction with the following property.
-		 * The set cannot contain two elements that are comparable via 
+		 * The set cannot contain two elements that are comparable via
 		 * inclusion.
 		 * Whenever we add an element xjunction_new such that for some existing
-		 * xjunction xjunction_old the inclusion 
+		 * xjunction xjunction_old the inclusion
 		 *     xjunction_old ⊆ xjunction_new
 		 * the new element xjunction_new is discarded.
 		 * Whenever we add an element xjunction_new we remove all existing
 		 * xjunctions xjunction_old for which the inclusion
 		 *     xjunction_new ⊆ xjunction_old
 		 * hols.
-		 * 
+		 *
 		 * @author Matthias Heizmann
 		 *
 		 */
 		class XJunctionPosetMinimalElements {
 			private final Set<XJunction> mElements = new HashSet<XJunction>();
-			
+
 			public void add(final XJunction xjunction) {
 				final Iterator<XJunction> it = mElements.iterator();
 				while (it.hasNext()) {
@@ -453,7 +459,7 @@ public abstract class XnfTransformer extends NnfTransformer {
 			public Set<XJunction> getElements() {
 				return mElements;
 			}
-			
+
 			public int size() {
 				return mElements.size();
 			}

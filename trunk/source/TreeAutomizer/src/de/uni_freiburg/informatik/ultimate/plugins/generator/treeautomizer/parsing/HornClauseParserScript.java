@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -71,6 +70,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.CnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 
 /**
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -200,61 +202,6 @@ public class HornClauseParserScript extends NoopScript {
 		}
 	}
 
-	/**
-	 * private String termsToString(Term[] terms) { String res = ""; for (Term term : terms) { res += " ( " +
-	 * term.toString() + " ) "; } if (res.length() > 0) return " { " + res + " } "; else return res; }
-	 *
-	 * private HornClausePredicateSymbol getHornPredicateSymbol(FunctionSymbol func) { if
-	 * (!predicates.containsKey(func.getName())) { predicates.put(func.getName(), new
-	 * HornClausePredicateSymbol(func.getName(), func.getParameterCount())); } return predicates.get(func.getName()); }
-	 *
-	 * private Map<HornClausePredicateSymbol, ArrayList<TermVariable>> getPredicateSymbols(ApplicationTerm term) {
-	 * HashMap<HornClausePredicateSymbol, ArrayList<TermVariable>> res = new HashMap<>(); if
-	 * (mDeclaredPredicateSymbols.contains(term.getFunction().getName())) { ArrayList<TermVariable> vars = new ArrayList
-	 * <TermVariable>(); for (Term par : term.getParameters()) { vars.add((TermVariable) par); }
-	 *
-	 * res.put(getHornPredicateSymbol(term.getFunction()), vars); } if (term.getFunction().getName().equals("and")) {
-	 * for (Term literal : term.getParameters()) { Map<HornClausePredicateSymbol, ArrayList<TermVariable>> temp =
-	 * getPredicateSymbols( (ApplicationTerm) literal); for (HornClausePredicateSymbol symbol : temp.keySet()) {
-	 * res.put(symbol, temp.get(symbol)); } } }
-	 *
-	 * if (term.getFunction().getName().equals("or")) { for (Term literal : term.getParameters()) {
-	 * Map<HornClausePredicateSymbol, ArrayList<TermVariable>> temp = getPredicateSymbols( (ApplicationTerm) literal);
-	 * for (HornClausePredicateSymbol symbol : temp.keySet()) { res.put(symbol, temp.get(symbol)); } } } return res; }
-	 *
-	 * private Term getTransitionFormula(ApplicationTerm term) { if (term.getFunction().getName().equals("and")) {
-	 * ArrayList<Term> terms = new ArrayList<>(); for (Term literal : term.getParameters()) {
-	 * terms.add(getTransitionFormula((ApplicationTerm) literal)); } if (terms.size() > 0) return
-	 * getTheory().and(terms.toArray(new Term[] {})); else return getTheory().mTrue; } if
-	 * (!predicates.containsKey(term.getFunction().getName())) { return term; } return getTheory().mTrue; }
-	 */
-
-	private Map<TermVariable, TermVariable> getTempVariablesMap(final QuantifiedFormula term) {
-
-		final Map<TermVariable, TermVariable> tempVars = new HashMap<>();
-		for (final TermVariable var : term.getVariables()) {
-			if (mVariablesStack.contains(var)) {
-				final TermVariable versionedVar = createFreshTermVariable(var.getName(), var.getSort());
-				tempVars.put(var, versionedVar);
-				mVariablesStack.add(versionedVar);
-				// mVariablesStack.put(var, mSymbolTable.) Construct a fresh copy of var
-			} else {
-				mVariablesStack.add(var);
-			}
-		}
-		return tempVars;
-	}
-
-	private void resetTempVariables(final QuantifiedFormula term, final Map<TermVariable, TermVariable> tempVars) {
-		for (final TermVariable var : term.getVariables()) {
-			mVariablesStack.remove(var);
-		}
-		for (final Entry<TermVariable, TermVariable> oldvar : tempVars.entrySet()) {
-			mVariablesStack.remove(oldvar.getKey());
-			//mVariablesStack.put(oldvar.getKey(), oldvar.getValue());
-		}
-	}
-
 	private List<HornClauseBody> parseCnf(final Term term) throws SMTLIBException {
 		final List<HornClauseBody> result = new ArrayList<>();
 
@@ -268,12 +215,7 @@ public class HornClauseParserScript extends NoopScript {
 
 		final Term[] clauses = SmtUtils.getConjuncts(quantifiersStripped);
 
-//		final List<Term> positiveUnint = new ArrayList<>();
-//		final List<Term> negativeUnint = new ArrayList<>();
-//		final List<Term> constraint = new ArrayList<>();
 		for (final Term clause : clauses) {
-
-
 			final HornClauseBody head = new HornClauseBody(this);
 
 			for (final Term literal : SmtUtils.getDisjuncts(clause)) {
@@ -310,7 +252,6 @@ public class HornClauseParserScript extends NoopScript {
 					throw new AssertionError("TODO: check this case");
 				}
 			}
-
 			result.add(head);
 		}
 
@@ -364,6 +305,7 @@ public class HornClauseParserScript extends NoopScript {
 
 		return ret;
 	}
+
 	@Override
 	public LBool assertTerm(final Term rawTerm) throws SMTLIBException {
 
@@ -377,7 +319,6 @@ public class HornClauseParserScript extends NoopScript {
 			if (parsedQuantification != null) {
 				mParsedHornClauses.add(parsedQuantification);
 				System.err.println("PARSED: " + parsedQuantification.debugString());
-				//System.err.println("Parsed: " + parsedQuantification.getBodyPredicates() + " " + parsedQuantification.getFormula() + " ~~>" + parsedQuantification.getHeadPredicate());
 			}
 		}
 		System.err.println("Parsed so far: " + mParsedHornClauses);
@@ -400,7 +341,8 @@ public class HornClauseParserScript extends NoopScript {
 		 * TODO: a TermCompiler and Clausifier a la SMTInterpol might be more efficient
 		 */
 
-		final Term nnf = SmtUtils.toNnf(mServices, mManagedScript, unl);
+//		final Term nnf = SmtUtils.toNnf(mServices, mManagedScript, unl);
+		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.PULL, true).transform(unl);
 
 		final Term pnfTerm = new PrenexNormalForm(mManagedScript).transform(nnf);
 		Term pnfBody;
@@ -430,7 +372,8 @@ public class HornClauseParserScript extends NoopScript {
 		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(pnfBody);
 
 		final Term cnfWConstraintsReplaced =
-				SmtUtils.toCnf(mServices, mManagedScript, bodyWithConstraintsReplaced, mXnfConversionTechnique);
+			 new CnfTransformer(mManagedScript, mServices, true).transform(bodyWithConstraintsReplaced);
+//				SmtUtils.toCnf(mServices, mManagedScript, bodyWithConstraintsReplaced, mXnfConversionTechnique);
 
 		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
 
