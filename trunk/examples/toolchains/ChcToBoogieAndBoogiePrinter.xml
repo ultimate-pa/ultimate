@@ -1,0 +1,11 @@
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.chctoboogie"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer" />
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+
+
+	</toolchain>
+</rundefinition>
