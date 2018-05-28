@@ -63,6 +63,7 @@ public class PeaToBoogie implements ISource {
 	private List<String> mFileNames = new ArrayList<>();
 	private IUltimateServiceProvider mServices;
 	private PeaResultUtil mReporter;
+	private IToolchainStorage mStorage;
 
 	@Override
 	public void init() {
@@ -225,8 +226,8 @@ public class PeaToBoogie implements ISource {
 		final boolean reportTrivialRtConsistency =
 				prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 
-		final Unit unit = new Req2BoogieTranslator(mServices, mLogger, vacuityCheck, combinationNum, checkConsistency,
-				reportTrivialRtConsistency, patterns).getUnit();
+		final Unit unit = new Req2BoogieTranslator(mServices, mStorage, mLogger, vacuityCheck, combinationNum,
+				checkConsistency, reportTrivialRtConsistency, patterns).getUnit();
 		new PatternContainer(patterns).annotate(unit);
 		return unit;
 	}
@@ -253,7 +254,7 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
-		// not necessary
+		mStorage = storage;
 	}
 
 	@Override

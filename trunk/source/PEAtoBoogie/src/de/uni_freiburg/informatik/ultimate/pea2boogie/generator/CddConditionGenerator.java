@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.CDDTranslator;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 public class CddConditionGenerator {
@@ -84,7 +84,7 @@ public class CddConditionGenerator {
 
 				cddOuter = cddOuter.and(cddInner, andCache);
 
-				final String pcName = Req2BoogieTranslator.getPcName(automaton);
+				final String pcName = ReqSymboltable.getPcName(automaton);
 				impliesLHS.add(genPCCompEQ(pcName, vector[j], bl));
 			}
 
