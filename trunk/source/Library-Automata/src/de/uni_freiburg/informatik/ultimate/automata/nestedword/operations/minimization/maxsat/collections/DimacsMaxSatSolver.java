@@ -74,6 +74,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private static final String LINE_SEPARATOR = System.lineSeparator();
 	private static final String FILE_NAME_TMP = "dimacs.wcnf.tmp";
 	private static final String EXTENSION = ".wcnf";
+	private static final String PREFIX = "UAutomizer_";
 	private static final String FILE_NAME_DEFAULT = "dimacs";
 	private static final String ENCODING = "UTF-8";
 	private static final boolean WRITE_TO_STD_OUT = false;
@@ -113,7 +114,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	 */
 	public DimacsMaxSatSolver(final AutomataLibraryServices services, final String filename) {
 		super(services);
-		mFilename = filename + EXTENSION;
+		mFilename = PREFIX + filename + EXTENSION;
 		mWriter = createWriter();
 		mVar2NumberString = new HashMap<>();
 		mNumber2Var = new ArrayList<>();
@@ -352,15 +353,16 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 					+ "c Minimization of Visibly Pushdown Automata Using Partial Max-SAT.\n"
 					+ "c TACAS (1) 2017: 461-478\n"
 					+ "c [2] https://ultimate.informatik.uni-freiburg.de/automata_library\n"
-					+ "c [3] Matthias Heizmann, Jochen Hoenicke, Andreas Podelski:\n" 
+					+ "c [3] Matthias Heizmann, Jochen Hoenicke, Andreas Podelski:\n"
 					+ "c Nested interpolants. POPL 2010: 471-482\n"
 					+ "c [4] Matthias Heizmann, Jochen Hoenicke, Andreas Podelski:\n"
-					+ "c Software Model Checking for People Who Love Automata.\n" + "c CAV 2013:36-52\n"
-					+ "c [5] Matthias Heizmann, Yu-Wen Chen, Daniel Dietsch, Marius Greitschus, \n"
-					+ "c Alexander Nutz, Betim Musa, Claus Schätzle, Christian Schilling, Frank \n"
-					+ "c Schüssele, Andreas Podelski: Ultimate Automizer with an On-Demand \n"
-					+ "c Construction of Floyd-Hoare Automata - (Competition Contribution).\n"
-					+ "c TACAS (2) 2017: 394-398\n"
+					+ "c Software Model Checking for People Who Love Automata.\n" + "c CAV 2013: 36-52\n"
+					+ "c [5] Matthias Heizmann, Yu-Fang Chen, Daniel Dietsch, Marius Greitschus,\n"
+					+ "c Jochen Hoenicke, Yong Li, Alexander Nutz, Betim Musa, Christian Schilling,\n"
+					+ "c Tanja Schindler, Andreas Podelski:\n"
+					+ "c Ultimate Automizer and the Search for Perfect Interpolants - (Competition\n"
+					+ "c Contribution).\n"
+					+ "c TACAS (II) 2018: 447-451\n"
 					+ "c [6] Dirk Beyer: Reliable and Reproducible Competition Results with \n"
 					+ "c BenchExec and Witnesses (Report on SV-COMP 2016).\n" + "c TACAS 2016: 887-904\n"
 					+ "p wcnf ";
