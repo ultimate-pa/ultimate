@@ -1,11 +1,8 @@
-Ultimate Buchi Automizer can analyze termination of C programs.
+Ultimate ChcToBoogie with Ultimate Automizer analyzes satisfiability of sets of constrained Horn clauses.
 
-http://ultimate.informatik.uniMINUSfreiburg.de/BuchiAutomizer/
+Ultimate ChcToBoogie with Ultimate Automizer is maintained by
+Alexander Nutz [University of Freiburg, Germany]
 
-
-Ultimate Buchi Automizer is maintained by
-Matthias Heizmann [University of Freiburg, Germany]
-
-Ultimate Buchi Automizer is part of Ultimate
+Ultimate ChcToBoogie with Ultimate Automizer is part of Ultimate
 http://ultimate.informatik.uniMINUSfreiburg.de/
 to which many people contributed.
