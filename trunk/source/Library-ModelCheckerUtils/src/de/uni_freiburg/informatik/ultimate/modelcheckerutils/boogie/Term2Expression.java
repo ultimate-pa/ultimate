@@ -37,6 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
@@ -198,6 +199,13 @@ public final class Term2Expression implements Serializable {
 				} else if ("-".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);
 					return new UnaryExpression(null, type, UnaryExpression.Operator.ARITHNEGATIVE, param);
+				} else if ("to_real".equals(symb.getName())) {
+					final Term param = term.getParameters()[0];
+					if (param instanceof ConstantTerm) {
+						return ExpressionFactory.createRealLiteral(null, param.toString());
+					} else {
+						throw new UnsupportedOperationException("should we implement a to_real operation here?");
+					}
 				} else {
 					throw new IllegalArgumentException("unknown symbol " + symb);
 				}

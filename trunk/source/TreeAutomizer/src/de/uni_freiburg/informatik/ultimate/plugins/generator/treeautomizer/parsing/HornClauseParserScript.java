@@ -295,24 +295,22 @@ public class HornClauseParserScript extends NoopScript {
 		return LBool.UNKNOWN;
 	}
 
+	/**
+	 * plan:
+	 * <li> prenex, nnf
+	 * <li> let every subformula that has no uninterpreted predicates
+	 * <li> cnf the body of the let
+	 * <li> unlet
+	 * result: a formula in prenex NF, with a CNF inside
+	 * TODO: a TermCompiler and Clausifier a la SMTInterpol might be more efficient
+	 */
 	public Term normalizeInputFormula(final Term rawTerm) {
-		// TODO: do we need this step?
-//		mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
-		final Term unl = new FormulaUnLet(UnletType.SMTLIB).unlet(rawTerm);
-//		final Term unl = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS).unlet(rawTerm);
-//		final Term unl = rawTerm;
 
-		/*
-		 * plan:
-		 * <li> prenex, nnf
-		 * <li> let every subformula that has no uninterpreted predicates
-		 * <li> cnf the body of the let
-		 * <li> unlet
-		 * result: a formula in prenex NF, with a CNF inside
-		 * TODO: a TermCompiler and Clausifier a la SMTInterpol might be more efficient
-		 */
 
-//		final Term nnf = SmtUtils.toNnf(mServices, mManagedScript, unl);
+		final Term nrmlized = new NormalizingTermTransformer().transform(rawTerm);
+
+		final Term unl = new FormulaUnLet(UnletType.SMTLIB).unlet(nrmlized);
+
 		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.PULL, true).transform(unl);
 
 		final Term pnfTerm = new PrenexNormalForm(mManagedScript).transform(nnf);
@@ -344,7 +342,6 @@ public class HornClauseParserScript extends NoopScript {
 
 		final Term cnfWConstraintsReplaced =
 			 new CnfTransformer(mManagedScript, mServices, true).transform(bodyWithConstraintsReplaced);
-//				SmtUtils.toCnf(mServices, mManagedScript, bodyWithConstraintsReplaced, mXnfConversionTechnique);
 
 		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
 
@@ -633,5 +630,49 @@ public class HornClauseParserScript extends NoopScript {
 		boolean getResult() {
 			return mResult;
 		}
+	}
+
+	class NormalizingTermTransformer extends TermTransformer {
+
+		@Override
+		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
+			final FunctionSymbol fsym = appTerm.getFunction();
+			final Sort[] paramSorts = fsym.getParameterSorts();
+
+
+			Term[] args = newArgs;
+
+			// modified copy from TermCompiler
+			if (paramSorts.length == 2
+					&& paramSorts[0].getName().equals("Real")
+					&& paramSorts[1] == paramSorts[0]) {
+				// IRA-Hack
+				if (args == appTerm.getParameters()) {
+					args = args.clone();
+				}
+				boolean changed = false;
+				final Term[] desugarParams = new Term[args.length];
+				final Term[] nargs = new Term[args.length];
+				for (int i = 0; i < args.length; i++) {
+					final Term arg = args[i];//mTracker.getProvedTerm(args[i]);
+					if (arg.getSort().getName().equals("Int")) {
+						desugarParams[i] = term("to_real", arg);
+						nargs[i] = desugarParams[i];
+						changed = true;
+					} else {
+						desugarParams[i] = arg;
+						nargs[i] = arg;
+					}
+				}
+				if (changed) {
+					setResult(term(fsym.getName(), nargs));
+				} else {
+					super.convertApplicationTerm(appTerm, newArgs);
+				}
+			} else {
+				super.convertApplicationTerm(appTerm, newArgs);
+			}
+		}
+
 	}
 }
