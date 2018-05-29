@@ -218,7 +218,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 //	}
 	public HcHeadVar getHeadVar(final String predSymName, final int index, final Sort sort) {
 		final Sort transferredSort = transferSort(sort);
-		final HcHeadVar result = mPredSymNameToIndexToSortToHcHeadVar.get(predSymName, index, transferredSort);//mIndexToSortToHcHeadVar.get(index, transferredSort);
+		final HcHeadVar result = mPredSymNameToIndexToSortToHcHeadVar.get(predSymName, index, transferredSort);
 		assert result != null;
 		return result;
 	}
@@ -323,10 +323,14 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return predSym.getName();
 	}
 
-	public List<HcHeadVar> getHcHeadVarsForPredSym(final HornClausePredicateSymbol bodySymbol) {
+	public List<HcHeadVar> getHcHeadVarsForPredSym(final HornClausePredicateSymbol bodySymbol,
+			final boolean constructIfNecessary) {
 		final List<HcHeadVar> result = new ArrayList<>();
 		for (int i = 0; i < bodySymbol.getArity(); i++) {
-			result.add(getHeadVar(bodySymbol.getName(), i, bodySymbol.getParameterSorts().get(i)));
+			final HcHeadVar hv = constructIfNecessary ?
+					getOrConstructHeadVar(bodySymbol.getName(), i, bodySymbol.getParameterSorts().get(i)) :
+						getHeadVar(bodySymbol.getName(), i, bodySymbol.getParameterSorts().get(i));
+			result.add(hv);
 		}
 		return result;
 	}

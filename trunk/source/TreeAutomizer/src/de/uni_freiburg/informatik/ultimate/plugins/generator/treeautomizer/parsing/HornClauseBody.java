@@ -127,22 +127,7 @@ public class HornClauseBody {
 				coBodyVars);
 		}
 
-		/*
-		 * Collect the predicate symbol and the arguments of the body predicate from the Term mHead
-		 *  right now we assume that
-		 *   - all parameters of the head predicate are variables
-		 *   - all parameters of the head predicate are pairwise different (i.e. there are no repeated variables)
-		 *   TODO: lift this assumption by introducing equalities
-		 */
-//		final HornClausePredicateSymbol bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
-//				mHead.getFunction().getName(), mHead.getFunction().getParameterSorts());
-//		final List<TermVariable> parameterTermVariables = Arrays.asList(mHead.getParameters()).stream()
-//				.map(t -> (TermVariable) t)
-//				.collect(Collectors.toList());
-//		assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
-//				+ "duplicate arguments";
-//		final List<TermVariable> bodyVars = parameterTermVariables;
-		final List<HcHeadVar> bodyVars = symbolTable.getHcHeadVarsForPredSym(bodySymbol);
+		final List<HcHeadVar> bodyVars = symbolTable.getHcHeadVarsForPredSym(bodySymbol, false);
 
 		return new HornClause(solverScript, symbolTable,
 				getTransitionFormula(solverScript.getScript()),

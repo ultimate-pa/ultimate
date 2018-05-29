@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.chctoboogie;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -183,10 +185,29 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		final List<Declaration> declarations = new ArrayList<>();
 		final ILocation loc = getLoc();
 
-		for (final HornClausePredicateSymbol headPredSymbol : hornClauseHeadPredicateToHornClauses.getDomain()) {
+		final Deque<HornClausePredicateSymbol> headPredQueue = new ArrayDeque<>();
+		final Set<HornClausePredicateSymbol> addedToQueueBefore = new HashSet<>();
 
+		headPredQueue.push(mBottomPredSym);
+		addedToQueueBefore.add(mBottomPredSym);
+
+//		for (final HornClausePredicateSymbol headPredSymbol : hornClauseHeadPredicateToHornClauses.getDomain()) {
+		while (!headPredQueue.isEmpty()) {
+			// breadth-first (pollFirst) or depth-first (pop) should not matter here
+			final HornClausePredicateSymbol headPredSymbol = headPredQueue.pop();
+
+
+			/*
+			 * if there are no Horn clauses with the current headPredSymbol in their head we create an empty procedure
+			 * this flag tracks this special case
+			 */
+			final boolean headPredUnconstrained =
+					hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol).isEmpty();
+
+			/*
+			 * create the procedure body according to all Horn clauses with headPredSymbol as their head
+			 */
 			List<Statement> nondetSwitch = null;
-
 			final Set<HcBodyVar> allBodyPredVariables = new HashSet<>();
 
 			for (final HornClause hornClause : hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol)) {
@@ -202,6 +223,11 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 					final HornClausePredicateSymbol bodyPredSym = hornClause.getBodyPredicates().get(i);
 					final List<Term> bodyPredArgs = hornClause.getBodyPredToArgs().get(i);
 
+					if (!addedToQueueBefore.contains(bodyPredSym)) {
+						headPredQueue.push(bodyPredSym);
+						addedToQueueBefore.add(bodyPredSym);
+					}
+
 					final CallStatement call = new CallStatement(loc, false, new VariableLHS[0],
 							predSymToMethodName(bodyPredSym),
 							bodyPredArgs.stream().map(t -> mTerm2Expression.translate(t)).collect(Collectors.toList())
@@ -212,7 +238,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 				nondetSwitch = addIteBranch(loc, nondetSwitch, branchBody);
 			}
 
-			final VarList[] inParams = getInParamsForHeadPredSymbol(loc, headPredSymbol);
+			final VarList[] inParams = getInParamsForHeadPredSymbol(loc, headPredSymbol, headPredUnconstrained);
 
 
 			final List<VariableDeclaration> localVarDecs = new ArrayList<>();
@@ -225,8 +251,9 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 						: localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
 			}
 
-			assert !nondetSwitch.stream().anyMatch(Objects::isNull);
-			final Statement[] block = nondetSwitch.toArray(new Statement[nondetSwitch.size()]);
+			assert headPredUnconstrained || !nondetSwitch.stream().anyMatch(Objects::isNull);
+			final Statement[] block = headPredUnconstrained ? new Statement[0] :
+					nondetSwitch.toArray(new Statement[nondetSwitch.size()]);
 			final Body body = new Body(loc, localVars, block);
 
 			final Procedure proc =
@@ -268,11 +295,12 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	 * @param headPredSym
 	 * @return
 	 */
-	private VarList[] getInParamsForHeadPredSymbol(final ILocation loc,
-			final HornClausePredicateSymbol headPredSym) {
+	private VarList[] getInParamsForHeadPredSymbol(final ILocation loc, final HornClausePredicateSymbol headPredSym,
+			final boolean constructIfNecessary) {
 		final VarList[] result = new VarList[headPredSym.getArity()];
+		final List<HcHeadVar> headVars = mHcSymbolTable.getHcHeadVarsForPredSym(headPredSym, constructIfNecessary);
 		for (int i = 0; i < headPredSym.getArity(); i++) {
-			final HcHeadVar hchv = mHcSymbolTable.getHcHeadVarsForPredSym(headPredSym).get(i);
+			final HcHeadVar hchv = headVars.get(i);
 			final Sort sort = hchv.getTermVariable().getSort();
 			final ASTType correspondingType = getCorrespondingAstType(loc, sort);
 			final VarList vl = new VarList(loc, new String[] { hchv.getGloballyUniqueId() }, correspondingType);
