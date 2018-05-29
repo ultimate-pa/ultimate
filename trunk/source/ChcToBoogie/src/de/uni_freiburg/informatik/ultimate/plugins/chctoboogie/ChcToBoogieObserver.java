@@ -191,11 +191,9 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		headPredQueue.push(mBottomPredSym);
 		addedToQueueBefore.add(mBottomPredSym);
 
-//		for (final HornClausePredicateSymbol headPredSymbol : hornClauseHeadPredicateToHornClauses.getDomain()) {
 		while (!headPredQueue.isEmpty()) {
 			// breadth-first (pollFirst) or depth-first (pop) should not matter here
 			final HornClausePredicateSymbol headPredSymbol = headPredQueue.pop();
-
 
 			/*
 			 * if there are no Horn clauses with the current headPredSymbol in their head we create an empty procedure

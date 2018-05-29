@@ -93,7 +93,7 @@ public class HornClauseParserScript extends NoopScript {
 	private final List<HornClause> mParsedHornClauses;
 	private final HCSymbolTable mSymbolTable;
 
-	FormulaUnLet mUnletter;
+//	FormulaUnLet mUnletter;
 
 	private final String mFilename;
 
@@ -123,7 +123,7 @@ public class HornClauseParserScript extends NoopScript {
 		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
 
 		mVariablesStack = new HashSet<>();
-		mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
+//		mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
 
 	}
 
@@ -297,7 +297,10 @@ public class HornClauseParserScript extends NoopScript {
 
 	public Term normalizeInputFormula(final Term rawTerm) {
 		// TODO: do we need this step?
-		final Term unl = mUnletter.unlet(rawTerm);
+//		mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
+		final Term unl = new FormulaUnLet(UnletType.SMTLIB).unlet(rawTerm);
+//		final Term unl = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS).unlet(rawTerm);
+//		final Term unl = rawTerm;
 
 		/*
 		 * plan:
