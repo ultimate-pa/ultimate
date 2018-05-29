@@ -10,11 +10,11 @@ RESULT_SAFE=`cat output.txt | grep "PositiveResult"`
 RESULT_UNKNOWN_EXCEPTION =`cat output.txt | grep "The toolchain threw an exception"`
 #RESULT_FALSE_TERMINATION=`cat output.txt | grep "Nonterminating execution"`
 
-if [ "$RESULT_UNSAFE" ]; then
+if [ "$RESULT_SAFE" ]; then
 	echo "YES"
 fi
     
-if [ "$RESULT_SAFE" ]; then
+if [ "$RESULT_UNSAFE" ]; then
 	echo "NO"
 fi
     
