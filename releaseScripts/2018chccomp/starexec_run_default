@@ -8,29 +8,20 @@ fi
 RESULT_UNSAFE=`cat output.txt | grep "CounterExampleResult"`
 RESULT_SAFE=`cat output.txt | grep "PositiveResult"`
 RESULT_UNKNOWN_EXCEPTION =`cat output.txt | grep "The toolchain threw an exception"`
-#RESULT_FALSE_TERMINATION=`cat output.txt | grep "Nonterminating execution"`
 
 if [ "$RESULT_SAFE" ]; then
-#	echo "YES"
 	echo "SAT"
 fi
     
 if [ "$RESULT_UNSAFE" ]; then
-	  #echo "NO"
 	echo "UNSAT"
 fi
     
 if [ "$RESULT_UNKNOWN_EXCEPTION" ]; then
-	#echo "MAYBE"
 	echo "UNKNOWN"
 fi
 
-#if [ "$RESULT_NOTMEMSAFE" ]; then
-#	echo "MAYBE"
-#fi
 
 echo ""
 cat output.txt
 
-#test if we receive output from z3
-#./../z3-4.3.2.d548c51a984e-x64-debian-6.0.6/bin/z3 -h
