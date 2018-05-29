@@ -410,10 +410,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final UnionFind<Term> eqClassesThis = eqThis.getEquivalences(new HashSet<>(thisBounds));
 		final UnionFind<Term> eqClassesOther = eqOther.getEquivalences(new HashSet<>(otherBounds));
 		final Set<TermVariable> excludedVars = new HashSet<>();
-		excludedVars.addAll(thisBounds);
-		excludedVars.addAll(otherBounds);
-		excludedVars.addAll(getTermVars(simplifiedThisSegmentation.getValues()));
-		excludedVars.addAll(getTermVars(simplifiedOtherSegmentation.getValues()));
+		excludedVars.addAll(getTermVars(segmentation.getBounds()));
+		excludedVars.addAll(getTermVars(otherSegmentation.getBounds()));
+		excludedVars.addAll(getTermVars(segmentation.getValues()));
+		excludedVars.addAll(getTermVars(otherSegmentation.getValues()));
 		final List<Set<Term>> boundsThisOld =
 				transformSegmentation(eqClassesThis, simplifiedThisSegmentation, Collections.emptySet(), false)
 						.getFirst();
@@ -882,24 +882,14 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				final Term indexTerm = mToolkit.getTerm(index);
 				final Expression value = store.getValue();
 				final Pair<STATE, Segmentation> subResult = getSegmentation(store.getArray());
-				STATE newSubState = subResult.getFirst();
+				final STATE tmpSubState = subResult.getFirst();
 				final Segmentation segmentation = subResult.getSecond();
-				final ArrayDomainState<STATE> tmpState = updateState(newSubState);
+				final ArrayDomainState<STATE> tmpState = updateState(tmpSubState);
 				final Pair<Integer, Integer> minMax = tmpState.getContainedBoundIndices(segmentation, indexTerm);
 				final int min = minMax.getFirst();
 				final int max = minMax.getSecond();
-				final IProgramVar newMinBound = mToolkit.createBoundVar(index.getType());
-				final IProgramVar newMaxBound = mToolkit.createBoundVar(index.getType());
-				final IProgramVar newValue = mToolkit.createValueVar(value.getType());
 				final Script script = mToolkit.getScript();
-				final Term minConstraint = SmtUtils.binaryEquality(script, newMinBound.getTermVariable(), indexTerm);
-				final Term maxConstraint = SmtUtils.binaryEquality(script, newMaxBound.getTermVariable(),
-						SmtUtils.sum(script, "+", indexTerm, script.numeral("1")));
-				final Term valueConstraint =
-						SmtUtils.binaryEquality(script, newValue.getTermVariable(), mToolkit.getTerm(value));
-				final Term constraint = SmtUtils.and(script, minConstraint, maxConstraint, valueConstraint);
-				newSubState = mToolkit.handleAssumptionBySubdomain(
-						newSubState.addVariables(Arrays.asList(newMinBound, newMaxBound, newValue)), constraint);
+				final List<Term> constraints = new ArrayList<>();
 				final List<IProgramVar> newBounds = new ArrayList<>();
 				final List<IProgramVar> newValues = new ArrayList<>();
 				for (int i = 0; i < min; i++) {
@@ -910,37 +900,33 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				for (int i = min; i < max; i++) {
 					oldValues.add(segmentation.getValue(i));
 				}
-				final Term minEq = SmtUtils.binaryEquality(script, newMinBound.getTermVariable(),
-						segmentation.getBound(min).getTermVariable());
-				if (newSubState.evaluate(script, minEq) != EvalResult.TRUE) {
-					final IProgramVar freshMinValue = mToolkit.createValueVar(index.getType());
-					final Term valueMinConstraint =
-							SmtUtils.or(script, connstructEquivalentConstraints(freshMinValue, oldValues));
-					newSubState = mToolkit.handleAssumptionBySubdomain(newSubState.addVariable(freshMinValue),
-							valueMinConstraint);
-					newBounds.add(segmentation.getBound(min));
-					newValues.add(freshMinValue);
-				}
+				newBounds.add(segmentation.getBound(min));
+				final IProgramVar freshMinValue = mToolkit.createValueVar(index.getType());
+				constraints.add(SmtUtils.or(script, connstructEquivalentConstraints(freshMinValue, oldValues)));
+				newValues.add(freshMinValue);
+				final IProgramVar newMinBound = mToolkit.createBoundVar(index.getType());
+				constraints.add(SmtUtils.binaryEquality(script, newMinBound.getTermVariable(), indexTerm));
 				newBounds.add(newMinBound);
+				final IProgramVar newValue = mToolkit.createValueVar(value.getType());
+				constraints.add(SmtUtils.binaryEquality(script, newValue.getTermVariable(), mToolkit.getTerm(value)));
 				newValues.add(newValue);
+				final IProgramVar newMaxBound = mToolkit.createBoundVar(index.getType());
+				constraints.add(SmtUtils.binaryEquality(script, newMaxBound.getTermVariable(),
+						SmtUtils.sum(script, "+", indexTerm, script.numeral("1"))));
 				newBounds.add(newMaxBound);
-				final Term maxEq = SmtUtils.binaryEquality(script, newMaxBound.getTermVariable(),
-						segmentation.getBound(max).getTermVariable());
-				if (newSubState.evaluate(script, maxEq) != EvalResult.TRUE) {
-					final IProgramVar freshMaxValue = mToolkit.createValueVar(index.getType());
-					final Term valueMaxConstraint =
-							SmtUtils.or(script, connstructEquivalentConstraints(freshMaxValue, oldValues));
-					newSubState = mToolkit.handleAssumptionBySubdomain(newSubState.addVariable(freshMaxValue),
-							valueMaxConstraint);
-					newValues.add(freshMaxValue);
-				}
+				final IProgramVar freshMaxValue = mToolkit.createValueVar(index.getType());
+				constraints.add(SmtUtils.or(script, connstructEquivalentConstraints(freshMaxValue, oldValues)));
+				newValues.add(freshMaxValue);
 				for (int i = max; i < segmentation.size(); i++) {
 					newBounds.add(segmentation.getBound(i));
 					newValues.add(segmentation.getValue(i));
 				}
 				newBounds.add(mToolkit.getMaxBound());
-				final Segmentation newSegmentation = new Segmentation(newBounds, newValues);
-				return new Pair<>(newSubState, newSegmentation);
+				final List<IProgramVarOrConst> newVariables =
+						Arrays.asList(freshMinValue, newMinBound, newValue, newMaxBound, freshMaxValue);
+				final STATE newSubState = mToolkit.handleAssumptionBySubdomain(tmpSubState.addVariables(newVariables),
+						SmtUtils.and(script, constraints));
+				return new Pair<>(newSubState, new Segmentation(newBounds, newValues));
 			}
 		}
 		// Otherwise return a top segmentation
