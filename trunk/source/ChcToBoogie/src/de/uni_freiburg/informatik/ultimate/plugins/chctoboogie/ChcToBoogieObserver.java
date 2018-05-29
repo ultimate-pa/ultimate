@@ -73,16 +73,17 @@ import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicate
 import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
+ * Does the main work of this plugin.
+ * Takes a set of HornClause objects from the previous plugin and converts it into a Boogie Unit that is safe if and
+ * only if the input set of Horn clauses is satisfiable.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
- *
  */
 public class ChcToBoogieObserver implements IUnmanagedObserver {
 
@@ -97,11 +98,9 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	private ManagedScript mManagedScript;
 	private TypeSortTranslator mTypeSortTanslator;
 	private HCSymbolTable mHcSymbolTable;
-	private Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	private final ILocation mLocation;
 
 	public ChcToBoogieObserver(final ILogger logger, final IUltimateServiceProvider services) {
-			//final ManagedScript managedScript) {
 		mLogger = logger;
 		mServices = services;
 		mNameOfMainEntryPointProc = "Ultimate.START";
@@ -125,7 +124,6 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 	public IElement getModel() {
 		return mBoogieUnit;
-//		return mResult;
 	}
 
 	@Override
@@ -154,17 +152,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			mTypeSortTanslator = new TypeSortTranslator(sortToType, mManagedScript.getScript(), mServices);
 		}
 
-
-//		{
-//			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations,
-//					mManagedScript, mTypeSortTanslator);
-//		}
-
-
-//		mTerm2Expression = new Term2Expression(mTypeSortTanslator, mBoogie2SmtSymbolTable, mManagedScript);
 		mTerm2Expression = new Term2Expression(mTypeSortTanslator, mHcSymbolTable, mManagedScript);
-
-
 
 		final HashRelation<HornClausePredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
 				sortHornClausesByHeads(hornClausesRaw);
@@ -174,7 +162,8 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		return true;
 	}
 
-	public HashRelation<HornClausePredicateSymbol, HornClause> sortHornClausesByHeads(final List<HornClause> hornClausesRaw) {
+	public HashRelation<HornClausePredicateSymbol, HornClause> sortHornClausesByHeads(
+			final List<HornClause> hornClausesRaw) {
 		final HashRelation<HornClausePredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
 				new HashRelation<>();
 
@@ -261,17 +250,10 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	private void updateLocalVarDecs(final List<VariableDeclaration> localVarDecs, final Set<HcBodyVar> bpvs,
 			final ILocation loc) {
 		for (final HcBodyVar bodyPredVar : bpvs) {
-//			final String boogieVarName = bodyPredVar.getName();
 			final String boogieVarName = bodyPredVar.getGloballyUniqueId();
 			final Sort sort = bodyPredVar.getSort();
-			final VarList varList = new VarList(loc, new String[] { boogieVarName }, getCorrespondingAstType(loc, sort));
-
-//			mManagedScript.lock(mBoogie2SmtSymbolTable);
-//			final LocalBoogieVar boogieVar = mBoogie2SmtSymbolTable.constructLocalBoogieVar(boogieVarName, procName,
-//					mTypeSortTanslator.getType(sort), varList,
-//					new DeclarationInformation(StorageClass.LOCAL, procName));
-//			mManagedScript.unlock(mBoogie2SmtSymbolTable);
-
+			final VarList varList = new VarList(loc, new String[] { boogieVarName },
+					getCorrespondingAstType(loc, sort));
 			localVarDecs.add(new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList }));
 		}
 	}
@@ -289,7 +271,6 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	private VarList[] getInParamsForHeadPredSymbol(final ILocation loc,
 			final HornClausePredicateSymbol headPredSym) {
 		final VarList[] result = new VarList[headPredSym.getArity()];
-//		for (HcHeadVar hchv : mHcSymbolTable.getHcHeadVarsForPredSym(headPredSym)) {
 		for (int i = 0; i < headPredSym.getArity(); i++) {
 			final HcHeadVar hchv = mHcSymbolTable.getHcHeadVarsForPredSym(headPredSym).get(i);
 			final Sort sort = hchv.getTermVariable().getSort();
@@ -298,18 +279,6 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			result[i] = vl;
 		}
 		return result;
-
-//		final VarList[] result = new VarList[headPredSym.getArity()];
-//
-//		for (int i = 0; i < headPredSym.getArity(); i++) {
-//			final Sort sort = headPredSym.getParameterSorts().get(i);
-//			final ASTType correspondingType = getCorrespondingAstType(loc, sort);
-//			final String varName = getHeadVarName(i, sort);
-//			final VarList vl = new VarList(loc, new String[] { varName }, correspondingType);
-//			result[i] = vl;
-//		}
-//
-//		return result;
 	}
 
 	private ASTType getCorrespondingAstType(final ILocation loc, final Sort sort) {
@@ -325,14 +294,10 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private String getHeadVarName(final int i, final Sort sort) {
-		return mHcSymbolTable.getHeadVarName(i, sort);
-	}
-
 	private Declaration constructMainEntryPointProcedure(final ILocation loc) {
 
-		final Statement callToBottomProc = new CallStatement(loc, false, new VariableLHS[0], predSymToMethodName(mBottomPredSym),
-				new Expression[0]);
+		final Statement callToBottomProc = new CallStatement(loc, false, new VariableLHS[0],
+				predSymToMethodName(mBottomPredSym), new Expression[0]);
 
 		final Statement assertFalse = new AssertStatement(loc,
 				ExpressionFactory.createBooleanLiteral(loc, false));
@@ -372,7 +337,6 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	}
 
 	private String predSymToMethodName(final HornClausePredicateSymbol predSym) {
-//		return predSym.getName();
 		return mHcSymbolTable.getMethodNameForPredSymbol(predSym);
 	}
 }

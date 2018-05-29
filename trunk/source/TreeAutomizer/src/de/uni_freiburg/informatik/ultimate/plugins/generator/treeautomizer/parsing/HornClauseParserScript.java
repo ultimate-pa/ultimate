@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -81,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.Nnf
  */
 public class HornClauseParserScript extends NoopScript {
 
-	private final String M_CONSTANTS = "sbcnst";
+	private final String M_COMPLEX_TERM = "sbcnst";
 	private final String M_REPEATING_VARS = "sbrptng";
 	/**
 	 * Interface to the SMT solver that TreeAutomizer (or whoever else will used the HornClauseGraph) will use as a
@@ -92,13 +91,10 @@ public class HornClauseParserScript extends NoopScript {
 	private final Settings mSolverSettings;
 	private final HashSet<String> mDeclaredPredicateSymbols;
 	private final List<HornClause> mParsedHornClauses;
-//	private final ArrayList<Term> mCurrentPredicateAtoms;
-//	private final ArrayList<Term> mCurrentTransitionAtoms;
 	private final HCSymbolTable mSymbolTable;
 
 	FormulaUnLet mUnletter;
 
-	private int mFreshVarCounter = 0;
 	private final String mFilename;
 
 	private final Set<TermVariable> mVariablesStack;
@@ -108,7 +104,6 @@ public class HornClauseParserScript extends NoopScript {
 	 * ManagedScript wrapping this HornClauseParserScript instance
 	 */
 	private final ManagedScript mManagedScript;
-	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	public HornClauseParserScript(final IUltimateServiceProvider services, final String filename,
 			final ManagedScript smtSolverScript, final String logic,
@@ -126,7 +121,6 @@ public class HornClauseParserScript extends NoopScript {
 		mParsedHornClauses = new ArrayList<>();
 
 		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
-
 
 		mVariablesStack = new HashSet<>();
 		mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
@@ -173,7 +167,6 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
 		super.setLogic(logic);
 	}
 
@@ -269,40 +262,15 @@ public class HornClauseParserScript extends NoopScript {
 				variables[i] = t;
 			} else if (t instanceof TermVariable && variableHasBeenSeenAlready) {
 				// argument is a variable that occurs not for the first time in the argument list --> substitute it
-				variables[i] = createFreshTermVariable(M_REPEATING_VARS, t.getSort());
+				variables[i] = mManagedScript.constructFreshTermVariable(M_REPEATING_VARS, t.getSort());
 				head.addTransitionFormula(this.term("=", variables[i], t));
 			} else {
-				// TODO this.term
-				variables[i] = createFreshTermVariable(M_CONSTANTS, t.getSort());
+				// argument is not a term variable, might be an arithmetic term for example --> substitute it
+				variables[i] = mManagedScript.constructFreshTermVariable(M_COMPLEX_TERM, t.getSort());
 				head.addTransitionFormula(this.term("=", variables[i], t));
 			}
 		}
 		final ApplicationTerm ret = (ApplicationTerm) this.term(func.getFunction().getName(), variables);
-		return ret;
-	}
-	private Term mapFormulasToVars(final HornClauseCobody body, final Term term) {
-		final ApplicationTerm func = (ApplicationTerm) term;
-		final Term[] variables = new Term[func.getParameters().length];
-		for (int i = 0; i < variables.length; ++i) {
-			final Term t = func.getParameters()[i];
-			final boolean variableHasBeenSeenAlready = Arrays.asList(variables).contains(t);
-			if (t instanceof TermVariable && !variableHasBeenSeenAlready) {
-				// argument is a variable that occurs for the first time in the argument list, leave it as is
-				variables[i] = t;
-			} else if (t instanceof TermVariable && variableHasBeenSeenAlready) {
-				// argument is a variable that occurs not for the first time in the argument list --> substitute it
-				variables[i] = createFreshTermVariable(M_REPEATING_VARS, t.getSort());
-				body.addTransitionFormula(this.term("=", variables[i], t));
-			} else {
-				// TODO this.term
-				variables[i] = createFreshTermVariable(M_CONSTANTS, t.getSort());
-				body.addTransitionFormula(this.term("=", variables[i], t));
-
-			}
-		}
-
-		final Term ret = this.term(func.getFunction().getName(), variables);
-
 		return ret;
 	}
 
@@ -323,7 +291,7 @@ public class HornClauseParserScript extends NoopScript {
 		}
 		System.err.println("Parsed so far: " + mParsedHornClauses);
 		System.err.println();
-		// for Horn clause solving we do no checks nothing until check-sat:
+		// for Horn clause solving we do no checks until check-sat
 		return LBool.UNKNOWN;
 	}
 
@@ -364,7 +332,7 @@ public class HornClauseParserScript extends NoopScript {
 		final Map<Term, Term> subsInverse = new HashMap<>();
 		// replace constraints with a boolean constant
 		for (final Term c : constraints) {
-			final Term freshTv = createFreshTermVariable("cnstrnt", sort("Bool"));
+			final Term freshTv = mManagedScript.constructFreshTermVariable("cnstrnt", sort("Bool"));
 			subs.put(c, freshTv);
 			assert !subsInverse.containsValue(freshTv);
 			subsInverse.put(freshTv, c);
@@ -385,37 +353,6 @@ public class HornClauseParserScript extends NoopScript {
 		}
 		return unlettedTerm;
 	}
-
-//	/**
-//	 * Does some simple transformations towards the standard "constrained Horn clause" form.
-//	 *
-//	 * @param term
-//	 * @return
-//	 */
-//	private Term normalizeAssertedTerm(Term term) {
-//		if (!(term instanceof QuantifiedFormula)) {
-//			if (!(term instanceof ApplicationTerm)) {
-//				throw new AssertionError("missing case??");
-//			}
-//			final ApplicationTerm at = (ApplicationTerm) term;
-//
-//			if (SmtUtils.isFunctionApplication(at, "=>")) {
-//				throw new AssertionError("missing case??");
-//			} else if (isUninterpretedPredicateSymbol(at.getFunction())) {
-//
-//
-//				throw new AssertionError("missing case??");
-//			} else if (term instanceof ApplicationTerm) {
-//
-//
-//				throw new AssertionError("missing case??");
-//			} else {
-//				throw new AssertionError("missing case??");
-//			}
-//		} else {
-//			return term;
-//		}
-//	}
 
 	private boolean hasNoUninterpretedPredicates(final Term term) {
 		final NoSubtermFulfillsPredicate nfsp = new NoSubtermFulfillsPredicate(
@@ -469,19 +406,10 @@ public class HornClauseParserScript extends NoopScript {
 
 		// workaround to deal with unary and, which occurs in some chc-comp benchmarks (e.g. eldarica..) TODO: ugly!
 		if (funcname.equals("and") && params.length == 1) {
-//			return Util.and(this, params);
-//			return SmtUtils.and(this, params);
 			return term(funcname, params[0], term("true"));
 		}
 
 		final Term result = super.term(funcname, indices, returnSort, params);
-//
-//		if (mDeclaredPredicateSymbols.contains(funcname)) {
-//			mCurrentPredicateAtoms.add(result);
-//		} else {
-//			mCurrentTransitionAtoms.add(result);
-//		}
-
 		return result;
 	}
 
@@ -679,10 +607,6 @@ public class HornClauseParserScript extends NoopScript {
 	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
 		// return mBackendSmtSolver.variable(varname, sort);
 		return super.variable(varname, sort);
-	}
-
-	public TermVariable createFreshTermVariable(final String varname, final Sort sort) {
-		return variable("v_" + varname + "_" + mFreshVarCounter++, sort);
 	}
 
 	class NoSubtermFulfillsPredicate extends TermTransformer {
