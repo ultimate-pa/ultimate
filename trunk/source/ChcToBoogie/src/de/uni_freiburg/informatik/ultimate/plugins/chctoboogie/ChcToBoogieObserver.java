@@ -347,16 +347,17 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 			final Statement newIfStm = new IfStatement(loc,
 					ExpressionFactory.constructBooleanWildCardExpression(loc),
-					oldIfStm,
-					branchBody.toArray(new Statement[branchBody.size()]));
+					branchBody.toArray(new Statement[branchBody.size()]),
+					oldIfStm);
 
 			return Collections.singletonList(newIfStm);
 		} else {
 			assert nondetSwitch.get(0) instanceof AssumeStatement || nondetSwitch.get(0) instanceof CallStatement;
 			final Statement newIfStm = new IfStatement(loc,
 					ExpressionFactory.constructBooleanWildCardExpression(loc),
-					nondetSwitch.toArray(new Statement[nondetSwitch.size()]),
-					branchBody.toArray(new Statement[branchBody.size()]));
+//					nondetSwitch.toArray(new Statement[nondetSwitch.size()]),
+					branchBody.toArray(new Statement[branchBody.size()]),
+					nondetSwitch.toArray(new Statement[nondetSwitch.size()]));
 
 			return Collections.singletonList(newIfStm);
 		}
