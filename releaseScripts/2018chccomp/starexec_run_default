@@ -11,15 +11,18 @@ RESULT_UNKNOWN_EXCEPTION =`cat output.txt | grep "The toolchain threw an excepti
 #RESULT_FALSE_TERMINATION=`cat output.txt | grep "Nonterminating execution"`
 
 if [ "$RESULT_SAFE" ]; then
-	echo "YES"
+#	echo "YES"
+	echo "SAT"
 fi
     
 if [ "$RESULT_UNSAFE" ]; then
-	echo "NO"
+	  #echo "NO"
+	echo "UNSAT"
 fi
     
 if [ "$RESULT_UNKNOWN_EXCEPTION" ]; then
-	echo "MAYBE"
+	#echo "MAYBE"
+	echo "UNKNOWN"
 fi
 
 #if [ "$RESULT_NOTMEMSAFE" ]; then
