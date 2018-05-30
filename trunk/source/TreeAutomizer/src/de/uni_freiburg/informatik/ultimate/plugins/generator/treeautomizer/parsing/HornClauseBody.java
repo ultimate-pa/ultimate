@@ -72,15 +72,6 @@ public class HornClauseBody {
 	}
 
 	/***
-	 * Copy constructor
-	 */
-	public HornClauseBody(final HornClauseBody original) {
-		mCobody = new HornClauseCobody(original.mCobody);
-		mParserScript = original.mParserScript;
-		mHead = original.mHead;
-	}
-
-	/***
 	 * Add literal to the cobody.
 	 * @param literal
 	 */
@@ -103,8 +94,7 @@ public class HornClauseBody {
 		 */
 		final List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
 		final HornClausePredicateSymbol bodySymbol = mHead == null ? null :
-			symbolTable.getOrConstructHornClausePredicateSymbol(
-				mHead.getFunction().getName(), mHead.getFunction().getParameterSorts());
+			symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
 
 
 		// transfer all terms
@@ -198,22 +188,6 @@ public class HornClauseBody {
 	 */
 	public boolean setHead(final ApplicationTerm literal) {
 		if (mHead == null) {
-//			final Map<Term, Term> subs = new HashMap<>();
-//			for (final Term param : literal.getParameters()) {
-//				if (param instanceof TermVariable) {
-//					// variables are the standard case --> do nothing
-//					continue;
-//				}
-//				if (subs.containsKey(param)) {
-//					// already saw this parameter --> we already substitute it --> do nothing
-//					continue;
-//				}
-//				final TermVariable freshTv = mParserScript.createFreshTermVariable("fresh", param.getSort());
-//				subs.put(param, freshTv);
-//				addTransitionFormula(SmtUtils.binaryEquality(mParserScript, param, freshTv));
-//			}
-//			mHead = (ApplicationTerm) new Substitution(mParserScript, subs).transform(literal);
-
 			assert Arrays.asList(literal.getParameters()).stream().allMatch(p -> p instanceof TermVariable);
 			assert Arrays.asList(literal.getParameters()).stream().collect(Collectors.toSet()).size()
 				== literal.getParameters().length;
@@ -222,13 +196,6 @@ public class HornClauseBody {
 		} else {
 			return false;
 		}
-	}
-
-	/***
-	 * Merge the cobody of the body with the given cobody.
-	 */
-	public void mergeCobody(final HornClauseCobody cobody) {
-		this.mCobody.mergeCobody(cobody);
 	}
 
 	/***

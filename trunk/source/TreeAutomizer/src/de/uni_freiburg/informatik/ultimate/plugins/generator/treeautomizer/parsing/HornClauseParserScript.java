@@ -583,8 +583,28 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getModel();
+		return new Model() {
+
+			@Override
+			public Term getFunctionDefinition(final String func, final TermVariable[] args) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Set<FunctionSymbol> getDefinedFunctions() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Map<Term, Term> evaluate(final Term[] input) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Term evaluate(final Term input) {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 
 	@Override

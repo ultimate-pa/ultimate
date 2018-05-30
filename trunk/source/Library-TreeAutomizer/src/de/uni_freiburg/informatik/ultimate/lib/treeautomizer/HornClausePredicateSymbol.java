@@ -27,9 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
@@ -47,20 +49,28 @@ public class HornClausePredicateSymbol {
 
 //	private final int mArity;
 //	private final String mName;
-//	private final FunctionSymbol mFunctionSymbol;
+	private final FunctionSymbol mFunctionSymbol;
 //	private final List<HCVar> mVars;
 	private final String mFunctionName;
 	private final List<Sort> mParameterSorts;
 
+	/**
+	 *
+	 * @param symbolTable
+	 * @param fsym  -- must be from solver (not parser) theory!
+	 * @param functionParameters
+	 */
 	public HornClausePredicateSymbol(final HCSymbolTable symbolTable,
-			final String functionName, final List<Sort> functionParameters) {
-		mFunctionName = functionName;
-		mParameterSorts = Collections.unmodifiableList(functionParameters);
-//		List<HCVar> vars = new ArrayList<>();
-//		for (int i = 0; i < functionParameters.size(); i++) {
-//			vars.add(symbolTable.getOrConstructHCVar(this, i, functionParameters.get(i)));
-//		}
-//		mVars = Collections.unmodifiableList(vars);
+			final FunctionSymbol fsym) {//, final List<Sort> functionParameters) {
+//			final String functionName, final List<Sort> functionParameters) {
+		mFunctionSymbol = fsym;
+		mFunctionName = fsym.getName();
+//		mParameterSorts = Collections.unmodifiableList(functionParameters);
+		mParameterSorts = Arrays.asList(fsym.getParameterSorts());
+	}
+
+	public FunctionSymbol getFunctionSymbol() {
+		return mFunctionSymbol;
 	}
 
 	public String getName() {
@@ -80,22 +90,19 @@ public class HornClausePredicateSymbol {
 		return mFunctionName;
 	}
 
-//	public List<HCVar> getHCVars() {
-//		return mVars;
-//	}
-
 	public abstract static class HornClauseConstantPredicateSymbol extends HornClausePredicateSymbol {
 
-		public HornClauseConstantPredicateSymbol(final HCSymbolTable symbolTable, final String functionName,
+		public HornClauseConstantPredicateSymbol(final HCSymbolTable symbolTable, final FunctionSymbol fsym,
 				final List<Sort> functionParameters) {
-			super(symbolTable, functionName, functionParameters);
+			super(symbolTable, fsym);
 		}
 
 	}
 
 	public static class HornClauseFalsePredicateSymbol extends HornClauseConstantPredicateSymbol {
-		public HornClauseFalsePredicateSymbol() {
-			super(null, "false", Collections.emptyList());
+		public HornClauseFalsePredicateSymbol(final FunctionSymbol fsym) {
+			super(null, fsym, Collections.emptyList());
+//			super(null, "false", Collections.emptyList());
 		}
 
 		@Override
@@ -114,49 +121,49 @@ public class HornClausePredicateSymbol {
 		}
 	}
 
-	public static class HornClauseTruePredicateSymbol extends HornClauseConstantPredicateSymbol {
-		public HornClauseTruePredicateSymbol() {
-			super(null, "true", Collections.emptyList());
-		}
-		@Override
-		public String getName() {
-			return "True";
-		}
-
-		@Override
-		public int getArity() {
-			return 0;
-		}
-
-		@Override
-		public String toString() {
-			return "True";
-		}
-	}
-
-	public static class HornClauseDontCareSymbol extends HornClauseConstantPredicateSymbol {
-
-		public HornClauseDontCareSymbol nextVersion() {
-			final HornClauseDontCareSymbol ret = new HornClauseDontCareSymbol();
-			return ret;
-		}
-		public HornClauseDontCareSymbol() {
-			super(null, "€", Collections.emptyList());
-		}
-
-		@Override
-		public String getName() {
-			return "€";
-		}
-
-		@Override
-		public int getArity() {
-			return 0;
-		}
-
-		@Override
-		public String toString() {
-			return "€";
-		}
-	}
+//	public static class HornClauseTruePredicateSymbol extends HornClauseConstantPredicateSymbol {
+//		public HornClauseTruePredicateSymbol() {
+//			super(null, "true", Collections.emptyList());
+//		}
+//		@Override
+//		public String getName() {
+//			return "True";
+//		}
+//
+//		@Override
+//		public int getArity() {
+//			return 0;
+//		}
+//
+//		@Override
+//		public String toString() {
+//			return "True";
+//		}
+//	}
+//
+//	public static class HornClauseDontCareSymbol extends HornClauseConstantPredicateSymbol {
+//
+//		public HornClauseDontCareSymbol nextVersion() {
+//			final HornClauseDontCareSymbol ret = new HornClauseDontCareSymbol();
+//			return ret;
+//		}
+//		public HornClauseDontCareSymbol() {
+//			super(null, "€", Collections.emptyList());
+//		}
+//
+//		@Override
+//		public String getName() {
+//			return "€";
+//		}
+//
+//		@Override
+//		public int getArity() {
+//			return 0;
+//		}
+//
+//		@Override
+//		public String toString() {
+//			return "€";
+//		}
+//	}
 }
