@@ -20,13 +20,13 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 public class TreeAutomizerTest extends UltimateTestSuite {
 
-	private static final String TEST_FILES_DIR = TestUtil.getPathFromTrunk("examples/smtlib/horn");
-//	private static final String TEST_FILES_DIR = "C:\\data\\sv-benchmarks\\clauses\\LIA\\Consistency";
+//	private static final String TEST_FILES_DIR = TestUtil.getPathFromTrunk("examples/smtlib/horn");
+	private static final String TEST_FILES_DIR = "/storage/chc-comp/with-result";
 
-	private static final long TIMEOUT = 10000;
+	private static final long TIMEOUT = 90*1000;
 
-	private static final String TOOLCHAIN = "examples/toolchains/TreeAutomizer.xml";
-	private static final String SETTINGS_FILE = "examples/settings/TreeAutomizer/TreeAutomizerStandardSettings.epf";
+	private static final String TOOLCHAIN = "examples/toolchains/AutomizerCHC.xml";
+	private static final String SETTINGS_FILE = "examples/settings/chccomp2018/chcToBoogie_automizer.epf";
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
