@@ -13,8 +13,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.HornClauseTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.TreeAutomizerTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogCsv;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
@@ -85,8 +85,7 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 		for (final File inputFile : inputFiles) {
 			final UltimateRunDefinition urd =
 					new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, TIMEOUT);
-			final TreeAutomizerTestResultDecider decider = new TreeAutomizerTestResultDecider(urd, true);
-
+			final ITestResultDecider decider = constructITestResultDecider(urd);
 			rtr.add(buildTestCase(urd, decider, inputFile.getName()));
 		}
 
@@ -104,6 +103,6 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new TreeAutomizerTestResultDecider(urd, true);
+		return new HornClauseTestResultDecider(urd, true);
 	}
 }
