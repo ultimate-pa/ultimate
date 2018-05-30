@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -47,8 +48,8 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 //	final NestedMap2<HornClausePredicateSymbol, Integer, HCVar> mHCPredSymbolToPositionToHCVar;
 	private final HornClausePredicateSymbol mFalseHornClausePredSym;
-	private final HornClausePredicateSymbol mDontCareHornClausePredSym;
-	private final HornClausePredicateSymbol mTrueHornClausePredSym;
+//	private final HornClausePredicateSymbol mDontCareHornClausePredSym;
+//	private final HornClausePredicateSymbol mTrueHornClausePredSym;
 
 	private final Map<TermVariable, ApplicationTerm> mTermVarToConst = new HashMap<>();
 
@@ -59,7 +60,15 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 	private final Map<TermVariable, IProgramVar> mTermVarToProgramVar;
 
+	private final TermTransferrer mTermTransferrer;
 
+
+
+	/**
+	 *
+	 * @param mgdScript note, this is the solver, not the parser, as a convention every Term that is saved in this
+	 *  symbol table (directly or inside an object) should be transferred to this script.
+	 */
 	public HCSymbolTable(final ManagedScript mgdScript) {
 		super();
 		mNameToSortsToHornClausePredicateSymbol = new NestedMap2<>();
@@ -67,14 +76,19 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		mManagedScript = mgdScript;
 
 		mManagedScript.lock(this);
-		mFalseHornClausePredSym = new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
-		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol();
-		mVersionsMap = new HashMap<>();
-		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol();
+		{
+			final ApplicationTerm bot = (ApplicationTerm) mgdScript.getScript().term("false");
+			mFalseHornClausePredSym = new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol(bot.getFunction());
+		}
+//		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol();
+//		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol();
 		mManagedScript.unlock(this);
+		mVersionsMap = new HashMap<>();
 		mPredSymNameToIndexToSortToHcHeadVar = new NestedMap3<>();
 		mPredSymNameToIndexToSortToHcBodyVar = new NestedMap3<>();
 		mTermVarToProgramVar = new HashMap<>();
+
+		mTermTransferrer = new TermTransferrer(mgdScript.getScript());
 	}
 
 	public TermVariable createFreshVersion(final TermVariable var) {
@@ -141,21 +155,28 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 
 	public HornClausePredicateSymbol getOrConstructHornClausePredicateSymbol(
-			final String functionName, final Sort[] functionParamenterSorts) {
-		final List<Sort> convertedFunctionParamenterSorts = Arrays.asList(transferSorts(functionParamenterSorts));
+			final ApplicationTerm at) {
+//			final FunctionSymbol fsym) {
+//			final String functionName, final Sort[] functionParamenterSorts) {
+		final ApplicationTerm atTransferred = (ApplicationTerm) mTermTransferrer.transform(at);
+		final FunctionSymbol fsym = atTransferred.getFunction();
+
+		final String functionName = fsym.getName();
+		final Sort[] functionParamenterSorts = fsym.getParameterSorts();
+		final List<Sort> convertedFunctionParamenterSorts = Arrays.asList(functionParamenterSorts);//Arrays.asList(transferSorts(functionParamenterSorts));
 
 		HornClausePredicateSymbol result = mNameToSortsToHornClausePredicateSymbol.get(
 				functionName,
 				convertedFunctionParamenterSorts);
 		if (result == null) {
-			result = new HornClausePredicateSymbol(this, functionName, convertedFunctionParamenterSorts);
+			result = new HornClausePredicateSymbol(this, fsym);
 			mNameToSortsToHornClausePredicateSymbol.put(functionName, convertedFunctionParamenterSorts, result);
 
-			mManagedScript.lock(this);
-			mManagedScript.declareFun(this, result.getName(),
-					convertedFunctionParamenterSorts.toArray(new Sort[convertedFunctionParamenterSorts.size()]),
-					mManagedScript.getScript().sort("Bool"));
-			mManagedScript.unlock(this);
+//			mManagedScript.lock(this);
+//			mManagedScript.declareFun(this, result.getName(),
+//					convertedFunctionParamenterSorts.toArray(new Sort[convertedFunctionParamenterSorts.size()]),
+//					mManagedScript.getScript().sort("Bool"));
+//			mManagedScript.unlock(this);
 		}
 		return result;
 	}
@@ -165,13 +186,13 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return mFalseHornClausePredSym;
 	}
 
-	public HornClausePredicateSymbol getTrueHornClausePredicateSymbol() {
-		return mTrueHornClausePredSym;
-	}
-
-	public HornClausePredicateSymbol getDontCareHornClausePredicateSymbol() {
-		return mDontCareHornClausePredSym;
-	}
+//	public HornClausePredicateSymbol getTrueHornClausePredicateSymbol() {
+//		return mTrueHornClausePredSym;
+//	}
+//
+//	public HornClausePredicateSymbol getDontCareHornClausePredicateSymbol() {
+//		return mDontCareHornClausePredSym;
+//	}
 
 
 	/*

@@ -93,8 +93,6 @@ public class HornClauseParserScript extends NoopScript {
 	private final List<HornClause> mParsedHornClauses;
 	private final HCSymbolTable mSymbolTable;
 
-//	FormulaUnLet mUnletter;
-
 	private final String mFilename;
 
 	private final Set<TermVariable> mVariablesStack;
@@ -123,8 +121,6 @@ public class HornClauseParserScript extends NoopScript {
 		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
 
 		mVariablesStack = new HashSet<>();
-//		mUnletter = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS);
-
 	}
 
 	private boolean isUninterpretedPredicateSymbol(final FunctionSymbol fs) {
@@ -360,7 +356,8 @@ public class HornClauseParserScript extends NoopScript {
 							((t instanceof ApplicationTerm)
 									&& isUninterpretedPredicateSymbol(((ApplicationTerm) t).getFunction())));
 		nfsp.transform(term);
-		return nfsp.getResult();
+		final boolean result = nfsp.getResult();
+		return result;
 	}
 
 	@Override
@@ -586,8 +583,28 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return super.getModel();
+		return new Model() {
+
+			@Override
+			public Term getFunctionDefinition(final String func, final TermVariable[] args) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Set<FunctionSymbol> getDefinedFunctions() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Map<Term, Term> evaluate(final Term[] input) {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Term evaluate(final Term input) {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 
 	@Override
@@ -640,9 +657,13 @@ public class HornClauseParserScript extends NoopScript {
 			final Sort[] paramSorts = fsym.getParameterSorts();
 
 
+			ApplicationTerm convertedAppTerm = appTerm;
 			Term[] args = newArgs;
 
-			// modified copy from TermCompiler
+			/*
+			 *  modified copy from TermCompiler, "IRA-hack", i.e., if an literal is given at a place that needs a real
+			 *  wrap it in a to_real to make it explicit..
+			 */
 			if (paramSorts.length == 2
 					&& paramSorts[0].getName().equals("Real")
 					&& paramSorts[1] == paramSorts[0]) {
@@ -665,10 +686,34 @@ public class HornClauseParserScript extends NoopScript {
 					}
 				}
 				if (changed) {
-					setResult(term(fsym.getName(), nargs));
-				} else {
-					super.convertApplicationTerm(appTerm, newArgs);
+//					setResult(term(fsym.getName(), nargs));
+					convertedAppTerm = (ApplicationTerm) term(fsym.getName(), nargs);
 				}
+			}
+
+			/*
+			 * inlining of defined functions, also taken from TermCompiler
+			 */
+			final Term[] params = convertedAppTerm.getParameters();
+			if (fsym.getDefinition() != null) {
+				final HashMap<TermVariable, Term> substs = new HashMap<>();
+				for (int i = 0; i < params.length; i++) {
+					substs.put(fsym.getDefinitionVars()[i], params[i]);
+				}
+				final FormulaUnLet unletter = new FormulaUnLet();
+				unletter.addSubstitutions(substs);
+				final Term expanded = unletter.unlet(fsym.getDefinition());
+//				final Term expandedProof = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), expanded,
+//						ProofConstants.RW_EXPAND_DEF);
+//				enqueueWalker(new TransitivityStep(expandedProof));
+//				pushTerm(expanded);
+//				final ApplicationTerm convertedTerm = appTerm;
+				convertedAppTerm = (ApplicationTerm) expanded;
+			}
+
+
+			if (convertedAppTerm != appTerm) {
+				setResult(convertedAppTerm);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
 			}

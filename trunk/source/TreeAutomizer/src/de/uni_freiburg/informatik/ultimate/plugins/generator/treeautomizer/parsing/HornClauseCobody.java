@@ -78,21 +78,6 @@ public class HornClauseCobody {
 		mParserScript = parserScript;
 	}
 
-	/**
-	 *
-	 * @param original
-	 */
-	public HornClauseCobody(final HornClauseCobody original) {
-		mPredicates = new ArrayList<>(original.mPredicates);
-		mPredicateSymbols = new ArrayList<>(original.mPredicateSymbols);
-		mPredicateSymbolToArgs = new ArrayList<>();
-		for (final List<Term> l : original.mPredicateSymbolToArgs) {
-			mPredicateSymbolToArgs.add(new ArrayList<>(l));
-		}
-		mTransitions = new HashSet<>(original.mTransitions);
-		mParserScript = original.mParserScript;
-	}
-
 	/***
 	 * Add a literal predicate to the cobody.
 	 * @param literal
@@ -112,38 +97,12 @@ public class HornClauseCobody {
 	}
 
 	/***
-	 * Merge with a different cobody, the results is stored in @this.
-	 * @param cobody
-	 */
-	public void mergeCobody(final HornClauseCobody cobody) {
-		assert !mFinalized;
-		for (final ApplicationTerm predicate : cobody.mPredicates) {
-			addPredicate(predicate);
-		}
-		for (final Term transition : cobody.mTransitions) {
-			addTransitionFormula(transition);
-		}
-	}
-
-	/***
-	 * Negate the cobody.
-	 * @return A body of the negation of the this.
-	 */
-	public HornClauseBody negate() {
-		assert !mFinalized;
-		final HornClauseBody res = new HornClauseBody(mParserScript);
-		res.mergeCobody(this);
-		return res;
-	}
-
-	/***
 	 * Get the transition formula of the cobody.
 	 * @param script
 	 * @return
 	 */
 	public Term getTransitionFormula(final Script parserScript) {
 		final Term[] transitions = mTransitions.toArray(new Term[mTransitions.size()]);
-//		return theory.and(transitions);
 		return SmtUtils.and(parserScript, transitions);
 	}
 
@@ -171,7 +130,7 @@ public class HornClauseCobody {
 
 		for (final ApplicationTerm pred : mPredicates) {
 			final HornClausePredicateSymbol cobodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
-					pred.getFunction().getName(), pred.getFunction().getParameterSorts());
+					pred);
 			mPredicateSymbols.add(cobodySymbol);
 			final List<Term> parameterTermVariables = Arrays.asList(pred.getParameters());
 			final List<Term> bodyVars = parameterTermVariables;
@@ -203,11 +162,6 @@ public class HornClauseCobody {
 		return '(' + result.toString() + ')';
 	}
 
-	public void addToTransitionFormula(final Term binaryEquality) {
-		// TODO Auto-generated method stub
-
-	}
-
 	/**
 	 * Apply the given substitution to all terms in this Cobody.
 	 *
@@ -216,16 +170,6 @@ public class HornClauseCobody {
 	 */
 	public void applySubstitution(final Map<Term, Term> mapping) {
 		final Substitution substitution = new Substitution(mParserScript, mapping);
-//		mTransitions =
-//				mTransitions.stream().map(t -> substitution.transform(t)).collect(Collectors.toSet());
-//
-//		mPredicates =
-//				mPredicates.stream().map(t -> (ApplicationTerm) substitution.transform(t)).collect(Collectors.toList());
-//
-//		mPredicateSymbolToArgs = mPredicateSymbolToArgs.stream()
-//					.map(l -> l.stream()
-//							.map(t -> substitution.transform(t)).collect(Collectors.toList()))
-//					.collect(Collectors.toList());
 		transformTerms(substitution::transform);
 	}
 

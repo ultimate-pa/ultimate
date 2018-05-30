@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.chctoboogie;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -250,7 +252,8 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			}
 
 			assert headPredUnconstrained || !nondetSwitch.stream().anyMatch(Objects::isNull);
-			final Statement[] block = headPredUnconstrained ? new Statement[0] :
+			final Statement[] block = headPredUnconstrained ?
+					new Statement[] { new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false)) }:
 					nondetSwitch.toArray(new Statement[nondetSwitch.size()]);
 			final Body body = new Body(loc, localVars, block);
 
@@ -314,9 +317,16 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			return new PrimitiveType(loc, BoogieType.TYPE_REAL, "real");
 		} else if (sort.getName().equals("Bool")) {
 			return new PrimitiveType(loc, BoogieType.TYPE_BOOL, "bool");
+		} else if (sort.isArraySort()) {
+			final List<Sort> args = Arrays.asList(sort.getArguments());
+			final List<ASTType> converted =
+					args.stream().map(arg -> getCorrespondingAstType(loc, arg)).collect(Collectors.toList());
+			final IBoogieType boogieType = mTypeSortTanslator.getType(sort);
+			return new ArrayType(loc, boogieType , new String[0],
+					converted.subList(0, converted.size() - 1).toArray(new ASTType[converted.size() -1]),
+					converted.get(converted.size() - 1));
 		} else {
 			throw new AssertionError("case not implemented");
-
 		}
 	}
 

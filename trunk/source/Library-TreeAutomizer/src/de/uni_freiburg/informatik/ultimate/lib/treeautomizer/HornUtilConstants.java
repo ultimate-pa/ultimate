@@ -28,13 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
 /**
- * 
- * 
+ *
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public final class HornUtilConstants {
-	
+
 	/**
 	 * A set of HornClauses does not have procedures. However, for fulfilling some interfaces we need
 	 * to give a procedure name.
@@ -44,8 +44,20 @@ public final class HornUtilConstants {
 	public static final String HORN_ANNOT_NAME = "HoRNClauses";
 
 	public static final String DONTCARE = "DontCare";
-	
+
+
+	public static final String BODYVARPREFIX = "hbv";
+	public static final String HEADVARPREFIX = "hhv";
+
 	private HornUtilConstants() {
 		// hides public constructor
 	}
+
+	public static String computeNameForHcVar(final String prefix, final String headPredSymProcName, final int index,
+			final String sortStringRaw) {
+		final String sortString = sortStringRaw.replaceAll(" ", "_").replaceAll("[()]", "");
+		return String.format("%s_%s_%d_%s", prefix, headPredSymProcName, index, sortString);
+	}
+
+
 }

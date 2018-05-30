@@ -295,9 +295,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
-		mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
-				mServices, super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(),
-				mPredicateFactory);
+		mAbstraction = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, super.mIcfg,
+				mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 
 		if (mComputeHoareAnnotation
 				&& mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
@@ -430,9 +429,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 
 			if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE && feasibility == LBool.SAT) {
-				final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
-						mServices, super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(),
-						mPredicateFactory);
+				final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton
+						.constructAutomatonWithSPredicates(mServices, super.mIcfg, mStateFactoryForRefinement,
+								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 				final FlowSensitiveFaultLocalizer<LETTER> fl = new FlowSensitiveFaultLocalizer<>(
 						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg, mServices, mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mFaultLocalizationMode,
@@ -577,42 +576,47 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		minimizeAbstractionIfEnabled();
 
-		final boolean pathProgramShouldHaveBeenRemoved = mTraceCheckAndRefinementEngine.somePerfectSequenceFound()
-				&& mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE;
-		if (pathProgramShouldHaveBeenRemoved) {
-			final Set<LETTER> counterexampleLetters = mCounterexample.getWord().asSet();
-			final PathProgramConstructionResult ppcr = PathProgram.constructPathProgram(
-					"PathprogramSubtractedCheckIteration" + mIteration, mIcfg, counterexampleLetters);
-			final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition = ppcr
-					.getOldTransition2NewTransition();
-			final Map newTransition2OldTransition = DataStructureUtils
-					.constructReverseMapping(oldTransition2NewTransition);
-			final Map<IcfgLocation, IcfgLocation> oldLocation2NewLocation = ppcr.getLocationMapping();
-			final PathProgram pp = ppcr.getPathProgram();
-			final IcfgLocation errorLoc = ((ISLPredicate) mCounterexample.getStateSequence()
-					.get(mCounterexample.getStateSequence().size() - 1)).getProgramPoint();
-			final VpAlphabet<LETTER> newVpAlphabet = CFG2NestedWordAutomaton.extractVpAlphabet(mIcfg,
-					!mPref.interprocedural());
-			final VpAlphabet<LETTER> oldVpAlphabet = new VpAlphabet<>(newVpAlphabet, newTransition2OldTransition);
-			final INestedWordAutomaton<LETTER, IPredicate> pathProgramAutomaton = CFG2NestedWordAutomaton
-					.constructAutomatonWithDebugPredicates(mServices, pp, mPredicateFactoryResultChecking,
-							Collections.singleton(oldLocation2NewLocation.get(errorLoc)), mPref.interprocedural(),
-							newVpAlphabet, newTransition2OldTransition);
-			assert pathProgramAutomaton.getFinalStates().size() == 1 : "incorrect accepting states";
-			final INestedWordAutomaton<LETTER, IPredicate> intersection = new Intersect<LETTER, IPredicate>(
-					new AutomataLibraryServices(mServices), mPredicateFactoryResultChecking,
-					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, pathProgramAutomaton)
-							.getResult();
-			final Boolean isEmpty = new IsEmpty<>(new AutomataLibraryServices(mServices), intersection).getResult();
-			if (!isEmpty) {
-				throw new AssertionError("The path program was not subtracted.");
-			}
-		}
-
+		assert checkPathProgramRemoval() : "The path program was not subtracted.";
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
 				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
+	}
+
+	private boolean checkPathProgramRemoval()
+			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
+		final boolean pathProgramShouldHaveBeenRemoved = mTraceCheckAndRefinementEngine.somePerfectSequenceFound()
+				&& mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NONE;
+		if (!pathProgramShouldHaveBeenRemoved) {
+			return true;
+		}
+		final Set<LETTER> counterexampleLetters = mCounterexample.getWord().asSet();
+		final PathProgramConstructionResult ppcr = PathProgram
+				.constructPathProgram("PathprogramSubtractedCheckIteration" + mIteration, mIcfg, counterexampleLetters);
+		final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition =
+				ppcr.getOldTransition2NewTransition();
+		final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition =
+				DataStructureUtils.constructReverseMapping(oldTransition2NewTransition);
+		final Map<IcfgLocation, IcfgLocation> oldLocation2NewLocation = ppcr.getLocationMapping();
+		final PathProgram pp = ppcr.getPathProgram();
+		final IcfgLocation errorLoc =
+				((ISLPredicate) mCounterexample.getStateSequence().get(mCounterexample.getStateSequence().size() - 1))
+						.getProgramPoint();
+		final VpAlphabet<LETTER> newVpAlphabet =
+				CFG2NestedWordAutomaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
+		final VpAlphabet<LETTER> oldVpAlphabet =
+				new VpAlphabet<>(newVpAlphabet, (Map<LETTER, LETTER>) newTransition2OldTransition);
+		final INestedWordAutomaton<LETTER, IPredicate> pathProgramAutomaton =
+				CFG2NestedWordAutomaton.constructAutomatonWithDebugPredicates(mServices, pp,
+						mPredicateFactoryResultChecking, Collections.singleton(oldLocation2NewLocation.get(errorLoc)),
+						mPref.interprocedural(), newVpAlphabet, newTransition2OldTransition);
+		assert pathProgramAutomaton.getFinalStates().size() == 1 : "incorrect accepting states";
+		final INestedWordAutomaton<LETTER, IPredicate> intersection =
+				new Intersect<>(new AutomataLibraryServices(mServices), mPredicateFactoryResultChecking,
+						(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
+						pathProgramAutomaton).getResult();
+		final Boolean isEmpty = new IsEmpty<>(new AutomataLibraryServices(mServices), intersection).getResult();
+		return isEmpty;
 	}
 
 	private void computeAutomataDifference(final INestedWordAutomaton<LETTER, IPredicate> minuend,
@@ -655,9 +659,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
 				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 						mPredicateFactoryResultChecking, mCounterexample, false);
-				final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
-						mServices, super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(),
-						mPredicateFactory);
+				final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton
+						.constructAutomatonWithSPredicates(mServices, super.mIcfg, mStateFactoryForRefinement,
+								super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 				mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
 						mTraceCheckAndRefinementEngine.getPredicateUnifier(), mSimplificationTechnique,
 						mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(), null,
@@ -1007,9 +1011,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (!errorGeneralizationEnabled) {
 			return false;
 		}
-		final INestedWordAutomaton<LETTER, IPredicate> cfg = CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(
-				mServices, super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(),
-				mPredicateFactory);
+		final INestedWordAutomaton<LETTER, IPredicate> cfg =
+				CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, super.mIcfg,
+						mStateFactoryForRefinement, super.mErrorLocs, mPref.interprocedural(), mPredicateFactory);
 		return mErrorGeneralizationEngine.isResultUnsafe(abstractResult, cfg, mCsToolkit, mPredicateFactory,
 				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mSimplificationTechnique, mXnfConversionTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable());

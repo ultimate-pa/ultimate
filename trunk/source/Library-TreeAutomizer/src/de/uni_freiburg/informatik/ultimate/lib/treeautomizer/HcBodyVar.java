@@ -78,12 +78,9 @@ public class HcBodyVar implements ILocalProgramVar { //IProgramVar {
 		mProcName = headPredSymProcName;
 		mIndex = index;
 		mSort = sort;
-//		mTermVariable = termVar;
-//		mDefaultConstant = defaultConstant;
-//		mPrimedConstant = primedConstant;
-//		mGloballyUniqueId = termVar.getName();
 
-		mGloballyUniqueId = String.format("hcbodyvar%s_%d_%s", headPredSymProcName, index, mSort);
+		mGloballyUniqueId = HornUtilConstants.computeNameForHcVar(HornUtilConstants.BODYVARPREFIX,
+				headPredSymProcName, index, sort.toString());
 		mTermVariable = script.variable(mGloballyUniqueId, sort);
 		mDefaultConstant = ProgramVarUtils.constructDefaultConstant(script, lockOwner, sort, mGloballyUniqueId);
 		mPrimedConstant = ProgramVarUtils.constructPrimedConstant(script, lockOwner, sort, mGloballyUniqueId);
