@@ -251,6 +251,13 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 						: localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
 			}
 
+			/*
+			 * Note: in the headPredUnconstrained case, the procedure body must consist of one "assume false;"
+			 *  statement.
+			 * General intuition: Each procedure blocks execution on those input vectors where the model of the
+			 *  corresponding predicate is false. A predicate that does not occur in a head, can be set to false
+			 *   everywhere.
+			 */
 			assert headPredUnconstrained || !nondetSwitch.stream().anyMatch(Objects::isNull);
 			final Statement[] block = headPredUnconstrained ?
 					new Statement[] { new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false)) }:
