@@ -252,7 +252,8 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			}
 
 			assert headPredUnconstrained || !nondetSwitch.stream().anyMatch(Objects::isNull);
-			final Statement[] block = headPredUnconstrained ? new Statement[0] :
+			final Statement[] block = headPredUnconstrained ?
+					new Statement[] { new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false)) }:
 					nondetSwitch.toArray(new Statement[nondetSwitch.size()]);
 			final Body body = new Body(loc, localVars, block);
 
