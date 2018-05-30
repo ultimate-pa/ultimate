@@ -595,7 +595,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				.constructPathProgram("PathprogramSubtractedCheckIteration" + mIteration, mIcfg, counterexampleLetters);
 		final Map<IIcfgTransition<?>, IIcfgTransition<?>> oldTransition2NewTransition =
 				ppcr.getOldTransition2NewTransition();
-		final Map newTransition2OldTransition = DataStructureUtils.constructReverseMapping(oldTransition2NewTransition);
+		final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition =
+				DataStructureUtils.constructReverseMapping(oldTransition2NewTransition);
 		final Map<IcfgLocation, IcfgLocation> oldLocation2NewLocation = ppcr.getLocationMapping();
 		final PathProgram pp = ppcr.getPathProgram();
 		final IcfgLocation errorLoc =
@@ -603,7 +604,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						.getProgramPoint();
 		final VpAlphabet<LETTER> newVpAlphabet =
 				CFG2NestedWordAutomaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
-		final VpAlphabet<LETTER> oldVpAlphabet = new VpAlphabet<>(newVpAlphabet, newTransition2OldTransition);
+		final VpAlphabet<LETTER> oldVpAlphabet =
+				new VpAlphabet<>(newVpAlphabet, (Map<LETTER, LETTER>) newTransition2OldTransition);
 		final INestedWordAutomaton<LETTER, IPredicate> pathProgramAutomaton =
 				CFG2NestedWordAutomaton.constructAutomatonWithDebugPredicates(mServices, pp,
 						mPredicateFactoryResultChecking, Collections.singleton(oldLocation2NewLocation.get(errorLoc)),
