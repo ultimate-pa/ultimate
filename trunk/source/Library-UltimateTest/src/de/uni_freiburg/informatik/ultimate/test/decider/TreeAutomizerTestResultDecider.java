@@ -43,8 +43,8 @@ public class TreeAutomizerTestResultDecider extends ThreeTierTestResultDecider<T
 
 	@Override
 	public SMTLibExpectedResultFinder<TreeAutomizerOverallResult> constructExpectedResultFinder() {
-		return new SMTLibExpectedResultFinder<TreeAutomizerOverallResult>(
-				TreeAutomizerOverallResult.UNKNOWN, TreeAutomizerOverallResult.SAT, TreeAutomizerOverallResult.UNSAT);
+		return new SMTLibExpectedResultFinder<>(TreeAutomizerOverallResult.UNKNOWN, TreeAutomizerOverallResult.SAT,
+				TreeAutomizerOverallResult.UNSAT);
 	}
 
 	@Override
