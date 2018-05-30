@@ -3,11 +3,12 @@ if [ ! "$1" ]; then
     echo "First argument has to be the file that we analyze"
     exit
 fi
-./../Ultimate/Ultimate -tc ./../AutomizerCHC.xml -s ./../chcToBoogie_automizer.epf -data "$TMPDIR" -i "$1" &> output.txt
+#./../Ultimate/Ultimate -tc ./../AutomizerCHC.xml -s ./../chcToBoogie_automizer.epf -data "$TMPDIR" -i "$1" &> output.txt
+java  -Dosgi.configuration.area=config/  -Xmx54G  -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar  -data "$TMPDIR" -tc ./../AutomizerCHC.xml -s ./../chcToBoogie_automizer.epf -i "$1" &> output.txt
 
 RESULT_UNSAFE=`cat output.txt | grep "CounterExampleResult"`
 RESULT_SAFE=`cat output.txt | grep "PositiveResult"`
-RESULT_UNKNOWN_EXCEPTION =`cat output.txt | grep "The toolchain threw an exception"`
+RESULT_UNKNOWN_EXCEPTION=`cat output.txt | grep "The toolchain threw an exception"`
 
 if [ "$RESULT_SAFE" ]; then
 	echo "SAT"
@@ -22,6 +23,6 @@ if [ "$RESULT_UNKNOWN_EXCEPTION" ]; then
 fi
 
 
-echo ""
-cat output.txt
+#echo ""
+#cat output.txt
 
