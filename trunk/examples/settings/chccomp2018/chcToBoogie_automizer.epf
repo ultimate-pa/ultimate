@@ -2,7 +2,7 @@
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.core=0.1.22
-/instance/de.uni_freiburg.informatik.ultimate.core/Logger\ pattern=%-5p\: %m%n
+/instance/de.uni_freiburg.informatik.ultimate.core/Logger\ pattern=[%d{ISO8601} %-5p]\: %m%n
 
 
 #Fri Oct 24 16:34:36 CEST 2014
@@ -21,6 +21,8 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ trace\ for\ counterexample\ result=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ statistics\ for\ interpolant\ sequences=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
@@ -30,6 +32,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopsAndPotentialCycles
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
+
 
 #Mon Aug 07 19:03:14 CEST 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
