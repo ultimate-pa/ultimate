@@ -625,27 +625,24 @@ public final class TestUtil {
 	 * Returns the line of File file that starts with "(set-info :status", or null if there is no such line
 	 */
 	public static String extractSMTLibStatusInfo(final File file) {
-		BufferedReader br;
-		String line = null;
-		try {
-			br = new BufferedReader(new FileReader(file));
+		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			while (true) {
-				line = br.readLine();
+				final String line = br.readLine();
+				if (line == null) {
+					return null;
+				}
 				if (line.trim().startsWith("(set-info :status")) {
 					// found the status
-					br.close();
-					break;
+					return line;
 				}
 				if (line.trim().startsWith("(assert")) {
 					// found an assert before the status information --> file does not seem to contain status info
-					br.close();
 					return null;
 				}
 			}
 		} catch (final IOException e) {
 			throw new AssertionError("unable to read file " + file);
 		}
-		return line;
 	}
 
 	/**
