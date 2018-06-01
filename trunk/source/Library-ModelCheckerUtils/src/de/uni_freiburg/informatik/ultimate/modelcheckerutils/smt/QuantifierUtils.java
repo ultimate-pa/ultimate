@@ -214,6 +214,17 @@ public class QuantifierUtils {
 			throw new AssertionError("unsupported connective " + booleanConnective);
 		}
 	}
+	
+	
+	public static int getDualQuantifier(int quantifier) {
+		if (quantifier == 0) {
+			return 1;
+		} else if (quantifier == 1) {
+			return 0;
+		} else {
+			throw new UnsupportedOperationException("unknown quantifier " + quantifier);
+		}
+	}
 
 	
 }
