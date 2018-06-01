@@ -11,15 +11,15 @@ RESULT_SAFE=`cat output.txt | grep "PositiveResult"`
 RESULT_UNKNOWN_EXCEPTION=`cat output.txt | grep "The toolchain threw an exception"`
 
 if [ "$RESULT_SAFE" ]; then
-	echo "SAT"
+	echo "sat"
 fi
     
 if [ "$RESULT_UNSAFE" ]; then
-	echo "UNSAT"
+	echo "unsat"
 fi
     
 if [ "$RESULT_UNKNOWN_EXCEPTION" ]; then
-	echo "UNKNOWN"
+	echo "unknown"
 fi
 
 
