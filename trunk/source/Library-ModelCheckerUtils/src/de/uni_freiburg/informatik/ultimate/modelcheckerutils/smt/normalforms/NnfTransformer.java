@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -269,7 +271,7 @@ public class NnfTransformer {
 
 		private void convertNot(final Term notParam, final Term notTerm) {
 			assert SmtSortUtils.isBoolSort(notParam.getSort()) : "Input is not Bool";
-			final Term pushed = pushNot1StepInside(mScript, notParam);
+			final Term pushed = pushNot1StepInside(mScript, notParam, mQuantifierHandling);
 			if (pushed == null) {
 				setResult(notTerm);
 			} else {
@@ -334,7 +336,8 @@ public class NnfTransformer {
 	}
 
 
-	public static Term pushNot1StepInside(final Script script, final Term notParam) {
+	public static Term pushNot1StepInside(final Script script, final Term notParam, 
+			QuantifierHandling quantifierHandling) {
 		if (notParam instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) notParam;
 			final String functionName = appTerm.getFunction().getName();
@@ -385,6 +388,31 @@ public class NnfTransformer {
 				// consider original term as atom
 				// nothing to push inside, return null;
 				return null;
+			}
+		} else if (notParam instanceof QuantifiedFormula) {
+			switch (quantifierHandling) {
+			case CRASH: {
+				throw new UnsupportedOperationException("quantifier handling set to " + quantifierHandling);
+			}
+			case IS_ATOM: {
+				return null;
+			}
+			case KEEP: {
+				final QuantifiedFormula qformula = (QuantifiedFormula) notParam;
+				final Term inner = qformula.getSubformula();
+				final Term innerNegated = SmtUtils.not(script, inner);
+				final int dualQuantifier = QuantifierUtils.getDualQuantifier(qformula.getQuantifier());
+				final Term result = SmtUtils.quantifier(script, dualQuantifier,
+						new HashSet<TermVariable>(Arrays.asList(qformula.getVariables())), innerNegated);
+				return result;
+			}
+			case PULL: {
+				throw new UnsupportedOperationException(
+						"20180601 Matthias: I am not sure if we shoud stil support PULL");
+			}
+			default: {
+				throw new AssertionError();
+			}
 			}
 		} else {
 			return null;
