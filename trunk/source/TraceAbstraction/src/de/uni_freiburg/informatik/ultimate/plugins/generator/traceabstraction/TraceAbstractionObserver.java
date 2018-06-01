@@ -95,52 +95,58 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		if (mLastModel) {
-			@SuppressWarnings("unchecked")
-			final IIcfg<IcfgLocation> rcfgRootNode = (IIcfg<IcfgLocation>) mIcfgs.stream()
-					.filter(a -> IcfgLocation.class.isAssignableFrom(a.getLocationClass())).reduce((a, b) -> b)
-					.orElseThrow(UnsupportedOperationException::new);
-
-			if (rcfgRootNode == null) {
-				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
-			}
-			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
-			INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
-			if (mWitnessNode == null) {
-				witnessAutomaton = null;
-			} else {
-				mLogger.warn(
-						"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
-				witnessAutomaton = new WitnessModelToAutomatonTransformer(mWitnessNode, mServices).getResult();
-			}
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile = constructRawNestedWordAutomata(mAutomataTestFileAsts);
-			
-			final TraceAbstractionStarter tas =
-					new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile);
-			mRootOfNewModel = tas.getRootOfNewModel();
+		if (!mLastModel) {
+			return;
 		}
+
+		if (mIcfgs.isEmpty()) {
+			throw new IllegalArgumentException("No ICFG present, Trace Abstraction cannot run");
+		}
+		@SuppressWarnings("unchecked")
+		final IIcfg<IcfgLocation> rcfgRootNode = (IIcfg<IcfgLocation>) mIcfgs.stream()
+				.filter(a -> IcfgLocation.class.isAssignableFrom(a.getLocationClass())).reduce((a, b) -> b)
+				.orElseThrow(UnsupportedOperationException::new);
+		if (rcfgRootNode == null) {
+			throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
+		}
+		mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
+		INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
+		if (mWitnessNode == null) {
+			witnessAutomaton = null;
+		} else {
+			mLogger.warn(
+					"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+			witnessAutomaton = new WitnessModelToAutomatonTransformer(mWitnessNode, mServices).getResult();
+		}
+		final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile =
+				constructRawNestedWordAutomata(mAutomataTestFileAsts);
+		final TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, mStorage, rcfgRootNode,
+				witnessAutomaton, rawFloydHoareAutomataFromFile);
+		mRootOfNewModel = tas.getRootOfNewModel();
 	}
 
-	private List<INestedWordAutomaton<String, String>> constructRawNestedWordAutomata(
-			final List<AutomataTestFileAST> automataTestFileAsts) {
+	private List<INestedWordAutomaton<String, String>>
+			constructRawNestedWordAutomata(final List<AutomataTestFileAST> automataTestFileAsts) {
 		final List<INestedWordAutomaton<String, String>> result = new ArrayList<>();
 		for (final AutomataTestFileAST automataTestFileAst : automataTestFileAsts) {
-			final List<AutomatonAST> automataDefinitions = automataTestFileAst.getAutomataDefinitions().getListOfAutomataDefinitions();
+			final List<AutomatonAST> automataDefinitions =
+					automataTestFileAst.getAutomataDefinitions().getListOfAutomataDefinitions();
 			for (final AutomatonAST automatonDefinition : automataDefinitions) {
 				if (automatonDefinition instanceof NestedwordAutomatonAST) {
 					final NestedWordAutomaton<String, String> nwa = AutomataDefinitionInterpreter
 							.constructNestedWordAutomaton((NestedwordAutomatonAST) automatonDefinition, mServices);
 					result.add(nwa);
 				} else if (automatonDefinition instanceof EpsilonNestedwordAutomatonAST) {
-					final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> nwa = AutomataDefinitionInterpreter
-							.constructEpsilonNestedWordAutomaton((EpsilonNestedwordAutomatonAST) automatonDefinition, mServices);
+					final EpsilonNestedWordAutomaton<String, String, NestedWordAutomaton<String, String>> nwa =
+							AutomataDefinitionInterpreter.constructEpsilonNestedWordAutomaton(
+									(EpsilonNestedwordAutomatonAST) automatonDefinition, mServices);
 					result.add(nwa);
 				} else {
 					throw new UnsupportedOperationException(
 							"Reading " + automatonDefinition.getClass().getSimpleName() + " not yet supported");
 				}
 			}
-			
+
 		}
 		return result;
 	}
