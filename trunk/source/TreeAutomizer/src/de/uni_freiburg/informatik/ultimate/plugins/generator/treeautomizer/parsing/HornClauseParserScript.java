@@ -306,8 +306,9 @@ public class HornClauseParserScript extends NoopScript {
 		final Term nrmlized = new NormalizingTermTransformer().transform(rawTerm);
 
 		final Term unl = new FormulaUnLet(UnletType.SMTLIB).unlet(nrmlized);
+//		final Term unl = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS).unlet(nrmlized);
 
-		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.PULL, true).transform(unl);
+		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP, true).transform(unl);
 
 		final Term pnfTerm = new PrenexNormalForm(mManagedScript).transform(nnf);
 		Term pnfBody;
@@ -626,11 +627,12 @@ public class HornClauseParserScript extends NoopScript {
 		return super.variable(varname, sort);
 	}
 
-	class NoSubtermFulfillsPredicate extends TermTransformer {
+	static class NoSubtermFulfillsPredicate extends TermTransformer {
 
-		boolean mResult;
+		private boolean mResult;
 
-		Predicate<Term> mPred;
+		private final Predicate<Term> mPred;
+
 		public NoSubtermFulfillsPredicate(final Predicate<Term> pred) {
 			mPred = pred;
 			mResult = true;
@@ -649,6 +651,12 @@ public class HornClauseParserScript extends NoopScript {
 		}
 	}
 
+	/**
+	 * Apply some normalizations to formulas we parsed. Similar in purpose to SMTInterpol's TermCompiler.
+	 *
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 */
 	class NormalizingTermTransformer extends TermTransformer {
 
 		@Override
@@ -686,7 +694,6 @@ public class HornClauseParserScript extends NoopScript {
 					}
 				}
 				if (changed) {
-//					setResult(term(fsym.getName(), nargs));
 					convertedAppTerm = (ApplicationTerm) term(fsym.getName(), nargs);
 				}
 			}
@@ -703,11 +710,6 @@ public class HornClauseParserScript extends NoopScript {
 				final FormulaUnLet unletter = new FormulaUnLet();
 				unletter.addSubstitutions(substs);
 				final Term expanded = unletter.unlet(fsym.getDefinition());
-//				final Term expandedProof = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), expanded,
-//						ProofConstants.RW_EXPAND_DEF);
-//				enqueueWalker(new TransitivityStep(expandedProof));
-//				pushTerm(expanded);
-//				final ApplicationTerm convertedTerm = appTerm;
 				convertedAppTerm = (ApplicationTerm) expanded;
 			}
 
