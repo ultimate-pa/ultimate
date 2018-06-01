@@ -672,9 +672,7 @@ public class ProofChecker extends NonRecursive {
 
 		if (startSubpathAnnot == 0) {
 			/* check that the mainPath is really a contradiction */
-			final SMTAffineTerm diff =
-					convertAffineTerm(lastPath.getFirst()).add(convertAffineTerm(lastPath.getSecond()).negate());
-			if (!diff.isConstant() || diff.getConstant().equals(Rational.ZERO)) {
+			if (!checkTrivialDisequality(lastPath.getFirst(), lastPath.getSecond())) {
 				reportError("No diseq, but main path is " + lastPath);
 			}
 		} else {
@@ -756,8 +754,7 @@ public class ProofChecker extends NonRecursive {
 					if (indexDiseqs.contains(new SymmetricPair<Term>(weakIdx, storeIndex))) {
 						continue;
 					}
-					final SMTAffineTerm diff = convertAffineTerm(weakIdx).add(convertAffineTerm(storeIndex).negate());
-					if (diff.isConstant() && !diff.getConstant().equals(Rational.ZERO)) {
+					if (checkTrivialDisequality(weakIdx, storeIndex)) {
 						continue;
 					}
 				} else {
@@ -830,6 +827,25 @@ public class ProofChecker extends NonRecursive {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Check whether the disequality between two terms is trivial. There are two cases, (1) the difference between the
+	 * terms is constant and nonzero, e.g. {@code (= x (+ x 1))}, or (2) the difference contains only integer variables
+	 * and the constant divided by the gcd of the factors is non-integral, e.g.,
+	 * {@code (= (+ x (* 2 y)) (+ x (* 2 z) 1))}.
+	 *
+	 * @param first
+	 *            the left-hand side of the equality
+	 * @param second
+	 *            the right-hand side of the equality
+	 * @return true if the equality is trivially not satisfied.
+	 */
+	boolean checkTrivialDisequality(Term first, Term second) {
+		final SMTAffineTerm diff =
+				convertAffineTerm(first).add(convertAffineTerm(second).negate());
+		return (diff.isConstant() && !diff.getConstant().equals(Rational.ZERO))
+			|| (diff.isAllIntSummands() && !diff.getConstant().div(diff.getGcd()).isIntegral());
 	}
 
 	/**
@@ -906,7 +922,7 @@ public class ProofChecker extends NonRecursive {
 			SMTAffineTerm affine = convertAffineTerm(params[0]);
 			if (isStrict && params[0].getSort().getName().equals("Int")) {
 				/*
-				 * make integer equalities non-strict by adding one. x < 0 iff x + 1 <= 0 x > 0 iff x - 1 >= 0
+				 * make integer equalities non-strict by adding one. x < 0 iff x + 1 <= 0 and x > 0 iff x - 1 >= 0
 				 */
 				affine = affine.add(isNegated ? Rational.ONE : Rational.MONE);
 				isStrict = false;

@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -33,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayAnnotation.RuleKind;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
@@ -257,35 +257,6 @@ public class CCProofGenerator {
 			}
 		}
 
-		/**
-		 * Merge the proof info of a congruence lemma into a parent's proof info.
-		 */
-		private void mergeProofInfo(final ProofInfo otherProof) {
-			final SymmetricPair<CCTerm> otherDiseq = otherProof.getDiseq();
-			// If the other disequality is not a literal from the main clause,
-			// merging corresponds to resolving the parent lemma with the auxiliary lemma
-			// and therefore the disequality has to be removed from the lemma clause.
-			if (!mEqualityLiterals.containsKey(otherDiseq)) {
-				mProofLiterals.remove(otherDiseq);
-			}
-			// Literals, paths and subproofs are added.
-			mProofLiterals.putAll(otherProof.getLiterals());
-			// In order to get the correct dependency order, remove the paths
-			// needed in the child proof and re-add them at a later position.
-			mProofPaths.removeAll(otherProof.getPaths());
-			// Only add paths which were not fresh built as main path for the
-			// congruence which is merged now
-			for (final IndexedPath otherProofPath : otherProof.getPaths()) {
-				final CCTerm[] path = otherProofPath.getPath();
-				if (path.length != 2 || !otherDiseq.equals(new SymmetricPair<>(path[0], path[1]))) {
-					mProofPaths.add(otherProofPath);
-				}
-			}
-			mSubProofs.putAll(otherProof.getSubProofs());
-			// Remove the child lemma from subProofs.
-			mSubProofs.remove(otherDiseq);
-		}
-
 		@Override
 		public String toString() {
 			return "Proof[" + mLemmaDiseq + "]";
@@ -461,47 +432,6 @@ public class CCProofGenerator {
 	}
 
 	/**
-	 * Merge nodes with only one parent (other than mainDiseq) into this parent node. Note that the parent numbers in
-	 * the proof info may need updates!
-	 */
-	private void mergeSingleDependencies(final HashMap<SymmetricPair<CCTerm>, ProofInfo> proofGraph,
-			final SymmetricPair<CCTerm> mainDiseq) {
-		final ArrayDeque<SymmetricPair<CCTerm>> todoMerge = new ArrayDeque<>();
-		if (!proofGraph.get(mainDiseq).getSubProofs().isEmpty()) {
-			todoMerge.addAll(proofGraph.get(mainDiseq).getSubProofs().keySet());
-		}
-		while (!todoMerge.isEmpty()) {
-			boolean merge = false;
-			final SymmetricPair<CCTerm> parentNode = todoMerge.removeFirst();
-			if (proofGraph.get(parentNode).getSubProofs().isEmpty()) {
-				continue;
-			}
-
-			final Set<SymmetricPair<CCTerm>> children = new HashSet<>();
-			children.addAll(proofGraph.get(parentNode).getSubProofs().keySet());
-			for (final SymmetricPair<CCTerm> childNode : children) {
-				if ((proofGraph.get(childNode).getNumParents() == 1) && (!parentNode.equals(mainDiseq))) {
-					if (!proofGraph.get(childNode).getSubProofs().isEmpty()) {
-						merge = true;
-					}
-					proofGraph.get(parentNode).mergeProofInfo(proofGraph.get(childNode));
-					proofGraph.remove(childNode);
-				}
-			}
-
-			// If at least one child was merged and has children itself,
-			// review the parent node for new merging possibilities.
-			if (merge) {
-				todoMerge.add(parentNode);
-			}
-			// Otherwise, continue with the children.
-			else {
-				todoMerge.addAll(proofGraph.get(parentNode).getSubProofs().keySet());
-			}
-		}
-	}
-
-	/**
 	 * Determine the order of the resolution tree. Start with the main lemma, represented by the main disequality, and
 	 * continue with its successor nodes. A node representing an auxiliary lemma can appear in the proof order only
 	 * after all its parent nodes.
@@ -626,8 +556,21 @@ public class CCProofGenerator {
 	private boolean isTrivialDisequality(final SymmetricPair<CCTerm> termPair) {
 		final SharedTerm first = termPair.getFirst().getSharedTerm();
 		final SharedTerm second = termPair.getSecond().getSharedTerm();
-		return first != null && second != null && first.getOffset() != null && first.getLinVar() == second.getLinVar()
-				&& first.getFactor() == second.getFactor() && first.getOffset() != second.getOffset();
+		if (first == null || second == null || first.getOffset() == null || second.getOffset() == null)
+			return false;
+		if (first.getLinVar() == second.getLinVar() && first.getFactor() == second.getFactor()) {
+			return first.getOffset() != second.getOffset();
+		}
+		MutableAffinTerm sum = new MutableAffinTerm();
+		if (first.getLinVar() != null) {
+			sum.add(first.getFactor(), first.getLinVar());
+		}
+		sum.add(first.getOffset());
+		if (second.getLinVar() != null) {
+			sum.add(second.getFactor().negate(), second.getLinVar());
+		}
+		sum.add(second.getOffset().negate());
+		return sum.isInt() && !sum.getConstant().div(sum.getGCD()).isIntegral();
 	}
 
 	private boolean isStoreTerm(CCTerm term) {
