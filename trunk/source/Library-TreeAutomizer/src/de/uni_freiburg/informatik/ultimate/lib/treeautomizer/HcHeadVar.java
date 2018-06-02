@@ -27,12 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
@@ -42,26 +37,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HcHeadVar implements IProgramVar {
+public class HcHeadVar extends HcVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
-
-	private final TermVariable mTermVariable;
-
-	/**
-	 * The sort of the TermVariable and constants
-	 *  --> this is a field just because it is part of this HCOutVar's identity.
-	 */
-	private final Sort mSort;
-
-	private final ApplicationTerm mDefaultConstant;
-	private final ApplicationTerm mPrimedConstant;
-
-	private final String mGloballyUniqueId;
-
-	private final int mIndex;
-
-	private final String mProcName;
 
 	/**
 	 * Identified by the first three parameters (headPredSymProcName, index, sort)
@@ -73,97 +51,8 @@ public class HcHeadVar implements IProgramVar {
 	 * @param defaultConstant
 	 * @param primedConstant
 	 */
-	public HcHeadVar(final String headPredSymProcName, final int index, final Sort sort,
+	public HcHeadVar(final HornClausePredicateSymbol headPredSym, final int index, final Sort sort,
 			final ManagedScript mgdScript, final Object lockOwner) {
-		mProcName = headPredSymProcName;
-		mIndex = index;
-		mSort = sort;
-//		mGloballyUniqueId = String.format("hcheadvar%s_%d_%s", headPredSymProcName, index, mSort);
-		mGloballyUniqueId = HornUtilConstants.computeNameForHcVar(HornUtilConstants.HEADVARPREFIX,
-				headPredSymProcName, index, sort.toString());
-		mTermVariable = mgdScript.variable(mGloballyUniqueId, sort);
-		mDefaultConstant = ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, sort, mGloballyUniqueId);
-		mPrimedConstant = null; //ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, sort, mGloballyUniqueId);
-	}
-
-	@Override
-	public TermVariable getTermVariable() {
-		return mTermVariable;
-	}
-
-	@Override
-	public String toString() {
-		return getGloballyUniqueId();
-	}
-
-	@Override
-	public String getGloballyUniqueId() {
-		return mGloballyUniqueId;
-	}
-
-	@Override
-	public String getProcedure() {
-//		throw new UnsupportedOperationException("a hc head var is not associated to a procedure or predicate symbol");
-		return mProcName;
-	}
-
-	@Override
-	public boolean isGlobal() {
-		return false;
-	}
-
-	@Override
-	public boolean isOldvar() {
-		return false;
-	}
-
-	@Override
-	public ApplicationTerm getDefaultConstant() {
-		return mDefaultConstant;
-	}
-
-	@Override
-	public ApplicationTerm getPrimedConstant() {
-		return mPrimedConstant;
-	}
-
-	@Override
-	public Term getTerm() {
-		return mTermVariable;
-	}
-
-	@Override
-	public int hashCode() {
-		return mGloballyUniqueId.hashCode();
-	}
-
-
-	@Override
-	public boolean equals(final Object arg0) {
-		if (this == arg0) {
-			// just for speedup
-			return true;
-		}
-		if (arg0 == null) {
-			return false;
-		}
-		if (!(arg0.getClass().equals(this.getClass()))) {
-			return false;
-		}
-		final HcHeadVar otherHcVar = (HcHeadVar) arg0;
-		if (mIndex != otherHcVar.mIndex) {
-			return false;
-		}
-		if (!mSort.equals(otherHcVar.mSort)) {
-			return false;
-		}
-
-		assert mGloballyUniqueId.equals(otherHcVar.mGloballyUniqueId);
-		return true;
-	}
-
-	@Override
-	public Sort getSort() {
-		return mSort;
+		super(true, headPredSym, index, sort, mgdScript, lockOwner);
 	}
 }

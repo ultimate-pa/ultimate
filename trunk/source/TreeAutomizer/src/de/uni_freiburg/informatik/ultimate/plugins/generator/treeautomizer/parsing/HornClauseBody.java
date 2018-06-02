@@ -139,14 +139,13 @@ public class HornClauseBody {
 	private Set<HcBodyVar> normalizeVariables(final HCSymbolTable symbolTable, final ManagedScript solverScript) {
 
 		final Set<HcBodyVar> bodyVars = new HashSet<>();
-		final String headPredSymbolName = mHead == null ?
-							symbolTable.getMethodNameForPredSymbol(symbolTable.getFalseHornClausePredicateSymbol()) :
-							symbolTable.getMethodNameForPredSymbol(mHead.getFunction());
+		final HornClausePredicateSymbol headPredSymbolName = mHead == null ?
+							symbolTable.getFalseHornClausePredicateSymbol() :
+							symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
 
 		// normalize head variables
 		final Map<Term, Term> subs = new HashMap<>();
 		if (mHead != null) {
-//			final Term[] newHeadParams = new Term[mHead.getParameters().length];
 			for (int i = 0; i < mHead.getParameters().length; i++) {
 				final TermVariable pTv = (TermVariable) mHead.getParameters()[i];
 				final Sort sort = pTv.getSort();
@@ -154,10 +153,8 @@ public class HornClauseBody {
 				final HcHeadVar headVar = symbolTable.getOrConstructHeadVar(headPredSymbolName, i, sort);
 
 				subs.put(pTv, headVar.getTermVariable());
-//				newHeadParams[i] = headVar.getTermVariable();
 			}
 
-//			mHead = (ApplicationTerm) mParserScript.term(mHead.getFunction().getName(), newHeadParams);
 			// note: it does not seem to matter much, which script we pass here
 			mHead = (ApplicationTerm) new Substitution(solverScript, subs).transform(mHead);
 
@@ -210,35 +207,6 @@ public class HornClauseBody {
 	public String toString() {
 		return '(' + mCobody.toString() + " ==> " + (mHead == null ? "false" : mHead.toString()) + ')';
 	}
-
-//	private Map<HornClausePredicateSymbol, List<TermVariable>> getBodyPredicateToVars(
-//			final HCSymbolTable symbolTable) {
-//
-//		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
-//		if (mHead != null) {
-//			final ArrayList<TermVariable> vars = new ArrayList<>();
-//			for (final Term par : mHead.getParameters()) {
-//				vars.add((TermVariable) par);
-//			}
-//
-//			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
-//						mHead.getFunction().getName(), mHead.getFunction().getParameterSorts()),
-//					vars);
-//		}
-//		return res;
-//	}
-
-
-
-//	/***
-//	 * Get the cobody
-//	 * @param symbolTable
-//	 * @return
-//	 */
-//	public Map<HornClausePredicateSymbol, List<TermVariable>> getCobodyPredicateToVars(
-//			HCSymbolTable symbolTable) {
-//		return mCobody.getPredicateToVars(symbolTable);
-//	}
 
 	/***
 	 * Get the transition formula.

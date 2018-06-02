@@ -53,10 +53,29 @@ public final class HornUtilConstants {
 		// hides public constructor
 	}
 
-	public static String computeNameForHcVar(final String prefix, final String headPredSymProcName, final int index,
-			final String sortStringRaw) {
-		final String sortString = sortStringRaw.replaceAll(" ", "_").replaceAll("[()]", "");
-		return String.format("%s_%s_%d_%s", prefix, headPredSymProcName, index, sortString);
+	public static String computeNameForHcVar(final String prefix, final HornClausePredicateSymbol predSym,
+			final int index, final String sortStringRaw) {
+
+		final String name = HornUtilConstants.sanitzePredName(predSym.getName());
+		final String sortString = sortStringRaw
+				.replaceAll(" ", "_")
+				.replaceAll("[()]", "");
+			return String.format("%s_%s_%d_%s", prefix, name, index, sortString);
+	}
+
+	/**
+	 * The allowed characters for smt identifiers are not all allowed for Boogie idenifiers.
+	 *
+	 * @param headPredSymProcNameRaw
+	 * @return
+	 */
+	public static String sanitzePredName(final String headPredSymProcNameRaw) {
+		assert !headPredSymProcNameRaw.contains("CLN") : "naming might clash";
+		assert !headPredSymProcNameRaw.contains("DLR") : "naming might clash";
+		final String headPredSymProcName = headPredSymProcNameRaw
+				.replaceAll("\\$", "DLR")
+				.replaceAll(":", "CLN");
+		return headPredSymProcName;
 	}
 
 
