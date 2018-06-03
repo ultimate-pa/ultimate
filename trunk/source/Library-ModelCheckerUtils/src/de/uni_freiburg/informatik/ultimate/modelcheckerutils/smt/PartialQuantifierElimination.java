@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
@@ -263,12 +263,12 @@ public class PartialQuantifierElimination {
 			result = applyUnconnectedParameterDeletion(mgdScript, quantifier, eliminatees, services,
 					xnfConversionTechnique, script, result);
 		}
-		
+
 		if (USE_SSD) {
 			final EliminationTask inputEliminationTask = new EliminationTask(quantifier, eliminatees, result);
 			final EliminationTask esp = new ElimStorePlain(mgdScript, services, simplificationTechnique)
 					.elimAllRec(new EliminationTask(quantifier, eliminatees, result));
-			assert EliminationTask.areDistinct(script, esp, inputEliminationTask) != LBool.SAT : "Array QEs incorrect. Esp: "
+			assert validateEquivalence(script, inputEliminationTask, esp, logger, "SDD") : "Array QEs incorrect. Esp: "
 					+ esp + " Input:" + inputEliminationTask;
 			if (DEBUG_APPLY_ARRAY_PQE_ALSO_TO_NEGATION) {
 				final int quantifierNegated = (quantifier * -1) + 1;
@@ -285,7 +285,7 @@ public class PartialQuantifierElimination {
 			if (DEBUG_EXTENDED_RESULT_CHECK) {
 				final EliminationTask sosResult = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services,
 						logger, simplificationTechnique, script, result);
-				assert EliminationTask.areDistinct(script, esp, sosResult) != LBool.SAT : "Array QEs differ. Esp: "
+				assert validateEquivalence(script, sosResult, esp, logger, "SDD") : "Array QEs differ. Esp: "
 						+ esp + " Sos:" + sosResult;
 				final boolean doSizeCheck = false;
 				if (doSizeCheck) {
@@ -324,7 +324,7 @@ public class PartialQuantifierElimination {
 
 		// simplification
 //		result = SmtUtils.simplify(mgdScript, result, services, simplificationTechnique);
-		
+
 
 		// (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));
@@ -351,6 +351,15 @@ public class PartialQuantifierElimination {
 		}
 
 		return result;
+	}
+
+	private static boolean validateEquivalence(final Script script, final EliminationTask inputEliminationTask,
+			final EliminationTask esp, final ILogger logger, final String name) {
+		final LBool sat = EliminationTask.areDistinct(script, esp, inputEliminationTask);
+		if (sat == LBool.UNKNOWN) {
+			logger.warn("Trying to double check " + name + " result, but SMT solver's response was UNKNOWN.");
+		}
+		return sat != LBool.SAT;
 	}
 
 
@@ -821,7 +830,7 @@ public class PartialQuantifierElimination {
 
 	/**
 	 * Construct new set that contains all Term variables that occur in eliminatees and are free variables of term.
-	 * 
+	 *
 	 * @return
 	 */
 	public static Set<TermVariable> constructNewEliminatees(final Term term, final Set<TermVariable> eliminatees) {
