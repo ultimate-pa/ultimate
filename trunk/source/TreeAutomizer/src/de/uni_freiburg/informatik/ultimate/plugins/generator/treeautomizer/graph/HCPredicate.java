@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -56,29 +56,29 @@ public class HCPredicate extends BasicPredicate {
 	private static final long serialVersionUID = 1750137515726690834L;
 	private static final int SERIAL_HCPREDICATE = 1000000007;
 
-	protected final Set<HornClausePredicateSymbol> mHcPredicateSymbols;
+	protected final Set<HcPredicateSymbol> mHcPredicateSymbols;
 
 	private final List<TermVariable> mVariables;
 
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
+	protected HCPredicate(final HcPredicateSymbol programPoint, final int serialNumber, final Term term,
 			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
 		this(programPoint, serialNumber, term, vars, closedFormula, variables, 0);
 	}
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
+	protected HCPredicate(final HcPredicateSymbol programPoint, final int serialNumber, final Term term,
 			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables, int dontCare) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
 		mHcPredicateSymbols = Collections.singleton(programPoint);
 		mVariables = variables;
 	}
 
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars,
+	protected HCPredicate(final HcPredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars,
 			final Term closedFormula, final List<TermVariable> variables) {
 		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables), term, vars,
 				closedFormula, variables);
 	}
 
 
-	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final int serialNumber, final Term term,
+	protected HCPredicate(final Set<HcPredicateSymbol> programPoints, final int serialNumber, final Term term,
 			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
 		mHcPredicateSymbols = programPoints;
@@ -103,7 +103,7 @@ public class HCPredicate extends BasicPredicate {
 		return result;
 	}
 
-	public Set<HornClausePredicateSymbol> getHcPredicateSymbols() {
+	public Set<HcPredicateSymbol> getHcPredicateSymbols() {
 		return mHcPredicateSymbols;
 	}
 

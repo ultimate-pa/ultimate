@@ -11,4 +11,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils;bundle
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.lib.boogieast
-Export-Package: de.uni_freiburg.informatik.ultimate.lib.treeautomizer
+Export-Package: de.uni_freiburg.informatik.ultimate.lib.chc

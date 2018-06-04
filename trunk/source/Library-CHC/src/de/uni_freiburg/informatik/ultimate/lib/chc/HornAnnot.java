@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TreeAutomizer Plugin grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
+package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -46,7 +46,7 @@ public class HornAnnot implements IAnnotations {
 	private static final long serialVersionUID = -3542578811318106167L;
 	private final ManagedScript mBackendSolverScript;
 	private final Map<String, Object> mMaechtigUnnoetigBenannteMap = new HashMap<>();
-	private final HCSymbolTable mSymbolTable;
+	private final HcSymbolTable mSymbolTable;
 	private final String mFileName;
 
 	/***
@@ -57,7 +57,7 @@ public class HornAnnot implements IAnnotations {
 	 * @param symbolTable
 	 */
 	public HornAnnot(final String filename, final List<HornClause> clauses, final ManagedScript backendSolver,
-			final HCSymbolTable symbolTable) {
+			final HcSymbolTable symbolTable) {
 		mFileName = filename;
 		mMaechtigUnnoetigBenannteMap.put(HornUtilConstants.HORN_ANNOT_NAME, clauses);
 		mBackendSolverScript = backendSolver;
@@ -73,7 +73,7 @@ public class HornAnnot implements IAnnotations {
 		return mBackendSolverScript;
 	}
 
-	public HCSymbolTable getSymbolTable() {
+	public HcSymbolTable getSymbolTable() {
 		return mSymbolTable;
 	}
 

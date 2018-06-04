@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
+package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 /**
  *
@@ -53,7 +53,7 @@ public final class HornUtilConstants {
 		// hides public constructor
 	}
 
-	public static String computeNameForHcVar(final String prefix, final HornClausePredicateSymbol predSym,
+	public static String computeNameForHcVar(final String prefix, final HcPredicateSymbol predSym,
 			final int index, final String sortStringRaw) {
 
 		final String name = HornUtilConstants.sanitzePredName(predSym.getName());

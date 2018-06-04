@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
+package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -29,7 +29,7 @@ public abstract class HcVar implements IProgramVar {
 
 	private final String mGloballyUniqueId;
 
-	private final HornClausePredicateSymbol mPredSymbol;
+	private final HcPredicateSymbol mPredSymbol;
 
 	private final String mProcName;
 
@@ -38,7 +38,7 @@ public abstract class HcVar implements IProgramVar {
 	private final boolean mIsGlobal;
 
 
-	HcVar(final boolean headNotBody, final HornClausePredicateSymbol predSym, final int index, final Sort sort,
+	HcVar(final boolean headNotBody, final HcPredicateSymbol predSym, final int index, final Sort sort,
 			final ManagedScript mgdScript, final Object lockOwner) {
 		mPredSymbol = predSym;
 		mProcName = HornUtilConstants.sanitzePredName(predSym.getName());

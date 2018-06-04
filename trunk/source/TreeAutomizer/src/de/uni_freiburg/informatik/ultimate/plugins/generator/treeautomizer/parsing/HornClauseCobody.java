@@ -37,8 +37,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -61,7 +61,7 @@ public class HornClauseCobody {
 
 	private boolean mFinalized = false;
 
-	private final List<HornClausePredicateSymbol> mPredicateSymbols;
+	private final List<HcPredicateSymbol> mPredicateSymbols;
 	private List<List<Term>> mPredicateSymbolToArgs;
 
 	private final HornClauseParserScript mParserScript;
@@ -106,7 +106,7 @@ public class HornClauseCobody {
 		return SmtUtils.and(parserScript, transitions);
 	}
 
-	List<HornClausePredicateSymbol> getPredicates(final HCSymbolTable symbolTable) {
+	List<HcPredicateSymbol> getPredicates(final HcSymbolTable symbolTable) {
 		computePredicates(symbolTable);
 
 		return mPredicateSymbols;
@@ -117,19 +117,19 @@ public class HornClauseCobody {
 	 * @param symbolTable
 	 * @return
 	 */
-	public List<List<Term>> getPredicateToVars(final HCSymbolTable symbolTable) {
+	public List<List<Term>> getPredicateToVars(final HcSymbolTable symbolTable) {
 		computePredicates(symbolTable);
 		return mPredicateSymbolToArgs;
 	}
 
-	private void computePredicates(final HCSymbolTable symbolTable) {
+	private void computePredicates(final HcSymbolTable symbolTable) {
 		if (mFinalized) {
 			// already did this before
 			return;
 		}
 
 		for (final ApplicationTerm pred : mPredicates) {
-			final HornClausePredicateSymbol cobodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
+			final HcPredicateSymbol cobodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
 					pred);
 			mPredicateSymbols.add(cobodySymbol);
 			final List<Term> parameterTermVariables = Arrays.asList(pred.getParameters());

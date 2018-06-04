@@ -59,11 +59,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornAnnot;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -102,7 +102,7 @@ public class TreeAutomizerCEGAR {
 	 */
 	//protected InterpolantTreeAutomatonBU<HornClause, IPredicate> mInterpolAutomaton;
 	protected ITreeAutomatonBU<HornClause, IPredicate> mInterpolAutomaton;
-	private final HCSymbolTable mSymbolTable;
+	private final HcSymbolTable mSymbolTable;
 //	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final HCHoareTripleChecker mHoareTripleChecker;
 	private final PredicateUnifier mPredicateUnifier;
@@ -223,7 +223,7 @@ public class TreeAutomizerCEGAR {
 		mAbstraction = new TreeAutomatonBU<>(mStateFactory);
 		for (final HornClause clause : mAlphabet) {
 			final List<IPredicate> tail = new ArrayList<>();
-			for (final HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
+			for (final HcPredicateSymbol sym : clause.getBodyPredicates()) {
 				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
 			}
 			if (clause.isHeadFalse()) {

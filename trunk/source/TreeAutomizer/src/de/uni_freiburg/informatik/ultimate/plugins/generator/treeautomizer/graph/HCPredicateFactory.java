@@ -35,8 +35,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -61,7 +61,7 @@ public class HCPredicateFactory extends PredicateFactory {
 	private final HCPredicate mDontCarePredicate;
 	private final HCPredicate mTruePredicate;
 	private final HCPredicate mFalsePredicate;
-	private final HCSymbolTable mHCSymbolTable;
+	private final HcSymbolTable mHCSymbolTable;
 
 	/**
 	 * The constructor of HornClause Factory
@@ -73,7 +73,7 @@ public class HCPredicateFactory extends PredicateFactory {
 	 * @param xnfConversionTechnique
 	 */
 	public HCPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final HCSymbolTable symbolTable,
+			final HcSymbolTable symbolTable,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 		mBackendSmtSolverScript = mgdScript;
@@ -97,7 +97,7 @@ public class HCPredicateFactory extends PredicateFactory {
 	 *            The given symbol
 	 * @return The new true HCPredicate
 	 */
-	public HCPredicate createTruePredicateWithLocation(final HornClausePredicateSymbol headPredicate) {
+	public HCPredicate createTruePredicateWithLocation(final HcPredicateSymbol headPredicate) {
 		mBackendSmtSolverScript.lock(this);
 		final HCPredicate result = newPredicate(headPredicate, mBackendSmtSolverScript.term(this, "true"),
 				Collections.emptyList());
@@ -117,21 +117,21 @@ public class HCPredicateFactory extends PredicateFactory {
 		return mDontCarePredicate;
 	}
 
-	public HCPredicate newPredicate(final HornClausePredicateSymbol loc, final Term term,
+	public HCPredicate newPredicate(final HcPredicateSymbol loc, final Term term,
 			final List<TermVariable> vars) {
 		return newPredicate(Collections.singleton(loc), 0, term, vars);
 	}
 
-	public HCPredicate newPredicate(final HornClausePredicateSymbol loc, final int serialNumber,
+	public HCPredicate newPredicate(final HcPredicateSymbol loc, final int serialNumber,
 			final Term term, final List<TermVariable> vars) {
 		return newPredicate(Collections.singleton(loc), serialNumber, term, vars);
 	}
 
-	public HCPredicate newPredicate(final Set<HornClausePredicateSymbol> loc,
+	public HCPredicate newPredicate(final Set<HcPredicateSymbol> loc,
 			final Term term, final List<TermVariable> vars) {
 		return newPredicate(loc, 0, term, vars);
 	}
-	public HCPredicate newPredicate(final Set<HornClausePredicateSymbol> loc, final int serialNumber,
+	public HCPredicate newPredicate(final Set<HcPredicateSymbol> loc, final int serialNumber,
 			final Term term, final List<TermVariable> vars) {
 		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars);
 

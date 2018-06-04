@@ -25,10 +25,9 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
+package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
@@ -38,30 +37,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HcBodyVar extends HcVar implements ILocalProgramVar {
+public class HcHeadVar extends HcVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
-
 
 	/**
 	 * Identified by the first three parameters (headPredSymProcName, index, sort)
 	 *
-	 * @param headPredSym
+	 * @param headPredSymProcName
 	 * @param index
 	 * @param sort
-	 * @param termVar
+	 * @param v
 	 * @param defaultConstant
 	 * @param primedConstant
 	 */
-	public HcBodyVar(final HornClausePredicateSymbol headPredSym, final int index, final Sort sort,
-			final ManagedScript script, final Object lockOwner) {
-		super(false, headPredSym, index, sort, script, lockOwner);
+	public HcHeadVar(final HcPredicateSymbol headPredSym, final int index, final Sort sort,
+			final ManagedScript mgdScript, final Object lockOwner) {
+		super(true, headPredSym, index, sort, mgdScript, lockOwner);
 	}
-
-
-	@Override
-	public String getIdentifier() {
-		return getGloballyUniqueId();
-	}
-
 }

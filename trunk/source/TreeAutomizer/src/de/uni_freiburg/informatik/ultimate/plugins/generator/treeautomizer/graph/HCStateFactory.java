@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -131,7 +131,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 	@Override
 	public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
-		final Set<HornClausePredicateSymbol> state1PredSymbols = new HashSet<>();
+		final Set<HcPredicateSymbol> state1PredSymbols = new HashSet<>();
 		state1PredSymbols.addAll(((HCPredicate) state1).getHcPredicateSymbols());
 
 		final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(
@@ -153,7 +153,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		 * generic IPredicate..
 		 */
 
-		final Set<HornClausePredicateSymbol> mergedLocations = new HashSet<>();
+		final Set<HcPredicateSymbol> mergedLocations = new HashSet<>();
 		Term mergedFormula = mBackendSmtSolverScript.getScript().term("false");
 
 		List<TermVariable> varsForHcPred = null;

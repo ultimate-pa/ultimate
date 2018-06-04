@@ -69,13 +69,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcBodyVar;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcHeadVar;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornAnnot;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
@@ -99,11 +99,11 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	private Unit mBoogieUnit;
 
 	private Term2Expression mTerm2Expression;
-	private HornClausePredicateSymbol mBottomPredSym;
+	private HcPredicateSymbol mBottomPredSym;
 	private final String mNameOfMainEntryPointProc;
 	private ManagedScript mManagedScript;
 	private TypeSortTranslator mTypeSortTanslator;
-	private HCSymbolTable mHcSymbolTable;
+	private HcSymbolTable mHcSymbolTable;
 	private final ILocation mLocation;
 
 	public ChcToBoogieObserver(final ILogger logger, final IUltimateServiceProvider services) {
@@ -160,7 +160,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 		mTerm2Expression = new Term2Expression(mTypeSortTanslator, mHcSymbolTable, mManagedScript);
 
-		final HashRelation<HornClausePredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
+		final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
 				sortHornClausesByHeads(hornClausesRaw);
 
 		generateBoogieAst(hornClauseHeadPredicateToHornClauses);
@@ -168,9 +168,9 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		return true;
 	}
 
-	public HashRelation<HornClausePredicateSymbol, HornClause> sortHornClausesByHeads(
+	public HashRelation<HcPredicateSymbol, HornClause> sortHornClausesByHeads(
 			final List<HornClause> hornClausesRaw) {
-		final HashRelation<HornClausePredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
+		final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
 				new HashRelation<>();
 
 		for (final HornClause hc : hornClausesRaw) {
@@ -184,20 +184,20 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	}
 
 	private void generateBoogieAst(
-			final HashRelation<HornClausePredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
+			final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
 
 		final List<Declaration> declarations = new ArrayList<>();
 		final ILocation loc = getLoc();
 
-		final Deque<HornClausePredicateSymbol> headPredQueue = new ArrayDeque<>();
-		final Set<HornClausePredicateSymbol> addedToQueueBefore = new HashSet<>();
+		final Deque<HcPredicateSymbol> headPredQueue = new ArrayDeque<>();
+		final Set<HcPredicateSymbol> addedToQueueBefore = new HashSet<>();
 
 		headPredQueue.push(mBottomPredSym);
 		addedToQueueBefore.add(mBottomPredSym);
 
 		while (!headPredQueue.isEmpty()) {
 			// breadth-first (pollFirst) or depth-first (pop) should not matter here
-			final HornClausePredicateSymbol headPredSymbol = headPredQueue.pop();
+			final HcPredicateSymbol headPredSymbol = headPredQueue.pop();
 
 			/*
 			 * if there are no Horn clauses with the current headPredSymbol in their head we create an empty procedure
@@ -222,7 +222,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 				branchBody.add(assume);
 
 				for (int i = 0; i < hornClause.getNoBodyPredicates(); i++) {
-					final HornClausePredicateSymbol bodyPredSym = hornClause.getBodyPredicates().get(i);
+					final HcPredicateSymbol bodyPredSym = hornClause.getBodyPredicates().get(i);
 					final List<Term> bodyPredArgs = hornClause.getBodyPredToArgs().get(i);
 
 					if (!addedToQueueBefore.contains(bodyPredSym)) {
@@ -317,7 +317,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	 * @param headPredSym
 	 * @return
 	 */
-	private VarList[] getInParamsForHeadPredSymbol(final ILocation loc, final HornClausePredicateSymbol headPredSym,
+	private VarList[] getInParamsForHeadPredSymbol(final ILocation loc, final HcPredicateSymbol headPredSym,
 			final boolean constructIfNecessary) {
 		final VarList[] result = new VarList[headPredSym.getArity()];
 		final List<HcHeadVar> headVars = mHcSymbolTable.getHcHeadVarsForPredSym(headPredSym, constructIfNecessary);
@@ -407,7 +407,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private String predSymToMethodName(final HornClausePredicateSymbol predSym) {
+	private String predSymToMethodName(final HcPredicateSymbol predSym) {
 		return mHcSymbolTable.getMethodNameForPredSymbol(predSym);
 	}
 }

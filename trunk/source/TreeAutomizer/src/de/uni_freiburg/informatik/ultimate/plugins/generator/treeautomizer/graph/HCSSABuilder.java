@@ -35,8 +35,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -77,7 +77,7 @@ public class HCSSABuilder {
 	private final Map<TreeRun<HornClause, IPredicate>, TreeRun<HornClause, SsaInfo>> mInputSubTreeToSsaSubtree =
 			new HashMap<>();
 
-	final HCSymbolTable mSymbolTable;
+	final HcSymbolTable mSymbolTable;
 
 	/**
 	 * Standard constructor, accepts all the input necessary for building the SSA.
@@ -92,7 +92,7 @@ public class HCSSABuilder {
 	 * */
 	public HCSSABuilder(final TreeRun<HornClause, IPredicate> inputTreeRun, final IPredicate preCondition,
 			final IPredicate postCondition, final ManagedScript script, final PredicateUnifier predicateUnifier,
-			final HCSymbolTable hcSymbolTable) {
+			final HcSymbolTable hcSymbolTable) {
 		mInputTreeRun = inputTreeRun;
 		mScript = script;
 		mSymbolTable = hcSymbolTable;

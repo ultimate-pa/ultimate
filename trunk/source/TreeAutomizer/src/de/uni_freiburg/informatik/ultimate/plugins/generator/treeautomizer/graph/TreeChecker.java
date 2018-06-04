@@ -32,8 +32,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -73,7 +73,7 @@ public class TreeChecker {
 	 */
 	public TreeChecker(final TreeRun<HornClause, IPredicate> tree, final ManagedScript backendSmtSolverScript,
 			final HCPredicate preCondition, final HCPredicate postCondition, ILogger logger,
-			final PredicateUnifier predicateUnifier, HCSymbolTable symbolTable) {
+			final PredicateUnifier predicateUnifier, HcSymbolTable symbolTable) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
 		mPostCondition = postCondition;

@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
+package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
  * @author nutz, mostafa-mahmoud
  *
  */
-public class HornClausePredicateSymbol {
+public class HcPredicateSymbol {
 
 //	private final int mArity;
 //	private final String mName;
@@ -60,7 +60,7 @@ public class HornClausePredicateSymbol {
 	 * @param fsym  -- must be from solver (not parser) theory!
 	 * @param functionParameters
 	 */
-	public HornClausePredicateSymbol(final HCSymbolTable symbolTable,
+	public HcPredicateSymbol(final HcSymbolTable symbolTable,
 			final FunctionSymbol fsym) {//, final List<Sort> functionParameters) {
 //			final String functionName, final List<Sort> functionParameters) {
 		mFunctionSymbol = fsym;
@@ -90,9 +90,9 @@ public class HornClausePredicateSymbol {
 		return mFunctionName;
 	}
 
-	public abstract static class HornClauseConstantPredicateSymbol extends HornClausePredicateSymbol {
+	public abstract static class HornClauseConstantPredicateSymbol extends HcPredicateSymbol {
 
-		public HornClauseConstantPredicateSymbol(final HCSymbolTable symbolTable, final FunctionSymbol fsym,
+		public HornClauseConstantPredicateSymbol(final HcSymbolTable symbolTable, final FunctionSymbol fsym,
 				final List<Sort> functionParameters) {
 			super(symbolTable, fsym);
 		}

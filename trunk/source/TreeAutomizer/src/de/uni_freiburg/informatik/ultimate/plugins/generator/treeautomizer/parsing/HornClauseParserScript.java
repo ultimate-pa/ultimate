@@ -41,10 +41,10 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornAnnot;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornUtilConstants;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
@@ -92,7 +92,7 @@ public class HornClauseParserScript extends NoopScript {
 	private final Settings mSolverSettings;
 	private final HashSet<String> mDeclaredPredicateSymbols;
 	private final List<HornClause> mParsedHornClauses;
-	private final HCSymbolTable mSymbolTable;
+	private final HcSymbolTable mSymbolTable;
 
 	private final String mFilename;
 
@@ -119,7 +119,7 @@ public class HornClauseParserScript extends NoopScript {
 
 		mParsedHornClauses = new ArrayList<>();
 
-		mSymbolTable = new HCSymbolTable(mBackendSmtSolver);
+		mSymbolTable = new HcSymbolTable(mBackendSmtSolver);
 
 		mVariablesStack = new HashSet<>();
 	}

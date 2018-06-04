@@ -35,11 +35,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcBodyVar;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcHeadVar;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -85,15 +85,15 @@ public class HornClauseBody {
 	 * @param symbolTable
 	 * @return
 	 */
-	public HornClause convertToHornClause(final ManagedScript solverScript, final HCSymbolTable symbolTable,
+	public HornClause convertToHornClause(final ManagedScript solverScript, final HcSymbolTable symbolTable,
 			final Script parserScript) {
 
 		/*
 		 *  register all HornClausePredicateSymbols --> this must be done before term transferral, because it declares
 		 *  the functions in the solverScript
 		 */
-		final List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
-		final HornClausePredicateSymbol bodySymbol = mHead == null ? null :
+		final List<HcPredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
+		final HcPredicateSymbol bodySymbol = mHead == null ? null :
 			symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
 
 
@@ -136,10 +136,10 @@ public class HornClauseBody {
 	 * @param script
 	 * @return
 	 */
-	private Set<HcBodyVar> normalizeVariables(final HCSymbolTable symbolTable, final ManagedScript solverScript) {
+	private Set<HcBodyVar> normalizeVariables(final HcSymbolTable symbolTable, final ManagedScript solverScript) {
 
 		final Set<HcBodyVar> bodyVars = new HashSet<>();
-		final HornClausePredicateSymbol headPredSymbolName = mHead == null ?
+		final HcPredicateSymbol headPredSymbolName = mHead == null ?
 							symbolTable.getFalseHornClausePredicateSymbol() :
 							symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
 

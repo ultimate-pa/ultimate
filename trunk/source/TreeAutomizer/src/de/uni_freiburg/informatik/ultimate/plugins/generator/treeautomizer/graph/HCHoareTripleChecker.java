@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HcBodyVar;
-import de.uni_freiburg.informatik.ultimate.lib.treeautomizer.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -66,7 +66,7 @@ public class HCHoareTripleChecker {
 	private final HCPredicateFactory mPredicateFactory;
 //	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final ManagedScript mManagedScript;
-	private final HCSymbolTable mSymbolTable;
+	private final HcSymbolTable mSymbolTable;
 	private int mFreshConstantCounter;
 	private final Map<TermVariable, Term> mTvToExtraVar = new HashMap<>();
 
@@ -77,7 +77,7 @@ public class HCHoareTripleChecker {
 	 * */
 	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, //final CfgSmtToolkit cfgSmtToolkit,
 			final ManagedScript mgdScript,
-			final HCPredicateFactory predicateFactory, final HCSymbolTable symbolTable) {
+			final HCPredicateFactory predicateFactory, final HcSymbolTable symbolTable) {
 		mPredicateUnifier = predicateUnifier;
 //		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
 		mPredicateFactory = predicateFactory;
@@ -149,7 +149,7 @@ public class HCHoareTripleChecker {
 	}
 
 
-	private Term close(final Term term, final HCSymbolTable symbolTable) {
+	private Term close(final Term term, final HcSymbolTable symbolTable) {
 		final Map<Term, Term> substitution = new HashMap<>();
 
 		for (final TermVariable fv : term.getFreeVars()) {

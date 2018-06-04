@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
+package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class HornClause implements IRankedLetter {
 
-	private final List<HornClausePredicateSymbol> mBodyPreds;
+	private final List<HcPredicateSymbol> mBodyPreds;
 
 	private final List<List<Term>> mBodyPredToArgs;
 
@@ -50,9 +50,9 @@ public class HornClause implements IRankedLetter {
 	 */
 //	private final List<TermVariable> mHeadPredTermVariables;
 	private final List<HcHeadVar> mHeadPredVariables;
-	private final HornClausePredicateSymbol mHeadPredicate;
+	private final HcPredicateSymbol mHeadPredicate;
 
-	private final HCSymbolTable mHornClauseSymbolTable;
+	private final HcSymbolTable mHornClauseSymbolTable;
 
 	private final Term mFormula;
 
@@ -73,18 +73,18 @@ public class HornClause implements IRankedLetter {
 	 * @param bodyPreds
 	 * @param bodyPredToTermVariables
 	 */
-	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
+	public HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
+			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
 			final Set<HcBodyVar> bodyVars
 			) {
 		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToTermVariables,
 				bodyVars, false);
 	}
 
-	public HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
+	public HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
 //			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
-			final HornClausePredicateSymbol headPred, final List<HcHeadVar> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
+			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
+			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
 			final Set<HcBodyVar> bodyVars
 			) {
 		this(script, symbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToTermVariables, bodyVars, false);
@@ -108,10 +108,10 @@ public class HornClause implements IRankedLetter {
 	 * @param dummy
 	 *            dummy parameter to allow for an extra constructor
 	 */
-	private HornClause(final ManagedScript script, final HCSymbolTable symbolTable, final Term constraint,
+	private HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
 //			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
-			final HornClausePredicateSymbol headPred, final List<HcHeadVar> headVars,
-			final List<HornClausePredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArgs,
+			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
+			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArgs,
 			final Set<HcBodyVar> bodyVars,
 			final boolean dummy) {
 
@@ -168,7 +168,7 @@ public class HornClause implements IRankedLetter {
 //		mBodyPreds = bodyPreds;
 	}
 
-	public HornClausePredicateSymbol getHeadPredicate() {
+	public HcPredicateSymbol getHeadPredicate() {
 		if (mHeadIsFalse) {
 			throw new AssertionError("Check for isHeadFalse() before calling this");
 		}
@@ -179,7 +179,7 @@ public class HornClause implements IRankedLetter {
 		return mHeadIsFalse;
 	}
 
-	public List<HornClausePredicateSymbol> getBodyPredicates() {
+	public List<HcPredicateSymbol> getBodyPredicates() {
 		return mBodyPreds;
 	}
 
@@ -258,7 +258,7 @@ public class HornClause implements IRankedLetter {
 		// return "HornClause TODO: better description"; //TODO
 	}
 
-	public HCSymbolTable getHornClauseSymbolTable() {
+	public HcSymbolTable getHornClauseSymbolTable() {
 		return mHornClauseSymbolTable;
 	}
 

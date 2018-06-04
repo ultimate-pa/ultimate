@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.treeautomizer;
+package de.uni_freiburg.informatik.ultimate.lib.chc;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -30,30 +30,30 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Stores runtime information concerning a set of constrained HornClauses centrally.
- * Eg. to pass information from a parser of a Horn clause format to a plugin like {@link TreeAutomizer} or
+ * E.g. to pass information from a parser of a Horn clause format to a plugin like {@link TreeAutomizer} or
  * {@link ChcToBooge} this could be used.
  *
- * FIXME: it is rather dubitable if this should be called a symbol table, and should not extend one either..
- *
+ * FIXME: it is rather questionable if this should be called a symbol table. Right now it only inherits from
+ *  {@link DefaultIcfgSymbolTable} in order to not break {@link TreeAutomizer} ever further.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2ExpressionSymbolTable {
+public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2ExpressionSymbolTable {
 
 	private final ManagedScript mManagedScript;
 
-	private final NestedMap2<String, List<Sort>, HornClausePredicateSymbol> mNameToSortsToHornClausePredicateSymbol;
+	private final NestedMap2<String, List<Sort>, HcPredicateSymbol> mNameToSortsToHornClausePredicateSymbol;
 	private final NestedMap2<Integer, Sort, HcBodyVar> mArgPosToSortToHcOutVar;
 
-	private final HornClausePredicateSymbol mFalseHornClausePredSym;
+	private final HcPredicateSymbol mFalseHornClausePredSym;
 
 	private final Map<TermVariable, ApplicationTerm> mTermVarToConst = new HashMap<>();
 
 	final Map<TermVariable, Integer> mVersionsMap;
 
-	private final NestedMap3<HornClausePredicateSymbol, Integer, Sort, HcHeadVar> mPredSymNameToIndexToSortToHcHeadVar;
-	private final NestedMap3<HornClausePredicateSymbol, Integer, Sort, HcBodyVar> mPredSymNameToIndexToSortToHcBodyVar;
+	private final NestedMap3<HcPredicateSymbol, Integer, Sort, HcHeadVar> mPredSymNameToIndexToSortToHcHeadVar;
+	private final NestedMap3<HcPredicateSymbol, Integer, Sort, HcBodyVar> mPredSymNameToIndexToSortToHcBodyVar;
 
 	private final Map<TermVariable, IProgramVar> mTermVarToProgramVar;
 
@@ -70,7 +70,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	 * @param mgdScript note, this is the solver, not the parser, as a convention every Term that is saved in this
 	 *  symbol table (directly or inside an object) should be transferred to this script.
 	 */
-	public HCSymbolTable(final ManagedScript mgdScript) {
+	public HcSymbolTable(final ManagedScript mgdScript) {
 		super();
 		mNameToSortsToHornClausePredicateSymbol = new NestedMap2<>();
 		mArgPosToSortToHcOutVar = new NestedMap2<>();
@@ -79,7 +79,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		mManagedScript.lock(this);
 		{
 			final ApplicationTerm bot = (ApplicationTerm) mgdScript.getScript().term("false");
-			mFalseHornClausePredSym = new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol(bot.getFunction());
+			mFalseHornClausePredSym = new HcPredicateSymbol.HornClauseFalsePredicateSymbol(bot.getFunction());
 		}
 //		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol();
 //		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol();
@@ -103,7 +103,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return mManagedScript.constructFreshTermVariable(var.getName() + ver, var.getSort());
 	}
 
-	public HornClausePredicateSymbol getOrConstructHornClausePredicateSymbol(
+	public HcPredicateSymbol getOrConstructHornClausePredicateSymbol(
 			final ApplicationTerm at) {
 		final ApplicationTerm atTransferred = (ApplicationTerm) mTermTransferrer.transform(at);
 		final FunctionSymbol fsym = atTransferred.getFunction();
@@ -112,11 +112,11 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		final Sort[] functionParamenterSorts = fsym.getParameterSorts();
 		final List<Sort> convertedFunctionParamenterSorts = Arrays.asList(functionParamenterSorts);//Arrays.asList(transferSorts(functionParamenterSorts));
 
-		HornClausePredicateSymbol result = mNameToSortsToHornClausePredicateSymbol.get(
+		HcPredicateSymbol result = mNameToSortsToHornClausePredicateSymbol.get(
 				functionName,
 				convertedFunctionParamenterSorts);
 		if (result == null) {
-			result = new HornClausePredicateSymbol(this, fsym);
+			result = new HcPredicateSymbol(this, fsym);
 			mNameToSortsToHornClausePredicateSymbol.put(functionName, convertedFunctionParamenterSorts, result);
 
 		}
@@ -124,7 +124,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	}
 
 
-	public HornClausePredicateSymbol getFalseHornClausePredicateSymbol() {
+	public HcPredicateSymbol getFalseHornClausePredicateSymbol() {
 		return mFalseHornClausePredSym;
 	}
 
@@ -179,14 +179,14 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 //			mTermVarToConst.put(tv, constant);
 //		}
 //	}
-	public HcHeadVar getHeadVar(final HornClausePredicateSymbol predSymName, final int index, final Sort sort) {
+	public HcHeadVar getHeadVar(final HcPredicateSymbol predSymName, final int index, final Sort sort) {
 		final Sort transferredSort = transferSort(sort);
 		final HcHeadVar result = mPredSymNameToIndexToSortToHcHeadVar.get(predSymName, index, transferredSort);
 		assert result != null;
 		return result;
 	}
 
-	public HcHeadVar getOrConstructHeadVar(final HornClausePredicateSymbol predSymName, final int index, final Sort sort) {
+	public HcHeadVar getOrConstructHeadVar(final HcPredicateSymbol predSymName, final int index, final Sort sort) {
 		final Sort transferredSort = transferSort(sort);
 		HcHeadVar result = mPredSymNameToIndexToSortToHcHeadVar.get(predSymName, index, transferredSort);
 		if (result == null) {
@@ -199,7 +199,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return result;
 	}
 
-	public HcBodyVar getOrConstructBodyVar(final HornClausePredicateSymbol predSymName, final int index, final Sort sort) {
+	public HcBodyVar getOrConstructBodyVar(final HcPredicateSymbol predSymName, final int index, final Sort sort) {
 		final Sort transferredSort = transferSort(sort);
 		HcBodyVar result = mPredSymNameToIndexToSortToHcBodyVar.get(predSymName, index, transferredSort);
 		if (result == null) {
@@ -278,11 +278,11 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		}
 	}
 
-	public String getMethodNameForPredSymbol(final HornClausePredicateSymbol predSym) {
+	public String getMethodNameForPredSymbol(final HcPredicateSymbol predSym) {
 		return HornUtilConstants.sanitzePredName(predSym.getName());
 	}
 
-	public List<HcHeadVar> getHcHeadVarsForPredSym(final HornClausePredicateSymbol bodySymbol,
+	public List<HcHeadVar> getHcHeadVarsForPredSym(final HcPredicateSymbol bodySymbol,
 			final boolean constructIfNecessary) {
 		final List<HcHeadVar> result = new ArrayList<>();
 		for (int i = 0; i < bodySymbol.getArity(); i++) {
