@@ -1,0 +1,31 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Author: schillic@informatik.uni-freiburg.de
+// Date: 2018-06-04
+
+NestedWordAutomaton result = removeDeadEnds(nwa);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c1 c2 c3 c4 c5},
+	internalAlphabet = {},
+	returnAlphabet = {r1 r2 r3 r4 r5 r6},
+	states = {q0 q1 q2 q3 q4 q5 qf},
+	initialStates = {q0},
+	finalStates = {qf},
+	callTransitions = {
+		(q0 c1 q1)
+		(q1 c2 q2)
+		(q2 c3 qf)
+		(qf c4 qf)
+		(qf c5 q2)
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+		(qf q2 r1 q3)
+		(qf qf r3 q4)
+		(q3 q1 r2 q4)
+		(q4 qf r4 q5)
+		(q4 q0 r5 q5) // wrongly detected as dead
+		(q5 qf r6 qf)
+	}
+);
