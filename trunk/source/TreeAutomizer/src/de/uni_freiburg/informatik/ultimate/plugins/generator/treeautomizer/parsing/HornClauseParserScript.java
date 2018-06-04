@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SkolemNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
@@ -195,12 +196,21 @@ public class HornClauseParserScript extends NoopScript {
 		final List<HornClauseBody> result = new ArrayList<>();
 
 
-		Term quantifiersStripped;
+		final Term quantifiersStripped;
 		if (term instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = (QuantifiedFormula) term;
+			if (qf.getQuantifier() == EXISTS) {
+				throw new AssertionError("Input not skolemized??");
+			}
 			quantifiersStripped = ((QuantifiedFormula) term).getSubformula();
 		} else {
 			quantifiersStripped = term;
 		}
+
+		if (quantifiersStripped instanceof QuantifiedFormula) {
+			throw new AssertionError("Input not skolemized??");
+		}
+
 
 		final Term[] clauses = SmtUtils.getConjuncts(quantifiersStripped);
 
@@ -306,26 +316,29 @@ public class HornClauseParserScript extends NoopScript {
 		final Term nrmlized = new NormalizingTermTransformer().transform(rawTerm);
 
 		final Term unl = new FormulaUnLet(UnletType.SMTLIB).unlet(nrmlized);
-//		final Term unl = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS).unlet(nrmlized);
 
 		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP, true).transform(unl);
 
-		final Term pnfTerm = new PrenexNormalForm(mManagedScript).transform(nnf);
-		Term pnfBody;
-		TermVariable[] pnfVars;
-		if (pnfTerm instanceof QuantifiedFormula) {
-			final QuantifiedFormula qf = ((QuantifiedFormula) pnfTerm);
-			pnfBody = qf.getSubformula();
-			pnfVars = qf.getVariables();
+		final Term qnfTerm = new PrenexNormalForm(mManagedScript).transform(nnf);
+		final SkolemNormalForm snf = new SkolemNormalForm(mManagedScript, qnfTerm);
+		final Term snfTerm = snf.getSkolemizedFormula();
+		mSymbolTable.announceSkolemFunctions(snf.getSkolemFunctions());
+
+		Term snfBody;
+		TermVariable[] snfVars;
+		if (snfTerm instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = ((QuantifiedFormula) snfTerm);
+			snfBody = qf.getSubformula();
+			snfVars = qf.getVariables();
 			assert qf.getQuantifier() == FORALL;
 		} else {
-			pnfBody = pnfTerm;
-			pnfVars = null;
+			snfBody = snfTerm;
+			snfVars = null;
 		}
 		final Set<Term> constraints =
 				new SubTermFinder(term -> term.getSort().getName().equals("Bool")
 						&& hasNoUninterpretedPredicates(term), true)
-				.findMatchingSubterms(pnfBody);
+				.findMatchingSubterms(snfBody);
 		final Map<Term, Term> subs = new HashMap<>();
 		final Map<Term, Term> subsInverse = new HashMap<>();
 		// replace constraints with a boolean constant
@@ -335,7 +348,7 @@ public class HornClauseParserScript extends NoopScript {
 			assert !subsInverse.containsValue(freshTv);
 			subsInverse.put(freshTv, c);
 		}
-		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(pnfBody);
+		final Term bodyWithConstraintsReplaced = new Substitution(this, subs).transform(snfBody);
 
 		final Term cnfWConstraintsReplaced =
 			 new CnfTransformer(mManagedScript, mServices, true).transform(bodyWithConstraintsReplaced);
@@ -343,8 +356,8 @@ public class HornClauseParserScript extends NoopScript {
 		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
 
 		Term unlettedTerm;
-		if (pnfTerm instanceof QuantifiedFormula) {
-			unlettedTerm = quantifier(FORALL, pnfVars, cnf);
+		if (snfTerm instanceof QuantifiedFormula) {
+			unlettedTerm = quantifier(FORALL, snfVars, cnf);
 		} else {
 			unlettedTerm = cnf;
 		}

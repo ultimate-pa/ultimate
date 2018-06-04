@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -81,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Does the main work of this plugin.
@@ -274,6 +276,18 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		// add the main entry point
 		declarations.add(constructMainEntryPointProcedure(loc));
 
+		/*
+		 * Add body-less boogie functions for the uninterpreted function appearing in constraints (e.g. skolem
+		 *  functions)
+		 */
+		for (final Triple<String, Sort[], Sort> sf : mHcSymbolTable.getSkolemFunctions()) {
+			final VarList[] inParams = getInParamsForSorts(loc, sf.getSecond());
+			final VarList outParam = getInParamsForSorts(loc, new Sort[] { sf.getThird() })[0];
+			final FunctionDeclaration boogieFun = new FunctionDeclaration(loc, new Attribute[0], sf.getFirst(),
+					new String[0], inParams, outParam);
+			declarations.add(boogieFun);
+		}
+
 		mBoogieUnit = new Unit(loc,
 				declarations.toArray(new Declaration[declarations.size()]));
 	}
@@ -315,6 +329,19 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			result[i] = vl;
 		}
 		return result;
+	}
+
+
+	private VarList[] getInParamsForSorts(final ILocation loc, final Sort[] sorts) {
+		final VarList[] result = new VarList[sorts.length];
+		for (int i = 0; i < sorts.length; i++) {
+			final Sort sort = sorts[i];
+			final ASTType correspondingType = getCorrespondingAstType(loc, sort);
+			final VarList vl = new VarList(loc, new String[] { "in_" + i }, correspondingType);
+			result[i] = vl;
+		}
+		return result;
+
 	}
 
 	private ASTType getCorrespondingAstType(final ILocation loc, final Sort sort) {

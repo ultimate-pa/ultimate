@@ -23,8 +23,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymb
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Stores runtime information concerning a set of constrained HornClauses centrally.
@@ -37,19 +39,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-//public class HCSymbolTable implements ITerm2ExpressionSymbolTable {
 public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2ExpressionSymbolTable {
 
 	private final ManagedScript mManagedScript;
 
 	private final NestedMap2<String, List<Sort>, HornClausePredicateSymbol> mNameToSortsToHornClausePredicateSymbol;
-//	private final NestedMap3<Integer, Integer, Sort, HCInVar> mInPredPosToArgPosToSortToHcInVar;
 	private final NestedMap2<Integer, Sort, HcBodyVar> mArgPosToSortToHcOutVar;
 
-//	final NestedMap2<HornClausePredicateSymbol, Integer, HCVar> mHCPredSymbolToPositionToHCVar;
 	private final HornClausePredicateSymbol mFalseHornClausePredSym;
-//	private final HornClausePredicateSymbol mDontCareHornClausePredSym;
-//	private final HornClausePredicateSymbol mTrueHornClausePredSym;
 
 	private final Map<TermVariable, ApplicationTerm> mTermVarToConst = new HashMap<>();
 
@@ -61,6 +58,10 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	private final Map<TermVariable, IProgramVar> mTermVarToProgramVar;
 
 	private final TermTransferrer mTermTransferrer;
+
+	private final Map<String, String> mSmtFunction2BoogieFunction;
+
+	private final HashRelation3<String, Sort[], Sort> mSkolemFunctions;
 
 
 
@@ -83,10 +84,13 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 //		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol();
 //		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol();
 		mManagedScript.unlock(this);
+
 		mVersionsMap = new HashMap<>();
 		mPredSymNameToIndexToSortToHcHeadVar = new NestedMap3<>();
 		mPredSymNameToIndexToSortToHcBodyVar = new NestedMap3<>();
 		mTermVarToProgramVar = new HashMap<>();
+		mSmtFunction2BoogieFunction = new HashMap<>();
+		mSkolemFunctions = new HashRelation3<>();
 
 		mTermTransferrer = new TermTransferrer(mgdScript.getScript());
 	}
@@ -99,65 +103,8 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return mManagedScript.constructFreshTermVariable(var.getName() + ver, var.getSort());
 	}
 
-//	public HcBodyVar getOrConstructHCOutVar(final int argPos, final Sort sort) {
-//		HcBodyVar result = mArgPosToSortToHcOutVar.get(argPos, sort);
-//
-//		if (result == null) {
-//			final String varName = String.format("HcOutVar_%d_%s", argPos, sort);
-//
-//			mManagedScript.lock(this);
-//			final TermVariable variable = mManagedScript.variable(varName, sort);
-//			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mManagedScript, this, sort,
-//					varName);
-//			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mManagedScript, this, sort,
-//					varName);
-//			mManagedScript.unlock(this);
-//
-//			result = new HcBodyVar(
-//					argPos,
-//					sort,
-//					variable,
-//					defaultConstant,
-//					primedConstant);
-//			mArgPosToSortToHcOutVar.put(argPos, sort, result);
-//			add(result);
-//		}
-//		assert result.getTermVariable().getSort() == sort;
-//
-//		return result;
-//	}
-
-//	@Override
-//	public void add(final IProgramVarOrConst varOrConst) {
-//		if (mConstructionFinished) {
-//			throw new IllegalStateException("Construction finished, unable to add new variables or constants.");
-//		}
-//
-//		if (varOrConst instanceof IProgramConst) {
-//			final IProgramConst pc = (IProgramConst) varOrConst;
-//			mConstants.add(pc);
-//			mAppTerm2ProgramConst.put(pc.getDefaultConstant(), pc);
-//		} else if (varOrConst instanceof IProgramVar) {
-//			final IProgramVar var = (IProgramVar) varOrConst;
-//			mTermVariable2ProgramVar.put(var.getTermVariable(), var);
-//			if (var instanceof HcBodyVar) {
-////				mGlobals.add(nonOldVar);
-////				final IProgramOldVar oldVar = nonOldVar.getOldVar();
-//				mTermVariable2ProgramVar.put(var.getTermVariable(), var);
-//			} else {
-//				throw new AssertionError("unknown kind of variable");
-//			}
-//		} else {
-//			throw new AssertionError("unknown kind of variable");
-//		}
-//	}
-
-
-
 	public HornClausePredicateSymbol getOrConstructHornClausePredicateSymbol(
 			final ApplicationTerm at) {
-//			final FunctionSymbol fsym) {
-//			final String functionName, final Sort[] functionParamenterSorts) {
 		final ApplicationTerm atTransferred = (ApplicationTerm) mTermTransferrer.transform(at);
 		final FunctionSymbol fsym = atTransferred.getFunction();
 
@@ -172,11 +119,6 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 			result = new HornClausePredicateSymbol(this, fsym);
 			mNameToSortsToHornClausePredicateSymbol.put(functionName, convertedFunctionParamenterSorts, result);
 
-//			mManagedScript.lock(this);
-//			mManagedScript.declareFun(this, result.getName(),
-//					convertedFunctionParamenterSorts.toArray(new Sort[convertedFunctionParamenterSorts.size()]),
-//					mManagedScript.getScript().sort("Bool"));
-//			mManagedScript.unlock(this);
 		}
 		return result;
 	}
@@ -307,7 +249,7 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 	@Override
 	public Map<String, String> getSmtFunction2BoogieFunction() {
-		throw new UnsupportedOperationException();
+		return mSmtFunction2BoogieFunction;
 	}
 
 
@@ -352,4 +294,15 @@ public class HCSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return result;
 	}
 
+	public void announceSkolemFunctions(final HashRelation3<String, Sort[], Sort> skolemFunctions) {
+		for (final Triple<String, Sort[], Sort> sf : skolemFunctions) {
+			assert !mSmtFunction2BoogieFunction.containsKey(sf.getFirst()) : "name clash";
+			mSkolemFunctions.addTriple(sf.getFirst(), transferSorts(sf.getSecond()), transferSort(sf.getThird()));
+			mSmtFunction2BoogieFunction.put(sf.getFirst(), sf.getFirst());
+		}
+	}
+
+	public HashRelation3<String, Sort[], Sort> getSkolemFunctions() {
+		return mSkolemFunctions;
+	}
 }
