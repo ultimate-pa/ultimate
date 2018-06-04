@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * Examples used by delta debugger.
  * <p>
  * NOTE: Users may insert their sample code as a new method and leave it here.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 @SuppressWarnings({ "squid:S00112", "squid:S1452",
@@ -133,6 +133,10 @@ public class AutomatonDebuggerExamples {
 		 */
 		MINIMIZE_NWA_OVERAPPROXIMATION,
 		/**
+		 * {@link RemoveDeadEnds}.
+		 */
+		REMOVE_DEAD_ENDS,
+		/**
 		 * {@link RemoveNonLiveStates}.
 		 */
 		REMOVE_NON_LIVE_STATES,
@@ -156,7 +160,7 @@ public class AutomatonDebuggerExamples {
 
 	/**
 	 * Getter for an {@link IOperation}.
-	 * 
+	 *
 	 * @param type
 	 *            operation type
 	 * @param automaton
@@ -222,6 +226,10 @@ public class AutomatonDebuggerExamples {
 
 			case MINIMIZE_NWA_OVERAPPROXIMATION:
 				operation = minimizeNwaOverapproximation(automaton, factory);
+				break;
+
+			case REMOVE_DEAD_ENDS:
+				operation = removeDeadEnds(automaton);
 				break;
 
 			case REMOVE_NON_LIVE_STATES:
@@ -422,6 +430,18 @@ public class AutomatonDebuggerExamples {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new MinimizeNwaOverapproximation<>(mServices, factory, preprocessed);
+	}
+
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @return new {@link RemoveDeadEnds} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<String, String, ? super StringFactory>
+			removeDeadEnds(final INestedWordAutomaton<String, String> automaton) throws Throwable {
+		return new RemoveDeadEnds<>(mServices, automaton);
 	}
 
 	/**
