@@ -551,7 +551,7 @@
 		<module>../Library-InteractiveCommon</module>
 		<module>../Library-InteractiveTA</module>
 		<module>../Library-Server</module>
-		<module>../Library-TreeAutomizer</module>
+		<module>../Library-CHC</module>
 		<module>../UltimateServer</module>
 		<module>../IcfgTransformation</module>
 		<module>../BuchiProgramProduct</module>
