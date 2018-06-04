@@ -96,11 +96,16 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			// TODO: handle array (in)equalities
 			return state;
 		}
+		final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectShallow(assumption, false);
+		if (selects.isEmpty()) {
+			final STATE newSubState = mToolkit.handleAssumptionBySubdomain(state.getSubState(), assumption);
+			return state.updateState(newSubState);
+		}
 		final List<Term> constraints = new ArrayList<>();
 		final SegmentationMap newSegmentationMap = state.getSegmentationMap();
 		final Map<Term, Term> substitution = new HashMap<>();
 		ArrayDomainState<STATE> newState = state;
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(assumption, false)) {
+		for (final MultiDimensionalSelect select : selects) {
 			final Expression arrayExpr = mToolkit.getExpression(select.getArray());
 			if (!(arrayExpr instanceof IdentifierExpression)) {
 				continue;

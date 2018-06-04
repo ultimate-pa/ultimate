@@ -35,8 +35,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -134,7 +132,15 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public STATE handleAssumptionBySubdomain(final STATE currentState, final Term assumption) {
-		return handleStatementBySubdomain(currentState, new AssumeStatement(null, getExpression(assumption)));
+		STATE last = null;
+		STATE result = currentState;
+		final Statement assume = new AssumeStatement(null, getExpression(assumption));
+		// Workaround: Apply post-operator until there's no change
+		while (last == null || !last.isEqualTo(result)) {
+			last = result;
+			result = handleStatementBySubdomain(result, assume);
+		}
+		return result;
 	}
 
 	public STATE handleStatementBySubdomain(final STATE currentState, final Statement statement) {
