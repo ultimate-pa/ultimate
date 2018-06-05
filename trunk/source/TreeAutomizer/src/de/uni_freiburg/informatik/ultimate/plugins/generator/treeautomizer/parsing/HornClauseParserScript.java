@@ -192,8 +192,8 @@ public class HornClauseParserScript extends NoopScript {
 		}
 	}
 
-	private List<HornClauseBody> parseCnf(final Term term) throws SMTLIBException {
-		final List<HornClauseBody> result = new ArrayList<>();
+	private List<HornClauseHead> parseCnf(final Term term) throws SMTLIBException {
+		final List<HornClauseHead> result = new ArrayList<>();
 
 
 		final Term quantifiersStripped;
@@ -215,7 +215,7 @@ public class HornClauseParserScript extends NoopScript {
 		final Term[] clauses = SmtUtils.getConjuncts(quantifiersStripped);
 
 		for (final Term clause : clauses) {
-			final HornClauseBody head = new HornClauseBody(this);
+			final HornClauseHead head = new HornClauseHead(this);
 
 			for (final Term literal : SmtUtils.getDisjuncts(clause)) {
 				Term literalStripped = literal;
@@ -229,6 +229,7 @@ public class HornClauseParserScript extends NoopScript {
 					final ApplicationTerm lsAt = (ApplicationTerm) literalStripped;
 					final FunctionSymbol fsym = lsAt.getFunction();
 					if (isUninterpretedPredicateSymbol(fsym)) {
+						// literalStripped is an uninterpreted predicate application
 						if (polarity) {
 							// head
 							final boolean headWasNull = head.setHead(mapFormulasToVars(head, lsAt));
@@ -237,16 +238,21 @@ public class HornClauseParserScript extends NoopScript {
 							}
 						} else {
 							// body ("cobody")
-							head.addPredicateToCobody(lsAt);
+							head.addPredicateToBody(lsAt);
 						}
 					} else {
-						// the constraint is in the cobody so we have to reverse polarity here
+						// literalStripped is a constraint
 						if (polarity) {
+							// the constraint is in the head so we have to reverse polarity here
 							head.addTransitionFormula(term("not", literal));
 						} else {
+							// note this case also catches Boolean variables in the body
 							head.addTransitionFormula(lsAt);
 						}
 					}
+				} else if (literalStripped instanceof TermVariable) {
+					// literalStripped is a quantified Boolean variable (in the head, thus we have to reverse polarity)
+					head.addTransitionFormula(term("not", literal));
 				} else {
 					throw new AssertionError("TODO: check this case");
 				}
@@ -257,7 +263,7 @@ public class HornClauseParserScript extends NoopScript {
 		return result;
 	}
 
-	private ApplicationTerm mapFormulasToVars(final HornClauseBody head, final Term term) {
+	private ApplicationTerm mapFormulasToVars(final HornClauseHead head, final Term term) {
 		final ApplicationTerm func = (ApplicationTerm) term;
 		final Term[] variables = new Term[func.getParameters().length];
 		for (int i = 0; i < variables.length; ++i) {
@@ -287,8 +293,8 @@ public class HornClauseParserScript extends NoopScript {
 
 		mVariablesStack.clear();
 
-		final List<HornClauseBody> parsedBodies = parseCnf(term);//parseBody(term);
-		for (final HornClauseBody parsedBody : parsedBodies) {
+		final List<HornClauseHead> parsedBodies = parseCnf(term);
+		for (final HornClauseHead parsedBody : parsedBodies) {
 			final HornClause parsedQuantification = parsedBody.convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
 			if (parsedQuantification != null) {
 				mParsedHornClauses.add(parsedQuantification);

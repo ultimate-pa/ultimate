@@ -27,193 +27,181 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2.
- * Confusing terminology-warning:
- * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the head.
+ * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the body of the Horn
+ * clause.
  *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class HornClauseBody {
-	private final HornClauseCobody mCobody;
-	private ApplicationTerm mHead;
+	private Set<Term> mTransitions;
+	private List<ApplicationTerm> mPredicates;
+
+	private boolean mFinalized = false;
+
+	private final List<HcPredicateSymbol> mPredicateSymbols;
+	private List<List<Term>> mPredicateSymbolToArgs;
+
 	private final HornClauseParserScript mParserScript;
 
 	/***
-	 * Construct a Body of a Horn statement.
+	 * Constructor of the body of a horn clause.
+	 * @param parserScript
 	 */
-	public HornClauseBody(final HornClauseParserScript script) {
-		mCobody = new HornClauseCobody(script);
-		mParserScript = script;
+	public HornClauseBody(final HornClauseParserScript parserScript) {
+		mPredicates = new ArrayList<>();
+		mPredicateSymbols = new ArrayList<>();
+		mPredicateSymbolToArgs = new ArrayList<>();
+		mTransitions = new HashSet<>();
+		mParserScript = parserScript;
 	}
 
 	/***
-	 * Add literal to the cobody.
+	 * Add a literal predicate to the cobody.
 	 * @param literal
 	 */
-	public void addPredicateToCobody(final ApplicationTerm literal) {
-		mCobody.addPredicate(literal);
+	public void addPredicate(final ApplicationTerm literal) {
+		assert !mFinalized;
+		mPredicates.add(literal);
 	}
 
 	/***
-	 * Convert the body to a HornClause.
-	 * @param solverScript
-	 * @param symbolTable
-	 * @return
-	 */
-	public HornClause convertToHornClause(final ManagedScript solverScript, final HcSymbolTable symbolTable,
-			final Script parserScript) {
-
-		/*
-		 *  register all HornClausePredicateSymbols --> this must be done before term transferral, because it declares
-		 *  the functions in the solverScript
-		 */
-		final List<HcPredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
-		final HcPredicateSymbol bodySymbol = mHead == null ? null :
-			symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
-
-
-		// transfer all terms
-		{
-			final TermTransferrer termTransferrer = new TermTransferrer(solverScript.getScript());
-			mHead = mHead == null ? null : (ApplicationTerm) termTransferrer.transform(mHead);
-			mCobody.transformTerms(termTransferrer::transform);
-		}
-
-		final Set<HcBodyVar> coBodyVars = normalizeVariables(symbolTable, solverScript);
-
-
-		final List<List<Term>> cobodyArgs = mCobody.getPredicateToVars(symbolTable);
-
-		if (mHead == null) {
-			return new HornClause(solverScript, symbolTable,
-				getTransitionFormula(solverScript.getScript()),
-				cobodySymbols,
-				cobodyArgs,
-				coBodyVars);
-		}
-
-		final List<HcHeadVar> bodyVars = symbolTable.getHcHeadVarsForPredSym(bodySymbol, false);
-
-		return new HornClause(solverScript, symbolTable,
-				getTransitionFormula(solverScript.getScript()),
-				bodySymbol,
-				bodyVars,
-				cobodySymbols,
-				cobodyArgs,
-				coBodyVars);
-	}
-
-	/**
-	 * Bring the head predicate's arguments into normal form.
-	 * (The variables are normalized according to their argument position and sort)
-	 *
-	 * @param symbolTable
-	 * @param script
-	 * @return
-	 */
-	private Set<HcBodyVar> normalizeVariables(final HcSymbolTable symbolTable, final ManagedScript solverScript) {
-
-		final Set<HcBodyVar> bodyVars = new HashSet<>();
-		final HcPredicateSymbol headPredSymbolName = mHead == null ?
-							symbolTable.getFalseHornClausePredicateSymbol() :
-							symbolTable.getOrConstructHornClausePredicateSymbol(mHead);
-
-		// normalize head variables
-		final Map<Term, Term> subs = new HashMap<>();
-		if (mHead != null) {
-			for (int i = 0; i < mHead.getParameters().length; i++) {
-				final TermVariable pTv = (TermVariable) mHead.getParameters()[i];
-				final Sort sort = pTv.getSort();
-
-				final HcHeadVar headVar = symbolTable.getOrConstructHeadVar(headPredSymbolName, i, sort);
-
-				subs.put(pTv, headVar.getTermVariable());
-			}
-
-			// note: it does not seem to matter much, which script we pass here
-			mHead = (ApplicationTerm) new Substitution(solverScript, subs).transform(mHead);
-
-		}
-		// normalize (co)body variables
-		int counter = 1;
-		for (final TermVariable tv : mCobody.getVariables()) {
-			if (subs.containsKey(tv)) {
-				// head var, already normalized, skip it
-				continue;
-			}
-
-			final HcBodyVar bodyVar = symbolTable.getOrConstructBodyVar(headPredSymbolName,
-					counter++, tv.getSort());
-
-			subs.put(tv, bodyVar.getTermVariable());
-			bodyVars.add(bodyVar);
-
-		}
-		mCobody.applySubstitution(subs);
-		return bodyVars;
-	}
-
-	/***
-	 * Set the head literal of the body.
-	 * @param literal
-	 * @return
-	 */
-	public boolean setHead(final ApplicationTerm literal) {
-		if (mHead == null) {
-			assert Arrays.asList(literal.getParameters()).stream().allMatch(p -> p instanceof TermVariable);
-			assert Arrays.asList(literal.getParameters()).stream().collect(Collectors.toSet()).size()
-				== literal.getParameters().length;
-			mHead = literal;
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	/***
-	 * Add the transition formula to the cobody (can be called several times).
+	 * Add a transition formula to the cobody (can be called several times, a conjunction will be built).
 	 * @param formula
 	 */
 	public void addTransitionFormula(final Term formula) {
-		mCobody.addTransitionFormula(formula);
-	}
-
-	@Override
-	public String toString() {
-		return '(' + mCobody.toString() + " ==> " + (mHead == null ? "false" : mHead.toString()) + ')';
+		assert !mFinalized;
+		mTransitions.add(formula);
 	}
 
 	/***
-	 * Get the transition formula.
+	 * Get the transition formula of the cobody.
 	 * @param script
 	 * @return
 	 */
 	public Term getTransitionFormula(final Script parserScript) {
-		return mCobody.getTransitionFormula(parserScript);
+		final Term[] transitions = mTransitions.toArray(new Term[mTransitions.size()]);
+		return SmtUtils.and(parserScript, transitions);
 	}
+
+	List<HcPredicateSymbol> getPredicates(final HcSymbolTable symbolTable) {
+		computePredicates(symbolTable);
+
+		return mPredicateSymbols;
+	}
+
+	/***
+	 * Get a map from literals to TermVariable.
+	 * @param symbolTable
+	 * @return
+	 */
+	public List<List<Term>> getPredicateToVars(final HcSymbolTable symbolTable) {
+		computePredicates(symbolTable);
+		return mPredicateSymbolToArgs;
+	}
+
+	private void computePredicates(final HcSymbolTable symbolTable) {
+		if (mFinalized) {
+			// already did this before
+			return;
+		}
+
+		for (final ApplicationTerm pred : mPredicates) {
+			final HcPredicateSymbol cobodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
+					pred);
+			mPredicateSymbols.add(cobodySymbol);
+			final List<Term> parameterTermVariables = Arrays.asList(pred.getParameters());
+			final List<Term> bodyVars = parameterTermVariables;
+			mPredicateSymbolToArgs.add(bodyVars);
+		}
+		mFinalized = true;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder result = new StringBuilder("");
+
+		boolean first = true;
+		for (final ApplicationTerm t : mPredicates) {
+			if (!first) {
+				result.append(" && ");
+
+			}
+			result.append(t.toString());
+			first = false;
+		}
+		for (final Term t : mTransitions) {
+			if (!first) {
+				result.append(" && ");
+			}
+			result.append(t.toStringDirect());
+			first = false;
+		}
+		return '(' + result.toString() + ')';
+	}
+
+	/**
+	 * Apply the given substitution to all terms in this Cobody.
+	 *
+	 * @param subs
+	 * @param mgdScript
+	 */
+	public void applySubstitution(final Map<Term, Term> mapping) {
+		final Substitution substitution = new Substitution(mParserScript, mapping);
+		transformTerms(substitution::transform);
+	}
+
+	public void transformTerms(final Function<Term, Term> transformer) {
+		mTransitions =
+				mTransitions.stream().map(t -> transformer.apply(t)).collect(Collectors.toSet());
+
+		mPredicates =
+				mPredicates.stream().map(t -> (ApplicationTerm) transformer.apply(t)).collect(Collectors.toList());
+
+		mPredicateSymbolToArgs = mPredicateSymbolToArgs.stream()
+					.map(l -> l.stream()
+							.map(t -> transformer.apply(t)).collect(Collectors.toList()))
+					.collect(Collectors.toList());
+	}
+
+	public Set<TermVariable> getVariables() {
+		final Set<TermVariable> result = new LinkedHashSet<>();
+		for (final Term trans : mTransitions) {
+			for (final TermVariable fv : trans.getFreeVars()) {
+				result.add(fv);
+			}
+		}
+		for (final List<Term> terms : mPredicateSymbolToArgs) {
+			for (final Term term : terms) {
+				for (final TermVariable fv : term.getFreeVars()) {
+					result.add(fv);
+				}
+			}
+		}
+
+		return result;
+	}
+
 }
