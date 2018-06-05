@@ -969,7 +969,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression erazeBits(final ILocation loc, final Expression value, final CPrimitive cType,
+	public Expression eraseBits(final ILocation loc, final Expression value, final CPrimitive cType,
 			final int remainingWith, final IASTNode hook) {
 		return applyEucledeanModulo(loc, value, BigInteger.valueOf(2).pow(remainingWith));
 	}
