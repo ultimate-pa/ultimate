@@ -6,7 +6,8 @@ Bundle-Version: 0.1.23
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  org.eclipse.cdt.core,
- de.uni_freiburg.informatik.ultimate.lib.core
+ de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.cdt.parser
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 
