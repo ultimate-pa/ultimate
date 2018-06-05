@@ -203,8 +203,21 @@ public final class Term2Expression implements Serializable {
 					final Term param = term.getParameters()[0];
 					if (param instanceof ConstantTerm) {
 						return ExpressionFactory.createRealLiteral(null, param.toString());
+					} else if (param instanceof ApplicationTerm) {
+						final ApplicationTerm at = (ApplicationTerm) param;
+						if (SmtUtils.isFunctionApplication(param, "-") ) {
+							if (at.getParameters().length == 1) {
+								// unary minus
+								return ExpressionFactory.createRealLiteral(null,
+										"-" + at.getParameters()[0].toString());
+							} else {
+								throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
+							}
+						} else {
+							throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
+						}
 					} else {
-						throw new UnsupportedOperationException("should we implement a to_real operation here?");
+						throw new UnsupportedOperationException("todo: implement more comprehensive to_real");
 					}
 				} else {
 					throw new IllegalArgumentException("unknown symbol " + symb);
