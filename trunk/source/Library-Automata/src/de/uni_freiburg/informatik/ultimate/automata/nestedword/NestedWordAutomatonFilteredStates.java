@@ -155,7 +155,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	public String sizeInformation() {
 		return mRemainingStates.size() + " states.";
 	}
-	
+
 	@Override
 	public VpAlphabet<LETTER> getVpAlphabet() {
 		return mNwa.getVpAlphabet();
@@ -213,7 +213,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		}
 		return letters;
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		final Set<LETTER> letters = new HashSet<>();
@@ -377,59 +377,75 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
 			final LETTER letter) {
-		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnPredecessorPredicate();
+		// filter out also the return transition that cannot be taken because
+		// the corresponding (lin, hier) DoubleDecker is not reachable
+		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
+				&& mRemainingStates.contains(trans.getHierPred()) && isDoubleDecker(trans.getLinPred(), trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnPredecessors(succ, hier, letter), predicate);
 	}
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
-		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnPredecessorPredicate();
+		// filter out also the return transition that cannot be taken because
+		// the corresponding (lin, hier) DoubleDecker is not reachable
+		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
+				&& mRemainingStates.contains(trans.getHierPred()) && isDoubleDecker(trans.getLinPred(), trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnPredecessors(succ, letter), predicate);
 	}
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
-		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnPredecessorPredicate();
+		// filter out also the return transition that cannot be taken because
+		// the corresponding (lin, hier) DoubleDecker is not reachable
+		final Predicate<IncomingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
+				&& mRemainingStates.contains(trans.getHierPred()) && isDoubleDecker(trans.getLinPred(), trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnPredecessors(succ), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
-		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnSuccessorPredicate();
+		// filter out also the return transition that cannot be taken because
+		// the corresponding (lin, hier) DoubleDecker is not reachable
+		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getHierPred())
+				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDecker(state, trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnSuccessors(state, hier, letter), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
-		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnSuccessorPredicate();
+		// filter out also the return transition that cannot be taken because
+		// the corresponding (lin, hier) DoubleDecker is not reachable
+		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getHierPred())
+				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDecker(state, trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnSuccessors(state), predicate);
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
-		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnSuccessorPredicate();
+		// filter out also the return transition that cannot be taken because
+		// the corresponding (lin, hier) DoubleDecker is not reachable
+		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getHierPred())
+				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDecker(state, trans.getHierPred());
 		return new FilteredIterable<>(mNwa.returnSuccessorsGivenHier(state, hier), predicate);
 	}
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier, final LETTER letter) {
-		final Predicate<SummaryReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnSummaryPredicate();
+		// filter out also the return transition that cannot be taken because
+		// the corresponding (lin, hier) DoubleDecker is not reachable
+		final Predicate<SummaryReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
+				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDecker(trans.getLinPred(), hier);
 		return new FilteredIterable<>(mNwa.summarySuccessors(hier, letter), predicate);
 	}
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
-		final Predicate<SummaryReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnSummaryPredicate();
+		// filter out also the return transition that cannot be taken because
+		// the corresponding (lin, hier) DoubleDecker is not reachable
+		final Predicate<SummaryReturnTransition<LETTER, STATE>> predicate = trans -> mRemainingStates.contains(trans.getLinPred())
+				&& mRemainingStates.contains(trans.getSucc()) && isDoubleDecker(trans.getLinPred(), hier);
 		return new FilteredIterable<>(mNwa.summarySuccessors(hier), predicate);
 	}
 

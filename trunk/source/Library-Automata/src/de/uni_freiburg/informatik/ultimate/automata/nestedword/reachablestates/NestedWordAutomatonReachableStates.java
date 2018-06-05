@@ -332,7 +332,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			final int numberOfSccs) {
 		return numberOfTransitions - numberOfStates + numberOfSccs;
 	}
-	
+
 	@Override
 	public VpAlphabet<LETTER> getVpAlphabet() {
 		return mVpAlphabet;
@@ -382,7 +382,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mStates.get(state).lettersCall();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		return mStates.get(state).lettersReturn(hier);
@@ -1485,6 +1485,18 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 						// linear predecessor will be removed
 						continue;
 					}
+					{
+						// if the (linPred, hierPred) DoubleDecker is not
+						// reachable in the resulting automaton, then
+						// this summary is not in the resulting automaton
+						// hence we must not use it for propagation here
+						final StateContainer<LETTER, STATE> linCont = getStatesMap().get(inTrans.getLinPred());
+						final boolean summaryIsInResultAutomaton = checkDoubleDeckerProperty(linCont, cont.getState(),
+								mRpAllDown, mRpSomeDown, mDspReachPrecious);
+						if (!summaryIsInResultAutomaton) {
+							continue;
+						}
+					}
 
 					final StateContainer<LETTER, STATE> succCont = getStatesMap().get(succ);
 					final boolean modified = propagateReachableAfterRemovalProperty(cont, succCont);
@@ -1502,6 +1514,23 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 					addToWorklistIfModfiedOrNotVisited(propagationWorklist, visited, modified, succCont);
 				}
 			}
+		}
+
+		private boolean checkDoubleDeckerProperty(final StateContainer<LETTER, STATE> up, final STATE down,
+				final ReachProp rpAllDown, final ReachProp rpSomeDown, final DownStateProp dspReachPrecious)
+				throws AssertionError {
+			boolean result;
+			if (up.getReachProp() == rpAllDown) {
+				result = true;
+			} else {
+				if (up.getReachProp() == rpSomeDown) {
+					assert up.getDownStates().containsKey(down);
+					result = up.hasDownProp(down, dspReachPrecious);
+				} else {
+					throw new AssertionError("DoubleDecker cannot reach precious");
+				}
+			}
+			return result;
 		}
 
 		private void addToWorklistIfModfiedOrNotVisited(
@@ -1823,13 +1852,13 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	/*
 	 * private boolean cecSumConsistent() { int sum = 0; for (CommonEntriesComponent<LETTER, STATE> cec : mAllCECs) {
 	 * sum += cec.mSize; } int allStates = getStatesMap().keySet().size(); return sum == allStates; }
-	 * 
+	 *
 	 * private boolean allStatesAreInTheirCec() { boolean result = true; for (STATE state : getStatesMap().keySet()) {
 	 * StateContainer<LETTER, STATE> sc = getStatesMap().get(state); CommonEntriesComponent<LETTER, STATE> cec =
 	 * sc.getCommonEntriesComponent(); if (!cec.mBorderOut.keySet().contains(sc)) { Set<StateContainer<LETTER, STATE>>
 	 * empty = new HashSet<StateContainer<LETTER, STATE>>(); result &= internalOutSummaryOutInCecOrForeigners(sc, empty,
 	 * cec); } } return result; }
-	 * 
+	 *
 	 * private boolean occuringStatesAreConsistent(CommonEntriesComponent<LETTER, STATE> cec) { boolean result = true;
 	 * Set<STATE> downStates = cec.mDownStates; Set<Entry<LETTER, STATE>> entries = cec.mEntries; if (cec.mSize > 0) {
 	 * result &= downStatesAreCallPredsOfEntries(downStates, entries); } assert (result); result &=
@@ -1837,18 +1866,18 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * resident : cec.mBorderOut.keySet()) { Set<StateContainer<LETTER, STATE>> foreignerSCs =
 	 * cec.mBorderOut.get(resident); result &= internalOutSummaryOutInCecOrForeigners(resident, foreignerSCs, cec);
 	 * assert (result); } return result; }
-	 * 
+	 *
 	 * private boolean downStatesConsistentwithEntriesDownStates(CommonEntriesComponent<LETTER, STATE> cec) { boolean
 	 * result = true; Set<STATE> downStates = cec.mDownStates; Set<Entry<LETTER, STATE>> entries = cec.mEntries;
 	 * Set<STATE> downStatesofEntries = new HashSet<STATE>(); for (Entry<LETTER, STATE> entry : entries) {
 	 * downStatesofEntries.addAll(entry.getDownStates().keySet()); } result &= isSubset(downStates,
 	 * downStatesofEntries); assert (result); result &= isSubset(downStatesofEntries, downStates); assert (result);
 	 * return result; }
-	 * 
+	 *
 	 * private boolean internalOutSummaryOutInCecOrForeigners(StateContainer<LETTER, STATE> state,
 	 * Set<StateContainer<LETTER, STATE>> foreigners, CommonEntriesComponent<LETTER, STATE> cec) {
 	 * Set<StateContainer<LETTER, STATE>> neighbors = new HashSet<StateContainer<LETTER, STATE>>();
-	 * 
+	 *
 	 * for (OutgoingInternalTransition<LETTER, STATE> trans : state.internalSuccessors()) { STATE succ =
 	 * trans.getSucc(); StateContainer<LETTER, STATE> succSc = getStatesMap().get(succ); if
 	 * (succSc.getCommonEntriesComponent() == cec) { // do nothing } else { neighbors.add(succSc); } } if
@@ -1857,11 +1886,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * allNeighborAreForeigners = isSubset(neighbors, foreigners); assert allNeighborAreForeigners; boolean
 	 * allForeignersAreNeighbor = isSubset(foreigners, neighbors); assert allForeignersAreNeighbor; return
 	 * allNeighborAreForeigners && allForeignersAreNeighbor; }
-	 * 
+	 *
 	 * private boolean eachStateHasThisCec(Set<STATE> states, CommonEntriesComponent<LETTER, STATE> cec) { boolean
 	 * result = true; for (STATE state : states) { StateContainer<LETTER, STATE> sc = getStatesMap().get(state); if
 	 * (sc.getCommonEntriesComponent() != cec) { result = false; assert result; } } return result; }
-	 * 
+	 *
 	 * private boolean downStatesAreCallPredsOfEntries(Set<STATE> downStates, Set<Entry<LETTER, STATE>> entries) {
 	 * Set<STATE> callPreds = new HashSet<STATE>(); for (Entry<LETTER, STATE> entry : entries) { STATE entryState =
 	 * entry.getState(); if (isInitial(entryState)) { callPreds.add(getEmptyStackState()); } for
@@ -1869,7 +1898,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * } boolean callPredsIndownStates = isSubset(callPreds, downStates); assert (callPredsIndownStates); boolean
 	 * downStatesInCallPreds = isSubset(downStates, callPreds); assert (downStatesInCallPreds); return
 	 * callPredsIndownStates && downStatesInCallPreds; }
-	 * 
+	 *
 	 * private boolean isBorderOutConsistent(StateContainer<LETTER, STATE> cont) { CommonEntriesComponent<LETTER, STATE>
 	 * cec = cont.getCommonEntriesComponent(); ArrayList<STATE> preds = new ArrayList<STATE>(); for
 	 * (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(cont.getState())) {

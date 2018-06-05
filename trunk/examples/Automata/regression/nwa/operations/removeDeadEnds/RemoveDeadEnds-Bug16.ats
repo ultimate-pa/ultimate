@@ -2,6 +2,12 @@
 // Author: schillic@informatik.uni-freiburg.de
 // Date: 2018-06-04
 
+// Example demonstates the two bugs that are resonsible for Issue #153
+// 1. The return transition (q4 q0 r5 q5) is dead but was not removed
+// 2. The DoubleDecker (q5, €) is not reachable after the removal
+// of dead ends but was still available in the internal data structures
+// of the automaton.
+
 NestedWordAutomaton result = removeDeadEnds(nwa);
 
 NestedWordAutomaton nwa = (
@@ -25,7 +31,7 @@ NestedWordAutomaton nwa = (
 		(qf qf r3 q4)
 		(q3 q1 r2 q4)
 		(q4 qf r4 q5)
-		(q4 q0 r5 q5) // wrongly detected as dead
+		(q4 q0 r5 q5) // dead but was not removed
 		(q5 qf r6 qf)
 	}
 );
