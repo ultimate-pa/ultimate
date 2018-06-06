@@ -373,11 +373,15 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	private IProgramExecution<IcfgEdge, Term> computeProgramExecution() {
-		// note: use IcfgProgramExecutionBuilder when it becomes available
-		throw new UnsupportedOperationException("not yet implemented");
+		// TODO: construct a real IProgramExecution using IcfgProgramExecutionBuilder (DD needs to refactor s.t. the
+		// class becomes available here).
+		if (mIsTraceCorrect == LBool.SAT) {
+			return IProgramExecution.emptyExecution(Term.class, IcfgEdge.class);
+		}
+		return null;
 	}
 
-	// TODO: Implement ITraceCheck interface
+	/** ITraceCheck interface **/
 
 	@Override
 	public LBool isCorrect() {
@@ -432,7 +436,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		return mTraceCheckFinishedNormally;
 	}
 
-	// TODO: Implement iInterpolantGenerator interface
+	/** End ITraceCheck interface **/
+
+	/** IInterpolantGenerator interface **/
 
 	@Override
 	public List<LETTER> getTrace() {
@@ -465,5 +471,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			throw new UnsupportedOperationException();
 		}
 	}
+
+	/** End IInterpolantGenerator interface **/
 
 }
