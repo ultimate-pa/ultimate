@@ -122,7 +122,7 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 	 * @param elem
 	 */
 	public void projectAway(final ELEM elem) {
-		assert mSurroundingCCSetConstraints.getCongruenceClosure().isRepresentative(elem) : "right?..";
+//		assert mSurroundingCCSetConstraints.getCongruenceClosure().isRepresentative(elem) : "right?..";
 		assert !elem.equals(mConstrainedElement);
 
 		/*
@@ -131,30 +131,39 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		 * existentially quantified variable.. but we would have to introduce one for
 		 * every projected element, right?..)
 		 */
-		for (final SetConstraint<ELEM> sc : new HashSet<>(mSetConstraints)) {
-			if (sc.containsElement(elem)) {
-				mSetConstraints.remove(sc);
+		final Set<SetConstraint<ELEM>> newSetConstraints = new HashSet<>();
+		for (final SetConstraint<ELEM> sc : mSetConstraints) {
+//			if (sc.containsElement(elem)) {
+//				mSetConstraints.remove(sc);
+//			}
+			if (!sc.containsElement(elem)) {
+				newSetConstraints.add(sc);
 			}
 		}
-
+		mSetConstraints = newSetConstraints;
 	}
 
-	public ELEM getSingletonValue() {
-		assert isSingleton() : "check for isSingleton before calling this";
-		return mSetConstraints.iterator().next().getSingletonValue();
+//	public ELEM getSingletonValue() {
+//		assert isSingleton() : "check for isSingleton before calling this";
+//		return mSetConstraints.iterator().next().getSingletonValue();
+//	}
+
+
+	private Set<ELEM> getSingletonValues() {
+		return SetConstraintConjunction.getSingletonValues(mSetConstraints);
 	}
 
-	public boolean isSingleton() {
-		if (mIsInconsistent) {
-			return false;
-		}
-		if (mSetConstraints.isEmpty()) {
-			return false;
-		}
-		final boolean result = mSetConstraints.stream().allMatch(sc -> sc.isSingleton());
-		assert !result || mSetConstraints.size() == 1 : "not cleaned up??";
-		return result;
-	}
+//	public boolean isSingleton() {
+//		if (mIsInconsistent) {
+//			return false;
+//		}
+//		if (mSetConstraints.isEmpty()) {
+//			return false;
+//		}
+//		final boolean result = mSetConstraints.stream().allMatch(sc -> sc.isSingleton());
+//		assert !result || mSetConstraints.size() == 1 : "not cleaned up??";
+//		return result;
+//	}
 
 	public boolean isTautological() {
 		if (mIsInconsistent) {
@@ -163,10 +172,12 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		if (mSetConstraints.isEmpty()) {
 			return true;
 		}
-		if (isSingleton() && getSingletonValue().equals(mConstrainedElement)) {
-//			assert false : "not normalized??";
-			return true;
-		}
+//		if (isSingleton() && getSingletonValue().equals(mConstrainedElement)) {
+//		Set<ELEM> svs = getSingletonValues();
+//		if (svs.size() == 1 && svs.stream().allMatch(sv -> sv.equ))
+////			assert false : "not normalized??";
+//			return true;
+//		}
 
 		return false;
 	}
@@ -523,6 +534,14 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 			// }
 		}
 
+		/*
+		 * singleton values should be propagated as equalities and omitted from any SetConstraintConjunction
+		 */
+		if (!getSingletonValues().isEmpty()) {
+			assert false;
+			return false;
+		}
+
 		// this might be ok, as we don't alwasy set the surrSetConstraints, e.g. wen a
 		// setCc is passed around
 		// if (mSurroundingCCSetConstraints == null) {
@@ -542,11 +561,15 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 				assert false;
 				return false;
 			}
-			// all must be representatives
-			for (final ELEM el : conjunct.getElementSet()) {
-				if (!mSurroundingCCSetConstraints.getCongruenceClosure().isRepresentative(el)) {
-					assert false;
-					return false;
+		}
+		if (mSurroundingCCSetConstraints.getCongruenceClosure() != null) {
+			for (final SetConstraint<ELEM> conjunct : mSetConstraints) {
+				// all must be representatives
+				for (final ELEM el : conjunct.getElementSet()) {
+					if (!mSurroundingCCSetConstraints.getCongruenceClosure().isRepresentative(el)) {
+						assert false;
+						return false;
+					}
 				}
 			}
 		}
@@ -627,15 +650,24 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 		return constraints.stream().anyMatch(sc -> sc.isInconsistent());
 	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean isSingleton(
-			final Collection<SetConstraint<ELEM>> constraints) {
-		return constraints.size() == 1 && constraints.iterator().next().isSingleton();
-	}
+//	/**
+//	 *
+//	 * @param constraints
+//	 * @return true if constraints contains one or more singletons
+//	 */
+//	public static <ELEM extends ICongruenceClosureElement<ELEM>> boolean hasSingletons(
+//			final Collection<SetConstraint<ELEM>> constraints) {
+//		return constraints.size() == 1 && constraints.iterator().next().isSingleton();
+//	}
 
-	public static <ELEM extends ICongruenceClosureElement<ELEM>> ELEM getSingletonValue(
+//	public static <ELEM extends ICongruenceClosureElement<ELEM>> ELEM getSingletonValues(
+	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<ELEM> getSingletonValues(
 			final Set<SetConstraint<ELEM>> constraints) {
-		assert isSingleton(constraints);
-		return constraints.iterator().next().getSingletonValue();
+//		assert hasSingletons(constraints);
+//		return constraints.iterator().next().getSingletonValue();
+		return constraints.stream().filter(sc -> sc.isSingleton())
+				.map(sc -> sc.getSingletonValue())
+				.collect(Collectors.toSet());
 	}
 
 //	/**
@@ -701,8 +733,12 @@ public class SetConstraintConjunction<ELEM extends ICongruenceClosureElement<ELE
 	}
 
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> Set<SetConstraint<ELEM>>
-			updateOnChangedRepresentative(
-					final Set<SetConstraint<ELEM>> oldConstraint, final CongruenceClosure<ELEM> newCc) {
+			updateOnChangedRepresentative(final Set<SetConstraint<ELEM>> oldConstraint,
+					final CongruenceClosure<ELEM> newCc) {
+		if (oldConstraint == null) {
+			return null;
+		}
+
 		final Set<SetConstraint<ELEM>> result = new HashSet<>();
 		boolean madeChanges = false;
 		for (final SetConstraint<ELEM> sc : oldConstraint) {

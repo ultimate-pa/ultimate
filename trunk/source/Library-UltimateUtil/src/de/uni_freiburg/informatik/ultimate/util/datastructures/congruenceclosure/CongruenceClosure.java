@@ -388,10 +388,11 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				new Pair<>(new HashRelation<>(), new HashRelation<>());
 		// literal constraint treatment
 		{
-			final Pair<ELEM, ELEM> eqToProp =
+			final HashRelation<ELEM, ELEM> eqToProp =
 					mLiteralSetConstraints.reportEquality(e1OldRep, e2OldRep, mElementTVER.getRepresentative(elem1));
 			if (eqToProp != null) {
-				propInfo.getFirst().addPair(eqToProp.getFirst(), eqToProp.getSecond());
+				propInfo.getFirst().addAll(eqToProp);
+//				propInfo.getFirst().addPair(eqToProp.getFirst(), eqToProp.getSecond());
 			}
 
 			if (mLiteralSetConstraints.isInconsistent()) {
@@ -1552,7 +1553,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		if (isInconsistent()) {
 			return false;
 		}
-		return mElementTVER.isTautological() && mLiteralSetConstraints.isTautological();
+		return mElementTVER.isTautological() && mLiteralSetConstraints.isEmpty();
 	}
 
 	/**
@@ -1972,16 +1973,25 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 	@Override
 	public void reportContainsConstraint(final ELEM elem, final Set<ELEM> literalSet) {
-		final Pair<ELEM, ELEM> eqToProp = mLiteralSetConstraints.reportContains(elem, literalSet);
+		final HashRelation<ELEM, ELEM> eqToProp = mLiteralSetConstraints.reportContains(elem, literalSet);
 		if (eqToProp != null) {
-			mManager.reportEquality(eqToProp.getFirst(), eqToProp.getSecond(), this, true);
+//			mManager.reportEquality(eqToProp.getFirst(), eqToProp.getSecond(), this, true);
+			for (final Entry<ELEM, ELEM> en : eqToProp) {
+				mManager.reportEquality(en.getKey(), en.getValue(), this, true);
+			}
 		}
 	}
 
 	@Override
 //	public void reportContainsConstraint(final ELEM elem, final SetConstraintConjunction<ELEM> setCc) {
 	public void reportContainsConstraint(final ELEM elem, final Collection<SetConstraint<ELEM>> setCc) {
-		mLiteralSetConstraints.reportContains(elem, new HashSet<>(setCc));
+		final HashRelation<ELEM, ELEM> eqToProp = mLiteralSetConstraints.reportContains(elem, new HashSet<>(setCc));
+		if (eqToProp != null) {
+//			mManager.reportEquality(eqToProp.getFirst(), eqToProp.getSecond(), this, true);
+			for (final Entry<ELEM, ELEM> en : eqToProp) {
+				mManager.reportEquality(en.getKey(), en.getValue(), this, true);
+			}
+		}
 	}
 
 	@Override
