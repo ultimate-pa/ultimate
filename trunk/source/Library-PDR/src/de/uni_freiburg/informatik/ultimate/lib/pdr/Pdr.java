@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -269,15 +270,26 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					 * Found Error trace
 					 */
 					if (level - 1 == 0) {
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug("Error trace found. Frames: " + mFrames.entrySet().stream()
+									.map(a -> a.getKey().getDebugIdentifier() + ": {"
+											+ a.getValue().stream().map(IPredicate::toString)
+													.collect(Collectors.joining(","))
+											+ "}")
+									.collect(Collectors.joining(",")));
+						}
 						return false;
 					}
 
 					final IPredicate preCondition;
 
 					if (predecessorTransition instanceof IIcfgInternalTransition) {
-						preCondition = mPredicateUnifier.getOrConstructPredicate(
-								mPredTrans.weakestPrecondition(toBeBlocked, predecessorTransition.getTransformula()));
-
+						final Term wp =
+								mPredTrans.weakestPrecondition(toBeBlocked, predecessorTransition.getTransformula());
+						preCondition = mPredicateUnifier.getOrConstructPredicate(wp);
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug(String.format("WP(%s, %s) == %s", toBeBlocked, predecessorTransition, wp));
+						}
 					} else if (predecessorTransition instanceof IIcfgCallTransition) {
 						final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
 								.getGlobalVarsAssignment(predecessorTransition.getSucceedingProcedure());
@@ -302,6 +314,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 					proofObligations.addFirst(proofObligation);
 					proofObligations.addFirst(newProofObligation);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("New PO: " + newProofObligation);
+					}
 
 					/**
 					 * If Unsat strengthen the frames of the location
@@ -340,6 +355,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private Validity checkSatInternal(final IPredicate pre, final IInternalAction trans, final IPredicate post) {
 		final IPredicate notP = not(post);
 		final Validity result = mHtc.checkInternal(pre, trans, notP);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(String.format(" %s && %s && %s is %s", pre, trans, post,
+					(result == Validity.VALID ? "unsat" : (result == Validity.INVALID ? "sat" : "unknown"))));
+		}
 		assert result != Validity.NOT_CHECKED;
 		return result;
 
