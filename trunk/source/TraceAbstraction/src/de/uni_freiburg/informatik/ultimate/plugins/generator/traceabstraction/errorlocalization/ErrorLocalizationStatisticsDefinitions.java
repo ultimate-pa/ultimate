@@ -38,7 +38,7 @@ public enum ErrorLocalizationStatisticsDefinitions implements IStatisticsElement
 
 	SuccesfullyFinished(Result.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-	ErrorLocalizationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	ErrorLocalizationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 
 	IcfgEdges(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 

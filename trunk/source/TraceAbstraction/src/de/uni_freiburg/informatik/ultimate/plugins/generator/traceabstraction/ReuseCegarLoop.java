@@ -591,7 +591,7 @@ public class ReuseCegarLoop<LETTER extends IIcfgTransition<?>> extends BasicCega
 		REUSE_HTC(IStatisticsDataProvider.class, StatisticsType.STATISTICS_DATA_AGGREGATION,
 				StatisticsType.KEY_BEFORE_DATA),
 
-		REUSE_TIME(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_TIME),
+		REUSE_TIME(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.KEY_BEFORE_NANOS),
 
 		DROPPED_AUTOMATA(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA),;
 

@@ -35,11 +35,11 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
 public enum TraceCheckStatisticsDefinitions implements IStatisticsElement {
 
-	SsaConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	SsaConstructionTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 
-	SatisfiabilityAnalysisTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	SatisfiabilityAnalysisTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 
-	InterpolantComputationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),
+	InterpolantComputationTime(Long.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),
 
 	NumberOfCodeBlocks(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 

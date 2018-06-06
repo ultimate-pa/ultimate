@@ -121,7 +121,7 @@ public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease
 
 		SolverNotchecked(Integer.class, StatisticsType.IN_CA_RE_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
-		Time(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.TIME_BEFORE_KEY),;
+		Time(Integer.class, StatisticsType.LONG_ADDITION, StatisticsType.NANOS_BEFORE_KEY),;
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
