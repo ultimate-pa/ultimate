@@ -304,7 +304,7 @@ public class TraceCheck<LETTER extends IAction> implements ITraceCheck {
 				result = new FeasibilityCheckResult(LBool.UNKNOWN, new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT,
 						null, ExceptionHandlingCategory.KNOWN_IGNORE), true);
 			} else {
-				result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckUtils.constructReasonUnknown(e), true);
+				result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckReasonUnknown.constructReasonUnknown(e), true);
 			}
 		} finally {
 			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());

@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck;
 
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+
 /**
  * Provides reasons why the trace feasiblity result of {@link TraceCheck} is unknown. Objects of this class will NOT
  * provide reasons for failed interpolations.
@@ -34,6 +36,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class TraceCheckReasonUnknown {
+
+	private static final String SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
+	private static final String CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX = "A non-linear fact";
 
 	public enum Reason {
 		/**
@@ -166,6 +171,52 @@ public class TraceCheckReasonUnknown {
 
 	public ExceptionHandlingCategory getExceptionHandlingCategory() {
 		return mExceptionHandlingCategory;
+	}
+
+	public static TraceCheckReasonUnknown constructReasonUnknown(final SMTLIBException e) {
+		final String message = e.getMessage();
+		final Reason reason;
+		final ExceptionHandlingCategory exceptionCategory;
+		if (message == null) {
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
+		} else if (message.equals(SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE)) {
+			// SMTInterpol does not support non-linear arithmetic
+			reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.startsWith(CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX)) {
+			// CVC4 does not support nonlinear arithmetic if some LIA or LRA logic is used.
+			reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.endsWith("Connection to SMT solver broken")) {
+			// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
+		} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
+			// problem with Z3
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
+		} else if (message.contains("Received EOF on stdin. stderr output:")) {
+			// problem with CVC4
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
+		} else if (message.startsWith("Logic does not allow numerals")) {
+			// wrong usage of external solver, tell the user
+			reason = Reason.SOLVER_CRASH_WRONG_USAGE;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.startsWith("Timeout exceeded")) {
+			// timeout
+			reason = Reason.SOLVER_RESPONSE_TIMEOUT;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.startsWith("ERROR: bvadd takes exactly 2 arguments")) {
+			// we use bvadd with larger number of params, e.g., MatSAT complains
+			reason = Reason.ULTIMATE_VIOLATES_SMT_LIB_STANDARD_AND_SOLVER_COMPLAINS;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else {
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
+		}
+		return new TraceCheckReasonUnknown(reason, e, exceptionCategory);
 	}
 
 }
