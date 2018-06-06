@@ -114,8 +114,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mIcfg = prefs.getIcfgContainer();
 
 		mFrames = new HashMap<>();
-		PathProgramConstructionResult pp = PathProgram.constructPathProgram("errorPP", mIcfg,
-				new HashSet<>(counterexample));
+		PathProgramConstructionResult pp =
+				PathProgram.constructPathProgram("errorPP", mIcfg, new HashSet<>(counterexample));
 
 		mPpIcfg = pp.getPathProgram();
 		mCsToolkit = mPpIcfg.getCfgSmtToolkit();
@@ -192,8 +192,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 				final Term sp = mPredTrans.strongestPostcondition(mTruePred, edge.getTransformula());
 				final IPredicate proofObligationPred = mPredicateUnifier.getOrConstructPredicate(sp);
-				final Triple<IPredicate, IcfgLocation, Integer> initialProofObligation = new Triple<>(
-						proofObligationPred, edge.getSource(), level);
+				final Triple<IPredicate, IcfgLocation, Integer> initialProofObligation =
+						new Triple<>(proofObligationPred, edge.getSource(), level);
 				proofObligations.add(initialProofObligation);
 			}
 
@@ -222,13 +222,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	/**
 	 * Blocking-phase, for blocking proof-obligations.
 	 *
-	 * @return false, if proof-obligation on level 0 is created true, if there
-	 *         is no proof-obligation left
+	 * @return false, if proof-obligation on level 0 is created true, if there is no proof-obligation left
 	 */
 	private boolean blockingPhase(final List<Triple<IPredicate, IcfgLocation, Integer>> initialProofObligations) {
 
-		final Deque<Triple<IPredicate, IcfgLocation, Integer>> proofObligations = new ArrayDeque<>(
-				initialProofObligations);
+		final Deque<Triple<IPredicate, IcfgLocation, Integer>> proofObligations =
+				new ArrayDeque<>(initialProofObligations);
 		while (!proofObligations.isEmpty()) {
 			final Triple<IPredicate, IcfgLocation, Integer> proofObligation = proofObligations.pop();
 			final IPredicate toBeBlocked = proofObligation.getFirst();
@@ -239,8 +238,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				final IcfgLocation predecessor = predecessorTransition.getSource();
 				final IPredicate predecessorFrame = mFrames.get(predecessor).get(level - 1);
 
-				final Validity result = checkSatInternal(predecessorFrame, (IInternalAction) predecessorTransition,
-						toBeBlocked);
+				final Validity result =
+						checkSatInternal(predecessorFrame, (IInternalAction) predecessorTransition, toBeBlocked);
 
 				/**
 				 * If Sat generate new proof-obligation
@@ -278,8 +277,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 								"Unknown transition type: " + predecessorTransition.getClass().toString());
 					}
 
-					final Triple<IPredicate, IcfgLocation, Integer> newProofObligation = new Triple<>(preCondition,
-							predecessor, level - 1);
+					final Triple<IPredicate, IcfgLocation, Integer> newProofObligation =
+							new Triple<>(preCondition, predecessor, level - 1);
 
 					proofObligations.addFirst(proofObligation);
 					proofObligations.addFirst(newProofObligation);
@@ -306,20 +305,17 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	/**
-	 * Use a {@link IHoareTripleChecker} to check for satisfiability of pre
-	 * &and; tf &and; post
+	 * Use a {@link IHoareTripleChecker} to check for satisfiability of pre &and; tf &and; post
 	 *
-	 * This method converts the post condition because an
-	 * {@link IHoareTripleChecker} checks for P &and; S &and; !Q
+	 * This method converts the post condition because an {@link IHoareTripleChecker} checks for P &and; S &and; !Q
 	 *
 	 * @param pre
 	 * @param trans
 	 * @param post
 	 *
-	 * @return {@link Validity#VALID} iff the formula is unsat,
-	 *         {@link Validity#INVALID} iff the formula is sat,
-	 *         {@link Validity#UNKNOWN} iff the solver was not able to find a
-	 *         solution, and {@link Validity#NOT_CHECKED} should not be returned
+	 * @return {@link Validity#VALID} iff the formula is unsat, {@link Validity#INVALID} iff the formula is sat,
+	 *         {@link Validity#UNKNOWN} iff the solver was not able to find a solution, and {@link Validity#NOT_CHECKED}
+	 *         should not be returned
 	 */
 	private Validity checkSatInternal(final IPredicate pre, final IInternalAction trans, final IPredicate post) {
 		final IPredicate notP = not(post);
