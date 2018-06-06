@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 Jonas Werner (jonaswerner95@gmail.com)
+ * Copyright (C) 2018 University of Freiburg
  *
  * This file is part of the ULTIMATE PDR library .
  *
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -57,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
@@ -95,11 +96,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private final IPredicate mFalsePred;
 	private final List<LETTER> mTrace;
 	private LBool mIsTraceCorrect;
-	// private final FeasibilityCheckResult mFeasibilityResult;
 
 	private boolean mTraceCheckFinished;
 	private IProgramExecution<IcfgEdge, Term> mFeasibleProgramExecution;
 	private ToolchainCanceledException mToolchainCanceledException;
+	private final PdrBenchmark mPdrBenchmark;
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IHoareTripleChecker htc, final List<LETTER> counterexample) {
@@ -113,8 +114,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mServices = prefs.getUltimateServices();
 		mIcfg = prefs.getIcfgContainer();
 
+		// stuff initialized here
+		mPdrBenchmark = new PdrBenchmark();
+
 		mFrames = new HashMap<>();
-		PathProgramConstructionResult pp =
+		final PathProgramConstructionResult pp =
 				PathProgram.constructPathProgram("errorPP", mIcfg, new HashSet<>(counterexample));
 
 		mPpIcfg = pp.getPathProgram();
@@ -128,10 +132,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mLogger.debug("PDR initialized...");
 
 		try {
+			mPdrBenchmark.start(PdrStatisticsDefinitions.PDR_RUNTIME);
 			mIsTraceCorrect = computePdr();
 		} catch (final ToolchainCanceledException tce) {
 			mToolchainCanceledException = tce;
 		} finally {
+			mPdrBenchmark.stop(PdrStatisticsDefinitions.PDR_RUNTIME);
 			mTraceCheckFinished = true;
 		}
 	}
@@ -394,8 +400,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	@Override
 	public IStatisticsDataProvider getTraceCheckBenchmark() {
-		// TODO Auto-generated method stub
-		return null;
+		return mPdrBenchmark;
 	}
 
 	@Override
