@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -70,6 +71,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -95,12 +98,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private final IPredicate mTruePred;
 	private final IPredicate mFalsePred;
 	private final List<LETTER> mTrace;
-	private LBool mIsTraceCorrect;
+	private final PdrBenchmark mPdrBenchmark;
 
-	private boolean mTraceCheckFinished;
+	private boolean mTraceCheckFinishedNormally;
 	private IProgramExecution<IcfgEdge, Term> mFeasibleProgramExecution;
 	private ToolchainCanceledException mToolchainCanceledException;
-	private final PdrBenchmark mPdrBenchmark;
+	private LBool mIsTraceCorrect;
+	private IPredicate[] mInterpolants;
+	private TraceCheckReasonUnknown mReasonUnknown;
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IHoareTripleChecker htc, final List<LETTER> counterexample) {
@@ -134,11 +139,18 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		try {
 			mPdrBenchmark.start(PdrStatisticsDefinitions.PDR_RUNTIME);
 			mIsTraceCorrect = computePdr();
+			mTraceCheckFinishedNormally = true;
+			mReasonUnknown = null;
 		} catch (final ToolchainCanceledException tce) {
 			mToolchainCanceledException = tce;
+			mTraceCheckFinishedNormally = false;
+			mReasonUnknown = new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, tce,
+					ExceptionHandlingCategory.KNOWN_DEPENDING);
+		} catch (final SMTLIBException e) {
+			mTraceCheckFinishedNormally = false;
+			mReasonUnknown = TraceCheckReasonUnknown.constructReasonUnknown(e);
 		} finally {
 			mPdrBenchmark.stop(PdrStatisticsDefinitions.PDR_RUNTIME);
-			mTraceCheckFinished = true;
 		}
 	}
 
@@ -220,6 +232,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				// throw new UnsupportedOperationException("error not
 				// reachable");
 				mLogger.debug("Error is not reachable.");
+				// TODO: compute interpolants
+				mInterpolants = new IPredicate[0];
 				return LBool.UNSAT;
 			}
 		}
@@ -410,14 +424,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	@Override
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
-		// TODO Auto-generated method stub
-		return null;
+		return mReasonUnknown;
 	}
 
 	@Override
 	public boolean wasTracecheckFinishedNormally() {
-		// TODO Auto-generated method stub
-		return mTraceCheckFinished;
+		return mTraceCheckFinishedNormally;
 	}
 
 	// TODO: Implement iInterpolantGenerator interface
@@ -429,8 +441,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	@Override
 	public IPredicate[] getInterpolants() {
-		// TODO Auto-generated method stub
-		return null;
+		return mInterpolants;
 	}
 
 	@Override
