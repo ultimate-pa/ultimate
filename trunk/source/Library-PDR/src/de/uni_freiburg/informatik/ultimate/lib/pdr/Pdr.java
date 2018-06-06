@@ -284,11 +284,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					final IPredicate preCondition;
 
 					if (predecessorTransition instanceof IIcfgInternalTransition) {
-						final Term wp =
-								mPredTrans.weakestPrecondition(toBeBlocked, predecessorTransition.getTransformula());
-						preCondition = mPredicateUnifier.getOrConstructPredicate(wp);
+						final Term pre = mPredTrans.pre(toBeBlocked, predecessorTransition.getTransformula());
+						preCondition = mPredicateUnifier.getOrConstructPredicate(pre);
 						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(String.format("WP(%s, %s) == %s", toBeBlocked, predecessorTransition, wp));
+							mLogger.debug(String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition, pre));
 						}
 					} else if (predecessorTransition instanceof IIcfgCallTransition) {
 						final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
