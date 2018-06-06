@@ -82,7 +82,7 @@ public class CoverageAnalysis<CL> {
 	}
 
 	public void analyze() {
-		assert mProgramPointSequence.size() - 2 == mIpp.getPredicates().size();
+		assert mProgramPointSequence.size() - 2 == mIpp.getPredicates().size() : "Wrong amount of interpolants";
 		preprocess();
 
 		for (int i = 0; i < mProgramPointSequence.size() - 1; i++) {
