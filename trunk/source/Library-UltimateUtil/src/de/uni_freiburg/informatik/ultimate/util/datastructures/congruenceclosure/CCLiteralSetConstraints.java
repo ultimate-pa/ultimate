@@ -66,17 +66,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 //		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}
 
-	private CCLiteralSetConstraints(final CcManager<ELEM> manager, final CongruenceClosure<ELEM> congruenceClosure,
-			final Map<ELEM, SetConstraintConjunction<ELEM>> containsConstraints) {
-		mCcManager = manager;
-		mCongruenceClosure = congruenceClosure;
-
-		mContainsConstraints = containsConstraints;
-		mIsInconsistent = false;
-//		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
-		assert containsConstraints.values().stream().allMatch(scc -> (scc.mSurroundingCCSetConstraints == this));
-	}
-
 	/**
 	 * copy constructor
 	 * @param manager
@@ -98,10 +87,7 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 //		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 	}
 
-//	public Pair<ELEM, ELEM> reportContains(final ELEM element, final SetConstraintConjunction<ELEM> constraint) {
 	public HashRelation<ELEM, ELEM> reportContains(final ELEM element, final Set<SetConstraint<ELEM>> constraintRaw) {
-//		assert constraint.mSurroundingCCSetConstraints == this ||
-//				constraint.mSurroundingCCSetConstraints == null;
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
 
 
@@ -111,20 +97,14 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 				SetConstraintConjunction.updateOnChangedRepresentative(constraintRaw, mCongruenceClosure);
 
 
-//		final SetConstraintConjunction<ELEM> oldConstraint = getConstraint(element);
 		final Set<SetConstraint<ELEM>> oldConstraint = getConstraint(element);
 		// just for analogy to reportEquality
 		mContainsConstraints.remove(elementRep);
 
-//		SetConstraintConjunction<ELEM> newConstraint;
 		Set<SetConstraint<ELEM>> newConstraint;
 		if (oldConstraint != null) {
-//			newConstraint = SetConstraintConjunction.meet(this, elementRep, oldConstraint, constraint);
-//			newConstraint = DataStructureUtils.union(oldConstraint.getSetConstraints(), constraint);
 			newConstraint = DataStructureUtils.union(oldConstraint, constraintUpdRep);
 		} else {
-//			assert constraint.getConstrainedElement() == elementRep;
-//			newConstraint = mCcManager.buildSetConstraintConjunction(this, elementRep, constraint.mSetConstraints);//new SetConstraintConjunction<>(this, constraint);
 			newConstraint = constraintUpdRep;
 		}
 
@@ -149,21 +129,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		final ELEM elementRep = mCongruenceClosure.getRepresentativeElement(element);
 
-//		if (elementRep.isLiteral()) {
-//			// element is already equal to a literal (x ~ l), thus we implicitly have the constraint x in {l}
-//			if (elements.contains(elementRep)) {
-//				// the new constraint is weaker than the existing one, do nothing
-//				return;
-//			} else {
-//				// the new constraint and the existing one contradict
-//				reportInconsistency();
-//				return;
-//			}
-//		}
-
-//		final SetConstraintConjunction<ELEM> additionalConstraint =
-//				mCcManager.buildSetConstraintConjunction(this, elementRep, elements);
-
 		return reportContains(elementRep, Collections.singleton(SetConstraint.buildSetConstraint(elements)));// additionalConstraint);
 	}
 
@@ -178,8 +143,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		assert !mContainsConstraints.containsKey(constrainedElemRep) : "assuming this has been removed before";
 		assert mCongruenceClosure.isRepresentative(constrainedElemRep);
 		assert CcSettings.OMIT_SANITYCHECK_FINE_GRAINED_3 || sanityCheck();
-
-
 
 		final HashRelation<ELEM, ELEM> result = new HashRelation<>();
 
@@ -208,27 +171,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			}
 		}
 
-
-//		if (SetConstraintConjunction.hasSingletons(newConstraint1)) {
-			/*
-			 * rule: e in {l} --> e ~ l
-			 * (containsConstraint is implicit in this case)
-			 */
-			// don't directly call reportEquality here, as we are in an intermediate state of
-			// CongruenceClosure.reportEquality..!!
-
-
-//			final ELEM singletonValue = SetConstraintConjunction.getSingletonValue(newConstraint1);
-//			if (singletonValue != constrainedElemRep) {
-////				result = new Pair<>(constrainedElemRep, singletonValue);
-//			}
-//		}
-
-
 		final SetConstraintConjunction<ELEM> newConstraint2 =
 				mCcManager.buildSetConstraintConjunction(this, constrainedElemRep, newConstraint1);
 
-//		if (!newConstraint2.isTautological() && result == null) {
 		if (!newConstraint2.isTautological()) {
 			// not tautological, not a singeton --> save the new constraint
 			putContainsConstraint(constrainedElemRep, newConstraint2);
@@ -298,7 +243,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		// update the other set constraints according to the change in representatives
 		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : new HashSet<>(mContainsConstraints.entrySet())) {
-//			en.getValue().updateOnChangedRepresentative(elem1OldRep, elem2OldRep, newRep);
 			final Set<SetConstraint<ELEM>> oldSc = en.getValue().getSetConstraints();
 			final Set<SetConstraint<ELEM>> newSc =
 					SetConstraintConjunction.updateOnChangedRepresentative(oldSc, elem1OldRep, elem2OldRep, newRep);
@@ -317,10 +261,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		return eqToProp;
 	}
 
-//	private void removeConstraint(final ELEM elem1OldRep) {
-//		mContainsConstraints.remove(mCongruenceClosure.getRepresentativeElement(elem1OldRep));
-//	}
-
 	public CCLiteralSetConstraints<ELEM> join(final CongruenceClosure<ELEM> newCc,
 			final CCLiteralSetConstraints<ELEM> other) {
 		if (this.isInconsistent()) {
@@ -329,10 +269,10 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		if (other.isInconsistent()) {
 			return this;
 		}
-		// this is problematic: if we join x = 1 and x = 2, the literal set constraints are tautological..
-//		if (this.isTautological() || other.isTautological()) {
-//			return new CCLiteralSetConstraints<>(mCcManager, newCc);
-//		}
+		/*
+		 * Note that we cannot do shortcut on (this.isTautological() || other.isTautological()) here, because if we
+		 *  join x = 1 and x = 2, the literal set constraints by themselves are tautological/empty..
+		 */
 
 		final CCLiteralSetConstraints<ELEM> newSetConstraints = new CCLiteralSetConstraints<>(mCcManager, newCc);
 
@@ -364,12 +304,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 			if (SetConstraintConjunction.isTautological(newConstraint)) {
 				// tautological constraint --> nothing to add
-//			} else if (newConstraint.isSingleton()) {
-////				assert newConstraint.iterator().next().equals(rep);
-//				assert newConstraint.getSingletonValue().equals(rep);
-//				// we leave constraints of the form l in {l} implicit
-//				// (this information is kept as an equality in CongruenceClosure)
-//				// do nothing
 			} else {
 				newContainsConstraints.put(constrainedElem, newConstraint);
 			}
@@ -379,7 +313,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		newSetConstraints.setContainsConstraints(newContainsConstraints);
 
 		return newSetConstraints;
-//		return new CCLiteralSetConstraints<>(mCcManager, null, newContainsConstraints);
 	}
 
 	private void setContainsConstraints(final Map<ELEM, SetConstraintConjunction<ELEM>> newContainsConstraints) {
@@ -482,7 +415,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	 * @param elem
 	 * @return
 	 */
-//	SetConstraintConjunction<ELEM> getConstraint(final ELEM elem) {
 	Set<SetConstraint<ELEM>> getConstraint(final ELEM elem) {
 		if (!mCongruenceClosure.hasElement(elem)) {
 			return null;
@@ -494,15 +426,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
 
 		// an equality x ~ y implies a set constraint x in {y}, which we simply conjoin with the rest
-//		if (!rep.equals(elem)) {
-			result.add(SetConstraint.buildSetConstraint(Collections.singleton(rep)));
-//		}
+		result.add(SetConstraint.buildSetConstraint(Collections.singleton(rep)));
 
-//		if (rep.isLiteral()) {
-//			return new SingletonSetConstraintConjunction<>(this, rep, rep);
-//		}
-
-//		return mContainsConstraints.get(rep).getSetConstraints();
 		final SetConstraintConjunction<ELEM> scc = mContainsConstraints.get(rep);
 		if (scc != null) {
 			result.addAll(scc.getSetConstraints());
@@ -522,20 +447,12 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		sb.append("CCLiteralSetConstraints:\n");
 
 		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : getConstraints().entrySet()) {
-//			sb.append(en.getKey() + " in " + en.getValue());
 			sb.append(en.getValue());
 			sb.append("\n");
 		}
 
 		return sb.toString();
 	}
-
-//	public boolean isTautological() {
-//		if (isInconsistent()) {
-//			return false;
-//		}
-//		return mContainsConstraints.isEmpty();
-//	}
 
 	public void projectAway(final ELEM elem) {
 		// EDIT: makes no sense: this is called during removal, when elem may already have been removed from mCc
@@ -553,12 +470,9 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		  * (a more precise alternative would be to introduce a dummy element, effectively an existentially quantified
 		  *  variable.. but we would have to introduce one for every projected element, right?..)
 		  */
-//		 for (final Entry<ELEM, Set<ELEM>> en : new HashSet<>(mContainsConstraints.entrySet())) {
 		 for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : new HashSet<>(mContainsConstraints.entrySet())) {
 			 en.getValue().projectAway(elem);
-//			 if (en.getValue().contains(elem)) {
-//				 mContainsConstraints.remove(en.getKey());
-//			 }
+
 			 // clean up constraints that became tautological
 			 if (en.getValue().isTautological()) {
 				 mContainsConstraints.remove(en.getKey());
@@ -621,8 +535,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 				} else {
 					// made no changes
 				}
-
-
 			}
 		}
 		// rule: e in L /\ e != l --> e in L\{l}
@@ -646,8 +558,6 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 				} else {
 					// made no changes
 				}
-
-
 			}
 		}
 	}
@@ -667,20 +577,14 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final CCLiteralSetConstraints<ELEM> result =
 				new CCLiteralSetConstraints<>(mCcManager, null);
 
-//		final Map<ELEM, SetConstraintConjunction<ELEM>> newContainsConstraints = new HashMap<>();
 		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : mContainsConstraints.entrySet()) {
 			if (constraintsToKeepReps.contains(en.getKey())) {
-//				newContainsConstraints.put(en.getKey(), new HashSet<>(en.getValue()));
-//				newContainsConstraints.put(en.getKey(), new SetConstraintConjunction<>(this, en.getValue()));
 				result.putContainsConstraint(en.getKey(), new SetConstraintConjunction<>(result, en.getValue()));
 			}
 			if (DataStructureUtils.haveNonEmptyIntersection(constraintsToKeepReps, en.getValue().getAllRhsElements())) {
-//				newContainsConstraints.put(en.getKey(), new SetConstraintConjunction<>(this, en.getValue()));
 				result.putContainsConstraint(en.getKey(), new SetConstraintConjunction<>(result, en.getValue()));
 			}
 		}
-//		final CCLiteralSetConstraints<ELEM> result =
-//				new CCLiteralSetConstraints<>(mCcManager, null, newContainsConstraints);
 		assert !result.isInconsistent();
 		return result;
 	}
@@ -699,16 +603,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			assert SetConstraintConjunction.getSingletonValues(valueTransformedSet).isEmpty();
 			final SetConstraintConjunction<ELEM> valueTransformed =
 					 mCcManager.buildSetConstraintConjunction(this, keyTransformed, valueTransformedSet);
-//			en.getValue().transformElements(elemTransformer);
-
-//			final Set<ELEM> valueTransformed = new HashSet<>();
-//			for (final ELEM el : en.getValue()) {
-//				valueTransformed.add(elemTransformer.apply(el));
-//			}
 
 			putContainsConstraint(keyTransformed, valueTransformed);
-//			mContainsConstraints.put(keyTransformed, en.getValue());
-
 		}
 	}
 
