@@ -651,6 +651,10 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> void mixFunctionTreatmentOnAddElement(
 			final ELEM elem, final BiConsumer<ELEM, Set<ELEM>> reportContainsConstraint,
 			final Consumer<ELEM> addElement, final Set<ELEM> weakOrStrongEquivalenceClassOfAppliedFunction) {
+		if (!CcSettings.SUPPORT_MIX_FUNCTION) {
+			return;
+		}
+
 		/*
 		 * treatment for constant functions:
 		 *  <li> if we are adding an element of the form m(x), where m is a mix function, and a and b are m's
@@ -704,8 +708,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			final Set<ELEM> elem2EquivalenceClass, final CcAuxData<ELEM> auxData, final Consumer<ELEM> addElement,
 			final ICongruenceClosure<ELEM> congruenceClosure) {
 		for (final ELEM equivalentFunction1 : elem1EquivalenceClass) {
-			if (equivalentFunction1.isMixFunction() ||
-					equivalentFunction1.isConstantFunction()) {
+			if ((CcSettings.SUPPORT_MIX_FUNCTION && equivalentFunction1.isMixFunction()) ||
+					(CcSettings.SUPPORT_CONSTANT_FUNCTIONS && equivalentFunction1.isConstantFunction())) {
 				// ccpar is f(x), equivalentFunction1 is g
 				for (final ELEM ccpar : auxData.getAfCcPars(elemRep2)) {
 					if (congruenceClosure.isInconsistent()) {
@@ -717,8 +721,8 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 		}
 		for (final ELEM equivalentFunction2 : elem2EquivalenceClass) {
-			if (equivalentFunction2.isMixFunction() ||
-					equivalentFunction2.isConstantFunction()) {
+			if ((CcSettings.SUPPORT_MIX_FUNCTION && equivalentFunction2.isMixFunction()) ||
+					(CcSettings.SUPPORT_CONSTANT_FUNCTIONS && equivalentFunction2.isConstantFunction())) {
 				// ccpar is f(x), equivalentFunction2 is g
 				for (final ELEM ccpar : auxData.getAfCcPars(elemRep1)) {
 					if (congruenceClosure.isInconsistent()) {
@@ -1680,7 +1684,9 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 
 		final Set<ELEM> worklist = new HashSet<>(elemsToKeep);
-		final Set<ELEM> constraintsToKeepReps = new HashSet<>();
+		/* the elements constraints over which we need to keep in our result (they do not need to be representatives
+		 * in the UnionFind instance but to add one element per equivalence class here suffices) */
+		final Set<ELEM> elemsInConstraintsToKeep = new HashSet<>();
 		final Set<ELEM> visitedEquivalenceClassElements = new HashSet<>();
 
 
@@ -1699,16 +1705,21 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 			}
 			visitedEquivalenceClassElements.addAll(copy.mElementTVER.getEquivalenceClass(current));
 
-			assert copy.mElementTVER.getEquivalenceClass(current).stream()
-				.anyMatch(e -> dependsOnAny(e, elemsToKeep));
-			constraintsToKeepReps.add(current);
+//			assert copy.mElementTVER.getEquivalenceClass(current).stream()
+//				.anyMatch(e -> dependsOnAny(e, elemsToKeep));
+			elemsInConstraintsToKeep.add(current);
 
+			/*
+			 * for each ccpar f(x) (afccpar as well as argccpar) of the current element q (which is related to an
+			 *  element in elemsToKeep through constraints), add an element f(q) (or q(x) respectively) to the worklist,
+			 *  so its equivalence class will be kept.
+			 */
 			for (final ELEM afccpar : new HashSet<>(copy.getAuxData().getAfCcPars(copy.getRepresentativeElement(current)))) {
 				if (visitedEquivalenceClassElements.contains(afccpar)) {
 					continue;
 				}
 				final ELEM substituted = afccpar.replaceAppliedFunction(current);
-				if (constraintsToKeepReps.contains(substituted)) {
+				if (elemsInConstraintsToKeep.contains(substituted)) {
 					continue;
 				}
 				if (removeElementInfo != null
@@ -1727,7 +1738,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 					continue;
 				}
 				final ELEM substituted = argccpar.replaceArgument(current);
-				if (constraintsToKeepReps.contains(substituted)) {
+				if (elemsInConstraintsToKeep.contains(substituted)) {
 					continue;
 				}
 				if (removeElementInfo != null
@@ -1741,16 +1752,39 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 				mManager.addElement(copy, substituted, true, false);
 				worklist.add(substituted);
 			}
+			/*
+			 * check literal constraints on current element, elements related to an elemToKeep this way must also be
+			 * kept
+			 */
+			for (final ELEM relEl :
+				copy.getLiteralSetConstraints().getRelatedElements(copy.getRepresentativeElement(current))) {
+				if (visitedEquivalenceClassElements.contains(relEl)) {
+					continue;
+				}
+				if (elemsInConstraintsToKeep.contains(relEl)) {
+					continue;
+				}
+				if (removeElementInfo != null
+						&& dependsOnAny(relEl, removeElementInfo.getRemovedElements())) {
+					// don't add anything that is currently being removed or depends on it
+					continue;
+				}
+				assert removeElementInfo == null
+						|| !dependsOnAny(relEl, removeElementInfo.getRemovedElements());
+//				assert dependsOnAny(relEl, elemsToKeep);
+				mManager.addElement(copy, relEl, true, false);
+				worklist.add(relEl);
+			}
 		}
 		// TVER does not know about parent/child relationship of nodes, so it is safe
 		final ThreeValuedEquivalenceRelation<ELEM> newTver =
-				copy.mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(constraintsToKeepReps);
+				copy.mElementTVER.filterAndKeepOnlyConstraintsThatIntersectWith(elemsInConstraintsToKeep);
 		assert assertNoNewElementsIntroduced(this.getAllElements(), newTver.getAllElements(), elemsToKeep)
 			: "no elements may have been introduced that were not present before this operation";
 
 
 		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
-				copy.mLiteralSetConstraints.filterAndKeepOnlyConstraintsThatIntersectWith(constraintsToKeepReps);
+				copy.mLiteralSetConstraints.filterAndKeepOnlyConstraintsThatIntersectWith(elemsInConstraintsToKeep);
 
 		/*
 		 *  (former BUG!!!) this constructor may not add all child elements for all remaining elements, therefore

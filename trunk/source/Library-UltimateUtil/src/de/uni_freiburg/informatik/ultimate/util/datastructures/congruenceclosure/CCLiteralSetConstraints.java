@@ -425,8 +425,12 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 
 		final ELEM rep = mCongruenceClosure.getRepresentativeElement(elem);
 
-		// an equality x ~ y implies a set constraint x in {y}, which we simply conjoin with the rest
-		result.add(SetConstraint.buildSetConstraint(Collections.singleton(rep)));
+		/* an equality x ~ y implies a set constraint x in {y}, which we simply conjoin with the rest
+		 * we don't add a constraint like x in {x} though, as
+		 */
+//		if (!rep.equals(elem)) {
+			result.add(SetConstraint.buildSetConstraint(Collections.singleton(rep)));
+//		}
 
 		final SetConstraintConjunction<ELEM> scc = mContainsConstraints.get(rep);
 		if (scc != null) {
@@ -635,5 +639,26 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 			return false;
 		}
 		return mContainsConstraints.isEmpty();
+	}
+
+	public Set<ELEM> getRelatedElements(final ELEM rep) {
+		assert mCongruenceClosure.isRepresentative(rep);
+		final Set<ELEM> result = new HashSet<>();
+		{
+			final Set<SetConstraint<ELEM>> c = getConstraint(rep);
+			c.forEach(sc -> sc.getElementSet().forEach(result::add));
+		}
+		for (final Entry<ELEM, SetConstraintConjunction<ELEM>> en : getConstraints().entrySet()) {
+			if (en.getKey().equals(rep)) {
+				en.getValue().getAllRhsElements().forEach(result::add);
+			} else {
+				if (en.getValue().getAllRhsElements().contains(rep)) {
+					en.getValue().getAllRhsElements().forEach(result::add);
+					result.add(en.getKey());
+				}
+			}
+		}
+		result.remove(rep);
+		return result;
 	}
 }

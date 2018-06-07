@@ -941,7 +941,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		// check for tautology
 		if (filtered1.isEmpty()) {
-			return null;
+			return Collections.emptySet();
 		}
 
 		final Set<SetConstraint<ELEM>> all = new HashSet<>();

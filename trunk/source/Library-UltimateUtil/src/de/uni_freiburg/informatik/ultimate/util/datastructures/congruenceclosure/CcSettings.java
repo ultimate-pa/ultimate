@@ -21,7 +21,7 @@ public class CcSettings {
 	/**
 	 * omit the second-finest grained class of sanity checks
 	 */
-	public static final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = false;
+	public static final boolean OMIT_SANITYCHECK_FINE_GRAINED_2 = true;
 	/**
 	 * omit the third-finest grained class of sanity checks
 	 */
@@ -43,5 +43,12 @@ public class CcSettings {
 	 * depends on the HeapSepSettings.ASSERT_FREEZE_VAR_LIT_DISEQUALITIES_INTO_SCRIPT
 	 */
 	public static final boolean ADD_NON_THEORYlITERAL_DISEQUALITIES_FOR_CHECKS = false;
+
+	public static final boolean SUPPORT_CONSTANT_FUNCTIONS = true;
+
+	/**
+	 * note: it probably does not make sense to support mix functions but not constant functions
+	 */
+	public static final boolean SUPPORT_MIX_FUNCTION = true;
 
 }
