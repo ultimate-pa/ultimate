@@ -576,13 +576,17 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		minimizeAbstractionIfEnabled();
 
-		assert checkPathProgramRemoval() : "The path program was not subtracted.";
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
 				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
 				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
 	}
 
+	/**
+	 *
+	 * @return true iff all traces of the path program defined by the counterexample
+	 *         of this iteration were subtracted from the abstraction
+	 */
 	private boolean checkPathProgramRemoval()
 			throws AutomataLibraryException, AutomataOperationCanceledException, AssertionError {
 		final boolean pathProgramShouldHaveBeenRemoved = mTraceCheckAndRefinementEngine.somePerfectSequenceFound()
