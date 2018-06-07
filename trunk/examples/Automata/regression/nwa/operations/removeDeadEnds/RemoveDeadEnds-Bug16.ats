@@ -9,6 +9,10 @@
 // of the automaton.
 
 NestedWordAutomaton result = removeDeadEnds(nwa);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 6);
+print(numberOfTransitions(result));
+assert(numberOfTransitions(result) == 8);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c1 c2 c3 c4 c5},
