@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierUtils
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -67,7 +68,26 @@ public class NnfTransformer {
 	private List<List<TermVariable>> mQuantifiedVariables;
 
 	public enum QuantifierHandling {
-		CRASH, PULL, KEEP, IS_ATOM
+		/**
+		 * Throw an UnsupportedOperationException if quantified formula is encountered.
+		 */
+		CRASH,
+		/**
+		 * Keep quantifier at the position where it occurred, but replace by dual
+		 * quantifier if necessary. E.g., ¬∀φ becomes Ǝ¬φ.
+		 */
+		KEEP,
+		/**
+		 * Consider quantified formulas as atoms do not descend into the body of the
+		 * quantified formula.
+		 */
+		IS_ATOM,
+		/**
+		 * Pull quantifiers to the front. I.e., the resulting formula will be in prenex
+		 * normal form. 2018-06-01 Matthias: better use {@link PrenexNormalForm}
+		 * instead, PULL may produce formulas with more quantifier alternations.
+		 */
+		PULL
 	}
 
 	protected final QuantifierHandling mQuantifierHandling;
@@ -336,8 +356,8 @@ public class NnfTransformer {
 	}
 
 
-	public static Term pushNot1StepInside(final Script script, final Term notParam, 
-			QuantifierHandling quantifierHandling) {
+	public static Term pushNot1StepInside(final Script script, final Term notParam,
+			final QuantifierHandling quantifierHandling) {
 		if (notParam instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) notParam;
 			final String functionName = appTerm.getFunction().getName();
@@ -408,7 +428,7 @@ public class NnfTransformer {
 			}
 			case PULL: {
 				throw new UnsupportedOperationException(
-						"20180601 Matthias: I am not sure if we shoud still support PULL");
+						"20180601 Matthias: I am not sure if we should still support PULL");
 			}
 			default: {
 				throw new AssertionError();
