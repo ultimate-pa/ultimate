@@ -408,7 +408,7 @@ public class NnfTransformer {
 			}
 			case PULL: {
 				throw new UnsupportedOperationException(
-						"20180601 Matthias: I am not sure if we shoud stil support PULL");
+						"20180601 Matthias: I am not sure if we shoud still support PULL");
 			}
 			default: {
 				throw new AssertionError();
