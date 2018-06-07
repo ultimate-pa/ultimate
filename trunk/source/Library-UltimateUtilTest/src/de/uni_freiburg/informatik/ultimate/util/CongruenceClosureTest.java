@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.util;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -1112,10 +1113,6 @@ public class CongruenceClosureTest {
 		assertTrue(cc.getEqualityStatus(y, l4) == EqualityStatus.NOT_EQUAL);
 	}
 
-	/**
-	 * Like ..03, but with an equality that should expand a non-literal in a set constraint instead of a set constraint
-	 *  with only literals
-	 */
 	@Test
 	public void testContainsConstraints04() {
 		final ILogger logger = new ConsoleLogger();
@@ -1184,6 +1181,70 @@ public class CongruenceClosureTest {
 		// y in { l1, l2, l3 } should hold now
 
 		assertTrue(cc.getEqualityStatus(y, l4) == EqualityStatus.NOT_EQUAL);
+	}
+
+	/**
+	 * Check some functionality of the join operator related to contains constraints.
+	 *
+	 */
+	@Test
+	public void testContainsConstraints05() {
+		final ILogger logger = new ConsoleLogger();
+		final CongruenceClosureComparator<StringCcElement> ccComparator =
+				new CongruenceClosureComparator<StringCcElement>();
+		final CcManager<StringCcElement> manager = new CcManager<>(logger, ccComparator);
+
+		CongruenceClosure<StringCcElement> cc1 = manager.getEmptyCc(mInPlace);
+		CongruenceClosure<StringCcElement> cc2 = manager.getEmptyCc(mInPlace);
+
+		final StringElementFactory factory = new StringElementFactory();
+
+		final StringCcElement f = factory.getBaseElement("f");
+		final StringCcElement g = factory.getBaseElement("g");
+
+		final StringCcElement x = factory.getBaseElement("x");
+		cc1 = manager.addElement(cc1, x, mInPlace, false);
+		cc2 = manager.addElement(cc2, x, mInPlace, false);
+
+		final StringCcElement y = factory.getBaseElement("y");
+		cc1 = manager.addElement(cc1, y, mInPlace, false);
+		cc2 = manager.addElement(cc2, y, mInPlace, false);
+
+		final StringCcElement z = factory.getBaseElement("z");
+		cc1 = manager.addElement(cc1, z, mInPlace, false);
+		cc2 = manager.addElement(cc2, z, mInPlace, false);
+
+		final StringCcElement a = factory.getBaseElement("a");
+		cc1 = manager.addElement(cc1, a, mInPlace, false);
+		cc2 = manager.addElement(cc2, a, mInPlace, false);
+
+		final StringCcElement b = factory.getBaseElement("b");
+		cc1 = manager.addElement(cc1, b, mInPlace, false);
+		cc2 = manager.addElement(cc2, b, mInPlace, false);
+
+		cc1 = manager.reportEquality(x, y, cc1, mInPlace);
+		cc1 = manager.reportEquality(y, z, cc1, mInPlace);
+
+		CongruenceClosure<StringCcElement> cc4 = manager.copyNoRemInfo(cc1);
+		cc4 = manager.reportContainsConstraint(x, new HashSet<>(Arrays.asList(new StringCcElement[] { a, b })), cc4,
+				mInPlace);
+		// cc4 = {x, y, z}, {a}, {b}, x in {a, b}
+
+		cc1 = manager.reportEquality(z, a, cc1, mInPlace);
+		// cc1 = {x, y, z, a}, {b}
+
+		cc2 = manager.reportEquality(x, y, cc2, mInPlace);
+		cc2 = manager.reportEquality(y, z, cc2, mInPlace);
+		cc2 = manager.reportEquality(z, b, cc2, mInPlace);
+		// cc2 = {x, y, z, b}, {a}
+
+		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2, mInPlace);
+		// cc3 should be {x, y, z}, {a}, {b}, x in {a, b}
+
+
+		// cc3 and cc4 should be equivalent
+		assertTrue(manager.isStrongerThan(cc3, cc4));;
+		assertTrue(manager.isStrongerThan(cc4, cc3));;
 	}
 
 
