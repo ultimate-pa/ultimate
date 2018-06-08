@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Memory efficient data structure that stores for a given equivalence relation if pairs are in the relation, not in the
@@ -389,7 +390,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 	}
 
 	public ThreeValuedEquivalenceRelation<E> join(final ThreeValuedEquivalenceRelation<E> other) {
-		final UnionFind<E> newPartition = UnionFind.intersectPartitionBlocks(this.mUnionFind, other.mUnionFind);
+		final UnionFind<E> newPartition =
+				UnionFind.intersectPartitionBlocks(this.mUnionFind, other.mUnionFind).getFirst();
 		return new ThreeValuedEquivalenceRelation<>(newPartition, xJoinDisequalities(this, other, newPartition, true));
 	}
 
@@ -398,7 +400,8 @@ public class ThreeValuedEquivalenceRelation<E> {
 		return new ThreeValuedEquivalenceRelation<>(newPartition, xJoinDisequalities(this, other, newPartition, false));
 	}
 
-	public UnionFind<E> joinPartitions(final ThreeValuedEquivalenceRelation<E> other) {
+	public Triple<UnionFind<E>, HashRelation<E, E>, HashRelation<E, E>> joinPartitions(
+			final ThreeValuedEquivalenceRelation<E> other) {
 		return UnionFind.intersectPartitionBlocks(this.mUnionFind, other.mUnionFind);
 	}
 

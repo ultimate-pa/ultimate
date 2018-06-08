@@ -262,6 +262,8 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 	}
 
 	public CCLiteralSetConstraints<ELEM> join(final CongruenceClosure<ELEM> newCc,
+			final HashRelation<ELEM, ELEM> thisSplitInfo,
+			final HashRelation<ELEM, ELEM> otherSplitInfo,
 			final CCLiteralSetConstraints<ELEM> other) {
 		if (this.isInconsistent()) {
 			return other;
@@ -279,13 +281,15 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		final Map<ELEM, SetConstraintConjunction<ELEM>> newContainsConstraints = new HashMap<>();
 
 		for (final ELEM constrainedElem : newCc.getAllElementRepresentatives()) {
-			final Set<SetConstraint<ELEM>> thisConstraint = this.getConstraint(constrainedElem);
-			final Set<SetConstraint<ELEM>> otherConstraint = other.getConstraint(constrainedElem);
+			final Set<SetConstraint<ELEM>> thisConstraint = this.getConstraint(constrainedElem, newCc, thisSplitInfo);
+			final Set<SetConstraint<ELEM>> otherConstraint = other.getConstraint(constrainedElem, newCc, otherSplitInfo);
 
 			final Set<SetConstraint<ELEM>> thisUpdRep =
-					SetConstraintConjunction.updateOnChangedRepresentative(thisConstraint, newCc);
+					thisConstraint;
+//					SetConstraintConjunction.updateOnChangedRepresentative(thisConstraint, newCc);
 			final Set<SetConstraint<ELEM>> otherUpdRep =
-					SetConstraintConjunction.updateOnChangedRepresentative(otherConstraint, newCc);
+					otherConstraint;
+//					SetConstraintConjunction.updateOnChangedRepresentative(otherConstraint, newCc);
 
 			Set<SetConstraint<ELEM>> newConstraints;
 			if (thisUpdRep != null && otherUpdRep != null) {
@@ -436,6 +440,42 @@ public class CCLiteralSetConstraints<ELEM extends ICongruenceClosureElement<ELEM
 		if (scc != null) {
 			result.addAll(scc.getSetConstraints());
 		}
+		return result;
+	}
+
+	/**
+	 * Get the constraints that this CCLiteralSetConstraints instance puts on constrainedElem, relative to the
+	 * equivalence relation in newCc.
+	 * (e.g. mCongruenceClosure = {!x, y, z,a}, newCc = {x, !y, z}, {!a}, constrainedElem = x, (representatives are
+	 *  marked with "!"), then the result should be "x in {y} /\ x in {a}")
+	 *
+	 * @param constrainedElem
+	 * @param newCc TODO remove this param?
+	 * @return
+	 */
+	private Set<SetConstraint<ELEM>> getConstraint(final ELEM constrainedElem, final CongruenceClosure<ELEM> newCc,
+			final HashRelation<ELEM, ELEM> splitInfo) {
+		if (!mCongruenceClosure.hasElement(constrainedElem)) {
+			return null;
+		}
+
+		// initialize to constraint relative to old Cc
+		Set<SetConstraint<ELEM>> result = new HashSet<>(getConstraint(constrainedElem));
+
+		for (final ELEM oldRep : splitInfo.getDomain()) {
+			assert !mCongruenceClosure.hasElement(oldRep)|| mCongruenceClosure.isRepresentative(oldRep);
+			final Set<SetConstraint<ELEM>> newResult = new HashSet<>();
+
+			for (final SetConstraint<ELEM> sc : result) {
+				for (final ELEM newRep : splitInfo.getImage(oldRep)) {
+					assert newCc.isRepresentative(newRep);
+					newResult.add(SetConstraint.transformElements(sc, e -> e.equals(oldRep) ? newRep : e));
+				}
+			}
+
+			result = newResult;
+		}
+
 		return result;
 	}
 

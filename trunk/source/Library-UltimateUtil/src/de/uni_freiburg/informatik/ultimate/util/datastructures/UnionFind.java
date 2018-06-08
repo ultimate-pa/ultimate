@@ -41,6 +41,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Data structure that can be used to partition a set of elements {@code <E>}.
@@ -51,82 +52,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * @author Matthias Heizmann
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @param <E>
  *            element type
  */
 public class UnionFind<E> implements IPartition<E>, Cloneable {
-	/**
-	 * Computes a new UnionFind instance whose partitions are the intersections of
-	 * the given UnionFind instance's equivalence classes. Only non-empty
-	 * intersections are added to the new equivalence relation.
-	 *
-	 * @param <E>
-	 *            element type
-	 * @param uf1
-	 *            instance to be intersected with uf2
-	 * @param uf2
-	 *            instance to be intersected with uf1
-	 * @return UnionFind with intersected equivalence classes
-	 */
-	public static <E> UnionFind<E> intersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
-		assert uf1.mElementComparator == uf2.mElementComparator;
-
-		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
-		for (final Set<E> uf1Block : uf1.getAllEquivalenceClasses()) {
-			final HashRelation<E, E> uf2RepToSubblock = new HashRelation<>();
-
-			for (final E uf1El : uf1Block) {
-				final E uf2Rep = uf2.find(uf1El);
-				uf2RepToSubblock.addPair(uf2Rep, uf1El);
-			}
-
-			uf2RepToSubblock.getDomain().stream()
-					.forEach(u2rep -> result.addEquivalenceClass(uf2RepToSubblock.getImage(u2rep)));
-		}
-		assert result.representativesAreMinimal();
-		return result;
-	}
-
-	/**
-	 * Computes a new UnionFind instance whose partitions are the unions of the
-	 * given UnionFind instance's equivalence classes.
-	 *
-	 * @param <E>
-	 *            element type
-	 * @param uf1
-	 *            instance to be union'ed with uf2
-	 * @param uf2
-	 *            instance to be union'ed with uf1
-	 * @return UnionFind with union'ed equivalence classes
-	 */
-	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
-		assert uf1.mElementComparator == uf2.mElementComparator;
-
-		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
-		final HashSet<E> todo = new HashSet<>(uf1.getAllElements());
-		while (!todo.isEmpty()) {
-			final E tver1El = todo.iterator().next();
-
-			final E uf1Rep = uf1.find(tver1El);
-			final E uf2Rep = uf2.find(tver1El);
-
-			final E newBlockRep;
-			if (uf1.mElementComparator == null) {
-				// it does not matter which representative we choose
-				newBlockRep = uf1Rep;
-			} else {
-				newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
-			}
-
-			final Set<E> newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(tver1El),
-					uf2.getEquivalenceClassMembers(tver1El));
-			result.addEquivalenceClass(newBlock, newBlockRep);
-			todo.removeAll(newBlock);
-		}
-		assert result.representativesAreMinimal();
-		return result;
-	}
-
 	/**
 	 * Comparator for elements. Our convention is that the representative of an
 	 * equivalence class must always be a minimal element within the class in terms
@@ -534,6 +464,97 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 		}
 		mRepresentative.put(largerSet, newRep);
 		assert representativesAreMinimal();
+	}
+
+	/**
+	 * Computes a new UnionFind instance whose partitions are the intersections of
+	 * the given UnionFind instance's equivalence classes. Only non-empty
+	 * intersections are added to the new equivalence relation.
+	 *
+	 * Also returns a split info for each input UnionFind. A split info maps each representative in the original
+	 * UnionFind to the (possibly many) corresponding representatives in the new UnionFind.
+	 *
+	 * @param <E>
+	 *            element type
+	 * @param uf1
+	 *            instance to be intersected with uf2
+	 * @param uf2
+	 *            instance to be intersected with uf1
+	 * @return UnionFind with intersected equivalence classes
+	 */
+	public static <E> Triple<UnionFind<E>, HashRelation<E, E>, HashRelation<E, E>> intersectPartitionBlocks(
+			final UnionFind<E> uf1, final UnionFind<E> uf2) {
+		assert uf1.mElementComparator == uf2.mElementComparator;
+
+		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
+		final HashRelation<E, E> uf1SplitInfo = new HashRelation<>();
+		final HashRelation<E, E> uf2SplitInfo = new HashRelation<>();
+
+		for (final Set<E> uf1Block : uf1.getAllEquivalenceClasses()) {
+			final E uf1Rep = uf1.find(uf1Block.iterator().next());
+
+			// map a representative of uf2 to the intersection of its block in uf2 with the current uf1Block
+			final HashRelation<E, E> uf2RepToIntersection = new HashRelation<>();
+			for (final E uf1El : uf1Block) {
+				final E uf2Rep = uf2.find(uf1El);
+				uf2RepToIntersection.addPair(uf2Rep, uf1El);
+			}
+
+			for (final E uf2Rep : uf2RepToIntersection.getDomain()) {
+				final Set<E> intersection = uf2RepToIntersection.getImage(uf2Rep);
+
+//				assert intersection.contains(uf2Rep) : "right?.."; // EDIT: not the case
+
+				result.addEquivalenceClass(intersection);
+
+				final E subBlockRep = result.find(intersection.iterator().next());
+
+				uf1SplitInfo.addPair(uf1Rep, subBlockRep);
+				uf2SplitInfo.addPair(uf2Rep, subBlockRep);
+			}
+		}
+		assert result.representativesAreMinimal();
+		return new Triple<>(result, uf1SplitInfo, uf2SplitInfo);
+	}
+
+	/**
+	 * Computes a new UnionFind instance whose partitions are the unions of the
+	 * given UnionFind instance's equivalence classes.
+	 *
+	 * @param <E>
+	 *            element type
+	 * @param uf1
+	 *            instance to be union'ed with uf2
+	 * @param uf2
+	 *            instance to be union'ed with uf1
+	 * @return UnionFind with union'ed equivalence classes
+	 */
+	public static <E> UnionFind<E> unionPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2) {
+		assert uf1.mElementComparator == uf2.mElementComparator;
+
+		final UnionFind<E> result = new UnionFind<>(uf1.mElementComparator);
+		final HashSet<E> todo = new HashSet<>(uf1.getAllElements());
+		while (!todo.isEmpty()) {
+			final E tver1El = todo.iterator().next();
+
+			final E uf1Rep = uf1.find(tver1El);
+			final E uf2Rep = uf2.find(tver1El);
+
+			final E newBlockRep;
+			if (uf1.mElementComparator == null) {
+				// it does not matter which representative we choose
+				newBlockRep = uf1Rep;
+			} else {
+				newBlockRep = uf1.mElementComparator.compare(uf1Rep, uf2Rep) < 0 ? uf1Rep : uf2Rep;
+			}
+
+			final Set<E> newBlock = DataStructureUtils.union(uf1.getEquivalenceClassMembers(tver1El),
+					uf2.getEquivalenceClassMembers(tver1El));
+			result.addEquivalenceClass(newBlock, newBlockRep);
+			todo.removeAll(newBlock);
+		}
+		assert result.representativesAreMinimal();
+		return result;
 	}
 
 	private boolean areMembersConsistent() {

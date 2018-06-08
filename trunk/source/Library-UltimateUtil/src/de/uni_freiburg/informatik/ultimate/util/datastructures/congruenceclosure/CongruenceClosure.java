@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquiva
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Implementation of the congruence closure algorithm and data structure. Builds
@@ -957,9 +958,14 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final CongruenceClosure<ELEM> thisAligned = aligned.getFirst();
 		final CongruenceClosure<ELEM> otherAligned = aligned.getSecond();
 
-		final UnionFind<ELEM> newPartition = thisAligned.mElementTVER.joinPartitions(otherAligned.mElementTVER);
-		final HashRelation<ELEM, ELEM> newDisequalities = intersectOrUnionDisequalities(thisAligned, otherAligned, newPartition,
-				true);
+		final Triple<UnionFind<ELEM>, HashRelation<ELEM, ELEM>, HashRelation<ELEM, ELEM>> joinRes =
+				thisAligned.mElementTVER.joinPartitions(otherAligned.mElementTVER);
+		final UnionFind<ELEM> newPartition = joinRes.getFirst();
+		final HashRelation<ELEM, ELEM> thisSplitInfo = joinRes.getSecond();
+		final HashRelation<ELEM, ELEM> otherSplitInfo = joinRes.getThird();
+
+		final HashRelation<ELEM, ELEM> newDisequalities = intersectOrUnionDisequalities(thisAligned, otherAligned,
+				newPartition, true);
 		final ThreeValuedEquivalenceRelation<ELEM> newElemTver = new ThreeValuedEquivalenceRelation<>(newPartition,
 				newDisequalities);
 
@@ -967,7 +973,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 		final CongruenceClosure<ELEM> newCc = mManager.getCongruenceClosureFromTver(newElemTver, true);
 
 		final CCLiteralSetConstraints<ELEM> newLiteralSetConstraints =
-				this.mLiteralSetConstraints.join(newCc, other.mLiteralSetConstraints);
+				this.mLiteralSetConstraints.join(newCc, thisSplitInfo, otherSplitInfo, other.mLiteralSetConstraints);
 //				this.mLiteralSetConstraints.join(other.mLiteralSetConstraints, newElemTver);
 		newCc.resetCcLiteralSetConstraints(newLiteralSetConstraints);
 
