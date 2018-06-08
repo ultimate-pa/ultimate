@@ -1115,7 +1115,7 @@ public class CongruenceClosure<ELEM extends ICongruenceClosureElement<ELEM>>
 
 
 		if (litConstraint1 != null && litConstraint2 != null
-				&& SetConstraintConjunction.meetIsInconsistent(getLiteralSetConstraints(),
+				&& mManager.getSetConstraintManager().meetIsInconsistent(getLiteralSetConstraints(),
 						litConstraint1,
 						litConstraint2)) {
 			return EqualityStatus.NOT_EQUAL;

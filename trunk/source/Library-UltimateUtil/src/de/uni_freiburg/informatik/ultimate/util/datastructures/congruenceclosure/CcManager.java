@@ -59,9 +59,13 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	private final boolean mBenchmarkMode;
 	private BenchmarkWithCounters mBenchmark;
 
+	private final SetConstraintManager<ELEM> mSetConstraintManager;
+
 	public CcManager(final ILogger logger, final IPartialComparator<CongruenceClosure<ELEM>> ccComparator) {
 		mLogger = logger;
 		mCcComparator = ccComparator;
+
+		mSetConstraintManager = new SetConstraintManager<>();
 
 		mInconsistentCc = new CongruenceClosure<>(true);
 		mInconsistentCc.freeze();
@@ -308,7 +312,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	public CongruenceClosure<ELEM> reportContainsConstraint(final ELEM elem, final Collection<ELEM> elementSet,
 			final CongruenceClosure<ELEM> origCc,
 			final boolean inplace) {
-		return reportContainsConstraint(elem, Collections.singleton(SetConstraint.buildSetConstraint(elementSet)),
+		return reportContainsConstraint(elem, Collections.singleton(mSetConstraintManager.buildSetConstraint(elementSet)),
 				origCc, inplace);
 	}
 
@@ -730,8 +734,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 
-		if (!CCLiteralSetConstraints.isStrongerThan(thisAligned.getLiteralSetConstraints(),
-				otherAligned.getLiteralSetConstraints())) {
+		if (!thisAligned.getLiteralSetConstraints().isStrongerThan(otherAligned.getLiteralSetConstraints())) {
 			return false;
 		}
 
@@ -864,7 +867,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		bmStart(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
 
 		final Set<SetConstraint<ELEM>> setConstraintsUpdRepr =
-				SetConstraintConjunction.updateOnChangedRepresentative(setConstraintsIn,
+				mSetConstraintManager.updateOnChangedRepresentative(setConstraintsIn,
 						surroundingSetConstraints.getCongruenceClosure());
 		assert setConstraintsUpdRepr == setConstraintsIn : "if this never fails, we can remove that updaterep operation";
 
@@ -872,14 +875,13 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 				setConstraintsUpdRepr);
 
 
-		// throw away all singletons, as they were (!) reported as equalities
+		// throw away all singletons, as they were (must have been!) reported as equalities
+		// throw away all tautological constraints
 		final Set<SetConstraint<ELEM>> filtered2 = filtered1.stream()
 				.filter(sc -> !sc.isSingleton())
+				.filter(sc -> !SetConstraint.isTautological(constrainedElement, sc))
 				.collect(Collectors.toSet());
 
-		if (filtered2 == null) {
-			return null;
-		}
 
 		assert !filtered2.stream().anyMatch(sc -> sc.isInconsistent()) || filtered2.size() == 1
 				: "not correctly normalized: there is a 'false' conjunct, but it is not the only conjunct";
@@ -917,7 +919,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 				for (final ELEM e : sc.getNonLiterals()) {
 					final Set<ELEM> expansion = elemToExpansion.getImage(e);
 					if (!expansion.isEmpty()) {
-						expanded.add(SetConstraint.expandNonLiteral(sc, e, expansion));
+						expanded.add(mSetConstraintManager.expandNonLiteral(sc, e, expansion));
 					}
 				}
 			}
@@ -925,7 +927,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 
 		//TODO: only instantiate SetConstraintComparator once??
-		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(new SetConstraintComparator<>());
+		final PartialOrderCache<SetConstraint<ELEM>> poc1 = new PartialOrderCache<>(
+				mSetConstraintManager.getSetConstraintComparator());
 		final Set<SetConstraint<ELEM>> filtered1 = poc1.getMaximalRepresentatives(expanded);
 
 		// check for inconsistency
@@ -948,7 +951,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 		// introduce all the conjunctive constraints according to all the subsets..
 		for (final Set<SetConstraint<ELEM>> subSet : DataStructureUtils.powerSet(filtered1)) {
-			final SetConstraint<ELEM> meet = SetConstraint.meet(surroundingSetConstraints, subSet);
+			final SetConstraint<ELEM> meet = mSetConstraintManager.meet(surroundingSetConstraints, subSet);
 
 			if (meet == null) {
 				// "Top" constraint, represented by "null", no need to add to a conjunction
@@ -964,7 +967,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		}
 
 		//TODO: only instantiate SetConstraintComparator once??
-		final PartialOrderCache<SetConstraint<ELEM>> poc = new PartialOrderCache<>(new SetConstraintComparator<>());
+		final PartialOrderCache<SetConstraint<ELEM>> poc =
+				new PartialOrderCache<>(mSetConstraintManager.getSetConstraintComparator());
 		final Set<SetConstraint<ELEM>> filtered = poc.getMaximalRepresentatives(all);
 
 		// check for tautology
@@ -1037,5 +1041,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	public BenchmarkWithCounters getPartialOrderCacheBenchmark() {
 		return mPartialOrderCache.getBenchmark();
+	}
+
+	public SetConstraintManager<ELEM> getSetConstraintManager() {
+		return mSetConstraintManager;
 	}
 }

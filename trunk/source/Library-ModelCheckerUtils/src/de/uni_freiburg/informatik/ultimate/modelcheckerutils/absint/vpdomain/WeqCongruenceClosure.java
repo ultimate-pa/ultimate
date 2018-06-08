@@ -512,7 +512,7 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 //					+ "literals --> unexpected..";
 //					assert !containsConstraint.isEmpty() : "uncaught inconsistent case";
 					assert containsConstraint == null
-							|| !SetConstraintConjunction.isInconsistent(containsConstraint) : "uncaught inconsistent case";
+							|| !mManager.getCcManager().getSetConstraintManager().isInconsistent(containsConstraint) : "uncaught inconsistent case";
 				}
 			}
 
@@ -538,11 +538,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 				for (final NODE aI : aIs) {
 					// construct L cup {l}
 					final Set<SetConstraint<NODE>> newLiteralSet =
-							SetConstraintConjunction.join(
+							mManager.getCcManager().getSetConstraintManager().join(
 									mCongruenceClosure.getLiteralSetConstraints(),
 									containsConstraint,
 									Collections.singleton(
-											SetConstraint.buildSetConstraint(Collections.singleton(constantArrayConstant))));
+											mManager.getCcManager().getSetConstraintManager()
+												.buildSetConstraint(Collections.singleton(constantArrayConstant))));
 //									aI,
 //									containsConstraint,
 //									new SetConstraintConjunction<>(
@@ -1349,11 +1350,12 @@ public class WeqCongruenceClosure<NODE extends IEqNodeIdentifier<NODE>>
 
 			// construct L cup {l}
 			final Set<SetConstraint<NODE>> newLiteralSet =
-					SetConstraintConjunction.join(
+					mManager.getCcManager().getSetConstraintManager().join(
 							mCongruenceClosure.getLiteralSetConstraints(),
 							containsConstraint,
 							Collections.singleton(
-									SetConstraint.buildSetConstraint(Collections.singleton(constantArrayConstant))));
+									mManager.getCcManager().getSetConstraintManager()
+										.buildSetConstraint(Collections.singleton(constantArrayConstant))));
 
 			// do propagation
 			mCongruenceClosure.reportContainsConstraint(elem, newLiteralSet);

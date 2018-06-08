@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.IRemovalInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.RemoveCcElement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraint;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.congruenceclosure.SetConstraintConjunction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 
 /**
@@ -1063,7 +1062,7 @@ class WeakEquivalenceEdgeLabel<NODE extends IEqNodeIdentifier<NODE>, DISJUNCT ex
 			if (resultConstraint == null) {
 				resultConstraint = cc;
 			} else {
-				resultConstraint = SetConstraintConjunction.join(
+				resultConstraint = mWeqCcManager.getCcManager().getSetConstraintManager().join(
 						mWeakEquivalenceGraph.mWeqCc.getCongruenceClosure().getLiteralSetConstraints(),
 						resultConstraint, cc);
 			}

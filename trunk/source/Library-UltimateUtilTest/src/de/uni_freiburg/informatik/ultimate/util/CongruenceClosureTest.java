@@ -1282,8 +1282,8 @@ public class CongruenceClosureTest {
 
 
 		// cc3 and cc4 should be equivalent
-		assertTrue(manager.isStrongerThan(cc3, cc4));;
-		assertTrue(manager.isStrongerThan(cc4, cc3));;
+		assertTrue(manager.isStrongerThan(cc3, cc4));
+		assertTrue(manager.isStrongerThan(cc4, cc3));
 	}
 
 
