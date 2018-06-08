@@ -47,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -73,6 +73,8 @@ public class AutomataStateRemovalTestSuite extends UltimateTestSuite {
 	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
 	private static int sTimeout = 60 * 1_000;
 	private static final String[] mDirectories = {
+//			"examples/Automata/regression/nwa/operations/minimization",
+			
 			"examples/Automata/nwaOperations/MinimizationBenchmarks/workspace",
 	};
 	
@@ -94,6 +96,7 @@ public class AutomataStateRemovalTestSuite extends UltimateTestSuite {
 			StatisticsType.STATES_OUTPUT.toString(),
 			StatisticsType.STATES_REDUCTION_ABSOLUTE.toString(),
 			StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
+			StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE.toString(),
 	};
 	
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
