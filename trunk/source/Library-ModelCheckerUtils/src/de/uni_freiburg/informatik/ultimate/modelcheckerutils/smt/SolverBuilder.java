@@ -133,20 +133,6 @@ public class SolverBuilder {
 		return script;
 	}
 
-	private static final class SMTInterpolTerminationRequest implements TerminationRequest {
-		private final IProgressMonitorService mMonitor;
-
-		SMTInterpolTerminationRequest(final IProgressMonitorService monitor) {
-			mMonitor = monitor;
-		}
-
-		@Override
-		public boolean isTerminationRequested() {
-			return !mMonitor.continueProcessingRoot();
-		}
-
-	}
-
 	/**
 	 * Build an SMT solver.
 	 *
@@ -195,130 +181,6 @@ public class SolverBuilder {
 			result = new ScriptWithTermConstructionChecks(result);
 		}
 		return result;
-	}
-
-	/**
-	 * Settings that define how a solver is build.
-	 */
-	public static final class Settings {
-
-		public Settings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
-				final String commandExternalSolver, final long timeoutSmtInterpol,
-				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
-				final String pathOfDumpedScript, final String baseNameOfDumpedScript) {
-			this(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
-					externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
-		}
-
-		public Settings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
-				final String commandExternalSolver, final long timeoutSmtInterpol,
-				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
-				final String pathOfDumpedScript, final String baseNameOfDumpedScript, final boolean useDiffWrapper) {
-			super();
-			mFakeNonIncrementalScript = fakeNonIncrementalScript;
-			mUseExternalSolver = useExternalSolver;
-			mCommandExternalSolver = commandExternalSolver;
-			mTimeoutSmtInterpol = timeoutSmtInterpol;
-			mExternalInterpolator = externalInterpolator;
-			mDumpSmtScriptToFile = dumpSmtScriptToFile;
-			mPathOfDumpedScript = pathOfDumpedScript;
-			mBaseNameOfDumpedScript = baseNameOfDumpedScript;
-			mUseDiffWrapper = useDiffWrapper;
-		}
-
-		/**
-		 * Emulate incremental script (push/pop) using reset and re-asserting all terms and re-declaring all sorts and
-		 * functions.
-		 */
-		private final boolean mFakeNonIncrementalScript;
-
-		private final boolean mUseExternalSolver;
-
-		/**
-		 * What shell command should be used to call the external smt solver?
-		 */
-		private final String mCommandExternalSolver;
-
-		private final long mTimeoutSmtInterpol;
-
-		private final ExternalInterpolator mExternalInterpolator;
-
-		/**
-		 * Write SMT solver script to file.
-		 */
-		private final boolean mDumpSmtScriptToFile;
-
-		/**
-		 * Path to which the SMT solver script is written.
-		 */
-		private final String mPathOfDumpedScript;
-
-		/**
-		 * Base name (without path and without file ending) of the file to which the SMT solver script is written.
-		 */
-		private final String mBaseNameOfDumpedScript;
-
-		/**
-		 * Use the diff wrapper script to add support for the diff function.
-		 */
-		private final boolean mUseDiffWrapper;
-
-		public boolean fakeNonIncrementalScript() {
-			return mFakeNonIncrementalScript;
-		}
-
-		public boolean useExternalSolver() {
-			return mUseExternalSolver;
-		}
-
-		public String getCommandExternalSolver() {
-			return mCommandExternalSolver;
-		}
-
-		public long getTimeoutSmtInterpol() {
-			return mTimeoutSmtInterpol;
-		}
-
-		public ExternalInterpolator getExternalInterpolator() {
-			return mExternalInterpolator;
-		}
-
-		public boolean dumpSmtScriptToFile() {
-			return mDumpSmtScriptToFile;
-		}
-
-		public String getPathOfDumpedScript() {
-			return mPathOfDumpedScript;
-		}
-
-		public String getBaseNameOfDumpedScript() {
-			return mBaseNameOfDumpedScript;
-		}
-
-		/**
-		 * Check whether to use the diff wrapper script to add support for the diff function.
-		 */
-		public boolean getUseDiffWrapper() {
-			return mUseDiffWrapper;
-		}
-
-		public String constructFullPathOfDumpedScript() {
-			String result = getPathOfDumpedScript();
-			result = addFileSeparator(result);
-			result += getBaseNameOfDumpedScript() + ".smt2";
-			return result;
-		}
-
-		/**
-		 * Add file separator if last symbol is not already file separator.
-		 */
-		private static String addFileSeparator(final String string) {
-			if (string.endsWith(System.getProperty("file.separator"))) {
-				return string;
-			}
-			return string + System.getProperty("file.separator");
-
-		}
 	}
 
 	public static Settings constructSolverSettings(final String filename, final SolverMode solverMode,
@@ -479,12 +341,12 @@ public class SolverBuilder {
 		 * trigger this only when it is needed <li> not yet that robust, for example z3 versions below 4.6 seem to
 		 * crash. <li> very particular solution (only works for [Int] Int arrays) --> generalize
 		 */
-		final boolean solverIsZ3 = (((solverMode == SolverMode.External_DefaultMode
+		final boolean solverIsZ3 = (solverMode == SolverMode.External_DefaultMode
 				|| solverMode == SolverMode.External_ModelsAndUnsatCoreMode
 				|| solverMode == SolverMode.External_ModelsMode)
-				&& solverSettings.getCommandExternalSolver().trim().startsWith("z3"))
-				|| solverMode == SolverMode.External_Z3InterpolationMode);
-		if (ENABLE_Z3_CONSTANT_ARRAYS && solverIsZ3 && logicForExternalSolver.equals("ALL")) {
+				&& solverSettings.getCommandExternalSolver().trim().startsWith("z3")
+				|| solverMode == SolverMode.External_Z3InterpolationMode;
+		if (ENABLE_Z3_CONSTANT_ARRAYS && solverIsZ3 && "ALL".equals(logicForExternalSolver)) {
 			final Sort arrayIntIntSort = script.sort("Array", script.sort("Int"), script.sort("Int"));
 			final TermVariable argTv = result.variable("x", script.sort("Int"));
 			script.defineFun("const-Array-Int-Int", new TermVariable[] { argTv }, arrayIntIntSort,
@@ -522,4 +384,142 @@ public class SolverBuilder {
 		}
 		return result;
 	}
+
+	private static final class SMTInterpolTerminationRequest implements TerminationRequest {
+		private final IProgressMonitorService mMonitor;
+
+		SMTInterpolTerminationRequest(final IProgressMonitorService monitor) {
+			mMonitor = monitor;
+		}
+
+		@Override
+		public boolean isTerminationRequested() {
+			return !mMonitor.continueProcessingRoot();
+		}
+	}
+
+	/**
+	 * Settings that define how a solver is build.
+	 */
+	public static final class Settings {
+
+		/**
+		 * Emulate incremental script (push/pop) using reset and re-asserting all terms and re-declaring all sorts and
+		 * functions.
+		 */
+		private final boolean mFakeNonIncrementalScript;
+
+		private final boolean mUseExternalSolver;
+
+		/**
+		 * What shell command should be used to call the external smt solver?
+		 */
+		private final String mCommandExternalSolver;
+
+		private final long mTimeoutSmtInterpol;
+
+		private final ExternalInterpolator mExternalInterpolator;
+
+		/**
+		 * Write SMT solver script to file.
+		 */
+		private final boolean mDumpSmtScriptToFile;
+
+		/**
+		 * Path to which the SMT solver script is written.
+		 */
+		private final String mPathOfDumpedScript;
+
+		/**
+		 * Base name (without path and without file ending) of the file to which the SMT solver script is written.
+		 */
+		private final String mBaseNameOfDumpedScript;
+
+		/**
+		 * Use the diff wrapper script to add support for the diff function.
+		 */
+		private final boolean mUseDiffWrapper;
+
+		public Settings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
+				final String commandExternalSolver, final long timeoutSmtInterpol,
+				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
+				final String pathOfDumpedScript, final String baseNameOfDumpedScript) {
+			this(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
+					externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
+		}
+
+		public Settings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
+				final String commandExternalSolver, final long timeoutSmtInterpol,
+				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
+				final String pathOfDumpedScript, final String baseNameOfDumpedScript, final boolean useDiffWrapper) {
+			super();
+			mFakeNonIncrementalScript = fakeNonIncrementalScript;
+			mUseExternalSolver = useExternalSolver;
+			mCommandExternalSolver = commandExternalSolver;
+			mTimeoutSmtInterpol = timeoutSmtInterpol;
+			mExternalInterpolator = externalInterpolator;
+			mDumpSmtScriptToFile = dumpSmtScriptToFile;
+			mPathOfDumpedScript = pathOfDumpedScript;
+			mBaseNameOfDumpedScript = baseNameOfDumpedScript;
+			mUseDiffWrapper = useDiffWrapper;
+		}
+
+		public boolean fakeNonIncrementalScript() {
+			return mFakeNonIncrementalScript;
+		}
+
+		public boolean useExternalSolver() {
+			return mUseExternalSolver;
+		}
+
+		public String getCommandExternalSolver() {
+			return mCommandExternalSolver;
+		}
+
+		public long getTimeoutSmtInterpol() {
+			return mTimeoutSmtInterpol;
+		}
+
+		public ExternalInterpolator getExternalInterpolator() {
+			return mExternalInterpolator;
+		}
+
+		public boolean dumpSmtScriptToFile() {
+			return mDumpSmtScriptToFile;
+		}
+
+		public String getPathOfDumpedScript() {
+			return mPathOfDumpedScript;
+		}
+
+		public String getBaseNameOfDumpedScript() {
+			return mBaseNameOfDumpedScript;
+		}
+
+		/**
+		 * Check whether to use the diff wrapper script to add support for the diff function.
+		 */
+		public boolean getUseDiffWrapper() {
+			return mUseDiffWrapper;
+		}
+
+		public String constructFullPathOfDumpedScript() {
+			String result = getPathOfDumpedScript();
+			result = addFileSeparator(result);
+			result += getBaseNameOfDumpedScript() + ".smt2";
+			return result;
+		}
+
+		/**
+		 * Add file separator if last symbol is not already file separator.
+		 */
+		private static String addFileSeparator(final String string) {
+			if (string.endsWith(System.getProperty("file.separator"))) {
+				return string;
+			}
+			return string + System.getProperty("file.separator");
+
+		}
+	}
+
 }
