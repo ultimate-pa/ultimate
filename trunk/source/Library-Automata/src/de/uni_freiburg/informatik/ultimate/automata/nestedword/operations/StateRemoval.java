@@ -101,6 +101,11 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 				StatisticsType.STATES_REDUCTION_ABSOLUTE);
 		result.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 				StatisticsType.STATES_REDUCTION_RELATIVE);
+
+		final int transitionsInput = new NumberOfTransitions<LETTER, STATE>(mServices, getReach()).getResult();
+		final int transitionsOutput = new NumberOfTransitions<LETTER, STATE>(mServices, getResult()).getResult();
+
+		result.addKeyValuePair(StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE, transitionsInput - transitionsOutput);
 		return result;
 	}
 
