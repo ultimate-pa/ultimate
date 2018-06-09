@@ -1,0 +1,26 @@
+// 
+
+NestedWordAutomaton result = removeDeadEnds(nwa);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c0 c1 c2 },
+	internalAlphabet = {a0 a1 a2 a3 },
+	returnAlphabet = {r0 r1 r2 },
+	states = {q10 q20 q15 q05 qe q00 },
+	initialStates = {q00 },
+	finalStates = {qe },
+	callTransitions = {
+		(q10 c0 q20)
+		(q20 c1 q10)
+		(q00 c1 q10)
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+		(q15 q20 r1 q05)
+		(q15 q00 r1 q05)
+		(q20 q10 r0 q15)
+		(q05 q10 r0 qe)
+	}
+);
+
