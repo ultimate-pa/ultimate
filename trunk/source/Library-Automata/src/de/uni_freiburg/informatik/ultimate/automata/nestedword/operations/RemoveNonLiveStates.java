@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,10 +43,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates.DoubleDeckerReachability;
 
 /**
  * Creates a nested word automaton where non-live states have been removed.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -62,7 +63,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 	 * are not reachable or dead ends are omitted. (A dead end is a state from which no accepting state can be reached).
 	 * Each state of the result also occurred in the input. Only the auxiliary empty stack state of the result is
 	 * different.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -153,7 +154,8 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 	protected boolean checkDownStates(final STATE state, final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reach) {
 		final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
-		final Set<STATE> rCAdownStates = reach.getOnlyLiveStates().getDownStates(state);
+		final Set<STATE> rCAdownStates = reach.getOnlyLiveStates().getDownStates(state,
+				DoubleDeckerReachability.REACHABLE_AFTER_REMOVAL_OF_PRECIOUS_NOT_REACHERS);
 		final boolean correct = rCSdownStates.containsAll(rCAdownStates);
 		assert correct;
 		// After enhanced non-live/dead end removal the following does not hold.

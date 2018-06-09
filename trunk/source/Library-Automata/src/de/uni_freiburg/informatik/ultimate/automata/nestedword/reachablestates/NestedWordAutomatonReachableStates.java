@@ -85,6 +85,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		implements IDoubleDeckerAutomaton<LETTER, STATE>, IAutomatonWithSccComputation<LETTER, STATE> {
+
+	public enum DoubleDeckerReachability { CAN_REACH_PRECIOUS, REACHABLE_AFTER_REMOVAL_OF_PRECIOUS_NOT_REACHERS }
+
 	/**
 	 * Construct a run for each accepting state. Use this only while developing/debugging/testing the construction of
 	 * runs.
@@ -1231,6 +1234,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	public class AncestorComputation {
 		protected final ReachProp mRpAllDown;
 		protected final ReachProp mRpSomeDown;
+
 		/**
 		 * Property stating that from this DoubleDecker precious states are reachable (resp reachable infinitely often).
 		 */
@@ -1589,6 +1593,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		 */
 
 		/**
+		 * FIXME: documentation incorrect
 		 * @param upState
 		 *            up state
 		 * @param downState
@@ -1597,7 +1602,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		 *         deadEnds or non-live states). This is a workaround to maintain backward compatibility with the old
 		 *         implementation. In the future we return true if (up,down) is reachable in the resulting automaton
 		 */
-		public boolean isDownState(final STATE upState, final STATE downState) {
+		public boolean isDownState(final STATE upState, final STATE downState, final DoubleDeckerReachability ddr) {
 			final StateContainer<LETTER, STATE> cont = getStatesMap().get(upState);
 			assert cont.getReachProp() == mRpAllDown || cont.getReachProp() == mRpSomeDown;
 			if (cont.getDownStates().containsKey(downState)) {
@@ -1606,14 +1611,25 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 					return true;
 				}
 				assert cont.getReachProp() == mRpSomeDown;
-				final boolean notRemoved = cont.hasDownProp(downState, mDspReachPrecious)
-						|| cont.hasDownProp(downState, mDspReachableAfterRemoval);
-				return notRemoved;
+				final boolean canReachPrecious = cont.hasDownProp(downState, mDspReachPrecious);
+				switch (ddr) {
+				case CAN_REACH_PRECIOUS: {
+					return canReachPrecious;
+				}
+				case REACHABLE_AFTER_REMOVAL_OF_PRECIOUS_NOT_REACHERS: {
+					final boolean notRemoved = canReachPrecious
+							|| cont.hasDownProp(downState, mDspReachableAfterRemoval);
+					return notRemoved;
+				}
+				default:
+					throw new AssertionError();
+				}
 			}
 			return false;
 		}
 
 		/**
+		 * FIXME: documentation incorrect
 		 * @param state
 		 *            up state
 		 * @return The set of all down states such that (up,down) is reachable DoubleDecker in original automaton
@@ -1621,7 +1637,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		 *         compatibility with the old implementation. In the future we return set of down states in resulting
 		 *         automaton.
 		 */
-		public Set<STATE> getDownStates(final STATE state) {
+		public Set<STATE> getDownStates(final STATE state, final DoubleDeckerReachability ddr) {
 			final StateContainer<LETTER, STATE> cont = getStatesMap().get(state);
 			// return cont.getDownStates().keySet();
 			Set<STATE> downStates;
@@ -1630,11 +1646,25 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			} else {
 				assert cont.getReachProp() == mRpSomeDown;
 				downStates = new HashSet<>();
-				for (final STATE down : cont.getDownStates().keySet()) {
-					final boolean notRemoved = cont.hasDownProp(down, mDspReachPrecious)
-							|| cont.hasDownProp(down, mDspReachableAfterRemoval);
-					if (notRemoved) {
-						downStates.add(down);
+				for (final STATE downState : cont.getDownStates().keySet()) {
+					final boolean canReachPrecious = cont.hasDownProp(downState, mDspReachPrecious);
+					switch (ddr) {
+					case CAN_REACH_PRECIOUS: {
+						if (canReachPrecious) {
+							downStates.add(downState);
+						}
+						break;
+					}
+					case REACHABLE_AFTER_REMOVAL_OF_PRECIOUS_NOT_REACHERS: {
+						final boolean notRemoved = canReachPrecious
+								|| cont.hasDownProp(downState, mDspReachableAfterRemoval);
+						if (notRemoved) {
+							downStates.add(downState);
+						}
+						break;
+					}
+					default:
+						throw new AssertionError();
 					}
 				}
 			}
