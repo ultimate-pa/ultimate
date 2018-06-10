@@ -192,7 +192,7 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 						outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			correct = checkDownStates(state, reachableStatesCopy, reach);
+			correct = correct && checkDownStates(state, reachableStatesCopy, reach);
 		}
 		return correct;
 	}
