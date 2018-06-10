@@ -320,6 +320,10 @@ public final class CFGInvariantsGenerator {
 		}
 
 		if (invSynthSettings.useAbstractInterpretation()) {
+			final Map<IcfgLocation, IPredicate> result = generatePredicatesViaAbstractInterpretation(mPathProgram);
+			// FIXME 2018-06-10 Matthias: WIP - continue AI integration here.
+			mLogger.debug("Obtained invariant");
+			mLogger.debug(result);
 			// TODO: Implement the computation of predicates via abstract interpretation
 			// pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
 			// csToolkit.getManagedScript()));

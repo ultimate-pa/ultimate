@@ -74,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer.IncreasingStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
@@ -126,7 +125,7 @@ public class InvariantSynthesisStarter {
 		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final KindOfInvariant kindOfInvariant = 
+		final KindOfInvariant kindOfInvariant =
 				prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_KIND_INVARIANT, KindOfInvariant.class);
 
 		IPredicate precondition;
@@ -273,7 +272,8 @@ public class InvariantSynthesisStarter {
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
 		final boolean useLBE = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_LARGE_BLOCK_ENCODING);
-		final boolean useAbstractInterpretationPredicates = false;
+		final boolean useAbstractInterpretationPredicates = prefs
+				.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION);
 		final boolean useWPForPathInvariants = false;
 
 		final int initialDisjuncts = 1;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_DISJUNCTS);
