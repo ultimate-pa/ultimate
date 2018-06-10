@@ -126,10 +126,10 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 		correct = reachableStatesCopy.getStates().containsAll(result.getStates());
 		assert correct : getOperationName() + " incorrect: too few states";
 
-		correct = correct && checkEachState((DoubleDeckerAutomaton<LETTER, STATE>) reachableStatesCopy, result);
+		correct &= checkEachState((DoubleDeckerAutomaton<LETTER, STATE>) reachableStatesCopy, result);
 		assert correct : getOperationName() + " incorrect: checkEachState failed";
 
-		correct = correct && checkResultFurther(reachableStatesCopy);
+		correct &= checkResultFurther(reachableStatesCopy);
 		assert correct : getOperationName() + " incorrect: further tests failed";
 
 		if (!correct) {
@@ -165,20 +165,20 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 		for (final STATE state : result.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
 					.internalSuccessors(state)) {
-				correct = correct && reach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct &= reach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
-				correct = correct && reach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct &= reach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
-				correct = correct && reach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
+				correct &= reach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
 						outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : result.internalSuccessors(state)) {
-				correct = correct && reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(),
+				correct &= reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(),
 						outTrans.getSucc());
 				assert correct;
 			}
@@ -188,11 +188,11 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : result.returnSuccessors(state)) {
-				correct = correct && reachableStatesCopy.containsReturnTransition(state, outTrans.getHierPred(),
+				correct &= reachableStatesCopy.containsReturnTransition(state, outTrans.getHierPred(),
 						outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			correct = correct && checkDownStates(state, reachableStatesCopy, reach);
+			correct &= checkDownStates(state, reachableStatesCopy, reach);
 		}
 		return correct;
 	}
