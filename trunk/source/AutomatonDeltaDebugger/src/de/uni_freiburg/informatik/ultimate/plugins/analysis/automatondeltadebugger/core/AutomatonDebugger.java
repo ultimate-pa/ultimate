@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  */
 public class AutomatonDebugger<LETTER, STATE> {
 	private static final int STRING_BUFFER_MIN_SIZE = 71;
-	
+
 	private final IUltimateServiceProvider mServices;
 	private INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	private final INestedWordAutomatonFactory<LETTER, STATE> mFactory;

@@ -38,7 +38,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
  */
 public final class TypedTransition<LETTER, STATE> {
 	private static final String COMMA = ", ";
-	
+
 	private final STATE mPred;
 	private final STATE mSucc;
 	private final STATE mHier;

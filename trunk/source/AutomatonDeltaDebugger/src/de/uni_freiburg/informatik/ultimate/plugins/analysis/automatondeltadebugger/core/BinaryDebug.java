@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  */
 public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STATE> {
 	private static final int MINIMUM_INTERVAL_SIZE = 1;
-	
+
 	private final ArrayDeque<SublistBounds> mStack;
 	private SublistBounds mSublistBounds;
 

@@ -70,7 +70,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * @return new {@link INestedWordAutomaton} object
 	 */
 	public INestedWordAutomaton<LETTER, STATE> create(final INestedWordAutomaton<LETTER, STATE> automaton) {
-		return create(automaton.getVpAlphabet().getInternalAlphabet(), automaton.getVpAlphabet().getCallAlphabet(), automaton.getVpAlphabet().getReturnAlphabet());
+		return create(automaton.getVpAlphabet().getInternalAlphabet(), automaton.getVpAlphabet().getCallAlphabet(),
+				automaton.getVpAlphabet().getReturnAlphabet());
 	}
 
 	/**
@@ -88,7 +89,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
 		final Set<LETTER> internalAlphabetRes =
 				(internalAlphabet == null) ? mAutomaton.getVpAlphabet().getInternalAlphabet() : internalAlphabet;
-		final Set<LETTER> callAlphabetRes = (callAlphabet == null) ? mAutomaton.getVpAlphabet().getCallAlphabet() : callAlphabet;
+		final Set<LETTER> callAlphabetRes =
+				(callAlphabet == null) ? mAutomaton.getVpAlphabet().getCallAlphabet() : callAlphabet;
 		final Set<LETTER> returnAlphabetRes =
 				(returnAlphabet == null) ? mAutomaton.getVpAlphabet().getReturnAlphabet() : returnAlphabet;
 

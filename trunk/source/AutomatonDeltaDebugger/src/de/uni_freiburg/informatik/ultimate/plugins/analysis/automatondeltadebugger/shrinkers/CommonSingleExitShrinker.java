@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Removes states which only have one outgoing transition and bends over all incoming transitions to the respective
  * target state.
  * <p>
- * In contrast to {@link SingleExitShrinker}, this class replaces all such transitions with the same symbol in the
+ * In contrast to {@link SingleExitShrinker}, this shrinker replaces all such transitions with the same symbol in the
  * automaton in one go. This can sometimes be necessary.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -71,13 +71,13 @@ public class CommonSingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Se
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
 
 		// data structures to contain all transitive chains (forward & backward)
-		final HashMap<STATE, STATE> left2right = new HashMap<>();
-		final HashMap<STATE, STATE> right2left = new HashMap<>();
+		final Map<STATE, STATE> left2right = new HashMap<>();
+		final Map<STATE, STATE> right2left = new HashMap<>();
 
-		final HashSet<STATE> states = new HashSet<>(mAutomaton.getStates());
+		final Set<STATE> states = new HashSet<>(mAutomaton.getStates());
 		/*
-		 * add states that are not a left-hand side in the list; also set up data structures which contain all
-		 * transitive chains
+		 * add states that are not a left-hand side in the list; also set up data structures containing all transitive
+		 * chains
 		 */
 		for (final Set<Pair<STATE, STATE>> pairs : list) {
 			SingleExitShrinker.fillTransitivityMaps(left2right, right2left, states, pairs);

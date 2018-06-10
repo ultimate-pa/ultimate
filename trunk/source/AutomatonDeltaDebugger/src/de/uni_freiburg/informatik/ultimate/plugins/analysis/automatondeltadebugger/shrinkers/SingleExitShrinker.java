@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -47,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Removes states which only have one outgoing transition and bends over all incoming transitions to the respective
+ * Removes states that only have one outgoing transition and bends over all incoming transitions to the respective
  * target state.
  * <p>
  * Example: Two simple chains of four states connected by internal transitions "q1 -a-> q2 -b-> q4" and call-return
- * transitions "q1 -c-> q3 -r/q1-> q4" can be simplified by removing the states in the middle, i.e., q2 and q3 to "q1
+ * transitions "q1 -c-> q3 -r/q1-> q4" can be simplified by removing the states in the middle, i.e., q2 and q3, to "q1
  * -a-> q4" and "q1 -c-> q4". There is an important difference, namely that the internal b-transition and the return
  * transition have been removed, which may not always be reasonable. But often all that matters is that the target state
  * is still reachable.
@@ -59,9 +59,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * This shrinker is best used together with a general transition shrinker to raise the number of states with only one
  * outgoing transition.
  * <p>
- * This class could also be generalized to states with more than one outgoing transition, but then it is not clear where
- * the transitions should be bent to, and the data structures become more complicated.
- * 
+ * This shrinker could also be generalized to states with more than one outgoing transition, but then it is not clear
+ * where the transitions should be bent to, and the data structures become more complicated.
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -87,8 +87,8 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 		final Map<STATE, STATE> right2left = new HashMap<>();
 
 		/*
-		 * add states which are not a left-hand side in the list; also set up
-		 * data structures which contain all transitive chains
+		 * add states that are not a left-hand side in the list; also set up data structures containing all transitive
+		 * chains
 		 */
 		final HashSet<STATE> states = new HashSet<>(mAutomaton.getStates());
 		fillTransitivityMaps(left2right, right2left, states, list);
@@ -104,10 +104,10 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 			final INestedWordAutomatonFactory<LETTER, STATE> factory) {
 		factory.addStates(oldAutomaton, states);
 
-		// add transitions which are still unconcerned by removing the states
+		// add transitions that are still unconcerned by removing the states
 		factory.addFilteredTransitions(oldAutomaton, newAutomaton);
 
-		// add transitions which close a (transitive) chain of removed states
+		// add transitions that close a (transitive) chain of removed states
 		for (final Entry<STATE, STATE> entry : left2right.entrySet()) {
 			final STATE source = entry.getKey();
 			final STATE transitiveTarget = entry.getValue();
@@ -168,10 +168,7 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 	@Override
 	public List<Pair<STATE, STATE>> extractList() {
 		final List<Pair<STATE, STATE>> list = new ArrayList<>();
-		/*
-		 * check that there is exactly one internal/call/return successor which
-		 * is not a self-loop
-		 */
+		// check that there is exactly one internal/call/return successor that is not a self-loop
 		for (final STATE state : mAutomaton.getStates()) {
 			final STATE target = checkForUniqueTarget(state);
 			if (target != null) {
