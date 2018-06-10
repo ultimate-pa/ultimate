@@ -72,7 +72,6 @@ public class CommonSingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Se
 
 		// data structures to contain all transitive chains (forward & backward)
 		final Map<STATE, STATE> left2right = new HashMap<>();
-		final Map<STATE, STATE> right2left = new HashMap<>();
 
 		final Set<STATE> states = new HashSet<>(mAutomaton.getStates());
 		/*
@@ -80,7 +79,7 @@ public class CommonSingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Se
 		 * chains
 		 */
 		for (final Set<Pair<STATE, STATE>> pairs : list) {
-			SingleExitShrinker.fillTransitivityMaps(left2right, right2left, states, pairs);
+			SingleExitShrinker.fillTransitivityMaps(left2right, states, pairs);
 		}
 
 		SingleExitShrinker.constructResuLt(automaton, left2right, states, mAutomaton, mFactory);

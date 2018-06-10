@@ -84,14 +84,13 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 
 		// data structures to contain all transitive chains (forward & backward)
 		final Map<STATE, STATE> left2right = new HashMap<>();
-		final Map<STATE, STATE> right2left = new HashMap<>();
 
 		/*
 		 * add states that are not a left-hand side in the list; also set up data structures containing all transitive
 		 * chains
 		 */
 		final HashSet<STATE> states = new HashSet<>(mAutomaton.getStates());
-		fillTransitivityMaps(left2right, right2left, states, list);
+		fillTransitivityMaps(left2right, states, list);
 
 		constructResuLt(automaton, left2right, states, mAutomaton, mFactory);
 
@@ -139,8 +138,9 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 		}
 	}
 
-	protected static <STATE> void fillTransitivityMaps(final Map<STATE, STATE> left2right,
-			final Map<STATE, STATE> right2left, final Set<STATE> states, final Iterable<Pair<STATE, STATE>> pairs) {
+	protected static <STATE> void fillTransitivityMaps(final Map<STATE, STATE> left2right, final Set<STATE> states,
+			final Iterable<Pair<STATE, STATE>> pairs) {
+		final Map<STATE, STATE> right2left = new HashMap<>();
 		for (final Pair<STATE, STATE> pair : pairs) {
 			final STATE source = pair.getFirst();
 			final STATE target = pair.getSecond();
