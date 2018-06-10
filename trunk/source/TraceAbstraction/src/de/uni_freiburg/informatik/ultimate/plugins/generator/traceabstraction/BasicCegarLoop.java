@@ -672,7 +672,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						(NestedRun<LETTER, IPredicate>) mCounterexample, (IIcfg<IcfgLocation>) mIcfg);
 			}
 
-			dumpAutomatonIfEnabled(subtrahend, "", automatonType);
+			dumpAutomatonIfEnabled(subtrahend, "Enhanced", automatonType);
 			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
 
 			if (!useErrorAutomaton) {
@@ -691,7 +691,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 			mAbstraction = diff.getResult();
 
-			dumpAutomatonIfEnabled(subtrahendBeforeEnhancement, "Enhanced", automatonType);
+			dumpAutomatonIfEnabled(subtrahendBeforeEnhancement, "Original", automatonType);
 
 		} finally
 
