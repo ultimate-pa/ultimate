@@ -11,21 +11,34 @@ NestedWordAutomaton nwa = (
 	callAlphabet = {c0 c1 c2 },
 	internalAlphabet = {a0 a1 a2 a3 },
 	returnAlphabet = {r0 r1 r2 },
-	states = {q10 q20 q15 q05 qe q00 },
+	states = {q10 q22 q20 q15 q21 t10 q05 t91 t00 te t90 t93 t92 q00 },
 	initialStates = {q00 },
-	finalStates = {qe },
+	finalStates = {te },
 	callTransitions = {
 		(q10 c0 q20)
-		(q20 c1 q10)
+		(q22 c1 q10)
+		(q05 c2 t10)
+		(t91 c2 t10)
+		(t93 c0 q21)
+		(t92 c1 t90)
 		(q00 c1 q10)
 	},
 	internalTransitions = {
+		(q20 a1 q21)
+		(q20 a3 q22)
+		(t90 a2 t92)
+		(t90 a0 t93)
 	},
 	returnTransitions = {
-		(q15 q20 r1 q05)
+		(q15 q22 r1 q05)
+		(q15 t92 r1 q05)
 		(q15 q00 r1 q05) // dead transition
-		(q20 q10 r0 q15)
-		(q05 q10 r0 qe)
+		(q21 q10 r0 q15)
+		(q21 t93 r0 q15)
+		(t10 q05 r2 t00)
+		(t10 t91 r2 te)
+		(t00 q10 r0 t90)
+		(t00 t92 r1 t91)
 	}
 );
 
