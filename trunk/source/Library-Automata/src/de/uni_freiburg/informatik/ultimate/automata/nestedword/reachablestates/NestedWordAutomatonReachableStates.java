@@ -907,6 +907,15 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		return result;
 	}
 
+	/**
+	 * Auxiliary method for checking that we do not waste memory.
+	 * @return true iff the locally stored worklist of state's {@link StateContainer} was removed
+	 */
+	public boolean checkWorklistEmpty(final STATE state) {
+		final StateContainer<LETTER, STATE> cont = mStates.get(state);
+		return (cont.getUnpropagatedDownStates() == null);
+	}
+
 	@SuppressWarnings("squid:S1698")
 	boolean checkStateEquality(final STATE state1, final STATE state2) {
 		return state1 == state2;

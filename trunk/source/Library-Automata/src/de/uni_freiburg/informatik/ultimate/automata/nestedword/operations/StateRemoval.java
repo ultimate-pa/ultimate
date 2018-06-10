@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+	private static final boolean CHECK_WORKLIST_EMTPY = false;
 	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
 	/**
@@ -193,6 +194,11 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 				assert correct;
 			}
 			correct &= checkDownStates(state, reachableStatesCopy, reach);
+			assert correct;
+			if (CHECK_WORKLIST_EMTPY) {
+				correct &= reach.checkWorklistEmpty(state);
+				assert correct;
+			}
 		}
 		return correct;
 	}
