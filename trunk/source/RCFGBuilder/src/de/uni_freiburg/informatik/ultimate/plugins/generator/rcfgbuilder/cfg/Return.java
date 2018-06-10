@@ -77,7 +77,7 @@ public class Return extends CodeBlock implements IIcfgReturnTransition<IcfgLocat
 
 	@Override
 	public String toString() {
-		return "return;";
+		return "#" + getSerialNumber() + "#" + "return;";
 	}
 
 	@Override
