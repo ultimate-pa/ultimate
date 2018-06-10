@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceInitializer {
-	
-	
+
+
 	public enum IncreasingStrategy {
 		Conservative,
 		Medium,
@@ -47,29 +47,31 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 		ExponentialConjuncts,
 		ConjunctsPriorized
 	}
-	
+
 	/*
 	 * labels for the different preferencess
 	 */
 	public static final String LABEL_KIND_INVARIANT = "Kind of invariant";
-	
+
 	public static final String LABEL_UNSAT_CORES = "Use unsat cores";
-	
+
 	public static final String LABEL_INITIAL_DISJUNCTS = "Initial disjuncts";
 	public static final String LABEL_INITIAL_CONJUNCTS = "Initial conjuncts";
 	public static final String LABEL_STEP_DISJUNCTS = "Step to increase disjuncts";
 	public static final String LABEL_STEP_CONJUNCTS = "Step to increase conjuncts";
-	
+
 	public static final String LABEL_NONLINEAR_CONSTRAINTS =
 			"Nonlinear constraints";
-	
+
 	public static final String LABEL_EXTERNAL_SMT_SOLVER = "Use external solver (z3)";
 	public static final String LABEL_SOLVER_TIMEOUT = "Solver timeout (sec)";
-	
+
 	public static final String LABEL_LARGE_BLOCK_ENCODING = "Large-Block-Encoding";
-	
+
 	public static final String LABEL_INCR_STRATEGY = "Increasing strategy";
 	public static final String LABEL_DANGER_INVARIANT_GUESSING = "Guess danger invariant";
+	public static final String LABEL_USE_ABSTRACT_INTERPRETATION = "Use abstract interpretation";
+
 
 	/*
 	 * default values for the different preferences
@@ -78,19 +80,22 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	public static final boolean DEF_UNSAT_CORES = true;
 	public static final boolean DEF_NONLINEAR_CONSTRAINTS = false;
 	public static final boolean DEF_LARGE_BLOCK_ENCODING = true;
-	
+
 	public static final int DEF_INITIAL_DISJUNCTS = 1;
 	public static final int DEF_INITIAL_CONJUNCTS = 1;
 	public static final int DEF_STEP_DISJUNCTS = 1;
 	public static final int DEF_STEP_CONJUNCTS = 1;
-	
+
 	public static final boolean DEF_EXTERNAL_SMT_SOLVER = true;
 	public static final int DEF_SOLVER_TIMEOUT = 15; // in seconds
-	
+
 	public static final IncreasingStrategy DEF_INCR_STRATEGY = IncreasingStrategy.Conservative;
 	public static final boolean DEF_DANGER_INVARIANT_GUESSING = false;
-	
-	
+	public static final boolean DEF_USE_ABSTRACT_INTERPRETATION = false;
+
+
+
+
 	/**
 	 * Constructor.
 	 */
@@ -113,6 +118,7 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SMT_SOLVER, DEF_EXTERNAL_SMT_SOLVER, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SOLVER_TIMEOUT, DEF_SOLVER_TIMEOUT, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_DANGER_INVARIANT_GUESSING, DEF_DANGER_INVARIANT_GUESSING, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_ABSTRACT_INTERPRETATION, DEF_USE_ABSTRACT_INTERPRETATION, PreferenceType.Boolean),
 		};
 	};
 }
