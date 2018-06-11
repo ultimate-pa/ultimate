@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Provides static auxiliary methods for {@link RefinementStrategy}s.
@@ -56,35 +55,8 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  */
 public class RefinementStrategyUtils {
 
-	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
-	public static final String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
-	public static final String COMMAND_CVC4_NO_TIMEOUT = getCvc4NoTimeout();
-	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
-
-	// 20161214 Matthias: MathSAT does not support timeouts
-	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
-	public static final long TIMEOUT_SMTINTERPOL = 12_000L;
-	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
-	public static final String LOGIC_Z3 = "ALL";
-	public static final String LOGIC_CVC4_DEFAULT = "AUFLIRA";
-	public static final String LOGIC_CVC4_BITVECTORS = "AUFBV";
-	public static final String LOGIC_MATHSAT = "ALL";
-
 	private RefinementStrategyUtils() {
 		// do not instantiate utility classes
-	}
-
-	/**
-	 * On Windows we do not have the "golden copy" of cvc4 anymore. Newer versions require a different commandline, so
-	 * we switch here based on the OS in use.
-	 *
-	 * @return the command to start cvc4
-	 */
-	private static final String getCvc4NoTimeout() {
-		if (CoreUtil.OS_IS_WINDOWS) {
-			return "cvc4 --tear-down-incremental=1 --print-success --lang smt --rewrite-divk";
-		}
-		return "cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
 	}
 
 	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator<LETTER> constructInterpolantGenerator(

@@ -357,8 +357,8 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case SMTINTERPOL_TREE_INTERPOLANTS:
 		case SMTINTERPOL_FP:
 		case SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY:
-			final long timeout = useTimeout ? RefinementStrategyUtils.TIMEOUT_SMTINTERPOL
-					: RefinementStrategyUtils.TIMEOUT_NONE_SMTINTERPOL;
+			final long timeout = useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL
+					: SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
 			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = mode == Track.SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY
@@ -376,17 +376,17 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			 */
 		case Z3_FPBP:
 		case Z3_FP:
-			command = useTimeout ? RefinementStrategyUtils.COMMAND_Z3_TIMEOUT
-					: RefinementStrategyUtils.COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT
+					: SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = RefinementStrategyUtils.LOGIC_Z3;
+			logicForExternalSolver = SolverBuilder.LOGIC_Z3;
 			break;
 		case CVC4_FPBP:
 		case CVC4_FP:
-			command = useTimeout ? RefinementStrategyUtils.COMMAND_CVC4_TIMEOUT
-					: RefinementStrategyUtils.COMMAND_CVC4_NO_TIMEOUT;
+			command = useTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT
+					: SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -394,19 +394,19 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			break;
 		case MATHSAT_FPBP:
 		case MATHSAT_FP:
-			command = RefinementStrategyUtils.COMMAND_MATHSAT;
+			command = SolverBuilder.COMMAND_MATHSAT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-			logicForExternalSolver = RefinementStrategyUtils.LOGIC_MATHSAT;
+			logicForExternalSolver = SolverBuilder.LOGIC_MATHSAT;
 			break;
 		case PDR:
-			command = useTimeout ? RefinementStrategyUtils.COMMAND_Z3_TIMEOUT
-					: RefinementStrategyUtils.COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT
+					: SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsMode;
-			logicForExternalSolver = RefinementStrategyUtils.LOGIC_Z3;
+			logicForExternalSolver = SolverBuilder.LOGIC_Z3;
 			break;
 		default:
 			throw new IllegalArgumentException(

@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * Wrapper that constructs SMTInterpol or an external solver.
@@ -79,8 +80,25 @@ public class SolverBuilder {
 		External_DefaultMode,
 	}
 
-	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
-	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
+	public static final String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
+	public static final String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
+	/**
+	 * On Windows we do not have the "golden copy" of cvc4 anymore. Newer versions require a different commandline, so
+	 * we switch here based on the OS in use.
+	 */
+	public static final String COMMAND_CVC4_NO_TIMEOUT =
+			CoreUtil.OS_IS_WINDOWS ? "cvc4 --tear-down-incremental=1 --print-success --lang smt --rewrite-divk"
+					: "cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
+	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
+	// 20161214 Matthias: MathSAT does not support timeouts
+	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
+	public static final long TIMEOUT_SMTINTERPOL = 12_000L;
+	public static final long TIMEOUT_NONE_SMTINTERPOL = 0L;
+	public static final String LOGIC_Z3 = "ALL";
+	public static final String LOGIC_CVC4_DEFAULT = "AUFLIRA";
+	public static final String LOGIC_CVC4_BITVECTORS = "AUFBV";
+	public static final String LOGIC_MATHSAT = "ALL";
+
 	public static final boolean USE_DIFF_WRAPPER_SCRIPT = true;
 
 	/**
@@ -94,6 +112,9 @@ public class SolverBuilder {
 	 */
 	public static final boolean ENABLE_ARRAY_MIX_FUNCTION = false;
 	public static final String MIX_ARRAY_INT_INT_NAME = "mix-Array-Int-Int";
+
+	private static final String SOLVER_LOGGER_NAME = "SolverLogger";
+	private static final boolean USE_WRAPPER_SCRIPT_WITH_TERM_CONSTRUCTION_CHECKS = false;
 
 	private static Script createSMTInterpol(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
