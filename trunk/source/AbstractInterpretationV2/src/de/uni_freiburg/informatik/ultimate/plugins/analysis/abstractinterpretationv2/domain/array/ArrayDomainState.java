@@ -1043,32 +1043,35 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		final Script script = mToolkit.getScript();
 		final Term term = getSubTerm();
 		int current = 0;
-		int next = 1;
 		final List<IProgramVar> newBounds = new ArrayList<>();
 		final List<IProgramVar> newValues = new ArrayList<>();
-		while (next < segmentation.size()) {
+		final int max = segmentation.size() - 1;
+		while (current < max) {
 			final TermVariable currentValue = segmentation.getValue(current).getTermVariable();
-			final TermVariable nextValue = segmentation.getValue(next).getTermVariable();
+			final TermVariable nextValue = segmentation.getValue(current + 1).getTermVariable();
+			final TermVariable currentBound = segmentation.getBound(current).getTermVariable();
+			final TermVariable nextBound = segmentation.getBound(current + 1).getTermVariable();
+			final Term boundEquality = SmtUtils.binaryEquality(script, currentBound, nextBound);
+			if (mSubState.evaluate(script, boundEquality) == EvalResult.TRUE) {
+				current++;
+				continue;
+			}
 			final Term currentTerm = SmtUtils.filterFormula(term, Collections.singleton(currentValue), script);
 			final Term nextTerm = SmtUtils.filterFormula(term, Collections.singleton(nextValue), script);
 			final Substitution substitution =
 					new Substitution(mToolkit.getManagedScript(), Collections.singletonMap(nextValue, currentValue));
 			final Term currentSubstitutedTerm = substitution.transform(currentTerm);
 			final Term nextSubstitutedTerm = substitution.transform(nextTerm);
-			final TermVariable currentBound = segmentation.getBound(current).getTermVariable();
-			final TermVariable nextBound = segmentation.getBound(next).getTermVariable();
-			final Term boundEquality = SmtUtils.binaryEquality(script, currentBound, nextBound);
-			if (SmtUtils.areFormulasEquivalent(currentSubstitutedTerm, nextSubstitutedTerm, script)
-					|| mSubState.evaluate(script, boundEquality) == EvalResult.TRUE) {
-				next++;
-			} else {
-				newBounds.add(segmentation.getBound(current));
-				newValues.add(segmentation.getValue(current));
-				current = next++;
+			if (SmtUtils.areFormulasEquivalent(currentSubstitutedTerm, nextSubstitutedTerm, script)) {
+				current++;
+				continue;
 			}
+			newBounds.add(segmentation.getBound(current));
+			newValues.add(segmentation.getValue(current));
+			current++;
 		}
-		newBounds.add(segmentation.getBound(current));
-		newValues.add(segmentation.getValue(current));
+		newBounds.add(segmentation.getBound(max));
+		newValues.add(segmentation.getValue(max));
 		newBounds.add(mToolkit.getMaxBound());
 		return new Segmentation(newBounds, newValues);
 	}
