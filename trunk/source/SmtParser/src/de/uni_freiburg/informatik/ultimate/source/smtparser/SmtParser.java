@@ -56,7 +56,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsi
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornClauseParserScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.BooleanOption;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap.CopyMode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
@@ -202,6 +204,7 @@ public class SmtParser implements ISource {
 					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage,
 							"treeAutomizerSolver");
 			script = new HornClauseParserScript(mServices, file.getName(), caibss.getScript(),
+//					"ALL", caibss.getSolverSettings());
 					caibss.getLogicForExternalSolver(), caibss.getSolverSettings());
 		} else {
 			if (useExternalSolver) {
@@ -221,7 +224,16 @@ public class SmtParser implements ISource {
 		}
 
 		mLogger.info("Executing SMT file " + file.getAbsolutePath());
-		final OptionMap optionMap = new OptionMap(logProxy, true);
+
+
+		OptionMap optionMap = new OptionMap(logProxy, true);
+
+		if (inHornSolverMode) {
+			// crash in Horn solver mode if parsing fails
+			optionMap.addOption(":continue-on-error", new BooleanOption(false, false, "continue on error"));
+			optionMap = optionMap.copy(CopyMode.CURRENT_VALUE);
+		}
+
 		final ParseEnvironment parseEnv = new ParseEnvironment(script, optionMap);
 		try {
 			parseEnv.parseScript(file.getAbsolutePath());
