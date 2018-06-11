@@ -70,13 +70,40 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class InvariantChecker {
 
+	public static class LoopLocations {
+		public final Map<IcfgLocation, IcfgEdge> mLoopLoc2errorEdge;
+		public final Map<IcfgLocation, IcfgEdge> mLoopErrorLoc2errorEdge;
+		public final List<IcfgLocation> mLoopLocWithoutInvariant;
+
+		public LoopLocations(final Map<IcfgLocation, IcfgEdge> loopLoc2errorEdge,
+				final Map<IcfgLocation, IcfgEdge> loopErrorLoc2errorEdge, final List<IcfgLocation> loopLocWithoutInvariant) {
+			mLoopLoc2errorEdge = loopLoc2errorEdge;
+			mLoopErrorLoc2errorEdge = loopErrorLoc2errorEdge;
+			mLoopLocWithoutInvariant = loopLocWithoutInvariant;
+		}
+
+		public Map<IcfgLocation, IcfgEdge> getLoopLoc2errorEdge() {
+			return mLoopLoc2errorEdge;
+		}
+
+		public Map<IcfgLocation, IcfgEdge> getLoopErrorLoc2errorEdge() {
+			return mLoopErrorLoc2errorEdge;
+		}
+
+		public List<IcfgLocation> getLoopLocWithoutInvariant() {
+			return mLoopLocWithoutInvariant;
+		}
+
+
+	}
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
 	private final IIcfg<IcfgLocation> mIcfg;
 
-	private final Map<IcfgLocation, IcfgEdge> mLoopLoc2errorEdge = new HashMap<>();
-	private final Map<IcfgLocation, IcfgEdge> mLoopErrorLoc2errorEdge = new HashMap<>();
+	private final LoopLocations mLoopLocations;
+
 
 	public enum LocationType {
 		ENTRY, LOOP_HEAD, ERROR_LOC, UNKNOWN, LOOP_INVARIANT_ERROR_LOC
@@ -88,23 +115,14 @@ public class InvariantChecker {
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mIcfg = icfg;
-		final List<IcfgLocation> loopLocWithoutInvariant = new ArrayList<>();
-		for (final IcfgLocation loopLoc : mIcfg.getLoopLocations()) {
-			final IcfgEdge errorEdge = getErrorEdgeForLoopInvariant(loopLoc);
-			if (errorEdge == null) {
-				loopLocWithoutInvariant.add(loopLoc);
-			} else {
-				mLoopLoc2errorEdge.put(loopLoc, errorEdge);
-				mLoopErrorLoc2errorEdge.put(errorEdge.getTarget(), errorEdge);
-			}
-		}
-		if (!loopLocWithoutInvariant.isEmpty()) {
+		mLoopLocations = extractLoopLocations(mIcfg);
+		if (!mLoopLocations.getLoopLocWithoutInvariant().isEmpty()) {
 
 			final String shortDescription = "Not every loop was annotated with an invariant.";
-			final String longDescription = "Missing invariants at: " + loopLocWithoutInvariant;
+			final String longDescription = "Missing invariants at: " + mLoopLocations.getLoopLocWithoutInvariant();
 			final Severity severity = Severity.ERROR;
 			final GenericResultAtElement<?> grae = new GenericResultAtElement<>(
-					loopLocWithoutInvariant.get(0).getOutgoingEdges().get(0), Activator.PLUGIN_ID,
+					mLoopLocations.getLoopLocWithoutInvariant().get(0).getOutgoingEdges().get(0), Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), shortDescription, longDescription, severity);
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID, grae);
 			return;
@@ -115,7 +133,7 @@ public class InvariantChecker {
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
 		for (final Entry<String, Set<IcfgLocation>> entry : proc2errNodes.entrySet()) {
 			for (final IcfgLocation errorLoc : entry.getValue()) {
-				final IcfgEdge loopErrorEdge = mLoopErrorLoc2errorEdge.get(errorLoc);
+				final IcfgEdge loopErrorEdge = mLoopLocations.getLoopErrorLoc2errorEdge().get(errorLoc);
 				if (loopErrorEdge != null) {
 					loopLocsAndNonLoopErrorLocs.add(loopErrorEdge.getSource());
 				} else {
@@ -131,7 +149,7 @@ public class InvariantChecker {
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
 			final IcfgLocation startLoc = tpsd.getStartLocation();
 			final IcfgLocation errorLoc = tpsd.getEndLocation();
-			IcfgEdge omitEdge = mLoopLoc2errorEdge.get(startLoc);
+			IcfgEdge omitEdge = mLoopLocations.getLoopLoc2errorEdge().get(startLoc);
 			if (!tpsd.getSubgraphEdges().contains(omitEdge)) {
 				omitEdge = null;
 			}
@@ -142,6 +160,22 @@ public class InvariantChecker {
 			doCheck(startLoc, tf, errorLoc);
 		}
 
+	}
+
+	private LoopLocations extractLoopLocations(final IIcfg<IcfgLocation> icfg) {
+		final Map<IcfgLocation, IcfgEdge> loopLoc2errorEdge = new HashMap<>();
+		final Map<IcfgLocation, IcfgEdge> loopErrorLoc2errorEdge = new HashMap<>();
+		final List<IcfgLocation> loopLocWithoutInvariant = new ArrayList<>();
+		for (final IcfgLocation loopLoc : icfg.getLoopLocations()) {
+			final IcfgEdge errorEdge = getErrorEdgeForLoopInvariant(loopLoc);
+			if (errorEdge == null) {
+				loopLocWithoutInvariant.add(loopLoc);
+			} else {
+				loopLoc2errorEdge.put(loopLoc, errorEdge);
+				loopErrorLoc2errorEdge.put(errorEdge.getTarget(), errorEdge);
+			}
+		}
+		return new LoopLocations(loopLoc2errorEdge, loopErrorLoc2errorEdge, loopLocWithoutInvariant);
 	}
 
 	private List<TwoPointSubgraphDefinition> findSubgraphGivenError(final IcfgLocation backwardStartLoc,
@@ -171,8 +205,8 @@ public class InvariantChecker {
 			final List<TwoPointSubgraphDefinition> newTpsds =
 					findSubgraphGivenStart(startLoc, Collections.unmodifiableSet(seenBackward), icfg, backwardStartLoc);
 			for (final TwoPointSubgraphDefinition tpsd : newTpsds) {
-				if (mLoopLoc2errorEdge.containsKey(backwardStartLoc)) {
-					final IcfgEdge errorEdge = mLoopLoc2errorEdge.get(backwardStartLoc);
+				if (mLoopLocations.getLoopLoc2errorEdge().containsKey(backwardStartLoc)) {
+					final IcfgEdge errorEdge = mLoopLocations.getLoopLoc2errorEdge().get(backwardStartLoc);
 					final IcfgLocation errorLoc = errorEdge.getTarget();
 					if (tpsd.getEndLocation() != errorLoc) {
 						throw new AssertionError("wrong error loc");
@@ -205,7 +239,7 @@ public class InvariantChecker {
 			final IcfgLocation loc = currentEdge.getTarget();
 			if (loc == backwardStartLoc) {
 				if (icfg.getLoopLocations().contains(loc)) {
-					final IcfgEdge loopErrorEdge = mLoopLoc2errorEdge.get(loc);
+					final IcfgEdge loopErrorEdge = mLoopLocations.getLoopLoc2errorEdge().get(loc);
 					seenForward.add(loopErrorEdge);
 					errorLocations.add(loopErrorEdge.getTarget());
 				} else if (icfg.getProcedureErrorNodes().get(loc.getProcedure()).contains(loc)) {
@@ -250,7 +284,7 @@ public class InvariantChecker {
 	LocationType classify(final IcfgLocation loc) {
 		if (mIcfg.getLoopLocations().contains(loc)) {
 			return LocationType.LOOP_HEAD;
-		} else if (mLoopErrorLoc2errorEdge.containsKey(loc)) {
+		} else if (mLoopLocations.getLoopErrorLoc2errorEdge().containsKey(loc)) {
 			return LocationType.LOOP_INVARIANT_ERROR_LOC;
 		} else {
 			final String proc = loc.getProcedure();
@@ -362,7 +396,7 @@ public class InvariantChecker {
 		}
 	}
 
-	private IcfgEdge getErrorEdgeForLoopInvariant(final IcfgLocation loopLoc) {
+	private static IcfgEdge getErrorEdgeForLoopInvariant(final IcfgLocation loopLoc) {
 		IcfgEdge result = null;
 		for (final IcfgEdge succEdge : loopLoc.getOutgoingEdges()) {
 			final IcfgLocation succLoc = succEdge.getTarget();
@@ -377,7 +411,7 @@ public class InvariantChecker {
 		return result;
 	}
 
-	private boolean isInvariant(final IcfgLocation loc) {
+	private static boolean isInvariant(final IcfgLocation loc) {
 		final Check check = Check.getAnnotation(loc);
 		if (check != null) {
 			final EnumSet<Spec> specs = check.getSpec();
