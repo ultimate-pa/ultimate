@@ -470,7 +470,10 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 	 * Computes a new UnionFind instance whose partitions are the intersections of
 	 * the given UnionFind instance's equivalence classes. Only non-empty
 	 * intersections are added to the new equivalence relation.
-	 *
+	 * <p>
+	 * If the input UnionFind instances are viewed as elements of an abstract domain, the result corresponds to their
+	 *  abstract join.
+	 * <p>
 	 * Also returns a split info for each input UnionFind. A split info maps each representative in the original
 	 * UnionFind to the (possibly many) corresponding representatives in the new UnionFind.
 	 *
@@ -514,6 +517,7 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 			}
 		}
 		assert result.representativesAreMinimal();
+		assert sanityCheckIntersectPartitionBlocks(uf1, uf2, result, uf1SplitInfo, uf2SplitInfo);
 		return new Triple<>(result, uf1SplitInfo, uf2SplitInfo);
 	}
 
@@ -603,6 +607,39 @@ public class UnionFind<E> implements IPartition<E>, Cloneable {
 
 	boolean sanityCheck() {
 		assert assertRepresentativeMapIsInjective();
+		return true;
+	}
+
+	private static <E> boolean sanityCheckIntersectPartitionBlocks(final UnionFind<E> uf1, final UnionFind<E> uf2,
+			final UnionFind<E> result, final HashRelation<E, E> uf1SplitInfo, final HashRelation<E, E> uf2SplitInfo) {
+		/*
+		 * check the split infos: each pair's lhs must be a representative in the corresponding input UnionFind, and
+		 *  the rhs must be a representative in the output UnionFind
+		 */
+		for (final E l : uf1SplitInfo.getDomain()) {
+			if (uf1.find(l) != l) {
+				assert false;
+				return false;
+			}
+			for (final E r : uf1SplitInfo.getImage(l)) {
+				if (result.find(r) != r) {
+					assert false;
+					return false;
+				}
+			}
+		}
+		for (final E l : uf2SplitInfo.getDomain()) {
+			if (uf2.find(l) != l) {
+				assert false;
+				return false;
+			}
+			for (final E r : uf2SplitInfo.getImage(l)) {
+				if (result.find(r) != r) {
+					assert false;
+					return false;
+				}
+			}
+		}
 		return true;
 	}
 
