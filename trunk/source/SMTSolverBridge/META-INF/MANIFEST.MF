@@ -9,5 +9,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.smtinterpol,
- de.uni_freiburg.informatik.ultimate.core
+ de.uni_freiburg.informatik.ultimate.smtinterpol
