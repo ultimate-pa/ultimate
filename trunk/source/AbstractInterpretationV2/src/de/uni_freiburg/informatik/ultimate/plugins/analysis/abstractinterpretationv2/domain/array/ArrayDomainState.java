@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.QuantifierPusher.PqeTechniques;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalTermUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
@@ -206,7 +205,8 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		constraints.add(mToolkit.connstructEquivalentConstraint(v0, s2.getValue(0), getSubTerm()));
 		int idx1 = 1;
 		int idx2 = 1;
-		while (idx1 < s1.size() || idx2 < s2.size()) {
+		// TODO: Do we need new bounds here?
+		while (idx1 < s1.size() && idx2 < s2.size()) {
 			final IProgramVar b1 = s1.getBound(idx1);
 			final IProgramVar b2 = s2.getBound(idx2);
 			final IProgramVar v1 = s1.getValue(idx1);
@@ -215,8 +215,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 			final IProgramVar v2Old = s2.getValue(idx2 - 1);
 			final Term t1 = b1.getTermVariable();
 			final Term t2 = b2.getTermVariable();
-			if (!b1.equals(maxBound) && !b2.equals(maxBound)
-					&& mSubState.evaluate(script, SmtUtils.binaryEquality(script, t1, t2)) == EvalResult.TRUE) {
+			if (mSubState.evaluate(script, SmtUtils.binaryEquality(script, t1, t2)) == EvalResult.TRUE) {
 				final IProgramVar b = mToolkit.createBoundVar(boundType);
 				final IProgramVar v = mToolkit.createValueVar(valueType);
 				bounds.add(b);
@@ -226,8 +225,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				constraints.add(mToolkit.connstructEquivalentConstraint(v, v2, getSubTerm()));
 				idx1++;
 				idx2++;
-			} else if (b2.equals(maxBound)
-					|| mSubState.evaluate(script, SmtUtils.leq(script, t1, t2)) == EvalResult.TRUE) {
+			} else if (mSubState.evaluate(script, SmtUtils.leq(script, t1, t2)) == EvalResult.TRUE) {
 				final IProgramVar b = mToolkit.createBoundVar(boundType);
 				final IProgramVar v = mToolkit.createValueVar(valueType);
 				bounds.add(b);
@@ -236,8 +234,7 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				constraints.add(mToolkit.connstructEquivalentConstraint(v, v1, getSubTerm()));
 				constraints.add(mToolkit.connstructEquivalentConstraint(v, v2Old, getSubTerm()));
 				idx1++;
-			} else if (b1.equals(maxBound)
-					|| mSubState.evaluate(script, SmtUtils.geq(script, t1, t2)) == EvalResult.TRUE) {
+			} else if (mSubState.evaluate(script, SmtUtils.geq(script, t1, t2)) == EvalResult.TRUE) {
 				final IProgramVar b = mToolkit.createBoundVar(boundType);
 				final IProgramVar v = mToolkit.createValueVar(valueType);
 				bounds.add(b);
@@ -256,25 +253,23 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				values.add(vLow);
 				values.add(vHigh);
 				// Bound constraints
-				constraints.add(SmtUtils.leq(script, NonrelationalTermUtils.getTermVar(bLow),
-						NonrelationalTermUtils.getTermVar(b1)));
-				constraints.add(SmtUtils.leq(script, NonrelationalTermUtils.getTermVar(bLow),
-						NonrelationalTermUtils.getTermVar(b2)));
-				constraints.add(SmtUtils.geq(script, NonrelationalTermUtils.getTermVar(bLow),
-						NonrelationalTermUtils.getTermVar(s1.getBound(idx1 - 1))));
-				constraints.add(SmtUtils.geq(script, NonrelationalTermUtils.getTermVar(bLow),
-						NonrelationalTermUtils.getTermVar(s2.getBound(idx2 - 1))));
-				constraints.add(SmtUtils.geq(script, NonrelationalTermUtils.getTermVar(bHigh),
-						NonrelationalTermUtils.getTermVar(b1)));
-				constraints.add(SmtUtils.geq(script, NonrelationalTermUtils.getTermVar(bHigh),
-						NonrelationalTermUtils.getTermVar(b2)));
+				final TermVariable lowTv = bLow.getTermVariable();
+				final TermVariable highTv = bHigh.getTermVariable();
+				constraints.add(SmtUtils.leq(script, lowTv, b1.getTermVariable()));
+				constraints.add(SmtUtils.leq(script, lowTv, b2.getTermVariable()));
+				if (idx1 > 1) {
+					constraints.add(SmtUtils.leq(script, lowTv, s1.getBound(idx1 - 1).getTermVariable()));
+				}
+				if (idx2 > 1) {
+					constraints.add(SmtUtils.leq(script, lowTv, s2.getBound(idx2 - 1).getTermVariable()));
+				}
+				constraints.add(SmtUtils.leq(script, highTv, b1.getTermVariable()));
+				constraints.add(SmtUtils.leq(script, highTv, b2.getTermVariable()));
 				if (idx1 + 1 < s1.size()) {
-					constraints.add(SmtUtils.leq(script, NonrelationalTermUtils.getTermVar(bHigh),
-							NonrelationalTermUtils.getTermVar(s1.getBound(idx1 + 1))));
+					constraints.add(SmtUtils.leq(script, highTv, s1.getBound(idx1 + 1).getTermVariable()));
 				}
 				if (idx2 + 1 < s2.size()) {
-					constraints.add(SmtUtils.leq(script, NonrelationalTermUtils.getTermVar(bHigh),
-							NonrelationalTermUtils.getTermVar(s2.getBound(idx2 + 1))));
+					constraints.add(SmtUtils.leq(script, highTv, s2.getBound(idx2 + 1).getTermVariable()));
 				}
 				// Value constraints
 				constraints.add(SmtUtils.or(script, connstructEquivalentConstraints(vLow, Arrays.asList(v1, v1Old))));
@@ -285,9 +280,34 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				idx2++;
 			}
 		}
+		// Insert the remaining bounds and values
+		while (idx1 < s1.size()) {
+			final IProgramVar newValue = mToolkit.createValueVar(valueType);
+			final IProgramVar newBound = mToolkit.createBoundVar(boundType);
+			bounds.add(newBound);
+			values.add(newValue);
+			final IProgramVar value1 = s1.getValue(idx1);
+			final IProgramVar value2 = s2.getValue(s2.size() - 1);
+			constraints.add(mToolkit.connstructEquivalentConstraint(newBound, s1.getBound(idx1), getSubTerm()));
+			constraints.addAll(connstructEquivalentConstraints(newValue, Arrays.asList(value1, value2)));
+			idx1++;
+
+		}
+		while (idx2 < s2.size()) {
+			final IProgramVar newValue = mToolkit.createValueVar(valueType);
+			final IProgramVar newBound = mToolkit.createBoundVar(boundType);
+			bounds.add(newBound);
+			values.add(newValue);
+			final IProgramVar value1 = s1.getValue(s1.size() - 1);
+			final IProgramVar value2 = s2.getValue(idx2);
+			constraints.add(mToolkit.connstructEquivalentConstraint(newBound, s2.getBound(idx2), getSubTerm()));
+			constraints.addAll(connstructEquivalentConstraints(newValue, Arrays.asList(value1, value2)));
+			idx2++;
+
+		}
 		bounds.add(maxBound);
 		mSegmentationMap.addEquivalenceClass(arrayEquivalenceClass, new Segmentation(bounds, values));
-		final Set<IProgramVarOrConst> newVars = new HashSet<>();
+		final List<IProgramVarOrConst> newVars = new ArrayList<>();
 		newVars.addAll(bounds);
 		newVars.remove(minBound);
 		newVars.remove(maxBound);
@@ -297,7 +317,6 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 		return updateState(newState);
 	}
 
-	// TODO: Use unification
 	@Override
 	public ArrayDomainState<STATE> intersect(final ArrayDomainState<STATE> other) {
 		if (isBottom()) {
@@ -634,8 +653,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 				final IProgramVar newBoundVar = mToolkit.createBoundVar(boundType);
 				newVariables.add(newBoundVar);
 				newBounds.add(newBoundVar);
-				constraints
-						.add(SmtUtils.binaryEquality(script, newBoundVar.getTermVariable(), eqClass.iterator().next()));
+				if (!eqClass.isEmpty()) {
+					constraints.add(
+							SmtUtils.binaryEquality(script, newBoundVar.getTermVariable(), eqClass.iterator().next()));
+				}
 			}
 			final List<IProgramVar> valuesThis = unificationResult.getFirstValues();
 			final List<IProgramVar> valuesOther = unificationResult.getSecondValues();
@@ -962,6 +983,10 @@ public class ArrayDomainState<STATE extends IAbstractState<STATE>> implements IA
 
 	public ArrayDomainState<STATE> updateState(final STATE newSubState) {
 		return updateState(newSubState, getSegmentationMap());
+	}
+
+	public ArrayDomainState<STATE> updateState(final SegmentationMap newSegmentationMap) {
+		return updateState(mSubState, newSegmentationMap);
 	}
 
 	public STATE getSubState() {

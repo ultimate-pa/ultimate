@@ -87,15 +87,51 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		if (SmtUtils.isFunctionApplication(assumption, "or")) {
 			ArrayDomainState<STATE> returnState = mToolkit.createBottomState();
 			for (final Term t : ((ApplicationTerm) assumption).getParameters()) {
-				returnState = returnState.union(processAssumeTerm(returnState, t));
+				returnState = returnState.union(processAssumeTerm(state, t));
 			}
 			return returnState;
 		}
 		final Script script = mToolkit.getScript();
-		if (containsArrayEquality(assumption)) {
-			// TODO: handle array (in)equalities
-			return state;
+		// Handle array-equalities
+		if (SmtUtils.isFunctionApplication(assumption, "=")) {
+			final Term[] params = ((ApplicationTerm) assumption).getParameters();
+			assert params.length == 2;
+			if (params[0].getSort().isArraySort()) {
+				final Expression left = mToolkit.getExpression(params[0]);
+				final Expression right = mToolkit.getExpression(params[1]);
+				final SegmentationMap segmentationMap = state.getSegmentationMap();
+				if (left instanceof IdentifierExpression && right instanceof IdentifierExpression) {
+					final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((IdentifierExpression) left);
+					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) right);
+					segmentationMap.move(rightVar, leftVar);
+					final ArrayDomainState<STATE> state2 = state.updateState(segmentationMap).removeUnusedAuxVars();
+					return state.intersect(state2);
+				}
+				if (left instanceof IdentifierExpression) {
+					final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((IdentifierExpression) left);
+					final Pair<STATE, Segmentation> rightPair = state.getSegmentation(right);
+					segmentationMap.put(leftVar, rightPair.getSecond());
+					final ArrayDomainState<STATE> state2 =
+							state.updateState(rightPair.getFirst(), segmentationMap).removeUnusedAuxVars();
+					return state.intersect(state2);
+				}
+				if (right instanceof IdentifierExpression) {
+					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) right);
+					final Pair<STATE, Segmentation> leftPair = state.getSegmentation(right);
+					segmentationMap.put(rightVar, leftPair.getSecond());
+					final ArrayDomainState<STATE> state2 =
+							state.updateState(leftPair.getFirst(), segmentationMap).removeUnusedAuxVars();
+					return state.intersect(state2);
+				}
+				// TODO: Refine this?
+				return state;
+			}
 		}
+		// Handle array-inequalities
+		if (isInvalidArrayInequality(state, assumption)) {
+			return mToolkit.createBottomState();
+		}
+		// Handle array-reads
 		final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectShallow(assumption, false);
 		if (selects.isEmpty()) {
 			final STATE newSubState = mToolkit.handleAssumptionBySubdomain(state.getSubState(), assumption);
@@ -131,16 +167,26 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		return newState.updateState(newSubState, newSegmentationMap).simplify();
 	}
 
-	private boolean containsArrayEquality(final Term term) {
-		if (!(term instanceof ApplicationTerm)) {
+	private boolean isInvalidArrayInequality(final ArrayDomainState<STATE> state, final Term assumption) {
+		if (SmtUtils.isFunctionApplication(assumption, "not")) {
 			return false;
 		}
-		final ApplicationTerm appl = (ApplicationTerm) term;
-		final String functionName = appl.getFunction().getApplicationString();
-		final Term[] params = appl.getParameters();
-		if ("not".equals(functionName)) {
-			return containsArrayEquality(params[0]);
+		final Term subTerm = ((ApplicationTerm) assumption).getParameters()[0];
+		if (!SmtUtils.isFunctionApplication(subTerm, "=")) {
+			return false;
 		}
-		return "=".equals(functionName) && params[0].getSort().isArraySort();
+		final Term[] params = ((ApplicationTerm) subTerm).getParameters();
+		assert params.length == 2;
+		if (!params[0].getSort().isArraySort()) {
+			return false;
+		}
+		final Expression left = mToolkit.getExpression(params[0]);
+		final Expression right = mToolkit.getExpression(params[1]);
+		if (!(left instanceof IdentifierExpression && right instanceof IdentifierExpression)) {
+			return false;
+		}
+		final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((IdentifierExpression) left);
+		final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) right);
+		return state.getSegmentationMap().getEquivalenceClass(leftVar).contains(rightVar);
 	}
 }
