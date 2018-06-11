@@ -25,13 +25,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * <li> a mapping that assigns each of the argument positions of the uninterpreted predicate a free variable in the
  *   transition formula
  * </ul>
- *
+ * <p>
  * This class stores Horn clauses in a certain normal form:
  * <ul>
  *  <li> The arguments of the head predicate are a list of variables, which are determined by the argument position and
  *    the sort of that argument in the head predicate's signature.
  *      E.g. for two head predicates with the same signature, we have the same arguments.
- *
+ *      This also means that the arguments of head predicates never repeat (like "(P x x)").
  * </ul>
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -48,7 +48,6 @@ public class HornClause implements IRankedLetter {
 	 * the represented atom, which TermVariable in the transition formula
 	 * represents that argument in the represented atom.
 	 */
-//	private final List<TermVariable> mHeadPredTermVariables;
 	private final List<HcHeadVar> mHeadPredVariables;
 	private final HcPredicateSymbol mHeadPredicate;
 
@@ -58,7 +57,6 @@ public class HornClause implements IRankedLetter {
 
 	private final boolean mHeadIsFalse;
 
-//	private final Set<TermVariable> mBodyPredVariables;
 	private final Set<HcBodyVar> mBodyVariables;
 
 
@@ -71,23 +69,22 @@ public class HornClause implements IRankedLetter {
 	 * @param symbolTable
 	 * @param constraint
 	 * @param bodyPreds
-	 * @param bodyPredToTermVariables
+	 * @param bodyPredToArguments
 	 */
 	public HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
-			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
+			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
 			final Set<HcBodyVar> bodyVars
 			) {
-		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToTermVariables,
+		this(script, symbolTable, constraint, null, Collections.emptyList(), bodyPreds, bodyPredToArguments,
 				bodyVars, false);
 	}
 
 	public HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
-//			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
 			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
-			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToTermVariables,
+			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArguments,
 			final Set<HcBodyVar> bodyVars
 			) {
-		this(script, symbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToTermVariables, bodyVars, false);
+		this(script, symbolTable, constraint, headPred, headVars, bodyPreds, bodyPredToArguments, bodyVars, false);
 		assert headPred != null : "use other constructor for '... -> False' case";
 	}
 
@@ -109,7 +106,6 @@ public class HornClause implements IRankedLetter {
 	 *            dummy parameter to allow for an extra constructor
 	 */
 	private HornClause(final ManagedScript script, final HcSymbolTable symbolTable, final Term constraint,
-//			final HornClausePredicateSymbol headPred, final List<TermVariable> headVars,
 			final HcPredicateSymbol headPred, final List<HcHeadVar> headVars,
 			final List<HcPredicateSymbol> bodyPreds, final List<List<Term>> bodyPredToArgs,
 			final Set<HcBodyVar> bodyVars,
@@ -125,47 +121,6 @@ public class HornClause implements IRankedLetter {
 		mBodyPreds = Collections.unmodifiableList(bodyPreds);
 		mBodyPredToArgs = Collections.unmodifiableList(bodyPredToArgs);
 		mBodyVariables = Collections.unmodifiableSet(bodyVars);
-
-//		final TermTransferrer ttf = new TermTransferrer(script.getScript());
-//
-//		/*
-//		 * send all the TermVariables through the TermTransferrer
-//		 */
-//		mHeadPredTermVariables = headVars.stream().map(var -> (TermVariable) ttf.transform(var))
-//				.collect(Collectors.toList());
-//		mBodyPredToTermVariables = bodyPredToTermVariables.stream()
-//				.map(list -> list.stream().map(var -> ttf.transform(var)).collect(Collectors.toList()))
-//				.collect(Collectors.toList());
-//
-//		// transfer the transition formula to the solver script
-//		mFormula = ttf.transform(constraint);
-//
-////		mHeadPredTermVariables.forEach(mHornClauseSymbolTable::registerHeadVariable);
-//		for (int i = 0; i < mHeadPredicate.getArity(); i++) {
-//			final Sort sort = mHeadPredicate.getParameterSorts().get(i);
-////			mHeadPredTermVariables
-//		}
-//
-//		for (final TermVariable fv : mFormula.getFreeVars()) {
-//			mHornClauseSymbolTable.registerTermVariable(fv);
-//		}
-//
-//
-//		mBodyPredVariables = new HashSet<>();
-//		for (final List<Term> ts : mBodyPredToTermVariables) {
-//			for (final Term t : ts) {
-//				if (t instanceof TermVariable) {
-//					mHornClauseSymbolTable.registerTermVariable((TermVariable) t);
-//					if (!mHeadPredTermVariables.contains(t)) {
-//						mBodyPredVariables.add((TermVariable) t);
-//					}
-//				}
-//			}
-//		}
-
-//		mHeadIsFalse = headPred == null;
-//		mHeadPredicate = headPred;
-//		mBodyPreds = bodyPreds;
 	}
 
 	public HcPredicateSymbol getHeadPredicate() {
@@ -199,7 +154,6 @@ public class HornClause implements IRankedLetter {
 		return Collections.unmodifiableList(mBodyPredToArgs);
 	}
 
-//	public List<TermVariable> getTermVariablesForHeadPred() {
 	public List<HcHeadVar> getTermVariablesForHeadPred() {
 		return mHeadPredVariables;
 	}
@@ -264,12 +218,7 @@ public class HornClause implements IRankedLetter {
 
 	@Override
 	public int getRank() {
-		// if (mBodyPreds.isEmpty())
-		// {//mTransitionFormula.getInVars().isEmpty()) {
-		// // Initial state
-		// return 1;
-		// }
-		return mBodyPreds.size();// mTransitionFormula.getInVars().size();
+		return mBodyPreds.size();
 	}
 
 	public Term getConstraintFormula() {
@@ -283,7 +232,6 @@ public class HornClause implements IRankedLetter {
 	 *
 	 * @return
 	 */
-//	public Set<TermVariable> getBodyPredVariables() {
 	public Set<HcBodyVar> getBodyPredVariables() {
 		return mBodyVariables;
 	}

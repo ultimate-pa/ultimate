@@ -62,7 +62,7 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 	//defaults
 	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
 	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
-	public static final String DEF_ExtSolverLogic = "AUFNIRA";
+	public static final String DEF_ExtSolverLogic = "ALL";
 	public static final String DEF_SmtDumpPath = "";
 	public static final String DEF_AutomataDumpPath = "";
 
