@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InvariantChecker;
 
@@ -51,8 +50,6 @@ public class RefereeStarter {
 	 * Successors of this node exactly the initial nodes of procedures.
 	 */
 	private IElement mRootOfNewModel;
-	private Result mOverallResult;
-	private IElement mArtifact;
 
 
 	public RefereeStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
@@ -60,10 +57,7 @@ public class RefereeStarter {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		if (INVARIANT_CHECKING) {
-			new InvariantChecker(mServices, mToolchainStorage, rcfgRootNode);
-			return;
-		}
+		new InvariantChecker(mServices, mToolchainStorage, rcfgRootNode);
 	}
 
 	/**
