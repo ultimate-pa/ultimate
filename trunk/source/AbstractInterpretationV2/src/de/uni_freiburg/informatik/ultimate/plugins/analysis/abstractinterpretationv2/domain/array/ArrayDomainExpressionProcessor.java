@@ -168,7 +168,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 	}
 
 	private boolean isInvalidArrayInequality(final ArrayDomainState<STATE> state, final Term assumption) {
-		if (SmtUtils.isFunctionApplication(assumption, "not")) {
+		if (!SmtUtils.isFunctionApplication(assumption, "not")) {
 			return false;
 		}
 		final Term subTerm = ((ApplicationTerm) assumption).getParameters()[0];
