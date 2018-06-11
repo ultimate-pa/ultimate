@@ -388,8 +388,17 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	/**
 	 * Can deal with "null" arguments (which represent the "Top" value).
 	 *
-	 * Basic law for this: A /\ B -> C /\ D <=> A -> C /\ A -> D \/ B -> C /\ B -> D
+	 * Basic law for this:
+	 *  |= A /\ B --> C /\ D
+	 *    iff
+	 *   |= A /\ B --> C
+	 *     and
+	 *   |= A /\ B --> D
 	 *
+	 * That means we can build the meet of the input SetCcs in any detail we want, involving the usual power set
+	 * construction, and perhaps filtering, or we can assume this has been done (should be the case, at the moment,
+	 * as the Set<SetConstraint<ELEM>> come from SetConstraintConjunction<ELEM>, which have that property).
+	 * Then we check one by one for inclusion of the set constraints.
 	 *
 	 * @param constraintConjunction1
 	 * @param constraintConjunction2
@@ -415,22 +424,24 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 			return false;
 		}
 
-		for (final SetConstraint<ELEM> lhsConjunct : constraintConjunction1) {
+		for (final SetConstraint<ELEM> rhsConjunct : constraintConjunction2) {
 
-			boolean conjunctionHolds = true;
-			for (final SetConstraint<ELEM> rhsConjunct : constraintConjunction2) {
+			boolean disjunctionHolds = false;
+			for (final SetConstraint<ELEM> lhsConjunct : constraintConjunction1) {
 				if (!isStrongerThan(lhsConjunct, rhsConjunct)) {
-					conjunctionHolds = false;
+					disjunctionHolds = true;
 					break;
 				}
 			}
 
-			if (conjunctionHolds) {
-				return true;
+			if (disjunctionHolds) {
+				continue;
+			} else {
+				return false;
 			}
 		}
 
-		return false;
+		return true;
 	}
 
 	public  Set<SetConstraint<ELEM>> getInconsistentSetConstraintConjunction() {
