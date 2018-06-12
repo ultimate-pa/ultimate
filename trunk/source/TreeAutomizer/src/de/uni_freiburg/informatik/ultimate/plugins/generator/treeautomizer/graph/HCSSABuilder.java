@@ -95,30 +95,11 @@ public class HCSSABuilder {
 		mInputTreeRun = inputTreeRun;
 		mScript = script;
 		mSymbolTable = hcSymbolTable;
-//		mTermTransferrer = new TermTransferrer(mScript.getScript());
-//		mTransferToScriptNeeded = false;
-//		mPreCondition = preCondition;
-//		mPostCondition = postCondition;
-//		mCounters = new HashMap<>();
-//		mSubsMap = new HashMap<>();
 		mPredicateUnifier = predicateUnifier;
 
-//		mCurrentHcInVarVersion = new HashMap<>();
 		mResult = buildSSA();
 
 	}
-
-
-
-
-//	private int getOrConstructIndex(final TreeRun<HornClause, IPredicate> tree) {
-//		if (!mIdxMap.containsKey(tree)) {
-//			++mCurrentIdx;
-//			mIdxMap.put(tree, mCurrentIdx);
-//		}
-//		return mIdxMap.get(tree);
-//	}
-
 
 	private HcSsaTreeFlattener buildSSA() {
 		assert mInputTreeRun.getRootSymbol() != null;
@@ -199,7 +180,6 @@ public class HCSSABuilder {
 	 * @return
 	 */
 	private ApplicationTerm getFreshConstant(final Term t) {
-//		final Term res = PredicateUtils.getIndexedConstant(tv.getName(), tv.getSort(), getFreshIndex(tv),
 		final Term res = PredicateUtils.getIndexedConstant("name", t.getSort(), getFreshIndex(t),
 				mIndexedConstants, mScript.getScript());
 		return (ApplicationTerm) res;
@@ -210,86 +190,50 @@ public class HCSSABuilder {
 		return ++mIndexCounter;
 	}
 
-	//	private int getOrConstructIndex(final TreeRun<HornClause, IPredicate> tree) {
-	//		if (!mIdxMap.containsKey(tree)) {
-	//			++mCurrentIdx;
-	//			mIdxMap.put(tree, mCurrentIdx);
-	//		}
-	//		return mIdxMap.get(tree);
-	//	}
+
+	/**
+	 * Given a map from subtrees (TreeRuns) to interpolants in SSA-fomat, this method constructs a TreeRun that
+	 * matches the input TreeRun of this class (in TreeAutomizer: the counterExample from the emptiness check)
+	 * where the HCPredicates representing a Location/HCPredicateSymbol have been replaced by IPredicates representing
+	 * the corresponding interpolant.
+	 *
+	 * @param interpolantsMap represents the tree interpolant as received from the SMT solver
+	 * @return
+	 */
+	public TreeRun<HornClause, IPredicate> buildTreeRunWithBackVersionedInterpolants(
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
+		return buildBackVersionedTreeRunRec(mInputTreeRun, interpolantsMap);
+	}
+
+	private TreeRun<HornClause, IPredicate> buildBackVersionedTreeRunRec(final TreeRun<HornClause, IPredicate> currentSubTree,
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
+		final TreeRun<HornClause, SsaInfo> currentSsaSubtree = mInputSubTreeToSsaSubtree.get(currentSubTree);
+		if (currentSsaSubtree == null) {
+			// we're at a leaf
+			return new TreeRun<>(mPredicateUnifier.getTruePredicate());
+		}
+		final Term currentInterpolantTermInSsa = interpolantsMap.get(currentSubTree);
+		final HornClause currentHornClause = currentSubTree.getRootSymbol();
+
+		// the interpolant term in terms of the TermVariabels of the HornClause
+		final Term backSubstitutedTerm = new Substitution(mScript, currentSsaSubtree.getRoot().mBackSubstitution)
+				.transform(currentInterpolantTermInSsa);
 
 
-		/**
-		 * Given a map from subtrees (TreeRuns) to interpolants in SSA-fomat, this method constructs a TreeRun that
-		 * matches the input TreeRun of this class (in TreeAutomizer: the counterExample from the emptiness check)
-		 * where the HCPredicates representing a Location/HCPredicateSymbol have been replaced by IPredicates representing
-		 * the corresponding interpolant.
-		 *
-		 * @param interpolantsMap represents the tree interpolant as received from the SMT solver
-		 * @return
-		 */
-		public TreeRun<HornClause, IPredicate> buildTreeRunWithBackVersionedInterpolants(
-				final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
-			return buildBackVersionedTreeRunRec(mInputTreeRun, interpolantsMap);
+		final IPredicate backSubstitutedPredicate = mPredicateUnifier.getOrConstructPredicate(backSubstitutedTerm);
+
+		final List<TreeRun<HornClause, IPredicate>> children = new ArrayList<>();
+		for (int i = 0; i < currentSubTree.getChildren().size(); i++) {
+			children.add(buildBackVersionedTreeRunRec(currentSubTree.getChildren().get(i), interpolantsMap));
 		}
 
-
-
-
-	//	private int getOrConstructIndex(final TreeRun<HornClause, IPredicate> tree) {
-		//		if (!mIdxMap.containsKey(tree)) {
-		//			++mCurrentIdx;
-		//			mIdxMap.put(tree, mCurrentIdx);
-		//		}
-		//		return mIdxMap.get(tree);
-		//	}
-
-
-		private TreeRun<HornClause, IPredicate> buildBackVersionedTreeRunRec(final TreeRun<HornClause, IPredicate> currentSubTree,
-				final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
-			final TreeRun<HornClause, SsaInfo> currentSsaSubtree = mInputSubTreeToSsaSubtree.get(currentSubTree);
-			if (currentSsaSubtree == null) {
-				// we're at a leaf
-				return new TreeRun<>(mPredicateUnifier.getTruePredicate());
-			}
-			final Term currentInterpolantTermInSsa = interpolantsMap.get(currentSubTree);
-			final HornClause currentHornClause = currentSubTree.getRootSymbol();
-
-			// the interpolant term in terms of the TermVariabels of the HornClause
-			final Term backSubstitutedTerm = new Substitution(mScript, currentSsaSubtree.getRoot().mBackSubstitution)
-					.transform(currentInterpolantTermInSsa);
-
-//			final Map<Term, Term> hcvarSubstitution = new HashMap<>();
-//			for (int i = 0; !currentHornClause.isHeadFalse() &&  i < currentHornClause.getHeadPredicate().getArity(); i++) {
-////				throw new AssertionError("TODO: rework");
-//				final TermVariable tvInHc = currentHornClause.getTermVariablesForHeadPred().get(i).getTermVariable();
-////				hcvarSubstitution.put(tvInHc, mSymbolTable.getHCOutVar(i, tvInHc.getSort()).getTermVariable());
-//				hcvarSubstitution.put(tvInHc, currentHornClause.getBodyPredToArgs().get(i).get(i));
-//			}
-			// the interpolant term in terms of HcHeadVars
-			final Term backSubstitutedTermWithHcVars = backSubstitutedTerm;
-//					new Substitution(mScript, hcvarSubstitution)
-//					.transform(backSubstitutedTerm);
-
-			final IPredicate backSubstitutedPredicate = mPredicateUnifier
-					.getOrConstructPredicate(backSubstitutedTermWithHcVars);
-
-			final List<TreeRun<HornClause, IPredicate>> children = new ArrayList<>();
-			for (int i = 0; i < currentSubTree.getChildren().size(); i++) {
-				children.add(buildBackVersionedTreeRunRec(currentSubTree.getChildren().get(i), interpolantsMap));
-			}
-
-			return new TreeRun<HornClause, IPredicate>(backSubstitutedPredicate, currentHornClause, children);
-		}
-
-
+		return new TreeRun<HornClause, IPredicate>(backSubstitutedPredicate, currentHornClause, children);
+	}
 
 
 	public HcSsaTreeFlattener getSSA() {
 		return mResult;
 	}
-
-
 
 }
 
