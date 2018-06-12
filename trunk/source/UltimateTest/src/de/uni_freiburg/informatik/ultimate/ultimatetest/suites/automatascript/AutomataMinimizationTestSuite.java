@@ -47,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Minimization test suite.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
@@ -75,20 +75,21 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static final String[] mDirectories = {
 //			"examples/Automata/regression/nwa/operations/minimization",
 //			"examples/Automata/benchmarks/nwa/operations/minimization",
+//			"examples/automata-benchmarks/2017TACAS-Minimization/"
 
-			
+
 			// The following folder is not in the repository.
 			// Copy your automata benchmark sets into this folder.
 			"examples/Automata/benchmarks/nwa/operations/minimization/workspace",
 	};
-	
+
 	private static final String[] mFileEndings = { ".ats" };
 
 	private static final String[] SETTINGS = {
 			"AutomataScript/minimizeSevpa.epf",
 			"AutomataScript/shrinkNwa.epf",
-			"AutomataScript/minimizeNwaPmaxSat.epf",
-			"AutomataScript/minimizeNwaPmaxSatAsymmetric.epf",
+			"AutomataScript/minimizeNwaPmaxSatDirectBi.epf",
+			"AutomataScript/minimizeNwaPmaxSatDirect.epf",
 			"AutomataScript/reduceNwaDirectSimulation.epf",
 			"AutomataScript/reduceNwaDirectSimulationB.epf",
 			"AutomataScript/reduceNwaDelayedSimulation.epf",
@@ -124,12 +125,12 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT.toString(),
 			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT.toString(),
 	};
-	
+
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
 
 	private static final Object[] INTERESTING_OPERATIONS = {
-			"minimizeNwaPmaxSat",
-			"minimizeNwaPmaxSatAsymmetric",
+			"minimizeNwaPmaxSatDirectBi",
+			"minimizeNwaPmaxSatDirect",
 			"minimizeSevpa",
 			"shrinkNwa",
 			"reduceNwaDirectSimulation",
@@ -139,7 +140,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			"reduceNwaDirectFullMultipebbleSimulation",
 			"reduceNwaDelayedFullMultipebbleSimulation",
 	};
-	
+
 	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET =
 			new HashSet<>(Arrays.asList(INTERESTING_OPERATIONS));
 
