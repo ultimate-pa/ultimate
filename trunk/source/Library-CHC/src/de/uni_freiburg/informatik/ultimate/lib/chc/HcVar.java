@@ -97,4 +97,8 @@ public abstract class HcVar implements IProgramVar {
 		return mPrimedConstant;
 	}
 
+	public int getIndex() {
+		return mIndex;
+	}
+
 }

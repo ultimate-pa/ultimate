@@ -11,11 +11,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseDontCarePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol.HornClauseTruePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITerm2ExpressionSymbolTable;
@@ -46,6 +47,8 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	private final NestedMap2<String, List<Sort>, HcPredicateSymbol> mNameToSortsToHornClausePredicateSymbol;
 	private final NestedMap2<Integer, Sort, HcBodyVar> mArgPosToSortToHcOutVar;
 
+	private HornClauseTruePredicateSymbol mTrueHornClausePredSym;
+	private HornClauseDontCarePredicateSymbol mDontCareHornClausePredSym;
 	private final HcPredicateSymbol mFalseHornClausePredSym;
 
 	private final Map<TermVariable, ApplicationTerm> mTermVarToConst = new HashMap<>();
@@ -65,6 +68,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 
 
+
 	/**
 	 *
 	 * @param mgdScript note, this is the solver, not the parser, as a convention every Term that is saved in this
@@ -80,9 +84,12 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		{
 			final ApplicationTerm bot = (ApplicationTerm) mgdScript.getScript().term("false");
 			mFalseHornClausePredSym = new HcPredicateSymbol.HornClauseFalsePredicateSymbol(bot.getFunction());
+
+			final ApplicationTerm top = (ApplicationTerm) mgdScript.getScript().term("true");
+			mTrueHornClausePredSym = new HcPredicateSymbol.HornClauseTruePredicateSymbol(top.getFunction());
+
+			mDontCareHornClausePredSym = new HcPredicateSymbol.HornClauseDontCarePredicateSymbol();
 		}
-//		mTrueHornClausePredSym = new HornClausePredicateSymbol.HornClauseTruePredicateSymbol();
-//		mDontCareHornClausePredSym = new HornClausePredicateSymbol.HornClauseDontCareSymbol();
 		mManagedScript.unlock(this);
 
 		mVersionsMap = new HashMap<>();
@@ -128,13 +135,13 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return mFalseHornClausePredSym;
 	}
 
-//	public HornClausePredicateSymbol getTrueHornClausePredicateSymbol() {
-//		return mTrueHornClausePredSym;
-//	}
-//
-//	public HornClausePredicateSymbol getDontCareHornClausePredicateSymbol() {
-//		return mDontCareHornClausePredSym;
-//	}
+	public HcPredicateSymbol getTrueHornClausePredicateSymbol() {
+		return mTrueHornClausePredSym;
+	}
+
+	public HcPredicateSymbol getDontCareHornClausePredicateSymbol() {
+		return mDontCareHornClausePredSym;
+	}
 
 
 	/*
@@ -214,33 +221,33 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 
 
-	/**
-	 * Every TermVariable that appears in a HornClause has a default constant associated with it, which is declared
-	 * up front. (used for hoare triple checks)
-	 * @param fv
-	 * @return
-	 */
-	public Term getConstForTermVar(final TermVariable fv) {
-		final ApplicationTerm res = mTermVarToConst.get(fv);
-		assert res != null;
-		return res;
-	}
+//	/**
+//	 * Every TermVariable that appears in a HornClause has a default constant associated with it, which is declared
+//	 * up front. (used for hoare triple checks)
+//	 * @param fv
+//	 * @return
+//	 */
+//	public Term getConstForTermVar(final TermVariable fv) {
+//		final ApplicationTerm res = mTermVarToConst.get(fv);
+//		assert res != null;
+//		return res;
+//	}
 
-	public boolean hasConstForTermVar(final TermVariable fv) {
-		return mTermVarToConst.containsKey(fv);
-	}
+//	public boolean hasConstForTermVar(final TermVariable fv) {
+//		return mTermVarToConst.containsKey(fv);
+//	}
 
-	public HcBodyVar getHCOutVar(final int i, final Sort sort) {
-		final HcBodyVar result = mArgPosToSortToHcOutVar.get(i, sort);
-		if (result == null) {
-			throw new AssertionError();
-		}
-		return result;
-	}
+//	public HcBodyVar getHCOutVar(final int i, final Sort sort) {
+//		final HcBodyVar result = mArgPosToSortToHcOutVar.get(i, sort);
+//		if (result == null) {
+//			throw new AssertionError();
+//		}
+//		return result;
+//	}
 
-	public String getHeadVarName(final int i, final Sort sort) {
-		return "headvar_" + i + "_" + sort.getName();
-	}
+//	public String getHeadVarName(final int i, final Sort sort) {
+//		return "headvar_" + i + "_" + sort.getName();
+//	}
 
 	@Override
 	public BoogieConst getProgramConst(final ApplicationTerm term) {

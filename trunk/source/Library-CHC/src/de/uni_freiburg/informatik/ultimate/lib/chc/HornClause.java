@@ -117,7 +117,7 @@ public class HornClause implements IRankedLetter {
 
 		mHeadIsFalse = headPred == null;
 		mHeadPredicate = headPred;
-		mHeadPredVariables = mHeadIsFalse ? null : Collections.unmodifiableList(headVars);
+		mHeadPredVariables = mHeadIsFalse ? Collections.emptyList() : Collections.unmodifiableList(headVars);
 		mBodyPreds = Collections.unmodifiableList(bodyPreds);
 		mBodyPredToArgs = Collections.unmodifiableList(bodyPredToArgs);
 		mBodyVariables = Collections.unmodifiableSet(bodyVars);

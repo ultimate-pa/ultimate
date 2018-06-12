@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -111,7 +111,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		mBackendSmtSolverScript = backendSmtSolverScript;
 
 		mLogger = logger;
-		mSinkState = predicateFactory.getDontCarePredicate();
+		mSinkState = predicateFactory.getDontCareLocationPredicate();
 		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript.getScript());
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
@@ -141,7 +141,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		ps.add(state1);
 		ps.add(state2);
 
-		return mPredicateFactory.newPredicate(state1PredSymbols, constructFreshSerialNumber(), conjoinedFormula,
+		return mPredicateFactory.newPredicate(state1PredSymbols, //constructFreshSerialNumber(),
+				conjoinedFormula,
 				Arrays.asList(state1.getFormula().getFreeVars()));
 	}
 
@@ -171,7 +172,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		if (mergedLocations.isEmpty()) {
 			return mPredicateFactory.newPredicate(mergedFormula);
 		} else {
-			return mPredicateFactory.newPredicate(mergedLocations, constructFreshSerialNumber(), mergedFormula,
+			return mPredicateFactory.newPredicate(mergedLocations, //constructFreshSerialNumber(),
+					mergedFormula,
 					varsForHcPred);
 		}
 	}

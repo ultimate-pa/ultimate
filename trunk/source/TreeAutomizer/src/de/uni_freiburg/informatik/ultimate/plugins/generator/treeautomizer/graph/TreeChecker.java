@@ -90,13 +90,13 @@ public class TreeChecker {
 		return mSSABuilder.buildTreeRunWithBackVersionedInterpolants(interpolantsMap);
 	}
 
-	protected HCSsa getSSA() {
+	protected HcSsaTreeFlattener getSSA() {
 		return mSSABuilder.getSSA();
 	}
 
 	protected LBool checkTrace(Object lockOwner) {
 		
-		final HCSsa ssa = getSSA();
+		final HcSsaTreeFlattener ssa = getSSA();
 		final Term[] nestedExp = ssa.getFlattenedTermList();
 		HashSet<String> visited = new HashSet<>();
 		for (final Term t : nestedExp) {

@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -67,7 +66,7 @@ public class HCSSABuilder {
 	private final ManagedScript mScript;
 	private final PredicateUnifier mPredicateUnifier;
 
-	private final HCSsa mResult;
+	private final HcSsaTreeFlattener mResult;
 	private int mIndexCounter = -1;
 
 	/**
@@ -109,9 +108,7 @@ public class HCSSABuilder {
 
 	}
 
-	public HCSsa getSSA() {
-		return mResult;
-	}
+
 
 
 //	private int getOrConstructIndex(final TreeRun<HornClause, IPredicate> tree) {
@@ -123,78 +120,29 @@ public class HCSSABuilder {
 //	}
 
 
-	/**
-	 * Given a map from subtrees (TreeRuns) to interpolants in SSA-fomat, this method constructs a TreeRun that
-	 * matches the input TreeRun of this class (in TreeAutomizer: the counterExample from the emptiness check)
-	 * where the HCPredicates representing a Location/HCPredicateSymbol have been replaced by IPredicates representing
-	 * the corresponding interpolant.
-	 *
-	 * @param interpolantsMap represents the tree interpolant as received from the SMT solver
-	 * @return
-	 */
-	public TreeRun<HornClause, IPredicate> buildTreeRunWithBackVersionedInterpolants(
-			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
-		return buildBackVersionedTreeRunRec(mInputTreeRun, interpolantsMap);
-	}
-
-	private TreeRun<HornClause, IPredicate> buildBackVersionedTreeRunRec(final TreeRun<HornClause, IPredicate> currentSubTree,
-			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
-		final TreeRun<HornClause, SsaInfo> currentSsaSubtree = mInputSubTreeToSsaSubtree.get(currentSubTree);
-		if (currentSsaSubtree == null) {
-			// we're at a leaf
-			return new TreeRun<>(mPredicateUnifier.getTruePredicate());
-		}
-		final Term currentInterpolantTermInSsa = interpolantsMap.get(currentSubTree);
-		final HornClause currentHornClause = currentSubTree.getRootSymbol();
-
-		// the interpolant term in terms of the TermVariabels of the HornClause
-		final Term backSubstitutedTerm = new Substitution(mScript, currentSsaSubtree.getRoot().mBackSubstitution)
-				.transform(currentInterpolantTermInSsa);
-
-		final Map<Term, Term> hcvarSubstitution = new HashMap<>();
-		for (int i = 0; !currentHornClause.isHeadFalse() &&  i < currentHornClause.getHeadPredicate().getArity(); i++) {
-			throw new AssertionError("TODO: rework");
-//			final TermVariable tvInHc = currentHornClause.getTermVariablesForHeadPred().get(i);
-//			hcvarSubstitution.put(tvInHc, mSymbolTable.getHCOutVar(i, tvInHc.getSort()).getTermVariable());
-		}
-		// the interpolant term in terms of hcOutVars
-		final Term backSubstitutedTermWithHcVars = new Substitution(mScript, hcvarSubstitution)
-				.transform(backSubstitutedTerm);
-
-		final IPredicate backSubstitutedPredicate = mPredicateUnifier
-				.getOrConstructPredicate(backSubstitutedTermWithHcVars);
-
-		final List<TreeRun<HornClause, IPredicate>> children = new ArrayList<>();
-		for (int i = 0; i < currentSubTree.getChildren().size(); i++) {
-			children.add(buildBackVersionedTreeRunRec(currentSubTree.getChildren().get(i), interpolantsMap));
-		}
-
-		return new TreeRun<HornClause, IPredicate>(backSubstitutedPredicate, currentHornClause, children);
-	}
-
-	private HCSsa buildSSA() {
+	private HcSsaTreeFlattener buildSSA() {
 		assert mInputTreeRun.getRootSymbol() != null;
 		assert mInputTreeRun.getRoot() != null;
 
 		// the empty list should work here, because there is no head predicate at the root..
 		final TreeRun<HornClause, SsaInfo> resultTreeRun = buildSSArec(mInputTreeRun, Collections.emptyList());
 
-		return new HCSsa(resultTreeRun);
+		return new HcSsaTreeFlattener(resultTreeRun);
 	}
 
 	private TreeRun<HornClause, SsaInfo> buildSSArec(final TreeRun<HornClause, IPredicate> inputTreeRun,
-			final List<ApplicationTerm> headPredSsaConstants) {
+			final List<Term> headPredSsaConstants) {
 
 		final HornClause currentHornClause = inputTreeRun.getRootSymbol();
 
 		final SsaInfo ssaInfo = buildSsaInfo(inputTreeRun.getRootSymbol(), headPredSsaConstants);
 
-		assert ssaInfo.mSubstitutionForBodyPred.size() == currentHornClause.getNoBodyPredicates();
+		assert ssaInfo.getSubstitutionSize() == currentHornClause.getNoBodyPredicates();
 
 		final List<TreeRun<HornClause, SsaInfo>> subTreeRuns = new ArrayList<>();
 		for (int i = 0; i < currentHornClause.getNoBodyPredicates(); i++) {
 			final TreeRun<HornClause, SsaInfo> subTreeRun =
-					buildSSArec(inputTreeRun.getChildren().get(i), ssaInfo.mSubstitutionForBodyPred.get(i));
+					buildSSArec(inputTreeRun.getChildren().get(i), ssaInfo.getSubstitution(i));
 			subTreeRuns.add(subTreeRun);
 		}
 
@@ -205,46 +153,44 @@ public class HCSSABuilder {
 		return res;
 	}
 
-	private SsaInfo buildSsaInfo(final HornClause rootSymbol, final List<ApplicationTerm> headPredConstants) {
-		throw new AssertionError("TODO: rework");
+	private SsaInfo buildSsaInfo(final HornClause rootSymbol, final List<Term> headPredConstants) {
+		final Map<Term, Term> substitution = new HashMap<>();
 
-//		final Map<Term, Term> substitution = new HashMap<>();
-//
-//
-//		for (int i = 0; i < rootSymbol.getTermVariablesForHeadPred().size(); i++) {
-//			substitution.put(rootSymbol.getTermVariablesForHeadPred().get(i), headPredConstants.get(i));
-//		}
-//
-//		final List<List<ApplicationTerm>> substitutionForBodyPred = new ArrayList<>();
-//
-//		for (int i = 0; i < rootSymbol.getBodyPredicates().size(); i++) {
-//			final List<ApplicationTerm> subsForCurrentBodyPred = new ArrayList<>();
-//			for (int j = 0; j < rootSymbol.getBodyPredToTermVariables().get(i).size(); j++) {
-//				final Term bptv = rootSymbol.getBodyPredToTermVariables().get(i).get(j);
-//				if (substitution.keySet().contains(bptv)) {
-//					// tv already in substitution because already present in head
-//					subsForCurrentBodyPred.add((ApplicationTerm) substitution.get(bptv));
-//				} else {
-//					//
-//					final ApplicationTerm fresh = getFreshConstant(bptv);
-//					substitution.put(bptv, fresh);
-//					subsForCurrentBodyPred.add(fresh);
-//				}
-//
-//			}
-//			assert subsForCurrentBodyPred.size() == rootSymbol.getBodyPredicates().get(i).getArity();
-//			substitutionForBodyPred.add(Collections.unmodifiableList(subsForCurrentBodyPred));
-//		}
-//
-//
-//		/*
-//		 *  the substituted formula has the ssa-renaming
-//		 *  --> including the closing, i.e., constants instead of variables
-//		 *  it contains fresh constants (unless all variabels from the head are unchanged in the body pos)
-//		 */
-//		final Term substitutedFormula = new Substitution(mScript, substitution).transform(rootSymbol.getFormula());
-//
-//		return new SsaInfo(rootSymbol, substitution, substitutedFormula, substitutionForBodyPred);
+		for (int i = 0; i < rootSymbol.getTermVariablesForHeadPred().size(); i++) {
+			substitution.put(rootSymbol.getTermVariablesForHeadPred().get(i).getTerm(), headPredConstants.get(i));
+		}
+
+		final List<List<Term>> substitutionForBodyPred = new ArrayList<>();
+
+		for (int i = 0; i < rootSymbol.getBodyPredicates().size(); i++) {
+			final List<Term> subsForCurrentBodyPred = new ArrayList<>();
+			for (int j = 0; j < rootSymbol.getBodyPredToArgs().get(i).size(); j++) {
+				final Term bptv = rootSymbol.getBodyPredToArgs().get(i).get(j);
+				if (substitution.keySet().contains(bptv)) {
+					// tv already in substitution because already present in head
+					subsForCurrentBodyPred.add(substitution.get(bptv));
+				} else {
+					//
+					final ApplicationTerm fresh = getFreshConstant(bptv);
+					substitution.put(bptv, fresh);
+					subsForCurrentBodyPred.add(fresh);
+				}
+
+			}
+			assert subsForCurrentBodyPred.size() == rootSymbol.getBodyPredicates().get(i).getArity();
+			substitutionForBodyPred.add(Collections.unmodifiableList(subsForCurrentBodyPred));
+		}
+
+
+		/*
+		 *  the substituted formula has the ssa-renaming
+		 *  --> including the closing, i.e., constants instead of variables
+		 *  it contains fresh constants (unless all variabels from the head are unchanged in the body pos)
+		 */
+		final Term substitutedFormula = new Substitution(mScript, substitution)
+				.transform(rootSymbol.getConstraintFormula());
+
+		return new SsaInfo(rootSymbol, substitution, substitutedFormula, substitutionForBodyPred);
 	}
 
 	/**
@@ -252,17 +198,95 @@ public class HCSSABuilder {
 	 * @param tv
 	 * @return
 	 */
-	private ApplicationTerm getFreshConstant(final TermVariable tv) {
-//		mScript.lock(this);
-		final Term res = PredicateUtils.getIndexedConstant(tv.getName(), tv.getSort(), getFreshIndex(tv), mIndexedConstants,
-				mScript.getScript());
-//		mScript.unlock(this);
+	private ApplicationTerm getFreshConstant(final Term t) {
+//		final Term res = PredicateUtils.getIndexedConstant(tv.getName(), tv.getSort(), getFreshIndex(tv),
+		final Term res = PredicateUtils.getIndexedConstant("name", t.getSort(), getFreshIndex(t),
+				mIndexedConstants, mScript.getScript());
 		return (ApplicationTerm) res;
 	}
 
 
-	private int getFreshIndex(final TermVariable tv) {
+	private int getFreshIndex(final Term t) {
 		return ++mIndexCounter;
+	}
+
+	//	private int getOrConstructIndex(final TreeRun<HornClause, IPredicate> tree) {
+	//		if (!mIdxMap.containsKey(tree)) {
+	//			++mCurrentIdx;
+	//			mIdxMap.put(tree, mCurrentIdx);
+	//		}
+	//		return mIdxMap.get(tree);
+	//	}
+
+
+		/**
+		 * Given a map from subtrees (TreeRuns) to interpolants in SSA-fomat, this method constructs a TreeRun that
+		 * matches the input TreeRun of this class (in TreeAutomizer: the counterExample from the emptiness check)
+		 * where the HCPredicates representing a Location/HCPredicateSymbol have been replaced by IPredicates representing
+		 * the corresponding interpolant.
+		 *
+		 * @param interpolantsMap represents the tree interpolant as received from the SMT solver
+		 * @return
+		 */
+		public TreeRun<HornClause, IPredicate> buildTreeRunWithBackVersionedInterpolants(
+				final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
+			return buildBackVersionedTreeRunRec(mInputTreeRun, interpolantsMap);
+		}
+
+
+
+
+	//	private int getOrConstructIndex(final TreeRun<HornClause, IPredicate> tree) {
+		//		if (!mIdxMap.containsKey(tree)) {
+		//			++mCurrentIdx;
+		//			mIdxMap.put(tree, mCurrentIdx);
+		//		}
+		//		return mIdxMap.get(tree);
+		//	}
+
+
+		private TreeRun<HornClause, IPredicate> buildBackVersionedTreeRunRec(final TreeRun<HornClause, IPredicate> currentSubTree,
+				final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
+			final TreeRun<HornClause, SsaInfo> currentSsaSubtree = mInputSubTreeToSsaSubtree.get(currentSubTree);
+			if (currentSsaSubtree == null) {
+				// we're at a leaf
+				return new TreeRun<>(mPredicateUnifier.getTruePredicate());
+			}
+			final Term currentInterpolantTermInSsa = interpolantsMap.get(currentSubTree);
+			final HornClause currentHornClause = currentSubTree.getRootSymbol();
+
+			// the interpolant term in terms of the TermVariabels of the HornClause
+			final Term backSubstitutedTerm = new Substitution(mScript, currentSsaSubtree.getRoot().mBackSubstitution)
+					.transform(currentInterpolantTermInSsa);
+
+//			final Map<Term, Term> hcvarSubstitution = new HashMap<>();
+//			for (int i = 0; !currentHornClause.isHeadFalse() &&  i < currentHornClause.getHeadPredicate().getArity(); i++) {
+////				throw new AssertionError("TODO: rework");
+//				final TermVariable tvInHc = currentHornClause.getTermVariablesForHeadPred().get(i).getTermVariable();
+////				hcvarSubstitution.put(tvInHc, mSymbolTable.getHCOutVar(i, tvInHc.getSort()).getTermVariable());
+//				hcvarSubstitution.put(tvInHc, currentHornClause.getBodyPredToArgs().get(i).get(i));
+//			}
+			// the interpolant term in terms of HcHeadVars
+			final Term backSubstitutedTermWithHcVars = backSubstitutedTerm;
+//					new Substitution(mScript, hcvarSubstitution)
+//					.transform(backSubstitutedTerm);
+
+			final IPredicate backSubstitutedPredicate = mPredicateUnifier
+					.getOrConstructPredicate(backSubstitutedTermWithHcVars);
+
+			final List<TreeRun<HornClause, IPredicate>> children = new ArrayList<>();
+			for (int i = 0; i < currentSubTree.getChildren().size(); i++) {
+				children.add(buildBackVersionedTreeRunRec(currentSubTree.getChildren().get(i), interpolantsMap));
+			}
+
+			return new TreeRun<HornClause, IPredicate>(backSubstitutedPredicate, currentHornClause, children);
+		}
+
+
+
+
+	public HcSsaTreeFlattener getSSA() {
+		return mResult;
 	}
 
 
@@ -280,7 +304,7 @@ class SsaInfo {
 	final Map<Term, Term> mSubstitution;
 	final Map<Term, Term> mBackSubstitution;
 	final Term mSsaFormula;
-	final List<List<ApplicationTerm>> mSubstitutionForBodyPred;
+	final List<List<Term>> mSubstitutionForBodyPred;
 
 	/**
 	 * constructs an empty SSaInfo (its fields should not be accessed..
@@ -301,7 +325,7 @@ class SsaInfo {
 	 * @param substitutionForBodyPred the ssa-constant for each position in each body pred of the hornclause
 	 */
 	public SsaInfo(final HornClause hornClause, final Map<Term, Term> substitution, final Term substitutedFormula,
-			final List<List<ApplicationTerm>> substitutionForBodyPred) {
+			final List<List<Term>> substitutionForBodyPred) {
 		mHornClause = hornClause;
 		mSubstitution = Collections.unmodifiableMap(substitution);
 		mSsaFormula = substitutedFormula;
@@ -312,5 +336,13 @@ class SsaInfo {
 			backSubstitution.put(en.getValue(), en.getKey());
 		}
 		mBackSubstitution = Collections.unmodifiableMap(backSubstitution);
+	}
+
+	int getSubstitutionSize() {
+		return mSubstitutionForBodyPred.size();
+	}
+
+	List<Term> getSubstitution(final int i) {
+		return mSubstitutionForBodyPred.get(i);
 	}
 }

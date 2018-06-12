@@ -35,8 +35,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -45,8 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 
 /**
  * A factory for HornClause Predicates.
@@ -55,13 +54,15 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
  */
-public class HCPredicateFactory extends PredicateFactory {
+public class HCPredicateFactory extends BasicPredicateFactory {
 
-	private final ManagedScript mBackendSmtSolverScript;
-	private final HCPredicate mDontCarePredicate;
-	private final HCPredicate mTruePredicate;
-	private final HCPredicate mFalsePredicate;
+	private final ManagedScript mMgdScript;
+	private final HCPredicate mDontCareLocationPredicate;
+	private final HCPredicate mTrueLocationPredicate;
+	private final HCPredicate mFalseLocationPredicate;
 	private final HcSymbolTable mHCSymbolTable;
+
+	private final Map<HcPredicateSymbol, HCPredicate> mLocToTruePred;
 
 	/**
 	 * The constructor of HornClause Factory
@@ -76,18 +77,15 @@ public class HCPredicateFactory extends PredicateFactory {
 			final HcSymbolTable symbolTable,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
-		mBackendSmtSolverScript = mgdScript;
+		mMgdScript = mgdScript;
 		mHCSymbolTable = symbolTable;
 
-		mBackendSmtSolverScript.lock(this);
-		assert false;
-		mDontCarePredicate = null; //newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
-//				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
-		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
-		mTruePredicate = null; //newPredicate(symbolTable.getTrueHornClausePredicateSymbol(),
-//				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
-		mBackendSmtSolverScript.unlock(this);
+		mLocToTruePred = new HashMap<>();
+
+		mDontCareLocationPredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
+				super.getDontCareTerm(), Collections.emptyList());
+		mFalseLocationPredicate = getTruePredicateWithLocation(symbolTable.getFalseHornClausePredicateSymbol());
+		mTrueLocationPredicate = getTruePredicateWithLocation(symbolTable.getTrueHornClausePredicateSymbol());
 	}
 
 	/**
@@ -97,45 +95,38 @@ public class HCPredicateFactory extends PredicateFactory {
 	 *            The given symbol
 	 * @return The new true HCPredicate
 	 */
-	public HCPredicate createTruePredicateWithLocation(final HcPredicateSymbol headPredicate) {
-		mBackendSmtSolverScript.lock(this);
-		final HCPredicate result = newPredicate(headPredicate, mBackendSmtSolverScript.term(this, "true"),
-				Collections.emptyList());
-		mBackendSmtSolverScript.unlock(this);
+	public HCPredicate getTruePredicateWithLocation(final HcPredicateSymbol headPredicate) {
+		HCPredicate result = mLocToTruePred.get(headPredicate);
+		if (result == null) {
+			mMgdScript.lock(this);
+			result = newPredicate(headPredicate, mMgdScript.term(this, "true"), Collections.emptyList());
+			mMgdScript.unlock(this);
+			mLocToTruePred.put(headPredicate, result);
+		}
 		return result;
 	}
 
-	public HCPredicate getTruePredicate() {
-		return mTruePredicate;
+	public HCPredicate getTrueLocationPredicate() {
+		return mTrueLocationPredicate;
 	}
 
-	public HCPredicate getFalsePredicate() {
-		return mFalsePredicate;
+	public HCPredicate getFalseLocationPredicate() {
+		return mFalseLocationPredicate;
 	}
 
-	public HCPredicate getDontCarePredicate() {
-		return mDontCarePredicate;
+	public HCPredicate getDontCareLocationPredicate() {
+		return mDontCareLocationPredicate;
 	}
 
 	public HCPredicate newPredicate(final HcPredicateSymbol loc, final Term term,
 			final List<TermVariable> vars) {
-		return newPredicate(Collections.singleton(loc), 0, term, vars);
+		return newPredicate(Collections.singleton(loc), term, vars);
 	}
 
-	public HCPredicate newPredicate(final HcPredicateSymbol loc, final int serialNumber,
-			final Term term, final List<TermVariable> vars) {
-		return newPredicate(Collections.singleton(loc), serialNumber, term, vars);
-	}
-
-	public HCPredicate newPredicate(final Set<HcPredicateSymbol> loc,
-			final Term term, final List<TermVariable> vars) {
-		return newPredicate(loc, 0, term, vars);
-	}
-	public HCPredicate newPredicate(final Set<HcPredicateSymbol> loc, final int serialNumber,
-			final Term term, final List<TermVariable> vars) {
+	public HCPredicate newPredicate(final Set<HcPredicateSymbol> loc, final Term term, final List<TermVariable> vars) {
 		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars);
 
-		final int finalSerialNumber = HashUtils.hashHsieh(1000000007, loc, term, vars, serialNumber);
+		final int finalSerialNumber = constructFreshSerialNumber();
 		return new HCPredicate(loc, finalSerialNumber, chovant.getNormalizedTerm(), chovant.getProgramVars(),
 				computeClosedFormula(chovant.getNormalizedTerm()), vars);
 	}
@@ -155,13 +146,22 @@ public class HCPredicateFactory extends PredicateFactory {
 		return newPredicate(sym, term, vars);
 	}*/
 
+//	@Override
+//	protected TermVarsProc constructTermVarsProc(final Term term) {
+//		throw new UnsupportedOperationException("concept of TermVarsProc does not apply for Chc problem");
+//	}
+
 	private Term computeClosedFormula(final Term formula) {
+		if (isDontCare(formula)) {
+			return formula;
+		}
+
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable fv : formula.getFreeVars()) {
 			final ApplicationTerm defaultConstantForFv = mSymbolTable.getProgramVar(fv).getDefaultConstant();
 			substitutionMapping.put(fv, defaultConstantForFv);
 		}
-		return new Substitution(mBackendSmtSolverScript, substitutionMapping).transform(formula);
+		return new Substitution(mMgdScript, substitutionMapping).transform(formula);
 	}
 
 	/**
@@ -176,18 +176,23 @@ public class HCPredicateFactory extends PredicateFactory {
 		private final Set<IProgramVar> mProgramVars;
 
 		public ComputeHcOutVarsAndNormalizeTerm(final Term formula, final List<TermVariable> variables) {
-			final Map<Term, Term> normalizingSubstitution = new HashMap<>();
-			final Set<IProgramVar> hcOutVars = new HashSet<>();
+			if (isDontCare(formula)) {
+				mNormalizedTerm = formula;
+				mProgramVars = Collections.emptySet();
+			} else {
+				final Map<Term, Term> normalizingSubstitution = new HashMap<>();
+				final Set<IProgramVar> hcOutVars = new HashSet<>();
 
-			for (int i = 0; i < variables.size(); i++) {
-				throw new AssertionError("TODO: rework");
-//				final HcBodyVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
-//				hcOutVars.add(hcOutVar);
-//				normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
+				for (int i = 0; i < variables.size(); i++) {
+					throw new AssertionError("TODO: rework");
+					//				final HcBodyVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
+					//				hcOutVars.add(hcOutVar);
+					//				normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
+				}
+
+				mNormalizedTerm = new Substitution(mScript, normalizingSubstitution).transform(formula);
+				mProgramVars = hcOutVars;
 			}
-
-			mNormalizedTerm = new Substitution(mScript, normalizingSubstitution).transform(formula);
-			mProgramVars = hcOutVars;
 		}
 
 		public Term getNormalizedTerm() {

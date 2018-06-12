@@ -33,12 +33,11 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -61,14 +60,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class HCHoareTripleChecker {
 
-//	private final IHoareTripleChecker mHoareTripleChecker;
 	private final PredicateUnifier mPredicateUnifier;
-	private final HCPredicateFactory mPredicateFactory;
-//	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final ManagedScript mManagedScript;
 	private final HcSymbolTable mSymbolTable;
-	private int mFreshConstantCounter;
-	private final Map<TermVariable, Term> mTvToExtraVar = new HashMap<>();
 
 	/**
 	 * Constructor of HCHoareTripleChecker
@@ -76,32 +70,40 @@ public class HCHoareTripleChecker {
 	 * @param cfgSmtToolkit
 	 * */
 	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, //final CfgSmtToolkit cfgSmtToolkit,
-			final ManagedScript mgdScript,
-			final HCPredicateFactory predicateFactory, final HcSymbolTable symbolTable) {
+			final ManagedScript mgdScript, final HcSymbolTable symbolTable) {
 		mPredicateUnifier = predicateUnifier;
-//		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
-		mPredicateFactory = predicateFactory;
-//		mCfgSmtToolkit = cfgSmtToolkit;
-//		mManagedScript = cfgSmtToolkit.getManagedScript();
 		mManagedScript = mgdScript;
 		mSymbolTable = symbolTable;
 	}
 
 
-	private Term assertPreconditionsAndGetConstraint(final List<IPredicate> pre, final HornClause hornClause) {
-		throw new AssertionError("TODO: rework");
-//		mManagedScript.echo(this, new QuotedObject("starting Hoare triple check"));
-//
-//		Term preConditionFormula = mManagedScript.term(this, "true");
-//
-//		for (int i = 0; i < pre.size(); i++) {
-//			final Term preCondConjunct = unify(pre.get(i), hornClause.getTermVariablesForPredPos(i));
-//			final Term closedPreCondConjunct = close(preCondConjunct, mSymbolTable);
-//			preConditionFormula = SmtUtils.and(mManagedScript.getScript(), preConditionFormula, closedPreCondConjunct);
-//		}
-//		mManagedScript.assertTerm(this, preConditionFormula);
-//
-//		return close(hornClause.getFormula(), mSymbolTable);
+	/**
+	 *
+	 * Substitute HcHeadVars according to bodyPredArgs of hornclause (in particular their default constants), in pre
+	 * predicates, assert them.
+	 *
+	 * @param pre preState predicates, still in terms of HcHeadVars
+	 * @param hornClause
+	 * @return
+	 */
+	private void assertPreconditions(final List<IPredicate> pre, final HornClause hornClause) {
+		mManagedScript.echo(this, new QuotedObject("starting Hoare triple check"));
+
+		for (int bodyComponentIndex = 0; bodyComponentIndex < pre.size(); bodyComponentIndex++) {
+			mManagedScript.echo(this, new QuotedObject("asserting body component nr " + bodyComponentIndex + ":"));
+
+			final Map<Term, Term> subs = new HashMap<>();
+			final IPredicate currentPre = pre.get(bodyComponentIndex);
+			for (final TermVariable freeVar : currentPre.getFormula().getFreeVars()) {
+				final HcHeadVar headVar = (HcHeadVar) mSymbolTable.getProgramVar(freeVar);
+				final Term bodyArg = hornClause.getBodyPredToArgs().get(bodyComponentIndex).get(headVar.getIndex());
+				subs.put(headVar.getTermVariable(), bodyArg);
+			}
+
+			final Term preCondConjunct = new Substitution(mManagedScript, subs).transform(currentPre.getFormula());
+			final Term closedPreCondConjunct = close(preCondConjunct);
+			mManagedScript.assertTerm(this, closedPreCondConjunct);
+		}
 	}
 
 	/**
@@ -115,6 +117,7 @@ public class HCHoareTripleChecker {
 	 */
 	public Validity check(final List<IPredicate> preOld, final HornClause hornClause, final IPredicate succ) {
 
+		/* precondition */
 		/*
 		 * sanitize pre
 		 * -> for example if the HornClause not have any body predicates, just take "true" as precondition
@@ -131,13 +134,18 @@ public class HCHoareTripleChecker {
 		mManagedScript.lock(this);
 		mManagedScript.push(this, 1);
 
-		final Term closedConstraint = assertPreconditionsAndGetConstraint(pre, hornClause);
+		assertPreconditions(pre, hornClause);
+
+		/* constraint */
+		mManagedScript.echo(this, new QuotedObject("asserting horn clause constraint: "));
+		final Term closedConstraint = close(hornClause.getConstraintFormula());
 		mManagedScript.assertTerm(this, closedConstraint);
 
-		final Term negatedPostConditionFormula = SmtUtils.not(mManagedScript.getScript(),
-				unify(null, null));
-//				unify(succ, hornClause.getTermVariablesForHeadPred()));
-		final Term closedNegatedPostConditionFormula = close(negatedPostConditionFormula, mSymbolTable);
+		/* postcondition */
+		// the postcondition can keeps its head vars, as the Hornclause did
+		mManagedScript.echo(this, new QuotedObject("asserting negated post condition: "));
+		final Term closedNegatedPostConditionFormula = SmtUtils.not(mManagedScript.getScript(),
+				succ.getClosedFormula());
 		mManagedScript.assertTerm(this, closedNegatedPostConditionFormula);
 
 		final LBool satResult = mManagedScript.checkSat(this);
@@ -149,107 +157,15 @@ public class HCHoareTripleChecker {
 	}
 
 
-	private Term close(final Term term, final HcSymbolTable symbolTable) {
+	private Term close(final Term term) {
 		final Map<Term, Term> substitution = new HashMap<>();
 
 		for (final TermVariable fv : term.getFreeVars()) {
-			if (symbolTable.hasConstForTermVar(fv)) {
-				// the variable occurs in one of the input hornClauses --> we already have a constant declared for it
-				substitution.put(fv, symbolTable.getConstForTermVar(fv));
-			} else {
-				/*
-				 *  the variable was introduced at unification because we could not match all positions (because the
-				 *  predicate symbol in the Horn clause has lower arity than the current pre/postcondition predicate)
-				 */
-				substitution.put(fv, getExtraConst(fv));
-			}
+			final IProgramVar pv = mSymbolTable.getProgramVar(fv);
+			substitution.put(fv, pv.getDefaultConstant());
 		}
 
 		return new Substitution(mManagedScript, substitution).transform(term);
-	}
-
-	private Term  getExtraConst(final TermVariable tv) {
-		Term result = mTvToExtraVar.get(tv);
-		if (result == null) {
-			final String freshConstantName = "c_any_" + tv.toString() /*.substring(2, fv.toString().length())*/ + "_" +
-					+ mFreshConstantCounter++;
-			mManagedScript.declareFun(this, freshConstantName, new Sort[0], tv.getSort());
-			result =  mManagedScript.term(this, freshConstantName);
-			mTvToExtraVar.put(tv, result);
-		}
-		return result;
-	}
-
-
-	private Term unify(final IPredicate iPredicate, final List<TermVariable> termVariablesForPredPos) {
-		throw new AssertionError("TODO: rework");
-//		final Map<Term, Term> substitution = new HashMap<>();
-//		for (final IProgramVar pvar : iPredicate.getVars()) {
-//			final HcBodyVar hcvar = (HcBodyVar) pvar;
-//
-//			if (termVariablesForPredPos.size() > hcvar.getArgumentPos()) {
-//				substitution.put(hcvar.getTermVariable(), termVariablesForPredPos.get(hcvar.getArgumentPos()));
-//			} else {
-//				/*
-//				 *  the predicate we want to unify with has less arguments than the hornClause's head predicate
-//				 *   --> introduce a fresh variable
-//				 */
-//				substitution.put(hcvar.getTermVariable(),
-//						mManagedScript.constructFreshTermVariable("any", hcvar.getSort()));
-//			}
-//		}
-//		return new Substitution(mManagedScript, substitution).transform(iPredicate.getFormula());
-	}
-
-	/**
-	 * Substitute the formula of an IPredicate over HCOutVars through a given list of ProgramVariabls (appearing in a
-	 *  TransFormula)
-	 *
-	 * @param predicate
-	 * @param programVars
-	 * @param predicateArity
-	 * @return
-	 */
-	private Term substitutePredicateFormula(final IPredicate predicate, final List<IProgramVar> programVars) {
-		final int predicateArity = programVars.size();
-		final Map<Integer, HcBodyVar> sortedHCOutVars = sortHCOutVars(predicate);//predicate.getVars());
-//		assert programVars.size() >= predicate.getVars().size();
-
-		final Map<Term, Term> substitution = new HashMap<>();
-		for (int argPos = 0; argPos < predicateArity; argPos++) {
-			final HcBodyVar predVarAtArgPos = sortedHCOutVars.get(argPos);
-			if (predVarAtArgPos != null) {
-				substitution.put(
-//						sortedHCOutVars.get(argPos).getTermVariable(),
-						predVarAtArgPos.getTermVariable(),
-						programVars.get(argPos).getDefaultConstant());
-			}
-		}
-		Term substitutedFormula =
-				new Substitution(mManagedScript, substitution).transform(predicate.getFormula());
-
-		substitutedFormula = replaceFreeVarsWithFreshConstants(substitutedFormula);
-
-		return substitutedFormula;
-	}
-
-	private Term replaceFreeVarsWithFreshConstants(final Term formula) {
-		final Map<Term, Term> substitution = new HashMap<>();
-		for (final TermVariable fv : formula.getFreeVars()) {
-			substitution.put(fv,
-					SmtUtils.buildNewConstant(mManagedScript.getScript(), fv.getName(), fv.getSort().getName()));
-		}
-		return new Substitution(mManagedScript, substitution).transform(formula);
-	}
-
-	private Map<Integer, HcBodyVar> sortHCOutVars(final IPredicate pred) {
-		throw new AssertionError("TODO: rework");
-//		final Map<Integer, HcBodyVar> result = new HashMap<>();
-//		for (final IProgramVar var : pred.getVars()) {
-//			final HcBodyVar hcOutVar = (HcBodyVar) var;
-//			result.put(hcOutVar.getArgumentPos(), hcOutVar);
-//		}
-//		return result;
 	}
 
 	public Validity check(final TreeAutomatonRule<HornClause, IPredicate> rule) {

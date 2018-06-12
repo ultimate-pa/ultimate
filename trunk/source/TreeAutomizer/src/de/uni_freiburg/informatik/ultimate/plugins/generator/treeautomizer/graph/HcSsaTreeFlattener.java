@@ -34,31 +34,31 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * HCSsa HornClause-SSA
- * 
+ * Constructed from a TreeRun with SsaInfos. Computes the post-order flattening of the tree as needed for a
+ *  (get-interpolants.. ) request in (e.g.) SMTInterpol format.
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
- * 
+ *
  */
-public class HCSsa {
+public class HcSsaTreeFlattener {
 
-//	private final TreeRun<TermRankedLetter, IPredicate> mNestedFormulas;
 	private final TreeRun<HornClause, SsaInfo> mNestedFormulas;
 	private final Map<Term, Integer> mCounters;
-	private final Map<Term, Term> mTermToAssertion;
 
 	private boolean mCountersAreFinalized;
-	private Term[] mFlattenedTerms;
-	private int[] mStartsOfSubtrees;
+	private final Term[] mFlattenedTerms;
+	private final int[] mStartsOfSubtrees;
 
 	/**
 	 * Constructor for HC-SSA
-	 * 
+	 *
 	 * @param nestedFormulas
 	 *            A given treeRun
 	 * @param pre
@@ -68,20 +68,18 @@ public class HCSsa {
 	 * @param counters
 	 *            A map of the counts of each Term.
 	 */
-//	public HCSsa(final TreeRun<TermRankedLetter, IPredicate> nestedFormulas, final Term pre, final Term post) {
-	public HCSsa(final TreeRun<HornClause, SsaInfo> nestedFormulas) {
+	public HcSsaTreeFlattener(final TreeRun<HornClause, SsaInfo> nestedFormulas) {
 		mNestedFormulas = nestedFormulas;
 
 		mCounters = new HashMap<>();
 		mCountersAreFinalized = false;
-		mTermToAssertion = new HashMap<>();
 
 		final Pair<List<Term>, List<Integer>> flattenRes = flatten(mNestedFormulas, 0);
 		final List<Term> flattenedTermslist = flattenRes.getFirst();
 		final List<Integer> depthOfSubtrees = flattenRes.getSecond();
 		mFlattenedTerms = flattenedTermslist.toArray(new Term[flattenedTermslist.size()]);
 		mStartsOfSubtrees = new int[depthOfSubtrees.size()];
-		
+
 		final Map<Integer, Integer> startOfDepth = new HashMap<>();
 		for (int i = 0; i < depthOfSubtrees.size(); i++) {
 			if (!startOfDepth.containsKey(depthOfSubtrees.get(i))) {
@@ -95,7 +93,7 @@ public class HCSsa {
 	int getCounter(final Term t) {
 		if (!mCounters.containsKey(t)) {
 			assert !mCountersAreFinalized;
-			int r = mCounters.size() + 1;
+			final int r = mCounters.size() + 1;
 			mCounters.put(t, r);
 		}
 		return mCounters.get(t);
@@ -105,42 +103,39 @@ public class HCSsa {
 	 * Returns a name for the given term. The term must be one of those that are in the List returned by flatten().
 	 * The name will be used by Tree checker for making annotated terms out of the flattened terms, and for posing
 	 * the get-interpolants query.
-	 * 
+	 *
 	 * @param t
 	 * @return
 	 */
 	public String getName(final Term t) {
-		return "HCsSATerm_" + getCounter(t);
+		return HornUtilConstants.HC_SSA_TERM + getCounter(t);
 	}
 
 	/**
 	 * Computes a flat (i.e. array instead of tree) version of the SSA.
-	 * This flat version is used by the TreeChecker to construct named formulas from it and assert each one in the 
+	 * This flat version is used by the TreeChecker to construct named formulas from it and assert each one in the
 	 *  solver.
-	 *  
-	 * The order of the flattened list corresponds to a post-order over the tree, this 
-	 * 
-	 * @return 
+	 *
+	 * The order of the flattened list corresponds to a post-order over the tree, this
+	 *
+	 * @return
 	 */
 	public Term[] getFlattenedTermList() {
 		return mFlattenedTerms;
 	}
 
-//	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<TermRankedLetter, IPredicate> tree, int depth) {
-	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<HornClause, SsaInfo> tree, int depth) {
-		ArrayList<Term> res = new ArrayList<>();
-		ArrayList<Integer> resDepthOfSubtrees = new ArrayList<>();
+	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<HornClause, SsaInfo> tree, final int depth) {
+		final ArrayList<Term> res = new ArrayList<>();
+		final ArrayList<Integer> resDepthOfSubtrees = new ArrayList<>();
 		for (int i = 0; i < tree.getChildren().size(); i++) {
-			TreeRun<HornClause, SsaInfo> child = tree.getChildren().get(i);
-			Pair<List<Term>, List<Integer>> childRes = flatten(child, depth + i);
+			final TreeRun<HornClause, SsaInfo> child = tree.getChildren().get(i);
+			final Pair<List<Term>, List<Integer>> childRes = flatten(child, depth + i);
 			res.addAll(childRes.getFirst());
 			resDepthOfSubtrees.addAll(childRes.getSecond());
 		}
 		if (tree.getRootSymbol() != null) {
-//			res.add(tree.getRootSymbol().getTerm());
 			res.add(tree.getRoot().mSsaFormula);
 			resDepthOfSubtrees.add(depth);
-//			this.getCounter(tree.getRootSymbol().getTerm());
 			this.getCounter(tree.getRoot().mSsaFormula);
 		}
 		return new Pair<>(res, resDepthOfSubtrees);

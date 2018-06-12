@@ -49,6 +49,8 @@ public final class HornUtilConstants {
 	public static final String BODYVARPREFIX = "hbv";
 	public static final String HEADVARPREFIX = "hhv";
 
+	public static final String HC_SSA_TERM = "HCsSATerm_";
+
 	private HornUtilConstants() {
 		// hides public constructor
 	}

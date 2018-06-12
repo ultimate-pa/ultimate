@@ -54,8 +54,14 @@ public class HcPredicateSymbol {
 	 */
 	public HcPredicateSymbol(final HcSymbolTable symbolTable, final FunctionSymbol fsym) {
 		mFunctionSymbol = fsym;
-		mFunctionName = fsym.getName();
-		mParameterSorts = Arrays.asList(fsym.getParameterSorts());
+		if (fsym == null) {
+			assert this instanceof HornClauseDontCarePredicateSymbol;
+			mFunctionName = this.getName();
+			mParameterSorts = null;
+		} else {
+			mFunctionName = fsym.getName();
+			mParameterSorts = Arrays.asList(fsym.getParameterSorts());
+		}
 	}
 
 	public FunctionSymbol getFunctionSymbol() {
@@ -105,7 +111,52 @@ public class HcPredicateSymbol {
 
 		@Override
 		public String toString() {
-			return "False";
+			return getName();
 		}
 	}
+
+	public static class HornClauseTruePredicateSymbol extends HornClauseConstantPredicateSymbol {
+		public HornClauseTruePredicateSymbol(final FunctionSymbol fsym) {
+			super(null, fsym, Collections.emptyList());
+		}
+
+		@Override
+		public String getName() {
+			return "True";
+		}
+
+		@Override
+		public int getArity() {
+			return 0;
+		}
+
+		@Override
+		public String toString() {
+			return getName();
+		}
+	}
+
+	public static class HornClauseDontCarePredicateSymbol extends HornClauseConstantPredicateSymbol {
+		public HornClauseDontCarePredicateSymbol() {
+			super(null, null, Collections.emptyList());
+		}
+
+		@Override
+		public String getName() {
+			return "DontCare";
+		}
+
+		@Override
+		public int getArity() {
+			return 0;
+		}
+
+		@Override
+		public String toString() {
+			return getName();
+		}
+	}
+
+
+
 }

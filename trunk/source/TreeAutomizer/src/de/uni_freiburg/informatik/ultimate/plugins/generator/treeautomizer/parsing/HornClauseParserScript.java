@@ -684,7 +684,7 @@ public class HornClauseParserScript extends NoopScript {
 			final Sort[] paramSorts = fsym.getParameterSorts();
 
 
-			ApplicationTerm convertedAppTerm = appTerm;
+			Term convertedAppTerm = appTerm;
 			Term[] args = newArgs;
 
 			/*
@@ -713,14 +713,14 @@ public class HornClauseParserScript extends NoopScript {
 					}
 				}
 				if (changed) {
-					convertedAppTerm = (ApplicationTerm) term(fsym.getName(), nargs);
+					convertedAppTerm = term(fsym.getName(), nargs);
 				}
 			}
 
 			/*
 			 * inlining of defined functions, also taken from TermCompiler
 			 */
-			final Term[] params = convertedAppTerm.getParameters();
+			final Term[] params = ((ApplicationTerm) convertedAppTerm).getParameters();
 			if (fsym.getDefinition() != null) {
 				final HashMap<TermVariable, Term> substs = new HashMap<>();
 				for (int i = 0; i < params.length; i++) {
@@ -729,7 +729,7 @@ public class HornClauseParserScript extends NoopScript {
 				final FormulaUnLet unletter = new FormulaUnLet();
 				unletter.addSubstitutions(substs);
 				final Term expanded = unletter.unlet(fsym.getDefinition());
-				convertedAppTerm = (ApplicationTerm) expanded;
+				convertedAppTerm = expanded;
 			}
 
 

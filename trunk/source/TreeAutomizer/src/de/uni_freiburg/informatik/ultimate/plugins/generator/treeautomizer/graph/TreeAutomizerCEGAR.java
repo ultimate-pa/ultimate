@@ -59,10 +59,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -143,17 +143,15 @@ public class TreeAutomizerCEGAR {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
 
 
-		mInitialPredicate = mPredicateFactory.getTruePredicate();
-		mFinalPredicate = mPredicateFactory.getFalsePredicate();
+		mInitialPredicate = mPredicateFactory.getTrueLocationPredicate();
+		mFinalPredicate = mPredicateFactory.getFalseLocationPredicate();
 
-//		mCfgSmtToolkit = new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()), mBackendSmtSolverScript,
-//				mSymbolTable, mInitialPredicate, Collections.singleton(HornUtilConstants.HORNCLAUSEMETHODNAME));
 		mPredicateUnifier = new PredicateUnifier(services, mBackendSmtSolverScript, mPredicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
-		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mBackendSmtSolverScript, mPredicateFactory,
-				mSymbolTable);
-		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mLogger, mPredicateUnifier, mHoareTripleChecker,
-				!TreeAutomizerSettings.USE_SEMANTIC_REDUCTION);
+
+		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mBackendSmtSolverScript, mSymbolTable);
+		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mLogger, mPredicateUnifier,
+				mHoareTripleChecker, !TreeAutomizerSettings.USE_SEMANTIC_REDUCTION);
 
 		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
 		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());
@@ -224,13 +222,13 @@ public class TreeAutomizerCEGAR {
 		for (final HornClause clause : mAlphabet) {
 			final List<IPredicate> tail = new ArrayList<>();
 			for (final HcPredicateSymbol sym : clause.getBodyPredicates()) {
-				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
+				tail.add(mPredicateFactory.getTruePredicateWithLocation(sym));
 			}
 			if (clause.isHeadFalse()) {
 				mAbstraction.addRule(new TreeAutomatonRule<>(clause, tail, mFinalPredicate));
 			} else {
 				mAbstraction.addRule(new TreeAutomatonRule<>(clause, tail,
-						mPredicateFactory.createTruePredicateWithLocation(clause.getHeadPredicate())));
+						mPredicateFactory.getTruePredicateWithLocation(clause.getHeadPredicate())));
 			}
 		}
 
@@ -406,7 +404,7 @@ public class TreeAutomizerCEGAR {
 		return false;
 	}
 
-	private Map<TreeRun<HornClause, IPredicate>, Term> retrieveInterpolantsMap(final HCSsa ssa,
+	private Map<TreeRun<HornClause, IPredicate>, Term> retrieveInterpolantsMap(final HcSsaTreeFlattener ssa,
 			final TreeRun<HornClause, IPredicate> counterExample) {
 
 		final Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this,
