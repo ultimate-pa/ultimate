@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -103,9 +105,9 @@ public class BoogieDeclarations {
 	 */
 	private final Map<String, Set<String>> mModifiedVars = new HashMap<>();
 
-	public BoogieDeclarations(final Unit unit, final ILogger logger) {
+	public BoogieDeclarations(final Collection<Declaration> decls, final ILogger logger) {
 		mLogger = logger;
-		for (final Declaration decl : unit.getDeclarations()) {
+		for (final Declaration decl : decls) {
 			if (decl instanceof Axiom) {
 				mAxioms.add((Axiom) decl);
 			} else if (decl instanceof TypeDeclaration) {
@@ -147,6 +149,14 @@ public class BoogieDeclarations {
 		for (final Procedure proc : mProcSpecification.values()) {
 			extractContract(proc.getIdentifier());
 		}
+	}
+
+	public BoogieDeclarations(final Declaration[] decls, final ILogger logger) {
+		this(Arrays.asList(decls), logger);
+	}
+
+	public BoogieDeclarations(final Unit unit, final ILogger logger) {
+		this(unit.getDeclarations(), logger);
 	}
 
 	/**
