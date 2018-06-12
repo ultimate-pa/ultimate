@@ -84,8 +84,7 @@ public class TypeSortTranslator {
 	}
 
 	/**
-	 * Constructor for ChcToBoogieTranslation.
-	 * All sort-type pairs are passed as a HashRelation.
+	 * Constructor for ChcToBoogieTranslation. All sort-type pairs are passed as a HashRelation.
 	 *
 	 * @param sortToType
 	 * @param script
@@ -96,20 +95,19 @@ public class TypeSortTranslator {
 		mType2Attributes = new HashMap<>();
 		mServices = services;
 		mScript = script;
-//		{
-//			// Add type/sort bool to mapping. We need this in our
-//			// backtranslation in the case where there was no Boolean
-//			// variable in the Boogie program but we translate a boolean
-//			// term e.g., "true".
-//			final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
-//			final IBoogieType boolType = BoogieType.TYPE_BOOL;
-//			cacheSort(boolType, boolSort);
-//		}
+		// {
+		// // Add type/sort bool to mapping. We need this in our
+		// // backtranslation in the case where there was no Boolean
+		// // variable in the Boogie program but we translate a boolean
+		// // term e.g., "true".
+		// final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+		// final IBoogieType boolType = BoogieType.TYPE_BOOL;
+		// cacheSort(boolType, boolSort);
+		// }
 		for (final Entry<Sort, IBoogieType> en : sortToType.entrySet()) {
 			cacheSort(en.getValue(), en.getKey());
 		}
 	}
-
 
 	/**
 	 * Constructor is only used in a workaround for the backtranslation while dumping path programs.
@@ -229,8 +227,7 @@ public class TypeSortTranslator {
 			} else if (boogieType.equals(BoogieType.TYPE_REAL)) {
 				result = SmtSortUtils.getRealSort(mScript);
 			} else if (boogieType.equals(BoogieType.TYPE_ERROR)) {
-				throw new IllegalArgumentException("BoogieAST contains type "
-						+ "errors. This plugin supports only BoogieASTs without type errors");
+				throw new IllegalArgumentException("BoogieAST contains type errors.");
 			} else if (((BoogiePrimitiveType) boogieType).getTypeCode() > 0) {
 				final int bitvectorSize = ((BoogiePrimitiveType) boogieType).getTypeCode();
 				final BigInteger[] sortIndices = { BigInteger.valueOf(bitvectorSize) };
