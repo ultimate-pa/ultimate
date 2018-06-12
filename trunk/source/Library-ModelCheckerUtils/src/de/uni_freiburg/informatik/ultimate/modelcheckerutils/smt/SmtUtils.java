@@ -559,6 +559,13 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * Return term that represents (or (not lhs) rhs).
+	 */
+	public static Term implies(final Script script, final Term lhs, final Term rhs) {
+		return or(script, not(script, lhs), rhs);
+	}
+
+	/**
 	 * Returns the equality ("=" lhs rhs), or true resp. false if some simple checks detect validity or unsatisfiablity
 	 * of the equality.
 	 */
