@@ -358,7 +358,7 @@ public class BoogieOutput {
 		} else if (expr instanceof IntegerLiteral) {
 			sb.append(((IntegerLiteral) expr).getValue());
 		} else if (expr instanceof RealLiteral) {
-			sb.append(((RealLiteral) expr).getValue());
+			sb.append(Double.parseDouble(((RealLiteral) expr).getValue()));
 		} else if (expr instanceof BooleanLiteral) {
 			sb.append(((BooleanLiteral) expr).getValue());
 		} else if (expr instanceof StringLiteral) {
