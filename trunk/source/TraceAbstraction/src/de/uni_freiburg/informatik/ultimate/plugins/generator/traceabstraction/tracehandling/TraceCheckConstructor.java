@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
@@ -256,7 +256,7 @@ public class TraceCheckConstructor<LETTER extends IIcfgTransition<?>> implements
 			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:12000";
 		}
 		final boolean fakeNonIncrementalSolver = false;
-		final Settings solverSettings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
+		final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 		final InvariantSynthesisSettings invariantSynthesisSettings =
 				new InvariantSynthesisSettings(solverSettings, useNonlinearConstraints, useUnsatCores,

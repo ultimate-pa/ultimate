@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -214,7 +214,7 @@ public final class CFGInvariantsGenerator {
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
+			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final SolverSettings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,

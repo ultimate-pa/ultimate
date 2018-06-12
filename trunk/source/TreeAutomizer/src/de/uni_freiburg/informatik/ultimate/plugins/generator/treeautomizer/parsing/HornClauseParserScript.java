@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
@@ -89,7 +89,7 @@ public class HornClauseParserScript extends NoopScript {
 	 */
 	private final ManagedScript mBackendSmtSolver;
 	private final String mLogic;
-	private final Settings mSolverSettings;
+	private final SolverSettings mSolverSettings;
 	private final HashSet<String> mDeclaredPredicateSymbols;
 	private final List<HornClause> mParsedHornClauses;
 	private final HcSymbolTable mSymbolTable;
@@ -106,7 +106,7 @@ public class HornClauseParserScript extends NoopScript {
 
 	public HornClauseParserScript(final IUltimateServiceProvider services, final String filename,
 			final ManagedScript smtSolverScript, final String logic,
-			final Settings settings) {
+			final SolverSettings settings) {
 		mServices = services;
 		mFilename = filename;
 		mBackendSmtSolver = smtSolverScript;

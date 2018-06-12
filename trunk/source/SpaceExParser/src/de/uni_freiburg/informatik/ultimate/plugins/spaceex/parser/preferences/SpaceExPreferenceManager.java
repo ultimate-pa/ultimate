@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
@@ -64,7 +64,7 @@ public class SpaceExPreferenceManager {
 	private boolean mDumpUsatCoreTrackBenchmark;
 	private boolean mDumpMainTrackBenchmark;
 	private String mLogicForExternalSolver;
-	private Settings mSolverSettings;
+	private SolverSettings mSolverSettings;
 
 	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
 			final File spaceExFile) throws Exception {
@@ -183,7 +183,7 @@ public class SpaceExPreferenceManager {
 		return mLogicForExternalSolver;
 	}
 
-	public Settings getSolverSettings() {
+	public SolverSettings getSolverSettings() {
 		return mSolverSettings;
 	}
 

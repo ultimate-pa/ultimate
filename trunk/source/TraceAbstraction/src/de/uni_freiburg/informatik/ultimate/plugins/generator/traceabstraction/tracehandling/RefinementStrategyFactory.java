@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -222,7 +222,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final String commandExternalSolver = prefs.getCommandExternalSolver();
 			final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 			final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
-			final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
+			final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 					fakeNonIncrementalSolver, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, toolchainStorage,
 					prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(), filename);

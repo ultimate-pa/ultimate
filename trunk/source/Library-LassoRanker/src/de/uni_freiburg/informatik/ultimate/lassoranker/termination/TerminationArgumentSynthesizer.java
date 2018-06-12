@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 
 /**
@@ -147,7 +147,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	@Override
 	protected Script constructScript(final ILassoRankerPreferences preferences, final String constraintsName) {
-		final Settings settings = preferences
+		final SolverSettings settings = preferences
 				.getSolverConstructionSettings(preferences.getBaseNameOfDumpedScript() + "+" + constraintsName);
 		final SolverMode solverMode;
 		if (preferences.isAnnotateTerms()) {

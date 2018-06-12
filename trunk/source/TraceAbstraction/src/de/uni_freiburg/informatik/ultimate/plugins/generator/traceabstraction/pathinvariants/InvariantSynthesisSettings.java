@@ -1,12 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
 
 public class InvariantSynthesisSettings {
 	
 	// The settings for the theorem solver, that is used for invariant synthesis.
-	Settings mSolverSettings;
+	SolverSettings mSolverSettings;
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseUnsatCores;
 	private final boolean mUseAbstractInterpretationPredicates;
@@ -14,7 +14,7 @@ public class InvariantSynthesisSettings {
 	private final boolean mUseLBE; // use large-block encoding?
 	private final AbstractTemplateIncreasingDimensionsStrategy mTemplateDimensionsStrat;
 	
-	public InvariantSynthesisSettings(Settings solverSettings, final AbstractTemplateIncreasingDimensionsStrategy templateDimensionsStrat, 
+	public InvariantSynthesisSettings(SolverSettings solverSettings, final AbstractTemplateIncreasingDimensionsStrategy templateDimensionsStrat, 
 			final boolean useNonlinearConstraints, 	final boolean useUnsatCores, 
 			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants, final boolean useLBE) {
 		mUseNonlinearConstraints = useNonlinearConstraints;
@@ -26,7 +26,7 @@ public class InvariantSynthesisSettings {
 		mUseLBE = useLBE;
 	}
 	
-	public InvariantSynthesisSettings(Settings solverSettings, final boolean useNonlinearConstraints,
+	public InvariantSynthesisSettings(SolverSettings solverSettings, final boolean useNonlinearConstraints,
 			final boolean useUnsatCores, final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants, final boolean useLBE) {
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mSolverSettings = solverSettings;
@@ -53,7 +53,7 @@ public class InvariantSynthesisSettings {
 		return mUseWPForPathInvariants;
 	}
 	
-	public final Settings getSolverSettings() {
+	public final SolverSettings getSolverSettings() {
 		return mSolverSettings;
 	}
 	

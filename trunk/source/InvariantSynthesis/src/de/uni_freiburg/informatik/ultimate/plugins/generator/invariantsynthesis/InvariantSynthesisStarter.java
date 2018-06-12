@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.dangerinvariants.Da
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -267,7 +267,7 @@ public class InvariantSynthesisStarter {
 		final String pathOfDumpedScript = "YOUR/FOLDER/HERE";
 		final String baseNameOfDumpedScript =
 				useNonlinearConstraints ? "Nonlinear" + "_" + cfgIdentifier : "Linear" + "_" + cfgIdentifier;
-		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
+		final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
 				timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);

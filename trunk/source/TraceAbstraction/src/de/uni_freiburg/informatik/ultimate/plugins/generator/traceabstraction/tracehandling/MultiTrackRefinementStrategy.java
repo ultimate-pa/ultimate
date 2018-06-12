@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
@@ -349,7 +349,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
 				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + mTaskIdentifier;
-		final Settings solverSettings;
+		final SolverSettings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
 		final String command;
@@ -359,7 +359,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY:
 			final long timeout = useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL
 					: SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
-			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
+			solverSettings = new SolverSettings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = mode == Track.SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY
 					? SolverMode.Internal_SMTInterpol_NoArrayInterpol
@@ -378,7 +378,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case Z3_FP:
 			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT
 					: SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 			logicForExternalSolver = SolverBuilder.LOGIC_Z3;
@@ -387,7 +387,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case CVC4_FP:
 			command = useTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT
 					: SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 			logicForExternalSolver = getCvc4Logic();
@@ -395,7 +395,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case MATHSAT_FPBP:
 		case MATHSAT_FP:
 			command = SolverBuilder.COMMAND_MATHSAT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 			logicForExternalSolver = SolverBuilder.LOGIC_MATHSAT;
@@ -403,7 +403,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case PDR:
 			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT
 					: SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsMode;
 			logicForExternalSolver = SolverBuilder.LOGIC_Z3;

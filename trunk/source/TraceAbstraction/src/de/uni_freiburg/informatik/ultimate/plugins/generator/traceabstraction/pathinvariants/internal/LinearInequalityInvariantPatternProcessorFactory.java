@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermC
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -67,7 +67,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final boolean mUseUnsatCores;
 	private final boolean mSynthesizeEntryPattern;
 	private final KindOfInvariant mKindOfInvariant;
-	private final Settings mSolverSettings;
+	private final SolverSettings mSolverSettings;
 	private final IPredicate mAxioms;
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2underApprox;
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2overApprox;
@@ -100,7 +100,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IToolchainStorage storage, final IPredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinerConstraints, final boolean useUnsatCores,
-			final Settings solverSettings,
+			final SolverSettings solverSettings,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IPredicate axioms, final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
 			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox, final boolean synthesizeEntryPattern,
@@ -161,7 +161,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver settings to use
 	 */
 	@Deprecated
-	private Settings produceSolverSettings() {
+	private SolverSettings produceSolverSettings() {
 		final boolean dumpSmtScriptToFile = false;
 		final String pathOfDumpedScript = ".";
 		final String baseNameOfDumpedScript = "contraintSolving";
@@ -172,7 +172,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			solverCommand = "yices-smt2 --incremental";
 		}
 		final boolean fakeNonIncrementalSolver = false;
-		return new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null, dumpSmtScriptToFile,
+		return new SolverSettings(fakeNonIncrementalSolver, true, solverCommand, -1, null, dumpSmtScriptToFile,
 				pathOfDumpedScript, baseNameOfDumpedScript);
 	}
 

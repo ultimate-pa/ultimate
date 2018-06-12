@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -191,7 +191,7 @@ public class CfgBuilder {
 				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
 		final String logicForExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC);
-		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 
 		return SolverBuilder.buildAndInitializeSolver(services, storage, solverMode, solverSettings,

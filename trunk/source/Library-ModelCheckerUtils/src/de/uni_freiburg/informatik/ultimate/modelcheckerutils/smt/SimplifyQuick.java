@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 
 /**
  * Variant of {@link SimplifyDDA} that uses SMTInterpol's "quick check". The "quick check" is much faster but returns
@@ -57,8 +57,8 @@ public class SimplifyQuick {
 	
 	public Term getSimplifiedTerm(final Term inputTerm) throws SMTLIBException {
 		
-		final Settings settings =
-				new SolverBuilder.Settings(false, false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
+		final SolverSettings settings =
+				new SolverBuilder.SolverSettings(false, false, "", TIMOUT_IN_SECONDS * 1000, null, false, null, null);
 		final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 		simplificationScript.setLogic(Logics.CORE);
 		final TermTransferrer towards = new TermTransferrerBooleanCore(simplificationScript);

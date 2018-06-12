@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 
 /**
  * Static class that manages SMT-Solver related things.
@@ -57,7 +57,7 @@ public class SMTSolver {
 	 */
 	public static Script newScript(final ILassoRankerPreferences preferences, final String constraintsName,
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
-		final Settings settings = preferences
+		final SolverSettings settings = preferences
 				.getSolverConstructionSettings(preferences.getBaseNameOfDumpedScript() + "+" + constraintsName);
 		final Script script = SolverBuilder.buildScript(services, storage, settings);
 

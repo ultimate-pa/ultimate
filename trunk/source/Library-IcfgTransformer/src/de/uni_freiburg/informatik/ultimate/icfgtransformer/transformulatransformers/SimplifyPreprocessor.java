@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Mod
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -76,7 +76,7 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
 		final Term simplified;
 		if (USE_SMTINTERPOL_FOR_SIMPLIFICATION) {
-			final Settings settings = new SolverBuilder.Settings(false, false, "", 10 * 1000, null, false, null, null);
+			final SolverSettings settings = new SolverBuilder.SolverSettings(false, false, "", 10 * 1000, null, false, null, null);
 			final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
 			final TermTransferrer towards = new TermTransferrer(simplificationScript);

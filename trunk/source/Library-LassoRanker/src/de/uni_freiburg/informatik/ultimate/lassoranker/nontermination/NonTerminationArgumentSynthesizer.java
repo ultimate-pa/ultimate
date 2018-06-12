@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinte
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -177,7 +177,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	@Override
 	protected Script constructScript(final ILassoRankerPreferences preferences, final String constraintsName) {
-		final Settings settings = preferences
+		final SolverSettings settings = preferences
 				.getSolverConstructionSettings(preferences.getBaseNameOfDumpedScript() + "+" + constraintsName);
 		final SolverMode solverMode;
 		if (preferences.isAnnotateTerms()) {

@@ -160,7 +160,7 @@ public class SolverBuilder {
 	 * @return A Script that represents an SMT solver which is defined by settings.
 	 */
 	public static Script buildScript(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final Settings settings) {
+			final SolverSettings settings) {
 		final ILogger solverLogger = services.getLoggingService().getLoggerForExternalTool(SOLVER_LOGGER_NAME);
 		Script result;
 		if (settings.useExternalSolver()) {
@@ -204,7 +204,7 @@ public class SolverBuilder {
 		return result;
 	}
 
-	public static Settings constructSolverSettings(final String filename, final SolverMode solverMode,
+	public static SolverSettings constructSolverSettings(final String filename, final SolverMode solverMode,
 			final boolean fakeNonIncrementalScript, final String commandExternalSolver,
 			final boolean dumpSmtScriptToFile, final String pathOfDumpedScript) throws AssertionError {
 		final boolean useExternalSolver;
@@ -247,14 +247,14 @@ public class SolverBuilder {
 		default:
 			throw new AssertionError("unknown solver mode");
 		}
-		final Settings solverSettings =
-				new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
+		final SolverSettings solverSettings =
+				new SolverSettings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
 						externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, filename, useDiffWrapper);
 		return solverSettings;
 	}
 
 	public static Script buildAndInitializeSolver(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SolverMode solverMode, final Settings solverSettings,
+			final IToolchainStorage storage, final SolverMode solverMode, final SolverSettings solverSettings,
 			final boolean dumpUsatCoreTrackBenchmark, final boolean dumpMainTrackBenchmark,
 			final String logicForExternalSolver, final String solverId) throws AssertionError {
 
@@ -422,7 +422,7 @@ public class SolverBuilder {
 	/**
 	 * Settings that define how a solver is build.
 	 */
-	public static final class Settings {
+	public static final class SolverSettings {
 
 		/**
 		 * Emulate incremental script (push/pop) using reset and re-asserting all terms and re-declaring all sorts and
@@ -461,7 +461,7 @@ public class SolverBuilder {
 		 */
 		private final boolean mUseDiffWrapper;
 
-		public Settings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
+		public SolverSettings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
 				final String commandExternalSolver, final long timeoutSmtInterpol,
 				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
 				final String pathOfDumpedScript, final String baseNameOfDumpedScript) {
@@ -469,7 +469,7 @@ public class SolverBuilder {
 					externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript, false);
 		}
 
-		public Settings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
+		public SolverSettings(final boolean fakeNonIncrementalScript, final boolean useExternalSolver,
 				final String commandExternalSolver, final long timeoutSmtInterpol,
 				final ExternalInterpolator externalInterpolator, final boolean dumpSmtScriptToFile,
 				final String pathOfDumpedScript, final String baseNameOfDumpedScript, final boolean useDiffWrapper) {

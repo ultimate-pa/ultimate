@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
@@ -321,7 +321,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
 				"Script_" + prefs.getIcfgContainer().getIdentifier() + "_Iteration" + taskIdentifier;
-		final Settings solverSettings;
+		final SolverSettings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
 		final String command;
@@ -330,7 +330,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		case ABSTRACT_INTERPRETATION:
 			final long timeout = useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL
 					: SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
-			solverSettings = new Settings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
+			solverSettings = new SolverSettings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.Internal_SMTInterpol;
 			logicForExternalSolver = null;
@@ -339,7 +339,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		case Z3_NO_IG:
 			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT
 					: SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 			logicForExternalSolver = SolverBuilder.LOGIC_Z3;
@@ -348,7 +348,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		case CVC4_NO_IG:
 			command = useTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT
 					: SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
-			solverSettings = new Settings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 			logicForExternalSolver = SolverBuilder.LOGIC_CVC4_DEFAULT;

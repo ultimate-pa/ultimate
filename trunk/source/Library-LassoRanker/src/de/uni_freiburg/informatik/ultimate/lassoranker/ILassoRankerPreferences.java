@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminationSettings;
 
 /**
@@ -140,9 +140,9 @@ public interface ILassoRankerPreferences {
 	 *            to true
 	 * @return a Settings object that allows us to build a new solver.
 	 */
-	default Settings getSolverConstructionSettings(final String filenameDumpedScript) {
+	default SolverSettings getSolverConstructionSettings(final String filenameDumpedScript) {
 		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000L;
-		return new Settings(isFakeNonIncrementalScript(), isExternalSolver(), getExternalSolverCommand(),
+		return new SolverSettings(isFakeNonIncrementalScript(), isExternalSolver(), getExternalSolverCommand(),
 				timeoutSmtInterpol, null, isDumpSmtSolverScript(), getPathOfDumpedScript(), filenameDumpedScript);
 	}
 

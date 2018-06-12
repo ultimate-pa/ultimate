@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
@@ -47,7 +47,7 @@ public class HCGBuilderHelper {
 
 	public static class ConstructAndInitializeBackendSmtSolver {
 
-		private Settings mSolverSettings;
+		private SolverSettings mSolverSettings;
 		private String mLogicForExternalSolver;
 		private ManagedScript mScript;
 
@@ -93,7 +93,7 @@ public class HCGBuilderHelper {
 			mScript = new ManagedScript(services, script);
 		}
 
-		public Settings getSolverSettings() {
+		public SolverSettings getSolverSettings() {
 			return mSolverSettings;
 		}
 

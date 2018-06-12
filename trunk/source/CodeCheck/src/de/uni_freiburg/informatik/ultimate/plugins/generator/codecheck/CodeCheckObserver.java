@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -424,7 +424,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					final boolean dumpSmtScriptToFile = false;
 					final String pathOfDumpedScript = "";
 					final boolean fakeNonIncrementalScript = false;
-					final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
+					final SolverSettings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 							fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 					final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
 							mGlobalSettings.getChooseSeparateSolverForTracechecks(), solverSettings, false, false,
