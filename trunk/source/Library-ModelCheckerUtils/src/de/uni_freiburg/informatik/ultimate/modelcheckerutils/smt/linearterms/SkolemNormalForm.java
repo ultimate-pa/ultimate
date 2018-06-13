@@ -65,8 +65,8 @@ public class SkolemNormalForm  {
 			} else {
 				// qb.getQuantifier() == QuantifiedFormula.EXISTS
 				final List<TermVariable> universalVars =  new ArrayList<>(universalQuantifiersInScope.getVariables());
-				final TermVariable[] universalVarsArray =
-						universalVars.toArray(new TermVariable[universalVars.size()]);
+				final Term[] universalVarsArray =
+						universalVars.toArray(new Term[universalVars.size()]);
 
 				final List<Sort> paramSortList = universalVars.stream()
 						.map(tv -> tv.getSort())
