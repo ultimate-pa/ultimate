@@ -358,7 +358,15 @@ public class BoogieOutput {
 		} else if (expr instanceof IntegerLiteral) {
 			sb.append(((IntegerLiteral) expr).getValue());
 		} else if (expr instanceof RealLiteral) {
-			sb.append(Double.parseDouble(((RealLiteral) expr).getValue()));
+			final String value = ((RealLiteral) expr).getValue();
+			String realValue;
+			try {
+				// produce decimal literal for integer values, e.g., write 1.0 if RealLiteral is 1
+				realValue = String.valueOf(Double.parseDouble(value));
+			} catch (final NumberFormatException ex) {
+				realValue = value;
+			}
+			sb.append(realValue);
 		} else if (expr instanceof BooleanLiteral) {
 			sb.append(((BooleanLiteral) expr).getValue());
 		} else if (expr instanceof StringLiteral) {
