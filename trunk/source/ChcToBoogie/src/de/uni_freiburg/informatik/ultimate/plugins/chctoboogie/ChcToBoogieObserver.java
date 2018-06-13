@@ -69,12 +69,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -134,21 +134,21 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Exception {
-		final BasePayloadContainer rootNode = (BasePayloadContainer) root;
 
-		final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
-		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
-		mLogger.debug(annot.getAnnotationsAsMap().get(HornUtilConstants.HORN_ANNOT_NAME));
+		final HornAnnot annot;
+		{
+			final BasePayloadContainer rootNode = (BasePayloadContainer) root;
+			final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
+			annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
+			mLogger.debug("Converting the following HornClause set to a Boogie Program:");
+			mLogger.debug(annot);
+		}
 
-
-		final List<HornClause> hornClausesRaw =
-				(List<HornClause>) annot.getAnnotationsAsMap().get(HornUtilConstants.HORN_ANNOT_NAME);
+		final List<HornClause> hornClausesRaw = annot.getHornClauses();
+		mManagedScript = annot.getScript();
 		mHcSymbolTable = annot.getSymbolTable();
 
 		mBottomPredSym = mHcSymbolTable.getFalseHornClausePredicateSymbol();
-
-
-		mManagedScript = annot.getScript();
 
 		{
 			final HashRelation<Sort, IBoogieType> sortToType = new HashRelation<>();

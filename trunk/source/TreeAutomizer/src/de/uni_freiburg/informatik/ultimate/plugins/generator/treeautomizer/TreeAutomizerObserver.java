@@ -89,7 +89,8 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 
 		final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
 		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
-		mLogger.debug(annot.getAnnotationsAsMap().get(HornUtilConstants.HORN_ANNOT_NAME));
+		mLogger.debug("HornAnnot as passed to TreeAutomizer:");
+		mLogger.debug(annot);
 
 		final TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, mToolchainStorage, annot, taPrefs, mLogger);
 

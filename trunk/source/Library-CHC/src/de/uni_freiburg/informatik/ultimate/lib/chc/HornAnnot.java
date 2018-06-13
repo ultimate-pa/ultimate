@@ -27,13 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -45,9 +42,9 @@ public class HornAnnot implements IAnnotations {
 
 	private static final long serialVersionUID = -3542578811318106167L;
 	private final ManagedScript mBackendSolverScript;
-	private final Map<String, Object> mMaechtigUnnoetigBenannteMap = new HashMap<>();
 	private final HcSymbolTable mSymbolTable;
 	private final String mFileName;
+	private final List<HornClause> mHornClauses;
 
 	/***
 	 * An annotation of horn clauses.
@@ -59,14 +56,14 @@ public class HornAnnot implements IAnnotations {
 	public HornAnnot(final String filename, final List<HornClause> clauses, final ManagedScript backendSolver,
 			final HcSymbolTable symbolTable) {
 		mFileName = filename;
-		mMaechtigUnnoetigBenannteMap.put(HornUtilConstants.HORN_ANNOT_NAME, clauses);
+		mHornClauses = clauses;
 		mBackendSolverScript = backendSolver;
 		mSymbolTable = symbolTable;
 	}
 
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
-		return mMaechtigUnnoetigBenannteMap;
+		throw new UnsupportedOperationException();
 	}
 
 	public ManagedScript getScript() {
@@ -77,6 +74,10 @@ public class HornAnnot implements IAnnotations {
 		return mSymbolTable;
 	}
 
+	public List<HornClause> getHornClauses() {
+		return mHornClauses;
+	}
+
 	public String getFileName() {
 		return mFileName;
 	}
@@ -84,11 +85,10 @@ public class HornAnnot implements IAnnotations {
 	@Override
 	public String toString() {
 		final StringBuilder res = new StringBuilder();
-		for (final Entry<String, Object> en : mMaechtigUnnoetigBenannteMap.entrySet()) {
-			if (res.length() != 0) {
-				res.append('\t');
-			}
-			res.append("{{" + en.getValue().toString() + "}}");
+		res.append("(HornAnnot) List of HornClauses:\n");
+		for (final HornClause hc : mHornClauses) {
+			res.append(hc.toString());
+			res.append('\n');
 		}
 		return res.toString();
 	}

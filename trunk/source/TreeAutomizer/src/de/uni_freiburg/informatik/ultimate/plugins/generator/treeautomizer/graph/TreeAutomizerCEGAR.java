@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -131,7 +130,7 @@ public class TreeAutomizerCEGAR {
 		mLogger = logger;
 		mHornAnnot = annot;
 
-		mAlphabet = (List<HornClause>) mHornAnnot.getAnnotationsAsMap().get(HornUtilConstants.HORN_ANNOT_NAME);
+		mAlphabet = mHornAnnot.getHornClauses();
 
 		mIteration = 0;
 
