@@ -63,9 +63,21 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	protected long mTimeout;
 	protected String mRootFolder;
+	/**
+	 * Regex that excludes toolchain and settings files whose path is matched by the regex.
+	 */
 	protected String mExcludeFilterRegex;
+	/**
+	 * Regex that includes only toolchain and settings files whose path is matched by the regex.
+	 */
 	protected String mIncludeFilterRegex;
+	/**
+	 * Regex that excludes input files whose path is matched by the regex.
+	 */
 	protected String mFileExcludeFilterRegex;
+	/**
+	 * Regex that includes only input files whose path is matched by the regex.
+	 */
 	protected String mFileIncludeFilterRegex;
 	protected String[] mFiletypesToConsider;
 
