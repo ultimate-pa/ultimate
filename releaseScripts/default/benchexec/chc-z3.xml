@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="z3" memlimit="6GB" timelimit="90" hardtimelimit="112" cpuCores="4">
+	<rundefinition name="CHC">
+
+		<tasks name="CHC">
+			<includesfile>/storage/chc-comp/no-rules.set</includesfile>
+		</tasks>
+
+	</rundefinition>
+</benchmark>
