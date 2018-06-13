@@ -122,6 +122,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private TraceCheckReasonUnknown mReasonUnknown;
+	private int mInvarSpot;
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IHoareTripleChecker htc, final List<LETTER> counterexample) {
@@ -130,6 +131,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mPredicateUnifier = predicateUnifier;
 		mHtc = htc;
 		mTrace = counterexample;
+
+		mInvarSpot = -1;
 
 		// stuff from prefs
 		mServices = prefs.getUltimateServices();
@@ -151,6 +154,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
 
 		mLogger.debug("PDR initialized...");
+		mLogger.debug("Analyting Trace: " + mTrace);
 
 		try {
 			mPdrBenchmark.start(PdrStatisticsDefinitions.PDR_RUNTIME);
@@ -348,7 +352,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					final Triple<IPredicate, IcfgLocation, Integer> newProofObligation =
 							new Triple<>(preCondition, predecessor, level - 1);
 
-					// proofObligations.addFirst(proofObligation);
+					proofObligations.addFirst(proofObligation);
 					proofObligations.addFirst(newProofObligation);
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug("New PO: " + newProofObligation);
@@ -383,24 +387,58 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : mFrames.entrySet()) {
 			final List<Pair<ChangedFrame, IPredicate>> frames = locationTrace.getValue();
 
-			for (int i = 0; i < frames.size(); i++) {
-				final IPredicate p1 = frames.get(i).getSecond();
-				if (frames.get(i).getFirst() == ChangedFrame.UNCHANGED) {
+			for (int i = 0; i < frames.size() - 1; i++) {
+				if (frames.get(i).getFirst() == ChangedFrame.UNCHANGED
+						|| frames.get(i + 1).getFirst() == ChangedFrame.UNCHANGED) {
 					continue;
 				}
-				for (int k = i + 1; k < frames.size(); k++) {
-					if (frames.get(k).getFirst() == ChangedFrame.UNCHANGED) {
-						continue;
-					}
-					final IPredicate p2 = frames.get(k).getSecond();
-					if (p1.getFormula().equals(p2.getFormula())) {
-						mLogger.debug("Invariant Found: " + frames.get(i) + " equals " + frames.get(k));
-						return true;
-					}
+				final IPredicate p1 = frames.get(i).getSecond();
+				final IPredicate p2 = frames.get(i + 1).getSecond();
+
+				if (p1.getFormula().equals(p2.getFormula()) && checkFrames(i)) {
+					mLogger.debug("Spot: " + i);
+					mInvarSpot = i;
+					return true;
 				}
+				/*
+				 * for (int k = i + 1; k < frames.size(); k++) { if (frames.get(k).getFirst() == ChangedFrame.UNCHANGED)
+				 * { continue; } final IPredicate p2 = frames.get(k).getSecond(); if
+				 * (p1.getFormula().equals(p2.getFormula())) { mLogger.debug("Invariant Found: " + frames.get(i) +
+				 * " equals " + frames.get(k)); return true; } }
+				 */
 			}
 		}
+		mLogger.debug("Frames:");
+		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
+			mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
+					.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
+		}
 		return false;
+	}
+
+	/**
+	 * check invariant candidate location i
+	 * 
+	 * @param i
+	 * @return
+	 */
+	private boolean checkFrames(final int i) {
+		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : mFrames.entrySet()) {
+			if (mPpIcfg.getInitialNodes().contains(locationTrace.getKey())) {
+				continue;
+			}
+			final List<Pair<ChangedFrame, IPredicate>> frames = locationTrace.getValue();
+
+			final IPredicate p1 = frames.get(i).getSecond();
+			final IPredicate p2 = frames.get(i + 1).getSecond();
+			if (p1.getFormula().equals(p2.getFormula()) && frames.get(i).getFirst() == ChangedFrame.CHANGED
+					&& frames.get(i + 1).getFirst() == ChangedFrame.CHANGED) {
+				continue;
+			} else {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -453,16 +491,20 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private IPredicate[] computeInterpolants() {
 		mLogger.debug("computing interpolants.");
 
-		final Map<IcfgLocation, Set<IPredicate>> traceFrames = new HashMap<>();
+		final Map<IcfgLocation, IPredicate> traceFrames = new HashMap<>();
 		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
 			final IcfgLocation key = entry.getKey();
 			final IcfgLocation actualLoc = key.getLabel();
 			assert key != actualLoc : "Not a path program loc";
+			assert mInvarSpot != -1 : "Invariants";
+
+			final IPredicate pred = entry.getValue().get(mInvarSpot).getSecond();
 
 			final Set<IPredicate> preds = entry.getValue().stream().filter(a -> a.getFirst() == ChangedFrame.CHANGED)
 					.map(Pair<ChangedFrame, IPredicate>::getSecond).collect(Collectors.toSet());
-			final Set<IPredicate> old = traceFrames.put(actualLoc, preds);
+			final IPredicate old = traceFrames.put(actualLoc, pred);
 			assert old == null || old.equals(preds);
+
 		}
 
 		final Iterator<LETTER> traceIt = mTrace.iterator();
@@ -475,10 +517,10 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				break;
 			}
 
-			final Set<IPredicate> lPreds = traceFrames.get(l.getTarget());
+			final IPredicate lPreds = traceFrames.get(l.getTarget());
 			assert lPreds != null;
-			final IPredicate lInterpolant = mPredicateUnifier.getOrConstructPredicateForDisjunction(lPreds);
-			interpolants[i] = lInterpolant;
+			// final IPredicate lInterpolant = mPredicateUnifier.getOrConstructPredicateForDisjunction(lPreds);
+			interpolants[i] = lPreds;
 			++i;
 		}
 		return interpolants;
