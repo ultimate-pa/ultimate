@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * Automata.</i></li>
  * </ol>
  * The runtime is the same as in [2], also for the same reason.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
@@ -91,7 +91,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 	/**
 	 * Demo usage of the operation. Also used for debugging purpose.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws AutomataOperationCanceledException
@@ -192,11 +192,11 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	/**
 	 * Minimizes the given tree automaton operand. The result can be obtained by
 	 * using {@link #getResult()}.
-	 * 
+	 *
 	 * @param <SF>
 	 *            Factory that is able to create sink states, merge and intersect
 	 *            states
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param sinkMergeIntersectFactory
@@ -238,7 +238,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.
 	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
@@ -259,7 +259,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
@@ -270,7 +270,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	/**
 	 * Builds a minimal tree automaton accepting the empty language. The automaton
 	 * consists of no states, no letters and no rules, it is empty.
-	 * 
+	 *
 	 * @return A minimal tree automaton accepting the empty language
 	 */
 	private ITreeAutomatonBU<LETTER, STATE> buildEmptyLanguageTree() {
@@ -284,7 +284,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * and holds which states are able to use that rule at given positions. Based on
 	 * that splits can be determined since if a state is able to use a rule but
 	 * others of the same block are not, then they must not stay in the same block.
-	 * 
+	 *
 	 * @param destinationBlock
 	 *            The block used as destination for rules to be selected
 	 * @return An iterator over all collected contexts
@@ -311,25 +311,25 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		final STATE destinationRepresentative = this.mPartition.find(destinationBlock.iterator().next());
 		final NestedMap2<LETTER, List<STATE>, RuleContext<LETTER, STATE>> letterAndSourceSignatureToContexts = new NestedMap2<>();
 
-		final Map<STATE, Map<LETTER, Set<List<STATE>>>> predecessorsMap = new HashMap<>();
-		for (final List<STATE> src : mOperand.getSourceCombinations()) {
-			for (final TreeAutomatonRule<LETTER, STATE> rule : mOperand.getSuccessors(src)) {
-				final LETTER letter = rule.getLetter();
-				final STATE destination = rule.getDest();
-				
-				if (!predecessorsMap.containsKey(destination)) {
-					predecessorsMap.put(destination, new HashMap<>());
-				}
-				if (!predecessorsMap.get(destination).containsKey(letter)) {
-					predecessorsMap.get(destination).put(letter, new HashSet<>());
-				}
-				predecessorsMap.get(destination).get(letter).add(src);
-			}
-		}
+//		final Map<STATE, Map<LETTER, Set<List<STATE>>>> predecessorsMap = new HashMap<>();
+//		for (final List<STATE> src : mOperand.getSourceCombinations()) {
+//			for (final TreeAutomatonRule<LETTER, STATE> rule : mOperand.getSuccessors(src)) {
+//				final LETTER letter = rule.getLetter();
+//				final STATE destination = rule.getDest();
+//
+//				if (!predecessorsMap.containsKey(destination)) {
+//					predecessorsMap.put(destination, new HashMap<>());
+//				}
+//				if (!predecessorsMap.get(destination).containsKey(letter)) {
+//					predecessorsMap.get(destination).put(letter, new HashSet<>());
+//				}
+//				predecessorsMap.get(destination).get(letter).add(src);
+//			}
+//		}
 		// Find all rules whose destination is in the given block
 		for (final STATE destination : destinationBlock) {
-			//final Map<LETTER, Iterable<List<STATE>>> predecessors = this.mOperand.getPredecessors(destination);
-			final Map<LETTER, Set<List<STATE>>> predecessors = predecessorsMap.get(destination);
+			final Map<LETTER, Iterable<List<STATE>>> predecessors = ((TreeAutomatonBU<LETTER, STATE>) this.mOperand).getPredecessors(destination);
+//			final Map<LETTER, Set<List<STATE>>> predecessors = predecessorsMap.get(destination);
 			for (final LETTER letter : predecessors.keySet()) {
 				// Skip all 0-ranked letters as they do not contribute to the language directly
 				if (letter.getRank() == 0) {
@@ -379,7 +379,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 	/**
 	 * Executes this operation.
-	 * 
+	 *
 	 * @return The resulting tree automaton obtained after minimizing the operand.
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
@@ -463,7 +463,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	/**
 	 * Builds and sets the initial partition and relation which separates final from
 	 * non-final states.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -541,7 +541,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * contains a state for every block in the given partition. Thus every states
 	 * and rule of the operand will result in a representative where every
 	 * occurrence of states are replaced by the corresponding merged state.
-	 * 
+	 *
 	 * @param partition
 	 *            The partition to use for merge
 	 * @return The merged automaton
@@ -599,19 +599,19 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 					final STATE mergedState = representativeToMergedState.get(partition.find(state));
 					mergedSource.add(mergedState);
 				}
-	
+
 				// Merge destination
 				final STATE mergedDestination = representativeToMergedState.get(partition.find(rule.getDest()));
-	
+
 				// Add the merged rule
 				final TreeAutomatonRule<LETTER, STATE> mergedRule = new TreeAutomatonRule<>(rule.getLetter(), mergedSource,
 						mergedDestination);
 				result.addRule(mergedRule);
-	
+
 				if (this.mLogger.isDebugEnabled()) {
 					this.mLogger.debug("Merged rule=" + rule + " to mergedRule=" + mergedRule);
 				}
-	
+
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
@@ -630,7 +630,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * and holds which states are able to use that rule at given positions. Based on
 	 * that splits can be determined since if a state is able to use a rule but
 	 * others of the same block are not, then they must not stay in the same block.
-	 * 
+	 *
 	 * @param contexts
 	 *            The contexts to refine based on
 	 * @param destinationBlock
@@ -793,11 +793,11 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * <br>
 	 * If it is the initial round the method will always select the block of final
 	 * states as all recognized words of the language must end with a final state.
-	 * 
+	 *
 	 * @param initialRound
 	 *            If it is the initial round, thus the block of final states should
 	 *            be selected, or not.
-	 * 
+	 *
 	 * @return A block used as starting point for splits
 	 */
 	private STATE selectBlockForRound(final boolean initialRound) {
@@ -874,7 +874,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 	 * partition. If the partition does not change anymore the progress blocks will
 	 * be equal to the partition after some steps. At this point a fixed point has
 	 * reached and the partition represents a valid bisimulation.
-	 * 
+	 *
 	 * @param blockToSplitOff
 	 *            The block to split off
 	 * @throws AutomataOperationCanceledException
@@ -954,7 +954,7 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 
 	/**
 	 * Gets the operand of this operation.
-	 * 
+	 *
 	 * @return The operand of this operation
 	 */
 	protected ITreeAutomatonBU<LETTER, STATE> getOperand() {
