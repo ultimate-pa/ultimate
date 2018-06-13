@@ -150,8 +150,8 @@ public class TreeAutomizerCEGAR {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
 
 		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mBackendSmtSolverScript, mSymbolTable);
-		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mLogger, mPredicateUnifier,
-				mHoareTripleChecker, !TreeAutomizerSettings.USE_SEMANTIC_REDUCTION);
+		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mServices, mLogger,
+				mPredicateUnifier, mHoareTripleChecker, !TreeAutomizerSettings.USE_SEMANTIC_REDUCTION);
 
 		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
 		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());

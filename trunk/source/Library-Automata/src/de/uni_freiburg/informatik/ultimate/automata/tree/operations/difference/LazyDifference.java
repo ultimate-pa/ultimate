@@ -100,7 +100,8 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 				: new DummySemanticReducerFactory<>());
 	}
 
-	private <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> boolean getAllDestinations(
+	private <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+		boolean getAllDestinations(
 			final SF fac, final List<Collection<Pair<STATE, STATE>>> combinationValues,
 			final Map<STATE, Set<STATE>> successors, final TreeAutomatonRule<LETTER, STATE> rule,
 			final Set<TreeAutomatonRule<LETTER, STATE>> newRules) {
@@ -144,7 +145,8 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		return newReached;
 	}
 
-	private <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE> computeDifference(
+	private <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+		ITreeAutomatonBU<LETTER, STATE> computeDifference(
 			final SF fac) {
 
 		// Map of all states from t1 to the states from t2 that are derived as a
@@ -219,7 +221,8 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		return result;
 	}
 
-	private <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>> STATE intersectPair(
+	private <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE>>
+		STATE intersectPair(
 			final SF factory, final STATE s1, final STATE s2) {
 
 		STATE res = mCache.get(s1, s2);

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -48,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -70,7 +73,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 	private final HCPredicate mSinkState;
 
-	private final ManagedScript mBackendSmtSolverScript;
+	private final ManagedScript mMgdScript;
 	private final SimplifyDDA mSimplifier;
 
 	private final HCPredicateFactory mPredicateFactory;
@@ -84,17 +87,21 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 	private final boolean mDummySemanticReduction;
 
+	private final IUltimateServiceProvider mServices;
+
 	/***
 	 * HornClause State factory constructor.
 	 *
 	 * @param backendSmtSolverScript
 	 * @param predicateFactory
 	 * @param predicateUnifier
+	 * @param services
 	 * @param symbolTable
 	 */
 	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
-			final ILogger logger, final PredicateUnifier predicateUnifier, final HCHoareTripleChecker hoareChecker) {
-		this(backendSmtSolverScript, predicateFactory, logger, predicateUnifier, hoareChecker, false);
+			final IUltimateServiceProvider services, final ILogger logger, final PredicateUnifier predicateUnifier,
+			final HCHoareTripleChecker hoareChecker) {
+		this(backendSmtSolverScript, predicateFactory, services, logger, predicateUnifier, hoareChecker, false);
 	}
 
 	/***
@@ -103,16 +110,18 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	 * @param backendSmtSolverScript
 	 * @param predicateFactory
 	 * @param predicateUnifier
+	 * @param services
 	 * @param symbolTable
 	 */
 	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
-			final ILogger logger, final PredicateUnifier predicateUnifier, final HCHoareTripleChecker hoareChecker,
-			final boolean dummySemanticReduction) {
-		mBackendSmtSolverScript = backendSmtSolverScript;
-
+			final IUltimateServiceProvider services, final ILogger logger, final PredicateUnifier predicateUnifier,
+			final HCHoareTripleChecker hoareChecker, final boolean dummySemanticReduction) {
+		mMgdScript = backendSmtSolverScript;
+		mServices = services;
 		mLogger = logger;
+
 		mSinkState = predicateFactory.getDontCareLocationPredicate();
-		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript.getScript());
+		mSimplifier = new SimplifyDDA(mMgdScript.getScript());
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mHoareTripleChecker = hoareChecker;
@@ -131,18 +140,33 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 	@Override
 	public IPredicate intersection(final IPredicate state1, final IPredicate state2) {
+		/*
+		 * TODO: add a mode with all don't care predicates --> for when we do not want to produce a model and thus can
+		 *  save the time
+		 */
+
 		final Set<HcPredicateSymbol> state1PredSymbols = new HashSet<>();
 		state1PredSymbols.addAll(((HCPredicate) state1).getHcPredicateSymbols());
+		assert state1PredSymbols.size() == 1 : "what does this mean??";
 
-		final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(
-				SmtUtils.and(mBackendSmtSolverScript.getScript(), state1.getFormula(), state2.getFormula()));
+//		final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(
+//				SmtUtils.and(mBackendSmtSolverScript.getScript(), state1.getFormula(), state2.getFormula()));
+		final IPredicate conjoinedPred = mPredicateFactory.and(state1, state2);
 
-		final Set<IPredicate> ps = new HashSet<>();
-		ps.add(state1);
-		ps.add(state2);
+		if (mPredicateFactory.isDontCare(conjoinedPred)) {
+			return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedPred.getFormula(),
+				Collections.emptyList());
+//			return conjoinedPred;
+		}
 
-		return mPredicateFactory.newPredicate(state1PredSymbols, //constructFreshSerialNumber(),
-				conjoinedFormula,
+		final Term conjoinedFormula = new CommuhashNormalForm(mServices, mMgdScript.getScript())
+				.transform(conjoinedPred.getFormula());
+
+//		final Set<IPredicate> ps = new HashSet<>();
+//		ps.add(state1);
+//		ps.add(state2);
+
+		return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedFormula,
 				Arrays.asList(state1.getFormula().getFreeVars()));
 	}
 
@@ -155,11 +179,15 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		 */
 
 		final Set<HcPredicateSymbol> mergedLocations = new HashSet<>();
-		Term mergedFormula = mBackendSmtSolverScript.getScript().term("false");
+		Term mergedFormula = mMgdScript.getScript().term("false");
 
 		List<TermVariable> varsForHcPred = null;
 
 		for (final IPredicate pred : states) {
+			if (mPredicateFactory.isDontCare(pred)) {
+				return pred;
+			}
+
 			if (pred instanceof HCPredicate) {
 				mergedLocations.addAll(((HCPredicate) pred).getHcPredicateSymbols());
 				assert varsForHcPred == null || varsForHcPred.equals(((HCPredicate) pred).getSignature()) : "merging "
@@ -167,7 +195,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				varsForHcPred = ((HCPredicate) pred).getSignature();
 			}
 			mergedFormula = mSimplifier.getSimplifiedTerm(
-					SmtUtils.or(mBackendSmtSolverScript.getScript(), mergedFormula, pred.getFormula()));
+					SmtUtils.or(mMgdScript.getScript(), mergedFormula, pred.getFormula()));
 		}
 		if (mergedLocations.isEmpty()) {
 			return mPredicateFactory.newPredicate(mergedFormula);
@@ -185,23 +213,23 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 	private Term implicationStatement(final IPredicate predA, final IPredicate predB) {
 
-		return SmtUtils.and(mBackendSmtSolverScript.getScript(), predA.getClosedFormula(),
-				SmtUtils.not(mBackendSmtSolverScript.getScript(), predB.getClosedFormula()));
+		return SmtUtils.and(mMgdScript.getScript(), predA.getClosedFormula(),
+				SmtUtils.not(mMgdScript.getScript(), predB.getClosedFormula()));
 
 	}
 
 	private boolean implies(final IPredicate predA, final IPredicate predB) {
 
-		mBackendSmtSolverScript.lock(this);
-		mBackendSmtSolverScript.push(this, 1);
+		mMgdScript.lock(this);
+		mMgdScript.push(this, 1);
 
 		final Term statement = implicationStatement(predA, predB);
 
-		mBackendSmtSolverScript.assertTerm(this, statement);
-		final LBool res = mBackendSmtSolverScript.checkSat(this);
+		mMgdScript.assertTerm(this, statement);
+		final LBool res = mMgdScript.checkSat(this);
 
-		mBackendSmtSolverScript.pop(this, 1);
-		mBackendSmtSolverScript.unlock(this);
+		mMgdScript.pop(this, 1);
+		mMgdScript.unlock(this);
 		return res == LBool.SAT;
 	}
 
@@ -269,6 +297,9 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 	@Override
 	public Iterable<IPredicate> getOptimalDestination(final Iterable<IPredicate> states, final List<IPredicate> src,
 			final HornClause letter, final Iterable<IPredicate> dest) {
+		if (src.stream().anyMatch(mPredicateFactory::isDontCare)) {
+			return Collections.singleton(mPredicateFactory.getDontCareLocationPredicate());
+		}
 
 		final Set<IPredicate> potential = new HashSet<>();
 		for (final IPredicate state : states) {

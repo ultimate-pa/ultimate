@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
@@ -180,18 +180,22 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 				mNormalizedTerm = formula;
 				mProgramVars = Collections.emptySet();
 			} else {
-				final Map<Term, Term> normalizingSubstitution = new HashMap<>();
-				final Set<IProgramVar> hcOutVars = new HashSet<>();
+//				final Map<Term, Term> normalizingSubstitution = new HashMap<>();
+//				final Set<IProgramVar> hcOutVars = new HashSet<>();
 
-				for (int i = 0; i < variables.size(); i++) {
-					throw new AssertionError("TODO: rework");
-					//				final HcBodyVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
-					//				hcOutVars.add(hcOutVar);
-					//				normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
-				}
+//				for (int i = 0; i < variables.size(); i++) {
+//					final HcBodyVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
+//					hcOutVars.add(hcOutVar);
+//					normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
+//				}
 
-				mNormalizedTerm = new Substitution(mScript, normalizingSubstitution).transform(formula);
-				mProgramVars = hcOutVars;
+//				mNormalizedTerm = new Substitution(mScript, normalizingSubstitution).transform(formula);
+//				mProgramVars = hcOutVars;
+
+				// TODO: make nicer, this may not need an extra class..
+				mNormalizedTerm = formula;
+				mProgramVars = variables.stream().map(tv -> mHCSymbolTable.getProgramVar(tv))
+						.collect(Collectors.toSet());
 			}
 		}
 
