@@ -28,10 +28,12 @@ package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,24 +45,36 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
@@ -76,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.Trac
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -88,7 +103,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final Map<IcfgLocation, List<IPredicate>> mFrames;
+	private final Map<IcfgLocation, List<Pair<changedFrame, IPredicate>>> mFrames;
 	private final ManagedScript mScript;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTrans;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
@@ -107,6 +122,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private TraceCheckReasonUnknown mReasonUnknown;
+
+	/**
+	 * To indicate whether a frame has been changed. It is possible to add "true" to frames, but that was ignored in the
+	 * propagation phase.
+	 */
+	private enum changedFrame {
+		CHANGED, UNCHANGED
+	}
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IHoareTripleChecker htc, final List<LETTER> counterexample) {
@@ -181,9 +204,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			}
 			mFrames.put(loc, new ArrayList<>());
 			if (init.contains(loc)) {
-				mFrames.get(loc).add(mTruePred);
+				mFrames.get(loc).add(new Pair<changedFrame, IPredicate>(changedFrame.UNCHANGED, mTruePred));
 			} else {
-				mFrames.get(loc).add(mFalsePred);
+				mFrames.get(loc).add(new Pair<changedFrame, IPredicate>(changedFrame.UNCHANGED, mFalsePred));
 			}
 		}
 
@@ -196,8 +219,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			/**
 			 * Initialize new level.
 			 */
-			for (final Entry<IcfgLocation, List<IPredicate>> trace : mFrames.entrySet()) {
-				trace.getValue().add(mTruePred);
+			for (final Entry<IcfgLocation, List<Pair<changedFrame, IPredicate>>> trace : mFrames.entrySet()) {
+				trace.getValue().add(new Pair<changedFrame, IPredicate>(changedFrame.UNCHANGED, mTruePred));
 			}
 
 			level += 1;
@@ -216,14 +239,24 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				proofObligations.add(initialProofObligation);
 			}
 
+			mLogger.debug("Initial POs: " + proofObligations);
+
 			/**
 			 * Generated proof-obligation on level 0 -> error is reachable
 			 */
 			if (!blockingPhase(proofObligations)) {
 				// throw new UnsupportedOperationException("error reachable");
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(
+							"Error trace found. Frames: " + mFrames.entrySet().stream()
+									.map(a -> a.getKey().getDebugIdentifier() + ": {"
+											+ a.getValue().stream().map(Pair<changedFrame, IPredicate>::toString)
+													.collect(Collectors.joining(","))
+											+ "}")
+									.collect(Collectors.joining(",")));
+				}
 				mLogger.debug("Error is reachable.");
 				return LBool.SAT;
-
 			}
 
 			/**
@@ -232,9 +265,17 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			if (propagationPhase()) {
 				// throw new UnsupportedOperationException("error not
 				// reachable");
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(
+							"Error trace found. Frames: " + mFrames.entrySet().stream()
+									.map(a -> a.getKey().getDebugIdentifier() + ": {"
+											+ a.getValue().stream().map(Pair<changedFrame, IPredicate>::toString)
+													.collect(Collectors.joining(","))
+											+ "}")
+									.collect(Collectors.joining(",")));
+				}
 				mLogger.debug("Error is not reachable.");
-				// TODO: compute interpolants
-				mInterpolants = new IPredicate[0];
+				mInterpolants = computeInterpolants();
 				return LBool.UNSAT;
 			}
 		}
@@ -247,6 +288,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 */
 	private boolean blockingPhase(final List<Triple<IPredicate, IcfgLocation, Integer>> initialProofObligations) {
 
+		mLogger.debug("Begin Blocking Phase: \n");
+
 		final Deque<Triple<IPredicate, IcfgLocation, Integer>> proofObligations =
 				new ArrayDeque<>(initialProofObligations);
 		while (!proofObligations.isEmpty()) {
@@ -255,12 +298,17 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			final IcfgLocation location = proofObligation.getSecond();
 			final int level = proofObligation.getThird();
 
+			mLogger.debug("predecessors: " + location.getIncomingEdges());
 			for (final IcfgEdge predecessorTransition : location.getIncomingEdges()) {
+				mLogger.debug("Predecessor Transition: " + predecessorTransition);
 				final IcfgLocation predecessor = predecessorTransition.getSource();
-				final IPredicate predecessorFrame = mFrames.get(predecessor).get(level - 1);
+				final IPredicate predecessorFrame = mFrames.get(predecessor).get(level - 1).getSecond();
 
-				final Validity result =
-						checkSatInternal(predecessorFrame, (IInternalAction) predecessorTransition, toBeBlocked);
+				/**
+				 * @TODO error on other actions that are not IInternalAction
+				 */
+
+				final Validity result = checkSatInternal(predecessorFrame, predecessorTransition, toBeBlocked);
 
 				/**
 				 * If Sat generate new proof-obligation
@@ -270,14 +318,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					 * Found Error trace
 					 */
 					if (level - 1 == 0) {
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("Error trace found. Frames: " + mFrames.entrySet().stream()
-									.map(a -> a.getKey().getDebugIdentifier() + ": {"
-											+ a.getValue().stream().map(IPredicate::toString)
-													.collect(Collectors.joining(","))
-											+ "}")
-									.collect(Collectors.joining(",")));
-						}
 						return false;
 					}
 
@@ -289,6 +329,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug(String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition, pre));
 						}
+
 					} else if (predecessorTransition instanceof IIcfgCallTransition) {
 						final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
 								.getGlobalVarsAssignment(predecessorTransition.getSucceedingProcedure());
@@ -296,11 +337,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 								.getOldVarsAssignment(predecessorTransition.getSucceedingProcedure());
 						final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
 								.getModifiedBoogieVars(predecessorTransition.getSucceedingProcedure());
-						preCondition = (IPredicate) mPredTrans.weakestPreconditionCall(toBeBlocked,
-								predecessorTransition.getTransformula(), globalVarsAssignments, oldVarAssignments,
-								modifiableGlobals);
+						preCondition =
+								(IPredicate) mPredTrans.preCall(toBeBlocked, predecessorTransition.getTransformula(),
+										globalVarsAssignments, oldVarAssignments, modifiableGlobals);
 
 					} else if (predecessorTransition instanceof IIcfgReturnTransition) {
+						/*
+						 * What to do here?
+						 */
 						throw new UnsupportedOperationException();
 
 					} else {
@@ -311,7 +355,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					final Triple<IPredicate, IcfgLocation, Integer> newProofObligation =
 							new Triple<>(preCondition, predecessor, level - 1);
 
-					proofObligations.addFirst(proofObligation);
+					// proofObligations.addFirst(proofObligation);
 					proofObligations.addFirst(newProofObligation);
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug("New PO: " + newProofObligation);
@@ -322,11 +366,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					 */
 				} else if (result == Validity.VALID) {
 					for (int i = 0; i <= level; i++) {
-						IPredicate fTerm = mFrames.get(location).get(i);
+						IPredicate fTerm = mFrames.get(location).get(i).getSecond();
 						final IPredicate negToBeBlocked = mPredicateUnifier.getPredicateFactory().not(toBeBlocked);
 						fTerm = mPredicateUnifier.getPredicateFactory().and(fTerm, negToBeBlocked);
 						fTerm = mPredicateUnifier.getOrConstructPredicate(fTerm);
-						mFrames.get(location).set(i, fTerm);
+						mFrames.get(location).set(i, new Pair<changedFrame, IPredicate>(changedFrame.CHANGED, fTerm));
 					}
 
 				} else {
@@ -336,6 +380,34 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Propagation-Phase, for finding invariants
+	 */
+	private boolean propagationPhase() {
+		mLogger.debug("Begin Propagation Phase: \n");
+		for (final Entry<IcfgLocation, List<Pair<changedFrame, IPredicate>>> locationTrace : mFrames.entrySet()) {
+			final List<Pair<changedFrame, IPredicate>> frames = locationTrace.getValue();
+
+			for (int i = 0; i < frames.size(); i++) {
+				final IPredicate p1 = frames.get(i).getSecond();
+				if (frames.get(i).getFirst() == changedFrame.UNCHANGED) {
+					continue;
+				}
+				for (int k = i + 1; k < frames.size(); k++) {
+					if (frames.get(k).getFirst() == changedFrame.UNCHANGED) {
+						continue;
+					}
+					final IPredicate p2 = frames.get(k).getSecond();
+					if (p1.getFormula().equals(p2.getFormula())) {
+						mLogger.debug("Invariant Found: " + frames.get(i) + " equals " + frames.get(k));
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -351,9 +423,21 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 *         {@link Validity#UNKNOWN} iff the solver was not able to find a solution, and {@link Validity#NOT_CHECKED}
 	 *         should not be returned
 	 */
-	private Validity checkSatInternal(final IPredicate pre, final IInternalAction trans, final IPredicate post) {
+	private Validity checkSatInternal(final IPredicate pre, final IAction trans, final IPredicate post) {
 		final IPredicate notP = not(post);
-		final Validity result = mHtc.checkInternal(pre, trans, notP);
+		Validity result = Validity.NOT_CHECKED;
+
+		if (trans instanceof IIcfgInternalTransition) {
+			result = mHtc.checkInternal(pre, (IInternalAction) trans, notP);
+		} else if (trans instanceof IcfgCallTransition) {
+			result = mHtc.checkCall(pre, (ICallAction) trans, notP);
+		} else if (trans instanceof IcfgReturnTransition) {
+			/*
+			 * @TODO how does this work?
+			 */
+			result = mHtc.checkReturn(mTruePred, pre, (IReturnAction) trans, notP);
+		}
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format(" %s && %s && %s is %s", pre, trans, post,
 					(result == Validity.VALID ? "unsat" : (result == Validity.INVALID ? "sat" : "unknown"))));
@@ -368,26 +452,39 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	/**
-	 * Propagation-Phase, for finding invariants
+	 * Compute interpolants of mTrace.
+	 * 
+	 * @ToDo optimization
+	 * @return
 	 */
-	private boolean propagationPhase() {
-		for (final Entry<IcfgLocation, List<IPredicate>> locationTrace : mFrames.entrySet()) {
-			final List<IPredicate> frames = locationTrace.getValue();
+	private IPredicate[] computeInterpolants() {
+		/*
+		 * What do with live variables? How does unsatcore work?
+		 */
+		mLogger.debug("computing interpolants.");
 
-			for (int i = 0; i < frames.size(); i++) {
-				final IPredicate p1 = frames.get(i);
-				if (p1.equals(mPredicateUnifier.getTruePredicate())) {
-					continue;
-				}
-				for (int k = i + 1; k < frames.size(); k++) {
-					final IPredicate p2 = frames.get(k);
-					if (p1.getFormula().equals(p2.getFormula())) {
-						return true;
-					}
-				}
-			}
+		Term traceTerm = mScript.getScript().term("true");
+		final Iterator<LETTER> traceIt = mTrace.iterator();
+		while (traceIt.hasNext()) {
+			final LETTER l = traceIt.next();
+			traceTerm = mScript.getScript().term("and", traceTerm, l.getTransformula().getFormula());
 		}
-		return false;
+
+		// always sat? why?
+		final LBool sat = mScript.getScript().checkSat();
+		if (sat == LBool.UNSAT) {
+			final Term[] unsatCore = mScript.getScript().getUnsatCore();
+		}
+
+		final IPredicate[] interpolants = new IPredicate[mTrace.size()];
+
+		interpolants[0] = mTruePred;
+		for (int i = 1; i < mTrace.size(); i++) {
+			final Term interpolantTerm =
+					mPredTrans.strongestPostcondition(interpolants[i - 1], mTrace.get(i - 1).getTransformula());
+			interpolants[i] = mPredicateUnifier.getOrConstructPredicate(interpolantTerm);
+		}
+		return Arrays.copyOfRange(interpolants, 1, mTrace.size());
 	}
 
 	private IProgramExecution<IcfgEdge, Term> computeProgramExecution() {
