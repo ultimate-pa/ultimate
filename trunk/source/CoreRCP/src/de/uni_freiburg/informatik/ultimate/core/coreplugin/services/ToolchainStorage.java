@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -68,13 +69,16 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	private final Map<String, IStorable> mToolchainStorage;
 	private final Map<String, PreferenceLayer> mPreferenceLayers;
 
+	private final Object mLock;
+
 	public ToolchainStorage() {
-		this(new LinkedHashMap<>(), new HashMap<>(), new ArrayDeque<>());
+		this(new LinkedHashMap<>(), new HashMap<>(), new ArrayDeque<>(), new Object());
 		pushMarker(this);
 	}
 
 	private ToolchainStorage(final Map<String, IStorable> storage, final Map<String, PreferenceLayer> layers,
-			final Deque<Pair<Object, Set<String>>> marker) {
+			final Deque<Pair<Object, Set<String>>> marker, final Object lock) {
+		mLock = Objects.requireNonNull(lock);
 		mToolchainStorage = Objects.requireNonNull(storage);
 		mPreferenceLayers = Objects.requireNonNull(layers);
 		mMarker = Objects.requireNonNull(marker);
@@ -82,7 +86,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public IStorable getStorable(final String key) {
-		return mToolchainStorage.get(key);
+		synchronized (mLock) {
+			return mToolchainStorage.get(key);
+		}
 	}
 
 	@Override
@@ -90,52 +96,62 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		if (value == null || key == null) {
 			throw new IllegalArgumentException("Cannot store nothing");
 		}
-		final Pair<Object, Set<String>> currentMarker = mMarker.peek();
-		currentMarker.getSecond().add(key);
-		return mToolchainStorage.put(key, value);
+		synchronized (mLock) {
+			final Pair<Object, Set<String>> currentMarker = mMarker.peek();
+			currentMarker.getSecond().add(key);
+			return mToolchainStorage.put(key, value);
+		}
 	}
 
 	@Override
 	public IStorable removeStorable(final String key) {
-		return mToolchainStorage.remove(key);
+		synchronized (mLock) {
+			return mToolchainStorage.remove(key);
+		}
 	}
 
 	@Override
 	public void clear() {
-		final List<IStorable> current = new ArrayList<>(mToolchainStorage.values());
-
-		if (current.isEmpty()) {
-			return;
-		}
-
-		// destroy storables in reverse order s.t., e.g., scripts are destroyed
-		// before the solver is destroyed.
-		// this is done because we assume that instances created later may
-		// depend on instances created earlier.
-		Collections.reverse(current);
-
-		final ILogger coreLogger = getLoggingService().getLogger(Activator.PLUGIN_ID);
-		if (coreLogger.isDebugEnabled()) {
-			coreLogger.debug("Clearing " + current.size() + " storables from " + getClass().getSimpleName());
-		}
-		for (final IStorable storable : current) {
-			if (storable == null) {
-				coreLogger.warn("Found NULL storable, ignoring");
-				continue;
+		synchronized (mLock) {
+			final Collection<IStorable> values = mToolchainStorage.values();
+			if (values.isEmpty()) {
+				return;
 			}
-			try {
-				storable.destroy();
-			} catch (final Throwable t) {
-				if (coreLogger == null) {
+			final List<IStorable> current = new ArrayList<>(values);
+
+			if (current.isEmpty()) {
+				return;
+			}
+
+			// destroy storables in reverse order s.t., e.g., scripts are destroyed
+			// before the solver is destroyed.
+			// this is done because we assume that instances created later may
+			// depend on instances created earlier.
+			Collections.reverse(current);
+
+			final ILogger coreLogger = getLoggingService().getLogger(Activator.PLUGIN_ID);
+			if (coreLogger.isDebugEnabled()) {
+				coreLogger.debug("Clearing " + current.size() + " storables from " + getClass().getSimpleName());
+			}
+			for (final IStorable storable : current) {
+				if (storable == null) {
+					coreLogger.warn("Found NULL storable, ignoring");
 					continue;
 				}
-				coreLogger.fatal("There was an exception during clearing of toolchain storage while destroying "
-						+ storable.getClass().toString() + ": " + t.getMessage());
+				try {
+					storable.destroy();
+				} catch (final Throwable t) {
+					if (coreLogger == null) {
+						continue;
+					}
+					coreLogger.fatal("There was an exception during clearing of toolchain storage while destroying "
+							+ storable.getClass().toString() + ": " + t.getMessage());
+				}
 			}
+			mToolchainStorage.clear();
+			mMarker.clear();
+			pushMarker(this);
 		}
-		mToolchainStorage.clear();
-		mMarker.clear();
-		pushMarker(this);
 	}
 
 	@Override
@@ -190,26 +206,33 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public IUltimateServiceProvider registerPreferenceLayer(final Class<?> creator, final String... pluginIds) {
-		final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
-		if (pluginIds == null || pluginIds.length == 0) {
-			return this;
-		}
-		for (final String pluginId : pluginIds) {
-			final PreferenceLayer existingLayer = newLayers.get(pluginId);
-			final PreferenceLayer newLayer;
-			if (existingLayer != null) {
-				newLayer = new PreferenceLayer(existingLayer, creator);
-			} else {
-				newLayer = new PreferenceLayer(getPreferenceProvider(pluginId), creator);
+		synchronized (mLock) {
+
+			final Map<String, PreferenceLayer> newLayers = new HashMap<>(mPreferenceLayers);
+			if (pluginIds == null || pluginIds.length == 0) {
+				return this;
 			}
-			newLayers.put(pluginId, newLayer);
+			for (final String pluginId : pluginIds) {
+				final PreferenceLayer existingLayer = newLayers.get(pluginId);
+				final PreferenceLayer newLayer;
+				if (existingLayer != null) {
+					newLayer = new PreferenceLayer(existingLayer, creator);
+				} else {
+					newLayer = new PreferenceLayer(getPreferenceProvider(pluginId), creator);
+				}
+				newLayers.put(pluginId, newLayer);
+			}
+			return new ToolchainStorage(mToolchainStorage, newLayers, mMarker, mLock);
 		}
-		return new ToolchainStorage(mToolchainStorage, newLayers, mMarker);
 	}
 
 	@Override
 	public Set<String> keys() {
-		return Collections.unmodifiableSet(mToolchainStorage.keySet());
+		final Set<String> keys;
+		synchronized (mLock) {
+			keys = new HashSet<>(mToolchainStorage.keySet());
+		}
+		return keys;
 	}
 
 	@Override
@@ -220,7 +243,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		if (hasMarker(marker)) {
 			throw new IllegalArgumentException("duplicate marker");
 		}
-		mMarker.push(new Pair<>(marker, new HashSet<>()));
+		synchronized (mLock) {
+			mMarker.push(new Pair<>(marker, new HashSet<>()));
+		}
 	}
 
 	@Override
@@ -228,25 +253,29 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		if (mMarker.isEmpty() || !hasMarker(marker)) {
 			return Collections.emptySet();
 		}
-		final Set<String> rtr = new HashSet<>();
-		final Iterator<Pair<Object, Set<String>>> iter = mMarker.iterator();
-		while (iter.hasNext()) {
-			final Pair<Object, Set<String>> markerPair = iter.next();
-			iter.remove();
-			for (final String key : markerPair.getSecond()) {
-				if (destroyStorable(key)) {
-					rtr.add(key);
+		synchronized (mLock) {
+			final Set<String> rtr = new HashSet<>();
+			final Iterator<Pair<Object, Set<String>>> iter = mMarker.iterator();
+			while (iter.hasNext()) {
+				final Pair<Object, Set<String>> markerPair = iter.next();
+				iter.remove();
+				for (final String key : markerPair.getSecond()) {
+					if (destroyStorable(key)) {
+						rtr.add(key);
+					}
+				}
+				if (markerPair.getFirst() == marker) {
+					return rtr;
 				}
 			}
-			if (markerPair.getFirst() == marker) {
-				return rtr;
-			}
+			return rtr;
 		}
-		return rtr;
 	}
 
 	private boolean hasMarker(final Object marker) {
 		assert marker != null;
-		return mMarker.stream().map(a -> a.getFirst()).anyMatch(a -> a == marker);
+		synchronized (mLock) {
+			return mMarker.stream().map(a -> a.getFirst()).anyMatch(a -> a == marker);
+		}
 	}
 }
