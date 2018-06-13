@@ -45,12 +45,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -71,10 +68,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
@@ -204,9 +197,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			}
 			mFrames.put(loc, new ArrayList<>());
 			if (init.contains(loc)) {
-				mFrames.get(loc).add(new Pair<changedFrame, IPredicate>(changedFrame.UNCHANGED, mTruePred));
+				mFrames.get(loc).add(new Pair<>(changedFrame.UNCHANGED, mTruePred));
 			} else {
-				mFrames.get(loc).add(new Pair<changedFrame, IPredicate>(changedFrame.UNCHANGED, mFalsePred));
+				mFrames.get(loc).add(new Pair<>(changedFrame.UNCHANGED, mFalsePred));
 			}
 		}
 
@@ -220,7 +213,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			 * Initialize new level.
 			 */
 			for (final Entry<IcfgLocation, List<Pair<changedFrame, IPredicate>>> trace : mFrames.entrySet()) {
-				trace.getValue().add(new Pair<changedFrame, IPredicate>(changedFrame.UNCHANGED, mTruePred));
+				trace.getValue().add(new Pair<>(changedFrame.UNCHANGED, mTruePred));
 			}
 
 			level += 1;
@@ -370,7 +363,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						final IPredicate negToBeBlocked = mPredicateUnifier.getPredicateFactory().not(toBeBlocked);
 						fTerm = mPredicateUnifier.getPredicateFactory().and(fTerm, negToBeBlocked);
 						fTerm = mPredicateUnifier.getOrConstructPredicate(fTerm);
-						mFrames.get(location).set(i, new Pair<changedFrame, IPredicate>(changedFrame.CHANGED, fTerm));
+						mFrames.get(location).set(i, new Pair<>(changedFrame.CHANGED, fTerm));
 					}
 
 				} else {
@@ -453,7 +446,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	/**
 	 * Compute interpolants of mTrace.
-	 * 
+	 *
 	 * @ToDo optimization
 	 * @return
 	 */
