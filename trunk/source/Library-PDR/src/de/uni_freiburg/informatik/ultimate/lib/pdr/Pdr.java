@@ -258,14 +258,13 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				// throw new UnsupportedOperationException("error not
 				// reachable");
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(
-							"Frames: " + mFrames.entrySet().stream()
-									.map(a -> a.getKey().getDebugIdentifier() + ": {"
-											+ a.getValue().stream().map(Pair<ChangedFrame, IPredicate>::toString)
-													.collect(Collectors.joining(","))
-											+ "}")
-									.collect(Collectors.joining(",")));
-					mLogger.debug(new IcfgLocationIterator<>(mPpIcfg).asStream().map(a -> a.getDebugIdentifier())
+					mLogger.debug("Frames:");
+					for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
+						mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
+								.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
+					}
+					mLogger.debug("PP:");
+					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream().map(a -> a.getDebugIdentifier())
 							.collect(Collectors.joining(",")));
 				}
 				mLogger.debug("Error is not reachable.");
