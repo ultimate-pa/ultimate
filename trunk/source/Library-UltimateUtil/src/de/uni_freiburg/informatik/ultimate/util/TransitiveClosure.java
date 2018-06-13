@@ -52,10 +52,11 @@ public class TransitiveClosure {
 
 	/**
 	 * Input:
+	 * <ul>
 	 *  <li> a set of NODES
 	 *  <li> a labeling function l : NODEs -> NODEs that assigns a set of labels to each node
 	 *  <li> a graph over the nodes
-	 *
+	 * </ul>
 	 * This procedure computes the minimal labeling l' where for each edge (n1, n2) in the node graph, the label of n2
 	 * is a superset of the label of n1, i.e. l'(n1) \subseteq l'(n2).
 	 *
