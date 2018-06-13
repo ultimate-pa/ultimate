@@ -13,5 +13,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
- de.uni_freiburg.informatik.ultimate.lib.treeautomizer
+ de.uni_freiburg.informatik.ultimate.lib.chc
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing

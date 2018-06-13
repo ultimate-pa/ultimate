@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-TreeAutomizer
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.treeautomizer
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.chc
 Bundle-Version: 0.1.23
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: .
