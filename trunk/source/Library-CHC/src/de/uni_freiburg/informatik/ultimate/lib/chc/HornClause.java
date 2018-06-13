@@ -1,11 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.lib.chc;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.IRankedLetter;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -234,6 +239,55 @@ public class HornClause implements IRankedLetter {
 	 */
 	public Set<HcBodyVar> getBodyPredVariables() {
 		return mBodyVariables;
+	}
+
+	/**
+	 *
+	 * @param mgdScript
+	 * @return a complete Horn constraint as it can be asserted in an (assert ..) term in smtlib.
+	 */
+	public Term constructFormula(final ManagedScript mgdScript) {
+		final TermVariable[] qVars;
+		final List<TermVariable> headVars;
+		{
+			final List<HcHeadVar> headVarList = getTermVariablesForHeadPred();
+			final Set<HcBodyVar> bodyVars = getBodyPredVariables();
+			headVars = headVarList.stream().map(hv -> hv.getTermVariable()).collect(Collectors.toList());
+
+			final List<TermVariable> qVarsList = new ArrayList<>();
+			qVarsList.addAll(headVars);
+			bodyVars.forEach(bv -> qVarsList.add(bv.getTermVariable()));
+			qVars = qVarsList.toArray(new TermVariable[qVarsList.size()]);
+		}
+
+		mgdScript.lock(this);
+
+		final Term head = isHeadFalse() ?
+				mgdScript.term(this, "false") :
+					mgdScript.term(this, getHeadPredicate().getName(), headVars.toArray(new Term[headVars.size()]));
+
+		final Term tail;
+		{
+			final List<Term> conjuncts = new ArrayList<>();
+
+			// applications of uninterpreted predicates
+			for (int bodyPredIndex = 0; bodyPredIndex < getNoBodyPredicates(); bodyPredIndex++) {
+				final HcPredicateSymbol bpsym = getBodyPredicates().get(bodyPredIndex);
+				final List<Term> args = getBodyPredToArgs().get(bodyPredIndex);
+				conjuncts.add(mgdScript.term(this, bpsym.getName(), args.toArray(new Term[args.size()])));
+			}
+
+			// constraint
+			conjuncts.add(getConstraintFormula());
+
+			tail = SmtUtils.and(mgdScript.getScript(), conjuncts);
+		}
+
+		final Term clause = mgdScript.term(this, "=>", tail, head);
+
+		final Term result = mgdScript.getScript().quantifier(QuantifiedFormula.FORALL, qVars, clause);
+		mgdScript.unlock(this);
+		return result;
 	}
 
 }

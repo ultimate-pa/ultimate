@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -45,13 +46,10 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	private final ManagedScript mManagedScript;
 
 	private final NestedMap2<String, List<Sort>, HcPredicateSymbol> mNameToSortsToHornClausePredicateSymbol;
-	private final NestedMap2<Integer, Sort, HcBodyVar> mArgPosToSortToHcOutVar;
 
 	private HornClauseTruePredicateSymbol mTrueHornClausePredSym;
 	private HornClauseDontCarePredicateSymbol mDontCareHornClausePredSym;
 	private final HcPredicateSymbol mFalseHornClausePredSym;
-
-	private final Map<TermVariable, ApplicationTerm> mTermVarToConst = new HashMap<>();
 
 	final Map<TermVariable, Integer> mVersionsMap;
 
@@ -67,8 +65,6 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	private final HashRelation3<String, Sort[], Sort> mSkolemFunctions;
 
 
-
-
 	/**
 	 *
 	 * @param mgdScript note, this is the solver, not the parser, as a convention every Term that is saved in this
@@ -77,7 +73,6 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	public HcSymbolTable(final ManagedScript mgdScript) {
 		super();
 		mNameToSortsToHornClausePredicateSymbol = new NestedMap2<>();
-		mArgPosToSortToHcOutVar = new NestedMap2<>();
 		mManagedScript = mgdScript;
 
 		mManagedScript.lock(this);
@@ -130,7 +125,6 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return result;
 	}
 
-
 	public HcPredicateSymbol getFalseHornClausePredicateSymbol() {
 		return mFalseHornClausePredSym;
 	}
@@ -143,6 +137,13 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 		return mDontCareHornClausePredSym;
 	}
 
+	/**
+	 * Returns all uninterpreted predicates that are registered in this symbol table.
+	 * @return
+	 */
+	public List<HcPredicateSymbol> getHcPredicateSymbols() {
+		return mNameToSortsToHornClausePredicateSymbol.values().collect(Collectors.toList());
+	}
 
 	/*
 	 * TODO: copied from TermTransferrer --> do something nicer..
