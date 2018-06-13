@@ -62,11 +62,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.SkolemNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -361,13 +363,25 @@ public class HornClauseParserScript extends NoopScript {
 
 		final Term cnf = new Substitution(this, subsInverse).transform(cnfWConstraintsReplaced);
 
-		Term unlettedTerm;
+		Term normalizedTerm;
 		if (snfTerm instanceof QuantifiedFormula) {
-			unlettedTerm = quantifier(FORALL, snfVars, cnf);
+			normalizedTerm = quantifier(FORALL, snfVars, cnf);
 		} else {
-			unlettedTerm = cnf;
+			normalizedTerm = cnf;
 		}
-		return unlettedTerm;
+
+		assert checkEquivalence(rawTerm, normalizedTerm) : "Nnf transformation unsound";
+		return normalizedTerm;
+	}
+
+	public boolean checkEquivalence(final Term t1, final Term t2) {
+		final TermTransferrer ttf = new TermTransferrer(mBackendSmtSolver.getScript());
+		final Term unl1 = new FormulaUnLet(UnletType.SMTLIB).unlet(t1);
+		final Term unl2 = new FormulaUnLet(UnletType.SMTLIB).unlet(t2);
+
+		final boolean result = Util.checkSat(mBackendSmtSolver.getScript(),
+				mBackendSmtSolver.getScript().term("distinct", ttf.transform(unl1), ttf.transform(unl2))) != LBool.SAT ;
+		return result;
 	}
 
 	private boolean hasNoUninterpretedPredicates(final Term term) {
