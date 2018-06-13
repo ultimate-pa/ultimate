@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -94,9 +93,17 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInterpolantGenerator<LETTER> {
 
+	/**
+	 * To indicate whether a frame has been changed. It is possible to add "true" to frames, but that was ignored in the
+	 * propagation phase.
+	 */
+	private enum ChangedFrame {
+		CHANGED, UNCHANGED
+	}
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final Map<IcfgLocation, List<Pair<changedFrame, IPredicate>>> mFrames;
+	private final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> mFrames;
 	private final ManagedScript mScript;
 	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredTrans;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
@@ -115,14 +122,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private LBool mIsTraceCorrect;
 	private IPredicate[] mInterpolants;
 	private TraceCheckReasonUnknown mReasonUnknown;
-
-	/**
-	 * To indicate whether a frame has been changed. It is possible to add "true" to frames, but that was ignored in the
-	 * propagation phase.
-	 */
-	private enum changedFrame {
-		CHANGED, UNCHANGED
-	}
 
 	public Pdr(final ILogger logger, final ITraceCheckPreferences prefs, final IPredicateUnifier predicateUnifier,
 			final IHoareTripleChecker htc, final List<LETTER> counterexample) {
@@ -197,9 +196,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			}
 			mFrames.put(loc, new ArrayList<>());
 			if (init.contains(loc)) {
-				mFrames.get(loc).add(new Pair<>(changedFrame.UNCHANGED, mTruePred));
+				mFrames.get(loc).add(new Pair<>(ChangedFrame.UNCHANGED, mTruePred));
 			} else {
-				mFrames.get(loc).add(new Pair<>(changedFrame.UNCHANGED, mFalsePred));
+				mFrames.get(loc).add(new Pair<>(ChangedFrame.UNCHANGED, mFalsePred));
 			}
 		}
 
@@ -212,8 +211,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			/**
 			 * Initialize new level.
 			 */
-			for (final Entry<IcfgLocation, List<Pair<changedFrame, IPredicate>>> trace : mFrames.entrySet()) {
-				trace.getValue().add(new Pair<>(changedFrame.UNCHANGED, mTruePred));
+			for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> trace : mFrames.entrySet()) {
+				trace.getValue().add(new Pair<>(ChangedFrame.UNCHANGED, mTruePred));
 			}
 
 			level += 1;
@@ -243,7 +242,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					mLogger.debug(
 							"Error trace found. Frames: " + mFrames.entrySet().stream()
 									.map(a -> a.getKey().getDebugIdentifier() + ": {"
-											+ a.getValue().stream().map(Pair<changedFrame, IPredicate>::toString)
+											+ a.getValue().stream().map(Pair<ChangedFrame, IPredicate>::toString)
 													.collect(Collectors.joining(","))
 											+ "}")
 									.collect(Collectors.joining(",")));
@@ -260,12 +259,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				// reachable");
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(
-							"Error trace found. Frames: " + mFrames.entrySet().stream()
+							"Frames: " + mFrames.entrySet().stream()
 									.map(a -> a.getKey().getDebugIdentifier() + ": {"
-											+ a.getValue().stream().map(Pair<changedFrame, IPredicate>::toString)
+											+ a.getValue().stream().map(Pair<ChangedFrame, IPredicate>::toString)
 													.collect(Collectors.joining(","))
 											+ "}")
 									.collect(Collectors.joining(",")));
+					mLogger.debug(new IcfgLocationIterator<>(mPpIcfg).asStream().map(a -> a.getDebugIdentifier())
+							.collect(Collectors.joining(",")));
 				}
 				mLogger.debug("Error is not reachable.");
 				mInterpolants = computeInterpolants();
@@ -363,7 +364,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						final IPredicate negToBeBlocked = mPredicateUnifier.getPredicateFactory().not(toBeBlocked);
 						fTerm = mPredicateUnifier.getPredicateFactory().and(fTerm, negToBeBlocked);
 						fTerm = mPredicateUnifier.getOrConstructPredicate(fTerm);
-						mFrames.get(location).set(i, new Pair<>(changedFrame.CHANGED, fTerm));
+						mFrames.get(location).set(i, new Pair<>(ChangedFrame.CHANGED, fTerm));
 					}
 
 				} else {
@@ -380,16 +381,16 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 */
 	private boolean propagationPhase() {
 		mLogger.debug("Begin Propagation Phase: \n");
-		for (final Entry<IcfgLocation, List<Pair<changedFrame, IPredicate>>> locationTrace : mFrames.entrySet()) {
-			final List<Pair<changedFrame, IPredicate>> frames = locationTrace.getValue();
+		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> locationTrace : mFrames.entrySet()) {
+			final List<Pair<ChangedFrame, IPredicate>> frames = locationTrace.getValue();
 
 			for (int i = 0; i < frames.size(); i++) {
 				final IPredicate p1 = frames.get(i).getSecond();
-				if (frames.get(i).getFirst() == changedFrame.UNCHANGED) {
+				if (frames.get(i).getFirst() == ChangedFrame.UNCHANGED) {
 					continue;
 				}
 				for (int k = i + 1; k < frames.size(); k++) {
-					if (frames.get(k).getFirst() == changedFrame.UNCHANGED) {
+					if (frames.get(k).getFirst() == ChangedFrame.UNCHANGED) {
 						continue;
 					}
 					final IPredicate p2 = frames.get(k).getSecond();
@@ -451,33 +452,37 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 * @return
 	 */
 	private IPredicate[] computeInterpolants() {
-		/*
-		 * What do with live variables? How does unsatcore work?
-		 */
 		mLogger.debug("computing interpolants.");
 
-		Term traceTerm = mScript.getScript().term("true");
+		final Map<IcfgLocation, Set<IPredicate>> traceFrames = new HashMap<>();
+		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
+			final IcfgLocation key = entry.getKey();
+			final IcfgLocation actualLoc = key.getLabel();
+			assert key != actualLoc : "Not a path program loc";
+
+			final Set<IPredicate> preds = entry.getValue().stream().filter(a -> a.getFirst() == ChangedFrame.CHANGED)
+					.map(Pair<ChangedFrame, IPredicate>::getSecond).collect(Collectors.toSet());
+			final Set<IPredicate> old = traceFrames.put(actualLoc, preds);
+			assert old == null || old.equals(preds);
+		}
+
 		final Iterator<LETTER> traceIt = mTrace.iterator();
+		final IPredicate[] interpolants = new IPredicate[mTrace.size() - 1];
+		int i = 0;
 		while (traceIt.hasNext()) {
 			final LETTER l = traceIt.next();
-			traceTerm = mScript.getScript().term("and", traceTerm, l.getTransformula().getFormula());
-		}
+			if (!traceIt.hasNext()) {
+				// the last target is always false
+				break;
+			}
 
-		// always sat? why?
-		final LBool sat = mScript.getScript().checkSat();
-		if (sat == LBool.UNSAT) {
-			final Term[] unsatCore = mScript.getScript().getUnsatCore();
+			final Set<IPredicate> lPreds = traceFrames.get(l.getTarget());
+			assert lPreds != null;
+			final IPredicate lInterpolant = mPredicateUnifier.getOrConstructPredicateForDisjunction(lPreds);
+			interpolants[i] = lInterpolant;
+			++i;
 		}
-
-		final IPredicate[] interpolants = new IPredicate[mTrace.size()];
-
-		interpolants[0] = mTruePred;
-		for (int i = 1; i < mTrace.size(); i++) {
-			final Term interpolantTerm =
-					mPredTrans.strongestPostcondition(interpolants[i - 1], mTrace.get(i - 1).getTransformula());
-			interpolants[i] = mPredicateUnifier.getOrConstructPredicate(interpolantTerm);
-		}
-		return Arrays.copyOfRange(interpolants, 1, mTrace.size());
+		return interpolants;
 	}
 
 	private IProgramExecution<IcfgEdge, Term> computeProgramExecution() {
