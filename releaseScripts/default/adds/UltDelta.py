@@ -719,16 +719,20 @@ def main():
     # before doing anything, set permissions
     # call_relaxed(['chmod', 'ug+rwx', '-R', ultimatedir])
 
+    f = open('output.txt','a')
+    sys.stdout = f
+    sys.stderr = f
+    
     property_file, architecture, input_files, verbose, validate_witness, extras = parse_args()
-    if prop:
+    if property_file:
         main_classic(property_file, architecture, input_files, verbose, validate_witness, extras)
         raise RuntimeError('Unexpected return from main_classic')
 
     # execute ultimate and assume that -tc and -s are given in extras
     print('Version ' + version)
     ultimate_bin = get_binary()
-    ultimate_call = create_callargs(ultimate_bin, extras)
-    z3_call = create_callargs('z3', input_files)
+    ultimate_call = create_callargs(ultimate_bin, extras+['-i']+input_files)
+    z3_call = create_callargs(['z3'], input_files)
 
     ultimate_process = call_desperate(ultimate_call)
     z3_process = call_desperate(z3_call)
@@ -748,7 +752,7 @@ def main():
             print_call_finished('Ultimate', ultimate_process)
             print_call_finished('z3', z3_process)
             break
-
+        
         # check for desired reduction behavior in output
         if ult_line and ult_line.find('CounterExampleResult') != -1:
             ult_reduction = True
