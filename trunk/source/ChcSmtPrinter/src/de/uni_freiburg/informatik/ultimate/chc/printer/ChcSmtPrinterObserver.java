@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -99,7 +100,7 @@ public class ChcSmtPrinterObserver implements IUnmanagedObserver {
 			final File file = openTempFile(root);
 			// TODO make an option for cse
 			final boolean useCse = true;
-			loggingScript = new LoggingScript(file.getAbsolutePath(), true, useCse);
+			loggingScript = new LoggingScript(new NoopScript(), file.getAbsolutePath(), true, useCse);
 		} catch (final FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
