@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TaMinimization;
 
 /**
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -51,13 +52,14 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 	public static final String PRINCESS = "princess +incremental +stdin -timeout=12000";
 
 	/*
-	 * new preferences that belong to the RCFG Builder
+	 * labels for the settings
 	 */
 	public static final String LABEL_Solver = "SMT solver";
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
 	public static final String LABEL_SmtDumpPath = "Dump smtlib scripts to";
 	public static final String LABEL_AutomataDumpPath = "Dump automata to";
+	public static final String LABEL_MinimizationAlgorithm = "Type of minimization to use";
 
 	//defaults
 	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -65,6 +67,7 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 	public static final String DEF_ExtSolverLogic = "ALL";
 	public static final String DEF_SmtDumpPath = "";
 	public static final String DEF_AutomataDumpPath = "";
+	public static final TaMinimization DEF_MinimizationAlgorithm = TaMinimization.NAIVE;
 
 
 	public TreeAutomizerPreferenceInitializer() {
@@ -79,6 +82,8 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_SmtDumpPath, DEF_SmtDumpPath, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_AutomataDumpPath, DEF_AutomataDumpPath, PreferenceType.String),
+				new UltimatePreferenceItem<TaMinimization>(LABEL_MinimizationAlgorithm, DEF_MinimizationAlgorithm,
+						PreferenceType.Combo, TaMinimization.values()),
 				};
 	}
 }

@@ -26,10 +26,11 @@ public class TreeAutomizerSettings {
 	 */
 	public static final int ITERATIONS_BOUND = -1;
 
-	/**
-	 * Apply minimization to current abstraction at the end of every CEGAR iteration?
-	 */
-	public static final TaMinimization MINIMIZATION = TaMinimization.HOPCROFT;
+	// moved to preferences:
+//	/**
+//	 * Apply minimization to current abstraction at the end of every CEGAR iteration?
+//	 */
+//	public static final TaMinimization MINIMIZATION = TaMinimization.NAIVE;
 
 	/***
 	 * Use semantic reduction in lazy difference
