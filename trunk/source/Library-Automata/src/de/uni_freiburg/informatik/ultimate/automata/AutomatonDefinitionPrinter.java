@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutom
 import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AlternatingAutomatonWriter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.BaFormatWriter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.GoalFormatWriter;
@@ -157,7 +158,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 * @param automata
 	 *            sequence of automata to print
 	 * @param append
-	 * 			  whether the automata should be added at the end of the file (true) or replace the content of the file (false) 
+	 * 			  whether the automata should be added at the end of the file (true) or replace the content of the file (false)
 	 */
 	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
 			final String fileName, final Format format, final String message, final boolean append,
@@ -172,12 +173,12 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			printAutomataToFileWriter(automatonName, format, message, automata);
 		}
 	}
-	
+
 	public AutomatonDefinitionPrinter(final AutomataLibraryServices services, final String automatonName,
 			final String fileName, final Format format, final String message, final IAutomaton<?, ?>... automata) {
 		this(services, automatonName, fileName, format, message, false, automata);
 	}
-	
+
 	/**
 	 * Constructor for printing a single {@link IAutomaton} to a {@link StringWriter}.
 	 *
@@ -239,8 +240,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	/**
-	 *  @param append 
-	 *  		
+	 *  @param append
+	 *
 	 */
 	private FileWriter getFileWriterWithOptionalAppend(final String fileName, final Format format, final boolean append) {
 		final File testfile = new File(fileName + '.' + format.getFileEnding());
@@ -253,7 +254,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Date/time string used inside files.
 	 *
@@ -361,26 +362,38 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		}
 
 		switch (format) {
-			case ATS:
-				new NwaWriterToString<>(mPrintWriter, name, nwa);
-				break;
-			case ATS_QUOTED:
-				new NwaWriterToStringWithHash<>(mPrintWriter, name, nwa);
-				break;
-			case ATS_NUMERATE:
-				new NwaWriterUniqueId<>(mPrintWriter, name, nwa);
-				break;
-			case BA:
-				new BaFormatWriter<>(mPrintWriter, nwa);
-				break;
-			case HOA:
-				new HanoiFormatWriter<>(mPrintWriter, nwa);
-				break;
-			case GFF:
-				new GoalFormatWriter<>(mPrintWriter, nwa);
-				break;
-			default:
-				throw new AssertionError(UNSUPPORTED_LABELING);
+		case ATS:
+			new NwaWriterToString<>(mPrintWriter, name, nwa);
+			break;
+		case ATS_QUOTED:
+			new NwaWriterToStringWithHash<>(mPrintWriter, name, nwa);
+			break;
+		case ATS_NUMERATE:
+			new NwaWriterUniqueId<>(mPrintWriter, name, nwa);
+			break;
+		case BA:
+			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
+				throw new UnsupportedOperationException(
+						format + " format does not support call transitions or return transitions");
+			}
+			new BaFormatWriter<>(mPrintWriter, nwa);
+			break;
+		case HOA:
+			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
+				throw new UnsupportedOperationException(
+						format + " format does not support call transitions or return transitions");
+			}
+			new HanoiFormatWriter<>(mPrintWriter, nwa);
+			break;
+		case GFF:
+			if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
+				throw new UnsupportedOperationException(
+						format + " format does not support call transitions or return transitions");
+			}
+			new GoalFormatWriter<>(mPrintWriter, nwa);
+			break;
+		default:
+			throw new AssertionError(UNSUPPORTED_LABELING);
 		}
 	}
 
