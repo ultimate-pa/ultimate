@@ -144,9 +144,16 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 			mLogger.debug(annot);
 		}
 
+		if (!annot.hasCheckSat()) {
+			generateDummyBoogieAst();
+			return true;
+		}
+
+
 		final List<HornClause> hornClausesRaw = annot.getHornClauses();
 		mManagedScript = annot.getScript();
 		mHcSymbolTable = annot.getSymbolTable();
+
 
 		mBottomPredSym = mHcSymbolTable.getFalseHornClausePredicateSymbol();
 
@@ -274,7 +281,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		}
 
 		// add the main entry point
-		declarations.add(constructMainEntryPointProcedure(loc));
+		declarations.add(constructMainEntryPointProcedure(loc, true));
 
 		/*
 		 * Add body-less boogie functions for the uninterpreted function appearing in constraints (e.g. skolem
@@ -287,6 +294,17 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 					new String[0], inParams, outParam);
 			declarations.add(boogieFun);
 		}
+
+		mBoogieUnit = new Unit(loc,
+				declarations.toArray(new Declaration[declarations.size()]));
+	}
+
+	private void generateDummyBoogieAst() {
+
+		final ILocation loc = getLoc();
+		final List<Declaration> declarations = new ArrayList<>();
+
+		declarations.add(constructMainEntryPointProcedure(loc, false));
 
 		mBoogieUnit = new Unit(loc,
 				declarations.toArray(new Declaration[declarations.size()]));
@@ -364,19 +382,22 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private Declaration constructMainEntryPointProcedure(final ILocation loc) {
+	private Declaration constructMainEntryPointProcedure(final ILocation loc, final boolean callBottomProc) {
 
-		final Statement callToBottomProc = new CallStatement(loc, false, new VariableLHS[0],
-				predSymToMethodName(mBottomPredSym), new Expression[0]);
+		Statement[] statements;
+		if (callBottomProc) {
+			final Statement callToBottomProc = new CallStatement(loc, false, new VariableLHS[0],
+					predSymToMethodName(mBottomPredSym), new Expression[0]);
 
-		final Statement assertFalse = new AssertStatement(loc,
-				ExpressionFactory.createBooleanLiteral(loc, false));
+			final Statement assertFalse = new AssertStatement(loc,
+					ExpressionFactory.createBooleanLiteral(loc, false));
 
-		final Body body = new Body(loc, new VariableDeclaration[0],
-				new Statement[] {
-						callToBottomProc,
-						assertFalse
-				});
+			statements = new Statement[] { callToBottomProc, assertFalse };
+		} else {
+			statements = new Statement[0];
+		}
+
+		final Body body = new Body(loc, new VariableDeclaration[0], statements);
 
 		return new Procedure(loc, new Attribute[0], mNameOfMainEntryPointProc, new String[0],
 				new VarList[0], new VarList[0], new Specification[0], body);

@@ -45,6 +45,7 @@ public class HornAnnot implements IAnnotations {
 	private final HcSymbolTable mSymbolTable;
 	private final String mFileName;
 	private final List<HornClause> mHornClauses;
+	private final boolean mHasCheckSat;
 
 	/***
 	 * An annotation of horn clauses.
@@ -53,12 +54,13 @@ public class HornAnnot implements IAnnotations {
 	 * @param backendSolver
 	 * @param symbolTable
 	 */
-	public HornAnnot(final String filename, final List<HornClause> clauses, final ManagedScript backendSolver,
-			final HcSymbolTable symbolTable) {
+	public HornAnnot(final String filename, final ManagedScript backendSolver,
+			final HcSymbolTable symbolTable, final List<HornClause> clauses, final boolean hasCheckSat) {
 		mFileName = filename;
 		mHornClauses = clauses;
 		mBackendSolverScript = backendSolver;
 		mSymbolTable = symbolTable;
+		mHasCheckSat = hasCheckSat;
 	}
 
 	@Override
@@ -76,6 +78,10 @@ public class HornAnnot implements IAnnotations {
 
 	public List<HornClause> getHornClauses() {
 		return mHornClauses;
+	}
+
+	public boolean hasCheckSat() {
+		return mHasCheckSat;
 	}
 
 	public String getFileName() {

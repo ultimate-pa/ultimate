@@ -113,6 +113,8 @@ public class HornClauseParserScript extends NoopScript {
 	 * quantifiers.
 	 */
 	private final boolean mDoSolverBasedSanityChecks = false;
+	private boolean mSawCheckSat = false;
+	private boolean mFinished;
 
 	public HornClauseParserScript(final IUltimateServiceProvider services, final ILogger logger, final String filename,
 			final ManagedScript smtSolverScript, final String logic,
@@ -140,10 +142,12 @@ public class HornClauseParserScript extends NoopScript {
 	}
 
 	public IElement getHornClauses() {
+		mFinished = true;
 		mSymbolTable.finishConstruction();
 
 		final Payload payload = new Payload();
-		final HornAnnot annot = new HornAnnot(mFilename, mParsedHornClauses, mBackendSmtSolver, mSymbolTable);
+		final HornAnnot annot = new HornAnnot(mFilename, mBackendSmtSolver, mSymbolTable, mParsedHornClauses,
+				mSawCheckSat);
 		payload.getAnnotations().put(HornUtilConstants.HORN_ANNOT_NAME, annot);
 
 		return new HornClauseAST(payload);
@@ -299,6 +303,7 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public LBool assertTerm(final Term rawTerm) throws SMTLIBException {
+		assert !mFinished;
 
 		final Term term = normalizeInputFormula(rawTerm);
 
@@ -413,6 +418,11 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public LBool checkSat() {
+		assert !mFinished;
+		if (mSawCheckSat) {
+			throw new UnsupportedOperationException("only one check-sat command is supported in Horn solver mode");
+		}
+		mSawCheckSat = true;
 		// TODO maybe tell the graph builder that we're finished, maybe do
 		// nothing..
 		return super.checkSat();
