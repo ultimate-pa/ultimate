@@ -225,14 +225,14 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		this.mNoFinalStates = false;
 		this.mPossiblyLastRoundBlockRepresentative = null;
 
-		if (this.mLogger.isInfoEnabled()) {
-			this.mLogger.info(startMessage());
+		if (this.mLogger.isDebugEnabled()) {
+			this.mLogger.debug(startMessage());
 		}
 
 		this.mResult = doOperation();
 
-		if (this.mLogger.isInfoEnabled()) {
-			this.mLogger.info(exitMessage());
+		if (this.mLogger.isDebugEnabled()) {
+			this.mLogger.debug(exitMessage());
 		}
 	}
 
@@ -250,8 +250,8 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 				this.mSinkMergeIntersectFactory, this.mOperand, this.mResult);
 		final boolean isEquivalent = equivalenceCheck.getResult().booleanValue();
 
-		if (!isEquivalent && this.mLogger.isInfoEnabled()) {
-			this.mLogger.info("Counterexample: " + equivalenceCheck.getCounterexample().get());
+		if (!isEquivalent && this.mLogger.isDebugEnabled()) {
+			this.mLogger.debug("Counterexample: " + equivalenceCheck.getCounterexample().get());
 		}
 
 		return isEquivalent;

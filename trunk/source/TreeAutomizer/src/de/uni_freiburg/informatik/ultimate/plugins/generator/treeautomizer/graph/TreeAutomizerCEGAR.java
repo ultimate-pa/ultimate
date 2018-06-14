@@ -246,11 +246,13 @@ public class TreeAutomizerCEGAR {
 
 		final TreeRun<HornClause, IPredicate> counterexample = emptiness.getTreeRun();
 
-		if (counterexample != null) {
-			mLogger.debug("Error trace found.");
-			mLogger.debug(counterexample.toString());
-		} else {
-			mLogger.debug("No (further) counterexample found in abstraction.");
+		if (mLogger.isDebugEnabled()) {
+			if (counterexample != null) {
+				mLogger.debug("Error trace found.");
+				mLogger.debug(counterexample.toString());
+			} else {
+				mLogger.debug("No (further) counterexample found in abstraction.");
+			}
 		}
 
 		mCounterExample = counterexample;
@@ -364,7 +366,8 @@ public class TreeAutomizerCEGAR {
 				mAbstraction.removeState(pred);
 			}
 		}
-		if (TreeAutomizerSettings.MINIMIZATION == TaMinimization.NAIVE) {
+		if (mPreferences.getEnum(TreeAutomizerPreferenceInitializer.LABEL_MinimizationAlgorithm, TaMinimization.class)
+				== TaMinimization.NAIVE) {
 			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
 					mStateFactory, mAbstraction)).getResult();
 			if (mLogger.isDebugEnabled()) {
@@ -373,7 +376,8 @@ public class TreeAutomizerCEGAR {
 						((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
 			}
 
-		} else if (TreeAutomizerSettings.MINIMIZATION == TaMinimization.HOPCROFT) {
+		} else if (mPreferences.getEnum(TreeAutomizerPreferenceInitializer.LABEL_MinimizationAlgorithm,
+				TaMinimization.class) == TaMinimization.HOPCROFT) {
 
 			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new MinimizeNftaHopcroft<>(mAutomataLibraryServices,
 					mStateFactory, mAbstraction)).getResult();
@@ -386,7 +390,8 @@ public class TreeAutomizerCEGAR {
 		}
 		mLogger.debug("Refine ends...");
 
-		assert !(new Accepts<>(mAutomataLibraryServices, mAbstraction, mCounterExample).getResult());
+		assert !(new Accepts<>(mAutomataLibraryServices, mAbstraction, mCounterExample).getResult()) : "refined "
+				+ "abstraction still contains error tree -- no progress";
 		++mIteration;
 		return false;
 	}

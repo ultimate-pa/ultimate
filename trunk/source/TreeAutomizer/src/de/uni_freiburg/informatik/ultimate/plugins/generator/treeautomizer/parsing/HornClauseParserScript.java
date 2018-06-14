@@ -309,11 +309,15 @@ public class HornClauseParserScript extends NoopScript {
 			final HornClause parsedQuantification = parsedBody.convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
 			if (parsedQuantification != null) {
 				mParsedHornClauses.add(parsedQuantification);
-				mLogger.debug("PARSED: " + parsedQuantification.debugString());
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("PARSED: " + parsedQuantification.debugString());
+				}
 			}
 		}
-		mLogger.debug("Parsed so far: " + mParsedHornClauses);
-		mLogger.debug("");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Parsed so far: " + mParsedHornClauses);
+			mLogger.debug("");
+		}
 		// for Horn clause solving we do no checks until check-sat
 		return LBool.UNKNOWN;
 	}

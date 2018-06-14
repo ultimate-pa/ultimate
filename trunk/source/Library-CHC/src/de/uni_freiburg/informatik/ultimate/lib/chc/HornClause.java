@@ -165,13 +165,14 @@ public class HornClause implements IRankedLetter {
 
 	public String debugString() {
 
-		String cobody = "";
+		final StringBuilder cobodySb = new StringBuilder();
 
 		for (int i = 0; i < mBodyPredToArgs.size(); ++i) {
-			cobody += " " + mBodyPreds.get(i) + "(";
-			cobody += mBodyPredToArgs.get(i);
-			cobody += ")";
+			cobodySb.append(" " + mBodyPreds.get(i) + "(");
+			cobodySb.append(mBodyPredToArgs.get(i));
+			cobodySb.append(")");
 		}
+		String cobody = cobodySb.toString();
 		if (cobody.length() > 0) {
 			cobody = "and" + cobody;
 		} else {
