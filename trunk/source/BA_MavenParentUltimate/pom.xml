@@ -289,8 +289,8 @@
 			src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Numeral.java,
 			src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Query.java,
 			src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Union.java,
-			src/de/uni_freiburg/informatik/ultimate/interactive/traceabstraction/protobuf/*.java
-			src/de/uni_freiburg/informatik/ultimate/interactive/common/protobuf/*.java
+			src/de/uni_freiburg/informatik/ultimate/interactive/traceabstraction/protobuf/*.java,
+			src/de/uni_freiburg/informatik/ultimate/interactive/common/protobuf/*.java,
             src/de/uni_freiburg/informatik/ultimate/servercontroller/protobuf/*.java
 		</sonar.exclusions>
 
