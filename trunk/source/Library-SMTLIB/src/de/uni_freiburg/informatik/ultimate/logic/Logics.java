@@ -24,7 +24,9 @@ package de.uni_freiburg.informatik.ultimate.logic;
  */
 public enum Logics {
 	CORE(0),// Pure Boolean logic
-	ALL       (Features.QU + Features.NA + Features.IA + Features.RA + 
+	ALL       (Features.QU + Features.NA + Features.IA + Features.RA +
+			   Features.BV + Features.UF + Features.AX + Features.FP),
+	HORN      (Features.QU + Features.NA + Features.IA + Features.RA +
 			   Features.BV + Features.UF + Features.AX + Features.FP),
 	QF_BV     (Features.BV),
 	QF_FP     (Features.UF + Features.FP),
@@ -33,7 +35,7 @@ public enum Logics {
 	QF_RDL    (Features.DL + Features.RA),
 	QF_LIA    (Features.LA + Features.IA),
 	QF_LRA    (Features.LA + Features.RA),
-	QF_LIRA   (Features.LA + Features.RA + Features.IA), 
+	QF_LIRA   (Features.LA + Features.RA + Features.IA),
 	QF_NIA    (Features.NA + Features.IA),
 	QF_NRA    (Features.NA + Features.RA),
 	QF_NIRA   (Features.NA + Features.RA + Features.IA),
@@ -70,9 +72,9 @@ public enum Logics {
 	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA), //NOCHECKSTYLE
 	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
 	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA), //NOCHECKSTYLE
-	
+
 	; //NOCHECKSTYLE
-	
+
 	static class Features {
 		/** flag for quantified logic. */
 		static final int QU = (1 << 0);
@@ -95,9 +97,9 @@ public enum Logics {
 		/** flag for floating point arithmetic. */
 		static final int FP = (1 << 9);
 	}
-	
+
 	private final int mFeatures;
-	
+
 	private Logics(final int features) {
 		mFeatures = features;
 	}
@@ -141,7 +143,7 @@ public enum Logics {
 	public boolean isQuantified() {
 		return (mFeatures & Features.QU) != 0;
 	}
-	
+
 	/**
 	 * Does this logic support arithmetic operators?
 	 * @return <code>true</code> if and only if this logic supports arithmetic
@@ -191,7 +193,7 @@ public enum Logics {
 	}
 	/**
 	 * Does this logic support floating point arithmetic?
-	 * @return <code>true</code> if and only if this logic supports floating 
+	 * @return <code>true</code> if and only if this logic supports floating
 	 * point arithmetic.
 	 */
 	public boolean isFloatingPoint() {
