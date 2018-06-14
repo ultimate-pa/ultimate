@@ -75,8 +75,10 @@ public class HcSsaTreeFlattener {
 		mCountersAreFinalized = false;
 
 		final Pair<List<Term>, List<Integer>> flattenRes = flatten(mNestedFormulas, 0);
+
 		final List<Term> flattenedTermslist = flattenRes.getFirst();
 		final List<Integer> depthOfSubtrees = flattenRes.getSecond();
+
 		mFlattenedTerms = flattenedTermslist.toArray(new Term[flattenedTermslist.size()]);
 		mStartsOfSubtrees = new int[depthOfSubtrees.size()];
 
@@ -134,9 +136,9 @@ public class HcSsaTreeFlattener {
 			resDepthOfSubtrees.addAll(childRes.getSecond());
 		}
 		if (tree.getRootSymbol() != null) {
-			res.add(tree.getRoot().mSsaFormula);
+			res.add(tree.getRoot().getSsaFormula());
 			resDepthOfSubtrees.add(depth);
-			this.getCounter(tree.getRoot().mSsaFormula);
+			this.getCounter(tree.getRoot().getSsaFormula());
 		}
 		return new Pair<>(res, resDepthOfSubtrees);
 	}

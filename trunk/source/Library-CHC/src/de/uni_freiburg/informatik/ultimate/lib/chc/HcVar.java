@@ -101,4 +101,8 @@ public abstract class HcVar implements IProgramVar {
 		return mIndex;
 	}
 
+	@Override
+	public String toString() {
+		return "HcVar:" + mGloballyUniqueId;
+	}
 }

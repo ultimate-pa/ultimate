@@ -214,7 +214,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 			for (final HornClause hornClause : hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol)) {
 
-				allBodyPredVariables.addAll(hornClause.getBodyPredVariables());
+				allBodyPredVariables.addAll(hornClause.getBodyVariables());
 
 				final List<Statement> branchBody = new ArrayList<>();
 				final Statement assume =

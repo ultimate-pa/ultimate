@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
+import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -134,33 +136,75 @@ public class HCSSABuilder {
 		return res;
 	}
 
-	private SsaInfo buildSsaInfo(final HornClause rootSymbol, final List<Term> headPredConstants) {
-		final Map<Term, Term> substitution = new HashMap<>();
+	private SsaInfo buildSsaInfo(final HornClause rootSymbol, final List<Term> headPredVariableReplacements) {
+		final Map<Term, Term> subsMapping = new HashMap<>();
 
-		for (int i = 0; i < rootSymbol.getTermVariablesForHeadPred().size(); i++) {
-			substitution.put(rootSymbol.getTermVariablesForHeadPred().get(i).getTerm(), headPredConstants.get(i));
+		// arguments of the clause head: substitute the headVars with the term we got from the child
+		for (int headPredArgNr = 0; headPredArgNr < rootSymbol.getTermVariablesForHeadPred().size(); headPredArgNr++) {
+			final HcHeadVar hv = rootSymbol.getTermVariablesForHeadPred().get(headPredArgNr);
+//			substitution.put(rootSymbol.getTermVariablesForHeadPred().get(i).getTerm(), headPredConstants.get(i));
+			subsMapping.put(hv.getTermVariable(), headPredVariableReplacements.get(headPredArgNr));
 		}
 
-		final List<List<Term>> substitutionForBodyPred = new ArrayList<>();
+		// each body var is replaced by a fresh constant
+		for (final HcBodyVar bodyVar : rootSymbol.getBodyVariables()) {
+			final Term bptv = bodyVar.getTermVariable();
+			final ApplicationTerm fresh = getFreshConstant(bptv);
+			subsMapping.put(bptv, fresh);
+		}
 
+		final Substitution substitutionTtf = new Substitution(mScript, subsMapping);
+
+		/*
+		 * these will be the headPredConstants in each child, obtained by applying the substitution for each body pred
+		 * arg
+		 */
+		final List<List<Term>> substitutionForBodyPred = new ArrayList<>();
 		for (int i = 0; i < rootSymbol.getBodyPredicates().size(); i++) {
 			final List<Term> subsForCurrentBodyPred = new ArrayList<>();
 			for (int j = 0; j < rootSymbol.getBodyPredToArgs().get(i).size(); j++) {
-				final Term bptv = rootSymbol.getBodyPredToArgs().get(i).get(j);
-				if (substitution.keySet().contains(bptv)) {
-					// tv already in substitution because already present in head
-					subsForCurrentBodyPred.add(substitution.get(bptv));
-				} else {
-					//
-					final ApplicationTerm fresh = getFreshConstant(bptv);
-					substitution.put(bptv, fresh);
-					subsForCurrentBodyPred.add(fresh);
-				}
+				final Term bodyPredArg = rootSymbol.getBodyPredToArgs().get(i).get(j);
+				final Term substituted = substitutionTtf.transform(bodyPredArg);
+				subsForCurrentBodyPred.add(substituted);
 
 			}
-			assert subsForCurrentBodyPred.size() == rootSymbol.getBodyPredicates().get(i).getArity();
 			substitutionForBodyPred.add(Collections.unmodifiableList(subsForCurrentBodyPred));
 		}
+
+
+//		// the arguments of the prediacates in the clause body
+//		for (int i = 0; i < rootSymbol.getBodyPredicates().size(); i++) {
+//			final List<Term> subsForCurrentBodyPred = new ArrayList<>();
+//			for (int j = 0; j < rootSymbol.getBodyPredToArgs().get(i).size(); j++) {
+//				final Term bptv = rootSymbol.getBodyPredToArgs().get(i).get(j);
+//				if (substitution.keySet().contains(bptv)) {
+//					// tv already in substitution because already present in head
+//					subsForCurrentBodyPred.add(substitution.get(bptv));
+//				} else {
+//					//
+//					final ApplicationTerm fresh = getFreshConstant(bptv);
+//					substitution.put(bptv, fresh);
+//					subsForCurrentBodyPred.add(fresh);
+//				}
+//
+//			}
+//			assert subsForCurrentBodyPred.size() == rootSymbol.getBodyPredicates().get(i).getArity();
+//			substitutionForBodyPred.add(Collections.unmodifiableList(subsForCurrentBodyPred));
+//		}
+
+//		/*
+//		 * There may be variables that are not an argument of a predicate in the body but only appear in the constraint.
+//		 * Here we treat those
+//		 */
+//		for (final HcBodyVar bodyVar : rootSymbol.getBodyVariables()) {
+//			final Term bptv = bodyVar.getTermVariable();
+//			if (substitution.keySet().contains(bptv)) {
+//			} else {
+//				//
+//				final ApplicationTerm fresh = getFreshConstant(bptv);
+//				substitution.put(bptv, fresh);
+//			}
+//		}
 
 
 		/*
@@ -168,10 +212,11 @@ public class HCSSABuilder {
 		 *  --> including the closing, i.e., constants instead of variables
 		 *  it contains fresh constants (unless all variabels from the head are unchanged in the body pos)
 		 */
-		final Term substitutedFormula = new Substitution(mScript, substitution)
-				.transform(rootSymbol.getConstraintFormula());
+		final Term substitutedConstraintFormula = substitutionTtf.transform(rootSymbol.getConstraintFormula());
+//		final Term substitutedConstraintFormula = new Substitution(mScript, subsMapping)
+//				.transform(rootSymbol.getConstraintFormula());
 
-		return new SsaInfo(rootSymbol, substitution, substitutedFormula, substitutionForBodyPred);
+		return new SsaInfo(rootSymbol, subsMapping, substitutedConstraintFormula, substitutionForBodyPred);
 	}
 
 	/**
@@ -270,6 +315,7 @@ class SsaInfo {
 	 */
 	public SsaInfo(final HornClause hornClause, final Map<Term, Term> substitution, final Term substitutedFormula,
 			final List<List<Term>> substitutionForBodyPred) {
+		assert substitutedFormula.getFreeVars().length == 0;
 		mHornClause = hornClause;
 		mSubstitution = Collections.unmodifiableMap(substitution);
 		mSsaFormula = substitutedFormula;
@@ -289,4 +335,9 @@ class SsaInfo {
 	List<Term> getSubstitution(final int i) {
 		return mSubstitutionForBodyPred.get(i);
 	}
+
+	public Term getSsaFormula() {
+		return mSsaFormula;
+	}
+
 }

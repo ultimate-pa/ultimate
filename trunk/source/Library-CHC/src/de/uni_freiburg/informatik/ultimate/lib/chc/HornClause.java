@@ -231,13 +231,13 @@ public class HornClause implements IRankedLetter {
 	}
 
 	/**
-	 * Retrieve the variables that occur free as an argument in a body predicate. However, exempt the variables that
-	 * are arguments of the head predicate.
-	 * (these variables roughly correspond to the primed variabels in a transition formula..)
+	 * Retrieve the variables that occur free in the clause body (as an argument in a body predicate and/or in the
+	 * constraint). However, exempt the variables that are arguments of the head predicate.
+	 * (these variables roughly correspond to the primed variables in a transition formula..)
 	 *
 	 * @return
 	 */
-	public Set<HcBodyVar> getBodyPredVariables() {
+	public Set<HcBodyVar> getBodyVariables() {
 		return mBodyVariables;
 	}
 
@@ -251,7 +251,7 @@ public class HornClause implements IRankedLetter {
 		final List<TermVariable> headVars;
 		{
 			final List<HcHeadVar> headVarList = getTermVariablesForHeadPred();
-			final Set<HcBodyVar> bodyVars = getBodyPredVariables();
+			final Set<HcBodyVar> bodyVars = getBodyVariables();
 			headVars = headVarList.stream().map(hv -> hv.getTermVariable()).collect(Collectors.toList());
 
 			final List<TermVariable> qVarsList = new ArrayList<>();
