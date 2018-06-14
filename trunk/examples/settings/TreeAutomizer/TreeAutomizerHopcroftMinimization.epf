@@ -1,0 +1,13 @@
+#Mon Aug 07 19:03:14 CEST 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/SMT\ solver=Internal_SMTInterpol
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer/Type\ of\ minimization\ to\ use=HOPCROFT
+@de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer=0.1.20
+file_export_version=3.0
+#Mon Aug 07 19:03:14 CEST 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Use\ TreeAutomizer\ as\ solver\ for\ the\ given\ file\ (assumes\ the\ file\ contains\ Horn\ clauses\ only).=true
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Use\ external\ solver=true
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Write\ SMT\ commands\ to\ file=false
+@de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.20
+file_export_version=3.0
