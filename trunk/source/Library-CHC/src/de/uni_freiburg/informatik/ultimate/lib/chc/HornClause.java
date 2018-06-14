@@ -189,33 +189,7 @@ public class HornClause implements IRankedLetter {
 
 	@Override
 	public String toString() {
-		// String cobody = "";
-		//
-		// for (final HornClausePredicateSymbol symbol :
-		// mBodyPredToTermVariables.keySet()) {
-		// cobody += " " + symbol.getName() +
-		// mBodyPredToTermVariables.get(symbol);
-		// }
-		// if (cobody.length() > 0) {
-		// cobody = "and" + cobody;
-		// } else {
-		// cobody = "true";
-		// }
-		//
-		// final String body = mHeadPredicate.getName() +
-		// mHeadPredTermVariables;
-		// if (mTransitionFormula == null) {
-		if (mFormula == null) {
-			return "unintialized HornClause";
-		}
-
-		// return mTransitionFormula.getFormula().toString();
-		return mFormula.toStringDirect();
-		// return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ",
-		// cobody, mTransitionFormula, body,
-		// return String.format("(%s) ^^ (%s) ~~> (%s)", cobody,
-		// mTransitionFormula.getFormula(), body);
-		// return "HornClause TODO: better description"; //TODO
+		return debugString();
 	}
 
 	public HcSymbolTable getHornClauseSymbolTable() {
