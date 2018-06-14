@@ -97,8 +97,10 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 			}
 		}
 		assert automatonPartitionedBySCCs();
-		mLogger.info("Graph consists of " + getBalls().size() + " InCaSumBalls and " + mNumberOfNonBallSCCs
-				+ " non ball SCCs. Number of states in SCCs " + mNumberOfAllStates + ".");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Graph consists of " + getBalls().size() + " InCaSumBalls and " + mNumberOfNonBallSCCs
+					+ " non ball SCCs. Number of states in SCCs " + mNumberOfAllStates + ".");
+		}
 	}
 
 	/***
