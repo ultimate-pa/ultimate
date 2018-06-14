@@ -40,6 +40,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
@@ -105,11 +106,19 @@ public class HornClauseParserScript extends NoopScript {
 	 * ManagedScript wrapping this HornClauseParserScript instance
 	 */
 	private final ManagedScript mManagedScript;
+	private final ILogger mLogger;
 
-	public HornClauseParserScript(final IUltimateServiceProvider services, final String filename,
+	/**
+	 * Do sanity checks that require calls to an SMT solver. Note that this leads to crashes if the solver cannot handle
+	 * quantifiers.
+	 */
+	private final boolean mDoSolverBasedSanityChecks = false;
+
+	public HornClauseParserScript(final IUltimateServiceProvider services, final ILogger logger, final String filename,
 			final ManagedScript smtSolverScript, final String logic,
 			final SolverSettings settings) {
 		mServices = services;
+		mLogger = logger;
 		mFilename = filename;
 		mBackendSmtSolver = smtSolverScript;
 		mLogic = logic;
@@ -300,11 +309,11 @@ public class HornClauseParserScript extends NoopScript {
 			final HornClause parsedQuantification = parsedBody.convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
 			if (parsedQuantification != null) {
 				mParsedHornClauses.add(parsedQuantification);
-				System.err.println("PARSED: " + parsedQuantification.debugString());
+				mLogger.debug("PARSED: " + parsedQuantification.debugString());
 			}
 		}
-		System.err.println("Parsed so far: " + mParsedHornClauses);
-		System.err.println();
+		mLogger.debug("Parsed so far: " + mParsedHornClauses);
+		mLogger.debug("");
 		// for Horn clause solving we do no checks until check-sat
 		return LBool.UNKNOWN;
 	}
@@ -375,13 +384,17 @@ public class HornClauseParserScript extends NoopScript {
 	}
 
 	public boolean checkEquivalence(final Term t1, final Term t2) {
+		if (!mDoSolverBasedSanityChecks) {
+			return true;
+		}
+
 		final TermTransferrer ttf = new TermTransferrer(mBackendSmtSolver.getScript());
 		final Term unl1 = new FormulaUnLet(UnletType.SMTLIB).unlet(t1);
 		final Term unl2 = new FormulaUnLet(UnletType.SMTLIB).unlet(t2);
 
-		final boolean result = Util.checkSat(mBackendSmtSolver.getScript(),
-				mBackendSmtSolver.getScript().term("distinct", ttf.transform(unl1), ttf.transform(unl2))) != LBool.SAT ;
-		return result;
+		final LBool satResult = Util.checkSat(mBackendSmtSolver.getScript(),
+				mBackendSmtSolver.getScript().term("distinct", ttf.transform(unl1), ttf.transform(unl2)));
+		return satResult != LBool.SAT;
 	}
 
 	private boolean hasNoUninterpretedPredicates(final Term term) {

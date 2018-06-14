@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -345,23 +346,6 @@ public class TreeAutomizerCEGAR {
 			writeAutomatonToFile(mServices, mAbstraction, automataDumpPath, filename, Format.ATS_NUMERATE, "");
 		}
 
-		/*
-		final ITreeAutomatonBU<HornClause, IPredicate> cCounterExample = (new Complement<>(mAutomataLibraryServices,
-				mStateFactory, getCounterExample())).getResult();
-		mLogger.debug("Complemented counter example automaton:");
-		mLogger.debug(cCounterExample);
-
-		assert !(new Accepts<>(mAutomataLibraryServices, cCounterExample, mCounterExample).getResult());
-		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Intersect<>(mAutomataLibraryServices,
-				mStateFactory, mAbstraction, cCounterExample)).getResult();
-		mLogger.debug(String.format("Size before totalize %d states, %d rules.", mAbstraction.getStates().size(),
-				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
-		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Totalize<>(mAutomataLibraryServices,
-				mStateFactory, mAbstraction)).getResult();
-		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
-				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
-		*/
-
 		if (TreeAutomizerSettings.USE_NAIVE_DIFFERENCE) {
 			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Difference<HornClause, IPredicate>(
 					mAutomataLibraryServices, mStateFactory, mAbstraction, getCounterExample()).getResult());
@@ -376,24 +360,28 @@ public class TreeAutomizerCEGAR {
 		states.addAll(mAbstraction.getStates());
 		for (final IPredicate pred : states) {
 
-			if ("false".equals(pred.getFormula().toString())) {
+			if (SmtUtils.isFalse(pred.getFormula())) {
 				mAbstraction.removeState(pred);
 			}
 		}
 		if (TreeAutomizerSettings.MINIMIZATION == TaMinimization.NAIVE) {
 			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
 					mStateFactory, mAbstraction)).getResult();
-			mLogger.debug(String.format("Abstraction after naive minimization has  %d states, %d rules.",
-					mAbstraction.getStates().size(),
-					((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(String.format("Abstraction after naive minimization has  %d states, %d rules.",
+						mAbstraction.getStates().size(),
+						((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
+			}
 
 		} else if (TreeAutomizerSettings.MINIMIZATION == TaMinimization.HOPCROFT) {
 
 			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new MinimizeNftaHopcroft<>(mAutomataLibraryServices,
 					mStateFactory, mAbstraction)).getResult();
-			mLogger.debug(String.format("Abstraction after hopcroft minimization has %d states, %d rules.",
-					mAbstraction.getStates().size(),
-					((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(String.format("Abstraction after hopcroft minimization has %d states, %d rules.",
+						mAbstraction.getStates().size(),
+						((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
+			}
 
 		}
 		mLogger.debug("Refine ends...");

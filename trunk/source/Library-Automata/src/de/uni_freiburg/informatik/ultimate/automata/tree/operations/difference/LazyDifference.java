@@ -80,14 +80,14 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		mReducer = reducer;
 		mSink = factory.createSinkStateContent();
 		this.mCache = new NestedMap2<>();
-		if (this.mLogger.isInfoEnabled()) {
-			this.mLogger.info(startMessage());
+		if (this.mLogger.isDebugEnabled()) {
+			this.mLogger.debug(startMessage());
 		}
 
 		this.mResult = computeDifference(factory);
 
-		if (this.mLogger.isInfoEnabled()) {
-			this.mLogger.info(exitMessage());
+		if (this.mLogger.isDebugEnabled()) {
+			this.mLogger.debug(exitMessage());
 		}
 	}
 
