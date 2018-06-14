@@ -24,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode;
-import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * This class represents a clause.  It basically consists of an array
@@ -167,7 +166,6 @@ public class Clause extends SimpleListable<Clause> {
 	 * the activity drops below some point the clause is removed.
 	 */
 	double mActivity;
-//	int usedTimes;
 	/**
 	 * The stacklevel this clause was introduced.
 	 */
@@ -180,8 +178,6 @@ public class Clause extends SimpleListable<Clause> {
 
 	ClauseDeletionHook mCleanupHook;
 	
-	private int mHash = 0;
-
 	public int getSize() {
 		return mLiterals.length;
 	}
@@ -246,14 +242,6 @@ public class Clause extends SimpleListable<Clause> {
 		mActivity = Double.POSITIVE_INFINITY;
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (o instanceof Clause) {
-			return Arrays.equals(mLiterals, ((Clause) o).mLiterals);
-		}
-		return false;
-	}
-
 	public void setProof(ProofNode proof) {
 		mProof = proof;
 	}
@@ -283,17 +271,6 @@ public class Clause extends SimpleListable<Clause> {
 			}
 		}
 		return false;
-	}
-	
-	@Override
-	public int hashCode() {
-		if (mHash == 0) {
-			mHash = HashUtils.hashJenkins(0, (Object[]) mLiterals);
-			if (mHash == 0) {
-				mHash = 0xbadc0ded;
-			}
-		}
-		return mHash;
 	}
 	
 	public Term toTerm(Theory theory) {
