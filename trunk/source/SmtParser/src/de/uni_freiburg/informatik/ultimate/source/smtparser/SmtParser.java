@@ -229,6 +229,7 @@ public class SmtParser implements ISource {
 		if (inHornSolverMode) {
 			// crash in Horn solver mode if parsing fails
 			optionMap.set(":continue-on-error", false);
+			optionMap.set(":print-success", false);
 		}
 
 		final ParseEnvironment parseEnv = new ParseEnvironment(script, optionMap);
