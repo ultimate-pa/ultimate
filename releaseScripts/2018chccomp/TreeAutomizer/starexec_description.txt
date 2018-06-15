@@ -1,8 +1,8 @@
-Ultimate ChcToBoogie with Ultimate Automizer analyzes satisfiability of sets of constrained Horn clauses.
+Ultimate TreeAutomizer analyzes satisfiability of sets of constrained Horn clauses.
 
-Ultimate ChcToBoogie with Ultimate Automizer is maintained by
+Ultimate TreeAutomizer is maintained by
 Alexander Nutz [University of Freiburg, Germany]
 
-Ultimate ChcToBoogie with Ultimate Automizer is part of Ultimate
+Ultimate TreeAutomizer is part of Ultimate
 http://ultimate.informatik.uniMINUSfreiburg.de/
 to which many people contributed.
