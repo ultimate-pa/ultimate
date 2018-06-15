@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -222,16 +223,20 @@ public class HornClause implements IRankedLetter {
 	 * @return a complete Horn constraint as it can be asserted in an (assert ..) term in smtlib.
 	 */
 	public Term constructFormula(final ManagedScript mgdScript) {
+		final TermTransferrer termTransferrer = new TermTransferrer(mgdScript.getScript());
+
 		final TermVariable[] qVars;
 		final List<TermVariable> headVars;
 		{
 			final List<HcHeadVar> headVarList = getTermVariablesForHeadPred();
 			final Set<HcBodyVar> bodyVars = getBodyVariables();
-			headVars = headVarList.stream().map(hv -> hv.getTermVariable()).collect(Collectors.toList());
+			headVars = headVarList.stream()
+					.map(hv -> (TermVariable) termTransferrer.transform(hv.getTermVariable()))
+					.collect(Collectors.toList());
 
 			final List<TermVariable> qVarsList = new ArrayList<>();
 			qVarsList.addAll(headVars);
-			bodyVars.forEach(bv -> qVarsList.add(bv.getTermVariable()));
+			bodyVars.forEach(bv -> qVarsList.add((TermVariable) termTransferrer.transform(bv.getTermVariable())));
 			qVars = qVarsList.toArray(new TermVariable[qVarsList.size()]);
 		}
 
@@ -248,12 +253,13 @@ public class HornClause implements IRankedLetter {
 			// applications of uninterpreted predicates
 			for (int bodyPredIndex = 0; bodyPredIndex < getNoBodyPredicates(); bodyPredIndex++) {
 				final HcPredicateSymbol bpsym = getBodyPredicates().get(bodyPredIndex);
-				final List<Term> args = getBodyPredToArgs().get(bodyPredIndex);
+				final List<Term> args = getBodyPredToArgs().get(bodyPredIndex).stream()
+						.map(termTransferrer::transform).collect(Collectors.toList());
 				conjuncts.add(mgdScript.term(this, bpsym.getName(), args.toArray(new Term[args.size()])));
 			}
 
 			// constraint
-			conjuncts.add(getConstraintFormula());
+			conjuncts.add(termTransferrer.transform(getConstraintFormula()));
 
 			tail = SmtUtils.and(mgdScript.getScript(), conjuncts);
 		}

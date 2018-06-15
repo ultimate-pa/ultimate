@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
@@ -99,7 +100,6 @@ public class HornClauseParserScript extends NoopScript {
 
 	private final String mFilename;
 
-	private final Set<TermVariable> mVariablesStack;
 	private final IUltimateServiceProvider mServices;
 
 	/**
@@ -134,7 +134,6 @@ public class HornClauseParserScript extends NoopScript {
 
 		mSymbolTable = new HcSymbolTable(mBackendSmtSolver);
 
-		mVariablesStack = new HashSet<>();
 	}
 
 	private boolean isUninterpretedPredicateSymbol(final FunctionSymbol fs) {
@@ -305,20 +304,26 @@ public class HornClauseParserScript extends NoopScript {
 	public LBool assertTerm(final Term rawTerm) throws SMTLIBException {
 		assert !mFinished;
 
-		final Term term = normalizeInputFormula(rawTerm);
+		final Term normalizedFormula = normalizeInputFormula(rawTerm);
 
-		mVariablesStack.clear();
-
-		final List<HornClauseHead> parsedBodies = parseCnf(term);
+		final List<HornClauseHead> parsedBodies = parseCnf(normalizedFormula);
+		final List<HornClause> parsedHornClauses = new ArrayList<>();
 		for (final HornClauseHead parsedBody : parsedBodies) {
 			final HornClause parsedQuantification = parsedBody.convertToHornClause(mBackendSmtSolver, mSymbolTable, this);
 			if (parsedQuantification != null) {
-				mParsedHornClauses.add(parsedQuantification);
+				parsedHornClauses.add(parsedQuantification);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("PARSED: " + parsedQuantification.debugString());
 				}
 			}
 		}
+		mParsedHornClauses.addAll(parsedHornClauses);
+		assert checkEquivalence(normalizedFormula,
+				SmtUtils.and(mManagedScript.getScript(),
+						parsedHornClauses.stream()
+						.map(hc -> hc.constructFormula(mManagedScript))
+						.collect(Collectors.toList())));
+
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Parsed so far: " + mParsedHornClauses);
 			mLogger.debug("");
@@ -388,7 +393,7 @@ public class HornClauseParserScript extends NoopScript {
 			normalizedTerm = cnf;
 		}
 
-		assert checkEquivalence(rawTerm, normalizedTerm) : "Nnf transformation unsound";
+		assert checkEquivalence(rawTerm, normalizedTerm) : "transformation unsound";
 		return normalizedTerm;
 	}
 
