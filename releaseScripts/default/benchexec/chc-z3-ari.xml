@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="z3" memlimit="4GB" timelimit="90" hardtimelimit="112" cpuCores="2">
 	<rundefinition name="CHC-z3-ari">
-		<option name="-v:0" />
-		<option name="fixedpoint.xform.slice">false </option>
-		<option name="fixedpoint.xform.inline_linear">true </option>
-		<option name="fixedpoint.xform.inline_eager">true </option>
-		<option name="fixedpoint.xform.tail_simplifier_pve">false </option>
-		<option name="fixedpoint.engine">spacer </option>
-		<option name="fixedpoint.spacer.elim_aux">true </option>
-		<option name="fixedpoint.spacer.reach_dnf">true </option>
-		<option name="fixedpoint.spacer.iuc">$IUC </option>
-		<option name="fixedpoint.spacer.iuc.arith">$IUC_ARITH </option>
-		<option name="fixedpoint.spacer.ground_cti">true </option>
-		<option name="fixedpoint.spacer.iuc.old_hyp_reducer">$IUC_OLD_HYPREDUCE </option>
-		<option name="fixedpoint.spacer.ctp">true </option>
-		<option name="fixedpoint.spacer.native_mbp">$MBP</option>
-		
+<option name="-v:0" />
+<option name="fixedpoint.xform.slice=false" /> 
+<option name="fixedpoint.xform.inline_linear=true" />
+<option name="fixedpoint.xform.inline_eager=true" />
+<option name="fixedpoint.xform.tail_simplifier_pve=false" />
+<option name="fixedpoint.engine=spacer" />
+<option name="fixedpoint.spacer.elim_aux=true" />
+<option name="fixedpoint.spacer.reach_dnf=true" />
+<option name="fixedpoint.spacer.iuc=$IUC" />
+<option name="fixedpoint.spacer.iuc.arith=$IUC_ARITH" />
+<option name="fixedpoint.spacer.ground_cti=true" />
+<option name="fixedpoint.spacer.iuc.old_hyp_reducer=$IUC_OLD_HYPREDUCE" />
+<option name="fixedpoint.spacer.ctp=true" />
+<option name="fixedpoint.spacer.native_mbp=$MBP" />		
 		<tasks name="CHC">
 			<includesfile>/storage/chc-comp/no-rules.set</includesfile>
 		</tasks>
