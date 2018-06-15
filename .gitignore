@@ -274,6 +274,9 @@ hs_err_pid*
 /releaseScripts/svcomp2018/adds/.idea
 /trunk/source/UltimateTest/automata-dump
 
-/releaseScripts/2018chccomp/StarExecArchive/*
-/releaseScripts/2018chccomp/StarExecArchive
-/releaseScripts/2018chccomp/UltimateCommandline.zip
+/releaseScripts/2018chccomp/Unihorn/StarExecArchive/*
+/releaseScripts/2018chccomp/Unihorn/StarExecArchive
+/releaseScripts/2018chccomp/Unihorn/UltimateCommandline.zip
+/releaseScripts/2018chccomp/TreeAutomizer/StarExecArchive/*
+/releaseScripts/2018chccomp/TreeAutomizer/StarExecArchive
+/releaseScripts/2018chccomp/TreeAutomizer/UltimateCommandline.zip
