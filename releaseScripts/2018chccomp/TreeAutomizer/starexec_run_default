@@ -1,0 +1,28 @@
+#!/bin/sh
+if [ ! "$1" ]; then
+    echo "First argument has to be the file that we analyze"
+    exit
+fi
+#./../Ultimate/Ultimate -tc ./../AutomizerCHC.xml -s ./../chcToBoogie_automizer.epf -data "$TMPDIR" -i "$1" &> output.txt
+java  -Dosgi.configuration.area=config/  -Xmx54G  -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar  -data "$TMPDIR" -tc ./../TreeAutomizer.xml -s ./../TreeAutomizerStandardSettings.epf -i "$1" &> output.txt
+
+RESULT_UNSAT=`cat output.txt | grep "TreeAutomizerUnsatResult"`
+RESULT_SAT=`cat output.txt | grep "TreeAutomizerSatResult"`
+RESULT_UNKNOWN_EXCEPTION=`cat output.txt | grep "The toolchain threw an exception"`
+
+if [ "$RESULT_SAFE" ]; then
+	echo "sat"
+fi
+    
+if [ "$RESULT_UNSAFE" ]; then
+	echo "unsat"
+fi
+    
+if [ "$RESULT_UNKNOWN_EXCEPTION" ]; then
+	echo "unknown"
+fi
+
+
+#echo ""
+#cat output.txt
+
