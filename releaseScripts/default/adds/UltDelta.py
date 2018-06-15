@@ -726,14 +726,16 @@ def main():
     property_file, architecture, input_files, verbose, validate_witness, extras = parse_args()
     if property_file:
         main_classic(property_file, architecture, input_files, verbose, validate_witness, extras)
-        raise RuntimeError('Unexpected return from main_classic')
+        sys.exit(ExitCode.FAIL_NO_REDUCTION)
 
     # execute ultimate and assume that -tc and -s are given in extras
     print('Version ' + version)
     ultimate_bin = get_binary()
-    ultimate_call = create_callargs(ultimate_bin, extras+['-i']+input_files)
+    input=extras[-1]
+    extras = extras[:-1]
+    ultimate_call = create_callargs(ultimate_bin, extras+['-i',input])
     z3_call = create_callargs(['z3'], input_files)
-
+    print(' '.join(ultimate_call))
     ultimate_process = call_desperate(ultimate_call)
     z3_process = call_desperate(z3_call)
 
@@ -754,6 +756,7 @@ def main():
             break
         
         # check for desired reduction behavior in output
+        
         if ult_line and ult_line.find('CounterExampleResult') != -1:
             ult_reduction = True
 
@@ -770,3 +773,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    sys.exit(ExitCode.FAIL_NO_REDUCTION)
