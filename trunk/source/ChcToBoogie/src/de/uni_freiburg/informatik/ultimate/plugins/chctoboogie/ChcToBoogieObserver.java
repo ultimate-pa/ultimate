@@ -190,11 +190,121 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 		return hornClauseHeadPredicateToHornClauses;
 	}
 
+	private void generateBoogieAstWithGotos(
+			final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
+
+		final ILocation loc = getLoc();
+		final List<Declaration> declarations = new ArrayList<>();
+
+		final Deque<HcPredicateSymbol> headPredQueue = new ArrayDeque<>();
+		final Set<HcPredicateSymbol> addedToQueueBefore = new HashSet<>();
+
+		headPredQueue.push(mBottomPredSym);
+		addedToQueueBefore.add(mBottomPredSym);
+
+		while (!headPredQueue.isEmpty()) {
+			// breadth-first (pollFirst) or depth-first (pop) should not matter here
+			final HcPredicateSymbol headPredSymbol = headPredQueue.pop();
+
+			/*
+			 * if there are no Horn clauses with the current headPredSymbol in their head we create an empty procedure
+			 * this flag tracks this special case
+			 */
+			final boolean headPredUnconstrained =
+					hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol).isEmpty();
+
+			/*
+			 * create the procedure body according to all Horn clauses with headPredSymbol as their head
+			 */
+			List<Statement> nondetSwitch = null;
+			final Set<HcBodyVar> allBodyPredVariables = new HashSet<>();
+
+			for (final HornClause hornClause : hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol)) {
+
+				allBodyPredVariables.addAll(hornClause.getBodyVariables());
+
+				final List<Statement> branchBody = new ArrayList<>();
+				final Statement assume =
+						new AssumeStatement(loc, mTerm2Expression.translate(hornClause.getConstraintFormula()));
+				branchBody.add(assume);
+
+				for (int i = 0; i < hornClause.getNoBodyPredicates(); i++) {
+					final HcPredicateSymbol bodyPredSym = hornClause.getBodyPredicates().get(i);
+					final List<Term> bodyPredArgs = hornClause.getBodyPredToArgs().get(i);
+
+					if (!addedToQueueBefore.contains(bodyPredSym)) {
+						headPredQueue.push(bodyPredSym);
+						addedToQueueBefore.add(bodyPredSym);
+					}
+
+					final CallStatement call = new CallStatement(loc, false, new VariableLHS[0],
+							predSymToMethodName(bodyPredSym),
+							bodyPredArgs.stream().map(t -> mTerm2Expression.translate(t)).collect(Collectors.toList())
+								.toArray(new Expression[bodyPredArgs.size()]));
+					branchBody.add(call);
+				}
+
+				nondetSwitch = addIteBranch(loc, nondetSwitch, branchBody);
+			}
+
+			final VarList[] inParams = getInParamsForHeadPredSymbol(loc, headPredSymbol, headPredUnconstrained);
+
+
+			final List<VariableDeclaration> localVarDecs = new ArrayList<>();
+			updateLocalVarDecs(localVarDecs, allBodyPredVariables, loc);
+
+			final VariableDeclaration[] localVars;
+			{
+				localVars = localVarDecs == null
+						? new VariableDeclaration[0]
+						: localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
+			}
+
+			/*
+			 * Note: in the headPredUnconstrained case, the procedure body must consist of one "assume false;"
+			 *  statement.
+			 * General intuition: Each procedure blocks execution on those input vectors where the model of the
+			 *  corresponding predicate is false. A predicate that does not occur in a head, can be set to false
+			 *   everywhere.
+			 */
+			assert headPredUnconstrained || !nondetSwitch.stream().anyMatch(Objects::isNull);
+			final Statement[] block = headPredUnconstrained ?
+					new Statement[] { new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false)) }:
+					nondetSwitch.toArray(new Statement[nondetSwitch.size()]);
+			final Body body = new Body(loc, localVars, block);
+
+			final Procedure proc =
+					new Procedure(loc, new Attribute[0], predSymToMethodName(headPredSymbol), new String[0],
+							inParams, new VarList[0],
+							new Specification[0], body);
+			declarations.add(proc);
+		}
+
+		// add the main entry point
+		declarations.add(constructMainEntryPointProcedure(loc, true));
+
+		/*
+		 * Add body-less boogie functions for the uninterpreted function appearing in constraints (e.g. skolem
+		 *  functions)
+		 */
+		for (final Triple<String, Sort[], Sort> sf : mHcSymbolTable.getSkolemFunctions()) {
+			final VarList[] inParams = getInParamsForSorts(loc, sf.getSecond());
+			final VarList outParam = getInParamsForSorts(loc, new Sort[] { sf.getThird() })[0];
+			final FunctionDeclaration boogieFun = new FunctionDeclaration(loc, new Attribute[0], sf.getFirst(),
+					new String[0], inParams, outParam);
+			declarations.add(boogieFun);
+		}
+
+		mBoogieUnit = new Unit(loc,
+				declarations.toArray(new Declaration[declarations.size()]));
+	}
+
+
 	private void generateBoogieAst(
 			final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
 
-		final List<Declaration> declarations = new ArrayList<>();
 		final ILocation loc = getLoc();
+		final List<Declaration> declarations = new ArrayList<>();
 
 		final Deque<HcPredicateSymbol> headPredQueue = new ArrayDeque<>();
 		final Set<HcPredicateSymbol> addedToQueueBefore = new HashSet<>();
