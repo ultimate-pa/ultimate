@@ -61,6 +61,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Check given annotation without inferring invariants.
@@ -172,6 +174,8 @@ public class InvariantChecker {
 
 		final List<TwoPointSubgraphDefinition> tpsds = findTwoPointSubgraphDefinitions(icfg, mLoopLocations,
 				loopLocsAndNonLoopErrorLocs);
+		final String message = message24(tpsds);
+		mLogger.info("Will check " + message);
 		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
 			final IcfgLocation startLoc = tpsd.getStartLocation();
 			final IcfgLocation errorLoc = tpsd.getEndLocation();
@@ -193,6 +197,27 @@ public class InvariantChecker {
 			}
 		}
 
+	}
+
+	private String message24(final List<TwoPointSubgraphDefinition> tpsds) {
+		final HashRelation<Pair<LocationType, LocationType>, TwoPointSubgraphDefinition> hr = new HashRelation<>();
+		for (final TwoPointSubgraphDefinition tpsd : tpsds) {
+			final LocationType startType = classify(tpsd.getStartLocation());
+			final LocationType endType = classify(tpsd.getEndLocation());
+			hr.addPair(new Pair(startType, endType), tpsd);
+		}
+		boolean isFirst = true;
+		final StringBuilder sb = new StringBuilder();
+		for (final Pair<LocationType, LocationType> dom : hr.getDomain()) {
+			final int number = hr.numberOfPairsWithGivenDomainElement(dom);
+			if (!isFirst) {
+				sb.append(", ");
+			}
+			sb.append(number + " loop-free subgraphs from " + getNiceSubgraphPointDescription(dom.getFirst()) + " to "
+					+ getNiceSubgraphPointDescription(dom.getSecond()));
+			isFirst = false;
+		}
+		return sb.toString();
 	}
 
 	private List<TwoPointSubgraphDefinition> findTwoPointSubgraphDefinitions(final IIcfg<IcfgLocation> icfg,
@@ -484,6 +509,23 @@ public class InvariantChecker {
 	private boolean isLoopLoc(final IcfgLocation loc) {
 		final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(loc);
 		return (loa != null);
+	}
+
+	private String getNiceSubgraphPointDescription(final LocationType lt) {
+		switch (lt) {
+		case ENTRY:
+			return "procedure entry";
+		case ERROR_LOC:
+			return "error location";
+		case LOOP_HEAD:
+			return "loop head";
+		case LOOP_INVARIANT_ERROR_LOC:
+			return "loop head";
+		case UNKNOWN:
+			return "unspecified location type";
+		default:
+			throw new AssertionError("unknown location type " + lt);
+		}
 	}
 
 	private static class TwoPointSubgraphDefinition {
