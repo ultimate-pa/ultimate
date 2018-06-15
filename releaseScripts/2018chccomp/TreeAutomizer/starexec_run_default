@@ -10,11 +10,11 @@ RESULT_UNSAT=`cat output.txt | grep "TreeAutomizerUnsatResult"`
 RESULT_SAT=`cat output.txt | grep "TreeAutomizerSatResult"`
 RESULT_UNKNOWN_EXCEPTION=`cat output.txt | grep "The toolchain threw an exception"`
 
-if [ "$RESULT_SAFE" ]; then
+if [ "$RESULT_SAT" ]; then
 	echo "sat"
 fi
     
-if [ "$RESULT_UNSAFE" ]; then
+if [ "$RESULT_UNSAT" ]; then
 	echo "unsat"
 fi
     
