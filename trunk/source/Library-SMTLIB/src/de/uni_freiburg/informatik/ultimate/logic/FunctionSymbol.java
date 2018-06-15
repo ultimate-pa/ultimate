@@ -191,6 +191,7 @@ public class FunctionSymbol {
 	 * @param params the arguments for the function symbols.
 	 */
 	public void typecheck(Term[] params) throws SMTLIBException {
+		assert params.getClass() == Term[].class;
 		boolean mixRealInt = false;
 		if (getTheory().getLogic() != null && getTheory().getLogic().isIRA()
 			&& mParamSort.length == 2

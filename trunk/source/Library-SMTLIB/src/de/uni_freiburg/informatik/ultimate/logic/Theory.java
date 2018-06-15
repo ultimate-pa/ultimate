@@ -111,7 +111,7 @@ public class Theory {
 
 	public final ApplicationTerm mTrue, mFalse;
 	public final FunctionSymbol mAnd, mOr, mNot, mImplies, mXor;
-	public final PolymorphicFunctionSymbol mEquals, mDistinct, mIte;
+	public final PolymorphicFunctionSymbol mEquals, mDistinct;
 
 	final static Sort[] EMPTY_SORT_ARRAY = Script.EMPTY_SORT_ARRAY;
 	final static TermVariable[] EMPTY_TERM_VARIABLE_ARRAY = {};
@@ -131,7 +131,7 @@ public class Theory {
 	public Theory() {
 		mTrue = mFalse = null;
 		mAnd = mOr = mNot = mImplies = mXor = null;
-		mEquals = mDistinct = mIte = null;
+		mEquals = mDistinct = null;
 	}
 
 	public Theory(final Logics logic) {
@@ -164,7 +164,7 @@ public class Theory {
 		mDistinct = declareInternalPolymorphicFunction("distinct", generic1, generic2, mBooleanSort,
 				FunctionSymbol.PAIRWISE);
 		mXor = declareInternalFunction("xor", bool2, mBooleanSort, leftassoc);
-		mIte = declareInternalPolymorphicFunction("ite", generic1,
+		declareInternalPolymorphicFunction("ite", generic1,
 				new Sort[] { mBooleanSort, generic1[0], generic1[0] }, generic1[0], 0);
 		mTrue = term(declareInternalFunction("true", noarg, mBooleanSort, 0));
 		mFalse = term(declareInternalFunction("false", noarg, mBooleanSort, 0));
@@ -289,7 +289,7 @@ public class Theory {
 		if (e == mFalse) {
 			return term(mAnd, c, t);
 		}
-		return term(mIte, c, t, e);
+		return term("ite", c, t, e);
 	}
 
 	private Term quantify(final int quant, final TermVariable[] vars, final Term f) {
@@ -682,6 +682,40 @@ public class Theory {
 		// isint x: (= x (to_real (to_int x)))
 		final Term isintx = term("=", xr, term("to_real", term("to_int", xr)));
 		declareInternalFunction("is_int", real1, new TermVariable[] { xr }, isintx, 0);
+
+		FunctionSymbolFactory iraIte = new FunctionSymbolFactory("ite") {
+			@Override
+			public Term getDefinition(final TermVariable[] tvs, final Sort resultSort) {
+				if (tvs[1].getSort() != tvs[2].getSort()) {
+					/* IRA hack for ite */
+					assert (tvs[1].getSort() == mNumericSort && tvs[2].getSort() == mRealSort)
+						|| (tvs[1].getSort() == mRealSort && tvs[2].getSort() == mNumericSort);
+					if (tvs[1].getSort() == mNumericSort) {
+						return term("ite", tvs[0], term("to_real", tvs[1]), tvs[2]);
+					} else {
+						return term("ite", tvs[0], tvs[1], term("to_real", tvs[2]));
+					}
+				}
+				return null;
+			}
+
+			@Override
+			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
+				if (indices == null && paramSorts.length == 3
+						&& paramSorts[0] == mBooleanSort && paramSorts[1] == paramSorts[2]) {
+					return paramSorts[1];
+				}
+				if (indices == null && paramSorts.length == 3
+						&& paramSorts[0] == mBooleanSort
+						&& (paramSorts[1] == mNumericSort || paramSorts[1] == mRealSort)
+						&& (paramSorts[2] == mNumericSort || paramSorts[2] == mRealSort)) {
+					return mRealSort;
+				}
+				return null;
+			}
+		};
+
+		mFunFactory.put(iraIte.mFuncName, iraIte);
 
 		defineFunction(new FunctionSymbolFactory("abs") {
 			@Override
