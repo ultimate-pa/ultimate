@@ -187,6 +187,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-NestedInterpolation-Bitvector-Kojak.epf"));
 
+		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-CVC4-FP-UC-LV-Bitvector-Kojak.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-CVC4NYU-FP-UC-LV-Bitvector-Kojak.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Mathsat-FP-UC-LV-Bitvector-Kojak.epf"));
 //		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-SMTInterpol-FP-UC-LV-Bitvector-Kojak.epf"));
@@ -247,6 +248,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 
 	public static List<Pair<String, String>> getReachFloatAutomizer() {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
+		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/float/Reach-32bit-CVC4-FP-UC-LV-Float-Kojak.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/float/Reach-32bit-Mathsat-FP-UC-LV-Float-Kojak.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/float/Reach-32bit-Z3-FP-UC-LV-Float-Kojak.epf"));
 
