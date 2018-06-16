@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Minimization test suite.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
@@ -73,11 +73,11 @@ public class AutomataStateRemovalTestSuite extends UltimateTestSuite {
 	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
 	private static int sTimeout = 60 * 1_000;
 	private static final String[] mDirectories = {
-//			"examples/Automata/regression/nwa/operations/minimization",
-			
-			"examples/Automata/nwaOperations/MinimizationBenchmarks/workspace",
+			"examples/Automata/regression/nwa/",
+//			"examples/automata-benchmarks/2017TACAS-Minimization/"
+//			"examples/Automata/nwaOperations/MinimizationBenchmarks/workspace",
 	};
-	
+
 	private static final String[] mFileEndings = { ".ats" };
 
 	private static final String[] SETTINGS = {
@@ -98,7 +98,7 @@ public class AutomataStateRemovalTestSuite extends UltimateTestSuite {
 			StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
 			StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE.toString(),
 	};
-	
+
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
 
 	private static final Object[] INTERESTING_OPERATIONS = {
@@ -106,7 +106,7 @@ public class AutomataStateRemovalTestSuite extends UltimateTestSuite {
 			"removeDeadEnds",
 			"removeNonLiveStates",
 	};
-	
+
 	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET =
 			new HashSet<>(Arrays.asList(INTERESTING_OPERATIONS));
 
