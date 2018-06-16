@@ -42,7 +42,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ standard\ solver\ (from\ RCFGBuilder)\ with\ FP\ interpolation\ as\ fallback=false
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/interpolation\ mode=ForwardPredicates
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=QF_BVFP
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=QF_ABVFP
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=mathsat\ -unsat_core_generation=3
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ separate\ solver\ for\ tracechecks=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_ModelsAndUnsatCoreMode

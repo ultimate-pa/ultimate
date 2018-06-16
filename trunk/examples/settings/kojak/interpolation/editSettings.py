@@ -319,7 +319,7 @@ solverCallCVC4KojakBitvector = '''/instance/de.uni_freiburg.informatik.ultimate.
 solverCallMathSATKojakBitvector = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFBV
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=mathsat\ -unsat_core_generation=3'''
 
-solverCallMathSATKojakFloat = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=QF_BVFP
+solverCallMathSATKojakFloat = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=QF_ABVFP
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=mathsat\ -unsat_core_generation=3'''
 
 dontUseLVKojak = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ live\ variables\ in\ FP/BP\ interpolation=false'''
@@ -361,7 +361,7 @@ interpolationModeSMTInterpolAutomizer = '''/instance/de.uni_freiburg.informatik.
 solverCallMathSATAutomizerFloat = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=./dump/
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=mathsat\ -unsat_core_generation=3
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Logic\ for\ external\ solver=QF_BVFP'''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Logic\ for\ external\ solver=QF_ABVFP'''
 
 solverCallZ3AutomizerInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=/home/matthias/ultimate/dump
