@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -94,8 +95,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInterpolantGenerator<LETTER> {
 
 	/**
-	 * To indicate whether a frame has been changed. It is possible to add "true" to frames, but that was ignored in the
-	 * propagation phase.
+	 * To indicate whether a frame has been changed. It is possible to add
+	 * "true" to frames, but that was ignored in the propagation phase.
 	 */
 	private enum ChangedFrame {
 		CHANGED, UNCHANGED
@@ -142,8 +143,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		mPdrBenchmark = new PdrBenchmark();
 
 		mFrames = new HashMap<>();
-		final PathProgramConstructionResult pp =
-				PathProgram.constructPathProgram("errorPP", mIcfg, new HashSet<>(counterexample));
+		final PathProgramConstructionResult pp = PathProgram.constructPathProgram("errorPP", mIcfg,
+				new HashSet<>(counterexample));
 
 		mPpIcfg = pp.getPathProgram();
 		mCsToolkit = mPpIcfg.getCfgSmtToolkit();
@@ -230,8 +231,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 				final Term sp = mPredTrans.strongestPostcondition(mTruePred, edge.getTransformula());
 				final IPredicate proofObligationPred = mPredicateUnifier.getOrConstructPredicate(sp);
-				final Triple<IPredicate, IcfgLocation, Integer> initialProofObligation =
-						new Triple<>(proofObligationPred, edge.getSource(), level);
+				final Triple<IPredicate, IcfgLocation, Integer> initialProofObligation = new Triple<>(
+						proofObligationPred, edge.getSource(), level);
 				proofObligations.add(initialProofObligation);
 			}
 
@@ -281,14 +282,15 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	/**
 	 * Blocking-phase, for blocking proof-obligations.
 	 *
-	 * @return false, if proof-obligation on level 0 is created true, if there is no proof-obligation left
+	 * @return false, if proof-obligation on level 0 is created true, if there
+	 *         is no proof-obligation left
 	 */
 	private boolean blockingPhase(final List<Triple<IPredicate, IcfgLocation, Integer>> initialProofObligations) {
 
 		mLogger.debug("Begin Blocking Phase: \n");
 
-		final Deque<Triple<IPredicate, IcfgLocation, Integer>> proofObligations =
-				new ArrayDeque<>(initialProofObligations);
+		final Deque<Triple<IPredicate, IcfgLocation, Integer>> proofObligations = new ArrayDeque<>(
+				initialProofObligations);
 		while (!proofObligations.isEmpty()) {
 			final Triple<IPredicate, IcfgLocation, Integer> proofObligation = proofObligations.pop();
 			final IPredicate toBeBlocked = proofObligation.getFirst();
@@ -323,34 +325,51 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					if (predecessorTransition instanceof IIcfgInternalTransition) {
 						final Term pre = mPredTrans.pre(toBeBlocked, predecessorTransition.getTransformula());
 						preCondition = mPredicateUnifier.getOrConstructPredicate(pre);
+
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug(String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition, pre));
 						}
 
 					} else if (predecessorTransition instanceof IIcfgCallTransition) {
+
 						final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
 								.getGlobalVarsAssignment(predecessorTransition.getSucceedingProcedure());
 						final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
 								.getOldVarsAssignment(predecessorTransition.getSucceedingProcedure());
 						final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
 								.getModifiedBoogieVars(predecessorTransition.getSucceedingProcedure());
-						preCondition =
-								(IPredicate) mPredTrans.preCall(toBeBlocked, predecessorTransition.getTransformula(),
-										globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+
+						final Term pre = mPredTrans.preCall(toBeBlocked, predecessorTransition.getTransformula(),
+								globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+
+						preCondition = mPredicateUnifier.getOrConstructPredicate(pre);
 
 					} else if (predecessorTransition instanceof IIcfgReturnTransition) {
-						/*
-						 * What to do here?
-						 */
-						throw new UnsupportedOperationException();
+
+						final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
+								.getOldVarsAssignment(predecessorTransition.getSucceedingProcedure());
+						final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
+								.getModifiedBoogieVars(predecessorTransition.getSucceedingProcedure());
+
+						IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
+
+						UnmodifiableTransFormula call = returnTrans.getLocalVarsAssignmentOfCall();
+
+						final Term sp = mPredTrans.strongestPostcondition(mTruePred, call);
+						final IPredicate callPred = mPredicateUnifier.getOrConstructPredicate(sp);
+
+						final Term pre = mPredTrans.preReturn(toBeBlocked, callPred,
+								returnTrans.getAssignmentOfReturn(), returnTrans.getLocalVarsAssignmentOfCall(),
+								oldVarAssignments, modifiableGlobals);
+						preCondition = mPredicateUnifier.getOrConstructPredicate(pre);
 
 					} else {
 						throw new UnsupportedOperationException(
 								"Unknown transition type: " + predecessorTransition.getClass().toString());
 					}
 
-					final Triple<IPredicate, IcfgLocation, Integer> newProofObligation =
-							new Triple<>(preCondition, predecessor, level - 1);
+					final Triple<IPredicate, IcfgLocation, Integer> newProofObligation = new Triple<>(preCondition,
+							predecessor, level - 1);
 
 					proofObligations.addFirst(proofObligation);
 					proofObligations.addFirst(newProofObligation);
@@ -401,9 +420,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					return true;
 				}
 				/*
-				 * for (int k = i + 1; k < frames.size(); k++) { if (frames.get(k).getFirst() == ChangedFrame.UNCHANGED)
-				 * { continue; } final IPredicate p2 = frames.get(k).getSecond(); if
-				 * (p1.getFormula().equals(p2.getFormula())) { mLogger.debug("Invariant Found: " + frames.get(i) +
+				 * for (int k = i + 1; k < frames.size(); k++) { if
+				 * (frames.get(k).getFirst() == ChangedFrame.UNCHANGED) {
+				 * continue; } final IPredicate p2 = frames.get(k).getSecond();
+				 * if (p1.getFormula().equals(p2.getFormula())) {
+				 * mLogger.debug("Invariant Found: " + frames.get(i) +
 				 * " equals " + frames.get(k)); return true; } }
 				 */
 			}
@@ -442,17 +463,20 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	/**
-	 * Use a {@link IHoareTripleChecker} to check for satisfiability of pre &and; tf &and; post
+	 * Use a {@link IHoareTripleChecker} to check for satisfiability of pre
+	 * &and; tf &and; post
 	 *
-	 * This method converts the post condition because an {@link IHoareTripleChecker} checks for P &and; S &and; !Q
+	 * This method converts the post condition because an
+	 * {@link IHoareTripleChecker} checks for P &and; S &and; !Q
 	 *
 	 * @param pre
 	 * @param trans
 	 * @param post
 	 *
-	 * @return {@link Validity#VALID} iff the formula is unsat, {@link Validity#INVALID} iff the formula is sat,
-	 *         {@link Validity#UNKNOWN} iff the solver was not able to find a solution, and {@link Validity#NOT_CHECKED}
-	 *         should not be returned
+	 * @return {@link Validity#VALID} iff the formula is unsat,
+	 *         {@link Validity#INVALID} iff the formula is sat,
+	 *         {@link Validity#UNKNOWN} iff the solver was not able to find a
+	 *         solution, and {@link Validity#NOT_CHECKED} should not be returned
 	 */
 	private Validity checkSatInternal(final IPredicate pre, final IAction trans, final IPredicate post) {
 		final IPredicate notP = not(post);
@@ -460,13 +484,17 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		if (trans instanceof IIcfgInternalTransition) {
 			result = mHtc.checkInternal(pre, (IInternalAction) trans, notP);
-		} else if (trans instanceof IcfgCallTransition) {
+		} else if (trans instanceof ICallAction) {
 			result = mHtc.checkCall(pre, (ICallAction) trans, notP);
-		} else if (trans instanceof IcfgReturnTransition) {
+			
+		} else if (trans instanceof IReturnAction) {
 			/*
 			 * @TODO how does this work?
 			 */
-			result = mHtc.checkReturn(mTruePred, pre, (IReturnAction) trans, notP);
+			UnmodifiableTransFormula call = ((IReturnAction) trans).getLocalVarsAssignmentOfCall();
+			final Term sp = mPredTrans.strongestPostcondition(mTruePred, call);
+			final IPredicate callPred = mPredicateUnifier.getOrConstructPredicate(sp);
+			result = mHtc.checkReturn(pre, callPred, (IReturnAction) trans, notP);
 		}
 
 		if (mLogger.isDebugEnabled()) {
@@ -519,7 +547,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 			final IPredicate lPreds = traceFrames.get(l.getTarget());
 			assert lPreds != null;
-			// final IPredicate lInterpolant = mPredicateUnifier.getOrConstructPredicateForDisjunction(lPreds);
+			// final IPredicate lInterpolant =
+			// mPredicateUnifier.getOrConstructPredicateForDisjunction(lPreds);
 			interpolants[i] = lPreds;
 			++i;
 		}
@@ -527,7 +556,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	private IProgramExecution<IcfgEdge, Term> computeProgramExecution() {
-		// TODO: construct a real IProgramExecution using IcfgProgramExecutionBuilder (DD needs to refactor s.t. the
+		// TODO: construct a real IProgramExecution using
+		// IcfgProgramExecutionBuilder (DD needs to refactor s.t. the
 		// class becomes available here).
 		if (mIsTraceCorrect == LBool.SAT) {
 			return IProgramExecution.emptyExecution(Term.class, IcfgEdge.class);
