@@ -88,7 +88,7 @@ public class SolverBuilder {
 	 */
 	public static final String COMMAND_CVC4_NO_TIMEOUT =
 			CoreUtil.OS_IS_WINDOWS ? "cvc4 --tear-down-incremental=1 --print-success --lang smt --rewrite-divk"
-					: "cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
+					: "cvc4nyu --tear-down-incremental --print-success --lang smt --rewrite-divk";
 	public static final String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
 	// 20161214 Matthias: MathSAT does not support timeouts
 	public static final String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";

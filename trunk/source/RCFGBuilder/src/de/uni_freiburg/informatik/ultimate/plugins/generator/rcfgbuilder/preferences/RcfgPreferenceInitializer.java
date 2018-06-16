@@ -49,7 +49,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 			"z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
 	public static final String Z3_DEFAULT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 	public static final String Z3_LOW_TIMEOUT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:2000";
-	public static final String CVC4 = "cvc4 --tear-down-incremental --print-success --lang smt --tlimit-per=12000";
+	public static final String CVC4 = "cvc4nyu --tear-down-incremental --print-success --lang smt --tlimit-per=12000";
 	public static final String Princess = "princess +incremental +stdin -timeout=12000";
 
 	/*
@@ -57,9 +57,9 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
 	public static final boolean DEF_ASSUME_FOR_ASSERT = !false;
-	
-	private static final String DESC_ASSUME_FOR_ASSERT = "While checking some specification, assume that all other specifications hold. This is only sound in a setting where the verification process stops after the first violated specification was found.";	
-	
+
+	private static final String DESC_ASSUME_FOR_ASSERT = "While checking some specification, assume that all other specifications hold. This is only sound in a setting where the verification process stops after the first violated specification was found.";
+
 	public static final String LABEL_SOLVER = "SMT solver";
 	public static final SolverMode DEF_SOLVER = SolverMode.External_ModelsAndUnsatCoreMode;
 	// public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;
