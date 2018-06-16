@@ -191,6 +191,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-CVC4NYU-FP-UC-LV-Bitvector-Kojak.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Mathsat-FP-UC-LV-Bitvector-Kojak.epf"));
 //		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-SMTInterpol-FP-UC-LV-Bitvector-Kojak.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3MIN-FP-UC-LV-Bitvector-Kojak.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector-Kojak.epf"));
 
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-Bitvector-Kojak.epf"));
