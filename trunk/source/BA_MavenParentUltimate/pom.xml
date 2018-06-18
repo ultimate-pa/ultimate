@@ -18,9 +18,9 @@
 		<ultimate-version>0.1.23</ultimate-version>
 
 		<!-- maven plugin versions -->
-		<tycho-version>1.0.0</tycho-version>
-		<sonar-version>3.2</sonar-version>
-		<jacoco-version>0.7.7.201606060606</jacoco-version>
+		<tycho-version>1.2.0</tycho-version>
+		<sonar-version>3.4.0.905</sonar-version>
+		<jacoco-version>0.8.1</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>
 		<coveralls-version>4.2.0</coveralls-version>
 		<git-commit-id-version>2.2.3</git-commit-id-version>
