@@ -13,6 +13,14 @@ function test {
     return $status
 }
 
+function copy_if_non_empty {
+    local source="$1"
+    local target="$2"
+    if [ ! -z "$source" ]; then 
+        test cp "$source" "$target"
+    fi
+}
+
 if [ $# -le 2 ]; then
     echo "Not enough arguments supplied -- use arguments in the following order"
 	echo "1. the toolname" 
@@ -28,27 +36,33 @@ fi
 
 TOOLNAME="$1"
 if [ -z "$TOOLNAME" ]; then
-	echo "First argument (toolname) cannot be empty"		
+	echo "First argument (toolname) cannot be empty"
 	exit 1
 fi
 LCTOOLNAME="$(echo $TOOLNAME | tr '[A-Z]' '[a-z]')"
-echo "using $TOOLNAME ($LCTOOLNAME) as toolname"
+echo "Using $TOOLNAME ($LCTOOLNAME) as toolname"
 
 
+# additional files for all architectures 
+ADDS=(
+    "adds/LICENSE*"
+    "adds/*LICENSE"
+    "adds/Ultimate.py"
+    "adds/Ultimate.ini"
+    "adds/README"
+)
+
+# architecture-specific variables  
 if [ "$2" == "linux" ]; then
     echo "Building .zip for linux..."
 	ARCH="linux"
 	ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
-	Z3PATH="adds/z3"
-	CVC4PATH="adds/cvc4"
-	MATHSATPATH="adds/mathsat"
+    ADDS+=("adds/z3" "adds/cvc4nyu" "adds/cvc4" "adds/mathsat") 
 elif [ "$2" == "win32" ]; then
 	echo "Building .zip for win32..."
 	ARCH="win32"
 	ARCHPATH="products/CLI-E4/win32/win32/x86_64"
-	Z3PATH="adds/z3.exe"
-	CVC4PATH="adds/cvc4.exe"
-	MATHSATPATH="adds/mathsat.exe adds/mpir.dll"
+    ADDS+=("adds/z3.exe" "adds/cvc4nyu.exe" "adds/cvc4.exe" "adds/mathsat.exe" "adds/mpir.dll") 
 else
     echo "Wrong argument: ""$2"" -- use 'linux' or 'win32'"		
 	exit 1
@@ -58,11 +72,15 @@ fi
 # set version 
 VERSION=`git rev-parse HEAD | cut -c1-8`
 echo "Version is "$VERSION
+
+
 TARGETDIR=U${TOOLNAME}-${ARCH}
 CONFIGDIR="$TARGETDIR"/config
 DATADIR="$TARGETDIR"/data
 ZIPFILE=Ultimate${TOOLNAME}-${ARCH}.zip
+SETTINGS=../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*
 
+# check all toolchain arguments 
 if [ ! -z "$3" -a ! "NONE" = "$3" ]; then
 	TOOLCHAIN=../../trunk/examples/toolchains/${3}
 else 
@@ -105,8 +123,8 @@ else
 	TERMVALTOOLCHAIN=
 fi
 
-SETTINGS=../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*
 
+## removing files and dirs from previous deployments 
 if [ -d "$TARGETDIR" ]; then
 	echo "Removing old ""$TARGETDIR"
 	rm -r "$TARGETDIR"
@@ -116,41 +134,30 @@ if [ -f "${ZIPFILE}" ]; then
 	rm "${ZIPFILE}"
 fi
 
+## start copying files 
 echo "Copying files"
 mkdir "$TARGETDIR"
 mkdir "$CONFIGDIR"
 mkdir "$DATADIR"
 
 test cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
-if [ ! -z "$TOOLCHAIN" ]; then 
-	test cp "$TOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Reach.xml
-fi
-if [ ! -z "$TERMTOOLCHAIN" ]; then  
-	test cp "$TERMTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Termination.xml
-fi
-if [ ! -z "$VALTOOLCHAIN" ]; then 
-	test cp "$VALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"ReachWitnessValidation.xml
-fi
-if [ ! -z "$MEMDEREFMEMTRACKTOOLCHAIN" ]; then 
-	test cp "$MEMDEREFMEMTRACKTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"MemDerefMemtrack.xml
-fi
-if [ ! -z "$LTLTOOLCHAIN" ]; then 
-	test cp "$LTLTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"LTL.xml
-fi
-if [ ! -z "$TERMVALTOOLCHAIN" ]; then 
-	test cp "$TERMVALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"TerminationWitnessValidation.xml
-fi
-
-
-test cp adds/LICENSE* "$TARGETDIR"/
-test cp adds/*LICENSE "$TARGETDIR"/
+copy_if_non_empty "$TOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Reach.xml
+copy_if_non_empty "$TERMTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Termination.xml
+copy_if_non_empty "$VALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"ReachWitnessValidation.xml
+copy_if_non_empty "$MEMDEREFMEMTRACKTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"MemDerefMemtrack.xml
+copy_if_non_empty "$LTLTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"LTL.xml
+copy_if_non_empty "$TERMVALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"TerminationWitnessValidation.xml
 test cp ${SETTINGS} "$CONFIGDIR"/.
-test cp adds/Ultimate.py "$TARGETDIR"/
-test cp adds/Ultimate.ini "$TARGETDIR"/
-test cp adds/README "$TARGETDIR"/
-test cp ${Z3PATH} "$TARGETDIR"/
-test cp ${CVC4PATH} "$TARGETDIR"/
-test cp ${MATHSATPATH} "$TARGETDIR"/
+
+## copy all adds to target dir 
+for add in "${ADDS[@]}" ; do 
+    if ! readlink -fe $add > /dev/null ; then 
+        echo "$add does not exist, aborting..." 
+        exit 1
+    fi 
+    test cp $add "$TARGETDIR"/
+done 
+
 
 echo "Modifying Ultimate.py with version and toolname"
 ## replacing version value in Ultimate.py
