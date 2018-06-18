@@ -5,6 +5,7 @@ from __future__ import print_function
 import argparse
 import fnmatch
 import os
+import signal
 import re
 import subprocess
 import sys
@@ -305,7 +306,6 @@ def run_ultimate(ultimate_call, prop):
 def _init_child_process():
     new_umask = 022
     os.umask(new_umask)
-
 
 def call_desperate(call_args):
     if call_args is None:
@@ -716,9 +716,6 @@ def print_call_finished(name, process):
 
 
 def main():
-    # before doing anything, set permissions
-    # call_relaxed(['chmod', 'ug+rwx', '-R', ultimatedir])
-
     f = open('output.txt','a')
     sys.stdout = f
     sys.stderr = f
@@ -729,12 +726,11 @@ def main():
         sys.exit(ExitCode.FAIL_NO_REDUCTION)
 
     # execute ultimate and assume that -tc and -s are given in extras
-    print('Version ' + version)
     ultimate_bin = get_binary()
-    input=extras[-1]
+    input = extras[-1]
     extras = extras[:-1]
-    ultimate_call = create_callargs(ultimate_bin, extras+['-i',input])
-    z3_call = create_callargs(['z3'], input_files)
+    ultimate_call = create_callargs(ultimate_bin, extras + ['-i', input])
+    z3_call = ['z3', 'fixedpoint.engine=spacer', input]
     print(' '.join(ultimate_call))
     ultimate_process = call_desperate(ultimate_call)
     z3_process = call_desperate(z3_call)
@@ -745,7 +741,7 @@ def main():
     # poll the output
     while True:
         ult_line = ultimate_process.stdout.readline().decode('utf-8', 'ignore')
-        z3_line = ultimate_process.stdout.readline().decode('utf-8', 'ignore')
+        z3_line = z3_process.stdout.readline().decode('utf-8', 'ignore')
         ultimate_process.poll()
         z3_process.poll()
 
@@ -758,9 +754,11 @@ def main():
         # check for desired reduction behavior in output
         
         if ult_line and ult_line.find('CounterExampleResult') != -1:
+            print('Seen Ultimate line of interest')
             ult_reduction = True
-
-        if z3_line and z3_line.find('sat') != -1:
+            
+        if z3_line and z3_line.startswith('sat'):
+            print('Seen z3 line of interest')
             z3_reduction = True
 
         if z3_reduction and ult_reduction:
