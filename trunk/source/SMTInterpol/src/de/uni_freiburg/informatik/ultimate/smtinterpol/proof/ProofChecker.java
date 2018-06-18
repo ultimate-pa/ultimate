@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -1650,9 +1649,6 @@ public class ProofChecker extends NonRecursive {
 		case ":leqFalse":
 			okay = checkRewriteLeq(rewriteRule, eqParams[0], eqParams[1]);
 			break;
-		case ":desugar":
-			okay = checkRewriteDesugar(eqParams[0], eqParams[1]);
-			break;
 		case ":divisible":
 			okay = checkRewriteDivisible(eqParams[0], eqParams[1]);
 			break;
@@ -2129,37 +2125,6 @@ public class ProofChecker extends NonRecursive {
 			}
 		}
 		return rhsOffset == rhsArgs.length;
-	}
-
-	boolean checkRewriteDesugar(final Term lhs, final Term rhs) {
-		// (* realparam intparam) --> (* realparam (to_real intparam))
-		if (!(lhs instanceof ApplicationTerm) || !(rhs instanceof ApplicationTerm)) {
-			return false;
-		}
-
-		final FunctionSymbol fsym = ((ApplicationTerm) lhs).getFunction();
-		if (((ApplicationTerm) rhs).getFunction() != fsym) {
-			return false;
-		}
-		final Sort[] sorts = fsym.getParameterSorts();
-		if (sorts.length != 2 || !sorts[0].isNumericSort() || sorts[0].getName() != "Real" || !sorts[1].isNumericSort()
-				|| sorts[1].getName() != "Real") {
-			return false;
-		}
-
-		final Term[] lhsParams = ((ApplicationTerm) lhs).getParameters();
-		final Term[] rhsParams = ((ApplicationTerm) rhs).getParameters();
-		if (lhsParams.length != rhsParams.length) {
-			return false;
-		}
-		for (int i = 0; i < lhsParams.length; i++) {
-			final Term expected =
-					(lhsParams[i].getSort().getName() == "Int" ? mSkript.term("to_real", lhsParams[i]) : lhsParams[i]);
-			if (rhsParams[i] != expected) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	boolean checkRewriteDivisible(final Term lhs, final Term rhs) {

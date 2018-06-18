@@ -66,7 +66,6 @@ public interface ProofConstants {
 	public final static Annotation RW_GT_TO_LEQ0        = new Annotation(":gtToLeq0", null);
 	public final static Annotation RW_LEQ_TRUE          = new Annotation(":leqTrue", null);
 	public final static Annotation RW_LEQ_FALSE         = new Annotation(":leqFalse", null);
-	public final static Annotation RW_DESUGAR           = new Annotation(":desugar", null);
 	public final static Annotation RW_DIVISIBLE         = new Annotation(":divisible", null);
 	public final static Annotation RW_MODULO            = new Annotation(":modulo", null);
 	public final static Annotation RW_MODULO_ONE        = new Annotation(":modulo1", null);

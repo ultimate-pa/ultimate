@@ -55,16 +55,24 @@ public class LogicTest {
 		final FunctionSymbol plusReal2 = theory.getFunction("+", sortReal, sortReal);
 		Assert.assertNotNull(plusReal2);
 		Assert.assertSame(plusReal2, theory.getFunction("+", sortReal, sortReal, sortReal));
-		Assert.assertSame(plusReal2, theory.getFunction("+", sortReal, sortInt, sortReal));
-		Assert.assertSame(plusReal2, theory.getFunction("+", sortInt, sortInt, sortReal));
+		final FunctionSymbol plusRealIntReal = theory.getFunction("+", sortReal, sortInt, sortReal);
+		final FunctionSymbol plusIntIntReal = theory.getFunction("+", sortInt, sortInt, sortReal);
+		Assert.assertNotNull(plusRealIntReal);
+		Assert.assertNotNull(plusIntIntReal);
 
 		final Term x = theory.term(theory.declareFunction("x", new Sort[0], sortReal));
 		final Term y = theory.term(theory.declareFunction("y", new Sort[0], sortReal));
 		final Term i = theory.term(theory.declareFunction("i", new Sort[0], sortInt));
 		final Term j = theory.term(theory.declareFunction("j", new Sort[0], sortInt));
 		final Term sum = theory.term("+", x, y, i, j);
+		final Term sum1 = theory.term("+", x, i, y);
+		final Term sum2 = theory.term("+", i, j, x);
+		Assert.assertSame(plusRealIntReal, ((ApplicationTerm) sum1).getFunction());
+		Assert.assertSame(plusIntIntReal, ((ApplicationTerm) sum2).getFunction());
 		final Term mul = theory.term("*", Rational.valueOf(-3, 7).toTerm(sortReal), i);
 		Assert.assertEquals("(+ x y i j)", sum.toString());
+		Assert.assertEquals("(+ x i y)", sum1.toString());
+		Assert.assertEquals("(+ i j x)", sum2.toString());
 		Assert.assertEquals("(* (/ (- 3.0) 7.0) i)", mul.toString());
 	}
 

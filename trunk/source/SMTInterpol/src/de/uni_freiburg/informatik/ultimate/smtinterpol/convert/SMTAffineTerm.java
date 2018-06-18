@@ -129,7 +129,7 @@ public final class SMTAffineTerm extends Term {
 				summands.put(me.getKey(), me.getValue().mul(factor));
 			}
 		} else if (subterm instanceof ConstantTerm) {
-			constant = convertConstant((ConstantTerm) subterm);
+			constant = convertConstant((ConstantTerm) subterm).mul(factor);
 			summands = Collections.emptyMap();
 		} else {
 			summands = Collections.singletonMap(subterm, factor);

@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -176,37 +175,6 @@ public class TermCompiler extends TermTransformer {
 
 		Term convertedApp = mTracker.congruence(mTracker.reflexivity(appTerm), args);
 
-		final Sort[] paramSorts = fsym.getParameterSorts();
-		if (theory.getLogic().isIRA()
-			&& paramSorts.length == 2
-			&& paramSorts[0].getName().equals("Real")
-			&& paramSorts[1] == paramSorts[0]) {
-			// IRA-Hack
-			if (args == appTerm.getParameters()) {
-				args = args.clone();
-			}
-			boolean changed = false;
-			final Term[] desugarParams = new Term[args.length];
-			final Term[] nargs = new Term[args.length];
-			for (int i = 0; i < args.length; i++) {
-				final Term arg = mTracker.getProvedTerm(args[i]);
-				if (arg.getSort().getName().equals("Int")) {
-					desugarParams[i] = theory.term("to_real", arg);
-					nargs[i] = mTracker.buildRewrite(desugarParams[i],
-							SMTAffineTerm.create(arg).typecast(paramSorts[0]),
-							ProofConstants.RW_CANONICAL_SUM);
-					changed = true;
-				} else {
-					desugarParams[i] = arg;
-					nargs[i] = mTracker.reflexivity(arg);
-				}
-			}
-			if (changed) {
-				final Term desugar = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp),
-						theory.term(fsym, desugarParams), ProofConstants.RW_DESUGAR);
-				convertedApp = mTracker.congruence(mTracker.transitivity(convertedApp, desugar), nargs);
-			}
-		}
 		final Term[] params = ((ApplicationTerm) mTracker.getProvedTerm(convertedApp)).getParameters();
 
 		if (fsym.getDefinition() != null) {
@@ -219,7 +187,7 @@ public class TermCompiler extends TermTransformer {
 			final Term expanded = unletter.unlet(fsym.getDefinition());
 			final Term expandedProof = mTracker.buildRewrite(mTracker.getProvedTerm(convertedApp), expanded,
 					ProofConstants.RW_EXPAND_DEF);
-			enqueueWalker(new TransitivityStep(expandedProof));
+			enqueueWalker(new TransitivityStep(mTracker.transitivity(convertedApp, expandedProof)));
 			pushTerm(expanded);
 			return;
 		}

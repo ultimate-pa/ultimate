@@ -171,13 +171,13 @@ public class FunctionSymbol {
 		return mParamSort;
 	}
 	
-	private final void checkSort(Term arg, Sort sort, boolean mixRealInt) {
+	private final void checkSort(Term arg, Sort sort) {
 		final Sort argSort = arg.getSort();
 		if (!sort.equalsSort(argSort)) {
 			if (argSort.toString().equals(sort.toString())) {
 				throw new SMTLIBException(
 						"Argument " + arg + " comes from wrong theory.");
-			} else if (!mixRealInt || !argSort.getName().equals("Int")) {
+			} else {
 				throw new SMTLIBException(
 						"Argument " + arg + " has type " + argSort
 						+ " but function " + mName + " expects " + sort);
@@ -192,24 +192,17 @@ public class FunctionSymbol {
 	 */
 	public void typecheck(Term[] params) throws SMTLIBException {
 		assert params.getClass() == Term[].class;
-		boolean mixRealInt = false;
-		if (getTheory().getLogic() != null && getTheory().getLogic().isIRA()
-			&& mParamSort.length == 2
-			&& mParamSort[0] == mParamSort[1]
-			&& mParamSort[0] == getTheory().getSort("Real")) {
-			mixRealInt = true;
-		}
 		if ((mFlags & (ASSOCMASK)) != 0) { // NOPMD
 			// All arguments should have the same type.
 			if (params.length < 2) {
 				throw new SMTLIBException(
 					"Function " + mName + " expects at least two arguments.");
 			}
-			checkSort(params[0], mParamSort[0], mixRealInt);
-			checkSort(params[params.length - 1], mParamSort[1], mixRealInt);
+			checkSort(params[0], mParamSort[0]);
+			checkSort(params[params.length - 1], mParamSort[1]);
 			final Sort otherSort = isLeftAssoc() ? mParamSort[1] : mParamSort[0];
 			for (int i = 1; i < params.length - 1; i++) {
-				checkSort(params[i], otherSort, mixRealInt);
+				checkSort(params[i], otherSort);
 			}
 		} else {
 			if (params.length != mParamSort.length) {
@@ -218,7 +211,7 @@ public class FunctionSymbol {
 						+ " arguments.");
 			}
 			for (int i = 0; i < mParamSort.length; i++) {
-				checkSort(params[i], mParamSort[i], mixRealInt);
+				checkSort(params[i], mParamSort[i]);
 			}
 		}
 	}
@@ -229,31 +222,20 @@ public class FunctionSymbol {
 	 * @return true if the type check succeeds, false otherwise.
 	 */
 	public boolean typecheck(Sort[] params) {
-		boolean mixRealInt = false;
-		if (getTheory().getLogic().isIRA()
-			&& mParamSort.length == 2
-			&& mParamSort[0] == mParamSort[1]
-			&& mParamSort[0].getName().equals("Real")) {
-			mixRealInt = true;
-		}
 		if ((mFlags & (ASSOCMASK)) != 0) { // NOPMD
 			assert (mParamSort.length == 2);
 			if (params.length < 2) {
 				return false;
 			}
-			if (!params[0].equalsSort(mParamSort[0])
-				&& (!mixRealInt || params[0] != getTheory().getSort("Int"))) {
+			if (!params[0].equalsSort(mParamSort[0])) {
 				return false;
 			}
-			if (!params[params.length - 1].equalsSort(mParamSort[1])
-				&& (!mixRealInt || params[params.length - 1]
-						!= getTheory().getSort("Int"))) {
+			if (!params[params.length - 1].equalsSort(mParamSort[1])) {
 				return false;
 			}
 			final Sort otherSort = isLeftAssoc() ? mParamSort[1] : mParamSort[0];
 			for (int i = 1; i < params.length - 1; i++) {
-				if (!params[i].equalsSort(otherSort)
-					&& (!mixRealInt || params[i] != getTheory().getSort("Int"))) {
+				if (!params[i].equalsSort(otherSort)) {
 					return false;
 				}
 			}
@@ -262,8 +244,7 @@ public class FunctionSymbol {
 				return false;
 			}
 			for (int i = 0; i < mParamSort.length; i++) {
-				if (!params[i].equalsSort(mParamSort[i])
-					&& (!mixRealInt || params[i] != getTheory().getSort("Int"))) {
+				if (!params[i].equalsSort(mParamSort[i])) {
 					return false;
 				}
 			}

@@ -105,6 +105,10 @@ public class Theory {
 	private final UnifyHash<Term> mTermCache = new UnifyHash<>();
 	private final UnifyHash<TermVariable> mTvUnify = new UnifyHash<>();
 	/**
+	 * Factory for to_real wrapper function symbol, if IRA logic is used.
+	 */
+	private IRAWrapperFactory mIRAWrappers;
+	/**
 	 * Cache for bitvector constant function symbols (_ bv123 456).
 	 */
 	private UnifyHash<FunctionSymbol> mBitVecConstCache;
@@ -514,13 +518,10 @@ public class Theory {
 	}
 
 	public Term modelRational(final Rational rat, final Sort sort) {
-		if (sort == mRealSort) {
-			final BigInteger num = rat.numerator();
-			final BigInteger denom = rat.denominator();
+		final BigInteger num = rat.numerator();
+		final BigInteger denom = rat.denominator();
 
-			if (denom.equals(BigInteger.ONE) && !mLogic.isIRA()) {
-				return decimal(new BigDecimal(num));
-			}
+		if (sort == mRealSort) {
 			if (mLogic.isIRA()) {
 				final FunctionSymbol div = getFunction("/", mRealSort, mRealSort);
 				final FunctionSymbol toreal = getFunction("to_real", mNumericSort);
@@ -529,12 +530,17 @@ public class Theory {
 					numeralTerm = term("-", numeralTerm);
 				}
 				return term(div, numeralTerm, term(toreal, numeral(denom)));
+			} else {
+				if (denom.equals(BigInteger.ONE)) {
+					return decimal(new BigDecimal(num));
+				}
+				final FunctionSymbol div = getFunction("/", mNumericSort, mNumericSort);
+				return term(div, numeral(num), numeral(denom));
 			}
-			final FunctionSymbol div = getFunction("/", mNumericSort, mNumericSort);
-			return term(div, numeral(num), numeral(denom));
+		} else {
+			assert denom.equals(BigInteger.ONE);
+			return numeral(rat.numerator());
 		}
-		assert rat.isIntegral();
-		return numeral(rat.numerator());
 	}
 
 	public Term string(final String value) {
@@ -634,6 +640,7 @@ public class Theory {
 	}
 
 	private void createIRAOperators() {
+		mIRAWrappers = new IRAWrapperFactory();
 		class BinArithFactory extends FunctionSymbolFactory {
 			Sort mReturnSort;
 			int mFlags;
@@ -682,40 +689,6 @@ public class Theory {
 		// isint x: (= x (to_real (to_int x)))
 		final Term isintx = term("=", xr, term("to_real", term("to_int", xr)));
 		declareInternalFunction("is_int", real1, new TermVariable[] { xr }, isintx, 0);
-
-		FunctionSymbolFactory iraIte = new FunctionSymbolFactory("ite") {
-			@Override
-			public Term getDefinition(final TermVariable[] tvs, final Sort resultSort) {
-				if (tvs[1].getSort() != tvs[2].getSort()) {
-					/* IRA hack for ite */
-					assert (tvs[1].getSort() == mNumericSort && tvs[2].getSort() == mRealSort)
-						|| (tvs[1].getSort() == mRealSort && tvs[2].getSort() == mNumericSort);
-					if (tvs[1].getSort() == mNumericSort) {
-						return term("ite", tvs[0], term("to_real", tvs[1]), tvs[2]);
-					} else {
-						return term("ite", tvs[0], tvs[1], term("to_real", tvs[2]));
-					}
-				}
-				return null;
-			}
-
-			@Override
-			public Sort getResultSort(final BigInteger[] indices, final Sort[] paramSorts, final Sort resultSort) {
-				if (indices == null && paramSorts.length == 3
-						&& paramSorts[0] == mBooleanSort && paramSorts[1] == paramSorts[2]) {
-					return paramSorts[1];
-				}
-				if (indices == null && paramSorts.length == 3
-						&& paramSorts[0] == mBooleanSort
-						&& (paramSorts[1] == mNumericSort || paramSorts[1] == mRealSort)
-						&& (paramSorts[2] == mNumericSort || paramSorts[2] == mRealSort)) {
-					return mRealSort;
-				}
-				return null;
-			}
-		};
-
-		mFunFactory.put(iraIte.mFuncName, iraIte);
 
 		defineFunction(new FunctionSymbolFactory("abs") {
 			@Override
@@ -1413,21 +1386,20 @@ public class Theory {
 		}
 		final FunctionSymbolFactory factory = mFunFactory.get(name);
 		if (factory != null) {
-			FunctionSymbol fsym = factory.getFunctionWithResult(this, indices, paramTypes, resultType);
+			final FunctionSymbol fsym = factory.getFunctionWithResult(this, indices, paramTypes, resultType);
 			if (fsym != null) {
 				return fsym;
 			}
-			if (mLogic.isIRA()) {
-				fsym = factory.getFunctionWithResult(this, indices, new Sort[] { mRealSort, mRealSort }, resultType);
-				if (fsym != null && fsym.typecheck(paramTypes)) {
-					return fsym;
-				}
+		} else {
+			final FunctionSymbol fsym = mDeclaredFuns.get(name);
+			if (fsym != null && indices == null && resultType == null && fsym.typecheck(paramTypes)) {
+				return fsym;
 			}
-			return null;
 		}
-		final FunctionSymbol fsym = mDeclaredFuns.get(name);
-		if (fsym != null && indices == null && resultType == null && fsym.typecheck(paramTypes)) {
-			return fsym;
+		if (mIRAWrappers != null) {
+			final FunctionSymbol fsym = mIRAWrappers.createWrapper(this, name, indices, paramTypes, resultType);
+			if (fsym != null)
+				return fsym;
 		}
 		if (mBitVecSort != null && name.matches(BITVEC_CONST_PATTERN) && indices != null && indices.length == 1
 				&& resultType == null) {
