@@ -69,6 +69,8 @@ public class GenerateGotoBoogieAst {
 
 	private final String mGotoVarName;
 
+	private final Set<HcPredicateSymbol> mPredicatesThatHaveANonTailCall;
+
 	public GenerateGotoBoogieAst(final ChcPreMetaInfoProvider preAnalysis,
 			final GenerateBoogieAstHelper helper,
 			final String gotoVarName) {
@@ -77,6 +79,9 @@ public class GenerateGotoBoogieAst {
 		mChcInfo = preAnalysis;
 
 		mGotoVarName = gotoVarName;
+
+		mPredicatesThatHaveANonTailCall = new HashSet<>();
+		mPredicatesThatHaveANonTailCall.add(helper.getBottomPredSym());
 
 		mIndexToSortToGotoProcArgId = new NestedMap2<>();
 		mIndexToSortToGotoProcArgIdList = new ArrayList<>();
@@ -210,6 +215,12 @@ public class GenerateGotoBoogieAst {
 			List<Statement> predSwitch = null;
 
 			for (final Entry<HcPredicateSymbol, Label> en : predSymbolToLabel.entrySet()) {
+
+				if (!mPredicatesThatHaveANonTailCall.contains(en.getKey())) {
+					// switch branch is unecessary, leave it out
+					continue;
+				}
+
 				final HcPredicateSymbol predSym = en.getKey();
 				final Label predSymLabel = en.getValue();
 				final Integer predSymNumber = predLabelToNumber.get(predSymLabel);
@@ -401,6 +412,8 @@ public class GenerateGotoBoogieAst {
 				} else {
 					// we have to rearrange the call arguments
 
+					mPredicatesThatHaveANonTailCall.add(bodyPredSym);
+
 					final List<Expression> splatArgs = new ArrayList<>();
 					splatArgs.add(targetLabelNumber);
 
@@ -566,21 +579,25 @@ public class GenerateGotoBoogieAst {
 			final IntegerLiteral predicateLabelNumberToJumpTo,
 			final List<Expression> translatedArguments) {
 
-		final Statement gotoVarAssignment = StatementFactory.constructAssignmentStatement(loc,
-				new VariableLHS[] { getGotoVarLhs() },
-				new Expression[] { predicateLabelNumberToJumpTo });
-		branchBody.add(gotoVarAssignment);
+		// EDIT: makes no sense -- we are using a direct goto, the switch will not be reached from here..
+//		final Statement gotoVarAssignment = StatementFactory.constructAssignmentStatement(loc,
+//				new VariableLHS[] { getGotoVarLhs() },
+//				new Expression[] { predicateLabelNumberToJumpTo });
+//		branchBody.add(gotoVarAssignment);
 
-		// assignment of head vars (analogous to what a call would have done implicitly)
-		final Statement argAssignment = StatementFactory.constructAssignmentStatement(loc,
+		if (translatedArguments.size() > 0) {
+			// assignment of head vars (analogous to what a call would have done implicitly)
+			final Statement argAssignment = StatementFactory.constructAssignmentStatement(loc,
 					mHelper.toVariableLhss(mHcSymbolTable.getHcHeadVarsForPredSym(bodyPredSym, false),
 							new DeclarationInformation(StorageClass.LOCAL, getGotoProcName())),
 					translatedArguments.toArray(new Expression[translatedArguments.size()]));
-		branchBody.add(argAssignment);
-
-		// havoc body vars
-		branchBody.add(new HavocStatement(loc, mHelper.toVariableLhss(hornClause.getBodyVariables(),
-				new DeclarationInformation(StorageClass.LOCAL, getGotoProcName()))));
+			branchBody.add(argAssignment);
+		}
+		if (hornClause.getBodyVariables().size() > 0) {
+			// havoc body vars
+			branchBody.add(new HavocStatement(loc, mHelper.toVariableLhss(hornClause.getBodyVariables(),
+					new DeclarationInformation(StorageClass.LOCAL, getGotoProcName()))));
+		}
 
 		// add goto statement
 		branchBody.add(new GotoStatement(loc, new String[] { labelForBodyPredSym.getName().toString() }));
