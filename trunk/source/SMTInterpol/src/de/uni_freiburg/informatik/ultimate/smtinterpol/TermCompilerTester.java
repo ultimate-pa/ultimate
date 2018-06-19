@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 
 public class TermCompilerTester extends LoggingScript {
@@ -40,7 +39,7 @@ public class TermCompilerTester extends LoggingScript {
 	}
 
 	@Override
-	public LBool assertTerm(Term term) throws SMTLIBException {
+	public LBool assertTerm(final Term term) throws SMTLIBException {
 		Term tmp = mUnletter.unlet(term);
 		tmp = mCompiler.transform(tmp);
 //		Simplifier simp = new Simplifier();
@@ -53,7 +52,6 @@ public class TermCompilerTester extends LoggingScript {
 //		} while (tmp2 != tmp);
 //		System.err.printf("Simplified for %d rounds\n", rounds);
 //		System.exit(0);
-		tmp = SMTAffineTerm.cleanup(tmp);
 		return super.assertTerm(mLetter.let(tmp));
 	}
 	

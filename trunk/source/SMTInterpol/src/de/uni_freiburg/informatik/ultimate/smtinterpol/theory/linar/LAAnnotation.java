@@ -137,8 +137,7 @@ public class LAAnnotation implements IAnnotation {
 		if (r == null) {
 			r = Rational.ZERO;
 		}
-		assert(lit.getAtom() instanceof LAEquality
-			   || r.signum() * coeff.signum() >= 0);
+		assert lit.getAtom() instanceof LAEquality || r.signum() * coeff.signum() >= 0;
 		r = r.add(coeff);
 		if (r == Rational.ZERO) {
 			mCoefficients.remove(lit);

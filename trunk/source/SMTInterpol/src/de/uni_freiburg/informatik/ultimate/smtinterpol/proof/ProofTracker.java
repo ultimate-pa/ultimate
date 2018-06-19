@@ -29,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 
 /**
@@ -55,7 +54,6 @@ public class ProofTracker implements IProofTracker{
 		assert proof != null;
 		final Theory theory = term.getTheory();
 		final Annotation[] annotions = new Annotation[] { new Annotation(":proof", proof) };
-		annotions[0] = new Annotation(":proof", proof);
 		return theory.annotatedTerm(annotions, term);
 	}
 
@@ -67,7 +65,7 @@ public class ProofTracker implements IProofTracker{
 	@Override
 	public Term intern(final Term term, final Term intern) {
 		final Theory t = term.getTheory();
-		if (SMTAffineTerm.cleanup(term) == SMTAffineTerm.cleanup(intern)) {
+		if (term == intern) {
 			return reflexivity(intern);
 		}
 		return buildProof(t.term("@intern", t.term("=", term, intern)), intern);
@@ -222,7 +220,7 @@ public class ProofTracker implements IProofTracker{
 	@Override
 	public Term buildRewrite(final Term orig, final Term res, final Annotation rule) {
 		final Theory theory = orig.getTheory();
-		if (SMTAffineTerm.cleanup(orig) == SMTAffineTerm.cleanup(res)) {
+		if (orig == res) {
 			return reflexivity(res);
 		}
 		final Term statement = theory.term("=", orig, res);

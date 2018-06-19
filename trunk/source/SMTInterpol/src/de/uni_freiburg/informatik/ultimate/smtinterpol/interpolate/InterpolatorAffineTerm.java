@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumber;
 
 /**
@@ -47,6 +48,11 @@ public class InterpolatorAffineTerm {
 	public InterpolatorAffineTerm(final InterpolatorAffineTerm iat) {
 		mConstant = iat.getConstant();
 		mSummands.putAll(iat.getSummands());
+	}
+
+	public InterpolatorAffineTerm(final SMTAffineTerm affine) {
+		mConstant = new InfinitNumber(affine.getConstant(), 0);
+		mSummands.putAll(affine.getSummands());
 	}
 
 	public InterpolatorAffineTerm add(final Rational c) {

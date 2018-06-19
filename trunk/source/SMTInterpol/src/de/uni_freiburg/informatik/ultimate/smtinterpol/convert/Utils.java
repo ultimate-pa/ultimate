@@ -124,21 +124,20 @@ public class Utils {
 		assert leq0Term.getFunction().getName() == "<=";
 		assert leq0Term.getParameters()[1] == Rational.ZERO.toTerm(leq0Term.getParameters()[0].getSort());
 		final Term arg = leq0Term.getParameters()[0];
-		if (arg instanceof SMTAffineTerm) {
-			final SMTAffineTerm at = (SMTAffineTerm) arg;
-			if (at.isConstant()) {
-				final Theory t = arg.getTheory();
-				if (at.getConstant().compareTo(Rational.ZERO) > 0) {
-					return mTracker.transitivity(input,
-							mTracker.buildRewrite(leq0Term, t.mFalse, ProofConstants.RW_LEQ_FALSE));
-				} else {
-					return mTracker.transitivity(input,
-							mTracker.buildRewrite(leq0Term, t.mTrue, ProofConstants.RW_LEQ_TRUE));
-				}
+		if (arg instanceof ConstantTerm) {
+			final Rational value = (Rational) ((ConstantTerm) arg).getValue();
+			final Theory t = arg.getTheory();
+			if (value.compareTo(Rational.ZERO) > 0) {
+				return mTracker.transitivity(input,
+						mTracker.buildRewrite(leq0Term, t.mFalse, ProofConstants.RW_LEQ_FALSE));
+			} else {
+				return mTracker.transitivity(input,
+						mTracker.buildRewrite(leq0Term, t.mTrue, ProofConstants.RW_LEQ_TRUE));
 			}
 		}
 		return input;
 	}
+
 	/**
 	 * Simplify ite terms.  This might destroy the ite if it is Boolean with
 	 * at least one constant leaf, or if the leaves equal.
@@ -234,6 +233,7 @@ public class Utils {
 		}
 		return input;
 	}
+
 	/**
 	 * Optimize equalities.  This function creates binary equalities out of
 	 * n-ary equalities.  First, we optimize the arguments of the equality by
@@ -251,15 +251,13 @@ public class Utils {
 		if (args[0].getSort().isNumericSort()) {
 			Rational lastConst = null;
 			for (final Term t : args) {
-				if (t instanceof ConstantTerm || t instanceof SMTAffineTerm) {
-					final SMTAffineTerm at = SMTAffineTerm.create(t);
-					if (at.isConstant()) {
-						if (lastConst == null) {
-							lastConst = at.getConstant();
-						} else if (!lastConst.equals(at.getConstant())) {
-							return mTracker.transitivity(input,
-									mTracker.buildRewrite(eqTerm, theory.mFalse, ProofConstants.RW_CONST_DIFF));
-						}
+				if (t instanceof ConstantTerm) {
+					final Rational value = (Rational) ((ConstantTerm) t).getValue();
+					if (lastConst == null) {
+						lastConst = value;
+					} else if (!lastConst.equals(value)) {
+						return mTracker.transitivity(input,
+								mTracker.buildRewrite(eqTerm, theory.mFalse, ProofConstants.RW_CONST_DIFF));
 					}
 				}
 				eqArgList.add(t);

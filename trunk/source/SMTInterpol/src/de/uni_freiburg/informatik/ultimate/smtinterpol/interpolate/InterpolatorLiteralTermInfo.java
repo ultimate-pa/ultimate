@@ -110,7 +110,7 @@ public class InterpolatorLiteralTermInfo {
 		}
 		mAtom = atom;
 		mIsCCEquality = annot == ":quotedCC";
-		Term unquoted = mAtom instanceof AnnotatedTerm ? ((AnnotatedTerm) atom).getSubterm() : mAtom;
+		final Term unquoted = mAtom instanceof AnnotatedTerm ? ((AnnotatedTerm) atom).getSubterm() : mAtom;
 		mIsBoundConstraint = isBoundConstraint(unquoted);
 		mIsLAEquality = annot == ":quotedLA" && !mIsBoundConstraint;
 
@@ -127,36 +127,6 @@ public class InterpolatorLiteralTermInfo {
 		} else if (mIsCCEquality) {
 			mCCEquality = (ApplicationTerm) ((AnnotatedTerm) atom).getSubterm();
 		}
-	}
-
-	/**
-	 * Get the underlying atomic term for an annotated or negated term
-	 */
-	private Term computeAtom(final Term term) {
-		Term inner = term;
-		if (isNegated(inner)) {
-			inner = ((ApplicationTerm) inner).getParameters()[0];
-		}
-		if (inner instanceof AnnotatedTerm) {
-			inner = ((AnnotatedTerm) inner).getSubterm();
-		}
-		return inner;
-	}
-
-	/**
-	 * Check if this atom is a LA equality. Note that some CC equalities look like LA equalities, but in those cases,
-	 * they are treated the same way.
-	 */
-	boolean isLAEquality(final Term atom) {
-		if (atom instanceof ApplicationTerm) {
-			if (((ApplicationTerm) atom).getFunction().getName().equals("=")) {
-				final Term secondParam = ((ApplicationTerm) atom).getParameters()[1];
-				if (secondParam instanceof ConstantTerm) {
-					return SMTAffineTerm.create(secondParam).getConstant().equals(Rational.ZERO);
-				}
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -186,8 +156,7 @@ public class InterpolatorLiteralTermInfo {
 		final Term[] params = ((ApplicationTerm) laAtom).getParameters();
 		final Term varTerm = params[0];
 
-		assert params[1] instanceof ConstantTerm;
-		assert SMTAffineTerm.create(params[1]).getConstant().equals(Rational.ZERO);
+		assert SMTAffineTerm.convertConstant((ConstantTerm) params[1]).equals(Rational.ZERO);
 		return Interpolator.termToAffine(varTerm);
 	}
 
@@ -196,17 +165,6 @@ public class InterpolatorLiteralTermInfo {
 	 */
 	private InfinitNumber computeEpsilon(final Term term) {
 		return mLinVar.isInt() ? InfinitNumber.ONE : InfinitNumber.EPSILON;
-	}
-
-	/**
-	 * Check if a term is negated
-	 */
-	private boolean isNegated(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			return ((ApplicationTerm) term).getFunction().getName().equals("not");
-		} else {
-			return false;
-		}
 	}
 
 	public Term getAtom() {

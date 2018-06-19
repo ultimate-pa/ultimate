@@ -60,15 +60,10 @@ public class SourceAnnotation implements IAnnotation {
 	@Override
 	public Term toTerm(final Clause cls, final Theory theory) {
 		Term res = cls.toTerm(theory);
-		if (mSource == null) {
-			// Partial proof mode
-			res = theory.term("@asserted", theory.annotatedTerm(
+		// For partial proofs, make an asserted sub proof.
+		Term subproof = mSource != null ? mSource : theory.term("@asserted", res);
+		return theory.term("@clause", subproof, theory
+				.annotatedTerm(
 					new Annotation[] { new Annotation(":input", mAnnot.isEmpty() ? null : mAnnot) }, res));
-		} else {
-			// Full proof mode
-			res = theory.term("@clause", mSource, theory.annotatedTerm(
-					new Annotation[] { new Annotation(":input", mAnnot.isEmpty() ? null : mAnnot) }, res));
-		}
-		return res;
 	}
 }

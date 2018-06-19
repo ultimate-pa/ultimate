@@ -24,6 +24,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.NoopProofTracker;
@@ -38,19 +39,19 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.NoopProofTracker;
  * @author Juergen Christ
  */
 public class EqualityDestructor extends NonRecursive {
-	
+
 	private static final class SearchEqualities implements NonRecursive.Walker {
 		private final Term mTerm;
 		private final boolean mPositive;
-		public SearchEqualities(Term term) {
+		public SearchEqualities(final Term term) {
 			this(term, true);
 		}
-		public SearchEqualities(Term term, boolean positive) {
+		public SearchEqualities(final Term term, final boolean positive) {
 			mTerm = term;
 			mPositive = positive;
 		}
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			if (mTerm instanceof ApplicationTerm) {
 				final ApplicationTerm at = (ApplicationTerm) mTerm;
 				if (at.getFunction() == at.getTheory().mNot) {
@@ -95,19 +96,18 @@ public class EqualityDestructor extends NonRecursive {
 					} else if (args[1] instanceof TermVariable) {
 						// (= c x)
 						final TermVariable v1 = (TermVariable) args[1];
-						checkVariable(ed, v1, args[0]);						
+						checkVariable(ed, v1, args[0]);
 					}
 				}
 				// Not interesting...
 			}
 		}
-		
-		private void checkVariable(EqualityDestructor ed,
-				TermVariable var, Term val) {
+
+		private void checkVariable(final EqualityDestructor ed,
+				final TermVariable var, final Term val) {
 			// rewrite loop check
 			// FIXME: This is ugly
-			final TermVariable[] freeVars =
-					SMTAffineTerm.cleanup(val).getFreeVars();
+			final TermVariable[] freeVars = val.getFreeVars();
 			for (final TermVariable v : freeVars) {
 				if (v == var) {
 					return;
@@ -118,18 +118,18 @@ public class EqualityDestructor extends NonRecursive {
 			}
 		}
 	}
-	
+
 	private final Map<TermVariable, Term> mEqs =
 		new HashMap<TermVariable, Term>();
-	
-	public Term destruct(Term qbody) {
+
+	public Term destruct(final Term qbody) {
 		run(new SearchEqualities(qbody));
-		return new InternTermTransformer() {
-			
+		return new TermTransformer() {
+
 			Utils mUtils = new Utils(new NoopProofTracker());
 
 			@Override
-			protected void convert(Term term) {
+			protected void convert(final Term term) {
 				if (term instanceof TermVariable) {
 					final Term replacement = mEqs.get(term);
 					if (replacement != null) {
@@ -142,11 +142,12 @@ public class EqualityDestructor extends NonRecursive {
 
 			@Override
 			public void convertApplicationTerm(ApplicationTerm appTerm,
-					Term[] newArgs) {
+					final Term[] newArgs) {
 				if (newArgs == appTerm.getParameters()) {
 					setResult(appTerm);
 				} else {
 					final Theory t = appTerm.getTheory();
+					appTerm = t.term(appTerm.getFunction(), newArgs);
 					if (appTerm.getFunction() == t.mNot) {
 						setResult(mUtils.convertNot(appTerm));
 					} else if (appTerm.getFunction() == t.mOr) {
@@ -158,8 +159,7 @@ public class EqualityDestructor extends NonRecursive {
 					} else if (appTerm.getFunction().getName().equals("ite")) {
 						setResult(mUtils.convertIte(appTerm));
 					} else {
-						assert !appTerm.getFunction().isIntern();
-						setResult(t.term(appTerm.getFunction(), newArgs));
+						setResult(appTerm);
 					}
 				}
 			}

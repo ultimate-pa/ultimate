@@ -20,6 +20,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,9 +37,11 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.OccurrenceCounter;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
@@ -77,7 +80,7 @@ public class Clausifier {
 		private final SourceAnnotation mSource;
 
 		private class BuildCCTerm implements Operation {
-			private Term mTerm;
+			private final Term mTerm;
 
 			public BuildCCTerm(final Term term) {
 				mTerm = term;
@@ -112,9 +115,6 @@ public class Clausifier {
 			}
 
 			private FunctionSymbol getSymbol() {
-				if (mTerm instanceof SMTAffineTerm) {
-					mTerm = ((SMTAffineTerm) mTerm).internalize(mCompiler);
-				}
 				if (mTerm instanceof ApplicationTerm) {
 					final ApplicationTerm at = (ApplicationTerm) mTerm;
 					final FunctionSymbol fs = at.getFunction();
@@ -400,7 +400,7 @@ public class Clausifier {
 
 		/**
 		 * Add the clauses for an asserted term.
-		 * 
+		 *
 		 * @param term
 		 *            the term to assert annotated with its proof.
 		 * @param source
@@ -560,8 +560,8 @@ public class Clausifier {
 			negLit = mPositive ? negLit.negate() : negLit;
 			final Term negLitTerm = negLit.getSMTFormula(t, true);
 			if (mTerm instanceof ApplicationTerm) {
-				final ApplicationTerm at = (ApplicationTerm) mTerm;
-				final Term[] params = at.getParameters();
+				ApplicationTerm at = (ApplicationTerm) mTerm;
+				Term[] params = at.getParameters();
 				if (at.getFunction() == t.mOr) {
 					if (mPositive) {
 						// (or (not (or t1 ... tn)) t1 ... tn)
@@ -572,6 +572,8 @@ public class Clausifier {
 						buildAuxClause(negLit, axiom, mSource);
 					} else {
 						// (or (or t1 ... tn)) (not ti))
+						at = flattenOr(at);
+						params = at.getParameters();
 						for (final Term p : params) {
 							final Term axiom = t.term("or", negLitTerm, t.term("not", p));
 							final Term axiomProof = mTracker.auxAxiom(axiom, ProofConstants.AUX_OR_NEG);
@@ -641,14 +643,38 @@ public class Clausifier {
 						buildAuxClause(negLit, axiom, mSource);
 					}
 				} else {
-					throw new InternalError("AuxAxiom not implemented: " + SMTAffineTerm.cleanup(mTerm));
+					throw new InternalError("AuxAxiom not implemented: " + mTerm);
 				}
 			} else if (mTerm instanceof QuantifiedFormula) {
 				// TODO: Correctly implement this once we support quantifiers.
 				throw new SMTLIBException("Cannot create quantifier in quantifier-free logic");
 			} else {
-				throw new InternalError("Don't know how to create aux axiom: " + SMTAffineTerm.cleanup(mTerm));
+				throw new InternalError("Don't know how to create aux axiom: " + mTerm);
 			}
+		}
+
+		private ApplicationTerm flattenOr(final ApplicationTerm at) {
+			final FunctionSymbol or = at.getFunction();
+			assert or.getName().equals("or");
+			final ArrayList<Term> flat = new ArrayList<>();
+			final ArrayDeque<Term> todo = new ArrayDeque<>();
+			todo.addAll(Arrays.asList(at.getParameters()));
+			while (!todo.isEmpty()) {
+				final Term first = todo.removeFirst();
+				if (first instanceof ApplicationTerm) {
+					final ApplicationTerm firstApp = (ApplicationTerm) first;
+					if (firstApp.getFunction() == or && firstApp.mTmpCtr <= Config.OCC_INLINE_THRESHOLD) {
+						final Term[] params = firstApp.getParameters();
+						for (int i = params.length - 1; i >= 0; i--) {
+							todo.addFirst(params[i]);
+						}
+						continue;
+					}
+				}
+				flat.add(first);
+			}
+			return flat.size() == at.getParameters().length ? at :
+					at.getTheory().term(or, flat.toArray(new Term[flat.size()]));
 		}
 	}
 
@@ -1001,19 +1027,7 @@ public class Clausifier {
 	 *            Are we in {@link CCTermBuilder}?
 	 * @return Shared term.
 	 */
-	public SharedTerm getSharedTerm(Term t, final boolean inCCTermBuilder, final SourceAnnotation source) { // NOPMD
-		if (t instanceof ApplicationTerm) {
-			final String func = ((ApplicationTerm) t).getFunction().getName();
-			if (func.equals("+") || func.equals("-") || func.equals("*") || func.equals("to_real")) {
-				t = SMTAffineTerm.create(t);
-			}
-		}
-		if (t instanceof ConstantTerm) {
-			t = SMTAffineTerm.create(t);
-		}
-		if (t instanceof SMTAffineTerm) {
-			t = ((SMTAffineTerm) t).internalize(mCompiler);
-		}
+	public SharedTerm getSharedTerm(final Term t, final boolean inCCTermBuilder, final SourceAnnotation source) { // NOPMD
 		SharedTerm res = mSharedTerms.get(t);
 		if (res == null) {
 			// if we reach here, t is neither true nor false
@@ -1045,9 +1059,18 @@ public class Clausifier {
 					}
 				}
 			}
-			if (t instanceof SMTAffineTerm) {
-				getLASolver().generateSharedVar(res, createMutableAffinTerm((SMTAffineTerm) t, source));
-				addUnshareLA(res);
+			if (t.getSort().isNumericSort()) {
+				boolean needsLA = t instanceof ConstantTerm;
+				if (t instanceof ApplicationTerm) {
+					final String func = ((ApplicationTerm) t).getFunction().getName();
+					if (func.equals("+") || func.equals("-") || func.equals("*") || func.equals("to_real")) {
+						needsLA = true;
+					}
+				}
+				if (needsLA) {
+					getLASolver().generateSharedVar(res, createMutableAffinTerm(new SMTAffineTerm(t), source));
+					addUnshareLA(res);
+				}
 			}
 		}
 		return res;
@@ -1237,17 +1260,17 @@ public class Clausifier {
 	public void addDivideAxioms(final ApplicationTerm divTerm, final SourceAnnotation source) {
 		final Theory theory = divTerm.getTheory();
 		final Term[] divParams = divTerm.getParameters();
-		final SMTAffineTerm arg = SMTAffineTerm.create(divParams[0]);
-		final Rational dividend = SMTAffineTerm.create(divParams[1]).getConstant();
-		final SMTAffineTerm divmul = SMTAffineTerm.create(divTerm).mul(dividend);
+		final Rational divisor = (Rational) ((ConstantTerm) divParams[1]).getValue();
 		final Term zero = Rational.ZERO.toTerm(divTerm.getSort());
-		// (<= (- (* d (div x d)) x) 0)
-		final SMTAffineTerm difflow = divmul.add(arg.negate());
-		Term axiom = theory.term("<=", difflow, zero);
+		final SMTAffineTerm diff = new SMTAffineTerm(divParams[0]);
+		diff.negate(); // -x
+		diff.add(divisor, divTerm); // -x + d * (div x d)
+		// (<= (+ (- x) (* d (div x d))) 0)
+		Term axiom = theory.term("<=", diff.toTerm(divTerm.getSort()), zero);
 		buildClause(mTracker.auxAxiom(axiom, ProofConstants.AUX_DIV_LOW), source);
-		// (not (<= (+ |d| (- x) (* d (div x d))) 0))
-		final SMTAffineTerm diffhigh = arg.negate().add(divmul).add(dividend.abs());
-		axiom = theory.term("not", theory.term("<=", diffhigh, zero));
+		// (not (<= (+ (- x) (* d (div x d) |d|)) 0))
+		diff.add(divisor.abs());
+		axiom = theory.term("not", theory.term("<=", diff.toTerm(divTerm.getSort()), zero));
 		buildClause(mTracker.auxAxiom(axiom, ProofConstants.AUX_DIV_HIGH), source);
 	}
 
@@ -1257,16 +1280,17 @@ public class Clausifier {
 	 */
 	public void addToIntAxioms(final ApplicationTerm toIntTerm, final SourceAnnotation source) {
 		final Theory theory = toIntTerm.getTheory();
-		final SMTAffineTerm realTerm = SMTAffineTerm.create(toIntTerm.getParameters()[0]);
-		final SMTAffineTerm toInt = SMTAffineTerm.create(toIntTerm).typecast(realTerm.getSort());
-		// (<= (- (to_real (to_int x)) x) 0)
-		final SMTAffineTerm difflow = toInt.add(realTerm.negate());
+		final Term realTerm = toIntTerm.getParameters()[0];
 		final Term zero = Rational.ZERO.toTerm(realTerm.getSort());
-		Term axiom = theory.term("<=", difflow, zero);
+		final SMTAffineTerm diff = new SMTAffineTerm(realTerm);
+		diff.negate();
+		diff.add(Rational.ONE, toIntTerm);
+		// (<= (+ (to_real (to_int x)) (- x)) 0)
+		Term axiom = theory.term("<=", diff.toTerm(realTerm.getSort()), zero);
 		buildClause(mTracker.auxAxiom(axiom, ProofConstants.AUX_TO_INT_LOW), source);
 		// (not (<= (+ (to_real (to_int x)) (- x) 1) 0))
-		final SMTAffineTerm diffhigh = toInt.add(Rational.ONE).add(realTerm.negate());
-		axiom = theory.term("not", theory.term("<=", diffhigh, zero));
+		diff.add(Rational.ONE);
+		axiom = theory.term("not", theory.term("<=", diff.toTerm(realTerm.getSort()), zero));
 		buildClause(mTracker.auxAxiom(axiom, ProofConstants.AUX_TO_INT_HIGH), source);
 	}
 
@@ -1330,8 +1354,9 @@ public class Clausifier {
 	}
 
 	public EqualityProxy createEqualityProxy(final SharedTerm lhs, final SharedTerm rhs) {
-		SMTAffineTerm diff = SMTAffineTerm.create(lhs.getTerm())
-				.addUnchecked(SMTAffineTerm.create(rhs.getTerm()).negate(), lhs.getSort() == rhs.getSort());
+		final SMTAffineTerm diff = new SMTAffineTerm(lhs.getTerm());
+		diff.negate();
+		diff.add(new SMTAffineTerm(rhs.getTerm()));
 		if (diff.isConstant()) {
 			if (diff.getConstant().equals(Rational.ZERO)) {
 				return EqualityProxy.getTrueProxy();
@@ -1339,13 +1364,14 @@ public class Clausifier {
 				return EqualityProxy.getFalseProxy();
 			}
 		}
-		diff = diff.div(diff.getGcd());
+		diff.div(diff.getGcd());
+		Sort sort = lhs.getSort();
 		// normalize equality to integer logic if all variables are integer.
-		if (mTheory.getLogic().isIRA() && !diff.isIntegral() && diff.isAllIntSummands()) {
-			diff = diff.typecast(getTheory().getSort("Int"));
+		if (mTheory.getLogic().isIRA() && sort.getName().equals("Real") && diff.isAllIntSummands()) {
+			sort = getTheory().getSort("Int");
 		}
 		// check for unsatisfiable integer formula, e.g. 2x + 2y = 1.
-		if (diff.isIntegral() && !diff.getConstant().isIntegral()) {
+		if (sort.getName().equals("Int") && !diff.getConstant().isIntegral()) {
 			return EqualityProxy.getFalseProxy();
 		}
 		// we cannot really normalize the sign of the term. Try both signs.
@@ -1353,7 +1379,8 @@ public class Clausifier {
 		if (eqForm != null) {
 			return eqForm;
 		}
-		eqForm = mEqualities.get(diff.negate());
+		diff.negate();
+		eqForm = mEqualities.get(diff);
 		if (eqForm != null) {
 			return eqForm;
 		}
@@ -1623,7 +1650,6 @@ public class Clausifier {
 		} finally {
 			mCompiler.reset();
 		}
-		simpFormula = SMTAffineTerm.cleanup(simpFormula);
 		simpFormula = mTracker.getRewriteProof(mTracker.asserted(origFormula), simpFormula);
 		origFormula = null;
 
@@ -1698,7 +1724,7 @@ public class Clausifier {
 
 	/**
 	 * This is called for named formulas and creates a literal for the whole term.
-	 * 
+	 *
 	 * @param term
 	 * @param names
 	 */
@@ -1746,7 +1772,7 @@ public class Clausifier {
 	private Literal createLeq0(final ApplicationTerm leq0term, final SourceAnnotation source) {
 		Literal lit = mLiteralData.get(leq0term);
 		if (lit == null) {
-			final SMTAffineTerm sum = SMTAffineTerm.create(leq0term.getParameters()[0]);
+			final SMTAffineTerm sum = new SMTAffineTerm(leq0term.getParameters()[0]);
 			final MutableAffinTerm msum = createMutableAffinTerm(sum, source);
 			lit = mLASolver.generateConstraint(msum, false);
 			mLiteralData.put(leq0term, lit);
@@ -1790,7 +1816,6 @@ public class Clausifier {
 		} finally {
 			mCompiler.reset();
 		}
-		tmp2 = SMTAffineTerm.cleanup(tmp2);
 		tmp = null;
 		mOccCounter.count(tmp2);
 

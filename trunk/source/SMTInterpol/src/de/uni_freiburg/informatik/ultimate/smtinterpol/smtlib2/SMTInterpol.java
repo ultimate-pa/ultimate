@@ -154,10 +154,10 @@ public class SMTInterpol extends NoopScript {
 				proof = theory.getSort("@Proof");
 				proof2 = new Sort[] { proof, proof };
 				declareInternalFunction(theory, "@res", proof2, proof, leftassoc);
-				declareInternalFunction(theory, "@tautology", bool1, proof, 0);
 				declareInternalFunction(theory, "@lemma", bool1, proof, 0);
-				declareInternalFunction(theory, "@asserted", bool1, proof, 0);
+				declareInternalFunction(theory, "@clause", new Sort[] { proof, bool }, proof, 0);
 				declareInternalFunction(theory, "@assumption", bool1, proof, 0);
+				declareInternalFunction(theory, "@asserted", bool1, proof, 0);
 			}
 			if (mProofMode > 1) {
 				// Full proofs.
@@ -170,7 +170,7 @@ public class SMTInterpol extends NoopScript {
 				declareInternalFunction(theory, "@split", new Sort[] { proof, bool }, proof, 0);
 				declareInternalFunction(theory, "@eq", proof2, proof, 0);
 				declareInternalFunction(theory, "@rewrite", bool1, proof, 0);
-				declareInternalFunction(theory, "@clause", new Sort[] { proof, bool }, proof, 0);
+				declareInternalFunction(theory, "@tautology", bool1, proof, 0);
 			}
 			defineFunction(theory, new FunctionSymbolFactory("@undefined") {
 
@@ -787,7 +787,7 @@ public class SMTInterpol extends NoopScript {
 			throw new SMTLIBException("Option :produce-proofs not set to true");
 		}
 		if (proofMode == 1) {
-			mLogger.warn("Using partial proofs (cut at CNF-level).  "
+			mLogger.info("Using partial proofs (cut at CNF-level).  "
 					+ "Set option :produce-proofs to true to get complete proofs.");
 		}
 		checkAssertionStackModified();

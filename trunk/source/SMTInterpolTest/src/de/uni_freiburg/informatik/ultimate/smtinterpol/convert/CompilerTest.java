@@ -41,7 +41,6 @@ public class CompilerTest {
 		public LBool assertTerm(Term term) {
 			term = new FormulaUnLet(UnletType.EXPAND_DEFINITIONS).unlet(term);
 			term = new TermCompiler().transform(term);
-			term = SMTAffineTerm.cleanup(term);
 			term = new FormulaLet().let(term);
 			return super.assertTerm(term);
 		}

@@ -16,48 +16,29 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
-
-import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
-import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+package de.uni_freiburg.informatik.ultimate.logic;
 
 public class OccurrenceCounter extends NonRecursive {
-	
-	private static class CountWalker extends InternAbstractTermWalker {
 
-		public CountWalker(Term term) {
+	private static class CountWalker extends TermWalker {
+
+		public CountWalker(final Term term) {
 			super(term);
 		}
 
 		@Override
-		public void walk(NonRecursive walker, SMTAffineTerm term) {
-			final OccurrenceCounter occ = (OccurrenceCounter) walker;
-			if (++term.mTmpCtr == 1) {
-				for (final Term t : term.getSummands().keySet()) {
-					occ.enqueueWalker(new CountWalker(t));
-				}
-			}
-		}
-
-		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// TODO Do we need counts for constants???
 		}
 
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			// just skip
 			walker.enqueueWalker(new CountWalker(term.getSubterm()));
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			final OccurrenceCounter occ = (OccurrenceCounter) walker;
 			if (++term.mTmpCtr == 1) {
 				for (final Term t : term.getParameters()) {
@@ -67,12 +48,12 @@ public class OccurrenceCounter extends NonRecursive {
 		}
 
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new InternalError("Term should be unletted before counting");
 		}
 
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			// TODO Do we really want to descent into quantified formulas???
 			final OccurrenceCounter occ = (OccurrenceCounter) walker;
 			if (++term.mTmpCtr == 1) {
@@ -81,42 +62,31 @@ public class OccurrenceCounter extends NonRecursive {
 		}
 
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			++term.mTmpCtr;
 		}
-		
-	}
-	
-	private static class ResetWalker extends InternAbstractTermWalker {
 
-		public ResetWalker(Term term) {
+	}
+
+	private static class ResetWalker extends TermWalker {
+
+		public ResetWalker(final Term term) {
 			super(term);
 		}
 
 		@Override
-		public void walk(NonRecursive walker, SMTAffineTerm term) {
-			final OccurrenceCounter occ = (OccurrenceCounter) walker;
-			if (term.mTmpCtr != 0) {
-				for (final Term t : term.getSummands().keySet()) {
-					occ.enqueueWalker(new ResetWalker(t));
-				}
-				term.mTmpCtr = 0;
-			}
-		}
-
-		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// TODO Do we need counts for constants???
 		}
 
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			// just skip
 			walker.enqueueWalker(new ResetWalker(term.getSubterm()));
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			final OccurrenceCounter occ = (OccurrenceCounter) walker;
 			if (term.mTmpCtr != 0) {
 				for (final Term t : term.getParameters()) {
@@ -127,12 +97,12 @@ public class OccurrenceCounter extends NonRecursive {
 		}
 
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new InternalError("Term should be unletted before counting");
 		}
 
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			// TODO Do we really want to descent into quantified formulas???
 			final OccurrenceCounter occ = (OccurrenceCounter) walker;
 			if (term.mTmpCtr != 0) {
@@ -142,11 +112,11 @@ public class OccurrenceCounter extends NonRecursive {
 		}
 
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			term.mTmpCtr = 0;
 		}
 	}
-	
+
 	/**
 	 * Compute the occurrence counter for the sub terms.  This method does not
 	 * keep any state in this object.  This should prevent memory leaks since
@@ -154,11 +124,11 @@ public class OccurrenceCounter extends NonRecursive {
 	 * collect the counter map.
 	 * @param t The term to count.
 	 */
-	public void count(Term t) {
+	public void count(final Term t) {
 		run(new CountWalker(t));
 	}
-	
-	public void reset(Term t) {
+
+	public void reset(final Term t) {
 		run(new ResetWalker(t));
 	}
 

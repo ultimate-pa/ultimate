@@ -31,56 +31,51 @@ public class SubtermChecker extends NonRecursive {
 	
 	private static final class IsSubterm extends TermWalker {
 
-		public IsSubterm(Term term) {
+		public IsSubterm(final Term term) {
 			super(term);
 		}
 
 		@Override
-		public void walk(NonRecursive walker) {
+		public void walk(final NonRecursive walker) {
 			final SubtermChecker sc = (SubtermChecker) walker;
 			if (getTerm() == sc.mSubTerm) {
 				sc.mFound = true;
 				// Clear the todo stack
 				sc.done();
-			} else if (getTerm() instanceof SMTAffineTerm) {
-				final SMTAffineTerm at = (SMTAffineTerm) getTerm();
-				for (final Term s : at.getSummands().keySet()) {
-					walker.enqueueWalker(new IsSubterm(s));
-				}
 			} else {
 				super.walk(walker);
 			}
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
+		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			// Already checked in walk
 		}
 
 		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
+		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			walker.enqueueWalker(new IsSubterm(term.getSubterm()));
 		}
 
 		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
+		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			for (final Term p : term.getParameters()) {
 				walker.enqueueWalker(new IsSubterm(p));
 			}
 		}
 
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
+		public void walk(final NonRecursive walker, final LetTerm term) {
 			throw new InternalError("LetTerms should not be present!");
 		}
 
 		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
+		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			walker.enqueueWalker(new IsSubterm(term.getSubformula()));
 		}
 
 		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
+		public void walk(final NonRecursive walker, final TermVariable term) {
 			// Already checked in walk
 		}
 		
@@ -89,11 +84,11 @@ public class SubtermChecker extends NonRecursive {
 	private final Term mSubTerm;
 	private boolean mFound = false;
 	
-	public SubtermChecker(Term subterm) {
+	public SubtermChecker(final Term subterm) {
 		mSubTerm = subterm;
 	}
 	
-	public boolean findSubterm(Term where) {
+	public boolean findSubterm(final Term where) {
 		run(new IsSubterm(where));
 		return mFound;
 	}

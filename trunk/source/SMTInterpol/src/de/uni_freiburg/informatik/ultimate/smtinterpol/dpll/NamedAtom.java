@@ -22,8 +22,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 
 public class NamedAtom extends DPLLAtom {
 	public final static Annotation[] QUOTED = new Annotation[] {
@@ -31,9 +29,8 @@ public class NamedAtom extends DPLLAtom {
 	};
 	private final Term mSmtAtom;
 	
-	public NamedAtom(Term smtAtom, int assertionstacklevel) {
+	public NamedAtom(final Term smtAtom, final int assertionstacklevel) {
 		super(smtAtom.hashCode(), assertionstacklevel);
-		assert Config.EXPENSIVE_ASSERTS ? smtAtom == SMTAffineTerm.cleanup(smtAtom) : true;
 		mSmtAtom = smtAtom;
 	}
 	
@@ -43,16 +40,16 @@ public class NamedAtom extends DPLLAtom {
 	}
 
 	@Override
-	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
+	public Term getSMTFormula(final Theory smtTheory, final boolean quoted) {
 		return quoted ? smtTheory.annotatedTerm(QUOTED, mSmtAtom) : mSmtAtom;
 	}
 	
-	public int containsTerm(TermVariable tv) {
+	public int containsTerm(final TermVariable tv) {
 		return 0;
 	}
 	
 	@Override
-	public boolean equals(Object other) { // NOCHECKSTYLE see Literal.hashCode()
+	public boolean equals(final Object other) { // NOCHECKSTYLE see Literal.hashCode()
 		return other instanceof NamedAtom
 			&& ((NamedAtom) other).mSmtAtom == mSmtAtom;
 	}

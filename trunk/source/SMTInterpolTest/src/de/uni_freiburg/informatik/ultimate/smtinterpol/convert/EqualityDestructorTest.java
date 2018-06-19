@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -63,9 +64,10 @@ public class EqualityDestructorTest {
 				mScript.term("<=", mScript.term("+", mScript.variable("x", mInt), mIC1, mIC2), mScript.numeral("0")));
 		final Term ibody = mCompiler.transform(body);
 		final EqualityDestructor ed = new EqualityDestructor();
-		final Term dbody = SMTAffineTerm.cleanup(ed.destruct(ibody));
+		final Term dbody = ed.destruct(ibody);
 		final Term expected =
-				mScript.term("<=", mScript.term("+", mIC1, mIC2, mScript.numeral("3")), mScript.numeral("0"));
+				mScript.term("<=", mScript.term("+", Rational.valueOf(3, 1).toTerm(mInt), mIC1, mIC2),
+						Rational.ZERO.toTerm(mInt));
 		Assert.assertSame(expected, dbody);
 	}
 
@@ -103,7 +105,7 @@ public class EqualityDestructorTest {
 				mScript.term("<", mScript.variable("x", mInt), mScript.numeral("2")));
 		final Term ibody = mCompiler.transform(body);
 		final EqualityDestructor ed = new EqualityDestructor();
-		final Term dbody = ed.destruct(ibody);
+		final Term dbody = mCompiler.transform(ed.destruct(ibody));
 		Assert.assertSame(mScript.term("false"), dbody);
 	}
 }

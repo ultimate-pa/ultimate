@@ -43,14 +43,10 @@ public class InterpolatorClauseTermInfo {
 	 */
 	private final ArrayList<Term> mLiterals;
 
-	private boolean mIsResolution;
-
-	private boolean mIsLeaf;
-
 	/**
 	 * The type of this leaf term, i.e. lemma or clause
 	 */
-	private String mLeafKind;
+	private String mNodeKind;
 
 	/**
 	 * The type of this lemma, i.e. EQ, CC, LA, weakeq-ext, read-over-weakeq
@@ -133,9 +129,7 @@ public class InterpolatorClauseTermInfo {
 	}
 
 	public InterpolatorClauseTermInfo() {
-		mIsResolution = false;
-		mIsLeaf = false;
-		mLeafKind = null;
+		mNodeKind = null;
 		mLemmaType = null;
 		mLiterals = new ArrayList<Term>();
 		mPrimary = null;
@@ -156,8 +150,8 @@ public class InterpolatorClauseTermInfo {
 	 * Fill in all relevant fields for the given proof term.
 	 */
 	public void computeClauseTermInfo(final Term term) {
-		assert isComplexTerm(term);
-		if (isResolutionTerm(term)) {
+		mNodeKind = computeNodeKind(term);
+		if (isResolution()) {
 			computeResolutionTermInfo(term);
 		} else {
 			computeLeafTermInfo(term);
@@ -168,7 +162,7 @@ public class InterpolatorClauseTermInfo {
 	 * Fill in the field mLiterals for this resolution term only if needed (i.e. if deep check is switched on)
 	 */
 	public void computeResolutionLiterals(final Interpolator interpolator) {
-		assert mIsResolution;
+		assert isResolution();
 		final LinkedHashSet<Term> literals = new LinkedHashSet<Term>();
 		final InterpolatorClauseTermInfo primInfo = interpolator.mClauseTermInfos.get(mPrimary);
 		literals.addAll(primInfo.getLiterals());
@@ -201,7 +195,6 @@ public class InterpolatorClauseTermInfo {
 		for (int i = 0; i < params.length - 1; i++) {
 			antes[i] = (AnnotatedTerm) params[i + 1];
 		}
-		mIsResolution = true;
 		mPrimary = params[0];
 		mAntecedents = antes;
 	}
@@ -209,16 +202,9 @@ public class InterpolatorClauseTermInfo {
 	/**
 	 * Collect the information needed to interpolate this leaf term.
 	 */
-	private void computeLeafTermInfo(final Term term) {
-		Term leafTerm = term;
-		if (term instanceof AnnotatedTerm) {
-			leafTerm = ((AnnotatedTerm) term).getSubterm();
-		}
-		mIsLeaf = true;
+	private void computeLeafTermInfo(final Term leafTerm) {
 		mLiterals.addAll(computeLiterals(leafTerm));
-		final String leafKind = computeLeafKind(leafTerm);
-		if (leafKind.equals("@lemma")) {
-			mLeafKind = "@lemma";
+		if (mNodeKind.equals("@lemma")) {
 			final String lemmaType = computeLemmaType(leafTerm);
 			if (lemmaType.equals(":EQ")) {
 				computeEQLemmaInfo(leafTerm);
@@ -230,8 +216,12 @@ public class InterpolatorClauseTermInfo {
 			} else {
 				throw new IllegalArgumentException("Unknown lemma type!");
 			}
+		} else if (mNodeKind.equals("@clause")) {
+			AnnotatedTerm inputTerm = (AnnotatedTerm) ((ApplicationTerm) leafTerm).getParameters()[1];
+			assert inputTerm.getAnnotations()[0].getKey().equals(":input");
+			mSource = (String) inputTerm.getAnnotations()[0].getValue();
 		} else {
-			computeInputTermInfo(leafTerm);
+			throw new AssertionError("Unknown leaf type");
 		}
 	}
 
@@ -272,51 +262,10 @@ public class InterpolatorClauseTermInfo {
 	}
 
 	/**
-	 * Collect the information needed to interpolate this input term
-	 */
-	private void computeInputTermInfo(final Term term) {
-		mLeafKind = computeLeafKind(term);
-		mSource = computeSource(term);
-	}
-
-	/**
-	 * Determine if a proof term is a complex term such as a resolution or leaf.
-	 */
-	private boolean isComplexTerm(final Term term) {
-		if (term instanceof ApplicationTerm) {
-			return ((ApplicationTerm) term).getFunction().getName().contains("@");
-		}
-		if (term instanceof AnnotatedTerm) {
-			return isComplexTerm(((AnnotatedTerm) term).getSubterm());
-		}
-		return false;
-	}
-
-	/**
-	 * Determine if a proof term represents a resolution.
-	 */
-	private boolean isResolutionTerm(final Term term) {
-		Term inner = term;
-		if (term instanceof AnnotatedTerm) {
-			inner = ((AnnotatedTerm) term).getSubterm();
-		}
-		if (inner instanceof ApplicationTerm) {
-			return ((ApplicationTerm) inner).getFunction().getName() == "@res";
-		}
-		return false;
-	}
-
-	/**
 	 * Compute the kind of a leaf proof term
 	 */
-	private String computeLeafKind(final Term term) {
-		ApplicationTerm leafTerm;
-		if (term instanceof AnnotatedTerm) {
-			leafTerm = (ApplicationTerm) ((AnnotatedTerm) term).getSubterm();
-		} else {
-			leafTerm = (ApplicationTerm) term;
-		}
-		return leafTerm.getFunction().getName();
+	private String computeNodeKind(final Term term) {
+		return ((ApplicationTerm) term).getFunction().getName();
 	}
 
 	/**
@@ -324,7 +273,7 @@ public class InterpolatorClauseTermInfo {
 	 */
 	private LinkedHashSet<Term> computeLiterals(final Term term) {
 		final LinkedHashSet<Term> literals = new LinkedHashSet<Term>();
-		final String leafKind = computeLeafKind(term);
+		final String leafKind = computeNodeKind(term);
 		Term clause;
 		if (leafKind.equals("@lemma")) {
 			final AnnotatedTerm innerLemma = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[0];
@@ -332,11 +281,8 @@ public class InterpolatorClauseTermInfo {
 		} else if (leafKind.equals("@clause")) {
 			final AnnotatedTerm annotLit = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[1];
 			clause = annotLit.getSubterm();
-		} else if (leafKind.equals("@asserted")) {
-			final AnnotatedTerm annotLit = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[0];
-			clause = annotLit.getSubterm();
 		} else {
-			throw new RuntimeException("There is another leafkind which has " + "not yet been implemented.");
+			throw new AssertionError("There is another leafkind which has not yet been implemented.");
 		}
 		if (clause instanceof ApplicationTerm && ((ApplicationTerm) clause).getFunction().getName().equals("or")) {
 			final ApplicationTerm appLit = (ApplicationTerm) clause;
@@ -366,23 +312,6 @@ public class InterpolatorClauseTermInfo {
 	private String computeLemmaType(final Term term) {
 		final AnnotatedTerm innerLemma = (AnnotatedTerm) ((ApplicationTerm) term).getParameters()[0];
 		return innerLemma.getAnnotations()[0].getKey();
-	}
-
-	/**
-	 * For a leaf term get the source partition
-	 */
-	private String computeSource(final Term proofTerm) {
-		final String leafKind = computeLeafKind(proofTerm);
-		if (!leafKind.equals("@clause") && !leafKind.equals("@asserted")) {
-			return null;
-		}
-		AnnotatedTerm inputTerm;
-		if (leafKind.equals("@clause")) {
-			inputTerm = (AnnotatedTerm) ((ApplicationTerm) proofTerm).getParameters()[1];
-		} else {
-			inputTerm = (AnnotatedTerm) ((ApplicationTerm) proofTerm).getParameters()[0];
-		}
-		return (String) inputTerm.getAnnotations()[0].getValue();
 	}
 
 	/**
@@ -428,7 +357,7 @@ public class InterpolatorClauseTermInfo {
 		}
 		for (int i = 0; i < coeffs.length; i++) {
 			term = subs[i];
-			coeff = SMTAffineTerm.create((ConstantTerm) coeffs[i]).getConstant();
+			coeff = SMTAffineTerm.convertConstant((ConstantTerm) coeffs[i]);
 			coeffMap.put(term, coeff);
 		}
 		return coeffMap;
@@ -508,7 +437,7 @@ public class InterpolatorClauseTermInfo {
 			if (((ApplicationTerm) atom).getFunction().getName().equals("=")) {
 				final Term secondParam = ((ApplicationTerm) atom).getParameters()[1];
 				if ((secondParam instanceof ConstantTerm)) {
-					return SMTAffineTerm.create(secondParam).getConstant().equals(Rational.ZERO);
+					return SMTAffineTerm.convertConstant((ConstantTerm) secondParam).equals(Rational.ZERO);
 				}
 			}
 		}
@@ -516,15 +445,15 @@ public class InterpolatorClauseTermInfo {
 	}
 
 	public boolean isResolution() {
-		return mIsResolution;
+		return mNodeKind.equals("@res");
 	}
 
 	public boolean isLeaf() {
-		return mIsLeaf;
+		return !isResolution();
 	}
 
 	public String getLeafKind() {
-		return mLeafKind;
+		return mNodeKind;
 	}
 
 	public String getLemmaType() {

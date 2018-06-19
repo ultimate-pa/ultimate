@@ -48,6 +48,9 @@ public class IRAWrapperFactory {
 			/* Create the base function symbol. */
 			fsym = theory.getFunctionWithResult(name, indices, resultType,
 					new Sort[] { theory.getBooleanSort(), realSort, realSort });
+			if (fsym == null) {
+				return null;
+			}
 		} else {
 			/* Else all arguments must be Int or Real. At least one must be Int. */
 			boolean hasInt = false;
@@ -63,6 +66,9 @@ public class IRAWrapperFactory {
 			}
 			/* Create the base function symbol. */
 			fsym = theory.getFunctionWithResult(name, indices, resultType, realSort, realSort);
+			if (fsym == null) {
+				return null;
+			}
 			/* Check if the number of parameters is two or the symbol is associative. */
 			if (paramSorts.length != 2 && (paramSorts.length < 2 || (fsym.mFlags & FunctionSymbol.ASSOCMASK) == 0)) {
 				return null;

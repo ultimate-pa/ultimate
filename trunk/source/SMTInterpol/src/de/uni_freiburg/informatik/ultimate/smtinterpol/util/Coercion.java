@@ -30,34 +30,22 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
  * @author Juergen Christ
  */
 public final class Coercion {
-	
+
 	private Coercion() {
 		// Hide constructor
 	}
-	public static Term toInt(Term t) {
-		assert t.getSort().getName().equals("Real");
-		if (t instanceof ConstantTerm) {
-			final Rational val = SMTAffineTerm.create(t).getConstant();
-			assert val.isIntegral();
-			return val.toTerm(t.getTheory().getSort("Int"));
-		}
-		return t.getTheory().term("to_int", t);
-	}
-	public static Term toReal(Term t) {
+	public static Term toReal(final Term t) {
 		assert t.getSort().getName().equals("Int");
 		if (t instanceof ConstantTerm) {
-			final SMTAffineTerm tmp = SMTAffineTerm.create(t);
-			assert tmp.getConstant().isIntegral();
-			return tmp.getConstant().toTerm(t.getTheory().getSort("Real"));
+			final Rational val = SMTAffineTerm.convertConstant((ConstantTerm) t).floor();
+			assert val.isIntegral();
+			return val.toTerm(t.getTheory().getSort("Real"));
 		}
 		return t.getTheory().term("to_real", t);
 	}
-	public static Term coerce(Term t, Sort s) {
+	public static Term coerce(final Term t, final Sort s) {
 		if (t.getSort() == s) {
 			return t;
-		}
-		if (s.getName().equals("Int")) {
-			return toInt(t);
 		}
 		if (s.getName().equals("Real")) {
 			return toReal(t);
@@ -65,7 +53,7 @@ public final class Coercion {
 		throw new InternalError("Should only be called with numeric sort!");
 	}
 	/// BE CAREFUL: args might be modified!!!
-	public static Term buildApp(FunctionSymbol fsymb, Term[] args) {
+	public static Term buildApp(final FunctionSymbol fsymb, final Term[] args) {
 		final Sort[] paramSorts = fsymb.getParameterSorts();
 		if (fsymb.getTheory().getLogic().isIRA()) {
 			for (int i = 0; i < args.length; ++i) {
@@ -76,7 +64,7 @@ public final class Coercion {
 		}
 		return fsymb.getTheory().term(fsymb, args);
 	}
-	
+
 	public static Term buildEq(Term lhs, Term rhs) {
 		if (lhs.getSort() != rhs.getSort()) {
 			assert lhs.getTheory().getLogic().isIRA();
@@ -89,7 +77,7 @@ public final class Coercion {
 		}
 		return lhs.getTheory().term("=", lhs, rhs);
 	}
-	
+
 	public static Term buildDistinct(Term lhs, Term rhs) {
 		if (lhs.getSort() != rhs.getSort()) {
 			assert lhs.getTheory().getLogic().isIRA();

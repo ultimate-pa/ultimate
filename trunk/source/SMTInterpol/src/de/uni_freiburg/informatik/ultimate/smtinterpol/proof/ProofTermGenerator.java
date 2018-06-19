@@ -27,26 +27,25 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
 
 /**
  * A non-recursive proof tree printer.  This class tries to avoid a stack
- * overflow by using an explicit stack that contains different visitors. 
+ * overflow by using an explicit stack that contains different visitors.
  * @author Juergen Christ
  */
 public class ProofTermGenerator extends NonRecursive {
-	
+
 	private static class GenerateTerm implements Walker {
 		private final Clause mCls;
-		public GenerateTerm(Clause cls) {
+		public GenerateTerm(final Clause cls) {
 			assert cls.getProof() instanceof ResolutionNode;
 			mCls = cls;
 		}
 		@Override
-		public void walk(NonRecursive nr) {
+		public void walk(final NonRecursive nr) {
 			final ProofTermGenerator engine = (ProofTermGenerator) nr;
 			final Theory t = engine.getTheory();
 			final Antecedent[] antes = ((ResolutionNode) mCls.getProof()).
@@ -65,14 +64,14 @@ public class ProofTermGenerator extends NonRecursive {
 			engine.pushConverted(res);
 		}
 	}
-	
+
 	private static class Expander implements Walker {
 		private final Clause mCls;
-		public Expander(Clause cls) {
+		public Expander(final Clause cls) {
 			mCls = cls;
 		}
 		@Override
-		public void walk(NonRecursive nr) {
+		public void walk(final NonRecursive nr) {
 			final ProofTermGenerator engine = (ProofTermGenerator) nr;
 			final Term known = engine.getTerm(mCls);
 			if (known != null) {
@@ -120,34 +119,34 @@ public class ProofTermGenerator extends NonRecursive {
 	 * Initialize the generator with a theory.
 	 * @param t   The theory.
 	 */
-	public ProofTermGenerator(Theory t) {
+	public ProofTermGenerator(final Theory t) {
 		mTheory = t;
 	}
 	public Theory getTheory() {
 		return mTheory;
 	}
-	
-	Term getTerm(Clause cls) {
+
+	Term getTerm(final Clause cls) {
 		return mNodes.get(cls);
 	}
-	
+
 	Term getConverted() {
 		return mConverted.pop();
 	}
-	
-	void pushConverted(Term res) {
+
+	void pushConverted(final Term res) {
 		assert res.getSort().getName().equals("@Proof");
 		mConverted.push(res);
 	}
-	
-	void setResult(Clause cls, Term res) {
+
+	void setResult(final Clause cls, final Term res) {
 		mNodes.put(cls, res);
 	}
-	
-	public Term convert(Clause cls) {
+
+	public Term convert(final Clause cls) {
 		assert cls.getProof() != null;
 		run(new Expander(cls));
 		final Term res = mConverted.pop();
-		return SMTAffineTerm.cleanup(res);
+		return new FixResolutionProof().fix(res);
 	}
 }

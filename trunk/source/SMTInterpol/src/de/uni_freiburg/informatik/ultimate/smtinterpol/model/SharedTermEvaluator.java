@@ -18,23 +18,22 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
 
 public class SharedTermEvaluator {
 	private final LinArSolve mLa;
-	public SharedTermEvaluator(LinArSolve la) {
+	public SharedTermEvaluator(final LinArSolve la) {
 		mLa = la;
 	}
-	public Rational evaluate(SharedTerm st, Theory t) {
+	public Rational evaluate(final SharedTerm st, final Theory t) {
 		if (st.validShared()) {
 			if (st.getLinVar() == null) {
-				final SMTAffineTerm sat = SMTAffineTerm.create(st.getTerm());
-				assert sat.isConstant();
-				return sat.getConstant();
+				/* This can only happen if st.getTerm() is a numeric constant term */
+				return (Rational) ((ConstantTerm) st.getTerm()).getValue();
 			}
 			final Rational val = st.getFactor().mul(mLa.realValue(st.getLinVar())).
 				add(st.getOffset());

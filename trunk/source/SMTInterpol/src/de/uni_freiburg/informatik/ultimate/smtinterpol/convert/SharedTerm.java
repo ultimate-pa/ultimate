@@ -25,30 +25,28 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 
 public class SharedTerm {
-	
+
 	private final Clausifier mClausifier;
 	private final Term mTerm;
-	
+
 	// fields for theory.cclosure (Congruence Closure)
 	CCTerm mCCterm;
-	
+
 	// fields for theory.linar (Linear Arithmetic)
 	LinVar mLinVar;
 	Rational mFactor, mOffset;
-	
-	private Term mRealTerm = null;
-	
+
 	public SharedTerm(final Clausifier clausifier, final Term term) {
 		mClausifier = clausifier;
 		mTerm = term;
 	}
-	
+
 	public void setLinVar(final Rational factor, final LinVar linvar, final Rational offset) {
 		mFactor = factor;
 		mLinVar = linvar;
 		mOffset = offset;
 	}
-	
+
 	public void share() {
 		if (mClausifier.getLogger().isInfoEnabled()) {
 			mClausifier.getLogger().info("Sharing term: " + this);
@@ -63,12 +61,11 @@ public class SharedTerm {
 			return;
 		}
 		assert getSort().isNumericSort() : "Sharing non-numeric sort?";
-		assert ! (mTerm instanceof SMTAffineTerm) : "SMTAffineTerm without a linvar?";
 
 		final boolean isint = getSort().getName().equals("Int");
 		mLinVar = mClausifier.getLASolver().addVar(this, isint,
 				mClausifier.getStackLevel());
-		
+
 		mFactor = Rational.ONE;
 		mOffset = Rational.ZERO;
 		mClausifier.addUnshareLA(this);
@@ -76,7 +73,7 @@ public class SharedTerm {
 			share();
 		}
 	}
-	
+
 	public EqualityProxy createEquality(final SharedTerm other) {
 		return mClausifier.createEqualityProxy(this, other);
 	}
@@ -86,7 +83,7 @@ public class SharedTerm {
 		mLinVar = null;
 		mOffset = null;
 	}
-	
+
 	public void unshareCC() {
 		mCCterm = null;
 	}
@@ -104,7 +101,7 @@ public class SharedTerm {
 	public boolean validShared() {
 		return mCCterm != null && mOffset != null;
 	}
-	
+
 	public Sort getSort() {
 		return mTerm.getSort();
 	}
@@ -120,12 +117,9 @@ public class SharedTerm {
 	 * @return A cleaned up term.
 	 */
 	public Term getRealTerm() {
-		if (mRealTerm == null) {
-			mRealTerm = SMTAffineTerm.cleanup(mTerm);
-		}
-		return mRealTerm;
+		return mTerm;
 	}
-	
+
 	public Clausifier getClausifier() {
 		return mClausifier;
 	}
@@ -133,17 +127,17 @@ public class SharedTerm {
 	public CCTerm getCCTerm() {
 		return mCCterm;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mTerm.hashCode();
 	}
-	
+
 	@Override
 	public String toString() {
-		return SMTAffineTerm.cleanup(mTerm).toString();
+		return mTerm.toString();
 	}
-	
+
 	void setCCTerm(final CCTerm ccterm) {
 		assert(mCCterm == null);
 		mCCterm = ccterm;

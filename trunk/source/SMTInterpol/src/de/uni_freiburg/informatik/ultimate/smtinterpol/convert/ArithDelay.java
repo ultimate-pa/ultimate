@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -32,11 +33,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
-public class ArithDelay extends InternTermTransformer {
-	private final ScopedHashMap<Rational, Term> mArithConsts = 
+public class ArithDelay extends TermTransformer {
+	private final ScopedHashMap<Rational, Term> mArithConsts =
 			new ScopedHashMap<Rational, Term>();
-	
-	private Term replace(Rational constant, Theory t, Sort s) {
+
+	private Term replace(final Rational constant, final Theory t, final Sort s) {
 		Term replacement = mArithConsts.get(constant);
 		if (replacement == null) {
 			final String rep = "@" + constant.toString();
@@ -49,35 +50,33 @@ public class ArithDelay extends InternTermTransformer {
 		}
 		return replacement;
 	}
-	
+
 	@Override
-	public void convertApplicationTerm(
-			ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final Theory t = appTerm.getTheory();
 		if (appTerm.getFunction().getName().equals("<=")) {
-			final SMTAffineTerm arg0 = (SMTAffineTerm) newArgs[0];
+			final SMTAffineTerm arg0 = new SMTAffineTerm(newArgs[0]);
 			if (arg0.getConstant().compareTo(Rational.ZERO) != 0) {
 				final Rational constant = arg0.getConstant();
-				final Term replacement = replace(constant, t, arg0.getSort());
+				final Term replacement = replace(constant, t, newArgs[0].getSort());
 				final Map<Term, Rational> summands =
 						new HashMap<Term, Rational>(arg0.getSummands());
 				summands.put(replacement, Rational.ONE);
-				final SMTAffineTerm res = SMTAffineTerm.create(
-						summands, Rational.ZERO, arg0.getSort());
-				setResult(t.term(appTerm.getFunction(), res, newArgs[1]));
+				final SMTAffineTerm res = new SMTAffineTerm(
+						summands, Rational.ZERO, newArgs[0].getSort());
+				setResult(t.term(appTerm.getFunction(), res.toTerm(newArgs[0].getSort()), newArgs[1]));
 				return;
 			}
 		} else if (appTerm.getFunction().getName().equals("=")) {
 			Term[] args = newArgs;
-			for (int i = 0; i < newArgs.length; ++i) {
-				if (args[i] instanceof SMTAffineTerm) {
-					final SMTAffineTerm arg = (SMTAffineTerm) args[i];
-					if (arg.isConstant()) {
-						if (newArgs == args) {
-							args = newArgs.clone();
-						}
-						args[i] = replace(arg.getConstant(), t, arg.getSort());
+			for (int i = 0; i < newArgs.length; i++) {
+				if (args[i] instanceof ConstantTerm
+						&& args[i].getSort().isNumericSort()) {
+					final Rational value = (Rational) ((ConstantTerm) args[i]).getValue();
+					if (newArgs == args) {
+						args = newArgs.clone();
 					}
+					args[i] = replace(value, t, args[i].getSort());
 				}
 			}
 			setResult(t.term(appTerm.getFunction(), args));
@@ -85,10 +84,10 @@ public class ArithDelay extends InternTermTransformer {
 		}
 		super.convertApplicationTerm(appTerm, newArgs);
 	}
-	
+
 	public Iterable<Term> getReplacedEqs() {
 		return new Iterable<Term>() {
-			
+
 			@Override
 			public Iterator<Term> iterator() {
 				return new Iterator<Term>() {
@@ -113,23 +112,23 @@ public class ArithDelay extends InternTermTransformer {
 					public void remove() {
 						throw new UnsupportedOperationException();
 					}
-					
+
 				};
 			}
 		};
 	}
-	
+
 	public TermTransformer getReverter() {
 		final HashMap<Term, Term> reverted = new HashMap<Term, Term>();
 		for (final Map.Entry<Rational, Term> me : mArithConsts.entrySet()) {
 			final Term nkey = me.getValue();
 			reverted.put(nkey, me.getKey().toTerm(nkey.getSort()));
 		}
-		return new InternTermTransformer() {
+		return new TermTransformer() {
 
 			@Override
-			public void convertApplicationTerm(ApplicationTerm appTerm,
-					Term[] newArgs) {
+			public void convertApplicationTerm(final ApplicationTerm appTerm,
+					final Term[] newArgs) {
 				final Term rep = reverted.get(appTerm);
 				if (rep == null) {
 					super.convertApplicationTerm(appTerm, newArgs);
@@ -143,13 +142,13 @@ public class ArithDelay extends InternTermTransformer {
 	public boolean isEmpty() {
 		return mArithConsts.isEmpty();
 	}
-	
+
 	public void push() {
 		mArithConsts.beginScope();
 	}
-	
+
 	public void pop() {
 		mArithConsts.endScope();
 	}
-	
+
 }
