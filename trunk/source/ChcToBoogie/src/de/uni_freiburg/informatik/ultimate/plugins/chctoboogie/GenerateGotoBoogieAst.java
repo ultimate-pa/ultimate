@@ -236,7 +236,7 @@ public class GenerateGotoBoogieAst {
 						branchBody.add(assignment);
 					}
 
-					branchBody.add(new GotoStatement(loc, new String[]{ en.getKey().toString() }));
+					branchBody.add(new GotoStatement(loc, new String[]{ en.getValue().getName() }));
 				}
 
 				final Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,

@@ -76,7 +76,9 @@ public final class HornUtilConstants {
 	public static String sanitzePredName(final String headPredSymProcNameRaw) {
 		assert !headPredSymProcNameRaw.contains("CLN") : "naming might clash";
 		assert !headPredSymProcNameRaw.contains("DLR") : "naming might clash";
+		assert !headPredSymProcNameRaw.contains("AT") : "naming might clash";
 		final String headPredSymProcName = headPredSymProcNameRaw
+				.replaceAll("@", "AT")
 				.replaceAll("\\$", "DLR")
 				.replaceAll(":", "CLN");
 		return headPredSymProcName;
