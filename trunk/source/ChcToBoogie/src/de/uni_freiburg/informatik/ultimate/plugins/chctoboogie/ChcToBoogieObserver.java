@@ -26,15 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.chctoboogie;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -57,9 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
-import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.chc.ChcPreMetaInfoProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornAnnot;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
@@ -160,15 +151,16 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 //		final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
 //				sortHornClausesByHeads(hornClausesRaw);
-		final ChcPreAnalysis preAnalysis = new ChcPreAnalysis(hornClausesRaw, mHcSymbolTable);
+		final ChcPreMetaInfoProvider preAnalysis = new ChcPreMetaInfoProvider(hornClausesRaw, mHcSymbolTable);
 
-		mGotoProcName = "main";
 		mGotoVarName = "gotoSwitch";
 		final GenerateBoogieAstHelper helper = new GenerateBoogieAstHelper(mLocation, mHcSymbolTable, mTerm2Expression,
-				mTypeSortTanslator, mNameOfMainEntryPointProc, mGotoProcName, mGotoVarName);
+				mTypeSortTanslator, mNameOfMainEntryPointProc);
 		if (mPrefs.getBoolean(ChcToBoogiePreferenceInitializer.ENCODE_AS_GOTO_PROGRAM)) {
-			mBoogieUnit = new GenerateGotoBoogieAst(preAnalysis.getHornClausesSorted(), helper).getResult();
+			mHcSymbolTable.setGotoProcMode(true);
+			mBoogieUnit = new GenerateGotoBoogieAst(preAnalysis, helper, mGotoVarName).getResult();
 		} else {
+			mHcSymbolTable.setGotoProcMode(false);
 			mBoogieUnit = new GenerateBoogieAst(preAnalysis.getHornClausesSorted(), helper).getResult();
 		}
 
@@ -189,87 +181,6 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 
 		mBoogieUnit = new Unit(mLocation,
 				new Declaration[] { proc });
-	}
-
-
-
-
-	static class ChcPreAnalysis {
-
-		private final HcSymbolTable mSymbolTable;
-		private final List<HornClause> mHornClausesRaw;
-		private final HashRelation<HcPredicateSymbol, HornClause> mHornClausesSorted;
-
-		// auxiliary variables
-		private final Set<HcHeadVar> mAllHeadHcVars;
-		private final Set<HcBodyVar> mAllBodyHcVars;
-
-		// output variables
-		private final List<HcHeadVar> mAllHeadHcVarsAsList;
-		private final List<HcBodyVar> mAllBodyHcVarsAsList;
-
-		public ChcPreAnalysis(final List<HornClause> hornClausesRaw, final HcSymbolTable symbolTable) {
-			mHornClausesRaw = hornClausesRaw;
-			mSymbolTable = symbolTable;
-			mHornClausesSorted = sortHornClausesByHeads(hornClausesRaw);
-
-			mAllHeadHcVars = new LinkedHashSet<>();
-			mAllBodyHcVars = new LinkedHashSet<>();
-			mAllHeadHcVarsAsList = new ArrayList<>();
-			mAllBodyHcVarsAsList = new ArrayList<>();
-		}
-
-		void compute() {
-
-			final Deque<HcPredicateSymbol> headPredQueue = new ArrayDeque<>();
-			final Set<HcPredicateSymbol> addedToQueueBefore = new HashSet<>();
-
-			headPredQueue.push(mSymbolTable.getFalseHornClausePredicateSymbol());
-			addedToQueueBefore.add(mSymbolTable.getFalseHornClausePredicateSymbol());
-
-			while (!headPredQueue.isEmpty()) {
-				// breadth-first (pollFirst) or depth-first (pop) should not matter here
-				final HcPredicateSymbol headPredSymbol = headPredQueue.pop();
-
-				mAllHeadHcVars.addAll(mSymbolTable.getHcHeadVarsForPredSym(headPredSymbol, false));
-
-				final Set<HornClause> hornClausesForHeadPred = mHornClausesSorted.getImage(headPredSymbol);
-
-				for (final HornClause hornClause : hornClausesForHeadPred) {
-					mAllBodyHcVars.addAll(hornClause.getBodyVariables());
-				}
-			}
-
-			mAllHeadHcVarsAsList.addAll(mAllHeadHcVars);
-			mAllBodyHcVarsAsList.addAll(mAllBodyHcVars);
-		}
-
-		private HashRelation<HcPredicateSymbol, HornClause> sortHornClausesByHeads(
-				final List<HornClause> hornClausesRaw) {
-			final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses =
-					new HashRelation<>();
-
-			for (final HornClause hc : hornClausesRaw) {
-				if (hc.isHeadFalse()) {
-					hornClauseHeadPredicateToHornClauses.addPair(mSymbolTable.getFalseHornClausePredicateSymbol(), hc);
-				} else {
-					hornClauseHeadPredicateToHornClauses.addPair(hc.getHeadPredicate(), hc);
-				}
-			}
-			return hornClauseHeadPredicateToHornClauses;
-		}
-
-		public HashRelation<HcPredicateSymbol, HornClause> getHornClausesSorted() {
-			return mHornClausesSorted;
-		}
-
-		public List<HcHeadVar> getAllHeadHcVarsAsList() {
-			return Collections.unmodifiableList(mAllHeadHcVarsAsList);
-		}
-
-		public List<HcBodyVar> getAllBodyHcVarsAsList() {
-			return Collections.unmodifiableList(mAllBodyHcVarsAsList);
-		}
 	}
 
 }

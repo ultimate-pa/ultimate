@@ -64,6 +64,7 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 	private final HashRelation3<String, Sort[], Sort> mSkolemFunctions;
 
+	private boolean mGotoProcMode;
 
 	/**
 	 *
@@ -276,13 +277,17 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 	@Override
 	public de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation
 			getDeclarationInformation(final IProgramVar pv) {
-		if (pv instanceof HcBodyVar) {
-			return new DeclarationInformation(StorageClass.LOCAL, pv.getProcedure());
-		} else if (pv instanceof HcHeadVar) {
-//			return new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, pv.getProcedure());
-			return new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, pv.getProcedure());
+		if (mGotoProcMode) {
+			return new DeclarationInformation(StorageClass.LOCAL, HornUtilConstants.GOTO_PROC_NAME);
 		} else {
-			throw new AssertionError();
+			if (pv instanceof HcBodyVar) {
+				return new DeclarationInformation(StorageClass.LOCAL, pv.getProcedure());
+			} else if (pv instanceof HcHeadVar) {
+				//			return new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, pv.getProcedure());
+				return new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, pv.getProcedure());
+			} else {
+				throw new AssertionError();
+			}
 		}
 	}
 
@@ -312,5 +317,15 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 
 	public HashRelation3<String, Sort[], Sort> getSkolemFunctions() {
 		return mSkolemFunctions;
+	}
+
+	/**
+	 * Decides over some behaviour of symbol table, like:
+	 * <li> DeclarationInformation of ProgramVars (HcVars)
+	 *
+	 * @param mode
+	 */
+	public void setGotoProcMode(final boolean mode) {
+		mGotoProcMode = mode;
 	}
 }

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugin.chctoboogie.preferences.ChcToBoogiePreferenceInitializer;
 
 /**
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -105,8 +106,7 @@ public class ChcToBoogie implements IGenerator {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		// no preferences so far
-		return null;
+		return new ChcToBoogiePreferenceInitializer();
 	}
 
 	@Override

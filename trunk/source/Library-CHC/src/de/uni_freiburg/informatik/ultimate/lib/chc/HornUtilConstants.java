@@ -51,6 +51,8 @@ public final class HornUtilConstants {
 
 	public static final String HC_SSA_TERM = "HCsSATerm_";
 
+	public static final String GOTO_PROC_NAME = "gotoProc";
+
 	private HornUtilConstants() {
 		// hides public constructor
 	}
