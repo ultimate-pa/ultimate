@@ -13,6 +13,7 @@ public class StatementFactory {
 
 	public static AssignmentStatement constructAssignmentStatement(final ILocation loc, final LeftHandSide[] lhs,
 			final Expression[] rhs) {
+		assert lhs.length == rhs.length;
 
 		final String[] lhsIds = new String[lhs.length];
 		final BoogieType[] lhsTypes = new BoogieType[lhs.length];

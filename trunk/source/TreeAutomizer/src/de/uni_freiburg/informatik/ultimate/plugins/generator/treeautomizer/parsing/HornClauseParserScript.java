@@ -318,7 +318,8 @@ public class HornClauseParserScript extends NoopScript {
 			}
 		}
 		mParsedHornClauses.addAll(parsedHornClauses);
-		assert checkEquivalence(normalizedFormula,
+		assert !mDoSolverBasedSanityChecks ||
+			checkEquivalence(normalizedFormula,
 				SmtUtils.and(mManagedScript.getScript(),
 						parsedHornClauses.stream()
 						.map(hc -> hc.constructFormula(mManagedScript))

@@ -266,7 +266,13 @@ public class HornClause implements IRankedLetter {
 
 		final Term clause = mgdScript.term(this, "=>", tail, head);
 
-		final Term result = mgdScript.getScript().quantifier(QuantifiedFormula.FORALL, qVars, clause);
+		final Term result;
+		if (qVars.length == 0) {
+			result = clause;
+	 	} else {
+	 		result = mgdScript.getScript().quantifier(QuantifiedFormula.FORALL, qVars, clause);
+	 	}
+
 		mgdScript.unlock(this);
 		return result;
 	}
