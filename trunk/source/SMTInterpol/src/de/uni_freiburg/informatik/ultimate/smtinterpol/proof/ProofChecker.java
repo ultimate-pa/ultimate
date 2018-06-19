@@ -2076,23 +2076,25 @@ public class ProofChecker extends NonRecursive {
 				for (int i = 1; i < lhsArgs.length; i++) {
 					if (expected.isConstant()) {
 						final Rational factor = expected.getConstant();
-						expected = new SMTAffineTerm(lhsArgs[1]);
+						expected = new SMTAffineTerm(lhsArgs[i]);
 						expected.mul(factor);
-					} else if (lhsArgs[1] instanceof ConstantTerm) {
-						expected.mul(SMTAffineTerm.convertConstant((ConstantTerm) lhsArgs[1]));
 					} else {
-						return false;
+						final Rational factor = parseConstant(lhsArgs[i]);
+						if (factor == null) {
+							return false;
+						}
+						expected.mul(factor);
 					}
 				}
 				break;
 			case "/":
 				expected = new SMTAffineTerm(lhsArgs[0]);
 				for (int i = 1; i < lhsArgs.length; i++) {
-					if (lhsArgs[1] instanceof ConstantTerm) {
-						expected.div(SMTAffineTerm.convertConstant((ConstantTerm) lhsArgs[1]));
-					} else {
+					final Rational factor = parseConstant(lhsArgs[i]);
+					if (factor == null) {
 						return false;
 					}
+					expected.div(factor);
 				}
 				break;
 			case "to_real":

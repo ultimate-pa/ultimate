@@ -563,6 +563,7 @@ public class SMTInterpol extends NoopScript {
 						System.exit(2);
 					}
 					mLogger.fatal("Proof-checker did not verify");
+					throw new SMTLIBException("Proof-check failed");
 				}
 			}
 		}

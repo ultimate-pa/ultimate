@@ -424,8 +424,8 @@ public class TermCompiler extends TermTransformer {
 						setResult(mTracker.transitivity(convertedApp, rewrite));
 					} else {
 						final Term div = theory.term("div", params[0], params[1]);
-						final Term rhs = theory.term("+", params[0],
-								theory.term("*", divisor.negate().toTerm(params[1].getSort()), div));
+						arg0.add(divisor.negate(), div);
+						final Term rhs = arg0.toTerm(params[1].getSort());
 						final Term rewrite = mTracker.buildRewrite(lhs, rhs, ProofConstants.RW_MODULO);
 						setResult(mTracker.transitivity(convertedApp, rewrite));
 					}
