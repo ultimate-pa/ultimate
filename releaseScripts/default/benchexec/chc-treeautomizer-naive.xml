@@ -4,7 +4,7 @@
 		<option name="-tc">../../../trunk/examples/toolchains/TreeAutomizer.xml</option>
 		<option name="--generate-csv" />
 		<option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
-		<option name="-s">../../../trunk/examples/settings/TreeAutomizer/TreeAutomizerNaiveMinimization.epf</option>
+		<option name="-s">../../../trunk/examples/settings/chc/TreeAutomizer/TreeAutomizerNaiveMinimization.epf</option>
 
 		<tasks name="CHC">
 			<includesfile>/storage/chc-comp/no-rules.set</includesfile>

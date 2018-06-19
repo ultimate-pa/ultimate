@@ -4,7 +4,7 @@
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCHC.xml</option>
 		<option name="--generate-csv" />
 		<option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
-		<option name="-s">../../../trunk/examples/settings/chccomp2018/chcToBoogie_automizer.epf</option>
+		<option name="-s">../../../trunk/examples/settings/chc/AutomizerCHC/AutomizerCHC_No_Goto.epf</option>
 
 		<tasks name="CHC">
 			<includesfile>/storage/chc-comp/no-rules.set</includesfile>

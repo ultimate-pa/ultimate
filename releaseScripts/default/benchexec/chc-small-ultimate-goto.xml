@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="360" cpuCores="2">
-	<rundefinition name="CHC">
+	<rundefinition name="CHC-Goto">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCHC.xml</option>
 		<option name="--generate-csv" />
 		<option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
-		<option name="-s">../../../trunk/examples/settings/chc/AutomizerCHC/AutomizerCHC_No_Goto.epf</option>
+		<option name="-s">../../../trunk/examples/settings/chc/AutomizerCHC/AutomizerCHC_Goto.epf</option>
 
 		<tasks name="CHC">
 			<includesfile>/storage/chc-comp/chc-minisample.set</includesfile>
