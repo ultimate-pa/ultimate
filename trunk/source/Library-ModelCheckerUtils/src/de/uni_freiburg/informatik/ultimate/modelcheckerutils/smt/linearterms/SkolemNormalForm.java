@@ -87,11 +87,15 @@ public class SkolemNormalForm  {
 
 		final Term newInnerTerm = new Substitution(mMgdScript, substitutionMapping).transform(qs.getInnerTerm());
 
-		try {
-			mResult = QuantifierSequence.prependQuantifierSequence(mMgdScript.getScript(),
-					Collections.singletonList(universalQuantifiersInScope), newInnerTerm);
-		} catch (final Exception ex) {
-			throw new AssertionError();
+		if (universalQuantifiersInScope.getVariables().isEmpty()) {
+			mResult = newInnerTerm;
+		} else {
+			try {
+				mResult = QuantifierSequence.prependQuantifierSequence(mMgdScript.getScript(),
+						Collections.singletonList(universalQuantifiersInScope), newInnerTerm);
+			} catch (final Exception ex) {
+				throw new AssertionError();
+			}
 		}
 
 		mMgdScript.unlock(this);
