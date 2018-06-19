@@ -127,7 +127,8 @@ public class GenerateGotoBoogieAst {
 		{
 			Integer predsymCounter = 0;
 			// generate the labels
-			for (final HcPredicateSymbol predSym : mChcInfo.getHornClausesSorted().getDomain()) {
+//			for (final HcPredicateSymbol predSym : mChcInfo.getHornClausesSorted().getDomain()) {
+			for (final HcPredicateSymbol predSym : mChcInfo.getAllReachablePredSymbols()) {
 				final Label label = new Label(loc, mHelper.predSymToMethodName(predSym));
 				final Integer number = predsymCounter++;
 				predSymbolToLabel.put(predSym, label);

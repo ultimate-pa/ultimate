@@ -29,6 +29,8 @@ public class ChcPreMetaInfoProvider {
 	private final List<HornClause> mHornClausesRaw;
 	private final HashRelation<HcPredicateSymbol, HornClause> mHornClausesSorted;
 
+	private final Set<HcPredicateSymbol> mAllReachablePredSymbols;
+
 	// auxiliary variables
 	private final Set<HcHeadVar> mAllHeadHcVars;
 	private final Set<HcBodyVar> mAllBodyHcVars;
@@ -41,6 +43,8 @@ public class ChcPreMetaInfoProvider {
 		mHornClausesRaw = hornClausesRaw;
 		mSymbolTable = symbolTable;
 		mHornClausesSorted = sortHornClausesByHeads(hornClausesRaw);
+
+		mAllReachablePredSymbols = new LinkedHashSet<>();
 
 		mAllHeadHcVars = new LinkedHashSet<>();
 		mAllBodyHcVars = new LinkedHashSet<>();
@@ -62,7 +66,9 @@ public class ChcPreMetaInfoProvider {
 			// breadth-first (pollFirst) or depth-first (pop) should not matter here
 			final HcPredicateSymbol headPredSymbol = headPredQueue.pop();
 
-			mAllHeadHcVars.addAll(mSymbolTable.getHcHeadVarsForPredSym(headPredSymbol, false));
+			mAllReachablePredSymbols.add(headPredSymbol);
+
+			mAllHeadHcVars.addAll(mSymbolTable.getHcHeadVarsForPredSym(headPredSymbol, true));
 
 			final Set<HornClause> hornClausesForHeadPred = mHornClausesSorted.getImage(headPredSymbol);
 
@@ -107,5 +113,9 @@ public class ChcPreMetaInfoProvider {
 
 	public List<HcBodyVar> getAllBodyHcVarsAsList() {
 		return Collections.unmodifiableList(mAllBodyHcVarsAsList);
+	}
+
+	public Set<HcPredicateSymbol> getAllReachablePredSymbols() {
+		return mAllReachablePredSymbols;
 	}
 }
