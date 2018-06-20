@@ -55,7 +55,7 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 
 	private static final long serialVersionUID = -221110423926589618L;
 	private final List<CodeBlock> mCodeBlocks;
-	private final String mPrettyPrinted;
+	private String mPrettyPrinted;
 	private final Map<TermVariable, CodeBlock> mBranchIndicator2CodeBlock = new HashMap<>();
 	private final IUltimateServiceProvider mServices;
 
@@ -66,8 +66,7 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 		mServices = services;
 		final Script script = mgdScript.getScript();
 		mCodeBlocks = codeBlocks;
-
-		String prettyPrinted = "";
+		mPrettyPrinted = null;
 
 		final UnmodifiableTransFormula[] transFormulas = new UnmodifiableTransFormula[codeBlocks.size()];
 		final UnmodifiableTransFormula[] transFormulasWithBranchEncoders =
@@ -89,7 +88,6 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 
 			currentCodeblock.disconnectSource();
 			currentCodeblock.disconnectTarget();
-			prettyPrinted += "PARALLEL" + currentCodeblock.getPrettyPrintedStatements();
 			transFormulas[i] = currentCodeblock.getTransformula();
 			transFormulasWithBranchEncoders[i] = currentCodeblock.getTransitionFormulaWithBranchEncoders();
 			final String varname = "LBE" + currentCodeblock.getSerialNumber();
@@ -103,7 +101,6 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
-		mPrettyPrinted = prettyPrinted;
 
 		final boolean s_TransformToCNF =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
@@ -117,6 +114,16 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 
 	@Override
 	public String getPrettyPrintedStatements() {
+		if (mPrettyPrinted == null) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("BeginParallelComposition{");
+			for (int i = 0; i < mCodeBlocks.size(); i++) {
+				sb.append("ParallelCodeBlock" + i + ": ");
+				sb.append(mCodeBlocks.get(i));
+			}
+			sb.append("}EndParallelComposition");
+			mPrettyPrinted = sb.toString();
+		}
 		return mPrettyPrinted;
 	}
 
@@ -131,14 +138,7 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("BeginParallelComposition{");
-		for (int i = 0; i < mCodeBlocks.size(); i++) {
-			sb.append("ParallelCodeBlock" + i + ": ");
-			sb.append(mCodeBlocks.get(i));
-		}
-		sb.append("}EndParallelComposition");
-		return sb.toString();
+		return getPrettyPrintedStatements();
 	}
 
 	@Visualizable

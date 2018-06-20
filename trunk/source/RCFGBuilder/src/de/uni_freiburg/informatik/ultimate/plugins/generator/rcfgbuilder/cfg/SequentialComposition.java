@@ -64,7 +64,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 
 	private static final long serialVersionUID = 9192152338120598669L;
 	private final List<CodeBlock> mCodeBlocks;
-	private final String mPrettyPrinted;
+	private String mPrettyPrinted;
 	private final int mCallsWithoutReturns;
 
 	SequentialComposition(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
@@ -75,16 +75,14 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 
 		mCodeBlocks = codeBlocks;
-		final StringBuilder prettyPrinted = new StringBuilder();
 		mCallsWithoutReturns = getCheckedOpenCalls(codeBlocks).size();
+		mPrettyPrinted = null;
 
 		for (final CodeBlock currentCodeblock : codeBlocks) {
 			currentCodeblock.disconnectSource();
 			currentCodeblock.disconnectTarget();
-			prettyPrinted.append(currentCodeblock.getPrettyPrintedStatements());
 			ModelUtils.copyAnnotations(currentCodeblock, this);
 		}
-		mPrettyPrinted = prettyPrinted.toString();
 
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
@@ -100,6 +98,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 	}
 
 	private Deque<Call> getCheckedOpenCalls(final List<CodeBlock> codeBlocks) {
+		// TODO: Necessary in runtime code?
 		final Deque<Call> callstack = new ArrayDeque<>();
 		for (final CodeBlock currentCodeblock : codeBlocks) {
 			if (currentCodeblock instanceof Call) {
@@ -128,6 +127,13 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 
 	@Override
 	public String getPrettyPrintedStatements() {
+		if (mPrettyPrinted == null) {
+			final StringBuilder sb = new StringBuilder();
+			for (final CodeBlock block : mCodeBlocks) {
+				sb.append(block.getPrettyPrintedStatements());
+			}
+			mPrettyPrinted = sb.toString();
+		}
 		return mPrettyPrinted;
 	}
 
@@ -280,11 +286,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		for (final CodeBlock cb : mCodeBlocks) {
-			sb.append(cb.toString());
-		}
-		return sb.toString();
+		return getPrettyPrintedStatements();
 	}
 
 	@Override

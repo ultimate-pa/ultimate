@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -56,12 +57,12 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 
 	private static final long serialVersionUID = -1780068525981157749L;
 
-	public static enum Origin {
+	public enum Origin {
 		ENSURES, REQUIRES, IMPLEMENTATION, ASSERT
 	}
 
-	private final List<Statement> mStatements = new ArrayList<>();
-	private String mPrettyPrintedStatements = "";
+	private final List<Statement> mStatements;
+	private String mPrettyPrintedStatements;
 	/**
 	 * mOrigin stores the origin of this InternalEdge, which could be either be the ensures specification, the requires
 	 * specification or the implementation of a program.
@@ -70,38 +71,37 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 
 	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final Statement st, final ILogger logger) {
-		super(serialNumber, source, target, logger);
-		mOrigin = Origin.IMPLEMENTATION;
-		addStatement(st);
+		this(serialNumber, source, target, Collections.singletonList(st), Origin.IMPLEMENTATION, logger);
 	}
 
 	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final Statement st, final Origin origin, final ILogger logger) {
-		super(serialNumber, source, target, logger);
-		mOrigin = origin;
-		addStatement(st);
+		this(serialNumber, source, target, Collections.singletonList(st), origin, logger);
 	}
 
 	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final List<Statement> stmts, final Origin origin, final ILogger logger) {
 		super(serialNumber, source, target, logger);
-		mStatements.addAll(stmts);
 		mOrigin = origin;
-		mPrettyPrintedStatements = "";
-		for (final Statement st : stmts) {
-			mPrettyPrintedStatements += BoogiePrettyPrinter.print(st);
+		mStatements = new ArrayList<>();
+		if (stmts != null && !stmts.isEmpty()) {
+			stmts.forEach(this::addStatement);
 		}
+		mPrettyPrintedStatements = null;
 	}
 
+	/**
+	 * Add a new {@link Statement} to this statement sequence. Only internal statements are allowed, i.e., no Call,
+	 * Return, Summary.
+	 */
 	public void addStatement(final Statement st) {
-		if (st instanceof AssumeStatement || st instanceof AssignmentStatement || st instanceof HavocStatement) {
-			// do nothing
-		} else {
+		if (!(st instanceof AssumeStatement) && !(st instanceof AssignmentStatement)
+				&& !(st instanceof HavocStatement)) {
 			throw new IllegalArgumentException(
 					"Only Assignment, Assume and" + " HavocStatement allowed in InternalEdge.");
 		}
 		mStatements.add(st);
-		mPrettyPrintedStatements += BoogiePrettyPrinter.print(st);
+		mPrettyPrintedStatements = null;
 	}
 
 	@Visualizable
@@ -111,6 +111,13 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 
 	@Override
 	public String getPrettyPrintedStatements() {
+		if (mPrettyPrintedStatements == null) {
+			final StringBuilder sb = new StringBuilder();
+			for (final Statement st : mStatements) {
+				sb.append(BoogiePrettyPrinter.print(st));
+			}
+			mPrettyPrintedStatements = sb.toString();
+		}
 		return mPrettyPrintedStatements;
 	}
 
@@ -120,10 +127,6 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		for (final Statement st : mStatements) {
-			sb.append(BoogiePrettyPrinter.print(st));
-		}
-		return sb.toString();
+		return getPrettyPrintedStatements();
 	}
 }

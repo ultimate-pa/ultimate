@@ -56,7 +56,7 @@ public class Call extends CodeBlock implements IIcfgCallTransition<IcfgLocation>
 			final CallStatement st, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;
-		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
+		mPrettyPrintedStatements = null;
 	}
 
 	@Visualizable
@@ -66,12 +66,15 @@ public class Call extends CodeBlock implements IIcfgCallTransition<IcfgLocation>
 
 	@Override
 	public String getPrettyPrintedStatements() {
+		if (mPrettyPrintedStatements == null) {
+			mPrettyPrintedStatements = BoogiePrettyPrinter.print(mCallStatement);
+		}
 		return mPrettyPrintedStatements;
 	}
 
 	@Override
 	public String toString() {
-		return BoogiePrettyPrinter.print(mCallStatement);
+		return getPrettyPrintedStatements();
 	}
 
 	@Override

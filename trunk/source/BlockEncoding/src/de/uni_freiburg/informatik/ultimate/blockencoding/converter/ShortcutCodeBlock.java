@@ -59,7 +59,7 @@ public class ShortcutCodeBlock extends CodeBlock {
 
 	@Override
 	public String getPrettyPrintedStatements() {
-		return null;
+		return toString();
 	}
 
 	/**

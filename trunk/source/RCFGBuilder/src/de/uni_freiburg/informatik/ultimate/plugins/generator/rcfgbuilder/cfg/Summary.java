@@ -46,7 +46,7 @@ public class Summary extends CodeBlock implements IIcfgInternalTransition<IcfgLo
 	private static final long serialVersionUID = 6048827510357561291L;
 
 	private final CallStatement mCallStatement;
-	private final String mPrettyPrintedStatements;
+	private String mPrettyPrintedStatements;
 
 	@Visualizable
 	private final boolean mCalledProcedureHasImplementation;
@@ -56,7 +56,7 @@ public class Summary extends CodeBlock implements IIcfgInternalTransition<IcfgLo
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;
 		mCalledProcedureHasImplementation = calledProcedureHasImplementation;
-		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);
+		mPrettyPrintedStatements = null;
 	}
 
 	public boolean calledProcedureHasImplementation() {
@@ -70,6 +70,9 @@ public class Summary extends CodeBlock implements IIcfgInternalTransition<IcfgLo
 
 	@Override
 	public String getPrettyPrintedStatements() {
+		if (mPrettyPrintedStatements == null) {
+			mPrettyPrintedStatements = BoogiePrettyPrinter.print(mCallStatement);
+		}
 		return mPrettyPrintedStatements;
 	}
 
