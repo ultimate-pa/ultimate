@@ -461,7 +461,7 @@ public class GenerateGotoBoogieAst {
 			return ExpressionFactory.createBooleanLiteral(mHelper.getLoc(), false);
 		} else if ("Int".equals(sort.getName())) {
 			return ExpressionFactory.createIntegerLiteral(mHelper.getLoc(), "0");
-		} else if ("Int".equals(sort.getName())) {
+		} else if ("Real".equals(sort.getName())) {
 			return ExpressionFactory.createRealLiteral(mHelper.getLoc(), "0");
 		} else {
 			throw new UnsupportedOperationException("sort not yet supported");
