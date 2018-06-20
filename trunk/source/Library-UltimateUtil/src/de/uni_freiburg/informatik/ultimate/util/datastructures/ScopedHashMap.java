@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.util.ScopeUtils;
  * A scoped hash map is useful for symbol tables. With beginScope() a new
  * scope is started.  All modifications to the table are reversed when
  * the scope is ended with endScope().
- * 
+ *
  * You can also get a key, entry, or value collection of the currently
  * active scope.  This will only iterate the keys/values set since the last
  * beginScope() call.  Removing an entry will restore the value that was
  * previously set on the outer scope.
- * 
+ *
  * Note that it is forbidden to store null values into a scoped hash map.
- * 
+ *
  * @author Jochen Hoenicke
  *
  * @param <K> Key type
@@ -61,26 +61,42 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 	private HashMap<K, V>[] mHistory;
 	private int mCurScope = -1;
 	private final boolean mShrink;
-	
+
 	public ScopedHashMap() {
 		this(true);
 	}
-	
+
+	/**
+	 * Copy constructor
+	 *
+	 * @param original
+	 */
+	@SuppressWarnings("unchecked")
+	public ScopedHashMap(final ScopedHashMap<K, V> original) {
+		mMap = new HashMap<>(original.mMap);
+		mHistory = new HashMap[original.mHistory.length];
+		for (int i = 0; i < mHistory.length; i++) {
+			mHistory[i] = new HashMap<>(original.mHistory[i]);
+		}
+		mShrink = original.mShrink;
+		mCurScope = original.mCurScope;
+	}
+
 	@SuppressWarnings("unchecked")
 	public ScopedHashMap(final boolean shrink) {
 		mMap = new HashMap<>();
 		mHistory = new HashMap[ScopeUtils.NUM_INITIAL_SCOPES];
 		mShrink = shrink;
 	}
-	
+
 	HashMap<K, V> getMap() {
 		return mMap;
 	}
-	
+
 	HashMap<K, V> undoMap() {
 		return mHistory[mCurScope];
 	}
-	
+
 	void recordUndo(final K key, final V value) {
 		if (mCurScope != -1) {
 			final Map<K, V> old = undoMap();
@@ -97,7 +113,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			mMap.put(old.getKey(), old.getValue());
 		}
 	}
-	
+
 	@Override
 	public void beginScope() {
 		if (mCurScope == mHistory.length - 1) {
@@ -105,7 +121,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		}
 		mHistory[++mCurScope] = new HashMap<>();
 	}
-	
+
 	@Override
 	public void endScope() {
 		for (final Entry<K, V> old : undoMap().entrySet()) {
@@ -116,7 +132,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			mHistory = ScopeUtils.shrink(mHistory);
 		}
 	}
-	
+
 	public Iterable<Map.Entry<K, V>> currentScopeEntries() {
 		if (mCurScope == -1) {
 			return entrySet();
@@ -127,7 +143,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 				return new Iterator<Map.Entry<K, V>>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
-					
+
 					@Override
 					public boolean hasNext() {
 						return mBacking.hasNext();
@@ -168,7 +184,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			}
 		};
 	}
-	
+
 	@Override
 	public Iterable<K> currentScopeKeys() {
 		if (mCurScope == -1) {
@@ -180,7 +196,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 				return new Iterator<K>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
-					
+
 					@Override
 					public boolean hasNext() {
 						return mBacking.hasNext();
@@ -205,7 +221,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			}
 		};
 	}
-	
+
 	public Iterable<V> currentScopeValues() {
 		if (mCurScope == -1) {
 			return values();
@@ -216,7 +232,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 				return new Iterator<V>() {
 					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
 					private Entry<K, V> mLast;
-					
+
 					@Override
 					public boolean hasNext() {
 						return mBacking.hasNext();
@@ -241,7 +257,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			}
 		};
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public void clear() {
@@ -268,7 +284,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 	public boolean isEmpty() {
 		return mMap.isEmpty();
 	}
-	
+
 	@Override
 	public boolean isEmptyScope() {
 		return mCurScope == -1;
@@ -283,7 +299,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 				return new Iterator<Entry<K,V>>() {
 					private final Iterator<Entry<K,V>> mBacking = getMap().entrySet().iterator();
 					private Entry<K,V> mLast;
-					
+
 					@Override
 					public boolean hasNext() {
 						return mBacking.hasNext();
@@ -331,7 +347,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 	public int size() {
 		return mMap.size();
 	}
-	
+
 	public int getActiveScopeNum() {
 		return mCurScope + 1;
 	}

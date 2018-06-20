@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Translate a Boogie Expression into an SMT Term. Use the here defined interface IndentifierResolver to translate
@@ -81,10 +83,9 @@ public class Expression2Term {
 	private final ManagedScript mVariableManager;
 	private final boolean mOverapproximateFunctions = false;
 
-	private final ScopedHashMap<String, TermVariable> mQuantifiedVariables = new ScopedHashMap<>();
-	private IIdentifierTranslator[] mSmtIdentifierProviders;
-	private Map<String, ILocation> mOverapproximations = null;
-	private Collection<TermVariable> mAuxVars = null;
+	private final NestedMap2<TranslateState, Expression, Term> mCache = new NestedMap2<>();
+
+	private TranslateState mState;
 
 	/**
 	 * Count the height of current old(.) expressions. As long as this is strictly greater than zero we are have to
@@ -105,51 +106,39 @@ public class Expression2Term {
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		mOperationTranslator = operationTranslator;
 		mVariableManager = variableManager;
+
+		mState = new TranslateState();
 	}
 
 	public SingleTermResult translateToTerm(final IIdentifierTranslator[] identifierTranslators,
 			final Expression expression) {
-		assert mSmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
-		assert mQuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
-		assert mOverapproximations == null : getClass().getSimpleName() + " in use";
-		assert mAuxVars == null : getClass().getSimpleName() + " in use";
-		mSmtIdentifierProviders = identifierTranslators;
-		mAuxVars = new ArrayList<>();
-		mOverapproximations = new HashMap<>();
+		assert mState.isNotInUse();
+		mState = TranslateState.initBeforeTranslate(identifierTranslators);
 		final Term term = translate(expression);
-		final SingleTermResult result = new SingleTermResult(mOverapproximations, mAuxVars, term);
-		mSmtIdentifierProviders = null;
-		mAuxVars = null;
-		mOverapproximations = null;
+		final SingleTermResult result = new SingleTermResult(mState.getOverapproximations(), mState.getAuxVars(), term);
+		mState = TranslateState.resetAfterTranslate();
 		return result;
 	}
 
 	public MultiTermResult translateToTerms(final IIdentifierTranslator[] identifierTranslators,
 			final Expression[] expressions) {
-		assert mSmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
-		assert mQuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
-		assert mOverapproximations == null : getClass().getSimpleName() + " in use";
-		assert mAuxVars == null : getClass().getSimpleName() + " in use";
-		mSmtIdentifierProviders = identifierTranslators;
-		mAuxVars = new ArrayList<>();
-		mOverapproximations = new HashMap<>();
+		assert mState.isNotInUse();
+		mState = TranslateState.initBeforeTranslate(identifierTranslators);
 		final Term[] terms = new Term[expressions.length];
 		for (int i = 0; i < expressions.length; i++) {
 			terms[i] = translate(expressions[i]);
 		}
-		final MultiTermResult result = new MultiTermResult(mOverapproximations, mAuxVars, terms);
-		mSmtIdentifierProviders = null;
-		mAuxVars = null;
-		mOverapproximations = null;
+		final MultiTermResult result = new MultiTermResult(mState.getOverapproximations(), mState.getAuxVars(), terms);
+		mState = TranslateState.resetAfterTranslate();
 		return result;
 	}
 
 	private Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
 			final BoogieASTNode boogieASTNode) {
-		if (mQuantifiedVariables.containsKey(id)) {
-			return mQuantifiedVariables.get(id);
+		if (mState.getQuantifiedVariables().containsKey(id)) {
+			return mState.getQuantifiedVariables().get(id);
 		}
-		for (final IIdentifierTranslator it : mSmtIdentifierProviders) {
+		for (final IIdentifierTranslator it : mState.getSmtIdentifierProviders()) {
 			final Term term = it.getSmtIdentifier(id, declInfo, isOldContext, boogieASTNode);
 			if (term != null) {
 				return term;
@@ -167,7 +156,29 @@ public class Expression2Term {
 		return mOldContextScopeDepth > 0;
 	}
 
+	/**
+	 * Provides caching for translateBase.
+	 *
+	 * @param exp
+	 * @return
+	 */
 	private Term translate(final Expression exp) {
+		final TranslateState stateAtStart = mState;
+		Term result = mCache.get(mState, exp);
+		if (result == null) {
+			result = translateBase(exp);
+			mCache.put(stateAtStart, exp, result);
+		}
+		return result;
+	}
+
+	/**
+	 * Should only be called from translate (could be inlined)
+	 *
+	 * @param exp
+	 * @return
+	 */
+	private Term translateBase(final Expression exp) {
 		if (exp instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression arrexp = (ArrayAccessExpression) exp;
 			final Expression[] indices = arrexp.getIndices();
@@ -266,8 +277,8 @@ public class Expression2Term {
 				final Sort resultSort = mTypeSortTranslator.getSort(exp.getType(), exp);
 				final TermVariable auxVar =
 						mVariableManager.constructFreshTermVariable(func.getIdentifier(), resultSort);
-				mAuxVars.add(auxVar);
-				mOverapproximations.put(overapproximation, exp.getLocation());
+				mState = TranslateState.addAuxVar(mState, auxVar);
+				mState = TranslateState.putOverApproximation(mState, overapproximation, exp.getLocation());
 				result = auxVar;
 			} else {
 				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
@@ -337,7 +348,7 @@ public class Expression2Term {
 			// typeStack.push(vars[offset]);
 			// offset++;
 			// }
-			mQuantifiedVariables.beginScope();
+			mState = TranslateState.qVarsBeginScope(mState);
 			for (int i = 0; i < variables.length; i++) {
 				final IBoogieType type = variables[i].getType().getBoogieType();
 				final Sort sort = mTypeSortTranslator.getSort(type, exp);
@@ -345,7 +356,7 @@ public class Expression2Term {
 					final String identifier = variables[i].getIdentifiers()[j];
 					final String smtVarName = "q" + Boogie2SMT.quoteId(variables[i].getIdentifiers()[j]);
 					vars[offset] = mScript.variable(smtVarName, sort);
-					mQuantifiedVariables.put(identifier, vars[offset]);
+					mState = TranslateState.putQuantifiedVariables(mState, identifier, vars[offset]);
 					offset++;
 				}
 			}
@@ -382,7 +393,7 @@ public class Expression2Term {
 			// for (int j = 0; j < typeParams.length; j++) {
 			// typeStack.pop();
 			// }
-			mQuantifiedVariables.endScope();
+			mState = TranslateState.qVarsEndScope(mState);
 
 			Term result = null;
 			try {
@@ -460,5 +471,110 @@ public class Expression2Term {
 	public interface IIdentifierTranslator {
 		Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext,
 				BoogieASTNode boogieASTNode);
+	}
+
+	private static class TranslateState {
+		private final ScopedHashMap<String, TermVariable> mQuantifiedVariables;// = new ScopedHashMap<>();
+		private final IIdentifierTranslator[] mSmtIdentifierProviders;// = null;
+		private final Map<String, ILocation> mOverapproximations;// = null;
+		private final Collection<TermVariable> mAuxVars;// = null;
+
+		public TranslateState() {
+			mQuantifiedVariables = new ScopedHashMap<>();
+			mSmtIdentifierProviders = null;
+			mOverapproximations = null;
+			mAuxVars = null;
+		}
+
+		public TranslateState(final ScopedHashMap<String, TermVariable> quantifiedVariables,
+				final IIdentifierTranslator[] smtIdentifierProviders, final Map<String, ILocation> overapproximations,
+				final Collection<TermVariable> auxVars) {
+			mQuantifiedVariables = quantifiedVariables;
+			mSmtIdentifierProviders = smtIdentifierProviders;
+			mOverapproximations = overapproximations;
+			mAuxVars = auxVars;
+		}
+
+		public static TranslateState putQuantifiedVariables(final TranslateState oldState, final String identifier,
+				final TermVariable termVariable) {
+			final ScopedHashMap<String, TermVariable> newQuantifiedVariables =
+					new ScopedHashMap<>(oldState.getQuantifiedVariables());
+			newQuantifiedVariables.put(identifier, termVariable);
+			return new TranslateState(newQuantifiedVariables, oldState.getSmtIdentifierProviders(),
+					oldState.getOverapproximations(), oldState.getAuxVars());
+		}
+
+		public static TranslateState qVarsBeginScope(final TranslateState oldState) {
+			final ScopedHashMap<String, TermVariable> newQuantifiedVariables =
+					new ScopedHashMap<>(oldState.getQuantifiedVariables());
+			newQuantifiedVariables.beginScope();
+			return new TranslateState(newQuantifiedVariables, oldState.getSmtIdentifierProviders(),
+					oldState.getOverapproximations(), oldState.getAuxVars());
+		}
+
+		public static TranslateState qVarsEndScope(final TranslateState oldState) {
+			final ScopedHashMap<String, TermVariable> newQuantifiedVariables =
+					new ScopedHashMap<>(oldState.getQuantifiedVariables());
+			newQuantifiedVariables.endScope();
+			return new TranslateState(newQuantifiedVariables, oldState.getSmtIdentifierProviders(),
+					oldState.getOverapproximations(), oldState.getAuxVars());
+		}
+
+		public static TranslateState putOverApproximation(final TranslateState oldState, final String overapproximation,
+				final ILocation location) {
+			final Map<String, ILocation> newOverApprox = new HashMap<>(oldState.getOverapproximations());
+			newOverApprox.put(overapproximation, location);
+			return new TranslateState(oldState.getQuantifiedVariables(), oldState.getSmtIdentifierProviders(),
+					newOverApprox, oldState.getAuxVars());
+		}
+
+		public static TranslateState addAuxVar(final TranslateState oldState, final TermVariable auxVar) {
+			final Collection<TermVariable> newAuxVars = new ArrayList<>(oldState.getAuxVars());
+			newAuxVars.add(auxVar);
+			return new TranslateState(oldState.getQuantifiedVariables(), oldState.getSmtIdentifierProviders(),
+					oldState.getOverapproximations(), newAuxVars);
+		}
+
+		public static TranslateState resetAfterTranslate() {
+			// original code:
+			//		mSmtIdentifierProviders = null;
+			//		mAuxVars = null;
+			//		mOverapproximations = null;
+			return new TranslateState();
+		}
+
+		public boolean isNotInUse() {
+			assert mSmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
+			assert mQuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
+			assert mOverapproximations == null : getClass().getSimpleName() + " in use";
+			assert mAuxVars == null : getClass().getSimpleName() + " in use";
+			return true;
+		}
+
+
+		public static TranslateState initBeforeTranslate(final IIdentifierTranslator[] identifierTranslators) {
+			// original code:
+			//		mSmtIdentifierProviders = identifierTranslators;
+			//		mAuxVars = new ArrayList<>();
+			//		mOverapproximations = new HashMap<>();
+			return new TranslateState(new ScopedHashMap<>(), identifierTranslators,  Collections.emptyMap(), Collections.emptyList());
+		}
+
+		public ScopedHashMap<String, TermVariable> getQuantifiedVariables() {
+			return mQuantifiedVariables;
+		}
+
+		public IIdentifierTranslator[] getSmtIdentifierProviders() {
+			return mSmtIdentifierProviders;
+		}
+
+		public Map<String, ILocation> getOverapproximations() {
+			return mOverapproximations;
+		}
+
+		public Collection<TermVariable> getAuxVars() {
+			return mAuxVars;
+		}
+
 	}
 }
