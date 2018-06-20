@@ -31,8 +31,10 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -102,6 +104,8 @@ public final class Term2Expression implements Serializable {
 
 	private final Set<IdentifierExpression> mFreeVariables;
 
+	private final Map<Term, Expression> mCache;
+
 	public Term2Expression(final TypeSortTranslator tsTranslation,
 			final ITerm2ExpressionSymbolTable boogie2SmtSymbolTable,
 			final ManagedScript maScript) {
@@ -111,6 +115,7 @@ public final class Term2Expression implements Serializable {
 		mFreeVariables = new HashSet<>();
 		mFreshIdentiferCounter = 0;
 		mQuantifiedVariables = new ScopedHashMap<>();
+		mCache = new HashMap<>();
 	}
 
 	private String getFreshIdenfier() {
@@ -119,23 +124,26 @@ public final class Term2Expression implements Serializable {
 	}
 
 	public Expression translate(final Term term) {
-		Expression result;
-		if (term instanceof AnnotatedTerm) {
-			result = translate((AnnotatedTerm) term);
-		} else if (term instanceof ApplicationTerm) {
-			return translate((ApplicationTerm) term);
-		} else if (term instanceof ConstantTerm) {
-			result = translate((ConstantTerm) term);
-		} else if (term instanceof LetTerm) {
-			result = translate((LetTerm) term);
-		} else if (term instanceof QuantifiedFormula) {
-			result = translate((QuantifiedFormula) term);
-		} else if (term instanceof TermVariable) {
-			result = translate((TermVariable) term);
-		} else {
-			throw new UnsupportedOperationException("unknown kind of Term");
+		Expression result = mCache.get(term);
+		if (result == null) {
+			if (term instanceof AnnotatedTerm) {
+				result = translate((AnnotatedTerm) term);
+			} else if (term instanceof ApplicationTerm) {
+				result = translate((ApplicationTerm) term);
+			} else if (term instanceof ConstantTerm) {
+				result = translate((ConstantTerm) term);
+			} else if (term instanceof LetTerm) {
+				result = translate((LetTerm) term);
+			} else if (term instanceof QuantifiedFormula) {
+				result = translate((QuantifiedFormula) term);
+			} else if (term instanceof TermVariable) {
+				result = translate((TermVariable) term);
+			} else {
+				throw new UnsupportedOperationException("unknown kind of Term");
+			}
+			assert result != null;
+			mCache.put(term, result);
 		}
-		assert result != null;
 		return result;
 	}
 

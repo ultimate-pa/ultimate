@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.CachingBoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
@@ -61,11 +61,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePlaceholderType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -78,40 +78,40 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * This class removes our Boogie syntax extension of structs and creates a plain
  * Boogie code without the struct extension.
- * 
+ *
  * The extensions for struct we support are: New ASTType:
- * 
+ *
  * <pre>StructType ::= fields : VarList[]
- * 
+ *
  * <pre>
- * 
+ *
  * New LeftHandSide:
- * 
+ *
  * <pre>
  * StructLHS ::=  struct: LeftHandSide, field:String
  * </pre>
- * 
+ *
  * New Expressions:
- * 
+ *
  * <pre>
  * StructAccessExpression ::=  struct : Expression, field:String
  * StructConstructor ::= fieldIdentifiers : String[], fieldValues : Expression[]
  * </pre>
- * 
+ *
  * Also, IdentifierExpression and VariableLHS can refer to struct typed
  * variables. And functions can take struct typed parameters and return struct
  * typed values.
- * 
+ *
  * The semantic type of a boogie.ast.StructType is represented by
  * boogie.type.StructType. This contains an array of fieldNames (String) and an
  * array of fieldTypes (BoogieType) of the same length. Two struct types are
  * identical if they declare the same names of the same types in the same order.
  * The field types can also be struct typed and one can build arrays over
  * structs and structs over arrays.
- * 
+ *
  * This class gets rid of structs by flattening them and replacing them by the
  * finite list of values.
- * 
+ *
  * If a struct type is used as index type of an array, it is replaced by a
  * multidimensional array, one index type for every element in the struct,
  * forgetting the names of the fields. E.g., <code>[{a:int,b:real]int</code> is
@@ -124,7 +124,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * <code>{ a : int, b: { x:int, y:int}}</code> is flattened to
  * <code>{ a: int, b.x : int, b.y : int}</code>. After these transformation a
  * type can contain a struct type only on the outside.
- * 
+ *
  * For every variable declaration occuring in the BoogieAST with a struct type,
  * we create one variable for each field, e.g.
  * <code>var x,y: {a:int,b:real}, z:real;<code>
@@ -132,19 +132,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * <code>var x.a:int, x.b:real, y.a:int, y.b:real, z:real</code>. This also
  * includes the variable lists used for input parameters in function and
  * procedure declarations and for output parameters in procedures.
- * 
+ *
  * A function returning a struct is replaced by several functions, one for each
  * field. The name also uses the DOT, e.g.,
  * <code>function f () : {a:int,b:real}<code>
  *  is expanded to
  * <code>function f.a () : int; function f.b():real}<code>
- * 
+ *
  * In assignments and procedure calls (which are also assignments), the
  * left-hand-sides that are of struct type are expanded to a list of
  * left-hand-sides, one for each field.
  * An expression of a struct type is replaced by a list of expressions
  * one for each field.
- * 
+ *
  * The expansion of expression of struct types works as follows:
  * An IdentifierExpression is expanded to one IdentifierExpression for
  * every field, matching the way the variable declaration is expanded.
@@ -153,13 +153,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * An array access is expanded recursively, e.g., if <code>expr<code>
  * expands to <code>e1,...,en<code>, <code>expr[i]<code> expands to
  * <code>e1[i],...,en[i]<code>
- * 
- * 
- * 
+ *
+ *
+ *
  * @author Markus Lindenmann, Jochen Hoenicke
  * @date 26.08.2012
  */
-public class StructExpander extends BoogieTransformer implements IUnmanagedObserver {
+public class StructExpander extends CachingBoogieTransformer implements IUnmanagedObserver {
 	/**
 	 * String holding a period / dot.
 	 */
@@ -177,11 +177,11 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * type <code>Field {a:int, b:real}</code> is flattened to
 	 * <code>Field (struct~a~b int real)</code>. We need to remember to add the
 	 * type declaration
-	 * 
+	 *
 	 * <pre>
 	 * type struct~a~b $0 $1;
 	 * </pre>
-	 * 
+	 *
 	 * which is remembered in this map.
 	 */
 	private final HashMap<String, BoogieTypeConstructor> mStructTypes;
@@ -198,7 +198,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * Create a new struct wrapper type and register the corresponding type
 	 * constructor, unless that is already present. The input type must already
 	 * be flattened, i.e., the field types do not contain any structs.
-	 * 
+	 *
 	 * @param st
 	 *            the struct type for which a wrapper is created.
 	 * @returns a new constructed type for this struct type.
@@ -231,7 +231,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * at the outside. arrays of structs are converted to structs of arrays and
 	 * nested structs are flattened. We work on BoogieType and use
 	 * getUnderlyingType() so that we do not need to handle type aliases.
-	 * 
+	 *
 	 * @param itype
 	 *            the type that should be flattened. This must be a BoogieType,
 	 *            but we want to avoid casts everywhere.
@@ -362,7 +362,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * Processes a list of varLists. This will expand declarations of structs
 	 * into declarations for all fields in the struct. It is used for procedure
 	 * and function parameters, and local and global variables.
-	 * 
+	 *
 	 * @param vls
 	 *            the list of varlist to process.
 	 * @return The expanded varlist.
@@ -389,7 +389,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * declarations for all fields in the struct. If the declared variables have
 	 * a struct type, it creates one declaration for every variable and every
 	 * field in the struct.
-	 * 
+	 *
 	 * @param input
 	 *            the var list to expand.
 	 * @return The expanded varlist.
@@ -421,7 +421,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * Process expressions. Mainly this flattens the expression types, but it
 	 * will also remove StructAccessExpression. It must only be called for
 	 * expression that are not of a struct type after flattening.
-	 * 
+	 *
 	 * @param expr
 	 *            the expression that should be processed.
 	 * @returns the struct-free expression.
@@ -477,7 +477,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * field. Otherwise this returns a singleton list with the processsed
 	 * expression. The processed expressions are guaranteed to not contain any
 	 * struct operations.
-	 * 
+	 *
 	 * @param e
 	 *            the expression to expand.
 	 * @return A list containing an expanded expression for every field in the
@@ -597,7 +597,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * struct type to multiple expression, one for each field. This can thus be
 	 * used to expand procedure and function arguments and the right hand sides
 	 * of assignments.
-	 * 
+	 *
 	 * @param e
 	 *            the expression list to process.
 	 * @return A list containing the processed expression. This expands
@@ -615,7 +615,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	/**
 	 * Processes a single left hand side. This must only be called for left hand
 	 * sides that are not of struct type.
-	 * 
+	 *
 	 * @param lhs
 	 *            the left hand sides to process.
 	 * @return The processed lhs.
@@ -643,7 +643,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	/**
 	 * Processes a single left hand side and expands it. This will expand an lhs
 	 * if it has struct type into one for each field.
-	 * 
+	 *
 	 * @param lhs
 	 *            the left hand sides to process.
 	 * @return The expanded lhs.
@@ -709,7 +709,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * struct type to multiple lhs, one for each field. This can thus be used to
 	 * expand the lhs of an assignment of procedure call or the havoc or
 	 * modified list.
-	 * 
+	 *
 	 * @param lhss
 	 *            the list of left hand sides to process.
 	 * @return A list containing the processed lhs.
@@ -729,24 +729,24 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * <li>iff return value is of struct type: declare a function for each
 	 * struct field recursively. <br />
 	 * E.g.:<br />
-	 * 
+	 *
 	 * <pre>
 	 * <code>function f() returns (v:{f1:int, f2:bool});</code>
 	 * </pre>
-	 * 
+	 *
 	 * to:<br />
-	 * 
+	 *
 	 * <pre>
 	 * <code>function f.f1() returns (v:int);<br />
 	 * function f.f2() returns (v:bool);</code>
 	 * </pre>
-	 * 
+	 *
 	 * </li>
 	 * <li>for each param p : if p is of struct type: expand to multiple in
 	 * params</li>
 	 * <li>otherwise: return function declaration as is.</li>
 	 * <ul>
-	 * 
+	 *
 	 * @param decl
 	 *            the declaration to expand.
 	 * @return new declarations.

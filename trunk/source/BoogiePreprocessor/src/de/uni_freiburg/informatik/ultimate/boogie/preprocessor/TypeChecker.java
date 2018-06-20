@@ -160,8 +160,11 @@ public class TypeChecker extends BaseObserver {
 	private Set<String> mLocalVars;
 	private final IUltimateServiceProvider mServices;
 
+	private final Map<Expression, BoogieType> mCache;
+
 	public TypeChecker(final IUltimateServiceProvider services) {
 		mServices = services;
+		mCache = new HashMap<>();
 	}
 
 
@@ -177,146 +180,150 @@ public class TypeChecker extends BaseObserver {
 
 		final TypeErrorReporter typeErrorReporter = new TypeErrorReporter(expr);
 
-		BoogieType resultType;
+		BoogieType resultType = mCache.get(expr);
+		if (resultType == null) {
 
-		if (expr instanceof BinaryExpression) {
-			final BinaryExpression binexp = (BinaryExpression) expr;
-			resultType = TypeCheckHelper.typeCheckBinaryExpression(binexp.getOperator(),
-					typecheckExpression(binexp.getLeft()),
-					typecheckExpression(binexp.getRight()), new TypeErrorReporter(binexp));
-		} else if (expr instanceof UnaryExpression) {
-			final UnaryExpression unexp = (UnaryExpression) expr;
-			resultType = TypeCheckHelper.typeCheckUnaryExpression(unexp.getOperator(),
-					typecheckExpression(unexp.getExpr()),
-					new TypeErrorReporter(expr));
-		} else if (expr instanceof BitVectorAccessExpression) {
-			final BitVectorAccessExpression bvaexpr = (BitVectorAccessExpression) expr;
-			final BoogieType bvType = typecheckExpression(bvaexpr.getBitvec());
-			resultType = TypeCheckHelper.typeCheckBitVectorAccessExpression(
-					TypeCheckHelper.getBitVecLength(bvType), bvaexpr.getEnd(),
-					bvaexpr.getStart(), bvType, new TypeErrorReporter(expr));
-		} else if (expr instanceof StructAccessExpression) {
-			final StructAccessExpression sae = (StructAccessExpression) expr;
-			resultType = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs(
-					typecheckExpression(sae.getStruct()).getUnderlyingType(), sae.getField(), typeErrorReporter);
-		} else if (expr instanceof ArrayAccessExpression) {
-			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
-			final BoogieType arrayType = typecheckExpression(aaexpr.getArray()).getUnderlyingType();
-			final List<BoogieType> indicesTypes = Arrays.stream(aaexpr.getIndices())
-					.map(exp -> typecheckExpression(exp)).collect(Collectors.toList());
-			resultType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes, typeErrorReporter);
-		} else if (expr instanceof ArrayStoreExpression) {
-			final ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
-			final BoogieType arrayType = typecheckExpression(asexpr.getArray()).getUnderlyingType();
-			final Expression[] indices = asexpr.getIndices();
-			final List<BoogieType> indicesTypes = new ArrayList<>();
-			Arrays.stream(indices).forEachOrdered(index -> indicesTypes.add(typecheckExpression(index)));
-			assert indicesTypes.size() == indices.length;
-			final BoogieType valueType = typecheckExpression(asexpr.getValue());
+			if (expr instanceof BinaryExpression) {
+				final BinaryExpression binexp = (BinaryExpression) expr;
+				resultType = TypeCheckHelper.typeCheckBinaryExpression(binexp.getOperator(),
+						typecheckExpression(binexp.getLeft()),
+						typecheckExpression(binexp.getRight()), new TypeErrorReporter(binexp));
+			} else if (expr instanceof UnaryExpression) {
+				final UnaryExpression unexp = (UnaryExpression) expr;
+				resultType = TypeCheckHelper.typeCheckUnaryExpression(unexp.getOperator(),
+						typecheckExpression(unexp.getExpr()),
+						new TypeErrorReporter(expr));
+			} else if (expr instanceof BitVectorAccessExpression) {
+				final BitVectorAccessExpression bvaexpr = (BitVectorAccessExpression) expr;
+				final BoogieType bvType = typecheckExpression(bvaexpr.getBitvec());
+				resultType = TypeCheckHelper.typeCheckBitVectorAccessExpression(
+						TypeCheckHelper.getBitVecLength(bvType), bvaexpr.getEnd(),
+						bvaexpr.getStart(), bvType, new TypeErrorReporter(expr));
+			} else if (expr instanceof StructAccessExpression) {
+				final StructAccessExpression sae = (StructAccessExpression) expr;
+				resultType = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs(
+						typecheckExpression(sae.getStruct()).getUnderlyingType(), sae.getField(), typeErrorReporter);
+			} else if (expr instanceof ArrayAccessExpression) {
+				final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
+				final BoogieType arrayType = typecheckExpression(aaexpr.getArray()).getUnderlyingType();
+				final List<BoogieType> indicesTypes = Arrays.stream(aaexpr.getIndices())
+						.map(exp -> typecheckExpression(exp)).collect(Collectors.toList());
+				resultType = TypeCheckHelper.typeCheckArrayAccessExpressionOrLhs(arrayType, indicesTypes, typeErrorReporter);
+			} else if (expr instanceof ArrayStoreExpression) {
+				final ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
+				final BoogieType arrayType = typecheckExpression(asexpr.getArray()).getUnderlyingType();
+				final Expression[] indices = asexpr.getIndices();
+				final List<BoogieType> indicesTypes = new ArrayList<>();
+				Arrays.stream(indices).forEachOrdered(index -> indicesTypes.add(typecheckExpression(index)));
+				assert indicesTypes.size() == indices.length;
+				final BoogieType valueType = typecheckExpression(asexpr.getValue());
 
-			resultType = TypeCheckHelper.typeCheckArrayStoreExpression(arrayType, indicesTypes, valueType,
-					typeErrorReporter);
-		} else if (expr instanceof BooleanLiteral) {
-			resultType = BoogieType.TYPE_BOOL;
-		} else if (expr instanceof IntegerLiteral) {
-			resultType = BoogieType.TYPE_INT;
-		} else if (expr instanceof RealLiteral) {
-			resultType = BoogieType.TYPE_REAL;
-		} else if (expr instanceof BitvecLiteral) {
-			final BitvecLiteral bvlit = (BitvecLiteral) expr;
-			resultType = BoogieType.createBitvectorType(bvlit.getLength());
-		} else if (expr instanceof StructConstructor) {
-			final StructConstructor struct = (StructConstructor) expr;
-			final Expression[] fieldExprs = struct.getFieldValues();
-			final BoogieType[] fieldTypes = new BoogieType[fieldExprs.length];
-			boolean hasError = false;
-			for (int i = 0; i < fieldExprs.length; i++) {
-				fieldTypes[i] = typecheckExpression(fieldExprs[i]);
-				hasError |= fieldTypes[i] == BoogieType.TYPE_ERROR;
-			}
-			resultType = hasError ? BoogieType.TYPE_ERROR
-					: BoogieType.createStructType(struct.getFieldIdentifiers(), fieldTypes);
-		} else if (expr instanceof IdentifierExpression) {
-			final IdentifierExpression idexpr = (IdentifierExpression) expr;
-			final String name = idexpr.getIdentifier();
-			final VariableInfo info = findVariable(name);
-			if (info == null) {
-				typeError(expr, "Undeclared identifier " + name + " in " + expr);
-				resultType = BoogieType.TYPE_ERROR;
-			} else {
-				final DeclarationInformation declInfo = idexpr.getDeclarationInformation();
-				if (declInfo == null) {
-					idexpr.setDeclarationInformation(info.getDeclarationInformation());
-				} else {
-					checkExistingDeclarationInformation(name, declInfo, info.getDeclarationInformation());
+				resultType = TypeCheckHelper.typeCheckArrayStoreExpression(arrayType, indicesTypes, valueType,
+						typeErrorReporter);
+			} else if (expr instanceof BooleanLiteral) {
+				resultType = BoogieType.TYPE_BOOL;
+			} else if (expr instanceof IntegerLiteral) {
+				resultType = BoogieType.TYPE_INT;
+			} else if (expr instanceof RealLiteral) {
+				resultType = BoogieType.TYPE_REAL;
+			} else if (expr instanceof BitvecLiteral) {
+				final BitvecLiteral bvlit = (BitvecLiteral) expr;
+				resultType = BoogieType.createBitvectorType(bvlit.getLength());
+			} else if (expr instanceof StructConstructor) {
+				final StructConstructor struct = (StructConstructor) expr;
+				final Expression[] fieldExprs = struct.getFieldValues();
+				final BoogieType[] fieldTypes = new BoogieType[fieldExprs.length];
+				boolean hasError = false;
+				for (int i = 0; i < fieldExprs.length; i++) {
+					fieldTypes[i] = typecheckExpression(fieldExprs[i]);
+					hasError |= fieldTypes[i] == BoogieType.TYPE_ERROR;
 				}
-				resultType = info.getType().getUnderlyingType();
-			}
-		} else if (expr instanceof FunctionApplication) {
-			final FunctionApplication app = (FunctionApplication) expr;
-			final String name = app.getIdentifier();
-			final FunctionInfo fi = mDeclaredFunctions.get(name);
-			if (fi == null) {
-				typeError(expr, "Undeclared function " + name + " in " + expr);
-				resultType = BoogieType.TYPE_ERROR;
-			} else {
-				final BoogieFunctionSignature fs = fi.getSignature();
-				final BoogieType[] subst = new BoogieType[fs.getTypeArgCount()];
-				final Expression[] appArgs = app.getArguments();
-				if (appArgs.length != fs.getParamCount()) {
-					typeError(expr, "Type check failed (wrong number of indices): " + expr);
+				resultType = hasError ? BoogieType.TYPE_ERROR
+						: BoogieType.createStructType(struct.getFieldIdentifiers(), fieldTypes);
+			} else if (expr instanceof IdentifierExpression) {
+				final IdentifierExpression idexpr = (IdentifierExpression) expr;
+				final String name = idexpr.getIdentifier();
+				final VariableInfo info = findVariable(name);
+				if (info == null) {
+					typeError(expr, "Undeclared identifier " + name + " in " + expr);
+					resultType = BoogieType.TYPE_ERROR;
 				} else {
-					for (int i = 0; i < appArgs.length; i++) {
-						final BoogieType t = typecheckExpression(appArgs[i]);
-						if (!t.equals(BoogieType.TYPE_ERROR) && !fs.getParamType(i).unify(t, subst)) {
-							typeError(expr, "Type check failed (index " + i + "): " + expr);
+					final DeclarationInformation declInfo = idexpr.getDeclarationInformation();
+					if (declInfo == null) {
+						idexpr.setDeclarationInformation(info.getDeclarationInformation());
+					} else {
+						checkExistingDeclarationInformation(name, declInfo, info.getDeclarationInformation());
+					}
+					resultType = info.getType().getUnderlyingType();
+				}
+			} else if (expr instanceof FunctionApplication) {
+				final FunctionApplication app = (FunctionApplication) expr;
+				final String name = app.getIdentifier();
+				final FunctionInfo fi = mDeclaredFunctions.get(name);
+				if (fi == null) {
+					typeError(expr, "Undeclared function " + name + " in " + expr);
+					resultType = BoogieType.TYPE_ERROR;
+				} else {
+					final BoogieFunctionSignature fs = fi.getSignature();
+					final BoogieType[] subst = new BoogieType[fs.getTypeArgCount()];
+					final Expression[] appArgs = app.getArguments();
+					if (appArgs.length != fs.getParamCount()) {
+						typeError(expr, "Type check failed (wrong number of indices): " + expr);
+					} else {
+						for (int i = 0; i < appArgs.length; i++) {
+							final BoogieType t = typecheckExpression(appArgs[i]);
+							if (!t.equals(BoogieType.TYPE_ERROR) && !fs.getParamType(i).unify(t, subst)) {
+								typeError(expr, "Type check failed (index " + i + "): " + expr);
+							}
 						}
 					}
+					resultType = fs.getResultType().substitutePlaceholders(subst);
 				}
-				resultType = fs.getResultType().substitutePlaceholders(subst);
-			}
-		} else if (expr instanceof IfThenElseExpression) {
-			final IfThenElseExpression ite = (IfThenElseExpression) expr;
+			} else if (expr instanceof IfThenElseExpression) {
+				final IfThenElseExpression ite = (IfThenElseExpression) expr;
 
-			final BoogieType condType = typecheckExpression(ite.getCondition());
-			final BoogieType left = typecheckExpression(ite.getThenPart());
-			final BoogieType right = typecheckExpression(ite.getElsePart());
+				final BoogieType condType = typecheckExpression(ite.getCondition());
+				final BoogieType left = typecheckExpression(ite.getThenPart());
+				final BoogieType right = typecheckExpression(ite.getElsePart());
 
 
-			resultType = TypeCheckHelper.typeCheckIfThenElseExpression(condType, left, right, typeErrorReporter);
-		} else if (expr instanceof QuantifierExpression) {
-			final QuantifierExpression quant = (QuantifierExpression) expr;
-			final TypeParameters typeParams = new TypeParameters(quant.getTypeParams());
-			mTypeManager.pushTypeScope(typeParams);
+				resultType = TypeCheckHelper.typeCheckIfThenElseExpression(condType, left, right, typeErrorReporter);
+			} else if (expr instanceof QuantifierExpression) {
+				final QuantifierExpression quant = (QuantifierExpression) expr;
+				final TypeParameters typeParams = new TypeParameters(quant.getTypeParams());
+				mTypeManager.pushTypeScope(typeParams);
 
-			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.QUANTIFIED, null);
-			final VarList[] parameters = quant.getParameters();
+				final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.QUANTIFIED, null);
+				final VarList[] parameters = quant.getParameters();
 
-			mVarScopes.beginScope();
-			for (final VarList p : parameters) {
-				final BoogieType type = mTypeManager.resolveType(p.getType());
-				for (final String id : p.getIdentifiers()) {
-					mVarScopes.put(id, new VariableInfo(true, null, id, type, declInfo));
+				mVarScopes.beginScope();
+				for (final VarList p : parameters) {
+					final BoogieType type = mTypeManager.resolveType(p.getType());
+					for (final String id : p.getIdentifiers()) {
+						mVarScopes.put(id, new VariableInfo(true, null, id, type, declInfo));
+					}
 				}
-			}
-			if (!typeParams.fullyUsed()) {
-				typeError(expr, "Type args not fully used in variable types: " + expr);
-			}
+				if (!typeParams.fullyUsed()) {
+					typeError(expr, "Type args not fully used in variable types: " + expr);
+				}
 
-			typecheckAttributes(quant.getAttributes());
-			final BoogieType t = typecheckExpression(quant.getSubformula());
-			if (!t.equals(BoogieType.TYPE_ERROR) && !t.equals(BoogieType.TYPE_BOOL)) {
-				typeError(expr, "Type check error in: " + expr);
+				typecheckAttributes(quant.getAttributes());
+				final BoogieType t = typecheckExpression(quant.getSubformula());
+				if (!t.equals(BoogieType.TYPE_ERROR) && !t.equals(BoogieType.TYPE_BOOL)) {
+					typeError(expr, "Type check error in: " + expr);
+				}
+				mVarScopes.endScope();
+				mTypeManager.popTypeScope();
+				resultType = BoogieType.TYPE_BOOL;
+			} else if (expr instanceof WildcardExpression) {
+				resultType = BoogieType.TYPE_BOOL;
+			} else {
+				throw new IllegalStateException("Unknown expression node " + expr);
 			}
-			mVarScopes.endScope();
-			mTypeManager.popTypeScope();
-			resultType = BoogieType.TYPE_BOOL;
-		} else if (expr instanceof WildcardExpression) {
-			resultType = BoogieType.TYPE_BOOL;
-		} else {
-			throw new IllegalStateException("Unknown expression node " + expr);
+			expr.setType(resultType);
+			mCache.put(expr, resultType);
 		}
-		expr.setType(resultType);
+		assert expr.getType().equals(resultType);
 		return resultType;
 	}
 

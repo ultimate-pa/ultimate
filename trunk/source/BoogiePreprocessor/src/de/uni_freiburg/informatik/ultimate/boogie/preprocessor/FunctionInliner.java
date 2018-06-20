@@ -2,27 +2,27 @@
  * Copyright (C) 2009-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Sergio Feo Arenis (arenis@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogiePreprocessor plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogiePreprocessor plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.CachingBoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -59,12 +59,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 
 /**
  * This class removes function bodies by either inlining them (if the attribute
- * "inline" is set) or by adding a corresponding axiom stating that for all 
+ * "inline" is set) or by adding a corresponding axiom stating that for all
  * input values the function returns the output given by the body.
- * 
+ *
  * @author hoenicke
  */
-public class FunctionInliner extends BoogieTransformer 
+public class FunctionInliner extends CachingBoogieTransformer
 	implements IUnmanagedObserver {
 
 	/**
@@ -95,61 +95,61 @@ public class FunctionInliner extends BoogieTransformer
 		 * The parent scope.
 		 */
 		Scope parent;
-		
+
 		public Scope() {
 			parent = null;
 			renamings = new HashMap<String,Expression>();
 			declaredName = new HashSet<String>();
 		}
-		
-		public Scope(Scope par) {
+
+		public Scope(final Scope par) {
 			parent = par;
 			renamings = new HashMap<String,Expression>(par.renamings);
 			declaredName = new HashSet<String>(par.declaredName);
 		}
-		
+
 		public Scope getParent() {
 			return parent;
 		}
 
-		public void addRenaming(String name, Expression expr) {
+		public void addRenaming(final String name, final Expression expr) {
 			renamings.put(name, expr);
 		}
 
-		public Expression lookupRenaming(String name) {
-			// we only need to check current scope, since we clone 
+		public Expression lookupRenaming(final String name) {
+			// we only need to check current scope, since we clone
 			// renamings when creating a new scope.
 			return renamings.get(name);
 		}
 
-		public boolean clashes(String name) {
-			// we only need to check current scope, since we clone 
+		public boolean clashes(final String name) {
+			// we only need to check current scope, since we clone
 			// declaredName when creating a new scope.
 			return declaredName.contains(name);
 		}
-		
-		public void declareName(String name) {
+
+		public void declareName(final String name) {
 			declaredName.add(name);
 		}
 	}
-	
+
 
 	@Override
 	/**
 	 * Process a boogie file.  This is called by the tree walker and processes
 	 * the main node of the tree that starts the Boogie AST.
 	 */
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		// Check if node is the first node of the AST.
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
 			final List<Declaration> newDeclarations = new ArrayList<Declaration>();
 			inlinedFunctions = new HashMap<String, FunctionDeclaration>();
-			
+
 			// Process all declarations, copying them and replacing function
 			// declarations (removing inlined functions, removing bodies of
 			// other functions and adding axioms).
-			// It also collects inlined function in the hash map 
+			// It also collects inlined function in the hash map
 			// inlinedFunctions.
 			for (final Declaration decl: unit.getDeclarations()) {
 				if (decl instanceof FunctionDeclaration) {
@@ -177,28 +177,28 @@ public class FunctionInliner extends BoogieTransformer
 						int anonctr = 0;
 						for (final VarList vl : fdecl.getInParams()) {
 							if (vl.getIdentifiers().length == 0) {
-								params.add(new IdentifierExpression(vl.getLocation(), 
-										vl.getType().getBoogieType(), 
-										"#"+(anonctr++), 
+								params.add(new IdentifierExpression(vl.getLocation(),
+										vl.getType().getBoogieType(),
+										"#"+(anonctr++),
 										new DeclarationInformation(StorageClass.QUANTIFIED,  null)));
 							} else {
 								for (final String i: vl.getIdentifiers()) {
-									params.add(new IdentifierExpression(vl.getLocation(), 
-											vl.getType().getBoogieType(), i, 
+									params.add(new IdentifierExpression(vl.getLocation(),
+											vl.getType().getBoogieType(), i,
 											new DeclarationInformation(StorageClass.QUANTIFIED,  null)
 											));
 								}
 							}
 						}
-						final Expression[] funcParams = params.toArray(new Expression[params.size()]); 
+						final Expression[] funcParams = params.toArray(new Expression[params.size()]);
 						final Expression funcApp = new FunctionApplication(fdecl.getLocation(), fdecl.getOutParam().getType().getBoogieType(), fdecl.getIdentifier(), funcParams);
 						final Trigger funcTrigger = new Trigger(fdecl.getLocation(), new Expression[] {funcApp} );
 						final Expression funcEq = new BinaryExpression(fdecl.getLocation(), BoogiePrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, funcApp, fdecl.getBody());
 						final Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), BoogiePrimitiveType.TYPE_BOOL, true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger }, funcEq);
-						final Axiom fdeclAxiom = new Axiom(fdecl.getLocation(),  
+						final Axiom fdeclAxiom = new Axiom(fdecl.getLocation(),
 								                     new Attribute[0], funcDecl);
-						newDeclarations.add(new FunctionDeclaration(fdecl.getLocation(),  
-								fdecl.getAttributes(), fdecl.getIdentifier(), fdecl.getTypeParams(), 
+						newDeclarations.add(new FunctionDeclaration(fdecl.getLocation(),
+								fdecl.getAttributes(), fdecl.getIdentifier(), fdecl.getTypeParams(),
 								fdecl.getInParams(), fdecl.getOutParam()));
 						newDeclarations.add(fdeclAxiom);
 					}
@@ -219,13 +219,13 @@ public class FunctionInliner extends BoogieTransformer
 		}
 		return true;
 	}
-	
+
 	@Override
 	/**
-	 * Process a declaration.  This creates new scopes for function and 
+	 * Process a declaration.  This creates new scopes for function and
 	 * procedures, that store input and output variables.
 	 */
-	protected Declaration processDeclaration(Declaration d)
+	protected Declaration processDeclaration(final Declaration d)
 	{
 		if (d instanceof FunctionDeclaration
 			|| d instanceof Procedure) {
@@ -237,12 +237,12 @@ public class FunctionInliner extends BoogieTransformer
 			return super.processDeclaration(d);
 		}
 	}
-	
+
 	@Override
 	/**
-	 * Process a body.  This creates new scope for storing local variables. 
+	 * Process a body.  This creates new scope for storing local variables.
 	 */
-	protected Body processBody(Body b)
+	protected Body processBody(final Body b)
 	{
 		currentScope = new Scope(currentScope);
 		final Body result = super.processBody(b);
@@ -252,25 +252,25 @@ public class FunctionInliner extends BoogieTransformer
 
 	@Override
 	/**
-	 * Process a variable declaration list.  This adds all variables to 
-	 * the name clash set of the current scope. 
+	 * Process a variable declaration list.  This adds all variables to
+	 * the name clash set of the current scope.
 	 */
-	public VarList processVarList(VarList vl)
+	public VarList processVarList(final VarList vl)
 	{
 		for (final String name: vl.getIdentifiers()) {
 			currentScope.declareName(name);
 		}
 		return super.processVarList(vl);
 	}
-	
+
 	@Override
 	/**
 	 * Process an expression.  This replaces identifiers according to the
 	 * renaming (if present), inlines function calls, and renames identifiers
 	 * in quantifiers in case a name from an inlined function clashes with
-	 * a name declared in the outer scope. 
+	 * a name declared in the outer scope.
 	 */
-	public Expression processExpression(Expression expr) {
+	public Expression processExpression(final Expression expr) {
 	    Expression newExpr = null;
 		if (expr instanceof IdentifierExpression) {
 			// rename identifiers according to the renaming map in the scope.
@@ -322,7 +322,7 @@ public class FunctionInliner extends BoogieTransformer
 						} while (currentScope.clashes(newname));
 						newIds[idNr] = newname;
 						currentScope.addRenaming(ids[idNr], new IdentifierExpression(
-								vl[vlNr].getLocation(), vl[vlNr].getType().getBoogieType(), 
+								vl[vlNr].getLocation(), vl[vlNr].getType().getBoogieType(),
 								newname, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
 					}
 					if (newIds != ids) {
@@ -340,7 +340,7 @@ public class FunctionInliner extends BoogieTransformer
 			if (vl == newVl && subform == qexpr.getSubformula() && attrs == qexpr.getAttributes()) {
 				return expr;
 			}
-			newExpr = new QuantifierExpression(qexpr.getLocation(), qexpr.getType(), qexpr.isUniversal(), 
+			newExpr = new QuantifierExpression(qexpr.getLocation(), qexpr.getType(), qexpr.isUniversal(),
 					qexpr.getTypeParams(), newVl, attrs,
 					subform);
 		}
@@ -358,7 +358,7 @@ public class FunctionInliner extends BoogieTransformer
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 	}
 	@Override
 	public boolean performedChanges() {
