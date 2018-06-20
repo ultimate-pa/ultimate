@@ -82,8 +82,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
@@ -1094,10 +1094,14 @@ public class CfgBuilder {
 			if (mCurrent instanceof CodeBlock) {
 				final CodeBlock transEdge = (CodeBlock) mCurrent;
 				transEdge.connectTarget(finalNode);
-				mLogger.debug("Constructed TransEdge " + transEdge + "as predecessr of " + mIcfg.mFinalNode);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Constructed TransEdge " + transEdge + "as predecessr of " + mIcfg.mFinalNode);
+				}
 			} else if (mCurrent instanceof BoogieIcfgLocation) {
 				mergeLocNodes((BoogieIcfgLocation) mCurrent, finalNode);
-				mLogger.debug("Replacing " + mCurrent + " by " + finalNode);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Replacing " + mCurrent + " by " + finalNode);
+				}
 			} else {
 				// mcurrent must be either LocNode or TransEdge
 				// s_Logger.warn("Last location of " + mcurrentProcedureName +
