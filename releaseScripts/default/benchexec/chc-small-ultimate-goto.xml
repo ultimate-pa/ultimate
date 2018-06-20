@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="360" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90" hardtimelimit="112" cpuCores="2">
 	<rundefinition name="CHC-Goto">
 		<option name="-tc">../../../trunk/examples/toolchains/AutomizerCHC.xml</option>
 		<option name="--generate-csv" />
