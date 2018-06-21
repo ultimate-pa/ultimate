@@ -90,7 +90,7 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 			}
 			newTrace.add(mappedEdge);
 			addProgramState(i, newValues, programExecution.getProgramState(i));
-			if (oldBranchEncoders != null) {
+			if (oldBranchEncoders != null && i < oldBranchEncoders.length) {
 				newBranchEncoders.add(oldBranchEncoders[i]);
 			}
 		}
@@ -141,6 +141,5 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, Icf
 	public Map<IcfgEdge, IcfgEdge> getEdgeMapping() {
 		return Collections.unmodifiableMap(mEdgeMapping);
 	}
-	
-	
+
 }

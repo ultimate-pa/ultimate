@@ -29,23 +29,29 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.DnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * {@link SmallBlockEncoder} tries to transform every internal transition to a DNF and if the resulting DNF has more
@@ -55,11 +61,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 
+	private static final boolean CONVERT_TO_DNF = false;
+
 	private final IcfgEdgeBuilder mEdgeBuilder;
+
+	private DnfTransformer mDnfTransformer;
+
+	private NnfTransformer mNnfTransformer;
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param edgeBuilder
 	 * @param services
 	 * @param backtranslator
@@ -80,9 +92,11 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
+		mDnfTransformer = new DnfTransformer(toolkit.getManagedScript(), mServices);
+		mNnfTransformer = new NnfTransformer(toolkit.getManagedScript(), mServices, QuantifierHandling.KEEP);
+		final Script script = toolkit.getManagedScript().getScript();
 
 		final IcfgLocationIterator<IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
-		final DnfTransformer dnfTransformer = new DnfTransformer(toolkit.getManagedScript(), mServices);
 
 		final Set<IcfgEdge> toRemove = new HashSet<>();
 
@@ -97,31 +111,141 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 					continue;
 				}
 
-				final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(edge);
-				final Term dnf = dnfTransformer.transform(tf.getFormula());
-				final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
-				if (disjuncts.length == 1) {
-					// was already in dnf
+				final Term term = getTerm(edge);
+
+				final Term[] disjuncts = SmtUtils.getDisjuncts(term);
+				if (disjuncts.length > 1) {
+					// top-level disjunction, remove this edge, replace by disjunctions
+					if (!toRemove.add(edge)) {
+						mLogger.warn("Unncessecary transformation");
+						continue;
+					}
+					addEdgesFromDisjuncts(edge, disjuncts);
 					continue;
 				}
+
+				final Term[] conjuncts = SmtUtils.getConjuncts(term);
+				if (conjuncts.length == 1) {
+					// its neither disjunction nor conjunction, so it should be a literal or relation
+					// we keep this edge and move on
+					continue;
+				}
+
+				// top-level conjunction; try to go down one level and extract all
+				// conjuncts that are disjunctions by splitting it three ways:
+				// - prefix without disjunctions
+				// - the first disjunction
+				// - the rest
+
+				final List<Term> prefix = new ArrayList<>();
+				Term[] disjunction = null;
+				final List<Term> suffix = new ArrayList<>();
+				for (int i = 0; i < conjuncts.length; ++i) {
+					final Term[] subdisjuncts = SmtUtils.getDisjuncts(conjuncts[i]);
+					if (subdisjuncts.length == 1) {
+						prefix.add(subdisjuncts[0]);
+					} else {
+						disjunction = subdisjuncts;
+						for (int j = i + 1; j < conjuncts.length; ++j) {
+							suffix.add(conjuncts[j]);
+						}
+						break;
+					}
+				}
+
+				if (disjunction == null) {
+					// there was no disjunction, lets just keep this edge
+					continue;
+				}
+
+				// we are going to remove this edge, check if we already did it
 				if (!toRemove.add(edge)) {
 					mLogger.warn("Unncessecary transformation");
 					continue;
 				}
-				addNewEdges(edge, disjuncts);
+
+				final IcfgLocation newSource;
+				if (prefix.isEmpty()) {
+					newSource = edge.getSource();
+				} else {
+					// we add a new edge between the old source and a new location and label it with the prefix
+					newSource = createNewLocation(icfg, edge.getTarget());
+					final Term prefixTerm = SmtUtils.and(script, prefix);
+					final IcfgEdge newEdge =
+							mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), newSource, prefixTerm);
+					rememberEdgeMapping(newEdge, edge);
+				}
+
+				final IcfgLocation newTarget;
+				if (suffix.isEmpty()) {
+					newTarget = edge.getTarget();
+				} else {
+					// we add a new edge between a new location and the old target and label it with the suffix
+					newTarget = createNewLocation(icfg, edge.getTarget());
+					final Term suffixTerm = SmtUtils.and(script, suffix);
+					final IcfgEdge newEdge =
+							mEdgeBuilder.constructInternalTransition(edge, newTarget, edge.getTarget(), suffixTerm);
+					rememberEdgeMapping(newEdge, edge);
+				}
+
+				// finally, we add the disjunctions between newsource and newtarget
+				for (final Term disjunct : disjunction) {
+					final IcfgEdge newEdge =
+							mEdgeBuilder.constructInternalTransition(edge, newSource, newTarget, disjunct);
+					rememberEdgeMapping(newEdge, edge);
+				}
 			}
 		}
 
+		final List<Pair<IcfgLocation, IcfgLocation>> locations = new ArrayList<>();
 		toRemove.stream().forEach(a -> {
+			locations.add(new Pair<>(a.getSource(), a.getTarget()));
 			a.disconnectSource();
 			a.disconnectTarget();
 		});
+		for (final Pair<IcfgLocation, IcfgLocation> location : locations) {
+			final IcfgLocation source = location.getFirst();
+			final IcfgLocation target = location.getSecond();
+			if (target == null || source == null) {
+				continue;
+			}
+			final IcfgLocationIterator<IcfgLocation> locIter = new IcfgLocationIterator<>(source);
+			if (locIter.asStream().allMatch(a -> !a.equals(target))) {
+				throw new AssertionError("Disconnected graph by removing connection between "
+						+ source.getDebugIdentifier() + " and " + target.getDebugIdentifier());
+			}
+		}
 		mRemovedEdges = toRemove.size();
-
 		return icfg;
 	}
 
-	private void addNewEdges(final IcfgEdge oldEdge, final Term[] disjuncts) {
+	private static IcfgLocation createNewLocation(final BasicIcfg<IcfgLocation> icfg, final IcfgLocation oldLoc) {
+
+		final String proc = oldLoc.getProcedure();
+		final Map<String, IcfgLocation> localPps = icfg.getProgramPoints().get(proc);
+
+		String newIdentifier = oldLoc.getDebugIdentifier();
+		while (localPps.containsKey(newIdentifier)) {
+			newIdentifier += "s";
+		}
+
+		final IcfgLocation freshLoc = new IcfgLocation(newIdentifier, proc);
+
+		// determine attributes of location
+		final Set<IcfgLocation> errorLocs = icfg.getProcedureErrorNodes().get(proc);
+		final boolean isError = errorLocs != null && errorLocs.contains(oldLoc);
+		final boolean isProcEntry = oldLoc.equals(icfg.getProcedureEntryNodes().get(proc));
+		final boolean isProcExit = oldLoc.equals(icfg.getProcedureExitNodes().get(proc));
+		final boolean isLoopLocation = icfg.getLoopLocations().contains(oldLoc);
+		final boolean isInitial = icfg.getInitialNodes().contains(oldLoc);
+
+		// add fresh location to resultIcfg
+		icfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+
+		return freshLoc;
+	}
+
+	private void addEdgesFromDisjuncts(final IcfgEdge oldEdge, final Term[] disjuncts) {
 		final IcfgLocation source = oldEdge.getSource();
 		final IcfgLocation target = oldEdge.getTarget();
 		for (final Term disjunct : disjuncts) {
@@ -129,4 +253,13 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 			rememberEdgeMapping(newEdge, oldEdge);
 		}
 	}
+
+	private Term getTerm(final IIcfgTransition<?> edge) {
+		final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(edge);
+		if (CONVERT_TO_DNF) {
+			return mDnfTransformer.transform(tf.getFormula());
+		}
+		return mNnfTransformer.transform(tf.getFormula());
+	}
+
 }

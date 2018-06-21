@@ -81,6 +81,14 @@ public abstract class BaseBlockEncoder<LOC extends IcfgLocation> implements IEnc
 		return mResult;
 	}
 
+	public int getRemovedEdges() {
+		return mRemovedEdges;
+	}
+
+	public int getRemovedLocations() {
+		return mRemovedLocations;
+	}
+
 	protected abstract BasicIcfg<LOC> createResult(BasicIcfg<LOC> icfg);
 
 	protected List<IcfgLocation> getSuccessors(final IcfgLocation point) {

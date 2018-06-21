@@ -177,8 +177,22 @@ public final class BlockEncoder {
 
 		if (ups.getBoolean(BlockEncodingPreferences.PRE_SBE)) {
 			mLogger.info("Using " + BlockEncodingPreferences.PRE_SBE);
-			mIterationResult = new SmallBlockEncoder(mEdgeBuilder, mServices, mBacktranslator, mLogger)
-					.getResult(mIterationResult);
+			int removedEdges = 0;
+			while (true) {
+				final SmallBlockEncoder sbe = new SmallBlockEncoder(mEdgeBuilder, mServices, mBacktranslator, mLogger);
+				mIterationResult = sbe.getResult(mIterationResult);
+				removedEdges += sbe.getRemovedEdges();
+				if (!sbe.isGraphStructureChanged()) {
+					break;
+				}
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+							new TimeoutResult(Activator.PLUGIN_ID, "Timeout during SBE block encoding"));
+					return;
+				}
+			}
+			mLogger.info("SBE split " + removedEdges + " edges");
+
 		}
 
 		while (true) {
