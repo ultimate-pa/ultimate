@@ -75,10 +75,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 
 /**
  * Construct Boogie Expressions (and LeftHandSides), use this instead of the constructors. Functionalities:
- * <li>do minor simplifications (e.g. if all operands are literals)
- * <li>computes types for the resulting Boogie expressions, throws an exception if it cannot be typed. Note that this
+ * <ul>
+ *  <li> do minor simplifications (e.g. if all operands are literals)
+ *  <li> computes types for the resulting Boogie expressions, throws an exception if it cannot be typed. Note that this
  * means that all input Boogie expressions must have a type. (Which is the case if they have been constructed using this
  * factory.)
+ * </ul>
  *
  * @author Daniel Dietsch
  * @author Matthias Heizmann

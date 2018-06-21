@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.typechecker;
 import java.util.List;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -45,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 /**
  * Contains methods that infer the Boogie type for any kind of composite Boogie expression from its component's types.
  *
- * This code was factored our from the TypeChecker in BoogiePreprocessor in order to make it available to the
- * ExpressionFactory.
+ * This code was factored our from the {@link TypeChecker} in BoogiePreprocessor in order to make it available to the
+ * {@link ExpressionFactory}.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
