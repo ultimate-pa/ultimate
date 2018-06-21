@@ -76,7 +76,8 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		mMap = new HashMap<>(original.mMap);
 		mHistory = new HashMap[original.mHistory.length];
 		for (int i = 0; i < mHistory.length; i++) {
-			mHistory[i] = new HashMap<>(original.mHistory[i]);
+			final HashMap<K, V> origEntry = original.mHistory[i];
+			mHistory[i] = origEntry == null ? null : new HashMap<>(origEntry);
 		}
 		mShrink = original.mShrink;
 		mCurScope = original.mCurScope;
