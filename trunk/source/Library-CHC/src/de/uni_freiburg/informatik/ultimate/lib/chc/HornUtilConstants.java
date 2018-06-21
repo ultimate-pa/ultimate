@@ -53,6 +53,8 @@ public final class HornUtilConstants {
 
 	public static final String GOTO_PROC_NAME = "gotoProc";
 
+	public static final String SSA_VAR_PREFIX = "ssa";
+
 	private HornUtilConstants() {
 		// hides public constructor
 	}

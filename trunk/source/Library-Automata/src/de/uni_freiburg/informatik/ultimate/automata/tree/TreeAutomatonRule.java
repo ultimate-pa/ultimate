@@ -70,7 +70,7 @@ public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 
 	@Override
 	public String toString() {
-		return "(" + mSrc.toString() + " ~~ " + mLetter.toString() + " ~~> " + mDest.toString() + ")";
+		return "(" + mSrc.toString() + " | " + mLetter.toString() + " | " + mDest.toString() + ")";
 	}
 
 	@Override

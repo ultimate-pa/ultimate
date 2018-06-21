@@ -284,7 +284,7 @@ public class TreeAutomizerCEGAR {
 
 		((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 
-		assert allRulesAreInductive(mInterpolAutomaton);
+		assert assertAllRulesAreInductive(mInterpolAutomaton);
 		if (TreeAutomizerSettings.GENERALIZE_INTERPOLANT_AUTOMATON_UPFRONT) {
 			generalizeCounterExample(mInterpolAutomaton);
 		}
@@ -297,7 +297,7 @@ public class TreeAutomizerCEGAR {
 			writeAutomatonToFile(mServices, mInterpolAutomaton, automataDumpPath, filename, Format.ATS_NUMERATE, "");
 		}
 
-		assert allRulesAreInductive(mInterpolAutomaton);
+		assert assertAllRulesAreInductive(mInterpolAutomaton);
 	}
 
 	/**
@@ -307,11 +307,12 @@ public class TreeAutomizerCEGAR {
 	 * @param automaton
 	 * @return boolean if all the rules are inductive.
 	 */
-	private boolean allRulesAreInductive(final ITreeAutomatonBU<HornClause, IPredicate> automaton) {
+	private boolean assertAllRulesAreInductive(final ITreeAutomatonBU<HornClause, IPredicate> automaton) {
 		for (final List<IPredicate> source : automaton.getSourceCombinations()) {
 			for (final TreeAutomatonRule<HornClause, IPredicate> rule : automaton.getSuccessors(source)) {
 				final Validity validity = mHoareTripleChecker.check(rule.getSource(), rule.getLetter(), rule.getDest());
 				if (validity != Validity.VALID) {
+					assert false;
 					return false;
 				}
 			}
