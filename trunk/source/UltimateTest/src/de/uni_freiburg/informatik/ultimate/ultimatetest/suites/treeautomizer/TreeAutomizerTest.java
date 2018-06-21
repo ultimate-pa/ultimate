@@ -37,7 +37,8 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 	private static final long TIMEOUT = 90 * 1000;
 
 	private static final String TOOLCHAIN = "examples/toolchains/AutomizerCHC.xml";
-	private static final String SETTINGS_FILE = "examples/settings/chccomp2018/chcToBoogie_automizer.epf";
+	private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_Goto.epf";
+//	private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_No_Goto.epf";
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
