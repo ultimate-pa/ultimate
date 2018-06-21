@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.treeautomizer;
+package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.chc;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -13,8 +13,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimate.test.decider.HornClauseTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.TreeAutomizerTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogCsv;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
@@ -36,9 +36,9 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 
 	private static final long TIMEOUT = 90 * 1000;
 
-	private static final String TOOLCHAIN = "examples/toolchains/AutomizerCHC.xml";
-	private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_Goto.epf";
-//	private static final String SETTINGS_FILE = "examples/settings/chc/AutomizerCHC/AutomizerCHC_No_Goto.epf";
+	private static final String TOOLCHAIN = "examples/toolchains/TreeAutomizer.xml";
+//	private static final String SETTINGS_FILE = "examples/settings/chc/TreeAutomizer/TreeAutomizerHopcroftMinimization.epf";
+	private static final String SETTINGS_FILE = "examples/settings/chc/TreeAutomizer/TreeAutomizerNaiveMinimization.epf";
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -104,6 +104,6 @@ public class TreeAutomizerTest extends AbstractModelCheckerTestSuiteWithIncremen
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new HornClauseTestResultDecider(urd, true);
+		return new TreeAutomizerTestResultDecider(urd, true);
 	}
 }

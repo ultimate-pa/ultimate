@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyChec
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class HornClauseTestResultDecider extends SafetyCheckTestResultDecider {
+public class AutomizerChcTestResultDecider extends SafetyCheckTestResultDecider {
 
-	public HornClauseTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+	public AutomizerChcTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
 			final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
