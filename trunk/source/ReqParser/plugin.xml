@@ -4,7 +4,7 @@
    <extension
          point="de.uni_freiburg.informatik.ultimate.ep.source">
       <impl
-            class="de.uni_freiburg.informatik.ultimate.pea2boogie.ReqParser">
+            class="de.uni_freiburg.informatik.ultimate.reqparser.ReqParser">
       </impl>
    </extension>
 

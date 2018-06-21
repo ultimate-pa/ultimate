@@ -234,7 +234,7 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public String[] getFileTypes() {
-		return new String[] { ".req" };
+		return new String[] { ".reqlala" };
 	}
 
 	@Override

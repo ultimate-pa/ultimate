@@ -31,33 +31,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class ReqParser implements ISource {
 	private ILogger mLogger;
@@ -95,12 +83,14 @@ public class ReqParser implements ISource {
 		final List<PatternType> rawPatterns = new ArrayList<>();
 		for (File file: files) {
 			final FileInputStream fis = new FileInputStream(file);
+			mLogger.info("Parsing file "+file.getName());
 			try {
 				final de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser parser 
 				= new de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser(mServices, mLogger, fis, file.getName());
 				final Symbol goal = parser.parse();
 				rawPatterns.addAll(Arrays.asList((PatternType[]) goal.value));
 			} finally {
+				mLogger.error("Error in file: "+file.getName());
 				fis.close();
 			}
 		}
@@ -137,15 +127,6 @@ public class ReqParser implements ISource {
 	@Override
 	public void finish() {
 		// not necessary
-	}
-
-	private static final class DummyLocation extends DefaultLocation {
-
-		private static final long serialVersionUID = 1L;
-
-		public DummyLocation() {
-			super("", -1, 0, 0, 0);
-		}
 	}
 
 	@Override
