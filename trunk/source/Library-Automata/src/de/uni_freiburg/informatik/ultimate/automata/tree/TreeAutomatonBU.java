@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Mostafa M.A. (mostafa.amin93@gmail.com)
  * Copyright (C) 2014-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * A Bottom-up TreeAutomaton. The rules have the form f(q1,...,qn) ~> q
- * 
- * 
+ *
+ *
  * @param <LETTER>
  *            is the type of the alphabet.
  * @param <STATE>
  *            is the type of the states.
- * 
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
@@ -81,7 +81,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/***
 	 * Add Final state
-	 * 
+	 *
 	 * @param state
 	 */
 	public void addFinalState(final STATE state) {
@@ -91,7 +91,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/***
 	 * Add a letter
-	 * 
+	 *
 	 * @param letter
 	 */
 	public void addLetter(final LETTER letter) {
@@ -100,9 +100,10 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/**
 	 * Add a rule to the automaton.
-	 * 
+	 *
 	 * @param rule
 	 */
+	@Override
 	public void addRule(final TreeAutomatonRule<LETTER, STATE> rule) {
 		if (mRules.contains(rule)) {
 			// If rule already exists, do nothing
@@ -168,7 +169,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/***
 	 * Add a state
-	 * 
+	 *
 	 * @param state
 	 */
 	public void addState(final STATE state) {
@@ -192,7 +193,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/***
 	 * A debug string representation
-	 * 
+	 *
 	 * @return
 	 */
 	public String DebugString() {
@@ -211,7 +212,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/***
 	 * Extend the alphabet.
-	 * 
+	 *
 	 * @param sigma
 	 */
 	public void extendAlphabet(final Collection<LETTER> sigma) {
@@ -225,7 +226,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU#
 	 * getAmountOfRules()
 	 */
@@ -272,11 +273,11 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/***
 	 * Get rules that use a specific character.
-	 * 
+	 *
 	 * @param letter
 	 * @return
 	 */
-	
+
 	@Override
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final LETTER letter) {
 		final Set<TreeAutomatonRule<LETTER, STATE>> res = new HashSet<>();
@@ -288,11 +289,11 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return res;
 		//return mLettersMap.get(letter);
 	}
-	
+
 
 	/***
 	 * Get rules by source.
-	 * 
+	 *
 	 * @param src
 	 * @return
 	 */
@@ -360,7 +361,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 
 	/***
 	 * Remove a given state from all the rules
-	 * 
+	 *
 	 * @param st
 	 */
 	public void removeState(final STATE st) {
@@ -483,7 +484,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return false;
 	}
 
-	private String stateString(STATE state) {
+	private String stateString(final STATE state) {
 		final StringBuilder res = new StringBuilder(state.toString());
 		res.append('"');
 		if (isFinalState(state)) {
@@ -494,7 +495,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	}
 
 	@Override
-	public IElement transformToUltimateModel(AutomataLibraryServices services)
+	public IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
 		// TODO Auto-generated method stub
 		return null;
