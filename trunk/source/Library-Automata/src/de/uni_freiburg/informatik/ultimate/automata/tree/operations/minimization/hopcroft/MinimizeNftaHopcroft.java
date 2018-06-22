@@ -311,25 +311,10 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		final STATE destinationRepresentative = this.mPartition.find(destinationBlock.iterator().next());
 		final NestedMap2<LETTER, List<STATE>, RuleContext<LETTER, STATE>> letterAndSourceSignatureToContexts = new NestedMap2<>();
 
-//		final Map<STATE, Map<LETTER, Set<List<STATE>>>> predecessorsMap = new HashMap<>();
-//		for (final List<STATE> src : mOperand.getSourceCombinations()) {
-//			for (final TreeAutomatonRule<LETTER, STATE> rule : mOperand.getSuccessors(src)) {
-//				final LETTER letter = rule.getLetter();
-//				final STATE destination = rule.getDest();
-//
-//				if (!predecessorsMap.containsKey(destination)) {
-//					predecessorsMap.put(destination, new HashMap<>());
-//				}
-//				if (!predecessorsMap.get(destination).containsKey(letter)) {
-//					predecessorsMap.get(destination).put(letter, new HashSet<>());
-//				}
-//				predecessorsMap.get(destination).get(letter).add(src);
-//			}
-//		}
 		// Find all rules whose destination is in the given block
 		for (final STATE destination : destinationBlock) {
-			final Map<LETTER, Iterable<List<STATE>>> predecessors = ((TreeAutomatonBU<LETTER, STATE>) this.mOperand).getPredecessors(destination);
-//			final Map<LETTER, Set<List<STATE>>> predecessors = predecessorsMap.get(destination);
+			final Map<LETTER, Iterable<List<STATE>>> predecessors =
+					((TreeAutomatonBU<LETTER, STATE>) this.mOperand).getPredecessors(destination);
 			for (final LETTER letter : predecessors.keySet()) {
 				// Skip all 0-ranked letters as they do not contribute to the language directly
 				if (letter.getRank() == 0) {
@@ -590,34 +575,33 @@ public final class MinimizeNftaHopcroft<LETTER extends IRankedLetter, STATE>
 		}
 
 		// Add resulting rules
-		for (final List<STATE> src : this.mOperand.getSourceCombinations()) {
-			for (final TreeAutomatonRule<LETTER, STATE> rule : this.mOperand.getSuccessors(src)) {
-				// Merge source
-				final List<STATE> source = rule.getSource();
-				final List<STATE> mergedSource = new ArrayList<>(source.size());
-				for (final STATE state : source) {
-					final STATE mergedState = representativeToMergedState.get(partition.find(state));
-					mergedSource.add(mergedState);
-				}
+		for (final TreeAutomatonRule<LETTER, STATE> rule :
+				((TreeAutomatonBU<LETTER, STATE>) this.mOperand).getRules()) {
+			// Merge source
+			final List<STATE> source = rule.getSource();
+			final List<STATE> mergedSource = new ArrayList<>(source.size());
+			for (final STATE state : source) {
+				final STATE mergedState = representativeToMergedState.get(partition.find(state));
+				mergedSource.add(mergedState);
+			}
 
-				// Merge destination
-				final STATE mergedDestination = representativeToMergedState.get(partition.find(rule.getDest()));
+			// Merge destination
+			final STATE mergedDestination = representativeToMergedState.get(partition.find(rule.getDest()));
 
-				// Add the merged rule
-				final TreeAutomatonRule<LETTER, STATE> mergedRule = new TreeAutomatonRule<>(rule.getLetter(), mergedSource,
-						mergedDestination);
-				result.addRule(mergedRule);
+			// Add the merged rule
+			final TreeAutomatonRule<LETTER, STATE> mergedRule = new TreeAutomatonRule<>(rule.getLetter(), mergedSource,
+					mergedDestination);
+			result.addRule(mergedRule);
 
-				if (this.mLogger.isDebugEnabled()) {
-					this.mLogger.debug("Merged rule=" + rule + " to mergedRule=" + mergedRule);
-				}
+			if (this.mLogger.isDebugEnabled()) {
+				this.mLogger.debug("Merged rule=" + rule + " to mergedRule=" + mergedRule);
+			}
 
-				// If operation was canceled, for example from the
-				// Ultimate framework
-				if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-					this.mLogger.debug("Stopped at creating result/adding rules");
-					throw new AutomataOperationCanceledException(this.getClass());
-				}
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+				this.mLogger.debug("Stopped at creating result/adding rules");
+				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
 
