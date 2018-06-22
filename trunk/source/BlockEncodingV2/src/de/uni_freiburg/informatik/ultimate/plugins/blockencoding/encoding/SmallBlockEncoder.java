@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -49,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.XnfTransformer.AbortBeforeBlowup;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 
-	private static final boolean CONVERT_TO_DNF = false;
+	private static final int DNF_ONLY_IF_LESS_THAN = 35;
 
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
@@ -94,7 +94,7 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
 		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
-		mDnfTransformer = new DnfTransformer(toolkit.getManagedScript(), mServices);
+		mDnfTransformer = new DnfTransformer(toolkit.getManagedScript(), mServices, a -> a > DNF_ONLY_IF_LESS_THAN);
 		mNnfTransformer = new NnfTransformer(toolkit.getManagedScript(), mServices, QuantifierHandling.KEEP);
 		mScript = toolkit.getManagedScript().getScript();
 		final IcfgLocationIterator<IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
@@ -120,7 +120,18 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 				continue;
 			}
 
-			final Term term = getTerm(edge);
+			final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(edge);
+			Term term;
+			try {
+				term = mDnfTransformer.transform(tf.getFormula());
+			} catch (final AbortBeforeBlowup exception) {
+				if (edge.getTransformula().getAssignedVars().isEmpty()) {
+					term = mNnfTransformer.transform(tf.getFormula());
+				} else {
+					continue;
+				}
+
+			}
 
 			final Term[] disjuncts = SmtUtils.getDisjuncts(term);
 			if (disjuncts.length > 1) {
@@ -130,11 +141,6 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 					continue;
 				}
 				addEdgesFromDisjuncts(edge, disjuncts);
-				continue;
-			}
-
-			if (!edge.getTransformula().getAssignedVars().isEmpty()) {
-				// skip edges that have assignments; we cannot split them easily
 				continue;
 			}
 
@@ -265,14 +271,6 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(oldEdge, source, target, disjunct);
 			rememberEdgeMapping(newEdge, oldEdge);
 		}
-	}
-
-	private Term getTerm(final IIcfgTransition<?> edge) {
-		final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(edge);
-		if (CONVERT_TO_DNF) {
-			return mDnfTransformer.transform(tf.getFormula());
-		}
-		return mNnfTransformer.transform(tf.getFormula());
 	}
 
 }
