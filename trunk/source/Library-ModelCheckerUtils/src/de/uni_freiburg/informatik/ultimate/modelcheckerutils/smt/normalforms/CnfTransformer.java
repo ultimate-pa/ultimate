@@ -36,20 +36,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * Transform Boolean Term into conjunctive normal form.
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 
 public class CnfTransformer extends XnfTransformer {
 
 	public CnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
-		super(script,services);
+		super(script, services);
 	}
 
 	public CnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean omitSoundnessCheck) {
-		super(script,services, omitSoundnessCheck);
+		super(script, services, omitSoundnessCheck);
 	}
-
 
 	@Override
 	protected NnfTransformerHelper getNnfTransformerHelper(final IUltimateServiceProvider services) {
