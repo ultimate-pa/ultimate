@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class CnfTransformer extends XnfTransformer {
 
 	public CnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
-		super(script, services);
+		this(script, services, false);
 	}
 
 	public CnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,

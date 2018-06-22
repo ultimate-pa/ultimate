@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -56,13 +57,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.XJu
  */
 public abstract class XnfTransformer extends NnfTransformer {
 
-	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services) {
-		super(script, services, QuantifierHandling.IS_ATOM);
-	}
-
 	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean omitSoundnessCheck) {
 		super(script, services, QuantifierHandling.IS_ATOM, omitSoundnessCheck);
+	}
+
+	public XnfTransformer(final ManagedScript script, final IUltimateServiceProvider services,
+			final boolean omitSoundnessCheck, final Function<Integer, Boolean> funAbortIfExponential) {
+		super(script, services, QuantifierHandling.IS_ATOM, omitSoundnessCheck, funAbortIfExponential);
 	}
 
 	protected abstract class XnfTransformerHelper extends NnfTransformerHelper {
@@ -127,6 +129,10 @@ public abstract class XnfTransformer extends NnfTransformer {
 
 			final int inputSize = first.numberOfUnprocessedOuterJunctions();
 			if (inputSize > 5) {
+				if (mFunAbortIfExponential.apply(inputSize)) {
+					mLogger.warn("aborting because of expected exponential blowup for input size " + inputSize);
+					throw new AbortBeforeBlowup();
+				}
 				mLogger.warn("expecting exponential blowup for input size " + inputSize);
 			}
 
@@ -434,5 +440,12 @@ public abstract class XnfTransformer extends NnfTransformer {
 				return mElements.size();
 			}
 		}
+
+	}
+
+	public class AbortBeforeBlowup extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+
 	}
 }

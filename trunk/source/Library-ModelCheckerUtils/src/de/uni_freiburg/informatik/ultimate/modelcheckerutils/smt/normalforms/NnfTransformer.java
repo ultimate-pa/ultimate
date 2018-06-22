@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -73,40 +75,47 @@ public class NnfTransformer {
 		 */
 		CRASH,
 		/**
-		 * Keep quantifier at the position where it occurred, but replace by dual
-		 * quantifier if necessary. E.g., ¬∀φ becomes Ǝ¬φ.
+		 * Keep quantifier at the position where it occurred, but replace by dual quantifier if necessary. E.g., ¬∀φ
+		 * becomes Ǝ¬φ.
 		 */
 		KEEP,
 		/**
-		 * Consider quantified formulas as atoms do not descend into the body of the
-		 * quantified formula.
+		 * Consider quantified formulas as atoms do not descend into the body of the quantified formula.
 		 */
 		IS_ATOM,
 		/**
-		 * Pull quantifiers to the front. I.e., the resulting formula will be in prenex
-		 * normal form. 2018-06-01 Matthias: better use {@link PrenexNormalForm}
-		 * instead, PULL may produce formulas with more quantifier alternations.
+		 * Pull quantifiers to the front. I.e., the resulting formula will be in prenex normal form. 2018-06-01
+		 * Matthias: better use {@link PrenexNormalForm} instead, PULL may produce formulas with more quantifier
+		 * alternations.
 		 */
 		PULL
 	}
 
 	protected final QuantifierHandling mQuantifierHandling;
 
+	protected Function<Integer, Boolean> mFunAbortIfExponential;
+
 	/**
-	 * Sometimes we need to omit the soundness check which does a checksat on mManagedScript.
-	 * For example, this is the case when mManagedScript.getScript is HornClauseParserScript (in which case the
-	 *  soundness check would lead to nontermination)
+	 * Sometimes we need to omit the soundness check which does a checksat on mManagedScript. For example, this is the
+	 * case when mManagedScript.getScript is HornClauseParserScript (in which case the soundness check would lead to
+	 * nontermination)
 	 */
 	private final boolean mOmitSoundnessCheck;
 
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling) {
-		this(mgdScript, services, quantifierHandling, false);
+		this(mgdScript, services, quantifierHandling, false, a -> false);
 	}
 
 	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck) {
-		super();
+		this(mgdScript, services, quantifierHandling, omitSoundnessCheck, a -> false);
+	}
+
+	public NnfTransformer(final ManagedScript mgdScript, final IUltimateServiceProvider services,
+			final QuantifierHandling quantifierHandling, final boolean omitSoundnessCheck,
+			final Function<Integer, Boolean> funAbortIfExponential) {
+		mFunAbortIfExponential = Objects.requireNonNull(funAbortIfExponential);
 		mQuantifierHandling = quantifierHandling;
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
@@ -288,7 +297,6 @@ public class NnfTransformer {
 			}
 		}
 
-
 		private void convertNot(final Term notParam, final Term notTerm) {
 			assert SmtSortUtils.isBoolSort(notParam.getSort()) : "Input is not Bool";
 			final Term pushed = pushNot1StepInside(mScript, notParam, mQuantifierHandling);
@@ -311,7 +319,6 @@ public class NnfTransformer {
 		}
 
 	}
-
 
 	private static Term[] negateTerms(final Script script, final Term[] terms) {
 		final Term[] newTerms = new Term[terms.length];
@@ -354,7 +361,6 @@ public class NnfTransformer {
 	public static boolean isXor(final ApplicationTerm appTerm, final String functionName) {
 		return functionName.equals("xor") || functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm);
 	}
-
 
 	public static Term pushNot1StepInside(final Script script, final Term notParam,
 			final QuantifierHandling quantifierHandling) {
@@ -423,7 +429,7 @@ public class NnfTransformer {
 				final Term innerNegated = SmtUtils.not(script, inner);
 				final int dualQuantifier = QuantifierUtils.getDualQuantifier(qformula.getQuantifier());
 				final Term result = SmtUtils.quantifier(script, dualQuantifier,
-						new HashSet<TermVariable>(Arrays.asList(qformula.getVariables())), innerNegated);
+						new HashSet<>(Arrays.asList(qformula.getVariables())), innerNegated);
 				return result;
 			}
 			case PULL: {
