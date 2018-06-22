@@ -1,0 +1,25 @@
+// example where hopcroft minimization returns a non-equivalent automaton (as of 22.06.2018)
+
+TreeAutomaton ta2 = TreeAutomaton (
+	alphabet = { l0 l1 l2 l3 l4 l5 l6 l7 l8},
+
+	states = { q0 q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q11 q12 q13 q14},
+
+	finalStates = { q12 q13 q14},
+
+	transitionTable = {
+		(() l3 q7)
+		(() l5 q8)
+		((q11 q3) l0 q12)
+		((q7 q10) l0 q12)
+		((q5) l7 q10)
+		(() l4 q5)
+		((q8) l8 q8)
+		((q8) l2 q11)
+		((q11 q10) l0 q12)
+		((q5) l6 q5)
+		(() l1 q3)}
+
+);
+
+assert(isEquivalent(minimizeNftaHopcroft(ta2), ta2));
