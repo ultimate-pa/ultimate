@@ -341,13 +341,7 @@ public class TreeAutomizerCEGAR {
 	}
 
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		// dump abstraction
-		final String automataDumpPath =
-				mPreferences.getString(TreeAutomizerPreferenceInitializer.LABEL_AutomataDumpPath);
-		if (!automataDumpPath.isEmpty()) {
-			final String filename = mHornAnnot.getFileName() + "_abstraction_nr_" + mIteration;
-			writeAutomatonToFile(mServices, mAbstraction, automataDumpPath, filename, Format.ATS_NUMERATE, "");
-		}
+		dumpAbstraction("r0_abstraction_before_refine");
 
 		if (TreeAutomizerSettings.USE_NAIVE_DIFFERENCE) {
 			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Difference<HornClause, IPredicate>(
@@ -359,14 +353,16 @@ public class TreeAutomizerCEGAR {
 		mLogger.debug(String.format("Abstraction ffter difference has %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
 
-		final Set<IPredicate> states = new HashSet<>();
-		states.addAll(mAbstraction.getStates());
-		for (final IPredicate pred : states) {
+		dumpAbstraction("r1_abstraction_after_difference");
+		assert !(new Accepts<>(mAutomataLibraryServices, mAbstraction, mCounterExample).getResult()) : "refined "
+				+ "abstraction still contains error tree -- no progress";
 
-			if (SmtUtils.isFalse(pred.getFormula())) {
-				mAbstraction.removeState(pred);
-			}
-		}
+		removeFalseStatesFromAbstraction();
+
+		dumpAbstraction("r2_abstraction_after_removeFalse");
+		assert !(new Accepts<>(mAutomataLibraryServices, mAbstraction, mCounterExample).getResult()) : "refined "
+				+ "abstraction still contains error tree -- no progress";
+
 		if (mPreferences.getEnum(TreeAutomizerPreferenceInitializer.LABEL_MinimizationAlgorithm, TaMinimization.class)
 				== TaMinimization.NAIVE) {
 			mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Minimize<>(mAutomataLibraryServices,
@@ -391,10 +387,33 @@ public class TreeAutomizerCEGAR {
 		}
 		mLogger.debug("Refine ends...");
 
+		dumpAbstraction("r3_abstraction_after_minimize");
 		assert !(new Accepts<>(mAutomataLibraryServices, mAbstraction, mCounterExample).getResult()) : "refined "
 				+ "abstraction still contains error tree -- no progress";
 		++mIteration;
 		return false;
+	}
+
+	public void removeFalseStatesFromAbstraction() {
+		final Set<IPredicate> states = new HashSet<>();
+		states.addAll(mAbstraction.getStates());
+		for (final IPredicate pred : states) {
+
+			if (SmtUtils.isFalse(pred.getFormula())) {
+				mAbstraction.removeState(pred);
+			}
+		}
+	}
+
+	public void dumpAbstraction(final String dumpName) {
+		{
+			final String automataDumpPath =
+					mPreferences.getString(TreeAutomizerPreferenceInitializer.LABEL_AutomataDumpPath);
+			if (!automataDumpPath.isEmpty()) {
+				final String filename = mHornAnnot.getFileName() + dumpName + mIteration;
+				writeAutomatonToFile(mServices, mAbstraction, automataDumpPath, filename, Format.ATS_NUMERATE, "");
+			}
+		}
 	}
 
 	private Map<TreeRun<HornClause, IPredicate>, Term> retrieveInterpolantsMap(final HcSsaTreeFlattener ssa,
