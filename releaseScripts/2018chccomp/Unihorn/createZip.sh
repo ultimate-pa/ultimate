@@ -8,7 +8,7 @@ cp starexec_description.txt StarExecArchive/
 cp ../../../trunk/examples/toolchains/AutomizerCHC.xml StarExecArchive/
 cp starexec_run_* StarExecArchive/bin/
 cp Ultimate.ini StarExecArchive/Ultimate/
-cp ../../../trunk/examples/settings/chccomp2018/chcToBoogie_automizer.epf StarExecArchive/
+cp ../../../trunk/examples/settings/chc/AutomizerCHC/AutomizerCHC_Goto_SS.epf StarExecArchive/
 #cp ../../trunk/examples/settings/buchiAutomizer/termcomp2017-NontrivialArrayWrites.epf StarExecArchive/
 #mkdir StarExecArchive/z3
 cp -LR ../../default/adds/z3 StarExecArchive/bin/

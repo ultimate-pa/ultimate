@@ -8,7 +8,7 @@ cp starexec_description.txt StarExecArchive/
 cp ../../../trunk/examples/toolchains/TreeAutomizer.xml StarExecArchive/
 cp starexec_run_* StarExecArchive/bin/
 cp Ultimate.ini StarExecArchive/Ultimate/
-cp ../../../trunk/examples/settings/chccomp2018/TreeAutomizerStandardSettings.epf StarExecArchive/
+cp ../../../trunk/examples/settings/chc/TreeAutomizer/TreeAutomizerHopcroftMinimization.epf StarExecArchive/
 #cp ../../trunk/examples/settings/buchiAutomizer/termcomp2017-NontrivialArrayWrites.epf StarExecArchive/
 #mkdir StarExecArchive/z3
 cp -LR ../../default/adds/z3 StarExecArchive/bin/
