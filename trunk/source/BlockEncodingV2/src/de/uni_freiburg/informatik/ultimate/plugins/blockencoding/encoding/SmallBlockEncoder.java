@@ -69,6 +69,8 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 
 	private NnfTransformer mNnfTransformer;
 
+	private Script mScript;
+
 	/**
 	 * Default constructor.
 	 *
@@ -94,109 +96,121 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
 		mDnfTransformer = new DnfTransformer(toolkit.getManagedScript(), mServices);
 		mNnfTransformer = new NnfTransformer(toolkit.getManagedScript(), mServices, QuantifierHandling.KEEP);
-		final Script script = toolkit.getManagedScript().getScript();
-
+		mScript = toolkit.getManagedScript().getScript();
 		final IcfgLocationIterator<IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
-
 		final Set<IcfgEdge> toRemove = new HashSet<>();
 
 		while (iter.hasNext()) {
 			final IcfgLocation current = iter.next();
-			final List<IcfgEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
+			processLocation(icfg, toRemove, current);
+		}
 
-			for (final IcfgEdge edge : outEdges) {
-				if (!(edge instanceof IIcfgInternalTransition<?>) || edge instanceof Summary) {
-					// only internal transitions can be converted in DNF
-					// summaries are not supported
-					continue;
-				}
+		removeOldEdges(toRemove);
+		return icfg;
+	}
 
-				final Term term = getTerm(edge);
+	private void processLocation(final BasicIcfg<IcfgLocation> icfg, final Set<IcfgEdge> toRemove,
+			final IcfgLocation current) {
+		final List<IcfgEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
 
-				final Term[] disjuncts = SmtUtils.getDisjuncts(term);
-				if (disjuncts.length > 1) {
-					// top-level disjunction, remove this edge, replace by disjunctions
-					if (!toRemove.add(edge)) {
-						mLogger.warn("Unncessecary transformation");
-						continue;
-					}
-					addEdgesFromDisjuncts(edge, disjuncts);
-					continue;
-				}
+		for (final IcfgEdge edge : outEdges) {
+			if (!(edge instanceof IIcfgInternalTransition<?>) || edge instanceof Summary) {
+				// only internal transitions can be converted in DNF
+				// summaries are not supported
+				continue;
+			}
 
-				final Term[] conjuncts = SmtUtils.getConjuncts(term);
-				if (conjuncts.length == 1) {
-					// its neither disjunction nor conjunction, so it should be a literal or relation
-					// we keep this edge and move on
-					continue;
-				}
+			final Term term = getTerm(edge);
 
-				// top-level conjunction; try to go down one level and extract all
-				// conjuncts that are disjunctions by splitting it three ways:
-				// - prefix without disjunctions
-				// - the first disjunction
-				// - the rest
-
-				final List<Term> prefix = new ArrayList<>();
-				Term[] disjunction = null;
-				final List<Term> suffix = new ArrayList<>();
-				for (int i = 0; i < conjuncts.length; ++i) {
-					final Term[] subdisjuncts = SmtUtils.getDisjuncts(conjuncts[i]);
-					if (subdisjuncts.length == 1) {
-						prefix.add(subdisjuncts[0]);
-					} else {
-						disjunction = subdisjuncts;
-						for (int j = i + 1; j < conjuncts.length; ++j) {
-							suffix.add(conjuncts[j]);
-						}
-						break;
-					}
-				}
-
-				if (disjunction == null) {
-					// there was no disjunction, lets just keep this edge
-					continue;
-				}
-
-				// we are going to remove this edge, check if we already did it
+			final Term[] disjuncts = SmtUtils.getDisjuncts(term);
+			if (disjuncts.length > 1) {
+				// top-level disjunction, remove this edge, replace by disjunctions
 				if (!toRemove.add(edge)) {
 					mLogger.warn("Unncessecary transformation");
 					continue;
 				}
+				addEdgesFromDisjuncts(edge, disjuncts);
+				continue;
+			}
 
-				final IcfgLocation newSource;
-				if (prefix.isEmpty()) {
-					newSource = edge.getSource();
+			if (!edge.getTransformula().getAssignedVars().isEmpty()) {
+				// skip edges that have assignments; we cannot split them easily
+				continue;
+			}
+
+			final Term[] conjuncts = SmtUtils.getConjuncts(term);
+			if (conjuncts.length == 1) {
+				// its neither disjunction nor conjunction, so it should be a literal or relation
+				// we keep this edge and move on
+				continue;
+			}
+
+			// top-level conjunction; try to go down one level and extract all
+			// conjuncts that are disjunctions by splitting it three ways:
+			// - prefix without disjunctions
+			// - the first disjunction
+			// - the rest
+
+			final List<Term> prefix = new ArrayList<>();
+			Term[] disjunction = null;
+			final List<Term> suffix = new ArrayList<>();
+			for (int i = 0; i < conjuncts.length; ++i) {
+				final Term[] subdisjuncts = SmtUtils.getDisjuncts(conjuncts[i]);
+				if (subdisjuncts.length == 1) {
+					prefix.add(subdisjuncts[0]);
 				} else {
-					// we add a new edge between the old source and a new location and label it with the prefix
-					newSource = createNewLocation(icfg, edge.getTarget());
-					final Term prefixTerm = SmtUtils.and(script, prefix);
-					final IcfgEdge newEdge =
-							mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), newSource, prefixTerm);
-					rememberEdgeMapping(newEdge, edge);
-				}
-
-				final IcfgLocation newTarget;
-				if (suffix.isEmpty()) {
-					newTarget = edge.getTarget();
-				} else {
-					// we add a new edge between a new location and the old target and label it with the suffix
-					newTarget = createNewLocation(icfg, edge.getTarget());
-					final Term suffixTerm = SmtUtils.and(script, suffix);
-					final IcfgEdge newEdge =
-							mEdgeBuilder.constructInternalTransition(edge, newTarget, edge.getTarget(), suffixTerm);
-					rememberEdgeMapping(newEdge, edge);
-				}
-
-				// finally, we add the disjunctions between newsource and newtarget
-				for (final Term disjunct : disjunction) {
-					final IcfgEdge newEdge =
-							mEdgeBuilder.constructInternalTransition(edge, newSource, newTarget, disjunct);
-					rememberEdgeMapping(newEdge, edge);
+					disjunction = subdisjuncts;
+					for (int j = i + 1; j < conjuncts.length; ++j) {
+						suffix.add(conjuncts[j]);
+					}
+					break;
 				}
 			}
-		}
 
+			if (disjunction == null) {
+				// there was no disjunction, lets just keep this edge
+				continue;
+			}
+
+			// we are going to remove this edge, check if we already did it
+			if (!toRemove.add(edge)) {
+				mLogger.warn("Unncessecary transformation");
+				continue;
+			}
+
+			final IcfgLocation newSource;
+			if (prefix.isEmpty()) {
+				newSource = edge.getSource();
+			} else {
+				// we add a new edge between the old source and a new location and label it with the prefix
+				newSource = createNewLocation(icfg, edge.getTarget());
+				final Term prefixTerm = SmtUtils.and(mScript, prefix);
+				final IcfgEdge newEdge =
+						mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), newSource, prefixTerm);
+				rememberEdgeMapping(newEdge, edge);
+			}
+
+			final IcfgLocation newTarget;
+			if (suffix.isEmpty()) {
+				newTarget = edge.getTarget();
+			} else {
+				// we add a new edge between a new location and the old target and label it with the suffix
+				newTarget = createNewLocation(icfg, edge.getTarget());
+				final Term suffixTerm = SmtUtils.and(mScript, suffix);
+				final IcfgEdge newEdge =
+						mEdgeBuilder.constructInternalTransition(edge, newTarget, edge.getTarget(), suffixTerm);
+				rememberEdgeMapping(newEdge, edge);
+			}
+
+			// finally, we add the disjunctions between newsource and newtarget
+			for (final Term disjunct : disjunction) {
+				final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(edge, newSource, newTarget, disjunct);
+				rememberEdgeMapping(newEdge, edge);
+			}
+		}
+	}
+
+	private void removeOldEdges(final Set<IcfgEdge> toRemove) throws AssertionError {
 		final List<Pair<IcfgLocation, IcfgLocation>> locations = new ArrayList<>();
 		toRemove.stream().forEach(a -> {
 			locations.add(new Pair<>(a.getSource(), a.getTarget()));
@@ -216,7 +230,6 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 			}
 		}
 		mRemovedEdges = toRemove.size();
-		return icfg;
 	}
 
 	private static IcfgLocation createNewLocation(final BasicIcfg<IcfgLocation> icfg, final IcfgLocation oldLoc) {
