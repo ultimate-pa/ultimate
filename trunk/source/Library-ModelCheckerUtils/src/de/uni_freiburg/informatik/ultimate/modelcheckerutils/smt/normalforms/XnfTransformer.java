@@ -26,14 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -45,13 +46,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.XJunction.AtomAndNegationException;
 
 /**
- * Common abstract superclass of Cnf and Dnf.
- * In order to understand the variable names and the documentation
- * replace "outer" by "conjunct" and "inner" by "disjunct" for CNF, and
- * replace "outer" by "disjunct" and "inner" by "conjunct" for DNF.
- * In documentation we use the Greek letter iota 'ι' to denote the inner
- * connective and we use the Greek letter omikron 'o' to denote the outer
- * connective.
+ * Common abstract superclass of Cnf and Dnf. In order to understand the variable names and the documentation replace
+ * "outer" by "conjunct" and "inner" by "disjunct" for CNF, and replace "outer" by "disjunct" and "inner" by "conjunct"
+ * for DNF. In documentation we use the Greek letter iota 'ι' to denote the inner connective and we use the Greek letter
+ * omikron 'o' to denote the outer connective.
  *
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -67,19 +65,22 @@ public abstract class XnfTransformer extends NnfTransformer {
 		super(script, services, QuantifierHandling.IS_ATOM, omitSoundnessCheck);
 	}
 
-
 	protected abstract class XnfTransformerHelper extends NnfTransformerHelper {
 
 		protected XnfTransformerHelper(final IUltimateServiceProvider services) {
 			super(services);
 		}
+
 		public abstract String innerConnectiveSymbol();
+
 		public abstract String outerConnectiveSymbol();
 
 		public abstract String innerJunctionName();
+
 		public abstract String outerJunctionName();
 
 		public abstract Term innerConnective(Script script, List<Term> params);
+
 		public abstract Term outerConnective(Script script, List<Term> params);
 
 		public abstract Term[] getOuterJuncts(Term term);
@@ -101,44 +102,37 @@ public abstract class XnfTransformer extends NnfTransformer {
 			setResult(result);
 		}
 
-
 		/**
-		 * Uses Distributivity to transform an innerJunction (given as an array
-		 * of innerJuncts) to an equivalent outerJunction (given as an array of
-		 * outerJuncts).
-		 * E.g., ((A o B) ι (C ο D)) is transformed to
-		 * (A ι C) o (A ι D) o (B ι C) o (B ι D)
-		 * In order to keep the result small optimizations are applied.
+		 * Uses Distributivity to transform an innerJunction (given as an array of innerJuncts) to an equivalent
+		 * outerJunction (given as an array of outerJuncts). E.g., ((A o B) ι (C ο D)) is transformed to (A ι C) o (A ι
+		 * D) o (B ι C) o (B ι D) In order to keep the result small optimizations are applied.
+		 *
 		 * @param inputInnerJunction
 		 * @return
 		 */
 		private Term[] applyDistributivityAndOr(final Term[] inputInnerJunction) {
 
-			ResultInnerJunctions first;
-			{
-				Set<XJunction> innerJunctionOfOuterJunctions =
-						convertInnerJunctionOfOuterJunctionsToSet(inputInnerJunction);
-				try {
-					first = new ResultInnerJunctions(innerJunctionOfOuterJunctions);
-					innerJunctionOfOuterJunctions = null;
-				} catch (final AtomAndNegationException e1) {
-					// innerJunctionOfOuterJunctions contains the singleton {φ}
-					// and the singleton {¬φ}.
-					// Hence the result is equivalent to the annihilator of the
-					// innerJunction resp. the neutral element of the
-					// outerJunction (true for ∧, false for ∨)
-					return new Term[0];
-				}
+			final ResultInnerJunctions first;
+
+			try {
+				first = new ResultInnerJunctions(convertInnerJunctionOfOuterJunctionsToSet(inputInnerJunction));
+			} catch (final AtomAndNegationException e1) {
+				// innerJunctionOfOuterJunctions contains the singleton {φ}
+				// and the singleton {¬φ}.
+				// Hence the result is equivalent to the annihilator of the
+				// innerJunction resp. the neutral element of the
+				// outerJunction (true for ∧, false for ∨)
+				return new Term[0];
 			}
 
 			final int inputSize = first.numberOfUnprocessedOuterJunctions();
-			if ( inputSize > 5) {
+			if (inputSize > 5) {
 				mLogger.warn("expecting exponential blowup for input size " + inputSize);
 			}
 
 			// iteratively apply distributivity until we have a set of innerJunctions.
-			final Set<XJunction> resOuterJunction = new HashSet<XJunction>();
-			final Stack<ResultInnerJunctions> todoStack = new Stack<ResultInnerJunctions>();
+			final Set<XJunction> resOuterJunction = new HashSet<>();
+			final Deque<ResultInnerJunctions> todoStack = new ArrayDeque<>();
 			todoStack.add(first);
 			while (!todoStack.isEmpty()) {
 				final ResultInnerJunctions top = todoStack.pop();
@@ -155,9 +149,8 @@ public abstract class XnfTransformer extends NnfTransformer {
 
 			final boolean timeConsumingSimplification = (resOuterJunction.size() > 5000);
 			if (timeConsumingSimplification) {
-				mLogger.warn("Simplifying " + outerJunctionName() + " of "
-						+ resOuterJunction.size() + " " + innerJunctionName() +
-						"s. " + "This might take some time...");
+				mLogger.warn("Simplifying " + outerJunctionName() + " of " + resOuterJunction.size() + " "
+						+ innerJunctionName() + "s. " + "This might take some time...");
 			}
 
 			// Simplify by keeping only minimal (with respect to set inclusion)
@@ -165,17 +158,15 @@ public abstract class XnfTransformer extends NnfTransformer {
 			final XJunctionPosetMinimalElements pme = new XJunctionPosetMinimalElements();
 			for (final XJunction resInnerSet : resOuterJunction) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(this.getClass(),
-							"XNF transformer was simplifying " + resOuterJunction.size()
-							+ " " + innerJunctionName() + "s. ");
+					throw new ToolchainCanceledException(this.getClass(), "XNF transformer was simplifying "
+							+ resOuterJunction.size() + " " + innerJunctionName() + "s. ");
 				}
 				pme.add(resInnerSet);
 			}
 
 			if (timeConsumingSimplification) {
-				mLogger.info("Simplified to " + outerJunctionName() + " of "
-						+ pme.getElements().size() + " " + innerJunctionName() +
-						"s. ");
+				mLogger.info("Simplified to " + outerJunctionName() + " of " + pme.getElements().size() + " "
+						+ innerJunctionName() + "s. ");
 			}
 
 			// Construct terms.
@@ -185,16 +176,14 @@ public abstract class XnfTransformer extends NnfTransformer {
 				resInnerTerms[i] = innerConnective(mScript, resInnerSet.toTermList(mScript));
 				i++;
 			}
-			assert i==resInnerTerms.length;
+			assert i == resInnerTerms.length;
 			return resInnerTerms;
 		}
 
 		/**
-		 * Convert an innerJunction of outerJunctions given as an array of terms
-		 * into a Set of XJunctions.
+		 * Convert an innerJunction of outerJunctions given as an array of terms into a Set of XJunctions.
 		 */
-		private Set<XJunction> convertInnerJunctionOfOuterJunctionsToSet(
-				final Term[] inputInnerJunction) {
+		private Set<XJunction> convertInnerJunctionOfOuterJunctionsToSet(final Term[] inputInnerJunction) {
 			final Set<XJunction> result = new HashSet<>();
 			for (final Term inputInnerJunct : inputInnerJunction) {
 				final Term[] inputOuterJunction = getOuterJuncts(inputInnerJunct);
@@ -212,14 +201,13 @@ public abstract class XnfTransformer extends NnfTransformer {
 		/**
 		 * Represents a an innerJunction of outerJunctions using
 		 * <ul>
-		 * <li> one innerJunction given as an XJunction (mInnerJuncts) and
-		 * <li> one innerJunction of outerJunctions given as a set of
-		 * XJunctions (mUnprocessedInnerJunctionOfOuterJunctions).
+		 * <li>one innerJunction given as an XJunction (mInnerJuncts) and
+		 * <li>one innerJunction of outerJunctions given as a set of XJunctions
+		 * (mUnprocessedInnerJunctionOfOuterJunctions).
 		 * </ul>
-		 *    (mInnerJuncts ι (outerJunction_1 ι ... ι outerJunction_n))
-		 * This class can be used to successively apply distributivity to
-		 * get rid of the outerJunctions. Therefore objects of this class
-		 * are split into a set of such objects, one for each outerJunct.
+		 * (mInnerJuncts ι (outerJunction_1 ι ... ι outerJunction_n)) This class can be used to successively apply
+		 * distributivity to get rid of the outerJunctions. Therefore objects of this class are split into a set of such
+		 * objects, one for each outerJunct.
 		 *
 		 * @author Matthias Heizmann
 		 *
@@ -228,15 +216,19 @@ public abstract class XnfTransformer extends NnfTransformer {
 			private final XJunction mInnerJuncts;
 			private final Set<XJunction> mUnprocessedInnerJunctionOfOuterJunctions;
 
-			public ResultInnerJunctions(final Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
+			public ResultInnerJunctions(final Set<XJunction> innerJunctionOfOuterJunctions)
+					throws AtomAndNegationException {
 				final XJunction innerJuncts = new XJunction();
-				mUnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(innerJuncts, innerJunctionOfOuterJunctions);
+				mUnprocessedInnerJunctionOfOuterJunctions =
+						moveOutwardsAbsorbeAndMpsimplify(innerJuncts, innerJunctionOfOuterJunctions);
 				mInnerJuncts = innerJuncts;
 			}
 
-			public ResultInnerJunctions(final XJunction innerJuncts, final Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
+			public ResultInnerJunctions(final XJunction innerJuncts, final Set<XJunction> innerJunctionOfOuterJunctions)
+					throws AtomAndNegationException {
 				final XJunction newInnerJuncts = new XJunction();
-				mUnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(newInnerJuncts, innerJunctionOfOuterJunctions);
+				mUnprocessedInnerJunctionOfOuterJunctions =
+						moveOutwardsAbsorbeAndMpsimplify(newInnerJuncts, innerJunctionOfOuterJunctions);
 				mInnerJuncts = XJunction.disjointUnion(innerJuncts, newInnerJuncts);
 			}
 
@@ -259,11 +251,13 @@ public abstract class XnfTransformer extends NnfTransformer {
 				final ArrayList<ResultInnerJunctions> result = new ArrayList<>(next.size());
 				for (final Entry<Term, Polarity> entry : next.entrySet()) {
 					final XJunction singletonInnerJunct = new XJunction(entry.getKey(), entry.getValue());
-					final Set<XJunction> innerJunctionOfOuterJunctions = new HashSet<XJunction>(mUnprocessedInnerJunctionOfOuterJunctions);
+					final Set<XJunction> innerJunctionOfOuterJunctions =
+							new HashSet<>(mUnprocessedInnerJunctionOfOuterJunctions);
 					innerJunctionOfOuterJunctions.add(singletonInnerJunct);
 					final XJunction innerJunctions = new XJunction(mInnerJuncts);
 					try {
-						final ResultInnerJunctions rij = new ResultInnerJunctions(innerJunctions, innerJunctionOfOuterJunctions);
+						final ResultInnerJunctions rij =
+								new ResultInnerJunctions(innerJunctions, innerJunctionOfOuterJunctions);
 						result.add(rij);
 					} catch (final AtomAndNegationException e) {
 						// omit this ResultInnerJunctions it is equivalent to true/false
@@ -273,56 +267,54 @@ public abstract class XnfTransformer extends NnfTransformer {
 			}
 
 			/**
-			 * Given an innerJunction and an innerJunction of outerJunctions, we
-			 * consider this an an innerJunction
-			 * (innerJunction ι (outerJunction_1 ι ... ι outerJunction_n))
-			 * and move as many elements as possible to innerJunction by applying
-			 * equivalence transformations.
+			 * Given an innerJunction and an innerJunction of outerJunctions, we consider this an an innerJunction
+			 * (innerJunction ι (outerJunction_1 ι ... ι outerJunction_n)) and move as many elements as possible to
+			 * innerJunction by applying equivalence transformations.
 			 *
-			 * @param innerJunction input and output of this method. This method
-			 * adds new elements to this XJunction.
-			 * @param innerJunctionOfOuterJunctions input of this method, but also
-			 * used to store intermediate data. It is modified and should not be
-			 * used by the caller after calling this method.
-			 * However the XJunction contained in this set are not modified.
-			 * @return and innerJunction of outerJunction that is together with
-			 * the modified innerJunction equivalent to the input.
-			 * @throws AtomAndNegationException thrown if we detect that the input
-			 * is equivalent to the annihilating element of the inner connective
+			 * @param innerJunction
+			 *            input and output of this method. This method adds new elements to this XJunction.
+			 * @param innerJunctionOfOuterJunctions
+			 *            input of this method, but also used to store intermediate data. It is modified and should not
+			 *            be used by the caller after calling this method. However the XJunction contained in this set
+			 *            are not modified.
+			 * @return and innerJunction of outerJunction that is together with the modified innerJunction equivalent to
+			 *         the input.
+			 * @throws AtomAndNegationException
+			 *             thrown if we detect that the input is equivalent to the annihilating element of the inner
+			 *             connective
 			 */
-			private Set<XJunction> moveOutwardsAbsorbeAndMpsimplify(
-					final XJunction innerJunction,
+			private Set<XJunction> moveOutwardsAbsorbeAndMpsimplify(final XJunction innerJunction,
 					Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
 				while (true) {
 					final boolean modified = moveSingletonsOutwards(innerJunction, innerJunctionOfOuterJunctions);
 					if (!modified) {
 						return innerJunctionOfOuterJunctions;
 					}
-					final Set<XJunction> newinnerJunctionOfOuterJunctions = applyAbsorbeAndMpsimplify(innerJunction, innerJunctionOfOuterJunctions);
+					final Set<XJunction> newinnerJunctionOfOuterJunctions =
+							applyAbsorbeAndMpsimplify(innerJunction, innerJunctionOfOuterJunctions);
 					if (newinnerJunctionOfOuterJunctions == innerJunctionOfOuterJunctions) {
 						return innerJunctionOfOuterJunctions;
-					} else {
-						innerJunctionOfOuterJunctions = newinnerJunctionOfOuterJunctions;
 					}
+					innerJunctionOfOuterJunctions = newinnerJunctionOfOuterJunctions;
 				}
 			}
 
 			/**
-			 * Remove from innerJunctionOfOuterJunctions all XJunctions that are
-			 * singletons and move their elements to innerJunction.
-			 * @param innerJunction is modified and used as input and output of
-			 * this method
-			 * @param innerJunctionOfOuterJunctions is modified and input and
-			 * output of this method
-			 * @return true iff innerJunctionOfOuterJunctions contained a singleton
-			 * (note that if the result is false this means especially that the
-			 * inputs were not modified)
-			 * @throws AtomAndNegationException the resulting innerJunction would
-			 * be equivalent to the annihilating element of the inner connective.
+			 * Remove from innerJunctionOfOuterJunctions all XJunctions that are singletons and move their elements to
+			 * innerJunction.
+			 *
+			 * @param innerJunction
+			 *            is modified and used as input and output of this method
+			 * @param innerJunctionOfOuterJunctions
+			 *            is modified and input and output of this method
+			 * @return true iff innerJunctionOfOuterJunctions contained a singleton (note that if the result is false
+			 *         this means especially that the inputs were not modified)
+			 * @throws AtomAndNegationException
+			 *             the resulting innerJunction would be equivalent to the annihilating element of the inner
+			 *             connective.
 			 */
 			private boolean moveSingletonsOutwards(final XJunction innerJunction,
-					final Set<XJunction> innerJunctionOfOuterJunctions)
-							throws AtomAndNegationException {
+					final Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
 				boolean someSingletonContained = false;
 				final Iterator<XJunction> it = innerJunctionOfOuterJunctions.iterator();
 				while (it.hasNext()) {
@@ -337,34 +329,28 @@ public abstract class XnfTransformer extends NnfTransformer {
 				return someSingletonContained;
 			}
 
-
-
 			/**
-			 * Given an innerJunction and an innerJunction of outerJunctions, we
-			 * consider this an an innerJunction
-			 * (innerJunction ι (outerJunction_1 ι ... ι outerJunction_n))
-			 * and simplify the innerJunction of outerJunctions by applying two
-			 * simplification rules.
+			 * Given an innerJunction and an innerJunction of outerJunctions, we consider this an an innerJunction
+			 * (innerJunction ι (outerJunction_1 ι ... ι outerJunction_n)) and simplify the innerJunction of
+			 * outerJunctions by applying two simplification rules.
 			 * <ul>
-			 *  <li> 1. Absorption. If innerJunction and outerJunction_i share
-			 *  a common element, we drop outerJunction_i from the innerJunction
-			 *  of outerJuncts.
-			 *  <li> 2. Mpsimplify. If innerJunction contains a formula φ and one
-			 *  outerJunction of outerJunction_i is ¬φ we remove this outerJunction
-			 *  from outerJunction_i.
+			 * <li>1. Absorption. If innerJunction and outerJunction_i share a common element, we drop outerJunction_i
+			 * from the innerJunction of outerJuncts.
+			 * <li>2. Mpsimplify. If innerJunction contains a formula φ and one outerJunction of outerJunction_i is ¬φ
+			 * we remove this outerJunction from outerJunction_i.
 			 * </ul>
-			 * @param innerJunction above mentioned innerJunction, not modified by
-			 * this methods
-			 * @param innerJunctionOfOuterJunctions above mentioned innerJunction
-			 * of outerJunctions, not modified by this method
-			 * @return innerJunction of outerJunctions which is simplified with
-			 * respect to innerJunction as mentioned above. If no simplification
-			 * was possible innerJunctionOfOuterJunctions (same Object) is returned
-			 * otherwise a new HashSet is returned.
+			 *
+			 * @param innerJunction
+			 *            above mentioned innerJunction, not modified by this methods
+			 * @param innerJunctionOfOuterJunctions
+			 *            above mentioned innerJunction of outerJunctions, not modified by this method
+			 * @return innerJunction of outerJunctions which is simplified with respect to innerJunction as mentioned
+			 *         above. If no simplification was possible innerJunctionOfOuterJunctions (same Object) is returned
+			 *         otherwise a new HashSet is returned.
 			 */
 			private Set<XJunction> applyAbsorbeAndMpsimplify(final XJunction innerJunction,
 					final Set<XJunction> innerJunctionOfOuterJunctions) {
-				final HashSet<XJunction> newInnerJunctionOfOuterJunctions = new HashSet<XJunction>();
+				final HashSet<XJunction> newInnerJunctionOfOuterJunctions = new HashSet<>();
 				boolean modified = false;
 				for (final XJunction outerJunction : innerJunctionOfOuterJunctions) {
 					final XJunction newOuterJunction = applyAbsorbeAndMpsimplify(innerJunction, outerJunction);
@@ -382,28 +368,20 @@ public abstract class XnfTransformer extends NnfTransformer {
 				}
 				if (modified) {
 					return newInnerJunctionOfOuterJunctions;
-				} else {
-					return innerJunctionOfOuterJunctions;
 				}
+				return innerJunctionOfOuterJunctions;
 			}
 
 			/**
-			 * Given an innerJunction and an outerJunction, we consider this as an
-			 * inner Junction
-			 *     (innerJunction ι outerJunction)
-			 * and simplify outerJunction with respect to innerJunction.
-			 * If innerJunction and outerJunction share a common literal we
-			 * simplify outerJunction to the neutral element of the innerJunction
-			 * (absorption) and return null to indicate that.
-			 * If there is a literal in outerJunction that occurs with the opposite
-			 * polarity in innerJunction, we remove it from the outerJunction
-			 * (mpsimplify, reminiscent to modus ponens). In fact, outerJunction
-			 * is never modified, if we have to modify it, we return a new XJunction
-			 * instead. If we do not have to modify it, we return the input
-			 * outerJunction.
+			 * Given an innerJunction and an outerJunction, we consider this as an inner Junction (innerJunction ι
+			 * outerJunction) and simplify outerJunction with respect to innerJunction. If innerJunction and
+			 * outerJunction share a common literal we simplify outerJunction to the neutral element of the
+			 * innerJunction (absorption) and return null to indicate that. If there is a literal in outerJunction that
+			 * occurs with the opposite polarity in innerJunction, we remove it from the outerJunction (mpsimplify,
+			 * reminiscent to modus ponens). In fact, outerJunction is never modified, if we have to modify it, we
+			 * return a new XJunction instead. If we do not have to modify it, we return the input outerJunction.
 			 */
-			private XJunction applyAbsorbeAndMpsimplify(final XJunction innerJunction,
-					final XJunction outerJunction) {
+			private XJunction applyAbsorbeAndMpsimplify(final XJunction innerJunction, final XJunction outerJunction) {
 				XJunction resultOuterJunction = outerJunction;
 				for (final Entry<Term, Polarity> literal : innerJunction.entrySet()) {
 					if (outerJunction.contains(literal.getKey(), literal.getValue())) {
@@ -420,41 +398,33 @@ public abstract class XnfTransformer extends NnfTransformer {
 			}
 		}
 
-
 		/**
-		 * Represents a Set of XJunction with the following property.
-		 * The set cannot contain two elements that are comparable via
-		 * inclusion.
-		 * Whenever we add an element xjunction_new such that for some existing
-		 * xjunction xjunction_old the inclusion
-		 *     xjunction_old ⊆ xjunction_new
-		 * the new element xjunction_new is discarded.
-		 * Whenever we add an element xjunction_new we remove all existing
-		 * xjunctions xjunction_old for which the inclusion
-		 *     xjunction_new ⊆ xjunction_old
-		 * hols.
+		 * Represents a Set of XJunction with the following property. The set cannot contain two elements that are
+		 * comparable via inclusion. Whenever we add an element xjunction_new such that for some existing xjunction
+		 * xjunction_old the inclusion xjunction_old ⊆ xjunction_new the new element xjunction_new is discarded.
+		 * Whenever we add an element xjunction_new we remove all existing xjunctions xjunction_old for which the
+		 * inclusion xjunction_new ⊆ xjunction_old hols.
 		 *
 		 * @author Matthias Heizmann
 		 *
 		 */
 		class XJunctionPosetMinimalElements {
-			private final Set<XJunction> mElements = new HashSet<XJunction>();
+			private final Set<XJunction> mElements = new HashSet<>();
 
 			public void add(final XJunction xjunction) {
 				final Iterator<XJunction> it = mElements.iterator();
 				while (it.hasNext()) {
 					final XJunction existing = it.next();
-					if(existing.isSubset(xjunction)) {
+					if (existing.isSubset(xjunction)) {
 						// add nothing
 						return;
 					}
-					if(xjunction.isSubset(existing)) {
+					if (xjunction.isSubset(existing)) {
 						it.remove();
 					}
 				}
 				mElements.add(xjunction);
 			}
-
 
 			public Set<XJunction> getElements() {
 				return mElements;
