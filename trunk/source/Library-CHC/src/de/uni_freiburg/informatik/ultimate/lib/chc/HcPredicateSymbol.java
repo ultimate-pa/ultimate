@@ -157,6 +157,33 @@ public class HcPredicateSymbol {
 		}
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mFunctionSymbol == null) ? 0 : mFunctionSymbol.hashCode());
+		return result;
+	}
 
-
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final HcPredicateSymbol other = (HcPredicateSymbol) obj;
+		if (mFunctionSymbol == null) {
+			if (other.mFunctionSymbol != null) {
+				return false;
+			}
+		} else if (!mFunctionSymbol.equals(other.mFunctionSymbol)) {
+			return false;
+		}
+		return true;
+	}
 }

@@ -277,4 +277,61 @@ public class HornClause implements IRankedLetter {
 		return result;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mBodyPredToArgs == null) ? 0 : mBodyPredToArgs.hashCode());
+		result = prime * result + ((mBodyPreds == null) ? 0 : mBodyPreds.hashCode());
+		result = prime * result + ((mFormula == null) ? 0 : mFormula.hashCode());
+		result = prime * result + (mHeadIsFalse ? 1231 : 1237);
+		result = prime * result + ((mHeadPredicate == null) ? 0 : mHeadPredicate.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final HornClause other = (HornClause) obj;
+		if (mBodyPredToArgs == null) {
+			if (other.mBodyPredToArgs != null) {
+				return false;
+			}
+		} else if (!mBodyPredToArgs.equals(other.mBodyPredToArgs)) {
+			return false;
+		}
+		if (mBodyPreds == null) {
+			if (other.mBodyPreds != null) {
+				return false;
+			}
+		} else if (!mBodyPreds.equals(other.mBodyPreds)) {
+			return false;
+		}
+		if (mFormula == null) {
+			if (other.mFormula != null) {
+				return false;
+			}
+		} else if (!mFormula.equals(other.mFormula)) {
+			return false;
+		}
+		if (mHeadIsFalse != other.mHeadIsFalse) {
+			return false;
+		}
+		if (mHeadPredicate == null) {
+			if (other.mHeadPredicate != null) {
+				return false;
+			}
+		} else if (!mHeadPredicate.equals(other.mHeadPredicate)) {
+			return false;
+		}
+		return true;
+	}
 }
