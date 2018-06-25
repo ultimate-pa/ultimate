@@ -31,28 +31,40 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Classes that implement this interface represent an action in an interprocedural control flow (i.e., a labeling of an
- * edge that defines the operational semantics of the edge).
+ * Classes that implement this interface define the effect that a transition has
+ * on (non-control-flow) variables of the system. Note that there are no
+ * explicit control-flow variables (like a program counter or a call stack) in
+ * our ICFG. <br />
+ * In contrast to {@link IIcfgTransition}s the {@link IAction}s do not have to
+ * provide predecessor and successor locations.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public interface IAction {
 	/**
-	 * @return Identifier of the procedure in which the system/program is before this action is executed.
+	 * @return Identifier of the procedure in which the system/program is before
+	 *         this action is executed.
 	 */
 	@Visualizable
 	String getPrecedingProcedure();
 
 	/**
-	 * @return Identifier of the procedure in which the system/program is after this action is executed.
+	 * @return Identifier of the procedure in which the system/program is after this
+	 *         action is executed.
 	 */
 	@Visualizable
 	String getSucceedingProcedure();
 
 	/**
-	 * @return {@link TransFormula} which defines how the system/program's variables are modified while executing this
-	 *         action.
+	 * @return {@link TransFormula} which defines
+	 *         <ul>
+	 *         <li>how the system/program's variables are modified while executing
+	 *         this action
+	 *         <li>in which states this action can be executed (e.g., x'=x+1 /\ x
+	 *         >=23 can only be executed in states where the value of the variable x
+	 *         is greater than or equal to 23.
+	 *         </ul>
 	 */
 	@Visualizable
 	UnmodifiableTransFormula getTransformula();

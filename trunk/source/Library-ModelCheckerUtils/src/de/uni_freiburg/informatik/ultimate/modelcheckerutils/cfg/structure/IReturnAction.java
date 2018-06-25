@@ -30,8 +30,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Classes that implement this interface represent an {@link IAction} which labels a return edge in an interprocedural
- * control flow graph.
+ * Classes that implement this interface represent an {@link IAction} that
+ * defines the effect that a return has to the (non-control-flow)
+ * variables of the system. A return is the transition that brings the system from the called procedure back to the called
+ * procedure. This means that the effect of the of a return is that
+ * <ul>
+ * <li> local variables of the calling context get the values that they had before the call
+ * <li> variables that are assigned by the call get the values that are returned by the procedure
+ * <li> all local variables that occur only in the context of the called procedure are havoced.
+ * <ul />
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
