@@ -94,7 +94,8 @@ public class ReqParser implements ISource {
 				fis.close();
 			}
 		}
-		return new ObjectContainer<List<PatternType>>(rawPatterns);
+		ObjectContainer<List> container = new ObjectContainer<List>(rawPatterns);
+		return container;
 	}
 
 	@Override

@@ -41,6 +41,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -74,42 +75,52 @@ public class ReqPrinterObserver implements IUnmanagedObserver {
 				mLogger.warn("No requirements found");
 				return false;
 			}
-			final PrintWriter writer = openTempFile(root);
-			if (writer == null) {
-				return false;
-			}
-
-			final List<PatternType> sortedPatterns = new ArrayList<>(container.getPatterns());
-			sortedPatterns.sort(new Comparator<PatternType>() {
-
-				@Override
-				public int compare(final PatternType o1, final PatternType o2) {
-					if (o1 instanceof InitializationPattern) {
-						if (o2 instanceof InitializationPattern) {
-							final VariableCategory o1cat = ((InitializationPattern) o1).getCategory();
-							final VariableCategory o2cat = ((InitializationPattern) o2).getCategory();
-							if (o1cat == VariableCategory.CONST && o2cat != VariableCategory.CONST) {
-								return -1;
-							} else if (o2cat == VariableCategory.CONST && o1cat != VariableCategory.CONST) {
-								return 1;
-							}
-						} else {
-							return -1;
-						}
-					} else if (o2 instanceof InitializationPattern) {
-						return 1;
-					}
-					return o1.getId().compareToIgnoreCase(o2.getId());
-				}
-			});
-
-			for (final PatternType pattern : sortedPatterns) {
-				writer.println(pattern.toString());
-			}
-			writer.close();
+			final List<PatternType> pattern = new ArrayList<>(container.getPatterns());
+			printPatternList(root, pattern);
 			return false;
-		}
+		}  else if (root instanceof ObjectContainer) {
+			if(((ObjectContainer) root).getValue() instanceof List) {
+				final List<PatternType> pattern = (List<PatternType>) ((ObjectContainer) root).getValue();
+				printPatternList(root, pattern);
+			}
+			return false;
+		} 
 		return true;
+	}
+	
+	private void printPatternList(IElement root, List<PatternType> sortedPatterns) {
+		final PrintWriter writer = openTempFile(root);
+		/*if (writer == null) {
+			return false;
+		}*/
+
+		sortedPatterns.sort(new Comparator<PatternType>() {
+
+			@Override
+			public int compare(final PatternType o1, final PatternType o2) {
+				if (o1 instanceof InitializationPattern) {
+					if (o2 instanceof InitializationPattern) {
+						final VariableCategory o1cat = ((InitializationPattern) o1).getCategory();
+						final VariableCategory o2cat = ((InitializationPattern) o2).getCategory();
+						if (o1cat == VariableCategory.CONST && o2cat != VariableCategory.CONST) {
+							return -1;
+						} else if (o2cat == VariableCategory.CONST && o1cat != VariableCategory.CONST) {
+							return 1;
+						}
+					} else {
+						return -1;
+					}
+				} else if (o2 instanceof InitializationPattern) {
+					return 1;
+				}
+				return o1.getId().compareToIgnoreCase(o2.getId());
+			}
+		});
+
+		for (final PatternType pattern : sortedPatterns) {
+			writer.println(pattern.toString());
+		}
+		writer.close();
 	}
 
 	private PrintWriter openTempFile(final IElement root) {
