@@ -717,8 +717,12 @@ public class Req2BoogieTranslator {
 				.filter(a -> a.getValue().getPhases().length != 1).collect(Collectors.toList());
 
 		final int count = entries.size();
-		mLogger.info((mReq2Automata.size() - count) + " requirements are invariant");
+		mLogger.info((mReq2Automata.size() - count) + " of " + mReq2Automata.size() + " requirements are invariant");
 		final int actualCombinationNum = mCombinationNum <= count ? mCombinationNum : count;
+		if (actualCombinationNum < 2) {
+			mLogger.info("No rt-inconsistencies possible");
+			return Collections.emptyList();
+		}
 		final List<Statement> stmtList = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		final List<Entry<PatternType, PhaseEventAutomata>[]> subsets = CrossProducts
