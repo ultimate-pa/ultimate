@@ -71,6 +71,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
+/**
+ *
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ * @param <INLOC>
+ * @param <OUTLOC>
+ */
 public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
 
@@ -94,7 +101,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 * prefix of heap arrays (copied from class "SFO" in C to Boogie translation)
 	 */
 	public static final String MEMORY = "#memory";
-
 
 
 	/**
@@ -193,7 +199,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral;
 		final MemlocArrayManager memlocArrayManager;
 
-			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
+//			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
 			mLogger.info("Heap separator: starting memloc-array-style preprocessing");
 
 			memlocArrayManager = new MemlocArrayManager(mMgdScript);
@@ -308,11 +314,9 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			storeIndexInfoToFreezeVar = null;
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
-//		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
-//			mLogger.debug("storeIndexInfoToFreezeVar: " + DataStructureUtils.prettyPrint(storeIndexInfoToFreezeVar));
-//		} else {
-			mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
-//		}
+
+		mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
+
 		mLogger.debug("edgeToIndexToStoreIndexInfo: " + DataStructureUtils.prettyPrint(edgeToIndexToStoreIndexInfo));
 
 		/*
@@ -334,15 +338,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 				new HashSet<>(heapSepPreanalysis.getArrayToArrayGroup().values())));
 		mLogger.info("  select infos: " + DataStructureUtils.prettyPrint(heapSepPreanalysis.getSelectInfos()));
 
-		final HeapPartitionManager partitionManager;
-//		if (mSettings.getPreprocessing() == Preprocessing.FREEZE_VARIABLES) {
-//			partitionManager = new HeapPartitionManager(mLogger, arrayToArrayGroup, storeIndexInfoToFreezeVar,
-//					mHeapArrays, mStatistics, mMgdScript);
-//		} else {
-			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
-			partitionManager = new HeapPartitionManager(mLogger, mMgdScript, arrayToArrayGroup, mHeapArrays,
-					mStatistics, memlocArrayManager, storeIndexInfoToLocLiteral);
-//		}
+		final HeapPartitionManager partitionManager = new HeapPartitionManager(mLogger, mMgdScript, arrayToArrayGroup,
+				mHeapArrays, mStatistics, memlocArrayManager, storeIndexInfoToLocLiteral);
 
 		/*
 		 * 3b. compute an array partitioning
@@ -380,11 +377,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 						mMgdScript.getScript(), literalTerms));
 		mMgdScript.assertTerm(this, allLiteralDisequalities);
 		mMgdScript.unlock(this);
-	}
-
-	private String getFreezeVarLitName(final IProgramNonOldVar freezeVar) {
-		// TODO make _really_ sure that the new id is unique
-		return freezeVar.getGloballyUniqueId() + "_lit";
 	}
 
 	/**
@@ -427,10 +419,6 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	}
 }
 
-enum Preprocessing {
-	FREEZE_VARIABLES, MEMLOC_ARRAY; // edit: FREEZE_VARIABLES is deprecated
-}
-
 class HeapSepSettings {
 	/**
 	 *
@@ -441,9 +429,6 @@ class HeapSepSettings {
 	private final boolean mAssumeFreezeVarLitDisequalitiesAtInitEdges = false;
 
 	private final boolean mAssertFreezeVarLitDisequalitiesIntoScript = true;
-
-	private final Preprocessing mPreprocessing = Preprocessing.MEMLOC_ARRAY;
-//	private final Preprocessing mPreprocessing = Preprocessing.FREEZE_VARIABLES;
 
 	private final boolean mAddLiteralDisequalitiesAsAxioms = false;
 
@@ -457,10 +442,6 @@ class HeapSepSettings {
 
 	public boolean isAssertFreezeVarLitDisequalitiesIntoScript() {
 		return mAssertFreezeVarLitDisequalitiesIntoScript;
-	}
-
-	public Preprocessing getPreprocessing() {
-		return mPreprocessing;
 	}
 }
 
@@ -612,7 +593,7 @@ class ComputeStoreIndexInfosAndArrayGroups<LOC extends IcfgLocation> {
 	 *
 	 * @return
 	 */
-	private IProgramVarOrConst findPvoc(final TransFormula edge, final Set<Term> terms) {
+	private static IProgramVarOrConst findPvoc(final TransFormula edge, final Set<Term> terms) {
 		for (final Term term : terms) {
 			final IProgramVarOrConst pvoc = TransFormulaUtils.getProgramVarOrConstForTerm(edge, term);
 			if (pvoc != null) {
