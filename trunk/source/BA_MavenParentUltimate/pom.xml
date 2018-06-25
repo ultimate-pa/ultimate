@@ -341,6 +341,7 @@
 		<module>../UltimateDeltaDebugger</module>
 		<module>../InvariantSynthesis</module>
 		<module>../ReqPrinter</module>
+		<module>../ReqParser</module>
 
 	</modules>
 

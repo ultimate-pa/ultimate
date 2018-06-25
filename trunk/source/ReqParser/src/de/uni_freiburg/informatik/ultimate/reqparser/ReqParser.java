@@ -19,10 +19,10 @@
  * along with the ULTIMATE PEAtoBoogie plug-in. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ReqParser plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
+ * licensors of the ULTIMATE ReqParer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.reqparser;
@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -132,7 +131,6 @@ public class ReqParser implements ISource {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

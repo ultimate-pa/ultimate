@@ -87,7 +87,7 @@ public class PeaToBoogie implements ISource {
 	}
 
 	public boolean parseable(final File file) {
-		return file.getName().endsWith(".reqasdf");
+		return file.getName().endsWith(".req");
 	}
 
 	@Override
@@ -234,7 +234,7 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public String[] getFileTypes() {
-		return new String[] { ".reqasdf" };
+		return new String[] { ".req" };
 	}
 
 	@Override
