@@ -2,7 +2,7 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         point="de.uni_freiburg.informatik.ultimate.ep.source">
+         point="de.uni_freiburg.informatik.ultimate.ep.generator">
       <impl
             class="de.uni_freiburg.informatik.ultimate.pea2boogie.PeaToBoogie">
       </impl>

@@ -88,8 +88,9 @@ public class ReqParser implements ISource {
 				= new de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser(mServices, mLogger, fis, file.getName());
 				final Symbol goal = parser.parse();
 				rawPatterns.addAll(Arrays.asList((PatternType[]) goal.value));
-			} finally {
+			} catch (Exception e){ 
 				mLogger.error("Error in file: "+file.getName());
+			} finally {
 				fis.close();
 			}
 		}

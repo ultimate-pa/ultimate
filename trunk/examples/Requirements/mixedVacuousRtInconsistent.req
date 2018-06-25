@@ -1,4 +1,11 @@
-Globally, it is never the case that "A" holds.
-After "A", it is always the case that "B" holds.
-Globally, it is always the case that if "C" holds then "!D" holds for at least "10" time units.
-Globally, it is always the case that if "E" holds then "D" holds after at most "5" time units.
+Input A is bool
+Input B is bool
+Input C is bool
+Input D is bool
+Input E is bool
+
+
+req01: Globally, it is never the case that "A" holds.
+req02: After "A", it is always the case that "B" holds.
+req03: Globally, it is always the case that if "C" holds then "!D" holds for at least "10" time units.
+req04: Globally, it is always the case that if "E" holds then "D" holds after at most "5" time units.
