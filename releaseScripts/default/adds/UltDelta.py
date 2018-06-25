@@ -250,12 +250,12 @@ def start_processes(list_of_calls):
     return rtr
 
 
-def poll_processes(list_of_processes, is_interesting, write_output):
+def poll_processes(list_of_processes, is_interesting, is_interesting_initial, write_output):
     # poll the output
 
     reductions = dict()
-    for fun in is_interesting:
-        reductions[fun] = False
+    for fun, default in zip(is_interesting, is_interesting_initial):
+        reductions[fun] = default
 
     while True:
         lines = []
@@ -282,7 +282,7 @@ def poll_processes(list_of_processes, is_interesting, write_output):
 
         for line, fun in zip(lines, is_interesting):
             if line:
-                reductions[fun] = reductions[fun] or fun(line)
+                reductions[fun] = fun(reductions[fun], line)
 
         if all(reductions.values()):
             print('Successful reduction')
@@ -300,11 +300,29 @@ def delta_debug_smtinterpol(input_files, verbose, output, extras):
     ultimate_call = create_callargs(ultimate_bin, extras + ['-i', input_files])
     z3_call = ['z3', 'fixedpoint.engine=spacer', input]
 
-    z3_interesting = lambda x: x.startswith(sat)
-    ult_interesting = lambda x: x.find('CounterExampleResult') != -1
+    z3_interesting = lambda acc, line: acc or line.startswith('sat')
+    ult_interesting = lambda acc, line: acc or line.find('CounterExampleResult') != -1
 
     processes = start_processes([ultimate_call, z3_call])
-    poll_processes(processes, [ult_interesting, z3_interesting], verbose)
+    poll_processes(processes, [ult_interesting, z3_interesting], [False, False], verbose)
+
+    sys.exit(ExitCode.FAIL_NO_REDUCTION)
+
+
+def delta_debug_creduce(input_files, verbose, output, extras):
+    # execute ultimate and assume that -tc and -s are given in extras
+    ultimate_bin = get_binary()
+    input = extras[-1]
+    extras = extras[:-1]
+    ultimate_call = create_callargs(ultimate_bin, extras + ['-i', input_files])
+    gcc_call = ['gcc', '-std=c11', '-pedantic', '-w', '-fsyntax-only', input]
+
+    ult_interesting = lambda acc, line: acc or x.find('CounterExampleResult') != -1
+    # any gcc output says that there is a syntax error
+    gcc_interesting = lambda acc, line: False
+
+    processes = start_processes([ultimate_call, gcc_call])
+    poll_processes(processes, [ult_interesting, gcc_interesting], [False, True], verbose)
 
     sys.exit(ExitCode.FAIL_NO_REDUCTION)
 
@@ -316,6 +334,7 @@ def main():
     sys.stdout = output_file
     sys.stderr = output_file
     delta_debug_smtinterpol(input_files, verbose, output, extras)
+    # delta_debug_creduce(input_files, verbose, output, extras)
 
 
 if __name__ == "__main__":
