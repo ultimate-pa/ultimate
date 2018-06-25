@@ -134,14 +134,9 @@ public class RtInconcistencyConditionGenerator {
 			}
 
 			// first, compute rhs without primed invariant
-			final Term checkRhsWithPrimes = SmtUtils.and(mScript, outer);
-			final Term checkRhs = existentiallyProjectEventsAndPrimedVars(checkRhsWithPrimes);
-			if (checkRhs == mTrue) {
-				continue;
-			}
-			// then, add invariant
-			final Term checkRhsAndPrimedInvariant = SmtUtils.and(mScript, checkRhs, mPrimedInvariant);
-			final Term checkRhsAndInvariant = existentiallyProjectEventsAndPrimedVars(checkRhsAndPrimedInvariant);
+			final Term checkPrimedRhs = SmtUtils.and(mScript, outer);
+			final Term checkPrimedRhsAndPrimedInvariant = SmtUtils.and(mScript, checkPrimedRhs, mPrimedInvariant);
+			final Term checkRhsAndInvariant = existentiallyProjectEventsAndPrimedVars(checkPrimedRhsAndPrimedInvariant);
 			final Term checkRhsAndInvariantSimplified = simplify(checkRhsAndInvariant);
 			if (checkRhsAndInvariantSimplified == mTrue) {
 				continue;
