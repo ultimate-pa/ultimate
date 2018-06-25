@@ -3,14 +3,13 @@
 from __future__ import print_function
 
 import argparse
-import signal
+import os
 import subprocess
 import sys
-
-import fnmatch
-import os
-import re
 from stat import ST_MODE
+
+MODE_SMTINTERPOL = 'smtinterpol'
+MODE_CREDUCE = 'creduce'
 
 version = 'DELTA-DEBUG'
 ultimatedir = os.path.dirname(os.path.realpath(__file__))
@@ -22,7 +21,7 @@ enable_assertions = False
 class _ExitCode:
     _exit_codes = ["SUCCESS", "FAIL_OPEN_SUBPROCESS", "FAIL_NO_INPUT_FILE", "FAIL_NO_WITNESS_TO_VALIDATE",
                    "FAIL_MULTIPLE_FILES", "FAIL_NO_TOOLCHAIN_FOUND", "FAIL_NO_SETTINGS_FILE_FOUND",
-                   "FAIL_ULTIMATE_ERROR", "FAIL_NO_REDUCTION"]
+                   "FAIL_ULTIMATE_ERROR", "FAIL_NO_REDUCTION", "FAIL_ILLEGAL_MODE"]
 
     def __init__(self):
         pass
@@ -188,7 +187,8 @@ def parse_args():
         debug_environment()
         sys.exit(ExitCode.SUCCESS)
 
-    parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
+    parser = argparse.ArgumentParser(
+        description='Ultimate wrapper script for delta-debugging with SMTInterpol delta debugger or creduce')
     parser.add_argument('--version', action='store_true',
                         help='Print Ultimate.py\'s version and exit')
     parser.add_argument('--config', nargs=1, metavar='<dir>', type=check_dir,
@@ -206,6 +206,9 @@ def parse_args():
     parser.add_argument('--file', metavar='<file>', nargs=1, type=check_file,
                         help='One C file')
     parser.add_argument('--output', metavar='<file>', nargs=1, help='File to which output is written')
+    parser.add_argument('--mode', metavar='<mode>', nargs=1, required=True, action='store',
+                        choices=[MODE_SMTINTERPOL, MODE_CREDUCE],
+                        help='Select whether SMTInterpol delta debugger or creduce will be used. SMTInterpol automatically supplies the modified argument as last argument, creduce does not')
 
     args, extras = parser.parse_known_args()
 
@@ -220,7 +223,7 @@ def parse_args():
         sys.exit(ExitCode.SUCCESS)
 
     if args.output:
-        output = args.output
+        output = args.output[0]
     else:
         output = "ultimate-output.log"
 
@@ -231,14 +234,24 @@ def parse_args():
         print("Setting data dir to {0}".format(args.data[0]))
         datadir = args.data[0]
 
-    return [args.file[0]], args.full_output, output, extras
+    mode = args.mode[0]
+    if mode == MODE_SMTINTERPOL:
+        input_file = extras[-1]
+        extras = extras[:-1]
+    elif mode == MODE_CREDUCE:
+        input_file = args.file[0]
+    else:
+        print('Unknown mode ' + mode)
+        sys.exit(ExitCode.FAIL_ILLEGAL_MODE)
+
+    return input_file, args.full_output, output, mode, extras
 
 
 def print_call_finished(name, process):
     if process.returncode == 0:
-        print('\n' + name + ' finished normally')
+        print('\n', name, ' finished normally', sep='')
     else:
-        print('\n' + name + 'Ultimate finished with exit code ' + str(process.returncode))
+        print('\n', name, ' finished with exit code ', process.returncode, sep='')
 
 
 def start_processes(list_of_calls):
@@ -246,7 +259,7 @@ def start_processes(list_of_calls):
     for call in list_of_calls:
         call_proc = call_desperate(call)
         rtr += [call_proc]
-        print('Creating process {} by calling {}'.format(call_proc.procid(), call))
+        print('Creating process {} by calling {}'.format(call_proc.pid, ' '.join(call)))
     return rtr
 
 
@@ -260,25 +273,26 @@ def poll_processes(list_of_processes, is_interesting, is_interesting_initial, wr
     while True:
         lines = []
         for process in list_of_processes:
-            lines += [process.stdout.readline().decode('utf-8', 'ignore')]
+            lines += [process.stdout.readline()]
             process.poll()
 
         is_running = False
         for process, line in zip(list_of_processes, lines):
-            is_running = is_running or (process.returncode is not None and not line)
+            is_running = is_running or process.returncode is None or line
             if is_running:
                 break
 
         if not is_running:
             for process in list_of_processes:
-                print_call_finished(process.procid(), process)
+                print_call_finished(process.pid, process)
             break
 
         if write_output:
             for process, line in zip(list_of_processes, lines):
                 if not line:
                     continue
-                print('[{}] {}'.format(process.procid(), line))
+                print_line = '[{}] {}'.format(process.pid, line)
+                sys.stdout.write(print_line)
 
         for line, fun in zip(lines, is_interesting):
             if line:
@@ -286,19 +300,20 @@ def poll_processes(list_of_processes, is_interesting, is_interesting_initial, wr
 
         if all(reductions.values()):
             print('Successful reduction')
+            sys.stdout.flush()
             sys.exit(ExitCode.SUCCESS)
 
     print('No reduction')
+    sys.stdout.flush()
     sys.exit(ExitCode.FAIL_NO_REDUCTION)
 
 
-def delta_debug_smtinterpol(input_files, verbose, output, extras):
+def delta_debug_smtinterpol(input_file, verbose, output, extras):
     # execute ultimate and assume that -tc and -s are given in extras
     ultimate_bin = get_binary()
-    input = extras[-1]
-    extras = extras[:-1]
-    ultimate_call = create_callargs(ultimate_bin, extras + ['-i', input_files])
-    z3_call = ['z3', 'fixedpoint.engine=spacer', input]
+
+    ultimate_call = create_callargs(ultimate_bin, extras + ['-i', input_file])
+    z3_call = ['z3', 'fixedpoint.engine=spacer', input_file]
 
     z3_interesting = lambda acc, line: acc or line.startswith('sat')
     ult_interesting = lambda acc, line: acc or line.find('CounterExampleResult') != -1
@@ -309,15 +324,13 @@ def delta_debug_smtinterpol(input_files, verbose, output, extras):
     sys.exit(ExitCode.FAIL_NO_REDUCTION)
 
 
-def delta_debug_creduce(input_files, verbose, output, extras):
+def delta_debug_creduce(input_file, verbose, output, extras):
     # execute ultimate and assume that -tc and -s are given in extras
     ultimate_bin = get_binary()
-    input = extras[-1]
-    extras = extras[:-1]
-    ultimate_call = create_callargs(ultimate_bin, extras + ['-i', input_files])
-    gcc_call = ['gcc', '-std=c11', '-pedantic', '-w', '-fsyntax-only', input]
+    ultimate_call = create_callargs(ultimate_bin, extras + ['-i', input_file])
+    gcc_call = ['gcc', '-std=c11', '-pedantic', '-w', '-fsyntax-only', input_file]
 
-    ult_interesting = lambda acc, line: acc or x.find('CounterExampleResult') != -1
+    ult_interesting = lambda acc, line: acc or line.find('java.lang.ClassCastException: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed cannot be cast to de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive') != -1
     # any gcc output says that there is a syntax error
     gcc_interesting = lambda acc, line: False
 
@@ -328,14 +341,21 @@ def delta_debug_creduce(input_files, verbose, output, extras):
 
 
 def main():
-    input_files, verbose, output, extras = parse_args()
+    input_file, verbose, output, mode, extras = parse_args()
 
     output_file = open(output, 'a')
     sys.stdout = output_file
     sys.stderr = output_file
-    delta_debug_smtinterpol(input_files, verbose, output, extras)
-    # delta_debug_creduce(input_files, verbose, output, extras)
+
+    if mode == MODE_CREDUCE:
+        delta_debug_creduce(input_file, verbose, output, extras)
+    elif mode == MODE_SMTINTERPOL:
+        delta_debug_smtinterpol(input_file, verbose, output, extras)
+    else:
+        print('Unknown mode ' + mode)
+        sys.exit(ExitCode.FAIL_ILLEGAL_MODE)
 
 
 if __name__ == "__main__":
+    main()
     sys.exit(ExitCode.FAIL_NO_REDUCTION)
