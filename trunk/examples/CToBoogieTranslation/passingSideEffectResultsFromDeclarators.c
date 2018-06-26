@@ -8,9 +8,6 @@
  * trunk/examples/svcomp/ntdrivers/floppy_true-unreach-call_true-valid-memsafety.i.cil.c \
  *
  */
-int main() {
-  struct _VPB vpb;
-}
 
 typedef unsigned short wchar_t;
 
@@ -19,3 +16,7 @@ typedef wchar_t WCHAR;
 struct _VPB {
    WCHAR VolumeLabel[(32U * sizeof(WCHAR )) / sizeof(WCHAR )] ;
 };
+
+int main() {
+  struct _VPB vpb;
+}
