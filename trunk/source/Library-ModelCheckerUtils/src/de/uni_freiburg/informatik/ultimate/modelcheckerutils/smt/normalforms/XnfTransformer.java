@@ -153,6 +153,20 @@ public abstract class XnfTransformer extends NnfTransformer {
 				}
 			}
 
+			final Set<XJunction> elems = simplifyWithPosetMinimalElements(resOuterJunction);
+
+			// Construct terms.
+			final Term[] resInnerTerms = new Term[elems.size()];
+			int i = 0;
+			for (final XJunction resInnerSet : elems) {
+				resInnerTerms[i] = innerConnective(mScript, resInnerSet.toTermList(mScript));
+				i++;
+			}
+			assert i == resInnerTerms.length;
+			return resInnerTerms;
+		}
+
+		private Set<XJunction> simplifyWithPosetMinimalElements(final Set<XJunction> resOuterJunction) {
 			final boolean timeConsumingSimplification = (resOuterJunction.size() > 5000);
 			if (timeConsumingSimplification) {
 				mLogger.warn("Simplifying " + outerJunctionName() + " of " + resOuterJunction.size() + " "
@@ -175,15 +189,7 @@ public abstract class XnfTransformer extends NnfTransformer {
 						+ innerJunctionName() + "s. ");
 			}
 
-			// Construct terms.
-			final Term[] resInnerTerms = new Term[pme.getElements().size()];
-			int i = 0;
-			for (final XJunction resInnerSet : pme.getElements()) {
-				resInnerTerms[i] = innerConnective(mScript, resInnerSet.toTermList(mScript));
-				i++;
-			}
-			assert i == resInnerTerms.length;
-			return resInnerTerms;
+			return pme.getElements();
 		}
 
 		/**
