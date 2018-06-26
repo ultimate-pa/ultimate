@@ -1,7 +1,4 @@
 
 int main() {
-  char ca[20];
-
-  ca = "bla";
-
+  char ca[] = "bla";
 }
