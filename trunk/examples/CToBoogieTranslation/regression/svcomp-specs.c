@@ -36,8 +36,8 @@ void main(){
 	unsigned char l 			= __VERIFIER_nondet_uchar();
 	unsigned int m 				= __VERIFIER_nondet_unsigned();
 	unsigned int n 				= __VERIFIER_nondet_uint();
-	unsigned unsigned long o 	= __VERIFIER_nondet_ulong();
-	unsigned unsigned short p 	= __VERIFIER_nondet_ushort();
+	unsigned long o 			= __VERIFIER_nondet_ulong();
+	unsigned short p 			= __VERIFIER_nondet_ushort();
 	char q 						= __VERIFIER_nondet_char();
 	
 	__VERIFIER_error();		
