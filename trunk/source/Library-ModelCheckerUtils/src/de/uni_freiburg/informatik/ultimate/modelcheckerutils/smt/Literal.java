@@ -44,7 +44,7 @@ public class Literal {
 
 	public enum Polarity {
 		POSITIVE, NEGATIVE
-	};
+	}
 
 	private final Term mAtom;
 	private final Polarity mPolarity;
