@@ -84,6 +84,8 @@ public final class BlockEncoder {
 
 	private BasicIcfg<IcfgLocation> mIterationResult;
 
+	private final boolean mRunAsPlugin;
+
 	/**
 	 * Create a {@link BlockEncoder} for the BlockEncoding plugin.
 	 *
@@ -106,6 +108,7 @@ public final class BlockEncoder {
 		mIterationResult = null;
 		mBacktranslator = backtranslator;
 		mEdgeBuilder = builder;
+		mRunAsPlugin = true;
 		processIcfg(icfg);
 	}
 
@@ -131,6 +134,7 @@ public final class BlockEncoder {
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = logger;
+		mRunAsPlugin = false;
 		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 		final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
 		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique, xnfConversionTechnique);
@@ -305,7 +309,9 @@ public final class BlockEncoder {
 	private void reportSizeBenchmark(final String message, final IIcfg<?> root) {
 		final IcfgSizeBenchmark bench = new IcfgSizeBenchmark(root, message);
 		mLogger.info(message + " " + bench);
-		bench.reportBenchmarkResult(mServices.getResultService(), Activator.PLUGIN_ID, message);
+		if (mRunAsPlugin) {
+			bench.reportBenchmarkResult(mServices.getResultService(), Activator.PLUGIN_ID, message);
+		}
 	}
 
 	private static boolean hasToBePreserved(final IIcfg<?> icfg, final IcfgLocation node) {
