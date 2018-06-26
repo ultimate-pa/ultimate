@@ -22,7 +22,7 @@ java -Dosgi.configuration.area=./data/config -Xmx12G -Xms1G -jar ./plugins/org.e
 */
 
 struct cpumask {
-   int bits[     0  /  0     ] ;
+   int bits[     0  /  1     ] ;
 };
 
 typedef struct cpumask  cpumask_var_t;
@@ -33,22 +33,24 @@ struct mm_struct {
 
 };
 
-struct kiocb {
-
-   struct kioctx  ki_ctx ;
-
-};
-
 struct kioctx {
 
    struct mm_struct  mm ;
 
 };
 
+
+struct kiocb {
+
+   struct kioctx  ki_ctx ;
+
+};
+
+
 struct address_space_operations {
 
-   int ( direct_IO)(     struct kiocb
-                          ) ;
+   int direct_IO;
+   struct kiocb ;
 
 };
 
@@ -66,18 +68,21 @@ struct file {
 
 struct file_operations {
 
-   int ( llseek)(struct file             ) ;
+   int llseek;
+   struct file             ;
 
 };
+
+struct dvb_device {
+
+   struct file_operations  const   fops ;
+
+};
+
 
 struct dvb_adapter {
 
    struct dvb_device  mfe_dvbdev ;
-
-};
-struct dvb_device {
-
-   struct file_operations  const   fops ;
 
 };
 

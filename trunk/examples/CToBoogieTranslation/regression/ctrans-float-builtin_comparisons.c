@@ -24,6 +24,8 @@
 
 */
 
+#include <math.h> 
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } return; }
 
@@ -32,36 +34,36 @@ int main(void)
     __VERIFIER_assert(__builtin_isgreaterequal(2.0, 1.0));
     __VERIFIER_assert(!__builtin_isgreaterequal(1.0, 2.0));
     __VERIFIER_assert(__builtin_isgreaterequal(1.0, 1.0));
-    __VERIFIER_assert(__builtin_isgreaterequal((__builtin_inff ("")), 1.0));
+    __VERIFIER_assert(__builtin_isgreaterequal((__builtin_inff()), 1.0));
     __VERIFIER_assert(!__builtin_isgreaterequal(1.0, (__builtin_nanf (""))));
     __VERIFIER_assert(!__builtin_isgreaterequal((__builtin_nanf ("")),1.0));
 
     __VERIFIER_assert(__builtin_isgreater(2.0, 1.0));
     __VERIFIER_assert(!__builtin_isgreater(1.0, 2.0));
     __VERIFIER_assert(!__builtin_isgreater(1.0, 1.0));
-    __VERIFIER_assert(__builtin_isgreater((__builtin_inff ("")), 1.0));
+    __VERIFIER_assert(__builtin_isgreater((__builtin_inff()), 1.0));
     __VERIFIER_assert(!__builtin_isgreater(1.0, (__builtin_nanf (""))));
     __VERIFIER_assert(!__builtin_isgreater((__builtin_nanf ("")),1.0));
     
     __VERIFIER_assert(!__builtin_isless(2.0, 1.0));
     __VERIFIER_assert(__builtin_isless(1.0, 2.0));
     __VERIFIER_assert(!__builtin_isless(1.0, 1.0));
-    __VERIFIER_assert(!__builtin_isless((__builtin_inff ("")), 1.0));
+    __VERIFIER_assert(!__builtin_isless((__builtin_inff()), 1.0));
     __VERIFIER_assert(!__builtin_isless(1.0, (__builtin_nanf (""))));
     __VERIFIER_assert(!__builtin_isless((__builtin_nanf ("")),1.0));
     
     __VERIFIER_assert(!__builtin_islessequal(2.0, 1.0));
     __VERIFIER_assert(__builtin_islessequal(1.0, 2.0));
     __VERIFIER_assert(__builtin_islessequal(1.0, 1.0));
-    __VERIFIER_assert(!__builtin_islessequal((__builtin_inff ("")), 1.0));
+    __VERIFIER_assert(!__builtin_islessequal((__builtin_inff()), 1.0));
     __VERIFIER_assert(!__builtin_islessequal(1.0, (__builtin_nanf (""))));
     __VERIFIER_assert(!__builtin_islessequal((__builtin_nanf ("")),1.0));
     
     __VERIFIER_assert(!__builtin_isunordered(2.0, 1.0));
     __VERIFIER_assert(!__builtin_isunordered(1.0, 2.0));
     __VERIFIER_assert(!__builtin_isunordered(1.0, 1.0));
-    __VERIFIER_assert(!__builtin_isunordered((__builtin_inff ("")), 1.0));
-    __VERIFIER_assert(!__builtin_isunordered((__builtin_inff ("")), (__builtin_inff (""))));
+    __VERIFIER_assert(!__builtin_isunordered((__builtin_inff()), 1.0));
+    __VERIFIER_assert(!__builtin_isunordered((__builtin_inff()), (__builtin_inff())));
     __VERIFIER_assert(__builtin_isunordered(1.0, (__builtin_nanf (""))));
     __VERIFIER_assert(__builtin_isunordered((__builtin_nanf ("")),1.0));
     __VERIFIER_assert(__builtin_isunordered((__builtin_nanf ("")),(__builtin_nanf (""))));
@@ -69,8 +71,8 @@ int main(void)
     __VERIFIER_assert(__builtin_islessgreater(2.0, 1.0));
     __VERIFIER_assert(__builtin_islessgreater(1.0, 2.0));
     __VERIFIER_assert(!__builtin_islessgreater(1.0, 1.0));
-    __VERIFIER_assert(__builtin_islessgreater((__builtin_inff ("")), 1.0));
-    __VERIFIER_assert(!__builtin_islessgreater((__builtin_inff ("")), (__builtin_inff (""))));
+    __VERIFIER_assert(__builtin_islessgreater((__builtin_inff()), 1.0));
+    __VERIFIER_assert(!__builtin_islessgreater((__builtin_inff()), (__builtin_inff())));
     __VERIFIER_assert(!__builtin_islessgreater(1.0, (__builtin_nanf (""))));
     __VERIFIER_assert(!__builtin_islessgreater((__builtin_nanf ("")),1.0));
     __VERIFIER_assert(!__builtin_islessgreater((__builtin_nanf ("")),(__builtin_nanf (""))));

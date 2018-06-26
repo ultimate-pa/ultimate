@@ -2,12 +2,12 @@ int main() {
 	char c;
 	signed char sc;
 	unsigned char uc;
-	short s;
-	short int si;
-	signed short ss;
-	signed short int ssi;
-	unsigned short us;
-	unsigned short int usi;
+	short sh;
+	short int shi;
+	signed short ssh;
+	signed short int sshi;
+	unsigned short ush;
+	unsigned short int ushi;
 	int i;
 	signed int si;
 	unsigned u;

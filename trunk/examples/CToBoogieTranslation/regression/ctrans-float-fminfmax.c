@@ -19,6 +19,8 @@
 
 */
 
+#include <math.h>
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 void __VERIFIER_assert(int cond) { if (!(cond)) { ERROR: __VERIFIER_error(); } return; }
 
@@ -35,8 +37,8 @@ int main(void)
     __VERIFIER_assert(fmax(-INFINITY,0) == 0);
     __VERIFIER_assert(fmax(NAN,-1) == -1.000000);
     __VERIFIER_assert(fmax(-1,NAN) == -1.000000);
-    int i = isnan(fmax(NAN,NAN));
-    __VERIFIER_assert(i);
+    int j = isnan(fmax(NAN,NAN));
+    __VERIFIER_assert(j);
     
     return 0;
 }
