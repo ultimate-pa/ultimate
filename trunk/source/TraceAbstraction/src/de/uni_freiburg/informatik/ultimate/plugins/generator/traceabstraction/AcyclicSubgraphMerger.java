@@ -54,18 +54,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pat
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * Merge an acyclic subgraph into a list of {@link UnmodifiableTransFormula}s.
- * Given
+ * Merge an acyclic subgraph into a list of {@link UnmodifiableTransFormula}s. Given
  * <ul>
  * <li>an ICFG mICFG,
- * <li>a set of {@link IcfgEdge}s that defines an acyclic and connected subgraph
- * of mICFG,
- * <li>a location startLoc such that all edges of the subgraph are successors of
- * startLoc,
+ * <li>a set of {@link IcfgEdge}s that defines an acyclic and connected subgraph of mICFG,
+ * <li>a location startLoc such that all edges of the subgraph are successors of startLoc,
  * <li>and a a set of locations {endLoc_1, ..., endloc L_n},
  * </ul>
- * construct {@link UnmodifiableTransFormula}s tf_1,...tf_n such that tf_i
- * represents the disjunction of all paths from startLoc to endLoc_i.
+ * construct {@link UnmodifiableTransFormula}s tf_1,...tf_n such that tf_i represents the disjunction of all paths from
+ * startLoc to endLoc_i.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -78,28 +75,29 @@ public class AcyclicSubgraphMerger {
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mEndloc2TransFormula;
 
 	public AcyclicSubgraphMerger(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final Set<IcfgEdge> subgraphEdges, final IcfgLocation subgraphStartLocation, final IcfgEdge startLocErrorEdge,
-			final Set<IcfgLocation> subgraphEndLocations) {
+			final Set<IcfgEdge> subgraphEdges, final IcfgLocation subgraphStartLocation,
+			final IcfgEdge startLocErrorEdge, final Set<IcfgLocation> subgraphEndLocations) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final Subgraph initialSubgraph = new Subgraph(icfg, subgraphStartLocation, subgraphEndLocations);
 
 		final Subgraph initialCopy;
-		Set<IcfgEdge>subgraphEdgesInCopy;
+		Set<IcfgEdge> subgraphEdgesInCopy;
 		{
 			// construct a copy of the cfg
 			final Subgraph initialCopyWithOldStartLoc;
 			final IcfgEdge startLocErrorEdgeInCopy;
 			{
-				final BlockEncodingBacktranslator backtranslator = new BlockEncodingBacktranslator(IcfgEdge.class,
-						Term.class, mLogger);
-				final BasicIcfg<IcfgLocation> newCfg = new IcfgDuplicator(mLogger, mServices, icfg.getCfgSmtToolkit().getManagedScript(),
-						backtranslator).copy(icfg);
+				final BlockEncodingBacktranslator backtranslator =
+						new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
+				final BasicIcfg<IcfgLocation> newCfg = new IcfgDuplicator(mLogger, mServices,
+						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg);
 				final Map<IcfgLocation, IcfgLocation> newLoc2oldLoc = backtranslator.getLocationMapping();
 				initialCopyWithOldStartLoc = new Subgraph(initialSubgraph, newCfg, newLoc2oldLoc);
 				final Map<IcfgEdge, IcfgEdge> newEdge2oldEdge = backtranslator.getEdgeMapping();
-				final Map<IcfgEdge, IcfgEdge> oldEdge2newEdge = DataStructureUtils.constructReverseMapping(newEdge2oldEdge);
+				final Map<IcfgEdge, IcfgEdge> oldEdge2newEdge =
+						DataStructureUtils.constructReverseMapping(newEdge2oldEdge);
 				subgraphEdgesInCopy = translate(subgraphEdges, oldEdge2newEdge);
 				if (startLocErrorEdge == null) {
 					startLocErrorEdgeInCopy = null;
@@ -110,14 +108,16 @@ public class AcyclicSubgraphMerger {
 			}
 
 			final String startLocProcedure = initialCopyWithOldStartLoc.getSubgraphStartLocation().getProcedure();
-			final IcfgLocation entryForStartLoc = initialCopyWithOldStartLoc.getIcfg().getProcedureEntryNodes().get(startLocProcedure);
+			final IcfgLocation entryForStartLoc =
+					initialCopyWithOldStartLoc.getIcfg().getProcedureEntryNodes().get(startLocProcedure);
 			// take the entry of the startLocations's procedure and connect entry
 			// and starLocation by TransFormula that is labeled with 'true' (a skip
 			// edge)
 			// one exception: if entry is already start location then we do not add
 			// edges
 			if (initialSubgraph.getSubgraphStartLocation() != entryForStartLoc) {
-				final List<IcfgEdge> initOutgoing = new ArrayList<>(initialCopyWithOldStartLoc.getSubgraphStartLocation().getOutgoingEdges());
+				final List<IcfgEdge> initOutgoing =
+						new ArrayList<>(initialCopyWithOldStartLoc.getSubgraphStartLocation().getOutgoingEdges());
 				for (final IcfgEdge edge : initOutgoing) {
 					if (edge != startLocErrorEdgeInCopy && subgraphEdgesInCopy.contains(edge)) {
 						// hashcode changes, we shoud remove and re-add it
@@ -132,27 +132,27 @@ public class AcyclicSubgraphMerger {
 			}
 		}
 
-
 		final Subgraph projection;
 		{
 			final String identifier = "InductivityChecksStartingFrom_" + initialCopy.getSubgraphStartLocation();
-			final PathProgramConstructionResult pc = PathProgram.constructPathProgram(identifier, initialCopy.getIcfg(),
-					subgraphEdgesInCopy);
+			final PathProgramConstructionResult pc =
+					PathProgram.constructPathProgram(identifier, initialCopy.getIcfg(), subgraphEdgesInCopy);
 			final Map<IcfgLocation, IcfgLocation> copy2projection = pc.getLocationMapping();
-			final Map<IcfgLocation, IcfgLocation> projection2copy = DataStructureUtils.constructReverseMapping(copy2projection);
+			final Map<IcfgLocation, IcfgLocation> projection2copy =
+					DataStructureUtils.constructReverseMapping(copy2projection);
 			projection = new Subgraph(initialCopy, pc.getPathProgram(), projection2copy);
 		}
 
 		// apply block encoding
 		final Subgraph blockEncoded;
 		{
-			final IUltimateServiceProvider beServices = mServices.registerPreferenceLayer(getClass(),
-					BlockEncodingPreferences.PLUGIN_ID);
+			final IUltimateServiceProvider beServices =
+					mServices.registerPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
 			final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
-			final BlockEncoder be = new BlockEncoder(mLogger, beServices, projection.getIcfg(), SimplificationTechnique.NONE,
-					XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			final BlockEncoder be = new BlockEncoder(mLogger, beServices, projection.getIcfg(),
+					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 			blockEncoded = new Subgraph(projection, be.getResult(), be.getBacktranslator().getLocationMapping());
 		}
 
@@ -174,15 +174,12 @@ public class AcyclicSubgraphMerger {
 		}
 	}
 
-
 	/**
-	 * @return {@link UnmodifiableTransFormula} that represents the disjunction
-	 *         of all paths from startLoc to endLoc.
+	 * @return {@link UnmodifiableTransFormula} that represents the disjunction of all paths from startLoc to endLoc.
 	 */
 	public UnmodifiableTransFormula getTransFormula(final IcfgLocation endLoc) {
 		return mEndloc2TransFormula.get(endLoc);
 	}
-
 
 	private class Subgraph {
 		private final IIcfg<IcfgLocation> mIcfg;
