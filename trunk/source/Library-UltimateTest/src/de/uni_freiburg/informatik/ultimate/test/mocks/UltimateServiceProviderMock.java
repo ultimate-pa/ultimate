@@ -85,4 +85,9 @@ public class UltimateServiceProviderMock implements IUltimateServiceProvider {
 	public IUltimateServiceProvider registerPreferenceLayer(final Class<?> creator, final String... pluginIds) {
 		throw new UnsupportedOperationException("Not yet supported");
 	}
+
+	@Override
+	public IUltimateServiceProvider registerDefaultPreferenceLayer(final Class<?> creator, final String... pluginIds) {
+		throw new UnsupportedOperationException("Not yet supported");
+	}
 }
