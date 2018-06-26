@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 /**
  * A {@link PreferenceLayer} instance allows you to supplement preference provider with your own preferences at runtime.
  * This can be useful in implementing both, user-configured and program-configured algorithms.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -48,7 +48,7 @@ public class PreferenceLayer implements IPreferenceProvider {
 
 	/**
 	 * Create a new preference layer over some {@link IPreferenceProvider}.
-	 * 
+	 *
 	 * @param backing
 	 *            The given {@link IPreferenceProvider}
 	 * @param creator
@@ -62,82 +62,82 @@ public class PreferenceLayer implements IPreferenceProvider {
 
 	@Override
 	public boolean getBoolean(final String key) {
-		return getFromOverlay(key, mBacking::getBoolean);
+		return getFromOverlay(key, Boolean::parseBoolean, mBacking::getBoolean);
 	}
 
 	@Override
 	public boolean getBoolean(final String key, final boolean defaultValue) {
-		return getFromOverlay(key, a -> mBacking.getBoolean(a, defaultValue));
+		return getFromOverlay(key, Boolean::parseBoolean, a -> mBacking.getBoolean(a, defaultValue));
 	}
 
 	@Override
 	public String getString(final String key) {
-		return getFromOverlay(key, mBacking::getString);
+		return getFromOverlay(key, t -> t, mBacking::getString);
 	}
 
 	@Override
 	public String getString(final String key, final String defaultValue) {
-		return getFromOverlay(key, a -> mBacking.getString(a, defaultValue));
+		return getFromOverlay(key, t -> t, a -> mBacking.getString(a, defaultValue));
 	}
 
 	@Override
 	public <T extends Enum<T>> T getEnum(final String key, final Class<T> clazz) {
-		return getFromOverlay(key, a -> mBacking.getEnum(a, clazz));
+		return getFromOverlay(key, a -> Enum.valueOf(clazz, a), a -> mBacking.getEnum(a, clazz));
 	}
 
 	@Override
 	public <T extends Enum<T>> T getEnum(final String key, final T defaultValue, final Class<T> clazz) {
-		return getFromOverlay(key, a -> mBacking.getEnum(a, defaultValue, clazz));
+		return getFromOverlay(key, a -> Enum.valueOf(clazz, a), a -> mBacking.getEnum(a, defaultValue, clazz));
 	}
 
 	@Override
 	public byte[] getByteArray(final String key) {
-		return getFromOverlay(key, mBacking::getByteArray);
+		return getFromOverlay(key, a -> a.getBytes(), mBacking::getByteArray);
 	}
 
 	@Override
 	public byte[] getByteArray(final String key, final byte[] defaultValue) {
-		return getFromOverlay(key, a -> mBacking.getByteArray(a, defaultValue));
+		return getFromOverlay(key, a -> a.getBytes(), a -> mBacking.getByteArray(a, defaultValue));
 	}
 
 	@Override
 	public double getDouble(final String key) {
-		return getFromOverlay(key, mBacking::getDouble);
+		return getFromOverlay(key, Double::parseDouble, mBacking::getDouble);
 	}
 
 	@Override
 	public double getDouble(final String key, final double defaultValue) {
-		return getFromOverlay(key, a -> mBacking.getDouble(a, defaultValue));
+		return getFromOverlay(key, Double::parseDouble, a -> mBacking.getDouble(a, defaultValue));
 	}
 
 	@Override
 	public float getFloat(final String key) {
-		return getFromOverlay(key, mBacking::getFloat);
+		return getFromOverlay(key, Float::parseFloat, mBacking::getFloat);
 	}
 
 	@Override
 	public float getFloat(final String key, final float defaultValue) {
-		return getFromOverlay(key, a -> mBacking.getFloat(a, defaultValue));
+		return getFromOverlay(key, Float::parseFloat, a -> mBacking.getFloat(a, defaultValue));
 	}
 
 	@Override
 	public int getInt(final String key) {
-		return getFromOverlay(key, mBacking::getInt);
+		return getFromOverlay(key, Integer::parseInt, mBacking::getInt);
 	}
 
 	@Override
 	public int getInt(final String key, final int defaultValue) {
-		return getFromOverlay(key, a -> mBacking.getInt(a, defaultValue));
+		return getFromOverlay(key, Integer::parseInt, a -> mBacking.getInt(a, defaultValue));
 	}
 
 	@Override
 	public long getLong(final String key) {
-		return getFromOverlay(key, mBacking::getLong);
+		return getFromOverlay(key, Long::parseLong, mBacking::getLong);
 	}
 
 	@Override
 	public long getLong(final String key, final long defaultValue) {
-		return getFromOverlay(key, a -> mBacking.getLong(a, defaultValue));
+		return getFromOverlay(key, Long::parseLong, a -> mBacking.getLong(a, defaultValue));
 	}
 
 	@Override
@@ -151,9 +151,13 @@ public class PreferenceLayer implements IPreferenceProvider {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> T getFromOverlay(final String key, final Function<String, T> funFromBacking) {
+	private <T> T getFromOverlay(final String key, final Function<String, T> funStrToValue,
+			final Function<String, T> funFromBacking) {
 		final Object value = mPreferenceOverlay.get(key);
 		if (value != null) {
+			if (value instanceof String) {
+				return funStrToValue.apply((String) value);
+			}
 			return (T) value;
 		}
 		return funFromBacking.apply(key);

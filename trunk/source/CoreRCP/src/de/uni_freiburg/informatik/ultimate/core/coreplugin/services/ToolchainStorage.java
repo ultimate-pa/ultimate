@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
@@ -227,6 +228,19 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
+	public IUltimateServiceProvider registerDefaultPreferenceLayer(final Class<?> creator, final String... pluginIds) {
+		final IUltimateServiceProvider layer = registerPreferenceLayer(creator, pluginIds);
+		for (final String pluginId : pluginIds) {
+			final RcpPreferenceProvider prefProvider = new RcpPreferenceProvider(pluginId);
+			final IPreferenceProvider preferences = layer.getPreferenceProvider(pluginId);
+			for (final Entry<String, Object> entry : prefProvider.getDefaultPreferences().entrySet()) {
+				preferences.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return layer;
+	}
+
+	@Override
 	public Set<String> keys() {
 		final Set<String> keys;
 		synchronized (mLock) {
@@ -278,4 +292,5 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 			return mMarker.stream().map(a -> a.getFirst()).anyMatch(a -> a == marker);
 		}
 	}
+
 }

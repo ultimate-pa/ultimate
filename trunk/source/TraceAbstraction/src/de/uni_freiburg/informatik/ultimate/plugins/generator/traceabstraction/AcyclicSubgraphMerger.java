@@ -147,7 +147,7 @@ public class AcyclicSubgraphMerger {
 		final Subgraph blockEncoded;
 		{
 			final IUltimateServiceProvider beServices =
-					mServices.registerPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
+					mServices.registerDefaultPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
 			final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);

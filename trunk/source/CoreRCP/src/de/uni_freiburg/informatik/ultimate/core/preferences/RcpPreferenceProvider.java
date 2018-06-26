@@ -284,7 +284,6 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 
 	/**
 	 * Get an array of strings were each entry represents all preferences that differ from their default values.
-	 *
 	 */
 	public String[] getDeltaPreferencesStrings() {
 		final List<String> rtr = new ArrayList<>();
@@ -304,6 +303,23 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 		}
 
 		return rtr.toArray(new String[rtr.size()]);
+	}
+
+	/**
+	 * @return A map from key to value of the default preferences for this provider
+	 */
+	public Map<String, Object> getDefaultPreferences() {
+		final Map<String, Object> rtr = new HashMap<>();
+		try {
+			final IEclipsePreferences defaults = getDefault();
+			for (final String defaultKey : defaults.keys()) {
+				final Object defaultValue = defaults.get(defaultKey, null);
+				rtr.put(defaultKey, defaultValue);
+			}
+		} catch (final BackingStoreException e) {
+			throw new PreferenceException(mPluginID, e);
+		}
+		return rtr;
 	}
 
 	@Override
