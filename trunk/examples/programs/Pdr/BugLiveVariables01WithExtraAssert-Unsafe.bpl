@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 /*
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 02.11.2013
@@ -15,12 +15,13 @@ implementation main() returns ()
 {
   x := y;
   call proc();
-  assert x == y;
+  assert false;
 }
 
 implementation proc() returns ()
 {
   assume x != y;
+	assert x == 1;
 }
 
 
