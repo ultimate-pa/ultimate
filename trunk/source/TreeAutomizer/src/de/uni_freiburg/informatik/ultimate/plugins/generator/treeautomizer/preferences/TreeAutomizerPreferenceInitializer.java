@@ -35,6 +35,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activ
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.TaMinimization;
 
 /**
+ *
+ * TODO: many settings here are unused, currently (e.g. backend solver is set in SMTParser) --> remove or update them
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *

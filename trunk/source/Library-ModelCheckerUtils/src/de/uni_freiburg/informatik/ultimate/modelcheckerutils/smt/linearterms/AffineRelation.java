@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -263,8 +264,9 @@ public class AffineRelation {
 			final Term rhsTerm =
 					SmtUtils.sum(script, mAffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
 			final Term result = BinaryRelation.constructLessNormalForm(script, mRelationSymbol, lhsTerm, rhsTerm);
-			assert isEquivalent(script, mOriginalTerm,
-					result) != LBool.SAT : "transformation to positive normal form unsound";
+			assert script instanceof INonSolverScript
+				|| isEquivalent(script, mOriginalTerm, result) != LBool.SAT : "transformation to positive normal form "
+						+ "unsound";
 			return result;
 		}
 	}
@@ -323,7 +325,8 @@ public class AffineRelation {
 		final RelationSymbol relSymb =
 				useRelationSymbolForSwappedTerms ? BinaryRelation.swapParameters(mRelationSymbol) : mRelationSymbol;
 		final ApplicationTerm result = (ApplicationTerm) script.term(relSymb.toString(), var, rhsTerm);
-		assert isEquivalent(script, mOriginalTerm, result) != LBool.SAT : "transformation to AffineRelation unsound";
+		assert script instanceof INonSolverScript
+			|| isEquivalent(script, mOriginalTerm, result) != LBool.SAT : "transformation to AffineRelation unsound";
 		return result;
 	}
 

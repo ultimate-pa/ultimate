@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet.UnletType;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -88,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HornClauseParserScript extends NoopScript {
+public class HornClauseParserScript extends NoopScript implements INonSolverScript {
 
 	private final String M_COMPLEX_TERM = "sbcnst";
 	private final String M_REPEATING_VARS = "sbrptng";

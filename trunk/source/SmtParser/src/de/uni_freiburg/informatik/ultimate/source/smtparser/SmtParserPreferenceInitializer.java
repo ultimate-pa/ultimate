@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2018 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE SmtParser plug-in.
  *
@@ -31,45 +32,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 
+/**
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class SmtParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	public SmtParserPreferenceInitializer() {
-		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
-	}
-
-	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-//				new UltimatePreferenceItem<Boolean>(LABEL_UseExtSolver,
-//						DEF_UseExtSolver, PreferenceType.Boolean),
-//				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
-//						DEF_ExtSolverCommand, PreferenceType.String),
-//				new UltimatePreferenceItem<Boolean>(LABEL_WriteToFile,
-//						DEF_WriteToFile, PreferenceType.Boolean),
-//				new UltimatePreferenceItem<String>(LABEL_Filename,
-//						DEF_Filename, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_Directory,
-						DEF_Directory, PreferenceType.Directory),
-				new UltimatePreferenceItem<Boolean>(LABEL_HornSolverMode,
-						DEF_HornSolverMode, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_FilterUnusedDeclarationsMode,
-						DEF_FilterUnusedDeclarationsMode, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DoLocalSimplifications,
-						DEF_DoLocalSimplifications, PreferenceType.Boolean),
-				new UltimatePreferenceItem<SolverMode>(LABEL_Solver, DEF_Solver, PreferenceType.Combo,
-						SolverMode.values()),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_SmtDumpPath, DEF_SmtDumpPath, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_AutomataDumpPath, DEF_AutomataDumpPath, PreferenceType.String),
-//				new UltimatePreferenceItem<TaMinimization>(LABEL_MinimizationAlgorithm, DEF_MinimizationAlgorithm,
-//						PreferenceType.Combo, TaMinimization.values()),
-
-
-		};
-	}
-
-//	public static final String LABEL_UseExtSolver = "Use external solver";
+	//	public static final String LABEL_UseExtSolver = "Use external solver";
 //	public static final boolean DEF_UseExtSolver = true;
 //
 //	public static final String LABEL_ExtSolverCommand = "Command for external solver";
@@ -84,7 +55,8 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_Directory = "Directory";
 	public static final String DEF_Directory = "";
 
-	public static final String LABEL_HornSolverMode = "Use TreeAutomizer as solver for the given file (assumes the file contains Horn clauses only).";
+	public static final String LABEL_HornSolverMode = "Use TreeAutomizer as solver for the given file (assumes the file"
+			+ " contains Horn clauses only).";
 	public static final boolean DEF_HornSolverMode = false;
 
 	public static final String LABEL_DoLocalSimplifications = "Use SMTUtils to do local simplifications during parsing";
@@ -129,7 +101,41 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String DEF_ExtSolverLogic = "ALL";
 	public static final String DEF_SmtDumpPath = "";
 	public static final String DEF_AutomataDumpPath = "";
-//	public static final TaMinimization DEF_MinimizationAlgorithm = TaMinimization.NAIVE;
+public SmtParserPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
+	//	public static final TaMinimization DEF_MinimizationAlgorithm = TaMinimization.NAIVE;
+	@Override
+		protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+			return new UltimatePreferenceItem<?>[] {
+	//				new UltimatePreferenceItem<Boolean>(LABEL_UseExtSolver,
+	//						DEF_UseExtSolver, PreferenceType.Boolean),
+	//				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
+	//						DEF_ExtSolverCommand, PreferenceType.String),
+	//				new UltimatePreferenceItem<Boolean>(LABEL_WriteToFile,
+	//						DEF_WriteToFile, PreferenceType.Boolean),
+	//				new UltimatePreferenceItem<String>(LABEL_Filename,
+	//						DEF_Filename, PreferenceType.String),
+					new UltimatePreferenceItem<String>(LABEL_Directory,
+							DEF_Directory, PreferenceType.Directory),
+					new UltimatePreferenceItem<Boolean>(LABEL_HornSolverMode,
+							DEF_HornSolverMode, PreferenceType.Boolean),
+					new UltimatePreferenceItem<Boolean>(LABEL_FilterUnusedDeclarationsMode,
+							DEF_FilterUnusedDeclarationsMode, PreferenceType.Boolean),
+					new UltimatePreferenceItem<Boolean>(LABEL_DoLocalSimplifications,
+							DEF_DoLocalSimplifications, PreferenceType.Boolean),
+					new UltimatePreferenceItem<SolverMode>(LABEL_Solver, DEF_Solver, PreferenceType.Combo,
+							SolverMode.values()),
+					new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
+					new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
+					new UltimatePreferenceItem<String>(LABEL_SmtDumpPath, DEF_SmtDumpPath, PreferenceType.String),
+					new UltimatePreferenceItem<String>(LABEL_AutomataDumpPath, DEF_AutomataDumpPath, PreferenceType.String),
+	//				new UltimatePreferenceItem<TaMinimization>(LABEL_MinimizationAlgorithm, DEF_MinimizationAlgorithm,
+	//						PreferenceType.Combo, TaMinimization.values()),
+
+
+			};
+		}
 
 
 
