@@ -448,6 +448,43 @@ Statement ::=
 		 */
 		arguments : Expression[]
 	| { /**
+	     * A asynchrone procedure call.
+	     * The arguments are evaluated before the procedure call and then
+	     * the side-effects of the procedure call occur.
+	     */
+	    ForkStatement }
+	    /**
+	     * An id referencing that fork statement out of multiple ones.
+	     */
+		forkID  : Expression
+		/**
+		 * The name of the procedure.
+		 */
+		methodName: String
+		/**
+		 * The arguments.  This must contain the same number of expressions
+		 * as there are input parameters to the procedure.
+		 * If {@link #isForall()} is true, the argument can be a wildcard
+		 * and the procedure is &ldquo;called&rdquo; for all possible values.
+		 * This is used for lemma procedures which should not have any
+		 * side effects.
+		 */
+		arguments : Expression[]
+	| { /**
+	     * A join statement waits for a procedure (which was called
+	     * with fork before) to termiate.
+	     */
+	    JoinStatement }
+	    /**
+	     * The id of the fork expression, to which the join statement
+	     * is referring to.
+	     */
+		forkID  : Expression
+		/**
+		 * The variables where the return values are written to.
+		 */
+		lhs       : VariableLHS[]
+	| { /**
 	     * An if statements.  The condition is evaluated and according to
 	     * the result either the then part or else part is executed.  Note
 	     * that the condition cannot have side-effects.

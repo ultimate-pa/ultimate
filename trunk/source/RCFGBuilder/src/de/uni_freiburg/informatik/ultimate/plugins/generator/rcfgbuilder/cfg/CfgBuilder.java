@@ -50,8 +50,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -503,7 +505,12 @@ public class CfgBuilder {
 				else if (st instanceof ReturnStatement) {
 					processReturnStatement();
 				}
-
+				else if (st instanceof ForkStatement) {
+					// TODO: NotImplementedYet
+				}
+				else if (st instanceof JoinStatement) {
+					// TODO: NotImplementedYet
+				}
 				else {
 					throw new UnsupportedOperationException("At the moment"
 							+ " only Labels, Assert, Assume, Assignment, Havoc" + " and Goto statements are supported");

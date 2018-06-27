@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -184,6 +186,10 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 			visit((BreakStatement) statement);
 		} else if (statement instanceof CallStatement) {
 			visit((CallStatement) statement);
+		} else if (statement instanceof ForkStatement) {
+			visit((ForkStatement) statement);
+		} else if (statement instanceof JoinStatement) {
+			visit((JoinStatement) statement);
 		} else if (statement instanceof GotoStatement) {
 			visit((GotoStatement) statement);
 		} else if (statement instanceof HavocStatement) {
@@ -229,6 +235,14 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 	}
 
 	protected void visit(final CallStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
+	
+	protected void visit(final ForkStatement statement) {
+		// empty because it may be overridden (but does not have to)
+	}
+	
+	protected void visit(final JoinStatement statement) {
 		// empty because it may be overridden (but does not have to)
 	}
 

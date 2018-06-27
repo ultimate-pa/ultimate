@@ -98,7 +98,7 @@ terminal OLD;
 terminal FORALL, EXISTS;
 terminal BOOL, INT, REAL;
 terminal FALSE, TRUE;
-terminal ASSUME, ASSERT, HAVOC, ASYNC, CALL, IF, THEN, ELSE, WHILE, BREAK, RETURN, GOTO;
+terminal ASSUME, ASSERT, HAVOC, FORK, JOIN, ASYNC, CALL, IF, THEN, ELSE, WHILE, BREAK, RETURN, GOTO;
 /* Other Symbols */
 terminal COMMA, COLON, SEMI, COLONEQUALS, EQUALS;
 terminal LPAR, RPAR, LBKT, RBKT, LBRC, RBRC, LANG, RANG;
@@ -177,6 +177,8 @@ non terminal LeftHandSide lhs;
 non terminal Statement[] blockStmt;
 non terminal Statement   ifStmt;
 non terminal Statement   callStmt;
+non terminal Statement   forkStmt;
+non terminal Statement   joinStmt;
 non terminal Statement[] elseOpt;
 non terminal List<LoopInvariantSpecification> loopInvStar;
 non terminal LoopInvariantSpecification loopInv;
@@ -723,6 +725,10 @@ stmt ::=
 	| ASYNC callStmt:s 
 	  {: RESULT = s; :}
 	| callStmt:s
+	| forkStmt:s
+	| ASYNC joinStmt:s
+	  {: RESULT = s; :}
+	| joinStmt:s
 	;
 callStmt ::= 
       CALL:x ID:m LPAR:y exprCommaStar:e RPAR SEMI
@@ -731,7 +737,19 @@ callStmt ::=
 	  {: RESULT = new CallStatement(getLocation(x$,p$), false, ass.toArray(new VariableLHS[ass.size()]), m, p.toArray(new Expression[p.size()])); :}
 	| CALL:x FORALL:z ID:m LPAR wildcardExprCommaStar:e RPAR SEMI
 	  {: RESULT = new CallStatement(getLocation(x$,e$), true, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
-	;  
+	;
+	/* Example: fork 5 someProcedure(firstArg, true); */ 
+forkStmt ::=
+      FORK:x expr:i ID:m LPAR:y exprCommaStar:e RPAR SEMI
+	  {: RESULT = new ForkStatement(getLocation(x$,e$), i, m, e.toArray(new Expression[e.size()])); :}
+	;
+/* Example: join 5; or join x := 5; */
+joinStmt ::=
+      JOIN:x expr:i SEMI
+	  {: RESULT = new JoinStatement(getLocation(x$,i$), i, new VariableLHS[0]); :}
+	| JOIN:x varCommaPlus:ass COLONEQUALS expr:i SEMI
+	  {: RESULT = new JoinStatement(getLocation(x$,i$), i, ass.toArray(new VariableLHS[ass.size()])); :}
+	;
 ifStmt ::=
 	  IF:x LPAR wildcardExpr:c RPAR blockStmt:block elseOpt:e
 	  {: RESULT = new IfStatement(getLocation(x$,e$), c, block, e); :}

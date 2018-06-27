@@ -80,6 +80,8 @@ BvType = "bv" {DecIntegerLiteral}
   "havoc"         { return symbol(LexerSymbols.HAVOC); }
   "async"         { return symbol(LexerSymbols.ASYNC); }
   "call"          { return symbol(LexerSymbols.CALL); }
+  "fork"		  { return symbol(LexerSymbols.FORK); }
+  "join"		  { return symbol(LexerSymbols.JOIN); }
   "if"            { return symbol(LexerSymbols.IF); }
   "then"          { return symbol(LexerSymbols.THEN); }
   "else"          { return symbol(LexerSymbols.ELSE); }

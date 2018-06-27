@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
@@ -75,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -776,6 +778,34 @@ public class TypeChecker extends BaseObserver {
 						typeError(statement, "Type mismatch (output parameter " + i + ") in " + statement);
 					}
 				}
+			}
+		} else if (statement instanceof ForkStatement) {
+			// TODO: implement type checker for fork statement
+			final ForkStatement fork = (ForkStatement) statement;
+			final ProcedureInfo procInfo = mDeclaredProcedures.get(fork.getMethodName());
+			if (procInfo == null) {
+				typeError(statement, "Forking undeclared procedure " + fork);
+				return;
+			}
+			// TODO: checkModifiesTransitives for forkStatement
+			final BoogieType[] typeParams = new BoogieType[procInfo.getTypeParameters().getCount()];
+			final VariableInfo[] inParams = procInfo.getInParams();
+			final Expression[] arguments = fork.getArguments();
+			if (arguments.length != inParams.length) {
+				typeError(statement, "Procedure forked with wrong number of arguments: " + fork);
+				return;
+			}
+			for (int i = 0; i < arguments.length; i++) {
+				final BoogieType t = typecheckExpression(arguments[i]);
+				if (!inParams[i].getType().unify(t, typeParams)) {
+					typeError(statement, "Wrong parameter type at index " + i + ": " + fork);
+				}
+			}
+		} else if (statement instanceof JoinStatement) {
+			final JoinStatement join = (JoinStatement) statement;
+			final Expression expr = join.getForkID();
+			if (expr == null) {
+				typeError(statement, "Expression " + expr + " does not exist.");
 			}
 		} else {
 			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
