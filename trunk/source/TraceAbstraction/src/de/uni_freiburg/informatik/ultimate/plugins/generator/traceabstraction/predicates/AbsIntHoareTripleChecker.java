@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<?>>
 		implements IHoareTripleChecker {
 
+	private static final int MAX_DISJUNCTS = 1;
 	private static final boolean ACCEPT_REJECTION_DUE_TO_IMPRECISION = true;
 	private static final String MSG_BOTTOM_WAS_LOST = "Bottom was lost";
 	private static final String MSG_IS_SUBSET_OF_IS_UNSOUND = "isSubsetOf is unsound";
@@ -106,6 +107,28 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	private final boolean mOnlyAbsInt;
 	private final boolean mUseHierachicalPre;
 
+	/**
+	 * Create a new {@link AbsIntHoareTripleChecker} instance.
+	 *
+	 * @param logger
+	 *            An {@link ILogger} instance
+	 * @param services
+	 *            An {@link IUltimateServiceProvider} instance
+	 * @param domain
+	 *            The {@link IAbstractDomain} that should be used for the hoare triple checks (it must be the domain
+	 *            that created the abstract states)
+	 * @param varProvider
+	 *            A {@link IVariableProvider} that supports all {@link IAction}s that will be seen by this hoare triple
+	 *            checker.
+	 * @param predicateUnifer
+	 *            A {@link IPredicateUnifier} that is only used during assertions and as supplier of true and false
+	 *            predicates
+	 * @param csToolkit
+	 *            A {@link CfgSmtToolkit} which is used for fallback HTC checks with SMT-based hoare triple checkers
+	 * @param onlyAbsInt
+	 *            A flag controlling whether this HTC falls back to SMT-based hoare triple checkers (false) or not
+	 *            (true).
+	 */
 	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
 			final IAbstractDomain<STATE, ACTION> domain, final IVariableProvider<STATE, ACTION> varProvider,
 			final IPredicateUnifier predicateUnifer, final CfgSmtToolkit csToolkit, final boolean onlyAbsInt) {
@@ -124,8 +147,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		mTruePred = mPredicateUnifier.getTruePredicate();
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
-		mTopState = new DisjunctiveAbstractState<>(5, mDomain.createTopState());
-		mBottomState = new DisjunctiveAbstractState<>(5, mDomain.createBottomState());
+		mTopState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createTopState());
+		mBottomState = new DisjunctiveAbstractState<>(MAX_DISJUNCTS, mDomain.createBottomState());
 		mHtcSmt = new IncrementalHoareTripleChecker(mCsToolkit, false);
 		mHtcSd = new SdHoareTripleChecker(mCsToolkit, predicateUnifer, mBenchmark);
 		mOnlyAbsInt = onlyAbsInt;
@@ -216,13 +239,17 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 
 		final Validity result = checkInternalTransitionWithValidState(reducedPreState, action, reducedPostState);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Result: " + result);
+			mLogger.debug(getMsgResult(result));
 		}
 		assert assertValidity(validPreState, null, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
 		mLogger.debug("--");
 		final Validity rtr = result;
 		mBenchmark.stopEdgeCheckerTime();
 		return rtr;
+	}
+
+	private static String getMsgResult(final Validity result) {
+		return "Result: " + result;
 	}
 
 	private Set<IProgramVarOrConst> getVars(final ACTION action) {
@@ -248,7 +275,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 
 		final Validity result = checkScopeChangingTransitionWithValidState(reducedPreBL, reducedPreAL, action, succ);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Result: " + result);
+			mLogger.debug(getMsgResult(result));
 		}
 		assert assertValidity(validPreBL, null, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
 		mLogger.debug("--");
@@ -271,7 +298,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 				createValidPostOpStateBeforeLeaving(correspondingCall, preHier);
 		final DisjunctiveAbstractState<STATE> validPreAL;
 		if (mUseHierachicalPre) {
-			validPreAL = createValidPostOpStateHierachicalPre(action, validPreBL, validPreHier);
+			validPreAL = createValidPostOpStateHierachicalPre(validPreBL, validPreHier);
 		} else {
 			validPreAL = createValidPostOpStateAfterLeaving(action, validPreBL, validPreHier);
 		}
@@ -287,7 +314,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 
 		final Validity result = checkScopeChangingTransitionWithValidState(validPreBL, validPreAL, action, succ);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Result: " + result);
+			mLogger.debug(getMsgResult(result));
 		}
 		assert assertValidity(validPreBL, validPreAL, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
 		mLogger.debug("--");
@@ -299,8 +326,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	private ACTION getCorrespondingCall(final ACTION action) {
 		assert action instanceof IIcfgReturnTransition<?, ?>;
 		final IIcfgReturnTransition<?, ?> retAct = (IIcfgReturnTransition<?, ?>) action;
-		final ACTION correspondingCall = (ACTION) retAct.getCorrespondingCall();
-		return correspondingCall;
+		return (ACTION) retAct.getCorrespondingCall();
 	}
 
 	@Override
@@ -331,7 +357,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			return Validity.VALID;
 		}
 
-		// TODO: Take mDomain.useHierachicalPre() into account
+		// TODO: Take mDomain.useHierachicalPre() into account (this is relevant for PredicateTransformer based domains
+		// like the EQ domain; those are probably legacy anyways)
 		final DisjunctiveAbstractState<STATE> calculatedPost =
 				stateAfterLeaving.apply(mPostOp, stateBeforeLeaving, act);
 		return comparePostAndCalculatedPost(act, postState, calculatedPost);
@@ -441,7 +468,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		if (unifiedPreState == mBottomState) {
 			return unifiedPreState;
 		}
-		final DisjunctiveAbstractState<STATE> unifiedPreHierState = unifyBottom(preHierState);
+		final DisjunctiveAbstractState<STATE> unifiedPreHierState;
+		if (preHierState == null) {
+			unifiedPreHierState = null;
+		} else {
+			unifiedPreHierState = unifyBottom(preHierState);
+		}
 
 		final DisjunctiveAbstractState<STATE> rtr =
 				unifiedPreState.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState);
@@ -451,7 +483,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		return rtr;
 	}
 
-	private DisjunctiveAbstractState<STATE> createValidPostOpStateHierachicalPre(final ACTION act,
+	private DisjunctiveAbstractState<STATE> createValidPostOpStateHierachicalPre(
 			final DisjunctiveAbstractState<STATE> preState, final DisjunctiveAbstractState<STATE> preHierState) {
 
 		final DisjunctiveAbstractState<STATE> unifiedPreState = unifyBottom(preState);
@@ -479,7 +511,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		return validPreState.removeVariables(toRemove);
 	}
 
-	private Set<IProgramVarOrConst> getMissingOldVars(final Set<IProgramVarOrConst> requiredVars) {
+	private static Set<IProgramVarOrConst> getMissingOldVars(final Set<IProgramVarOrConst> requiredVars) {
 		final Set<IProgramVarOrConst> missingOldVars = new HashSet<>();
 		for (final IProgramVarOrConst requiredVar : requiredVars) {
 			if (requiredVar.isGlobal()) {
@@ -509,9 +541,6 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private DisjunctiveAbstractState<STATE> unifyBottom(final DisjunctiveAbstractState<STATE> state) {
-		if (state == null) {
-			return null;
-		}
 		if (state.isBottom()) {
 			return mBottomState;
 		}
@@ -526,7 +555,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			final DisjunctiveAbstractState<STATE> preHierState, final DisjunctiveAbstractState<STATE> synchronizedState,
 			final IFunPointer funReplay) {
 		final boolean rtr =
-				!pre.isBottom() && (preHierState == null || !preHierState.isBottom()) || synchronizedState.isBottom();
+				(!pre.isBottom() && (preHierState == null || !preHierState.isBottom())) || synchronizedState.isBottom();
 		if (!rtr) {
 			funReplay.run();
 		}
@@ -566,21 +595,21 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		if (precondHier == null) {
 			mLogger.fatal("PreS: {" + preState + "}");
 		} else {
-			mLogger.fatal("PreBefore: {" + preState + "}");
-			mLogger.fatal("PreAfter: {" + validPreLinState + "}");
+			mLogger.fatal(getMsgPreBefore(preState));
+			mLogger.fatal(getMsgPreAfter(validPreLinState));
 		}
 		mLogger.fatal(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
-		mLogger.fatal("Post: {" + succ + "}");
+		mLogger.fatal(getMsgPost(succ));
 
 		mLogger.fatal("Failing Hoare triple:");
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + precond.getFormula() + "}");
 		} else {
-			mLogger.fatal("PreBefore: {" + precond.getFormula() + "}");
-			mLogger.fatal("PreAfter: {" + precondHier.getFormula() + "}");
+			mLogger.fatal(getMsgPreBefore(precond.getFormula()));
+			mLogger.fatal(getMsgPreAfter(precondHier.getFormula()));
 		}
 		mLogger.fatal(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
-		mLogger.fatal("Post: {" + postcond.getFormula() + "}");
+		mLogger.fatal(getMsgPost(postcond.getFormula()));
 
 		mLogger.fatal("Simplified:");
 		final String simplePre = SmtUtils
@@ -588,19 +617,30 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + simplePre + "}");
 		} else {
-			mLogger.fatal("PreBefore: {" + simplePre + "}");
-			mLogger.fatal("PreAfter: {"
-					+ SmtUtils.simplify(mManagedScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
-							.toStringDirect()
-					+ "}");
+			mLogger.fatal(getMsgPreBefore(simplePre));
+			mLogger.fatal(getMsgPreAfter(
+					SmtUtils.simplify(mManagedScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
+							.toStringDirect()));
 		}
 		mLogger.fatal(
 				IcfgUtils.getTransformula(transition).getClosedFormula().toStringDirect() + " (" + transition + ")");
-		mLogger.fatal("Post: {" + SmtUtils
-				.simplify(mManagedScript, postcond.getFormula(), mServices, mSimplificationTechnique).toStringDirect()
-				+ "}");
+		mLogger.fatal(
+				getMsgPost(SmtUtils.simplify(mManagedScript, postcond.getFormula(), mServices, mSimplificationTechnique)
+						.toStringDirect()));
 		return false;
 
+	}
+
+	private static String getMsgPreBefore(final Object preState) {
+		return "PreBefore: {" + preState + "}";
+	}
+
+	private static String getMsgPreAfter(final Object validPreLinState) {
+		return "PreAfter: {" + validPreLinState + "}";
+	}
+
+	private static String getMsgPost(final Object succ) {
+		return "Post: {" + succ + "}";
 	}
 
 	private Validity assertIsPostSound(final IPredicate precond, final IPredicate precondHier, final ACTION transition,
@@ -644,11 +684,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		result = SmtUtils.checkSatTerm(script, checkedTerm);
 
 		if (result == LBool.UNKNOWN || result == expected) {
-			script.echo(new QuotedObject("End isSubsetOf assertion"));
+			script.echo(buildQuoteEndIsSubsetOf());
 			return true;
 		}
 		if (subResult == SubsetResult.NONE) {
-			script.echo(new QuotedObject("End isSubsetOf assertion"));
+			script.echo(buildQuoteEndIsSubsetOf());
 			mLogger.warn("isSubsetOf was not precise enough (may lost precision through disjunctions)");
 			return true;
 		}
@@ -674,8 +714,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 
 		final SubsetResult reComputeForDebug = leftState.isSubsetOf(rightState);
 		mLogger.fatal(reComputeForDebug);
-		script.echo(new QuotedObject("End isSubsetOf assertion"));
+		script.echo(buildQuoteEndIsSubsetOf());
 		return false;
+	}
+
+	private static QuotedObject buildQuoteEndIsSubsetOf() {
+		return new QuotedObject("End isSubsetOf assertion");
 	}
 
 	@FunctionalInterface
