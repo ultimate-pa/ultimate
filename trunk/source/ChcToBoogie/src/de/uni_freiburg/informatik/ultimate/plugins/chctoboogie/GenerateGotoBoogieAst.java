@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornUtilConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -377,6 +378,10 @@ public class GenerateGotoBoogieAst {
 		List<Statement> nondetSwitch = null;
 
 		for (final HornClause hornClause : hornClausesForHeadPred) {
+			if (SmtUtils.isFalse(hornClause.getConstraintFormula())) {
+				// branch with an "assume false" --> can be skipped
+				continue;
+			}
 
 			allBodyPredVariables.addAll(hornClause.getBodyVariables());
 

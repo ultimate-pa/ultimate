@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TreeAutomizer Plugin grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
+package de.uni_freiburg.informatik.ultimate.source.smtparser.chc;
 
 import java.util.Arrays;
 import java.util.HashMap;

@@ -255,14 +255,6 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.witnessparser=0.1.23
 file_export_version=3.0
 #Wed Mar 28 11:00:48 CEST 2018
-\!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
-/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Remove\ only\ unused\ declarations\ from\ SMT\ file\ (experimental)=false
-/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Use\ TreeAutomizer\ as\ solver\ for\ the\ given\ file\ (assumes\ the\ file\ contains\ Horn\ clauses\ only).=true
-/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Use\ external\ solver=true
-/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Write\ SMT\ commands\ to\ file=false
-@de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.23
-file_export_version=3.0
-#Wed Mar 28 11:00:48 CEST 2018
 \!/instance/CDTParser=
 /instance/CDTParser/Please\ specify\ include\ paths\ that\ will\ be\ parsed\ with\ the\ given\ C-File=
 file_export_version=3.0

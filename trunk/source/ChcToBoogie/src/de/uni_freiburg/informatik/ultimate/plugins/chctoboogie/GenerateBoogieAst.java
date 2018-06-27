@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HcBodyVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class GenerateBoogieAst {
@@ -130,6 +131,10 @@ public class GenerateBoogieAst {
 		List<Statement> nondetSwitch = null;
 
 		for (final HornClause hornClause : hornClausesForHeadPred) {
+			if (SmtUtils.isFalse(hornClause.getConstraintFormula())) {
+				// branch with an "assume false" --> can be skipped
+				continue;
+			}
 
 			allBodyPredVariables.addAll(hornClause.getBodyVariables());
 

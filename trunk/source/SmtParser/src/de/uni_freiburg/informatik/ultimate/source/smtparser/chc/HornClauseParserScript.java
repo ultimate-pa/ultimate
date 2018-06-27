@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TreeAutomizer Plugin grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
+package de.uni_freiburg.informatik.ultimate.source.smtparser.chc;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -36,11 +36,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
@@ -77,6 +79,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.CnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.source.smtparser.Activator;
+import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -116,6 +121,10 @@ public class HornClauseParserScript extends NoopScript {
 	private boolean mSawCheckSat = false;
 	private boolean mFinished;
 
+	private final Stack<Triple<String, List<BigInteger>, List<Term>>> mSimplificationStack;
+
+	private final IPreferenceProvider mPreferences;
+
 	public HornClauseParserScript(final IUltimateServiceProvider services, final ILogger logger, final String filename,
 			final ManagedScript smtSolverScript, final String logic,
 			final SolverSettings settings) {
@@ -134,6 +143,9 @@ public class HornClauseParserScript extends NoopScript {
 
 		mSymbolTable = new HcSymbolTable(mBackendSmtSolver);
 
+		mSimplificationStack = new Stack<>();
+
+		mPreferences = services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	private boolean isUninterpretedPredicateSymbol(final FunctionSymbol fs) {
@@ -473,7 +485,23 @@ public class HornClauseParserScript extends NoopScript {
 			return term(funcname, params[0], term("true"));
 		}
 
-		final Term result = super.term(funcname, indices, returnSort, params);
+		if (!mPreferences.getBoolean(SmtParserPreferenceInitializer.LABEL_DoLocalSimplifications)) {
+			// omit local simplifications
+			return super.term(funcname, indices, returnSort, params);
+		}
+
+		final List<BigInteger> indicesList = indices == null ? null : Arrays.asList(indices);
+		final List<Term> paramsList = params == null ? null : Arrays.asList(params);
+
+		final Term result;
+		if (!mSimplificationStack.isEmpty()
+					&& mSimplificationStack.peek().equals(new Triple<>(funcname, indicesList, paramsList))) {
+			result = super.term(funcname, indices, returnSort, params);
+		} else {
+			mSimplificationStack.push(new Triple<>(funcname, indicesList, paramsList));
+			result = SmtUtils.termWithLocalSimplification(this, funcname, indices, params);
+			mSimplificationStack.pop();
+		}
 		return result;
 	}
 

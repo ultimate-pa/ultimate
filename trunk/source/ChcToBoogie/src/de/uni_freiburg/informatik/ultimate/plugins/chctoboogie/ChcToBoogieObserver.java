@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class ChcToBoogieObserver implements IUnmanagedObserver {
 
-	private static final String NestedMap2 = null;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 

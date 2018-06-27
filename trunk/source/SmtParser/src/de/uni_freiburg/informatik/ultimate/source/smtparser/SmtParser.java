@@ -52,15 +52,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornClauseParserScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProxyWrapper;
+import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HCGBuilderHelper;
+import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
+import de.uni_freiburg.informatik.ultimate.source.smtparser.chc.HornClauseParserScript;
 
 /**
  * There are currently two basic modes in which SMTParser can work:
@@ -153,7 +151,7 @@ public class SmtParser implements ISource {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return new PreferenceInitializer();
+		return new SmtParserPreferenceInitializer();
 	}
 
 	@Override
@@ -174,20 +172,20 @@ public class SmtParser implements ISource {
 
 	private void processFile(final File file) throws IOException {
 
-		final boolean useExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.LABEL_UseExtSolver);
-		final String commandExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
-		final boolean writeCommandsToFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.LABEL_WriteToFile);
-		final String filename =
-				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.LABEL_Filename);
+//		final boolean useExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+//				.getBoolean(SmtParserPreferenceInitializer.LABEL_UseExtSolver);
+//		final String commandExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+//				.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverCommand);
+//		final boolean writeCommandsToFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+//				.getBoolean(SmtParserPreferenceInitializer.LABEL_WriteToFile);
+//		final String filename =
+//				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(SmtParserPreferenceInitializer.LABEL_Filename);
 		final String directory =
-				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.LABEL_Directory);
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(SmtParserPreferenceInitializer.LABEL_Directory);
 		final boolean inHornSolverMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.LABEL_HornSolverMode);
+				.getBoolean(SmtParserPreferenceInitializer.LABEL_HornSolverMode);
 		final boolean filterUnusedDeclarationsMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.LABEL_FilterUnusedDeclarationsMode);
+				.getBoolean(SmtParserPreferenceInitializer.LABEL_FilterUnusedDeclarationsMode);
 
 		final LogProxy logProxy = new SmtInterpolLogProxyWrapper(mLogger);
 
@@ -195,33 +193,37 @@ public class SmtParser implements ISource {
 			runFilterUnusedDeclarationsMode(file, directory, logProxy);
 			return;
 		}
+
+		final ConstructAndInitializeBackendSmtSolver caibss =
+				new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage,
+						"smtParserBackendSolver");
+
 		Script script;
 		if (inHornSolverMode) {
 			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
-			final ConstructAndInitializeBackendSmtSolver caibss =
-					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage,
-							"treeAutomizerSolver");
 			script = new HornClauseParserScript(mServices, mLogger, file.getName(), caibss.getScript(),
 //					"ALL", caibss.getSolverSettings());
 					caibss.getLogicForExternalSolver(), caibss.getSolverSettings());
 		} else {
-			if (useExternalSolver) {
-				mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
-				script = new Scriptor(commandExternalSolver, mLogger, mServices, mStorage,
-						"external solver of SMT parser plugin");
-			} else {
-				mLogger.info("Starting SMTInterpol");
-				script = new SMTInterpol(logProxy);
-			}
+			mLogger.info("Running solver on smt file");
+//			if (useExternalSolver) {
+//				mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
+//				script = new Scriptor(commandExternalSolver, mLogger, mServices, mStorage,
+//						"external solver of SMT parser plugin");
+//			} else {
+//				mLogger.info("Starting SMTInterpol");
+//				script = new SMTInterpol(logProxy);
+//			}
+			script = caibss.getScript().getScript();
 
-			if (writeCommandsToFile) {
-				final String abs = new File(filename).getAbsolutePath();
-				mLogger.info("Writing all SMT commands to " + abs);
-				script = new LoggingScript(script, filename, true);
-			}
+//			if (writeCommandsToFile) {
+//				final String abs = new File(filename).getAbsolutePath();
+//				mLogger.info("Writing all SMT commands to " + abs);
+//				script = new LoggingScript(script, filename, true);
+//			}
 		}
 
-		mLogger.info("Executing SMT file " + file.getAbsolutePath());
+//		mLogger.info("Executing SMT file " + file.getAbsolutePath());
 
 
 		final OptionMap optionMap = new OptionMap(logProxy, true);

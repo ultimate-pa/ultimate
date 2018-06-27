@@ -25,18 +25,18 @@
  * licensors of the ULTIMATE TreeAutomizer Plugin grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
+package de.uni_freiburg.informatik.ultimate.source.smtparser.chc;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.preferences.TreeAutomizerPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.source.smtparser.Activator;
+import de.uni_freiburg.informatik.ultimate.source.smtparser.SmtParserPreferenceInitializer;
 
 /**
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -63,20 +63,21 @@ public class HCGBuilderHelper {
 				final String filename) {
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 			final SolverMode solverMode = prefs
-					.getEnum(TreeAutomizerPreferenceInitializer.LABEL_Solver, SolverMode.class);
+					.getEnum(SmtParserPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
 			final String commandExternalSolver = prefs
-					.getString(TreeAutomizerPreferenceInitializer.LABEL_ExtSolverCommand);
+					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverCommand);
 
 			mLogicForExternalSolver = prefs
-					.getString(TreeAutomizerPreferenceInitializer.LABEL_ExtSolverLogic);
-			
-			final String dumpPath = prefs.getString(TreeAutomizerPreferenceInitializer.LABEL_SmtDumpPath);
+					.getString(SmtParserPreferenceInitializer.LABEL_ExtSolverLogic);
+
+			final String dumpPath = prefs.getString(
+					SmtParserPreferenceInitializer.LABEL_SmtDumpPath);
 			final boolean dumpScript = !dumpPath.isEmpty();
 
 			final boolean fakeNonIncrementalSolver = false;
 			mSolverSettings = SolverBuilder.constructSolverSettings(
-					filename, solverMode, fakeNonIncrementalSolver , 
+					filename, solverMode, fakeNonIncrementalSolver ,
 					commandExternalSolver, dumpScript, dumpPath);//"C:\\Temp\\smt");
 
 			final Script script = SolverBuilder.buildAndInitializeSolver(services,
@@ -89,7 +90,7 @@ public class HCGBuilderHelper {
 					false,
 					mLogicForExternalSolver,
 					"HornClauseSolverBackendSolverScript");
-			
+
 			mScript = new ManagedScript(services, script);
 		}
 

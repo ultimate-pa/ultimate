@@ -32,9 +32,6 @@
 @de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.20
 \!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
 /instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Use\ TreeAutomizer\ as\ solver\ for\ the\ given\ file\ (assumes\ the\ file\ contains\ Horn\ clauses\ only).=true
-/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Use\ external\ solver=true
-/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Write\ SMT\ commands\ to\ file=false
-
 
 @de.uni_freiburg.informatik.ultimate.plugins.chctoboogie=0.1.23
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.chctoboogie=
