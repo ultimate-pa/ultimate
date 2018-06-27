@@ -296,8 +296,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 								.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
 					}
 					mLogger.debug("PP:");
-					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream().map(a -> a.getDebugIdentifier())
-							.collect(Collectors.joining(",")));
+					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream()
+							.map(IcfgLocation::getDebugIdentifier).collect(Collectors.joining(",")));
 				}
 				mLogger.debug("Error is not reachable.");
 				mInterpolants = computeInterpolants();
@@ -443,7 +443,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	/**
 	 * Generate a new proofobligation
-	 * 
+	 *
 	 * @param proofObligations
 	 * @param proofObligation
 	 * @param level
@@ -460,7 +460,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		proofObligations.addFirst(proofObligation);
 		proofObligations.addFirst(newProofObligation);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("New PO: " + newProofObligation);
+			mLogger.debug(String.format("New PO at %s (%s): %s", newProofObligation.getSecond(),
+					newProofObligation.getThird(), newProofObligation.getFirst()));
 		}
 	}
 
