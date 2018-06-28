@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -1801,6 +1802,41 @@ public final class SmtUtils {
 			i++;
 		}
 		return i;
+	}
+
+	/**
+	 * Tries to compute an interpolant I for the term (and first second) by first checking if the term is indeed unsat
+	 * and then retrieving the interpolants.
+	 *
+	 * @return A pair containing the result of the {@link Script#checkSat()} call as first element and as second element
+	 *         the interpolant if the result was {@link LBool#UNSAT} or null.
+	 */
+	public static Pair<LBool, Term> interpolateBinary(final Script script, final Term first, final Term second) {
+		script.push(1);
+		try {
+			final Term fPart = assertAndAnnotate(script, first, "first");
+			final Term sPart = assertAndAnnotate(script, second, "second");
+			final LBool checkSatResult = script.checkSat();
+			switch (checkSatResult) {
+			case UNSAT:
+				final Term[] interpolants = script.getInterpolants(new Term[] { fPart, sPart });
+				assert interpolants != null && interpolants.length == 1;
+				return new Pair<>(checkSatResult, interpolants[0]);
+			case SAT:
+			case UNKNOWN:
+			default:
+				return new Pair<>(checkSatResult, null);
+			}
+		} finally {
+			script.pop(1);
+		}
+	}
+
+	private static Term assertAndAnnotate(final Script script, final Term t, final String name) {
+		final Annotation annot = new Annotation(":named", name);
+		final Term fAnnot = script.annotate(t, annot);
+		script.assertTerm(fAnnot);
+		return script.term(name);
 	}
 
 	private static class InnerDualJunctTracker {
