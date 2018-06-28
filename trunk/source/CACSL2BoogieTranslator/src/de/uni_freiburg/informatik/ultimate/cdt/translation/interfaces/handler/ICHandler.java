@@ -33,7 +33,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
@@ -113,533 +112,527 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public interface ICHandler extends IHandler {
 
 	/**
-     * Holds the variables for the different scopes in a c program.
-     *
-     * @return the variables in scopes.
-     */
-     FlatSymbolTable getSymbolTable();
+	 * Holds the variables for the different scopes in a c program.
+	 *
+	 * @return the variables in scopes.
+	 */
+	FlatSymbolTable getSymbolTable();
 
-    /**
-     * Setter for the ACSL contract.
-     *
-     * @param rc
-     *            the contract to set, null to mark contract as handled.
-     */
-     void clearContract();
+	/**
+	 * Setter for the ACSL contract.
+	 *
+	 * @param rc
+	 *            the contract to set, null to mark contract as handled.
+	 */
+	void clearContract();
 
-    /**
-     * Checks resType, whether it needs some special treatment for pointers,
-     * according the value in pointerOps.
-     * Also in case the flag putOnHeap is set -- which is the case for our special
-     * HeapVariables.
-     *
-     * @param main
-     *            a reference to the main Dispatcher.
-     * @param pointerOps
-     *            the pointer operator array.
-     * @param resType
-     *            the type to check.
-     * @param putOnHeap
-     *            indicates whether we are dealing with a HeapVar
-     * @return the checked ResultTypes object.
-     */
-     TypesResult checkForPointer(Dispatcher main,
-            IASTPointerOperator[] pointerOps, TypesResult resType, boolean putOnHeap);
+	/**
+	 * Checks resType, whether it needs some special treatment for pointers, according the value in pointerOps. Also in
+	 * case the flag putOnHeap is set -- which is the case for our special HeapVariables.
+	 *
+	 * @param main
+	 *            a reference to the main Dispatcher.
+	 * @param pointerOps
+	 *            the pointer operator array.
+	 * @param resType
+	 *            the type to check.
+	 * @param putOnHeap
+	 *            indicates whether we are dealing with a HeapVar
+	 * @return the checked ResultTypes object.
+	 */
+	TypesResult checkForPointer(Dispatcher main, IASTPointerOperator[] pointerOps, TypesResult resType,
+			boolean putOnHeap);
 
-    /**
-     * Translates mulitple DecoratorNodes, wrapped in DecoratedUnits.
-     * 
-     * @param main
-     * 			  a reference to the main dispatcher
-     * @param units
-     * 			  the decorator units to visit
-     * @return a result object
-     */
-    public Result visit(Dispatcher main, List<DecoratedUnit> units);
-    
-    /**
-     * Translates an IASTTranslationUnit.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTTranslationUnit node);
+	/**
+	 * Translates mulitple DecoratorNodes, wrapped in DecoratedUnits.
+	 * 
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param units
+	 *            the decorator units to visit
+	 * @return a result object
+	 */
+	public Result visit(Dispatcher main, List<DecoratedUnit> units);
 
-	 Result visit(Dispatcher main, IASTASMDeclaration node);
+	/**
+	 * Translates an IASTTranslationUnit.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTTranslationUnit node);
 
-    /**
-     * Translates an IASTFunctionDefinition.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTFunctionDefinition node);
+	Result visit(Dispatcher main, IASTASMDeclaration node);
 
-    /**
-     * Translates an IASTCompundStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTCompoundStatement node);
+	/**
+	 * Translates an IASTFunctionDefinition.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTFunctionDefinition node);
 
-    /**
-     * Translates an IASTSimpleDeclaration.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTSimpleDeclaration node);
+	/**
+	 * Translates an IASTCompundStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTCompoundStatement node);
 
-    /**
-     * Translates an IASTParameterDeclaration.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTParameterDeclaration node);
+	/**
+	 * Translates an IASTSimpleDeclaration.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTSimpleDeclaration node);
 
-    /**
-     * Translates an IASTDeclarator.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTDeclarator node);
+	/**
+	 * Translates an IASTParameterDeclaration.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTParameterDeclaration node);
 
-    /**
-     * Translates an IASTLiteralExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTLiteralExpression node);
+	/**
+	 * Translates an IASTDeclarator.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTDeclarator node);
 
-    /**
-     * Translates an IASTIdExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTIdExpression node);
+	/**
+	 * Translates an IASTLiteralExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTLiteralExpression node);
 
-    /**
-     * Translates an IASTUnaryExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTUnaryExpression node);
+	/**
+	 * Translates an IASTIdExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTIdExpression node);
 
-    /**
-     * Translates an IASTBinaryExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTBinaryExpression node);
+	/**
+	 * Translates an IASTUnaryExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTUnaryExpression node);
 
-    /**
-     * Translates an IASTEqualsInitializer.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTEqualsInitializer node);
+	/**
+	 * Translates an IASTBinaryExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTBinaryExpression node);
 
-    /**
-     * Translates an IASTDeclarationStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTDeclarationStatement node);
+	/**
+	 * Translates an IASTEqualsInitializer.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTEqualsInitializer node);
 
-    /**
-     * Translates an IASTReturnStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTReturnStatement node);
+	/**
+	 * Translates an IASTDeclarationStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTDeclarationStatement node);
 
-    /**
-     * Translates an IASTExpressionStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTExpressionStatement node);
+	/**
+	 * Translates an IASTReturnStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTReturnStatement node);
 
-    /**
-     * Translates an IASTIfStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTIfStatement node);
+	/**
+	 * Translates an IASTExpressionStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTExpressionStatement node);
 
-    /**
-     * Translates an IASTWhileStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTWhileStatement node);
+	/**
+	 * Translates an IASTIfStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTIfStatement node);
 
-    /**
-     * Translates an IASTForStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTForStatement node);
+	/**
+	 * Translates an IASTWhileStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTWhileStatement node);
 
-    /**
-     * Translates an IASTDoStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTDoStatement node);
+	/**
+	 * Translates an IASTForStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTForStatement node);
 
-	 Result visit(Dispatcher main, IASTContinueStatement cs);
+	/**
+	 * Translates an IASTDoStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTDoStatement node);
 
-    /**
-     * Translates an IASTExpressionList.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTExpressionList node);
+	Result visit(Dispatcher main, IASTContinueStatement cs);
 
-    /**
-     * Translates an IASTFunctionCallExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTFunctionCallExpression node);
+	/**
+	 * Translates an IASTExpressionList.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTExpressionList node);
 
-    /**
-     * Translates an IASTBreakStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTBreakStatement node);
+	/**
+	 * Translates an IASTFunctionCallExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTFunctionCallExpression node);
 
-    /**
-     * Translates an CASTNullStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTNullStatement node);
+	/**
+	 * Translates an IASTBreakStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTBreakStatement node);
 
-    /**
-     * Handles an IASTSwitchStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTSwitchStatement node);
+	/**
+	 * Translates an CASTNullStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTNullStatement node);
 
-    /**
-     * Handles an IASTCaseStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTCaseStatement node);
+	/**
+	 * Handles an IASTSwitchStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTSwitchStatement node);
 
-    /**
-     * Handles an IASTDefaultStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTDefaultStatement node);
+	/**
+	 * Handles an IASTCaseStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTCaseStatement node);
 
-    /**
-     * Handles an IASTLabelStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTLabelStatement node);
+	/**
+	 * Handles an IASTDefaultStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTDefaultStatement node);
 
-    /**
-     * Handles an IASTGotoStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTGotoStatement node);
+	/**
+	 * Handles an IASTLabelStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTLabelStatement node);
 
-    /**
-     * Handles an IASTCastExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTCastExpression node);
+	/**
+	 * Handles an IASTGotoStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTGotoStatement node);
 
-    /**
-     * Handles an IASTConditionalExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-	 Result visit(Dispatcher main, IASTConditionalExpression node);
+	/**
+	 * Handles an IASTCastExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTCastExpression node);
 
-    /**
-     * Handles an IASTInitializerList.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTInitializerList node);
+	/**
+	 * Handles an IASTConditionalExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTConditionalExpression node);
 
-    /**
-     * Handles an IASTArraySubscriptExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTArraySubscriptExpression node);
+	/**
+	 * Handles an IASTInitializerList.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTInitializerList node);
 
-    /**
-     * Handles an IASTInitializerClause.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTInitializerClause node);
+	/**
+	 * Handles an IASTArraySubscriptExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTArraySubscriptExpression node);
 
-    /**
-     * Handles an IASTFieldReference (e.g. array field).
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTFieldReference node);
+	/**
+	 * Handles an IASTInitializerClause.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTInitializerClause node);
 
-    /**
-     * Handles an CASTDesignatedInitializer (e.g. struct initializer).
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, CASTDesignatedInitializer node);
+	/**
+	 * Handles an IASTFieldReference (e.g. array field).
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTFieldReference node);
 
-    /**
-     * Handles an IASTProblemStatement.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTProblemStatement node);
+	/**
+	 * Handles an CASTDesignatedInitializer (e.g. struct initializer).
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, CASTDesignatedInitializer node);
 
-    /**
-     * Handles an IASTProblemDeclaration.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTProblemDeclaration node);
+	/**
+	 * Handles an IASTProblemStatement.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTProblemStatement node);
 
-    /**
-     * Handles an IASTProblemExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTProblemExpression node);
+	/**
+	 * Handles an IASTProblemDeclaration.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTProblemDeclaration node);
 
-    /**
-     * Handles an IASTProblem.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTProblem node);
+	/**
+	 * Handles an IASTProblemExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTProblemExpression node);
 
-    /**
-     * Handles an IASTProblemTypeId.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTProblemTypeId node);
+	/**
+	 * Handles an IASTProblem.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTProblem node);
 
-    /**
-     * Handles an IASTPointer.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTPointer node);
+	/**
+	 * Handles an IASTProblemTypeId.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTProblemTypeId node);
 
-    /**
-     * Handles an IASTTypeIdExpression.
-     *
-     * @param main
-     *            a reference to the main dispatcher
-     * @param node
-     *            the node to visit
-     * @return a result object
-     */
-     Result visit(Dispatcher main, IASTTypeIdExpression node);
+	/**
+	 * Handles an IASTPointer.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTPointer node);
 
+	/**
+	 * Handles an IASTTypeIdExpression.
+	 *
+	 * @param main
+	 *            a reference to the main dispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(Dispatcher main, IASTTypeIdExpression node);
 
-     Result visit(Dispatcher main, IGNUASTCompoundStatementExpression node);
+	Result visit(Dispatcher main, IGNUASTCompoundStatementExpression node);
 
-    /**
-     * central methods for beginning a scope in all necessary ScopedThings
-     * (f.i. symbolTable,..)
-     */
-     void beginScope();
-    /**
-     * central methods for ending a scope in all necessary ScopedThings
-     * (f.i. symbolTable,..)
-     */
-     void endScope();
+	/**
+	 * central methods for beginning a scope in all necessary ScopedThings (f.i. symbolTable,..)
+	 */
+	void beginScope();
+
+	/**
+	 * central methods for ending a scope in all necessary ScopedThings (f.i. symbolTable,..)
+	 */
+	void endScope();
 
 	boolean isHeapVar(String boogieId);
 
 	/**
-	 * Takes an arithmetic expression that has integer value and can be computed at compile-time, i.e., that
-	 * contains no variables, and returns an IntegerLiteral containing the result.
+	 * Takes an arithmetic expression that has integer value and can be computed at compile-time, i.e., that contains no
+	 * variables, and returns an IntegerLiteral containing the result.
 	 */
-	 BigInteger computeConstantValue(Expression value);
+	BigInteger computeConstantValue(Expression value);
 
 	/**
-	 * Modifies a given {@link ExpressionResult} such that the effect of
-	 * a cast from the current {@link CType} of the {@link ExpressionResult}
-	 * to resultType is captured.
-	 * Method may exchange the {@link RValue} of the  {@link ExpressionResult}
-	 * and add additional objects (statements, auxVars, etc.).
+	 * Modifies a given {@link ExpressionResult} such that the effect of a cast from the current {@link CType} of the
+	 * {@link ExpressionResult} to resultType is captured. Method may exchange the {@link RValue} of the
+	 * {@link ExpressionResult} and add additional objects (statements, auxVars, etc.).
 	 */
 	void convert(ILocation loc, ExpressionResult rexp, CType resultType);
 
