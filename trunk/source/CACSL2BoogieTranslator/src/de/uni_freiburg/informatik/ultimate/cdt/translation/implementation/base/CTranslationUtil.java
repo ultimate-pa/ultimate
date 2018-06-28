@@ -103,7 +103,7 @@ public class CTranslationUtil {
 			}
 		}
 
-		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(), index);
+		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLhs(), index);
 
 		return new LocalLValue(alhs, cArrayType.getValueType(), null);
 	}
@@ -116,7 +116,7 @@ public class CTranslationUtil {
 		final Expression index = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
 				new BigInteger(arrayIndex.toString()));
 
-		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(),
+		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLhs(),
 				new Expression[] { index });
 
 		final CType cellType = cArrayType.getValueType();
@@ -321,7 +321,7 @@ public class CTranslationUtil {
 		final String fieldId = cStructType.getFieldIds()[i];
 
 		final StructLHS lhs =
-				ExpressionFactory.constructStructAccessLhs(loc, structBaseLhsToInitialize.getLHS(), fieldId);
+				ExpressionFactory.constructStructAccessLhs(loc, structBaseLhsToInitialize.getLhs(), fieldId);
 
 		return new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 	}

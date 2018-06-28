@@ -67,7 +67,7 @@ public class LocalLValue extends LRValue {
 		this(llVal.mLhs, llVal.getCType(), llVal.isBoogieBool(), llVal.isIntFromPointer(), null);
 	}
 
-	public LeftHandSide getLHS() {
+	public LeftHandSide getLhs() {
 		return mLhs;
 	}
 

@@ -2042,7 +2042,7 @@ public class MemoryHandler {
 	 *            name of the calling procedure
 	 */
 	public CallStatement getMallocCall(final LocalLValue resultPointer, final ILocation loc, final IASTNode hook) {
-		return getMallocCall(calculateSizeOf(loc, resultPointer.getCType(), hook), (VariableLHS) resultPointer.getLHS(),
+		return getMallocCall(calculateSizeOf(loc, resultPointer.getCType(), hook), (VariableLHS) resultPointer.getLhs(),
 				loc);
 	}
 
@@ -2449,7 +2449,7 @@ public class MemoryHandler {
 		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) { // frees are inserted in
 			// handleReturnStm
 			frees.add(getDeallocCall(main, llvp.llv, llvp.loc));
-			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLHS() }));
+			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLhs() }));
 		}
 		final List<Statement> newBlockAL = new ArrayList<>();
 		newBlockAL.addAll(mallocs);

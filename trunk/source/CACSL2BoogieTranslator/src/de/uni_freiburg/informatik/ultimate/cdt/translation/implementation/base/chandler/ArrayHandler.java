@@ -176,7 +176,7 @@ public class ArrayHandler {
 				// If the left hand side is an array represented as LocalLValue
 				// we return a copy of this LocalLValue where we added the
 				// current index.
-				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.mLrVal).getLHS();
+				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.mLrVal).getLhs();
 
 				final RValue bound = lhsArrayType.getBound();
 

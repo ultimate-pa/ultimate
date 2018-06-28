@@ -339,7 +339,7 @@ public class InitializationHandler {
 					cStructType.getFieldIds(), fieldValues.toArray(new Expression[fieldValues.size()]));
 
 			final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { ((LocalLValue) structBaseLhsToInitialize).getLHS() },
+					new LeftHandSide[] { ((LocalLValue) structBaseLhsToInitialize).getLhs() },
 					new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(initInfo.getOverapprs(), assignment);
 			initialization.addStatement(assignment);
@@ -575,7 +575,7 @@ public class InitializationHandler {
 					} else {
 						final String fieldName = cStructType.getFieldIds()[i];
 						final LeftHandSide lhs =
-								ExpressionFactory.constructStructAccessLhs(loc, lhsToInitIfAny.getLHS(), fieldName);
+								ExpressionFactory.constructStructAccessLhs(loc, lhsToInitIfAny.getLhs(), fieldName);
 						fieldLhs = new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 					}
 				}
@@ -831,7 +831,7 @@ public class InitializationHandler {
 					mMemoryHandler.getWriteCall(main, loc, (HeapLValue) lhs, initializationValue, cType, true, hook);
 		} else {
 			final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { ((LocalLValue) lhs).getLHS() }, new Expression[] { initializationValue });
+					new LeftHandSide[] { ((LocalLValue) lhs).getLhs() }, new Expression[] { initializationValue });
 			addOverApprToStatementAnnots(overAppr, assignment);
 			assigningStatements = Collections.singletonList(assignment);
 		}

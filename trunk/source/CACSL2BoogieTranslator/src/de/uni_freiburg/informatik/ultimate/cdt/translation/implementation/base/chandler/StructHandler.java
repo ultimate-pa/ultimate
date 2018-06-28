@@ -154,7 +154,7 @@ public class StructHandler {
 			newValue = new RValue(sexpr, cFieldType);
 		} else {
 			final LocalLValue lVal = (LocalLValue) fieldOwner.mLrVal;
-			final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLHS(), field);
+			final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLhs(), field);
 			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
 			newValue = new LocalLValue(slhs, cFieldType, bi);
 
@@ -195,7 +195,7 @@ public class StructHandler {
 
 			if (fieldOwner instanceof LocalLValue) {
 				final StructLHS havocSlhs = ExpressionFactory.constructStructAccessLhs(loc,
-						((LocalLValue) fieldOwner).getLHS(), neighbourField);
+						((LocalLValue) fieldOwner).getLhs(), neighbourField);
 				builder.setLrVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
 			} else {
 				assert fieldOwner instanceof HeapLValue;

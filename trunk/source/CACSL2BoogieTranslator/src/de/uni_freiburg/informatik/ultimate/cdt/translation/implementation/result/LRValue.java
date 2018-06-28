@@ -84,7 +84,7 @@ public abstract class LRValue {
 		if (this instanceof HeapLValue) {
 			return "address: " + ((HeapLValue) this).getAddress();
 		} else if (this instanceof LocalLValue) {
-			return "lhs: " + ((LocalLValue) this).getLHS();
+			return "lhs: " + ((LocalLValue) this).getLhs();
 		} else {
 			return "value: " + getValue();
 		}

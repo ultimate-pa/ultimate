@@ -564,7 +564,7 @@ public class FunctionHandler {
 				resultBuilder.addStatement(memoryHandler.getDeallocCall(main, entry.getKey().llv, entry.getKey().loc));
 
 				resultBuilder.addStatement(
-						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
+						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLhs() }));
 			}
 		}
 
