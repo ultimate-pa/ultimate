@@ -2869,7 +2869,7 @@ public class CHandler implements ICHandler {
 				final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
 				rhsWithBitfieldTreatment =
 						mExpressionTranslation.eraseBits(loc, rightHandSideValueWithConversionsApplied.getValue(),
-								(CPrimitive) lValue.getCType(), bitfieldWidth, hook);
+								(CPrimitive) lValue.getCType().getUnderlyingType(), bitfieldWidth, hook);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
