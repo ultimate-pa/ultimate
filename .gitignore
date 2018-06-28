@@ -173,6 +173,8 @@ hs_err_pid*
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/VarList.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/WhileStatement.java
 /trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/WildcardExpression.java
+/trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/ForkStatement.java
+/trunk/source/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast/JoinStatement.java
 
 /trunk/source/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/generated
 
