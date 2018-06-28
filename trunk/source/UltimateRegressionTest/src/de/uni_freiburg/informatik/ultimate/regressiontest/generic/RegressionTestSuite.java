@@ -47,11 +47,11 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	public RegressionTestSuite() {
 		super();
 		mTimeout = DEFAULT_TIMEOUT;
-		mRootFolder = TestUtil.getPathFromTrunk("examples/programs/regression");
+		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
 		// exclude paths that match the following regex
 		mExcludeFilterRegex =
-				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL|nestedInterpolants|forwardPredicates|AutomizerC|Concurrent-default).*";
+				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL).*";
 	}
 
 	@Override
