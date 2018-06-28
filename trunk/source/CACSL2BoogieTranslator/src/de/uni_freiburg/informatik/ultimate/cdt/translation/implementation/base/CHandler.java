@@ -2803,7 +2803,7 @@ public class CHandler implements ICHandler {
 				}
 			} else if (leftHandSide instanceof LocalLValue) {
 				String lId = null;
-				final LeftHandSide value = ((LocalLValue) leftHandSide).getLHS();
+				final LeftHandSide value = ((LocalLValue) leftHandSide).getLhs();
 				if (value instanceof VariableLHS) {
 					lId = ((VariableLHS) value).getIdentifier();
 					markAsIntFromPointer(loc, lId, hook);
@@ -2874,7 +2874,7 @@ public class CHandler implements ICHandler {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
 			final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { lValue.getLHS() }, new Expression[] { rhsWithBitfieldTreatment });
+					new LeftHandSide[] { lValue.getLhs() }, new Expression[] { rhsWithBitfieldTreatment });
 
 			builder.addStatement(assignStmt);
 
