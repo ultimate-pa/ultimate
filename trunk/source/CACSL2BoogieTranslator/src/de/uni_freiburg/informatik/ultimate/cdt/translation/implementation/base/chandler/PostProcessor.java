@@ -645,7 +645,7 @@ public class PostProcessor {
 						boogieTypeHelper.constructIdentifierExpression(loc,
 								boogieTypeHelper.getBoogieTypeForPointerType(),
 								SFO.FUNCTION_ADDRESS + fittingFunctions.get(i),
-								StorageClass.IMPLEMENTATION_INPARAM, dispatchingProcedureName);
+								StorageClass.GLOBAL, null);
 				final Expression condition =
 						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
 								functionPointerIdex, functionPointerValueOfCurrentFittingFunctionIdex);

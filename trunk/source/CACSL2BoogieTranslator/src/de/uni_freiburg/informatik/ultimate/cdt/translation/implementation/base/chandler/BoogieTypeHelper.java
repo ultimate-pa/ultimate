@@ -80,6 +80,7 @@ public class BoogieTypeHelper {
 	 */
 	public IdentifierExpression constructIdentifierExpression(final ILocation loc, final BoogieType boogieType,
 			final String id, final StorageClass storageClass, final String surroundingProcedureName) {
+		assert storageClass != StorageClass.GLOBAL || surroundingProcedureName == null;
 		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, id,
 				new DeclarationInformation(storageClass, surroundingProcedureName));
 	}
