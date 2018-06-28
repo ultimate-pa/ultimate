@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.NNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RemoveNegation;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteEquality;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteIte;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteUnequality;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
@@ -80,7 +80,7 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 		transformer.add(new RewriteIte());
 		transformer.add(new NNF(mServices));
 		transformer.add(new RemoveNegation());
-		transformer.add(new RewriteEquality());
+		transformer.add(new RewriteUnequality());
 		transformer.add(new NNF(mServices));
 		transformer.add(new RemoveNegation());
 
