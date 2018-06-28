@@ -83,29 +83,32 @@ public class ArrayDomainStatementProcessor<STATE extends IAbstractState<STATE>> 
 
 	private ArrayDomainState<STATE> processSingleAssignment(final LeftHandSide lhs, final Expression rhs,
 			final ArrayDomainState<STATE> oldstate) {
-		final Pair<ArrayDomainState<STATE>, Expression> processed = mExpressionProcessor.processExpression(oldstate, rhs);
+		final Pair<ArrayDomainState<STATE>, Expression> processed =
+				mExpressionProcessor.processExpression(oldstate, rhs);
 		final ArrayDomainState<STATE> tmpState = processed.getFirst();
 		final Expression newExpr = processed.getSecond();
 		if (lhs instanceof VariableLHS) {
-			STATE newSubState = tmpState.getSubState();
-			final SegmentationMap newSegmentationMap = tmpState.getSegmentationMap();
 			final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((VariableLHS) lhs);
 			if (leftVar.getSort().isArraySort()) {
+				// If there is an array assignment such as a := b, just move b to the equivalence-class of a
 				if (newExpr instanceof IdentifierExpression) {
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) newExpr);
+					final SegmentationMap newSegmentationMap = tmpState.getSegmentationMap();
 					newSegmentationMap.move(leftVar, rightVar);
-				} else {
-					// TODO: Rename unchanged parts of the segmentation here?
-					final Pair<STATE, Segmentation> segmentationPair = tmpState.getSegmentation(newExpr);
-					newSubState = segmentationPair.getFirst();
-					newSegmentationMap.remove(leftVar);
-					newSegmentationMap.add(leftVar, segmentationPair.getSecond());
+					return tmpState.updateState(newSegmentationMap).removeUnusedAuxVars();
 				}
-			} else {
-				final AssignmentStatement assignment = constructSingleAssignment(lhs, newExpr);
-				newSubState = mToolkit.handleStatementBySubdomain(newSubState, assignment);
+				// TODO: Rename unchanged parts of the segmentation here?
+				final Pair<ArrayDomainState<STATE>, Segmentation> segmentationPair = tmpState.getSegmentation(newExpr);
+				final ArrayDomainState<STATE> newState = segmentationPair.getFirst();
+				final SegmentationMap newSegmentationMap = newState.getSegmentationMap();
+				newSegmentationMap.remove(leftVar);
+				newSegmentationMap.add(leftVar, segmentationPair.getSecond());
+				return newState.updateState(newSegmentationMap).removeUnusedAuxVars();
 			}
-			return tmpState.updateState(newSubState, newSegmentationMap).removeUnusedAuxVars();
+			// Just handle the assignment by the subdomain
+			final AssignmentStatement assignment = constructSingleAssignment(lhs, newExpr);
+			final STATE newSubState = mToolkit.handleStatementBySubdomain(tmpState.getSubState(), assignment);
+			return tmpState.updateState(newSubState);
 		} else if (lhs instanceof ArrayLHS) {
 			final ArrayLHS arrayLhs = (ArrayLHS) lhs;
 			final LeftHandSide array = arrayLhs.getArray();

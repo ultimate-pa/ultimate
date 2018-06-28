@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>> {
@@ -38,35 +39,44 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 		final List<Term> constraints = new ArrayList<>();
 		ArrayDomainState<STATE> tmpState = state;
 		final Script script = mToolkit.getScript();
-		final Term stateTerm = state.getSubTerm();
 		// TODO: Replace array (in)equalities
-		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(term, false)) {
+		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectShallow(term, true)) {
 			final Term selectTerm = select.getSelectTerm();
-			final Expression array = mToolkit.getExpression(select.getArray());
-			final IProgramVar auxVar = mToolkit.createVariable("aux", mToolkit.getType(selectTerm.getSort()));
-			auxVars.add(auxVar);
-			if (select.getIndex().size() == 1) {
-				final Term index = select.getIndex().get(0);
-				final Pair<STATE, Segmentation> segmentationPair = tmpState.getSegmentation(array);
-				tmpState = tmpState.updateState(segmentationPair.getFirst());
+			Term currentTerm = select.getArray();
+			for (final Term index : select.getIndex()) {
+				final Pair<ArrayDomainState<STATE>, Segmentation> segmentationPair =
+						tmpState.getSegmentation(mToolkit.getExpression(currentTerm));
+				tmpState = segmentationPair.getFirst();
 				final Segmentation segmentation = segmentationPair.getSecond();
 				final Pair<Integer, Integer> bounds = tmpState.getContainedBoundIndices(segmentation, index);
 				final int min = bounds.getFirst();
 				final int max = bounds.getSecond();
-				final List<Term> disjuncts = new ArrayList<>();
-				for (int i = min; i < max; i++) {
-					disjuncts.add(mToolkit.connstructEquivalentConstraint(auxVar, segmentation.getValue(i), stateTerm));
+				final IProgramVar auxVar =
+						mToolkit.createVariable("aux", mToolkit.getType(TypeUtils.getValueSort(currentTerm.getSort())));
+				if (auxVar.getSort().isArraySort()) {
+					final List<Term> disjuncts = new ArrayList<>();
+					for (int i = min; i < max; i++) {
+						disjuncts.add(SmtUtils.binaryEquality(script, auxVar.getTermVariable(),
+								segmentation.getValue(i).getTermVariable()));
+					}
+					tmpState = processAssumeTerm(tmpState.addAuxVar(auxVar), SmtUtils.and(script, disjuncts));
+				} else {
+					auxVars.add(auxVar);
+					final List<Term> disjuncts = new ArrayList<>();
+					for (int i = min; i < max; i++) {
+						disjuncts.add(mToolkit.connstructEquivalentConstraint(auxVar, segmentation.getValue(i),
+								tmpState.getSubTerm()));
+					}
+					constraints.add(SmtUtils.or(script, disjuncts));
 				}
-				constraints.add(SmtUtils.or(script, disjuncts));
-			} else {
-				throw new UnsupportedOperationException();
+				currentTerm = auxVar.getTermVariable();
 			}
-			substitution.put(selectTerm, auxVar.getTermVariable());
+			substitution.put(selectTerm, currentTerm);
 		}
 		final STATE newSubState = mToolkit.handleAssumptionBySubdomain(tmpState.getSubState().addVariables(auxVars),
 				SmtUtils.and(script, constraints));
 		final Term newTerm = new Substitution(mToolkit.getManagedScript(), substitution).transform(term);
-		return new Pair<>(state.updateState(newSubState), newTerm);
+		return new Pair<>(tmpState.updateState(newSubState), newTerm);
 	}
 
 	public ArrayDomainState<STATE> processAssume(final ArrayDomainState<STATE> state, final Expression assumption) {
@@ -109,18 +119,18 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 				}
 				if (left instanceof IdentifierExpression) {
 					final IProgramVarOrConst leftVar = mToolkit.getBoogieVar((IdentifierExpression) left);
-					final Pair<STATE, Segmentation> rightPair = state.getSegmentation(right);
+					final Pair<ArrayDomainState<STATE>, Segmentation> rightPair = state.getSegmentation(right);
 					segmentationMap.put(leftVar, rightPair.getSecond());
 					final ArrayDomainState<STATE> state2 =
-							state.updateState(rightPair.getFirst(), segmentationMap).removeUnusedAuxVars();
+							rightPair.getFirst().updateState(segmentationMap).removeUnusedAuxVars();
 					return state.intersect(state2);
 				}
 				if (right instanceof IdentifierExpression) {
 					final IProgramVarOrConst rightVar = mToolkit.getBoogieVar((IdentifierExpression) right);
-					final Pair<STATE, Segmentation> leftPair = state.getSegmentation(right);
+					final Pair<ArrayDomainState<STATE>, Segmentation> leftPair = state.getSegmentation(right);
 					segmentationMap.put(rightVar, leftPair.getSecond());
 					final ArrayDomainState<STATE> state2 =
-							state.updateState(leftPair.getFirst(), segmentationMap).removeUnusedAuxVars();
+							leftPair.getFirst().updateState(segmentationMap).removeUnusedAuxVars();
 					return state.intersect(state2);
 				}
 				// TODO: Refine this?
@@ -132,7 +142,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			return mToolkit.createBottomState();
 		}
 		// Handle array-reads
-		final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectShallow(assumption, false);
+		final List<MultiDimensionalSelect> selects = MultiDimensionalSelect.extractSelectShallow(assumption, true);
 		if (selects.isEmpty()) {
 			final STATE newSubState = mToolkit.handleAssumptionBySubdomain(state.getSubState(), assumption);
 			return state.updateState(newSubState);
@@ -156,8 +166,8 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			final Expression store = mToolkit.getExpression(
 					SmtUtils.multiDimensionalStore(script, select.getArray(), select.getIndex(), auxVarTv));
 			final ArrayDomainState<STATE> tmpState = oldValueResult.getFirst().addVariable(auxVar);
-			final Pair<STATE, Segmentation> segmentationPair = tmpState.getSegmentation(store);
-			newState = newState.updateState(segmentationPair.getFirst());
+			final Pair<ArrayDomainState<STATE>, Segmentation> segmentationPair = tmpState.getSegmentation(store);
+			newState = segmentationPair.getFirst();
 			final IProgramVarOrConst arrayVar = mToolkit.getBoogieVar((IdentifierExpression) arrayExpr);
 			newSegmentationMap.put(arrayVar, segmentationPair.getSecond());
 		}
