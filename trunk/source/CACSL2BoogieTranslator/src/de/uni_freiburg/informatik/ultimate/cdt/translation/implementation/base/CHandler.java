@@ -980,16 +980,38 @@ public class CHandler implements ICHandler {
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
-			final ExpressionResult rl = leftOperand.switchToRValueIfNecessary(main, loc, node);
-			final ExpressionResult rr = rightOperand.switchToRValueIfNecessary(main, loc, node);
+			// if we are "adding" arrays, they must be treated as pointers
+			final ExpressionResult lDecayed = leftOperand.decayArrayToPointerIfNecessary(main, loc, node);
+			final ExpressionResult rDecayed = rightOperand.decayArrayToPointerIfNecessary(main, loc, node);
+			assert !(leftOperand.getLrValue().getCType() instanceof CArray)
+				|| node.getOperator() == IASTBinaryExpression.op_plus
+					: "subtraction is not allowed in pointer arithmetic, right?";
+			assert !(rightOperand.getLrValue().getCType() instanceof CArray)
+				|| node.getOperator() == IASTBinaryExpression.op_plus
+					: "subtraction is not allowed in pointer arithmetic, right?";
+
+			final ExpressionResult rl = lDecayed.switchToRValueIfNecessary(main, loc, node);
+			final ExpressionResult rr = rDecayed.switchToRValueIfNecessary(main, loc, node);
+
 			rl.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 			rr.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 			return handleAdditiveOperation(main, loc, null, node.getOperator(), rl, rr, node);
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
-			final ExpressionResult rl = leftOperand.switchToRValueIfNecessary(main, loc, node);
-			final ExpressionResult rr = rightOperand.switchToRValueIfNecessary(main, loc, node);
+			// if we are "adding" arrays, they must be treated as pointers
+			final ExpressionResult lDecayed = leftOperand.decayArrayToPointerIfNecessary(main, loc, node);
+			final ExpressionResult rDecayed = rightOperand.decayArrayToPointerIfNecessary(main, loc, node);
+			assert !(leftOperand.getLrValue().getCType() instanceof CArray)
+				|| node.getOperator() == IASTBinaryExpression.op_plus
+					: "subtraction is not allowed in pointer arithmetic, right?";
+			assert !(rightOperand.getLrValue().getCType() instanceof CArray)
+				|| node.getOperator() == IASTBinaryExpression.op_plus
+					: "subtraction is not allowed in pointer arithmetic, right?";
+
+			final ExpressionResult rl = lDecayed.switchToRValueIfNecessary(main, loc, node);
+			final ExpressionResult rr = rDecayed.switchToRValueIfNecessary(main, loc, node);
+
 			rl.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 			rr.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 			return handleAdditiveOperation(main, loc, leftOperand.mLrVal, node.getOperator(), rl, rr, node);
