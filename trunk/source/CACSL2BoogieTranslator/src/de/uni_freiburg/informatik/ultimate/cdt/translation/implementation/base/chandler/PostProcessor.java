@@ -288,21 +288,11 @@ public class PostProcessor {
 			final VarList[] outParams = procedureManager.getProcedureDeclaration(procName).getOutParams();
 			assert outParams.length <= 1;
 
-			procedureManager.beginProcedureScope(main, procedureManager.getProcedureInfo(procName));
 			final Body body = getFunctionPointerFunctionBody(ignoreLoc, main, functionHandler, procedureManager,
 									memoryHandler, procName, cFunc, inParams, outParams);
-			procedureManager.endProcedureScope(main);
-
 			final Procedure functionPointerMuxProc =
 					new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams, outParams,
-							// FIXME: it seems an odd convention that giving it "null" as Specification makes it an
-							// implementation
-							// (instead of a procedure) in Boogie
-							// new Specification[0],
-							null,
-							// functionHandler.getFunctionPointerFunctionBody(ignoreLoc, main, memoryHandler,
-							// structHandler, procName, cFunc, inParams, outParams));
-							body);
+							null, body);
 			result.add(functionPointerMuxProc);
 		}
 		return result;
@@ -507,11 +497,14 @@ public class PostProcessor {
 	 * 			out parameters of the dispatching procedure as it has been registered in FunctionHandler
 	 * @return
 	 */
-	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main,
+	private Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main,
 			final FunctionHandler functionHandler, final ProcedureManager procedureManager,
 			final MemoryHandler memoryHandler, final String dispatchingProcedureName,
 			final ProcedureSignature funcSignature, final VarList[] inParams,
 			final VarList[] outParam) {
+
+
+		procedureManager.beginProcedureScope(main, procedureManager.getProcedureInfo(dispatchingProcedureName));
 
 		final BoogieTypeHelper boogieTypeHelper = main.mCHandler.getBoogieTypeHelper();
 
@@ -593,10 +586,12 @@ public class PostProcessor {
 			builder.addStatements(CTranslationUtil.createHavocsForAuxVars(rex.mAuxVars));
 			builder.addStatement(new ReturnStatement(loc));
 
-			return procedureManager.constructBody(loc,
+			final Body result = procedureManager.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
 					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
 					dispatchingProcedureName);
+			procedureManager.endProcedureScope(main);
+			return result;
 		} else {
 			AuxVarInfo auxvar = null;
 			if (!resultTypeIsVoid) {
@@ -678,10 +673,12 @@ public class PostProcessor {
 			}
 			builder.addStatements(CTranslationUtil.createHavocsForAuxVars(builder.getAuxVars()));
 			builder.addStatement(new ReturnStatement(loc));
-			return procedureManager.constructBody(loc,
+			final Body result = procedureManager.constructBody(loc,
 					builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
 					builder.getStatements().toArray(new Statement[builder.getStatements().size()]),
 					dispatchingProcedureName);
+			procedureManager.endProcedureScope(main);
+			return result;
 		}
 	}
 
