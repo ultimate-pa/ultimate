@@ -114,45 +114,46 @@ public class CTranslationUtil {
 
 		final CPrimitive currentIndexType = (CPrimitive) cArrayType.getBound().getCType();
 		final Expression index = expressionTranslation.constructLiteralForIntegerType(loc, currentIndexType,
-					new BigInteger(arrayIndex.toString()));
+				new BigInteger(arrayIndex.toString()));
 
-		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(), new Expression[] { index });
+		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLHS(),
+				new Expression[] { index });
 
 		final CType cellType = cArrayType.getValueType();
 
 		return new LocalLValue(alhs, cellType, null);
 	}
 
-//	public static LRValue constructOffHeapStructAccessLhs(final ILocation loc, final LocalLValue structBaseLhs,
-//			final int i) {
-//		final CStruct cStructType = (CStruct) structBaseLhs.getCType().getUnderlyingType();
-//		final String fieldName = cStructType.getFieldIds()[i];
-//		final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, structBaseLhs.getLHS(), fieldName);
-//		return new LocalLValue(lhs, cStructType.getFieldTypes()[i]);
-//	}
+	// public static LRValue constructOffHeapStructAccessLhs(final ILocation loc, final LocalLValue structBaseLhs,
+	// final int i) {
+	// final CStruct cStructType = (CStruct) structBaseLhs.getCType().getUnderlyingType();
+	// final String fieldName = cStructType.getFieldIds()[i];
+	// final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, structBaseLhs.getLHS(), fieldName);
+	// return new LocalLValue(lhs, cStructType.getFieldTypes()[i]);
+	// }
 
-//	public static HeapLValue constructOnHeapStructAccessLhs(final HeapLValue structBaseLhs, final int i) {
-//		final CStruct cStructType = (CStruct) structBaseLhs.getCType();
-//		// TODO
-//		return null;
-//	}
+	// public static HeapLValue constructOnHeapStructAccessLhs(final HeapLValue structBaseLhs, final int i) {
+	// final CStruct cStructType = (CStruct) structBaseLhs.getCType();
+	// // TODO
+	// return null;
+	// }
 
 	public static HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final Dispatcher main,
 			final HeapLValue arrayBaseAddress, final List<Integer> arrayIndex, final IASTNode hook) {
 		final CArray cArrayType = (CArray) arrayBaseAddress.getCType().getUnderlyingType();
 
-		final List<Integer> arrayBounds = getConstantDimensionsOfArray(cArrayType,
-				main.mCHandler.getExpressionTranslation(), hook);
+		final List<Integer> arrayBounds =
+				getConstantDimensionsOfArray(cArrayType, main.mCHandler.getExpressionTranslation(), hook);
 
 		Integer product = 0;
 		for (int i = 0; i < arrayIndex.size(); i++) {
 			final int factor = i == arrayIndex.size() - 1 ? 1 : arrayBounds.get(i + 1);
-			product = product +  factor * arrayIndex.get(i);
+			product = product + factor * arrayIndex.get(i);
 		}
 		final CPrimitive sizeT = main.mCHandler.getTypeSizeAndOffsetComputer().getSizeT();
 
-		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation()
-				.constructLiteralForIntegerType(loc, sizeT, new BigInteger(product.toString()));
+		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation().constructLiteralForIntegerType(loc,
+				sizeT, new BigInteger(product.toString()));
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
@@ -171,21 +172,19 @@ public class CTranslationUtil {
 
 		final CPrimitive pointerComponentType = main.mCHandler.getExpressionTranslation().getCTypeOfPointerComponents();
 
-		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation()
-				.constructLiteralForIntegerType(loc, pointerComponentType, new BigInteger(arrayIndex.toString()));
+		final Expression flatCellNumber = main.mCHandler.getExpressionTranslation().constructLiteralForIntegerType(loc,
+				pointerComponentType, new BigInteger(arrayIndex.toString()));
 
 		/* do a conversion so the expression has boogie pointer type */
-		final RValue addressRVal =
-				arrayBaseAddress.getAddressAsPointerRValue(main.mTypeHandler.getBoogiePointerType());
-//		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
+		final RValue addressRVal = arrayBaseAddress.getAddressAsPointerRValue(main.mTypeHandler.getBoogiePointerType());
+		// final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(addressRVal.getValue(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(addressRVal.getValue(), loc);
 
 		final CType cellType = cArrayType.getValueType();
 
-		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc,
-				cellType, flatCellNumber, pointerComponentType, hook);
-
+		final Expression cellOffset = main.mCHandler.getMemoryHandler().multiplyWithSizeOfAnotherType(loc, cellType,
+				flatCellNumber, pointerComponentType, hook);
 
 		final Expression sum = main.mCHandler.getExpressionTranslation().constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_plus, pointerOffset, pointerComponentType, cellOffset, pointerComponentType);
@@ -201,8 +200,8 @@ public class CTranslationUtil {
 
 		final CPrimitive sizeT = main.mCHandler.getTypeSizeAndOffsetComputer().getSizeT();
 
-		final Expression fieldOffset = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(
-						loc, cStructType, fieldIndex, hook);
+		final Expression fieldOffset = main.mCHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc,
+				cStructType, fieldIndex, hook);
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress.getAddress(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress.getAddress(), loc);
@@ -210,9 +209,9 @@ public class CTranslationUtil {
 				IASTBinaryExpression.op_plus, pointerOffset, sizeT, fieldOffset, sizeT);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 
-
 		return LRValueFactory.constructHeapLValue(main, newPointer, cStructType.getFieldTypes()[fieldIndex], null);
 	}
+
 	public static boolean isVarlengthArray(final CArray cArrayType, final ExpressionTranslation expressionTranslation,
 			final IASTNode hook) {
 		CArray currentArrayType = cArrayType;
@@ -245,8 +244,8 @@ public class CTranslationUtil {
 
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
-			result.add(Integer.parseUnsignedInt(expressionTranslation.extractIntegerValue(currentArrayType.getBound(),
-					hook).toString()));
+			result.add(Integer.parseUnsignedInt(
+					expressionTranslation.extractIntegerValue(currentArrayType.getBound(), hook).toString()));
 
 			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
@@ -275,10 +274,9 @@ public class CTranslationUtil {
 	}
 
 	/**
-	 * The given result must be an ExpressionResult or an ExpressionListResult.
-	 *  case ExpressionResult: the ExpressionResult is returned unchanged
-	 *  case ExpressionListResult: we evaluate all expressions, also switching to rvalue in every case, and we
-	 *    accumulate the corresponding statements in an ExpressionResult
+	 * The given result must be an ExpressionResult or an ExpressionListResult. case ExpressionResult: the
+	 * ExpressionResult is returned unchanged case ExpressionListResult: we evaluate all expressions, also switching to
+	 * rvalue in every case, and we accumulate the corresponding statements in an ExpressionResult
 	 *
 	 * @param loc
 	 * @param main
@@ -297,10 +295,8 @@ public class CTranslationUtil {
 
 		for (int i = 0; i < listResult.list.size(); i++) {
 			/*
-			 * Note:
-			 * C11 6.5.17.2, footnote:
-			 *  A comma operator does not yield an lvalue.
-			 * --> thus we can immediately switch to rvalue here
+			 * Note: C11 6.5.17.2, footnote: A comma operator does not yield an lvalue. --> thus we can immediately
+			 * switch to rvalue here
 			 */
 			result.addAllExceptLrValue(listResult.list.get(i).switchToRValueIfNecessary(main, loc, hook));
 		}
@@ -324,30 +320,29 @@ public class CTranslationUtil {
 
 		final String fieldId = cStructType.getFieldIds()[i];
 
-		final StructLHS lhs = ExpressionFactory.constructStructAccessLhs(loc, structBaseLhsToInitialize.getLHS(), fieldId);
+		final StructLHS lhs =
+				ExpressionFactory.constructStructAccessLhs(loc, structBaseLhsToInitialize.getLHS(), fieldId);
 
 		return new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 	}
 
-	public static Expression convertLHSToExpression(final LeftHandSide lhs) {
-			if (lhs instanceof VariableLHS) {
-				final VariableLHS vlhs = (VariableLHS) lhs;
-	//			return new IdentifierExpression(lhs.getLocation(), ((VariableLHS) lhs).getIdentifier());
-				return ExpressionFactory.constructIdentifierExpression(vlhs.getLoc(),
-						(BoogieType) vlhs.getType(), vlhs.getIdentifier(), vlhs.getDeclarationInformation());
-			} else if (lhs instanceof ArrayLHS) {
-				final ArrayLHS alhs = (ArrayLHS) lhs;
-				final Expression array = convertLHSToExpression(alhs.getArray());
-				return ExpressionFactory.constructNestedArrayAccessExpression(alhs.getLocation(), array,
-						alhs.getIndices());
-			} else if (lhs instanceof StructLHS) {
-				final StructLHS slhs = (StructLHS) lhs;
-				final Expression struct = convertLHSToExpression(slhs.getStruct());
-				return ExpressionFactory.constructStructAccessExpression(slhs.getLocation(), struct, slhs.getField());
-			} else {
-				throw new AssertionError("Strange LeftHandSide " + lhs);
-			}
+	public static Expression convertLhsToExpression(final LeftHandSide lhs) {
+		if (lhs instanceof VariableLHS) {
+			final VariableLHS vlhs = (VariableLHS) lhs;
+			return ExpressionFactory.constructIdentifierExpression(vlhs.getLoc(), (BoogieType) vlhs.getType(),
+					vlhs.getIdentifier(), vlhs.getDeclarationInformation());
+		} else if (lhs instanceof ArrayLHS) {
+			final ArrayLHS alhs = (ArrayLHS) lhs;
+			final Expression array = convertLhsToExpression(alhs.getArray());
+			return ExpressionFactory.constructNestedArrayAccessExpression(alhs.getLocation(), array, alhs.getIndices());
+		} else if (lhs instanceof StructLHS) {
+			final StructLHS slhs = (StructLHS) lhs;
+			final Expression struct = convertLhsToExpression(slhs.getStruct());
+			return ExpressionFactory.constructStructAccessExpression(slhs.getLocation(), struct, slhs.getField());
+		} else {
+			throw new AssertionError("Strange LeftHandSide " + lhs);
 		}
+	}
 
 	/**
 	 * Create a havoc statement for each variable in auxVars. (Does not modify this auxVars map). We insert havocs for
@@ -355,8 +350,8 @@ public class CTranslationUtil {
 	 * the ResultExpression they return), and that map is used for calling this procedure once we reach a (basic)
 	 * statement.
 	 *
-	 * TODO: perhaps this could be integrated in ExpressionResultBuilder (i.e. a method that takes all auxvars,
-	 *  adds havocs for them, then resets the set of auxvars, and forbids adding further auxvars)
+	 * TODO: perhaps this could be integrated in ExpressionResultBuilder (i.e. a method that takes all auxvars, adds
+	 * havocs for them, then resets the set of auxvars, and forbids adding further auxvars)
 	 */
 	public static List<HavocStatement> createHavocsForAuxVars(final Set<AuxVarInfo> auxVars) {
 		final List<HavocStatement> result = new ArrayList<>();
@@ -373,51 +368,52 @@ public class CTranslationUtil {
 	 */
 	public static boolean isAuxVarMapComplete(final INameHandler nameHandler,
 			final ExpressionResultBuilder resultBuilder) {
-		return CTranslationUtil.isAuxVarMapComplete(nameHandler, resultBuilder.getDeclarations(), resultBuilder.getAuxVars());
+		return CTranslationUtil.isAuxVarMapComplete(nameHandler, resultBuilder.getDeclarations(),
+				resultBuilder.getAuxVars());
 	}
 
 	/**
-		 * Returns true iff all auxvars in decls are contained in auxVars
-		 */
-		public static boolean isAuxVarMapComplete(final INameHandler nameHandler, final List<Declaration> decls,
-	//			final Map<VariableDeclaration, ILocation> auxVars) {
-				final Set<AuxVarInfo> auxVars) {
-			boolean result = true;
-			for (final Declaration rExprdecl : decls) {
-				assert rExprdecl instanceof VariableDeclaration;
-				final VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
+	 * Returns true iff all auxvars in decls are contained in auxVars
+	 */
+	public static boolean isAuxVarMapComplete(final INameHandler nameHandler, final List<Declaration> decls,
+			// final Map<VariableDeclaration, ILocation> auxVars) {
+			final Set<AuxVarInfo> auxVars) {
+		boolean result = true;
+		for (final Declaration rExprdecl : decls) {
+			assert rExprdecl instanceof VariableDeclaration;
+			final VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
 
-				assert varDecl
-						.getVariables().length == 1 : "there are never two auxvars declared in one declaration, right??";
-				final VarList vl = varDecl.getVariables()[0];
-				assert vl.getIdentifiers().length == 1 : "there are never two auxvars declared in one declaration, right??";
-				final String id = vl.getIdentifiers()[0];
+			assert varDecl
+					.getVariables().length == 1 : "there are never two auxvars declared in one declaration, right??";
+			final VarList vl = varDecl.getVariables()[0];
+			assert vl.getIdentifiers().length == 1 : "there are never two auxvars declared in one declaration, right??";
+			final String id = vl.getIdentifiers()[0];
 
-				if (nameHandler.isTempVar(id)) {
-					// malloc auxvars do not need to be havocced in some cases (alloca)
-					// result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
-	//				result &= auxVars.containsKey(varDecl);
+			if (nameHandler.isTempVar(id)) {
+				// malloc auxvars do not need to be havocced in some cases (alloca)
+				// result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
+				// result &= auxVars.containsKey(varDecl);
 
-					boolean auxVarExists = false;
-					for (final AuxVarInfo auxVar : auxVars) {
-						if (auxVar.getVarDec().equals(varDecl)) {
-							auxVarExists = true;
-							break;
-						}
+				boolean auxVarExists = false;
+				for (final AuxVarInfo auxVar : auxVars) {
+					if (auxVar.getVarDec().equals(varDecl)) {
+						auxVarExists = true;
+						break;
 					}
-					result &= auxVarExists;
 				}
+				result &= auxVarExists;
 			}
-			return result;
 		}
+		return result;
+	}
 
-		/**
-		 * Convert the given expression to a corresponding LeftHandSide. This does not work for all kinds of Expressions,
-		 *  as not all have a corresponding LeftHandSide (e.g. ArrayStoreExpressions).
-		 *
-		 * @param modifiedGlobal
-		 * @return
-		 */
+	/**
+	 * Convert the given expression to a corresponding LeftHandSide. This does not work for all kinds of Expressions, as
+	 * not all have a corresponding LeftHandSide (e.g. ArrayStoreExpressions).
+	 *
+	 * @param modifiedGlobal
+	 * @return
+	 */
 	public static LeftHandSide convertExpressionToLHS(final Expression expr) {
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression idex = (IdentifierExpression) expr;

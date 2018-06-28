@@ -2832,7 +2832,7 @@ public class MemoryHandler {
 		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.CHAR);
 		final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.CHAR);
 		// mProcedureManager.addModifiedGlobal(dhp.getVariableLHS());
-		final Expression inputPointer = CTranslationUtil.convertLHSToExpression(resultPointer);
+		final Expression inputPointer = CTranslationUtil.convertLhsToExpression(resultPointer);
 		final Expression additionalOffsetExpr = mExpressionTranslation.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(additionalOffset));
 		final Expression pointer = doPointerArithmetic(IASTBinaryExpression.op_plus, loc, inputPointer,

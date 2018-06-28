@@ -651,7 +651,7 @@ public abstract class ExpressionTranslation {
 	/**
 	 * Presume that the input represents an integer that has inputWidth bit. Set all most significant bits to zero
 	 * except the remainingWith least significant bits. I.e., the result is input representation that consists only of
-	 * the bits. low-1, low-2, ..., 0 If inputWidth and remainingWith are different the result is always positive.
+	 * the bits. low-1, low-2, ..., 0. If inputWidth and remainingWith are different the result is always positive.
 	 */
 	public abstract Expression eraseBits(final ILocation loc, final Expression value, final CPrimitive cType,
 			final int remainingWith, final IASTNode hook);

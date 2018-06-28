@@ -144,8 +144,8 @@ public interface ICHandler extends IHandler {
 			boolean putOnHeap);
 
 	/**
-	 * Translates mulitple DecoratorNodes, wrapped in DecoratedUnits.
-	 * 
+	 * Translates multiple DecoratorNodes, wrapped in DecoratedUnits.
+	 *
 	 * @param main
 	 *            a reference to the main dispatcher
 	 * @param units
