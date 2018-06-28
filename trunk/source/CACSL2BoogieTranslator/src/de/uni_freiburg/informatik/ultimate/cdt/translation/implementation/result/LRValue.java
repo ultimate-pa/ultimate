@@ -41,42 +41,40 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
  */
 public abstract class LRValue {
 
+	private final CType mCType;
+
 	/**
-	 * Abstract class constructor -- all inheritors of LRValue have at least
-	 * an expression representing what the containing result evaluates to.
+	 * This flag is supposed to be true iff the value-expression of this LRValue is of boolean type in boogie. For
+	 * instance if it is the translation of a comparator expression like x == 0.
+	 */
+	private final boolean mIsBoogieBool;
+
+	private final boolean mIsIntFromPointer;
+
+	/**
+	 * Abstract class constructor -- all inheritors of LRValue have at least an expression representing what the
+	 * containing result evaluates to.
+	 *
 	 * @param value
 	 */
-	public LRValue (final CType cType, final boolean isBoogieBool, final boolean isIntFromPointer) {
-		this.cType = cType;
-		this.isBoogieBool = isBoogieBool;
-		this.isIntFromPointer = isIntFromPointer;
+	public LRValue(final CType cType, final boolean isBoogieBool, final boolean isIntFromPointer) {
+		mCType = cType;
+		mIsBoogieBool = isBoogieBool;
+		mIsIntFromPointer = isIntFromPointer;
 	}
-
-	private final CType cType;
-
-	/**
-	 * This flag is supposed to be true iff the value-expression of this
-	 * LRValue is of boolean type in boogie.
-	 * For instance if it is the translation of a comparator expression
-	 * like x == 0.
-	 */
-	private final boolean isBoogieBool;
-
-	private final boolean isIntFromPointer;
-
 
 	public abstract Expression getValue();
 
 	public CType getCType() {
-		return cType;
+		return mCType;
 	}
 
 	public boolean isBoogieBool() {
-		return isBoogieBool;
+		return mIsBoogieBool;
 	}
 
 	public boolean isIntFromPointer() {
-		return isIntFromPointer;
+		return mIsIntFromPointer;
 	}
 
 	@Override
@@ -95,23 +93,30 @@ public abstract class LRValue {
 	 * standard.
 	 * <p>
 	 * C11 6.3.2.3.3 An integer constant expression with the value 0, or such an expression cast to type void *, is
-	 * called a null pointer constant.
-	 *  footnote:
-	 *  The macro NULL is defined in <stddef.h> (and other headers) as a null pointer constant; see 7.19.
+	 * called a null pointer constant. footnote: The macro NULL is defined in <stddef.h> (and other headers) as a null
+	 * pointer constant; see 7.19.
 	 */
 	public boolean isNullPointerConstant() {
-		if (getCType().isVoidPointerType() || getCType().isArithmeticType()) {
-			Expression value;
-			if (this instanceof HeapLValue) {
-				value = ((HeapLValue) this).getAddress();
-				throw new AssertionError("unexpected: double check this case");
-			} else {
-				value = this.getValue();
-			}
-			return (value instanceof IntegerLiteral && ((IntegerLiteral) value).getValue().equals("0"))
-					|| (value instanceof BitvecLiteral && ((BitvecLiteral) value).getValue().equals("0"))
-					|| (value instanceof IdentifierExpression
-							&& ((IdentifierExpression) value).getIdentifier().equals(SFO.NULL));
+		if (!getCType().isVoidPointerType() && !getCType().isArithmeticType()) {
+			return false;
+		}
+
+		final Expression value;
+		if (this instanceof HeapLValue) {
+			value = ((HeapLValue) this).getAddress();
+			throw new AssertionError("unexpected: double check this case");
+		} else {
+			value = getValue();
+		}
+
+		if (value instanceof IntegerLiteral) {
+			return "0".equals(((IntegerLiteral) value).getValue());
+		}
+		if (value instanceof BitvecLiteral) {
+			return "0".equals(((BitvecLiteral) value).getValue());
+		}
+		if (value instanceof IdentifierExpression) {
+			return SFO.NULL.equals(((IdentifierExpression) value).getIdentifier());
 		}
 		return false;
 	}
