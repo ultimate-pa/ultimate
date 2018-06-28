@@ -652,7 +652,7 @@ public class CHandler implements ICHandler {
 		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}. Short
 		 * version:
 		 * <li>procedure implementations have already been inserted into the Boogie program by code above
-		 * <li>procedure declarations have been collected in the FunctionHandler
+		 * <li>procedure declarations have been collected in the ProcedureManager
 		 * <li>now we recompute the declarations, in order to give them correct modifies clauses and insert them into
 		 * the Boogie program
 		 *

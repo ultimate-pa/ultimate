@@ -90,11 +90,15 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
  * <p>
  * Boogie procedures are inserted into the translated program from several
  * sources:
- * <li>translations of C functions ({@link CHandler}, {@link FunctionHandler})
- * <li>helper procedures from the memory model ({@link MemoryHandler})
- * <li>when we provide a Boogie model for a standard C function
- * ({@link StandardFunctionHandler})
+ * <ul>
+ *  <li>translations of C functions ({@link CHandler}, {@link FunctionHandler})
+ *  <li>helper procedures from the memory model ({@link MemoryHandler})
+ *  <li>when we provide a Boogie model for a standard C function
+ *  ({@link StandardFunctionHandler})
  * <li>Ultimate.start and Ultimate.init ({@link PostProcessor})
+ * </ul>
+ *  Note that at the moment this manages procedure declarations. Procedure implementations are passed around elsewhere.
+ *  (We do not use the Boogie feature to have declaration and implementation in one.)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -117,6 +121,7 @@ public class ProcedureManager {
 	}
 
 	void beginProcedureScope(final Dispatcher main, final BoogieProcedureInfo currentProcInfo) {
+		assert currentProcInfo != null;
 		mCurrentProcedureInfo = currentProcInfo;
 		main.mCHandler.beginScope();
 	}
@@ -641,7 +646,7 @@ public class ProcedureManager {
 		/**
 		 * Sets the Boogie declaration that corresponds to the C declaration "int foo()".
 		 */
-		public void setDefaultDeclaration(final ILocation loc, final ASTType intType) {
+		void setDefaultDeclaration(final ILocation loc, final ASTType intType) {
 			setDeclaration(new Procedure(loc, new Attribute[0], mProcedureName, new String[0], new VarList[0],
 					new VarList[] {
 							new VarList(loc, new String[] { SFO.RES },
@@ -649,7 +654,7 @@ public class ProcedureManager {
 					new Specification[0], null));
 		}
 
-		public void setDeclaration(final Procedure declaration) {
+		void setDeclaration(final Procedure declaration) {
 			assert mDeclaration == null : "can only be set once!";
 			assert declaration.getSpecification() != null;
 			assert declaration.getBody() == null;
@@ -660,7 +665,7 @@ public class ProcedureManager {
 			return mImplementation;
 		}
 
-		public void setImplementation(final Procedure implementation) {
+		void setImplementation(final Procedure implementation) {
 			assert mImplementation == null : "can only be set once!";
 			assert implementation.getSpecification() == null;
 			assert implementation.getBody() != null;
