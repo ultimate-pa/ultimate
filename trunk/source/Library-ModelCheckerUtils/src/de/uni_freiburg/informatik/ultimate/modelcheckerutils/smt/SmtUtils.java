@@ -186,42 +186,8 @@ public final class SmtUtils {
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
-		final ExtendedSimplificationResult result = new ExtendedSimplificationResult(simplified, endTime - startTime,
-				sizeBefore - sizeAfter, (double) sizeAfter / sizeBefore * 100);
-		return result;
-	}
-
-	public static class ExtendedSimplificationResult {
-		private final Term mSimplifiedTerm;
-		private final long mSimplificationTimeNano;
-		private final long mReductionOfTreeSize;
-		private final double mReductionRatioInPercent;
-
-		public ExtendedSimplificationResult(final Term simplifiedTerm, final long simplificationTimeNano,
-				final long reductionOfTreeSize, final double reductionRatioPercent) {
-			super();
-			mSimplifiedTerm = simplifiedTerm;
-			mSimplificationTimeNano = simplificationTimeNano;
-			mReductionOfTreeSize = reductionOfTreeSize;
-			mReductionRatioInPercent = reductionRatioPercent;
-		}
-
-		public Term getSimplifiedTerm() {
-			return mSimplifiedTerm;
-		}
-
-		public long getSimplificationTimeNano() {
-			return mSimplificationTimeNano;
-		}
-
-		public long getReductionOfTreeSize() {
-			return mReductionOfTreeSize;
-		}
-
-		public double getReductionRatioInPercent() {
-			return mReductionRatioInPercent;
-		}
-
+		return new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter,
+				(double) sizeAfter / sizeBefore * 100);
 	}
 
 	public static LBool checkSatTerm(final Script script, final Term formula) {
@@ -286,7 +252,7 @@ public final class SmtUtils {
 	}
 
 	public static boolean allParamsAreBool(final ApplicationTerm term) {
-		return Arrays.stream(term.getParameters()).map(a -> a.getSort()).allMatch(SmtSortUtils::isBoolSort);
+		return Arrays.stream(term.getParameters()).map(Term::getSort).allMatch(SmtSortUtils::isBoolSort);
 	}
 
 	/**
@@ -680,20 +646,16 @@ public final class SmtUtils {
 		}
 		if (lhs instanceof ApplicationTerm) {
 			final ApplicationTerm appLhs = (ApplicationTerm) lhs;
-			if (appLhs.getFunction().getName().equals("store")) {
-				if (appLhs.getParameters()[0] == rhs) {
-					return setArrayCellValue(script, appLhs.getParameters()[0], appLhs.getParameters()[1],
-							appLhs.getParameters()[2]);
-				}
+			if ("store".equals(appLhs.getFunction().getName()) && appLhs.getParameters()[0] == rhs) {
+				return setArrayCellValue(script, appLhs.getParameters()[0], appLhs.getParameters()[1],
+						appLhs.getParameters()[2]);
 			}
 		}
 		if (rhs instanceof ApplicationTerm) {
 			final ApplicationTerm appRhs = (ApplicationTerm) rhs;
-			if (appRhs.getFunction().getName().equals("store")) {
-				if (appRhs.getParameters()[0] == lhs) {
-					return setArrayCellValue(script, appRhs.getParameters()[0], appRhs.getParameters()[1],
-							appRhs.getParameters()[2]);
-				}
+			if ("store".equals(appRhs.getFunction().getName()) && appRhs.getParameters()[0] == lhs) {
+				return setArrayCellValue(script, appRhs.getParameters()[0], appRhs.getParameters()[1],
+						appRhs.getParameters()[2]);
 			}
 		}
 		return script.term("=", CommuhashUtils.sortByHashCode(lhs, rhs));
@@ -720,8 +682,7 @@ public final class SmtUtils {
 	 * bars must not be nested.
 	 */
 	public static String removeSmtQuoteCharacters(final String string) {
-		final String result = string.replaceAll("\\|", "");
-		return result;
+		return string.replaceAll("\\|", "");
 	}
 
 	public static Map<TermVariable, Term> termVariables2Constants(final Script script,
@@ -827,14 +788,12 @@ public final class SmtUtils {
 	 * @return true iff term is some literal of sort Int whose value is the input number.
 	 */
 	public static boolean isIntegerLiteral(final BigInteger number, final Term term) {
-		if (term instanceof ConstantTerm) {
-			if (SmtSortUtils.isIntSort(term.getSort())) {
-				final Object value = ((ConstantTerm) term).getValue();
-				if (value instanceof Rational) {
-					value.equals(Rational.valueOf(number, BigInteger.ONE));
-				} else if (value instanceof BigInteger) {
-					return value.equals(number);
-				}
+		if (term instanceof ConstantTerm && SmtSortUtils.isIntSort(term.getSort())) {
+			final Object value = ((ConstantTerm) term).getValue();
+			if (value instanceof Rational) {
+				return value.equals(Rational.valueOf(number, BigInteger.ONE));
+			} else if (value instanceof BigInteger) {
+				return value.equals(number);
 			}
 		}
 		return false;
@@ -918,8 +877,8 @@ public final class SmtUtils {
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final InnerDualJunctTracker idjt = new InnerDualJunctTracker();
 		final String connective = "and";
-		final Predicate<Term> isNeutral = x -> SmtUtils.isTrue(x);
-		final Predicate<Term> isAbsorbing = x -> SmtUtils.isFalse(x);
+		final Predicate<Term> isNeutral = SmtUtils::isTrue;
+		final Predicate<Term> isAbsorbing = SmtUtils::isFalse;
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
 				isAbsorbing, terms, resultJuncts, negativeJuncts, idjt);
 		if (resultIsAbsorbingElement) {
@@ -932,8 +891,7 @@ public final class SmtUtils {
 		} else {
 			final boolean applyDistributivity = false;
 			if (applyDistributivity && idjt.getInnerDualJuncts() != null && !idjt.getInnerDualJuncts().isEmpty()) {
-				final Term result = applyDistributivity(script, resultJuncts, connective, idjt.getInnerDualJuncts());
-				return result;
+				return applyDistributivity(script, resultJuncts, connective, idjt.getInnerDualJuncts());
 			}
 			return script.term(connective, resultJuncts.toArray(new Term[resultJuncts.size()]));
 		}
@@ -969,8 +927,7 @@ public final class SmtUtils {
 		final List<Term> resultOuter = new ArrayList<>(omnipresentInnerDualJuncts.size() + 1);
 		resultOuter.addAll(omnipresentInnerDualJuncts);
 		resultOuter.add(resultInnerDistributed);
-		final Term result = script.term(innerConnective, resultOuter.toArray(new Term[resultOuter.size()]));
-		return result;
+		return script.term(innerConnective, resultOuter.toArray(new Term[resultOuter.size()]));
 	}
 
 	public static Term orWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
@@ -978,8 +935,8 @@ public final class SmtUtils {
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final InnerDualJunctTracker idjt = new InnerDualJunctTracker();
 		final String connective = "or";
-		final Predicate<Term> isNeutral = x -> SmtUtils.isFalse(x);
-		final Predicate<Term> isAbsorbing = x -> SmtUtils.isTrue(x);
+		final Predicate<Term> isNeutral = SmtUtils::isFalse;
+		final Predicate<Term> isAbsorbing = SmtUtils::isTrue;
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
 				isAbsorbing, terms, resultJuncts, negativeJuncts, idjt);
 		if (resultIsAbsorbingElement) {
@@ -1049,7 +1006,7 @@ public final class SmtUtils {
 						// the recursive all added all subjuncts,
 						// no need to add the junct itself
 						continue;
-					} else if (appTerm.getFunction().getName().equals("not")) {
+					} else if ("not".equals(appTerm.getFunction().getName())) {
 						if (resultJuncts.contains(appTerm.getParameters()[0])) {
 							// we already have the argument of this not term in the resultJuncts,
 							// hence the result will be equivalent to the absorbing element
@@ -1068,25 +1025,6 @@ public final class SmtUtils {
 			idjt.addOuterJunct(junct, connective);
 		}
 		return false;
-	}
-
-	private static class InnerDualJunctTracker {
-
-		Set<Term> mInnerDualJuncts = null;
-
-		public void addOuterJunct(final Term outerJunct, final String outerConnective) {
-			final Term[] innerDualJuncts = QuantifierUtils
-					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
-			if (mInnerDualJuncts == null) {
-				mInnerDualJuncts = new HashSet<>(Arrays.asList(innerDualJuncts));
-			} else {
-				mInnerDualJuncts.retainAll(Arrays.asList(innerDualJuncts));
-			}
-		}
-
-		public Set<Term> getInnerDualJuncts() {
-			return mInnerDualJuncts;
-		}
 	}
 
 	/**
@@ -1141,8 +1079,7 @@ public final class SmtUtils {
 	 * @throws SMTLIBException
 	 *             if declaration of constant fails, e.g. the name is already defined
 	 */
-	public static ApplicationTerm buildNewConstant(final Script script, final String name, final String sortname)
-			throws SMTLIBException {
+	public static ApplicationTerm buildNewConstant(final Script script, final String name, final String sortname) {
 		script.declareFun(name, new Sort[0], script.sort(sortname));
 		return (ApplicationTerm) script.term(name);
 	}
@@ -1188,8 +1125,7 @@ public final class SmtUtils {
 			if (ct.getValue() instanceof Rational) {
 				return (Rational) ct.getValue();
 			}
-			final Rational r = Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
-			return r;
+			return Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
 		} else {
 			throw new IllegalArgumentException("Trying to convert a ConstantTerm of unknown sort." + ct);
 		}
@@ -1200,69 +1136,55 @@ public final class SmtUtils {
 	 */
 	public static Term termWithLocalSimplification(final Script script, final String funcname,
 			final BigInteger[] indices, final Term... params) {
-		final Term result;
 		switch (funcname) {
 		case "and":
-			result = SmtUtils.and(script, params);
-			break;
+			return SmtUtils.and(script, params);
 		case "or":
-			result = SmtUtils.or(script, params);
-			break;
+			return SmtUtils.or(script, params);
 		case "not":
 			if (params.length != 1) {
 				throw new IllegalArgumentException("no not term");
 			}
-			result = SmtUtils.not(script, params[0]);
-			break;
+			return SmtUtils.not(script, params[0]);
 		case "=":
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
-			result = binaryEquality(script, params[0], params[1]);
-			break;
+			return binaryEquality(script, params[0], params[1]);
 		case "distinct":
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
-			result = SmtUtils.distinct(script, params[0], params[1]);
-			break;
+			return SmtUtils.distinct(script, params[0], params[1]);
 		case "=>":
-			result = Util.implies(script, params);
-			break;
+			return Util.implies(script, params);
 		case "ite":
 			if (params.length != 3) {
 				throw new IllegalArgumentException("no ite");
 			}
-			result = Util.ite(script, params[0], params[1], params[2]);
-			break;
+			return Util.ite(script, params[0], params[1], params[2]);
 		case "+":
 		case "bvadd":
-			result = SmtUtils.sum(script, funcname, params);
-			break;
+			return SmtUtils.sum(script, funcname, params);
 		case "-":
 		case "bvminus":
 			if (params.length == 1) {
-				result = SmtUtils.neg(script, params[0]);
-			} else {
-				result = SmtUtils.minus(script, params);
+				return SmtUtils.neg(script, params[0]);
 			}
-			break;
+			return SmtUtils.minus(script, params);
 		case "*":
 		case "bvmul":
-			result = SmtUtils.mul(script, funcname, params);
-			break;
+			return SmtUtils.mul(script, funcname, params);
 		case "div":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no div");
 			}
-			result = div(script, params[0], params[1]);
-			break;
+			return div(script, params[0], params[1]);
 		case "mod":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no mod");
 			}
-			result = mod(script, params[0], params[1]);
-			break;
+			return mod(script, params[0], params[1]);
 		case ">=":
 		case "<=":
 		case ">":
@@ -1270,21 +1192,11 @@ public final class SmtUtils {
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no comparison");
 			}
-			result = comparison(script, funcname, params[0], params[1]);
-			break;
-		case "store": {
-			final Term array = params[0];
-			final Term index = params[1];
-			final Term value = params[2];
-			result = store(script, array, index, value);
-			break;
-		}
-		case "select": {
-			final Term array = params[0];
-			final Term index = params[1];
-			result = select(script, array, index);
-			break;
-		}
+			return comparison(script, funcname, params[0], params[1]);
+		case "store":
+			return store(script, params[0], params[1], params[2]);
+		case "select":
+			return select(script, params[0], params[1]);
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
@@ -1309,16 +1221,10 @@ public final class SmtUtils {
 		case "bvsle":
 		case "bvsgt":
 		case "bvsge":
-			result = BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
-			break;
+			return BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
 		default:
-			// if (BitvectorUtils.allTermsAreBitvectorConstants(params)) {
-			// throw new AssertionError("wasted optimization " + funcname);
-			// }
-			result = script.term(funcname, indices, null, params);
-			break;
+			return script.term(funcname, indices, null, params);
 		}
-		return result;
 	}
 
 	public static Term select(final Script script, final Term array, final Term index) {
@@ -1369,11 +1275,11 @@ public final class SmtUtils {
 	/**
 	 * @return idx if array has form (store a idx v) return null if array has a different form
 	 */
-	public final static Term getArrayStoreIdx(final Term array) {
+	public static Term getArrayStoreIdx(final Term array) {
 		if (array instanceof ApplicationTerm) {
 			final ApplicationTerm appArray = (ApplicationTerm) array;
 			final FunctionSymbol arrayFunc = appArray.getFunction();
-			if (arrayFunc.isIntern() && arrayFunc.getName().equals("store")) {
+			if (arrayFunc.isIntern() && "store".equals(arrayFunc.getName())) {
 				// (store a i v)
 				return appArray.getParameters()[1];
 			}
@@ -1391,7 +1297,7 @@ public final class SmtUtils {
 	 * @return the simple array term inside the given array term that is obtained by taking the first argument of store
 	 *         and select terms exhaustively.
 	 */
-	public final static Term getBasicArrayTerm(final Term possiblyComplexArrayTerm) {
+	public static Term getBasicArrayTerm(final Term possiblyComplexArrayTerm) {
 		assert possiblyComplexArrayTerm.getSort().isArraySort();
 		Term result = possiblyComplexArrayTerm;
 		while (SmtUtils.isFunctionApplication(result, "store") || SmtUtils.isFunctionApplication(result, "select")) {
@@ -1484,8 +1390,7 @@ public final class SmtUtils {
 							|| bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
 						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
 						final Term innerDivisor = appTerm.getParameters()[0];
-						final Term result = mod(script, innerDivisor, SmtUtils.constructIntValue(script, min));
-						return result;
+						return mod(script, innerDivisor, SmtUtils.constructIntValue(script, min));
 					}
 				}
 			}
@@ -1529,7 +1434,7 @@ public final class SmtUtils {
 			}
 			throw new IllegalArgumentException("unable to convert rational to bitvector if not integer");
 		} else {
-			throw new AssertionError("unknown sort " + sort);
+			throw new AssertionError(ERROR_MSG_UNKNOWN_SORT + sort);
 		}
 	}
 
@@ -1896,5 +1801,57 @@ public final class SmtUtils {
 			i++;
 		}
 		return i;
+	}
+
+	private static class InnerDualJunctTracker {
+
+		private Set<Term> mInnerDualJuncts;
+
+		public void addOuterJunct(final Term outerJunct, final String outerConnective) {
+			final Term[] innerDualJuncts = QuantifierUtils
+					.getXjunctsInner(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
+			if (mInnerDualJuncts == null) {
+				mInnerDualJuncts = new HashSet<>(Arrays.asList(innerDualJuncts));
+			} else {
+				mInnerDualJuncts.retainAll(Arrays.asList(innerDualJuncts));
+			}
+		}
+
+		public Set<Term> getInnerDualJuncts() {
+			return mInnerDualJuncts;
+		}
+	}
+
+	public static class ExtendedSimplificationResult {
+		private final Term mSimplifiedTerm;
+		private final long mSimplificationTimeNano;
+		private final long mReductionOfTreeSize;
+		private final double mReductionRatioInPercent;
+
+		public ExtendedSimplificationResult(final Term simplifiedTerm, final long simplificationTimeNano,
+				final long reductionOfTreeSize, final double reductionRatioPercent) {
+			super();
+			mSimplifiedTerm = simplifiedTerm;
+			mSimplificationTimeNano = simplificationTimeNano;
+			mReductionOfTreeSize = reductionOfTreeSize;
+			mReductionRatioInPercent = reductionRatioPercent;
+		}
+
+		public Term getSimplifiedTerm() {
+			return mSimplifiedTerm;
+		}
+
+		public long getSimplificationTimeNano() {
+			return mSimplificationTimeNano;
+		}
+
+		public long getReductionOfTreeSize() {
+			return mReductionOfTreeSize;
+		}
+
+		public double getReductionRatioInPercent() {
+			return mReductionRatioInPercent;
+		}
+
 	}
 }
