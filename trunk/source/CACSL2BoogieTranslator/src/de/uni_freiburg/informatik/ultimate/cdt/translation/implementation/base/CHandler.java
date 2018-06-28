@@ -678,7 +678,7 @@ public class CHandler implements ICHandler {
 				main.getLocationFactory().createRootCLocation(
 						units.stream().map(a -> a.getSourceTranslationUnit()).collect(Collectors.toSet())),
 				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
-		final IASTTranslationUnit hook = units.stream().findAny().get().getSourceTranslationUnit();
+		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
 
 		// annotate the Unit with LTLPropertyChecks if applicable
 		for (final LTLExpressionExtractor ex : mGlobAcslExtractors) {
@@ -3286,7 +3286,7 @@ public class CHandler implements ICHandler {
 							// Loop contract
 							mContract.add(acslNode);
 						} else if (acslNode instanceof CodeAnnot) {
-							final Result acslResult = main.dispatch(acslNode, next == null ? parent : next);
+							final Result acslResult = main.dispatch(acslNode, next);
 							if (acslResult instanceof ExpressionResult) {
 								final ExpressionResult re = (ExpressionResult) acslResult;
 								resultBuilder.addStatements(re.mStmt);
