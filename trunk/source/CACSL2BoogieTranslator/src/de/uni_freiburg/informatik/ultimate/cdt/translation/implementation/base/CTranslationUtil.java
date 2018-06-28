@@ -326,6 +326,10 @@ public class CTranslationUtil {
 		return new LocalLValue(lhs, cStructType.getFieldTypes()[i], null);
 	}
 
+	/**
+	 * Generates a subexpression that allows accessing of a LHS in another expression (i.e., makes a
+	 * StructAccessExpression out of a StructLHS, an identifier expression out of a VariableLHS, etc.)
+	 */
 	public static Expression convertLhsToExpression(final LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			final VariableLHS vlhs = (VariableLHS) lhs;
