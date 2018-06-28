@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.util;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,6 +34,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
@@ -50,42 +50,44 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  */
 public class TransitiveClosure {
 
+	private TransitiveClosure() {
+		// do not instantiate utility class
+	}
+
 	/**
 	 * Input:
 	 * <ul>
-	 *  <li> a set of NODES
-	 *  <li> a labeling function l : NODEs -> NODEs that assigns a set of labels to each node
-	 *  <li> a graph over the nodes
+	 * <li>a set of NODES
+	 * <li>a labeling function l : NODEs -> NODEs that assigns a set of labels to each node
+	 * <li>a graph over the nodes
 	 * </ul>
 	 * This procedure computes the minimal labeling l' where for each edge (n1, n2) in the node graph, the label of n2
 	 * is a superset of the label of n1, i.e. l'(n1) \subseteq l'(n2).
 	 *
 	 * @param logger
-	 * @param allNodes set of all nodes
-	 * @param initialLabeling initial labeling function l
-	 * @param graphSuccessorProvider graph over the nodes
+	 * @param allNodes
+	 *            set of all nodes
+	 * @param initialLabeling
+	 *            initial labeling function l
+	 * @param graphSuccessorProvider
+	 *            graph over the nodes
 	 * @return
 	 */
-	public static <NODE, LABEL> Map<NODE, Set<LABEL>> computeClosure(final ILogger logger,
-			final Set<NODE> allNodes,
-			final Function<NODE, Set<LABEL>> initialLabeling,
-			final ISuccessorProvider<NODE> graphSuccessorProvider) {
-
-
+	public static <NODE, LABEL> Map<NODE, Set<LABEL>> computeClosure(final ILogger logger, final Set<NODE> allNodes,
+			final Function<NODE, Set<LABEL>> initialLabeling, final ISuccessorProvider<NODE> graphSuccessorProvider) {
 
 		final Map<NODE, Set<LABEL>> closedProcToModGlobals;
 		final int numberOfAllNodes = allNodes.size();
 		final Set<NODE> startNodes = allNodes;
-		final DefaultSccComputation<NODE> dssc = new DefaultSccComputation<>(logger,
-				graphSuccessorProvider, numberOfAllNodes, startNodes);
+		final DefaultSccComputation<NODE> dssc =
+				new DefaultSccComputation<>(logger, graphSuccessorProvider, numberOfAllNodes, startNodes);
 
 		/*
-		 * Initialize the modified globals for each SCC with the union of each method's
-		 * modified globals. (within an SCC all procedure may call all others (possibly
-		 * transitively) thus all must have the same modifies clause contents)
+		 * Initialize the modified globals for each SCC with the union of each method's modified globals. (within an SCC
+		 * all procedure may call all others (possibly transitively) thus all must have the same modifies clause
+		 * contents)
 		 */
-		final LinkedHashRelation<StronglyConnectedComponent<NODE>, LABEL> sccToLabel =
-				new LinkedHashRelation<>();
+		final LinkedHashRelation<StronglyConnectedComponent<NODE>, LABEL> sccToLabel = new LinkedHashRelation<>();
 		for (final StronglyConnectedComponent<NODE> scc : dssc.getSCCs()) {
 			for (final NODE procInfo : scc.getNodes()) {
 				for (final LABEL modGlobal : initialLabeling.apply(procInfo)) {
@@ -95,27 +97,25 @@ public class TransitiveClosure {
 		}
 
 		/*
-		 * update the modified globals for the sccs according to the edges in the call
-		 * graph that connect different SCCs
+		 * update the modified globals for the sccs according to the edges in the call graph that connect different SCCs
 		 *
-		 * algorithmic idea: start with the leafs of the graph and propagate all
-		 * modified globals back along call edges. The frontier is where we have already
-		 * propagated modified globals.
+		 * algorithmic idea: start with the leafs of the graph and propagate all modified globals back along call edges.
+		 * The frontier is where we have already propagated modified globals.
 		 *
 		 */
-		final Deque<StronglyConnectedComponent<NODE>> frontier = new ArrayDeque<>();
+		final Deque<StronglyConnectedComponent<NODE>> frontier = new HashDeque<>();
 		frontier.addAll(dssc.getRootComponents());
 		while (!frontier.isEmpty()) {
 			final StronglyConnectedComponent<NODE> currentScc = frontier.pollFirst();
 
 			/*
-			 * Note (concerns "transitive modified globals" application of this method):
-			 * We have chosen the ISuccessorProvider for the SccComputation such that the caller is the successor of the
-			 * callee. (i.e., the successor relation is the inverse of the call graph)
+			 * Note (concerns "transitive modified globals" application of this method): We have chosen the
+			 * ISuccessorProvider for the SccComputation such that the caller is the successor of the callee. (i.e., the
+			 * successor relation is the inverse of the call graph)
 			 */
 			final Set<LABEL> currentSccModGlobals = sccToLabel.getImage(currentScc);
-			final Iterator<StronglyConnectedComponent<NODE>> callers = dssc
-					.getComponentsSuccessorsProvider().getSuccessors(currentScc);
+			final Iterator<StronglyConnectedComponent<NODE>> callers =
+					dssc.getComponentsSuccessorsProvider().getSuccessors(currentScc);
 			while (callers.hasNext()) {
 				final StronglyConnectedComponent<NODE> caller = callers.next();
 
@@ -135,8 +135,7 @@ public class TransitiveClosure {
 		closedProcToModGlobals = new HashMap<>();
 		for (final NODE procInfo : allNodes) {
 
-			final Set<LABEL> currModClause = sccToLabel
-					.getImage(dssc.getNodeToComponents().get(procInfo));
+			final Set<LABEL> currModClause = sccToLabel.getImage(dssc.getNodeToComponents().get(procInfo));
 			closedProcToModGlobals.put(procInfo, currModClause);
 		}
 		return closedProcToModGlobals;
