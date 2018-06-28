@@ -88,17 +88,15 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
 /**
  * Manages the Boogie procedures of the translated program.
  * <p>
- * Boogie procedures are inserted into the translated program from several
- * sources:
+ * Boogie procedures are inserted into the translated program from several sources:
  * <ul>
- *  <li>translations of C functions ({@link CHandler}, {@link FunctionHandler})
- *  <li>helper procedures from the memory model ({@link MemoryHandler})
- *  <li>when we provide a Boogie model for a standard C function
- *  ({@link StandardFunctionHandler})
+ * <li>translations of C functions ({@link CHandler}, {@link FunctionHandler})
+ * <li>helper procedures from the memory model ({@link MemoryHandler})
+ * <li>when we provide a Boogie model for a standard C function ({@link StandardFunctionHandler})
  * <li>Ultimate.start and Ultimate.init ({@link PostProcessor})
  * </ul>
- *  Note that at the moment this manages procedure declarations. Procedure implementations are passed around elsewhere.
- *  (We do not use the Boogie feature to have declaration and implementation in one.)
+ * Note that at the moment this manages procedure declarations. Procedure implementations are passed around elsewhere.
+ * (We do not use the Boogie feature to have declaration and implementation in one.)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -174,18 +172,16 @@ public class ProcedureManager {
 	}
 
 	/**
-	 * This method is expected to be called from CHandler.visit(..TranslationUnit)
-	 * after all procedures have been registered in the FunctionHandler.
+	 * This method is expected to be called from CHandler.visit(..TranslationUnit) after all procedures have been
+	 * registered in the FunctionHandler.
 	 * <p>
-	 * Returns declarations for all procedures that will appear in the translated
-	 * program. Ensures that the modifies clauses of all procedures are transitive
-	 * with respect to the call graph.
+	 * Returns declarations for all procedures that will appear in the translated program. Ensures that the modifies
+	 * clauses of all procedures are transitive with respect to the call graph.
 	 * <p>
-	 * Special case regarding memory models: if one memory-array is included, all
-	 * active memory arrays have to be included (f.i. we have procedure modifies
-	 * memory_int, and memoryHandler.isFloatMMArray == true, and
-	 * memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false,
-	 * then we have to add memory_real to the modifies clause of procedure
+	 * Special case regarding memory models: if one memory-array is included, all active memory arrays have to be
+	 * included (f.i. we have procedure modifies memory_int, and memoryHandler.isFloatMMArray == true, and
+	 * memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false, then we have to add memory_real to
+	 * the modifies clause of procedure
 	 *
 	 * @param main
 	 *            a reference to the main dispatcher.
@@ -200,17 +196,16 @@ public class ProcedureManager {
 		}
 
 		/**
-		 * The base graph for the computation of strongly connected components (SCCs) is
-		 * the inverse call graph. I.e., in the sense of this graph, the successors of a
-		 * procedure are its callers.
+		 * The base graph for the computation of strongly connected components (SCCs) is the inverse call graph. I.e.,
+		 * in the sense of this graph, the successors of a procedure are its callers.
 		 */
 		final ISuccessorProvider<BoogieProcedureInfo> successorProvider =
 				new ISuccessorProvider<BoogieProcedureInfo>() {
-			@Override
-			public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
-				return mInverseCallGraph.getImage(node).iterator();
-			}
-		};
+					@Override
+					public Iterator<BoogieProcedureInfo> getSuccessors(final BoogieProcedureInfo node) {
+						return mInverseCallGraph.getImage(node).iterator();
+					}
+				};
 
 		final Set<BoogieProcedureInfo> allProcedures = new HashSet<>(mProcedureNameToProcedureInfo.values());
 		final ILogger logger = main.getLogger();
@@ -234,7 +229,7 @@ public class ProcedureManager {
 			} else {
 				// case: !procInfo.isModifiedGlobalsIsUsedDefined()
 				final Set<VariableLHS> currModClause = closedProcToModGlobals.get(procInfo);
-//						sccToModifiedGlobals.getImage(dssc.getNodeToComponents().get(procInfo));
+				// sccToModifiedGlobals.getImage(dssc.getNodeToComponents().get(procInfo));
 				assert currModClause != null : "No modifies clause proc " + procedureName;
 
 				procInfo.addModifiedGlobals(currModClause);
@@ -243,10 +238,9 @@ public class ProcedureManager {
 
 				{
 					/*
-					 * add missing heap arrays If the procedure modifies one heap array, we add all
-					 * heap arrays. This is a workaround. We cannot add all procedures immediately,
-					 * because we do not know all heap arrays in advance since they are added lazily
-					 * on demand.
+					 * add missing heap arrays If the procedure modifies one heap array, we add all heap arrays. This is
+					 * a workaround. We cannot add all procedures immediately, because we do not know all heap arrays in
+					 * advance since they are added lazily on demand.
 					 *
 					 */
 					final Collection<HeapDataArray> heapDataArrays = memoryHandler.getMemoryModel()
@@ -306,12 +300,11 @@ public class ProcedureManager {
 	}
 
 	/**
-	 * only keep variable lhss that refer to the same global variable, i.e., keep
-	 * only one per identifier String.
+	 * only keep variable lhss that refer to the same global variable, i.e., keep only one per identifier String.
 	 *
 	 * @return
 	 */
-	private Set<VariableLHS> filterDuplicateVariableLHSs(final Set<VariableLHS> input) {
+	private static Set<VariableLHS> filterDuplicateVariableLHSs(final Set<VariableLHS> input) {
 		final Set<VariableLHS> result = new LinkedHashSet<>();
 		final Set<String> seenLhsNames = new LinkedHashSet<>();
 		for (final VariableLHS lhs : input) {
@@ -334,7 +327,6 @@ public class ProcedureManager {
 		return false;
 	}
 
-
 	void registerCall(final BoogieProcedureInfo caller, final BoogieProcedureInfo callee) {
 		if (!callee.hasDeclaration()) {
 			mMethodsCalledBeforeDeclared.add(callee);
@@ -344,11 +336,10 @@ public class ProcedureManager {
 	}
 
 	/**
-	 * Checks, whether all procedures that are being called in C, were eventually
-	 * declared within the C program.
+	 * Checks, whether all procedures that are being called in C, were eventually declared within the C program.
 	 *
-	 * @return null if all called procedures were declared, otherwise the identifier
-	 *         of one procedure that was called but not declared.
+	 * @return null if all called procedures were declared, otherwise the identifier of one procedure that was called
+	 *         but not declared.
 	 */
 	private BoogieProcedureInfo isEveryCalledProcedureDeclared() {
 		for (final BoogieProcedureInfo s : mMethodsCalledBeforeDeclared) {
@@ -360,19 +351,16 @@ public class ProcedureManager {
 	}
 
 	/**
-	 * Announces the beginning of the declaration of a custom procedure. A custom
-	 * procedure is a procedure that is introduced by the translation and has no
-	 * direct counterpart in the translated C program. Examples are Ultimate.start,
-	 * Ultimate.init, and the procedures introduces by the memory model.
+	 * Announces the beginning of the declaration of a custom procedure. A custom procedure is a procedure that is
+	 * introduced by the translation and has no direct counterpart in the translated C program. Examples are
+	 * Ultimate.start, Ultimate.init, and the procedures introduces by the memory model.
 	 *
 	 * @param main
 	 * @param loc
 	 * @param procedureName
 	 * @param procedureDecl
-	 *            initial declaration for the procedure, should contain the
-	 *            signature, may be reset later for adding specifications; modifies
-	 *            specification will be generated by FunctionHandler like for all
-	 *            procedures.
+	 *            initial declaration for the procedure, should contain the signature, may be reset later for adding
+	 *            specifications; modifies specification will be generated by FunctionHandler like for all procedures.
 	 */
 	void beginCustomProcedure(final Dispatcher main, final ILocation loc, final String procedureName,
 			final Procedure procedureDecl) {
@@ -441,17 +429,16 @@ public class ProcedureManager {
 
 	/**
 	 *
-	 * @return true iff we (the translation) are currently in global scope. (We are
-	 *         in global scope if we are not currently translating the body of a
-	 *         function)
+	 * @return true iff we (the translation) are currently in global scope. (We are in global scope if we are not
+	 *         currently translating the body of a function)
 	 */
 	public boolean isGlobalScope() {
 		return mCurrentProcedureInfo == null;
 	}
 
 	/**
-	 * @return the identifier of the current procedure whose scope we are currently
-	 *         in (i.e. we are currently translating the result's procedure body.
+	 * @return the identifier of the current procedure whose scope we are currently in (i.e. we are currently
+	 *         translating the result's procedure body.
 	 */
 	public String getCurrentProcedureID() {
 		if (mCurrentProcedureInfo == null) {
@@ -501,8 +488,7 @@ public class ProcedureManager {
 	/**
 	 *
 	 * @param tentativeProcedureName
-	 * @return true iff a procedure of the given name is known to the function
-	 *         handler
+	 * @return true iff a procedure of the given name is known to the function handler
 	 */
 	public boolean hasProcedure(final String tentativeProcedureName) {
 		return mProcedureNameToProcedureInfo.containsKey(tentativeProcedureName);
@@ -583,9 +569,8 @@ public class ProcedureManager {
 		}
 
 		/**
-		 * Update the map procedureToCFunctionType according to the given arguments If a
-		 * parameter is null, the corresponding value will not be changed. (for
-		 * takesVarArgs, use "false" to change nothing).
+		 * Update the map procedureToCFunctionType according to the given arguments If a parameter is null, the
+		 * corresponding value will not be changed. (for takesVarArgs, use "false" to change nothing).
 		 */
 		void updateCFunction(final CType returnType, final CDeclaration[] allParamDecs, final CDeclaration oneParamDec,
 				final boolean takesVarArgs) {
@@ -648,10 +633,7 @@ public class ProcedureManager {
 		 */
 		void setDefaultDeclaration(final ILocation loc, final ASTType intType) {
 			setDeclaration(new Procedure(loc, new Attribute[0], mProcedureName, new String[0], new VarList[0],
-					new VarList[] {
-							new VarList(loc, new String[] { SFO.RES },
-							intType) },
-					new Specification[0], null));
+					new VarList[] { new VarList(loc, new String[] { SFO.RES }, intType) }, new Specification[0], null));
 		}
 
 		void setDeclaration(final Procedure declaration) {
@@ -694,7 +676,7 @@ public class ProcedureManager {
 		}
 	}
 
-	private Specification constructModifiesSpecification(final CACSLLocation loc, final boolean isFree,
+	private static Specification constructModifiesSpecification(final CACSLLocation loc, final boolean isFree,
 			final VariableLHS[] modifyList) {
 		final Set<VariableLHS> modifiedGlobals = new LinkedHashSet<>(Arrays.asList(modifyList));
 		final Set<VariableLHS> mgFiltered = filterDuplicateVariableLHSs(modifiedGlobals);
@@ -703,7 +685,7 @@ public class ProcedureManager {
 
 	public Body constructBody(final ILocation loc, final VariableDeclaration[] localDeclarations,
 			final Statement[] statements, final String procName) {
-//		assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
+		// assert !isGlobalScope() : "should be in the scope of the currently created procedure body..";
 
 		final BoogieProcedureInfo procInfo = getProcedureInfo(procName);
 
@@ -720,7 +702,8 @@ public class ProcedureManager {
 		return new Body(loc, localDeclarations, statements);
 	}
 
-	private void registerAssignmentStatement(final AssignmentStatement statement, final BoogieProcedureInfo procInfo) {
+	private static void registerAssignmentStatement(final AssignmentStatement statement,
+			final BoogieProcedureInfo procInfo) {
 		for (final LeftHandSide lhs : statement.getLhs()) {
 			final VariableLHS modifiedGlobal = new BoogieGlobalLhsFinder().getGlobalId(lhs);
 			if (modifiedGlobal != null) {
@@ -741,8 +724,8 @@ public class ProcedureManager {
 	}
 
 	/**
-	 * Essentially this method is to remind the programmer that he or she has to
-	 * give modified globals for an ensures specification manually.
+	 * Essentially this method is to remind the programmer that he or she has to give modified globals for an ensures
+	 * specification manually.
 	 *
 	 * @param loc
 	 * @param isFree
@@ -799,7 +782,6 @@ public class ProcedureManager {
 	public void registerCalledBeforeDeclaredFunction(final BoogieProcedureInfo procInfo) {
 		mMethodsCalledBeforeDeclared.add(procInfo);
 	}
-
 
 	class CallAndAssignmentStatementFinder extends BoogieVisitor {
 
