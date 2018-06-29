@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# Author: Christian Schilling (schillic@informatik.uni-freiburg.de)
+# Authors: Christian Schilling (schillic@informatik.uni-freiburg.de)
+#          Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 #
 # -----------------------------------------------------------------------------
 #
@@ -117,8 +118,8 @@ for FOLDER in $(find $PATH_TO_SOURCE -maxdepth 1 -mindepth 1 -type d); do
 done
 
 echo "Failed to write settings to the following folders:"
-for i in  ${FAIL[@]} ; do echo "$i" ; done 
+for i in  ${FAIL[@]} ; do echo "$i" ; done
 
 echo ""
 echo "Successfully wrote settings to the following folders:"
-for i in  ${SUCCESS[@]} ; do echo "$i" ; done 
+for i in  ${SUCCESS[@]} ; do echo "$i" ; done
