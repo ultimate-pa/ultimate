@@ -674,10 +674,12 @@ public class CHandler implements ICHandler {
 
 		// TODO Need to get a CLocation from somewhere
 		// the overall translation result:
-		final Unit boogieUnit = new Unit(
-				main.getLocationFactory().createRootCLocation(
-						units.stream().map(a -> a.getSourceTranslationUnit()).collect(Collectors.toSet())),
-				mDeclarations.toArray(new Declaration[mDeclarations.size()]));
+		final Unit boogieUnit =
+				new Unit(
+						main.getLocationFactory()
+								.createRootCLocation(units.stream().map(a -> a.getSourceTranslationUnit())
+										.collect(Collectors.toSet())),
+						mDeclarations.toArray(new Declaration[mDeclarations.size()]));
 		final IASTTranslationUnit hook = units.get(0).getSourceTranslationUnit();
 
 		// annotate the Unit with LTLPropertyChecks if applicable
@@ -1560,6 +1562,7 @@ public class CHandler implements ICHandler {
 
 		// Apply multifile input prefixing transformations to the ID
 		final String cId = node.getName().toString();
+		// cIdMp is only relevant for procedures and global variables
 		final String cIdMp = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 
 		// deal with builtin constants
@@ -1612,7 +1615,15 @@ public class CHandler implements ICHandler {
 		final boolean intFromPtr;
 		DeclarationInformation declarationInformation;
 
-		if (mSymbolTable.containsCSymbol(node, cIdMp) && !mProcedureManager.hasProcedure(cIdMp)) {
+		if (mSymbolTable.containsCSymbol(node, cId) && !mProcedureManager.hasProcedure(cIdMp)) {
+			// a local variable
+			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cId);
+			bId = stv.getBoogieName();
+			cType = stv.getCVariable();
+			useHeap = isHeapVar(bId);
+			intFromPtr = stv.isIntFromPointer();
+			declarationInformation = stv.getDeclarationInformation();
+		} else if (mSymbolTable.containsCSymbol(node, cIdMp) && !mProcedureManager.hasProcedure(cIdMp)) {
 			// we have a normal variable
 			final SymbolTableValue stv = mSymbolTable.findCSymbol(node, cIdMp);
 			bId = stv.getBoogieName();
