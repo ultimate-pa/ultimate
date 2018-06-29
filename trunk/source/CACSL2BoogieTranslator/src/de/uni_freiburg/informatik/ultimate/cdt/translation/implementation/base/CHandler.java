@@ -1071,21 +1071,29 @@ public class CHandler implements ICHandler {
 
 		final Expression newValue;
 		if (isPreRunMode()) {
+			final Expression oldValue;
 			if (rightLrVal instanceof HeapLValue) {
+				/*
+				 * Can happen for example if we have an array in a struct and now are dealing with a pointer to that
+				 *  struct.
+				 */
 
-				newValue = ((HeapLValue) rightLrVal).getAddress();
+
+//				newValue = ((HeapLValue) rightLrVal).getAddress();
+				oldValue = ((HeapLValue) rightLrVal).getAddress();
 				// final Expression oldAddress = ((HeapLValue) rightLrVal).getAddress();
 				// newValue = ExpressionFactory.replaceBoogieType(oldAddress, pointerType);
 				// address = new RValue(oldAddress,
 				// new CPointer(((CArray) rightLrVal.getCType()).getValueType()));
-				throw new AssertionError("does this occur??");
+//				throw new AssertionError("does this occur??");
+			} else {
+				oldValue = rightLrVal.getValue();
 			}
-			final Expression oldValue = rightLrVal.getValue();
 			/*
-			 * circumvents Boogie type checking during preprocessing TODO: use type error instead of pointer type?
+			 * circumvents Boogie type checking during preprocessing
 			 */
 			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
-			((PRDispatcher) mMainDispatcher).moveArrayAndStructIdsOnHeap(loc, rightLrVal.getValue(),
+			((PRDispatcher) mMainDispatcher).moveArrayAndStructIdsOnHeap(loc, oldValue,
 					Collections.emptySet(), hook);
 		} else {
 			if (rightLrVal instanceof RValueForArrays) {
