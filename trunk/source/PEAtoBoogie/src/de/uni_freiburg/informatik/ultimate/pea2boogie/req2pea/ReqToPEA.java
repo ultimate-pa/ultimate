@@ -26,20 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
-import java.io.FileInputStream;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 
@@ -52,19 +47,6 @@ public class ReqToPEA {
 		mLogger = logger;
 		mServices = services;
 		mResult = new PeaResultUtil(mLogger, mServices);
-	}
-
-	public List<PatternType> genPatterns(final String reqFileName) throws Exception {
-		final FileInputStream fis = new FileInputStream(reqFileName);
-		try {
-			final ReqParser parser = new ReqParser(mServices, mLogger, fis, reqFileName);
-			final Symbol goal = parser.parse();
-			final PatternType[] patterns = (PatternType[]) goal.value;
-
-			return Arrays.asList(patterns);
-		} finally {
-			fis.close();
-		}
 	}
 
 	public Map<PatternType, PhaseEventAutomata> genPEA(final List<PatternType> patterns,
