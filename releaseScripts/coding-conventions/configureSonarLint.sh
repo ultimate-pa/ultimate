@@ -50,6 +50,7 @@ FILE="$SETTINGS/org.sonarlint.eclipse.core.prefs"
 MANIFEST="/META-INF/MANIFEST.MF"
 PLUGIN_NAME_KEY="Bundle-SymbolicName: "
 
+
 SONAR_API_TOKEN="1511b3e61939ae40e5624e01ad7e284e337de77b"
 
 
@@ -61,6 +62,7 @@ function check_key(){
 }
 
 FAIL=()
+SUCCESS=() 
 
 for FOLDER in $(find $PATH_TO_SOURCE -maxdepth 1 -mindepth 1 -type d); do
 	# exclude folders starting with '.'
@@ -92,7 +94,7 @@ for FOLDER in $(find $PATH_TO_SOURCE -maxdepth 1 -mindepth 1 -type d); do
 		then
 			PLUGIN_NAME=$(grep "$PLUGIN_NAME_KEY" "$FOLDER$MANIFEST" | sed "s/$PLUGIN_NAME_KEY//" | sed "s/;singleton:=true//")
 			echo "  found plugin ID $PLUGIN_NAME"
-			PLUGIN_ID="\nmoduleKey=de.uni_freiburg.informatik.ultimate\:$PLUGIN_NAME\nserverId=monteverdi.informatik.uni-freiburg.de"
+			PLUGIN_ID="moduleKey=de.uni_freiburg.informatik.ultimate\:$PLUGIN_NAME\nprojectKey=de.uni_freiburg.informatik.ultimate\:mavenparent\nserverId=monteverdi.informatik.uni-freiburg.de"
             if ! check_key "$PLUGIN_NAME" ; then 
                 echo "  Plugin $PLUGIN_NAME not found on sonar server"
                 FAIL+=("$SHORT_NAME")
@@ -106,12 +108,17 @@ for FOLDER in $(find $PATH_TO_SOURCE -maxdepth 1 -mindepth 1 -type d); do
 		fi
 		
 		# write command
-		echo -e "autoEnabled=$ENABLE_ANALYSIS\neclipse.preferences.version=1\nextraProperties=$PLUGIN_ID" > "$FOLDER$FILE"
+		echo -e "autoEnabled=$ENABLE_ANALYSIS\neclipse.preferences.version=1\nextraProperties=\nfileExclusions=\n${PLUGIN_ID}" > "$FOLDER$FILE"
+        SUCCESS+=("$SHORT_NAME")
 	else
         FAIL+=("$SHORT_NAME")
 		echo "  ignoring folder $FOLDER"
 	fi
 done
 
-echo "Failed to write settings for the following folders:"
+echo "Failed to write settings to the following folders:"
 for i in  ${FAIL[@]} ; do echo "$i" ; done 
+
+echo ""
+echo "Successfully wrote settings to the following folders:"
+for i in  ${SUCCESS[@]} ; do echo "$i" ; done 
