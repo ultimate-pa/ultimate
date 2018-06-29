@@ -199,87 +199,84 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		final Map<StoreIndexInfo, IProgramConst> storeIndexInfoToLocLiteral;
 		final MemlocArrayManager memlocArrayManager;
 
-//			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
-			mLogger.info("Heap separator: starting memloc-array-style preprocessing");
+		//			assert mSettings.getPreprocessing() == Preprocessing.MEMLOC_ARRAY;
+		mLogger.info("Heap separator: starting memloc-array-style preprocessing");
 
-			memlocArrayManager = new MemlocArrayManager(mMgdScript);
+		memlocArrayManager = new MemlocArrayManager(mMgdScript);
 
+		/*
+		 * add the memloc array updates to each transition with an array update
+		 * the values the memloc array is set to are location literals, those are pairwise different by axiom
+		 */
+		final Set<IProgramConst> memlocLiterals = new HashSet<>();
+		final IIcfg<OUTLOC> icfgWithMemlocUpdates;
+		{
+			final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
+					new MemlocArrayUpdaterIcfgTransformer<>(mLogger,
+							originalIcfg.getCfgSmtToolkit(),
+							memlocArrayManager,
+							mHeapArrays, edgeToIndexToStoreIndexInfo);
+
+
+
+			final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
+					backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mauit);
+
+			storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
 			/*
-			 * add the memloc array updates to each transition with an array update
-			 * the values the memloc array is set to are location literals, those are pairwise different by axiom
+			 * make sure the literals are all treated as pairwise unequal
+			 *			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
 			 */
-			final Set<IProgramConst> memlocLiterals = new HashSet<>();
-			final IIcfg<OUTLOC> icfgWithMemlocUpdates;
-			{
-				final MemlocArrayUpdaterIcfgTransformer<INLOC, OUTLOC> mauit =
-						new MemlocArrayUpdaterIcfgTransformer<>(mLogger,
-								originalIcfg.getCfgSmtToolkit(),
-								memlocArrayManager,
-								mHeapArrays, edgeToIndexToStoreIndexInfo);
+			memlocLiterals.addAll(mauit.getLocationLiterals());
 
 
-
-				final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
-						backtranslationTracker, outLocationClass, "icfg_with_uninitialized_freeze_vars", mauit);
-
-				storeIndexInfoToLocLiteral = mauit.getStoreIndexInfoToLocLiteral();
-				/*
-				 * make sure the literals are all treated as pairwise unequal
-				 *			equalityProvider.announceAdditionalLiterals(mauit.getLocationLiterals());
-				 */
-				memlocLiterals.addAll(mauit.getLocationLiterals());
+			icfgWithMemlocUpdates = icgtf.getResult();
 
 
-				icfgWithMemlocUpdates = icgtf.getResult();
-
-
-				mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
-						" location literals (each corresponds to one heap write)");
-			}
+			mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
+					" location literals (each corresponds to one heap write)");
+		}
 
 
 
 
-			/*
-			 * Add initialization code for the memloc arrays.
-			 * Each memloc array is initialized with a constant array. The value of the constant array is a memloc
-			 * literal that is different from all other memloc literals we use.
-			 */
-			IIcfg<OUTLOC> icfgWMemlocInitialized;
-			{
+		/*
+		 * Add initialization code for the memloc arrays.
+		 * Each memloc array is initialized with a constant array. The value of the constant array is a memloc
+		 * literal that is different from all other memloc literals we use.
+		 */
+		IIcfg<OUTLOC> icfgWMemlocInitialized;
+		{
 
-//				final FreezeVarInitializingTransformulaBuilder fvtfb =
-//						new FreezeVarInitializingTransformulaBuilder(mMgdScript, freezeVarTofreezeVarLit, validArray,
-//								mSettings);
-				final ComputeMemlocInitializingTransformula mlit =
-						new ComputeMemlocInitializingTransformula(memlocArrayManager, validArray, mSettings,
-						mMgdScript);
+			final ComputeMemlocInitializingTransformula mlit =
+					new ComputeMemlocInitializingTransformula(memlocArrayManager, validArray, mSettings,
+							mMgdScript);
 
-				final AddInitializingEdgesIcfgTransformer<OUTLOC, OUTLOC> initTf =
-						new AddInitializingEdgesIcfgTransformer<>(mLogger,
-								icfgWithMemlocUpdates.getCfgSmtToolkit(),
-								outToOutLocFac,
-								backtranslationTracker,
-								outLocationClass,
-								icfgWithMemlocUpdates,
-								mlit.getResult(),
-								"icfg_with_initialized_freeze_vars");
+			final AddInitializingEdgesIcfgTransformer<OUTLOC, OUTLOC> initTf =
+					new AddInitializingEdgesIcfgTransformer<>(mLogger,
+							icfgWithMemlocUpdates.getCfgSmtToolkit(),
+							outToOutLocFac,
+							backtranslationTracker,
+							outLocationClass,
+							icfgWithMemlocUpdates,
+							mlit.getResult(),
+							"icfg_with_initialized_freeze_vars");
 
-				icfgWMemlocInitialized = initTf.getResult();
+			icfgWMemlocInitialized = initTf.getResult();
 
-//				final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
-//						icfgWithMemlocUpdates.getCfgSmtToolkit(),
-//						memlocArrayManager, validArray, mSettings,
-//						icfgWithMemlocUpdates.getInitialNodes());
+			//				final MemlocInitializer<OUTLOC, OUTLOC> mli = new MemlocInitializer<>(mLogger,
+			//						icfgWithMemlocUpdates.getCfgSmtToolkit(),
+			//						memlocArrayManager, validArray, mSettings,
+			//						icfgWithMemlocUpdates.getInitialNodes());
 
 
-//				final IcfgTransformer<OUTLOC, OUTLOC> icgtf = new IcfgTransformer<>(icfgWithMemlocUpdates,
-//						outToOutLocFac, backtranslationTracker, outLocationClass, "icfgmemlocinitialized", mli);
+			//				final IcfgTransformer<OUTLOC, OUTLOC> icgtf = new IcfgTransformer<>(icfgWithMemlocUpdates,
+			//						outToOutLocFac, backtranslationTracker, outLocationClass, "icfgmemlocinitialized", mli);
 
-//				icfgWMemlocInitialized = icgtf.getResult();
+			//				icfgWMemlocInitialized = icgtf.getResult();
 
-				memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
-//			}
+			memlocLiterals.addAll(memlocArrayManager.getMemLocLits());
+			//			}
 
 
 			// literal handling (different ways)
