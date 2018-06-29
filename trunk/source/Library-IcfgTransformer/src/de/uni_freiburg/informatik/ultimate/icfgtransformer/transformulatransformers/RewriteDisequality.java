@@ -41,11 +41,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Replaces inequalities (a != b) with (a > b \/ a < b).
+ * Replaces disequalities (a != b) with (a > b \/ a < b).
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class RewriteUnequality extends TransformerPreprocessor {
+public class RewriteDisequality extends TransformerPreprocessor {
 
 	public static final String DESCRIPTION = "Replaces a != b with (a > b \\/ a < b)";
 
@@ -64,16 +64,16 @@ public class RewriteUnequality extends TransformerPreprocessor {
 
 	@Override
 	protected TermTransformer getTransformer(final ManagedScript script) {
-		return new RewriteUnequalityTransformer(script.getScript());
+		return new RewriteDisequalityTransformer(script.getScript());
 	}
 
-	private static final class RewriteUnequalityTransformer extends TermTransformer {
+	private static final class RewriteDisequalityTransformer extends TermTransformer {
 
 		private static final Set<String> SUPPORTED_SORTS =
 				new HashSet<>(Arrays.asList(SmtSortUtils.INT_SORT, SmtSortUtils.REAL_SORT));
 		private final Script mScript;
 
-		RewriteUnequalityTransformer(final Script script) {
+		RewriteDisequalityTransformer(final Script script) {
 			assert script != null;
 			mScript = script;
 		}
