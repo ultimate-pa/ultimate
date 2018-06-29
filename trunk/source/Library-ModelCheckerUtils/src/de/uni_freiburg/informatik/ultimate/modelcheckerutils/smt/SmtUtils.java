@@ -361,8 +361,10 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Return term that represents the sum of all summands. Return the neutral element for sort sort if summands is
-	 * empty.
+	 * Return term that represents the sum of all summands. Return the neutral
+	 * element for sort sort if summands is empty. (This method should be kept
+	 * simple and does not remove "0" from the list of summands. If you want to get
+	 * rid of "0" then use {@link AffineTerm}).
 	 */
 	public static Term sum(final Script script, final Sort sort, final Term... summands) {
 		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
