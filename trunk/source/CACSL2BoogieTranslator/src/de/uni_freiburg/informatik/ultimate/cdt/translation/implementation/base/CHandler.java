@@ -1075,17 +1075,9 @@ public class CHandler implements ICHandler {
 			if (rightLrVal instanceof HeapLValue) {
 				/*
 				 * Can happen for example if we have an array in a struct and now are dealing with a pointer to that
-				 *  struct.
+				 *  struct. (see for example examples/CToBoogieTranslation/regression/pointerArithOnArrays.c)
 				 */
-
-
-//				newValue = ((HeapLValue) rightLrVal).getAddress();
 				oldValue = ((HeapLValue) rightLrVal).getAddress();
-				// final Expression oldAddress = ((HeapLValue) rightLrVal).getAddress();
-				// newValue = ExpressionFactory.replaceBoogieType(oldAddress, pointerType);
-				// address = new RValue(oldAddress,
-				// new CPointer(((CArray) rightLrVal.getCType()).getValueType()));
-//				throw new AssertionError("does this occur??");
 			} else {
 				oldValue = rightLrVal.getValue();
 			}
