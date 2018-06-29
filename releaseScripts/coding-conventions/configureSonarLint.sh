@@ -29,7 +29,7 @@
 # Set this variable to either "false" or "true".
 # "false": Do not automatically analyze this plugin with SonarLint.
 # "true": Automatically analyze this plugin with SonarLint.
-ENABLE_ANALYSIS=""
+ENABLE_ANALYSIS="false"
 
 if [[ $ENABLE_ANALYSIS == "" ]] ;
 then
@@ -50,28 +50,40 @@ FILE="$SETTINGS/org.sonarlint.eclipse.core.prefs"
 MANIFEST="/META-INF/MANIFEST.MF"
 PLUGIN_NAME_KEY="Bundle-SymbolicName: "
 
+SONAR_API_TOKEN="1511b3e61939ae40e5624e01ad7e284e337de77b"
+
+
+function check_key(){
+    local search_string="$1"
+    return `curl -qs -u ${SONAR_API_TOKEN}: \
+    --data-urlencode "component=de.uni_freiburg.informatik.ultimate:${search_string}" \
+    "https://monteverdi.informatik.uni-freiburg.de/sonar/api/components/show" | grep -c "not found"`
+}
+
+FAIL=()
+
 for FOLDER in $(find $PATH_TO_SOURCE -maxdepth 1 -mindepth 1 -type d); do
 	# exclude folders starting with '.'
 	SHORT_NAME=$(basename "$FOLDER")
+	echo "-- $SHORT_NAME --"
 	if [[ "${SHORT_NAME:0:1}" != "." ]] ;
 	then
 		SETTINGS_FOLDER="$FOLDER$SETTINGS"
-		
 		# optionally create folder
 		if [[ -e "$SETTINGS_FOLDER" ]] ;
 		then
-			echo "folder $SETTINGS_FOLDER already exists"
+			echo "  folder $SETTINGS_FOLDER already exists"
 		else
-			echo "creating folder $SETTINGS_FOLDER"
+			echo "  creating folder $SETTINGS_FOLDER"
 			mkdir "$SETTINGS_FOLDER"
 		fi
 		
 		# optionally create file
 		if [[ -e "$FOLDER$FILE" ]] ;
 		then
-			echo "settings file already exists, overwriting..."
+			echo "  settings file already exists, overwriting..."
 		else
-			echo "creating file $FOLDER$FILE"
+			echo "  creating file $FOLDER$FILE"
 			touch "$FOLDER$FILE"
 		fi
 		
@@ -79,16 +91,27 @@ for FOLDER in $(find $PATH_TO_SOURCE -maxdepth 1 -mindepth 1 -type d); do
 		if [[ -e "$FOLDER$MANIFEST" ]] ;
 		then
 			PLUGIN_NAME=$(grep "$PLUGIN_NAME_KEY" "$FOLDER$MANIFEST" | sed "s/$PLUGIN_NAME_KEY//" | sed "s/;singleton:=true//")
-			echo "found plugin ID $PLUGIN_NAME"
+			echo "  found plugin ID $PLUGIN_NAME"
 			PLUGIN_ID="\nmoduleKey=de.uni_freiburg.informatik.ultimate\:$PLUGIN_NAME\nserverId=monteverdi.informatik.uni-freiburg.de"
+            if ! check_key "$PLUGIN_NAME" ; then 
+                echo "  Plugin $PLUGIN_NAME not found on sonar server"
+                FAIL+=("$SHORT_NAME")
+                continue 
+            fi 
 		else
-			echo "no MANIFEST.MF file found, cannot read the plugin ID"
+			echo "  no MANIFEST.MF file found, cannot read the plugin ID"
+            FAIL+=("$SHORT_NAME")
 			PLUGIN_ID=""
+            continue
 		fi
 		
 		# write command
 		echo -e "autoEnabled=$ENABLE_ANALYSIS\neclipse.preferences.version=1\nextraProperties=$PLUGIN_ID" > "$FOLDER$FILE"
 	else
-		echo "ignoring folder $FOLDER"
+        FAIL+=("$SHORT_NAME")
+		echo "  ignoring folder $FOLDER"
 	fi
 done
+
+echo "Failed to write settings for the following folders:"
+for i in  ${FAIL[@]} ; do echo "$i" ; done 
