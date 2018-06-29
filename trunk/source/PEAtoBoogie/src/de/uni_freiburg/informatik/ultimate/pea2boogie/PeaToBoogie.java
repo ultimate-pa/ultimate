@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
@@ -43,11 +44,10 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePref
 
 public class PeaToBoogie implements IGenerator {
 	private ILogger mLogger;
-	private List<String> mFileNames = new ArrayList<>();
+	private final List<String> mFileNames = new ArrayList<>();
 	private IUltimateServiceProvider mServices;
 
 	private IToolchainStorage mStorage;
-	private PeaResultUtil mReporter;
 	private PEAtoBoogieObserver mObserver;
 
 	@Override
@@ -67,12 +67,7 @@ public class PeaToBoogie implements IGenerator {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		try {
-			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
-		} catch (final Exception ex) {
-			mLogger.fatal("syntax error: " + ex.getMessage());
-			return null;
-		}
+		return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
 	}
 
 	@Override
@@ -112,14 +107,14 @@ public class PeaToBoogie implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
-		// TODO Auto-generated method stub	
+	public void setInputDefinition(final ModelType graphType) {
+		// not necessary
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
 		mObserver = new PEAtoBoogieObserver(mLogger, mServices, mStorage);
-		return Arrays.asList( mObserver );
+		return Collections.singletonList(mObserver);
 	}
 
 	@Override
