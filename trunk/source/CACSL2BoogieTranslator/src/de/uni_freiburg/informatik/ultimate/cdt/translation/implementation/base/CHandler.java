@@ -983,12 +983,10 @@ public class CHandler implements ICHandler {
 			// if we are "adding" arrays, they must be treated as pointers
 			final ExpressionResult lDecayed = leftOperand.decayArrayToPointerIfNecessary(main, loc, node);
 			final ExpressionResult rDecayed = rightOperand.decayArrayToPointerIfNecessary(main, loc, node);
-			assert !(leftOperand.getLrValue().getCType() instanceof CArray)
-				|| node.getOperator() == IASTBinaryExpression.op_plus
-					: "subtraction is not allowed in pointer arithmetic, right?";
-			assert !(rightOperand.getLrValue().getCType() instanceof CArray)
-				|| node.getOperator() == IASTBinaryExpression.op_plus
-					: "subtraction is not allowed in pointer arithmetic, right?";
+			assert !(leftOperand.getLrValue().getCType() instanceof CArray) || node
+					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
+			assert !(rightOperand.getLrValue().getCType() instanceof CArray) || node
+					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
 
 			final ExpressionResult rl = lDecayed.switchToRValueIfNecessary(main, loc, node);
 			final ExpressionResult rr = rDecayed.switchToRValueIfNecessary(main, loc, node);
@@ -1002,12 +1000,10 @@ public class CHandler implements ICHandler {
 			// if we are "adding" arrays, they must be treated as pointers
 			final ExpressionResult lDecayed = leftOperand.decayArrayToPointerIfNecessary(main, loc, node);
 			final ExpressionResult rDecayed = rightOperand.decayArrayToPointerIfNecessary(main, loc, node);
-			assert !(leftOperand.getLrValue().getCType() instanceof CArray)
-				|| node.getOperator() == IASTBinaryExpression.op_plus
-					: "subtraction is not allowed in pointer arithmetic, right?";
-			assert !(rightOperand.getLrValue().getCType() instanceof CArray)
-				|| node.getOperator() == IASTBinaryExpression.op_plus
-					: "subtraction is not allowed in pointer arithmetic, right?";
+			assert !(leftOperand.getLrValue().getCType() instanceof CArray) || node
+					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
+			assert !(rightOperand.getLrValue().getCType() instanceof CArray) || node
+					.getOperator() == IASTBinaryExpression.op_plus : "subtraction is not allowed in pointer arithmetic, right?";
 
 			final ExpressionResult rl = lDecayed.switchToRValueIfNecessary(main, loc, node);
 			final ExpressionResult rr = rDecayed.switchToRValueIfNecessary(main, loc, node);
@@ -1515,13 +1511,8 @@ public class CHandler implements ICHandler {
 	public Result visit(final Dispatcher main, final IASTFunctionCallExpression node) {
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		if (functionName instanceof IASTIdExpression) {
-			// Transform the name for multifile input
-			final String transformedName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(),
-					((IASTIdExpression) functionName).getName().toString()); // TODO inject this, but is this really
-																				// needed?
 			final Result standardFunction =
 					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
-
 			if (standardFunction != null) {
 				return standardFunction;
 			}

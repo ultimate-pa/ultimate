@@ -113,9 +113,7 @@ public class StandardFunctionHandler {
 
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 
-	private final FunctionHandler mFunctionHandler;
-
-	ProcedureManager mProcedureManager;
+	private final ProcedureManager mProcedureManager;
 
 	private final CHandler mCHandler;
 
@@ -126,7 +124,6 @@ public class StandardFunctionHandler {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeComputer;
-		mFunctionHandler = functionHandler;
 		mProcedureManager = procedureManager;
 		mCHandler = cHandler;
 
@@ -151,7 +148,9 @@ public class StandardFunctionHandler {
 		final String name = astIdExpression.getName().toString();
 		final IFunctionModelHandler functionModel = mFunctionModels.get(name);
 		if (functionModel != null) {
-			final IASTNode funDecl = main.getFunctionTable().get(name);
+			final String transformedName =
+					mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), name);
+			final IASTNode funDecl = main.getFunctionTable().get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
 				return null;
