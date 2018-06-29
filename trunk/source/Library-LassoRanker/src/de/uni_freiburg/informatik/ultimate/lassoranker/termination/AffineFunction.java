@@ -190,7 +190,9 @@ public class AffineFunction implements Serializable {
 			final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 			summands.add(constructSummand(script, definition, entry.getValue()));
 		}
-		summands.add(SmtUtils.constructIntValue(script, mConstant));
+		if (!mConstant.equals(BigInteger.ZERO)) {
+			summands.add(SmtUtils.constructIntValue(script, mConstant));
+		}
 		return SmtUtils.sum(script, SmtSortUtils.getRealSort(script), summands.toArray(new Term[summands.size()]));
 	}
 
