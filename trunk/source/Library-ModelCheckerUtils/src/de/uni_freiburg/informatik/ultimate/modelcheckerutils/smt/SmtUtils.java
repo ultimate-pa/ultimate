@@ -795,9 +795,12 @@ public final class SmtUtils {
 				return value.equals(Rational.valueOf(number, BigInteger.ONE));
 			} else if (value instanceof BigInteger) {
 				return value.equals(number);
+			} else {
+				throw new AssertionError("unknown type of integer value " + value.getClass().getSimpleName());
 			}
+		} else {
+			return false;
 		}
-		return false;
 	}
 
 	/**
