@@ -17,17 +17,17 @@ assert(numberOfStates(complementNCSB) == 12);
 print(numberOfTransitions(complementNCSB));
 assert(numberOfTransitions(complementNCSB) == 26);
 
-NestedWordAutomaton complementNCSB = buchiComplementNCSBLazy3(ba);
-print(numberOfStates(complementNCSB));
-assert(numberOfStates(complementNCSB) == 10);
-print(numberOfTransitions(complementNCSB));
-assert(numberOfTransitions(complementNCSB) == 23);
+NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy3(ba);
+print(numberOfStates(complementNCSBLazy3));
+assert(numberOfStates(complementNCSBLazy3) == 10);
+print(numberOfTransitions(complementNCSBLazy3));
+assert(numberOfTransitions(complementNCSBLazy3) == 23);
 
-NestedWordAutomaton complementNCSB = buchiComplementNCSBLazy2(ba);
-print(numberOfStates(complementNCSB));
-assert(numberOfStates(complementNCSB) == 11);
-print(numberOfTransitions(complementNCSB));
-assert(numberOfTransitions(complementNCSB) == 26);
+NestedWordAutomaton complementNCSBLazy2 = buchiComplementNCSBLazy2(ba);
+print(numberOfStates(complementNCSBLazy2));
+assert(numberOfStates(complementNCSBLazy2) == 11);
+print(numberOfTransitions(complementNCSBLazy2));
+assert(numberOfTransitions(complementNCSBLazy2) == 26);
 
 NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(ba, "HEIMAT2", 77);
 print(numberOfStates(complementHeiMat2));
