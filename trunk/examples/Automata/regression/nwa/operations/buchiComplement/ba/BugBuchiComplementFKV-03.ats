@@ -39,8 +39,6 @@ assert(numberOfStates(complementSchewe) == 12);
 print(numberOfTransitions(complementSchewe));
 assert(numberOfTransitions(complementSchewe) == 30);
 
-print(complementNCSB);
-print(complementNCSB);
 
 NestedWordAutomaton ba = (
   callAlphabet = { },
