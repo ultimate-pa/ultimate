@@ -3,9 +3,18 @@
 // revealed bugs in buchiComplementFKV (while implementing Sven Schewes 
 // optimizations)
 
-buchiComplementFKV(infeasibleN);
+buchiComplementFKV(ba);
 
-NestedWordAutomaton infeasibleN = (
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba, true);
+assert (numberOfStates(complementNCSB) == 10);
+print(complementNCSB);
+
+NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy3(ba);
+assert (numberOfStates(complementNCSBLazy3) == 10);
+
+print(complementNCSBLazy3);
+
+NestedWordAutomaton ba = (
   callAlphabet = { },
   internalAlphabet = { "a" "b" },
   returnAlphabet = { },

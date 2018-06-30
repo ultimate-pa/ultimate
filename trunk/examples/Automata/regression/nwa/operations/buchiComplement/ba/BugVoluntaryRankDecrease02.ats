@@ -6,25 +6,41 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 2017-08-30
 
-NestedWordAutomaton complementNCSB3 = buchiComplementNCSBLazy3(nwa);
-print(numberOfStates(complementNCSB3));
-assert(numberOfStates(complementNCSB3) == 10);
-print(complementNCSB3);
-
 NestedWordAutomaton complementNCSB = buchiComplementNCSB(nwa);
 print(numberOfStates(complementNCSB));
 assert(numberOfStates(complementNCSB) == 10);
-print(complementNCSB);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 19);
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSBLazy3(nwa);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 10);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 20);
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSBLazy2(nwa);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 8);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 15);
 
 NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(nwa, "HEIMAT2", 77);
 print(numberOfStates(complementHeiMat2));
 assert(numberOfStates(complementHeiMat2) == 9);
-print(complementHeiMat2);
+print(numberOfTransitions(complementHeiMat2));
+assert(numberOfTransitions(complementHeiMat2) == 18);
 
 NestedWordAutomaton complementElastic = buchiComplementFKV(nwa, "ELASTIC", 77);
 print(numberOfStates(complementElastic));
 assert(numberOfStates(complementElastic) == 9);
-print(complementElastic);
+print(numberOfTransitions(complementElastic));
+assert(numberOfTransitions(complementElastic) == 18);
+
+NestedWordAutomaton complementSchewe = buchiComplementFKV(nwa, "SCHEWE", 77);
+print(numberOfStates(complementSchewe));
+assert(numberOfStates(complementSchewe) == 9);
+print(numberOfTransitions(complementSchewe));
+assert(numberOfTransitions(complementSchewe) == 18);
 
 
 

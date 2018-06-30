@@ -12,12 +12,41 @@
 
 
 NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
-assert (numberOfStates(complementNCSB) == 12);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 12);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 26);
 
-NestedWordAutomaton complementFKV = buchiComplementFKV(ba);
-assert (numberOfStates(complementFKV) == 23);
+NestedWordAutomaton complementNCSB = buchiComplementNCSBLazy3(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 10);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 23);
 
-print(complementNCSB);
+NestedWordAutomaton complementNCSB = buchiComplementNCSBLazy2(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 11);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 26);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(ba, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 23);
+print(numberOfTransitions(complementHeiMat2));
+assert(numberOfTransitions(complementHeiMat2) == 56);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(ba, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 23);
+print(numberOfTransitions(complementElastic));
+assert(numberOfTransitions(complementElastic) == 51);
+
+NestedWordAutomaton complementSchewe = buchiComplementFKV(ba, "SCHEWE", 77);
+print(numberOfStates(complementSchewe));
+assert(numberOfStates(complementSchewe) == 23);
+print(numberOfTransitions(complementSchewe));
+assert(numberOfTransitions(complementSchewe) == 63);
+
 
 FiniteAutomaton ba = (
 	alphabet = {a0 a1},

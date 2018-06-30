@@ -2,12 +2,51 @@
 // Matthias Heizmann
 // typical(?) Büchi interpolant automaton that is not easy to complement
 
-NestedWordAutomaton res = buchiComplementFKV(bia);
-assert( !buchiAccepts(bia, [a b, a b]));
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 8);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 15);
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSBLazy3(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 8);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 15);
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSBLazy2(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 8);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 15);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(ba, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 14);
+print(numberOfTransitions(complementHeiMat2));
+assert(numberOfTransitions(complementHeiMat2) == 25);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(ba, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 14);
+print(numberOfTransitions(complementElastic));
+assert(numberOfTransitions(complementElastic) == 25);
+
+NestedWordAutomaton complementSchewe = buchiComplementFKV(ba, "SCHEWE", 77);
+print(numberOfStates(complementSchewe));
+assert(numberOfStates(complementSchewe) == 17);
+print(numberOfTransitions(complementSchewe));
+assert(numberOfTransitions(complementSchewe) == 32);
+
+
+
+
+NestedWordAutomaton res = buchiComplementFKV(ba);
+assert( !buchiAccepts(ba, [a b, a b]));
 assert( buchiAccepts(res, [a b, a b]));
 print(res);
 
-NestedWordAutomaton bia = (
+NestedWordAutomaton ba = (
   callAlphabet = { },
   internalAlphabet = { "a" "b" },
   returnAlphabet = { },
