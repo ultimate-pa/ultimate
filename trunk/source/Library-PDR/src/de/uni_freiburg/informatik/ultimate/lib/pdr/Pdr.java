@@ -175,12 +175,14 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			mTraceCheckFinishedNormally = true;
 			mReasonUnknown = null;
 		} catch (final ToolchainCanceledException tce) {
-			mToolchainCanceledException = tce;
 			mTraceCheckFinishedNormally = false;
+			mIsTraceCorrect = LBool.UNKNOWN;
+			mToolchainCanceledException = tce;
 			mReasonUnknown = new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT, tce,
 					ExceptionHandlingCategory.KNOWN_DEPENDING);
 		} catch (final SMTLIBException e) {
 			mTraceCheckFinishedNormally = false;
+			mIsTraceCorrect = LBool.UNKNOWN;
 			mReasonUnknown = TraceCheckReasonUnknown.constructReasonUnknown(e);
 		} finally {
 			mPdrBenchmark.stop(PdrStatisticsDefinitions.PDR_RUNTIME);
@@ -337,14 +339,19 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 						final Term pre = mPredTrans.pre(toBeBlocked, predecessorTransition.getTransformula());
 
+						final IPredicate prePred = mPredicateUnifier.getOrConstructPredicate(pre);
+
+						// TODO: This is not as easy as it looks have a look at PredicateUtils.isInductiveHelper to see
+						// how a predicate and a transformula can be combined in an and
 						final Term second = SmtUtils.and(mScript.getScript(), predecessorFrame.getFormula(),
 								predecessorTransition.getTransformula().getFormula());
 
-						/**
-						 * null pointer? why?
-						 */
-						final Pair<LBool, Term> interpolPair =
-								SmtUtils.interpolateBinary(mScript.getScript(), pre, second);
+						final IPredicate secondPred = mPredicateUnifier.getOrConstructPredicate(second);
+
+						// make sure that the terms you give to the utility are closed , i.e., do not have any free vars
+						// lefts
+						final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(),
+								prePred.getClosedFormula(), secondPred.getClosedFormula());
 						final IPredicate interpolatedPreCondition =
 								mPredicateUnifier.getOrConstructPredicate(interpolPair.getSecond());
 
@@ -413,7 +420,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							globalVarsAssignments, oldVarAssignments, modifiableGlobals);
 
 					final UnmodifiableTransFormula procFormula = proc.getSecond();
-					IPredicate preHier = mPredicateUnifier
+					final IPredicate preHier = mPredicateUnifier
 							.getOrConstructPredicate(mPredTrans.pre(callerFrame.get(level).getSecond(), procFormula));
 
 					// final IPredicate preHier = mFalsePred;
@@ -602,7 +609,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format(" %s && %s && %s is %s", pre, trans, post,
-					(result == Validity.VALID ? "unsat" : (result == Validity.INVALID ? "sat" : "unknown"))));
+					result == Validity.VALID ? "unsat" : result == Validity.INVALID ? "sat" : "unknown"));
 		}
 		assert result != Validity.NOT_CHECKED;
 		return result;
@@ -615,7 +622,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format(" %s && %s && %s is %s", pre, trans, post,
-					(result == Validity.VALID ? "unsat" : (result == Validity.INVALID ? "sat" : "unknown"))));
+					result == Validity.VALID ? "unsat" : result == Validity.INVALID ? "sat" : "unknown"));
 		}
 		assert result != Validity.NOT_CHECKED;
 		return result;
@@ -628,7 +635,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format(" %s && %s && %s && %s is %s", pre, preHier, trans, post,
-					(result == Validity.VALID ? "unsat" : (result == Validity.INVALID ? "sat" : "unknown"))));
+					result == Validity.VALID ? "unsat" : result == Validity.INVALID ? "sat" : "unknown"));
 		}
 		assert result != Validity.NOT_CHECKED;
 		return result;
