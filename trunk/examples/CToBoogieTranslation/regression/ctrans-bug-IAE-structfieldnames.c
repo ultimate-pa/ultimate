@@ -1,14 +1,19 @@
-int i   ;
+/*
+ * Leads to java.lang.IllegalArgumentException: Field 'i' not in struct! exception CACSL2Boogie. 
+ *
+ * Author: dietsch@informatik.uni-freiburg.de 
+ * 2018-07-01 
+ */
+int i;
 
-union __CS__u {
+struct mystruct {
  int i[1];
-
 };
-union __CS__u __CS_u;
-void  t1( )
+
+struct mystruct x;
+
+void t1()
 {
-
- __CS_u.i       ;
-
+  x.i;
 }
 
