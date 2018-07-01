@@ -2128,11 +2128,12 @@ public class CHandler implements ICHandler {
 							result = new ExpressionResult((LRValue) null);
 						}
 
-						final VariableLHS lhs = // new VariableLHS(loc, bId);
+						final VariableLHS lhs =
 								ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);
 
-						if (cDec.hasInitializer()) { // must be a non-real initializer for variable length array size
-														// --> need to pass this on
+						if (cDec.hasInitializer()) {
+							// must be a non-real initializer for variable length array size
+							// --> need to pass this on
 							// TODO: double check this
 							((ExpressionResult) result).getDeclarations()
 									.addAll(cDec.getInitializer().getRootExpressionResult().getDeclarations());
@@ -2142,8 +2143,7 @@ public class CHandler implements ICHandler {
 									.addAll(cDec.getInitializer().getRootExpressionResult().getAuxVars());
 						}
 
-						// no initializer --> essentially needs to be havoced f.i. in each loop
-						// iteration
+						// no initializer --> essentially needs to be havoced f.i. in each loop iteration
 						if (!onHeap) {
 							((ExpressionResult) result).mStmt.add(new HavocStatement(loc, new VariableLHS[] { lhs }));
 						} else {
@@ -2157,8 +2157,7 @@ public class CHandler implements ICHandler {
 					} else if (hasRealInitializer && !mProcedureManager.isGlobalScope()
 							&& !mTypeHandler.isStructDeclaration()) {
 						// in case of a local variable declaration with an initializer, the statements
-						// and delcs
-						// necessary for the initialization are the result
+						// and delcs necessary for the initialization are the result
 						assert result instanceof SkipResult || result instanceof ExpressionResult;
 						final VariableLHS lhs = // new VariableLHS(loc, bId);
 								ExpressionFactory.constructVariableLHS(loc, boogieType, bId, declarationInformation);

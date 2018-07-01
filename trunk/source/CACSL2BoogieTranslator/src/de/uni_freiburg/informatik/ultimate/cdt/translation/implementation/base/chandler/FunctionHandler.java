@@ -462,8 +462,8 @@ public class FunctionHandler {
 
 		final String rawName = ((IASTIdExpression) functionName).getName().toString();
 		// Resolve the function name (might be prefixed by multiparse)
-		final String methodName = main.mCHandler.getSymbolTable().applyMultiparseRenaming(
-				functionName.getContainingFilename(), rawName);
+		final String methodName =
+				main.mCHandler.getSymbolTable().applyMultiparseRenaming(functionName.getContainingFilename(), rawName);
 
 		if (main.mCHandler.getSymbolTable().containsCSymbol(functionName, methodName)) {
 			// A 'real' function in the symbol table has a IASTFunctionDefinition as the parent of the declarator.
@@ -492,7 +492,6 @@ public class FunctionHandler {
 		// The ReturnValue could be empty!
 		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final VarList[] outParams = mProcedureManager.getCurrentProcedureInfo().getDeclaration().getOutParams();
-
 
 		if (mProcedureManager.isCalledBeforeDeclared(mProcedureManager.getCurrentProcedureInfo())
 				&& mProcedureManager.getCurrentProcedureInfo().getDeclaration().getOutParams().length == 0) {
@@ -578,8 +577,10 @@ public class FunctionHandler {
 
 		final BoogieProcedureInfo calleeProcInfo;
 		if (!mProcedureManager.hasProcedure(calleeName)) {
-			/* "implicit function declaration", assume it was declared as int foo();
-			 * (thus the signature can be completed by the first call, which we are dispatching here) */
+			/*
+			 * "implicit function declaration", assume it was declared as int foo(); (thus the signature can be
+			 * completed by the first call, which we are dispatching here)
+			 */
 			main.getLogger().warn("implicit declaration of function " + calleeName);
 			mProcedureManager.registerProcedure(calleeName);
 			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
@@ -588,7 +589,6 @@ public class FunctionHandler {
 		} else {
 			calleeProcInfo = mProcedureManager.getProcedureInfo(calleeName);
 		}
-
 
 		final Procedure calleeProcDecl = calleeProcInfo.getDeclaration();
 		assert calleeProcDecl != null : "unclear -- solve in conjunction with the exception directly above..";
@@ -735,13 +735,12 @@ public class FunctionHandler {
 	 * symboltable. Also update procedureToParamCType member.
 	 *
 	 * @param updateSymbolTable
-	 * 			set this to true if the symbol table should be updated, false if only the result of this method is of
-	 * 			interest and side effects are unwanted
+	 *            set this to true if the symbol table should be updated, false if only the result of this method is of
+	 *            interest and side effects are unwanted
 	 * @return
 	 */
-	private VarList[] processInParams(final Dispatcher main, final ILocation loc, final CFunction cFun,
+	private static VarList[] processInParams(final Dispatcher main, final ILocation loc, final CFunction cFun,
 			final BoogieProcedureInfo procInfo, final IASTNode hook, final boolean updateSymbolTable) {
-		// final String methodName) {
 		final CDeclaration[] paramDecs = cFun.getParameterTypes();
 		final VarList[] in = new VarList[paramDecs.length];
 		for (int i = 0; i < paramDecs.length; ++i) {
@@ -898,8 +897,8 @@ public class FunctionHandler {
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				main.mCHandler.getSymbolTable().storeCSymbol(paramDec, inparamCId,
-						new SymbolTableValue(inparamAuxVarName, inVarDecl,
-								new CDeclaration(cvar, inparamCId), inparamAuxVarDeclInfo, paramDec, false));
+						new SymbolTableValue(inparamAuxVarName, inVarDecl, new CDeclaration(cvar, inparamCId),
+								inparamAuxVarDeclInfo, paramDec, false));
 			}
 		}
 	}
@@ -1014,10 +1013,9 @@ public class FunctionHandler {
 				call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { returnedValueAsLhs },
 						methodName, translatedParameters.toArray(new Expression[translatedParameters.size()]));
 			} else { // unsupported!
-				 final String msg = "Cannot handle multiple out params! (makes no sense in the translation of a C "
-				 		+ "program) "
-						 + loc.toString();
-				 throw new AssertionError(msg);
+				final String msg = "Cannot handle multiple out params! (makes no sense in the translation of a C "
+						+ "program) " + loc.toString();
+				throw new AssertionError(msg);
 			}
 		} else {
 			procInfo = mProcedureManager.getOrConstructProcedureInfo(methodName);
@@ -1076,8 +1074,10 @@ public class FunctionHandler {
 		if (in.length > 0 && in[0] == null) {
 			throw new IllegalArgumentException("In-param cannot be null!");
 		}
-		/* convention (necessary probably only because of here): typeHandler.ctype2boogietype yields "null" for
-		 * CPrimitive(PRIMITIVE.VOID) */
+		/*
+		 * convention (necessary probably only because of here): typeHandler.ctype2boogietype yields "null" for
+		 * CPrimitive(PRIMITIVE.VOID)
+		 */
 		return in.length == 1 && in[0].getType() == null;
 	}
 

@@ -70,19 +70,12 @@ public class CDeclaration {
 		mCAstInitializer = cAstInitializer;
 		mInitializer = initializer;
 		assert cAstInitializer == null || initializer == null;
-		mIsOnHeap = onHeap;// TODO actually make use of this flag
+		// TODO actually make use of this flag
+		mIsOnHeap = onHeap;
 		mIsInitializerTranslated = false;
 		mStorageClass = storageClass;
 		mBitfieldSize = bitfieldSize;
 	}
-
-	// public CDeclaration(CType type, String name, ResultExpression initializer) {
-	// mType = type;
-	// mName = name;
-	// mInitializer = initializer;
-	// mIsOnHeap = false;
-	// mIsInitializerTranslated = true;
-	// }
 
 	public CDeclaration(final CType type, final String name, final CStorageClass storageClass) {
 		this(type, name, null, null, false, storageClass, -1);
@@ -93,9 +86,6 @@ public class CDeclaration {
 	}
 
 	public CType getType() {
-		// if (mIsOnHeap)
-		// return new CPointer(mType);
-		// else
 		return mType;
 	}
 
