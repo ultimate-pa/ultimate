@@ -48,19 +48,20 @@ print(numberOfTransitions(complementSchewe));
 assert(numberOfTransitions(complementSchewe) == 63);
 
 
+
 FiniteAutomaton ba = (
-	alphabet = {a0 a1},
+	alphabet = {a b},
 	states = {s0 s1 s2 s3},
 	initialStates = {s0},
 	finalStates = {s1 s2},
 	transitions = {
-		(s0 a0 s0)
-		(s0 a1 s0)
-		(s0 a1 s1)
-		(s1 a0 s3)
-		(s1 a1 s2)
-		(s2 a1 s3)
-		(s3 a0 s3)
-		(s3 a1 s1)
+		(s0 a s0)
+		(s0 b s0)
+		(s0 b s1)
+		(s1 a s3)
+		(s1 b s2)
+		(s2 b s3)
+		(s3 a s3)
+		(s3 b s1)
 	}
 );
