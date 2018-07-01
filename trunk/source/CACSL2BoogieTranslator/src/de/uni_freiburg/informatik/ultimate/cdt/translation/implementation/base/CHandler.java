@@ -1075,7 +1075,7 @@ public class CHandler implements ICHandler {
 			if (rightLrVal instanceof HeapLValue) {
 				/*
 				 * Can happen for example if we have an array in a struct and now are dealing with a pointer to that
-				 *  struct. (see for example examples/CToBoogieTranslation/regression/pointerArithOnArrays.c)
+				 * struct. (see for example examples/CToBoogieTranslation/regression/pointerArithOnArrays.c)
 				 */
 				oldValue = ((HeapLValue) rightLrVal).getAddress();
 			} else {
@@ -1085,8 +1085,7 @@ public class CHandler implements ICHandler {
 			 * circumvents Boogie type checking during preprocessing
 			 */
 			newValue = ExpressionFactory.replaceBoogieType(oldValue, mTypeHandler.getBoogiePointerType());
-			((PRDispatcher) mMainDispatcher).moveArrayAndStructIdsOnHeap(loc, oldValue,
-					Collections.emptySet(), hook);
+			((PRDispatcher) mMainDispatcher).moveArrayAndStructIdsOnHeap(loc, oldValue, Collections.emptySet(), hook);
 		} else {
 			if (rightLrVal instanceof RValueForArrays) {
 				newValue = rightLrVal.getValue();
@@ -1297,8 +1296,7 @@ public class CHandler implements ICHandler {
 					ExpressionResult er = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					er = er.switchToRValueIfNecessary(main, loc, node);
 					// FIXME: 2015-10-25 Matthias: uncomment once the simplification of Boogie
-					// expressions is
-					// implemented
+					// expressions is implemented
 					mExpressionTranslation.convertIntToInt(loc, er,
 							mExpressionTranslation.getCTypeOfPointerComponents());
 					expressionResults.add(er);
@@ -1348,7 +1346,7 @@ public class CHandler implements ICHandler {
 				throw new AssertionError("passing these results is not yet implemented");
 			}
 			newResType.cType = arrayType;
-			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
+			declName = getNonFunctionDeclaratorName(node);
 		} else if (node instanceof IASTStandardFunctionDeclarator) {
 			final IASTStandardFunctionDeclarator funcDecl = (IASTStandardFunctionDeclarator) node;
 
@@ -1386,13 +1384,7 @@ public class CHandler implements ICHandler {
 			newResType.cType = funcType;
 			declName = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
 		} else {
-			// Check if this is a global variable
-			if (node.getParent().getParent() instanceof IASTTranslationUnit) {
-				declName =
-						mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
-			} else {
-				declName = node.getName().toString();
-			}
+			declName = getNonFunctionDeclaratorName(node);
 		}
 		final int bitfieldSize;
 		if (node instanceof IASTFieldDeclarator) {
@@ -1416,6 +1408,47 @@ public class CHandler implements ICHandler {
 		final DeclaratorResult result = new DeclaratorResult(new CDeclaration(newResType.cType, declName,
 				node.getInitializer(), null, newResType.isOnHeap, CStorageClass.UNSPECIFIED, bitfieldSize));
 		return result;
+	}
+
+	/**
+	 * For symbols that may or may not be global (essentially variable declarations), we need to apply multiparse
+	 * renaming if they are in the global scope.
+	 * 
+	 * This method checks whether they are global and renames the variable appropriately.
+	 * 
+	 */
+	private String getNonFunctionDeclaratorName(final IASTDeclarator node) {
+		if (isGlobal(node)) {
+			return mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), node.getName().toString());
+		}
+		return node.getName().toString();
+	}
+
+	private static boolean isGlobal(final IASTDeclarator node) {
+		assert node != null;
+		if (node instanceof IASTFunctionDeclarator) {
+			return true;
+		}
+		if (node instanceof IASTFieldDeclarator) {
+			// fields in a struct are never global in this sense; the struct may be global
+			return false;
+		}
+		IASTNode parent = node.getParent();
+		while (parent != null) {
+			if (parent instanceof IASTFunctionDeclarator) {
+				// its a declarator inside of a function, it must be local
+				return false;
+			}
+			if (parent instanceof ICASTCompositeTypeSpecifier) {
+				// it is a declarator inside of another type, it must be local
+				return false;
+			}
+			if (parent instanceof IASTTranslationUnit) {
+				return true;
+			}
+			parent = parent.getParent();
+		}
+		return true;
 	}
 
 	@Override
@@ -2165,6 +2198,7 @@ public class CHandler implements ICHandler {
 				}
 
 				// reset the symbol table value with its final contents
+				// TODO: Unnamed struct fields have cDec.getName() == "" ; is this supposed to happen?
 				mSymbolTable.storeCSymbol(d, cDec.getName(),
 						new SymbolTableValue(bId, boogieDec, cDec, declarationInformation, d, false));
 			}
