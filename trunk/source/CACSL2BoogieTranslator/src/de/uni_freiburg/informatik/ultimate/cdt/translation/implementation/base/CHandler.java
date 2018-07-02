@@ -1413,9 +1413,9 @@ public class CHandler implements ICHandler {
 	/**
 	 * For symbols that may or may not be global (essentially variable declarations), we need to apply multiparse
 	 * renaming if they are in the global scope.
-	 * 
+	 *
 	 * This method checks whether they are global and renames the variable appropriately.
-	 * 
+	 *
 	 */
 	private String getNonFunctionDeclaratorName(final IASTDeclarator node) {
 		if (isGlobal(node)) {
@@ -3970,8 +3970,17 @@ public class CHandler implements ICHandler {
 		if (childRes instanceof DeclarationResult) {
 			// we have to add a global variable
 			final DeclarationResult rd = (DeclarationResult) childRes;
+
 			for (final CDeclaration cd : rd.getDeclarations()) {
 				// mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
+
+				if (cd.getType().isIncomplete()) {
+					/*
+					 * type of this (variable) declaration is incomplete at the end of the file -- omit the declaration
+					 *  from Boogie program
+					 */
+					continue;
+				}
 
 				final Declaration boogieDecl = mSymbolTable.getBoogieDeclForCDecl(cd);
 				if (boogieDecl instanceof VariableDeclaration) {
