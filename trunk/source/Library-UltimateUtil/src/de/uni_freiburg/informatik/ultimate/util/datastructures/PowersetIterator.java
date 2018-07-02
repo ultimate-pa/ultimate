@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,13 +39,23 @@ import java.util.Set;
  */
 public class PowersetIterator<E> implements Iterator<Set<E>> {
 	
-	private final E[] mArray;
+	private final List<E> mList;
 	private final int mPowersetSize;
 	private int mCurrentElement;
 	
 	public PowersetIterator(Set<E> set) {
-		mArray = set.toArray((E[]) new Object[set.size()]);
+		mList = new ArrayList<E>(set);
 		mPowersetSize = (int) Math.pow(2, set.size());
+		mCurrentElement = 0;
+	}
+	
+	/**
+	 * Warning behavior undefined if list does not represent a set (i.e., list
+	 * contains elements twice).
+	 */
+	public PowersetIterator(List<E> setAsList) {
+		mList = setAsList;
+		mPowersetSize = (int) Math.pow(2, setAsList.size());
 		mCurrentElement = 0;
 	}
 		
@@ -55,10 +67,10 @@ public class PowersetIterator<E> implements Iterator<Set<E>> {
 	@Override
 	public Set<E> next() {
 		final Set<E> result = new HashSet<E>();
-		for (int i=0; i<mArray.length; i++) {
+		for (int i=0; i<mList.size(); i++) {
 			final boolean bitSet = BigInteger.valueOf(mCurrentElement).testBit(i); 
 			if (bitSet) {
-				result.add(mArray[i]);
+				result.add(mList.get(i));
 			}
 		}
 		mCurrentElement++;
