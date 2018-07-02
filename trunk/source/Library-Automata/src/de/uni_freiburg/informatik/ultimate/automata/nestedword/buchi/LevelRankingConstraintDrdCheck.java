@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * LevelRankingConstraintWithDelayedRankDecreaseCheck.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -51,7 +51,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 
 	/**
 	 * Extended constructor.
-	 * 
+	 *
 	 * @param operand
 	 *            operand
 	 * @param predecessorOwasEmpty
@@ -96,8 +96,8 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	 * decreased). This means that for each of these (delayed rank decrease) transitions there is also a transition
 	 * whose source is the level ranking in which the rank was not voluntarily decreased. This interferes with other
 	 * optimizations (e.g., tight level rankings, elastic level rankings) because there the not voluntarily decreased
-	 * path was lost is some state in between was not tight (resp. elastic)
-	 * 
+	 * path was lost if some state in between was not tight (resp. not elastic)
+	 *
 	 * @return {@code true} iff it is a target of a delayed rank decrease
 	 */
 	public boolean isTargetOfDelayedRankDecrease() {
