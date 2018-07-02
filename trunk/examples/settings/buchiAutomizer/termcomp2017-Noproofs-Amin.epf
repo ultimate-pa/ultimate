@@ -59,8 +59,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ only\ trivial\ implications\ for\ array\ writes=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Add\ implications\ only\ for\ indices\ occuring\ in\ the\ current\ formula=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Buchi\ interpolant\ automaton\ construction\ strategy=DANDELION
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Automata\ minimization\ after\ feasibility-based\ refinement=SHRINK_NWA
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Automata\ minimization\ after\ rank-based\ refinement=SHRINK_NWA
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Automata\ minimization\ after\ feasibility-based\ refinement=NWA_SIZE_BASED_PICKER
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Automata\ minimization\ after\ rank-based\ refinement=NWA_SIZE_BASED_PICKER
 #Wed Mar 19 04:15:41 CET 2014
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
