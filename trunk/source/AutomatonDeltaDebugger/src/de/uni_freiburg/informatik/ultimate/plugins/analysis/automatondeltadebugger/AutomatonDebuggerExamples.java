@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiComplementNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
@@ -120,6 +121,10 @@ public class AutomatonDebuggerExamples {
 		 * {@link ShrinkNwa}.
 		 */
 		SHRINK_NWA,
+		/**
+		 * {@link BuchiComplementNCSB}.
+		 */
+		BUCHI_COMPLEMENT_NCSB,
 		/**
 		 * {@link BuchiReduce}.
 		 */
@@ -214,6 +219,10 @@ public class AutomatonDebuggerExamples {
 
 			case SHRINK_NWA:
 				operation = shrinkNwa(automaton, factory);
+				break;
+
+			case BUCHI_COMPLEMENT_NCSB:
+				operation = buchiComplementNcsb(automaton, factory);
 				break;
 
 			case BUCHI_REDUCE:
@@ -384,6 +393,11 @@ public class AutomatonDebuggerExamples {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new ShrinkNwa<>(mServices, factory, preprocessed);
+	}
+
+	public IOperation<String, String, ? super StringFactory> buchiComplementNcsb(
+			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
+		return new BuchiComplementNCSB<>(mServices, factory, automaton);
 	}
 
 	/**
