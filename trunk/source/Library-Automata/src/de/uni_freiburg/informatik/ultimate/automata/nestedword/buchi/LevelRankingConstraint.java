@@ -237,4 +237,40 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
 		return mPredecessorWasAccepting;
 	}
+	
+//	public List<DoubleDecker<StateWithRankInfo<STATE>>> getDoubleDeckersEligibleForVoluntaryRankDecrease(
+//			boolean voluntaryRankDecreaseOnlyIfPredecessorWasAccepting,
+//			boolean volutaryRankDecreaseOnlyIfEnablesEscapeFromO) {
+//		ArrayList<DoubleDecker<StateWithRankInfo<STATE>>> result = new ArrayList();
+//		if (voluntaryRankDecreaseOnlyIfPredecessorWasAccepting) {
+//			for (DoubleDecker<StateWithRankInfo<STATE>> dd : mPredecessorWasAccepting) {
+//				boolean isElibi
+//			}
+//		} else {
+//			throw new UnsupportedOperationException("unsupported. However not required for any good complementation");
+//		}
+//		return result;
+//	}
+	
+	public boolean isEligibleForVoluntaryRankDecrease(boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+			boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, DoubleDecker<StateWithRankInfo<STATE>> dd) {
+		boolean isEligible;
+		// voluntary decrease makes only sense for even ranks
+		isEligible = isEven(dd.getUp().getRank());
+		// if state is accepting we are not allowed to decrease to an odd rank
+		isEligible &= mOperand.isFinal(dd.getUp().getState());
+		// optimization used in all effective complementations: do voluntary 
+		// decrease only immediately after some predecessor was visiting an accepting
+		// state 
+		isEligible &= (!voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting
+				|| mPredecessorWasAccepting.contains(dd));
+		// optimization used in some effective complementations: do voluntary
+		// decrease only for states that would be in the set O if we would
+		// not decrease their rank to an odd rank.
+		// This optimization is incompatible to the original NCSB complementation.
+		isEligible &= (!voluntaryRankDecreaseOnlyIfEnablesEscapeFromO || dd.getUp().isInO());
+		return isEligible;
+	}
+	
+	
 }

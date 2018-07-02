@@ -176,4 +176,16 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 			}
 		}
 	}
+	
+	
+	@Override
+	public boolean isEligibleForVoluntaryRankDecrease(boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+			boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, DoubleDecker<StateWithRankInfo<STATE>> dd) {
+		boolean result;
+		result = super.isEligibleForVoluntaryRankDecrease(voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+				voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting, dd);
+//		result &= meinZustätzlicherCheck();
+		return result;
+	}
+
 }
