@@ -235,6 +235,28 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			minimizationResult = new MinimizationResult(true, newAutomatonWasBuilt, minNwa);
 			throw new UnsupportedOperationException("currently unsupported - check minimizaton attempt");
 		}
+		case NWA_SIZE_BASED_PICKER: {
+			final AbstractMinimizeNwa<LETTER, IPredicate> minNwa;
+			if (operand.size() <= 617) {
+				// TODO 2018-07-02 Matthias:
+				// Warning: I did not set a timeout. I hope that is is always quick because of the small number of
+				// states. Better solution (has to be tested): increase number of states but use small timeout,
+				// continue with other minimization in case timeout is reached.
+				minNwa = new MinimizeNwaPmaxSatDirectBi<>(autServices, predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
+						new MinimizeNwaMaxSat2.Settings<IPredicate>()
+						.setAddMapOldState2NewState(computeOldState2NewStateMapping).setLibraryMode(false));
+			} else if (operand.size() <= 13377) {
+				minNwa = new ShrinkNwa<>(autServices, predicateFactoryRefinement, operand, partition,
+						computeOldState2NewStateMapping, false, false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false,
+						0, false, false, true, initialPartitionSeparatesFinalsAndNonfinals);
+			} else {
+				minNwa = new MinimizeSevpa<>(autServices, predicateFactoryRefinement, operand, partition,
+						computeOldState2NewStateMapping, initialPartitionSeparatesFinalsAndNonfinals);
+			}
+			minimizationResult = new MinimizationResult(true, true, minNwa);
+			break;
+		}
 		case DFA_HOPCROFT_ARRAYS: {
 			minimizationResult = new MinimizationResult(true, true, new MinimizeDfaHopcroftArrays<>(autServices,
 					predicateFactoryRefinement, operand, partition, computeOldState2NewStateMapping));
@@ -379,12 +401,12 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 					public INestedWordAutomaton<LETTER, IPredicate> getResult() {
 						return operand;
 					}
-					
+
 					@Override
 					protected INestedWordAutomaton<LETTER, IPredicate> getOperand() {
 						return null;
 					}
-					
+
 					@Override
 					protected Pair<Boolean, String> checkResultHelper(
 							final IMinimizationCheckResultStateFactory<IPredicate> stateFactory)
