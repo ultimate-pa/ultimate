@@ -101,18 +101,6 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 */
 	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mPredecessorWasAccepting = new HashSet<>();
 
-	/**
-	 * Extended constructor.
-	 *
-	 * @param operand
-	 *            operand
-	 * @param predecessorOwasEmpty
-	 *            {code true} iff predecessor O was empty
-	 * @param userDefinedMaxRank
-	 *            user-defined maximal rank
-	 * @param useDoubleDeckers
-	 *            {code true} iff double deckers should be used
-	 */
 	public LevelRankingConstraint(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
 		super(operand);
