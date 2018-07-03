@@ -129,6 +129,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		return false;
 	}
 
+
 	/**
 	 * @param downState
 	 *            The down state.
@@ -176,15 +177,15 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 			}
 		}
 	}
-	
-	
+
+
 	@Override
-	public boolean isEligibleForVoluntaryRankDecrease(boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
-			boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, DoubleDecker<StateWithRankInfo<STATE>> dd) {
+	public boolean isEligibleForVoluntaryRankDecrease(final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+			final boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, final boolean omitConfluenceEnforcedDelayedRankDecrease, final DoubleDecker<StateWithRankInfo<STATE>> dd) {
 		boolean result;
 		result = super.isEligibleForVoluntaryRankDecrease(voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
-				voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting, dd);
-//		result &= meinZustätzlicherCheck();
+				voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting, false, dd);
+//		result &= (!omitConfluenceEnforcedDelayedRankDecrease)
 		return result;
 	}
 
