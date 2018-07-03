@@ -36,7 +36,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.EmptinessPetruchio;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -199,18 +197,18 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 *            content
 	 * @param isInitial
 	 *            {@code true} iff the place is initial
-	 * @param isFinal
+	 * @param isAccepting
 	 *            {@code true} iff the place is final
 	 * @return the newly added place
 	 */
 	@SuppressWarnings("squid:S2301")
-	public Place<S, C> addPlace(final C content, final boolean isInitial, final boolean isFinal) {
+	public Place<S, C> addPlace(final C content, final boolean isInitial, final boolean isAccepting) {
 		final Place<S, C> place = new Place<>(content);
 		mPlaces.add(place);
 		if (isInitial) {
 			mInitialPlaces.add(place);
 		}
-		if (isFinal) {
+		if (isAccepting) {
 			mAcceptingPlaces.add(place);
 		}
 		return place;
@@ -316,6 +314,10 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	@Override
 	public Marking<S, C> getInitialMarking() {
 		return new Marking<>(mInitialPlaces);
+	}
+	
+	public Set<Place<S, C>> getInitialPlaces() {
+		return mInitialPlaces;
 	}
 
 	public Collection<Place<S, C>> getAcceptingPlaces() {
