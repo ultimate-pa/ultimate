@@ -28,34 +28,37 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
  * Returns an Iterator that iterates over the powerset of a given set.
+ * <p>
+ * This class also works with mutlisets (sometimes called bags)
+ * when using {@link #next(Collection)} with a collection allowing for duplicates.
+ * Multiset {e, e} has the four subsets {}, {e}, {e}, {e, e}.
+ * 
+ * @param <E> Type of the base set's elements. 
+ * 
  * @author heizmann@informatik.uni-freiburg.de
+ * @author schaetzc@tf.uni-freiburg.de
  */
 public class PowersetIterator<E> implements Iterator<Set<E>> {
-	
+
 	private final List<E> mList;
-	private final int mPowersetSize;
-	private int mCurrentElement;
+	private final long mPowersetSize;
+	private long mCurrentElement;
 	
-	public PowersetIterator(Set<E> set) {
-		mList = new ArrayList<E>(set);
-		mPowersetSize = (int) Math.pow(2, set.size());
-		mCurrentElement = 0;
-	}
-	
-	/**
-	 * Warning behavior undefined if list does not represent a set (i.e., list
-	 * contains elements twice).
-	 */
-	public PowersetIterator(List<E> setAsList) {
-		mList = setAsList;
-		mPowersetSize = (int) Math.pow(2, setAsList.size());
+	public PowersetIterator(final Collection<E> set) {
+		mList = new ArrayList<>(set);
+		if (set.size() >= Long.SIZE - 1) {
+			throw new IllegalArgumentException("Powerset for " + set.size() + " elements is too large.");
+		}
+		mPowersetSize = 1L << set.size();
 		mCurrentElement = 0;
 	}
 		
@@ -64,17 +67,24 @@ public class PowersetIterator<E> implements Iterator<Set<E>> {
 		return mCurrentElement < mPowersetSize;
 	}
 
-	@Override
-	public Set<E> next() {
-		final Set<E> result = new HashSet<E>();
-		for (int i=0; i<mList.size(); i++) {
+	public <C extends Collection<E>> C next(final C resultContainer) {
+		if (!hasNext()) {
+			throw new NoSuchElementException();
+		}
+		for (int i = 0; i < mList.size(); i++) {
 			final boolean bitSet = BigInteger.valueOf(mCurrentElement).testBit(i); 
 			if (bitSet) {
-				result.add(mList.get(i));
+				resultContainer.add(mList.get(i));
 			}
 		}
 		mCurrentElement++;
-		return result;
+		return resultContainer;
+	}
+
+	@Override
+	@SuppressWarnings("squid:S2272")
+	public Set<E> next() {
+		return next(new HashSet<E>());
 	}
 
 	@Override
