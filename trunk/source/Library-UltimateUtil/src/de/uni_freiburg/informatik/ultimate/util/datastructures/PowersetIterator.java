@@ -41,8 +41,9 @@ import java.util.Set;
  * This class also works with mutlisets (sometimes called bags)
  * when using {@link #next(Collection)} with a collection allowing for duplicates.
  * Multiset {e, e} has the four subsets {}, {e}, {e}, {e, e}.
+ * With the normal {@link #next()} this would result in {}, {e}, {e}, {e}.
  * 
- * @param <E> Type of the base set's elements. 
+ * @param <E> Type of the base set's elements.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * @author schaetzc@tf.uni-freiburg.de
@@ -55,7 +56,7 @@ public class PowersetIterator<E> implements Iterator<Set<E>> {
 	
 	public PowersetIterator(final Collection<E> set) {
 		mList = new ArrayList<>(set);
-		if (set.size() >= Long.SIZE - 1) {
+		if (set.size() >= Long.SIZE) {
 			throw new IllegalArgumentException("Powerset for " + set.size() + " elements is too large.");
 		}
 		mPowersetSize = 1L << set.size();
@@ -64,7 +65,7 @@ public class PowersetIterator<E> implements Iterator<Set<E>> {
 		
 	@Override
 	public boolean hasNext() {
-		return mCurrentElement < mPowersetSize;
+		return mCurrentElement != mPowersetSize;
 	}
 
 	public <C extends Collection<E>> C next(final C resultContainer) {
@@ -72,13 +73,16 @@ public class PowersetIterator<E> implements Iterator<Set<E>> {
 			throw new NoSuchElementException();
 		}
 		for (int i = 0; i < mList.size(); i++) {
-			final boolean bitSet = BigInteger.valueOf(mCurrentElement).testBit(i); 
-			if (bitSet) {
+			if (isBitSet(mCurrentElement, i)) {
 				resultContainer.add(mList.get(i));
 			}
 		}
 		mCurrentElement++;
 		return resultContainer;
+	}
+	
+	private static boolean isBitSet(final long value, final int bitIndex) {
+		return bitIndex < Long.SIZE && (value & (1L << bitIndex)) != 0;
 	}
 
 	@Override
