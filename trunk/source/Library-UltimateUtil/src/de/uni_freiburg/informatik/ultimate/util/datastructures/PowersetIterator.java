@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2018 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
  * 
@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
