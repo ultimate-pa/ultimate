@@ -61,7 +61,7 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 		// directly; the controller will save one toolchain and release the last
 		// if it is overwritten
 
-		// if the current toolchain has no toolchain data, it is broken and should be released immediatly
+		// if the current toolchain has no toolchain data, it is broken and should be released immediately
 		if (mToolchain.getCurrentToolchainData() == null) {
 			super.releaseToolchain();
 		} else {
