@@ -51,6 +51,41 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LETTER, STATE> {
+	
+	/**
+	 * Elements of this enum are used to define when an individual state (resp.
+	 * {@link DoubleDecker}) inside a macro state is a candidate for a voluntary
+	 * decrease from an even to an odd rank. Note that voluntary rank decreases are
+	 * implicitly restricted to states that are non-accepting.
+	 * 
+	 */
+	public enum VoluntaryRankDecrease {
+		/**
+		 * Some predecessor of the individual state (resp.
+		 * {@link DoubleDecker}) is accepting.
+		 */
+		SOME_PREDECESSOR_IS_ACCEPTING,
+		/**
+		 * The set O of the predecessor macro state is empty.
+		 */
+		PREDECESSOR_HAS_EMPTY_O,
+		/**
+		 * The individual state (resp. {@link DoubleDecker}) would be in the set O of
+		 * the macro state. Hence a decrease the rank ensures that the state can escape
+		 * from the set O.
+		 */
+		ALLOWS_O_ESCAPE,
+		/**
+		 * Conjunction of two other elements.
+		 */
+		ALLOWS_O_ESCAPE_AND_SOME_PREDECESSOR_IS_ACCEPTING,
+		/**
+		 * No additional restriction to the implicit restrictions for voluntary rank
+		 * decreases.
+		 */
+		ALWAYS,
+	}
+	
 	protected final boolean mPredecessorOwasEmpty;
 
 	private final int mUserDefinedMaxRank;
