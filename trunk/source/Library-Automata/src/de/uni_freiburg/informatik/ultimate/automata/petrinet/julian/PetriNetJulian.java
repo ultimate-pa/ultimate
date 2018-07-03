@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.Em
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
 /**
  * A Petri net implementation.
@@ -379,5 +380,12 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	@Override
 	public boolean accepts(final Word<S> word) {
 		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * @return This petri net accepts the empty word.
+	 */
+	public boolean acceptsEmptyWord() {
+		return SetOperations.intersecting(mInitialPlaces, mAcceptingPlaces);
 	}
 }
