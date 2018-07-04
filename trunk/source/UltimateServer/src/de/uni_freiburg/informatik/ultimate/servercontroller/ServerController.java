@@ -155,8 +155,9 @@ public class ServerController implements IController<RunDefinition> {
 					mServer.setHelloMessage("Connection " + connectionNumber++);
 					initWrapper(core, availableToolchains);
 
-					if (false)
+					if (false) {
 						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
+					}
 				} catch (final CancellationException e) {
 					mLogger.error("Cancelled some Future", e);
 				} catch (final ExecutionException e) {
@@ -199,7 +200,7 @@ public class ServerController implements IController<RunDefinition> {
 
 		final Client<GeneratedMessageV3> client = mServer.waitForConnection(mListenTimeout, TimeUnit.SECONDS);
 		final CompletableFuture<IInteractiveQueue<Object>> commonFuture =
-				new CompletableFuture<IInteractiveQueue<Object>>();
+				new CompletableFuture<>();
 		mProtoInterface = client.createInteractiveInterface(commonFuture);
 
 		mConverterInitializer = new AbstractConverter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
@@ -222,18 +223,22 @@ public class ServerController implements IController<RunDefinition> {
 			requestAndLoadSettings(core);
 			requestAndLoadToolchain(core, tcFiles);
 
-			if (mInputFileQueue.isEmpty())
+			if (mInputFileQueue.isEmpty()) {
 				mInputFileQueue.offer(requestInput());
+			}
 
 			while (!mInputFileQueue.isEmpty()) {
 				if (mCla.ConfirmTC.getValue()) {
-					if (!mCommonInterface.request(Boolean.class, "Continue?:" + mInputFileQueue.peek().getName()).get())
+					if (!mCommonInterface.request(Boolean.class, "Continue?:" + mInputFileQueue.peek().getName())
+							.get()) {
 						continue;
+					}
 				}
 
 				mCurrentInputFile = mInputFileQueue.poll();
-				if (mCurrentInputFile == null)
+				if (mCurrentInputFile == null) {
 					break;
+				}
 
 				execToolchain(core, new File[] { mCurrentInputFile });
 				if (client.hasIOExceptionOccurred()) {
@@ -248,8 +253,9 @@ public class ServerController implements IController<RunDefinition> {
 			}
 			if (!mCommonInterface
 					.request(Boolean.class, "Input Files Processed:Ultimate has processed all input files. Continue?")
-					.get())
+					.get()) {
 				break;
+			}
 		}
 
 		mLogger.info("waiting for Client to Quit.");
@@ -298,10 +304,11 @@ public class ServerController implements IController<RunDefinition> {
 
 	private void handleIncomingInputPaths(final Path[] inputs) {
 		for (final Path input : inputs) {
-			if (!mInputFileQueue.offer(mCla.Input.getValue().toPath().resolve(input).toFile()))
+			if (!mInputFileQueue.offer(mCla.Input.getValue().toPath().resolve(input).toFile())) {
 				break;
-			else
+			} else {
 				mLogger.info("Client added " + input.toString());
+			}
 		}
 	}
 

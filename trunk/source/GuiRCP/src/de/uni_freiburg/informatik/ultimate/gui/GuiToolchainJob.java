@@ -30,10 +30,8 @@ import java.io.File;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
-import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
-import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class GuiToolchainJob extends DefaultToolchainJob {
@@ -43,29 +41,9 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 		super(name, core, controller, logger, inputFiles);
 	}
 
-	public GuiToolchainJob(final String name, final ICore<RunDefinition> core,
-			final IController<RunDefinition> controller, final ILogger logger,
-			final IToolchain<RunDefinition> toolchain) {
-		super(name, core, controller, logger, toolchain);
-	}
-
-	public GuiToolchainJob(final String name, final ICore<RunDefinition> core,
-			final IController<RunDefinition> controller, final ILogger logger, final IToolchainData<RunDefinition> data,
-			final File[] inputFiles) {
-		super(name, core, controller, logger, data, inputFiles);
-	}
-
 	@Override
-	protected void releaseToolchain() {
-		// save the current toolchain to the controller instead of releasing it
-		// directly; the controller will save one toolchain and release the last
-		// if it is overwritten
-
-		// if the current toolchain has no toolchain data, it is broken and should be released immediately
-		if (mToolchain.getCurrentToolchainData() == null) {
-			super.releaseToolchain();
-		} else {
-			((GuiController) mController).setAfterRerunCurrentToolchain(mToolchain);
-		}
+	protected void setToolchain(final IToolchain<RunDefinition> toolchain) {
+		super.setToolchain(toolchain);
+		((GuiController) mController).setCurrentToolchain(toolchain);
 	}
 }

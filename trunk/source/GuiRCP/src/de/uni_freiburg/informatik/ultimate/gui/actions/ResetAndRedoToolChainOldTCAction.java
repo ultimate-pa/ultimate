@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
-import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
+import de.uni_freiburg.informatik.ultimate.gui.GuiRerunFreshToolchainJob;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 /**
@@ -81,8 +81,8 @@ public class ResetAndRedoToolChainOldTCAction extends RunToolchainAction impleme
 			return;
 		}
 
-		final BasicToolchainJob tcj =
-				new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, toolchain, inputFiles);
+		final BasicToolchainJob tcj = new GuiRerunFreshToolchainJob("Processing Toolchain", mCore, mController, mLogger,
+				toolchain, inputFiles);
 		tcj.schedule();
 
 	}

@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -108,8 +109,8 @@ public class ToolchainManager {
 		}
 	}
 
-	public IToolchain<RunDefinition> requestToolchain() {
-		final Toolchain tc = new Toolchain(mCurrentId.incrementAndGet(), createModelManager());
+	public IToolchain<RunDefinition> requestToolchain(final File[] inputFiles) {
+		final Toolchain tc = new Toolchain(mCurrentId.incrementAndGet(), inputFiles, createModelManager());
 		mActiveToolchains.put(tc.getId(), tc);
 		return tc;
 	}
@@ -145,14 +146,15 @@ public class ToolchainManager {
 
 		private IToolchainData<RunDefinition> mToolchainData;
 		private final Map<File[], ISource> mFiles2Parser;
-		private File[] mInputFiles;
+		private final File[] mInputFiles;
 		private ToolchainWalker mToolchainWalker;
 
-		Toolchain(final long id, final IModelManager modelManager) {
+		Toolchain(final long id, final File[] inputFiles, final IModelManager modelManager) {
 			mId = id;
 			mModelManager = modelManager;
 			mBenchmark = new Benchmark();
 			mFiles2Parser = new LinkedHashMap<>();
+			mInputFiles = Objects.requireNonNull(inputFiles);
 		}
 
 		/*************************** IToolchain<RunDefinition> Implementation ****************************/
@@ -182,16 +184,6 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public void setInputFiles(final File[] files) {
-			if (files == null || files.length == 0) {
-				mInputFiles = new File[0];
-			} else {
-				final List<File> fileList = Arrays.stream(files).filter(a -> a != null).collect(Collectors.toList());
-				mInputFiles = fileList.toArray(new File[fileList.size()]);
-			}
-		}
-
-		@Override
 		public IToolchainData<RunDefinition> makeToolSelection(final IToolchainProgressMonitor monitor) {
 			final List<ITool> tools = mPluginFactory.getAllAvailableTools();
 
@@ -210,16 +202,16 @@ public class ToolchainManager {
 				final IToolchainData<RunDefinition> data) {
 			if (data == null) {
 				/* dialog was aborted */
-				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
+				mLogger.warn(getLogPrefix() + ": No toolchain found.");
 				return null;
 			}
 			if (!checkToolchain(data.getRootElement().getToolchain().getPluginOrSubchain())) {
-				mLogger.warn(getLogPrefix() + ": Invalid toolchain selection, returning null tools.");
+				mLogger.warn(getLogPrefix() + ": Invalid toolchain found.");
 				return null;
 			}
 			mToolchainData = data;
 			init(monitor);
-			mLogger.info(getLogPrefix() + ": Toolchain data selected.");
+			mLogger.info(getLogPrefix() + ": Toolchain selected.");
 			return data;
 		}
 
@@ -368,11 +360,6 @@ public class ToolchainManager {
 			return mId;
 		}
 
-		@Override
-		public boolean hasInputFiles() {
-			return mInputFiles != null;
-		}
-
 		/*************************** End IToolchain<RunDefinition> Implementation ****************************/
 
 		/**
@@ -488,6 +475,11 @@ public class ToolchainManager {
 
 		private String getLogPrefix() {
 			return "[Toolchain " + mId + "]";
+		}
+
+		@Override
+		public File[] getInputFiles() {
+			return mInputFiles;
 		}
 	}
 	/*************************** End ToolchainContainer Implementation ****************************/
