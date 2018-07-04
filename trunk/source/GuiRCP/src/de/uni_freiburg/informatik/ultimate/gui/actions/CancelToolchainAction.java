@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
@@ -81,7 +82,12 @@ public class CancelToolchainAction extends Action implements IWorkbenchAction {
 			mLogger.warn("Current toolchain has no services");
 			return;
 		}
-		services.getProgressMonitorService().cancelToolchain();
+		final IProgressMonitorService progressService = services.getProgressMonitorService();
+		if (progressService == null) {
+			// there is not toolchain running
+			return;
+		}
+		progressService.cancelToolchain();
 		mLogger.info("User requested toolchain termination....");
 	}
 
@@ -89,4 +95,5 @@ public class CancelToolchainAction extends Action implements IWorkbenchAction {
 	public void dispose() {
 		// do nothing
 	}
+
 }
