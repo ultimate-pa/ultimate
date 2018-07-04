@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IEpsilonNestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
@@ -283,7 +283,7 @@ terminal Object INITIAL_MARKINGS, ACCEPTING_PLACES;
  /* -------------------- Specification of non-terminals   -----------------------*/
 non terminal IdentifierListAST identifier_list_opt, identifier_list;
 // Automata types
-non terminal AutomatonAST nwa_definition, epsilon_nwa_definition, petrinetJulian_definition, aa_definition, ta_definition, fa_definition;
+non terminal AutomatonAST nwa_definition, epsilon_nwa_definition, boundedPetrinet_definition, aa_definition, ta_definition, fa_definition;
 // Alphabets
 non terminal IdentifierListAST alphabet, call_alphabet, return_alphabet, internal_alphabet;
 // States & Places
@@ -430,7 +430,7 @@ type	::=     INT
         |       FINITE_AUTOMATON
                 {: RESULT = INestedWordAutomaton.class; :}
         |       PETRINET_AUTOMATA         
-                {: RESULT = PetriNetJulian.class; :}
+                {: RESULT = BoundedPetriNet.class; :}
         |       BRANCHINGPROCESS_AUTOMATA         
                 {: RESULT = BranchingProcess.class; :}
         |       ALTERNATING_AUTOMATON         
@@ -467,8 +467,8 @@ variable_declaration ::=
                   m_automataDefinitions.addAutomaton(nwa);}
              else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"INestedWordAutomaton\""); }
              RESULT = null;:}
-        | type:t petrinetJulian_definition:petri
-          {: if (t.equals(PetriNetJulian.class))
+        | type:t boundedPetrinet_definition:petri
+          {: if (t.equals(BoundedPetriNet.class))
                 { petri.setType(t);
                   m_automataDefinitions.addAutomaton(petri);}
              else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"PetriNetAutomatonAST\""); }
@@ -1176,7 +1176,7 @@ transition ::= LPAREN:l identifier_list_opt:idList RPAREN:r
                {:RESULT = idList; :} ;                 
 
 
-petrinetJulian_definition ::= variable_identifier:id EQ LPAREN:l
+boundedPetrinet_definition ::= variable_identifier:id EQ LPAREN:l
                               alphabet:alpha COMMA
                               places:p COMMA
                               net_transitions:net_trans COMMA
@@ -1188,7 +1188,7 @@ petrinetJulian_definition ::= variable_identifier:id EQ LPAREN:l
                                  petri.setTransitions(net_trans.getNetTransitions());
                                  petri.setInitialMarkings(init_mark);
                                  petri.setAcceptingPlaces(acc_places.getIdentifierList());
-                                 m_varDeclarations.put(id, PetriNetJulian.class);
+                                 m_varDeclarations.put(id, BoundedPetriNet.class);
                             	 RESULT = petri; :}
                               ;
 
