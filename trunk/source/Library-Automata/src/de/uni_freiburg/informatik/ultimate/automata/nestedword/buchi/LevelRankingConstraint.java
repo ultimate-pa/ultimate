@@ -51,20 +51,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LETTER, STATE> {
-	
+
 	/**
 	 * Elements of this enum are used to define when an individual state (resp.
 	 * {@link DoubleDecker}) inside a macro state is a candidate for a voluntary
 	 * decrease from an even to an odd rank. Note that voluntary rank decreases are
 	 * implicitly restricted to states that are non-accepting.
-	 * 
+	 *
 	 */
 	public enum VoluntaryRankDecrease {
 		/**
-		 * Some predecessor of the individual state (resp.
-		 * {@link DoubleDecker}) is accepting.
+		 * All predecessor of the individual state (resp.
+		 * {@link DoubleDecker}) that have an even rank are accepting.
 		 */
-		SOME_PREDECESSOR_IS_ACCEPTING,
+		ALL_EVEN_PREDECESSORS_ARE_ACCEPTING,
 		/**
 		 * The set O of the predecessor macro state is empty.
 		 */
@@ -78,14 +78,37 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		/**
 		 * Conjunction of two other elements.
 		 */
-		ALLOWS_O_ESCAPE_AND_SOME_PREDECESSOR_IS_ACCEPTING,
+		ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING,
 		/**
 		 * No additional restriction to the implicit restrictions for voluntary rank
 		 * decreases.
 		 */
 		ALWAYS,
 	}
-	
+
+
+	public static <LETTER, STATE> boolean areAllEvenPredecessorsAccepting(final DoubleDecker<StateWithRankInfo<STATE>> dd, final LevelRankingConstraint<LETTER, STATE> lrc) {
+		if (lrc instanceof LevelRankingConstraintDrdCheck) {
+			return ((LevelRankingConstraintDrdCheck<LETTER, STATE>) lrc).nonAcceptingPredecessorsWithEvenRanksIsEmpty(dd.getDown(), dd.getUp().getState());
+		} else {
+			throw new UnsupportedOperationException("information unavailable");
+		}
+
+	}
+
+	public static <LETTER, STATE> boolean predecessorHasEmptyO(final DoubleDecker<StateWithRankInfo<STATE>> dd, final LevelRankingConstraint<LETTER, STATE> lrc) {
+		return lrc.predecessorHasEmptyO();
+	}
+
+	public static <LETTER, STATE> boolean allowsOEscape(final DoubleDecker<StateWithRankInfo<STATE>> dd, final LevelRankingConstraint<LETTER, STATE> lrc) {
+		return lrc.inO(dd.getDown(), dd.getUp().getState());
+	}
+
+
+
+
+
+
 	protected final boolean mPredecessorOwasEmpty;
 
 	private final int mUserDefinedMaxRank;
@@ -100,6 +123,12 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * LevelRankingGenerator.
 	 */
 	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mPredecessorWasAccepting = new HashSet<>();
+
+
+
+	public boolean predecessorHasEmptyO() {
+		return mPredecessorOwasEmpty;
+	}
 
 	public LevelRankingConstraint(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
