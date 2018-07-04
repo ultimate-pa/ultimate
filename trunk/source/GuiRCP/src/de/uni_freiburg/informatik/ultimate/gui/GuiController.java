@@ -123,7 +123,7 @@ public class GuiController implements IController<RunDefinition> {
 			mLogger.fatal("An exception occured", ex);
 			return returnCode;
 		} finally {
-			setAfterRerunCurrentToolchain(null);
+			setAndReleaseToolchain(null);
 			mDisplay.dispose();
 		}
 	}
@@ -212,10 +212,14 @@ public class GuiController implements IController<RunDefinition> {
 		return null;
 	}
 
-	public void setAfterRerunCurrentToolchain(final IToolchain<RunDefinition> toolchain) {
+	public void setAndReleaseToolchain(final IToolchain<RunDefinition> toolchain) {
 		if (mCurrentToolchain != null && !mCurrentToolchain.equals(toolchain)) {
 			mCore.releaseToolchain(mCurrentToolchain);
 		}
+		setCurrentToolchain(toolchain);
+	}
+
+	public void setCurrentToolchain(final IToolchain<RunDefinition> toolchain) {
 		mCurrentToolchain = toolchain;
 	}
 

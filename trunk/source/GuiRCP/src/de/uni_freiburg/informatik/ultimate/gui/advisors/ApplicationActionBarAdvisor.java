@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
+import de.uni_freiburg.informatik.ultimate.gui.actions.CancelToolchainAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSettingsAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSourceFilesAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainAction;
@@ -78,6 +79,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	private IWorkbenchAction mLoadSettings;
 	private IWorkbenchAction mSaveSettings;
 	private IWorkbenchAction mResetSettings;
+	private IWorkbenchAction mCancelToolchain;
 
 	public ApplicationActionBarAdvisor(final IActionBarConfigurer configurer, final ICore<RunDefinition> icc,
 			final GuiController controller, final ILogger logger) {
@@ -106,6 +108,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		mLoadSettings = registerAction(new LoadSettingsAction(window, mCore));
 		mSaveSettings = registerAction(new SaveSettingsAction(window, mCore));
 		mResetSettings = registerAction(new ResetSettingsAction(mCore));
+		mCancelToolchain = registerAction(new CancelToolchainAction(window, mController, mLogger));
 	}
 
 	private IWorkbenchAction registerAction(final IWorkbenchAction action) {
@@ -136,6 +139,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		settingsMenu.add(mLoadSettings);
 		settingsMenu.add(mSaveSettings);
 		settingsMenu.add(mResetSettings);
+		settingsMenu.add(mCancelToolchain);
 
 		final MenuManager helpMenu = new MenuManager("&Help", "help");
 		helpMenu.add(mAboutAction);
@@ -161,8 +165,6 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		toolBar.add(mLoadSettings);
 		toolBar.add(mSaveSettings);
 		toolBar.add(mResetSettings);
-
-		// toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-
+		toolBar.add(mCancelToolchain);
 	}
 }

@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.PEAJ2UPPAALConverter;
@@ -179,7 +179,7 @@ public class Audio {
 	}
 	
 	PhaseEventAutomata create4DC(final CounterTrace ct, final String name) {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		final PhaseEventAutomata pea = compiler.compile(name, new MCTrace(ct, null, null, null, false));
 		return abstractAutomaton(pea, ".*st[01W]*2.*");
 	}

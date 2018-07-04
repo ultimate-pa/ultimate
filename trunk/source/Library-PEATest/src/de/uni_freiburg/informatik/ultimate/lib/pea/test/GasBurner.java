@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PEATestAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.PEA2ARMCConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.SimplifyPEAs;
 import de.uni_freiburg.informatik.ultimate.lib.pea.util.SimpleSet;
@@ -85,7 +85,7 @@ public class GasBurner {
     }
 
     public void buildTimings() {
-	final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+	final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 	dc1 = compiler.compile("Prog1",
 			     new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(CDD.TRUE),

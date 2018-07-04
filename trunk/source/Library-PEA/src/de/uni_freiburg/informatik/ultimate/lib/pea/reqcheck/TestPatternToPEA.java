@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DOTWriter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALWriter;
@@ -227,7 +227,7 @@ public class TestPatternToPEA {
 	}
 
 	public void testSeeping() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata a1, a2, a3;
 
 		a1 = patternToPEA.universalityPattern("", P, Q, R, "Between");
@@ -253,7 +253,7 @@ public class TestPatternToPEA {
 	}
 
 	public void testSeeping2() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata a1, a2, a3;
 
 		a1 = patternToPEA.bndExistencePattern("", P, Q, R, "Before");
@@ -282,7 +282,7 @@ public class TestPatternToPEA {
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(P), new CounterTrace.DCPhase(S), new CounterTrace.DCPhase(S.negate()),
 				new CounterTrace.DCPhase() });
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		ctA = compiler.compile("inv1", ct); // ctA.dump();
 
 		final CounterTrace ct2 = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
@@ -294,7 +294,7 @@ public class TestPatternToPEA {
 	}
 
 	public void testSeeping3() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata a1, a2, a3;
 
 		a1 = patternToPEA.bndExistencePattern("", P, Q, R, "After");
@@ -325,7 +325,7 @@ public class TestPatternToPEA {
 	}
 
 	public void testVacuousProperty3() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata a1, a2, a3, aParallel;
 
 		a1 = patternToPEA.invariantPattern("", P, Q, R, S, "After");
@@ -348,7 +348,7 @@ public class TestPatternToPEA {
 
 	// shows the subgraphs when building up a prefix of a requirement
 	public void testVacuous() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata ctA, ctA2, ctA3;
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(P.and(S.negate())),
@@ -372,7 +372,7 @@ public class TestPatternToPEA {
 
 	// shows the subgraphs when building up a prefix of a requirement
 	public void testVacuous2() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata ctA, ctA2;
 		final PhaseEventAutomata ctA3;
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(P.negate()),
@@ -392,7 +392,7 @@ public class TestPatternToPEA {
 
 	// shows the subgraphs when building up a prefix of a requirement
 	public void testVacuous3() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata ctA, ctA2, ctA3;
 		// CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 		// new CounterTrace.DCPhase(),
@@ -423,7 +423,7 @@ public class TestPatternToPEA {
 
 	// shows the graphs for the case \neg(x;x;...;x\wedge y;true)
 	public void testVacuous5() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata ctA, ctA2, ctA3;
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				new CounterTrace.DCPhase(P), new CounterTrace.DCPhase(T.and(S)), new CounterTrace.DCPhase() });
@@ -449,7 +449,7 @@ public class TestPatternToPEA {
 		final CDD P = BooleanDecision.create("Signal_1");
 		final CDD Q = BooleanDecision.create("Signal_2");
 
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata ctA, ctA2, ctA3;
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 				// new CounterTrace.DCPhase(P.negate()),

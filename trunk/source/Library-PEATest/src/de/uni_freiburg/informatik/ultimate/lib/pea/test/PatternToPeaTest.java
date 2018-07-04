@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEANet;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DOTWriter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverterDOM;
@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 public class PatternToPeaTest {
 
-	private final Trace2PEACompiler mCompiler;
+	private final Trace2PeaCompiler mCompiler;
 	private final ILogger mLogger;
 	private final PatternToPEA mPatternToPea;
 
@@ -32,7 +32,7 @@ public class PatternToPeaTest {
 	public PatternToPeaTest() {
 		mLogger =
 				UltimateMocks.createUltimateServiceProviderMock().getLoggingService().getLogger(PatternToPeaTest.class);
-		mCompiler = new Trace2PEACompiler(mLogger);
+		mCompiler = new Trace2PeaCompiler(mLogger);
 		mPatternToPea = new PatternToPEA(mLogger);
 	}
 

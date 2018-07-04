@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.core.model;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 
 import javax.xml.bind.JAXBException;
@@ -66,13 +67,13 @@ public interface ICore<T> {
 	IToolchainData<T> createToolchainData();
 
 	/**
-	 * Request an {@link IToolchain} instance from the core in order to start a new toolchain.
+	 * Request an {@link IToolchain} instance for a set of input files from the core in order to start a new toolchain.
 	 *
 	 * Don't forget to release the toolchain after use.
 	 *
 	 * @return An {@link IToolchain} instance that can be initialized and started.
 	 */
-	IToolchain<T> requestToolchain();
+	IToolchain<T> requestToolchain(final File[] inputFiles);
 
 	/**
 	 * Release a previously requested {@link IToolchain} instance to invalidate all resources.

@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable.TypeErrorInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
@@ -145,6 +146,20 @@ public class Req2BoogieTranslator {
 		mReq2Automata = new ReqToPEA(mServices, mLogger).genPEA(requirements, genId2Bounds(init));
 		mSymboltable = new ReqSymboltable(mLogger, mReq2Automata, init);
 
+		if (!mSymboltable.getTypeErrors().isEmpty()) {
+			for (final Entry<String, TypeErrorInfo> entry : mSymboltable.getTypeErrors().entrySet()) {
+				final String msg = entry.getValue().getType().toString() + " of " + entry.getKey();
+				mPeaResultUtil.typeError(entry.getValue().getSource(), msg);
+			}
+
+			mServices.getProgressMonitorService().cancelToolchain();
+			mReq2Loc = null;
+			mUnitLocation = null;
+			mRtInconcistencyConditionGenerator = null;
+			mUnit = null;
+			return;
+		}
+
 		mReq2Loc = mSymboltable.getLocations();
 		mUnitLocation = generateUnitLocation(patterns);
 		final List<Declaration> decls = new ArrayList<>();
@@ -159,7 +174,6 @@ public class Req2BoogieTranslator {
 		}
 
 		decls.add(generateProcedures(init));
-
 		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
 	}
 

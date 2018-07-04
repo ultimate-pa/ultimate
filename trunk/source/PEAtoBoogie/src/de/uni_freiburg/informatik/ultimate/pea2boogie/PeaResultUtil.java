@@ -72,6 +72,10 @@ public class PeaResultUtil {
 		errorAndAbort(location, description, new SyntaxErrorResult(Activator.PLUGIN_ID, location, description));
 	}
 
+	public void typeError(final PatternType req, final String description) {
+		errorAndAbort(new RequirementTypeErrorResult(req.getId(), description));
+	}
+
 	public void intrinsicRtConsistencySuccess(final IElement element) {
 		final String plugin = Activator.PLUGIN_ID;
 		final IBacktranslationService translatorSequence = mServices.getBacktranslationService();
@@ -124,6 +128,12 @@ public class PeaResultUtil {
 		}
 	}
 
+	private void errorAndAbort(final IResult result) {
+		mLogger.error(result.getLongDescription());
+		report(result);
+		mServices.getProgressMonitorService().cancelToolchain();
+	}
+
 	private void errorAndAbort(final ILocation location, final String description, final IResult result) {
 		mLogger.error(location + ": " + description);
 		report(result);
@@ -132,6 +142,19 @@ public class PeaResultUtil {
 
 	private void report(final IResult result) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+	}
+
+	/**
+	 * Report type errors detected during creation of the symbol table. We abort if they occur.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static final class RequirementTypeErrorResult extends GenericResult {
+		public RequirementTypeErrorResult(final String id, final String reason) {
+			super(Activator.PLUGIN_ID, "Type error in requirement: " + id,
+					"Type error in requirement: " + id + " Reason: " + reason, Severity.ERROR);
+		}
 	}
 
 	/**

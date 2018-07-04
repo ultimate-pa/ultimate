@@ -29,19 +29,19 @@ package de.uni_freiburg.informatik.ultimate.gui.actions;
 
 import java.io.File;
 
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
-import de.uni_freiburg.informatik.ultimate.gui.GuiToolchainJob;
+import de.uni_freiburg.informatik.ultimate.gui.GuiRerunFreshToolchainJob;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 /**
@@ -67,39 +67,37 @@ public class ResetAndRedoToolChainAction extends RunToolchainAction implements I
 	 */
 	@Override
 	public final void run() {
-		final IToolchain<RunDefinition> tc = mController.getCurrentToolchain();
-		final BasicToolchainJob tcj;
-		if (tc != null) {
-			// we have a toolchain that we can rerun
-			tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, tc);
-
-		} else {
-			// we dont have a toolchain that we can rerun, but perhaps we can
-			// construct one from our preferences
-			tcj = getToolchainJobFromPreferences();
-			if (tcj == null) {
-				// ok, that also didnt work, we give up
-				MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
-						"Please run a toolchain before trying to " + "rerun it.");
-				return;
-			}
+		final Job job = createJob();
+		if (job == null) {
+			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
+					"Please run a toolchain before trying to rerun it.");
+			return;
 		}
 
-		tcj.schedule();
+		job.schedule();
 	}
 
-	private BasicToolchainJob getToolchainJobFromPreferences() {
-		final File[] lastInputFiles = getLastInputFiles();
-		if (lastInputFiles == null) {
+	private Job createJob() {
+		final IToolchain<RunDefinition> tc = mController.getCurrentToolchain();
+		final File[] files;
+		final IToolchainData<RunDefinition> data;
+		final String name;
+		if (tc != null) {
+			// we have a toolchain that we can rerun
+			data = tc.getCurrentToolchainData();
+			files = tc.getInputFiles();
+			name = "Re-running toolchain from last run";
+		} else {
+			files = getLastInputFiles();
+			data = getLastToolchainData();
+			name = "Re-running toolchain from preferences";
+		}
+		if (files == null) {
 			return null;
 		}
-
-		final IToolchainData<RunDefinition> toolchain = getLastToolchainData();
-
-		if (toolchain == null) {
+		if (data == null) {
 			return null;
 		}
-		return new GuiToolchainJob("Re-running toolchain from preferences...", mCore, mController, mLogger, toolchain,
-				lastInputFiles);
+		return new GuiRerunFreshToolchainJob(name, mCore, mController, mLogger, data, files);
 	}
 }

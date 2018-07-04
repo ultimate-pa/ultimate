@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 
+import java.io.File;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -37,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
+import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -56,22 +59,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 	}
 
 	@Override
-	protected IStatus runToolchainKeepToolchain(final IProgressMonitor monitor) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	protected IStatus runToolchainKeepInput(final IProgressMonitor monitor) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	protected IStatus rerunToolchain(final IProgressMonitor monitor) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	protected IStatus runToolchainDefault(final IProgressMonitor monitor) {
+	protected IStatus run(final IProgressMonitor monitor) {
 		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
 		IStatus returnstatus = Status.OK_STATUS;
 		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
@@ -79,24 +67,19 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 
 		try {
 			tpm.worked(1);
-			if ((mJobMode == ChainMode.RERUN || mJobMode == ChainMode.KEEP_TOOLCHAIN)) {
-				throw new UnsupportedOperationException("Rerun currently unsupported! Aborting...");
-			}
 			// all modes requires this
-			currentToolchain = mCore.requestToolchain();
+			currentToolchain = mCore.requestToolchain(new File[0]);
 
 			currentToolchain.init(tpm);
 			tpm.worked(1);
 			// only RUN_TOOLCHAIN and RUN_NEWTOOLCHAIN require this
 
-			if (mJobMode == ChainMode.DEFAULT || mJobMode == ChainMode.KEEP_INPUT) {
-				mChain = currentToolchain.makeToolSelection(tpm);
-				if (mChain == null) {
-					mLogger.warn("Toolchain selection failed, aborting...");
-					return new Status(IStatus.CANCEL, Activator.PLUGIN_ID, "Toolchain selection canceled");
-				}
-				setServices(mChain.getServices());
+			final IToolchainData<RunDefinition> chain = currentToolchain.makeToolSelection(tpm);
+			if (chain == null) {
+				mLogger.warn("Toolchain selection failed, aborting...");
+				return new Status(IStatus.CANCEL, Activator.PLUGIN_ID, "Toolchain selection canceled");
 			}
+			setServices(chain.getServices());
 
 			tpm.worked(1);
 			currentToolchain.addAST(mAST, mOutputDefinition);

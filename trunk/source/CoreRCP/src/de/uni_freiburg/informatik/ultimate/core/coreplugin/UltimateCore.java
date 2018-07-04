@@ -295,8 +295,8 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 	}
 
 	@Override
-	public IToolchain<RunDefinition> requestToolchain() {
-		return mToolchainManager.requestToolchain();
+	public IToolchain<RunDefinition> requestToolchain(final File[] inputFiles) {
+		return mToolchainManager.requestToolchain(inputFiles);
 	}
 
 	@Override

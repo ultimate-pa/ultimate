@@ -90,17 +90,23 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	}
 
 	/**
-	 * We say that a transition stems from a delayed rank decrease if there is a state which has even and odd
-	 * predecessors. Here, we neglect the highest odd if it is higher than the highest even rank. Rationale: Odd ranks
-	 * occur only in the beginning or as result of a voluntary rank decrease (if after a final state the rank was
-	 * decreased). This means that for each of these (delayed rank decrease) transitions there is also a transition
-	 * whose source is the level ranking in which the rank was not voluntarily decreased. This interferes with other
-	 * optimizations (e.g., tight level rankings, elastic level rankings) because there the not voluntarily decreased
-	 * path was lost if some state in between was not tight (resp. not elastic)
+	 * We say that a transition stems from a confluence-forced delayed rank decrease
+	 * if there is a state which has even and odd predecessors. Here, we neglect the
+	 * highest odd if it is higher than the highest even rank. Rationale: Odd ranks
+	 * occur only in the beginning or as result of a voluntary rank decrease (if
+	 * after a final state the rank was decreased). This means that for each of
+	 * these (delayed rank decrease) transitions there is also a transition whose
+	 * source is the level ranking in which the rank was not voluntarily decreased.
+	 * <br />
+	 * This interferes with most other optimizations (e.g., tight level rankings,
+	 * elastic level rankings, delayed rank decreases) because there the not
+	 * voluntarily decreased path was lost if some state in between was not tight
+	 * (resp. not elastic). <br />
+	 * This is not tested very well for other complementations than the NCSB
+	 * complementations.
 	 *
-	 * @return {@code true} iff it is a target of a delayed rank decrease
 	 */
-	public boolean isTargetOfDelayedRankDecrease() {
+	public boolean isTargetOfConfluenceForcedDelayedRankDecrease() {
 		if (isNonAcceptingSink()) {
 			return false;
 		}
@@ -128,6 +134,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		}
 		return false;
 	}
+
 
 	/**
 	 * @param downState
@@ -176,15 +183,15 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 			}
 		}
 	}
-	
-	
+
+
 	@Override
-	public boolean isEligibleForVoluntaryRankDecrease(boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
-			boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, DoubleDecker<StateWithRankInfo<STATE>> dd) {
+	public boolean isEligibleForVoluntaryRankDecrease(final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+			final boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, final boolean omitConfluenceEnforcedDelayedRankDecrease, final DoubleDecker<StateWithRankInfo<STATE>> dd) {
 		boolean result;
 		result = super.isEligibleForVoluntaryRankDecrease(voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
-				voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting, dd);
-//		result &= meinZustätzlicherCheck();
+				voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting, false, dd);
+//		result &= (!omitConfluenceEnforcedDelayedRankDecrease)
 		return result;
 	}
 

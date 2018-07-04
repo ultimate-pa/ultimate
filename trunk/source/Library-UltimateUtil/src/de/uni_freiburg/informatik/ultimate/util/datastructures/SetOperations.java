@@ -34,9 +34,6 @@ import java.util.Set;
 /**
  * Set operations like union and intersection.
  * Methods ending with "multi" work like multiset operation in case the result collection allows for duplicates.
- * <p>
- * For a method to check whether two collections are disjoint see
- * {@link Collections#disjoint(Collection, Collection)}.
  * 
  * @author schaetzc@tf.uni-freiburg.de
  */

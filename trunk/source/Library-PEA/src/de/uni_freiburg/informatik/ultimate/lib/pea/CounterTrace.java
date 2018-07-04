@@ -90,10 +90,10 @@ public class CounterTrace {
 		private final CDD mInvariant;
 		private final int mBoundType;
 		private final int mBound;
-		private final Set mForbid;
+		private final Set<String> mForbid;
 		private final boolean mAllowEmpty;
 
-		public DCPhase(final CDD ee, final CDD i, final int bt, final int b, final Set<?> f, final boolean empty) {
+		public DCPhase(final CDD ee, final CDD i, final int bt, final int b, final Set<String> f, final boolean empty) {
 			mEntryEvents = ee;
 			mInvariant = i;
 			mBound = b;
@@ -106,19 +106,19 @@ public class CounterTrace {
 			mAllowEmpty = empty;
 		}
 
-		public DCPhase(final CDD ee, final CDD i, final int bt, final int b, final Set<?> f) {
+		public DCPhase(final CDD ee, final CDD i, final int bt, final int b, final Set<String> f) {
 			this(ee, i, bt, b, f, false);
 		}
 
-		public DCPhase(final CDD i, final int bt, final int b, final Set<?> f) {
+		public DCPhase(final CDD i, final int bt, final int b, final Set<String> f) {
 			this(CDD.TRUE, i, bt, b, f, false);
 		}
 
-		public DCPhase(final CDD ee, final CDD i, final Set<?> f) {
+		public DCPhase(final CDD ee, final CDD i, final Set<String> f) {
 			this(ee, i, BOUND_NONE, 0, f, false);
 		}
 
-		public DCPhase(final CDD i, final Set<?> f) {
+		public DCPhase(final CDD i, final Set<String> f) {
 			this(CDD.TRUE, i, BOUND_NONE, 0, f, false);
 		}
 
@@ -222,7 +222,7 @@ public class CounterTrace {
 		/**
 		 * @return Returns the forbid.
 		 */
-		public Set getForbid() {
+		public Set<String> getForbid() {
 			return mForbid;
 		}
 

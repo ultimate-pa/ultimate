@@ -161,6 +161,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term constructPrimedStateInvariant(final Map<PatternType, PhaseEventAutomata> req2Automata) {
+
 		final List<CDD> primedStateInvariants =
 				req2Automata.entrySet().stream().filter(a -> a.getValue().getPhases().length == 1)
 						.map(a -> a.getValue().getPhases()[0].getStateInvariant().prime()).collect(Collectors.toList());

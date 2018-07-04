@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWra
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain;
@@ -55,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  */
 public class DefaultToolchainJob extends BasicToolchainJob {
 
-	private File[] mInputFiles;
+	protected File[] mInputFiles;
 	protected IToolchain<RunDefinition> mToolchain;
 
 	/**
@@ -75,8 +74,10 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
-		setInputFiles(input);
-		mJobMode = ChainMode.DEFAULT;
+		if (input == null || input.length == 0) {
+			throw new IllegalArgumentException("No input files given");
+		}
+		mInputFiles = input;
 	}
 
 	/**
@@ -95,40 +96,11 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		setUser(true);
 		setSystem(false);
 		setToolchain(toolchain);
-		mJobMode = ChainMode.RERUN;
 	}
 
-	/**
-	 * Use this constructor to run a toolchain based on the given {@link ToolchainData} definition.
-	 *
-	 * @param name
-	 * @param core
-	 * @param controller
-	 * @param logger
-	 * @param data
-	 * @param input
-	 */
-	public DefaultToolchainJob(final String name, final ICore<RunDefinition> core,
-			final IController<RunDefinition> controller, final ILogger logger, final IToolchainData<RunDefinition> data,
-			final File[] input) {
-		super(name, core, controller, logger);
-		setUser(true);
-		setSystem(false);
-		setInputFiles(input);
-		mChain = data;
-		mJobMode = ChainMode.DEFAULT;
-	}
-
-	private void setToolchain(final IToolchain<RunDefinition> toolchain) {
+	protected void setToolchain(final IToolchain<RunDefinition> toolchain) {
 		assert toolchain != null;
 		mToolchain = toolchain;
-	}
-
-	private void setInputFiles(final File[] inputFiles) {
-		if (inputFiles == null || inputFiles.length == 0) {
-			throw new IllegalArgumentException("No input files given");
-		}
-		mInputFiles = inputFiles;
 	}
 
 	/**
@@ -142,57 +114,15 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	}
 
 	@Override
-	protected IStatus runToolchainKeepToolchain(final IProgressMonitor monitor) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	protected IStatus runToolchainKeepInput(final IProgressMonitor monitor) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	protected IStatus rerunToolchain(final IProgressMonitor monitor) {
+	protected IStatus run(final IProgressMonitor monitor) {
 		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
 		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
 
 		try {
-			mToolchain.init(tpm);
-			tpm.worked(1);
-
-			final IToolchainData<RunDefinition> data = mToolchain.getCurrentToolchainData();
-			if (data == null) {
-				return Status.CANCEL_STATUS;
-			}
-			setServices(data.getServices());
-			tpm.worked(1);
-
-			mToolchain.runParsers();
-			tpm.worked(1);
-
-			return convert(mToolchain.processToolchain(tpm));
-
-		} catch (final Throwable e) {
-			return handleException(e);
-		} finally {
-			tpm.done();
-			releaseToolchain();
-		}
-	}
-
-	@Override
-	protected IStatus runToolchainDefault(final IProgressMonitor monitor) {
-		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
-		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
-
-		try {
-			setToolchain(mCore.requestToolchain());
+			setToolchain(mCore.requestToolchain(mInputFiles));
 			tpm.worked(1);
 
 			mToolchain.init(tpm);
-			tpm.worked(1);
-
-			mToolchain.setInputFiles(mInputFiles);
 			tpm.worked(1);
 
 			if (!mToolchain.initializeParsers()) {
@@ -200,19 +130,13 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			}
 			tpm.worked(1);
 
-			if (mChain == null) {
-				mChain = mToolchain.makeToolSelection(tpm);
-			} else {
-				// this may happen if someone provided us with a preselected
-				// toolchain
-				mChain = mToolchain.setToolSelection(tpm, mChain);
-			}
-			if (mChain == null) {
+			final IToolchainData<RunDefinition> chain = mToolchain.makeToolSelection(tpm);
+			if (chain == null) {
 				mLogger.fatal("Toolchain selection failed, aborting...");
 				return new Status(IStatus.CANCEL, Activator.PLUGIN_ID, IStatus.CANCEL, "Toolchain selection canceled",
 						null);
 			}
-			setServices(mChain.getServices());
+			setServices(chain.getServices());
 			tpm.worked(1);
 
 			mToolchain.runParsers();
@@ -227,7 +151,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		}
 	}
 
-	private IStatus handleException(final Throwable e) {
+	protected IStatus handleException(final Throwable e) {
 		if (e == null) {
 			mLogger.fatal("The toolchain wants to handle an exception, but provided nothing");
 		} else if (mLogger.isDebugEnabled()) {

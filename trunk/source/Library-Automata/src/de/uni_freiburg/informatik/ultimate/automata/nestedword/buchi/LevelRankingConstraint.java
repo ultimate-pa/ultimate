@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>mLevelRanking represents an upper bound for ranks of LevelRankingStates defined by this LevelRankingConstraints.
  * <li>A DoubleDecker is in LevelRankingState.mO iff (it is in LevelRankingConstraints.mO and it has an even level rank)
  * </ul>
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -51,6 +51,41 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LETTER, STATE> {
+	
+	/**
+	 * Elements of this enum are used to define when an individual state (resp.
+	 * {@link DoubleDecker}) inside a macro state is a candidate for a voluntary
+	 * decrease from an even to an odd rank. Note that voluntary rank decreases are
+	 * implicitly restricted to states that are non-accepting.
+	 * 
+	 */
+	public enum VoluntaryRankDecrease {
+		/**
+		 * Some predecessor of the individual state (resp.
+		 * {@link DoubleDecker}) is accepting.
+		 */
+		SOME_PREDECESSOR_IS_ACCEPTING,
+		/**
+		 * The set O of the predecessor macro state is empty.
+		 */
+		PREDECESSOR_HAS_EMPTY_O,
+		/**
+		 * The individual state (resp. {@link DoubleDecker}) would be in the set O of
+		 * the macro state. Hence a decrease the rank ensures that the state can escape
+		 * from the set O.
+		 */
+		ALLOWS_O_ESCAPE,
+		/**
+		 * Conjunction of two other elements.
+		 */
+		ALLOWS_O_ESCAPE_AND_SOME_PREDECESSOR_IS_ACCEPTING,
+		/**
+		 * No additional restriction to the implicit restrictions for voluntary rank
+		 * decreases.
+		 */
+		ALWAYS,
+	}
+	
 	protected final boolean mPredecessorOwasEmpty;
 
 	private final int mUserDefinedMaxRank;
@@ -66,18 +101,6 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 */
 	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mPredecessorWasAccepting = new HashSet<>();
 
-	/**
-	 * Extended constructor.
-	 * 
-	 * @param operand
-	 *            operand
-	 * @param predecessorOwasEmpty
-	 *            {code true} iff predecessor O was empty
-	 * @param userDefinedMaxRank
-	 *            user-defined maximal rank
-	 * @param useDoubleDeckers
-	 *            {code true} iff double deckers should be used
-	 */
 	public LevelRankingConstraint(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
 		super(operand);
@@ -237,7 +260,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
 		return mPredecessorWasAccepting;
 	}
-	
+
 //	public List<DoubleDecker<StateWithRankInfo<STATE>>> getDoubleDeckersEligibleForVoluntaryRankDecrease(
 //			boolean voluntaryRankDecreaseOnlyIfPredecessorWasAccepting,
 //			boolean volutaryRankDecreaseOnlyIfEnablesEscapeFromO) {
@@ -251,17 +274,21 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 //		}
 //		return result;
 //	}
-	
-	public boolean isEligibleForVoluntaryRankDecrease(boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
-			boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, DoubleDecker<StateWithRankInfo<STATE>> dd) {
+
+	public boolean isEligibleForVoluntaryRankDecrease(final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+			final boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, final boolean omitConfluenceEnforcedDelayedRankDecrease,
+			final DoubleDecker<StateWithRankInfo<STATE>> dd) {
+		if (omitConfluenceEnforcedDelayedRankDecrease) {
+			throw new AssertionError("unable to check, use subclass");
+		}
 		boolean isEligible;
 		// voluntary decrease makes only sense for even ranks
 		isEligible = isEven(dd.getUp().getRank());
 		// if state is accepting we are not allowed to decrease to an odd rank
 		isEligible &= mOperand.isFinal(dd.getUp().getState());
-		// optimization used in all effective complementations: do voluntary 
+		// optimization used in all effective complementations: do voluntary
 		// decrease only immediately after some predecessor was visiting an accepting
-		// state 
+		// state
 		isEligible &= (!voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting
 				|| mPredecessorWasAccepting.contains(dd));
 		// optimization used in some effective complementations: do voluntary
@@ -271,6 +298,6 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		isEligible &= (!voluntaryRankDecreaseOnlyIfEnablesEscapeFromO || dd.getUp().isInO());
 		return isEligible;
 	}
-	
-	
+
+
 }

@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.TimedAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 
 /**
  * Class to create an automaton from a counter example trace.
@@ -279,7 +279,7 @@ public class Elevator {
 	}
 
 	public void buildDCPart() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata dc1, dc2, dc3, dc4, dc5, dc6;
 		dc1 = compiler.compile("DC1",
 		        new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(CDD.TRUE),

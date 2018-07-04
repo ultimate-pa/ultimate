@@ -334,7 +334,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		 * (at some point in time where this run left an accepting state).
 		 * Hence these transitions are superficial. 
 		 */
-		if (constraint.isTargetOfDelayedRankDecrease()) {
+		if (constraint.isTargetOfConfluenceForcedDelayedRankDecrease()) {
 			// in this case we do not want to have successor states
 			return Collections.emptyList();
 		}

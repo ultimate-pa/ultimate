@@ -37,41 +37,15 @@ import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
-import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public abstract class BasicToolchainJob extends Job {
 
-	protected enum ChainMode {
-		/**
-		 * Run fresh toolchain
-		 */
-		DEFAULT,
-
-		/**
-		 * Run new toolchain on old input files
-		 */
-		KEEP_INPUT,
-
-		/**
-		 * Run old toolchain on old input files
-		 */
-		RERUN,
-
-		/**
-		 * Run old toolchain on new input files
-		 */
-		@Deprecated
-		KEEP_TOOLCHAIN,
-	}
-
-	protected ChainMode mJobMode;
 	protected ICore<RunDefinition> mCore;
 	protected IController<RunDefinition> mController;
 	protected ILogger mLogger;
-	protected IToolchainData<RunDefinition> mChain;
 	protected IUltimateServiceProvider mServices;
 	private long mDeadline;
 
@@ -81,7 +55,6 @@ public abstract class BasicToolchainJob extends Job {
 		assert logger != null;
 		mCore = core;
 		mController = controller;
-		mJobMode = ChainMode.DEFAULT;
 		mLogger = logger;
 		mDeadline = -1;
 	}
@@ -126,28 +99,7 @@ public abstract class BasicToolchainJob extends Job {
 	}
 
 	@Override
-	protected final IStatus run(final IProgressMonitor monitor) {
-		switch (mJobMode) {
-		case RERUN:
-			return rerunToolchain(monitor);
-		case DEFAULT:
-			return runToolchainDefault(monitor);
-		case KEEP_INPUT:
-			return runToolchainKeepInput(monitor);
-		case KEEP_TOOLCHAIN:
-			return runToolchainKeepToolchain(monitor);
-		default:
-			throw new UnsupportedOperationException();
-		}
-	}
-
-	protected abstract IStatus runToolchainKeepToolchain(IProgressMonitor monitor);
-
-	protected abstract IStatus runToolchainKeepInput(IProgressMonitor monitor);
-
-	protected abstract IStatus rerunToolchain(IProgressMonitor monitor);
-
-	protected abstract IStatus runToolchainDefault(IProgressMonitor monitor);
+	protected abstract IStatus run(final IProgressMonitor monitor);
 
 	protected IStatus convert(final ReturnCode result) {
 		switch (result) {
