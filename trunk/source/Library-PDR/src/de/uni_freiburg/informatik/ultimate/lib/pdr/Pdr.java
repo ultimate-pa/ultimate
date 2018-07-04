@@ -107,6 +107,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		CHANGED, UNCHANGED
 	}
 
+	private static final boolean USE_INTERPOLATION = false;
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final Map<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> mFrames;
@@ -350,33 +352,18 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 						final IPredicate prePred = mPredicateUnifier.getOrConstructPredicate(pre);
 
-						// TODO: This is not as easy as it looks have a look at PredicateUtils.isInductiveHelper to see
-						// how a predicate and a transformula can be combined in an and
+						final IPredicate newPO;
+						if (USE_INTERPOLATION) {
+							newPO = getInterpolant(predecessorTransition, predecessorFrame, prePred);
+						} else {
+							newPO = prePred;
+						}
 
-						// final Term third = SmtUtils.and(mScript.getScript(), predecessorFrame.getFormula(),
-						// predecessorTransition.getTransformula().getFormula());
-
-						// final Term second = andPredTf(mScript.getScript(), predecessorFrame,
-						// predecessorTransition.getTransformula(), mCsToolkit.getModifiableGlobalsTable()
-						// .getModifiedBoogieVars(predecessorTransition.getPrecedingProcedure()));
-						//
-						// final IPredicate secondPred = mPredicateUnifier.getOrConstructPredicate(second);
-
-						// make sure that the terms you give to the utility are closed , i.e., do not have any free vars
-						// lefts
-						// final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(),
-						// prePred.getClosedFormula(), secondPred.getClosedFormula());
-						//
-						// mLogger.debug("interpolating");
-						//
-						// final IPredicate interpolatedPreCondition =
-						// mPredicateUnifier.getOrConstructPredicate(interpolPair.getSecond());
-
-						addProofObligation(proofObligations, proofObligation, level, predecessor, prePred);
+						addProofObligation(proofObligations, proofObligation, level, predecessor, newPO);
 
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug(
-									String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition, prePred));
+									String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition, newPO));
 						}
 
 					} else if (result == Validity.VALID) {
@@ -468,6 +455,38 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		}
 		return true;
 
+	}
+
+	private IPredicate getInterpolant(final IcfgEdge predecessorTransition, final IPredicate predecessorFrame,
+			final IPredicate prePred) throws AssertionError {
+		// TODO: This is not as easy as it looks have a look at PredicateUtils.isInductiveHelper to see
+		// how a predicate and a transformula can be combined in an and
+
+		final Term second = andPredTf(mScript.getScript(), predecessorFrame, predecessorTransition.getTransformula(),
+				mCsToolkit.getModifiableGlobalsTable()
+						.getModifiedBoogieVars(predecessorTransition.getPrecedingProcedure()));
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(String.format("Converted frame %s and transformula %s to %s", predecessorFrame,
+					predecessorTransition.getTransformula(), second));
+		}
+
+		final IPredicate secondPred = mPredicateUnifier.getOrConstructPredicate(second);
+
+		// make sure that the terms you give to the utility are closed , i.e., do not have any free vars
+		// lefts
+		final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(),
+				prePred.getClosedFormula(), secondPred.getClosedFormula());
+
+		if (interpolPair.getFirst() != LBool.UNSAT) {
+			throw new AssertionError(String.format("Wrong interpolation query: %s  and  %s", prePred.getClosedFormula(),
+					secondPred.getClosedFormula()));
+		}
+
+		mLogger.debug("interpolating");
+
+		final IPredicate interpolatedPreCondition = mPredicateUnifier.getOrConstructPredicate(interpolPair.getSecond());
+		return interpolatedPreCondition;
 	}
 
 	/**

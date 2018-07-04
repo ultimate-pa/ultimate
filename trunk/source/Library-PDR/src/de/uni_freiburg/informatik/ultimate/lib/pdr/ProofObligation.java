@@ -76,4 +76,9 @@ public final class ProofObligation {
 		return mReason;
 	}
 
+	@Override
+	public String toString() {
+		return getToBeBlocked().toString();
+	}
+
 }
