@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEATestAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.PEA2ARMCConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.SimplifyPEAs;
 
@@ -167,7 +167,7 @@ public class ElevatorInf {
 	public void buildDCPart() {
 		final CDD passed = EventDecision.create("passed");
 		final CDD cgeq = BooleanDecision.create("current <= goal").and(BooleanDecision.create("goal <= current"));
-		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+		final Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 		PhaseEventAutomata dc1, dc2;
 		dc1 = compiler.compile("passed_not_too_fast",
 		        new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(CDD.TRUE),

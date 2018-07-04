@@ -9,14 +9,14 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.EventDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DOTWriter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALWriter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace;
 
 public class TestCase {
-	Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
+	Trace2PeaCompiler compiler = new Trace2PeaCompiler(ILogger.getLogger(""));
 	CDD entry = EventDecision.create("S1");
 	CDD exit = EventDecision.create("S2");
 	CDD missing = CDD.TRUE;

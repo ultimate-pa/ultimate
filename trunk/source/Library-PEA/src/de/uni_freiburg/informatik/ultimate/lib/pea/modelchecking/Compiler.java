@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PEANet;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PEATestAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseSet;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 
 /**
@@ -103,7 +103,7 @@ public class Compiler {
 
 	private TestForm2MCFormCompiler mcFormCompiler = null;
 	private MCTraceXML2JConverter traceConverter = null;
-	private Trace2PEACompiler traceCompiler = null;
+	private Trace2PeaCompiler traceCompiler = null;
 	private PEAJ2XMLConverter peaConverter = null;
 
 	private HashMap<Transition, PhaseSet> trans2phases[];
@@ -122,7 +122,7 @@ public class Compiler {
 		mLogger = logger;
 		mcFormCompiler = new TestForm2MCFormCompiler();
 		traceConverter = new MCTraceXML2JConverter(useZDecision);
-		traceCompiler = new Trace2PEACompiler(logger);
+		traceCompiler = new Trace2PeaCompiler(logger);
 		peaConverter = new PEAJ2XMLConverter();
 		new XMLWriter();
 	}
@@ -214,7 +214,7 @@ public class Compiler {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.TestForm2MCFormCompiler
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTraceXML2JConverter
-	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler
+	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.PEAJ2XMLConverter
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.XMLWriter
 	 */

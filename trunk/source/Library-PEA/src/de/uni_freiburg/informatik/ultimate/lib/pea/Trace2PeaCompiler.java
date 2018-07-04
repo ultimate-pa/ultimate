@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace;
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace
  * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace
  */
-public class Trace2PEACompiler {
+public class Trace2PeaCompiler {
 
 	private static final String FINAL = "FINAL";
 	private static final String START = "START";
@@ -101,7 +101,7 @@ public class Trace2PEACompiler {
 	 * @see ILogger
 	 * @see PropertyConfigurator
 	 */
-	public Trace2PEACompiler(final ILogger logger, final String loggerName) {
+	public Trace2PeaCompiler(final ILogger logger, final String loggerName) {
 		mLogger = logger;
 
 		mAllPhases = new TreeMap<>();
@@ -113,8 +113,8 @@ public class Trace2PEACompiler {
 	/**
 	 * Initialises the Trace2PEACompiler object with the default logger.
 	 */
-	public Trace2PEACompiler(final ILogger logger) {
-		this(logger, Trace2PEACompiler.DEFAULT_LOGGER);
+	public Trace2PeaCompiler(final ILogger logger) {
+		this(logger, Trace2PeaCompiler.DEFAULT_LOGGER);
 	}
 
 	/**
@@ -689,7 +689,7 @@ public class Trace2PEACompiler {
 			 */
 
 			mLogger.debug("Trying to add transitions from start state");
-			start = new Phase(Trace2PEACompiler.START + "_" + mName, CDD.TRUE, CDD.TRUE);
+			start = new Phase(Trace2PeaCompiler.START + "_" + mName, CDD.TRUE, CDD.TRUE);
 			start.addTransition(start, mNoSyncEvent.prime(), new String[0]);
 			for (int i = 0; i < mCountertrace.getPhases().length; i++) {
 				if ((mCanPossiblySeep & 1 << i) == 0) {
@@ -807,7 +807,7 @@ public class Trace2PEACompiler {
 	}
 
 	private void addVariables(final CDD cdd, final HashMap<String, String> variables, final HashSet<String> events) {
-		final Decision dec = cdd.getDecision();
+		final Decision<?> dec = cdd.getDecision();
 		if (dec == null) {
 			// may happen for true/false phases
 		} else if (dec instanceof EventDecision) {
@@ -855,7 +855,7 @@ public class Trace2PEACompiler {
 	 * @see de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.MCTrace
 	 */
 	private Phase buildExitSyncTransitions() {
-		final Phase exit = new Phase(Trace2PEACompiler.FINAL + "_" + mName, CDD.TRUE, CDD.TRUE);
+		final Phase exit = new Phase(Trace2PeaCompiler.FINAL + "_" + mName, CDD.TRUE, CDD.TRUE);
 		final String[] noResets = {};
 		exit.addTransition(exit, mNoSyncEvent.prime(), noResets);
 

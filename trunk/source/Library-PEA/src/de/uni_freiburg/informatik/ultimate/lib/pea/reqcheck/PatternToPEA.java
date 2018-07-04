@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompiler;
 
 /**
  * The class <code>PatternToPEA</code> offers functionality to transform requirements, formalized as instantiated
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PEACompiler;
  */
 
 public class PatternToPEA {
-	private final Trace2PEACompiler mCompiler;
+	private final Trace2PeaCompiler mCompiler;
 	private final ILogger mLogger;
 
 	// this index is needed so that the counters in the peas for the quantitative patterns
@@ -55,7 +55,7 @@ public class PatternToPEA {
 
 	public PatternToPEA(final ILogger logger) {
 		mLogger = logger;
-		mCompiler = new Trace2PEACompiler(logger);
+		mCompiler = new Trace2PeaCompiler(logger);
 	}
 
 	public PhaseEventAutomata compile(final String id, final CounterTrace ct) {
