@@ -3,6 +3,7 @@ if [ ! "$1" ]; then
     echo "First argument has to be the file that we analyze"
     exit
 fi
+
 mem=$((STAREXEC_MAX_MEM - 4096))
 
 if [[ $mem -le 0 ]]; then
@@ -10,17 +11,18 @@ if [[ $mem -le 0 ]]; then
     exit 1
 fi
 
-java  -Dosgi.configuration.area=config/  -Xmx${mem}M -Xss4m -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar  -data "$TMPDIR" -tc ./../TreeAutomizer.xml -s ./../TreeAutomizerHopcroftMinimization.epf -i "$1" &> output.txt
 
-RESULT_UNSAT=`cat output.txt | grep "TreeAutomizerUnsatResult"`
-RESULT_SAT=`cat output.txt | grep "TreeAutomizerSatResult"`
+java  -Dosgi.configuration.area=config/  -Xmx${mem}M -Xss4m -jar ./../Ultimate/plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar  -data "$TMPDIR" -tc ./../AutomizerCHC_wBE.xml -s ./../AutomizerCHC_Goto.epf -i "$1" &> output.txt
+
+RESULT_UNSAFE=`cat output.txt | grep "CounterExampleResult"`
+RESULT_SAFE=`cat output.txt | grep "PositiveResult"`
 RESULT_UNKNOWN_EXCEPTION=`cat output.txt | grep "The toolchain threw an exception"`
 
-if [ "$RESULT_SAT" ]; then
+if [ "$RESULT_SAFE" ]; then
 	echo "sat"
 fi
     
-if [ "$RESULT_UNSAT" ]; then
+if [ "$RESULT_UNSAFE" ]; then
 	echo "unsat"
 fi
     
@@ -31,6 +33,4 @@ if [ "$RESULT_UNKNOWN_EXCEPTION" ]; then
 fi
 
 
-#echo ""
-#cat output.txt
 
