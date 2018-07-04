@@ -183,9 +183,13 @@ public class ReqSymboltable {
 	}
 
 	private void addTypeError(final String name, final TypeErrorInfo typeErrorInfo) {
-		// TODO Auto-generated method stub
-		mLogger.error("Type error " + typeErrorInfo.mType + " for " + name);
-
+		final TypeErrorInfo oldTypeError = mId2TypeErrors.put(name, typeErrorInfo);
+		if (oldTypeError != null) {
+			mId2TypeErrors.put(name, oldTypeError.merge(typeErrorInfo));
+			mLogger.error("Additional type error " + typeErrorInfo.mType + " for " + name);
+		} else {
+			mLogger.error("Type error " + typeErrorInfo.mType + " for " + name);
+		}
 	}
 
 	private static BoogiePrimitiveType toPrimitiveType(final String type) {
@@ -294,16 +298,35 @@ public class ReqSymboltable {
 		return Collections.unmodifiableSet(mConstVars);
 	}
 
+	public Map<String, TypeErrorInfo> getTypeErrors() {
+		return mId2TypeErrors;
+	}
+
 	public enum TypeErrorType {
 		DUPLICATE_DECLARATION, UNKNOWN_TYPE, NO_DURATION_EXPRESSION, NO_DURATION_VALUE, NONE_TYPE, MISSING_DECLARATION
 	}
 
-	private static final class TypeErrorInfo {
+	public static final class TypeErrorInfo {
 
 		private final TypeErrorType mType;
+		private final PatternType mSource;
 
 		public TypeErrorInfo(final TypeErrorType type, final PatternType req) {
 			mType = type;
+			mSource = req;
+		}
+
+		public TypeErrorInfo merge(final TypeErrorInfo oldTypeError) {
+			// TODO What should happen if we have more than one type error in one location?
+			return this;
+		}
+
+		public PatternType getSource() {
+			return mSource;
+		}
+
+		public TypeErrorType getType() {
+			return mType;
 		}
 
 	}

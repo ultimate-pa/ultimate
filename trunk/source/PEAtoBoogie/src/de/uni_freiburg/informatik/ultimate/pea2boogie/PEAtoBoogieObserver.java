@@ -73,7 +73,9 @@ public class PEAtoBoogieObserver extends BaseObserver {
 
 		final Unit unit = new Req2BoogieTranslator(mServices, mStorage, mLogger, vacuityCheck, combinationNum,
 				checkConsistency, reportTrivialRtConsistency, patterns).getUnit();
-		new PatternContainer(patterns).annotate(unit);
+		if (unit != null) {
+			new PatternContainer(patterns).annotate(unit);
+		}
 		return unit;
 	}
 }
