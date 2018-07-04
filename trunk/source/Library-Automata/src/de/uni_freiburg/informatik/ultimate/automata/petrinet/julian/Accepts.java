@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -121,21 +122,10 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 			throw new IllegalArgumentException("Symbol " + symbol + " not in alphabet");
 		}
 
-		final HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol = new HashSet<>();
-
-		// get all active transitions which are labeled with the next symbol
-		for (final Place<S, C> place : marking) {
-			for (final ITransition<S, C> transition : place.getSuccessors()) {
-				if (marking.isTransitionEnabled(transition) && transition.getSymbol().equals(symbol)) {
-					activeTransitionsWithTheSymbol.add(transition);
-				}
-			}
-		}
-		// marking = new HashSet<Place<S,C>>();
 		final int nextPosition = position + 1;
 		boolean result = false;
 		Marking<S, C> nextMarking;
-		for (final ITransition<S, C> transition : activeTransitionsWithTheSymbol) {
+		for (final ITransition<S, C> transition : activeTransitionsWithSymbol(marking, symbol)) {
 			nextMarking = marking.fireTransition(transition);
 			if (getResultHelper(nextPosition, nextMarking)) {
 				result = true;
@@ -144,6 +134,17 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		return result;
 	}
 
+	private Set<ITransition<S, C>> activeTransitionsWithSymbol(Marking<S, C> marking, S symbol) {
+		final Set<ITransition<S, C>> activeTransitionsWithSymbol = new HashSet<>();
+		for (final Place<S, C> place : marking) {
+			mOperand.getSuccessors(place).stream()
+					.filter(transition -> transition.getSymbol().equals(symbol))
+					.filter(marking::isTransitionEnabled)
+					.forEach(activeTransitionsWithSymbol::add);
+		}
+		return activeTransitionsWithSymbol;
+	}
+	
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
 			throws AutomataLibraryException {

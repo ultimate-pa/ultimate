@@ -27,8 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * A Petri net place.
@@ -45,55 +43,17 @@ public class Place<S, C> implements Serializable {
 	private static int sSerialNumberCounter;
 
 	private final int mSerialNumber;
-	// TODO Christian 2016-09-24: This field is identical to mSerialNumber and hence could be removed.
-	private final int mHashCode;
 
 	private final C mContent;
-	private final ArrayList<ITransition<S, C>> mPredecessors;
-	private final ArrayList<ITransition<S, C>> mSuccessors;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param content
-	 *            content
-	 */
 	public Place(final C content) {
 		mSerialNumber = sSerialNumberCounter;
 		sSerialNumberCounter++;
-
 		mContent = content;
-		mPredecessors = new ArrayList<>();
-		mSuccessors = new ArrayList<>();
-		mHashCode = computeHashCode();
 	}
 
 	public C getContent() {
 		return mContent;
-	}
-
-	public Collection<ITransition<S, C>> getPredecessors() {
-		return mPredecessors;
-	}
-
-	public Collection<ITransition<S, C>> getSuccessors() {
-		return mSuccessors;
-	}
-
-	/**
-	 * @param transition
-	 *            Incoming transition.
-	 */
-	public void addPredecessor(final ITransition<S, C> transition) {
-		mPredecessors.add(transition);
-	}
-
-	/**
-	 * @param transition
-	 *            Outgoing transition.
-	 */
-	public void addSuccessor(final ITransition<S, C> transition) {
-		mSuccessors.add(transition);
 	}
 
 	@Override
@@ -110,10 +70,7 @@ public class Place<S, C> implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return mHashCode;
-	}
-
-	private final int computeHashCode() {
 		return mSerialNumber;
 	}
+
 }

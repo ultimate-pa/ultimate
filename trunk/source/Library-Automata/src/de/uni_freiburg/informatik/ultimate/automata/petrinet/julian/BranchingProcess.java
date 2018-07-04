@@ -45,8 +45,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * TODO undocumented.
- * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
@@ -67,21 +65,11 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 
 	private final Event<S, C> mDummyRoot;
 
-	private final PetriNetJulian<S, C> mNet;
+	private final BoundedPetriNet<S, C> mNet;
 
 	private final Order<S, C> mOrder;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param net
-	 *            petri net
-	 * @param order
-	 *            order
-	 */
-	public BranchingProcess(final AutomataLibraryServices services, final PetriNetJulian<S, C> net,
+	public BranchingProcess(final AutomataLibraryServices services, final BoundedPetriNet<S, C> net,
 			final Order<S, C> order) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -281,7 +269,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * 
 	 * @return the net associated with the branching process
 	 */
-	public PetriNetJulian<S, C> getNet() {
+	public BoundedPetriNet<S, C> getNet() {
 		return mNet;
 	}
 

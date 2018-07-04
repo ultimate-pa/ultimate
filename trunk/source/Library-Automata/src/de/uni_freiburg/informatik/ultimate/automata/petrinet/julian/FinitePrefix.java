@@ -56,7 +56,7 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public FinitePrefix(final AutomataLibraryServices services, final PetriNetJulian<LETTER, STATE> operand)
+	public FinitePrefix(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;

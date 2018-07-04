@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
- * Computes the difference between a {@link PetriNetJulian} and a {@link NestedWordAutomaton}.
+ * Computes the difference between a {@link BoundedPetriNet} and a {@link NestedWordAutomaton}.
  * <p>
  * TODO Christian 2016-09-06: If the <tt>finalIsTrap</tt> method is removed, the input can become an
  * {@link INestedWordAutomaton}.
@@ -69,11 +69,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  */
 public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & INwaInclusionStateFactory<C>>
 		extends UnaryNetOperation<S, C, CRSF> {
-	private final PetriNetJulian<S, C> mOperand;
+	private final BoundedPetriNet<S, C> mOperand;
 	private final INestedWordAutomaton<S, C> mNwa;
 	private final IBlackWhiteStateFactory<C> mContentFactory;
 
-	private PetriNetJulian<S, C> mResult;
+	private BoundedPetriNet<S, C> mResult;
 
 	private final Map<Place<S, C>, Place<S, C>> mOldPlace2NewPlace = new HashMap<>();
 
@@ -97,7 +97,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 	 *            nested word automaton
 	 */
 	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> DifferenceBlackAndWhite(
-			final AutomataLibraryServices services, final SF factory, final PetriNetJulian<S, C> net,
+			final AutomataLibraryServices services, final SF factory, final BoundedPetriNet<S, C> net,
 			final NestedWordAutomaton<S, C> nwa) {
 		super(services);
 		mOperand = net;
@@ -117,11 +117,9 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		}
 		final C nwaInitialState = nwa.getInitialStates().iterator().next();
 		classifySymbols();
-		// mSymbol2AutomatonTransition = createSymbol2AutomatonTransitionMap();
 		if (nwa.isFinal(nwaInitialState)) {
-			// case where nwa accepts everything. Result will be a net that
-			// accepts the empty language
-			mResult = new PetriNetJulian<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(), true);
+			// case where nwa accepts everything. Result will be a net that accepts the empty language
+			mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(), true);
 			final C sinkContent = factory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
 		} else {
@@ -182,41 +180,10 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		}
 	}
 
-	/*
-	private Map<S,Set<NestedWordAutomaton<S,C>.InternalTransition>> createSymbol2AutomatonTransitionMap() {
-		Map<S,Set<NestedWordAutomaton<S,C>.InternalTransition>> result =
-			new HashMap<S,Set<NestedWordAutomaton<S,C>.InternalTransition>>();
-		for (NestedWordAutomaton<S,C>.InternalTransition trans : mNwa.getInternalTransitions()) {
-			S symbol = trans.getSymbol();
-			Set<NestedWordAutomaton<S,C>.InternalTransition> transitions =
-				result.get(symbol);
-			if (transitions == null) {
-				transitions = new HashSet<NestedWordAutomaton<S,C>.InternalTransition>();
-				result.put(symbol,transitions);
-			}
-			transitions.add(trans);
-		}
-		return result;
-	}
-	
-	private Map<S, Set<ITransition<S, C>>> createSymbol2TransitionMap(
-			PetriNetJulian<S, C> net) {
-		Map<S, Set<ITransition<S, C>>> result =
-				new HashMap<S, Set<ITransition<S, C>>>();
-		for (S symbol : net.getAlphabet()) {
-			result.put(symbol, new HashSet<ITransition<S, C>>());
-		}
-		for (ITransition<S, C> transition : net.getTransitions()) {
-			result.get(transition.getSymbol()).add(transition);
-		}
-		return result;
-	}
-	*/
-
 	private void copyNetStatesOnly() {
 		// difference black and white preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = mOperand.constantTokenAmount();
-		mResult = new PetriNetJulian<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(),
+		mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(),
 				constantTokenAmount);
 
 		for (final Place<S, C> oldPlace : mOperand.getPlaces()) {
@@ -340,42 +307,8 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 	}
 
 	@Override
-	public PetriNetJulian<S, C> getResult() {
-		assert isPreSuccPlaceInNet(mResult);
-		assert isPreSuccTransitionInNet(mResult);
+	public BoundedPetriNet<S, C> getResult() {
 		return mResult;
-	}
-
-	private boolean isPreSuccPlaceInNet(final PetriNetJulian<S, C> net) {
-		for (final ITransition<S, C> trans : net.getTransitions()) {
-			for (final Place<S, C> place : trans.getPredecessors()) {
-				if (!net.getPlaces().contains(place)) {
-					return false;
-				}
-			}
-			for (final Place<S, C> place : trans.getSuccessors()) {
-				if (!net.getPlaces().contains(place)) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	private boolean isPreSuccTransitionInNet(final PetriNetJulian<S, C> net) {
-		for (final Place<S, C> place : net.getPlaces()) {
-			for (final ITransition<S, C> trans : place.getPredecessors()) {
-				if (!net.getTransitions().contains(trans)) {
-					return false;
-				}
-			}
-			for (final ITransition<S, C> trans : place.getSuccessors()) {
-				if (!net.getTransitions().contains(trans)) {
-					return false;
-				}
-			}
-		}
-		return true;
 	}
 
 	@Override

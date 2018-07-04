@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.Nwa
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriterToStringWithHash;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriterUniqueId;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToString;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToStringWithUniqueNumber;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterUniqueId;
@@ -400,11 +400,12 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	@SuppressWarnings("unused")
 	private void printPetriNet(final String name, final IPetriNet<LETTER, STATE> net, final Format format)
 			throws AssertionError {
-		if (!(net instanceof PetriNetJulian)) {
-			throw new IllegalArgumentException("Unknown Petri net type. Only 'PetriNetJulian' is supported.");
+		if (!(net instanceof BoundedPetriNet)) {
+			final String msg = "Unknown Petri net type. Only supported type is " + BoundedPetriNet.class.getSimpleName();
+			throw new IllegalArgumentException(msg);
 		}
 
-		final PetriNetJulian<LETTER, STATE> castNet = (PetriNetJulian<LETTER, STATE>) net;
+		final BoundedPetriNet<LETTER, STATE> castNet = (BoundedPetriNet<LETTER, STATE>) net;
 
 		switch (format) {
 			case ATS:

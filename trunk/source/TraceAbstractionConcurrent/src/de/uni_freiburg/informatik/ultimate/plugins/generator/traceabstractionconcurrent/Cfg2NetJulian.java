@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PrefixProduct;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 public final class Cfg2NetJulian<LETTER extends IIcfgTransition<?>>
-		extends CFG2Automaton<LETTER, PetriNetJulian<LETTER, IPredicate>> {
-	private final PetriNetJulian<LETTER, IPredicate> mResult;
+		extends CFG2Automaton<LETTER, BoundedPetriNet<LETTER, IPredicate>> {
+	private final BoundedPetriNet<LETTER, IPredicate> mResult;
 
 	public Cfg2NetJulian(final IIcfg<?> rootNode, final IStateFactory<IPredicate> contentFactory,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
@@ -52,8 +52,8 @@ public final class Cfg2NetJulian<LETTER extends IIcfgTransition<?>>
 				xnfConversionTechnique);
 
 		constructProcedureAutomata();
-		PetriNetJulian<LETTER, IPredicate> result =
-				new PetriNetJulian<>(new AutomataLibraryServices(services), mAutomata.get(0));
+		BoundedPetriNet<LETTER, IPredicate> result =
+				new BoundedPetriNet<>(new AutomataLibraryServices(services), mAutomata.get(0));
 		for (int i = 1; i < mAutomata.size(); i++) {
 			result = new PrefixProduct<>(new AutomataLibraryServices(services), result, mAutomata.get(i)).getResult();
 		}
@@ -61,7 +61,7 @@ public final class Cfg2NetJulian<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public PetriNetJulian<LETTER, IPredicate> getResult() {
+	public BoundedPetriNet<LETTER, IPredicate> getResult() {
 		return mResult;
 	}
 }

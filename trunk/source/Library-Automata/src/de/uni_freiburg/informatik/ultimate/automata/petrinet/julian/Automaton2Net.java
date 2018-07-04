@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Transforms an {@link INestedWordAutomaton} to a {@link PetriNetJulian}.
+ * Transforms an {@link INestedWordAutomaton} to a {@link BoundedPetriNet}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -65,7 +65,7 @@ public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		mNet = new PetriNetJulian<>(mServices, mOperand);
+		mNet = new BoundedPetriNet<>(mServices, mOperand);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}

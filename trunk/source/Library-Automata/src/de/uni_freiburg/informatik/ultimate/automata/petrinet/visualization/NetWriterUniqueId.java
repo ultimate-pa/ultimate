@@ -33,10 +33,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 
 /**
- * Prints a {@link PetriNetJulian}. In this version letters and places are represented by a default symbol and a unique
+ * Prints a {@link BoundedPetriNet}. In this version letters and places are represented by a default symbol and a unique
  * ID.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -55,7 +55,7 @@ public final class NetWriterUniqueId<LETTER, STATE> extends NetWriter<LETTER, ST
 	 * @param net
 	 *            Petri net
 	 */
-	public NetWriterUniqueId(final PrintWriter writer, final String name, final PetriNetJulian<LETTER, STATE> net) {
+	public NetWriterUniqueId(final PrintWriter writer, final String name, final BoundedPetriNet<LETTER, STATE> net) {
 		super(writer, name, net);
 	}
 

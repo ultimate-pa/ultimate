@@ -34,10 +34,10 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralAutomatonPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 
 /**
- * Prints a {@link PetriNetJulian}.
+ * Prints a {@link BoundedPetriNet}.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -59,7 +59,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	 *            Petri net
 	 */
 	@SuppressWarnings({ "squid:S1699", "fb-contrib:PCOA_PARTIALLY_CONSTRUCTED_OBJECT_ACCESS" })
-	public NetWriter(final PrintWriter writer, final String name, final PetriNetJulian<LETTER, STATE> net) {
+	public NetWriter(final PrintWriter writer, final String name, final BoundedPetriNet<LETTER, STATE> net) {
 		super(writer);
 		mAlphabet = getAlphabetMapping(net.getAlphabet());
 		mPlacesMapping = getPlacesMapping(net.getPlaces());

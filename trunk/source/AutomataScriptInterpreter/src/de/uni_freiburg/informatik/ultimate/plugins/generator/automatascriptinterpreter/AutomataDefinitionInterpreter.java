@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWord
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -460,7 +460,7 @@ public class AutomataDefinitionInterpreter {
 	 */
 	public void interpret(final PetriNetAutomatonAST pna) {
 		mErrorLocation = pna.getLocation();
-		final PetriNetJulian<String, String> net = new PetriNetJulian<>(new AutomataLibraryServices(mServices),
+		final BoundedPetriNet<String, String> net = new BoundedPetriNet<>(new AutomataLibraryServices(mServices),
 				new HashSet<>(pna.getAlphabet()), new StringFactory(), false);
 		final Map<String, Place<String, String>> name2places = new HashMap<>();
 

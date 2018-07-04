@@ -60,9 +60,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  */
 public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & IConcurrentProductStateFactory<C> & INwaInclusionStateFactory<C>>
 		extends UnaryNetOperation<S, C, CRSF> {
-	private final PetriNetJulian<S, C> mOperand;
+	private final BoundedPetriNet<S, C> mOperand;
 	private final INestedWordAutomaton<S, C> mNwa;
-	private final PetriNetJulian<S, C> mResult;
+	private final BoundedPetriNet<S, C> mResult;
 
 	private final Map<Place<S, C>, Place<S, C>> mOldPlace2newPlace = new HashMap<>();
 	private final Map<C, Place<S, C>> mState2newPlace = new HashMap<>();
@@ -80,7 +80,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public PrefixProduct(final AutomataLibraryServices services, final PetriNetJulian<S, C> operand,
+	public PrefixProduct(final AutomataLibraryServices services, final BoundedPetriNet<S, C> operand,
 			final INestedWordAutomaton<S, C> nwa) {
 		super(services);
 		mOperand = operand;
@@ -117,7 +117,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	}
 
 	@Override
-	public PetriNetJulian<S, C> getResult() {
+	public BoundedPetriNet<S, C> getResult() {
 		return mResult;
 	}
 
@@ -141,7 +141,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		nwaTransitions.add(nwaTransition);
 	}
 
-	private PetriNetJulian<S, C> computeResult() {
+	private BoundedPetriNet<S, C> computeResult() {
 		final HashSet<S> netOnlyAlphabet = new HashSet<>(mOperand.getAlphabet());
 		netOnlyAlphabet.removeAll(mNwa.getVpAlphabet().getInternalAlphabet());
 		final HashSet<S> sharedAlphabet = new HashSet<>(mOperand.getAlphabet());
@@ -153,8 +153,8 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 
 		// prefix product preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = mOperand.constantTokenAmount();
-		final PetriNetJulian<S, C> result =
-				new PetriNetJulian<>(mServices, unionAlphabet, mOperand.getStateFactory(), constantTokenAmount);
+		final BoundedPetriNet<S, C> result =
+				new BoundedPetriNet<>(mServices, unionAlphabet, mOperand.getStateFactory(), constantTokenAmount);
 
 		addPlacesAndStates();
 

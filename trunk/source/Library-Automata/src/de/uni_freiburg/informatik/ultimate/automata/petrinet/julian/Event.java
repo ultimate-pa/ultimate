@@ -116,7 +116,7 @@ public final class Event<S, C> implements Serializable {
 	 * @param net
 	 *            Petri net
 	 */
-	public Event(final PetriNetJulian<S, C> net) {
+	public Event(final BoundedPetriNet<S, C> net) {
 		mTransition = null;
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<S, C>>());
 		mMark = net.getInitialMarking();

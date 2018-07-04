@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.DifferenceBlackAndWhite;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix2PetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
@@ -103,7 +103,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		final PetriNetJulian<LETTER, IPredicate> abstraction = (PetriNetJulian<LETTER, IPredicate>) mAbstraction;
+		final BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
 		final String orderString = mPref.order();
 		final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 		UnfoldingOrder ord;
@@ -136,7 +136,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		PetriNetJulian<LETTER, IPredicate> abstraction = (PetriNetJulian<LETTER, IPredicate>) mAbstraction;
+		BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
 		if (mPref.unfoldingToNet()) {
 			// TODO: Find/implement appropriate stateFactory.
 			IFinitePrefix2PetriNetStateFactory<IPredicate> stateFactory = null;

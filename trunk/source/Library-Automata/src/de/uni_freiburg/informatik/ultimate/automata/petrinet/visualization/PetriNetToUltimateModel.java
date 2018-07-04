@@ -77,7 +77,7 @@ public class PetriNetToUltimateModel<S, C> {
 			final Object node = queue.remove();
 
 			if (node instanceof Place) {
-				placeHandling(place2placeNode, transition2transitionNode, queue, (Place<S, C>) node);
+				placeHandling(net, place2placeNode, transition2transitionNode, queue, (Place<S, C>) node);
 			} else if (node instanceof ITransition) {
 				transitionHandling(acceptingMarkings, place2placeNode, transition2transitionNode, queue,
 						(ITransition<S, C>) node);
@@ -86,11 +86,11 @@ public class PetriNetToUltimateModel<S, C> {
 		return graphroot;
 	}
 
-	private void placeHandling(final Map<Place<S, C>, PlaceNode> place2placeNode,
+	private void placeHandling(final IPetriNet<S, C> net, final Map<Place<S, C>, PlaceNode> place2placeNode,
 			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
 			final Place<S, C> place) {
 		final PlaceNode placeNode = place2placeNode.get(place);
-		for (final ITransition<S, C> transition : place.getSuccessors()) {
+		for (final ITransition<S, C> transition : net.getSuccessors(place)) {
 			TransitionNode transNode = transition2transitionNode.get(transition);
 			if (transNode == null) {
 				transNode = new TransitionNode((Transition<?, ?>) transition);

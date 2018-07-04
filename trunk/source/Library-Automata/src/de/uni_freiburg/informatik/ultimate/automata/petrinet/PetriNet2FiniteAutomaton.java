@@ -118,7 +118,6 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	private C getState(final Marking<S, C> marking, final boolean isInitial) {
 		C state = mMarking2State.get(marking);
 		if (state == null) {
-			// boolean isFinal = mNet.getAcceptingMarkings().contains(marking);
 			final boolean isFinal = mOperand.isAccepting(marking);
 			state = mContentFactory.getContentOnPetriNet2FiniteAutomaton(marking);
 			mResult.addState(isInitial, isFinal, state);
@@ -152,20 +151,10 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 		}
 	}
 
-	/*
-	private boolean isEnabled(ITransition<S, C> transition,
-			Set<Place<S, C>> marking) {
-		if (marking.containsAll(transition.getPredecessors())) {
-			return true;
-		} else
-			return false;
-	}
-	*/
-
 	private Set<ITransition<S, C>> getOutgoingNetTransitions(final Marking<S, C> marking) {
 		final Set<ITransition<S, C>> transitions = new HashSet<>();
 		for (final Place<S, C> place : marking) {
-			transitions.addAll(place.getSuccessors());
+			transitions.addAll(mOperand.getSuccessors(place));
 		}
 		return transitions;
 	}

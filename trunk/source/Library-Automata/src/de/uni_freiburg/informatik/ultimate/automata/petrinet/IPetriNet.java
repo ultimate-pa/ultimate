@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -34,54 +35,79 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * General Petri net interface.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
- *            symbols type
+ * 
+ * @param <LETTER>
+ *            Type of letters from the alphabet used to label transitions
  * @param <C>
  *            place content type
  */
-public interface IPetriNet<S, C> extends IAutomaton<S, C> {
+public interface IPetriNet<LETTER, C> extends IAutomaton<LETTER, C> {
 	/**
 	 * @return The places.
 	 */
-	Collection<Place<S, C>> getPlaces();
+	Collection<Place<LETTER, C>> getPlaces();
 
 	/**
 	 * @return The transitions.
 	 */
-	Collection<ITransition<S, C>> getTransitions();
+	Collection<ITransition<LETTER, C>> getTransitions();
 
 	/**
 	 * @return The initial marking.
 	 */
-	Marking<S, C> getInitialMarking();
+	Marking<LETTER, C> getInitialMarking();
 
 	/**
 	 * @return The accepting markings.
 	 */
-	Collection<Collection<Place<S, C>>> getAcceptingMarkings();
+	Collection<Collection<Place<LETTER, C>>> getAcceptingMarkings();
 
 	/**
 	 * @param marking
 	 *            A marking.
 	 * @return {@code true} iff the marking is accepting.
 	 */
-	boolean isAccepting(Marking<S, C> marking);
+	boolean isAccepting(Marking<LETTER, C> marking);
 
 	/**
 	 * @param word
 	 *            A word.
 	 * @return {@code true} iff the word is accepted.
 	 */
-	boolean accepts(Word<S> word);
+	boolean accepts(Word<LETTER> word);
+
+	default boolean acceptsEmptyWord() {
+		final Word<LETTER> emptyWord = new Word<>();
+		return accepts(emptyWord);
+	}
 
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
-		return new PetriNetToUltimateModel<S, C>().transformToUltimateModel(this);
+		return new PetriNetToUltimateModel<LETTER, C>().transformToUltimateModel(this);
 	}
+
+	/** @return Map from each place to its outgoing transitions. */
+	HashRelation<Place<LETTER, C>, ITransition<LETTER, C>> getSuccessors();
+	
+
+	/** @return Map from each place to its incoming transitions. */
+	HashRelation<Place<LETTER, C>, ITransition<LETTER, C>> getPredecessors();
+	
+	/** @return Outgoing transitions of one place. */
+	default Set<ITransition<LETTER, C>> getSuccessors(Place<LETTER, C> place) {
+		return getSuccessors().getImage(place);
+	}
+
+	/** @return Incoming transitions of one place. */
+	default Set<ITransition<LETTER, C>> getPredecessors(Place<LETTER, C> place) {
+		return getPredecessors().getImage(place);
+	}
+
 }

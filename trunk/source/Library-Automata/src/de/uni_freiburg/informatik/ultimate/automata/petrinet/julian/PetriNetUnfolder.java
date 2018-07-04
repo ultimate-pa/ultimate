@@ -145,7 +145,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public PetriNetUnfolder(final AutomataLibraryServices services, final PetriNetJulian<S, C> operand,
+	public PetriNetUnfolder(final AutomataLibraryServices services, final BoundedPetriNet<S, C> operand,
 			final UnfoldingOrder order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException {
 		super(services);
@@ -304,7 +304,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	 * @return A PetriNet that recognizes the same language as net but has a a similar structure as the occurrence net
 	 *         which is the finite prefix of net.
 	 */
-	public PetriNetJulian<S, C> getUnfoldedPetriNet() {
+	public BoundedPetriNet<S, C> getUnfoldedPetriNet() {
 		// TODO Julian and Matthias have to discuss what similar means.
 		return null;
 	}

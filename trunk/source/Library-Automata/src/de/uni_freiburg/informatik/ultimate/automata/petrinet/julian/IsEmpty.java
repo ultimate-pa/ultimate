@@ -61,7 +61,7 @@ public final class IsEmpty<LETTER, STATE>
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final PetriNetJulian<LETTER, STATE> operand)
+	public IsEmpty(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;

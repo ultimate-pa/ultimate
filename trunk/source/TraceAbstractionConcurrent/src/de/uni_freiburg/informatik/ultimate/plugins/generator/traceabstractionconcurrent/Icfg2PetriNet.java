@@ -33,7 +33,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -79,7 +79,7 @@ public abstract class Icfg2PetriNet {
 		
 		final Set<IcfgEdge> alphabet = new HashSet<>();
 		
-		final PetriNetJulian<IcfgEdge, IPredicate> net = new PetriNetJulian<>(
+		final BoundedPetriNet<IcfgEdge, IPredicate> net = new BoundedPetriNet<>(
 				new AutomataLibraryServices(services), alphabet, contentFactory, false);
 		
 		final Set<BoogieIcfgLocation> init = icfg.getInitialNodes();

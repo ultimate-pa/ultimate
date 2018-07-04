@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  */
 public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IStateFactory<C>> {
 	private final BranchingProcess<L, C> mInput;
-	private final PetriNetJulian<L, C> mNet;
+	private final BoundedPetriNet<L, C> mNet;
 	private final UnionFind<Condition<L, C>> mRepresentatives;
 	private final IFinitePrefix2PetriNetStateFactory<C> mStateFactory;
 
@@ -87,8 +87,8 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 			mLogger.info(startMessage());
 		}
 
-		final PetriNetJulian<L, C> oldNet = mInput.getNet();
-		mNet = new PetriNetJulian<>(mServices, oldNet.getAlphabet(), oldNet.getStateFactory(), false);
+		final BoundedPetriNet<L, C> oldNet = mInput.getNet();
+		mNet = new BoundedPetriNet<>(mServices, oldNet.getAlphabet(), oldNet.getStateFactory(), false);
 		mRepresentatives = new UnionFind<>();
 		constructNet(bp, oldNet);
 
@@ -100,7 +100,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 	}
 
 	@SuppressWarnings("squid:S1698")
-	private void constructNet(final BranchingProcess<L, C> bp, final PetriNetJulian<L, C> oldNet) {
+	private void constructNet(final BranchingProcess<L, C> bp, final BoundedPetriNet<L, C> oldNet) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("CONDITIONS:");
 			for (final Condition<L, C> c : bp.getConditions()) {
@@ -247,7 +247,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 		*/
 	}
 
-	private boolean petriNetLanguageEquivalence(final PetriNetJulian<L, C> oldNet, final PetriNetJulian<L, C> newNet)
+	private boolean petriNetLanguageEquivalence(final BoundedPetriNet<L, C> oldNet, final BoundedPetriNet<L, C> newNet)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing Petri net language equivalence");
@@ -290,7 +290,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 	}
 
 	@Override
-	public PetriNetJulian<L, C> getResult() {
+	public BoundedPetriNet<L, C> getResult() {
 		return mNet;
 	}
 
@@ -346,7 +346,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 			succsets.add(succset);
 		}
 
-		void addAllTransitionsToNet(final PetriNetJulian<L, C> net) {
+		void addAllTransitionsToNet(final BoundedPetriNet<L, C> net) {
 			for (final Entry<L, Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>>> entry1 : mLetter2Predset2Succsets
 					.entrySet()) {
 				final L letter = entry1.getKey();

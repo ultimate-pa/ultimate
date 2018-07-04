@@ -47,26 +47,13 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  *            place content type
  */
 public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
-	private static final int INITIAL_CAPACITY = 1000;
 
 	private final PriorityQueue<Event<S, C>> mPe;
 	private final BranchingProcess<S, C> mBranchingProcess;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param branchingProcess
-	 *            branching process
-	 * @param order
-	 *            order
-	 */
 	public PossibleExtensions(final BranchingProcess<S, C> branchingProcess, final Comparator<Event<S, C>> order) {
 		mBranchingProcess = branchingProcess;
-
-		// anonymous implementation of the Order corresponding to McMillan's Algorithm
-
-		// TODO find an appropriate initial Capacity
-		mPe = new PriorityQueue<>(INITIAL_CAPACITY, order);
+		mPe = new PriorityQueue<>(order);
 	}
 
 	@Override
@@ -107,19 +94,13 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 		cand.mPlaces.add(p);
 	}
 
-	// private void evolveCandidate(Transition<S, C> t, Set<Condition<S, C>> chosen, Collection<Place<S, C>> places) {
-
 	/**
-	 * @param event
-	 *            An event.
 	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
 	private Collection<Candidate<S, C>> computeCandidates(final Event<S, C> event) {
-		final int initCapacity = 2 * event.getSuccessorConditions().size()
-				* event.getSuccessorConditions().iterator().next().getPlace().getSuccessors().size();
-		final Map<ITransition<S, C>, Candidate<S, C>> candidates = new HashMap<>(initCapacity);
+		final Map<ITransition<S, C>, Candidate<S, C>> candidates = new HashMap<>();
 		for (final Condition<S, C> cond0 : event.getSuccessorConditions()) {
-			for (final ITransition<S, C> t : cond0.getPlace().getSuccessors()) {
+			for (final ITransition<S, C> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
 				Candidate<S, C> current;
 				if (!candidates.containsKey(t)) {
 					current = new Candidate<>((Transition<S, C>) t);

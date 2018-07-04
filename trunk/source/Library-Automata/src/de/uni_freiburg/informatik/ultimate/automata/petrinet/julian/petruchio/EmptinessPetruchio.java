@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import petruchio.cov.Backward;
 import petruchio.cov.SimpleList;
@@ -47,8 +47,8 @@ import petruchio.interfaces.petrinet.Place;
 import petruchio.interfaces.petrinet.Transition;
 
 /**
- * Check if a PetriNetJulian has an accepting run. The emptiness check uses Tim Strazny's Petruchio. A marking of a
- * PetriNetJulian is accepting if the marking contains an accepting place. EmptinessPetruchio checks if any (singleton)
+ * Check if a BoundedPetriNet has an accepting run. The emptiness check uses Tim Strazny's Petruchio. A marking of a
+ * BoundedPetriNet is accepting if the marking contains an accepting place. EmptinessPetruchio checks if any (singleton)
  * marking {p} such that p is an accepting place can be covered.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -60,7 +60,7 @@ import petruchio.interfaces.petrinet.Transition;
 public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPetriNet2FiniteAutomatonStateFactory<C>> {
 	private final PetruchioWrapper<S, C> mPetruchio;
 
-	private final PetriNetJulian<S, C> mNetJulian;
+	private final BoundedPetriNet<S, C> mBoundedNet;
 
 	private final NestedRun<S, C> mAcceptedRun;
 
@@ -72,9 +72,9 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 	 * @param net
 	 *            Petri net
 	 */
-	public EmptinessPetruchio(final AutomataLibraryServices services, final PetriNetJulian<S, C> net) {
+	public EmptinessPetruchio(final AutomataLibraryServices services, final BoundedPetriNet<S, C> net) {
 		super(services);
-		mNetJulian = net;
+		mBoundedNet = net;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -94,8 +94,8 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 	 */
 	private NestedRun<S, C> constructAcceptingRun() {
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Net has " + mNetJulian.getPlaces().size() + " Places");
-			mLogger.debug("Net has " + mNetJulian.getTransitions().size() + " Transitions");
+			mLogger.debug("Net has " + mBoundedNet.getPlaces().size() + " Places");
+			mLogger.debug("Net has " + mBoundedNet.getTransitions().size() + " Transitions");
 		}
 
 		final Integer one = Integer.valueOf(1);
@@ -116,17 +116,17 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 		// construct the following target:
 		// at least one of { {p_j} | p_j \in P accepting } is coverable
 		final Collection<Map<Place, Integer>> targets = new ArrayList<>();
-		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C> pAcceptingJulian : mNetJulian
+		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C> pAcceptingBounded : mBoundedNet
 				.getAcceptingPlaces()) {
 			// construct single target pAccepting >= 1
-			final Place pAcceptingPetruchio = mPetruchio.getpJulian2pPetruchio().get(pAcceptingJulian);
+			final Place pAcceptingPetruchio = mPetruchio.getpBounded2pPetruchio().get(pAcceptingBounded);
 			final Map<Place, Integer> placeWithOneToken = new IdentityHashMap<>();
 			placeWithOneToken.put(pAcceptingPetruchio, one);
 			targets.add(placeWithOneToken);
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Check coverability of " + mNetJulian.getAcceptingPlaces());
+			mLogger.debug("Check coverability of " + mBoundedNet.getAcceptingPlaces());
 		}
 		if (mLogger.isWarnEnabled()) {
 			mLogger.warn(targets);
@@ -154,7 +154,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 			return result;
 		}
 		for (final Transition tPetruchio : tracePetruchio) {
-			final S symbol = mPetruchio.gettPetruchio2tJulian().get(tPetruchio).getSymbol();
+			final S symbol = mPetruchio.gettPetruchio2tBounded().get(tPetruchio).getSymbol();
 			final NestedRun<S, C> oneStepSubrun = new NestedRun<>(null, symbol, NestedWord.INTERNAL_POSITION, null);
 			result = result.concatenate(oneStepSubrun);
 		}
@@ -163,7 +163,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 
 	@Override
 	protected IPetriNet<S, C> getOperand() {
-		return mNetJulian;
+		return mBoundedNet;
 	}
 
 	@Override
@@ -181,10 +181,10 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 		final boolean correct;
 		if (mAcceptedRun == null) {
 			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
-					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mNetJulian)).getResult())).getNestedRun();
+					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mBoundedNet)).getResult())).getNestedRun();
 			correct = automataRun == null;
 		} else {
-			correct = mNetJulian.accepts(mAcceptedRun.getWord());
+			correct = mBoundedNet.accepts(mAcceptedRun.getWord());
 		}
 
 		if (mLogger.isInfoEnabled()) {
