@@ -24,13 +24,7 @@ if [ "$RESULT_UNSAT" ]; then
 	echo "unsat"
 fi
     
-if [ "$RESULT_UNKNOWN_EXCEPTION" ]; then
-	echo "unknown"
-	echo ""
-	cat output.txt
-fi
-
-
-#echo ""
-#cat output.txt
+echo "unknown"
+echo ""
+cat output.txt
 
