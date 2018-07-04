@@ -45,11 +45,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -65,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -77,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
@@ -120,7 +125,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	private final PdrBenchmark mPdrBenchmark;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IPredicate mAxioms;
-	private final Deque<Triple<IPredicate, IcfgLocation, Integer>> mProofObligations;
+	private final Deque<ProofObligation> mProofObligations;
 
 	private boolean mTraceCheckFinishedNormally;
 	private IProgramExecution<IcfgEdge, Term> mFeasibleProgramExecution;
@@ -241,8 +246,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		for (final IcfgEdge edge : error.iterator().next().getIncomingEdges()) {
 			final Term sp = mPredTrans.pre(mTruePred, edge.getTransformula());
 			final IPredicate proofObligationPred = mPredicateUnifier.getPredicateFactory().newPredicate(sp);
-			final Triple<IPredicate, IcfgLocation, Integer> initialProofObligation =
-					new Triple<>(proofObligationPred, edge.getSource(), mLevel);
+			final ProofObligation initialProofObligation =
+					new ProofObligation(proofObligationPred, edge.getSource(), mLevel, null);
 
 			mProofObligations.add(initialProofObligation);
 		}
@@ -310,18 +315,24 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		mLogger.debug("Begin Blocking Phase: \n");
 
-		final Deque<Triple<IPredicate, IcfgLocation, Integer>> proofObligations = new ArrayDeque<>(mProofObligations);
+		final Deque<ProofObligation> proofObligations = new ArrayDeque<>(mProofObligations);
 		while (!proofObligations.isEmpty()) {
-			final Triple<IPredicate, IcfgLocation, Integer> proofObligation = proofObligations.pop();
-			final IPredicate toBeBlocked = proofObligation.getFirst();
-			final IcfgLocation location = proofObligation.getSecond();
-			final int level = mLevel - proofObligation.getThird();
+			final ProofObligation proofObligation = proofObligations.pop();
+			final IPredicate toBeBlocked = proofObligation.getToBeBlocked();
+			final IcfgLocation location = proofObligation.getLocation();
+			final int level = mLevel - proofObligation.getLevel();
 
 			mLogger.debug("predecessors: " + location.getIncomingEdges());
 			for (final IcfgEdge predecessorTransition : location.getIncomingEdges()) {
 				mLogger.debug("Predecessor Transition: " + predecessorTransition);
 				final IcfgLocation predecessor = predecessorTransition.getSource();
 				final IPredicate predecessorFrame = mFrames.get(predecessor).get(level - 1).getSecond();
+
+				if (proofObligation.hasBeenBlocked()) {
+					if (proofObligation.getReason().getFormula().equals(predecessorFrame.getFormula())) {
+						mLogger.warn("No changes.");
+					}
+				}
 
 				/**
 				 * TODO error on other actions that are not IInternalAction
@@ -343,28 +354,36 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 						// TODO: This is not as easy as it looks have a look at PredicateUtils.isInductiveHelper to see
 						// how a predicate and a transformula can be combined in an and
-						final Term second = SmtUtils.and(mScript.getScript(), predecessorFrame.getFormula(),
-								predecessorTransition.getTransformula().getFormula());
 
-						final IPredicate secondPred = mPredicateUnifier.getOrConstructPredicate(second);
+						// final Term third = SmtUtils.and(mScript.getScript(), predecessorFrame.getFormula(),
+						// predecessorTransition.getTransformula().getFormula());
+
+						// final Term second = andPredTf(mScript.getScript(), predecessorFrame,
+						// predecessorTransition.getTransformula(), mCsToolkit.getModifiableGlobalsTable()
+						// .getModifiedBoogieVars(predecessorTransition.getPrecedingProcedure()));
+						//
+						// final IPredicate secondPred = mPredicateUnifier.getOrConstructPredicate(second);
 
 						// make sure that the terms you give to the utility are closed , i.e., do not have any free vars
 						// lefts
-						final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(),
-								prePred.getClosedFormula(), secondPred.getClosedFormula());
-						final IPredicate interpolatedPreCondition =
-								mPredicateUnifier.getOrConstructPredicate(interpolPair.getSecond());
+						// final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(),
+						// prePred.getClosedFormula(), secondPred.getClosedFormula());
+						//
+						// mLogger.debug("interpolating");
+						//
+						// final IPredicate interpolatedPreCondition =
+						// mPredicateUnifier.getOrConstructPredicate(interpolPair.getSecond());
 
-						addProofObligation(proofObligations, proofObligation, level, predecessor,
-								interpolatedPreCondition);
+						addProofObligation(proofObligations, proofObligation, level, predecessor, prePred);
 
 						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition,
-									interpolPair.getSecond()));
+							mLogger.debug(
+									String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition, prePred));
 						}
 
 					} else if (result == Validity.VALID) {
 						updateFrames(toBeBlocked, location, level);
+						proofObligation.setReason(mFrames.get(predecessor).get(level - 1).getSecond());
 					} else {
 						throw new UnsupportedOperationException("what to do with the great unknown?");
 					}
@@ -462,12 +481,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 * @param predecessor
 	 * @param preCondition
 	 */
-	private void addProofObligation(final Deque<Triple<IPredicate, IcfgLocation, Integer>> proofObligations,
-			final Triple<IPredicate, IcfgLocation, Integer> proofObligation, final int level,
-			final IcfgLocation predecessor, final IPredicate preCondition) {
+	private void addProofObligation(final Deque<ProofObligation> proofObligations,
+			final ProofObligation proofObligation, final int level, final IcfgLocation predecessor,
+			final IPredicate preCondition) {
 		// add proof obligation
-		final Triple<IPredicate, IcfgLocation, Integer> newProofObligation =
-				new Triple<>(preCondition, predecessor, mLevel - level + 1);
+		final ProofObligation newProofObligation =
+				new ProofObligation(preCondition, predecessor, mLevel - level + 1, null);
 
 		mProofObligations.addFirst(newProofObligation);
 		proofObligations.addFirst(proofObligation);
@@ -685,6 +704,76 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			++i;
 		}
 		return interpolants;
+	}
+
+	private Term andPredTf(final Script script, final IPredicate precond, final UnmodifiableTransFormula tf,
+			final Set<IProgramNonOldVar> modifiableGlobalsPred) {
+		script.push(1);
+
+		final List<Term> conjuncts = new ArrayList<>();
+		{
+			// add oldvar equalities for precond and tf
+			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
+			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
+
+			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsPred, Collections.emptySet(),
+					unprimedOldVarEqualities, primedOldVarEqualities);
+			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsPred, Collections.emptySet(),
+					unprimedOldVarEqualities, primedOldVarEqualities);
+			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false, script));
+			}
+			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true, script));
+			}
+		}
+		{
+			// add precond
+			final Term precondRenamed = precond.getClosedFormula();
+			assert precondRenamed != null;
+			conjuncts.add(precondRenamed);
+		}
+		{
+			// add tf
+			final Term tfRenamed = tf.getClosedFormula();
+			assert tfRenamed != null;
+			conjuncts.add(tfRenamed);
+
+		}
+		script.assertTerm(SmtUtils.and(script, conjuncts));
+		final Term result = SmtUtils.and(script, conjuncts);
+		script.pop(1);
+		return result;
+	}
+
+	/**
+	 * Find all nonOldVars such that they are modifiable, their oldVar is in vars. Put the nonOldVar in
+	 * nonModifiableGlobalsPrimed if the corresponding oldVar is in primedRequired.
+	 *
+	 * @param vars
+	 * @param modifiableGlobalsPred
+	 * @param primedRequired
+	 * @param nonModifiableGlobalsUnprimed
+	 * @param nonModifiableGlobalsPrimed
+	 */
+	private static void findNonModifiablesGlobals(final Set<IProgramVar> vars,
+			final Set<IProgramNonOldVar> modifiableGlobalsPred, final Set<IProgramVar> primedRequired,
+			final Set<IProgramNonOldVar> nonModifiableGlobalsUnprimed,
+			final Set<IProgramNonOldVar> nonModifiableGlobalsPrimed) {
+		for (final IProgramVar bv : vars) {
+			if (bv instanceof IProgramOldVar) {
+				final IProgramNonOldVar nonOldVar = ((IProgramOldVar) bv).getNonOldVar();
+				if (modifiableGlobalsPred.contains(nonOldVar)) {
+					// var modifiable, do nothing
+				} else {
+					if (primedRequired.contains(bv)) {
+						nonModifiableGlobalsPrimed.add(nonOldVar);
+					} else {
+						nonModifiableGlobalsUnprimed.add(nonOldVar);
+					}
+				}
+			}
+		}
 	}
 
 	private IProgramExecution<IcfgEdge, Term> computeProgramExecution() {
