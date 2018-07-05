@@ -1,5 +1,6 @@
 #!/bin/bash
 rm -r StarExecArchive
+rm UltimateCommandline
 mkdir StarExecArchive
 mkdir StarExecArchive/bin
 mkdir StarExecArchive/Ultimate
