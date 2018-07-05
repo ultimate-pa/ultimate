@@ -107,7 +107,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		CHANGED, UNCHANGED
 	}
 
-	private static final boolean USE_INTERPOLATION = false;
+	private static final boolean USE_INTERPOLATION = true;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -313,7 +313,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 */
 	private boolean blockingPhase() {
 
-		mLogger.debug("Begin Blocking Phase: \n");
+		mLogger.debug("Begin Blocking Phase: on Level: " + mLevel);
 
 		final Deque<ProofObligation> proofObligations = new ArrayDeque<>(mProofObligations);
 		while (!proofObligations.isEmpty()) {
@@ -322,7 +322,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			final IcfgLocation location = proofObligation.getLocation();
 			final int level = mLevel - proofObligation.getLevel();
 
-			mLogger.debug("predecessors: " + location.getIncomingEdges());
+			mLogger.debug("ProofObligation: " + proofObligation);
+			mLogger.debug("predecessors: " + location.getIncomingNodes());
+
 			for (final IcfgEdge predecessorTransition : location.getIncomingEdges()) {
 				mLogger.debug("Predecessor Transition: " + predecessorTransition);
 				final IcfgLocation predecessor = predecessorTransition.getSource();
@@ -331,12 +333,12 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				if (proofObligation.hasBeenBlocked()) {
 					if (proofObligation.getReason().getFormula().equals(predecessorFrame.getFormula())) {
 						mLogger.warn("No changes.");
+						// updateFrames(not(proofObligation.getReason()), location, level);
+						// continue;
 					}
 				}
 
-				/**
-				 * TODO error on other actions that are not IInternalAction
-				 */
+
 				final Validity result;
 				/*
 				 * Dealing with internal transitions:
@@ -352,23 +354,21 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 						final IPredicate prePred = mPredicateUnifier.getOrConstructPredicate(pre);
 
-						final IPredicate newPO;
-						if (USE_INTERPOLATION) {
-							newPO = getInterpolant(predecessorTransition, predecessorFrame, prePred);
-						} else {
-							newPO = prePred;
-						}
-
-						addProofObligation(proofObligations, proofObligation, level, predecessor, newPO);
+						addProofObligation(proofObligations, proofObligation, level, predecessor, prePred);
 
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug(
-									String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition, newPO));
+									String.format("pre(%s, %s) == %s", toBeBlocked, predecessorTransition, prePred));
 						}
 
 					} else if (result == Validity.VALID) {
-						updateFrames(toBeBlocked, location, level);
-						proofObligation.setReason(mFrames.get(predecessor).get(level - 1).getSecond());
+						if (USE_INTERPOLATION) {
+							updateFrames(not(getInterpolant(predecessorTransition, predecessorFrame, toBeBlocked)),
+									location, level);
+						} else {
+							updateFrames(toBeBlocked, location, level);
+						}
+						proofObligation.setReason(predecessorFrame);
 					} else {
 						throw new UnsupportedOperationException("what to do with the great unknown?");
 					}
@@ -528,6 +528,11 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			fTerm = mPredicateUnifier.getOrConstructPredicate(fTerm);
 			mFrames.get(location).set(i, new Pair<>(ChangedFrame.CHANGED, fTerm));
 		}
+		mLogger.debug("Frames: Updated");
+		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
+			mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
+					.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
+		}
 	}
 
 	private Pair<List<LETTER>, UnmodifiableTransFormula> getProcedureTrace(final IcfgLocation callLoc,
@@ -594,11 +599,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					return true;
 				}
 			}
-		}
-		mLogger.debug("Frames:");
-		for (final Entry<IcfgLocation, List<Pair<ChangedFrame, IPredicate>>> entry : mFrames.entrySet()) {
-			mLogger.debug("  " + entry.getKey().getDebugIdentifier() + ": " + entry.getValue().stream()
-					.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
 		}
 		return false;
 	}
@@ -755,7 +755,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			final Term tfRenamed = tf.getClosedFormula();
 			assert tfRenamed != null;
 			conjuncts.add(tfRenamed);
-
 		}
 		script.assertTerm(SmtUtils.and(script, conjuncts));
 		final Term result = SmtUtils.and(script, conjuncts);

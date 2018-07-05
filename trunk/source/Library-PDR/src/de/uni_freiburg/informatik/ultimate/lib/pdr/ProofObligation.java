@@ -42,6 +42,17 @@ public final class ProofObligation {
 	private IPredicate mReason;
 	private Boolean mHasBeenBlocked;
 
+	/**
+	 * Create a new proofobligation, used by pdr.
+	 * @param toBeBlocked
+	 * 			{@link IPredicate} that needs to be blocked by pdr
+	 * @param location
+	 * 			{@link IcfgLocation} location where it needs to be blocked
+	 * @param level
+	 * 			 on which level
+	 * @param reason
+	 * 			If the proofobligation has been blocked before save the reason why
+	 */
 	public ProofObligation(final IPredicate toBeBlocked, final IcfgLocation location, final int level,
 			final IPredicate reason) {
 		mToBeBlocked = toBeBlocked;
@@ -51,34 +62,58 @@ public final class ProofObligation {
 		mHasBeenBlocked = false;
 	}
 
+	/**
+	 * Was the proofobligation blocked before?
+	 * @return
+	 */
 	public Boolean hasBeenBlocked() {
 		return mHasBeenBlocked;
 	}
 
+	/**
+	 * Save a new reason why the proofobligation was blocked
+	 * @param newReason
+	 */
 	public void setReason(final IPredicate newReason) {
 		mReason = newReason;
 		mHasBeenBlocked = true;
 	}
 
+	/**
+	 * Get the obligation
+	 * @return
+	 */
 	public IPredicate getToBeBlocked() {
 		return mToBeBlocked;
 	}
 
+	/**
+	 * Get the location
+	 * @return
+	 */
 	public IcfgLocation getLocation() {
 		return mLocation;
 	}
 
+	/**
+	 * Get the level
+	 * @return
+	 */
 	public int getLevel() {
 		return mLevel;
 	}
 
+	/**
+	 * get the reason why it was blockeds
+	 * @return
+	 */
 	public IPredicate getReason() {
 		return mReason;
 	}
 
 	@Override
 	public String toString() {
-		return getToBeBlocked().toString();
+		return getToBeBlocked().toString() + " at " + getLocation().toString() + " on level -" + getLevel();
 	}
 
 }
