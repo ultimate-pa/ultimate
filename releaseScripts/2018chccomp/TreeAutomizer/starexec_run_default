@@ -18,10 +18,12 @@ RESULT_UNKNOWN_EXCEPTION=`cat output.txt | grep "The toolchain threw an exceptio
 
 if [ "$RESULT_SAT" ]; then
 	echo "sat"
+	exit
 fi
     
 if [ "$RESULT_UNSAT" ]; then
 	echo "unsat"
+	exit
 fi
     
 echo "unknown"
