@@ -100,30 +100,6 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	private final boolean mConstantTokenAmount;
 
 	/**
-	 * Private constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param alphabet
-	 *            alphabet
-	 * @param stateFactory
-	 *            state factory
-	 * @param constantTokenAmount
-	 *            amount of constant tokens
-	 * @param dummy
-	 *            dummy parameter to avoid duplicate method signature
-	 */
-	@SuppressWarnings({ "unused", "squid:S1172" })
-	private BoundedPetriNet(final AutomataLibraryServices services, final Set<LETTER> alphabet,
-			final IStateFactory<C> stateFactory, final boolean constantTokenAmount, final boolean dummy) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mAlphabet = alphabet;
-		mStateFactory = stateFactory;
-		mConstantTokenAmount = constantTokenAmount;
-	}
-
-	/**
 	 * Standard constructor.
 	 * 
 	 * @param services
@@ -135,8 +111,11 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 */
 	public BoundedPetriNet(final AutomataLibraryServices services, final Set<LETTER> alphabet,
 			final IStateFactory<C> stateFactory, final boolean constantTokenAmount) {
-		this(services, alphabet, stateFactory, constantTokenAmount, true);
-		assert !constantTokenAmount() || transitionsPreserveTokenAmount();
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
+		mAlphabet = alphabet;
+		mStateFactory = stateFactory;
+		mConstantTokenAmount = constantTokenAmount;
 	}
 
 	/**
@@ -151,7 +130,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 */
 	public BoundedPetriNet(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, C> nwa)
 			throws AutomataLibraryException {
-		this(services, nwa.getVpAlphabet().getInternalAlphabet(), nwa.getStateFactory(), true, false);
+		this(services, nwa.getVpAlphabet().getInternalAlphabet(), nwa.getStateFactory(), true);
 		final Map<C, Place<LETTER, C>> state2place = new HashMap<>();
 		for (final C content : nwa.getStates()) {
 			// C content = state.getContent();
@@ -171,8 +150,21 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 				addTransition(trans.getLetter(), predPlace, succPlace);
 			}
 		}
-		assert !constantTokenAmount() || transitionsPreserveTokenAmount();
+		assert constantTokenAmountGuaranteed();
 		assert checkResult(nwa);
+	}
+	
+	/**
+	 * If {@link #mConstantTokenAmount} is set, check that amount of tokens is preserved for all initial markings*
+	 * and all firing sequences. 
+	 * <p>
+	 * * Depending on the initial marking and reachability of some transitions, this method may return false
+	 * even though {@link #mConstantTokenAmount} was set correctly to true.
+	 * 
+	 * @return {@link #mConstantTokenAmount} implies all (not only the reachable) transitions preserve the token amount.
+	 */
+	private boolean constantTokenAmountGuaranteed() {
+		return !constantTokenAmount() || transitionsPreserveTokenAmount();
 	}
 
 	private boolean checkResult(final INestedWordAutomaton<LETTER, C> nwa) throws AutomataLibraryException {
