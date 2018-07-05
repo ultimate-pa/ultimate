@@ -1,4 +1,5 @@
 #!/bin/bash
+rm -r StarExecArchive
 mkdir StarExecArchive
 mkdir StarExecArchive/bin
 mkdir StarExecArchive/Ultimate
