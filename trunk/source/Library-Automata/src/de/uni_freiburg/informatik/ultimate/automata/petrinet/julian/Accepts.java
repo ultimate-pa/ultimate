@@ -80,7 +80,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 			mLogger.info(startMessage());
 		}
 
-		// this.marking = new HashSet<Place<S, C>>(net.getInitialMarking());
+		// this.marking = new HashSet<Place<C>>(net.getInitialMarking());
 		// this.position = 0;
 		mResult = getResultHelper(0, operand.getInitialMarking());
 
@@ -89,7 +89,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		}
 	}
 
-	// private Collection<Place<S, C>> marking;
+	// private Collection<Place<C>> marking;
 	// private int position;
 
 	@Override
@@ -136,7 +136,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 
 	private Set<ITransition<S, C>> activeTransitionsWithSymbol(Marking<S, C> marking, S symbol) {
 		final Set<ITransition<S, C>> activeTransitionsWithSymbol = new HashSet<>();
-		for (final Place<S, C> place : marking) {
+		for (final Place<C> place : marking) {
 			mOperand.getSuccessors(place).stream()
 					.filter(transition -> transition.getSymbol().equals(symbol))
 					.filter(marking::isTransitionEnabled)

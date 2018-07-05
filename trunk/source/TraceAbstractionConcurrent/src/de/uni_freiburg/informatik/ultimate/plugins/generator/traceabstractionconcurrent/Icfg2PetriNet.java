@@ -85,21 +85,21 @@ public abstract class Icfg2PetriNet {
 		final Set<BoogieIcfgLocation> init = icfg.getInitialNodes();
 		final Map<String, Set<BoogieIcfgLocation>> procErrorNodes = icfg.getProcedureErrorNodes();
 		
-		final IValueConstruction<BoogieIcfgLocation, Place<IcfgEdge, IPredicate>> valueConstruction = 
-				new IValueConstruction<BoogieIcfgLocation, Place<IcfgEdge, IPredicate>>() {
+		final IValueConstruction<BoogieIcfgLocation, Place<IPredicate>> valueConstruction = 
+				new IValueConstruction<BoogieIcfgLocation, Place<IPredicate>>() {
 
 			@Override
-			public Place<IcfgEdge, IPredicate> constructValue(final BoogieIcfgLocation key) {
+			public Place<IPredicate> constructValue(final BoogieIcfgLocation key) {
 				final IPredicate pred = predicateFactory.newDontCarePredicate(key);
 				final boolean isInitial = init.contains(key);
 				final String proc = key.getProcedure();
 				final boolean isFinal = procErrorNodes.get(proc).contains(key);
-				final Place<IcfgEdge, IPredicate> place = net.addPlace(pred, isInitial, isFinal);
+				final Place<IPredicate> place = net.addPlace(pred, isInitial, isFinal);
 				return place;
 			}
 			
 		};
-		final ConstructionCache<BoogieIcfgLocation, Place<IcfgEdge, IPredicate>> cc = new ConstructionCache<>(valueConstruction);
+		final ConstructionCache<BoogieIcfgLocation, Place<IPredicate>> cc = new ConstructionCache<>(valueConstruction);
 
 		for (final BoogieIcfgLocation loc : init) {
 			cc.getOrConstruct(loc);
@@ -108,8 +108,8 @@ public abstract class Icfg2PetriNet {
 		final IcfgEdgeIterator it = new IcfgEdgeIterator(icfg);
 		while(it.hasNext()) {
 			final IcfgEdge edge = it.next();
-			final Place<IcfgEdge, IPredicate> pred = cc.getOrConstruct((BoogieIcfgLocation) edge.getSource());
-			final Place<IcfgEdge, IPredicate> succ = cc.getOrConstruct((BoogieIcfgLocation) edge.getTarget());
+			final Place<IPredicate> pred = cc.getOrConstruct((BoogieIcfgLocation) edge.getSource());
+			final Place<IPredicate> succ = cc.getOrConstruct((BoogieIcfgLocation) edge.getTarget());
 			net.addTransition(edge, Collections.singleton(pred), Collections.singleton(succ));
 		}
 	}

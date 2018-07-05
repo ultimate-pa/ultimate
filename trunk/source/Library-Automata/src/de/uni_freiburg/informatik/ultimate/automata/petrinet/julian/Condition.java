@@ -50,7 +50,7 @@ public class Condition<S, C> implements Serializable {
 
 	private final Event<S, C> mPredecessor;
 	private final Collection<Event<S, C>> mSuccessors;
-	private final Place<S, C> mPlace;
+	private final Place<C> mPlace;
 
 	private final int mSerialNumber;
 
@@ -62,7 +62,7 @@ public class Condition<S, C> implements Serializable {
 	 * @param place
 	 *            place
 	 */
-	public Condition(final Event<S, C> predecessor, final Place<S, C> place) {
+	public Condition(final Event<S, C> predecessor, final Place<C> place) {
 		mSerialNumber = sSerialNumberCounter;
 		sSerialNumberCounter++;
 
@@ -89,7 +89,7 @@ public class Condition<S, C> implements Serializable {
 		return mPredecessor;
 	}
 
-	public Place<S, C> getPlace() {
+	public Place<C> getPlace() {
 		return mPlace;
 	}
 

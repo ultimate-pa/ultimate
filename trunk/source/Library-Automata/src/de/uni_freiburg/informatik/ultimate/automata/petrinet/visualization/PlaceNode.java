@@ -49,7 +49,7 @@ public final class PlaceNode extends PetriNetVisualizationNode {
 	 * @param participatedAcceptingMarkings
 	 *            participated accepting markings
 	 */
-	public PlaceNode(final Place<?, ?> place, final Collection<String> participatedAcceptingMarkings) {
+	public PlaceNode(final Place<?> place, final Collection<String> participatedAcceptingMarkings) {
 		super(place.getContent().toString());
 
 		final IPayload payload = getPayload();

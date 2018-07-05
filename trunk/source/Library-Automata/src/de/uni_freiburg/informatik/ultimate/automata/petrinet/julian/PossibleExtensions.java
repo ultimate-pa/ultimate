@@ -79,7 +79,7 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 			mPe.add(new Event<>(cand.mChosen, cand.mT));
 			return;
 		}
-		final Place<S, C> p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
+		final Place<C> p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
 		for (final Condition<S, C> c : mBranchingProcess.place2cond(p)) {
 			assert cand.mT.getPredecessors().contains(c.getPlace());
 			// equality intended here

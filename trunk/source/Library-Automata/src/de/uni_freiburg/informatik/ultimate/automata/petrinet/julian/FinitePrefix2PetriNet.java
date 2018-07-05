@@ -173,12 +173,12 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 
 		}
 
-		final Map<Condition<L, C>, Place<L, C>> placeMap = new HashMap<>();
+		final Map<Condition<L, C>, Place<C>> placeMap = new HashMap<>();
 		for (final Condition<L, C> c : bp.getConditions()) {
 			assert mRepresentatives.find(c) != null;
 			// equality intended here
 			if (c == mRepresentatives.find(c)) {
-				final Place<L, C> place = mNet.addPlace(mStateFactory.finitePrefix2net(c),
+				final Place<C> place = mNet.addPlace(mStateFactory.finitePrefix2net(c),
 						bp.initialConditions().contains(c), bp.isAccepting(c));
 				placeMap.put(c, place);
 			}
@@ -189,8 +189,8 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 			if (e == bp.getDummyRoot()) {
 				continue;
 			}
-			final Set<Place<L, C>> preds = new HashSet<>();
-			final Set<Place<L, C>> succs = new HashSet<>();
+			final Set<Place<C>> preds = new HashSet<>();
+			final Set<Place<C>> succs = new HashSet<>();
 
 			for (final Condition<L, C> c : e.getPredecessorConditions()) {
 				final Condition<L, C> representative = mRepresentatives.find(c);
@@ -209,7 +209,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 		/*
 		for (final Condition<L, C> c : bp.getConditions()) {
 			if (!c.getPredecessorEvent().isCutoffEvent()) {
-				final Place<L, C> place = mNet.addPlace(old_net.getStateFactory()
+				final Place<C> place = mNet.addPlace(old_net.getStateFactory()
 						.finitePrefix2net(c), bp.initialConditions()
 								.contains(c),
 						bp.isAccepting(c));
@@ -217,15 +217,15 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 			}
 		}
 		mLogger.debug("CONDITIONS TO PLACE:");
-		for (final Map.Entry<Condition<L, C>, Place<L, C>> en : placeMap.entrySet()) {
+		for (final Map.Entry<Condition<L, C>, Place<C>> en : placeMap.entrySet()) {
 			mLogger.debug(en);
 		}
 		for (final Event<L, C> e : bp.getEvents()) {
 			if (e.getTransition() == null) {
 				continue;
 			}
-			final ArrayList<Place<L, C>> preds = new ArrayList<>();
-			final ArrayList<Place<L, C>> succs = new ArrayList<>();
+			final ArrayList<Place<C>> preds = new ArrayList<>();
+			final ArrayList<Place<C>> succs = new ArrayList<>();
 			for (final Condition<L, C> pc : e.getPredecessorConditions()) {
 				assert placeMap.containsKey(pc) : pc.toString()
 						+ " has successors, hence cannot be child of cut-off event." +
@@ -306,13 +306,13 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 	*/
 
 	private void mergeConditions(final Iterable<Condition<L, C>> set1, final Iterable<Condition<L, C>> set2) {
-		final Map<Place<L, C>, Condition<L, C>> origPlace2Condition = new HashMap<>();
+		final Map<Place<C>, Condition<L, C>> origPlace2Condition = new HashMap<>();
 		for (final Condition<L, C> cond1 : set1) {
 			origPlace2Condition.put(cond1.getPlace(), cond1);
 		}
 
 		for (final Condition<L, C> cond2 : set2) {
-			final Place<L, C> p2 = cond2.getPlace();
+			final Place<C> p2 = cond2.getPlace();
 			final Condition<L, C> c1 = origPlace2Condition.get(p2);
 			final Condition<L, C> c1representative = mRepresentatives.find(c1);
 			assert c1representative != null;
@@ -330,15 +330,15 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	class TransitionSet {
-		private final Map<L, Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>>> mLetter2Predset2Succsets = new HashMap<>();
+		private final Map<L, Map<Set<Place<C>>, Set<Set<Place<C>>>>> mLetter2Predset2Succsets = new HashMap<>();
 
-		void addTransition(final L letter, final Set<Place<L, C>> predset, final Set<Place<L, C>> succset) {
-			Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
+		void addTransition(final L letter, final Set<Place<C>> predset, final Set<Place<C>> succset) {
+			Map<Set<Place<C>>, Set<Set<Place<C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
 			if (predsets2succsets == null) {
 				predsets2succsets = new HashMap<>();
 				mLetter2Predset2Succsets.put(letter, predsets2succsets);
 			}
-			Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
+			Set<Set<Place<C>>> succsets = predsets2succsets.get(predset);
 			if (succsets == null) {
 				succsets = new HashSet<>();
 				predsets2succsets.put(predset, succsets);
@@ -347,16 +347,16 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 		}
 
 		void addAllTransitionsToNet(final BoundedPetriNet<L, C> net) {
-			for (final Entry<L, Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>>> entry1 : mLetter2Predset2Succsets
+			for (final Entry<L, Map<Set<Place<C>>, Set<Set<Place<C>>>>> entry1 : mLetter2Predset2Succsets
 					.entrySet()) {
 				final L letter = entry1.getKey();
-				final Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = entry1.getValue();
-				for (final Entry<Set<Place<L, C>>, Set<Set<Place<L, C>>>> entry2 : predsets2succsets.entrySet()) {
-					final Set<Place<L, C>> predset = entry2.getKey();
-					final Set<Set<Place<L, C>>> succsets = entry2.getValue();
-					for (final Set<Place<L, C>> succset : succsets) {
-						final List<Place<L, C>> predList = new ArrayList<>(predset);
-						final List<Place<L, C>> succList = new ArrayList<>(succset);
+				final Map<Set<Place<C>>, Set<Set<Place<C>>>> predsets2succsets = entry1.getValue();
+				for (final Entry<Set<Place<C>>, Set<Set<Place<C>>>> entry2 : predsets2succsets.entrySet()) {
+					final Set<Place<C>> predset = entry2.getKey();
+					final Set<Set<Place<C>>> succsets = entry2.getValue();
+					for (final Set<Place<C>> succset : succsets) {
+						final List<Place<C>> predList = new ArrayList<>(predset);
+						final List<Place<C>> succList = new ArrayList<>(succset);
 						net.addTransition(letter, predList, succList);
 					}
 				}

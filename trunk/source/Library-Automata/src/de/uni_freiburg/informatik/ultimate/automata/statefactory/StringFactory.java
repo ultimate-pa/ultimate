@@ -158,7 +158,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		final StringBuilder builder = new StringBuilder(marking.size() * MINIMUM_LIST_SIZE);
 		builder.append(OPEN_BRACE);
 		boolean firstElement = true;
-		for (final Place<?, String> place : marking) {
+		for (final Place<String> place : marking) {
 			if (firstElement) {
 				firstElement = false;
 			} else {

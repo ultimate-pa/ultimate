@@ -45,10 +45,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.InhibitorTra
  * @param <C>
  *            place content type
  */
-public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
+public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
-	private final Set<Place<S, C>> mPlaces;
+	private final Set<Place<C>> mPlaces;
 
 	/**
 	 * Constructor.
@@ -56,7 +56,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @param places
 	 *            places
 	 */
-	public Marking(final Set<Place<S, C>> places) {
+	public Marking(final Set<Place<C>> places) {
 		mPlaces = places;
 	}
 
@@ -66,7 +66,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return {@code true} iff the place is contained
 	 * @see java.util.Set#contains(Object)
 	 */
-	public boolean contains(final Place<S, C> place) {
+	public boolean contains(final Place<C> place) {
 		return mPlaces.contains(place);
 	}
 
@@ -76,7 +76,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return {@code true} iff all places are contained
 	 * @see java.util.Set#containsAll(java.util.Collection)
 	 */
-	public boolean containsAll(final Collection<Place<S, C>> places) {
+	public boolean containsAll(final Collection<Place<C>> places) {
 		return mPlaces.containsAll(places);
 	}
 
@@ -85,8 +85,8 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 *            The places.
 	 * @return {@code true} if the marking contains any of the specified places.
 	 */
-	public boolean containsAny(final Collection<Place<S, C>> places) {
-		for (final Place<S, C> place : places) {
+	public boolean containsAny(final Collection<Place<C>> places) {
+		for (final Place<C> place : places) {
 			if (mPlaces.contains(place)) {
 				return true;
 			}
@@ -102,7 +102,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @see java.util.Set#iterator()
 	 */
 	@Override
-	public Iterator<Place<S, C>> iterator() {
+	public Iterator<Place<C>> iterator() {
 		return mPlaces.iterator();
 	}
 
@@ -173,7 +173,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 */
 	public Marking<S, C> fireTransition(final ITransition<S, C> transition) {
-		final HashSet<Place<S, C>> resultSet = new HashSet<>(mPlaces);
+		final HashSet<Place<C>> resultSet = new HashSet<>(mPlaces);
 		resultSet.removeAll(transition.getPredecessors());
 		resultSet.addAll(transition.getSuccessors());
 		return new Marking<>(resultSet);

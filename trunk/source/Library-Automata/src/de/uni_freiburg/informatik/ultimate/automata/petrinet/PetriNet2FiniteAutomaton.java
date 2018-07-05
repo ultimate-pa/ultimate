@@ -127,9 +127,9 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 		return state;
 	}
 
-	private Collection<C> getMarkingContents(final Set<Place<S, C>> marking) {
+	private Collection<C> getMarkingContents(final Set<Place<C>> marking) {
 		final ArrayList<C> result = new ArrayList<>(marking.size());
-		for (final Place<S, C> place : marking) {
+		for (final Place<C> place : marking) {
 			result.add(place.getContent());
 		}
 		return result;
@@ -153,7 +153,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 
 	private Set<ITransition<S, C>> getOutgoingNetTransitions(final Marking<S, C> marking) {
 		final Set<ITransition<S, C>> transitions = new HashSet<>();
-		for (final Place<S, C> place : marking) {
+		for (final Place<C> place : marking) {
 			transitions.addAll(mOperand.getSuccessors(place));
 		}
 		return transitions;

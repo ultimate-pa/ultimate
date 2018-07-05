@@ -50,8 +50,8 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 
 	private final int mHashCode;
 	private final S mSymbol;
-	private final Collection<Place<S, C>> mPredecessors;
-	private final Collection<Place<S, C>> mSuccessors;
+	private final Collection<Place<C>> mPredecessors;
+	private final Collection<Place<C>> mSuccessors;
 
 	private final int mTotalOrderId;
 
@@ -70,11 +70,11 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 	 * @param totalOrderId
 	 *            total order ID
 	 */
-	public Transition(final S symbol, final Collection<Place<S, C>> predecessors,
-			final Collection<Place<S, C>> successors, final int totalOrderId) {
+	public Transition(final S symbol, final Collection<Place<C>> predecessors,
+			final Collection<Place<C>> successors, final int totalOrderId) {
 		mSymbol = symbol;
-		mPredecessors = Collections.unmodifiableList((List<Place<S, C>>) predecessors);
-		mSuccessors = Collections.unmodifiableList((List<Place<S, C>>) successors);
+		mPredecessors = Collections.unmodifiableList((List<Place<C>>) predecessors);
+		mSuccessors = Collections.unmodifiableList((List<Place<C>>) successors);
 		mHashCode = computeHashCode();
 		mTotalOrderId = totalOrderId;
 	}
@@ -85,12 +85,12 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 	}
 
 	@Override
-	public Collection<Place<S, C>> getPredecessors() {
+	public Collection<Place<C>> getPredecessors() {
 		return mPredecessors;
 	}
 
 	@Override
-	public Collection<Place<S, C>> getSuccessors() {
+	public Collection<Place<C>> getSuccessors() {
 		return mSuccessors;
 	}
 

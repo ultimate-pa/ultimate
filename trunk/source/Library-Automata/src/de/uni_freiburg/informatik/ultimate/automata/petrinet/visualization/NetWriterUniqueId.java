@@ -71,10 +71,10 @@ public final class NetWriterUniqueId<LETTER, STATE> extends NetWriter<LETTER, ST
 	}
 
 	@Override
-	protected Map<Place<LETTER, STATE>, String> getPlacesMapping(final Collection<Place<LETTER, STATE>> places) {
+	protected Map<Place<STATE>, String> getPlacesMapping(final Collection<Place<STATE>> places) {
 		int counter = 0;
-		final HashMap<Place<LETTER, STATE>, String> placesMapping = new HashMap<>();
-		for (final Place<LETTER, STATE> place : places) {
+		final HashMap<Place<STATE>, String> placesMapping = new HashMap<>();
+		for (final Place<STATE> place : places) {
 			placesMapping.put(place, 'p' + Integer.toString(counter));
 			counter++;
 		}

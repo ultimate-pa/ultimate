@@ -32,12 +32,10 @@ import java.io.Serializable;
  * A Petri net place.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
- *            symbols type
  * @param <C>
  *            place content type
  */
-public class Place<S, C> implements Serializable {
+public class Place<C> implements Serializable {
 	private static final long serialVersionUID = -4577818193149596161L;
 
 	private static int sSerialNumberCounter;

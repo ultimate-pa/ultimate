@@ -78,20 +78,20 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	private final Set<LETTER> mAlphabet;
 	private final IStateFactory<C> mStateFactory;
 
-	private final Collection<Place<LETTER, C>> mPlaces = new HashSet<>();
-	private final Set<Place<LETTER, C>> mInitialPlaces = new HashSet<>();
-	private final Collection<Place<LETTER, C>> mAcceptingPlaces = new HashSet<>();
+	private final Collection<Place<C>> mPlaces = new HashSet<>();
+	private final Set<Place<C>> mInitialPlaces = new HashSet<>();
+	private final Collection<Place<C>> mAcceptingPlaces = new HashSet<>();
 	private final Collection<ITransition<LETTER, C>> mTransitions = new HashSet<>();
 	/**
 	 * Map each place to its incoming transitions.
 	 * Redundant to {@link #mTransitions} for better performance.
 	 */
-	private final HashRelation<Place<LETTER, C>, ITransition<LETTER, C>> mPredecessors = new HashRelation<>();
+	private final HashRelation<Place<C>, ITransition<LETTER, C>> mPredecessors = new HashRelation<>();
 	/**
 	 * Map each place to its outgoing transitions.
 	 * Redundant to {@link #mTransitions} for better performance.
 	 */
-	private final HashRelation<Place<LETTER, C>, ITransition<LETTER, C>> mSuccessors = new HashRelation<>();
+	private final HashRelation<Place<C>, ITransition<LETTER, C>> mSuccessors = new HashRelation<>();
 	
 	/**
 	 * If true the number of tokens in this petri net is constant. Formally: There is a natural number n such that every
@@ -131,16 +131,16 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	public BoundedPetriNet(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, C> nwa)
 			throws AutomataLibraryException {
 		this(services, nwa.getVpAlphabet().getInternalAlphabet(), nwa.getStateFactory(), true);
-		final Map<C, Place<LETTER, C>> state2place = new HashMap<>();
+		final Map<C, Place<C>> state2place = new HashMap<>();
 		for (final C content : nwa.getStates()) {
 			// C content = state.getContent();
 			final boolean isInitial = nwa.isInitial(content);
 			final boolean isAccepting = nwa.isFinal(content);
-			final Place<LETTER, C> place = addPlace(content, isInitial, isAccepting);
+			final Place<C> place = addPlace(content, isInitial, isAccepting);
 			state2place.put(content, place);
 		}
-		Collection<Place<LETTER, C>> succPlace;
-		Collection<Place<LETTER, C>> predPlace;
+		Collection<Place<C>> succPlace;
+		Collection<Place<C>> predPlace;
 		for (final C content : nwa.getStates()) {
 			predPlace = new ArrayList<>(1);
 			predPlace.add(state2place.get(content));
@@ -197,8 +197,8 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 * @return the newly added place
 	 */
 	@SuppressWarnings("squid:S2301")
-	public Place<LETTER, C> addPlace(final C content, final boolean isInitial, final boolean isAccepting) {
-		final Place<LETTER, C> place = new Place<>(content);
+	public Place<C> addPlace(final C content, final boolean isInitial, final boolean isAccepting) {
+		final Place<C> place = new Place<>(content);
 		mPlaces.add(place);
 		if (isInitial) {
 			mInitialPlaces.add(place);
@@ -221,14 +221,14 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 * @return the newly added transition
 	 */
 	public Transition<LETTER, C> addTransition(final LETTER letter,
-			final Collection<Place<LETTER, C>> preds, final Collection<Place<LETTER, C>> succs) {
+			final Collection<Place<C>> preds, final Collection<Place<C>> succs) {
 		assert mAlphabet.contains(letter) : "Letter not from alphabet: " + letter;
 		final Transition<LETTER, C> transition = new Transition<>(letter, preds, succs, mTransitions.size());
-		for (final Place<LETTER, C> predPlace : preds) {
+		for (final Place<C> predPlace : preds) {
 			assert mPlaces.contains(predPlace) : "Place not from net: " + predPlace;
 			mSuccessors.addPair(predPlace, transition);
 		}
-		for (final Place<LETTER, C> succPlace : succs) {
+		for (final Place<C> succPlace : succs) {
 			assert mPlaces.contains(succPlace) : "Place not from net: " + succPlace;
 			mPredecessors.addPair(succPlace, transition);
 		}
@@ -240,8 +240,8 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 * Hack to satisfy requirements from IPetriNet. Used by visualization.
 	 */
 	@Override
-	public Collection<Collection<Place<LETTER, C>>> getAcceptingMarkings() {
-		final Collection<Collection<Place<LETTER, C>>> list = new ArrayList<>(1);
+	public Collection<Collection<Place<C>>> getAcceptingMarkings() {
+		final Collection<Collection<Place<C>>> list = new ArrayList<>(1);
 		list.add(mAcceptingPlaces);
 		return list;
 	}
@@ -254,7 +254,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 * @return {@code true} iff the transition is enabled
 	 */
 	public boolean isTransitionEnabled(final ITransition<LETTER, C> transition,
-			final Collection<Place<LETTER, C>> marking) {
+			final Collection<Place<C>> marking) {
 		return marking.containsAll(transition.getPredecessors());
 	}
 
@@ -267,8 +267,8 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 *            marking
 	 * @return resulting marking
 	 */
-	public Collection<Place<LETTER, C>> fireTransition(final ITransition<LETTER, C> transition,
-			final Collection<Place<LETTER, C>> marking) {
+	public Collection<Place<C>> fireTransition(final ITransition<LETTER, C> transition,
+			final Collection<Place<C>> marking) {
 		marking.removeAll(transition.getPredecessors());
 		marking.addAll(transition.getSuccessors());
 
@@ -286,7 +286,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	}
 
 	@Override
-	public Collection<Place<LETTER, C>> getPlaces() {
+	public Collection<Place<C>> getPlaces() {
 		return mPlaces;
 	}
 
@@ -295,11 +295,11 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		return new Marking<>(mInitialPlaces);
 	}
 	
-	public Set<Place<LETTER, C>> getInitialPlaces() {
+	public Set<Place<C>> getInitialPlaces() {
 		return mInitialPlaces;
 	}
 
-	public Collection<Place<LETTER, C>> getAcceptingPlaces() {
+	public Collection<Place<C>> getAcceptingPlaces() {
 		return mAcceptingPlaces;
 	}
 
@@ -309,12 +309,12 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	}
 
 	@Override
-	public HashRelation<Place<LETTER, C>, ITransition<LETTER, C>> getPredecessors() {
+	public HashRelation<Place<C>, ITransition<LETTER, C>> getPredecessors() {
 		return mPredecessors;
 	}
 
 	@Override
-	public HashRelation<Place<LETTER, C>, ITransition<LETTER, C>> getSuccessors() {
+	public HashRelation<Place<C>, ITransition<LETTER, C>> getSuccessors() {
 		return mSuccessors;
 	}
 
@@ -328,7 +328,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 
 	@Override
 	public boolean isAccepting(final Marking<LETTER, C> marking) {
-		for (final Place<LETTER, C> place : marking) {
+		for (final Place<C> place : marking) {
 			if (getAcceptingPlaces().contains(place)) {
 				return true;
 			}

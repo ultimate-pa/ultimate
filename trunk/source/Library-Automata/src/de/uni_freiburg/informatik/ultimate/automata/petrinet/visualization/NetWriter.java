@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetri
  */
 public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	private final Map<LETTER, String> mAlphabet;
-	private final Map<Place<LETTER, STATE>, String> mPlacesMapping;
+	private final Map<Place<STATE>, String> mPlacesMapping;
 
 	/**
 	 * @param writer
@@ -78,8 +78,8 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 
 	protected abstract Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet);
 
-	protected abstract Map<Place<LETTER, STATE>, String>
-			getPlacesMapping(final Collection<Place<LETTER, STATE>> places);
+	protected abstract Map<Place<STATE>, String>
+			getPlacesMapping(final Collection<Place<STATE>> places);
 
 	protected final void printElementPrefix(final String string) {
 		print(String.format("\t%s = ", string));
@@ -115,21 +115,21 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printOneTransitionSuffix();
 	}
 
-	private void printMarking(final Iterable<Place<LETTER, STATE>> marking) {
+	private void printMarking(final Iterable<Place<STATE>> marking) {
 		print('{');
-		for (final Place<LETTER, STATE> place : marking) {
+		for (final Place<STATE> place : marking) {
 			printElement(mPlacesMapping.get(place));
 		}
 		print('}');
 	}
 
-	private void printInitialMarking(final Iterable<Place<LETTER, STATE>> initialMarking) {
+	private void printInitialMarking(final Iterable<Place<STATE>> initialMarking) {
 		printElementPrefix("initialMarking");
 		printMarking(initialMarking);
 		println(',');
 	}
 
-	private void printAcceptingPlaces(final Iterable<Place<LETTER, STATE>> acceptingPlaces) {
+	private void printAcceptingPlaces(final Iterable<Place<STATE>> acceptingPlaces) {
 		printElementPrefix("acceptingPlaces");
 		printMarking(acceptingPlaces);
 		print(NEW_LINE);

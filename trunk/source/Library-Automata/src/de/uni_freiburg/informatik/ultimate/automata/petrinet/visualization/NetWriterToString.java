@@ -69,9 +69,9 @@ public final class NetWriterToString<LETTER, STATE> extends NetWriter<LETTER, ST
 	}
 
 	@Override
-	protected Map<Place<LETTER, STATE>, String> getPlacesMapping(final Collection<Place<LETTER, STATE>> places) {
-		final HashMap<Place<LETTER, STATE>, String> placesMapping = new HashMap<>();
-		for (final Place<LETTER, STATE> place : places) {
+	protected Map<Place<STATE>, String> getPlacesMapping(final Collection<Place<STATE>> places) {
+		final HashMap<Place<STATE>, String> placesMapping = new HashMap<>();
+		for (final Place<STATE> place : places) {
 			placesMapping.put(place, quoteAndReplaceBackslashes(place));
 		}
 		return placesMapping;

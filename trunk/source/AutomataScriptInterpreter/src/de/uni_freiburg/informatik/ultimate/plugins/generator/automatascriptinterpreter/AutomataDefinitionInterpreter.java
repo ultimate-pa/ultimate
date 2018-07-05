@@ -462,25 +462,25 @@ public class AutomataDefinitionInterpreter {
 		mErrorLocation = pna.getLocation();
 		final BoundedPetriNet<String, String> net = new BoundedPetriNet<>(new AutomataLibraryServices(mServices),
 				new HashSet<>(pna.getAlphabet()), new StringFactory(), false);
-		final Map<String, Place<String, String>> name2places = new HashMap<>();
+		final Map<String, Place<String>> name2places = new HashMap<>();
 
 		// add the places
 		for (final String p : pna.getPlaces()) {
-			final Place<String, String> place = net.addPlace(p, pna.getInitialMarkings().containsPlace(p),
+			final Place<String> place = net.addPlace(p, pna.getInitialMarkings().containsPlace(p),
 					pna.getAcceptingPlaces().contains(p));
 			name2places.put(p, place);
 		}
 
 		// add the transitions
 		for (final PetriNetTransitionAST ptrans : pna.getTransitions()) {
-			final Collection<Place<String, String>> preds = new ArrayList<>();
+			final Collection<Place<String>> preds = new ArrayList<>();
 			for (final String pred : ptrans.getPreds()) {
 				if (!name2places.containsKey(pred)) {
 					throw new IllegalArgumentException(UNDEFINED_PLACE + pred);
 				}
 				preds.add(name2places.get(pred));
 			}
-			final Collection<Place<String, String>> succs = new ArrayList<>();
+			final Collection<Place<String>> succs = new ArrayList<>();
 			for (final String succ : ptrans.getSuccs()) {
 				if (!name2places.containsKey(succ)) {
 					throw new IllegalArgumentException(UNDEFINED_PLACE + succ);

@@ -60,7 +60,7 @@ public class Candidate<S, C> {
 	/**
 	 * Places.
 	 */
-	public final ArrayList<Place<S, C>> mPlaces;
+	public final ArrayList<Place<C>> mPlaces;
 
 	/**
 	 * Constructor from another candidate.
@@ -68,7 +68,7 @@ public class Candidate<S, C> {
 	 * @param candidate
 	 *            candidate
 	 */
-	public Candidate(final Map.Entry<Transition<S, C>, Map<Place<S, C>, Condition<S, C>>> candidate) {
+	public Candidate(final Map.Entry<Transition<S, C>, Map<Place<C>, Condition<S, C>>> candidate) {
 		mT = candidate.getKey();
 		mChosen = new ArrayList<>(candidate.getValue().values());
 		mPlaces = new ArrayList<>(candidate.getValue().keySet());

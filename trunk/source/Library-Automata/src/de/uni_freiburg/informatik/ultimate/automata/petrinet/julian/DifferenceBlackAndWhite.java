@@ -72,14 +72,14 @@ public final class DifferenceBlackAndWhite
 
 	private BoundedPetriNet<LETTER, C> mResult;
 
-	private final Map<Place<LETTER, C>, Place<LETTER, C>> mOldPlace2NewPlace = new HashMap<>();
+	private final Map<Place<C>, Place<C>> mOldPlace2NewPlace = new HashMap<>();
 
 	private final Map<LETTER, Set<C>> mSelfloop = new HashMap<>();
 	private final Map<LETTER, Set<C>> mStateChanger = new HashMap<>();
 
-	private final Map<C, Place<LETTER, C>> mWhitePlace = new HashMap<>();
+	private final Map<C, Place<C>> mWhitePlace = new HashMap<>();
 
-	private final Map<C, Place<LETTER, C>> mBlackPlace = new HashMap<>();
+	private final Map<C, Place<C>> mBlackPlace = new HashMap<>();
 
 	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> DifferenceBlackAndWhite(
 			final AutomataLibraryServices services, final SF factory, final BoundedPetriNet<LETTER, C> net,
@@ -171,11 +171,11 @@ public final class DifferenceBlackAndWhite
 		mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(),
 				constantTokenAmount);
 
-		for (final Place<LETTER, C> oldPlace : mOperand.getPlaces()) {
+		for (final Place<C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
 			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
-			final Place<LETTER, C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
+			final Place<C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
 	}
@@ -186,10 +186,10 @@ public final class DifferenceBlackAndWhite
 				final boolean isInitial = mNwa.getInitialStates().contains(state);
 				final C stateContent = state;
 				final C whiteContent = mContentFactory.getWhiteContent(stateContent);
-				final Place<LETTER, C> whitePlace = mResult.addPlace(whiteContent, isInitial, false);
+				final Place<C> whitePlace = mResult.addPlace(whiteContent, isInitial, false);
 				mWhitePlace.put(state, whitePlace);
 				final C blackContent = mContentFactory.getBlackContent(stateContent);
-				final Place<LETTER, C> blackPlace = mResult.addPlace(blackContent, !isInitial, false);
+				final Place<C> blackPlace = mResult.addPlace(blackContent, !isInitial, false);
 				mBlackPlace.put(state, blackPlace);
 			}
 		}
@@ -212,9 +212,9 @@ public final class DifferenceBlackAndWhite
 					continue;
 				}
 
-				final Collection<Place<LETTER, C>> predecessors = new ArrayList<>();
-				for (final Place<LETTER, C> oldPlace : oldTrans.getPredecessors()) {
-					final Place<LETTER, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				final Collection<Place<C>> predecessors = new ArrayList<>();
+				for (final Place<C> oldPlace : oldTrans.getPredecessors()) {
+					final Place<C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
 				assert mWhitePlace.containsKey(predState);
@@ -222,9 +222,9 @@ public final class DifferenceBlackAndWhite
 				assert mWhitePlace.containsKey(succState);
 				predecessors.add(mBlackPlace.get(succState));
 
-				final Collection<Place<LETTER, C>> successors = new ArrayList<>();
-				for (final Place<LETTER, C> oldPlace : oldTrans.getSuccessors()) {
-					final Place<LETTER, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				final Collection<Place<C>> successors = new ArrayList<>();
+				for (final Place<C> oldPlace : oldTrans.getSuccessors()) {
+					final Place<C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
 				assert mWhitePlace.containsKey(succState);
@@ -237,14 +237,14 @@ public final class DifferenceBlackAndWhite
 
 			// One copy for the selfloops
 			if (!mSelfloop.isEmpty()) {
-				final Collection<Place<LETTER, C>> predecessors = new ArrayList<>();
-				for (final Place<LETTER, C> oldPlace : oldTrans.getPredecessors()) {
-					final Place<LETTER, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				final Collection<Place<C>> predecessors = new ArrayList<>();
+				for (final Place<C> oldPlace : oldTrans.getPredecessors()) {
+					final Place<C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				final Collection<Place<LETTER, C>> successors = new ArrayList<>();
-				for (final Place<LETTER, C> oldPlace : oldTrans.getSuccessors()) {
-					final Place<LETTER, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				final Collection<Place<C>> successors = new ArrayList<>();
+				for (final Place<C> oldPlace : oldTrans.getSuccessors()) {
+					final Place<C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
 				for (final C state : mStateChanger.get(symbol)) {

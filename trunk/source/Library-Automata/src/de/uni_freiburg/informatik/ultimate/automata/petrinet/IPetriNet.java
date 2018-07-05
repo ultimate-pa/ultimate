@@ -51,7 +51,7 @@ public interface IPetriNet<LETTER, C> extends IAutomaton<LETTER, C> {
 	/**
 	 * @return The places.
 	 */
-	Collection<Place<LETTER, C>> getPlaces();
+	Collection<Place<C>> getPlaces();
 
 	/**
 	 * @return The transitions.
@@ -66,7 +66,7 @@ public interface IPetriNet<LETTER, C> extends IAutomaton<LETTER, C> {
 	/**
 	 * @return The accepting markings.
 	 */
-	Collection<Collection<Place<LETTER, C>>> getAcceptingMarkings();
+	Collection<Collection<Place<C>>> getAcceptingMarkings();
 
 	/**
 	 * @param marking
@@ -94,19 +94,19 @@ public interface IPetriNet<LETTER, C> extends IAutomaton<LETTER, C> {
 	}
 
 	/** @return Map from each place to its outgoing transitions. */
-	HashRelation<Place<LETTER, C>, ITransition<LETTER, C>> getSuccessors();
+	HashRelation<Place<C>, ITransition<LETTER, C>> getSuccessors();
 	
 
 	/** @return Map from each place to its incoming transitions. */
-	HashRelation<Place<LETTER, C>, ITransition<LETTER, C>> getPredecessors();
+	HashRelation<Place<C>, ITransition<LETTER, C>> getPredecessors();
 	
 	/** @return Outgoing transitions of one place. */
-	default Set<ITransition<LETTER, C>> getSuccessors(Place<LETTER, C> place) {
+	default Set<ITransition<LETTER, C>> getSuccessors(Place<C> place) {
 		return getSuccessors().getImage(place);
 	}
 
 	/** @return Incoming transitions of one place. */
-	default Set<ITransition<LETTER, C>> getPredecessors(Place<LETTER, C> place) {
+	default Set<ITransition<LETTER, C>> getPredecessors(Place<C> place) {
 		return getPredecessors().getImage(place);
 	}
 

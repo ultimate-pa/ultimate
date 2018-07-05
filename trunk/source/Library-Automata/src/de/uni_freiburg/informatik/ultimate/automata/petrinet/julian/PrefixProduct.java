@@ -64,8 +64,8 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	private final INestedWordAutomaton<S, C> mNwa;
 	private final BoundedPetriNet<S, C> mResult;
 
-	private final Map<Place<S, C>, Place<S, C>> mOldPlace2newPlace = new HashMap<>();
-	private final Map<C, Place<S, C>> mState2newPlace = new HashMap<>();
+	private final Map<Place<C>, Place<C>> mOldPlace2newPlace = new HashMap<>();
+	private final Map<C, Place<C>> mState2newPlace = new HashMap<>();
 
 	private final Map<S, Collection<ITransition<S, C>>> mSymbol2netTransitions = new HashMap<>();
 	private final Map<S, Collection<AutomatonTransition>> mSymbol2nwaTransitions = new HashMap<>();
@@ -191,7 +191,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 					continue;
 				}
 				for (final AutomatonTransition nwaTrans : mSymbol2nwaTransitions.get(symbol)) {
-					final Collection<Place<S, C>> predecessors = new ArrayList<>();
+					final Collection<Place<C>> predecessors = new ArrayList<>();
 					addSharedTransitionsHelper(netTrans, nwaTrans, predecessors);
 				}
 			}
@@ -201,14 +201,14 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	private void addUnsharedTransitions(final HashSet<S> netOnlyAlphabet, final HashSet<S> nwaOnlyAlphabet) {
 		for (final S symbol : netOnlyAlphabet) {
 			for (final ITransition<S, C> trans : mSymbol2netTransitions.get(symbol)) {
-				final Collection<Place<S, C>> predecessors = new ArrayList<>();
-				for (final Place<S, C> oldPlace : trans.getPredecessors()) {
-					final Place<S, C> newPlace = mOldPlace2newPlace.get(oldPlace);
+				final Collection<Place<C>> predecessors = new ArrayList<>();
+				for (final Place<C> oldPlace : trans.getPredecessors()) {
+					final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				final Collection<Place<S, C>> successors = new ArrayList<>();
-				for (final Place<S, C> oldPlace : trans.getSuccessors()) {
-					final Place<S, C> newPlace = mOldPlace2newPlace.get(oldPlace);
+				final Collection<Place<C>> successors = new ArrayList<>();
+				for (final Place<C> oldPlace : trans.getSuccessors()) {
+					final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
 				mResult.addTransition(trans.getSymbol(), predecessors, successors);
@@ -217,12 +217,12 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 
 		for (final S symbol : nwaOnlyAlphabet) {
 			for (final AutomatonTransition trans : mSymbol2nwaTransitions.get(symbol)) {
-				final Collection<Place<S, C>> predecessors = new ArrayList<>(1);
-				final Place<S, C> newPlacePred = mState2newPlace.get(trans.getPredecessor());
+				final Collection<Place<C>> predecessors = new ArrayList<>(1);
+				final Place<C> newPlacePred = mState2newPlace.get(trans.getPredecessor());
 				predecessors.add(newPlacePred);
 
-				final Collection<Place<S, C>> successors = new ArrayList<>(1);
-				final Place<S, C> newPlaceSucc = mState2newPlace.get(trans.getSuccessor());
+				final Collection<Place<C>> successors = new ArrayList<>(1);
+				final Place<C> newPlaceSucc = mState2newPlace.get(trans.getSuccessor());
 				successors.add(newPlaceSucc);
 				mResult.addTransition(trans.getSymbol(), predecessors, successors);
 			}
@@ -230,16 +230,16 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	}
 
 	private void addSharedTransitionsHelper(final ITransition<S, C> netTrans, final AutomatonTransition nwaTrans,
-			final Collection<Place<S, C>> predecessors) {
-		for (final Place<S, C> oldPlace : netTrans.getPredecessors()) {
-			final Place<S, C> newPlace = mOldPlace2newPlace.get(oldPlace);
+			final Collection<Place<C>> predecessors) {
+		for (final Place<C> oldPlace : netTrans.getPredecessors()) {
+			final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
 			predecessors.add(newPlace);
 		}
 		predecessors.add(mState2newPlace.get(nwaTrans.getPredecessor()));
 
-		final Collection<Place<S, C>> successors = new ArrayList<>();
-		for (final Place<S, C> oldPlace : netTrans.getSuccessors()) {
-			final Place<S, C> newPlace = mOldPlace2newPlace.get(oldPlace);
+		final Collection<Place<C>> successors = new ArrayList<>();
+		for (final Place<C> oldPlace : netTrans.getSuccessors()) {
+			final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
 			successors.add(newPlace);
 		}
 		successors.add(mState2newPlace.get(nwaTrans.getSuccessor()));
@@ -248,11 +248,11 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 
 	private void addPlacesAndStates() {
 		//add places of old net
-		for (final Place<S, C> oldPlace : mOperand.getPlaces()) {
+		for (final Place<C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
 			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
-			final Place<S, C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
+			final Place<C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2newPlace.put(oldPlace, newPlace);
 		}
 
@@ -261,7 +261,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 			final C content = state;
 			final boolean isInitial = mNwa.getInitialStates().contains(state);
 			final boolean isAccepting = mNwa.isFinal(state);
-			final Place<S, C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
+			final Place<C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mState2newPlace.put(state, newPlace);
 		}
 	}

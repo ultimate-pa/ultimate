@@ -74,7 +74,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
 		final LinkedList<IPredicate> programPoints = new LinkedList<>();
-		for (final Place<?, IPredicate> place : marking) {
+		for (final Place<IPredicate> place : marking) {
 			programPoints.add(place.getContent());
 		}
 		return mPredicateFactory.getNewProdState(programPoints);

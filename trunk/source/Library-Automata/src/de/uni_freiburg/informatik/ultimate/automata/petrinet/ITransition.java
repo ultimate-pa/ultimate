@@ -46,12 +46,12 @@ public interface ITransition<S, C> {
 	/**
 	 * @return The predecessor places.
 	 */
-	Collection<Place<S, C>> getPredecessors();
+	Collection<Place<C>> getPredecessors();
 
 	/**
 	 * @return The successor places.
 	 */
-	Collection<Place<S, C>> getSuccessors();
+	Collection<Place<C>> getSuccessors();
 
 	/*
 	public interface Successors extends Iterable<IPlace> {
