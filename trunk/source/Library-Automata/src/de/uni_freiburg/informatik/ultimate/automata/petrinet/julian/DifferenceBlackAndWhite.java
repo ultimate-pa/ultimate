@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -54,51 +53,37 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
- * Computes the difference between a {@link BoundedPetriNet} and a {@link NestedWordAutomaton}.
- * <p>
- * TODO Christian 2016-09-06: If the <tt>finalIsTrap</tt> method is removed, the input can become an
- * {@link INestedWordAutomaton}.
+ * Computes the difference between a {@link BoundedPetriNet} and a {@link INestedWordAutomaton}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
- *            symbol type
+ * @param <LETTER>
+ *            Type of letters from the alphabet
  * @param <C>
  *            content type
  * @param <CRSF>
  *            check result state factory type
  */
-public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & INwaInclusionStateFactory<C>>
-		extends UnaryNetOperation<S, C, CRSF> {
-	private final BoundedPetriNet<S, C> mOperand;
-	private final INestedWordAutomaton<S, C> mNwa;
+public final class DifferenceBlackAndWhite
+		<LETTER, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & INwaInclusionStateFactory<C>>
+		extends UnaryNetOperation<LETTER, C, CRSF> {
+	private final BoundedPetriNet<LETTER, C> mOperand;
+	private final INestedWordAutomaton<LETTER, C> mNwa;
 	private final IBlackWhiteStateFactory<C> mContentFactory;
 
-	private BoundedPetriNet<S, C> mResult;
+	private BoundedPetriNet<LETTER, C> mResult;
 
-	private final Map<Place<S, C>, Place<S, C>> mOldPlace2NewPlace = new HashMap<>();
+	private final Map<Place<LETTER, C>, Place<LETTER, C>> mOldPlace2NewPlace = new HashMap<>();
 
-	private final Map<S, Set<C>> mSelfloop = new HashMap<>();
-	private final Map<S, Set<C>> mStateChanger = new HashMap<>();
+	private final Map<LETTER, Set<C>> mSelfloop = new HashMap<>();
+	private final Map<LETTER, Set<C>> mStateChanger = new HashMap<>();
 
-	private final Map<C, Place<S, C>> mWhitePlace = new HashMap<>();
+	private final Map<C, Place<LETTER, C>> mWhitePlace = new HashMap<>();
 
-	private final Map<C, Place<S, C>> mBlackPlace = new HashMap<>();
+	private final Map<C, Place<LETTER, C>> mBlackPlace = new HashMap<>();
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param factory
-	 *            content factory
-	 * @param net
-	 *            Petri net
-	 * @param nwa
-	 *            nested word automaton
-	 */
 	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> DifferenceBlackAndWhite(
-			final AutomataLibraryServices services, final SF factory, final BoundedPetriNet<S, C> net,
-			final NestedWordAutomaton<S, C> nwa) {
+			final AutomataLibraryServices services, final SF factory, final BoundedPetriNet<LETTER, C> net,
+			final INestedWordAutomaton<LETTER, C> nwa) {
 		super(services);
 		mOperand = net;
 		mNwa = nwa;
@@ -145,7 +130,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 	}
 
 	private void classifySymbols() {
-		for (final S symbol : mNwa.getVpAlphabet().getInternalAlphabet()) {
+		for (final LETTER symbol : mNwa.getVpAlphabet().getInternalAlphabet()) {
 			final HashSet<C> selfloopStates = new HashSet<>();
 			final HashSet<C> changerStates = new HashSet<>();
 			for (final C state : mNwa.getStates()) {
@@ -155,7 +140,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 					continue;
 				}
 
-				final Iterator<OutgoingInternalTransition<S, C>> successorsIt =
+				final Iterator<OutgoingInternalTransition<LETTER, C>> successorsIt =
 						mNwa.internalSuccessors(state, symbol).iterator();
 				if (!successorsIt.hasNext()) {
 					continue;
@@ -186,11 +171,11 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(),
 				constantTokenAmount);
 
-		for (final Place<S, C> oldPlace : mOperand.getPlaces()) {
+		for (final Place<LETTER, C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
 			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
-			final Place<S, C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
+			final Place<LETTER, C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
 	}
@@ -201,22 +186,22 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 				final boolean isInitial = mNwa.getInitialStates().contains(state);
 				final C stateContent = state;
 				final C whiteContent = mContentFactory.getWhiteContent(stateContent);
-				final Place<S, C> whitePlace = mResult.addPlace(whiteContent, isInitial, false);
+				final Place<LETTER, C> whitePlace = mResult.addPlace(whiteContent, isInitial, false);
 				mWhitePlace.put(state, whitePlace);
 				final C blackContent = mContentFactory.getBlackContent(stateContent);
-				final Place<S, C> blackPlace = mResult.addPlace(blackContent, !isInitial, false);
+				final Place<LETTER, C> blackPlace = mResult.addPlace(blackContent, !isInitial, false);
 				mBlackPlace.put(state, blackPlace);
 			}
 		}
 	}
 
 	private void addTransitions() {
-		for (final ITransition<S, C> oldTrans : mOperand.getTransitions()) {
-			final S symbol = oldTrans.getSymbol();
+		for (final ITransition<LETTER, C> oldTrans : mOperand.getTransitions()) {
+			final LETTER symbol = oldTrans.getSymbol();
 
 			// A copy for each changer
 			for (final C predState : mStateChanger.get(symbol)) {
-				final Iterator<OutgoingInternalTransition<S, C>> succStatesIt =
+				final Iterator<OutgoingInternalTransition<LETTER, C>> succStatesIt =
 						mNwa.internalSuccessors(predState, symbol).iterator();
 				assert succStatesIt.hasNext();
 				final C succState = succStatesIt.next().getSucc();
@@ -227,9 +212,9 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 					continue;
 				}
 
-				final Collection<Place<S, C>> predecessors = new ArrayList<>();
-				for (final Place<S, C> oldPlace : oldTrans.getPredecessors()) {
-					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				final Collection<Place<LETTER, C>> predecessors = new ArrayList<>();
+				for (final Place<LETTER, C> oldPlace : oldTrans.getPredecessors()) {
+					final Place<LETTER, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
 				assert mWhitePlace.containsKey(predState);
@@ -237,9 +222,9 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 				assert mWhitePlace.containsKey(succState);
 				predecessors.add(mBlackPlace.get(succState));
 
-				final Collection<Place<S, C>> successors = new ArrayList<>();
-				for (final Place<S, C> oldPlace : oldTrans.getSuccessors()) {
-					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				final Collection<Place<LETTER, C>> successors = new ArrayList<>();
+				for (final Place<LETTER, C> oldPlace : oldTrans.getSuccessors()) {
+					final Place<LETTER, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
 				assert mWhitePlace.containsKey(succState);
@@ -252,31 +237,16 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 
 			// One copy for the selfloops
 			if (!mSelfloop.isEmpty()) {
-				/*
-				Collection<IState<S,C>> succStates = predState.getInternalSucc(symbol);
-				assert (succStates.size() == 1);
-				IState<S,C> succState = succStates.iterator().next();
-				*/
-				final Collection<Place<S, C>> predecessors = new ArrayList<>();
-				for (final Place<S, C> oldPlace : oldTrans.getPredecessors()) {
-					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				final Collection<Place<LETTER, C>> predecessors = new ArrayList<>();
+				for (final Place<LETTER, C> oldPlace : oldTrans.getPredecessors()) {
+					final Place<LETTER, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				/*
-				predecessors.add(mWhitePlace.get(predState));
-				predecessors.add(mBlackPlace.get(succState));
-				*/
-
-				final Collection<Place<S, C>> successors = new ArrayList<>();
-				for (final Place<S, C> oldPlace : oldTrans.getSuccessors()) {
-					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
+				final Collection<Place<LETTER, C>> successors = new ArrayList<>();
+				for (final Place<LETTER, C> oldPlace : oldTrans.getSuccessors()) {
+					final Place<LETTER, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
-				/*
-				successors.add(mWhitePlace.get(succState));
-				successors.add(mBlackPlace.get(predState));
-				*/
-
 				for (final C state : mStateChanger.get(symbol)) {
 					predecessors.add(mBlackPlace.get(state));
 					successors.add(mBlackPlace.get(state));
@@ -287,27 +257,13 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		}
 	}
 
-	/*
-	private IState<S, C> getSuccessorState(IState<S, C> state, S symbol) {
-		Collection<IState<S, C>> successors = state.getInternalSucc(symbol);
-		if (successors.size() > 1) {
-			throw new IllegalArgumentException(
-					"Only deterministic automata supported");
-		}
-		for (IState<S, C> succ : successors) {
-			return succ;
-		}
-		return null;
-	}
-	*/
-
 	@Override
-	protected IPetriNet<S, C> getOperand() {
+	protected IPetriNet<LETTER, C> getOperand() {
 		return mOperand;
 	}
 
 	@Override
-	public BoundedPetriNet<S, C> getResult() {
+	public BoundedPetriNet<LETTER, C> getResult() {
 		return mResult;
 	}
 
@@ -317,11 +273,11 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 			mLogger.info("Testing correctness of " + getOperationName());
 		}
 
-		final INestedWordAutomaton<S, C> op1AsNwa =
+		final INestedWordAutomaton<LETTER, C> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<S, C> rcResult =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, C> rcResult =
 				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<S, C> resultAsNwa =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, C> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
 
 		boolean correct = true;
