@@ -30,16 +30,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Classes that implement this interface represent an {@link IAction} which labels a fork edge to the new thread
- * in an interprocedural control flow graph.
+ * Classes that implement this interface represent an {@link IAction} that
+ * defines the effect that a procedure fork has to the (non-control-flow)
+ * variables of the system. In our terminology, a procedure fork is the
+ * transition that brings the system from the forking procedure to the forked
+ * procedure. This means that the effect of the of a procedure fork is that all
+ * input variables of the forking procedure are assigned and all local variables
+ * of the forking procedure are havoced.
  *
  * @author Lars Nitzke (lars.nitzke@outlook.com)
  *
  */
-public interface IForkOtherThreadAction extends IAction {
+public interface IForkActionOtherThread extends IAction {
 	/**
-	 * @return {@link TransFormula} which defines how the local variables of the forked procedure are modified while
-	 *         executing this action.
+	 * @return {@link TransFormula} which defines how the local variables of the 
+	 * forked procedure are modified while executing this action.
 	 */
 	UnmodifiableTransFormula getLocalVarsAssignment();
 

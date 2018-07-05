@@ -28,12 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 /** 
- * An {@link IIcfgTransition} that represents a Join from the current thread. Edges of this type connect 
- * the location of the join with the location directly after the join.
- * 
+ * An {@link IIcfgTransition} that represents a Join. Edges of this type connect 
+ * the exit location of a forked procedure with the location directly after the 
+ * join statement.
+ *  
  * @author Lars Nitzke
  *
  */
-public interface IIcfgJoinCurrentThreadTransition<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IJoinCurrentThreadAction {
-
+public interface IIcfgJoinTransitionOtherThread<LOC extends IcfgLocation, T 
+		extends IIcfgForkTransitionOtherThread<LOC>> extends IIcfgTransition<LOC>, IJoinActionOtherThread {
+	// Just for grouping	
 }

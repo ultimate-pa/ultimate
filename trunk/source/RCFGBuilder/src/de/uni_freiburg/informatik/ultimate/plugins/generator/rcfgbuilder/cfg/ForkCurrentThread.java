@@ -30,6 +30,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgForkTransitionCurrentThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * Edge in a recursive control flow graph that represents a fork call. Opposed to a Summary this represents only
@@ -39,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *
  * @author lars.nitzke@outlook.com
  */
-public class ForkCurrentThread extends CodeBlock {
+public class ForkCurrentThread extends CodeBlock implements IIcfgForkTransitionCurrentThread<IcfgLocation> {
 	
 	private static final long serialVersionUID = -2032583850030703623L;
 	protected ForkStatement mForkStatement;

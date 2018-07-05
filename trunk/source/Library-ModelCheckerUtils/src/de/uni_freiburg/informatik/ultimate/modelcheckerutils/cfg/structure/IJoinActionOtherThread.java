@@ -28,35 +28,32 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
-/** 
- * An {@link IIcfgTransition} that represents a Join from another thread. Edges of this type connect 
- * the location directly after the join with the exit location of the forked procedure.
- *  
- * An {@link IIcfgJoinOtherThreadTransition} in a {@link IIcfg} represents the join with a forked procedure. This represents
- * the execution starting from the last position of a forked procedure to the position of the corresponding join statement. 
- * The update of the variables of the forking procedure is defined by the {@link TransFormula} provided by
- * {@link IIcfgJoinOtherThreadTransition#getAssignmentOfJoin()}.
- * 
- * Note that each {@link IIcfgJoinOtherThreadTransition} has to have a corresponding fork (provided by
- * {@link IIcfgJoinOtherThreadTransition#getCorrespondingFork()}.
- * 
- * @author Lars Nitzke
+/**
+ * Classes that implement this interface represent an {@link IAction} that
+ * defines the effect that a join has to the (non-control-flow)
+ * variables of the system. A join is the transition that brings the system 
+ * from a forked procedure back to the joining procedure. This means that the
+ * effect of the join is that
+ * <ul>
+ * <li> variables that are assigned by the fork get the values that are returned by the procedure
+ * <li> all local variables that occure only in the context of the forked procedure are havoced.
+ * <ul/>
+ *
+ * @author Lars Nitzke (lars.nitzke@outlook.com)
  *
  */
-public interface IIcfgJoinOtherThreadTransition<LOC extends IcfgLocation, T 
-		extends IIcfgForkOtherThreadTransition<LOC>> extends IIcfgTransition<LOC>, IJoinOtherThreadAction {
-	
+public interface IJoinActionOtherThread extends IAction {
 	/**
-	 * @return the {@link IIcfgForkOtherThreadTransition} that has to be taken before this 
-	 * {@link IIcfgJoinOtherThreadTransition} can be taken.
+	 * @return {@link TransFormula} which defines how the variables that are explicitly mentioned in the fork are
+	 *         updated on the join (this does not include information about modifiable global variables that are
+	 *         implicitly modified).
 	 */
-	T getCorrespondingFork();
+	UnmodifiableTransFormula getAssignmentOfJoin();
 
-	/**
-	 * @return the location that represents the call site.
-	 */
-	default LOC getForkerProgramPoint() {
-		return getCorrespondingFork().getSource();
+	@Override
+	default UnmodifiableTransFormula getTransformula() {
+		return getAssignmentOfJoin();
 	}
 }

@@ -787,7 +787,7 @@ public class TypeChecker extends BaseObserver {
 				typeError(statement, "Forking undeclared procedure " + fork);
 				return;
 			}
-			// TODO: checkModifiesTransitives for forkStatement
+			checkModifiesTransitive(fork, fork.getMethodName());
 			final BoogieType[] typeParams = new BoogieType[procInfo.getTypeParameters().getCount()];
 			final VariableInfo[] inParams = procInfo.getInParams();
 			final Expression[] arguments = fork.getArguments();
@@ -881,17 +881,33 @@ public class TypeChecker extends BaseObserver {
 	 * Check if each modified variable of the called procedure is in the modifies clause of the current procedure.
 	 */
 	private void checkModifiesTransitive(final CallStatement call, final String callee) {
+		checkModifiesTransitive((Statement)call, callee);
+	}
+	
+	/**
+	 * Check if each modified variable of the called procedure is in the modifies clause of the current procedure.
+	 */
+	private void checkModifiesTransitive(final ForkStatement fork, final String callee) {
+		checkModifiesTransitive((Statement)fork, callee);
+	}
+	
+	/**
+	 * Check if each modified variable of the called procedure is in the modifies clause of the current procedure.
+	 */
+	private void checkModifiesTransitive(final Statement stmt, final String callee) {
 		final String caller = mCurrentProcedure;
 		final Set<String> calleeModifiedGlobals = mProc2ModfiedGlobals.get(callee);
 		final Set<String> callerModifiedGlobals = mProc2ModfiedGlobals.get(caller);
 		for (final String var : calleeModifiedGlobals) {
 			if (!callerModifiedGlobals.contains(var)) {
 				final String message = "Procedure " + callee + " may modify " + var + " procedure " + caller
-						+ " must not modify " + var + ". " + call + " calls " + callee + ". Modifies not transitive";
-				typeError(call, message);
+						+ " must not modify " + var + ". " + stmt + " calls " + callee + ". Modifies not transitive";
+				typeError(stmt, message);
 			}
 		}
 	}
+	
+	
 
 	private void processBody(final Body body, final String prodecureId) {
 		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.LOCAL, prodecureId);

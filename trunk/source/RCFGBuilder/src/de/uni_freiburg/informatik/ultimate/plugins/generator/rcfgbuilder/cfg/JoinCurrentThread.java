@@ -31,8 +31,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgJoinTransitionCurrentThread;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public class JoinCurrentThread extends CodeBlock {
+public class JoinCurrentThread extends CodeBlock implements IIcfgJoinTransitionCurrentThread<IcfgLocation> {
 
 	private static final long serialVersionUID = 3124187699513230594L;
 	

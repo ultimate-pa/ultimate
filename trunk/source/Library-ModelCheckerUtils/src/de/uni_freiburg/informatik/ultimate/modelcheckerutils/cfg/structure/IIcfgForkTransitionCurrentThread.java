@@ -27,32 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-
-/**
- * Classes that implement this interface represent an {@link IAction} which labels a join edge 
- * from another thread in an interprocedural control flow graph.
- *
- * @author Lars Nitzke (lars.nitzke@outlook.com)
+/** 
+ * An {@link IIcfgTransition} that represents a Fork. Edges of this type connect 
+ * the location of the fork with the next location of the current thread.
+ *  
+ * @author Lars Nitzke
  *
  */
-public interface IJoinOtherThreadAction extends IAction {
-	/**
-	 * @return {@link TransFormula} which defines how the variables that are explicitly mentioned in the fork are
-	 *         updated on the join (this does not include information about modifiable global variables that are
-	 *         implicitly modified).
-	 */
-	UnmodifiableTransFormula getAssignmentOfJoin();
-
-	/**
-	 * @return {@link TransFormula} which defines how the local variables of the forked procedure are modified while
-	 *         executing the corresponding fork action.
-	 */
-	UnmodifiableTransFormula getLocalVarsAssignmentOfFork();
-
-	@Override
-	default UnmodifiableTransFormula getTransformula() {
-		return getAssignmentOfJoin();
-	}
+public interface IIcfgForkTransitionCurrentThread<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IForkActionCurrentThread {
+	// just for grouping
 }

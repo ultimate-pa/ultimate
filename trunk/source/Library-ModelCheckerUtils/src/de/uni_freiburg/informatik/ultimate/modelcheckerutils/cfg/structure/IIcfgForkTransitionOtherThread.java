@@ -27,13 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
-/**
- * Classes that implement this interface represent an {@link IAction} which labels a join edge 
- * of the current thread in an interprocedural control flow graph.
- *
- * @author Lars Nitzke (lars.nitzke@outlook.com)
+/** 
+ * An {@link IIcfgTransition} that represents a Fork. Edges of this type connect 
+ * the location of the fork with the entry location of the forked procedure.
+ *  
+ * @author Lars Nitzke
  *
  */
-public interface IJoinCurrentThreadAction {
-
+public interface IIcfgForkTransitionOtherThread<LOC extends IcfgLocation> extends IIcfgTransition<LOC>, IForkActionOtherThread {
+	// just for grouping
 }
