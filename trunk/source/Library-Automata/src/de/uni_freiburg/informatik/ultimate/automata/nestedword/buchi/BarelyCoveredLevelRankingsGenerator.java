@@ -140,11 +140,13 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 
 	private boolean complicatedCondition(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
-			final boolean cond3 = condition3(constraint, doubleDecker);
-			final boolean cond2 = condition2(constraint, doubleDecker);
+			final boolean cond3 = (!mVoluntaryDecreaseOnlyForStatesInO
+					|| LevelRankingConstraint.allowsOEscape(doubleDecker, constraint));
+			final boolean cond2 = (mAllowDelayedRankDecrease
+					|| LevelRankingConstraint.areAllEvenPredecessorsAccepting(doubleDecker, constraint));
 			final boolean evenRankAndNotFinal = evenRankAndNotFinal(constraint, doubleDecker);
-		return evenRankAndNotFinal(constraint, doubleDecker) && condition2(constraint, doubleDecker)
-				&& condition3(constraint, doubleDecker);
+			assert evenRankAndNotFinal;
+		return evenRankAndNotFinal & cond2 & cond3;
 	}
 
 	private boolean evenRankAndNotFinal(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
@@ -153,17 +155,6 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 				&& !mOperand.isFinal(doubleDecker.getUp().getState());
 	}
 
-	private boolean condition2(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
-			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
-		return mAllowDelayedRankDecrease || constraint
-				.nonAcceptingPredecessorsWithEvenRanksIsEmpty(doubleDecker.getDown(), doubleDecker.getUp().getState());
-	}
-
-	private boolean condition3(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
-			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
-		return !mVoluntaryDecreaseOnlyForStatesInO
-				|| constraint.inO(doubleDecker.getDown(), doubleDecker.getUp().getState());
-	}
 
 	private LevelRankingState<LETTER, STATE> computeLevelRanking(
 			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
