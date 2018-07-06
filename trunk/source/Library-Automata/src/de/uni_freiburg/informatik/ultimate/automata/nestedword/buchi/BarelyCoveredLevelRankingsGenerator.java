@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -116,12 +115,16 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
 		}
 		final List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<>();
-		final Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease = new HashSet<>();
-		for (final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker : constraint.getPredecessorWasAccepting()) {
-			if (complicatedCondition(constraint, doubleDecker)) {
-				doubleDeckersEligibleForVoluntaryDecrease.add(doubleDecker);
+		final List<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease = new ArrayList<>();
+		for (final StateWithRankInfo<STATE> down : constraint.getDownStates()) {
+			for (final StateWithRankInfo<STATE> up : constraint.getUpStates(down)) {
+				final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker = new DoubleDecker<>(down, up);
+				if (complicatedCondition(constraint, doubleDecker)) {
+					doubleDeckersEligibleForVoluntaryDecrease.add(doubleDecker);
+				}
 			}
 		}
+
 		final Iterator<Set<DoubleDecker<StateWithRankInfo<STATE>>>> it =
 				new PowersetIterator<>(doubleDeckersEligibleForVoluntaryDecrease);
 		while (it.hasNext()) {
@@ -145,7 +148,6 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			final boolean cond2 = (mAllowDelayedRankDecrease
 					|| LevelRankingConstraint.areAllEvenPredecessorsAccepting(doubleDecker, constraint));
 			final boolean evenRankAndNotFinal = evenRankAndNotFinal(constraint, doubleDecker);
-			assert evenRankAndNotFinal;
 		return evenRankAndNotFinal & cond2 & cond3;
 	}
 
