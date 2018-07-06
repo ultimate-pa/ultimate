@@ -26,8 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.pdr;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -39,80 +44,75 @@ public final class ProofObligation {
 	private final IPredicate mToBeBlocked;
 	private final IcfgLocation mLocation;
 	private final int mLevel;
-	private IPredicate mReason;
-	private Boolean mHasBeenBlocked;
+	private final List<Triple<IPredicate, IAction, IPredicate>> mBlockedQueries;
 
 	/**
 	 * Create a new proofobligation, used by pdr.
+	 * 
 	 * @param toBeBlocked
-	 * 			{@link IPredicate} that needs to be blocked by pdr
+	 *            {@link IPredicate} that needs to be blocked by pdr
 	 * @param location
-	 * 			{@link IcfgLocation} location where it needs to be blocked
+	 *            {@link IcfgLocation} location where it needs to be blocked
 	 * @param level
-	 * 			 on which level
+	 *            on which level
 	 * @param reason
-	 * 			If the proofobligation has been blocked before save the reason why
+	 *            If the proofobligation has been blocked before save the reason why
 	 */
-	public ProofObligation(final IPredicate toBeBlocked, final IcfgLocation location, final int level,
-			final IPredicate reason) {
+	public ProofObligation(final IPredicate toBeBlocked, final IcfgLocation location, final int level) {
 		mToBeBlocked = toBeBlocked;
 		mLocation = location;
 		mLevel = level;
-		mReason = reason;
-		mHasBeenBlocked = false;
+		mBlockedQueries = new ArrayList<>();
 	}
 
 	/**
-	 * Was the proofobligation blocked before?
-	 * @return
+	 * If a query to the SMT-solver has already been seen and blocked, take its toBeBlocked and add it to the
+	 * corresponding frame.
+	 * 
+	 * @param blockedQuery
 	 */
-	public Boolean hasBeenBlocked() {
-		return mHasBeenBlocked;
-	}
-
-	/**
-	 * Save a new reason why the proofobligation was blocked
-	 * @param newReason
-	 */
-	public void setReason(final IPredicate newReason) {
-		mReason = newReason;
-		mHasBeenBlocked = true;
+	public final void addBlockedQuery(final Triple<IPredicate, IAction, IPredicate> blockedQuery) {
+		mBlockedQueries.add(blockedQuery);
 	}
 
 	/**
 	 * Get the obligation
+	 * 
 	 * @return
 	 */
-	public IPredicate getToBeBlocked() {
+	public final IPredicate getToBeBlocked() {
 		return mToBeBlocked;
 	}
 
 	/**
 	 * Get the location
+	 * 
 	 * @return
 	 */
-	public IcfgLocation getLocation() {
+	public final IcfgLocation getLocation() {
 		return mLocation;
 	}
 
 	/**
 	 * Get the level
+	 * 
 	 * @return
 	 */
-	public int getLevel() {
+	public final int getLevel() {
 		return mLevel;
 	}
 
 	/**
-	 * get the reason why it was blockeds
+	 * Get the queries to the SMT-solver that have already been blocked.
+	 * 
 	 * @return
 	 */
-	public IPredicate getReason() {
-		return mReason;
+	public final List<Triple<IPredicate, IAction, IPredicate>> getBlockedQueries() {
+		return mBlockedQueries;
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return getToBeBlocked().toString() + " at " + getLocation().toString() + " on level -" + getLevel();
 	}
 
