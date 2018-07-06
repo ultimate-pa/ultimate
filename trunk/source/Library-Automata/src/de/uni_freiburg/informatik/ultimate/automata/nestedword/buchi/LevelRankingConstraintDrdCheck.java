@@ -49,18 +49,6 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> mRanksOfPredecessorsNonAcceptingPredecessors;
 	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> mRanksOfPredecessorsNonAcceptingPredecessorsEven;
 
-	/**
-	 * Extended constructor.
-	 *
-	 * @param operand
-	 *            operand
-	 * @param predecessorOwasEmpty
-	 *            {code true} iff predecessor O was empty
-	 * @param userDefinedMaxRank
-	 *            user-defined maximal rank
-	 * @param useDoubleDeckers
-	 *            {code true} iff double deckers should be used
-	 */
 	public LevelRankingConstraintDrdCheck(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
 		super(operand, predecessorOwasEmpty, userDefinedMaxRank, useDoubleDeckers);
@@ -68,9 +56,6 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		mRanksOfPredecessorsNonAcceptingPredecessorsEven = new HashRelation3<>();
 	}
 
-	/**
-	 * Constructor with no automaton.
-	 */
 	public LevelRankingConstraintDrdCheck() {
 		super();
 		mRanksOfPredecessorsNonAcceptingPredecessors = null;
