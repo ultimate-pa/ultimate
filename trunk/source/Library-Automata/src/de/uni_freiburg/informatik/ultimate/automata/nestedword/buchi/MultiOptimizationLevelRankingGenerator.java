@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -40,6 +41,7 @@ import java.util.TreeSet;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingConstraint.VoluntaryRankDecrease;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
@@ -49,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
  * to check to see if a value is odd, but this won't work for negative numbers (e.g., (-5) % 2 == -1). If this code is
  * intending to check for oddness, consider using x & 1 == 1, or x % 2 != 0. TODO Christian 2016-08-19: Writes
  * <tt>"Sacrifice!"</tt> to logger on <tt>INFO</tt> level.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -64,7 +66,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 
 	/**
 	 * Optimization options.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum FkvOptimization {
@@ -78,7 +80,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -129,14 +131,15 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		if (predecessorIsSubsetComponent) {
 			return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
 		}
-		final boolean lazySOptimization = false;
+		final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE);
 		return new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, mUserDefinedMaxRank, true, false, true,
-				true, true, lazySOptimization).generateLevelRankings((LevelRankingConstraintDrdCheck<LETTER, STATE>) constraint, false);
+				voluntaryRankDecrease).generateLevelRankings((LevelRankingConstraintDrdCheck<LETTER, STATE>) constraint,
+						false);
 	}
 
 	/**
 	 * Generates all LevelRanking states that are tight (see 2004ATVA paper) and fulfill given LevelRankingConstraints.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	class TightLevelRankingStateGenerator {
@@ -362,7 +365,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 
 	/**
 	 * HeiMatTightLevelRankingStateGenerator.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class HeiMatTightLevelRankingStateGenerator extends TightLevelRankingStateGenerator {
@@ -418,7 +421,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		/**
 		 * Construct all stuffed levelRankings that are compatible with the partially constructed levelRanking lrwsi. In
 		 * this iteration, we assign the (even) rank rk and the (odd) rank rk - 1.
-		 * 
+		 *
 		 * @param rank
 		 *            even rank such that all (odd?) ranks <tt>{@literal <} rk-2</tt> have already been assigned
 		 * @param assignedUnrestricted
@@ -756,7 +759,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 
 		/**
 		 * LevelRankingWithSacrificeInformation.
-		 * 
+		 *
 		 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 		 */
 		private class LevelRankingWithSacrificeInformation {
@@ -903,7 +906,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	 * fulfill the following property: If a DoubleDeckerWithRankInfo has an even rank it must the the highest possible
 	 * even rank. Warning: I think a restriction to LevelRanking that satisfy also the latter property leads to a sound
 	 * complementation, but it is not mentioned in any paper and I do not have a proof for that.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class HighEvenTightLevelRankingStateGenerator extends TightLevelRankingStateGenerator {
@@ -970,7 +973,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	 * (from powerset construction) the MaxTightLevelRankingStateGeneratorNonInitial should generate other
 	 * LevelRankings. I tried to implement the optimization suggested in Section 4 of 2009STACS - Schewe - Büchi
 	 * Complementation Made Tight This is still buggy and meanwhile I think that my optimization is more efficient.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class MaxTightLevelRankingStateGeneratorInitial extends TightLevelRankingStateGenerator {
@@ -1055,7 +1058,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 
 	/**
 	 * Use this together with MaxTightLevelRankingStateGeneratorInitial.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class MaxTightLevelRankingStateGeneratorNonInitial extends TightLevelRankingStateGenerator {

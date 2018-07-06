@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingConstraint.VoluntaryRankDecrease;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.PowersetIterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -63,9 +65,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 	private final boolean mAllowEmptyLevelRanking;
 	private final boolean mAllowRankZero;
 	private final boolean mRestrictToElasticLevelRankings;
-	private final boolean mVoluntaryDecreaseOnlyForStatesInO;
-	private final boolean mAllowDelayedRankDecrease;
-	private final boolean mLazySOptimization;
+	private final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
 
 	/**
 	 * Constructor.
@@ -82,23 +82,16 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 	 *            {@code true} iff empty level ranking is allowed
 	 * @param restrictToElasticLevelRankings
 	 *            {@code true} iff restriction to elastic level rankings is considered
-	 * @param voluntaryDecreaseOnlyForStatesInO
-	 *            TODO documentation
-	 * @param allowDelayedRankDecrease
-	 *            {@code true} iff delayed rank decrease is allowed
 	 */
 	public BarelyCoveredLevelRankingsGenerator(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final int userDefinedMaxRank,
 			final boolean allowRankZero, final boolean allowEmptyLevelRanking,
-			final boolean restrictToElasticLevelRankings, final boolean voluntaryDecreaseOnlyForStatesInO,
-			final boolean allowDelayedRankDecrease, final boolean lazySOptimization) {
+			final boolean restrictToElasticLevelRankings, final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease) {
 		super(services, operand, userDefinedMaxRank);
 		mAllowRankZero = allowRankZero;
 		mAllowEmptyLevelRanking = allowEmptyLevelRanking;
 		mRestrictToElasticLevelRankings = restrictToElasticLevelRankings;
-		mVoluntaryDecreaseOnlyForStatesInO = voluntaryDecreaseOnlyForStatesInO;
-		mAllowDelayedRankDecrease = allowDelayedRankDecrease;
-		mLazySOptimization = lazySOptimization;
+		mVoluntaryRankDecrease = voluntaryRankDecrease;
 	}
 
 	@Override
@@ -120,11 +113,16 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			for (final StateWithRankInfo<STATE> up : constraint.getUpStates(down)) {
 				final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker = new DoubleDecker<>(down, up);
 				if (evenRankAndNotFinal(constraint, doubleDecker)) {
-					boolean isEligible = true;
-					isEligible &= (!mVoluntaryDecreaseOnlyForStatesInO
-							|| LevelRankingConstraint.allowsOEscape(doubleDecker, constraint));
-					isEligible &= (mAllowDelayedRankDecrease
-							|| LevelRankingConstraint.areAllEvenPredecessorsAccepting(doubleDecker, constraint));
+					boolean isEligible = false;
+					if (mVoluntaryRankDecrease.contains(VoluntaryRankDecrease.ALWAYS)) {
+						isEligible = true;
+					}
+					if (mVoluntaryRankDecrease.contains(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING)) {
+						isEligible |= LevelRankingConstraint.areAllEvenPredecessorsAccepting(doubleDecker, constraint);
+					}
+					if (mVoluntaryRankDecrease.contains(VoluntaryRankDecrease.ALLOWS_O_ESCAPE)) {
+						isEligible |= LevelRankingConstraint.allowsOEscape(doubleDecker, constraint);
+					}
 					if (isEligible) {
 						doubleDeckersEligibleForVoluntaryDecrease.add(doubleDecker);
 					}
@@ -139,9 +137,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			final Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
 			final LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(constraint, subset);
 			if ((succCandidate != null) && (!mRestrictToElasticLevelRankings || succCandidate.isElastic())) {
-				if (!mLazySOptimization || succCandidate.isLazyS(doubleDeckersEligibleForVoluntaryDecrease, constraint)) {
-					succLvls.add(succCandidate);
-				}
+				succLvls.add(succCandidate);
 			}
 		}
 		return succLvls;

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaSuccessorStateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingConstraint.VoluntaryRankDecrease;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -49,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 /**
  * Implements the following paper.
  * 2017TACAS - Blahoudek,Heizmann,Schewe,Strejček,Tsai - Complementing Semi-deterministic Büchi Automata
- * 
+ *
  * If we mention line numbers, we refer to numbers used in the orginal publication.
  * https://link.springer.com/chapter/10.1007/978-3-662-49674-9_49
 
@@ -59,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * state has rank 2 == state is in C
  * state has rank 1 == state is in S
  * state is in O == state is in B
- * 
- * 
+ *
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -80,7 +82,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 	private static final boolean EARLY_SINK_HEURISTIC = false;
 
 	private final AutomataLibraryServices mServices;
-	
+
 	private final SetOfStates<STATE> mSetOfStates;
 
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
@@ -103,7 +105,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -122,8 +124,10 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		mStateFactory = stateFactory;
 		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
 		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
+		final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease = EnumSet
+				.of(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING);
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
-				false, false, false, lazySOptimization);
+				false, voluntaryRankDecrease);
 		constructInitialState();
 	}
 
@@ -243,9 +247,9 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 	 * (lines 12 and 13 on page 7 of the paper).
 	 * If a state (here upState) is in the set C (i.e. has an even rank in our
 	 * encoding), is not final (which would have enforced membership in C),
-	 * and does not have a successor an outgoing transition would be 
+	 * and does not have a successor an outgoing transition would be
 	 * superficial. This is because in our construction we already track
-	 * a run in which we moved the state to the set S earlier. 
+	 * a run in which we moved the state to the set S earlier.
 	 */
 	private boolean transitionWouldAnnihilateEvenRank(final StateWithRankInfo<STATE> upState,
 			final boolean hasSuccessor) {
@@ -325,14 +329,14 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		 * This check reflects the fourth bullet in the
 		 * construction of the transition relation of the complement automaton
 		 * (lines 10 and 11 on page 7 of the paper).
-		 * 
-		 * If we have a state that has predecessors in the set C and 
-		 * predecessors in the set S, the state needs to be in S 
+		 *
+		 * If we have a state that has predecessors in the set C and
+		 * predecessors in the set S, the state needs to be in S
 		 * (because we must not go back from S to C).
 		 * However, if one predecessor in C is not an accepting state, we
 		 * already track a run in which this state was already moved to S
 		 * (at some point in time where this run left an accepting state).
-		 * Hence these transitions are superficial. 
+		 * Hence these transitions are superficial.
 		 */
 		if (constraint.isTargetOfConfluenceForcedDelayedRankDecrease()) {
 			// in this case we do not want to have successor states
