@@ -123,6 +123,13 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 					if (mVoluntaryRankDecrease.contains(VoluntaryRankDecrease.ALLOWS_O_ESCAPE)) {
 						isEligible |= LevelRankingConstraint.allowsOEscape(doubleDecker, constraint);
 					}
+					if (mVoluntaryRankDecrease.contains(VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O)) {
+						isEligible |= LevelRankingConstraint.predecessorHasEmptyO(doubleDecker, constraint);
+					}
+					if (mVoluntaryRankDecrease.contains(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING)) {
+						isEligible |= (LevelRankingConstraint.allowsOEscape(doubleDecker, constraint)
+								&& LevelRankingConstraint.areAllEvenPredecessorsAccepting(doubleDecker, constraint));
+					}
 					if (isEligible) {
 						doubleDeckersEligibleForVoluntaryDecrease.add(doubleDecker);
 					}
