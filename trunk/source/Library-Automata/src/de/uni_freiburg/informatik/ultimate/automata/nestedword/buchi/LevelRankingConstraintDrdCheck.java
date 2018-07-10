@@ -35,6 +35,7 @@ import java.util.TreeSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * LevelRankingConstraintWithDelayedRankDecreaseCheck.
@@ -132,6 +133,18 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 			final STATE upState) {
 		return mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(downState, upState).isEmpty();
 	}
+
+
+	public boolean nonAcceptingPredecessorsInOWithEvenRanksIsEmpty(final StateWithRankInfo<STATE> downState,
+			final STATE upState, final LevelRankingState<LETTER, STATE> predecessorLrs) {
+		for (final Triple<StateWithRankInfo<STATE>, STATE, Integer> dd : mRanksOfPredecessorsNonAcceptingPredecessorsEven) {
+			if (!predecessorLrs.inO(dd.getFirst(), dd.getSecond())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 
 	private boolean isEligibleForVoluntaryRankDecrease(final StateWithRankInfo<STATE> downState, final STATE upState,
 			final boolean allowDelayedRankDecrease) {
