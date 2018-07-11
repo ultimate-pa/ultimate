@@ -56,7 +56,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
 		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
 		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>, 
-        IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String>, IAcceptingStateFactory<String> {
+        IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String> {
 
 	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
@@ -379,8 +379,4 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		return "q" + i;
 	}
 
-	@Override
-	public String acceptingStateContent() {
-		return "Accepting";
-	}
 }
