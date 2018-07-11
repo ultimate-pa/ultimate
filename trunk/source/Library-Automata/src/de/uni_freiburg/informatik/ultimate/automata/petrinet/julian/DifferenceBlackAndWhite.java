@@ -81,7 +81,7 @@ public final class DifferenceBlackAndWhite
 
 	private final Map<C, Place<C>> mBlackPlace = new HashMap<>();
 
-	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> DifferenceBlackAndWhite(
+	public <SF extends IBlackWhiteStateFactory<C>> DifferenceBlackAndWhite(
 			final AutomataLibraryServices services, final SF factory, final BoundedPetriNet<LETTER, C> net,
 			final INestedWordAutomaton<LETTER, C> nwa) {
 		super(services);
@@ -100,19 +100,10 @@ public final class DifferenceBlackAndWhite
 			throw new UnsupportedOperationException(
 					"DifferenceBlackAndWhite needs an automaton with exactly one inital state");
 		}
-		final C nwaInitialState = nwa.getInitialStates().iterator().next();
 		classifySymbols();
-		if (nwa.isFinal(nwaInitialState)) {
-			// case where nwa accepts everything. Result will be a net that accepts the empty language
-			mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(), true);
-			final C sinkContent = factory.createSinkStateContent();
-			mResult.addPlace(sinkContent, true, false);
-		} else {
-			copyNetStatesOnly();
-			addBlackAndWhitePlaces();
-			addTransitions();
-		}
-
+		copyNetStatesOnly();
+		addBlackAndWhitePlaces();
+		addTransitions();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
