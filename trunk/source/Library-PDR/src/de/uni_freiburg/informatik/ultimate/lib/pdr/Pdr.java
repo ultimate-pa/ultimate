@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
@@ -109,7 +110,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		CHANGED, UNCHANGED
 	}
 
-	private static final boolean USE_INTERPOLATION = false;
+	private static final boolean USE_INTERPOLATION = true;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -369,9 +370,16 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						 */
 					} else if (result == Validity.VALID) {
 						if (USE_INTERPOLATION) {
-							updateFrames(not(
-									getInterpolant((IcfgEdge) query.getSecond(), query.getFirst(), query.getThird())),
-									location, level);
+							final IPredicate interpolant =
+									getInterpolant((IcfgEdge) query.getSecond(), query.getFirst(), query.getThird());
+							if (interpolant != null) {
+								// final List<IPredicate> predsForDumbPeople = new ArrayList<>();
+								// predsForDumbPeople.add(not(interpolant));
+								// predsForDumbPeople.add(mPredicateUnifier.getOrConstructPredicate(query.getThird()));
+								updateFrames(interpolant, location, level);
+							} else {
+								updateFrames(query.getThird(), location, level);
+							}
 						} else {
 							updateFrames(query.getThird(), location, level);
 						}
@@ -462,7 +470,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	/**
 	 * Compute Interpolant of unsatisfiable query to add to the frames.
-	 * 
+	 *
 	 * @param predecessorTransition
 	 * @param predecessorFrame
 	 * @param prePred
@@ -471,9 +479,6 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 */
 	private IPredicate getInterpolant(final IcfgEdge predecessorTransition, final IPredicate predecessorFrame,
 			final IPredicate prePred) throws AssertionError {
-
-		// TODO: This is not as easy as it looks have a look at PredicateUtils.isInductiveHelper to see
-		// how a predicate and a transformula can be combined in an and
 
 		final Term second = andPredTf(mScript.getScript(), predecessorFrame, predecessorTransition.getTransformula(),
 				mCsToolkit.getModifiableGlobalsTable()
@@ -486,18 +491,46 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		final IPredicate secondPred = mPredicateUnifier.getOrConstructPredicate(second);
 
-		// make sure that the terms you give to the utility are closed , i.e., do not have any free vars
-		// lefts
-		final Pair<LBool, Term> interpolPair = SmtUtils.interpolateBinary(mScript.getScript(),
-				prePred.getClosedFormula(), secondPred.getClosedFormula());
-
-		if (interpolPair.getFirst() != LBool.UNSAT) {
-			throw new AssertionError(String.format("Wrong interpolation query: %s  and  %s", prePred.getClosedFormula(),
-					secondPred.getClosedFormula()));
+		// rename variables to primed constants
+		final Set<IProgramVar> ppVars = prePred.getVars();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		final Map<Term, Term> reverseMapping = new HashMap<>();
+		for (final IProgramVar var : ppVars) {
+			substitutionMapping.put(var.getDefaultConstant(), var.getPrimedConstant());
+			reverseMapping.put(var.getPrimedConstant(), var.getTermVariable());
 		}
 
-		mLogger.debug("interpolating");
-		final IPredicate interpolatedPreCondition = mPredicateUnifier.getOrConstructPredicate(interpolPair.getSecond());
+		final Term transformedPrePred =
+				new Substitution(mScript, substitutionMapping).transform(prePred.getClosedFormula());
+
+		final Pair<LBool, Term> interpolPair =
+				SmtUtils.interpolateBinary(mScript.getScript(), transformedPrePred, secondPred.getClosedFormula());
+
+		if (interpolPair.getFirst() == LBool.UNKNOWN) {
+			return null;
+		}
+
+		if (interpolPair.getFirst() == LBool.SAT) {
+			throw new AssertionError(String.format("Wrong interpolation query (is sat): %s  and  %s ",
+					transformedPrePred, secondPred.getClosedFormula()));
+		}
+
+		// TODO: The interpolant is now full of variables that are constants and primed constant_pv_prime; we have to go
+		// back to unprimed and un-constants
+
+		for (final IProgramVar var : secondPred.getVars()) {
+			reverseMapping.put(var.getPrimedConstant(), var.getTermVariable());
+		}
+
+		// unprime
+		final Term transformedInterpolant =
+				new Substitution(mScript, reverseMapping).transform(interpolPair.getSecond());
+
+		final IPredicate interpolatedPreCondition = mPredicateUnifier.getOrConstructPredicate(transformedInterpolant);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(String.format("Interpolant: %s (%s from binInt(%s  %s))", interpolatedPreCondition,
+					interpolPair.getSecond(), transformedPrePred, secondPred.getClosedFormula()));
+		}
 		return interpolatedPreCondition;
 	}
 
@@ -548,7 +581,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	/**
 	 * Get a summarized procedure call.
-	 * 
+	 *
 	 * @param callLoc
 	 * @param returnTrans
 	 * @param globalVarsAssignments
@@ -746,7 +779,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 	/**
 	 * Conjunct a {@link IPredicate} and a {@link TransFormula}
-	 * 
+	 *
 	 * @param script
 	 * @param precond
 	 * @param tf
@@ -755,41 +788,33 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 */
 	private static Term andPredTf(final Script script, final IPredicate precond, final UnmodifiableTransFormula tf,
 			final Set<IProgramNonOldVar> modifiableGlobalsPred) {
-		script.push(1);
 
 		final List<Term> conjuncts = new ArrayList<>();
-		{
-			// add oldvar equalities for precond and tf
-			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
-			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
+		// add oldvar equalities for precond and tf
+		final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
+		final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
 
-			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsPred, Collections.emptySet(),
-					unprimedOldVarEqualities, primedOldVarEqualities);
-			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsPred, Collections.emptySet(),
-					unprimedOldVarEqualities, primedOldVarEqualities);
-			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false, script));
-			}
-			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true, script));
-			}
+		findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsPred, Collections.emptySet(),
+				unprimedOldVarEqualities, primedOldVarEqualities);
+		findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsPred, Collections.emptySet(),
+				unprimedOldVarEqualities, primedOldVarEqualities);
+		for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
+			conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false, script));
 		}
-		{
-			// add precond
-			final Term precondRenamed = precond.getClosedFormula();
-			assert precondRenamed != null;
-			conjuncts.add(precondRenamed);
+		for (final IProgramNonOldVar bv : primedOldVarEqualities) {
+			conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true, script));
 		}
-		{
-			// add tf
-			final Term tfRenamed = tf.getClosedFormula();
-			assert tfRenamed != null;
-			conjuncts.add(tfRenamed);
-		}
-		script.assertTerm(SmtUtils.and(script, conjuncts));
-		final Term result = SmtUtils.and(script, conjuncts);
-		script.pop(1);
-		return result;
+
+		// add precond
+		final Term precondRenamed = precond.getClosedFormula();
+		assert precondRenamed != null;
+		conjuncts.add(precondRenamed);
+
+		// add tf
+		final Term tfRenamed = tf.getClosedFormula();
+		assert tfRenamed != null;
+		conjuncts.add(tfRenamed);
+		return SmtUtils.and(script, conjuncts);
 	}
 
 	/**
