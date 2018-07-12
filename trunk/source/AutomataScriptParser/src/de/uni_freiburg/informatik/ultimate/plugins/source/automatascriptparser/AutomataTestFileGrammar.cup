@@ -1225,10 +1225,10 @@ net_transition ::= LPAREN:l marking:m1 identifier:id marking:m2 RPAREN:r
 
 initial_markings ::= INITIAL_MARKINGS EQ marking:m {:RESULT = new PetriNetMarkingListAST(getLocation(m$,m$), m); :}  ;
 
-marking ::= LBRACE:l identifier_list:idList RBRACE:r
+marking ::= LBRACE:l identifier_list_opt:idList RBRACE:r
             {:RESULT = idList; :} ;
 
-accepting_places ::= ACCEPTING_PLACES EQ LBRACE:l identifier_list:idList RBRACE:r 
+accepting_places ::= ACCEPTING_PLACES EQ LBRACE:l identifier_list_opt:idList RBRACE:r 
 {:RESULT = idList; :} ;
 
 
