@@ -64,67 +64,9 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	private final BranchingProcess<S, C> mUnfolding;
 	private PetriNetRun<S, C> mRun;
 
-	private final Order<S, C> mMcMillanOrder = new Order<S, C>() {
-		@Override
-		public int compare(final Configuration<S, C> o1, final Configuration<S, C> o2) {
-			return o1.size() - o2.size();
-		}
-	};
-
-	private final Order<S, C> mEsparzaRoemerVoglerOrder = new Order<S, C>() {
-		@Override
-		public int compare(final Configuration<S, C> c1, final Configuration<S, C> c2) {
-			int result = c1.compareTo(c2);
-			if (result != 0) {
-				return result;
-			}
-			final Configuration<S, C> min1 = c1.getMin();
-			final Configuration<S, C> min2 = c2.getMin();
-			result = min1.compareTo(min2);
-			if (result != 0) {
-				return result;
-			}
-			final Configuration<S, C> c1withoutMin1 = c1.removeMin();
-			final Configuration<S, C> c2withoutMin2 = c2.removeMin();
-
-			assert c1.equals(c2) || !c1withoutMin1.equals(c2withoutMin2) : "\ne1\t=" + c1 + "\ne2\t=" + c2 + "\nmin1\t="
-					+ min1 + "\nmin2\t=" + min2 + "\n-min1\t=" + c1withoutMin1 + "\n-min2\t=" + c2withoutMin2;
-
-			// The Arguments are here technically no longer Configurations but
-			// the lexicographical extension of the order on transitions which
-			// is implemented in the compareTo method works on Sets of Events.
-			// See 1996TACAS - Esparza,Römer,Vogler, page 13.
-			result = compare(c1withoutMin1, c2withoutMin2);
-			// result = e1withoutMin1.compareTo(e2withoutMin2);
-			return result;
-		}
-	};
-
-	private final Order<S, C> mErvEqualMarkingOrder = new Order<S, C>() {
-		@Override
-		public int compare(final Event<S, C> o1, final Event<S, C> o2) {
-			int result = mMcMillanOrder.compare(o1, o2);
-			if (result != 0) {
-				return result;
-			}
-			if (!o1.getMark().equals(o2.getMark())) {
-				return 0;
-			}
-			final Configuration<S, C> c1 = o1.getLocalConfiguration();
-			final Configuration<S, C> c2 = o2.getLocalConfiguration();
-			assert !(c1.containsAll(c2)
-					&& c2.containsAll(c1)) : "Different events with equal local configurations. equals:"
-							+ c1.equals(c2);
-			result = compare(c1, c2);
-
-			return result;
-		}
-
-		@Override
-		public int compare(final Configuration<S, C> c1, final Configuration<S, C> c2) {
-			return mEsparzaRoemerVoglerOrder.compare(c1, c2);
-		}
-	};
+	private final IOrder<S, C> mMcMillanOrder = new McMillanOrder<>();
+	private final IOrder<S, C> mEsparzaRoemerVoglerOrder = new EsparzaRoemerVoglerOrder<>();
+	private final IOrder<S, C> mErvEqualMarkingOrder = new ErvEqualMarkingOrder<>();
 
 	private final PetriNetUnfolder<S, C>.Statistics mStatistics = new Statistics();
 
@@ -156,7 +98,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		mLogger.info(startMessage());
 		mUnfolding = new BranchingProcess<>(mServices, operand, mEsparzaRoemerVoglerOrder);
 		// cutOffEvents = new HashSet<Event<S, C>>();
-		Order<S, C> queueOrder = mMcMillanOrder;
+		IOrder<S, C> queueOrder = mMcMillanOrder;
 		switch (order) {
 			case ERV_MARK:
 				queueOrder = mErvEqualMarkingOrder;

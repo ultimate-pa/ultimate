@@ -76,10 +76,10 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 */
 	private final BoundedPetriNet<S, C> mNet;
 
-	private final Order<S, C> mOrder;
+	private final IOrder<S, C> mOrder;
 
 	public BranchingProcess(final AutomataLibraryServices services, final BoundedPetriNet<S, C> net,
-			final Order<S, C> order) {
+			final IOrder<S, C> order) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
@@ -429,7 +429,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		return "has " + mConditions.size() + "conditions, " + mEvents.size() + " events.";
 	}
 
-	public Order<S, C> getOrder() {
+	public IOrder<S, C> getOrder() {
 		return mOrder;
 	}
 

@@ -30,28 +30,26 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 import java.util.Comparator;
 
 /**
- * Order of events.
+ * Order of Events and Configurations.
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
- *            symbol type
+ * 
+ * @param <LETTER>
+ *            Type of letters from the alphabet used to label transitions
  * @param <C>
  *            place content type
  */
-public abstract class Order<S, C> implements Comparator<Event<S, C>> {
-	@SuppressWarnings("squid:S1698")
+public interface IOrder<LETTER, C> extends Comparator<Event<LETTER, C>> {
+
+	/** Compares two events by comparing their local configurations. */
 	@Override
-	public int compare(final Event<S, C> o1, final Event<S, C> o2) {
-		// equality intended here
+	default int compare(final Event<LETTER, C> o1, final Event<LETTER, C> o2) {
 		if (o1 == o2) {
-			// mLogger.info("compared " + o1 + " with itself.");
 			return 0;
 		}
-		final Configuration<S, C> c1 = o1.getLocalConfiguration();
-		final Configuration<S, C> c2 = o2.getLocalConfiguration();
-		assert !(c1.containsAll(c2) && c2.containsAll(c1)) : "Different events with equal local configurations. equals:"
-				+ c1.equals(c2);
+		final Configuration<LETTER, C> c1 = o1.getLocalConfiguration();
+		final Configuration<LETTER, C> c2 = o2.getLocalConfiguration();
 		return compare(c1, c2);
 	}
 
@@ -62,7 +60,7 @@ public abstract class Order<S, C> implements Comparator<Event<S, C>> {
 	 *            first configuration
 	 * @param o2
 	 *            second configuration
-	 * @return the value according to the {@link Comparator} interface
+	 * @return the value according to {@link Comparator}
 	 */
-	public abstract int compare(Configuration<S, C> o1, Configuration<S, C> o2);
+	int compare(Configuration<LETTER, C> o1, Configuration<LETTER, C> o2);
 }
