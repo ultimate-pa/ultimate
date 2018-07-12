@@ -63,8 +63,17 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 
 	private final Map<Place<C>, Set<Condition<S, C>>> mPlace2cond;
 
+	/**
+	 * Dummy root event with all initial conditions as successors.
+	 * Unlike all other events in this branching process, the root does not correspond to any transition of {@link #mNet}.
+	 */
 	private final Event<S, C> mDummyRoot;
 
+	/**
+	 * Net associated with this branching process.
+	 * Places of this branching process correspond to places of the net.
+	 * Events of this branching process correspond to transitions of the net.
+	 */
 	private final BoundedPetriNet<S, C> mNet;
 
 	private final Order<S, C> mOrder;
@@ -89,8 +98,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * @return Gets the "root" event, which is a dummy (has no transition associated) with all initial conditions as
-	 *         successors.
+	 * @return dummy root event with all initial conditions as successors.
+	 *        Is not associated with any transition from the net.
 	 */
 	public Event<S, C> getDummyRoot() {
 		return mDummyRoot;
@@ -191,10 +200,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 
 	@SuppressWarnings("unused")
 	private boolean isInCoRelationChecker(final Condition<S, C> c1, final Condition<S, C> c2) {
-		/**
-		 * Christian 2016-08-16: Probably a bug: isAncestorChecker(c1, c2) is repeated twice.
-		 */
-		return !(isAncestorChecker(c1, c2) || isAncestorChecker(c1, c2) || inConflict(c1, c2));
+		return !(isAncestorChecker(c1, c2) || inConflict(c1, c2));
 	}
 
 	private boolean isAncestorChecker(final Condition<S, C> leaf, final Condition<S, C> ancestor) {
@@ -212,19 +218,6 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		}
 		return false;
 	}
-
-	/*
-	private boolean inConflict(Condition<S, C> c1, Condition<S, C> c2) {
-		Set<Condition<S, C>> pred =
-				c1.getPredecessorEvent().getPredecessorConditions();
-		if (pred == null)
-			return false;
-		for (Condition<S, C> condition : pred) {
-			// TODO finish checker Method
-		}
-		return false;
-	}
-	*/
 
 	boolean isCoset(final Collection<Condition<S, C>> coSet, final Condition<S, C> condition) {
 		return mCoRelation.isCoset(coSet, condition);
@@ -246,28 +239,30 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * returns all minimal events of the branching process with respect to the causal order.
+	 * Returns all minimal events of this branching process with respect to the causal order.
+	 * An event is causally minimal iff all its predecessors are initial conditions.
+	 * Events with a non-initial preceding condition c cannot be minimal.
+	 * Because c is non-initial it has to be preceded by another event which is causally smaller.
 	 * 
-	 * @return all minimal events
+	 * @return The causally minimal events
 	 */
-	public Collection<Event<S, C>> getMinEvents() {
-		final HashSet<Event<S, C>> h = new HashSet<>();
-		final HashSet<Event<S, C>> min = new HashSet<>();
-		for (final Condition<S, C> c : initialConditions()) {
-			h.addAll(c.getSuccessorEvents());
+	public Collection<Event<S, C>> minEvents() {
+		final Set<Event<S, C>> eventsConnectedToInitConditions = new HashSet<>();
+		for (final Condition<S, C> initCondition : initialConditions()) {
+			eventsConnectedToInitConditions.addAll(initCondition.getSuccessorEvents());
 		}
-		for (final Event<S, C> e : h) {
-			if (initialConditions().containsAll(e.getPredecessorConditions())) {
-				min.add(e);
+		final Set<Event<S, C>> minEvents = new HashSet<>();
+		for (final Event<S, C> succEvent : eventsConnectedToInitConditions) {
+			if (initialConditions().containsAll(succEvent.getPredecessorConditions())) {
+				minEvents.add(succEvent);
 			}
 		}
-		return min;
+		return minEvents;
 	}
 
 	/**
-	 * gets the net associated with the branching process.
-	 * 
-	 * @return the net associated with the branching process
+	 * Returns the net associated with this branching process.
+	 * @return Net associated with this branching process
 	 */
 	public BoundedPetriNet<S, C> getNet() {
 		return mNet;

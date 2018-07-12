@@ -35,6 +35,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
+
 // TODO: rewrite this class, possibly split it up to resolve this horrible ambiguity
 /**
  * Represents a Suffix of a Configuration. A Configuration is a Set of Events which is causally closed and
@@ -75,58 +77,44 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	 *            minimum set of events
 	 */
 	private Configuration(final Set<Event<S, C>> events, final Set<Event<S, C>> min) {
-		// mEvents = new HashSet<Event<S, C>>(events);
 		mEvents = events;
 		mMin = min;
 	}
 
-	private List<Transition<S, C>> getPhi() {
+	public List<Transition<S, C>> getPhi() {
 		if (mPhi == null) {
 			mPhi = new ArrayList<>(mEvents.size());
 			for (final Event<S, C> e : mEvents) {
 				mPhi.add(e.getTransition());
 			}
 			Collections.sort(mPhi);
-			// mLogger.debug("PhiSorted: " + mPhi);
 		}
-		// return Collections.unmodifiableList(mPhi);
 		return mPhi;
 	}
 
-	/*
-	 * public Configuration<S, C> getMin() { Set<Event<S, C>> result = new
-	 * HashSet<Event<S, C>>();
-	 * 
-	 * return new Configuration<S, C>(result); }
-	 */
-
 	/**
-	 * Returns the minimum of the Set of Events regarding the causal relation.
-	 * <p>
-	 * only yields the correct result, if it either has been precomputed when the Object was constructed, or this is a
-	 * proper Configuration (not a suffix.)
+	 * Returns the causally minimal Events in this Configuration.
+	 * An Event e is causally minimal in a Configuration,
+	 * iff all Events preceding e are not in the configuration.
 	 * 
-	 * @param unf
-	 *            TODO Christian 2016-09-25: undocumented
-	 * @return the minimum of the Set of Events regarding the causal relation
+	 * @return causally minimal Events in this Configuration
 	 */
-	public Configuration<S, C> getMin(final BranchingProcess<S, C> unf) {
-		Set<Event<S, C>> result;
-		if (mMin != null) {
-			result = mMin;
-		} else {
-			result = new HashSet<>(unf.getMinEvents());
-			result.retainAll(mEvents);
-
-			/*
-			for (Event<S, C> event : unf.getMinDot()) {
-				if (mEvents.contains(event))
-					result.add(event);
-			}
-			*/
-			mMin = result;
+	public Configuration<S, C> getMin() {
+		if (mMin == null) {
+			mMin = computeMin();
 		}
-		return new Configuration<>(result);
+		return new Configuration<>(mMin);
+	}
+
+	private Set<Event<S, C>> computeMin() {
+		Set<Event<S, C>> min = new HashSet<>(mEvents);
+		Iterator<Event<S, C>> iter = min.iterator();
+		while (iter.hasNext()) {
+			if (SetOperations.intersecting(iter.next().getPredecessorEvents(), min)) {
+				iter.remove();
+			}
+		}
+		return min;
 	}
 
 	@Override
@@ -248,7 +236,6 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 			final Transition<S, C> t2 = phi2.get(i);
 			final int result = t1.getTotalOrderId() - t2.getTotalOrderId();
 			if (result != 0) {
-				// mLogger.debug(phi1.toString() + (result < 0 ? "<" : ">") + phi2.toString());
 				return result;
 			}
 		}

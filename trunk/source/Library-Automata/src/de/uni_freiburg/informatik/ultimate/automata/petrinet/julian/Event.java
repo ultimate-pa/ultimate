@@ -33,11 +33,14 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
 /**
- * Event.
+ * Event of a {@link BranchingProcess}.
+ * Each event corresponds to a {@link ITransition} of a {@link IPetriNet}.
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -130,23 +133,6 @@ public final class Event<S, C> implements Serializable {
 			conditionMarkSet.add(c);
 		}
 		mHashCode = computeHashCode();
-	}
-
-	/**
-	 * @param events
-	 *            A set of events.
-	 * @param <S>
-	 *            symbol type
-	 * @param <C>
-	 *            place content type
-	 * @return The Set of all successor conditions of {@code events}.
-	 */
-	public static <S, C> Set<Condition<S, C>> getDot(final Set<Event<S, C>> events) {
-		final HashSet<Condition<S, C>> result = new HashSet<>();
-		for (final Event<S, C> e : events) {
-			result.addAll(e.getSuccessorConditions());
-		}
-		return result;
 	}
 
 	/**

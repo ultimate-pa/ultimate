@@ -78,8 +78,8 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 			if (result != 0) {
 				return result;
 			}
-			final Configuration<S, C> min1 = c1.getMin(mUnfolding);
-			final Configuration<S, C> min2 = c2.getMin(mUnfolding);
+			final Configuration<S, C> min1 = c1.getMin();
+			final Configuration<S, C> min2 = c2.getMin();
 			result = min1.compareTo(min2);
 			if (result != 0) {
 				return result;
