@@ -28,8 +28,9 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolExpressionTable;
 
-public class ReqSymboltable {
+public class ReqSymboltable implements IReqSymbolExpressionTable {
 
 	private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
 
