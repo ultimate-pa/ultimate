@@ -1,9 +1,7 @@
 #! /bin/bash
 
 # Print an n-slotted ring protocol in Ultimate's .ats format.
-# See comments in printed .ats file for more information on the slotted ring protocol.
-#
-# TODO remove accepting place. Only a workaround for parser not accepting empty set as the set of accepting places.
+# See comments in printed .ats file for more information.
 #
 # author: schaetzc@tf.uni-freiburg.de
 # date:   2018-07-11
@@ -70,7 +68,7 @@ for node in $(seq "$n"); do
 		# write
 		"{${this}8} $dummyLetter {${this}9}"
 		# put message in slot
-		"{${this}4 ${this}9} $dummyLetter {${this}3}"
+		"{${this}4 ${this}9} $dummyLetter {${this}3 ${this}10}"
 		# used
 		"{${this}6 ${this}10} $dummyLetter {${this}5 ${next}7}"
 	)
@@ -82,8 +80,8 @@ cat <<EOF
 //
 // The slotted ring protocol was presented in [1].
 // In [2] the slotted ring protocol was used to show that complete finite
-// prefixes can be drastically reduced in size. Exact numbers of places and
-// conditions in the prefixes of some n-slotted ring protocols are given in
+// prefixes can be drastically reduced in size. Exact numbers of conditions and
+// events in the prefixes of some n-slotted ring protocols are given in
 // table 2 on page 18 and can be used as a test for Ultimate's finite prefix
 // operation.
 //
@@ -104,7 +102,7 @@ PetriNet slottedRingProtocol$n = (
 $(printf '    (%s)\n' "${transitions[@]}")
   },
   initialMarking = {${initialPlaces[@]}},
-  acceptingPlaces = {${this}8}
+  acceptingPlaces = {}
 );
 EOF
 

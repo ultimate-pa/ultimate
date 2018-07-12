@@ -1,10 +1,10 @@
 // 2-slotted ring protocol
-// auto-generated on 2018-07-11 by claus using generateSlottedRingProtocol.sh
+// auto-generated on 2018-07-12 by schaetzc using generateSlottedRingProtocol.sh
 //
 // The slotted ring protocol was presented in [1].
 // In [2] the slotted ring protocol was used to show that complete finite
-// prefixes can be drastically reduced in size. Exact numbers of places and
-// conditions in the prefixes of some n-slotted ring protocols are given in
+// prefixes can be drastically reduced in size. Exact numbers of conditions and
+// events in the prefixes of some n-slotted ring protocols are given in
 // table 2 on page 18 and can be used as a test for Ultimate's finite prefix
 // operation.
 //
@@ -30,7 +30,7 @@ PetriNet slottedRingProtocol2 = (
     ({n1_7} a {n1_8})
     ({n1_8} a {n1_1})
     ({n1_8} a {n1_9})
-    ({n1_4 n1_9} a {n1_3})
+    ({n1_4 n1_9} a {n1_3 n1_10})
     ({n1_6 n1_10} a {n1_5 n2_7})
     ({n2_1 n2_4} a {n2_2 n2_3})
     ({n2_2 n2_6} a {n2_5 n1_8})
@@ -40,9 +40,9 @@ PetriNet slottedRingProtocol2 = (
     ({n2_7} a {n2_8})
     ({n2_8} a {n2_1})
     ({n2_8} a {n2_9})
-    ({n2_4 n2_9} a {n2_3})
+    ({n2_4 n2_9} a {n2_3 n2_10})
     ({n2_6 n2_10} a {n2_5 n1_7})
   },
   initialMarking = {n1_2 n1_6 n2_2 n2_6},
-  acceptingPlaces = {n2_8}
+  acceptingPlaces = {}
 );
