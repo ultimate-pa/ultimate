@@ -17,24 +17,23 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 public class EsparzaRoemerVoglerOrder<LETTER, C> implements IOrder<LETTER, C> {
 	
 	@Override
-	public int compare(final Configuration<LETTER, C> c1, final Configuration<LETTER, C> c2) {
-		int result = c1.compareTo(c2);
-		if (result != 0) {
-			return result;
+	public int compare(Configuration<LETTER, C> c1, Configuration<LETTER, C> c2) {
+		while (true) {
+			int result = c1.compareTo(c2);
+			if (result != 0) {
+				return result;
+			}
+			final Configuration<LETTER, C> min1 = c1.getMin();
+			final Configuration<LETTER, C> min2 = c2.getMin();
+			result = min1.compareTo(min2);
+			if (result != 0) {
+				return result;
+			}
+			// The arguments here are technically no longer Configurations but the lexicographical
+			// extension of the order on transitions which is implemented in the compareTo method
+			// works on Sets of Events. See 1996TACAS - Esparza,Römer,Vogler, page 13.
+			c1 = c1.removeMin();
+			c2 = c2.removeMin();
 		}
-		final Configuration<LETTER, C> min1 = c1.getMin();
-		final Configuration<LETTER, C> min2 = c2.getMin();
-		result = min1.compareTo(min2);
-		if (result != 0) {
-			return result;
-		}
-		final Configuration<LETTER, C> c1withoutMin1 = c1.removeMin();
-		final Configuration<LETTER, C> c2withoutMin2 = c2.removeMin();
-
-		// The arguments here are technically no longer Configurations but the lexicographical
-		// extension of the order on transitions which is implemented in the compareTo method
-		// works on Sets of Events. See 1996TACAS - Esparza,Römer,Vogler, page 13.
-		result = compare(c1withoutMin1, c2withoutMin2);
-		return result;
 	}
 }
