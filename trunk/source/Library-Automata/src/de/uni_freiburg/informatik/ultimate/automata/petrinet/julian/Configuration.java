@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 
@@ -107,14 +108,9 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	}
 
 	private Set<Event<S, C>> computeMin() {
-		Set<Event<S, C>> min = new HashSet<>(mEvents);
-		Iterator<Event<S, C>> iter = min.iterator();
-		while (iter.hasNext()) {
-			if (SetOperations.intersecting(iter.next().getPredecessorEvents(), min)) {
-				iter.remove();
-			}
-		}
-		return min;
+		return mEvents.stream()
+				.filter(event -> SetOperations.disjoint(event.getPredecessorEvents(), mEvents))
+				.collect(Collectors.toCollection(HashSet::new));
 	}
 
 	@Override
