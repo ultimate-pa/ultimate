@@ -350,20 +350,12 @@ public class AutomataDefinitionInterpreter {
 
 	public static NestedWordAutomaton<String, String> constructNestedWordAutomaton(
 			final AbstractNestedwordAutomatonAST nwa, final IUltimateServiceProvider services) {
-		// check that the initial/final states exist
-		final Set<String> allStates = new HashSet<>(nwa.getStates());
-		final List<String> initStates = nwa.getInitialStates();
-		for (final String init : initStates) {
-			if (!allStates.contains(init)) {
-				throw new IllegalArgumentException("Initial state " + init + " not in set of states");
-			}
+		
+		{
+		checkThatInitialAndFinalStatesExist(nwa);
 		}
-		final List<String> finalStates = nwa.getFinalStates();
-		for (final String fin : finalStates) {
-			if (!allStates.contains(fin)) {
-				throw new IllegalArgumentException("Final state " + fin + " not in set of states");
-			}
-		}
+		final Set<String> initStatesAsSet = new HashSet<>(nwa.getInitialStates());
+		final Set<String> finalStatesAsSet = new HashSet<>(nwa.getFinalStates());
 
 		// data structures for unification
 		final Map<String, String> mUnifyLettersInternal;
@@ -402,8 +394,8 @@ public class AutomataDefinitionInterpreter {
 				new VpAlphabet<String>(internalAlphabet, callAlphabet, returnAlphabet), new StringFactory());
 
 		// add the states
-		for (final String state : allStates) {
-			nw.addState(initStates.contains(state), finalStates.contains(state), state);
+		for (final String state : nwa.getStates()) {
+			nw.addState(initStatesAsSet.contains(state), finalStatesAsSet.contains(state), state);
 			if (UNIFY_OBJECTS) {
 				mUnifyStates.put(state, state);
 			}
@@ -452,6 +444,26 @@ public class AutomataDefinitionInterpreter {
 			}
 		}
 		return nw;
+	}
+
+	/**
+	 * Throw exception if initial state does not exists in set of states.
+	 * Throw exception if finalstate does not exists in set of states.
+	 */
+	private static void checkThatInitialAndFinalStatesExist(final AbstractNestedwordAutomatonAST nwa) {
+		final Set<String> allStates = new HashSet<>(nwa.getStates());
+		final List<String> initStates = nwa.getInitialStates();
+		for (final String init : initStates) {
+			if (!allStates.contains(init)) {
+				throw new IllegalArgumentException("Initial state " + init + " not in set of states");
+			}
+		}
+		final List<String> finalStates = nwa.getFinalStates();
+		for (final String fin : finalStates) {
+			if (!allStates.contains(fin)) {
+				throw new IllegalArgumentException("Final state " + fin + " not in set of states");
+			}
+		}
 	}
 
 	/**
