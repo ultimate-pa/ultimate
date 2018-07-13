@@ -347,13 +347,31 @@ public class AutomataDefinitionInterpreter {
 				nwa, enwa.getEpsilonTransitions());
 		return result;
 	}
-
+	
 	public static NestedWordAutomaton<String, String> constructNestedWordAutomaton(
 			final AbstractNestedwordAutomatonAST nwa, final IUltimateServiceProvider services) {
-		
 		{
-		checkThatInitialAndFinalStatesExist(nwa);
+			String duplicateState = checkForDuplicate(nwa.getStates());
+			if (duplicateState != null) {
+				throw new IllegalArgumentException("State " + duplicateState + " contained twice in states.");
+			}
 		}
+		{
+			String duplicateState = checkForDuplicate(nwa.getInitialStates());
+			if (duplicateState != null) {
+				throw new IllegalArgumentException("State " + duplicateState + " contained twice in initial states.");
+			}
+		}
+		{
+			String duplicateState = checkForDuplicate(nwa.getFinalStates());
+			if (duplicateState != null) {
+				throw new IllegalArgumentException("State " + duplicateState + " contained twice in final states.");
+			}
+		}
+		
+
+		checkThatInitialAndFinalStatesExist(nwa);
+		
 		final Set<String> initStatesAsSet = new HashSet<>(nwa.getInitialStates());
 		final Set<String> finalStatesAsSet = new HashSet<>(nwa.getFinalStates());
 
@@ -444,6 +462,22 @@ public class AutomataDefinitionInterpreter {
 			}
 		}
 		return nw;
+	}
+	
+	/**
+	 * 
+	 * @return The first element that occurs twice in list, returns null if no such
+	 *         element exists.
+	 */
+	public static <E> E checkForDuplicate(List<E> list) {
+		Set<E> listAsSet = new HashSet<>();
+		for (E elem : list) {
+			boolean alreadycontained = listAsSet.add(elem);
+			if (!alreadycontained) {
+				return elem;
+			}
+		}
+		return null;
 	}
 
 	/**
