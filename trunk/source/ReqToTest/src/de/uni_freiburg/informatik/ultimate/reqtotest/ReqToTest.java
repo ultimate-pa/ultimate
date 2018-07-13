@@ -47,6 +47,7 @@ public class ReqToTest implements IGenerator {
 	private IUltimateServiceProvider mServices;
 
 	private IToolchainStorage mStorage;
+	private ReqToTestObserver mTestEncoderObserver;
 
 	@Override
 	public void init() {
@@ -111,13 +112,13 @@ public class ReqToTest implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		final IObserver o = new ReqToTestObserver(mLogger, mServices, mStorage);
-		return Arrays.asList(o);
+		mTestEncoderObserver = new ReqToTestObserver(mLogger, mServices, mStorage);
+		return Arrays.asList(mTestEncoderObserver);
 	}
 
 	@Override
 	public IElement getModel() {
-		return null; // mObserver.getResult();
+		return mTestEncoderObserver.getAst();
 	}
 
 }

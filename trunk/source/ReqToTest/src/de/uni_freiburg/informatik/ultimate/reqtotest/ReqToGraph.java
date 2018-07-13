@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.reqtotest;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -24,37 +25,37 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 
-public class ReqToBuchi {
+public class ReqToGraph {
 
 	private final ILogger mLogger;
-	private final ReqSymbolExpressionTable mReqSymbolExpressionTable;
-	private final Script mScript;
+	private final ReqSymbolTable mReqSymbolTable;
 	private final Term mTrue;
 	private final Term mFalse;
-	private final ManagedScript mManagedScript;
+
 	private final Boogie2SMT mBoogie2Smt;
 	private final CddToSmt mCddToSmt;
 	private final BoogieDeclarations mBoogieDeclarations;
 	
-	public ReqToBuchi(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final ReqSymbolExpressionTable reqSymbolExpressionTable){
+	private final ManagedScript mManagedScript;
+	private final Script mScript;
+	
+	public ReqToGraph(final ILogger logger, final IUltimateServiceProvider services,
+			final IToolchainStorage storage, final ReqSymbolTable reqSymbolExpressionTable,
+			Script scipt, ManagedScript managedScipt){
 		mLogger = logger;
-		mReqSymbolExpressionTable = reqSymbolExpressionTable;
-		final SolverSettings settings = SolverBuilder.constructSolverSettings("", SolverMode.External_DefaultMode,
-				false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
-		mScript = SolverBuilder.buildAndInitializeSolver(services, storage, SolverMode.External_DefaultMode, settings,
-				false, false, Logics.ALL.toString(), "RtInconsistencySolver");
-		mManagedScript = new ManagedScript(services, mScript);
+		mReqSymbolTable = reqSymbolExpressionTable;
+		mScript = scipt;
+		mManagedScript = managedScipt;
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
 		mBoogieDeclarations = 	new BoogieDeclarations(reqSymbolExpressionTable.constructVariableDeclarations(), logger);
 		mBoogie2Smt = new Boogie2SMT(mManagedScript, mBoogieDeclarations, false, services, false);
 		mCddToSmt = new CddToSmt(services, storage, mScript, mBoogie2Smt,
-				mBoogieDeclarations, mReqSymbolExpressionTable);
+				mBoogieDeclarations, mReqSymbolTable);
 	}
 	
-	public List<ReqGuardGraph<String>> patternListToBuechi(List<PatternType> patternList){
-		final List<ReqGuardGraph<String>> gs = new ArrayList<ReqGuardGraph<String>>();
+	public List<ReqGuardGraph> patternListToBuechi(List<PatternType> patternList){
+		final List<ReqGuardGraph> gs = new ArrayList<ReqGuardGraph>();
 		for (PatternType pattern: patternList) {
 			if (! (pattern instanceof InitializationPattern)) {
 				gs.add(patternToBuechi(pattern));
@@ -63,7 +64,7 @@ public class ReqToBuchi {
 		return gs;
 	}
 
-	public ReqGuardGraph<String> patternToBuechi(PatternType pattern){
+	public ReqGuardGraph patternToBuechi(PatternType pattern){
 		if(pattern instanceof InvariantPattern){
 			return getInvariantPatternToBuechi(pattern);
 		} else if(pattern instanceof BndResponsePatternUT){
@@ -76,7 +77,7 @@ public class ReqToBuchi {
 	/*
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds after at most "c1" time units.
 	 */
-	private ReqGuardGraph<String> getBndResponsePatternUTPatternToAutomaton(PatternType pattern){
+	private ReqGuardGraph getBndResponsePatternUTPatternToAutomaton(PatternType pattern){
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
@@ -86,13 +87,14 @@ public class ReqToBuchi {
 			Term notR = SmtUtils.not(mScript, R);
 			Term notRandS = SmtUtils.and(mScript, notR, S);
 			
-			final ReqGuardGraph<String> q0 = new ReqGuardGraph<String>("q_0");
-			final ReqGuardGraph<String> q1 = new ReqGuardGraph<String>("q_1");
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
+			final ReqGuardGraph q1 = new ReqGuardGraph(1);
 			q0.connectOutgoing(q0, notR);
 			q0.connectOutgoing(q1, R);
 			q1.connectOutgoing(q1, RandS);
 			q1.connectOutgoing(q0, notRandS);
-			return q0;
+			
+			return q0;		
 		} else {
 			throw new RuntimeException("Scope not implemented");
 		}
@@ -101,11 +103,11 @@ public class ReqToBuchi {
 	/*
 	 *  * {scope}, it is always the case that if "R" holds, then "S" holds as well.
 	 */
-	private ReqGuardGraph<String> getInvariantPatternToBuechi(PatternType pattern){
+	private ReqGuardGraph getInvariantPatternToBuechi(PatternType pattern){
 		if(pattern.getScope() instanceof SrParseScopeGlob) {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
-			final ReqGuardGraph<String> q0 = new ReqGuardGraph<String>("q_0");
+			final ReqGuardGraph q0 = new ReqGuardGraph(0);
 			q0.connectOutgoing(q0, R);
 			return q0;
 		} else {

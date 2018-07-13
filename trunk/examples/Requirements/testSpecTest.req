@@ -1,0 +1,7 @@
+Input A is int
+Internal B is int 
+Output C is int
+Const X is 44
+
+req1: Globally, it is always the case that if "A == 100" holds then "B == 20" holds after at most 10 time units.
+req2: Globally, it is always the case that if "X == 44 && B == 20" holds then "C == 47" holds after at most 12 time units.

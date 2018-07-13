@@ -27,14 +27,14 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 public class ReqToDeclarations {
 
 	private final ILogger mLogger;
-	private final ReqSymbolExpressionTable mReqSymbolExpressionTable;
+	private final ReqSymbolTable mReqSymbolExpressionTable;
 	
 	public ReqToDeclarations(final ILogger logger){
 		mLogger = logger;
-		mReqSymbolExpressionTable = new ReqSymbolExpressionTable(logger);
+		mReqSymbolExpressionTable = new ReqSymbolTable(logger);
 	}
 	
-	public ReqSymbolExpressionTable patternListToBuechi(List<PatternType> patternList){
+	public ReqSymbolTable patternListToBuechi(List<PatternType> patternList){
 		for (PatternType pattern: patternList) {
 			if (pattern instanceof InitializationPattern) {
 				mReqSymbolExpressionTable.extractVariablesFromInit((InitializationPattern)pattern);
