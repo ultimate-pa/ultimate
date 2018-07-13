@@ -64,10 +64,6 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	private final BranchingProcess<S, C> mUnfolding;
 	private PetriNetRun<S, C> mRun;
 
-	private final IOrder<S, C> mMcMillanOrder = new McMillanOrder<>();
-	private final IOrder<S, C> mEsparzaRoemerVoglerOrder = new EsparzaRoemerVoglerOrder<>();
-	private final IOrder<S, C> mErvEqualMarkingOrder = new ErvEqualMarkingOrder<>();
-
 	private final PetriNetUnfolder<S, C>.Statistics mStatistics = new Statistics();
 
 	/**
@@ -95,20 +91,20 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		mStopIfAcceptingRunFound = stopIfAcceptingRunFound;
 		mSameTransitionCutOff = sameTransitionCutOff;
 		mLogger.info(startMessage());
-		mUnfolding = new BranchingProcess<>(mServices, operand, mEsparzaRoemerVoglerOrder);
 		switch (order) {
 			case KMM:
-				mOrder = mMcMillanOrder;
+				mOrder = new McMillanOrder<>();
 				break;
 			case ERV_MARK:
-				mOrder = mErvEqualMarkingOrder;
+				mOrder = new ErvEqualMarkingOrder<>();
 				break;
 			case ERV:
-				mOrder = mEsparzaRoemerVoglerOrder;
+				mOrder = new EsparzaRoemerVoglerOrder<>();
 				break;
 			default:
 				throw new IllegalArgumentException();
 		}
+		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder);
 		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder);
 
 		computeUnfolding();
