@@ -59,7 +59,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	private final IPetriNet<S, C> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
-	private final UnfoldingOrder mOrder;
+	private final IOrder<S, C>  mOrder;
 	private final IPossibleExtensions<S, C> mPossibleExtensions;
 	private final BranchingProcess<S, C> mUnfolding;
 	private PetriNetRun<S, C> mRun;
@@ -94,22 +94,22 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		mOperand = operand;
 		mStopIfAcceptingRunFound = stopIfAcceptingRunFound;
 		mSameTransitionCutOff = sameTransitionCutOff;
-		mOrder = order;
 		mLogger.info(startMessage());
 		mUnfolding = new BranchingProcess<>(mServices, operand, mEsparzaRoemerVoglerOrder);
-		// cutOffEvents = new HashSet<Event<S, C>>();
-		IOrder<S, C> queueOrder = mMcMillanOrder;
 		switch (order) {
+			case KMM:
+				mOrder = mMcMillanOrder;
+				break;
 			case ERV_MARK:
-				queueOrder = mErvEqualMarkingOrder;
+				mOrder = mErvEqualMarkingOrder;
 				break;
 			case ERV:
-				queueOrder = mEsparzaRoemerVoglerOrder;
+				mOrder = mEsparzaRoemerVoglerOrder;
 				break;
 			default:
 				throw new IllegalArgumentException();
 		}
-		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, queueOrder);
+		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder);
 
 		computeUnfolding();
 		mLogger.info(exitMessage());
@@ -135,7 +135,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		while (!mPossibleExtensions.isEmpy()) {
 			final Event<S, C> e = mPossibleExtensions.remove();
 
-			final boolean finished = computeUnfoldinHelper(e);
+			final boolean finished = computeUnfoldingHelper(e);
 			if (finished) {
 				return;
 			}
@@ -146,30 +146,27 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		}
 	}
 
-	private boolean computeUnfoldinHelper(final Event<S, C> event) {
-		if (!parentIsCutoffEvent(event)) {
-			final boolean succOfEventIsAccpting = mUnfolding.addEvent(event);
-			// assert !unfolding.pairwiseConflictOrCausalRelation(e.getPredecessorConditions());
-			if (succOfEventIsAccpting && mRun == null) {
-				mRun = constructRun(event);
-				if (mStopIfAcceptingRunFound) {
-					return true;
-				}
-			}
-			// TODO: switch over the order given in the constructor.
-			if (!mUnfolding.isCutoffEvent(event, mEsparzaRoemerVoglerOrder, mSameTransitionCutOff)) {
-				mPossibleExtensions.update(event);
-				mLogger.debug("Constructed Non-cut-off-Event: " + event.toString());
-			} else {
-				mLogger.debug("Constructed     Cut-off-Event: " + event.toString());
-			}
-			mLogger.debug("Possible Extension size: " + mPossibleExtensions.size() + ", total #Events: "
-					+ mUnfolding.getEvents().size() + ", total #Conditions: " + mUnfolding.getConditions().size());
-			mStatistics.add(event);
+	private boolean computeUnfoldingHelper(final Event<S, C> event) {
+		if (parentIsCutoffEvent(event)) {
+			return false;
 		}
-		// else {
-		// assert (false);
-		// }
+		final boolean succOfEventIsAccpting = mUnfolding.addEvent(event);
+		// assert !unfolding.pairwiseConflictOrCausalRelation(e.getPredecessorConditions());
+		if (succOfEventIsAccpting && mRun == null) {
+			mRun = constructRun(event);
+			if (mStopIfAcceptingRunFound) {
+				return true;
+			}
+		}
+		if (mUnfolding.isCutoffEvent(event, mOrder, mSameTransitionCutOff)) {
+			mLogger.debug("Constructed     Cut-off-Event: " + event.toString());
+		} else {
+			mPossibleExtensions.update(event);
+			mLogger.debug("Constructed Non-cut-off-Event: " + event.toString());
+		}
+		mLogger.debug("Possible Extension size: " + mPossibleExtensions.size() + ", total #Events: "
+				+ mUnfolding.getEvents().size() + ", total #Conditions: " + mUnfolding.getConditions().size());
+		mStatistics.add(event);
 		return false;
 	}
 
@@ -190,9 +187,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	 * <p>
 	 * The run starts with the given Marking {@code initialMarking}
 	 */
-	@SuppressWarnings("squid:S1698")
 	private RunAndConditionMarking constructRun(final Event<S, C> event, final ConditionMarking<S, C> initialMarking) {
-		// equality intended here
 		assert event != mUnfolding.getDummyRoot();
 		assert !event.getPredecessorConditions().isEmpty();
 		assert !mUnfolding.pairwiseConflictOrCausalRelation(event.getPredecessorConditions());
@@ -240,15 +235,6 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	 */
 	public BranchingProcess<S, C> getFinitePrefix() {
 		return mUnfolding;
-	}
-
-	/**
-	 * @return A PetriNet that recognizes the same language as net but has a a similar structure as the occurrence net
-	 *         which is the finite prefix of net.
-	 */
-	public BoundedPetriNet<S, C> getUnfoldedPetriNet() {
-		// TODO Julian and Matthias have to discuss what similar means.
-		return null;
 	}
 
 	/**
