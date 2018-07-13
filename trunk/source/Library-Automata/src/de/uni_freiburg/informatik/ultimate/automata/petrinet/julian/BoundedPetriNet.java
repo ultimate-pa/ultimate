@@ -78,6 +78,12 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	private final Set<LETTER> mAlphabet;
 	private final IStateFactory<C> mStateFactory;
 
+	/**
+	 * Used to check that places have unique contents.
+	 * Remove this field once Places are replaced by just their content.
+	 */
+	private final Collection<C> mContents = new HashSet<>();
+	
 	private final Collection<Place<C>> mPlaces = new HashSet<>();
 	private final Set<Place<C>> mInitialPlaces = new HashSet<>();
 	private final Collection<Place<C>> mAcceptingPlaces = new HashSet<>();
@@ -198,6 +204,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 */
 	@SuppressWarnings("squid:S2301")
 	public Place<C> addPlace(final C content, final boolean isInitial, final boolean isAccepting) {
+		checkContentUniqueness(content);
 		final Place<C> place = new Place<>(content);
 		mPlaces.add(place);
 		if (isInitial) {
@@ -207,6 +214,13 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 			mAcceptingPlaces.add(place);
 		}
 		return place;
+	}
+	
+	private void checkContentUniqueness(final C content) {
+		final boolean wasNew = mContents.add(content);
+		if (!wasNew) {
+			throw new IllegalArgumentException("Content was already used: " + content);
+		}
 	}
 
 	/**
