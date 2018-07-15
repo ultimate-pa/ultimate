@@ -207,45 +207,20 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		}
 		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
 				new LevelRankingConstraintDrdCheck<>(mOperand, lvlrkState.isOempty(), MAGIC_RANK, true, false, lvlrkState);
-		boolean transitionWouldAnnihilateEvenRank = false;
-		boolean somePredecessorHasRank1 = false;
 		for (final StateWithRankInfo<STATE> downState : lvlrkState.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : lvlrkState.getUpStates(downState)) {
-				if (upState.getRank() == 1) {
-					somePredecessorHasRank1 = true;
-				}
 				boolean hasSuccessor = false;
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand
 						.internalSuccessors(upState.getState(), letter)) {
 					hasSuccessor = true;
 					constraint.addConstraint(downState, trans.getSucc(), new DoubleDecker<StateWithRankInfo<STATE>>(downState, upState));
 				}
-				if (transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
-					transitionWouldAnnihilateEvenRank = true;
+				if ((!mLazySOptimization || upState.isInO()) && transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
+					return new LevelRankingConstraintDrdCheck<>();
 				}
 			}
 		}
-		if (returnEmptyLrConstraint(constraint, transitionWouldAnnihilateEvenRank, somePredecessorHasRank1)) {
-			return new LevelRankingConstraintDrdCheck<>();
-		}
 		return constraint;
-	}
-
-	private boolean returnEmptyLrConstraint(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
-			final boolean transitionWouldAnnihilateEvenRank, final boolean somePredecessorHasRank1) {
-		if (EARLY_SINK_HEURISTIC) {
-			if (transitionWouldAnnihilateEvenRank && !constraint.isEmpty()) {
-				return true;
-			}
-			if (somePredecessorHasRank1 && constraint.isEmpty()) {
-				return true;
-			}
-		} else {
-			if (transitionWouldAnnihilateEvenRank) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -279,7 +254,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 					hasSuccessor = true;
 					constraint.addConstraint(upState, trans.getSucc(), new DoubleDecker<>(downState, upState));
 				}
-				if (transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
+				if ((!mLazySOptimization || upState.isInO()) && transitionWouldAnnihilateEvenRank(upState, hasSuccessor)) {
 					return new LevelRankingConstraintDrdCheck<>();
 				}
 			}
