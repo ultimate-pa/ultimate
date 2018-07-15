@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Queue;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -63,10 +65,11 @@ public class GraphToBoogie {
 	private final Term2Expression mTerm2Expression;
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
+	private final ThreeValuedAuxVarGen mThreeValuedAuxVarGen;
 	
 	
 	public GraphToBoogie(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage,  ReqSymbolTable symbolTable,
+			final IToolchainStorage storage,  ReqSymbolTable symbolTable, ThreeValuedAuxVarGen threeValuedAuxVarGen,
 			List<ReqGuardGraph> requirements, Script scipt, ManagedScript managedScipt) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
@@ -80,6 +83,7 @@ public class GraphToBoogie {
 
 		mScript = scipt;
 		mManagedScript = managedScipt;
+		mThreeValuedAuxVarGen = threeValuedAuxVarGen;
 		
 		final HashRelation<Sort, IBoogieType> sortToType = new HashRelation<>();
 		sortToType.addPair(mManagedScript.getScript().sort("Int"), BoogieType.TYPE_INT);
@@ -134,10 +138,12 @@ public class GraphToBoogie {
 	
 	private Statement[] generateWhileBody() {
 		final List<Statement> statements = new ArrayList<>();
-		statements.add(new HavocStatement(mDummyLocation, createHavocVariableList()));
+		statements.add(new HavocStatement(new BoogieLocation("", 0, 0, 1, 1), createHavocVariableList()));
 		for(ReqGuardGraph graph: mRequirements) {
 			statements.addAll(graphToBoogie(graph));
 		}
+		statements.addAll(createDefineUseAssumtions());
+		statements.addAll(createTestOracle());
 		statements.addAll(createNextLoopStateAssignment());
 		return statements.toArray(new Statement[statements.size()]);
 	}
@@ -173,7 +179,7 @@ public class GraphToBoogie {
 			Term guard) {
 				IfStatement ifStatement = new IfStatement(mDummyLocation,
 				mTerm2Expression.translate(guard),
-				new Statement[] {createVarIntAssignment(mGraphToPc.get(graph), successor.getLabel())},
+				new Statement[] {createVarIntAssignment(mGraphToPrimePc.get(graph), successor.getLabel())},
 				innerIf);
 		return new Statement[] {ifStatement};
 	}
@@ -226,6 +232,7 @@ public class GraphToBoogie {
 		modifiedVarsList.addAll(mSymbolTable.getInputVars());
 		modifiedVarsList.addAll(mSymbolTable.getHiddenVars());
 		modifiedVarsList.addAll(mSymbolTable.getOutputVars());
+		modifiedVarsList.addAll(mSymbolTable.getAuxVars());
 		//modifiedVarsList.addAll(mGraphToPrimePc.values());
 		
 		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
@@ -242,6 +249,7 @@ public class GraphToBoogie {
 		modifiedVarsList.addAll(mSymbolTable.getHiddenVars());
 		modifiedVarsList.addAll(mSymbolTable.getOutputVars());
 		modifiedVarsList.addAll(mSymbolTable.getConstVars());
+		modifiedVarsList.addAll(mSymbolTable.getAuxVars());
 		modifiedVarsList.addAll(mGraphToPrimePc.values());
 		modifiedVarsList.addAll(mGraphToPc.values());
 		
@@ -262,7 +270,27 @@ public class GraphToBoogie {
 	
 	
 	private static BoogieLocation generateDummyLocation() {
-		return new BoogieLocation("", -1, -1, -1, -1);
+		return new BoogieLocation("", 1, 1, 1, 1);
+	}
+	
+	private List<Statement> createDefineUseAssumtions(){
+		final List<Statement> defineUseAssumtptions = new ArrayList<>();
+		final List<Term> guards = mThreeValuedAuxVarGen.getDefineAssumeGuards();
+		for(Term guard: guards) {
+			Statement assume = new AssumeStatement(mDummyLocation, mTerm2Expression.translate(guard));
+			defineUseAssumtptions.add(assume);
+		}
+		return defineUseAssumtptions;
+	}
+	
+	private List<Statement> createTestOracle(){
+		final List<Statement> oracles = new ArrayList<>();
+		final List<Term> guards = mThreeValuedAuxVarGen.getOracleGuards();
+		for(Term guard: guards) {
+			Statement assume = new AssertStatement(new BoogieLocation("", 100, 100, 1, 1), mTerm2Expression.translate(guard));
+			oracles.add(assume);
+		}
+		return oracles;
 	}
 
 }

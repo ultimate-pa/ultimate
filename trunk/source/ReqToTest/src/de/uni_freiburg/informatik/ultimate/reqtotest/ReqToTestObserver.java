@@ -51,11 +51,11 @@ public class ReqToTestObserver extends BaseObserver{
 		final List<PatternType> rawPatterns = ((ObjectContainer<List<PatternType>>) root).getValue();
 		final ReqSymbolTable symbolTable = 
 				new ReqToDeclarations(mLogger).patternListToBuechi(rawPatterns);
-		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, mServices, mStorage, symbolTable, mScript, mManagedScript);
+		final ThreeValuedAuxVarGen threeValuedAuxVarGen = new ThreeValuedAuxVarGen(mLogger, mScript, symbolTable);
+		final ReqToGraph reqToBuchi = new ReqToGraph(mLogger, mServices, mStorage, symbolTable, threeValuedAuxVarGen, mScript, mManagedScript);
 		final List<ReqGuardGraph> automata = reqToBuchi.patternListToBuechi(rawPatterns);
-		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, symbolTable, automata, mScript, mManagedScript);
+		final GraphToBoogie graphToBoogie = new GraphToBoogie(mLogger, mServices, mStorage, symbolTable, threeValuedAuxVarGen, automata, mScript, mManagedScript);
 		mBoogieAst = graphToBoogie.getAst();
-
 		return false;
 	}
 	

@@ -38,20 +38,23 @@ public class ReqToGraph {
 	
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
+	private final ThreeValuedAuxVarGen mThreeValuedAuxVarGen;
 	
 	public ReqToGraph(final ILogger logger, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final ReqSymbolTable reqSymbolExpressionTable,
-			Script scipt, ManagedScript managedScipt){
+			final IToolchainStorage storage, final ReqSymbolTable reqSymbolExpressionTable, 
+			ThreeValuedAuxVarGen threeValuedAuxVarGen, Script scipt, ManagedScript managedScipt){
 		mLogger = logger;
 		mReqSymbolTable = reqSymbolExpressionTable;
 		mScript = scipt;
 		mManagedScript = managedScipt;
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
+		mThreeValuedAuxVarGen = threeValuedAuxVarGen;
 		mBoogieDeclarations = 	new BoogieDeclarations(reqSymbolExpressionTable.constructVariableDeclarations(), logger);
 		mBoogie2Smt = new Boogie2SMT(mManagedScript, mBoogieDeclarations, false, services, false);
 		mCddToSmt = new CddToSmt(services, storage, mScript, mBoogie2Smt,
 				mBoogieDeclarations, mReqSymbolTable);
+		
 	}
 	
 	public List<ReqGuardGraph> patternListToBuechi(List<PatternType> patternList){
@@ -82,17 +85,32 @@ public class ReqToGraph {
 			final List<CDD> args = pattern.getCdds();
 			final Term R = mCddToSmt.toSmt(args.get(1));
 			final Term S = mCddToSmt.toSmt(args.get(0));
-			
-			Term RandS = SmtUtils.and(mScript, R, S);
-			Term notR = SmtUtils.not(mScript, R);
-			Term notRandS = SmtUtils.and(mScript, notR, S);
-			
+			//create states to identify automaton
 			final ReqGuardGraph q0 = new ReqGuardGraph(0);
 			final ReqGuardGraph q1 = new ReqGuardGraph(1);
-			q0.connectOutgoing(q0, notR);
-			q0.connectOutgoing(q1, R);
-			q1.connectOutgoing(q1, RandS);
-			q1.connectOutgoing(q0, notRandS);
+			final ReqGuardGraph qw = new ReqGuardGraph(2);
+			//create effect guards
+			mThreeValuedAuxVarGen.setEffectLabel(q0, S);
+			//define labels 
+			final Term E = mThreeValuedAuxVarGen.getDefineGuard(q0);
+			final Term notE = mThreeValuedAuxVarGen.getNonDefineGuard(q0);
+			//normal labels
+			final Term uR = mThreeValuedAuxVarGen.getUseGuard(R);
+			final Term nuR = SmtUtils.not(mScript, uR);
+			final Term RandS = SmtUtils.and(mScript, R, S);
+			final Term notR = SmtUtils.not(mScript, R);
+			final Term notRandS = SmtUtils.and(mScript, notR, S);
+			
+			q0.connectOutgoing(q0, SmtUtils.and(mScript, uR, notR, notE));
+			q0.connectOutgoing(q1, SmtUtils.and(mScript, uR, R, notE));
+			q1.connectOutgoing(q1, SmtUtils.and(mScript, uR, RandS , E));
+			q1.connectOutgoing(q0, SmtUtils.and(mScript, uR, notRandS , E));
+			
+			q0.connectOutgoing(qw, SmtUtils.and(mScript, nuR, notE));
+			q1.connectOutgoing(qw, SmtUtils.and(mScript, nuR, E, S));
+			qw.connectOutgoing(qw, SmtUtils.and(mScript, nuR, notE));
+			qw.connectOutgoing(q0, SmtUtils.and(mScript, uR, notR, notE));
+			qw.connectOutgoing(q1, SmtUtils.and(mScript, uR, R, notE));
 			
 			return q0;		
 		} else {

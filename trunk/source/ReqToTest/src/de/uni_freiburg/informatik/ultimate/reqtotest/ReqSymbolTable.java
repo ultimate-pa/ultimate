@@ -103,6 +103,18 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		return mConstVars;
 	}
 	
+	public Set<String> getAuxVars(){
+		return mAuxVars;
+	}
+	
+	public boolean isNonInputNonConstVar(String ident) {
+		return (!mConstVars.contains(ident) && !mInputVars.contains(ident));
+	}
+	
+	public boolean isOutputVar(String ident) {
+		return mOutputVars.contains(ident);
+	}
+	
 	public void extractVariablesFromInit(final InitializationPattern init) {
 		final BoogiePrimitiveType type = toPrimitiveType(init.getType());
 		final String name = init.getId();
