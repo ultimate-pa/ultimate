@@ -34,8 +34,6 @@ import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * LevelRankingConstraintWithDelayedRankDecreaseCheck.
@@ -47,33 +45,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            state type
  */
 public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingConstraint<LETTER, STATE> {
-	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> mRanksOfPredecessorsNonAcceptingPredecessors;
-	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> mRanksOfPredecessorsNonAcceptingPredecessorsEven;
 
 	public LevelRankingConstraintDrdCheck(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
-		super(operand, predecessorOwasEmpty, userDefinedMaxRank, useDoubleDeckers);
-		mRanksOfPredecessorsNonAcceptingPredecessors = new HashRelation3<>();
-		mRanksOfPredecessorsNonAcceptingPredecessorsEven = new HashRelation3<>();
+			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers,
+			final boolean predecessorLrsIsPowersetComponent, final LevelRankingState<LETTER, STATE> predecessorLrs) {
+		super(operand, predecessorOwasEmpty, userDefinedMaxRank, useDoubleDeckers, predecessorLrsIsPowersetComponent,
+				predecessorLrs);
 	}
 
 	public LevelRankingConstraintDrdCheck() {
 		super();
-		mRanksOfPredecessorsNonAcceptingPredecessors = null;
-		mRanksOfPredecessorsNonAcceptingPredecessorsEven = null;
 	}
 
-	@Override
-	protected void addConstraint(final StateWithRankInfo<STATE> downState, final STATE upState,
-			final Integer predecessorRank, final boolean predecessorIsInO, final boolean predecessorIsAccepting) {
-		if (!predecessorIsAccepting) {
-			mRanksOfPredecessorsNonAcceptingPredecessors.addTriple(downState, upState, predecessorRank);
-			if (isEven(predecessorRank)) {
-				mRanksOfPredecessorsNonAcceptingPredecessorsEven.addTriple(downState, upState, predecessorRank);
-			}
-		}
-		super.addConstraint(downState, upState, predecessorRank, predecessorIsInO, predecessorIsAccepting);
-	}
 
 	/**
 	 * We say that a transition stems from a confluence-forced delayed rank decrease
@@ -100,7 +83,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 			// TODO Christian 2016-09-13: For clarity, this should not be a loop because it is executed at most once.
 			for (final STATE upState : entry.getValue().keySet()) {
 				final Set<Integer> predRanksOfNonAccepting =
-						mRanksOfPredecessorsNonAcceptingPredecessors.projectToTrd(entry.getKey(), upState);
+						getRanksOfNonAcceptingPredecessors(entry.getKey(), upState);
 				if (predRanksOfNonAccepting.size() <= 1) {
 					return false;
 				}
@@ -121,6 +104,32 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		return false;
 	}
 
+	private Set<Integer> getRanksOfNonAcceptingPredecessors(final StateWithRankInfo<STATE> downState,
+			final STATE upState) {
+		final Set<Integer> result = new HashSet<>();
+		for (final DoubleDecker<StateWithRankInfo<STATE>> pred : mPredecessors.projectToTrd(downState, upState)) {
+			if (!mOperand.isFinal(pred.getUp().getState())) {
+				result.add(pred.getUp().getRank());
+			}
+		}
+		return result;
+	}
+
+	private Set<Integer> getEvenRanksOfNonAcceptingPredecessors(final StateWithRankInfo<STATE> downState,
+			final STATE upState) {
+		final Set<Integer> result = new HashSet<>();
+		for (final DoubleDecker<StateWithRankInfo<STATE>> pred : mPredecessors.projectToTrd(downState, upState)) {
+			if (isEven(pred.getUp().getRank())) {
+				if (!mOperand.isFinal(pred.getUp().getState())) {
+					result.add(pred.getUp().getRank());
+				}
+			}
+		}
+		return result;
+	}
+
+
+
 
 	/**
 	 * @param downState
@@ -131,19 +140,19 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	 */
 	public boolean nonAcceptingPredecessorsWithEvenRanksIsEmpty(final StateWithRankInfo<STATE> downState,
 			final STATE upState) {
-		return mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(downState, upState).isEmpty();
+		return getEvenRanksOfNonAcceptingPredecessors(downState, upState).isEmpty();
 	}
 
 
-	public boolean nonAcceptingPredecessorsInOWithEvenRanksIsEmpty(final StateWithRankInfo<STATE> downState,
-			final STATE upState, final LevelRankingState<LETTER, STATE> predecessorLrs) {
-		for (final Triple<StateWithRankInfo<STATE>, STATE, Integer> dd : mRanksOfPredecessorsNonAcceptingPredecessorsEven) {
-			if (!predecessorLrs.inO(dd.getFirst(), dd.getSecond())) {
-				return false;
-			}
-		}
-		return true;
-	}
+//	public boolean nonAcceptingPredecessorsInOWithEvenRanksIsEmpty(final StateWithRankInfo<STATE> downState,
+//			final STATE upState, final LevelRankingState<LETTER, STATE> predecessorLrs) {
+//		for (final Triple<StateWithRankInfo<STATE>, STATE, Integer> dd : mRanksOfPredecessorsNonAcceptingPredecessorsEven) {
+//			if (!predecessorLrs.inO(dd.getFirst(), dd.getSecond())) {
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 
 
 	private boolean isEligibleForVoluntaryRankDecrease(final StateWithRankInfo<STATE> downState, final STATE upState,
@@ -153,9 +162,11 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 			return isEven(constraint) && !mOperand.isFinal(upState);
 		}
 		final Set<Integer> nonAcceptingEvenranks =
-				mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(downState, upState);
+				getEvenRanksOfNonAcceptingPredecessors(downState, upState);
 		return isEven(constraint) && !mOperand.isFinal(upState) && nonAcceptingEvenranks.isEmpty();
 	}
+
+
 
 	@Override
 	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
@@ -183,14 +194,14 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	}
 
 
-	@Override
-	public boolean isEligibleForVoluntaryRankDecrease(final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
-			final boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, final boolean omitConfluenceEnforcedDelayedRankDecrease, final DoubleDecker<StateWithRankInfo<STATE>> dd) {
-		boolean result;
-		result = super.isEligibleForVoluntaryRankDecrease(voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
-				voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting, false, dd);
-//		result &= (!omitConfluenceEnforcedDelayedRankDecrease)
-		return result;
-	}
+//	@Override
+//	public boolean isEligibleForVoluntaryRankDecrease(final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+//			final boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, final boolean omitConfluenceEnforcedDelayedRankDecrease, final DoubleDecker<StateWithRankInfo<STATE>> dd) {
+//		boolean result;
+//		result = super.isEligibleForVoluntaryRankDecrease(voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+//				voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting, false, dd);
+////		result &= (!omitConfluenceEnforcedDelayedRankDecrease)
+//		return result;
+//	}
 
 }

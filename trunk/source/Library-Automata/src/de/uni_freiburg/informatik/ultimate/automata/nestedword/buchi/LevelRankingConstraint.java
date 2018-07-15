@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
 /**
  * Constraints that define a set of LevelRankingStates.
@@ -87,6 +87,10 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	}
 
 
+	protected final LevelRankingState<LETTER, STATE> mPredecessorLrs;
+	private final boolean mPredecessorLrsIsPowersetComponent;
+	protected final HashRelation3<StateWithRankInfo<STATE>, STATE, DoubleDecker<StateWithRankInfo<STATE>>> mPredecessors = new HashRelation3<>();
+
 	public static <LETTER, STATE> boolean areAllEvenPredecessorsAccepting(final DoubleDecker<StateWithRankInfo<STATE>> dd, final LevelRankingConstraint<LETTER, STATE> lrc) {
 		if (lrc instanceof LevelRankingConstraintDrdCheck) {
 			return ((LevelRankingConstraintDrdCheck<LETTER, STATE>) lrc).nonAcceptingPredecessorsWithEvenRanksIsEmpty(dd.getDown(), dd.getUp().getState());
@@ -122,7 +126,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * Information if the direct predecessor of a DoubleDecker was accepting. If this information is used by the
 	 * LevelRankingGenerator.
 	 */
-	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mPredecessorWasAccepting = new HashSet<>();
+	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mSomePredecessorWasAccepting = new HashSet<>();
 
 
 
@@ -131,11 +135,14 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	}
 
 	public LevelRankingConstraint(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
+			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers,
+			final boolean predecessorLrsIsPowersetComponent, final LevelRankingState<LETTER, STATE> predecessorLrs) {
 		super(operand);
 		mPredecessorOwasEmpty = predecessorOwasEmpty;
 		mUserDefinedMaxRank = userDefinedMaxRank;
 		mUseDoubleDeckers = useDoubleDeckers;
+		mPredecessorLrs = predecessorLrs;
+		mPredecessorLrsIsPowersetComponent = predecessorLrsIsPowersetComponent;
 	}
 
 	/**
@@ -146,16 +153,16 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		mPredecessorOwasEmpty = false;
 		mUserDefinedMaxRank = -1;
 		mUseDoubleDeckers = true;
+		mPredecessorLrsIsPowersetComponent = true;
+		mPredecessorLrs = null;
 	}
 
 	void internalSuccessorConstraints(final IFkvState<LETTER, STATE> state, final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> downState : state.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : state.getUpStates(downState)) {
-				final Pair<Boolean, Integer> inOAndUpRank = getInOAndUpRankInternalCall(state, upState);
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand
 						.internalSuccessors(upState.getState(), symbol)) {
-					addConstraint(downState, trans.getSucc(), inOAndUpRank.getSecond(), inOAndUpRank.getFirst(),
-							mOperand.isFinal(upState.getState()));
+					addConstraint(downState, trans.getSucc(), new DoubleDecker<>(downState, upState));
 				}
 			}
 		}
@@ -164,7 +171,6 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	void callSuccessorConstraints(final IFkvState<LETTER, STATE> state, final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> downState : state.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : state.getUpStates(downState)) {
-				final Pair<Boolean, Integer> inOAndUpRank = getInOAndUpRankInternalCall(state, upState);
 				for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(upState.getState(),
 						symbol)) {
 					// if !mUseDoubleDeckers we always use getEmptyStackState()
@@ -172,24 +178,10 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					// sets of DoubleDeckers.
 					final StateWithRankInfo<STATE> succDownState =
 							mUseDoubleDeckers ? upState : new StateWithRankInfo<>(mOperand.getEmptyStackState());
-					addConstraint(succDownState, trans.getSucc(), inOAndUpRank.getSecond(), inOAndUpRank.getFirst(),
-							mOperand.isFinal(upState.getState()));
+					addConstraint(succDownState, trans.getSucc(), new DoubleDecker<>(downState, upState));
 				}
 			}
 		}
-	}
-
-	private Pair<Boolean, Integer> getInOAndUpRankInternalCall(final IFkvState<LETTER, STATE> state,
-			final StateWithRankInfo<STATE> upState) {
-		final Pair<Boolean, Integer> inOAndUpRank;
-		if (state instanceof LevelRankingState) {
-			assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
-			inOAndUpRank = new Pair<>(upState.isInO(), upState.getRank());
-		} else {
-			assert state instanceof FkvSubsetComponentState;
-			inOAndUpRank = new Pair<>(Boolean.FALSE, mUserDefinedMaxRank);
-		}
-		return inOAndUpRank;
 	}
 
 	void returnSuccessorConstraints(final IFkvState<LETTER, STATE> state, final IFkvState<LETTER, STATE> hier,
@@ -232,34 +224,40 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			final StateWithRankInfo<STATE> downState, final Iterable<StateWithRankInfo<STATE>> upStates,
 			final StateWithRankInfo<STATE> hierDown, final StateWithRankInfo<STATE> hierUp, final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> stateUp : upStates) {
-			final boolean inO;
-			final Integer upRank;
-			if (state instanceof LevelRankingState) {
-				assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
-				//TODO: obtain rank and inO directly from StateWithRankInfo
-				final LevelRankingState<LETTER, STATE> lvlRkState = (LevelRankingState<LETTER, STATE>) state;
-				inO = lvlRkState.inO(downState, stateUp.getState());
-				upRank = lvlRkState.getRank(downState, stateUp.getState());
-			} else {
-				assert state instanceof FkvSubsetComponentState;
-				inO = false;
-				upRank = mUserDefinedMaxRank;
-			}
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(stateUp.getState(),
 					hierUp.getState(), symbol)) {
 				// equality intended here
 				assert mUseDoubleDeckers || hierDown == mOperand.getEmptyStackState();
-				addConstraint(hierDown, trans.getSucc(), upRank, inO, mOperand.isFinal(stateUp.getState()));
+				addConstraint(hierDown, trans.getSucc(),
+						new DoubleDecker<StateWithRankInfo<STATE>>(downState, stateUp));
 			}
 		}
 	}
 
 	/**
-	 * Add constraint to the double decker (down,up). This constraints are only obtained from incoming transitions.
-	 * Further constraints (odd rank only allowed for non-finals or state in o if not odd) are added later.
+	 * Add constraint to the double decker (down,up). This constraints are only
+	 * obtained from incoming transitions. Further constraints (odd rank only
+	 * allowed for non-finals or state in o if not odd) are added later.
 	 */
 	protected void addConstraint(final StateWithRankInfo<STATE> downState, final STATE upState,
-			final Integer predecessorRank, final boolean predecessorIsInO, final boolean predecessorIsAccepting) {
+			final DoubleDecker<StateWithRankInfo<STATE>> predDD) {
+		mPredecessors.addTriple(downState, upState, predDD);
+		Integer predecessorRank;
+		if (mPredecessorLrsIsPowersetComponent) {
+			predecessorRank = mUserDefinedMaxRank;
+		} else {
+			predecessorRank = mPredecessorLrs.getRank(predDD.getDown(), predDD.getUp().getState());
+		}
+
+		boolean predecessorIsInO;
+		if (mPredecessorLrsIsPowersetComponent) {
+			predecessorIsInO = false;
+		} else {
+			predecessorIsInO = mPredecessorLrs.inO(predDD.getDown(), predDD.getUp().getState());
+		}
+
+		final boolean predecessorIsAccepting = mOperand.isFinal(predDD.getUp().getState());
+
 		// This method is very similar to addRank(), but it does not
 		// override a rank that was already set (instead takes the minimum)
 		// and one assert is missing.
@@ -281,13 +279,13 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			mHighestRank = predecessorRank;
 		}
 		if (predecessorIsAccepting) {
-			mPredecessorWasAccepting
+			mSomePredecessorWasAccepting
 					.add(new DoubleDecker<>(downState, new StateWithRankInfo<>(upState, predecessorRank, oCandidate)));
 		}
 	}
 
 	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
-		return mPredecessorWasAccepting;
+		return mSomePredecessorWasAccepting;
 	}
 
 //	public List<DoubleDecker<StateWithRankInfo<STATE>>> getDoubleDeckersEligibleForVoluntaryRankDecrease(
@@ -304,7 +302,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 //		return result;
 //	}
 
-	public boolean isEligibleForVoluntaryRankDecrease(final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+	private boolean isEligibleForVoluntaryRankDecrease(final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
 			final boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, final boolean omitConfluenceEnforcedDelayedRankDecrease,
 			final DoubleDecker<StateWithRankInfo<STATE>> dd) {
 		if (omitConfluenceEnforcedDelayedRankDecrease) {
@@ -319,13 +317,26 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		// decrease only immediately after some predecessor was visiting an accepting
 		// state
 		isEligible &= (!voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting
-				|| mPredecessorWasAccepting.contains(dd));
+				|| mSomePredecessorWasAccepting.contains(dd));
 		// optimization used in some effective complementations: do voluntary
 		// decrease only for states that would be in the set O if we would
 		// not decrease their rank to an odd rank.
 		// This optimization is incompatible to the original NCSB complementation.
 		isEligible &= (!voluntaryRankDecreaseOnlyIfEnablesEscapeFromO || dd.getUp().isInO());
 		return isEligible;
+	}
+
+	public boolean allEvenPredecessorsAreAcceptingOrNotInO(final StateWithRankInfo<STATE> downState,
+			final STATE upState) {
+		final Set<Integer> result = new HashSet<>();
+		for (final DoubleDecker<StateWithRankInfo<STATE>> pred : mPredecessors.projectToTrd(downState, upState)) {
+			if (isEven(pred.getUp().getRank())) {
+				if (!mOperand.isFinal(pred.getUp().getState()) || !pred.getUp().isInO()) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 

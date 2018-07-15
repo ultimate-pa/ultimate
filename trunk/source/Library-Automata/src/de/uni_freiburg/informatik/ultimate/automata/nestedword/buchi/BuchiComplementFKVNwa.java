@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Buchi Complementation based on 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -113,7 +113,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -253,19 +253,20 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			final STATE resSucc = getOrAdd(detSucc, false);
 			resSuccs.add(resSucc);
 
-			internalSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true, WARN_SIZE_1);
+			internalSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true, null, WARN_SIZE_1);
 		}
 		final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
 		if (complUp != null) {
-			internalSuccessorsHelper(state, letter, resSuccs, complUp, complUp.isOempty(), false, WARN_SIZE_2);
+			internalSuccessorsHelper(state, letter, resSuccs, complUp, complUp.isOempty(), false, complUp, WARN_SIZE_2);
 		}
 		return resSuccs;
 	}
 
 	private void internalSuccessorsHelper(final STATE state, final LETTER letter, final Collection<STATE> resSuccs,
 			final IFkvState<LETTER, STATE> detUp, final boolean isEmpty, final boolean predecessorIsSubsetComponent,
-			final int warnSize) {
-		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty);
+			final LevelRankingState<LETTER, STATE> predUp, final int warnSize) {
+		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty,
+				predecessorIsSubsetComponent, predUp);
 		constraints.internalSuccessorConstraints(detUp, letter);
 		final Collection<LevelRankingState<LETTER, STATE>> result =
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
@@ -281,8 +282,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			resSuccs.add(resSucc);
 		}
 	}
-	
-	
+
+
 	@Override
 	public Collection<STATE> callSuccessors(final STATE state, final LETTER letter) {
 		final Collection<STATE> resSuccs = new ArrayList<>();
@@ -293,19 +294,21 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			final STATE resSucc = getOrAdd(detSucc, false);
 			resSuccs.add(resSucc);
 
-			callSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true);
+			callSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true, null);
 		}
 		final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
 		if (complUp != null) {
-			callSuccessorsHelper(state, letter, resSuccs, complUp, complUp.isOempty(), false);
+			callSuccessorsHelper(state, letter, resSuccs, complUp, complUp.isOempty(), false, complUp);
 		}
 		return resSuccs;
 	}
 
 	private void callSuccessorsHelper(final STATE state, final LETTER letter, final Collection<STATE> resSuccs,
 			final IFkvState<LETTER, STATE> fkvState, final boolean isEmpty,
-			final boolean predecessorIsSubsetComponent) {
-		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty);
+			final boolean predecessorIsSubsetComponent,
+			final LevelRankingState<LETTER, STATE> predUp) {
+		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty,
+				predecessorIsSubsetComponent, predUp);
 		constraints.callSuccessorConstraints(fkvState, letter);
 		final Collection<LevelRankingState<LETTER, STATE>> result =
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
@@ -314,8 +317,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			resSuccs.add(resSucc);
 		}
 	}
-	
-	
+
+
 	@Override
 	public Collection<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter) {
 		final Collection<STATE> resSuccs = new ArrayList<>();
@@ -327,7 +330,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			final STATE resSucc = getOrAdd(detSucc, false);
 			resSuccs.add(resSucc);
 
-			returnSuccessorsHelper(state, hier, letter, resSuccs, detUp, detDown, O_IS_EMPTY, true);
+			returnSuccessorsHelper(state, hier, letter, resSuccs, detUp, detDown, O_IS_EMPTY, true, null);
 		}
 		final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
 		IFkvState<LETTER, STATE> complDown;
@@ -338,7 +341,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			complDown = mRes2lrk.get(hier);
 		}
 		if (complUp != null) {
-			returnSuccessorsHelper(state, hier, letter, resSuccs, complUp, complDown, complUp.isOempty(), false);
+			returnSuccessorsHelper(state, hier, letter, resSuccs, complUp, complDown, complUp.isOempty(), false, complUp);
 		}
 		return resSuccs;
 	}
@@ -346,8 +349,9 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 
 	private void returnSuccessorsHelper(final STATE state, final STATE hier, final LETTER letter,
 			final Collection<STATE> resSuccs, final IFkvState<LETTER, STATE> fkvUp,
-			final IFkvState<LETTER, STATE> fkvDown, final boolean isEmpty, final boolean predecessorIsSubsetComponent) {
-		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty);
+			final IFkvState<LETTER, STATE> fkvDown, final boolean isEmpty, final boolean predecessorIsSubsetComponent,
+			final LevelRankingState<LETTER, STATE> predUp) {
+		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty, predecessorIsSubsetComponent, predUp);
 		constraints.returnSuccessorConstraints(fkvUp, fkvDown, letter);
 		final Collection<LevelRankingState<LETTER, STATE>> result =
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
@@ -362,9 +366,10 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 		return mLevelRankingGenerator.generateLevelRankings(constraints, predecessorIsSubsetComponent);
 	}
 
-	private LevelRankingConstraint<LETTER, STATE> getLevelRankingConstraintDrdCheck(final boolean isEmpty) {
+	private LevelRankingConstraint<LETTER, STATE> getLevelRankingConstraintDrdCheck(final boolean isEmpty,
+			final boolean predecessorIsSubsetComponent, final LevelRankingState<LETTER, STATE> predecessorLrs) {
 		return new LevelRankingConstraintDrdCheck<>(mOperand, isEmpty, mUserDefinedMaxRank,
-				mStateDeterminizer.useDoubleDeckers());
+				mStateDeterminizer.useDoubleDeckers(), predecessorIsSubsetComponent, predecessorLrs);
 	}
 
 	@Override
