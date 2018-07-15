@@ -103,7 +103,7 @@ public class GraphToBoogie {
 	
 	private Declaration getMainProcedure() {
 		
-		final ModifiesSpecification mod = new ModifiesSpecification(mDummyLocation, false, createHavocVariableList());
+		final ModifiesSpecification mod = new ModifiesSpecification(mDummyLocation, false, createModifiesVariableList());
 		final ModifiesSpecification[] modArray = new ModifiesSpecification[1];
 		modArray[0] = mod;
 		
@@ -181,8 +181,8 @@ public class GraphToBoogie {
 	private void createPcVars() {
 		int i = 0;
 		for(ReqGuardGraph req: mRequirements) {
-			mGraphToPc.put(req, "reqtotest-pc"+ Integer.toString(i));
-			mGraphToPrimePc.put(req, "reqtotest-pc"+ Integer.toString(i) + "'");
+			mGraphToPc.put(req, "reqtotest_pc"+ Integer.toString(i));
+			mGraphToPrimePc.put(req, "reqtotest_pc"+ Integer.toString(i) + "'");
 			i++;
 		}
 	}
@@ -227,6 +227,23 @@ public class GraphToBoogie {
 		modifiedVarsList.addAll(mSymbolTable.getHiddenVars());
 		modifiedVarsList.addAll(mSymbolTable.getOutputVars());
 		//modifiedVarsList.addAll(mGraphToPrimePc.values());
+		
+		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
+		for (int i = 0; i < modifiedVars.length; i++) {
+			modifiedVars[i] = new VariableLHS(mDummyLocation, modifiedVarsList.get(i));
+		}
+		return modifiedVars;
+	}
+	
+	private VariableLHS[] createModifiesVariableList(){
+		final List<String> modifiedVarsList = new ArrayList<>();
+
+		modifiedVarsList.addAll(mSymbolTable.getInputVars());
+		modifiedVarsList.addAll(mSymbolTable.getHiddenVars());
+		modifiedVarsList.addAll(mSymbolTable.getOutputVars());
+		modifiedVarsList.addAll(mSymbolTable.getConstVars());
+		modifiedVarsList.addAll(mGraphToPrimePc.values());
+		modifiedVarsList.addAll(mGraphToPc.values());
 		
 		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
 		for (int i = 0; i < modifiedVars.length; i++) {

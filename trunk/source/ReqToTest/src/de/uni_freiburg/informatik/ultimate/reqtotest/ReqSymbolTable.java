@@ -99,6 +99,10 @@ public class ReqSymbolTable implements IReqSymbolExpressionTable, ITerm2Expressi
 		return mInputVars;
 	}
 	
+	public Set<String> getConstVars(){
+		return mConstVars;
+	}
+	
 	public void extractVariablesFromInit(final InitializationPattern init) {
 		final BoogiePrimitiveType type = toPrimitiveType(init.getType());
 		final String name = init.getId();
