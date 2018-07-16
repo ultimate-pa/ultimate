@@ -9,8 +9,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  net.sourceforge.czt,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
- de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils
+ de.uni_freiburg.informatik.ultimate.lib.util
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking,
  de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.armc,
