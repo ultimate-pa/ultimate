@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 
 /**
- * Computes the difference between a {@link BoundedPetriNet} and a {@link INestedWordAutomaton}.
+ * Computes the difference between a {@link BoundedPetriNet}
+ * and a deterministic automaton stored as an {@link INestedWordAutomaton}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -136,15 +136,13 @@ public final class DifferenceBlackAndWhite
 				if (!successorsIt.hasNext()) {
 					continue;
 				}
-				@SuppressWarnings("squid:S1941")
-				final C succState = successorsIt.next().getSucc();
-				if (successorsIt.hasNext()) {
-					throw new IllegalArgumentException("Only deterministic automata supported");
-				}
-				if (succState.equals(state)) {
+				if (successorsIt.next().getSucc().equals(state)) {
 					selfloopStates.add(state);
 				} else {
 					changerStates.add(state);
+				}
+				if (successorsIt.hasNext()) {
+					throw new IllegalArgumentException("Only deterministic automata supported");
 				}
 			}
 			mSelfloop.put(symbol, selfloopStates);
