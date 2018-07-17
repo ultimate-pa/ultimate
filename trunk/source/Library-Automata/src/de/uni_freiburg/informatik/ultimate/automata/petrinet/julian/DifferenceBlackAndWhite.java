@@ -208,7 +208,7 @@ public final class DifferenceBlackAndWhite
 				}
 				assert mWhitePlace.containsKey(predState);
 				predecessors.add(mWhitePlace.get(predState));
-				assert mWhitePlace.containsKey(succState);
+				assert mBlackPlace.containsKey(succState);
 				predecessors.add(mBlackPlace.get(succState));
 
 				final Collection<Place<C>> successors = new ArrayList<>();
