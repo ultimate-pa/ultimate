@@ -74,6 +74,8 @@ public final class DifferenceBlackAndWhite
 
 	private final Map<Place<C>, Place<C>> mOldPlace2NewPlace = new HashMap<>();
 
+	// TODO schaetzc 2018-07-18: mSelfloop can be removed.
+	// Only usage "mSelfloop.isEmpty()" can be replaced with "mNwa.getVpAlphabet().getInternalAlphabet().isEmpty()".
 	private final Map<LETTER, Set<C>> mSelfloop = new HashMap<>();
 	private final Map<LETTER, Set<C>> mStateChanger = new HashMap<>();
 
@@ -225,6 +227,8 @@ public final class DifferenceBlackAndWhite
 			}
 
 			// One copy for the selfloops
+			// TODO schaetzc 2018-07-18: is this a bug? ...
+			// ... "mSelfloop.isEmpty()" is equivalent to "mNwa.getVpAlphabet().getInternalAlphabet().isEmpty()".
 			if (!mSelfloop.isEmpty()) {
 				final Collection<Place<C>> predecessors = new ArrayList<>();
 				for (final Place<C> oldPlace : oldTrans.getPredecessors()) {
