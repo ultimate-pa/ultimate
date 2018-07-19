@@ -104,6 +104,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 
 	private final BarelyCoveredLevelRankingsGenerator<LETTER, STATE> mBclrg;
 	private final boolean mLazySOptimization;
+	final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
 
 	/**
 	 * Constructor.
@@ -127,15 +128,14 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		mLazySOptimization = lazySOptimization;
 		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
 		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
-		final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease;
 		if(lazySOptimization) {
-			voluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING, VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O);
+			mVoluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING, VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O);
 		} else {
-			voluntaryRankDecrease = EnumSet
+			mVoluntaryRankDecrease = EnumSet
 				.of(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING);
 		}
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
-				false, voluntaryRankDecrease);
+				false, mVoluntaryRankDecrease);
 		constructInitialState();
 	}
 
@@ -318,7 +318,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		 * (at some point in time where this run left an accepting state).
 		 * Hence these transitions are superficial.
 		 */
-		if (constraint.isTargetOfConfluenceForcedDelayedRankDecrease()) {
+		if (constraint.isTargetOfConfluenceForcedDelayedRankDecrease(mVoluntaryRankDecrease)) {
 			// in this case we do not want to have successor states
 			return Collections.emptyList();
 		}
