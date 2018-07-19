@@ -108,15 +108,15 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 			if (!correct) {
 				throw new AssertionError(String.format(
 						"Inconsistent number of states. Input: %s states, output: %s states, %s transitions, lazy3: %s states, %s transitions",
-						mOperand.size(), mResult.size(), numberOfTransitionsLazy3, lazy3.size(),
-						numberOfTransitionsResult));
+						mOperand.size(), mResult.size(), numberOfTransitionsResult, lazy3.size(),
+						numberOfTransitionsLazy3));
 			}
 			correct &= (new NumberOfTransitions<>(mServices, lazy3).getResult().equals(new NumberOfTransitions<>(mServices, getResult()).getResult()));
 			if (!correct) {
 				throw new AssertionError(String.format(
 						"Inconsistent number of transitions. Input: %s states, output: %s states, %s transitions, lazy3: %s states, %s transitions",
-						mOperand.size(), mResult.size(), numberOfTransitionsLazy3, lazy3.size(),
-						numberOfTransitionsResult));
+						mOperand.size(), mResult.size(), numberOfTransitionsResult, lazy3.size(),
+						numberOfTransitionsLazy3));
 			}
 		}
 
