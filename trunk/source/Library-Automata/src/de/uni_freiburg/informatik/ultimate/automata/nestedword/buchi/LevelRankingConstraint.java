@@ -331,7 +331,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		final Set<Integer> result = new HashSet<>();
 		for (final DoubleDecker<StateWithRankInfo<STATE>> pred : mPredecessors.projectToTrd(downState, upState)) {
 			if (isEven(pred.getUp().getRank())) {
-				if (!mOperand.isFinal(pred.getUp().getState()) || !pred.getUp().isInO()) {
+				if (!mOperand.isFinal(pred.getUp().getState()) && pred.getUp().isInO()) {
 					return false;
 				}
 			}
