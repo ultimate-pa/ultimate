@@ -1,0 +1,76 @@
+// Date: 2018-07-18
+// Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+//
+// Shows that the implementation of the "confluence forced delayed rank 
+// decrease optimization was buggy.
+// We checked only that some predecessors with even rank are accepting, 
+// we have to check that predecessors with an even rank are accepting.
+// As a consequence, the following two transitions were missing
+//		("({},{q1,r1},{s1},{q1,r1})" "a" "({},{},{q2},{})")
+//		("({},{q1,s1},{r1},{q1,s1})" "a" "({},{},{q2},{})")
+//
+// I tried to construct an examples where this bug leads to an unsoundness,
+// but I failed.
+// I think the buggy optimization would also be sound for our setting where
+// we move from N to C only if we visited an accepting state. Hence we
+// cannot produce a C-state without having an S-state copy available.
+// Think it would be unsound however, if the partition of the input automata's
+// states would be given manually.
+// This observation hints that we could improve our algorithm. However, there
+// were only two examples in our repository where we saw a difference.
+// In my opinion it is not worth the effort to dig deeper into that.
+
+
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(complementNCSB) == 8);
+print(numberOfTransitions(complementNCSB));
+assert(numberOfTransitions(complementNCSB) == 10);
+
+NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy(ba);
+print(numberOfStates(complementNCSBLazy3));
+assert(numberOfStates(complementNCSBLazy3) == 8);
+print(numberOfTransitions(complementNCSBLazy3));
+assert(numberOfTransitions(complementNCSBLazy3) == 8);
+
+NestedWordAutomaton complementNCSBLazy2 = buchiComplementNCSBLazy2(ba);
+print(numberOfStates(complementNCSBLazy2));
+assert(numberOfStates(complementNCSBLazy2) == 8);
+print(numberOfTransitions(complementNCSBLazy2));
+assert(numberOfTransitions(complementNCSBLazy2) == 8);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(ba, "HEIMAT2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 6);
+print(numberOfTransitions(complementHeiMat2));
+assert(numberOfTransitions(complementHeiMat2) == 7);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(ba, "ELASTIC", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 6);
+print(numberOfTransitions(complementElastic));
+assert(numberOfTransitions(complementElastic) == 7);
+
+NestedWordAutomaton complementSchewe = buchiComplementFKV(ba, "SCHEWE", 77);
+print(numberOfStates(complementSchewe));
+assert(numberOfStates(complementSchewe) == 8);
+print(numberOfTransitions(complementSchewe));
+assert(numberOfTransitions(complementSchewe) == 8);
+
+print(complementNCSB);
+
+NestedWordAutomaton ba = (
+  callAlphabet = { },
+  internalAlphabet = { a },
+  returnAlphabet = { },
+  states = {q0 q1 q2 r0 r1 r2 s0 s1 s2},
+  initialStates = {q0 r0 s0},
+  finalStates = {q0 r0 s0 q1},
+  callTransitions = { },
+  internalTransitions = {
+    (q0 a q1) (q0 a q1) (q1 a q2)
+ 	(r0 a r1) (r0 a r1) (r1 a q2)
+	(s0 a s1) (s0 a s1) (s1 a q2)
+  }, 
+  returnTransitions = { }
+);
