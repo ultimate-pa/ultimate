@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -75,6 +78,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	 * complementations.
 	 *
 	 */
+	@Deprecated
 	public boolean isTargetOfConfluenceForcedDelayedRankDecrease() {
 		if (isNonAcceptingSink()) {
 			return false;
@@ -103,6 +107,53 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		}
 		return false;
 	}
+
+	public boolean isTargetOfConfluenceForcedDelayedRankDecrease(final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease) {
+		for (final StateWithRankInfo<STATE> down : mPredecessors.projectToFst()) {
+			for (final STATE up : mPredecessors.projectToSnd(down)) {
+				// Only applicable if current state has odd rank
+				if (isOdd(getRank(down, up))) {
+					final List<DoubleDecker<StateWithRankInfo<STATE>>> predecessorsEvenRank = new ArrayList<>();
+					final List<DoubleDecker<StateWithRankInfo<STATE>>> predecessorsOddRank = new ArrayList<>();
+					for (final DoubleDecker<StateWithRankInfo<STATE>> predecessor : mPredecessors.projectToTrd(down, up)) {
+						if (isEven(predecessor.getUp().getRank())) {
+							predecessorsEvenRank.add(predecessor);
+						} else {
+							assert isOdd(predecessor.getUp().getRank());
+							predecessorsOddRank.add(predecessor);
+						}
+					}
+					if (!predecessorsEvenRank.isEmpty() && !predecessorsOddRank.isEmpty()) {
+						// current has odd rank and there are predecessors with even rank
+						// hence all even rank were forced to decrease by confluence
+						// now we only have to find out if this delayed rank decrease
+						for (final DoubleDecker<StateWithRankInfo<STATE>> predecessor : mPredecessors.projectToTrd(down, up)) {
+							if (voluntaryRankDecrease.equals(EnumSet.of(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING))) {
+								if (mOperand.isFinal(predecessor.getUp().getState())) {
+									// some predecessor is final, maybe there was no decrease before
+									return false;
+								}
+							} else if (voluntaryRankDecrease.equals(EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING, VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O))) {
+								if (mOperand.isFinal(predecessor.getUp().getState()) || predecessor.getUp().isInO()) {
+									// some predecessor is final, or state not in O, maybe there was no decrease before
+									return false;
+								}
+
+							} else {
+								throw new UnsupportedOperationException("unclear if CFDRD optimization is sound");
+							}
+						}
+						return true;
+					}
+
+				}
+
+			}
+		}
+		return false;
+	}
+
+
 
 	private Set<Integer> getRanksOfNonAcceptingPredecessors(final StateWithRankInfo<STATE> downState,
 			final STATE upState) {
