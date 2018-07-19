@@ -52,8 +52,16 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
 /**
- * Computes the difference between a {@link BoundedPetriNet}
- * and a deterministic automaton stored as an {@link INestedWordAutomaton}.
+ * Computes the difference between a {@link BoundedPetriNet} and an {@link INestedWordAutomaton}.
+ * This operation is specialized for subtrahend automata of the following structure.
+ * Results for other subtrahend automata may or may not be correct.
+ * <p>
+ * Requirements on the subtrahend automata:
+ * <ul>
+ *   <li>Has to be a DFA. Transitions to a sink state are optional.
+ *   <li>Once a final state is reached it cannot be left,
+ *       that is final states have a selfloop for each letter from the alphabet.
+ * <ul>
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -74,9 +82,7 @@ public final class DifferenceBlackAndWhite
 
 	private final Map<Place<C>, Place<C>> mOldPlace2NewPlace = new HashMap<>();
 
-	// TODO schaetzc 2018-07-18: mSelfloop can be removed.
-	// Only usage "mSelfloop.isEmpty()" can be replaced with "mNwa.getVpAlphabet().getInternalAlphabet().isEmpty()".
-	private final Map<LETTER, Set<C>> mSelfloop = new HashMap<>();
+	private final Map<LETTER, Boolean> mExistsSelfloop = new HashMap<>();
 	private final Map<LETTER, Set<C>> mStateChanger = new HashMap<>();
 
 	private final Map<C, Place<C>> mWhitePlace = new HashMap<>();
@@ -124,7 +130,7 @@ public final class DifferenceBlackAndWhite
 
 	private void classifySymbols() {
 		for (final LETTER symbol : mNwa.getVpAlphabet().getInternalAlphabet()) {
-			final HashSet<C> selfloopStates = new HashSet<>();
+			boolean existsSelfloop = false;
 			final HashSet<C> changerStates = new HashSet<>();
 			for (final C state : mNwa.getStates()) {
 				if (mNwa.isFinal(state)) {
@@ -139,7 +145,7 @@ public final class DifferenceBlackAndWhite
 					continue;
 				}
 				if (successorsIt.next().getSucc().equals(state)) {
-					selfloopStates.add(state);
+					existsSelfloop = true;
 				} else {
 					changerStates.add(state);
 				}
@@ -147,11 +153,11 @@ public final class DifferenceBlackAndWhite
 					throw new IllegalArgumentException("Only deterministic automata supported");
 				}
 			}
-			mSelfloop.put(symbol, selfloopStates);
+			mExistsSelfloop.put(symbol, existsSelfloop);
 			mStateChanger.put(symbol, changerStates);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(symbol + " " + selfloopStates.size() + " times selfloop " + changerStates.size()
-						+ " times changer");
+				mLogger.debug(symbol + " has " + (existsSelfloop ? "a" : "no") + " selfloop and "
+						+ changerStates.size() + " changer(s)");
 			}
 		}
 	}
@@ -226,10 +232,7 @@ public final class DifferenceBlackAndWhite
 				mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 			}
 
-			// One copy for the selfloops
-			// TODO schaetzc 2018-07-18: is this a bug? ...
-			// ... "mSelfloop.isEmpty()" is equivalent to "mNwa.getVpAlphabet().getInternalAlphabet().isEmpty()".
-			if (!mSelfloop.isEmpty()) {
+			if (!mExistsSelfloop.get(symbol)) {
 				final Collection<Place<C>> predecessors = new ArrayList<>();
 				for (final Place<C> oldPlace : oldTrans.getPredecessors()) {
 					final Place<C> newPlace = mOldPlace2NewPlace.get(oldPlace);
