@@ -242,7 +242,8 @@ public final class DifferenceBlackAndWhite
 				mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 			}
 
-			if (mExistsSelfloop.get(symbol)) {
+			// TODO equivalent to mNwa.getAlphabet().isEmpty(). Remove attribute or make use of it.
+			if (!mExistsSelfloop.isEmpty()) {
 				final Collection<Place<C>> predecessors = new ArrayList<>();
 				for (final Place<C> oldPlace : oldTrans.getPredecessors()) {
 					final Place<C> newPlace = mOldPlace2NewPlace.get(oldPlace);
