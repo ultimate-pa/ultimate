@@ -242,7 +242,7 @@ public final class DifferenceBlackAndWhite
 				mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 			}
 
-			if (!mExistsSelfloop.get(symbol)) {
+			if (mExistsSelfloop.get(symbol)) {
 				final Collection<Place<C>> predecessors = new ArrayList<>();
 				for (final Place<C> oldPlace : oldTrans.getPredecessors()) {
 					final Place<C> newPlace = mOldPlace2NewPlace.get(oldPlace);
