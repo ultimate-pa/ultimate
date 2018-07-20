@@ -164,4 +164,11 @@ public class PredicateFactoryForInterpolantAutomata
 		 */
 		throw new UnsupportedOperationException("State factory operation not implemented!");
 	}
+
+	@Override
+	public IPredicate getBlackContent(IPredicate content) {
+		return mPredicateFactory.newDebugPredicate("Black: " + content);
+	}
+	
+	
 }
