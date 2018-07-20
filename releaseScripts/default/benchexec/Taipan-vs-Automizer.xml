@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="6GB" timelimit="300" hardtimelimit="320" cpuCores="2">
+	<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+	<rundefinition name="Taipan">
+		<option name="--generate-csv" />
+		<option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
+		<option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-64bit-Taipan_Default.epf</option>
+	</rundefinition>
+
+	<rundefinition name="Automizer">
+		<option name="--generate-csv" />
+		<option name="--csv-dir">../../../releaseScripts/default/UAutomizer-linux/csv</option>
+		<option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+	</rundefinition>
+
+	<tasks name="Loops">
+		<includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
+	</tasks>
+
+	<tasks name="ECA">
+		<includesfile>../../../trunk/examples/svcomp/ReachSafety-ECA.set</includesfile>
+	</tasks>
+</benchmark>
