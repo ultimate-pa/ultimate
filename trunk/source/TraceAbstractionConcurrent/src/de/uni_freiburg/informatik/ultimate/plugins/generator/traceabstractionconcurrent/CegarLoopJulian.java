@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.DifferenceBlackAndWhite;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix2PetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder;
@@ -157,7 +157,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
 		}
-		mAbstraction = new DifferenceBlackAndWhite<>(new AutomataLibraryServices(mServices),
+		mAbstraction = new Difference<>(new AutomataLibraryServices(mServices),
 				mPredicateFactoryInterpolantAutomata, abstraction, (NestedWordAutomaton<LETTER, IPredicate>) dia)
 						.getResult();
 

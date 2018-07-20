@@ -6,7 +6,7 @@
 // is not final.
 
 
-assert(isEmpty(differenceBlackAndWhite(se7en, all)));
+assert(isEmpty(difference(se7en, all)));
 
 PetriNet se7en = (
   alphabet = {a b c},

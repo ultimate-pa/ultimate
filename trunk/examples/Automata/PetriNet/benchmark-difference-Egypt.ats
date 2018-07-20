@@ -13,12 +13,12 @@
 // other files in the weeks of the revolution in Egypt
 
 
-assert(!isEmpty(differenceBlackAndWhite(se7en, atLeastOneA)));
-assert(isEmpty(differenceBlackAndWhite(se7en, all)));
-assert(!isEmpty(differenceBlackAndWhite(NonEmptyNetWithoutTransitions, atLeastOneA)));
-assert(isEmpty(differenceBlackAndWhite(NonEmptyNetWithoutTransitions, all)));
+assert(!isEmpty(difference(se7en, atLeastOneA)));
+assert(isEmpty(difference(se7en, all)));
+assert(!isEmpty(difference(NonEmptyNetWithoutTransitions, atLeastOneA)));
+assert(isEmpty(difference(NonEmptyNetWithoutTransitions, all)));
 
-print(differenceBlackAndWhite(se7en, atLeastOneA));
+print(difference(se7en, atLeastOneA));
 
 PetriNet se7en = (
   alphabet = {a b c},

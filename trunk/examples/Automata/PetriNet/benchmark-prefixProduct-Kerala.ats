@@ -1,8 +1,8 @@
 // Author: heizmann@informatik.uni-freiburg.de,  Date: 5.6.2011
 
-// Modified version of TwoThreadOneRessource-differenceBlackAndWhite.fat
+// Modified version of TwoThreadOneRessource-difference.fat
 // Removed all transitions to accepting states and replaced 
-// differenceBlackAndWhite by prefixProduct.
+// difference by prefixProduct.
 
 assert(!isEmpty(prefixProduct(petriNetJulian(t1), t2)));
 

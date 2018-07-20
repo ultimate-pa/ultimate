@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
@@ -78,9 +79,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  * @param <CRSF>
  *            check result state factory type
  */
-public final class DifferenceBlackAndWhite
+public final class Difference
 		<LETTER, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & INwaInclusionStateFactory<C>>
-		extends UnaryNetOperation<LETTER, C, CRSF> {
+		extends GeneralOperation<LETTER, C, CRSF> {
 
 	private final BoundedPetriNet<LETTER, C> mOperand;
 	private final INestedWordAutomaton<LETTER, C> mNwa;
@@ -96,9 +97,9 @@ public final class DifferenceBlackAndWhite
 	private final Map<C, Place<C>> mWhitePlace = new HashMap<>();
 	private final Map<C, Place<C>> mBlackPlace = new HashMap<>();
 
-	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> DifferenceBlackAndWhite(
-			final AutomataLibraryServices services, final SF factory, final BoundedPetriNet<LETTER, C> net,
-			final INestedWordAutomaton<LETTER, C> nwa) {
+	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> Difference(
+			final AutomataLibraryServices services, final SF factory,
+			final BoundedPetriNet<LETTER, C> net, final INestedWordAutomaton<LETTER, C> nwa) {
 		super(services);
 		mOperand = net;
 		mNwa = nwa;
@@ -377,11 +378,6 @@ public final class DifferenceBlackAndWhite
 		for (final Place<C> oldPlace : trans.getSuccessors()) {
 			succs.add(mOldPlace2NewPlace.get(oldPlace));
 		}
-	}
-	
-	@Override
-	protected IPetriNet<LETTER, C> getOperand() {
-		return mOperand;
 	}
 
 	@Override
