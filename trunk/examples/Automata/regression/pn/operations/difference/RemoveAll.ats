@@ -1,0 +1,36 @@
+assert(accepts(net, [a a]));
+assert(accepts(net, [b]));
+
+assert(accepts(nwa, [a a]));
+assert(accepts(nwa, [b]));
+
+PetriNet difference = difference(net, nwa);
+assert(isEmpty(difference));
+// print(difference);
+
+PetriNet net = (
+	alphabet = {a b},
+	places = {p1 p2 p3},
+	transitions = {
+		({p1} a {p2})
+		({p2} a {p3})
+		({p1} b {p3})
+	},
+	initialMarking = {p1},
+	acceptingPlaces = {p3}
+);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a b},
+	returnAlphabet = {},
+	states = {q1},
+	initialStates = {q1},
+	finalStates = {q1},
+	callTransitions = {},
+	internalTransitions = {
+		(q1 a q1)
+		(q1 b q1)
+	},
+	returnTransitions = {}
+);

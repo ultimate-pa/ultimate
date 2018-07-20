@@ -1,0 +1,59 @@
+// Test for different synchronization methods with selfloops
+// a- and b-transitions should be synchronized with the normal pairwise method.
+// c-transitions should be synchronized with the inverted method using black places.
+
+assert(accepts(net, [a b]));
+assert(accepts(net, [c]));
+assert(accepts(net, [a b c]));
+assert(accepts(net, [a c b]));
+assert(accepts(net, [c a b]));
+
+assert(accepts(nwa, [a b]));
+assert(accepts(nwa, [a b c]));
+assert(accepts(nwa, [a c b]));
+assert(accepts(nwa, [c a b]));
+
+PetriNet difference = difference(net, nwa);
+assert(accepts(difference, [c]));
+assert(!accepts(difference, [a b]));
+assert(!accepts(difference, [a b c]));
+assert(!accepts(difference, [a c b]));
+assert(!accepts(difference, [c a b]));
+
+// a can only be synced once
+// b should be omitted
+// c should be synced only once (using inverted method)
+assert(numberOfTransitions(difference) == 2);
+
+// 4 places from petri net + 2 white places + 1 black place
+assert(numberOfPlaces(difference) == 7);
+
+// print(difference);
+
+PetriNet net = (
+	alphabet = {a b c},
+	places = {p1 p2 p3 p4},
+	transitions = {
+		({p1} a {p2})
+		({p2} b {p3})
+		({p4} c {p3})
+	},
+	initialMarking = {p1 p4},
+	acceptingPlaces = {p3}
+);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a b c},
+	returnAlphabet = {},
+	states = {q1 q2 q3},
+	initialStates = {q1},
+	finalStates = {q3},
+	callTransitions = {},
+	internalTransitions = {
+		(q1 a q2) (q2 b q3)
+		(q1 c q1) (q2 c q3)
+		(q3 a q3) (q3 b q3) (q3 c q3)
+	},
+	returnTransitions = {}
+);
