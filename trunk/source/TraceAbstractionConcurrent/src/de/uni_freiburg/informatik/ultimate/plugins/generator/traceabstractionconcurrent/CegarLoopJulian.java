@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import java.util.Collection;
 
-import javax.naming.spi.StateFactory;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -45,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix2PetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
@@ -87,7 +85,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		final TaConcurContentFactory contentFactory = new TaConcurContentFactory(this, super.mCsToolkit,
 				mPredicateFactory, super.mPref.computeHoareAnnotation(), mPref.computeHoareAnnotation(), false);
-		final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfg, contentFactory, mCsToolkit,
+		final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfg, mPredicateFactoryResultChecking, mCsToolkit,
 				mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2Automaton.getResult();
 
@@ -229,7 +227,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		final NestedWord<LETTER> nw = NestedWord.nestedWord(word);
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> petriNetAsFA =
 				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services),
-						mPredicateFactoryInterpolantAutomata, (IPetriNet<LETTER, IPredicate>) automaton).getResult();
+						mPredicateFactoryResultChecking, (IPetriNet<LETTER, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw);
 
 	}
