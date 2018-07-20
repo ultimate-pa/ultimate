@@ -33,7 +33,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISenwaStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
@@ -48,7 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class PredicateFactoryResultChecking
 		implements ISenwaStateFactory<IPredicate>, IConcurrentProductStateFactory<IPredicate>,
-		IMinimizationStateFactory<IPredicate>, IMinimizationCheckResultStateFactory<IPredicate> {
+		IMinimizationStateFactory<IPredicate>, IMinimizationCheckResultStateFactory<IPredicate>, 
+		IPetriNet2FiniteAutomatonStateFactory<IPredicate> {
 
 	protected final SmtFreePredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =
@@ -101,6 +104,11 @@ public class PredicateFactoryResultChecking
 
 	@Override
 	public IPredicate getContentOnConcurrentProduct(final IPredicate c1, final IPredicate c2) {
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
+	}
+
+	@Override
+	public IPredicate getContentOnPetriNet2FiniteAutomaton(Marking<?, IPredicate> marking) {
 		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 }
