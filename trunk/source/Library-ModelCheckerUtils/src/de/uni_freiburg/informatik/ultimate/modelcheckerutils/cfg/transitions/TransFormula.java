@@ -56,8 +56,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * <li>finally, adding the conjunct x=x' for each x∈(dom(invar)⋂dom(outvar) such that invar(x)=outvar(x)
  * </ul>
  *
- *
- *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class TransFormula implements ITransitionRelation {
@@ -76,45 +74,31 @@ public abstract class TransFormula implements ITransitionRelation {
 		mNonTheoryConsts = nonTheoryConsts;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#getAssignedVars()
-	 */
 	@Override
 	public abstract Set<IProgramVar> getAssignedVars();
 
 	public abstract Term getFormula();
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#getInVars()
-	 */
 	@Override
 	public Map<IProgramVar, TermVariable> getInVars() {
 		return Collections.unmodifiableMap(mInVars);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#getOutVars()
-	 */
 	@Override
 	public Map<IProgramVar, TermVariable> getOutVars() {
 		return Collections.unmodifiableMap(mOutVars);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#getNonTheoryConsts()
-	 */
 	@Override
 	public Set<IProgramConst> getNonTheoryConsts() {
 		return Collections.unmodifiableSet(mNonTheoryConsts);
 	}
 
+	@Override
 	public Set<TermVariable> getAuxVars() {
 		return Collections.unmodifiableSet(mAuxVars);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#isHavocedOut(de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar)
-	 */
 	@Override
 	public boolean isHavocedOut(final IProgramVar bv) {
 		final TermVariable inVar = mInVars.get(bv);
@@ -125,9 +109,6 @@ public abstract class TransFormula implements ITransitionRelation {
 		return !Arrays.asList(getFormula().getFreeVars()).contains(outVar);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#isHavocedIn(de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar)
-	 */
 	@Override
 	public boolean isHavocedIn(final IProgramVar bv) {
 		final TermVariable inVar = mInVars.get(bv);
@@ -137,5 +118,4 @@ public abstract class TransFormula implements ITransitionRelation {
 		}
 		return !Arrays.asList(getFormula().getFreeVars()).contains(inVar);
 	}
-
 }

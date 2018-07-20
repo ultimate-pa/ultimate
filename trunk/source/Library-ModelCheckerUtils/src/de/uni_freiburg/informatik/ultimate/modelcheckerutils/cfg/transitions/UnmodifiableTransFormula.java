@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * Unmodifiable variant of {@link TransFormula}
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 @SuppressWarnings("squid:S2055")
@@ -73,15 +73,13 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	 * infeasible but the solver is not able to prove the infeasibility.
 	 */
 	public enum Infeasibility {
-		INFEASIBLE, 
-		UNPROVEABLE, 
-		NOT_DETERMINED,
-		//FIXME: Introduce value for FEASIBLE
+		INFEASIBLE, UNPROVEABLE, NOT_DETERMINED,
+		// FIXME: Introduce value for FEASIBLE
 	}
 
 	/**
 	 * This constructor is package-private use {@link TransFormulaBuilder} to construct TransFormulas.
-	 * 
+	 *
 	 * @param nonTheoryConsts
 	 */
 	UnmodifiableTransFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars,
@@ -146,10 +144,10 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	 * <li>each auxVar is replaced by a constant (with the same name as the auxVar)
 	 * </ul>
 	 * If formula contained no branch encoders the result is a closed formula (does not contain free variables)
-	 * 
+	 *
 	 * @param existingAuxVarConsts
 	 *            if true we assume that the constants for the auxVars already exist, otherwise we construct them
-	 * 
+	 *
 	 */
 	public static Term computeClosedFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars, final ManagedScript script) {
@@ -176,22 +174,20 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		final Term closedTerm = new Substitution(script, substitutionMapping).transform(formula);
 		return closedTerm;
 	}
-	
+
 	/**
-	 * Return the constant (resp. 0-ary function symbol) that represents the
-	 * inVar of the {@link IProgramVar} pv in the closed form of the formula of
-	 * an {@link UnmodifiableTransFormula}.
-	 * 
+	 * Return the constant (resp. 0-ary function symbol) that represents the inVar of the {@link IProgramVar} pv in the
+	 * closed form of the formula of an {@link UnmodifiableTransFormula}.
+	 *
 	 */
 	public static Term getConstantForInVar(final IProgramVar pv) {
 		return pv.getDefaultConstant();
 	}
 
 	/**
-	 * Return the constant (resp. 0-ary function symbol) that represents the
-	 * outVar of the {@link IProgramVar} pv in the closed form of the formula of
-	 * an {@link UnmodifiableTransFormula}.
-	 * 
+	 * Return the constant (resp. 0-ary function symbol) that represents the outVar of the {@link IProgramVar} pv in the
+	 * closed form of the formula of an {@link UnmodifiableTransFormula}.
+	 *
 	 */
 	public static Term getConstantForOutVar(final IProgramVar pv, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
@@ -199,9 +195,8 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		final Term outVar = outVars.get(pv);
 		if (inVar == outVar) {
 			return pv.getDefaultConstant();
-		} else {
-			return pv.getPrimedConstant();
 		}
+		return pv.getPrimedConstant();
 	}
 
 	/**
