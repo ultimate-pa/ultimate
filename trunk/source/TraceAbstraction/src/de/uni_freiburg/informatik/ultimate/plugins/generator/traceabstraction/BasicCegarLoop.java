@@ -191,6 +191,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			new LinkedHashSet<>();
 	protected final TaskIdentifier mTaskIdentifier;
 	private boolean mFirstReuseDump = true;
+	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -450,10 +451,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				}
 			}
 		} else {
+			if (DUMP_DIFFICULT_PATH_PROGRAMS) {
 			mPathProgramDumpController.reportPathProgram((NestedRun<LETTER, IPredicate>) mCounterexample,
 					((TraceAbstractionRefinementEngine<LETTER>) mTraceCheckAndRefinementEngine)
 							.somePerfectSequenceFound(),
 					mIteration);
+			}
 		}
 
 		if (mInteractive.isInteractiveMode() && feasibility == LBool.SAT) {

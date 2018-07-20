@@ -59,13 +59,12 @@ public class PathProgramDumpController<LETTER extends IIcfgTransition<?>> {
 		mIcfg = icfgContainer;
 	}
 	private static final int DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD = Integer.MAX_VALUE;
-	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 	private static final DumpStop STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED = DumpStop.BEFORE_FIRST_DUPLICATE;
 	private static final InputMode DUMP_PATH_PROGRAMS_INPUT_MODE = InputMode.ICFG;
 	
 	
 	public void reportPathProgram(final NestedRun<LETTER, IPredicate> counterexample, final boolean perfectInterpolatSequenceFound, final int iteration) {
-		if (DUMP_DIFFICULT_PATH_PROGRAMS && !perfectInterpolatSequenceFound) {
+		if (!perfectInterpolatSequenceFound) {
 			announceDump(counterexample, iteration);
 			doDump(counterexample, iteration);
 		} else if (DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD != Integer.MAX_VALUE)  {
