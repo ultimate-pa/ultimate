@@ -39,25 +39,28 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class IsEquivalent<LETTER, STATE, SF extends INwaInclusionStateFactory<STATE> & IPetriNet2FiniteAutomatonStateFactory<STATE>>
+public class IsEquivalent<LETTER, STATE>
 		extends GeneralOperation<LETTER, STATE, IPetriNet2FiniteAutomatonStateFactory<STATE>> {
 	private final IPetriNet<LETTER, STATE> mPetriNet;
 	private final INestedWordAutomaton<LETTER, STATE> mAutomaton;
-	private final SF mStateFactory;
+	private final IPetriNet2FiniteAutomatonStateFactory<STATE> mPetriNet2FiniteAutomatonStateFactory;
+	private final INwaInclusionStateFactory mNwaInclusionStateFactory;
 	private final boolean mResult;
 
-	public IsEquivalent(final AutomataLibraryServices services, SF stateFactory,
-			final IPetriNet<LETTER, STATE> petriNet, INestedWordAutomaton<LETTER, STATE> automaton)
-			throws AutomataLibraryException {
+	public IsEquivalent(final AutomataLibraryServices services,
+			IPetriNet2FiniteAutomatonStateFactory<STATE> petriNet2FiniteAutomatonStateFactory,
+			INwaInclusionStateFactory nwaInclusionStateFactory, final IPetriNet<LETTER, STATE> petriNet,
+			INestedWordAutomaton<LETTER, STATE> automaton) throws AutomataLibraryException {
 		super(services);
 		mPetriNet = petriNet;
 		mAutomaton = automaton;
-		mStateFactory = stateFactory;
+		mPetriNet2FiniteAutomatonStateFactory = petriNet2FiniteAutomatonStateFactory;
+		mNwaInclusionStateFactory = nwaInclusionStateFactory;
 		printStartMessage();
 		final INestedWordAutomaton<LETTER, STATE> petriNetAsAutomaton = (new PetriNet2FiniteAutomaton<LETTER, STATE>(
-				mServices, mStateFactory, mPetriNet)).getResult();
+				mServices, mPetriNet2FiniteAutomatonStateFactory, mPetriNet)).getResult();
 		mResult = new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent<LETTER, STATE>(
-				mServices, mStateFactory, petriNetAsAutomaton, mAutomaton).getResult();
+				mServices, mNwaInclusionStateFactory, petriNetAsAutomaton, mAutomaton).getResult();
 		printExitMessage();
 	}
 
