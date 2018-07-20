@@ -205,8 +205,9 @@ public final class Difference
 	}
 
 	private void copyNetPlaces() {
-		// the correct "constantTokenAmmount" could be computed after "addBlackAndWhitePlaces()" using
-		// mOperand.constantTokenAmount() && mBlackPlace.size() == mWhitePlace.size()
+		// the correct "constantTokenAmmount" could be computed after "addBlackAndWhitePlaces()" using ...
+		//   mOperand.constantTokenAmount() && mBlackPlace.size() == mWhitePlace.size()
+		// ... but field has to be set in constructor and cannot be changed afterwards.
 		final boolean constantTokenAmount = false;
 		mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(), constantTokenAmount);
 
@@ -269,7 +270,8 @@ public final class Difference
 	private void syncWithChanger(final ITransition<LETTER, C> oldTrans,  final C predState) {
 		final C succState = onlyElement(mNwa.internalSuccessors(predState, oldTrans.getSymbol())).getSucc();
 		if (mNwa.isFinal(succState)) {
-			// optimization for special structure of subtrahend automata
+			// optimization for special structure of subtrahend automata:
+			// omit this transition because subtrahend will accept everything afterwards
 			return;
 		}
 		final Collection<Place<C>> predecessors = new ArrayList<>();
