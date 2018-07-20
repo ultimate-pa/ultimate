@@ -73,18 +73,6 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER extends IAction>
 
 	/**
 	 * Constructor from a general trace and predicate provider.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param alphabet
-	 *            automaton alphabet
-	 * @param predicateFactory
-	 *            predicate factory
-	 * @param trace
-	 *            trace
-	 * @param index2predicate
-	 *            Maps a trace index to a predicate. Index {@code 0} represents the pre- and index {@code n} represents
-	 *            the postcondition.
 	 */
 	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final VpAlphabet<LETTER> alphabet, final PredicateFactoryForInterpolantAutomata predicateFactory,
@@ -97,15 +85,6 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER extends IAction>
 
 	/**
 	 * Convenience constructor from interpolants.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param alphabet
-	 *            automaton alphabet
-	 * @param interpolantGenerator
-	 *            interpolant generator
-	 * @param predicateFactory
-	 *            predicate factory
 	 */
 	@SuppressWarnings("unchecked")
 	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
