@@ -41,12 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.EmptinessPetruchio;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -157,7 +156,6 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 			}
 		}
 		assert constantTokenAmountGuaranteed();
-		assert checkResult(nwa);
 	}
 	
 	/**
@@ -173,18 +171,15 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		return !constantTokenAmount() || transitionsPreserveTokenAmount();
 	}
 
-	private boolean checkResult(final INestedWordAutomaton<LETTER, C> nwa) throws AutomataLibraryException {
+	public boolean checkResult(final INestedWordAutomaton<LETTER, C> nwa,
+			IPetriNet2FiniteAutomatonStateFactory<C> stateFactoryNet2automaton,
+			INwaInclusionStateFactory<C> stateFactoryInclusion) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of constructor" + getClass().getSimpleName());
 		}
 
-		// TODO Christian 2017-02-15 Casts are temporary workarounds, either get a state factory or drop this check
-		final INestedWordAutomaton<LETTER, C> resultAutomaton = (new PetriNet2FiniteAutomaton<>(mServices,
-				(IPetriNet2FiniteAutomatonStateFactory<C>) nwa.getStateFactory(), this)).getResult();
-		final boolean correct =
-				new IsEquivalent<>(mServices, (INwaInclusionStateFactory<C>) getStateFactory(), resultAutomaton, nwa)
-						.getResult();
-
+		final boolean correct = new IsEquivalent<LETTER, C>(mServices, stateFactoryNet2automaton, stateFactoryInclusion,
+				this, nwa).getResult();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of constructor " + getClass().getSimpleName());
 		}
