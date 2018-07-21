@@ -234,7 +234,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ live\ variables=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Xnf\ conversion\ technique=BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=CANONICAL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Non-flow-sensitive\ error\ trace\ relevance\ analysis=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interprocedural\ analysis\ (Nested\ Interpolants)=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=false
