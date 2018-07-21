@@ -68,7 +68,8 @@ public interface IRefinementEngine<T> {
 	IProgramExecution<IcfgEdge, Term> getIcfgProgramExecution();
 
 	/**
-	 * @return Hoare triple checker.
+	 * Does sometimes return a Hoare triple checker. TODO: Find out under which
+	 * conditions a Hoare triple checker is returned.
 	 */
 	IHoareTripleChecker getHoareTripleChecker();
 
