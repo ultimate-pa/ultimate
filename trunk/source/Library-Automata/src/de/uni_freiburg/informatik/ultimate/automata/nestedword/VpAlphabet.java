@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-
 /**
  * Visibly pushdown Alphabet. Alphabet consisting of three not necessarily disjoint sets. For visibly pushdown automata
  * a (disjoint) partition into internal, call, and return alphabets is necessary. For our NestedWordAutomata this
@@ -83,25 +81,6 @@ public class VpAlphabet<LETTER> {
 				.collect(Collectors.toSet());
 	}
 
-	/**
-	 * Constructor which takes the alphabets from an automaton.
-	 *
-	 * @param automaton
-	 *            automaton
-	 */
-	public VpAlphabet(final IAutomaton<LETTER, ?> automaton) {
-		if (automaton instanceof INwaOutgoingLetterAndTransitionProvider) {
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, ?> nwa =
-					(INwaOutgoingLetterAndTransitionProvider<LETTER, ?>) automaton;
-			mInternalAlphabet = nwa.getVpAlphabet().getInternalAlphabet();
-			mCallAlphabet = nwa.getVpAlphabet().getCallAlphabet();
-			mReturnAlphabet = nwa.getVpAlphabet().getReturnAlphabet();
-		} else {
-			mInternalAlphabet = automaton.getAlphabet();
-			mCallAlphabet = Collections.emptySet();
-			mReturnAlphabet = Collections.emptySet();
-		}
-	}
 
 	/**
 	 * @return Set of all letters that can occur as label of an internal transition.

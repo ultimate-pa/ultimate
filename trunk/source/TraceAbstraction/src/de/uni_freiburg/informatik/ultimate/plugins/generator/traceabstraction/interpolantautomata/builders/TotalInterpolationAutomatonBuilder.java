@@ -112,7 +112,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 	private final boolean mCollectInterpolantStatistics;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator<LETTER> interpolantGenerator,
+			final NestedRun<LETTER, IPredicate> nestedRun, final IInterpolantGenerator<LETTER> interpolantGenerator,
 			final CfgSmtToolkit csToolkit, final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
@@ -124,16 +124,17 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCollectInterpolantStatistics = collectInterpolantStatistics;
 		mSymbolTable = symbolTable;
-		mStateSequence = stateSequence;
+		mStateSequence = nestedRun.getStateSequence();
 		// mTraceCheck = traceCheck;
 		mCsToolkit = csToolkit;
 		// mInterpolants = traceCheck.getInterpolants();
 		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
 		mAbstraction = abstraction;
-		final VpAlphabet<LETTER> alphabet = new VpAlphabet<>(abstraction);
-		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory,
-				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING)
+		final VpAlphabet<LETTER> alphabet = NestedWordAutomataUtils.getVpAlphabet(abstraction);
+		mIA = new StraightLineInterpolantAutomatonBuilder<LETTER>(mServices, null, alphabet,
+				Collections.singletonList(new TracePredicates(interpolantGenerator)), predicateFactory,
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING)
 						.getResult();
 		mModifiedGlobals = modifiableGlobalsTable;
 		mInterpolation = interpolation;
@@ -153,7 +154,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		}
 		mHtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC,
 				mCsToolkit, mPredicateUnifier);
-		for (final IPredicate state : stateSequence) {
+		for (final IPredicate state : nestedRun.getStateSequence()) {
 			mWorklist.add(state);
 			mAnnotated.add(state);
 		}

@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -89,7 +88,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Constructs a danger automaton for a given error trace.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type in the trace/automaton
@@ -168,7 +167,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		mPt = new PredicateTransformer<>(
 				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
 		final IncrementalHoareTripleChecker htc = new IncrementalHoareTripleChecker(mCsTookit, false);
-		
+
 		{
 			final IValueConstruction<Pair<IPredicate, LETTER>, Term> valueConstruction =
 					new IValueConstruction<Pair<IPredicate, LETTER>, Term>() {
@@ -184,7 +183,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			};
 			mPreInternalCc = new ConstructionCache<>(valueConstruction);
 		}
-		
+
 		{
 			final IValueConstruction<Triple<IPredicate, LETTER, IPredicate>, LBool> valueConstruction =
 					new IValueConstruction<Triple<IPredicate, LETTER, IPredicate>, LBool>() {
@@ -199,7 +198,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 					};
 			mIntersectionWithPreInternalCc = new ConstructionCache<>(valueConstruction);
 		}
-		
+
 
 		final NestedWordAutomaton<LETTER, IPredicate> optimizedResult = constructDangerAutomaton(new AutomataLibraryServices(services), mLogger, predicateFactory,
 				internalPredicateUnifier, csToolkit, predicateFactoryForAutomaton, abstraction, mPredicates, true);
@@ -262,7 +261,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 		}
 		final IncrementalImplicationChecker ic =
 				new IncrementalImplicationChecker(mServices, csToolkit.getManagedScript());
-		
+
 		final ConstructionCache<HashRelation<LETTER, IPredicate>, Set<IPredicate>> coveredPredicatesProvider;
 		{
 			final IValueConstruction<HashRelation<LETTER, IPredicate>, Set<IPredicate>> valueConstruction = new IValueConstruction<HashRelation<LETTER,IPredicate>, Set<IPredicate>>() {
@@ -276,7 +275,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 					}
 					final IPredicate programStatesWithSucc_Pred = predicateFactory
 							.newPredicate(SmtUtils.or(csToolkit.getManagedScript().getScript(), programStatesWithSucc_Term));
-					
+
 					final Set<IPredicate> coveredPredicates = new HashSet<>();
 					try {
 						for (final IPredicate candidate : predicates) {
@@ -295,17 +294,17 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 				}
 			};
 			coveredPredicatesProvider = new ConstructionCache<>(valueConstruction);
-			
+
 		}
-		
-		
-		
-		
-		
+
+
+
+
+
 		final Queue<IPredicate> worklist = new ArrayDeque<>();
 
-		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(services, new VpAlphabet<>(abstraction), predicateFactoryForAutomaton);
+		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(services,
+				NestedWordAutomataUtils.getVpAlphabet(abstraction), predicateFactoryForAutomaton);
 
 		final IPredicate trueState = predicateUnifier.getTruePredicate();
 		for (final IPredicate state : abstraction.getFinalStates()) {
@@ -339,7 +338,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 						coveredPredicates = minimalCover;
 					}
 				}
-				
+
 				if (USE_DISJUNCTIONS) {
 					final IPredicate newState = getNewState(abstraction, abstState2dangStates, disjunctionProvider,
 							worklist, result, pred, coveredPredicates);
@@ -370,13 +369,13 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 							for (final IPredicate succInDanger : abstState2dangStates.getImage(out.getSucc())) {
 								final LBool isContributing = mIntersectionWithPreInternalCc.getOrConstruct(new Triple<IPredicate, LETTER, IPredicate>(covered, out.getLetter(), succInDanger));
 								if (isContributing == LBool.SAT) {
-									result.addInternalTransition(disjunctionProvider.getOrConstruct(new Pair<>(pred, Collections.singleton(covered))), 
-											out.getLetter(), 
+									result.addInternalTransition(disjunctionProvider.getOrConstruct(new Pair<>(pred, Collections.singleton(covered))),
+											out.getLetter(),
 											disjunctionProvider.getOrConstruct(new Pair<>(out.getSucc(), Collections.singleton(succInDanger))));
 								}
 							}
 						}
-						
+
 					}
 				}
 			}
@@ -391,7 +390,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final ConstructionCache<Pair<IPredicate, Set<IPredicate>>, IPredicate> disjunctionProvider,
 			final Set<IPredicate> predicates, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
 			final IncrementalImplicationChecker ic, final IPredicate pred, final ConstructionCache<HashRelation<LETTER, IPredicate>, Set<IPredicate>> coveredPredicatesProvider) {
-		
+
 		final HashRelation<LETTER, IPredicate> constrainers = new HashRelation<>();
 		for (final OutgoingInternalTransition<LETTER, IPredicate> out : abstraction.internalSuccessors(pred)) {
 			for (final IPredicate succInDanger : abstState2dangStates.getImage(out.getSucc())) {
@@ -472,7 +471,7 @@ class DangerAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IErro
 			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
 			final IPredicate predecessor, final OutgoingInternalTransition<LETTER, IPredicate> out,
 			final IPredicate successor) {
-		final Term pre = mPreInternalCc.getOrConstruct(new Pair<IPredicate, LETTER>(successor, out.getLetter())); 
+		final Term pre = mPreInternalCc.getOrConstruct(new Pair<IPredicate, LETTER>(successor, out.getLetter()));
 		final Term conjunction = SmtUtils.and(csToolkit.getManagedScript().getScript(),
 				Arrays.asList(new Term[] { pre, predecessor.getFormula() }));
 		final LBool checkSatRes = SmtUtils.checkSatTerm(csToolkit.getManagedScript().getScript(), conjunction);

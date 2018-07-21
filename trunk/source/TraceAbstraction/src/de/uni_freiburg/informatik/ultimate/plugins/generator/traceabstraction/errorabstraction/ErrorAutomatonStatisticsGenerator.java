@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
@@ -62,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -199,8 +202,8 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
 			break;
 		case DANGER_AUTOMATON:
-			subtrahend = constructStraightLineAutomaton(services, errorTrace, new VpAlphabet<>(abstraction),
-					predicateFactory);
+			subtrahend = constructStraightLineAutomaton(services, errorTrace,
+					NestedWordAutomataUtils.getVpAlphabet(abstraction), predicateFactory);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown error automaton type: " + errorAutomatonBuilder.getType());
@@ -378,8 +381,9 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 					final IRun<LETTER, IPredicate, ?> errorTrace, final VpAlphabet<LETTER> alphabet,
 					final PredicateFactoryForInterpolantAutomata predicateFactory) {
 		final IInterpolantGenerator<LETTER> ig = new StraightlineGenerator<>(errorTrace);
-		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, ig, predicateFactory,
-				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING)
+		return new StraightLineInterpolantAutomatonBuilder<LETTER>(services, errorTrace.getWord(), alphabet,
+				Collections.singletonList(new TracePredicates(ig)), predicateFactory,
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING)
 						.getResult();
 	}
 

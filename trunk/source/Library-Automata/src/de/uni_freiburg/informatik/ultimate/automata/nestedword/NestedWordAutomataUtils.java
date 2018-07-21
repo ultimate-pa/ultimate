@@ -41,6 +41,7 @@ import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.InitialPartitionProcessor;
@@ -170,7 +171,7 @@ public final class NestedWordAutomataUtils {
 
 	/**
 	 * Convert binary relation given as partition into binary relation given as {@link HashRelation}.
-	 * 
+	 *
 	 * @param <STATE>
 	 *            state type
 	 */
@@ -297,7 +298,7 @@ public final class NestedWordAutomataUtils {
 
 	/**
 	 * Checks whether two nested word automata have the same internal, call, and return alphabets.
-	 * 
+	 *
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand
@@ -317,7 +318,7 @@ public final class NestedWordAutomataUtils {
 
 	/**
 	 * Generates a {@link NestedLassoWord} with a given stem and loop length and a random seed.
-	 * 
+	 *
 	 * @param nwa
 	 *            nested word automaton
 	 * @param size
@@ -332,11 +333,11 @@ public final class NestedWordAutomataUtils {
 		final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(null, nwa, size, seed)).getResult();
 		return new NestedLassoWord<>(stem, loop);
 	}
-	
-	
+
+
 
 	/**
-	 * @return true iff state has two or more outgoing internal edges that are 
+	 * @return true iff state has two or more outgoing internal edges that are
 	 * labeled with the same letter.
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicInternal(final STATE state,
@@ -355,7 +356,7 @@ public final class NestedWordAutomataUtils {
 	}
 
 	/**
-	 * @return true iff state has two or more outgoing call edges that are 
+	 * @return true iff state has two or more outgoing call edges that are
 	 * labeled with the same letter.
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicCall(final STATE state,
@@ -375,7 +376,7 @@ public final class NestedWordAutomataUtils {
 
 	/**
 	 * @return true iff state has two or more outgoing return edges that have the
-	 * are the same hierarchical predecessors. 
+	 * are the same hierarchical predecessors.
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state, final STATE hier,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
@@ -391,7 +392,7 @@ public final class NestedWordAutomataUtils {
 		}
 		return false;
 	}
-	
+
 	public static <LETTER, STATE> boolean isNondeterministic(final STATE up, final STATE down,
 			final IDoubleDeckerAutomaton<LETTER, STATE> nwa) {
 		final boolean isNondeterministicInternal = isNondeterministicInternal(up, nwa);
@@ -408,11 +409,11 @@ public final class NestedWordAutomataUtils {
 		}
 		return false;
 	}
-	
-	
-	
+
+
+
 	/**
-	 * @return Set of all states <tt>hier</tt> such that <tt>state</tt> has an 
+	 * @return Set of all states <tt>hier</tt> such that <tt>state</tt> has an
 	 * outgoing return transition
 	 * <tt>(state, hier, letter, succ)</tt> for some state <tt>succ</tt>.
 	 */
@@ -426,9 +427,9 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * @return Iterable over all {@link OutgoingReturnTransition}s of state
 	 *         whose LETTER is the letter given as input to this procedure.
@@ -439,21 +440,21 @@ public final class NestedWordAutomataUtils {
 		final Predicate<OutgoingReturnTransition<LETTER, STATE>> remainingElements = x -> x.getLetter().equals(letter);
 		return new FilteredIterable<>(iterable, remainingElements);
 	}
-	
-	
-	
+
+
+
 	public static <LETTER, STATE> Iterable<OutgoingInternalTransition<LETTER, STATE>> constructInternalTransitionIteratorFromNestedMap(
 			final STATE state, final LETTER letter, final NestedMap3<STATE, LETTER, STATE, IsContained> internalOut) {
 		final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer = x -> new OutgoingInternalTransition<>(letter, x);
 		return () -> new TransformIterator<STATE, OutgoingInternalTransition<LETTER, STATE>>(keySetOrEmpty(internalOut.get(state, letter)).iterator(), transformer);
 	}
-	
+
 	public static <LETTER, STATE> Iterable<OutgoingCallTransition<LETTER, STATE>> constructCallTransitionIteratorFromNestedMap(
 			final STATE state, final LETTER letter, final NestedMap3<STATE, LETTER, STATE, IsContained> callOut) {
 		final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer = x -> new OutgoingCallTransition<>(letter, x);
 		return () -> new TransformIterator<STATE, OutgoingCallTransition<LETTER, STATE>>(keySetOrEmpty(callOut.get(state, letter)).iterator(), transformer);
 	}
-	
+
 	public static <LETTER, STATE> Iterable<OutgoingReturnTransition<LETTER, STATE>> constructReturnTransitionIteratorFromNestedMap(
 			final STATE state, final STATE hier, final LETTER letter, final NestedMap4<STATE, STATE, LETTER, STATE, IsContained> returnOut) {
 		return () -> new TransformIterator<STATE, OutgoingReturnTransition<LETTER, STATE>>(
@@ -467,5 +468,13 @@ public final class NestedWordAutomataUtils {
 			return map.keySet();
 		}
 	}
-	
+
+	public static <LETTER> VpAlphabet<LETTER> getVpAlphabet(final IAutomaton<LETTER, ?> automaton) {
+		if (automaton instanceof INwaBasis) {
+			return ((INwaBasis<LETTER, ?>) automaton).getVpAlphabet();
+		} else {
+			return new VpAlphabet<>(automaton.getAlphabet());
+		}
+	}
+
 }

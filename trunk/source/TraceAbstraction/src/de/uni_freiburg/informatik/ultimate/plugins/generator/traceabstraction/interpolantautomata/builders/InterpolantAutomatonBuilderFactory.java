@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -58,8 +58,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckUtils;
 
 /**
@@ -126,14 +124,12 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 
 	private IBuilderFunction<LETTER> determineBuilder(final InterpolantAutomaton interpolAutomatonStyle) {
 		switch (interpolAutomatonStyle) {
+		case STRAIGHT_LINE:
+			return this::createBuilderStraightLine;
 		case CANONICAL:
 			return this::createBuilderCanonical;
-		case SINGLETRACE:
-			return this::createBuilderSingleTrace;
 		case TOTALINTERPOLATION2:
 			return this::createBuilderTotalInterpolation2;
-		case TWOTRACK:
-			return this::createBuilderTwoTrack;
 		case TOTALINTERPOLATION:
 		default:
 			throw new IllegalArgumentException("Setting " + interpolAutomatonStyle + " is unsupported");
@@ -160,6 +156,15 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 		}
 	}
 
+	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderStraightLine(
+			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator<LETTER> interpolGenerator,
+			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps) {
+		final StraightLineInterpolantAutomatonBuilder<LETTER> iab = new StraightLineInterpolantAutomatonBuilder<>(mServices,
+				counterexample.getWord(), NestedWordAutomataUtils.getVpAlphabet(abstraction), ipps, mPredicateFactory,
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
+		return iab;
+	}
+
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderAbstractInterpretation(
 			final IAutomaton<LETTER, IPredicate> abstraction, final IPredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample) {
@@ -175,10 +180,13 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 		}
 		// use the first sequence of interpolants
 		final TracePredicates ipp = ipps.get(0);
+		if (ipps.size() > 1) {
+			mLogger.warn("Throwing away all your interpolant sequences but the first");
+		}
 
 		final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
 				new CanonicalInterpolantAutomatonBuilder<>(mServices, ipp, counterexample.getStateSequence(),
-						new VpAlphabet<>(abstraction), mCsToolkit, mPredicateFactory, mLogger,
+						NestedWordAutomataUtils.getVpAlphabet(abstraction), mCsToolkit, mPredicateFactory, mLogger,
 						interpolGenerator.getPredicateUnifier(),
 						TraceCheckUtils.toNestedWord(interpolGenerator.getTrace()));
 		iab.analyze();
@@ -187,15 +195,6 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 				TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(counterexample.getWord())), mLogger,
 				interpolGenerator.getPredicateUnifier());
 		mBenchmark.addBackwardCoveringInformation(bci);
-		return iab;
-	}
-
-	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderSingleTrace(
-			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator<LETTER> interpolGenerator,
-			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps) {
-		final StraightLineInterpolantAutomatonBuilder<LETTER> iab = new StraightLineInterpolantAutomatonBuilder<>(
-				mServices, new VpAlphabet<>(abstraction), interpolGenerator, mPredicateFactory,
-				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING);
 		return iab;
 	}
 
@@ -208,49 +207,12 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 		@SuppressWarnings("unchecked")
 		final NestedRun<LETTER, IPredicate> castedCex = (NestedRun<LETTER, IPredicate>) counterexample;
 		final TotalInterpolationAutomatonBuilder<LETTER> iab = new TotalInterpolationAutomatonBuilder<>(
-				castedAbstraction, castedCex.getStateSequence(), interpolGenerator, mCsToolkit, mPredicateFactory,
+				castedAbstraction, castedCex, interpolGenerator, mCsToolkit, mPredicateFactory,
 				mCsToolkit.getModifiableGlobalsTable(), mInterpolationTechnique, mServices, mHoareTripleChecks,
 				mSimplificationTechnique, mXnfConversionTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
 				mCollectInterpolantStatistics);
 		mBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		return iab;
-	}
-
-	private IInterpolantAutomatonBuilder<LETTER, IPredicate> createBuilderTwoTrack(
-			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator<LETTER> interpolGenerator,
-			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps)
-			throws AutomataOperationCanceledException {
-		if (!(interpolGenerator instanceof TraceCheckSpWp)
-				&& !(interpolGenerator instanceof InterpolantConsolidation)) {
-			throw new AssertionError("TWOTRACK only for traceCheckSpWp or InterpolantConsolidation");
-		}
-		final List<IPredicate> predicatesA;
-		final List<IPredicate> predicatesB;
-		boolean build2TrackAutomaton = false;
-		if (interpolGenerator instanceof TraceCheckSpWp) {
-			final TraceCheckSpWp<LETTER> traceCheck = (TraceCheckSpWp<LETTER>) interpolGenerator;
-			predicatesA = traceCheck.getForwardPredicates();
-			predicatesB = traceCheck.getBackwardPredicates();
-			build2TrackAutomaton = true;
-		} else if (!((InterpolantConsolidation<?>) interpolGenerator).consolidationSuccessful()) {
-			// if consolidation wasn't successful, then build a 2-Track-Automaton
-			final InterpolantConsolidation<?> ic = (InterpolantConsolidation<?>) interpolGenerator;
-			predicatesA = ic.getInterpolantsOfType_I();
-			predicatesB = ic.getInterpolantsOfType_II();
-			build2TrackAutomaton = true;
-		} else {
-			predicatesA = null;
-			predicatesB = null;
-		}
-		if (build2TrackAutomaton) {
-			final TwoTrackInterpolantAutomatonBuilder<LETTER> ttiab = new TwoTrackInterpolantAutomatonBuilder<>(
-					mServices, counterexample, mCsToolkit, predicatesA, predicatesB,
-					interpolGenerator.getPrecondition(), interpolGenerator.getPostcondition(), abstraction);
-			return ttiab;
-		}
-		// Case of Canonical_Automaton, i.e. if the consolidation was successful
-		// FIXME: The case TWOTRACK from the switch is not nice. Should be refactored!
-		return createBuilderCanonical(abstraction, interpolGenerator, counterexample, ipps);
 	}
 
 	@FunctionalInterface

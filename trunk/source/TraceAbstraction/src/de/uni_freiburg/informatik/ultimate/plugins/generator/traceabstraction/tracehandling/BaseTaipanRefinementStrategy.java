@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -40,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
@@ -54,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.Trac
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheck;
@@ -247,13 +249,17 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			if (perfectIpps.isEmpty()) {
 				// if we have only imperfect interpolants, we take the first two
 				mLogger.info("Using the first two imperfect interpolant sequences");
-				return new MultiTrackInterpolantAutomatonBuilder<>(mServices, mCounterexample,
-						imperfectIpps.stream().limit(2).collect(Collectors.toList()), mAbstraction);
+				return new StraightLineInterpolantAutomatonBuilder<LETTER>(mServices, mCounterexample.getWord(),
+						(VpAlphabet<LETTER>) mAbstraction.getAlphabet(),
+						imperfectIpps.stream().limit(2).collect(Collectors.toList()), mAbstraction.getStateFactory(),
+						InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 			}
 			// if we have some perfect, we take one of those
 			mLogger.info("Using the first perfect interpolant sequence");
-			return new MultiTrackInterpolantAutomatonBuilder<>(mServices, mCounterexample,
-					perfectIpps.stream().limit(1).collect(Collectors.toList()), mAbstraction);
+			return new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),
+					(VpAlphabet<LETTER>) mAbstraction.getAlphabet(),
+					perfectIpps.stream().limit(1).collect(Collectors.toList()), mAbstraction.getStateFactory(),
+					InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
 			throw new AssertionError("The mode " + mode + " should be unreachable here.");

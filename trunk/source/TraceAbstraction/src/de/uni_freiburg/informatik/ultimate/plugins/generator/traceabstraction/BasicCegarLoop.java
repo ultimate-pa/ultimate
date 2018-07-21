@@ -210,15 +210,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			} else {
 				mInterpolation = interpolation;
 			}
-			if (mPref.interpolantAutomaton() == InterpolantAutomaton.TWOTRACK) {
-				mInterpolantAutomatonConstructionProcedure = InterpolantAutomaton.CANONICAL;
-			} else {
-				mInterpolantAutomatonConstructionProcedure = mPref.interpolantAutomaton();
-			}
 		} else {
 			mInterpolation = interpolation;
-			mInterpolantAutomatonConstructionProcedure = mPref.interpolantAutomaton();
 		}
+		mInterpolantAutomatonConstructionProcedure = mPref.interpolantAutomaton();
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		if (mComputeHoareAnnotation) {
 			mHoareAnnotationLocations = (Set<IcfgLocation>) TraceAbstractionUtils

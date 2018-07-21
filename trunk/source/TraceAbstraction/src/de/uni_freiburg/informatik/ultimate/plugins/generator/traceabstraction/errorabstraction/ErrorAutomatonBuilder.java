@@ -34,6 +34,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -72,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * <p>
  * TODO 2017-06-09 Christian: The successor 'True' (and 'False', but this does not matter) is never checked by the
  * {@link NondeterministicInterpolantAutomaton}. Is this a problem?
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type in the trace
@@ -110,7 +111,7 @@ class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IError
 
 	/**
 	 * Predicate transformer types.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private enum PredicateTransformerType {
@@ -167,7 +168,7 @@ class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IError
 
 		mResultBeforeEnhancement = constructStraightLineAutomaton(services, logger, csToolkit, predicateFactory,
 				internalPredicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
-				predicateFactoryErrorAutomaton, new VpAlphabet<>(abstraction), trace);
+				predicateFactoryErrorAutomaton, NestedWordAutomataUtils.getVpAlphabet(abstraction), trace);
 
 		mResultAfterEnhancement = USE_ENHANCEMENT
 				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
@@ -264,8 +265,8 @@ class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IError
 		final TracePredicates newPredicates = new TracePredicates(mErrorPrecondition,
 				predicateUnifier.getOrConstructPredicate(newPostcondition), newIntermediatePredicates);
 
-		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
-				trace, newPredicates,
+		return new StraightLineInterpolantAutomatonBuilder<LETTER>(services, trace, alphabet,
+				Collections.singletonList(newPredicates), predicateFactoryInterpolantAutomata,
 				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ALL_INITIAL_ALL_ACCEPTING)
 						.getResult();
 	}
