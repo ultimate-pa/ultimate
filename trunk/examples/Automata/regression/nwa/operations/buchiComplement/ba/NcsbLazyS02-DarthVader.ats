@@ -16,7 +16,7 @@ NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
 print(numberOfStates(complementNCSB));
 assert(numberOfStates(complementNCSB) == 44);
 print(numberOfTransitions(complementNCSB));
-assert(numberOfTransitions(complementNCSB) == 124);
+assert(numberOfTransitions(complementNCSB) == 99);
 
 NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy3(ba);
 print(numberOfStates(complementNCSBLazy3));

@@ -1,31 +1,20 @@
 // Date: 2018-07-18
 // Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 //
-// Shows that the implementation of the "confluence forced delayed rank 
-// decrease optimization was buggy.
-// We checked only that some predecessors with even rank are accepting, 
-// we have to check that predecessors with an even rank are accepting.
-// As a consequence, the following two transitions were missing
+// Shows that that helped me to understand the "confluence forced 
+// delayed rank decrease" better.
+// We may already omit the transition if *some* predecessors with even 
+// rank is not accepting.
+// E.g., in this example we will not have the following two transitions.
 //		("({},{q1,r1},{s1},{q1,r1})" "a" "({},{},{q2},{})")
 //		("({},{q1,s1},{r1},{q1,s1})" "a" "({},{},{q2},{})")
-//
-// I tried to construct an examples where this bug leads to an unsoundness,
-// but I failed.
-// I think the buggy optimization would also be sound for our setting where
-// we move from N to C only if we visited an accepting state. Hence we
-// cannot produce a C-state without having an S-state copy available.
-// Think it would be unsound however, if the partition of the input automata's
-// states would be given manually.
-// This observation hints that we could improve our algorithm. However, there
-// were only two examples in our repository where we saw a difference.
-// In my opinion it is not worth the effort to dig deeper into that.
 
 
 NestedWordAutomaton complementNCSB = buchiComplementNCSB(ba);
 print(numberOfStates(complementNCSB));
 assert(numberOfStates(complementNCSB) == 8);
 print(numberOfTransitions(complementNCSB));
-assert(numberOfTransitions(complementNCSB) == 10);
+assert(numberOfTransitions(complementNCSB) == 8);
 
 NestedWordAutomaton complementNCSBLazy3 = buchiComplementNCSBLazy(ba);
 print(numberOfStates(complementNCSBLazy3));
