@@ -67,22 +67,6 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 	private final boolean mRestrictToElasticLevelRankings;
 	private final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            operand
-	 * @param userDefinedMaxRank
-	 *            user-defined maximal rank
-	 * @param allowRankZero
-	 *            {@code true} iff rank zero is allowed
-	 * @param allowEmptyLevelRanking
-	 *            {@code true} iff empty level ranking is allowed
-	 * @param restrictToElasticLevelRankings
-	 *            {@code true} iff restriction to elastic level rankings is considered
-	 */
 	public BarelyCoveredLevelRankingsGenerator(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final int userDefinedMaxRank,
 			final boolean allowRankZero, final boolean allowEmptyLevelRanking,
