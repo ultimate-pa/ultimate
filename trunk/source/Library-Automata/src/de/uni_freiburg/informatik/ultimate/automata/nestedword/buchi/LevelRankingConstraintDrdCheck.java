@@ -127,23 +127,27 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 						// current has odd rank and there are predecessors with even rank
 						// hence all even rank were forced to decrease by confluence
 						// now we only have to find out if this delayed rank decrease
-						for (final DoubleDecker<StateWithRankInfo<STATE>> predecessor : mPredecessors.projectToTrd(down, up)) {
-							if (voluntaryRankDecrease.equals(EnumSet.of(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING))) {
-								if (mOperand.isFinal(predecessor.getUp().getState())) {
-									// some predecessor is final, maybe there was no decrease before
-									return false;
+						for (final DoubleDecker<StateWithRankInfo<STATE>> predecessor : predecessorsEvenRank) {
+							if (voluntaryRankDecrease
+									.equals(EnumSet.of(VoluntaryRankDecrease.ALL_EVEN_PREDECESSORS_ARE_ACCEPTING))) {
+								if (!mOperand.isFinal(predecessor.getUp().getState())) {
+									// some predecessor is not final, there is also a copy in which this was
+									// decreased before
+									return true;
 								}
-							} else if (voluntaryRankDecrease.equals(EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING, VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O))) {
-								if (mOperand.isFinal(predecessor.getUp().getState()) || predecessor.getUp().isInO()) {
-									// some predecessor is final, or state not in O, maybe there was no decrease before
-									return false;
+							} else if (voluntaryRankDecrease.equals(EnumSet.of(
+									VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING,
+									VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O))) {
+								if (!mOperand.isFinal(predecessor.getUp().getState()) && predecessor.getUp().isInO()) {
+									// some predecessor is not final but in O, there is also a copy in which this
+									// was decreased before
+									return true;
 								}
-
 							} else {
 								throw new UnsupportedOperationException("unclear if CFDRD optimization is sound");
 							}
 						}
-						return true;
+						return false;
 					}
 
 				}
