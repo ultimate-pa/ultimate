@@ -1,0 +1,6 @@
+programs/real-life/*.bpl
+programs/20170319-ConjunctivePathPrograms/*.bpl
+programs/20170304-DifficultPathPrograms/*.bpl
+programs/toy/tooDifficultLoopInvariant/*.bpl
+programs/toy/tooDifficultLoopInvariant/HierarchicalTraceAbstraction/*.bpl
+programs/toy/nonlinear/*.bpl
