@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 
 public class ReqToPEA {
+	private static final boolean ENABLE_DEBUG_LOGS = false;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResult;
@@ -53,10 +54,15 @@ public class ReqToPEA {
 			final Map<String, Integer> id2bounds) {
 		final Map<PatternType, PhaseEventAutomata> req2automata = new LinkedHashMap<>();
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
+		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
+
 		for (final PatternType pat : patterns) {
 
 			final PhaseEventAutomata pea;
 			try {
+				if (ENABLE_DEBUG_LOGS) {
+					mLogger.info("Transforming " + pat.getId());
+				}
 				pea = pat.transformToPea(peaTrans, id2bounds);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
@@ -72,6 +78,7 @@ public class ReqToPEA {
 				throw new AssertionError();
 			}
 		}
+		mLogger.info(String.format("Finished transforming %s requirements to PEAs", patterns.size()));
 
 		return req2automata;
 	}
