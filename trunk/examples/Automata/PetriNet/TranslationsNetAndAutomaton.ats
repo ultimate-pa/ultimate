@@ -2,13 +2,13 @@
 // Date: 30.3.2011
 // Test translations from petriNet to automata and back
 
-assert(isEmpty(difference(finiteAutomaton(petriNetJulian(a)), a)));
-assert(isEmpty(difference(a, finiteAutomaton(petriNetJulian(a)))));
+assert(isEmpty(difference(petriNet2FiniteAutomaton(automaton2Net(a)), a)));
+assert(isEmpty(difference(a, petriNet2FiniteAutomaton(automaton2Net(a)))));
 
-assert(isEmpty(difference(finiteAutomaton(petriNetJulian(Acontrol)), Acontrol)));
-assert(isEmpty(difference(Acontrol, finiteAutomaton(petriNetJulian(Acontrol)))));
+assert(isEmpty(difference(petriNet2FiniteAutomaton(automaton2Net(Acontrol)), Acontrol)));
+assert(isEmpty(difference(Acontrol, petriNet2FiniteAutomaton(automaton2Net(Acontrol)))));
 
-print(finiteAutomaton(petriNetJulian(a)));
+print(petriNet2FiniteAutomaton(automaton2Net(a)));
 
 NestedWordAutomaton a = (
   callAlphabet = { },

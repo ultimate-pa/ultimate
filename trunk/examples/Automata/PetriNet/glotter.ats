@@ -3,10 +3,10 @@
 // I used net1 of this file to discuss Petruchio integration problems
 // with Tim Strazny
 
-assert(!isEmpty(finiteAutomaton(net1)));
+assert(!isEmpty(petriNet2FiniteAutomaton(net1)));
 assert(!isEmpty(net1));
 
-assert(isEmpty(finiteAutomaton(net2)));
+assert(isEmpty(petriNet2FiniteAutomaton(net2)));
 assert(isEmpty(net2));
 
 print(net1);

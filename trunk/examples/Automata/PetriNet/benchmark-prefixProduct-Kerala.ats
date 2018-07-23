@@ -4,13 +4,13 @@
 // Removed all transitions to accepting states and replaced 
 // difference by prefixProduct.
 
-assert(!isEmpty(prefixProduct(petriNetJulian(t1), t2)));
+assert(!isEmpty(prefixProduct(automaton2Net(t1), t2)));
 
-assert(!isEmpty(prefixProduct(prefixProduct(petriNetJulian(t1), t2), access2Model)));
+assert(!isEmpty(prefixProduct(prefixProduct(automaton2Net(t1), t2), access2Model)));
 
 assert(!isEmpty(prefixProduct(
     prefixProduct(
-        prefixProduct(petriNetJulian(t1), t2),
+        prefixProduct(automaton2Net(t1), t2),
         access1Model),
     access2Model
 )));
@@ -18,7 +18,7 @@ assert(!isEmpty(prefixProduct(
 assert(isEmpty(prefixProduct(
     prefixProduct(
         prefixProduct(
-            prefixProduct(petriNetJulian(t1), t2),
+            prefixProduct(automaton2Net(t1), t2),
             access1Model),
         access2Model),
     lockModel)

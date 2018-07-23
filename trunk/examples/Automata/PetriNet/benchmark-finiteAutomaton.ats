@@ -8,7 +8,7 @@
 // file to test correctness of intersection by enabling the automatic
 // correctness test for automaton operations is Ultimate.
 
-assert(accepts(finiteAutomaton(se7en), []));
+assert(accepts(petriNet2FiniteAutomaton(se7en), []));
 
 PetriNet se7en = (
   alphabet = {a b c},
