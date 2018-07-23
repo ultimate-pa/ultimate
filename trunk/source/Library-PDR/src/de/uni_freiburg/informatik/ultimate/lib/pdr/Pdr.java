@@ -110,7 +110,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		CHANGED, UNCHANGED
 	}
 
-	private static final boolean USE_INTERPOLATION = true;
+	private static final boolean USE_INTERPOLATION = false;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
