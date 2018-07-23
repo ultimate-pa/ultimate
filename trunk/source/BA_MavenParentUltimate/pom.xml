@@ -286,6 +286,7 @@
 		<module>../GUIGeneratedPreferencePages</module>
 		<module>../GUILoggingWindow</module>
 		<module>../LassoRanker</module>
+		<module>../Library-MSO</module>
 
 		<module>../Library-ModelCheckerUtils</module>
 		<module>../AutomataScriptParser</module>

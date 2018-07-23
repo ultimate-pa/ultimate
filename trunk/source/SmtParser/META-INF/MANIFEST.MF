@@ -12,7 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- de.uni_freiburg.informatik.ultimate.lib.mso;bundle-version="0.0.1",
+ de.uni_freiburg.informatik.ultimate.lib.mso,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer
 Bundle-ActivationPolicy: lazy
