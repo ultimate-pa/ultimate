@@ -191,8 +191,8 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 								nwa.addReturnTransition(state, nodes2States.get(callerLocNode),
 										letterProvider.apply(returnEdge), succState);
 							} else {
-								throw new AssertionError(
-										"Cannot add " + returnEdge + ", missing callerNode " + callerLocNode);
+								// did not add returnEdge because the corresponding call predecessor location is not
+								// graph-reachable in the ICFG
 							}
 						}
 					} else if (edge instanceof Summary) {
