@@ -200,6 +200,9 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
 		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
 
+		final int outputTransitions = new NumberOfTransitions<>(mServices, getResult()).getResult();
+		result.addKeyValuePair(StatisticsType.TRANSITIONS_OUTPUT, outputTransitions);
+
 		return result;
 	}
 }
