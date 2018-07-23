@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -61,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -137,12 +139,12 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		BoundedPetriNet<LETTER, IPredicate> abstraction = (BoundedPetriNet<LETTER, IPredicate>) mAbstraction;
 		if (mPref.unfoldingToNet()) {
 			// TODO: Find/implement appropriate stateFactory.
-			IFinitePrefix2PetriNetStateFactory<IPredicate> stateFactory = null;
+			final IFinitePrefix2PetriNetStateFactory<IPredicate> stateFactory = null;
 			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding).getResult();
 		}
 
 		// Determinize the interpolant automaton
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> dia =
+		final INestedWordAutomaton<LETTER, IPredicate> dia =
 				determinizeInterpolantAutomaton(mInterpolAutomaton);
 
 		// Complement the interpolant automaton
@@ -156,7 +158,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			mArtifactAutomaton = nia;
 		}
 		mAbstraction = new Difference<>(new AutomataLibraryServices(mServices),
-				mPredicateFactoryInterpolantAutomata, abstraction, (NestedWordAutomaton<LETTER, IPredicate>) dia)
+				mPredicateFactoryInterpolantAutomata, abstraction, dia)
 						.getResult();
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
@@ -198,6 +200,13 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final DeterminizeDD<LETTER, IPredicate> dabps =
 					new DeterminizeDD<>(new AutomataLibraryServices(mServices), interpolAutomaton, psd);
 			dia = dabps.getResult();
+			break;
+		case PREDICATE_ABSTRACTION:
+			final IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit, false);
+			final DeterministicInterpolantAutomaton<LETTER> raw = new DeterministicInterpolantAutomaton<LETTER>(
+					mServices, mCsToolkit, htc, interpolAutomaton,
+					mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
+			dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
 			break;
 		default:
 			throw new UnsupportedOperationException();
