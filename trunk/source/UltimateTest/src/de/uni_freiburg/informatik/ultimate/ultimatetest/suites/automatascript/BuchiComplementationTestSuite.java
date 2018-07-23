@@ -103,8 +103,9 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 			StatisticsType.RUNTIME_TOTAL_MS.toString(),
 			StatisticsType.STATES_INPUT.toString(),
 			StatisticsType.STATES_OUTPUT.toString(),
+			StatisticsType.TRANSITIONS_OUTPUT.toString(),
 	};
-	
+
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
 
 	private static final Object[] INTERESTING_OPERATIONS = {
