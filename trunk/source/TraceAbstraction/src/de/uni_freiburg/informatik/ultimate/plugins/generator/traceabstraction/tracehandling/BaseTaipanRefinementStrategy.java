@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -249,15 +249,15 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			if (perfectIpps.isEmpty()) {
 				// if we have only imperfect interpolants, we take the first two
 				mLogger.info("Using the first two imperfect interpolant sequences");
-				return new StraightLineInterpolantAutomatonBuilder<LETTER>(mServices, mCounterexample.getWord(),
-						(VpAlphabet<LETTER>) mAbstraction.getAlphabet(),
+				return new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),
+						NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
 						imperfectIpps.stream().limit(2).collect(Collectors.toList()), mAbstraction.getStateFactory(),
 						InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 			}
 			// if we have some perfect, we take one of those
 			mLogger.info("Using the first perfect interpolant sequence");
 			return new StraightLineInterpolantAutomatonBuilder<>(mServices, mCounterexample.getWord(),
-					(VpAlphabet<LETTER>) mAbstraction.getAlphabet(),
+					NestedWordAutomataUtils.getVpAlphabet(mAbstraction),
 					perfectIpps.stream().limit(1).collect(Collectors.toList()), mAbstraction.getStateFactory(),
 					InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 		case Z3_NO_IG:
@@ -334,17 +334,16 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		switch (mode) {
 		case SMTINTERPOL:
 		case ABSTRACT_INTERPRETATION:
-			final long timeout = useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL
-					: SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
-			solverSettings = new SolverSettings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
-					baseNameOfDumpedScript);
+			final long timeout =
+					useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL : SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
+			solverSettings = new SolverSettings(false, false, null, timeout, null, dumpSmtScriptToFile,
+					pathOfDumpedScript, baseNameOfDumpedScript);
 			solverMode = SolverMode.Internal_SMTInterpol;
 			logicForExternalSolver = null;
 			break;
 		case Z3_IG:
 		case Z3_NO_IG:
-			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT
-					: SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT : SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -352,8 +351,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 			break;
 		case CVC4_IG:
 		case CVC4_NO_IG:
-			command = useTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT
-					: SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
+			command = useTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT : SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
 			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
