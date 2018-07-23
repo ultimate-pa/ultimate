@@ -4,3 +4,6 @@ Bundle-Name: Library-MSO
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.mso
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: de.uni_freiburg.informatik.ultimate.core;bundle-version="0.1.23",
+ de.uni_freiburg.informatik.ultimate.lib.smtlib;bundle-version="0.1.23"
+Export-Package: de.uni_freiburg.informatik.ultimate.mso
