@@ -282,7 +282,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		final List<TracePredicates> allIpps = DataStructureUtils.concat(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
-			mInterpolantAutomatonBuilder = new StraightLineInterpolantAutomatonBuilder<LETTER>(mServices,
+			mInterpolantAutomatonBuilder = new StraightLineInterpolantAutomatonBuilder<>(mServices,
 					mCounterexample.getWord(), NestedWordAutomataUtils.getVpAlphabet(mAbstraction), allIpps,
 					mAbstraction.getStateFactory(),
 					InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
@@ -361,10 +361,10 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case SMTINTERPOL_TREE_INTERPOLANTS:
 		case SMTINTERPOL_FP:
 		case SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY:
-			final long timeout = useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL
-					: SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
-			solverSettings = new SolverSettings(false, false, null, timeout, null, dumpSmtScriptToFile, pathOfDumpedScript,
-					baseNameOfDumpedScript);
+			final long timeout =
+					useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL : SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
+			solverSettings = new SolverSettings(false, false, null, timeout, null, dumpSmtScriptToFile,
+					pathOfDumpedScript, baseNameOfDumpedScript);
 			solverMode = mode == Track.SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY
 					? SolverMode.Internal_SMTInterpol_NoArrayInterpol
 					: SolverMode.Internal_SMTInterpol;
@@ -380,8 +380,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			 */
 		case Z3_FPBP:
 		case Z3_FP:
-			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT
-					: SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT : SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -389,8 +388,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			break;
 		case CVC4_FPBP:
 		case CVC4_FP:
-			command = useTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT
-					: SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
+			command = useTimeout ? SolverBuilder.COMMAND_CVC4_TIMEOUT : SolverBuilder.COMMAND_CVC4_NO_TIMEOUT;
 			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -405,8 +403,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			logicForExternalSolver = SolverBuilder.LOGIC_MATHSAT;
 			break;
 		case PDR:
-			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT
-					: SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
+			command = useTimeout ? SolverBuilder.COMMAND_Z3_TIMEOUT : SolverBuilder.COMMAND_Z3_NO_TIMEOUT;
 			solverSettings = new SolverSettings(false, true, command, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 					baseNameOfDumpedScript);
 			solverMode = SolverMode.External_ModelsMode;

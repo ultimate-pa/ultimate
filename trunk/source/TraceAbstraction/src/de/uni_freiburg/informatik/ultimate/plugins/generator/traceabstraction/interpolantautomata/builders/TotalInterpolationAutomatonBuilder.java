@@ -132,7 +132,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
 		mAbstraction = abstraction;
 		final VpAlphabet<LETTER> alphabet = NestedWordAutomataUtils.getVpAlphabet(abstraction);
-		mIA = new StraightLineInterpolantAutomatonBuilder<LETTER>(mServices, null, alphabet,
+		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, null, alphabet,
 				Collections.singletonList(new TracePredicates(interpolantGenerator)), predicateFactory,
 				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING)
 						.getResult();

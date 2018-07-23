@@ -292,7 +292,8 @@ public final class NestedWordAutomataUtils {
 	 *            state type
 	 * @return {@code true} iff both the call alphabet and the return alphabet is empty.
 	 */
-	public static <LETTER, STATE> boolean isFiniteAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
+	public static <LETTER, STATE> boolean
+			isFiniteAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		return nwa.getVpAlphabet().getCallAlphabet().isEmpty() && nwa.getVpAlphabet().getReturnAlphabet().isEmpty();
 	}
 
@@ -309,7 +310,8 @@ public final class NestedWordAutomataUtils {
 	 *            state type
 	 * @return {@code true} iff the automata have the same alphabets
 	 */
-	public static <LETTER, STATE> boolean sameAlphabet(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+	public static <LETTER, STATE> boolean sameAlphabet(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) {
 		boolean result;
 		result = fstOperand.getVpAlphabet().equals(sndOperand.getVpAlphabet());
@@ -334,11 +336,8 @@ public final class NestedWordAutomataUtils {
 		return new NestedLassoWord<>(stem, loop);
 	}
 
-
-
 	/**
-	 * @return true iff state has two or more outgoing internal edges that are
-	 * labeled with the same letter.
+	 * @return true iff state has two or more outgoing internal edges that are labeled with the same letter.
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicInternal(final STATE state,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
@@ -356,8 +355,7 @@ public final class NestedWordAutomataUtils {
 	}
 
 	/**
-	 * @return true iff state has two or more outgoing call edges that are
-	 * labeled with the same letter.
+	 * @return true iff state has two or more outgoing call edges that are labeled with the same letter.
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicCall(final STATE state,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
@@ -375,8 +373,8 @@ public final class NestedWordAutomataUtils {
 	}
 
 	/**
-	 * @return true iff state has two or more outgoing return edges that have the
-	 * are the same hierarchical predecessors.
+	 * @return true iff state has two or more outgoing return edges that have the are the same hierarchical
+	 *         predecessors.
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state, final STATE hier,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
@@ -410,12 +408,9 @@ public final class NestedWordAutomataUtils {
 		return false;
 	}
 
-
-
 	/**
-	 * @return Set of all states <tt>hier</tt> such that <tt>state</tt> has an
-	 * outgoing return transition
-	 * <tt>(state, hier, letter, succ)</tt> for some state <tt>succ</tt>.
+	 * @return Set of all states <tt>hier</tt> such that <tt>state</tt> has an outgoing return transition
+	 *         <tt>(state, hier, letter, succ)</tt> for some state <tt>succ</tt>.
 	 */
 	public static <LETTER, STATE> Set<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter,
 			final INestedWordAutomaton<LETTER, STATE> nwa) {
@@ -428,11 +423,9 @@ public final class NestedWordAutomataUtils {
 		return result;
 	}
 
-
-
 	/**
-	 * @return Iterable over all {@link OutgoingReturnTransition}s of state
-	 *         whose LETTER is the letter given as input to this procedure.
+	 * @return Iterable over all {@link OutgoingReturnTransition}s of state whose LETTER is the letter given as input to
+	 *         this procedure.
 	 */
 	public static <LETTER, STATE> Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state,
 			final LETTER letter, final INestedWordAutomaton<LETTER, STATE> nwa) {
@@ -441,40 +434,44 @@ public final class NestedWordAutomataUtils {
 		return new FilteredIterable<>(iterable, remainingElements);
 	}
 
-
-
-	public static <LETTER, STATE> Iterable<OutgoingInternalTransition<LETTER, STATE>> constructInternalTransitionIteratorFromNestedMap(
-			final STATE state, final LETTER letter, final NestedMap3<STATE, LETTER, STATE, IsContained> internalOut) {
-		final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer = x -> new OutgoingInternalTransition<>(letter, x);
-		return () -> new TransformIterator<STATE, OutgoingInternalTransition<LETTER, STATE>>(keySetOrEmpty(internalOut.get(state, letter)).iterator(), transformer);
+	public static <LETTER, STATE> Iterable<OutgoingInternalTransition<LETTER, STATE>>
+			constructInternalTransitionIteratorFromNestedMap(final STATE state, final LETTER letter,
+					final NestedMap3<STATE, LETTER, STATE, IsContained> internalOut) {
+		final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer =
+				x -> new OutgoingInternalTransition<>(letter, x);
+		return () -> new TransformIterator<>(
+				keySetOrEmpty(internalOut.get(state, letter)).iterator(), transformer);
 	}
 
-	public static <LETTER, STATE> Iterable<OutgoingCallTransition<LETTER, STATE>> constructCallTransitionIteratorFromNestedMap(
-			final STATE state, final LETTER letter, final NestedMap3<STATE, LETTER, STATE, IsContained> callOut) {
-		final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer = x -> new OutgoingCallTransition<>(letter, x);
-		return () -> new TransformIterator<STATE, OutgoingCallTransition<LETTER, STATE>>(keySetOrEmpty(callOut.get(state, letter)).iterator(), transformer);
+	public static <LETTER, STATE> Iterable<OutgoingCallTransition<LETTER, STATE>>
+			constructCallTransitionIteratorFromNestedMap(final STATE state, final LETTER letter,
+					final NestedMap3<STATE, LETTER, STATE, IsContained> callOut) {
+		final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer =
+				x -> new OutgoingCallTransition<>(letter, x);
+		return () -> new TransformIterator<>(
+				keySetOrEmpty(callOut.get(state, letter)).iterator(), transformer);
 	}
 
-	public static <LETTER, STATE> Iterable<OutgoingReturnTransition<LETTER, STATE>> constructReturnTransitionIteratorFromNestedMap(
-			final STATE state, final STATE hier, final LETTER letter, final NestedMap4<STATE, STATE, LETTER, STATE, IsContained> returnOut) {
-		return () -> new TransformIterator<STATE, OutgoingReturnTransition<LETTER, STATE>>(
-				keySetOrEmpty(returnOut.get(state, hier, letter)).iterator(), x -> new OutgoingReturnTransition<LETTER, STATE>(hier, letter, x));
+	public static <LETTER, STATE> Iterable<OutgoingReturnTransition<LETTER, STATE>>
+			constructReturnTransitionIteratorFromNestedMap(final STATE state, final STATE hier, final LETTER letter,
+					final NestedMap4<STATE, STATE, LETTER, STATE, IsContained> returnOut) {
+		return () -> new TransformIterator<>(
+				keySetOrEmpty(returnOut.get(state, hier, letter)).iterator(),
+				x -> new OutgoingReturnTransition<>(hier, letter, x));
 	}
 
 	private static <STATE> Iterable<STATE> keySetOrEmpty(final Map<STATE, IsContained> map) {
 		if (map == null) {
 			return Collections.emptySet();
-		} else {
-			return map.keySet();
 		}
+		return map.keySet();
 	}
 
 	public static <LETTER> VpAlphabet<LETTER> getVpAlphabet(final IAutomaton<LETTER, ?> automaton) {
 		if (automaton instanceof INwaBasis) {
 			return ((INwaBasis<LETTER, ?>) automaton).getVpAlphabet();
-		} else {
-			return new VpAlphabet<>(automaton.getAlphabet());
 		}
+		return new VpAlphabet<>(automaton.getAlphabet());
 	}
 
 }

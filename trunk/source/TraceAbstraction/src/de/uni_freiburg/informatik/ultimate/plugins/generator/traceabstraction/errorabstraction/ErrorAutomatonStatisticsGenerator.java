@@ -381,7 +381,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 					final IRun<LETTER, IPredicate, ?> errorTrace, final VpAlphabet<LETTER> alphabet,
 					final PredicateFactoryForInterpolantAutomata predicateFactory) {
 		final IInterpolantGenerator<LETTER> ig = new StraightlineGenerator<>(errorTrace);
-		return new StraightLineInterpolantAutomatonBuilder<LETTER>(services, errorTrace.getWord(), alphabet,
+		return new StraightLineInterpolantAutomatonBuilder<>(services, errorTrace.getWord(), alphabet,
 				Collections.singletonList(new TracePredicates(ig)), predicateFactory,
 				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING)
 						.getResult();
@@ -407,8 +407,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
-	private static final class StraightlineGenerator<LETTER extends IAction>
-			implements IInterpolantGenerator<LETTER> {
+	private static final class StraightlineGenerator<LETTER extends IAction> implements IInterpolantGenerator<LETTER> {
 		private final IRun<LETTER, IPredicate, ?> mErrorTrace;
 
 		private StraightlineGenerator(final IRun<LETTER, IPredicate, ?> errorTrace) {

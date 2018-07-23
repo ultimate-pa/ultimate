@@ -170,10 +170,11 @@ class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IError
 				internalPredicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
 				predicateFactoryErrorAutomaton, NestedWordAutomataUtils.getVpAlphabet(abstraction), trace);
 
-		mResultAfterEnhancement = USE_ENHANCEMENT
-				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
-						internalPredicateUnifier, predicateFactory)
-				: null;
+		mResultAfterEnhancement =
+				USE_ENHANCEMENT
+						? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
+								internalPredicateUnifier, predicateFactory)
+						: null;
 	}
 
 	@Override
@@ -199,8 +200,7 @@ class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IError
 
 	@Override
 	public InterpolantAutomatonEnhancement getEnhancementMode() {
-		return USE_ENHANCEMENT
-				? InterpolantAutomatonEnhancement.NO_SECOND_CHANCE
+		return USE_ENHANCEMENT ? InterpolantAutomatonEnhancement.NO_SECOND_CHANCE
 				: InterpolantAutomatonEnhancement.NONE;
 	}
 
@@ -265,7 +265,7 @@ class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IError
 		final TracePredicates newPredicates = new TracePredicates(mErrorPrecondition,
 				predicateUnifier.getOrConstructPredicate(newPostcondition), newIntermediatePredicates);
 
-		return new StraightLineInterpolantAutomatonBuilder<LETTER>(services, trace, alphabet,
+		return new StraightLineInterpolantAutomatonBuilder<>(services, trace, alphabet,
 				Collections.singletonList(newPredicates), predicateFactoryInterpolantAutomata,
 				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ALL_INITIAL_ALL_ACCEPTING)
 						.getResult();
@@ -285,15 +285,15 @@ class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> implements IError
 		final TracePredicates predicates;
 		try {
 			switch (predicateTransformer) {
-				case WP:
-					predicates = ipt.computeWeakestPreconditionSequence(dtf, postprocessors,
-							USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP, false);
-					break;
-				case SP:
-					predicates = ipt.computeStrongestPostconditionSequence(dtf, postprocessors);
-					break;
-				default:
-					throw new IllegalArgumentException("Unknown predicate transformer: " + predicateTransformer);
+			case WP:
+				predicates = ipt.computeWeakestPreconditionSequence(dtf, postprocessors,
+						USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP, false);
+				break;
+			case SP:
+				predicates = ipt.computeStrongestPostconditionSequence(dtf, postprocessors);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown predicate transformer: " + predicateTransformer);
 			}
 		} catch (final TraceInterpolationException e) {
 			// TODO 2017-05-17 Christian: better error handling
