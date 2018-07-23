@@ -209,7 +209,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 //		return true;
 //	}
 
-
+	@Deprecated
 	private boolean isEligibleForVoluntaryRankDecrease(final StateWithRankInfo<STATE> downState, final STATE upState,
 			final boolean allowDelayedRankDecrease) {
 		final Integer constraint = getRank(downState, upState);
@@ -223,18 +223,19 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 
 
 
-	@Override
-	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
-		final Set<DoubleDecker<StateWithRankInfo<STATE>>> result = new HashSet<>();
-		for (final StateWithRankInfo<STATE> downState : getDownStates()) {
-			for (final StateWithRankInfo<STATE> upState : getUpStates(downState)) {
-				if (isEligibleForVoluntaryRankDecrease(downState, upState.getState(), true)) {
-					result.add(new DoubleDecker<>(downState, upState));
-				}
-			}
-		}
-		return result;
-	}
+//	@Override
+//	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
+//		final Set<DoubleDecker<StateWithRankInfo<STATE>>> result = new HashSet<>();
+//		for (final StateWithRankInfo<STATE> downState : getDownStates()) {
+//			for (final StateWithRankInfo<STATE> upState : getUpStates(downState)) {
+//				if (isEligibleForVoluntaryRankDecrease(downState, upState.getState(), true)) {
+//					result.add(new DoubleDecker<>(downState, upState));
+//				}
+//			}
+//		}
+//		return result;
+//	}
+
 
 	private static void sortRanks(final Set<Integer> predRanksOfNonAccepting, final TreeSet<Integer> even,
 			final TreeSet<Integer> odd) {

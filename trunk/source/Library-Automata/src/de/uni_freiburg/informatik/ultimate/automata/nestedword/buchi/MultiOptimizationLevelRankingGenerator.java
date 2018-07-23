@@ -472,7 +472,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			for (final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker : constraintToRank) {
 				if (super.mConstraint.inO(doubleDecker.getDown(), doubleDecker.getUp().getState())) {
 					if (mSuccessorsOfFinalsWantToLeaveO && !mOperand.isFinal(doubleDecker.getUp().getState())
-							&& super.mConstraint.getPredecessorWasAccepting().contains(doubleDecker)) {
+							&& LevelRankingState.isEven(doubleDecker.getUp().getRank())) {
 						constraintToRankInO_WantLeave.add(doubleDecker);
 					} else {
 						constraintToRankInO_WantStay.add(doubleDecker);
