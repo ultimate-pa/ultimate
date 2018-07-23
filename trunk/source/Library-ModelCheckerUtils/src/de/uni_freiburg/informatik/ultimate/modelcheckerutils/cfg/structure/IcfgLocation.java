@@ -26,9 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 
 /**
  * Node of an interprocedureal control flow graph.
@@ -45,27 +48,28 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 	 */
 	@Visualizable
 	private final String mProcedure;
+
 	/**
-	 * Unique string that identifies this node. Only shown for debugging purposes.
+	 * Unique identifier for debugging purposes.
 	 */
 	@Visualizable
-	private final String mDebugIdentifier;
+	private final DebugIdentifier mDebugIdentifier;
 
 	/**
 	 *
 	 * @param debugIdentifier
-	 * 			Note that this String must uniquely identify the node, inside its procedure, not only for debugging
-	 *			 purposes, but because it is used in hashCode() and equals().
+	 *            Note that this String must uniquely identify the node, inside its procedure, not only for debugging
+	 *            purposes, but because it is used in hashCode() and equals().
 	 * @param procedure
 	 * @param payload
 	 */
-	public IcfgLocation(final String debugIdentifier, final String procedure, final Payload payload) {
+	public IcfgLocation(final DebugIdentifier debugIdentifier, final String procedure, final Payload payload) {
 		super(payload);
 		mProcedure = procedure;
-		mDebugIdentifier = debugIdentifier;
+		mDebugIdentifier = Objects.requireNonNull(debugIdentifier);
 	}
 
-	public IcfgLocation(final String debugIdentifier, final String procedure) {
+	public IcfgLocation(final DebugIdentifier debugIdentifier, final String procedure) {
 		this(debugIdentifier, procedure, null);
 	}
 
@@ -78,13 +82,13 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 		return mProcedure;
 	}
 
-	public String getDebugIdentifier() {
+	public DebugIdentifier getDebugIdentifier() {
 		return mDebugIdentifier;
 	}
 
 	@Override
 	public String toString() {
-		return mDebugIdentifier;
+		return mDebugIdentifier.toString();
 	}
 
 	@Override

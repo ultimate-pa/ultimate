@@ -296,8 +296,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 								.map(Pair<ChangedFrame, IPredicate>::toString).collect(Collectors.joining(",")));
 					}
 					mLogger.debug("PP:");
-					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream().map(a -> a.getDebugIdentifier())
-							.collect(Collectors.joining(",")));
+					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream()
+							.map(a -> a.getDebugIdentifier().toString()).collect(Collectors.joining(",")));
 				}
 				mLogger.debug("Error is not reachable.");
 				mInterpolants = computeInterpolants();

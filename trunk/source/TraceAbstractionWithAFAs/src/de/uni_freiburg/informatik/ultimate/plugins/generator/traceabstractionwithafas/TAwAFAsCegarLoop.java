@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -96,7 +97,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 
 	private final Map<String, Term> mIndexedConstants = new HashMap<>();
 
-	public TAwAFAsCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
+	public TAwAFAsCegarLoop(final DebugIdentifier name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks traceAbstractionBenchmarks,
 			final TAPreferences taPrefs, final Collection<? extends IcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
@@ -249,7 +250,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		 */
 		assert dag.getIncomingNodes().size() <= 1 : "DataflowDAG is not a tree, expecting a tree";
 		writtenVar = dag.getIncomingNodes().size() == 1
-				? dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar() : null;
+				? dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar()
+				: null;
 		writtenVarSsa = varToSsaVar.get(writtenVar);
 		for (final IProgramVar bv : dag.getNodeLabel().getBlock().getTransformula().getInVars().keySet()) {
 			varToSsaVarNew.put(bv, buildVersion(bv));

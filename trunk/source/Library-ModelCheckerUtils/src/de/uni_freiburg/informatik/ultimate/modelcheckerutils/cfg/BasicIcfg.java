@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 
 /**
  *
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer implements IIcfg<LOC> {
 
 	private static final long serialVersionUID = 1L;
-	private final Map<String, Map<String, LOC>> mProgramPoints;
+	private final Map<String, Map<DebugIdentifier, LOC>> mProgramPoints;
 	private final Map<String, LOC> mEntryNodes;
 	private final Map<String, LOC> mExitNodes;
 	private final Map<String, Set<LOC>> mErrorNodes;
@@ -118,7 +119,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 				.isAssignableFrom(loc.getClass()) : "Incompatible location types. Should be subclass of "
 						+ getLocationClass() + " but is " + loc.getClass();
 		final String proc = getProcedure(loc);
-		final Map<String, LOC> name2Loc = mProgramPoints.get(proc);
+		final Map<DebugIdentifier, LOC> name2Loc = mProgramPoints.get(proc);
 		assert name2Loc != null : "Unknown procedure";
 		final LOC old = name2Loc.put(loc.getDebugIdentifier(), loc);
 		if (loc.equals(old)) {
@@ -175,7 +176,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		}
 		final String proc = getProcedure(loc);
 
-		final Map<String, LOC> name2loc = mProgramPoints.get(proc);
+		final Map<DebugIdentifier, LOC> name2loc = mProgramPoints.get(proc);
 		if (name2loc == null) {
 			return false;
 		}
@@ -210,7 +211,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	}
 
 	@Override
-	public Map<String, Map<String, LOC>> getProgramPoints() {
+	public Map<String, Map<DebugIdentifier, LOC>> getProgramPoints() {
 		return Collections.unmodifiableMap(mProgramPoints);
 	}
 
@@ -238,7 +239,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
-	
+
 	public void setCfgSmtToolkit(final CfgSmtToolkit cfgSmtToolkit) {
 		mCfgSmtToolkit = cfgSmtToolkit;
 	}

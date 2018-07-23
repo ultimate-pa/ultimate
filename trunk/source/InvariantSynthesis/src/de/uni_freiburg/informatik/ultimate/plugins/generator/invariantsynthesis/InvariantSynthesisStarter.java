@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.dangerinvariants.DangerInvariantUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -267,19 +268,20 @@ public class InvariantSynthesisStarter {
 		final String pathOfDumpedScript = "YOUR/FOLDER/HERE";
 		final String baseNameOfDumpedScript =
 				useNonlinearConstraints ? "Nonlinear" + "_" + cfgIdentifier : "Linear" + "_" + cfgIdentifier;
-		final SolverSettings solverSettings = new SolverSettings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
-				timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+		final SolverSettings solverSettings =
+				new SolverSettings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
+						timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
 		final boolean useLBE = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_LARGE_BLOCK_ENCODING);
-		final boolean useAbstractInterpretationPredicates = prefs
-				.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION);
+		final boolean useAbstractInterpretationPredicates =
+				prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION);
 		final boolean useWPForPathInvariants = false;
 
-		final int initialDisjuncts = 1;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_DISJUNCTS);
-		final int disjunctsStep = 1;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_DISJUNCTS);
-		final int initialConjuncts = 3;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_CONJUNCTS);
-		final int conjunctsStep = 1;//prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_CONJUNCTS);
+		final int initialDisjuncts = 1;// prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_DISJUNCTS);
+		final int disjunctsStep = 1;// prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_DISJUNCTS);
+		final int initialConjuncts = 3;// prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_CONJUNCTS);
+		final int conjunctsStep = 1;// prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_CONJUNCTS);
 
 		AbstractTemplateIncreasingDimensionsStrategy templateIncrDimensionsStrat = null;
 		final IncreasingStrategy incrStrat = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_INCR_STRATEGY,
@@ -365,7 +367,8 @@ public class InvariantSynthesisStarter {
 	}
 
 	private void writeHoareAnnotationToLogger(final IIcfg<IcfgLocation> root) {
-		for (final Entry<String, Map<String, IcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
+		for (final Entry<String, Map<DebugIdentifier, IcfgLocation>> proc2label2pp : root.getProgramPoints()
+				.entrySet()) {
 			for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
 				final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
 				if (hoare == null) {

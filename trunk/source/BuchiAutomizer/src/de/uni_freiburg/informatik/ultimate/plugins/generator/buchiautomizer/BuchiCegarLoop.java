@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -873,7 +874,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 	private void getInitialAbstraction() {
 		final Collection<IcfgLocation> acceptingNodes;
 		final Collection<IcfgLocation> allNodes = new HashSet<>();
-		for (final Map<String, ? extends IcfgLocation> prog2pp : mIcfg.getProgramPoints().values()) {
+		for (final Map<DebugIdentifier, ? extends IcfgLocation> prog2pp : mIcfg.getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
 

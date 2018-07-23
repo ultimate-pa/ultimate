@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -64,7 +65,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
- * Guess a danger invariant candidate. 
+ * Guess a danger invariant candidate.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -74,42 +76,37 @@ public final class DangerInvariantGuesser {
 	private final ILogger mLogger;
 	private final IToolchainStorage mStorage;
 	private final Map<IcfgLocation, IPredicate> mCandidateInvariant;
-	
+
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 
-
 	public DangerInvariantGuesser(final IIcfg<IcfgLocation> inputIcfg, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final IPredicate precondition,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
-			final CfgSmtToolkit csToolkit) {
+			final IToolchainStorage storage, final IPredicate precondition, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit) {
 		mStorage = storage;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
-		
+
 		mIcfg = applyLargeBlockEncoding(inputIcfg, predicateFactory, predicateUnifier);
-		
+
 		try {
-			mCandidateInvariant = computeCandidateInvariant(services, predicateFactory,
-					predicateUnifier, csToolkit, mIcfg);
+			mCandidateInvariant =
+					computeCandidateInvariant(services, predicateFactory, predicateUnifier, csToolkit, mIcfg);
 		} catch (final ToolchainCanceledException tce) {
-			final String taskDescription = "traversing ICFG of " + IcfgUtils.getNumberOfLocations(mIcfg)
-					+ " locations";
+			final String taskDescription = "traversing ICFG of " + IcfgUtils.getNumberOfLocations(mIcfg) + " locations";
 			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw tce;
 		}
-		
+
 	}
-	
-	
 
 	public Map<IcfgLocation, IPredicate> getCandidateInvariant() {
 		return mCandidateInvariant;
 	}
-	
+
 	public boolean isDangerInvariant() {
 		final Validity isDangerInvariant = DangerInvariantUtils.checkDangerInvariant(mCandidateInvariant, mIcfg,
 				mCsToolkit.getManagedScript(), mServices, mPredicateFactory, mLogger);
@@ -120,7 +117,8 @@ public final class DangerInvariantGuesser {
 			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier) {
 		IIcfg<IcfgLocation> icfg;
 		if (true) {
-			final LargeBlockEncodingIcfgTransformer lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, predicateFactory, predicateUnifier);
+			final LargeBlockEncodingIcfgTransformer lbeTransformer =
+					new LargeBlockEncodingIcfgTransformer(mServices, predicateFactory, predicateUnifier);
 			icfg = lbeTransformer.transform(pathProgram);
 		} else {
 			icfg = pathProgram;
@@ -139,17 +137,16 @@ public final class DangerInvariantGuesser {
 			candidateInvariant.put(errorLoc, truePredicate);
 			worklist.add(errorLoc);
 		}
-		
+
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(
-				csToolkit.getManagedScript(),
-				new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
+				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
 		while (!worklist.isEmpty()) {
-			
+
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(this.getClass(),
 						"processing worklist containing " + worklist.size() + " elements");
 			}
-			
+
 			final Iterator<IcfgLocation> it = worklist.iterator();
 			final IcfgLocation cur = it.next();
 			it.remove();
@@ -170,9 +167,9 @@ public final class DangerInvariantGuesser {
 				try {
 					preTerm = computePre(pt, p, tfnew, predicateFactory, csToolkit);
 				} catch (final ToolchainCanceledException tce) {
-					final String taskDescription = "computing PRE for IPredicate of DAG size "
-							+ new DagSizePrinter(p.getFormula()) + " and TransFormula of DAG size "
-							+ new DagSizePrinter(tf.getFormula());
+					final String taskDescription =
+							"computing PRE for IPredicate of DAG size " + new DagSizePrinter(p.getFormula())
+									+ " and TransFormula of DAG size " + new DagSizePrinter(tf.getFormula());
 					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 					throw tce;
 				}
@@ -200,8 +197,8 @@ public final class DangerInvariantGuesser {
 
 	private void addFalseToRemainingLocations(final IIcfg<IcfgLocation> icfg,
 			final Map<IcfgLocation, IPredicate> candidateInvariant, final IPredicate falsePredicate) {
-		for (final Entry<String, Map<String, IcfgLocation>> entry1 : icfg.getProgramPoints().entrySet()) {
-			for (final Entry<String, IcfgLocation> entry2 : entry1.getValue().entrySet()) {
+		for (final Entry<String, Map<DebugIdentifier, IcfgLocation>> entry1 : icfg.getProgramPoints().entrySet()) {
+			for (final Entry<DebugIdentifier, IcfgLocation> entry2 : entry1.getValue().entrySet()) {
 				final IcfgLocation loc = entry2.getValue();
 				if (!candidateInvariant.containsKey(loc)) {
 					candidateInvariant.put(loc, falsePredicate);
@@ -209,7 +206,7 @@ public final class DangerInvariantGuesser {
 			}
 		}
 	}
-	
+
 	private Term computePre(final PredicateTransformer<Term, IPredicate, TransFormula> pt, final IPredicate p,
 			final UnmodifiableTransFormula tf, final BasicPredicateFactory predicateFactory,
 			final CfgSmtToolkit csToolkit) {

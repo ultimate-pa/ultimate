@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 
 /**
  * Interface that describes a factory which creates locations for an {@link IIcfg} based on an old location.
@@ -17,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public interface ILocationFactory<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 	/**
 	 * Create a new location based on an old location, a procedure, and a debug identifier.
-	 * 
+	 *
 	 * @param oldLocation
 	 *            the old location
 	 * @param debugIdentifier
@@ -26,5 +27,5 @@ public interface ILocationFactory<INLOC extends IcfgLocation, OUTLOC extends Icf
 	 *            A string specifiying to which procedure the new location should belong.
 	 * @return The new location.
 	 */
-	OUTLOC createLocation(final INLOC oldLocation, final String debugIdentifier, final String procedure);
+	OUTLOC createLocation(final INLOC oldLocation, final DebugIdentifier debugIdentifier, final String procedure);
 }

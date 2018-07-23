@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -76,7 +77,7 @@ public class PredicateFactory extends BasicPredicateFactory {
 	}
 
 	public ISLPredicate newEmptyStackPredicate() {
-		final BoogieIcfgLocation pp = new BoogieIcfgLocation("noCaller", "noCaller", false, null);
+		final BoogieIcfgLocation pp = new BoogieIcfgLocation(NoCallerDebugIdentifier.INSTANCE, "noCaller", false, null);
 		return newSPredicate(pp, new TermVarsProc(mEmptyStackTerm, EMPTY_VARS, NO_PROCEDURE, mEmptyStackTerm));
 	}
 
@@ -101,7 +102,6 @@ public class PredicateFactory extends BasicPredicateFactory {
 				new HashSet<IProgramVar>(0));
 	}
 
-
 	public SPredicate newTrueSLPredicateWithWitnessNode(final IcfgLocation pp, final WitnessNode witnessNode,
 			final Integer stutteringSteps) {
 		final SPredicate pred = new SPredicateWithWitnessNode(pp, constructFreshSerialNumber(), NO_PROCEDURE,
@@ -112,6 +112,20 @@ public class PredicateFactory extends BasicPredicateFactory {
 	public HoareAnnotation getNewHoareAnnotation(final IcfgLocation pp,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
 		return new HoareAnnotation(pp, constructFreshSerialNumber(), this, mScript);
+	}
+
+	private static final class NoCallerDebugIdentifier extends DebugIdentifier {
+
+		public static final NoCallerDebugIdentifier INSTANCE = new NoCallerDebugIdentifier();
+
+		private NoCallerDebugIdentifier() {
+			// singleton constructor
+		}
+
+		@Override
+		public String toString() {
+			return "noCaller";
+		}
 	}
 
 }

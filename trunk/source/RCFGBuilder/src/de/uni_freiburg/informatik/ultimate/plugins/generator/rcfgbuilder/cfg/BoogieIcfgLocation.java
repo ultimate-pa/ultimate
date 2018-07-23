@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 
 /**
  * {@link IcfgLocation} of an ICFG that was obtained directly from a Boogie program
@@ -61,12 +62,12 @@ public class BoogieIcfgLocation extends IcfgLocation {
 	/**
 	 *
 	 * @param debugIdentifier
-	 * 			see {@link IcfgLocation} (must be unique inside its procedure among all the nodes!)
+	 *            see {@link IcfgLocation} (must be unique inside its procedure among all the nodes!)
 	 * @param procedure
 	 * @param isErrorLoc
 	 * @param boogieASTNode
 	 */
-	public BoogieIcfgLocation(final String debugIdentifier, final String procedure, final boolean isErrorLoc,
+	public BoogieIcfgLocation(final DebugIdentifier debugIdentifier, final String procedure, final boolean isErrorLoc,
 			final BoogieASTNode boogieASTNode) {
 		super(debugIdentifier, procedure);
 		mIsErrorLocation = isErrorLoc;

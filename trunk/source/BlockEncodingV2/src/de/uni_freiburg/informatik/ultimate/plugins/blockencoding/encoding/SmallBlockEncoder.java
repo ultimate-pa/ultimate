@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DuplicatedDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalforms.DnfTransformer;
@@ -69,6 +72,8 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 
 	private NnfTransformer mNnfTransformer;
 
+	private final Map<DebugIdentifier, Integer> mCloneCount;
+
 	private Script mScript;
 
 	/**
@@ -83,6 +88,7 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
 		super(logger, services, backtranslator);
 		mEdgeBuilder = edgeBuilder;
+		mCloneCount = new HashMap<>();
 
 	}
 
@@ -238,16 +244,20 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 		mRemovedEdges = toRemove.size();
 	}
 
-	private static IcfgLocation createNewLocation(final BasicIcfg<IcfgLocation> icfg, final IcfgLocation oldLoc) {
+	private IcfgLocation createNewLocation(final BasicIcfg<IcfgLocation> icfg, final IcfgLocation oldLoc) {
 
-		final String proc = oldLoc.getProcedure();
-		final Map<String, IcfgLocation> localPps = icfg.getProgramPoints().get(proc);
-
-		String newIdentifier = oldLoc.getDebugIdentifier();
-		while (localPps.containsKey(newIdentifier)) {
-			newIdentifier += "s";
+		final DebugIdentifier oldIdentifier = oldLoc.getDebugIdentifier();
+		final DebugIdentifier newIdentifier;
+		Integer cloneCount = mCloneCount.get(oldIdentifier);
+		if (cloneCount == null) {
+			newIdentifier = new DuplicatedDebugIdentifier(oldIdentifier, 0);
+			mCloneCount.put(oldIdentifier, 0);
+		} else {
+			cloneCount = cloneCount + 1;
+			newIdentifier = new DuplicatedDebugIdentifier(oldIdentifier, cloneCount);
+			mCloneCount.put(oldIdentifier, cloneCount);
 		}
-
+		final String proc = oldLoc.getProcedure();
 		final IcfgLocation freshLoc = new IcfgLocation(newIdentifier, proc);
 
 		// determine attributes of location

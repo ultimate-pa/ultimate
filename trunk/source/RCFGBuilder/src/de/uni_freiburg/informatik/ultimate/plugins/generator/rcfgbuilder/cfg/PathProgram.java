@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInte
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -70,7 +71,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	private static final long serialVersionUID = 6691317791231881900L;
 
 	private final String mIdentifier;
-	private final Map<String, Map<String, IcfgLocation>> mProgramPoints;
+	private final Map<String, Map<DebugIdentifier, IcfgLocation>> mProgramPoints;
 	private final Map<String, IcfgLocation> mProcEntries;
 	private final Map<String, IcfgLocation> mProcExits;
 	private final Map<String, Set<IcfgLocation>> mProcError;
@@ -80,7 +81,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	private final transient CfgSmtToolkit mCfgSmtToolkit;
 
 	private PathProgram(final String identifier, final CfgSmtToolkit cfgSmtToolkit,
-			final Map<String, Map<String, IcfgLocation>> programPoints,
+			final Map<String, Map<DebugIdentifier, IcfgLocation>> programPoints,
 			final Map<String, IcfgLocation> procedureEntries, final Map<String, IcfgLocation> procedureExits,
 			final Map<String, Set<IcfgLocation>> procedureErrors, final Set<IcfgLocation> initialNodes,
 			final Set<IcfgLocation> loopLocations) {
@@ -108,11 +109,12 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	 */
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
 			final IIcfg<?> originalIcfg, final Set<? extends IIcfgTransition<?>> allowedTransitions) {
-		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, Collections.emptySet()).getResult();
+		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, Collections.emptySet())
+				.getResult();
 	}
 
 	@Override
-	public Map<String, Map<String, IcfgLocation>> getProgramPoints() {
+	public Map<String, Map<DebugIdentifier, IcfgLocation>> getProgramPoints() {
 		return mProgramPoints;
 	}
 
@@ -203,7 +205,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final DefaultIcfgSymbolTable mSymbolTable;
 		private final Set<String> mProcedures;
 
-		private final Map<String, Map<String, IcfgLocation>> mProgramPoints;
+		private final Map<String, Map<DebugIdentifier, IcfgLocation>> mProgramPoints;
 		private final Map<String, IcfgLocation> mProcEntries;
 		private final Map<String, IcfgLocation> mProcExits;
 		private final Map<String, Set<IcfgLocation>> mProcError;
@@ -341,8 +343,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 				newPpProcErrors.add(ppLoc);
 			}
 
-			final Map<String, IcfgLocation> procProgramPoints = mProgramPoints.get(procedure);
-			final Map<String, IcfgLocation> newProcProgramPoints;
+			final Map<DebugIdentifier, IcfgLocation> procProgramPoints = mProgramPoints.get(procedure);
+			final Map<DebugIdentifier, IcfgLocation> newProcProgramPoints;
 			if (procProgramPoints == null) {
 				newProcProgramPoints = new HashMap<>();
 				mProgramPoints.put(procedure, newProcProgramPoints);
@@ -386,7 +388,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final IcfgLocation mBacking;
 
 		protected PathProgramIcfgLocation(final IcfgLocation backing) {
-			super("PP-" + backing.getDebugIdentifier(), backing.getProcedure());
+			super(backing.getDebugIdentifier(), backing.getProcedure());
 			mBacking = Objects.requireNonNull(backing, "Backing cannot be null");
 		}
 

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -140,7 +141,7 @@ public class IcfgDuplicator {
 
 		final Set<IcfgLocation> programPoints =
 				icfg.getProgramPoints().entrySet().stream().flatMap(a -> a.getValue().entrySet().stream())
-						.map(Entry<String, IcfgLocation>::getValue).collect(Collectors.toSet());
+						.map(Entry<DebugIdentifier, IcfgLocation>::getValue).collect(Collectors.toSet());
 		for (final IcfgLocation loc : programPoints) {
 			if (loc.getOutgoingEdges().isEmpty() && loc.getIncomingEdges().isEmpty()) {
 				continue;

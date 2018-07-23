@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGloba
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -75,7 +76,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	private final Map<String, BoogieIcfgLocation> mExitNode;
 	private final Set<BoogieIcfgLocation> mLoopLocations;
 	private final Map<String, Set<BoogieIcfgLocation>> mErrorNodes;
-	private final Map<String, Map<String, BoogieIcfgLocation>> mLocNodes;
+	private final Map<String, Map<DebugIdentifier, BoogieIcfgLocation>> mLocNodes;
 
 	/**
 	 * Maps a procedure name to the final node of that procedure. The final node of a procedure represents the location
@@ -125,7 +126,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 
 	@Override
 	@Visualizable
-	public Map<String, Map<String, BoogieIcfgLocation>> getProgramPoints() {
+	public Map<String, Map<DebugIdentifier, BoogieIcfgLocation>> getProgramPoints() {
 		return mLocNodes;
 	}
 

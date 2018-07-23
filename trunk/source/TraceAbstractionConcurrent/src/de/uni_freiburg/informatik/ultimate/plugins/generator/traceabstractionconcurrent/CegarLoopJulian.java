@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -75,10 +76,11 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
 
-	public CegarLoopJulian(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks timingStatistics,
-			final TAPreferences taPrefs, final Collection<BoogieIcfgLocation> errorLocs,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public CegarLoopJulian(final DebugIdentifier name, final BoogieIcfgContainer rootNode,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
+			final Collection<BoogieIcfgLocation> errorLocs, final IUltimateServiceProvider services,
+			final IToolchainStorage storage) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				InterpolationTechnique.Craig_TreeInterpolation, false, services, storage);
 	}
@@ -87,8 +89,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		final TaConcurContentFactory contentFactory = new TaConcurContentFactory(this, super.mCsToolkit,
 				mPredicateFactory, super.mPref.computeHoareAnnotation(), mPref.computeHoareAnnotation(), false);
-		final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfg, mPredicateFactoryResultChecking, mCsToolkit,
-				mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
+		final Cfg2NetJulian<LETTER> cFG2Automaton = new Cfg2NetJulian<>(mIcfg, mPredicateFactoryResultChecking,
+				mCsToolkit, mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2Automaton.getResult();
 
 		if (mIteration <= mPref.watchIteration()
@@ -140,12 +142,12 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mPref.unfoldingToNet()) {
 			// TODO: Find/implement appropriate stateFactory.
 			final IFinitePrefix2PetriNetStateFactory<IPredicate> stateFactory = null;
-			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding).getResult();
+			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding)
+					.getResult();
 		}
 
 		// Determinize the interpolant automaton
-		final INestedWordAutomaton<LETTER, IPredicate> dia =
-				determinizeInterpolantAutomaton(mInterpolAutomaton);
+		final INestedWordAutomaton<LETTER, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
 
 		// Complement the interpolant automaton
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia =
@@ -157,9 +159,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
 		}
-		mAbstraction = new Difference<>(new AutomataLibraryServices(mServices),
-				mPredicateFactoryInterpolantAutomata, abstraction, dia)
-						.getResult();
+		mAbstraction = new Difference<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata,
+				abstraction, dia).getResult();
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
@@ -203,9 +204,9 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			break;
 		case PREDICATE_ABSTRACTION:
 			final IHoareTripleChecker htc = new IncrementalHoareTripleChecker(super.mCsToolkit, false);
-			final DeterministicInterpolantAutomaton<LETTER> raw = new DeterministicInterpolantAutomaton<LETTER>(
-					mServices, mCsToolkit, htc, interpolAutomaton,
-					mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
+			final DeterministicInterpolantAutomaton<LETTER> raw =
+					new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, interpolAutomaton,
+							mTraceCheckAndRefinementEngine.getPredicateUnifier(), false, false);
 			dia = new RemoveUnreachable(new AutomataLibraryServices(mServices), raw).getResult();
 			break;
 		default:
@@ -235,8 +236,8 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			throws AutomataOperationCanceledException {
 		final NestedWord<LETTER> nw = NestedWord.nestedWord(word);
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> petriNetAsFA =
-				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services),
-						mPredicateFactoryResultChecking, (IPetriNet<LETTER, IPredicate>) automaton).getResult();
+				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services), mPredicateFactoryResultChecking,
+						(IPetriNet<LETTER, IPredicate>) automaton).getResult();
 		return super.accepts(services, petriNetAsFA, nw);
 
 	}

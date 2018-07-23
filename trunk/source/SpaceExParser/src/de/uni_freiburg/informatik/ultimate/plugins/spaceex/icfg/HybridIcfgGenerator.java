@@ -42,6 +42,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ArtificialRootDebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -61,6 +64,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslator
  */
 public class HybridIcfgGenerator {
 
+	// Scenario that determines if PreferenceGroups are used or not.
+	private enum Scenario {
+		PREF_GROUPS, NO_GROUPS
+	}
+
 	private final ILogger mLogger;
 
 	private final UnmodifiableTransFormula mTrivialTransformula;
@@ -78,11 +86,6 @@ public class HybridIcfgGenerator {
 	private final Scenario mScenario;
 	private int mCurrentGroupID;
 
-	// Scenario that determines if PreferenceGroups are used or not.
-	private enum Scenario {
-		PREF_GROUPS, NO_GROUPS
-	}
-
 	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceContainer preferenceContainer,
 			final CfgSmtToolkit smtToolkit, final HybridVariableManager variableManager) {
 		mLogger = logger;
@@ -96,7 +99,7 @@ public class HybridIcfgGenerator {
 		mScenario = preferenceContainer.hasPreferenceGroups() ? Scenario.PREF_GROUPS : Scenario.NO_GROUPS;
 		mTrivialTransformula = TransFormulaBuilder.getTrivialTransFormula(smtToolkit.getManagedScript());
 		// create a root and error location
-		mErrorLocation = new IcfgLocation("error", HybridTranslatorConstants.PROC_NAME);
+		mErrorLocation = new IcfgLocation(new StringDebugIdentifier("error"), HybridTranslatorConstants.PROC_NAME);
 		// DD: You need the check annotation s.t. result reporting knows what
 		// you are checking
 		new Check(Spec.ASSERT).annotate(mErrorLocation);
@@ -104,7 +107,7 @@ public class HybridIcfgGenerator {
 		// a way ;) ) -- the location is also
 		// responsible for the line number in the result
 		new DummyLocation("").annotate(mErrorLocation);
-		mRootLocation = new IcfgLocation("root", HybridTranslatorConstants.PROC_NAME);
+		mRootLocation = new IcfgLocation(ArtificialRootDebugIdentifier.DEFAULT, HybridTranslatorConstants.PROC_NAME);
 	}
 
 	/**
@@ -220,13 +223,18 @@ public class HybridIcfgGenerator {
 		// assignment----> end
 		final List<IcfgLocation> locations = new ArrayList<>();
 		final List<IcfgInternalTransition> transitions = new ArrayList<>();
-		final String id = "varAssignment_" + (group == null ? "" : group.getId());
-		final IcfgLocation start = new IcfgLocation(id + "_start", HybridTranslatorConstants.PROC_NAME);
-		final IcfgLocation end = new IcfgLocation(id + "_end", HybridTranslatorConstants.PROC_NAME);
+
+		final IcfgLocation start =
+				new IcfgLocation(new HybridAutomataStartDebugIdentifier(-1, (group == null ? -1 : group.getId())),
+						HybridTranslatorConstants.PROC_NAME);
+		final IcfgLocation end =
+				new IcfgLocation(new HybridAutomataEndDebugIdentifier(-1, (group == null ? -1 : group.getId())),
+						HybridTranslatorConstants.PROC_NAME);
 		transitions.add(mHelper.createIcfgTransition(start, end, transformula));
 
 		// create a list for the start node which contains the target.
 		// new cfgComponent, has to be connected to the root node.
+		final String id = "varAssignment_" + (group == null ? "" : group.getId());
 		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions, ""));
 
 		/*
@@ -261,14 +269,17 @@ public class HybridIcfgGenerator {
 			/*
 			 * Locations: Start, End, Flow, InvariantCheck
 			 */
-			final IcfgLocation start =
-					new IcfgLocation(autid + "_" + mCurrentGroupID + "_start", HybridTranslatorConstants.PROC_NAME);
-			final IcfgLocation end =
-					new IcfgLocation(autid + "_" + mCurrentGroupID + "_end", HybridTranslatorConstants.PROC_NAME);
+
+			final IcfgLocation start = new IcfgLocation(new HybridAutomataStartDebugIdentifier(autid, mCurrentGroupID),
+					HybridTranslatorConstants.PROC_NAME);
+			final IcfgLocation end = new IcfgLocation(new HybridAutomataEndDebugIdentifier(autid, mCurrentGroupID),
+					HybridTranslatorConstants.PROC_NAME);
 			final IcfgLocation preFlow =
-					new IcfgLocation(autid + "_" + mCurrentGroupID + "_preFlow", HybridTranslatorConstants.PROC_NAME);
+					new IcfgLocation(new HybridAutomataPreflowDebugIdentifier(autid, mCurrentGroupID),
+							HybridTranslatorConstants.PROC_NAME);
 			final IcfgLocation postFlow =
-					new IcfgLocation(autid + "_" + mCurrentGroupID + "_postFlow", HybridTranslatorConstants.PROC_NAME);
+					new IcfgLocation(new HybridAutomataPostflowDebugIdentifier(autid, mCurrentGroupID),
+							HybridTranslatorConstants.PROC_NAME);
 			locations.add(preFlow);
 			locations.add(postFlow);
 			/*
@@ -445,13 +456,13 @@ public class HybridIcfgGenerator {
 	public BasicIcfg<IcfgLocation> getSimpleIcfg() {
 		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, IcfgLocation.class);
 
-		final IcfgLocation startLoc = new IcfgLocation("start", "MAIN");
+		final IcfgLocation startLoc = new IcfgLocation(new StringDebugIdentifier("start"), "MAIN");
 		icfg.addLocation(startLoc, true, false, true, false, false);
 
-		final IcfgLocation middleLoc = new IcfgLocation("middle", "MAIN");
+		final IcfgLocation middleLoc = new IcfgLocation(new StringDebugIdentifier("middle"), "MAIN");
 		icfg.addLocation(middleLoc, false, false, false, false, false);
 
-		final IcfgLocation endLoc = new IcfgLocation("error", "MAIN");
+		final IcfgLocation endLoc = new IcfgLocation(new StringDebugIdentifier("error"), "MAIN");
 		icfg.addLocation(endLoc, false, true, false, true, false);
 
 		// Every procedure must have a unique entry and a unique exit. It is not
@@ -497,6 +508,100 @@ public class HybridIcfgGenerator {
 		endLoc.addIncoming(middleToEnd);
 
 		return icfg;
+	}
+
+	private static abstract class HybridAutomataDebugIdentifier extends DebugIdentifier {
+
+		private final int mAutomataId;
+		private final int mGroupId;
+
+		public HybridAutomataDebugIdentifier(final int automataId, final int groupId) {
+			mAutomataId = automataId;
+			mGroupId = groupId;
+		}
+
+		@Override
+		public String toString() {
+			return mAutomataId + "_" + mGroupId;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + mAutomataId;
+			result = prime * result + mGroupId;
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final HybridAutomataDebugIdentifier other = (HybridAutomataDebugIdentifier) obj;
+			if (mAutomataId != other.mAutomataId) {
+				return false;
+			}
+			if (mGroupId != other.mGroupId) {
+				return false;
+			}
+			return true;
+		}
+	}
+
+	private static final class HybridAutomataStartDebugIdentifier extends HybridAutomataDebugIdentifier {
+
+		public HybridAutomataStartDebugIdentifier(final int automataId, final int groupId) {
+			super(automataId, groupId);
+		}
+
+		@Override
+		public String toString() {
+			return super.toString() + "_start";
+		}
+	}
+
+	private static final class HybridAutomataEndDebugIdentifier extends HybridAutomataDebugIdentifier {
+
+		public HybridAutomataEndDebugIdentifier(final int automataId, final int groupId) {
+			super(automataId, groupId);
+		}
+
+		@Override
+		public String toString() {
+			return super.toString() + "_end";
+		}
+	}
+
+	private static final class HybridAutomataPreflowDebugIdentifier extends HybridAutomataDebugIdentifier {
+
+		public HybridAutomataPreflowDebugIdentifier(final int automataId, final int groupId) {
+			super(automataId, groupId);
+		}
+
+		@Override
+		public String toString() {
+			return super.toString() + "_preFlow";
+		}
+	}
+
+	private static final class HybridAutomataPostflowDebugIdentifier extends HybridAutomataDebugIdentifier {
+
+		public HybridAutomataPostflowDebugIdentifier(final int automataId, final int groupId) {
+			super(automataId, groupId);
+		}
+
+		@Override
+		public String toString() {
+			return super.toString() + "_postFlow";
+		}
 	}
 
 }

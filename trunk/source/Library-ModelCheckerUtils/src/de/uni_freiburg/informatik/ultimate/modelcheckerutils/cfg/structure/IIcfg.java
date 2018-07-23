@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 
 /**
  *
@@ -45,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable<VisualizationNode> {
 
 	/**
-	 * Maps the pair of procedure name location name to the LocNode that represents this location.
+	 * Maps the pair of procedure name and location debug identifier to the LOC node that represents this location.
 	 */
-	Map<String, Map<String, LOC>> getProgramPoints();
+	Map<String, Map<DebugIdentifier, LOC>> getProgramPoints();
 
 	/**
 	 * Maps a procedure name to the entry node of that procedure. The entry node of a procedure represents an auxiliary
@@ -77,9 +78,9 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	CfgSmtToolkit getCfgSmtToolkit();
 
 	/**
-	 * 
-	 * @deprecated 2017-02-02 Matthias: Symbol table is part of CFG toolkit,
-	 * we do not want to have a separate getter here.
+	 *
+	 * @deprecated 2017-02-02 Matthias: Symbol table is part of CFG toolkit, we do not want to have a separate getter
+	 *             here.
 	 */
 	@Deprecated
 	IIcfgSymbolTable getSymboltable();

@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import java.util.Objects;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DuplicatedDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
@@ -37,23 +39,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public final class ProductLocationNameGenerator {
 
-	private static final String HELPER_STATE_PREFIX = "crhelper";
+	private static final String NONWA = "NONWA";
 	private int mHelperUnifique;
-	private final INwaOutgoingLetterAndTransitionProvider<CodeBlock, String> mNWA;
 
-	protected ProductLocationNameGenerator(final INwaOutgoingLetterAndTransitionProvider<CodeBlock, String> nwa) {
-		assert nwa != null;
-
+	protected ProductLocationNameGenerator() {
 		mHelperUnifique = 0;
-		mNWA = nwa;
 	}
 
-	protected String generateStateName(final BoogieIcfgLocation loc) {
+	protected static DebugIdentifier generateStateName(final BoogieIcfgLocation loc) {
 		return generateStateName(loc, null);
 	}
 
 	/**
-	 * Central method to create the product state's names.
+	 * Central method to create the product state's debug identifier.
 	 *
 	 * @param rcfgName
 	 *            Name of the state in the RCFG
@@ -61,31 +59,81 @@ public final class ProductLocationNameGenerator {
 	 *            Name of the state in the BA / NWA
 	 * @return a String representing the name of this location in the product
 	 */
-	protected String generateStateName(final BoogieIcfgLocation loc, final String nwaName) {
-		return generateStateName(String.valueOf(loc.hashCode()) + '_' + loc.getDebugIdentifier(), nwaName);
-	}
-
-	private String generateStateName(final String rcfgName, final String nwaName) {
-		assert nwaName == null || !nwaName.isEmpty();
+	protected static DebugIdentifier generateStateName(final BoogieIcfgLocation loc, final String nwaName) {
+		final DebugIdentifier icfgDebugIdentifier = loc.getDebugIdentifier();
 		if (nwaName == null) {
-			return "NP" + "__" + rcfgName;
-		} else if (rcfgName.equals("ULTIMATE.startENTRY") && mNWA.isInitial(nwaName)) {
-			return "ULTIMATE.start";
-		} else {
-			return rcfgName + "__" + nwaName;
+			return new BuchiProgramDebugIdentifier(icfgDebugIdentifier, NONWA);
 		}
+		return new BuchiProgramDebugIdentifier(icfgDebugIdentifier, nwaName);
 	}
 
-	protected String generateHelperStateName(final String location) {
+	protected DebugIdentifier generateHelperStateName(final DebugIdentifier location) {
 		mHelperUnifique++;
-		return HELPER_STATE_PREFIX + Integer.toString(mHelperUnifique) + "__" + location;
+		if (mHelperUnifique < 0) {
+			throw new IllegalArgumentException();
+		}
+		return new BuchiProgramHelperStateDebugIdentifier(location, mHelperUnifique);
 	}
 
 	protected static boolean isHelperState(final BoogieIcfgLocation loc) {
 		if (loc == null) {
 			return false;
 		}
-		return loc.getDebugIdentifier().startsWith(HELPER_STATE_PREFIX);
+		return loc.getDebugIdentifier() instanceof BuchiProgramHelperStateDebugIdentifier;
+	}
+
+	private static final class BuchiProgramDebugIdentifier extends DebugIdentifier {
+
+		private final DebugIdentifier mIcfgIdentifier;
+		private final String mNwaLocation;
+
+		public BuchiProgramDebugIdentifier(final DebugIdentifier icfgIdentifier, final String nwaLocation) {
+			mIcfgIdentifier = Objects.requireNonNull(icfgIdentifier);
+			mNwaLocation = Objects.requireNonNull(nwaLocation);
+		}
+
+		@Override
+		public String toString() {
+			return mIcfgIdentifier.toString() + "_" + mNwaLocation;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + mIcfgIdentifier.hashCode();
+			result = prime * result + mNwaLocation.hashCode();
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final BuchiProgramDebugIdentifier other = (BuchiProgramDebugIdentifier) obj;
+			if (!mIcfgIdentifier.equals(other.mIcfgIdentifier)) {
+				return false;
+			}
+			if (!mNwaLocation.equals(other.mNwaLocation)) {
+				return false;
+			}
+			return true;
+		}
+
+	}
+
+	private static final class BuchiProgramHelperStateDebugIdentifier extends DuplicatedDebugIdentifier {
+
+		public BuchiProgramHelperStateDebugIdentifier(final DebugIdentifier debugIdentifier, final int duplication) {
+			super(debugIdentifier, duplication);
+		}
 	}
 
 }

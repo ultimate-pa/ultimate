@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
@@ -97,7 +98,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private final HashMap<BoogieIcfgLocation, BoogieIcfgLocation> mOrigToNewMap;
 
-	private final HashMap<String, HashMap<String, BoogieIcfgLocation>> mLocNodesForAnnot;
+	private final HashMap<String, HashMap<DebugIdentifier, BoogieIcfgLocation>> mLocNodesForAnnot;
 
 	private final HashSet<IMinimizedEdge> mVisitedEdges;
 
@@ -338,7 +339,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (mLocNodesForAnnot.containsKey(newNode.getProcedure())) {
 			mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getDebugIdentifier(), newNode);
 		} else {
-			final HashMap<String, BoogieIcfgLocation> newMap = new HashMap<>();
+			final HashMap<DebugIdentifier, BoogieIcfgLocation> newMap = new HashMap<>();
 			newMap.put(newNode.getDebugIdentifier(), newNode);
 			mLocNodesForAnnot.put(newNode.getProcedure(), newMap);
 		}
@@ -567,7 +568,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	/**
 	 * @return the locNodesForAnnot
 	 */
-	public HashMap<String, HashMap<String, BoogieIcfgLocation>> getLocNodesForAnnot() {
+	public HashMap<String, HashMap<DebugIdentifier, BoogieIcfgLocation>> getLocNodesForAnnot() {
 		return mLocNodesForAnnot;
 	}
 }

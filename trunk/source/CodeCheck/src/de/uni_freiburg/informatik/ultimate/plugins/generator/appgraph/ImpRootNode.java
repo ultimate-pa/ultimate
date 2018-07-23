@@ -27,13 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.ArtificialRootDebugIdentifier;
 
 public class ImpRootNode extends AnnotatedProgramPoint {
 
 	private static final long serialVersionUID = 1L;
 
 	public ImpRootNode() {
-		super(null, new IcfgLocation("root", ""), false);
+		super(null, new IcfgLocation(ArtificialRootDebugIdentifier.DEFAULT, ""), false);
 	}
 
 	@Override

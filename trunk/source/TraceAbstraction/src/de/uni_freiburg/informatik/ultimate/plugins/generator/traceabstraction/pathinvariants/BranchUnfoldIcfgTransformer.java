@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -102,8 +103,8 @@ public final class BranchUnfoldIcfgTransformer {
 					public IcfgLocation constructValue(final Pair<IcfgLocation, Integer> pair) {
 						final IcfgLocation inputLoc = pair.getFirst();
 						final boolean initial = mInputIcfg.getInitialNodes().contains(inputLoc);
-						final String debugIdentifier =
-								inputLoc.getDebugIdentifier() + this.getClass().getSimpleName() + pair.getSecond();
+						final BranchUnfoldDebugIdentifier debugIdentifier = new BranchUnfoldDebugIdentifier(
+								inputLoc.getDebugIdentifier(), this.getClass(), pair.getSecond());
 						final IcfgLocation resultLoc = new IcfgLocation(debugIdentifier, inputLoc.getProcedure());
 						final boolean isInitial = initial;
 						final boolean isError =
@@ -164,6 +165,32 @@ public final class BranchUnfoldIcfgTransformer {
 		}
 		mInputIcfg = null;
 		return result;
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static final class BranchUnfoldDebugIdentifier extends DebugIdentifier {
+
+		private final int mNumber;
+		private final Class<?> mCreatingClass;
+		private final DebugIdentifier mOriginalIdentifier;
+
+		public BranchUnfoldDebugIdentifier(final DebugIdentifier originalIdentifier, final Class<?> creatingClass,
+				final int number) {
+			// TODO: Matthias, check if this is what you need here
+			mNumber = number;
+			mCreatingClass = creatingClass;
+			mOriginalIdentifier = originalIdentifier;
+		}
+
+		@Override
+		public String toString() {
+			return mOriginalIdentifier.toString() + mCreatingClass.getSimpleName() + mNumber;
+		}
+
 	}
 
 }

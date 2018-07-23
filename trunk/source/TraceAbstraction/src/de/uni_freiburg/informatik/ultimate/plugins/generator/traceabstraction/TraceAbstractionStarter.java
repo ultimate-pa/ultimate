@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -147,15 +148,14 @@ public class TraceAbstractionStarter {
 		mArtifact = null;
 
 		if (taPrefs.allErrorLocsAtOnce()) {
-			final String name = "AllErrorsAtOnce";
-			iterate(name, icfg, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errNodesOfAllProc,
-					witnessAutomaton, rawFloydHoareAutomataFromFile);
+			iterate(AllErrorsAtOnceDebugIdentifier.INSTANCE, icfg, taPrefs, csToolkit, predicateFactory,
+					traceAbstractionBenchmark, errNodesOfAllProc, witnessAutomaton, rawFloydHoareAutomataFromFile);
 		} else {
 			final IProgressMonitorService progmon = mServices.getProgressMonitorService();
 			final int numberOfErrorLocs = errNodesOfAllProc.size();
 			int finishedErrorLocs = 1;
 			for (final IcfgLocation errorLoc : errNodesOfAllProc) {
-				final String name = errorLoc.getDebugIdentifier();
+				final DebugIdentifier name = errorLoc.getDebugIdentifier();
 				final List<IcfgLocation> errorLocs = new ArrayList<>(1);
 				errorLocs.add(errorLoc);
 				if (taPrefs.hasLimitAnalysisTime()) {
@@ -297,7 +297,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private Result iterate(final String name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
+	private Result iterate(final DebugIdentifier name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton,
@@ -340,7 +340,7 @@ public class TraceAbstractionStarter {
 		return result;
 	}
 
-	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<IcfgLocation> root,
+	private BasicCegarLoop<?> constructCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile) {
@@ -410,7 +410,8 @@ public class TraceAbstractionStarter {
 	}
 
 	private void writeHoareAnnotationToLogger(final IIcfg<IcfgLocation> root) {
-		for (final Entry<String, Map<String, IcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
+		for (final Entry<String, Map<DebugIdentifier, IcfgLocation>> proc2label2pp : root.getProgramPoints()
+				.entrySet()) {
 			for (final IcfgLocation pp : proc2label2pp.getValue().values()) {
 				final HoareAnnotation hoare = HoareAnnotation.getAnnotation(pp);
 				if (hoare != null && !hoare.getFormula().toString().equals("true")) {
@@ -544,5 +545,19 @@ public class TraceAbstractionStarter {
 		final SolverMode solver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 		return solver == SolverMode.External_PrincessInterpolationMode;
+	}
+
+	public final static class AllErrorsAtOnceDebugIdentifier extends DebugIdentifier {
+
+		public static final AllErrorsAtOnceDebugIdentifier INSTANCE = new AllErrorsAtOnceDebugIdentifier();
+
+		private AllErrorsAtOnceDebugIdentifier() {
+			// singleton constructor
+		}
+
+		@Override
+		public String toString() {
+			return "AllErrorsAtOnce";
+		}
 	}
 }

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -115,15 +116,15 @@ public class IcfgUtils {
 		}
 		return procErrorNodes.contains(loc);
 	}
-	
+
 	public static <LOC extends IcfgLocation> int getNumberOfLocations(final IIcfg<LOC> icfg) {
 		int result = 0;
-		for (final Entry<String, Map<String, LOC>> entry : icfg.getProgramPoints().entrySet()) {
+		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : icfg.getProgramPoints().entrySet()) {
 			result += entry.getValue().size();
 		}
 		return result;
 	}
-	
+
 	public static Set<IProgramVar> collectAllProgramVars(final CfgSmtToolkit csToolkit) {
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramNonOldVar nonold : csToolkit.getSymbolTable().getGlobals()) {
@@ -138,14 +139,11 @@ public class IcfgUtils {
 		}
 		return result;
 	}
-	
-	
+
 	/**
-	 * Compute a hashcode for the graph structure of an ICFG. The hashcode is is
-	 * only based on the hashcode of locations and edges and ignores
-	 * {@link IProgramVar}s and other objects that come along with an ICFG. The
-	 * method can help while debugging in order to find nondeterminism in our
-	 * implementation.
+	 * Compute a hashcode for the graph structure of an ICFG. The hashcode is is only based on the hashcode of locations
+	 * and edges and ignores {@link IProgramVar}s and other objects that come along with an ICFG. The method can help
+	 * while debugging in order to find nondeterminism in our implementation.
 	 */
 	public static <LOC extends IcfgLocation> int computeIcfgHashCode(final IIcfg<LOC> icfg) {
 		final IcfgLocationIterator<LOC> locIt = new IcfgLocationIterator<>(icfg);

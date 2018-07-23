@@ -172,8 +172,9 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 				public int compare(final TraceAbstractionProtos.PreNestedWord.Loop o1,
 						final TraceAbstractionProtos.PreNestedWord.Loop o2) {
 					final int cmp = Integer.compare(o1.getStartPosition(), o2.getStartPosition());
-					if (cmp != 0)
+					if (cmp != 0) {
 						return cmp;
+					}
 					// We want outer loops first - thus if the starting point matches
 					// we want loops with bigger endpoints first
 					return Integer.compare(o2.getEndPosition(), o1.getEndPosition());
@@ -205,12 +206,15 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 	private static TraceAbstractionProtos.IterationInfo fromIterationInfo(final Info info) {
 		final TraceAbstractionProtos.IterationInfo.Builder builder = TraceAbstractionProtos.IterationInfo.newBuilder();
-		if (info.mAbstraction != null)
+		if (info.mAbstraction != null) {
 			builder.setAbstractionSizeInfo(info.mAbstraction);
-		if (info.mInterpolantAutomaton != null)
+		}
+		if (info.mInterpolantAutomaton != null) {
 			builder.setInterpolantAutomatonSizeInfo(info.mInterpolantAutomaton);
-		if (info.mIteration != null)
+		}
+		if (info.mIteration != null) {
 			builder.setIteration(info.mIteration);
+		}
 		return builder.build();
 	}
 
@@ -236,16 +240,16 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	 * private static InteractiveIterationInfo fromIterationInfo(final ParrotInteractiveIterationInfo itInfo) { return
 	 * InteractiveIterationInfo.newBuilder() .setFallback(convertTo(Strategy.class,
 	 * itInfo.getFallbackStrategy())).build(); }
-	 * 
+	 *
 	 * private static ParrotInteractiveIterationInfo toIterationInfo(final InteractiveIterationInfo itInfo) { return new
 	 * ParrotInteractiveIterationInfo(convertTo(RefinementStrategy.class, itInfo.getFallback())); }
-	 * 
+	 *
 	 * private static TraceAbstractionProtos.Tracks fromTracks(final
 	 * MultiTrackTraceAbstractionRefinementStrategy.Track[] tracks) { final TraceAbstractionProtos.Tracks.Builder
 	 * builder = TraceAbstractionProtos.Tracks.newBuilder();
 	 * Arrays.stream(tracks).map(convertToEnum(TraceAbstractionProtos.Track.class)).forEach(builder::addTrack); return
 	 * builder.build(); }
-	 * 
+	 *
 	 * private static MultiTrackTraceAbstractionRefinementStrategy.Track[] toTracks(final TraceAbstractionProtos.Tracks
 	 * tracks) { return tracks.getTrackList().stream()
 	 * .map(convertToEnum(MultiTrackTraceAbstractionRefinementStrategy.Track.class)).toArray(Track[]::new); }
@@ -267,14 +271,15 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		for (int i = 0; i < word.length(); i++) {
 			builder.addSymbol(fromCodeblock(word.getSymbol(i)));
 			if (word.isCallPosition(i)) {
-				if (word.isPendingCall(i))
+				if (word.isPendingCall(i)) {
 					nestingRelation.addPendingCall(i);
-				else
+				} else {
 					nestingRelation.putInternalNesting(i, word.getReturnPosition(i));
+				}
 			} else if (word.isReturnPosition(i)) {
-				if (word.isPendingReturn(i))
+				if (word.isPendingReturn(i)) {
 					nestingRelation.addPendingReturn(i);
-				else if (nestingRelation.getInternalNestingOrThrow(word.getCallPosition(i)) != i) {
+				} else if (nestingRelation.getInternalNestingOrThrow(word.getCallPosition(i)) != i) {
 					throw new IllegalArgumentException("Invalid Nested Run?");
 					// builder.putInternalNesting(word.getCallPosition(i),i);
 				}
@@ -289,7 +294,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	 * public static NestedWord<CodeBlock> toNestedWord(TraceAbstractionProtos.NestedWord nestedWord) { CodeBlock[] word
 	 * = new CodeBlock[] {}; int[] nestingrelation = new int[] {}; return new NestedWord<>(word, nestingrelation); }
 	 *
-	 * 
+	 *
 	 * public static NestedRun<CodeBlock, IPredicate> toNestedRun(TraceAbstractionProtos.NestedRun run) {
 	 * NestedWord<CodeBlock> nestedWord = new NestedWord<>(); ArrayList<IPredicate> stateSequence = new ArrayList<>();
 	 * // run.getst return new NestedRun<>(nestedWord, stateSequence); }
@@ -314,10 +319,12 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		for (final IPredicate state : states) {
 			final Consumer<Consumer<Integer>> addStateStateRef = addStateRef.apply(state);
 			builder.addStates(fromPredicate(state));
-			if (automaton.isInitial(state))
+			if (automaton.isInitial(state)) {
 				addStateStateRef.accept(builder::addInitial);
-			if (automaton.isFinal(state))
+			}
+			if (automaton.isFinal(state)) {
 				addStateStateRef.accept(builder::addFinal);
+			}
 
 			stream(automaton.internalSuccessors(state)).map(getTransition(addStateStateRef, internalAlphabet, states))
 					.forEach(builder::addInternalEdges);
@@ -370,8 +377,9 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 		while (!openStates.isEmpty()) {
 			final IPredicate state = openStates.removeFirst();
-			if (!visitedStates.add(state))
+			if (!visitedStates.add(state)) {
 				continue;
+			}
 			states.add(state);
 
 			automaton.callSuccessors(state).forEach(t -> {
@@ -386,10 +394,12 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		for (final IPredicate state : states) {
 			final Consumer<Consumer<Integer>> addStateStateRef = addStateRef.apply(state);
 			builder.addStates(fromPredicate(state));
-			if (automaton.isInitial(state))
+			if (automaton.isInitial(state)) {
 				addStateStateRef.accept(builder::addInitial);
-			if (automaton.isFinal(state))
+			}
+			if (automaton.isFinal(state)) {
 				addStateStateRef.accept(builder::addFinal);
+			}
 
 			stream(automaton.internalSuccessors(state)).map(getTransition(addStateStateRef, internalAlphabet, states))
 					.forEach(builder::addInternalEdges);
@@ -422,7 +432,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 	/**
 	 * Creates Integer References to positions of List elements
-	 * 
+	 *
 	 * @param targets
 	 *            elements that should be referenced
 	 * @return a Function that should be passed the target element which should be referenced to the result. The
@@ -461,8 +471,9 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	}
 
 	public static TraceAbstractionProtos.IcfgLocation fromLocation(final IcfgLocation location) {
-		return TraceAbstractionProtos.IcfgLocation.newBuilder().setDebugIdentifier(location.getDebugIdentifier())
-				.setProcedure(location.getProcedure()).build();
+		return TraceAbstractionProtos.IcfgLocation.newBuilder()
+				.setDebugIdentifier(location.getDebugIdentifier().toString()).setProcedure(location.getProcedure())
+				.build();
 	}
 
 	public static TraceAbstractionProtos.Predicate fromPredicate(final IPredicate predicate) {

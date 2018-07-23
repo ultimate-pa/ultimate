@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -53,7 +54,7 @@ public final class Dumper {
 	private final PrintWriter mIterationPW;
 	private final ILogger mLogger;
 
-	Dumper(final ILogger logger, final TAPreferences prefs, final String name, final int iteration) {
+	Dumper(final ILogger logger, final TAPreferences prefs, final DebugIdentifier name, final int iteration) {
 		final File file = new File(prefs.dumpPath() + "/" + name + "_iteration" + iteration + ".txt");
 		try {
 			mIterationPW = new PrintWriter(new FileWriter(file));

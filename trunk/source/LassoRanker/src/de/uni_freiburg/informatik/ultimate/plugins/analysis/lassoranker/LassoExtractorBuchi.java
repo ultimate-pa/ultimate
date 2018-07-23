@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
@@ -86,8 +87,8 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 			mSomeNoneForErrorReport = extractSomeNodeForErrorReport(rootNode);
 		} else {
 			final NestedLassoWord<LETTER> nlw = run.getNestedLassoWord();
-			mLassoAutomaton = new LassoAutomatonBuilder<>(mCfgAutomaton.getVpAlphabet(), mPredicateFactoryRc, mPredicateFactory,
-					nlw.getStem(), nlw.getLoop(), mServices).getResult();
+			mLassoAutomaton = new LassoAutomatonBuilder<>(mCfgAutomaton.getVpAlphabet(), mPredicateFactoryRc,
+					mPredicateFactory, nlw.getStem(), nlw.getLoop(), mServices).getResult();
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> difference =
 					new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactoryRc, mCfgAutomaton,
 							mLassoAutomaton).getResult();
@@ -112,13 +113,13 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 		return ((ISLPredicate) run.getLoop().getStateAtPosition(0)).getProgramPoint();
 	}
 
-	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructCfgAutomaton(final IIcfg<IcfgLocation> rootNode,
-			final CfgSmtToolkit csToolkit) {
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>
+			constructCfgAutomaton(final IIcfg<IcfgLocation> rootNode, final CfgSmtToolkit csToolkit) {
 		final Collection<IcfgLocation> allNodes = new HashSet<>();
-		for (final Map<String, IcfgLocation> prog2pp : rootNode.getProgramPoints().values()) {
+		for (final Map<DebugIdentifier, IcfgLocation> prog2pp : rootNode.getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
-		return CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, rootNode, mPredicateFactoryRc, allNodes, true,
-				mPredicateFactory);
+		return CFG2NestedWordAutomaton.constructAutomatonWithSPredicates(mServices, rootNode, mPredicateFactoryRc,
+				allNodes, true, mPredicateFactory);
 	}
 }

@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.SuffixedDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -110,7 +112,8 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 	}
 
 	private OUTLOC createAndAddNewLocation(final INLOC originalInitNode, final boolean isInitial, final boolean isError,
-			final boolean isProcEntry, final boolean isProcExit, final boolean isLoopLocation, final String locName) {
+			final boolean isProcEntry, final boolean isProcExit, final boolean isLoopLocation,
+			final DebugIdentifier locName) {
 		// TODO: general solution.. this one works for BoogieIcfgLocations
 		// final String debugString = this.getClass().toString() + "freshInit" + originalInitNode.hashCode();
 		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(locName, originalInitNode.getProcedure(), false,
@@ -190,14 +193,14 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 				assert !mBuilder.hasNewLoc(oldInitTarget) : "init edge target should not have been recreated " + "here";
 
 				final OUTLOC s1 = createAndAddNewLocation(oldInitTarget, false, false, true, false, false,
-						oldInitTarget.getDebugIdentifier() + "_split-1");
+						new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"));
 				final OUTLOC s2 = createAndAddNewLocation(oldInitTarget, false,
 						mInputIcfg.getProcedureErrorNodes().get(initEdge.getSucceedingProcedure())
 								.contains(oldInitTarget),
 						false,
 						mInputIcfg.getProcedureExitNodes().get(initEdge.getSucceedingProcedure()).equals(oldInitTarget),
 						mInputIcfg.getLoopLocations().contains(oldInitTarget),
-						oldInitTarget.getDebugIdentifier() + "_split-2");
+						new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-2"));
 
 				// final OUTLOC oldInitEdgeTargetInNewCfg = mBuilder.createNewLocation((INLOC) initEdge.getTarget());
 
