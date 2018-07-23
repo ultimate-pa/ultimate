@@ -385,7 +385,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						}
 						proofObligation.addBlockedQuery(query);
 					} else {
-						throw new UnsupportedOperationException("what to do with the great unknown?");
+						mLogger.error(String.format("Internal query %s && %s && %s was unknown!", query.getFirst(),
+								query.getSecond(), query.getThird()));
+						throw new UnsupportedOperationException("Solver returned unknown");
 					}
 
 					/*
@@ -416,7 +418,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					} else if (result == Validity.VALID) {
 						updateFrames(toBeBlocked, location, level);
 					} else {
-						throw new UnsupportedOperationException("what to do with the great unknown?");
+						mLogger.error(String.format("Call query %s && %s && %s was unknown!", query.getFirst(),
+								query.getSecond(), query.getThird()));
+						throw new UnsupportedOperationException("Solver returned unknown");
 					}
 
 					/*
@@ -456,7 +460,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					} else if (result == Validity.VALID) {
 						updateFrames(toBeBlocked, location, level);
 					} else {
-						throw new UnsupportedOperationException("what to do with the great unknown?");
+						mLogger.error(String.format("Return query %s && %s && %s && %s was unknown", predecessorFrame,
+								preHier, returnTrans, toBeBlocked));
+						throw new UnsupportedOperationException("Solver returned unknown");
 					}
 				} else {
 					throw new UnsupportedOperationException(
