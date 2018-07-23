@@ -775,50 +775,6 @@ public class CfgBuilder {
 			}
 		}
 
-		// /////////////////////////////////////////////////////////
-		// private void assignModifiableGlobals() {
-		//
-		// }
-		// //////////////////////////////////////////////////////////
-		//
-		// /**
-		// * Build AssignmentStatement such that to a variable the own value is
-		// * assigned.
-		// * This AssignmentStatement seems to be pretty useless, but will be
-		// used to
-		// * build an auxiliary TransitionFormula used for the computation of
-		// nested
-		// * interpolants.
-		// * @param vars Representation for a set of variables. A variable name
-		// is
-		// * mapped to its type.
-		// * @return Assignment where we assign to each variable in vars its own
-		// value
-		// */
-		// private AssignmentStatement oldVar2VarAssignment(Map<String,ASTType>
-		// vars) {
-		// Collection<String> identifiers;
-		// if (vars==null) {
-		// identifiers = new HashSet<String>(0);
-		// }
-		// else {
-		// identifiers = vars.keySet();
-		// }
-		// VariableLHS[] lhs = new VariableLHS[identifiers.size()];
-		// Expression[] rhs = new Expression[identifiers.size()];
-		//
-		// int i=0;
-		// for (String identifier : identifiers) {
-		// IType type = vars.get(identifier).getBoogieType();
-		// lhs[i] = new VariableLHS(null,type,identifier);
-		// rhs[i] = new IdentifierExpression(null,type,identifier);
-		// rhs[i] = new UnaryExpression(null,UnaryExpression.Operator.OLD,
-		// rhs[i]);
-		// i++;
-		// }
-		// return new AssignmentStatement(null,lhs,rhs);
-		// }
-
 		private String constructLocName(final Statement stmt) {
 			final ILocation location = stmt.getLocation();
 			final int startLine = location.getStartLine();
