@@ -58,6 +58,9 @@ public class SmtParserPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_HornSolverMode = "Use TreeAutomizer as solver for the given file (assumes the file"
 			+ " contains Horn clauses only).";
 	public static final boolean DEF_HornSolverMode = false;
+	
+	public static final String LABEL_MsoSolverMode = "Apply MSO solver on input";
+	public static final boolean DEF_MsoSolverMode = false;
 
 	public static final String LABEL_DoLocalSimplifications = "Use SMTUtils to do local simplifications during parsing";
 	public static final boolean DEF_DoLocalSimplifications = true;
@@ -120,6 +123,8 @@ public SmtParserPreferenceInitializer() {
 							DEF_Directory, PreferenceType.Directory),
 					new UltimatePreferenceItem<Boolean>(LABEL_HornSolverMode,
 							DEF_HornSolverMode, PreferenceType.Boolean),
+					new UltimatePreferenceItem<Boolean>(LABEL_MsoSolverMode,
+							DEF_MsoSolverMode, PreferenceType.Boolean),
 					new UltimatePreferenceItem<Boolean>(LABEL_FilterUnusedDeclarationsMode,
 							DEF_FilterUnusedDeclarationsMode, PreferenceType.Boolean),
 					new UltimatePreferenceItem<Boolean>(LABEL_DoLocalSimplifications,
