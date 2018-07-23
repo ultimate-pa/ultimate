@@ -254,6 +254,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    petruchio.pn,
    de.uni_freiburg.informatik.ultimate.automata,
    de.uni_freiburg.informatik.ultimate.automata.nestedword",
+ de.uni_freiburg.informatik.ultimate.automata.petrinet.operations,
  de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
   uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet.julian,
    de.uni_freiburg.informatik.ultimate.core.lib.models,
