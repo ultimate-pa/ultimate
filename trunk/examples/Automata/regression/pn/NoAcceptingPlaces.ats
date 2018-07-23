@@ -3,10 +3,10 @@
 //
 // Net without accepting places.
 
-assert(isEmpty(n));
-assert(numberOfConditions(finitePrefix(n)) == 3);
+assert(isEmpty(noAccepting));
+assert(numberOfConditions(finitePrefix(noAccepting)) == 3);
 
-PetriNet n = (
+PetriNet noAccepting = (
   alphabet = {a},
   places = {p},
   transitions = {
