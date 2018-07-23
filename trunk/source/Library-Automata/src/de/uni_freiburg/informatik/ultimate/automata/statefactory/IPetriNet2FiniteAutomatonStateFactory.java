@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import petruchio.interfaces.petrinet.PetriNet;
 
 /**
