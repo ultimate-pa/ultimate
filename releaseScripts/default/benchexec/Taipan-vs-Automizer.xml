@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
 	<option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
-	<rundefinition name="Taipan">
-		<option name="--generate-csv" />
-		<option name="--csv-dir">csv</option>
-		<option name="-s">../../../trunk/examples/settings/default/taipan/svcomp-Reach-64bit-Taipan_Default-old.epf</option>
+	<option name="--generate-csv" />
+	<option name="--csv-dir">csv</option>
+
+	<rundefinition name="Taipan_OldIcfg">
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-Taipan_Default-OldIcfg.epf</option>
 	</rundefinition>
 
-	<rundefinition name="Automizer">
-		<option name="--generate-csv" />
-		<option name="--csv-dir">csv</option>
-		<option name="-s">../../../trunk/examples/settings/default/automizer/svcomp-Reach-64bit-Automizer_Default.epf</option>
+	<rundefinition name="RubberTaipan_OldIcfg">
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-RubberTaipan_Default-OldIcfg.epf</option>
 	</rundefinition>
 
+    <rundefinition name="RubberTaipan_NewIcfg">
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-RubberTaipan_Default-NewIcfg.epf</option>
+	</rundefinition>
+
+    <rundefinition name="Taipan_NewIcfg">
+		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-Taipan_Default-NewIcfg.epf</option>
+	</rundefinition>
+    
 	<tasks name="Loops">
 		<includesfile>../../../trunk/examples/svcomp/ReachSafety-Loops.set</includesfile>
 		 <propertyfile>../../../trunk/examples/svcomp/ReachSafety.prp</propertyfile>
