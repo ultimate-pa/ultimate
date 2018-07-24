@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
-	<option name="-tc">../../../trunk/examples/toolchains/AutomizerBpl.xml</option>
+	<option name="-tc">../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+	<option name="--generate-csv" />
+	<option name="--csv-dir">csv</option>
 	<rundefinition name="Automizer NestedInterpolants">
-		<option name="--generate-csv" />
-		<option name="--csv-dir">csv</option>
 		<option name="-s">../../../trunk/examples/settings/Pdr/AutomizerBpl-nestedInterpolants.epf</option>
 	</rundefinition>
 
 	<rundefinition name="Automizer PDR">
-		<option name="--generate-csv" />
-		<option name="--csv-dir">csv</option>
 		<option name="-s">../../../trunk/examples/settings/Pdr/AutomizerBpl-pdr.epf</option>
 	</rundefinition>
 
