@@ -21,7 +21,7 @@ assert(isEmpty(difference(
 ));
 
 //print(difference(prefixProduct(automaton2Net(t1), t2), access1Model));
-print(difference(prefixProduct(automaton2Net(t1), t2), access2Model));
+//print(difference(prefixProduct(automaton2Net(t1), t2), access2Model));
 
 NestedWordAutomaton t1 = (
   callAlphabet = {},
