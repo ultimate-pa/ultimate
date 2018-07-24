@@ -56,7 +56,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
 		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
 		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String>, IUnionStateFactory<String>, 
-        IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String> {
+        IBuchiComplementNcsbSimpleStateFactory<String>, IRelabelStateFactory<String>, IConcurrentProductStateFactory<String> {
 
 	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
@@ -76,15 +76,8 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 	private static final int RANK_THREE = 3;
 	private static final int MINIMUM_LIST_SIZE = 2;
 	private static final int MINIMUM_PAIR_LIST_SIZE = 7;
-
-	@Override
-	public String union(final String state1, final String state2) {
-		// use the same string as for intersection
-		return intersection(state1, state2);
-	}
-
-	@Override
-	public String intersection(final String state1, final String state2) {
+	
+	private String product(final String state1, final String state2) {
 		final StringBuilder builder = new StringBuilder();
 		// @formatter:off
 		builder.append(OPEN_BRACKET)
@@ -94,6 +87,22 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 				.append(CLOSE_BRACKET);
 		// @formatter:on
 		return builder.toString();
+	}
+
+	@Override
+	public String union(final String state1, final String state2) {
+		// use the same string as for intersection
+		return product(state1, state2);
+	}
+
+	@Override
+	public String intersection(final String state1, final String state2) {
+		return product(state1, state2);
+	}
+	
+	@Override
+	public String concurrentProduct(String state1, String state2) {
+		return product(state1, state2);
 	}
 
 	@Override

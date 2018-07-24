@@ -134,7 +134,7 @@ public class PredicateFactoryForInterpolantAutomata
 	}
 
 	@Override
-	public IPredicate getContentOnConcurrentProduct(final IPredicate c1, final IPredicate c2) {
+	public IPredicate concurrentProduct(final IPredicate c1, final IPredicate c2) {
 		if (!(c2 instanceof ISLPredicate)) {
 			throw new IllegalArgumentException("has to be predicate with single location");
 		}

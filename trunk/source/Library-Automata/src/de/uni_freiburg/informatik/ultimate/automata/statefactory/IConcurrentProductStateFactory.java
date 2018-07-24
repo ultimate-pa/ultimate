@@ -46,5 +46,5 @@ public interface IConcurrentProductStateFactory<STATE> extends IStateFactory<STA
 	 *            second state
 	 * @return state representing the concurrent product
 	 */
-	STATE getContentOnConcurrentProduct(final STATE state1, final STATE state2);
+	STATE concurrentProduct(final STATE state1, final STATE state2);
 }

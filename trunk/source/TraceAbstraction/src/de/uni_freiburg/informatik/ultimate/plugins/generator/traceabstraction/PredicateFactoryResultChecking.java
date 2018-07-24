@@ -103,7 +103,7 @@ public class PredicateFactoryResultChecking
 	}
 
 	@Override
-	public IPredicate getContentOnConcurrentProduct(final IPredicate c1, final IPredicate c2) {
+	public IPredicate concurrentProduct(final IPredicate c1, final IPredicate c2) {
 		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 

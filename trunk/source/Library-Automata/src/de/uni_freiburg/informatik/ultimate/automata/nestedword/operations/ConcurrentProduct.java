@@ -152,7 +152,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 			}
 			final STATE content1 = state1;
 			final STATE content2 = state2;
-			state = mContentFactory.getContentOnConcurrentProduct(content1, content2);
+			state = mContentFactory.concurrentProduct(content1, content2);
 			mResult.addState(isInitial, isFinal, state);
 			mInputPair2resultState.put(state1, state2, state);
 			mWorklist.enqueue(state1, state2);

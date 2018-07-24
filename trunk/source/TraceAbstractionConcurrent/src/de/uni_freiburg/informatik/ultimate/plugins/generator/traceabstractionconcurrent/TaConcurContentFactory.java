@@ -53,7 +53,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 	}
 	
 	@Override
-	public IPredicate getContentOnConcurrentProduct(final IPredicate c1, final IPredicate c2) {
+	public IPredicate concurrentProduct(final IPredicate c1, final IPredicate c2) {
 		
 		final List<IPredicate> programPoints = new ArrayList<>();
 		final ProdState result = mPredicateFactory.getNewProdState(programPoints);
