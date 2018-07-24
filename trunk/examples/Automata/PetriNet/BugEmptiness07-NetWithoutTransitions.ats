@@ -1,6 +1,6 @@
 // Testfile dumped by Ultimate at 2012/07/21 00:45:34
 
-print(net);
+assert(isEmpty(net));
 
 PetriNet net = (
 	alphabet = {a1 a2 a0 },

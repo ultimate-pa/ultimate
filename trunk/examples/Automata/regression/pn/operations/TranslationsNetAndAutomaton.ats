@@ -8,7 +8,7 @@ assert(isEmpty(difference(a, petriNet2FiniteAutomaton(automaton2Net(a)))));
 assert(isEmpty(difference(petriNet2FiniteAutomaton(automaton2Net(Acontrol)), Acontrol)));
 assert(isEmpty(difference(Acontrol, petriNet2FiniteAutomaton(automaton2Net(Acontrol)))));
 
-print(petriNet2FiniteAutomaton(automaton2Net(a)));
+// print(petriNet2FiniteAutomaton(automaton2Net(a)));
 
 NestedWordAutomaton a = (
   callAlphabet = { },
