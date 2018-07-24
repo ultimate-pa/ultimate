@@ -8,12 +8,8 @@
 		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-Taipan_Default-OldIcfg.epf</option>
 	</rundefinition>
 
-	<rundefinition name="RubberTaipan_OldIcfg">
+	<rundefinition name="RubberTaipan">
 		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-RubberTaipan_Default-OldIcfg.epf</option>
-	</rundefinition>
-
-    <rundefinition name="RubberTaipan_NewIcfg">
-		<option name="-s">../../../trunk/examples/settings/ai/taipanbench/svcomp-Reach-64bit-RubberTaipan_Default-NewIcfg.epf</option>
 	</rundefinition>
 
     <rundefinition name="Taipan_NewIcfg">
