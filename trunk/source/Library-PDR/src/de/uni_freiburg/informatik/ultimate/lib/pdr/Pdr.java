@@ -107,10 +107,25 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 * propagation phase.
 	 */
 	private enum ChangedFrame {
-		CHANGED, UNCHANGED
+	CHANGED, UNCHANGED
+	}
+
+	/**
+	 * How to deal with procedures.
+	 *
+	 * @author Jonas Werner
+	 *
+	 */
+	private enum DealWithProcedures {
+		THROW_EXCEPTION, CONTINUE
 	}
 
 	private static final boolean USE_INTERPOLATION = false;
+
+	/**
+	 * Currently we cannot handle procedures.
+	 */
+	private final DealWithProcedures mDealWithProcedures = DealWithProcedures.THROW_EXCEPTION;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -394,6 +409,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					 * Dealing with procedure calls TODO:
 					 */
 				} else if (predecessorTransition instanceof IIcfgCallTransition) {
+					if (mDealWithProcedures.equals(DealWithProcedures.THROW_EXCEPTION)) {
+						throw new UnsupportedOperationException("Cannot deal with procedures");
+					}
 					result = checkSatCall(predecessorFrame, (ICallAction) predecessorTransition, toBeBlocked);
 					/*
 					 * Query is satisfiable: generate new proofobligation
@@ -427,6 +445,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					 * Dealing with procedure returns TODO:
 					 */
 				} else if (predecessorTransition instanceof IIcfgReturnTransition) {
+					if (mDealWithProcedures.equals(DealWithProcedures.THROW_EXCEPTION)) {
+						throw new UnsupportedOperationException("Cannot deal with procedures");
+					}
 					final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
 					final IcfgLocation pp = returnTrans.getCallerProgramPoint();
 					final List<Pair<ChangedFrame, IPredicate>> callerFrame = mFrames.get(pp);
