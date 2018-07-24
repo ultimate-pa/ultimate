@@ -107,7 +107,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	 * propagation phase.
 	 */
 	private enum ChangedFrame {
-	CHANGED, UNCHANGED
+		CHANGED, UNCHANGED
 	}
 
 	/**
