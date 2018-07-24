@@ -3,7 +3,10 @@
 
 // Reveals bug in unfolding.
 
-assert(numberOfConditions(finitePrefix(ReservoirDogs)) == 8);
+BranchingProcess bp = finitePrefix(ReservoirDogs);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 8);
+
 assert(!isEmpty(ReservoirDogs));
 
 

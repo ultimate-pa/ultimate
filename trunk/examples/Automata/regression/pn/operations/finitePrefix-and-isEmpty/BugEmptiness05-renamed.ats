@@ -1,6 +1,9 @@
 // Testfile dumped by Ultimate at 2011/12/17 15:44:51
 
-assert(numberOfConditions(finitePrefix(net)) == 310);
+BranchingProcess bp = finitePrefix(net);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 230);
+
 assert(isEmpty(net));
 
 PetriNet net = (

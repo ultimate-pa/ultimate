@@ -1,6 +1,9 @@
 // Testfile dumped by Ultimate at 2011/10/29 00:38:52
 
-assert(numberOfConditions(finitePrefix(net)) == 32);
+BranchingProcess bp = finitePrefix(net);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 28);
+
 assert(!isEmpty(net));
 
 //print(net);

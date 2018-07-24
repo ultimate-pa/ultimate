@@ -65,7 +65,7 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 			mLogger.info(startMessage());
 		}
 		final PetriNetUnfolder<LETTER, STATE> unf =
-				new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV, true, false);
+				new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV, false, false);
 		mResult = unf.getFinitePrefix();
 
 		if (mLogger.isInfoEnabled()) {

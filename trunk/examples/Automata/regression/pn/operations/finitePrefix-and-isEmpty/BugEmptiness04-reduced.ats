@@ -3,7 +3,10 @@
 assert(!accepts(net, ["[critical = 0;]141" "[n0 = 0;]89" "[n1 = 1;]323" "[assume true;]60" "[assume true;]38" "[n0 = n1 + 1;]290" "[assume n1 == 0 || n0 < n1;]71" "[assume true;]130" "[n1 = n0 + 1;]229" "[assume n0 == 0 || n1 < n0;]178" "[assume critical == 0;]277" "[critical = 1;]255" "[assume !(critical == 0);]315]"]));
 //[[critical = 0;]141, [n0 = 0;]89, [n1 = 1;]323, [assume true;]60, [assume true;]38, [n0 = n1 + 1;]290, [assume n1 == 0 || n0 < n1;]71, [assume !(critical == 0);]315]
 
-assert(numberOfConditions(finitePrefix(net)) == 27);
+BranchingProcess bp = finitePrefix(net);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 27);
+
 assert(!isEmpty(net));
 
 PetriNet net = (

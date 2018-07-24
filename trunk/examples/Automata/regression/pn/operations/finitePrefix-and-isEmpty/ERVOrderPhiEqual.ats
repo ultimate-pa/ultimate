@@ -11,7 +11,10 @@
 // <_R is the total order suggested in TACAS 1996 paper.
 
 
-assert(numberOfConditions(finitePrefix(equalphi)) == 11);
+BranchingProcess bp = finitePrefix(equalphi);
+print(numberOfConditions(bp));
+assert(numberOfConditions(bp) == 10);
+
 assert(!isEmpty(equalphi));
 
 
