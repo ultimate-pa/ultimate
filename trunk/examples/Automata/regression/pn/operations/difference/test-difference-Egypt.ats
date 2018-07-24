@@ -18,7 +18,7 @@ assert(isEmpty(difference(se7en, all)));
 assert(!isEmpty(difference(NonEmptyNetWithoutTransitions, atLeastOneA)));
 assert(isEmpty(difference(NonEmptyNetWithoutTransitions, all)));
 
-print(difference(se7en, atLeastOneA));
+// print(difference(se7en, atLeastOneA));
 
 PetriNet se7en = (
   alphabet = {a b c},
