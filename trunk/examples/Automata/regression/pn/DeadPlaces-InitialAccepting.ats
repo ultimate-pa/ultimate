@@ -1,0 +1,20 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date:  2018-07-24
+//
+// Net where 
+// * the initial marking is accepting (hence the empty word is accepted) and
+// * some place (here q) does not occur in any accepting run.
+
+assert(!isEmpty(deadPlacesInitialAccepting));
+assert(numberOfConditions(finitePrefix(deadPlacesInitialAccepting)) == 2);
+print(finitePrefix(deadPlacesInitialAccepting));
+
+PetriNet deadPlacesInitialAccepting = (
+  alphabet = {a},
+  places = {p q},
+  transitions = {
+    ({p} a {q})
+  },
+  initialMarking = {p},
+  acceptingPlaces = {p}
+);
