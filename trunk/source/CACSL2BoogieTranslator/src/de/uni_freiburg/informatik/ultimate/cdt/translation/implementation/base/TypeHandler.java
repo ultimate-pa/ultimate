@@ -278,6 +278,10 @@ public class TypeHandler implements ITypeHandler {
 				final String modifiedName =
 						main.mCHandler.getSymbolTable().applyMultiparseRenaming(node.getContainingFilename(), cId);
 				final SymbolTableValue stv = main.mCHandler.getSymbolTable().findCSymbol(node, modifiedName);
+				if (stv == null) {
+					final String msg = "Undefined type " + cId;
+					throw new UnsupportedSyntaxException(loc, msg);
+				}
 				final BoogieType boogieType =
 						mHandlerHandler.getBoogieTypeHelper().getBoogieTypeForCType(stv.getCVariable());
 				// (BoogieType) cType2AstType(loc,
@@ -288,7 +292,7 @@ public class TypeHandler implements ITypeHandler {
 						new CNamed(bId, mDefinedTypes.get(bId).cType));
 			}
 		}
-		final String msg = "Unknown or unsupported type! " + node.toString();
+		final String msg = "Unknown or unsupported type! " + node.getClass();
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
