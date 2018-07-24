@@ -4,7 +4,7 @@
 // Net without accepting places.
 
 assert(isEmpty(noAccepting));
-assert(numberOfConditions(finitePrefix(noAccepting)) == 3);
+assert(numberOfConditions(finitePrefix(noAccepting)) == 2);
 
 PetriNet noAccepting = (
   alphabet = {a},
