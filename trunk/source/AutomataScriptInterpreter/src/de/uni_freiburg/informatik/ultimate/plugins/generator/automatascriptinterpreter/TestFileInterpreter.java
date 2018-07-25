@@ -4,22 +4,22 @@
  * Copyright (C) 2013-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AutomataScriptInterpreter plug-in.
- * 
+ *
  * The ULTIMATE AutomataScriptInterpreter plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AutomataScriptInterpreter plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AutomataScriptInterpreter plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AutomataScriptInterpreter plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -114,28 +114,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  * This is the main class for interpreting automata script test files. It fulfills the following tasks: - Interpreting
  * automata definitions - Type checking the automata script test file - Interpreting the automata script test file -
  * Generation and output of the results
- * 
+ *
  * @author musab@informatik.uni-freiburg.de
  */
 public class TestFileInterpreter implements IMessagePrinter {
 	private static final boolean PRINT_STACK_TRACE_FOR_EXCEPTIONS = true;
-	
+
 	public static final String WRITE = "write";
 	public static final String PRINT = "print";
 	public static final String ASSERT = "assert";
 	private static final int WRITE_ARGUMENTS = 3;
-	
+
 	private static final String ASSERTION_HOLDS_MESSAGE = "Assertion holds.";
 	private static final String ASSERTION_VIOLATED_MESSAGE = "Assertion violated!";
-	
+
 	private static final String ERROR_STRING = "Error: ";
 	private static final String DOES_NOT_EXIST = "\" does not exist";
 	private static final String DIRECTORY = "Directory \"";
-	
+
 	/**
 	 * This enum represents the current flow of the program. It could have the values "NORMAL", "BREAK", "CONTINUE", and
 	 * "RETURN". It is necessary to implement the "continue" and "break" function for loops.
-	 * 
+	 *
 	 * @author musab@informatik.uni-freiburg.de
 	 */
 	enum Flow {
@@ -144,10 +144,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		CONTINUE,
 		RETURN;
 	}
-	
+
 	/**
 	 * Logger severity.
-	 * 
+	 *
 	 * @author musab@informatik.uni-freiburg.de
 	 */
 	public enum LoggerSeverity {
@@ -156,10 +156,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		ERROR,
 		DEBUG
 	}
-	
+
 	/**
 	 * Status how a test case interpretation may have terminated.
-	 * 
+	 *
 	 * @author musab@informatik.uni-freiburg.de
 	 */
 	private enum Finished {
@@ -168,7 +168,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		ERROR,
 		OUTOFMEMORY
 	}
-	
+
 	/**
 	 * Contains the declared variables, automata variables too. It is a map from variable name to the object it
 	 * represents.
@@ -214,7 +214,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private final List<GenericResultAtElement<AtsASTNode>> mResultOfAssertStatements;
 	private final IUltimateServiceProvider mServices;
 	private final boolean mProvideStatisticsResults = true;
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -224,8 +224,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		readPreferences();
-		assert isStatisticsEnumAlphabeticallySorted() :
-				"The entries of enum StatisticsType must be sorted alphabetically for benchmark purposes.";
+		assert isStatisticsEnumAlphabeticallySorted() : "The entries of enum StatisticsType must be sorted alphabetically.";
 		mVariables = new HashMap<>();
 		mFlow = Flow.NORMAL;
 		mAutomataInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
@@ -250,13 +249,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 		mIgnoreOperationsAndExecuteCommandInstead = prefs.getBoolean(PreferenceInitializer.NAME_EXECUTE_COMMAND_FLAG);
 		mCommandToExecute = prefs.getString(PreferenceInitializer.NAME_EXECUTE_COMMAND_STRING);
 	}
-	
+
 	private static String getDateTime() {
 		final DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 		final Date date = new Date();
 		return dateFormat.format(date);
 	}
-	
+
 	/**
 	 * Method to interpret an automatascript test file. The interpretation involves 4 steps.
 	 * <ol>
@@ -265,7 +264,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * <li>Interpret the automatascript test file.</li>
 	 * <li>Report the results to the ILogger and to the web interface.</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param node
 	 *            the root node of the AST
 	 * @return the result of the automatascript test file, which is either an automaton or null.
@@ -292,7 +291,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			reportToUltimate(Severity.ERROR, errorMessage + " Interpretation of testfile cancelled.", "Error", node);
 			interpretationFinished = Finished.ERROR;
 		}
-		
+
 		final AtsASTNode statements;
 		if (mIgnoreOperationsAndExecuteCommandInstead) {
 			final String commandAdapted = substituteAutomataNames(mCommandToExecute, ats.getAutomataDefinitions());
@@ -305,7 +304,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			statements = ats.getStatementList();
 		}
-		
+
 		if (interpretationFinished == Finished.FINISHED) {
 			// Put all defined automata into variables map
 			mVariables.putAll(mAutomataInterpreter.getAutomata());
@@ -326,7 +325,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				errorMessage = e.getLongDescription();
 			}
 		}
-		
+
 		Object result = null;
 		if (interpretationFinished == Finished.FINISHED) {
 			// Interpreting test file
@@ -363,10 +362,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Replaces <tt>$i</tt> by the <tt>i</tt>th automaton name (e.g., <tt>$5</tt> by the fifth automaton name).
-	 * 
+	 *
 	 * @param command
 	 *            input command containing placeholders
 	 * @param automataDefinitions
@@ -401,14 +400,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @return The automaton that was printed last by a print-operation.
 	 */
 	public IAutomaton<String, String> getLastPrintedAutomaton() {
 		return mLastPrintedAutomaton;
 	}
-	
+
 	private Object interpret(final AssignmentExpressionAST as) throws InterpreterException {
 		final List<AtsASTNode> children = as.getOutgoingNodes();
 		final VariableExpressionAST var = (VariableExpressionAST) children.get(0);
@@ -418,12 +417,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 			throw new InterpreterException(as.getLocation(), message);
 		}
 		final Object newValue = interpret(children.get(1));
-		
+
 		if (newValue == null) {
 			final String longDescr = "Var \"" + var.getIdentifier() + "\" is assigned \"null\".";
 			throw new InterpreterException(as.getLocation(), longDescr);
 		}
-		
+
 		final Object oldValue = mVariables.get(var.getIdentifier());
 		final Integer assignValue;
 		switch (as.getOperator()) {
@@ -452,7 +451,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return oldValue;
 	}
-	
+
 	private Object interpret(final AtsASTNode node) throws InterpreterException {
 		Object result = null;
 		if (node instanceof AssignmentExpressionAST) {
@@ -498,7 +497,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-	
+
 	private Object interpret(final BinaryExpressionAST be) throws InterpreterException {
 		final List<AtsASTNode> children = be.getOutgoingNodes();
 		// If the return type is 'String', we just call the toString method of
@@ -511,7 +510,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		final Integer v1 = (Integer) interpret(children.get(0));
 		final Integer v2 = (Integer) interpret(children.get(1));
-		
+
 		switch (be.getOperator()) {
 			case PLUS:
 				return v1 + v2;
@@ -526,13 +525,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 						" BinaryExpression: This type of operator is not supported: " + be.getOperator());
 		}
 	}
-	
+
 	private Object interpret(final BreakStatementAST bst) {
 		// Change the flow
 		mFlow = Flow.BREAK;
 		return null;
 	}
-	
+
 	private Boolean interpret(final ConditionalBooleanExpressionAST cbe) throws InterpreterException {
 		final List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
@@ -548,20 +547,20 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(cbe.getLocation(), message);
 		}
 	}
-	
+
 	private static Object interpret(final ConstantExpressionAST ce) {
 		return ce.getValue();
 	}
-	
+
 	private Object interpret(final ContinueStatementAST cst) {
 		// Change the flow
 		mFlow = Flow.CONTINUE;
 		return null;
 	}
-	
+
 	private Object interpret(final ForStatementAST fs) throws InterpreterException {
 		final List<AtsASTNode> children = fs.getOutgoingNodes();
-		
+
 		// If the loop condition is missing, we just execute the loop forever
 		final boolean loopForever = children.get(0) == null;
 		// execute the initialization statement, if one is existing
@@ -594,10 +593,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-	
+
 	private Object interpret(final IfElseStatementAST is) throws InterpreterException {
 		final List<AtsASTNode> children = is.getOutgoingNodes();
-		
+
 		// children(0) is the condition
 		if ((Boolean) interpret(children.get(0))) {
 			interpret(children.get(1));
@@ -606,7 +605,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-	
+
 	private Object interpret(final IfStatementAST is) throws InterpreterException {
 		final List<AtsASTNode> children = is.getOutgoingNodes();
 		if ((Boolean) interpret(children.get(0))) {
@@ -616,21 +615,21 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-	
+
 	private static NestedWord<String> interpret(final NestedwordAST nw) {
 		return new NestedWord<>(nw.getWordSymbols(), nw.getNestingRelation());
 	}
-	
+
 	private static NestedLassoWord<String> interpret(final NestedLassowordAST nw) {
 		final NestedWord<String> stem = interpret(nw.getStem());
 		final NestedWord<String> loop = interpret(nw.getLoop());
 		return new NestedLassoWord<>(stem, loop);
 	}
-	
+
 	private static Tree<StringRankedLetter> interpret(final TreeAST t) {
 		return t.getTree();
 	}
-	
+
 	private Object interpret(final OperationInvocationExpressionAST oe) throws InterpreterException {
 		final List<AtsASTNode> children = oe.getOutgoingNodes();
 		if (children.size() != 1) {
@@ -648,7 +647,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		for (final AtsASTNode node : argsToInterpret) {
 			arguments.add(interpret(node));
 		}
-		
+
 		Object result = null;
 		if (oe.getOperationName().equalsIgnoreCase(ASSERT) && arguments.size() == 1) {
 			result = executeAssertMethod(oe, arguments);
@@ -661,7 +660,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-	
+
 	private Object executeLibraryMethod(final OperationInvocationExpressionAST oe, final ArrayList<Object> arguments,
 			final Object result) throws InterpreterException {
 		final SimpleTimer timer = new SimpleTimer();
@@ -699,7 +698,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-	
+
 	private void executeWriteMethod(final OperationInvocationExpressionAST oe, final List<AtsASTNode> children,
 			final ArrayList<Object> arguments) throws InterpreterException {
 		if (arguments.size() != WRITE_ARGUMENTS) {
@@ -720,7 +719,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename,
 				format, "output according to \"write\" command", automaton);
 	}
-	
+
 	private void executePrintMethod(final OperationInvocationExpressionAST oe, final List<AtsASTNode> children,
 			final ArrayList<Object> arguments) throws InterpreterException {
 		final String argsAsString = children.get(0).getAsString();
@@ -769,7 +768,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			mPrintWriter.println(text);
 		}
 	}
-	
+
 	private Object executeAssertMethod(final OperationInvocationExpressionAST oe, final ArrayList<Object> arguments)
 			throws AssertionError {
 		Object result;
@@ -789,7 +788,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-	
+
 	private Boolean interpret(final RelationalExpressionAST re) throws InterpreterException {
 		final List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
@@ -815,7 +814,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-	
+
 	private Object interpret(final ReturnStatementAST rst) throws InterpreterException {
 		final List<AtsASTNode> children = rst.getOutgoingNodes();
 		// Change the flow
@@ -825,20 +824,20 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return interpret(children.get(0));
 	}
-	
+
 	private Object interpret(final StatementListAST stmtList) throws InterpreterException {
 		for (final AtsASTNode stmt : stmtList.getOutgoingNodes()) {
 			interpret(stmt);
 		}
 		return null;
 	}
-	
+
 	private Integer interpret(final UnaryExpressionAST ue) throws InterpreterException {
 		final List<AtsASTNode> children = ue.getOutgoingNodes();
-		
+
 		final VariableExpressionAST var = (VariableExpressionAST) children.get(0);
 		final Integer oldVal = (Integer) interpret(var);
-		
+
 		switch (ue.getOperator()) {
 			case EXPR_PLUSPLUS:
 				mVariables.put(var.getIdentifier(), oldVal + 1);
@@ -858,14 +857,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 				throw new InterpreterException(ue.getLocation(), message);
 		}
 	}
-	
+
 	private Object interpret(final VariableDeclarationAST vd) throws InterpreterException {
 		final List<AtsASTNode> children = vd.getOutgoingNodes();
 		Object value = null;
 		if (children.size() == 1) {
 			value = interpret(children.get(0));
 		}
-		
+
 		for (final String id : vd.getIdentifiers()) {
 			if (value == null) {
 				final String longDescr = "Var \"" + id + "\" is assigned \"null\".";
@@ -875,7 +874,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-	
+
 	private Object interpret(final VariableExpressionAST v) throws InterpreterException {
 		if (!mVariables.containsKey(v.getIdentifier())) {
 			final String longDescr = "Variable \"" + v.getIdentifier() + "\" was not declared before.";
@@ -883,7 +882,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return mVariables.get(v.getIdentifier());
 	}
-	
+
 	private Object interpret(final WhileStatementAST ws) throws InterpreterException {
 		final List<AtsASTNode> children = ws.getOutgoingNodes();
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
@@ -910,7 +909,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Reports the results of assert statements to the ILogger and to Ultimate as a GenericResult.
 	 */
@@ -953,7 +952,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		reportToLogger(loggerSeverity, result.getLongDescription());
 	}
-	
+
 	@Override
 	public void printMessage(final Severity severityForResult, final LoggerSeverity severityForLogger,
 			final String longDescr,
@@ -961,10 +960,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		reportToUltimate(severityForResult, longDescr, shortDescr, node);
 		reportToLogger(severityForLogger, longDescr);
 	}
-	
+
 	/**
 	 * Reports the given string with the given severity to Ultimate as a GenericResult.
-	 * 
+	 *
 	 * @param sev
 	 *            the severity
 	 * @param longDescr
@@ -983,10 +982,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
-	
+
 	/**
 	 * Reports the given string with the given severity to the logger.
-	 * 
+	 *
 	 * @param sev
 	 *            the severity of the string
 	 * @param toPrint
@@ -1009,11 +1008,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 				break;
 		}
 	}
-	
+
 	/**
 	 * Gets an object of an automata operation indicated by OperationInvocationExpression, if the operation exists and
 	 * all arguments have correct type. Otherwise it returns null.
-	 * 
+	 *
 	 * @param oe
 	 *            the automata operation
 	 * @param arguments
@@ -1024,7 +1023,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * @throws UnsupportedOperationException
 	 *             if the operation does not exist
 	 */
-	
+
 	@SuppressWarnings("unchecked")
 	private IOperation<String, String, ? super StringFactory> getAutomataOperation(
 			final OperationInvocationExpressionAST oe, final List<Object> arguments) throws InterpreterException {
@@ -1101,13 +1100,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Prepend {@link AutomataLibraryServices} and possibly {@link IStateFactory} to args.
 	 * <p>
 	 * By convention, every operation has a first argument of type {@link AutomataLibraryServices}. If an operation has
 	 * an argument of type {@link IStateFactory}, it must come second.
-	 * 
+	 *
 	 * @return fresh list of arguments with additional arguments prepended
 	 */
 	private Object[] prependAutomataLibraryServicesAndStateFactoryIfNeeded(final Constructor<?> c,
@@ -1115,7 +1114,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		assert isServicesFirstArgument(c.getParameterTypes());
 		final boolean isStateFactorySecondArgument = isStateFactorySecondArgument(c.getParameterTypes());
 		final int totalNumberOfArgs = arguments.size() + (isStateFactorySecondArgument ? 2 : 1);
-		
+
 		final List<Object> list = new ArrayList<>(totalNumberOfArgs);
 		list.add(new AutomataLibraryServices(mServices));
 		if (isStateFactorySecondArgument) {
@@ -1124,7 +1123,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		list.addAll(arguments);
 		return list.toArray();
 	}
-	
+
 	private static boolean isServicesFirstArgument(final Class<?>[] argsClasses) {
 		if (argsClasses.length < 1) {
 			// no argument at all, i.e., no services
@@ -1132,7 +1131,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return AutomataLibraryServices.class.isAssignableFrom(argsClasses[0]);
 	}
-	
+
 	private static boolean isStateFactorySecondArgument(final Class<?>[] argsClasses) {
 		if (argsClasses.length < 1) {
 			// no argument at all, i.e., no state factory
@@ -1140,7 +1139,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return IStateFactory.class.isAssignableFrom(argsClasses[1]);
 	}
-	
+
 	private static boolean isNoStateFactoryAfterSecondArgument(final Class<?>[] argsClasses) {
 		for (int i = 2; i < argsClasses.length; i++) {
 			if (IStateFactory.class.isAssignableFrom(argsClasses[i])) {
@@ -1149,10 +1148,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Checks if all arguments have the correct type.
-	 * 
+	 *
 	 * @param c
 	 *            The constructor of the operation class.
 	 * @param arguments
@@ -1174,12 +1173,12 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Finds all automata operations implementing the IOperation interface. It maps the operation names to set of class
 	 * objects, because there may exist different classes for the same operation. E.g. accepts-operation for
 	 * NestedWordAutomata and accepts-operations for PetriNets
-	 * 
+	 *
 	 * @return A map from class names to set of class objects from classes found in the directories.
 	 */
 	private Map<String, Set<Class<?>>> getOperationClasses() {
@@ -1197,7 +1196,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		};
 		for (final String packageName : packages) {
 			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
-			
+
 			for (final File file : files) {
 				final String filename = file.getName();
 				final boolean wasOperation = addClassIfOperation(result, packageName, file, filename);
@@ -1208,7 +1207,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-	
+
 	private boolean addClassIfOperation(final Map<String, Set<Class<?>>> result, final String packageName,
 			final File file, final String filename) {
 		if (!filename.endsWith(".class")) {
@@ -1224,7 +1223,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (!classImplementsIOperationInterface(clazz)) {
 			return false;
 		}
-		
+
 		final String opName = IOperation.computeOperationName((Class<? extends IOperation>) clazz);
 		Set<Class<?>> set = result.get(opName);
 		if (set == null) {
@@ -1246,7 +1245,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return clazz;
 	}
-	
+
 	/**
 	 * Tries to resolve the fully qualified name from the package name and the found file.
 	 * If the package is a.b.c.d and we found a class with the path /foo/bar/a/b/c/d/huh/OurClass.class, then the fully
@@ -1255,29 +1254,29 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private static String getQualifiedNameFromFile(final String packageName, final File file) {
 		assert file != null;
 		assert file.getName().endsWith(".class");
-		
+
 		final String fullname = file.getAbsolutePath();
 		final String filenameWithoutSuffix = fullname.substring(0, fullname.length() - 6);
 		final String knownPath = getPathFromPackageName(packageName);
 		final int validAfter = filenameWithoutSuffix.indexOf(knownPath);
 		assert validAfter != -1;
-		
+
 		return filenameWithoutSuffix.substring(validAfter).replace(File.separatorChar, '.');
 	}
-	
+
 	private static String getPathFromPackageName(final String packageName) {
 		return packageName.replace(".", File.separator);
 	}
-	
+
 	private static boolean classIsAbstract(final Class<?> clazz) {
 		return Modifier.isAbstract(clazz.getModifiers());
 	}
-	
+
 	/**
 	 * Checks if the given class object implements the IOperation interface.
 	 * <p>
 	 * The check also checks whether a superclass implements the interface.
-	 * 
+	 *
 	 * @param clazzIn
 	 *            the class object to check
 	 * @return true if and only if the class object c implements the IOperation interface. Otherwise false.
@@ -1295,7 +1294,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} while ((clazz = clazz.getSuperclass()) != null);
 		return false;
 	}
-	
+
 	/**
 	 * Return the filenames of the files in the given directory. We use the classloader to get the URL of this folder.
 	 * We support only URLs with protocol <i>file</i> and <i>bundleresource</i>. At the moment these are the only ones
@@ -1329,7 +1328,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return resolveDirectories(Arrays.asList(dirFile));
 	}
-	
+
 	private static Collection<File> resolveDirectories(final Collection<File> files) {
 		final ArrayDeque<File> worklist = new ArrayDeque<>();
 		final ArrayList<File> rtr = new ArrayList<>();
@@ -1344,24 +1343,28 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return rtr;
 	}
-	
+
 	private static boolean isStatisticsEnumAlphabeticallySorted() {
 		final StatisticsType[] values = StatisticsType.values();
 		for (int i = 1; i < values.length; ++i) {
 			if (values[i - 1].toString().compareTo(values[i].toString()) > 0) {
+				final StatisticsType tooLate = values[i];
+				final StatisticsType tooEarly = values[i - 1];
+				assert false : "The entries of enum StatisticsType are not sorted alphabetically. Too late: " + tooLate
+						+ " too early: " + tooEarly;
 				return false;
 			}
 		}
 		return true;
 	}
-	
+
 	private static class SimpleTimer {
 		private final long mStartTime;
-		
+
 		public SimpleTimer() {
 			mStartTime = System.nanoTime();
 		}
-		
+
 		/**
 		 * @return Time difference of the timer between start and now.
 		 */
