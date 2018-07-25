@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.InhibitorTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 
 /**
@@ -147,12 +146,12 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 * @return true, if the marking enables the specified transition.
 	 */
 	public boolean isTransitionEnabled(final ITransition<S, C> transition) {
-		if (transition instanceof InhibitorTransition<?, ?>) {
-			final InhibitorTransition<S, C> it = (InhibitorTransition<S, C>) transition;
-			if (containsAny(it.getInhibitors())) {
-				return false;
-			}
-		}
+//		if (transition instanceof InhibitorTransition<?, ?>) {
+//			final InhibitorTransition<S, C> it = (InhibitorTransition<S, C>) transition;
+//			if (containsAny(it.getInhibitors())) {
+//				return false;
+//			}
+//		}
 		return mPlaces.containsAll(transition.getPredecessors());
 	}
 
