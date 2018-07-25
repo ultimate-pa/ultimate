@@ -1,6 +1,6 @@
 // Testfile dumped by Ultimate at 2012/08/06 16:36:47
 
-print(finitePrefix2PetriNet( finitePrefix( net) ));
+print(finitePrefix2PetriNet( finitePrefix( net, true) ));
 //print(finitePrefix( net));
 //print(net);
 
@@ -9,7 +9,7 @@ print(finitePrefix2PetriNet( finitePrefix( net) ));
 
 PetriNet net = (
 	alphabet = {a2 a1 kandel feldberg a3 a4 schauinsland brend },
-	places = {"#478#Thread0EXIT0" "#479#Thread1EXIT0" "#476#L550" "#477#L350" "#474#L590" "#475#L390" p13 "#473#L32loopEntry0" p10 fin1 p12 xxxx p3 p7 p6 p4 "#493#L540" p5  "#494#L340" p1 "#488#Thread0FINAL0" p0 yyyy p8 "#484#Thread1FINAL0" xxxx yyy p11 fin0 p9 t },
+	places = {"#478#Thread0EXIT0" "#479#Thread1EXIT0" "#476#L550" "#477#L350" "#474#L590" "#475#L390" p13 "#473#L32loopEntry0" p10 fin1 xxxx p3 p7 p6 p4 "#493#L540" p5  "#494#L340" p1 "#488#Thread0FINAL0" p0 yyyy p8 "#484#Thread1FINAL0" yyy p11 fin0 p9 t },
 	transitions = {
 		( { p4 } a1 { p7 } )
 		( {t p7 } kandel {t p7 } )

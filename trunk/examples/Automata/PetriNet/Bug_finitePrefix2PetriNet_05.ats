@@ -2,13 +2,13 @@
 
 //print(net);
 //print(finitePrefix( net));
-print(finitePrefix2PetriNet( finitePrefix( net) ));
+print(finitePrefix2PetriNet( finitePrefix( net, true) ));
 
 //d c telefo b rat c telefo
 
 PetriNet net = (
 	alphabet = { b c d rat kartoffel bratwurst "assume !true;0" geraet a1 telefo "critical = 1;0" a1 "flag1 = 0;0" "flag0 = 1;0" geraet "turn = 1;0" geraet "critical = 1;0" telefo "assume !(critical ==...0" "assume flag1 == 0 ||...0" "assume !true;0" "flag0 = 0;0" a1 geraet geraet "assume !(critical ==...0" "assume flag0 == 0 ||...0" "turn = 0;0" "flag1 = 1;0" },
-	places = {"#478#Thread0EXIT0" "#479#Thread1EXIT0" fin zzzz eee hhh "#472#L52loopEntry0" p8 p8 fin hhh ddd p3 p7 p6 p4 eeee p5  xxxx p1 "#488#Thread0FINAL0" p0 yyy yyyy "#484#Thread1FINAL0" xxxx xxxx fffff dddd xxx ggg },
+	places = {"#478#Thread0EXIT0" "#479#Thread1EXIT0" fin zzzz eee "#472#L52loopEntry0" p8 hhh ddd p3 p7 p6 p4 eeee p5  xxxx p1 "#488#Thread0FINAL0" p0 yyy yyyy "#484#Thread1FINAL0" fffff dddd xxx ggg },
 	transitions = {
 		( {p8 } rat {yyyy } )
 		( {ggg p7 } telefo {p8 p7 } )
