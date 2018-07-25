@@ -34,6 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -41,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Petri net unfolder.
@@ -55,7 +56,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * @param <C>
  *            place content type
  */
-public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetriNet2FiniteAutomatonStateFactory<C>> {
+public final class PetriNetUnfolder<S, C> {
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
+	
 	private final IPetriNet<S, C> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
@@ -65,6 +69,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	private PetriNetRun<S, C> mRun;
 
 	private final PetriNetUnfolder<S, C>.Statistics mStatistics = new Statistics();
+
 
 	/**
 	 * Build the finite Prefix of PetriNet net.
@@ -82,11 +87,14 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	public PetriNetUnfolder(final AutomataLibraryServices services, final BoundedPetriNet<S, C> operand,
 			final UnfoldingOrder order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException {
-		super(services);
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mStopIfAcceptingRunFound = stopIfAcceptingRunFound;
 		mSameTransitionCutOff = sameTransitionCutOff;
-		mLogger.info(startMessage());
+		mLogger.debug("Start unfolding. Net " + mOperand.sizeInformation()
+				+ (mStopIfAcceptingRunFound ? "We stop if some accepting run was found"
+						: "We compute complete finite Prefix"));
 		switch (order) {
 			case KMM:
 				mOrder = new McMillanOrder<>();
@@ -104,25 +112,12 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		mPossibleExtensions = new PossibleExtensions<>(mUnfolding, mOrder);
 
 		computeUnfolding();
-		mLogger.info(exitMessage());
 		mLogger.info(mStatistics.cutOffInformation());
 		mLogger.info(mStatistics.coRelationInformation());
 	}
 
 	public PetriNetUnfolder<S, C>.Statistics getUnfoldingStatistics() {
 		return mStatistics;
-	}
-
-	@Override
-	public String startMessage() {
-		return "Start " + getOperationName() + ". Net " + mOperand.sizeInformation() + (mStopIfAcceptingRunFound
-				? "We stop if some accepting run was found"
-				: "We compute complete finite Prefix");
-	}
-
-	@Override
-	public String exitMessage() {
-		return "Finished " + getOperationName() + ". Result " + mUnfolding.sizeInformation();
 	}
 
 	private void computeUnfolding() throws AutomataOperationCanceledException {
@@ -149,7 +144,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 				return;
 			}
 
-			if (isCancellationRequested()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 		}
@@ -265,17 +260,11 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		}
 	}
 
-	@Override
-	protected IPetriNet<S, C> getOperand() {
-		return mOperand;
-	}
 
-	@Override
 	public BranchingProcess<S, C> getResult() {
 		return mUnfolding;
 	}
 
-	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
 			throws AutomataOperationCanceledException {
 		mLogger.info("Testing correctness of emptinessCheck");
