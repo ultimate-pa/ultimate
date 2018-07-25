@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,16 +45,21 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
 /**
+ * Given a Petri net N and an finite automaton A over the same alphabet.
+ * The language of the {@link PrefixProduct} is the set of all words w such that
+ * <ul>
+ * <li> w is the interleaving of two words w_N and w_A such that
+ * <li> there is a run of N over w_N
+ * <li> there is a run of A over w_A
+ * <li> w_A is accepted by A or w_N is accepted by N
+ * </ ul>
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
- *            symbol type
- * @param <C>
- *            state/content type
  * @param <CRSF>
  *            check result state factory type
  */
@@ -70,16 +75,6 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	private final Map<S, Collection<ITransition<S, C>>> mSymbol2netTransitions = new HashMap<>();
 	private final Map<S, Collection<AutomatonTransition>> mSymbol2nwaTransitions = new HashMap<>();
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            operand
-	 * @param nwa
-	 *            nested word automaton
-	 */
 	public PrefixProduct(final AutomataLibraryServices services, final BoundedPetriNet<S, C> operand,
 			final INestedWordAutomaton<S, C> nwa) {
 		super(services);
