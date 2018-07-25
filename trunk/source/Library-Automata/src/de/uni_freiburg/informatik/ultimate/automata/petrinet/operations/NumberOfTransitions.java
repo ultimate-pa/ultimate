@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Operation that returns the number of places of a Petri net.
+ * Operation that returns the number of transitions of a Petri net.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <PLACE>
  *            place type
  */
-public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
+public class NumberOfTransitions<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
 	private final IPetriNet<LETTER, PLACE> mOperand;
 
 	/**
@@ -51,7 +51,7 @@ public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLA
 	 * @param operand
 	 *            operand
 	 */
-	public NumberOfPlaces(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand) {
+	public NumberOfTransitions(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand) {
 		super(services);
 		mOperand = operand;
 	}
@@ -63,6 +63,6 @@ public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLA
 
 	@Override
 	public Integer getResult() {
-		return mOperand.getPlaces().size();
+		return mOperand.getTransitions().size();
 	}
 }
