@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.petruchio;
 
 import java.util.ArrayList;
 import java.util.Collection;
