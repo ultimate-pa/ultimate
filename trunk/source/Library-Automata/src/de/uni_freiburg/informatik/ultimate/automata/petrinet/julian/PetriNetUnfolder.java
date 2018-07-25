@@ -69,10 +69,6 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	/**
 	 * Build the finite Prefix of PetriNet net.
 	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            Petri net
 	 * @param order
 	 *            the order on events and configurations respectively is used to determine cut-off events.
 	 * @param sameTransitionCutOff
@@ -111,6 +107,10 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		mLogger.info(exitMessage());
 		mLogger.info(mStatistics.cutOffInformation());
 		mLogger.info(mStatistics.coRelationInformation());
+	}
+
+	public PetriNetUnfolder<S, C>.Statistics getUnfoldingStatistics() {
+		return mStatistics;
 	}
 
 	@Override
@@ -303,9 +303,6 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 		return correct;
 	}
 
-	/**
-	 * Run and condition marking.
-	 */
 	class RunAndConditionMarking {
 		private final PetriNetRun<S, C> mRunInner;
 		private final ConditionMarking<S, C> mMarking;
@@ -319,15 +316,11 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	/**
 	 * FIXME documentation.
 	 */
-	private class Statistics {
+	public class Statistics {
 		private final Map<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>> mTrans2Mark2Events = new HashMap<>();
 		private int mCutOffEvents;
 		private int mNonCutOffEvents;
 
-		/**
-		 * @param event
-		 *            Event to add.
-		 */
 		public void add(final Event<S, C> event) {
 			final Marking<S, C> marking = event.getMark();
 			final ITransition<S, C> transition = event.getTransition();
@@ -360,18 +353,25 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 			}
 		}
 
-		/**
-		 * @return Cut-off information.
-		 */
 		public String cutOffInformation() {
 			return "has " + mCutOffEvents + " CutOffEvents and " + mNonCutOffEvents + " nonCutOffEvents";
 		}
 
-		/**
-		 * @return Co-relation information.
-		 */
 		public String coRelationInformation() {
 			return "co relation was queried " + mUnfolding.getCoRelationQueries() + " times.";
 		}
+
+		public int getCoRelationQueries() {
+			return mUnfolding.getCoRelationQueries();
+		}
+
+		public int getCutOffEvents() {
+			return mCutOffEvents;
+		}
+
+		public int getNonCutOffEvents() {
+			return mNonCutOffEvents;
+		}
+
 	}
 }
