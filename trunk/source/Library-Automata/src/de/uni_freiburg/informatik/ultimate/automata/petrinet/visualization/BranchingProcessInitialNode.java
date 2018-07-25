@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 

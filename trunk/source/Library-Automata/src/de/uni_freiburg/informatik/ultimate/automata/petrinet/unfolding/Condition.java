@@ -25,13 +25,13 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 
 /**
  * A condition.

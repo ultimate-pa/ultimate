@@ -25,12 +25,13 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayList;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * Represents an incomplete Event. A <i>Candidate</i> consists of

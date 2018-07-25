@@ -29,7 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * An inhibitor transition.

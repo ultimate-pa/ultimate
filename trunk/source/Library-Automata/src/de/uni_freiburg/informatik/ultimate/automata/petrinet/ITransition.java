@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
+
 /**
  * A Petri net transition interface.
  * 

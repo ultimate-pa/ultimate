@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.increm
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**

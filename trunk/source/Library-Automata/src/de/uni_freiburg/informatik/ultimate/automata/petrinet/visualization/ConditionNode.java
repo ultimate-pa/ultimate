@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 

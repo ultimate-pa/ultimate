@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 /**
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)

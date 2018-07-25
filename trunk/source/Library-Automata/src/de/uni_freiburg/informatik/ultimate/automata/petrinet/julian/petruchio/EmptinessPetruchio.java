@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import petruchio.cov.Backward;
 import petruchio.cov.SimpleList;
@@ -116,7 +116,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 		// construct the following target:
 		// at least one of { {p_j} | p_j \in P accepting } is coverable
 		final Collection<Map<Place, Integer>> targets = new ArrayList<>();
-		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<C> pAcceptingBounded : mBoundedNet
+		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place<C> pAcceptingBounded : mBoundedNet
 				.getAcceptingPlaces()) {
 			// construct single target pAccepting >= 1
 			final Place pAcceptingPetruchio = mPetruchio.getpBounded2pPetruchio().get(pAcceptingBounded);

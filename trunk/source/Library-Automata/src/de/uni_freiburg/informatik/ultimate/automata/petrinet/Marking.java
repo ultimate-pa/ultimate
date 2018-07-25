@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.InhibitorTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 
 /**
  * A marking of a Petri Net which is a set of places.

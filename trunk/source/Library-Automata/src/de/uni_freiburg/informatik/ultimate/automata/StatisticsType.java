@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaSimulationBased;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 
 /**
  * Type of statistics that can be reported to the

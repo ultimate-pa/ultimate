@@ -32,9 +32,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Event;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**

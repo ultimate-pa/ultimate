@@ -27,7 +27,7 @@
  * to convey the resulting work.
  */
 /**
- * Basic implementation of a Petri net.
+ * Package is deprecated
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)

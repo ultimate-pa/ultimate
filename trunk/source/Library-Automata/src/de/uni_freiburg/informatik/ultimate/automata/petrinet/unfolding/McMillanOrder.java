@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
+package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 /**
  * Naive order used by McMillan.
