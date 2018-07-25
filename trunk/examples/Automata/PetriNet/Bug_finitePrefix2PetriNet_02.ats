@@ -1,6 +1,6 @@
 // Testfile dumped by Ultimate at 2012/08/06 16:36:47
 
-print(finitePrefix2PetriNet( finitePrefix( net) ));
+print(finitePrefix2PetriNet( finitePrefix( net, true) ));
 
 PetriNet net = (
 	alphabet = {"assume !true;0" "assume true;0" "critical = 0;0" "assume critical == 0...0" "critical = 1;0" "critical = 0;0" "flag1 = 0;0" "flag0 = 1;0" "assume true;0" "turn = 1;0" "assume true;0" "critical = 1;0" "assume critical == 0...0" "assume !(critical ==...0" "assume flag1 == 0 ||...0" "assume !true;0" "flag0 = 0;0" "critical = 0;0" "assume true;0" "assume true;0" "assume !(critical ==...0" "assume flag0 == 0 ||...0" "turn = 0;0" "flag1 = 1;0" },

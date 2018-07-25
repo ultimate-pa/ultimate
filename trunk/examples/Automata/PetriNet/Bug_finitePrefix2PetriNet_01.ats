@@ -2,7 +2,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 
-print(finitePrefix2PetriNet( finitePrefix( se7en) ));
+print(finitePrefix2PetriNet( finitePrefix( se7en, true) ));
 
 
 PetriNet se7en = (
