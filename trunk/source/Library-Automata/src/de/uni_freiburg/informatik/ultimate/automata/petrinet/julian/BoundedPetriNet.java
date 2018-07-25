@@ -214,7 +214,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	private void checkContentUniqueness(final C content) {
 		final boolean wasNew = mContents.add(content);
 		if (!wasNew) {
-			throw new IllegalArgumentException("Content was already used: " + content);
+			throw new IllegalArgumentException("Must not add the same place twice: " + content);
 		}
 	}
 
