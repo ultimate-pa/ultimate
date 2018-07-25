@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.Nwa
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriterToStringWithHash;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaWriterUniqueId;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToString;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToStringWithUniqueNumber;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterUniqueId;
