@@ -11,7 +11,7 @@
 		<option name="-s">../../../trunk/examples/settings/Pdr/AutomizerBpl-pdr-z3.epf</option>
 	</rundefinition>
 
-    <rundefinition name="Automizer PDR z3">
+    <rundefinition name="Automizer PDR smtinterpol">
 		<option name="-s">../../../trunk/examples/settings/Pdr/AutomizerBpl-pdr-smtinterpol.epf</option>
 	</rundefinition>
     
