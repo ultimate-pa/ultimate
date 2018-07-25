@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaSimulationBased;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 
 /**
  * Type of statistics that can be reported to the
@@ -205,6 +206,19 @@ public enum StatisticsType {
 	 */
 	NUMBER_CLAUSES,
 	/**
+	 * Number of conditions in a {@link BranchingProcess}.
+	 */
+	NUMBER_CONDITIONS,
+	/**
+	 * Number of pairs of conditions for which we checked whether they are in co-relation while computing the
+	 * unfolding of a Petri net.
+	 */
+	NUMBER_CO_RELATION_QUERIES,
+	/**
+	 * Number of cut-off events in Petri net unfolding.
+	 */
+	NUMBER_CUT_OFF_EVENTS,
+	/**
 	 * Number of pairs in a preprocessing.
 	 */
 	NUMBER_INITIAL_PAIRS,
@@ -212,6 +226,10 @@ public enum StatisticsType {
 	 * Number of pairs in a preprocessing for PMax-SAT solver.
 	 */
 	NUMBER_INITIAL_PAIRS_PMAXSAT,
+	/**
+	 * Number of events in Petri net unfolding that are not cut-off events.
+	 */
+	NUMBER_NON_CUT_OFF_EVENTS,
 	/**
 	 * Number of pairs in a result.
 	 */
