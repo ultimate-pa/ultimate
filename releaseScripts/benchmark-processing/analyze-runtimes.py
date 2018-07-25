@@ -11,6 +11,7 @@ import traceback
 import urllib
 
 import os
+import re
 
 
 class LogLine:
@@ -57,7 +58,7 @@ class LogLine:
             return self.__str__()
 
     def construct_simple_str(self):
-        return str(self.timedelta) + ' ' + self.line
+        return str(self.timedelta).ljust(20) + ' ' + self.line
 
 
 class MyMatch:
@@ -94,8 +95,11 @@ def parse_args():
     argparser = argparse.ArgumentParser(description="Analyze a single Ultimate log file")
     argparser.add_argument('-f', '--file', metavar='file', required=True, help='The Ultimate log file')
     argparser.add_argument('-t', '--time-bound', type=int, dest='time_bound', metavar='seconds',
-                           help='Show log lines with a time delta larger than this number in seconds (Default: 100)',
-                           default=100)
+                           help='Match log lines with a time delta larger than this number in seconds',
+                           default=0)
+    argparser.add_argument('-m', '--message', dest='message', metavar='regex',
+                           help='Match log lines whose message matches this regex',
+                           default=None)
     argparser.add_argument('-A', '--after', type=int, dest='lines_after', metavar='count',
                            help='Show additional log lines after a match (Default: 0)',
                            default=0)
@@ -118,22 +122,53 @@ def log_lines(file):
             last_log_line = current_log_line
 
 
+def reduce_and(arg, funs):
+    for fun in funs:
+        if not fun(arg):
+            return False
+    return True
+
+
+def create_match_predicate(args):
+    rtr = []
+    if args.time_bound > 0:
+        rtr += [lambda x: x.timedelta.total_seconds() > args.time_bound]
+    if args.message is not None:
+        matcher = re.compile(args.message)
+        rtr += [lambda x: matcher.match(x.message)]
+    if not rtr:
+        return lambda x: True
+    if len(rtr) == 1:
+        return rtr[0]
+
+    return lambda x: all([func(x) for func in rtr])
+
+
 def main():
     args = parse_args()
     log = log_lines(args.file)
     save_lines_before = args.lines_before if args.lines_before > 0 else 1
     past_buffer = collections.deque(maxlen=save_lines_before)
     matches = []
+    time_total = datetime.timedelta()
+    time_matches = datetime.timedelta()
+    match_predicate = create_match_predicate(args)
     for i in log:
+        # print matches
         for m in matches:
             if not m.add_line_after(i):
                 m.print_match()
                 matches.remove(m)
-
-        if i.timedelta.total_seconds() > args.time_bound:
+        # create new matches
+        if match_predicate(i):
             matches += [MyMatch(i, past_buffer, args.lines_before, args.lines_after)]
+            time_matches += i.timedelta
 
+        time_total += i.timedelta
         past_buffer.append(i)
+
+    print('Total time: {}'.format(time_total))
+    print('Match time: {}'.format(time_matches))
 
 
 if __name__ == "__main__":
