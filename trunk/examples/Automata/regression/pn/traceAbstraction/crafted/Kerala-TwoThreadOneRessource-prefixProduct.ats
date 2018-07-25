@@ -1,6 +1,6 @@
 // Author: heizmann@informatik.uni-freiburg.de,  Date: 5.6.2011
 
-// Modified version of TwoThreadOneRessource-difference.fat
+// Modified version of TwoThreadOneRessource-difference.ats
 // Removed all transitions to accepting states and replaced 
 // difference by prefixProduct.
 
@@ -53,9 +53,9 @@ NestedWordAutomaton lockModel = (
   callAlphabet = {},
   internalAlphabet = {"1request" "1assume2crit" "1release" "2request" "2assume1crit" "2release"},
   returnAlphabet = {},
-  states = {"free" "reserved" "false"},
+  states = {"free" "reserved" "lockFalse"},
   initialStates = {"free"},
-  finalStates = {"false"},
+  finalStates = {"lockFalse"},
   callTransitions = {},
   internalTransitions = {
 	("free" "1request" "reserved")
@@ -64,18 +64,18 @@ NestedWordAutomaton lockModel = (
 	("free" "2release" "free")
 	("free" "1assume2crit" "free")
 	("free" "2assume1crit" "free")
-//	("reserved" "1request" "false")
-//	("reserved" "2request" "false")
+//	("reserved" "1request" "lockFalse")
+//	("reserved" "2request" "lockFalse")
 	("reserved" "1release" "free")
 	("reserved" "2release" "free")
 	("reserved" "1assume2crit" "reserved")
 	("reserved" "2assume1crit" "reserved")
-//	("false" "1request" "false")
-//	("false" "2request" "false")
-//	("false" "1release" "false")
-//	("false" "2release" "false")
-//	("false" "1assume2crit" "false")
-//	("false" "2assume1crit" "false")
+//	("lockFalse" "1request" "lockFalse")
+//	("lockFalse" "2request" "lockFalse")
+//	("lockFalse" "1release" "lockFalse")
+//	("lockFalse" "2release" "lockFalse")
+//	("lockFalse" "1assume2crit" "lockFalse")
+//	("lockFalse" "2assume1crit" "lockFalse")
 	}, 
   returnTransitions = {}
 );
@@ -85,29 +85,29 @@ NestedWordAutomaton access1Model = (
   callAlphabet = {},
   internalAlphabet = {"1request" "1assume2crit" "1release" "2request" "2assume1crit" "2release"},
   returnAlphabet = {},
-  states = {"1safe" "1crit" "false"},
+  states = {"1safe" "a1crit" "a1false"},
   initialStates = {"1safe"},
-  finalStates = {"false"},
+  finalStates = {"a1false"},
   callTransitions = {},
   internalTransitions = {
-	("1safe" "1request" "1crit")
+	("1safe" "1request" "a1crit")
 	("1safe" "2request" "1safe")
 	("1safe" "1release" "1safe")
 	("1safe" "2release" "1safe")
 	("1safe" "1assume2crit" "1safe")
-//	("1safe" "2assume1crit" "false")
-	("1crit" "1request" "1crit")
-	("1crit" "2request" "1crit")
-	("1crit" "1release" "1safe")
-	("1crit" "2release" "1crit")
-	("1crit" "1assume2crit" "1crit")
-	("1crit" "2assume1crit" "1crit")
-//	("false" "1request" "false")
-//	("false" "2request" "false")
-//	("false" "1release" "false")
-//	("false" "2release" "false")
-//	("false" "1assume2crit" "false")
-//	("false" "2assume1crit" "false")
+//	("1safe" "2assume1crit" "a1false")
+	("a1crit" "1request" "a1crit")
+	("a1crit" "2request" "a1crit")
+	("a1crit" "1release" "1safe")
+	("a1crit" "2release" "a1crit")
+	("a1crit" "1assume2crit" "a1crit")
+	("a1crit" "2assume1crit" "a1crit")
+//	("a1false" "1request" "a1false")
+//	("a1false" "2request" "a1false")
+//	("a1false" "1release" "a1false")
+//	("a1false" "2release" "a1false")
+//	("a1false" "1assume2crit" "a1false")
+//	("a1false" "2assume1crit" "a1false")
 	}, 
   returnTransitions = {}
 );
@@ -118,29 +118,29 @@ NestedWordAutomaton access2Model = (
   callAlphabet = {},
   internalAlphabet = {"1request" "1assume2crit" "1release" "2request" "2assume1crit" "2release"},
   returnAlphabet = {},
-  states = {"2safe" "2crit" "false"},
+  states = {"2safe" "a2crit" "a2false"},
   initialStates = {"2safe"},
-  finalStates = {"false"},
+  finalStates = {"a2false"},
   callTransitions = {},
   internalTransitions = {
 	("2safe" "1request" "2safe")
-	("2safe" "2request" "2crit")
+	("2safe" "2request" "a2crit")
 	("2safe" "1release" "2safe")
 	("2safe" "2release" "2safe")
-//	("2safe" "1assume2crit" "false")
+//	("2safe" "1assume2crit" "a2false")
 	("2safe" "2assume1crit" "2safe")
-	("2crit" "1request" "2crit")
-	("2crit" "2request" "2crit")
-	("2crit" "1release" "2crit")
-	("2crit" "2release" "2safe")
-	("2crit" "1assume2crit" "2crit")
-	("2crit" "2assume1crit" "2crit")
-//	("false" "1request" "false")
-//	("false" "2request" "false")
-//	("false" "1release" "false")
-//	("false" "2release" "false")
-//	("false" "1assume2crit" "false")
-//	("false" "2assume1crit" "false")
+	("a2crit" "1request" "a2crit")
+	("a2crit" "2request" "a2crit")
+	("a2crit" "1release" "a2crit")
+	("a2crit" "2release" "2safe")
+	("a2crit" "1assume2crit" "a2crit")
+	("a2crit" "2assume1crit" "a2crit")
+//	("a2false" "1request" "a2false")
+//	("a2false" "2request" "a2false")
+//	("a2false" "1release" "a2false")
+//	("a2false" "2release" "a2false")
+//	("a2false" "1assume2crit" "a2false")
+//	("a2false" "2assume1crit" "a2false")
 	}, 
   returnTransitions = {}
 );
