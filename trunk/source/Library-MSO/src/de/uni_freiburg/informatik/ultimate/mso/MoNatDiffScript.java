@@ -24,6 +24,14 @@
  * licensors of the ULTIMATE MSO Library package library grant you additional permission
  * to convey the resulting work.
  */
+
+/*
+ * ApplicationTerm		:= function symbols
+ * ConstantTerm			:= literals
+ * QuantifiedFormula	:= 
+ * TermVariable			:= quantified variables
+ */
+
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigDecimal;
@@ -35,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -42,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class MoNatDiffScript implements Script {
+public class MoNatDiffScript extends NoopScript {
 	
 	private final ILogger mLogger;
 
@@ -53,59 +62,13 @@ public class MoNatDiffScript implements Script {
 	@Override
 	public void setLogic(String logic) throws UnsupportedOperationException, SMTLIBException {
 		mLogger.info("hello world, logic set to " + logic);
+		super.setLogic(logic);
 	}
 
 	@Override
 	public void setLogic(Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		mLogger.info("hello world, logic set to " + logic);
-	}
-
-	@Override
-	public void setOption(String opt, Object value) throws UnsupportedOperationException, SMTLIBException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setInfo(String info, Object value) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void declareSort(String sort, int arity) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void defineSort(String sort, Sort[] sortParams, Sort definition) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void defineFun(String fun, TermVariable[] params, Sort resultSort, Term definition) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void push(int levels) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pop(int levels) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		
+		super.setLogic(logic);
 	}
 
 	@Override
@@ -119,216 +82,4 @@ public class MoNatDiffScript implements Script {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public LBool checkSatAssuming(Term... assumptions) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term[] getAssertions() throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term[] getUnsatAssumptions() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Object getOption(String opt) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Object getInfo(String info) throws UnsupportedOperationException, SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void exit() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public Sort sort(String sortname, Sort... params) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Sort sort(String sortname, BigInteger[] indices, Sort... params) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Sort[] sortVariables(String... names) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term term(String funcname, Term... params) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term term(String funcname, BigInteger[] indices, Sort returnSort, Term... params) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public TermVariable variable(String varname, Sort sort) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term quantifier(int quantor, TermVariable[] vars, Term body, Term[]... patterns) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term let(TermVariable[] vars, Term[] values, Term body) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term annotate(Term t, Annotation... annotations) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term numeral(String num) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term numeral(BigInteger num) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term decimal(String decimal) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term decimal(BigDecimal decimal) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term hexadecimal(String hex) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term binary(String bin) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term string(String str) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term simplify(Term term) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void reset() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void resetAssertions() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public Term[] getInterpolants(Term[] partition) throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term[] getInterpolants(Term[] partition, int[] startOfSubtree)
-			throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterable<Term[]> checkAllsat(Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Term[] findImpliedEquality(Term[] x, Term[] y) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public QuotedObject echo(QuotedObject msg) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }
