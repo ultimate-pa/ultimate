@@ -34,28 +34,30 @@
 
 package de.uni_freiburg.informatik.ultimate.mso;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Map;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class MoNatDiffScript extends NoopScript {
 	
+	
+	private final IUltimateServiceProvider mServices;
+	private final AutomataLibraryServices mAutomataLibraryServices;
 	private final ILogger mLogger;
 
-	public MoNatDiffScript(ILogger logger) {
+	public MoNatDiffScript(IUltimateServiceProvider services, ILogger logger) {
+		mServices = services;
+		mAutomataLibraryServices = new AutomataLibraryServices(services);
 		mLogger = logger;
 	}
 
@@ -81,5 +83,23 @@ public class MoNatDiffScript extends NoopScript {
 	public LBool checkSat() throws SMTLIBException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	
+	private void constructAutomaton() {
+		Set<Integer> alphabet = null;
+		VpAlphabet<Integer> vpAlphabet = new VpAlphabet<Integer>(alphabet);
+		IEmptyStackStateFactory stateFactory = new StringFactory();
+		NestedWordAutomaton<Integer, String> automaton = new NestedWordAutomaton<Integer, String>(
+				mAutomataLibraryServices, vpAlphabet, stateFactory);
+		
+		// add some initial state
+		automaton.addState(true, false, "q_0");
+		// add some accepting state
+		automaton.addState(false, true, "q_1");
+		// connect both states via transition that is labeled by letter 23
+		automaton.addInternalTransition("q_0", 23, "q_1");
+		
+		
 	}
 }

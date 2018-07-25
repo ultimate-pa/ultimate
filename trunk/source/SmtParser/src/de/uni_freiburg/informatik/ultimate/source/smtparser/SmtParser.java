@@ -209,7 +209,7 @@ public class SmtParser implements ISource {
 					caibss.getLogicForExternalSolver(), caibss.getSolverSettings());
 		} else if (inMsoSolverMode) {
 			mLogger.info("Running our experimental MSO solver on input file");
-			script = new MoNatDiffScript(mLogger);
+			script = new MoNatDiffScript(mServices, mLogger);
 		} else {
 			mLogger.info("Running solver on smt file");
 //			if (useExternalSolver) {
