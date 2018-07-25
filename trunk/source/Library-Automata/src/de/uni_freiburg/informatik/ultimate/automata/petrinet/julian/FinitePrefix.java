@@ -51,26 +51,22 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 
 	private final PetriNetUnfolder<LETTER, STATE>.Statistics mUnfoldingStatistics;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            operand
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
+
 	public FinitePrefix(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
+		this(services, operand, false);
+	}
+	
+	public FinitePrefix(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, STATE> operand,
+			boolean sameTransitionCutOff) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final PetriNetUnfolder<LETTER, STATE> unf =
-				new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV, false, false);
+		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV,
+				sameTransitionCutOff, false);
 		mUnfoldingStatistics = unf.getUnfoldingStatistics();
 		mResult = unf.getFinitePrefix();
 
