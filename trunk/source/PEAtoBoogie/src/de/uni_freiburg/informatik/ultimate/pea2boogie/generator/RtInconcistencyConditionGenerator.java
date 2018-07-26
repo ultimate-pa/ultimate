@@ -103,6 +103,8 @@ public class RtInconcistencyConditionGenerator {
 	private int mPlain;
 	private int mAfterSize;
 	private int mBeforeSize;
+	private int mTrivialConsistent;
+	private int mGeneratedChecks;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final ReqSymboltable symboltable,
@@ -122,16 +124,21 @@ public class RtInconcistencyConditionGenerator {
 		mVars = mBoogie2Smt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mIdentifierTranslators = new IIdentifierTranslator[] { this::getSmtIdentifier };
 		mSeparateInvariantHandling = separateInvariantHandling;
-		if (mSeparateInvariantHandling) {
-			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
-		} else {
-			mPrimedInvariant = mTrue;
-		}
 		mPhaseTermCache = new HashMap<>();
 		mQuantified = 0;
 		mPlain = 0;
 		mBeforeSize = 0;
 		mAfterSize = 0;
+		mTrivialConsistent = 0;
+		mGeneratedChecks = 0;
+
+		if (mSeparateInvariantHandling) {
+			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
+			mLogger.info("Finished generating primed state invariant: " + mPrimedInvariant.toString());
+		} else {
+			mPrimedInvariant = mTrue;
+		}
+
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
@@ -162,7 +169,7 @@ public class RtInconcistencyConditionGenerator {
 			} else {
 				mPlain++;
 			}
-			final Term checkRhsAndInvariantSimplified = simplify(checkRhsAndInvariant);
+			final Term checkRhsAndInvariantSimplified = simplifyAndLog(checkRhsAndInvariant);
 			if (checkRhsAndInvariantSimplified == mTrue) {
 				continue;
 			}
@@ -174,13 +181,19 @@ public class RtInconcistencyConditionGenerator {
 			rtInconsistencyChecks.add(rtInconsistencyCheck);
 		}
 		if (rtInconsistencyChecks.isEmpty()) {
+			mTrivialConsistent++;
 			return null;
 		}
+		mGeneratedChecks++;
 		final Term finalCheck = SmtUtils.and(mScript, rtInconsistencyChecks);
 		return mBoogie2Smt.getTerm2Expression().translate(finalCheck);
 	}
 
 	public void logStats() {
+		if (mTrivialConsistent > 0) {
+			mLogger.info(String.format("%s checks, %s trivial consistent, %s non-trivial",
+					mGeneratedChecks + mTrivialConsistent, mTrivialConsistent, mGeneratedChecks));
+		}
 		if (!PRINT_STATS) {
 			return;
 		}
@@ -188,7 +201,7 @@ public class RtInconcistencyConditionGenerator {
 				mQuantified, mPlain));
 		if (SIMPLIFY) {
 			mLogger.info(String.format("Terms of DAG size %s were simplified to DAG size %s (%s percent reduction)",
-					mBeforeSize, mAfterSize, 100.0 - ((mBeforeSize * 1.0) / (mAfterSize * 1.0)) * 100.0));
+					mBeforeSize, mAfterSize, 100.0 - ((mAfterSize * 1.0) / (mBeforeSize * 1.0)) * 100.0));
 		}
 	}
 
@@ -205,17 +218,18 @@ public class RtInconcistencyConditionGenerator {
 		return phaseTerm;
 	}
 
-	private Term simplify(final Term term) {
+	private Term simplifyAndLog(final Term term) {
 		if (!SIMPLIFY) {
 			return term;
 		}
-		final int before = new DAGSize().size(term);
-		final Term simplified =
-				SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-		final int after = new DAGSize().size(simplified);
-		mBeforeSize = mBeforeSize + before;
-		mAfterSize = mAfterSize + after;
+		mBeforeSize = mBeforeSize + new DAGSize().size(term);
+		final Term simplified = simplify(term);
+		mAfterSize = mAfterSize + new DAGSize().size(simplified);
 		return simplified;
+	}
+
+	private Term simplify(final Term term) {
+		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
 	private Term constructPrimedStateInvariant(final Map<PatternType, PhaseEventAutomata> req2Automata) {
