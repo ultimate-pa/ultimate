@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -99,6 +100,10 @@ public class MoNatDiffScript extends NoopScript
 	public LBool assertTerm(final Term term) throws SMTLIBException
 	{
 		// TODO Auto-generated method stub
+		
+		mLogger.info("term: " + term);
+		postOrder(term);
+		
 		return null;
 	}
 
@@ -107,6 +112,45 @@ public class MoNatDiffScript extends NoopScript
 	{
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	private void postOrder(Term term)
+	{
+		if (term == null)
+			return;
+		
+		String str = new String();
+		Term term1 = null, term2 = null;
+		
+		if (term instanceof QuantifiedFormula)
+		{
+			QuantifiedFormula quantifiedFormula = (QuantifiedFormula)term;
+			str = quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS ? "exists" : "forall";
+			term1 = quantifiedFormula.getSubformula();
+		}
+		else if (term instanceof ApplicationTerm)
+		{
+			ApplicationTerm applicationTerm = (ApplicationTerm)term;
+			str = applicationTerm.getFunction().getName();
+			Term[] terms = applicationTerm.getParameters();
+			term1 = terms.length > 0 ? terms[0] : null;
+			term2 = terms.length > 1 ? terms[1] : null;
+		}
+		else if (term instanceof TermVariable)
+		{
+			TermVariable termVariable = (TermVariable)term;
+			str = termVariable.toString();
+		}
+		else if (term instanceof ConstantTerm)
+		{
+			ConstantTerm constantTerm = (ConstantTerm)term;
+			str = constantTerm.toString();
+		}
+		
+		postOrder(term1);
+		postOrder(term2);
+		
+		mLogger.info("term: " + str);
 	}
 	
 	/*
