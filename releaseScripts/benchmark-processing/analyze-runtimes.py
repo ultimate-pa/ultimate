@@ -97,9 +97,12 @@ def parse_args():
     argparser.add_argument('-t', '--time-bound', type=int, dest='time_bound', metavar='seconds',
                            help='Match log lines with a time delta larger than this number in seconds',
                            default=0)
-    argparser.add_argument('-m', '--message', dest='message', metavar='regex',
+    argparser.add_argument('-m', '--message', dest='message', action='append', metavar='regex',
                            help='Match log lines whose message matches this regex',
-                           default=None)
+                           default=[])
+    argparser.add_argument('-v', '--invert-match', dest='invert_match', action='store_true',
+                           help='Match only log lines not matched by the -m option',
+                           default=False)
     argparser.add_argument('-A', '--after', type=int, dest='lines_after', metavar='count',
                            help='Show additional log lines after a match (Default: 0)',
                            default=0)
@@ -122,25 +125,22 @@ def log_lines(file):
             last_log_line = current_log_line
 
 
-def reduce_and(arg, funs):
-    for fun in funs:
-        if not fun(arg):
-            return False
-    return True
-
-
 def create_match_predicate(args):
     rtr = []
     if args.time_bound > 0:
         rtr += [lambda x: x.timedelta.total_seconds() > args.time_bound]
-    if args.message is not None:
-        matcher = re.compile(args.message)
-        rtr += [lambda x: matcher.match(x.message)]
+    if args.message:
+        for regex in args.message:
+            matcher = re.compile(regex)
+            if args.invert_match:
+                rtr += [lambda x: not matcher.match(x.message)]
+            else:
+                rtr += [lambda x: matcher.match(x.message)]
+
     if not rtr:
         return lambda x: True
     if len(rtr) == 1:
         return rtr[0]
-
     return lambda x: all([func(x) for func in rtr])
 
 
