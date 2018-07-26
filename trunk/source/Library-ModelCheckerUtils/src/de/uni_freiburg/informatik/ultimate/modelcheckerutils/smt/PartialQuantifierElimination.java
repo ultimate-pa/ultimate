@@ -129,7 +129,7 @@ public class PartialQuantifierElimination {
 		}
 		Term elim = body;
 		if (USE_PUSH_PULL) {
-			final int quantBefore = varSet.size();
+			// final int quantBefore = varSet.size();
 			// Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
 			elim = elimPushPull(mgdScript, quantifier, varSet, elim, services, logger);
 			// return elim;
@@ -137,7 +137,7 @@ public class PartialQuantifierElimination {
 				final QuantifiedFormula qf = (QuantifiedFormula) elim;
 				varSet = new HashSet<>(Arrays.asList(qf.getVariables()));
 				elim = qf.getSubformula();
-				final int quantAfterwards = varSet.size();
+				// final int quantAfterwards = varSet.size();
 				// logger.warn("push-pull eliminated " + (quantBefore-quantAfterwards) + " of " + quantBefore);
 			} else {
 				// logger.warn("push-pull eliminated " + quantBefore);
@@ -159,6 +159,26 @@ public class PartialQuantifierElimination {
 				patterns);
 	}
 
+	/**
+	 * Returns formula equivalent to the one constructed by {@link SmtUtils#quantifier(Script, int, Set, Term)}. Formula
+	 * is not quantified if quantified variables are not in the formula or if quantifiers can be eliminated by using
+	 * {@link PqeTechniques#ONLY_DER}.
+	 */
+	public static Term quantifierOnlyDER(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript mgdScript, final int quantifier, final Collection<TermVariable> vars, final Term body,
+			final Term[]... patterns) {
+		final Set<TermVariable> varSet = constructIntersectionWithFreeVars(vars, body);
+		if (varSet.isEmpty()) {
+			return body;
+		}
+		final Term elim = elimPushPull(mgdScript, quantifier, varSet, body, services, logger, PqeTechniques.ONLY_DER);
+		if (elim instanceof QuantifiedFormula) {
+			final QuantifiedFormula qf = (QuantifiedFormula) elim;
+			return mgdScript.getScript().quantifier(quantifier, qf.getVariables(), qf.getSubformula(), patterns);
+		}
+		return elim;
+	}
+
 	private static Set<TermVariable> constructIntersectionWithFreeVars(final Collection<TermVariable> vars,
 			final Term term) {
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(term.getFreeVars()));
@@ -174,13 +194,18 @@ public class PartialQuantifierElimination {
 	public static Term elimPushPull(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final Term term, final IUltimateServiceProvider services,
 			final ILogger logger) {
+		return elimPushPull(mgdScript, quantifier, eliminatees, term, services, logger, PqeTechniques.ALL_LOCAL);
+	}
+
+	private static Term elimPushPull(final ManagedScript mgdScript, final int quantifier,
+			final Set<TermVariable> eliminatees, final Term term, final IUltimateServiceProvider services,
+			final ILogger logger, final PqeTechniques techniques) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term quantified = mgdScript.getScript().quantifier(quantifier,
 				eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
-		final Term pushed =
-				new QuantifierPusher(mgdScript, services, true, PqeTechniques.ALL_LOCAL).transform(quantified);
-		final Term commu = new CommuhashNormalForm(services, mgdScript.getScript()).transform(pushed);
+		final Term pushed = new QuantifierPusher(mgdScript, services, true, techniques).transform(quantified);
+		// final Term commu = new CommuhashNormalForm(services, mgdScript.getScript()).transform(pushed);
 		// final Term pnf = new Nnf(script, services, freshTermVariableConstructor,
 		// QuantifierHandling.PULL).transform(pushed);
 		final Term pnf = new PrenexNormalForm(mgdScript).transform(pushed);
