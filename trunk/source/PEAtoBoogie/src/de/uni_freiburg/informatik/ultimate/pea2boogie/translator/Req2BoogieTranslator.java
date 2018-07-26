@@ -779,6 +779,7 @@ public class Req2BoogieTranslator {
 			}
 			if (subsetsSize % 1000 == 0) {
 				mLogger.info(subsetsSize + " subsets remaining");
+				mRtInconcistencyConditionGenerator.logStats();
 			}
 			final Statement assertStmt = genAssertRTInconsistency(subset);
 			if (assertStmt != null) {

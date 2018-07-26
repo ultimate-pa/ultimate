@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 
 /**
@@ -80,6 +81,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
  *
  */
 public class RtInconcistencyConditionGenerator {
+
+	private static final boolean SIMPLIFY = false;
+	private static final boolean PRINT_STATS = false;
 
 	private final ReqSymboltable mBoogieSymboltable;
 	private final Term mPrimedInvariant;
@@ -95,6 +99,10 @@ public class RtInconcistencyConditionGenerator {
 	private final boolean mSeparateInvariantHandling;
 
 	private final Map<Phase, Term> mPhaseTermCache;
+	private int mQuantified;
+	private int mPlain;
+	private int mAfterSize;
+	private int mBeforeSize;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final ReqSymboltable symboltable,
@@ -120,7 +128,10 @@ public class RtInconcistencyConditionGenerator {
 			mPrimedInvariant = mTrue;
 		}
 		mPhaseTermCache = new HashMap<>();
-
+		mQuantified = 0;
+		mPlain = 0;
+		mBeforeSize = 0;
+		mAfterSize = 0;
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
@@ -146,6 +157,11 @@ public class RtInconcistencyConditionGenerator {
 			final Term checkPrimedRhs = SmtUtils.and(mScript, outer);
 			final Term checkPrimedRhsAndPrimedInvariant = SmtUtils.and(mScript, checkPrimedRhs, mPrimedInvariant);
 			final Term checkRhsAndInvariant = existentiallyProjectEventsAndPrimedVars(checkPrimedRhsAndPrimedInvariant);
+			if (checkRhsAndInvariant instanceof QuantifiedFormula) {
+				mQuantified++;
+			} else {
+				mPlain++;
+			}
 			final Term checkRhsAndInvariantSimplified = simplify(checkRhsAndInvariant);
 			if (checkRhsAndInvariantSimplified == mTrue) {
 				continue;
@@ -164,6 +180,18 @@ public class RtInconcistencyConditionGenerator {
 		return mBoogie2Smt.getTerm2Expression().translate(finalCheck);
 	}
 
+	public void logStats() {
+		if (!PRINT_STATS) {
+			return;
+		}
+		mLogger.info(String.format("Of %s formulas, %s were quantified, %s were plain", mQuantified + mPlain,
+				mQuantified, mPlain));
+		if (SIMPLIFY) {
+			mLogger.info(String.format("Terms of DAG size %s were simplified to DAG size %s (%s percent reduction)",
+					mBeforeSize, mAfterSize, 100.0 - ((mBeforeSize * 1.0) / (mAfterSize * 1.0)) * 100.0));
+		}
+	}
+
 	private Term getPhaseTerm(final Phase phase) {
 		Term phaseTerm = mPhaseTermCache.get(phase);
 		if (phaseTerm == null) {
@@ -177,9 +205,17 @@ public class RtInconcistencyConditionGenerator {
 		return phaseTerm;
 	}
 
-	private Term simplify(final Term rtInconcistencyCheckRhsWithPrimes) {
-		return SmtUtils.simplify(mManagedScript, rtInconcistencyCheckRhsWithPrimes, mServices,
-				SimplificationTechnique.SIMPLIFY_DDA);
+	private Term simplify(final Term term) {
+		if (!SIMPLIFY) {
+			return term;
+		}
+		final int before = new DAGSize().size(term);
+		final Term simplified =
+				SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		final int after = new DAGSize().size(simplified);
+		mBeforeSize = mBeforeSize + before;
+		mAfterSize = mAfterSize + after;
+		return simplified;
 	}
 
 	private Term constructPrimedStateInvariant(final Map<PatternType, PhaseEventAutomata> req2Automata) {
@@ -347,6 +383,10 @@ public class RtInconcistencyConditionGenerator {
 			mLogger.debug("Removing " + varsToRemove.size() + " variables");
 		}
 		final Term quantifiedFormula = SmtUtils.quantifier(mScript, QuantifiedFormula.EXISTS, varsToRemove, term);
+
+		// final Term quantifierFreeFormula = PartialQuantifierElimination.quantifierOnlyDER(mServices, mLogger,
+		// mManagedScript, QuantifiedFormula.EXISTS, varsToRemove, term, new Term[0]);
+
 		final Term quantifierFreeFormula =
 				PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantifiedFormula,
 						SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
