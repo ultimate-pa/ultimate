@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -89,8 +90,10 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPat
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable.TypeErrorInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
@@ -123,19 +126,29 @@ public class Req2BoogieTranslator {
 
 	private final ReqSymboltable mSymboltable;
 	private final RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
+	private boolean mSeparateInvariantHandling;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final ILogger logger, final boolean vacuityCheck, final int num, final boolean checkConsistency,
-			final boolean reportTrivialRtConsistency, final List<PatternType> patterns) {
+			final ILogger logger, final List<PatternType> patterns) {
 		mLogger = logger;
 		mServices = services;
-		mCheckVacuity = vacuityCheck;
-		mReportTrivialConsistency = reportTrivialRtConsistency;
-		mCombinationNum = num;
-		mCheckConsistency = checkConsistency;
+
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+
+		// set preferences
+		mCheckVacuity = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
+
+		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
+			final int length = patterns.size();
+			mCombinationNum = Math.min(length, prefs.getInt(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE));
+		} else {
+			mCombinationNum = -1;
+		}
+		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
+		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
+		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
 
 		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
-
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 		final List<InitializationPattern> init = patterns.stream().filter(a -> a instanceof InitializationPattern)
@@ -168,7 +181,7 @@ public class Req2BoogieTranslator {
 		if (mCombinationNum > 1) {
 			final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, logger);
 			mRtInconcistencyConditionGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, storage,
-					mSymboltable, mReq2Automata, boogieDeclarations);
+					mSymboltable, mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
 		} else {
 			mRtInconcistencyConditionGenerator = null;
 		}
@@ -726,12 +739,21 @@ public class Req2BoogieTranslator {
 			return Collections.emptyList();
 		}
 
-		// get all automata that are not invariant, i.e. have more than 1 phase
-		final List<Entry<PatternType, PhaseEventAutomata>> entries = mReq2Automata.entrySet().stream()
-				.filter(a -> a.getValue().getPhases().length != 1).collect(Collectors.toList());
+		// get all automata for which conditions should be generated
+		final List<Entry<PatternType, PhaseEventAutomata>> consideredAutomata;
+		if (mSeparateInvariantHandling) {
+			consideredAutomata = mReq2Automata.entrySet().stream().filter(a -> a.getValue().getPhases().length != 1)
+					.collect(Collectors.toList());
+		} else {
+			consideredAutomata = mReq2Automata.entrySet().stream().collect(Collectors.toList());
+		}
 
-		final int count = entries.size();
-		mLogger.info((mReq2Automata.size() - count) + " of " + mReq2Automata.size() + " requirements are invariant");
+		final int count = consideredAutomata.size();
+		final int invariant = mReq2Automata.size() - count;
+		if (mSeparateInvariantHandling) {
+			mLogger.info(String.format("%s of %s requirements are invariant", invariant, count));
+		}
+
 		final int actualCombinationNum = mCombinationNum <= count ? mCombinationNum : count;
 		if (actualCombinationNum < 2) {
 			mLogger.info("No rt-inconsistencies possible");
@@ -739,8 +761,8 @@ public class Req2BoogieTranslator {
 		}
 		final List<Statement> stmtList = new ArrayList<>();
 		@SuppressWarnings("unchecked")
-		final List<Entry<PatternType, PhaseEventAutomata>[]> subsets = CrossProducts
-				.subArrays(entries.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
+		final List<Entry<PatternType, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
+				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
 		int subsetsSize = subsets.size();
 		if (subsetsSize > 10000) {
 			mLogger.warn("Computing rt-inconsistency assertions for " + subsetsSize
@@ -764,7 +786,6 @@ public class Req2BoogieTranslator {
 			}
 		}
 		return stmtList;
-
 	}
 
 	/**

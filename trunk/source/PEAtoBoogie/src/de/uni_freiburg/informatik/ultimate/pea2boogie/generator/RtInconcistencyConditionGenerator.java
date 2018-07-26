@@ -91,10 +91,12 @@ public class RtInconcistencyConditionGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IIdentifierTranslator[] mIdentifierTranslators;
+	private final boolean mSeparateInvariantHandling;
 
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final ReqSymboltable symboltable,
-			final Map<PatternType, PhaseEventAutomata> req2Automata, final BoogieDeclarations boogieDeclarations) {
+			final Map<PatternType, PhaseEventAutomata> req2Automata, final BoogieDeclarations boogieDeclarations,
+			final boolean separateInvariantHandling) {
 		mBoogieSymboltable = symboltable;
 		mServices = services;
 		mLogger = logger;
@@ -108,7 +110,13 @@ public class RtInconcistencyConditionGenerator {
 		mBoogie2Smt = new Boogie2SMT(mManagedScript, boogieDeclarations, false, services, false);
 		mVars = mBoogie2Smt.getBoogie2SmtSymbolTable().getGlobalsMap();
 		mIdentifierTranslators = new IIdentifierTranslator[] { this::getSmtIdentifier };
-		mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
+		mSeparateInvariantHandling = separateInvariantHandling;
+		if (mSeparateInvariantHandling) {
+			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
+		} else {
+			mPrimedInvariant = mTrue;
+		}
+
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {

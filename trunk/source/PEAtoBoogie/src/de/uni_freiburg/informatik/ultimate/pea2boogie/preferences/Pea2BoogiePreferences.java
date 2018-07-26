@@ -61,7 +61,16 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 					+ "Note: This value increases the runtime exponentially!";
 	public static final String LABEL_REPORT_TRIVIAL_RT_CONSISTENCY = "Report trivial rt-consistency";
 	private static final boolean DEF_REPORT_TRIVIAL_RT_CONSISTENCY = false;
-	private static final String DESC_REPORT_TRIVIAL_RT_CONSISTENCY = null;
+	private static final String DESC_REPORT_TRIVIAL_RT_CONSISTENCY =
+			"Generate a result even if rt-consistency is shown during the generation of the assertion";
+
+	public static final String LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS =
+			"Always use all invariants during rt-inconsistency checks";
+	private static final boolean DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS = true;
+	private static final String DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS =
+			"This setting controls whether invariant requirements are included in every rt-inconsistency check or if they"
+					+ " are treated as separate requirements. If enabled, each rt-inconsistency check is of the form "
+					+ "Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated separately.";
 
 	public Pea2BoogiePreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -80,8 +89,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, DEF_REPORT_TRIVIAL_RT_CONSISTENCY,
 						DESC_REPORT_TRIVIAL_RT_CONSISTENCY, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_RANGE, DEF_RT_INCONSISTENCY_RANGE,
-						DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer,
-						IUltimatePreferenceItemValidator.GEQ_TWO), };
+						DESC_RT_INCONSISTENCY_RANGE, PreferenceType.Integer, IUltimatePreferenceItemValidator.GEQ_TWO),
+				new UltimatePreferenceItem<>(LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
+						DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS, DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS,
+						PreferenceType.Boolean), };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
