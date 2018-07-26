@@ -25,18 +25,12 @@
  * to convey the resulting work.
  */
 
-/*
- * ApplicationTerm		:= function symbols
- * ConstantTerm			:= literals
- * QuantifiedFormula	:=
- * TermVariable			:= quantified variables
- */
-
 package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.PairXY;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -73,45 +68,381 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 
-public class MoNatDiffScript extends NoopScript {
-
-
+public class MoNatDiffScript extends NoopScript
+{
 	private final IUltimateServiceProvider mServices;
 	private final AutomataLibraryServices mAutomataLibraryServices;
 	private final ILogger mLogger;
 
-	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger) {
+	public MoNatDiffScript(final IUltimateServiceProvider services, final ILogger logger)
+	{
 		mServices = services;
 		mAutomataLibraryServices = new AutomataLibraryServices(services);
 		mLogger = logger;
 	}
 
 	@Override
-	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
+	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException
+	{
 		mLogger.info("hello world, logic set to " + logic);
 		super.setLogic(logic);
 	}
 
 	@Override
-	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
+	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException
+	{
 		mLogger.info("hello world, logic set to " + logic);
 		super.setLogic(logic);
 	}
 
 	@Override
-	public LBool assertTerm(final Term term) throws SMTLIBException {
+	public LBool assertTerm(final Term term) throws SMTLIBException
+	{
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public LBool checkSat() throws SMTLIBException {
+	public LBool checkSat() throws SMTLIBException
+	{
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	/*
+	 * Constructs empty automaton.
+	 */
+	private NestedWordAutomaton<BigInteger, String> emptyAutomaton() throws AutomataLibraryException
+	{
+		Set<BigInteger> alphabet = null;
+		VpAlphabet<BigInteger> vpAlphabet = new VpAlphabet<BigInteger>(alphabet);
+		StringFactory stateFactory = new StringFactory();
+		
+		return new NestedWordAutomaton<BigInteger, String>(mAutomataLibraryServices, vpAlphabet, stateFactory);
+	}
+	
+	/*
+	 * Converts term of sort Int to int.
+	 */
+	private int termToInt(Term term) throws NumberFormatException
+	{
+		if (!term.getSort().getName().equals("Int"))
+			throw new IllegalArgumentException("SMTLIB sort of term is not Int");
+		
+		return Integer.parseInt(term.toString());
+	}
+	
+	/*
+	 * Adds loops for some constant to automaton.
+	 */
+	private void addConstPart(NestedWordAutomaton<BigInteger, String> automaton, int constant, BigInteger initToState,
+			BigInteger predStateToState, BigInteger stateToFinal)
+	{
+		for (int i = 0; i < constant; i++)
+		{
+			String state = "c" + String.valueOf(i + 1);
+			automaton.addState(false, false, state);
+			
+			if (i == 0)
+			{
+				automaton.addInternalTransition("init", initToState, state);
+			}
+			else
+			{
+				String predState = "c" + String.valueOf(i);
+				automaton.addInternalTransition(predState, predStateToState, state);
+			}
+			
+			automaton.addInternalTransition(state, stateToFinal, "final");
+		}
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "x-y <= c".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictIneqAutomaton(Term x, Term y, Term c)
+			throws AutomataLibraryException, NumberFormatException
+	{
+		int cInt = termToInt(c);
+		List<Term> mapping = Arrays.asList(x, y);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();	
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addState(false, false, "s1");
+		
+		automaton.addInternalTransition("init", BigInteger.valueOf(0), "init");
+		automaton.addInternalTransition("init", BigInteger.valueOf(1), "s1");
+		automaton.addInternalTransition("s1", BigInteger.valueOf(0), "s1");
+		automaton.addInternalTransition("s1", BigInteger.valueOf(2), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+		automaton.addInternalTransition("init", BigInteger.valueOf(3), "final");
+		
+		addConstPart(automaton, cInt, BigInteger.valueOf(2), BigInteger.valueOf(0), BigInteger.valueOf(1));
+		
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
 
+	/*
+	 * Creates automaton for atomic formula "x-y < c".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictIneqAutomaton(Term x, Term y, Term c)
+			throws AutomataLibraryException, NumberFormatException
+	{
+		int cInt = termToInt(c);
+		List<Term> mapping = Arrays.asList(x, y);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();	
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		automaton.addState(false, false, "s1");
+		
+		automaton.addInternalTransition("init", BigInteger.valueOf(0), "init");
+		automaton.addInternalTransition("init", BigInteger.valueOf(1), "s1");
+		automaton.addInternalTransition("s1", BigInteger.valueOf(0), "s1");
+		automaton.addInternalTransition("s1", BigInteger.valueOf(2), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+		
+		if (cInt > 0)
+			automaton.addInternalTransition("init", BigInteger.valueOf(3), "final");
+		
+		addConstPart(automaton, cInt - 1, BigInteger.valueOf(2), BigInteger.valueOf(0), BigInteger.valueOf(1));
+		
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "x <= c".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictIneqAutomaton(Term x, Term c)
+			throws AutomataLibraryException, NumberFormatException
+	{
+		int cInt = termToInt(c);
+		List<Term> mapping = Arrays.asList(x);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		
+		automaton.addInternalTransition("init", BigInteger.valueOf(1), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+		
+		addConstPart(automaton, cInt, BigInteger.valueOf(0), BigInteger.valueOf(0), BigInteger.valueOf(1));
 
-	private void constructAutomaton() throws AutomataLibraryException {
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "x < c".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictIneqAutomaton(Term x, Term c)
+			throws AutomataLibraryException, NumberFormatException
+	{
+		int cInt = termToInt(c);
+		List<Term> mapping = Arrays.asList(x);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
+		
+		if (cInt > 0)
+		{
+			automaton.addState(true, false, "init");
+			automaton.addState(false, true, "final");
+			
+			automaton.addInternalTransition("init", BigInteger.valueOf(1), "final");
+			automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+			
+			addConstPart(automaton, cInt - 1, BigInteger.valueOf(0), BigInteger.valueOf(0), BigInteger.valueOf(1));
+		}
+
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "-x <= c".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictNegIneqAutomaton(Term x, Term c)
+			throws AutomataLibraryException, NumberFormatException
+	{
+		int cInt = termToInt(c);
+		List<Term> mapping = Arrays.asList(x);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		
+		automaton.addInternalTransition("init", BigInteger.valueOf(0), "init");
+		automaton.addInternalTransition("init", BigInteger.valueOf(1), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "-x < c".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictNegIneqAutomaton(Term x, Term c)
+			throws AutomataLibraryException, NumberFormatException
+	{
+		int cInt = termToInt(c);
+		List<Term> mapping = Arrays.asList(x);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		
+		automaton.addInternalTransition("init", BigInteger.valueOf(0), "init");
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+		
+		if (cInt == 0)
+		{
+			automaton.addState(false,  false, "s1");
+			automaton.addInternalTransition("init", BigInteger.valueOf(0), "s1");
+			automaton.addInternalTransition("s1", BigInteger.valueOf(1), "final");
+		}
+		else
+		{
+			automaton.addInternalTransition("init", BigInteger.valueOf(1), "final");
+		}
+
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "X is non strict subset of Y".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictSubsetAutomaton(Term x, Term y)
+			throws AutomataLibraryException
+	{
+		List<Term> mapping = Arrays.asList(x, y);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		
+		automaton.addInternalTransition("init", BigInteger.valueOf(0), "final");
+		automaton.addInternalTransition("init", BigInteger.valueOf(2), "final");
+		automaton.addInternalTransition("init", BigInteger.valueOf(3), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(2), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(3), "final");
+
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "X is strict subset of Y".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictSubsetAutomaton(Term x, Term y)
+			throws AutomataLibraryException
+	{
+		List<Term> mapping = Arrays.asList(x, y);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		
+		automaton.addInternalTransition("init", BigInteger.valueOf(0), "init");
+		automaton.addInternalTransition("init", BigInteger.valueOf(3), "init");
+		automaton.addInternalTransition("init", BigInteger.valueOf(2), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(2), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(3), "final");
+
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "x+c is element of Y".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> elementAutomaton(Term x, Term c, Term y)
+			throws AutomataLibraryException, NumberFormatException
+	{
+		int cInt = termToInt(c);
+		List<Term> mapping = Arrays.asList(x, y);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();	
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		
+		automaton.addInternalTransition("init", BigInteger.valueOf(0), "init");
+		automaton.addInternalTransition("init", BigInteger.valueOf(2), "init");
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(2), "final");
+		
+		if (cInt == 0)
+		{
+			automaton.addInternalTransition("init", BigInteger.valueOf(3), "final");
+		}
+
+		for (int i = 0; i < cInt; i++)
+		{
+			String state = "c" + String.valueOf(i + 1);
+			automaton.addState(false, false, state);
+			
+			if (i == 0)
+			{
+				automaton.addInternalTransition("init", BigInteger.valueOf(1), state);
+				automaton.addInternalTransition("init", BigInteger.valueOf(3), state);
+			}
+			
+			if (i > 1)
+			{
+				String predState = "c" + String.valueOf(i);
+				automaton.addInternalTransition(predState, BigInteger.valueOf(0), state);
+				automaton.addInternalTransition(predState, BigInteger.valueOf(2), state);
+			}
+			
+			if (i == cInt - 1)
+			{
+				automaton.addInternalTransition(state, BigInteger.valueOf(2), "final");
+			}
+		}
+		
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+	
+	/*
+	 * Creates automaton for atomic formula "c is element of X".
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> constElementAutomaton(Term c, Term x)
+			throws AutomataLibraryException, NumberFormatException
+	{
+		int cInt = termToInt(c);
+		List<Term> mapping = Arrays.asList(x);
+		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();	
+		
+		automaton.addState(true, false, "init");
+		automaton.addState(false, true, "final");
+		
+		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
+		automaton.addInternalTransition("final", BigInteger.valueOf(1), "final");
+		
+		if (cInt == 0)
+		{
+			automaton.addInternalTransition("init", BigInteger.valueOf(1), "final");
+		}
+
+		for (int i = 0; i < cInt; i++)
+		{
+			String state = "c" + String.valueOf(i + 1);
+			automaton.addState(false, false, state);
+			
+			String predState = i > 0 ? "c" + String.valueOf(i) : "init";
+			automaton.addInternalTransition(predState, BigInteger.valueOf(0), state);
+			automaton.addInternalTransition(predState, BigInteger.valueOf(1), state);
+			
+			if (i == cInt - 1)
+				automaton.addInternalTransition(state, BigInteger.valueOf(1), "final");
+		}
+		
+		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+	}
+
+	/*
+	 * Examples.
+	 * TODO: Remove later.
+	 */
+	private void constructAutomaton() throws AutomataLibraryException
+	{
 		final Set<Integer> alphabet = null;
 		final VpAlphabet<Integer> vpAlphabet = new VpAlphabet<Integer>(alphabet);
 		final StringFactory stateFactory = new StringFactory();
@@ -124,7 +455,6 @@ public class MoNatDiffScript extends NoopScript {
 		automaton.addState(false, true, "q_1");
 		// connect both states via transition that is labeled by letter 23
 		automaton.addInternalTransition("q_0", 23, "q_1");
-
 
 		final INestedWordAutomaton<Integer, String> intersection = new Intersect<Integer, String>(
 				mAutomataLibraryServices, stateFactory, automaton, automaton).getResult();
@@ -149,13 +479,14 @@ public class MoNatDiffScript extends NoopScript {
 			final NestedLassoRun<Integer, String> lassorun = buchiEmptinessCheck.getAcceptingNestedLassoRun();
 			final NestedLassoWord<Integer> lassoword = lassorun.getNestedLassoWord();
 		}
-
-
-
 	}
 
-
-	private void someAuxiliaryMethodsThatMightBeHelpfulForWorkingWithFormulas() {
+	/*
+	 * Examples.
+	 * TODO: Remove later.
+	 */
+	private void someAuxiliaryMethodsThatMightBeHelpfulForWorkingWithFormulas()
+	{
 		final Term term = null;
 		final Term term2 = null;
 		SmtUtils.isAtomicFormula(term);
@@ -164,6 +495,7 @@ public class MoNatDiffScript extends NoopScript {
 		SmtUtils.quantifier(this, QuantifiedFormula.EXISTS, new HashSet<TermVariable>(Arrays.asList(qf.getFreeVars())), term);
 		SmtUtils.not(this, term2);
 		final ApplicationTerm appTerm = (ApplicationTerm) term2;
+		
 		if (appTerm.getFunction().getName().equals("and")) {
 			// this is an and term
 		}
@@ -186,13 +518,39 @@ public class MoNatDiffScript extends NoopScript {
 			throw new IllegalArgumentException("not a integer");
 		}
 		final BigInteger integer = literal.numerator();
+		
+		
+		/*
+		Dirty test of how to walk to bottom in the tree.
+		
+		mLogger.info("term: " + term);
+		mLogger.info("smtlib type: " + term.getSort());
+		
+		term = ((QuantifiedFormula)term).getSubformula();
+		mLogger.info("term: " + term);
+		mLogger.info("smtlib type: " + term.getSort());
 
-
-
-
-
-
-
+		ApplicationTerm appTerm = (ApplicationTerm)term;
+		mLogger.info("function: " + appTerm.getFunction().getName());
+		
+		Term[] terms = appTerm.getParameters();
+		mLogger.info("term: " + terms[0]);
+		mLogger.info("smtlib type: " + terms[0].getSort());
+		
+		appTerm = (ApplicationTerm)terms[0];
+		mLogger.info("function: " + appTerm.getFunction().getName());
+		
+		terms = appTerm.getParameters();
+		mLogger.info("term: " + terms[1]);
+		mLogger.info("smtlib type: " + terms[1].getSort());
+		mLogger.info("is smtlib type == Int: " + terms[1].getSort().getName().equals("Int"));
+		*/
+		
+		/*
+		ApplicationTerm		:= function symbols
+		ConstantTerm		:= literals
+		QuantifiedFormula	:=
+		TermVariable		:= quantified variables
+		*/
 	}
-
 }
