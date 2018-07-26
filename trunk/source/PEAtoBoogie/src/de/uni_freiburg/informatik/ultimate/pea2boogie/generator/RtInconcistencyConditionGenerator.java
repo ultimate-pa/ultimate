@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +94,8 @@ public class RtInconcistencyConditionGenerator {
 	private final IIdentifierTranslator[] mIdentifierTranslators;
 	private final boolean mSeparateInvariantHandling;
 
+	private final Map<Phase, Term> mPhaseTermCache;
+
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final ReqSymboltable symboltable,
 			final Map<PatternType, PhaseEventAutomata> req2Automata, final BoogieDeclarations boogieDeclarations,
@@ -116,6 +119,7 @@ public class RtInconcistencyConditionGenerator {
 		} else {
 			mPrimedInvariant = mTrue;
 		}
+		mPhaseTermCache = new HashMap<>();
 
 	}
 
@@ -134,11 +138,8 @@ public class RtInconcistencyConditionGenerator {
 				final String pcName = ReqSymboltable.getPcName(automaton);
 				impliesLHS.add(genPCCompEQ(pcName, phaseIndex));
 				final Phase phase = automaton.getPhases()[phaseIndex];
-				final List<Term> inner = new ArrayList<>();
-				for (final Transition trans : phase.getTransitions()) {
-					inner.add(SmtUtils.and(mScript, genGuardANDPrimedStInv(trans), genStrictInv(trans)));
-				}
-				outer.add(SmtUtils.or(mScript, inner));
+				final Term phaseDisjunction = getPhaseTerm(phase);
+				outer.add(phaseDisjunction);
 			}
 
 			// first, compute rhs without primed invariant
@@ -161,6 +162,19 @@ public class RtInconcistencyConditionGenerator {
 		}
 		final Term finalCheck = SmtUtils.and(mScript, rtInconsistencyChecks);
 		return mBoogie2Smt.getTerm2Expression().translate(finalCheck);
+	}
+
+	private Term getPhaseTerm(final Phase phase) {
+		Term phaseTerm = mPhaseTermCache.get(phase);
+		if (phaseTerm == null) {
+			final List<Term> inner = new ArrayList<>();
+			for (final Transition trans : phase.getTransitions()) {
+				inner.add(SmtUtils.and(mScript, genGuardANDPrimedStInv(trans), genStrictInv(trans)));
+			}
+			phaseTerm = SmtUtils.or(mScript, inner);
+			mPhaseTermCache.put(phase, phaseTerm);
+		}
+		return phaseTerm;
 	}
 
 	private Term simplify(final Term rtInconcistencyCheckRhsWithPrimes) {
