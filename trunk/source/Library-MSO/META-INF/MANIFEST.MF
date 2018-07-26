@@ -6,5 +6,6 @@ Bundle-Version: 0.1.23
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils;bundle-version="0.1.23",
  de.uni_freiburg.informatik.ultimate.lib.automata;bundle-version="0.1.23"
 Export-Package: de.uni_freiburg.informatik.ultimate.mso
