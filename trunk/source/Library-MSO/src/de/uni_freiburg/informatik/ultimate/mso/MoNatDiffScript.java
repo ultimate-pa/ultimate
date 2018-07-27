@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.mso;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -288,9 +289,11 @@ public class MoNatDiffScript extends NoopScript
 	 */
 	private int termToInt(Term term)
 	{
+		// TODO: existing library method for checking sort
+		// SmtSortUtils.isIntSort(term.getSort())
 		if (!term.getSort().getName().equals("Int"))
 			throw new IllegalArgumentException("SMTLIB sort of term is not Int");
-		
+
 		return Integer.parseInt(term.toString());
 	}
 	
@@ -391,6 +394,7 @@ public class MoNatDiffScript extends NoopScript
 		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
 		
 		addConstPart(automaton, cInt, BigInteger.valueOf(0), BigInteger.valueOf(0), BigInteger.valueOf(1));
+		
 
 		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
@@ -683,5 +687,9 @@ public class MoNatDiffScript extends NoopScript
 			throw new IllegalArgumentException("not a integer");
 		}
 		final BigInteger integer = literal.numerator();
+		
+		// TODO: another suggestion for symbols of an alphabet
+		Map<Term, Boolean> myAlphabetSymbol = new HashMap();
+		myAlphabetSymbol.put(this.variable("myVariable", this.sort("Int")), true);
 	}
 }
