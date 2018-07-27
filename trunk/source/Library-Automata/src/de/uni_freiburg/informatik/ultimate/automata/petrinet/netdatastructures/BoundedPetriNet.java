@@ -37,19 +37,15 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IsEquivalent;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.petruchio.EmptinessPetruchio;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -241,15 +237,6 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		return transition;
 	}
 
-	/**
-	 * Hack to satisfy requirements from IPetriNet. Used by visualization.
-	 */
-	@Override
-	public Collection<Collection<Place<C>>> getAcceptingMarkings() {
-		final Collection<Collection<Place<C>>> list = new ArrayList<>(1);
-		list.add(mAcceptingPlaces);
-		return list;
-	}
 
 	/**
 	 * @param transition
@@ -257,7 +244,9 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 * @param marking
 	 *            marking
 	 * @return {@code true} iff the transition is enabled
+	 * @deprecated currently not used
 	 */
+	@Deprecated
 	public boolean isTransitionEnabled(final ITransition<LETTER, C> transition,
 			final Collection<Place<C>> marking) {
 		return marking.containsAll(transition.getPredecessors());
@@ -271,8 +260,10 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 * @param marking
 	 *            marking
 	 * @return resulting marking
+	 * @deprecated currently not used, modifies marking
 	 */
-	public Collection<Place<C>> fireTransition(final ITransition<LETTER, C> transition,
+	@Deprecated
+	private Collection<Place<C>> fireTransition(final ITransition<LETTER, C> transition,
 			final Collection<Place<C>> marking) {
 		marking.removeAll(transition.getPredecessors());
 		marking.addAll(transition.getSuccessors());
@@ -285,25 +276,17 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		return mAlphabet;
 	}
 
-//	@Override
-//	public IStateFactory<C> getStateFactory() {
-//		return mStateFactory;
-//	}
-
 	@Override
 	public Collection<Place<C>> getPlaces() {
 		return mPlaces;
 	}
 
 	@Override
-	public Marking<LETTER, C> getInitialMarking() {
-		return new Marking<>(mInitialPlaces);
-	}
-
 	public Set<Place<C>> getInitialPlaces() {
 		return mInitialPlaces;
 	}
 
+	@Override
 	public Collection<Place<C>> getAcceptingPlaces() {
 		return mAcceptingPlaces;
 	}
@@ -313,14 +296,17 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		return mTransitions;
 	}
 
+
+	/** @return Outgoing transitions of given place. */
 	@Override
-	public HashRelation<Place<C>, ITransition<LETTER, C>> getPredecessors() {
-		return mPredecessors;
+	public Set<ITransition<LETTER, C>> getSuccessors(final Place<C> place) {
+		return mSuccessors.getImage(place);
 	}
 
+	/** @return Incoming transitions of given place. */
 	@Override
-	public HashRelation<Place<C>, ITransition<LETTER, C>> getSuccessors() {
-		return mSuccessors;
+	public Set<ITransition<LETTER, C>> getPredecessors(final Place<C> place) {
+		return mPredecessors.getImage(place);
 	}
 
 	/**
@@ -341,12 +327,6 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		return false;
 	}
 
-	/** @return An accepting nested run. */
-	public NestedRun<LETTER, C> getAcceptingNestedRun() {
-		final EmptinessPetruchio<LETTER, C> ep = new EmptinessPetruchio<>(mServices, this);
-		return ep.getResult();
-	}
-
 	boolean transitionsPreserveTokenAmount() {
 		return mTransitions.parallelStream().allMatch(
 				transition -> transition.getPredecessors().size() == transition.getSuccessors().size());
@@ -362,14 +342,4 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		return "has " + mPlaces.size() + "places, " + mTransitions.size() + " transitions";
 	}
 
-	@Override
-	public boolean accepts(final Word<LETTER> word) {
-		throw new UnsupportedOperationException();
-	}
-
-	/**  @return This petri net accepts the empty word. */
-	@Override
-	public boolean acceptsEmptyWord() {
-		return SetOperations.intersecting(mInitialPlaces, mAcceptingPlaces);
-	}
 }

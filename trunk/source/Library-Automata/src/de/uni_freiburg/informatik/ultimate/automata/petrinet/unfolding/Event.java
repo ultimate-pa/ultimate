@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 /**
  * Event of a {@link BranchingProcess}.
  * Each event corresponds to a {@link ITransition} of a {@link IPetriNet}.
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
@@ -71,7 +71,7 @@ public final class Event<S, C> implements Serializable {
 	 * Creates an Event from its predecessor conditions and the transition from the net system it is mapped to by the
 	 * homomorphism. Its successor conditions are automatically created. The given set not be referenced directly, but
 	 * copied.
-	 * 
+	 *
 	 * @param predecessors
 	 *            predecessor conditions
 	 * @param transition
@@ -117,14 +117,14 @@ public final class Event<S, C> implements Serializable {
 
 	/**
 	 * Creates a dummy event. Used as the root of a {@link BranchingProcess}.
-	 * 
+	 *
 	 * @param net
 	 *            Petri net
 	 */
 	public Event(final BoundedPetriNet<S, C> net) {
 		mTransition = null;
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<S, C>>());
-		mMark = net.getInitialMarking();
+		mMark = new Marking(net.getInitialPlaces());
 		final Set<Condition<S, C>> conditionMarkSet = new HashSet<>();
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();

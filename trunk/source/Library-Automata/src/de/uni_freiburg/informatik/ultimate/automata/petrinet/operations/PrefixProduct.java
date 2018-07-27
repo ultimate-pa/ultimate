@@ -246,7 +246,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		//add places of old net
 		for (final Place<C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
-			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
+			final boolean isInitial = mOperand.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
 			final Place<C> newPlace = result.addPlace(content, isInitial, isAccepting);
 			mOldPlace2newPlace.put(oldPlace, newPlace);

@@ -211,7 +211,7 @@ public final class Difference
 
 		for (final Place<C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
-			final boolean isInitial = mOperand.getInitialMarking().contains(oldPlace);
+			final boolean isInitial = mOperand.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
 			final Place<C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2NewPlace.put(oldPlace, newPlace);

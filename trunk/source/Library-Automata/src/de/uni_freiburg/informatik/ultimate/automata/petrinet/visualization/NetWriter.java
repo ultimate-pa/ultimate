@@ -70,7 +70,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printAlphabet();
 		printPlaces();
 		printTransitions(net.getTransitions());
-		printInitialMarking(net.getInitialMarking());
+		printInitialMarking(net.getInitialPlaces());
 		printAcceptingPlaces(net.getAcceptingPlaces());
 		printAutomatonSuffix();
 		finish();

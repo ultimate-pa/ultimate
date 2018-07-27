@@ -28,11 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Automaton2Net;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PrefixProduct;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -54,10 +53,9 @@ public final class Cfg2NetJulian<LETTER extends IIcfgTransition<?>>
 				xnfConversionTechnique);
 
 		constructProcedureAutomata();
-		BoundedPetriNet<LETTER, IPredicate> result = new BoundedPetriNet<>(new AutomataLibraryServices(services),
-				mAutomata.get(0));
-		assert result.checkResult(mAutomata.get(0), (IPetriNet2FiniteAutomatonStateFactory<IPredicate>) contentFactory,
-				(INwaInclusionStateFactory<IPredicate>) contentFactory);
+		final Automaton2Net<LETTER, IPredicate> automaton2Net = new Automaton2Net<>(new AutomataLibraryServices(services), mAutomata.get(0));
+		BoundedPetriNet result = (BoundedPetriNet) automaton2Net.getResult();
+		assert automaton2Net.checkResult(contentFactory);
 		for (int i = 1; i < mAutomata.size(); i++) {
 			result = new PrefixProduct<>(new AutomataLibraryServices(services), result, mAutomata.get(i)).getResult();
 		}

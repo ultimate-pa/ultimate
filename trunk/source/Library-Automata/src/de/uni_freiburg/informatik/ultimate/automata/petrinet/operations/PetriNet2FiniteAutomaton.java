@@ -99,7 +99,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 		final Set<S> alphabet = new HashSet<>(operand.getAlphabet());
 		final VpAlphabet<S> vpAlphabet = new VpAlphabet<S>(alphabet, Collections.emptySet(), Collections.emptySet());
 		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
-		getState(operand.getInitialMarking(), true);
+		getState(new Marking(operand.getInitialPlaces()), true);
 		while (!mWorklist.isEmpty()) {
 			final Marking<S, C> marking = mWorklist.remove(0);
 			constructOutgoingTransitions(marking);

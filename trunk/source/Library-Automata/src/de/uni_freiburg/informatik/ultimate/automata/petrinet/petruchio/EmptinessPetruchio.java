@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import petruchio.cov.Backward;
@@ -50,7 +51,7 @@ import petruchio.interfaces.petrinet.Transition;
  * Check if a BoundedPetriNet has an accepting run. The emptiness check uses Tim Strazny's Petruchio. A marking of a
  * BoundedPetriNet is accepting if the marking contains an accepting place. EmptinessPetruchio checks if any (singleton)
  * marking {p} such that p is an accepting place can be covered.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
  *            Type of alphabet symbols
@@ -66,7 +67,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param net
@@ -184,7 +185,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mBoundedNet)).getResult())).getNestedRun();
 			correct = automataRun == null;
 		} else {
-			correct = mBoundedNet.accepts(mAcceptedRun.getWord());
+			correct = new Accepts(mServices, mBoundedNet, mAcceptedRun.getWord()).getResult();
 		}
 
 		if (mLogger.isInfoEnabled()) {

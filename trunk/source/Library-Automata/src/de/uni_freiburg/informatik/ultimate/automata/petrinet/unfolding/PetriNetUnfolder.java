@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -60,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public final class PetriNetUnfolder<S, C> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	
+
 	private final IPetriNet<S, C> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
@@ -282,7 +283,7 @@ public final class PetriNetUnfolder<S, C> {
 			correct = automataRun == null;
 		} else {
 			final Word<S> word = mRun.getWord();
-			if (mOperand.accepts(word)) {
+			if (new Accepts<S, C>(mServices, mOperand, word).getResult()) {
 				correct = true;
 			} else {
 				mLogger.error("Result of EmptinessCheck, but not accepted: " + word);
