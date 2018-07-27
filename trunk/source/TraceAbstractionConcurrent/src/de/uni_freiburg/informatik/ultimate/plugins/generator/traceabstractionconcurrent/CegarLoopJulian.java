@@ -142,7 +142,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mPref.unfoldingToNet()) {
 			// TODO: Find/implement appropriate stateFactory.
 			final IFinitePrefix2PetriNetStateFactory<IPredicate> stateFactory = null;
-			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding, null, null)
+			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding)
 					.getResult();
 		}
 

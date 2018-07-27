@@ -145,14 +145,14 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(final ITransition<S, C> transition) {
+	public boolean isTransitionEnabled(final ITransition<S, C> transition, IPetriNet<S, C> net) {
 //		if (transition instanceof InhibitorTransition<?, ?>) {
 //			final InhibitorTransition<S, C> it = (InhibitorTransition<S, C>) transition;
 //			if (containsAny(it.getInhibitors())) {
 //				return false;
 //			}
 //		}
-		return mPlaces.containsAll(transition.getPredecessors());
+		return mPlaces.containsAll(net.getPredecessors(transition));
 	}
 
 	/*
@@ -172,10 +172,10 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 *            The transition.
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 */
-	public Marking<S, C> fireTransition(final ITransition<S, C> transition) {
+	public Marking<S, C> fireTransition(final ITransition<S, C> transition, IPetriNet<S, C> net) {
 		final HashSet<Place<C>> resultSet = new HashSet<>(mPlaces);
-		resultSet.removeAll(transition.getPredecessors());
-		resultSet.addAll(transition.getSuccessors());
+		resultSet.removeAll(net.getPredecessors(transition));
+		resultSet.addAll(net.getSuccessors(transition));
 		return new Marking<>(resultSet);
 	}
 
@@ -186,12 +186,12 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 *            transition
 	 * @return {@code true} iff all successor places are contained.
 	 */
-	public boolean undoTransition(final ITransition<S, C> transition) {
-		if (!mPlaces.containsAll(transition.getSuccessors())) {
+	public boolean undoTransition(final ITransition<S, C> transition, IPetriNet<S, C> net) {
+		if (!mPlaces.containsAll(net.getSuccessors(transition))) {
 			return false;
 		}
-		mPlaces.removeAll(transition.getSuccessors());
-		mPlaces.addAll(transition.getPredecessors());
+		mPlaces.removeAll(net.getSuccessors(transition));
+		mPlaces.addAll(net.getPredecessors(transition));
 		return true;
 	}
 

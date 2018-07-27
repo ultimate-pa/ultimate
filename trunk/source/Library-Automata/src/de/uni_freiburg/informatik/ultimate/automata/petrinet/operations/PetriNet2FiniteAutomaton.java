@@ -147,8 +147,8 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 		final C state = getState(marking, false);
 		final Set<ITransition<S, C>> outgoing = getOutgoingNetTransitions(marking);
 		for (final ITransition<S, C> transition : outgoing) {
-			if (marking.isTransitionEnabled(transition)) {
-				final Marking<S, C> succMarking = marking.fireTransition(transition);
+			if (marking.isTransitionEnabled(transition, mOperand)) {
+				final Marking<S, C> succMarking = marking.fireTransition(transition, mOperand);
 				final C succState = getState(succMarking, false);
 				mResult.addInternalTransition(state, transition.getSymbol(), succState);
 			}

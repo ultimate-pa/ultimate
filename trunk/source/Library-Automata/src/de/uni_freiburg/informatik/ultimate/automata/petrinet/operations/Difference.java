@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.operations;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -272,8 +271,8 @@ public final class Difference
 			// omit this transition because subtrahend will accept everything afterwards
 			return;
 		}
-		final Collection<Place<C>> predecessors = new ArrayList<>();
-		final Collection<Place<C>> successors = new ArrayList<>();
+		final Set<Place<C>> predecessors = new HashSet<>();
+		final Set<Place<C>> successors = new HashSet<>();
 		predecessors.add(mWhitePlace.get(predState));
 		successors.add(mWhitePlace.get(succState));
 		final Place<C> blackSucc = mBlackPlace.get(succState);
@@ -322,8 +321,8 @@ public final class Difference
 		// with the selfloop of the implicit (!) sink state which is not in mSelfloop.get(symbol)
 		final LETTER symbol = oldTrans.getSymbol();
 		for (final C state : mSelfloop.get(symbol)) {
-			final Collection<Place<C>> predecessors = new ArrayList<>();
-			final Collection<Place<C>> successors = new ArrayList<>();
+			final Set<Place<C>> predecessors = new HashSet<>();
+			final Set<Place<C>> successors = new HashSet<>();
 			predecessors.add(mWhitePlace.get(state));
 			successors.add(mWhitePlace.get(state));
 			copyMinuendFlow(oldTrans, predecessors, successors);
@@ -360,8 +359,8 @@ public final class Difference
 			// Usually we would have to sync at least with the selfloop of the implicit (!) sink state.
 			return;
 		}
-		final Collection<Place<C>> predecessors = new ArrayList<>();
-		final Collection<Place<C>> successors = new ArrayList<>();
+		final Set<Place<C>> predecessors = new HashSet<>();
+		final Set<Place<C>> successors = new HashSet<>();
 		copyMinuendFlow(oldTrans, predecessors, successors);
 		for (final C state : mStateChanger.get(symbol)) {
 			predecessors.add(mBlackPlace.get(state));
@@ -372,10 +371,10 @@ public final class Difference
 
 	private void copyMinuendFlow(final ITransition<LETTER, C> trans,
 			final Collection<Place<C>> preds, final Collection<Place<C>> succs) {
-		for (final Place<C> oldPlace : trans.getPredecessors()) {
+		for (final Place<C> oldPlace : mOperand.getPredecessors(trans)) {
 			preds.add(mOldPlace2NewPlace.get(oldPlace));
 		}
-		for (final Place<C> oldPlace : trans.getSuccessors()) {
+		for (final Place<C> oldPlace : mOperand.getSuccessors(trans)) {
 			succs.add(mOldPlace2NewPlace.get(oldPlace));
 		}
 	}

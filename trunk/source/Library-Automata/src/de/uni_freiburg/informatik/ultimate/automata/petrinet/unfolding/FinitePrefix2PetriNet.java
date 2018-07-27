@@ -26,11 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -80,11 +78,11 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 	 *             if two nets do not have the same alphabet.
 	 */
 	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
-			final IFinitePrefix2PetriNetStateFactory<C> stateFactory, final BranchingProcess<L, C> bp,
-			final IPetriNet2FiniteAutomatonStateFactory<C> net2autoStateFactory,
-			final INwaInclusionStateFactory<C> nwaInclusionStateFactory) throws AutomataLibraryException {
+			final IFinitePrefix2PetriNetStateFactory<C> stateFactory, final BranchingProcess<L, C> bp) throws AutomataLibraryException {
 		super(services);
 		mStateFactory = stateFactory;
+		final IPetriNet2FiniteAutomatonStateFactory<C> net2autoStateFactory = (IPetriNet2FiniteAutomatonStateFactory<C>) stateFactory;
+		final INwaInclusionStateFactory<C> nwaInclusionStateFactory = (INwaInclusionStateFactory<C>) stateFactory;
 		// TODO implement merging for markings?
 		mInput = bp;
 
@@ -360,8 +358,8 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 					final Set<Place<C>> predset = entry2.getKey();
 					final Set<Set<Place<C>>> succsets = entry2.getValue();
 					for (final Set<Place<C>> succset : succsets) {
-						final List<Place<C>> predList = new ArrayList<>(predset);
-						final List<Place<C>> succList = new ArrayList<>(succset);
+						final Set<Place<C>> predList = new HashSet<>(predset);
+						final Set<Place<C>> succList = new HashSet<>(succset);
 						net.addTransition(letter, predList, succList);
 					}
 				}

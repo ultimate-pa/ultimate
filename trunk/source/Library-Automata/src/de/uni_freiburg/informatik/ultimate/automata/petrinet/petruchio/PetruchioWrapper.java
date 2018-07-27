@@ -102,14 +102,14 @@ public class PetruchioWrapper<S, C> {
 			final Transition transitionPetruchio = mNetPetruchio.addTransition(tBounded.toString());
 			mTPetruchio2tBounded.put(transitionPetruchio, tBounded);
 			// PTArcs kopieren
-			for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place<C> pBounded : tBounded
-					.getSuccessors()) {
+			for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place<C> pBounded : 
+				mBoundedNet.getSuccessors(tBounded)) {
 				// 1-safe net
 				mNetPetruchio.addArc(transitionPetruchio, mPBounded2pPetruchio.get(pBounded), 1);
 			}
 			// TPArcs kopieren
-			for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place<C> p : tBounded
-					.getPredecessors()) {
+			for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place<C> p : 
+					mBoundedNet.getPredecessors(tBounded)) {
 				// 1-safe net
 				mNetPetruchio.addArc(mPBounded2pPetruchio.get(p), transitionPetruchio, 1);
 			}

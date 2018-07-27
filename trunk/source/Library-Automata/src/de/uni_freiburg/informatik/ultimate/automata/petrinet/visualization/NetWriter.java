@@ -69,7 +69,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printAutomatonPrefix();
 		printAlphabet();
 		printPlaces();
-		printTransitions(net.getTransitions());
+		printTransitions(net);
 		printInitialMarking(net.getInitialPlaces());
 		printAcceptingPlaces(net.getAcceptingPlaces());
 		printAutomatonSuffix();
@@ -97,21 +97,21 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printCollectionSuffix();
 	}
 
-	private void printTransitions(final Collection<ITransition<LETTER, STATE>> transitions) {
+	private void printTransitions(final BoundedPetriNet<LETTER, STATE> net) {
 		printlnCollectionPrefix("transitions");
-		for (final ITransition<LETTER, STATE> transition : transitions) {
-			printTransition(transition);
+		for (final ITransition<LETTER, STATE> transition : net.getTransitions()) {
+			printTransition(transition, net);
 		}
 		printTransitionsSuffix();
 	}
 
-	private void printTransition(final ITransition<LETTER, STATE> transition) {
+	private void printTransition(final ITransition<LETTER, STATE> transition, BoundedPetriNet<LETTER, STATE> net) {
 		printOneTransitionPrefix();
-		printMarking(transition.getPredecessors());
+		printMarking(net.getPredecessors(transition));
 		print(' ');
 		print(mAlphabet.get(transition.getSymbol()));
 		print(' ');
-		printMarking(transition.getSuccessors());
+		printMarking(net.getSuccessors(transition));
 		printOneTransitionSuffix();
 	}
 

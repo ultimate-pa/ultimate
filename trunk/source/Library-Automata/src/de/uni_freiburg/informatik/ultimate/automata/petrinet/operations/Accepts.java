@@ -125,7 +125,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		boolean result = false;
 		Marking<S, C> nextMarking;
 		for (final ITransition<S, C> transition : activeTransitionsWithSymbol(marking, symbol)) {
-			nextMarking = marking.fireTransition(transition);
+			nextMarking = marking.fireTransition(transition, mOperand);
 			if (getResultHelper(nextPosition, nextMarking)) {
 				result = true;
 			}
@@ -138,7 +138,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		for (final Place<C> place : marking) {
 			mOperand.getSuccessors(place).stream()
 					.filter(transition -> transition.getSymbol().equals(symbol))
-					.filter(marking::isTransitionEnabled)
+					.filter((transition -> marking.isTransitionEnabled(transition, mOperand)))
 					.forEach(activeTransitionsWithSymbol::add);
 		}
 		return activeTransitionsWithSymbol;

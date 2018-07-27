@@ -62,11 +62,19 @@ public interface IPetriNet<LETTER, C> extends IAutomaton<LETTER, C> {
 
 
 
-	/** @return Outgoing transitions of one place. */
+	/** @return Outgoing transitions of given place. */
 	Set<ITransition<LETTER, C>> getSuccessors(final Place<C> place);
 
-	/** @return Incoming transitions of one place. */
+	/** @return Incoming transitions of given place. */
 	Set<ITransition<LETTER, C>> getPredecessors(final Place<C> place);
+	
+	
+	/** @return Outgoing places of given transition. */
+	Set<Place<C>> getSuccessors(final ITransition<LETTER, C> transition);
+
+	/** @return Incoming places of given transition. */
+	Set<Place<C>> getPredecessors(final ITransition<LETTER, C> transition);
+	
 
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)

@@ -28,9 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 
@@ -49,8 +48,8 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 
 	private final int mHashCode;
 	private final S mSymbol;
-	private final Collection<Place<C>> mPredecessors;
-	private final Collection<Place<C>> mSuccessors;
+	private final Set<Place<C>> mPredecessors;
+	private final Set<Place<C>> mSuccessors;
 
 	private final int mTotalOrderId;
 
@@ -69,11 +68,11 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 	 * @param totalOrderId
 	 *            total order ID
 	 */
-	public Transition(final S symbol, final Collection<Place<C>> predecessors,
-			final Collection<Place<C>> successors, final int totalOrderId) {
+	public Transition(final S symbol, final Set<Place<C>> predecessors,
+			final Set<Place<C>> successors, final int totalOrderId) {
 		mSymbol = symbol;
-		mPredecessors = Collections.unmodifiableList((List<Place<C>>) predecessors);
-		mSuccessors = Collections.unmodifiableList((List<Place<C>>) successors);
+		mPredecessors = Collections.unmodifiableSet(predecessors);
+		mSuccessors = Collections.unmodifiableSet(successors);
 		mHashCode = computeHashCode();
 		mTotalOrderId = totalOrderId;
 	}
@@ -83,13 +82,11 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 		return mSymbol;
 	}
 
-	@Override
-	public Collection<Place<C>> getPredecessors() {
+	public Set<Place<C>> getPredecessors() {
 		return mPredecessors;
 	}
 
-	@Override
-	public Collection<Place<C>> getSuccessors() {
+	public Set<Place<C>> getSuccessors() {
 		return mSuccessors;
 	}
 

@@ -26,10 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
-import java.util.Collection;
-
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
-
 /**
  * A Petri net transition interface.
  * 
@@ -45,19 +41,4 @@ public interface ITransition<S, C> {
 	 */
 	S getSymbol();
 
-	/**
-	 * @return The predecessor places.
-	 */
-	Collection<Place<C>> getPredecessors();
-
-	/**
-	 * @return The successor places.
-	 */
-	Collection<Place<C>> getSuccessors();
-
-	/*
-	public interface Successors extends Iterable<IPlace> {
-		
-	}
-	*/
 }

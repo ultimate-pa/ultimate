@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -136,18 +135,37 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 			final Place<C> place = addPlace(content, isInitial, isAccepting);
 			state2place.put(content, place);
 		}
-		Collection<Place<C>> succPlace;
-		Collection<Place<C>> predPlace;
+		Set<Place<C>> succPlace;
+		Set<Place<C>> predPlace;
 		for (final C content : nwa.getStates()) {
-			predPlace = new ArrayList<>(1);
+			predPlace = new HashSet<>();
 			predPlace.add(state2place.get(content));
 			for (final OutgoingInternalTransition<LETTER, C> trans : nwa.internalSuccessors(content)) {
-				succPlace = new ArrayList<>(1);
+				succPlace = new HashSet<>();
 				succPlace.add(state2place.get(trans.getSucc()));
 				addTransition(trans.getLetter(), predPlace, succPlace);
 			}
 		}
 		assert constantTokenAmountGuaranteed();
+	}
+	
+	
+	@Override
+	public Set<Place<C>> getSuccessors(ITransition<LETTER, C> transition) {
+		if (transition instanceof Transition) {
+			return ((Transition) transition).getSuccessors();
+		} else {
+			throw new IllegalArgumentException(this.getClass().getSimpleName() + " works only with " + Transition.class.getSimpleName());
+		}
+	}
+
+	@Override
+	public Set<Place<C>> getPredecessors(ITransition<LETTER, C> transition) {
+		if (transition instanceof Transition) {
+			return ((Transition) transition).getPredecessors();
+		} else {
+			throw new IllegalArgumentException(this.getClass().getSimpleName() + " works only with " + Transition.class.getSimpleName());
+		}
 	}
 
 	/**
@@ -222,7 +240,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 * @return the newly added transition
 	 */
 	public Transition<LETTER, C> addTransition(final LETTER letter,
-			final Collection<Place<C>> preds, final Collection<Place<C>> succs) {
+			final Set<Place<C>> preds, final Set<Place<C>> succs) {
 		assert mAlphabet.contains(letter) : "Letter not from alphabet: " + letter;
 		final Transition<LETTER, C> transition = new Transition<>(letter, preds, succs, mTransitions.size());
 		for (final Place<C> predPlace : preds) {
@@ -249,7 +267,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	@Deprecated
 	public boolean isTransitionEnabled(final ITransition<LETTER, C> transition,
 			final Collection<Place<C>> marking) {
-		return marking.containsAll(transition.getPredecessors());
+		return marking.containsAll(getSuccessors(transition));
 	}
 
 	/**
@@ -265,8 +283,8 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	@Deprecated
 	private Collection<Place<C>> fireTransition(final ITransition<LETTER, C> transition,
 			final Collection<Place<C>> marking) {
-		marking.removeAll(transition.getPredecessors());
-		marking.addAll(transition.getSuccessors());
+		marking.removeAll(getPredecessors(transition));
+		marking.addAll(getSuccessors(transition));
 
 		return marking;
 	}
@@ -329,7 +347,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 
 	boolean transitionsPreserveTokenAmount() {
 		return mTransitions.parallelStream().allMatch(
-				transition -> transition.getPredecessors().size() == transition.getSuccessors().size());
+				transition -> getPredecessors(transition).size() == getSuccessors(transition).size());
 	}
 
 	@Override
@@ -341,5 +359,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	public String sizeInformation() {
 		return "has " + mPlaces.size() + "places, " + mTransitions.size() + " transitions";
 	}
+
+
 
 }

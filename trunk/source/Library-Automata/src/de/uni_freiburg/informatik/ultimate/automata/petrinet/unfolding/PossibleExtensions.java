@@ -111,7 +111,7 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 				}
 				current.mChosen.add(cond0);
 				current.mPlaces.remove(cond0.getPlace());
-				assert current.mPlaces.size() + current.mChosen.size() == t.getPredecessors().size();
+				assert current.mPlaces.size() + current.mChosen.size() == mBranchingProcess.getNet().getPredecessors(t).size();
 			}
 		}
 		return candidates.values();
