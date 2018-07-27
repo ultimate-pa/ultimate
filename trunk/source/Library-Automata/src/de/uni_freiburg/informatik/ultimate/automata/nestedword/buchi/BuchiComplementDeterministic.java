@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementDeterministicStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -72,18 +71,6 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 	private final HashMap<STATE, STATE> mOld2Final = new HashMap<>();
 	private final HashMap<STATE, STATE> mOld2NonFinal = new HashMap<>();
 
-	/**
-	 * Constructor.
-	 *
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            operand
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
 	public BuchiComplementDeterministic(final AutomataLibraryServices services,
 			final IBuchiComplementDeterministicStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
@@ -100,8 +87,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		} else {
 			mTotalizedOperand = new ReachableStatesCopy<>(mServices, operand, true, false, false, false).getResult();
 		}
-		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getVpAlphabet(),
-				(IEmptyStackStateFactory<STATE>) operand.getStateFactory());
+		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getVpAlphabet(), stateFactory);
 		traverseDoubleDeckerGraph();
 
 		if (mLogger.isInfoEnabled()) {
