@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -102,7 +103,28 @@ public class MoNatDiffScript extends NoopScript
 		// TODO Auto-generated method stub
 		
 		mLogger.info("term: " + term);
-		postOrder(term);
+		PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton = postOrder(term);		
+		
+		try
+		{
+			IsEmpty<BigInteger, String> emptinessCheck = new IsEmpty<BigInteger, String>(mAutomataLibraryServices, automaton.getFstElement());
+			if (emptinessCheck.getResult() == false)
+			{
+				mLogger.info("automaton is not empty");
+				
+				NestedRun<BigInteger, String> run = emptinessCheck.getNestedRun();
+				NestedWord<BigInteger> word = run.getWord();
+				
+				mLogger.info("accepting word: " + word);
+			}
+			else
+				mLogger.info("automaton is empty");
+		}
+		catch (AutomataOperationCanceledException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		return null;
 	}
@@ -114,49 +136,144 @@ public class MoNatDiffScript extends NoopScript
 		return null;
 	}
 	
-	private void postOrder(Term term)
-	{
+	/*
+	 * Traverses formula in post order.
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> postOrder(Term term)
+	{	
 		if (term == null)
-			return;
+			return null;
 		
-		String str = new String();
+		String operator = new String();
 		Term term1 = null, term2 = null;
 		
 		if (term instanceof QuantifiedFormula)
 		{
 			QuantifiedFormula quantifiedFormula = (QuantifiedFormula)term;
-			str = quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS ? "exists" : "forall";
+			operator = quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS ? "exists" : "forall";
 			term1 = quantifiedFormula.getSubformula();
 		}
-		else if (term instanceof ApplicationTerm)
+		
+		if (term instanceof ApplicationTerm)
 		{
 			ApplicationTerm applicationTerm = (ApplicationTerm)term;
-			str = applicationTerm.getFunction().getName();
-			Term[] terms = applicationTerm.getParameters();
-			term1 = terms.length > 0 ? terms[0] : null;
-			term2 = terms.length > 1 ? terms[1] : null;
-		}
-		else if (term instanceof TermVariable)
-		{
-			TermVariable termVariable = (TermVariable)term;
-			str = termVariable.toString();
-		}
-		else if (term instanceof ConstantTerm)
-		{
-			ConstantTerm constantTerm = (ConstantTerm)term;
-			str = constantTerm.toString();
+			String operator_tmp = applicationTerm.getFunction().getName();
+			
+			if (operator_tmp.equals("not") || operator_tmp.equals("and") || operator_tmp.equals("or"))
+			{
+				operator = operator_tmp;
+				Term[] terms = applicationTerm.getParameters();
+				term1 = terms.length > 0 ? terms[0] : null;
+				term2 = terms.length > 1 ? terms[1] : null;
+			}
 		}
 		
-		postOrder(term1);
-		postOrder(term2);
+		PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton1 = postOrder(term1);
+		PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton2 = postOrder(term2);
 		
-		mLogger.info("term: " + str);
+		mLogger.info("process: " + term);
+		return process(term, operator, automaton1, automaton2);
+	}
+	
+	/*
+	 * Processes formula.
+	 */
+	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> process (Term term, String operator,
+			PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton1,
+			PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton2)
+	{
+		if (operator.isEmpty())
+		{
+			ApplicationTerm appTerm = (ApplicationTerm)term;
+			operator = appTerm.getFunction().getName();
+
+			if (operator.equals("subsetInts"))
+			{
+				mLogger.info("construct nonStrictSubsetAutomaton X subset Y");
+				Term[] terms = appTerm.getParameters();
+				return nonStrictSubsetAutomaton(terms[0], terms[1]);
+			}
+			
+			if (operator.equals("strictSubsetInts"))
+			{
+				mLogger.info("construct strictSubsetAutomaton X strictSubset Y");
+				Term[] terms = appTerm.getParameters();
+				return strictSubsetAutomaton(terms[0], terms[1]);
+			}
+			
+			if (operator.equals("element"))
+			{
+				Term[] terms = appTerm.getParameters();
+				if (terms[0] instanceof ConstantTerm)
+				{
+					mLogger.info("construct constElementAutomaton c element X");
+					return constElementAutomaton(terms[0], terms[1] );
+				}
+				
+				ApplicationTerm term0 = (ApplicationTerm)terms[0];
+				Term[] terms0 = term0.getParameters();
+				mLogger.info("construct elementAutomaton x+c element Y");
+				return elementAutomaton(terms0[0], terms0[1], terms[1]);
+			}
+			
+			if (operator.equals("<="))
+			{
+				Term[] terms = appTerm.getParameters();
+				ApplicationTerm term0 = terms[0] instanceof ApplicationTerm ? (ApplicationTerm)terms[0] : null;
+				
+				if (term0 == null || term0.getFunction().getParameterCount() == 0)
+				{
+					mLogger.info("construct nonStrictIneqAutomaton x <= c");
+					return nonStrictIneqAutomaton(terms[0], terms[1]);
+				}
+				
+				Term[] terms0 = term0.getParameters();
+				if (terms0.length == 1)
+				{
+					mLogger.info("construct nonStrictNegIneqAutomaton -x <= c");
+					return nonStrictNegIneqAutomaton(terms0[0], terms[1]);
+				}
+				
+				mLogger.info("construct nonStrictIneqAutomaton x-y <= c");
+				return nonStrictIneqAutomaton(terms0[0], terms0[1], terms[1]);
+			}
+			
+			if (operator.equals("<"))
+			{
+				Term[] terms = appTerm.getParameters();
+				ApplicationTerm term0 = terms[0] instanceof ApplicationTerm ? (ApplicationTerm)terms[0] : null;
+				
+				if (term0 == null || term0.getFunction().getParameterCount() == 0)
+				{
+					mLogger.info("construct strictIneqAutomaton x < c");
+					return strictIneqAutomaton(terms[0], terms[1]);
+				}
+				
+				Term[] terms0 = term0.getParameters();
+				if (terms0.length == 1)
+				{
+					mLogger.info("construct strictNegIneqAutomaton -x < c");
+					return strictNegIneqAutomaton(terms0[0], terms[1]);
+				}
+				
+				mLogger.info("construct strictIneqAutomaton x-y < c");
+				return strictIneqAutomaton(terms0[0], terms0[1], terms[1]);
+			}
+		}
+		
+		/* TODO: Construct automata for ...
+		 * not
+		 * and
+		 * exist
+		 */
+		
+		return null;
 	}
 	
 	/*
 	 * Constructs empty automaton.
 	 */
-	private NestedWordAutomaton<BigInteger, String> emptyAutomaton() throws AutomataLibraryException
+	private NestedWordAutomaton<BigInteger, String> emptyAutomaton()
 	{
 		Set<BigInteger> alphabet = null;
 		VpAlphabet<BigInteger> vpAlphabet = new VpAlphabet<BigInteger>(alphabet);
@@ -165,16 +282,18 @@ public class MoNatDiffScript extends NoopScript
 		return new NestedWordAutomaton<BigInteger, String>(mAutomataLibraryServices, vpAlphabet, stateFactory);
 	}
 	
+	
 	/*
 	 * Converts term of sort Int to int.
 	 */
-	private int termToInt(Term term) throws NumberFormatException
+	private int termToInt(Term term)
 	{
 		if (!term.getSort().getName().equals("Int"))
 			throw new IllegalArgumentException("SMTLIB sort of term is not Int");
 		
 		return Integer.parseInt(term.toString());
 	}
+	
 	
 	/*
 	 * Adds loops for some constant to automaton.
@@ -201,11 +320,11 @@ public class MoNatDiffScript extends NoopScript
 		}
 	}
 	
+	
 	/*
 	 * Creates automaton for atomic formula "x-y <= c".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictIneqAutomaton(Term x, Term y, Term c)
-			throws AutomataLibraryException, NumberFormatException
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x, y);
@@ -227,11 +346,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 
+	
 	/*
 	 * Creates automaton for atomic formula "x-y < c".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictIneqAutomaton(Term x, Term y, Term c)
-			throws AutomataLibraryException, NumberFormatException
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x, y);
@@ -255,11 +374,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
+	
 	/*
 	 * Creates automaton for atomic formula "x <= c".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictIneqAutomaton(Term x, Term c)
-			throws AutomataLibraryException, NumberFormatException
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -276,11 +395,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
+	
 	/*
 	 * Creates automaton for atomic formula "x < c".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictIneqAutomaton(Term x, Term c)
-			throws AutomataLibraryException, NumberFormatException
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -290,7 +409,6 @@ public class MoNatDiffScript extends NoopScript
 		{
 			automaton.addState(true, false, "init");
 			automaton.addState(false, true, "final");
-			
 			automaton.addInternalTransition("init", BigInteger.valueOf(1), "final");
 			automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
 			
@@ -300,11 +418,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
+
 	/*
 	 * Creates automaton for atomic formula "-x <= c".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictNegIneqAutomaton(Term x, Term c)
-			throws AutomataLibraryException, NumberFormatException
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -320,11 +438,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
+
 	/*
 	 * Creates automaton for atomic formula "-x < c".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictNegIneqAutomaton(Term x, Term c)
-			throws AutomataLibraryException, NumberFormatException
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -350,11 +468,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
+
 	/*
 	 * Creates automaton for atomic formula "X is non strict subset of Y".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictSubsetAutomaton(Term x, Term y)
-			throws AutomataLibraryException
 	{
 		List<Term> mapping = Arrays.asList(x, y);
 		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
@@ -372,11 +490,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
+
 	/*
 	 * Creates automaton for atomic formula "X is strict subset of Y".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictSubsetAutomaton(Term x, Term y)
-			throws AutomataLibraryException
 	{
 		List<Term> mapping = Arrays.asList(x, y);
 		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
@@ -394,11 +512,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
+
 	/*
 	 * Creates automaton for atomic formula "x+c is element of Y".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> elementAutomaton(Term x, Term c, Term y)
-			throws AutomataLibraryException, NumberFormatException
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x, y);
@@ -444,11 +562,11 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
+
 	/*
 	 * Creates automaton for atomic formula "c is element of X".
 	 */
 	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> constElementAutomaton(Term c, Term x)
-			throws AutomataLibraryException, NumberFormatException
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -481,6 +599,7 @@ public class MoNatDiffScript extends NoopScript
 		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 
+
 	/*
 	 * Examples.
 	 * TODO: Remove later.
@@ -512,11 +631,13 @@ public class MoNatDiffScript extends NoopScript
 				mAutomataLibraryServices, stateFactory, automaton).getResult();
 		final INestedWordAutomaton<Integer, String> buchiComplement = new BuchiComplementFKV<Integer, String>(
 				mAutomataLibraryServices, stateFactory, automaton).getResult();
+		
 		final IsEmpty<Integer, String> emptinessCheck = new IsEmpty<Integer, String>(mAutomataLibraryServices, union);
 		if (emptinessCheck.getResult() == false) {
 			final NestedRun<Integer, String> run = emptinessCheck.getNestedRun();
 			final NestedWord<Integer> word = run.getWord();
 		}
+		
 		final BuchiIsEmpty<Integer, String> buchiEmptinessCheck = new BuchiIsEmpty<Integer, String>(
 				mAutomataLibraryServices, buchiComplement);
 		if (emptinessCheck.getResult() == false) {
@@ -562,39 +683,5 @@ public class MoNatDiffScript extends NoopScript
 			throw new IllegalArgumentException("not a integer");
 		}
 		final BigInteger integer = literal.numerator();
-		
-		
-		/*
-		Dirty test of how to walk to bottom in the tree.
-		
-		mLogger.info("term: " + term);
-		mLogger.info("smtlib type: " + term.getSort());
-		
-		term = ((QuantifiedFormula)term).getSubformula();
-		mLogger.info("term: " + term);
-		mLogger.info("smtlib type: " + term.getSort());
-
-		ApplicationTerm appTerm = (ApplicationTerm)term;
-		mLogger.info("function: " + appTerm.getFunction().getName());
-		
-		Term[] terms = appTerm.getParameters();
-		mLogger.info("term: " + terms[0]);
-		mLogger.info("smtlib type: " + terms[0].getSort());
-		
-		appTerm = (ApplicationTerm)terms[0];
-		mLogger.info("function: " + appTerm.getFunction().getName());
-		
-		terms = appTerm.getParameters();
-		mLogger.info("term: " + terms[1]);
-		mLogger.info("smtlib type: " + terms[1].getSort());
-		mLogger.info("is smtlib type == Int: " + terms[1].getSort().getName().equals("Int"));
-		*/
-		
-		/*
-		ApplicationTerm		:= function symbols
-		ConstantTerm		:= literals
-		QuantifiedFormula	:=
-		TermVariable		:= quantified variables
-		*/
 	}
 }
