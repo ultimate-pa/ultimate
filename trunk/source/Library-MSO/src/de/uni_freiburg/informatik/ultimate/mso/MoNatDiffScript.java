@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.PairXY;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -69,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class MoNatDiffScript extends NoopScript
 {
@@ -103,11 +103,11 @@ public class MoNatDiffScript extends NoopScript
 		// TODO Auto-generated method stub
 		
 		mLogger.info("term: " + term);
-		PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton = postOrder(term);		
+		Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton = postOrder(term);		
 		
 		try
 		{
-			IsEmpty<BigInteger, String> emptinessCheck = new IsEmpty<BigInteger, String>(mAutomataLibraryServices, automaton.getFstElement());
+			IsEmpty<BigInteger, String> emptinessCheck = new IsEmpty<BigInteger, String>(mAutomataLibraryServices, automaton.getFirst());
 			if (emptinessCheck.getResult() == false)
 			{
 				mLogger.info("automaton is not empty");
@@ -139,7 +139,7 @@ public class MoNatDiffScript extends NoopScript
 	/*
 	 * Traverses formula in post order.
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> postOrder(Term term)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> postOrder(Term term)
 	{	
 		if (term == null)
 			return null;
@@ -168,8 +168,8 @@ public class MoNatDiffScript extends NoopScript
 			}
 		}
 		
-		PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton1 = postOrder(term1);
-		PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton2 = postOrder(term2);
+		Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton1 = postOrder(term1);
+		Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton2 = postOrder(term2);
 		
 		mLogger.info("process: " + term);
 		return process(term, operator, automaton1, automaton2);
@@ -178,9 +178,9 @@ public class MoNatDiffScript extends NoopScript
 	/*
 	 * Processes formula.
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> process (Term term, String operator,
-			PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton1,
-			PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton2)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> process (Term term, String operator,
+			Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton1,
+			Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> automaton2)
 	{
 		if (operator.isEmpty())
 		{
@@ -324,7 +324,7 @@ public class MoNatDiffScript extends NoopScript
 	/*
 	 * Creates automaton for atomic formula "x-y <= c".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictIneqAutomaton(Term x, Term y, Term c)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictIneqAutomaton(Term x, Term y, Term c)
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x, y);
@@ -343,14 +343,14 @@ public class MoNatDiffScript extends NoopScript
 		
 		addConstPart(automaton, cInt, BigInteger.valueOf(2), BigInteger.valueOf(0), BigInteger.valueOf(1));
 		
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 
 	
 	/*
 	 * Creates automaton for atomic formula "x-y < c".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictIneqAutomaton(Term x, Term y, Term c)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> strictIneqAutomaton(Term x, Term y, Term c)
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x, y);
@@ -371,14 +371,14 @@ public class MoNatDiffScript extends NoopScript
 		
 		addConstPart(automaton, cInt - 1, BigInteger.valueOf(2), BigInteger.valueOf(0), BigInteger.valueOf(1));
 		
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
 	
 	/*
 	 * Creates automaton for atomic formula "x <= c".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictIneqAutomaton(Term x, Term c)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictIneqAutomaton(Term x, Term c)
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -392,14 +392,14 @@ public class MoNatDiffScript extends NoopScript
 		
 		addConstPart(automaton, cInt, BigInteger.valueOf(0), BigInteger.valueOf(0), BigInteger.valueOf(1));
 
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
 	
 	/*
 	 * Creates automaton for atomic formula "x < c".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictIneqAutomaton(Term x, Term c)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> strictIneqAutomaton(Term x, Term c)
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -415,14 +415,14 @@ public class MoNatDiffScript extends NoopScript
 			addConstPart(automaton, cInt - 1, BigInteger.valueOf(0), BigInteger.valueOf(0), BigInteger.valueOf(1));
 		}
 
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
 
 	/*
 	 * Creates automaton for atomic formula "-x <= c".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictNegIneqAutomaton(Term x, Term c)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictNegIneqAutomaton(Term x, Term c)
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -435,14 +435,14 @@ public class MoNatDiffScript extends NoopScript
 		automaton.addInternalTransition("init", BigInteger.valueOf(1), "final");
 		automaton.addInternalTransition("final", BigInteger.valueOf(0), "final");
 
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
 
 	/*
 	 * Creates automaton for atomic formula "-x < c".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictNegIneqAutomaton(Term x, Term c)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> strictNegIneqAutomaton(Term x, Term c)
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -465,14 +465,14 @@ public class MoNatDiffScript extends NoopScript
 			automaton.addInternalTransition("init", BigInteger.valueOf(1), "final");
 		}
 
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
 
 	/*
 	 * Creates automaton for atomic formula "X is non strict subset of Y".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictSubsetAutomaton(Term x, Term y)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> nonStrictSubsetAutomaton(Term x, Term y)
 	{
 		List<Term> mapping = Arrays.asList(x, y);
 		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
@@ -487,14 +487,14 @@ public class MoNatDiffScript extends NoopScript
 		automaton.addInternalTransition("final", BigInteger.valueOf(2), "final");
 		automaton.addInternalTransition("final", BigInteger.valueOf(3), "final");
 
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
 
 	/*
 	 * Creates automaton for atomic formula "X is strict subset of Y".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> strictSubsetAutomaton(Term x, Term y)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> strictSubsetAutomaton(Term x, Term y)
 	{
 		List<Term> mapping = Arrays.asList(x, y);
 		NestedWordAutomaton<BigInteger, String> automaton = emptyAutomaton();
@@ -509,14 +509,14 @@ public class MoNatDiffScript extends NoopScript
 		automaton.addInternalTransition("final", BigInteger.valueOf(2), "final");
 		automaton.addInternalTransition("final", BigInteger.valueOf(3), "final");
 
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
 
 	/*
 	 * Creates automaton for atomic formula "x+c is element of Y".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> elementAutomaton(Term x, Term c, Term y)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> elementAutomaton(Term x, Term c, Term y)
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x, y);
@@ -559,14 +559,14 @@ public class MoNatDiffScript extends NoopScript
 			}
 		}
 		
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 	
 
 	/*
 	 * Creates automaton for atomic formula "c is element of X".
 	 */
-	private PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>> constElementAutomaton(Term c, Term x)
+	private Pair<NestedWordAutomaton<BigInteger, String>, List<Term>> constElementAutomaton(Term c, Term x)
 	{
 		int cInt = termToInt(c);
 		List<Term> mapping = Arrays.asList(x);
@@ -596,7 +596,7 @@ public class MoNatDiffScript extends NoopScript
 				automaton.addInternalTransition(state, BigInteger.valueOf(1), "final");
 		}
 		
-		return new PairXY<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
+		return new Pair<NestedWordAutomaton<BigInteger, String>, List<Term>>(automaton, mapping);
 	}
 
 
