@@ -31,9 +31,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
 
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -518,14 +516,14 @@ public class AutomataDefinitionInterpreter {
 
 		// add the transitions
 		for (final PetriNetTransitionAST ptrans : pna.getTransitions()) {
-			final Collection<Place<String>> preds = new ArrayList<>();
+			final Set<Place<String>> preds = new HashSet<>();
 			for (final String pred : ptrans.getPreds()) {
 				if (!name2places.containsKey(pred)) {
 					throw new IllegalArgumentException(UNDEFINED_PLACE + pred);
 				}
 				preds.add(name2places.get(pred));
 			}
-			final Collection<Place<String>> succs = new ArrayList<>();
+			final Set<Place<String>> succs = new HashSet<>();
 			for (final String succ : ptrans.getSuccs()) {
 				if (!name2places.containsKey(succ)) {
 					throw new IllegalArgumentException(UNDEFINED_PLACE + succ);
