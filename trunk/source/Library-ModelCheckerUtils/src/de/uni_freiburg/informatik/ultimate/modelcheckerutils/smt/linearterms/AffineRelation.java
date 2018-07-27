@@ -47,13 +47,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.Bin
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 /**
- * Represents an term of the form ψ ▷ φ, where ψ and φ are affine terms and ▷ is a binary relation symbol. Allows to
- * return this relation as an SMT term in the following two forms:
+ * Represents an term of the form ψ ▷ φ, where ψ and φ are {@link AffineTerm}s
+ * and ▷ is a binary relation symbol from the following list.
+ * <p>
+ * ▷ ∈ { =, !=, \<=, \<, \>=, \> }
+ * </p>
+ * <p>
+ * Allows to return this relation as an SMT term in the following two forms:
  * <ul>
  * <li>positive normal form
- * <li>the form where a specific variable is on the left hand side and all other summands are moved to the right hand
- * side.
+ * <li>the form where a specific variable is on the left hand side and all other
+ * summands are moved to the right hand side.
  * </ul>
+ * </p>
  *
  * @author Matthias Heizmann
  */
