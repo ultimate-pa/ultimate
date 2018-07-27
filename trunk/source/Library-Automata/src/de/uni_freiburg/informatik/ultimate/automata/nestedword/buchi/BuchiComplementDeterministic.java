@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementDeterministicStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -99,7 +100,8 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		} else {
 			mTotalizedOperand = new ReachableStatesCopy<>(mServices, operand, true, false, false, false).getResult();
 		}
-		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getVpAlphabet(), operand.getStateFactory());
+		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getVpAlphabet(),
+				(IEmptyStackStateFactory<STATE>) operand.getStateFactory());
 		traverseDoubleDeckerGraph();
 
 		if (mLogger.isInfoEnabled()) {
