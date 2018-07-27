@@ -13,7 +13,7 @@ public class InterpolantTreeAutomatonBU<LETTER extends IRankedLetter, STATE> ext
 
 
 	public <SF extends ISemanticReducerFactory<STATE, LETTER>> InterpolantTreeAutomatonBU(final SF fac) {
-		super(fac);
+		super();
 		mReducer = fac;
 	}
 

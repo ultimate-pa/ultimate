@@ -200,8 +200,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		}
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
-		final RAFA_Determination<LETTER> determination = new RAFA_Determination<>(
-				new AutomataLibraryServices(mServices), alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier);
+		final RAFA_Determination<LETTER> determination = new RAFA_Determination<LETTER>(
+				new AutomataLibraryServices(mServices), alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier, mPredicateFactoryInterpolantAutomata);
 		mInterpolAutomaton = determination.getResult();
 		try {
 			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, (NestedWord<LETTER>) trace)
@@ -402,7 +402,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 	private AlternatingAutomaton<LETTER, IPredicate>
 			computeAlternatingAutomaton(final DataflowDAG<TraceCodeBlock> dag) {
 		final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton =
-				new AlternatingAutomaton<>(mAbstraction.getAlphabet(), mAbstraction.getStateFactory());
+				new AlternatingAutomaton<>(mAbstraction.getAlphabet());
 		final IPredicate initialState = mPredicateUnifier.getFalsePredicate();
 		final IPredicate finalState = mPredicateUnifier.getTruePredicate();
 		alternatingAutomaton.addState(initialState);

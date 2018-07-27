@@ -142,7 +142,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		if (mPref.unfoldingToNet()) {
 			// TODO: Find/implement appropriate stateFactory.
 			final IFinitePrefix2PetriNetStateFactory<IPredicate> stateFactory = null;
-			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding)
+			abstraction = new FinitePrefix2PetriNet<>(new AutomataLibraryServices(mServices), stateFactory, mUnfolding, null, null)
 					.getResult();
 		}
 
@@ -199,7 +199,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
 					new PowersetDeterminizer<>(interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
 			final DeterminizeDD<LETTER, IPredicate> dabps =
-					new DeterminizeDD<>(new AutomataLibraryServices(mServices), interpolAutomaton, psd);
+					new DeterminizeDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, interpolAutomaton, psd);
 			dia = dabps.getResult();
 			break;
 		case PREDICATE_ABSTRACTION:

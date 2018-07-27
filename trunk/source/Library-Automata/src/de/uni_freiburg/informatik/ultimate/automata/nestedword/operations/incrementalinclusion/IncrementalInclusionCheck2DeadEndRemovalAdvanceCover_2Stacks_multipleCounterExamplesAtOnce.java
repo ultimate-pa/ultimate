@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Jeffery Hsu (a71128@gmail.com)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,12 +48,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * This is an implementation of incremental inclusion check based on the Bn baseline Algorithm.<br/>
  * We use InclusionViaDIfference to check its correctness.
- * 
+ *
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
  *            letter type
@@ -79,15 +80,15 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	private final boolean macc;
 
 	class NfaUnion implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
-		public IStateFactory<STATE> stateFactory;
+		public IEmptyStackStateFactory<STATE> stateFactory;
 		INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> orgin, target;
 		NestedWordAutomaton<LETTER, STATE> result;
 		Collection<STATE> state1, state2;
-		Collection<LETTER> letter1, letter2; 
+		Collection<LETTER> letter1, letter2;
 		Set<LETTER> newLetterSet;
 		private final AutomataLibraryServices mServices;
 
-		public NfaUnion(final AutomataLibraryServices services, final IStateFactory<STATE> sf,
+		public NfaUnion(final AutomataLibraryServices services, final IEmptyStackStateFactory<STATE> sf,
 				final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> in1,
 				final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> in2) {
 			mServices = services;

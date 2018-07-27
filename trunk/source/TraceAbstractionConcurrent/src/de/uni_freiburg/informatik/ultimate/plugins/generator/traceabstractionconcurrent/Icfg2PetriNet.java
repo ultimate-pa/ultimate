@@ -34,7 +34,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -50,21 +49,20 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 public abstract class Icfg2PetriNet {
-	
+
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	
+
 	private final BoogieIcfgContainer mIcfg;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
-	private final IStateFactory<IPredicate> mContentFactory;
 
-	
 
-	
-	public Icfg2PetriNet(final BoogieIcfgContainer icfg, final IStateFactory<IPredicate> contentFactory,
+
+
+	public Icfg2PetriNet(final BoogieIcfgContainer icfg,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -73,19 +71,18 @@ public abstract class Icfg2PetriNet {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mIcfg = icfg;
-		mContentFactory = contentFactory;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
-		
+
 		final Set<IcfgEdge> alphabet = new HashSet<>();
-		
+
 		final BoundedPetriNet<IcfgEdge, IPredicate> net = new BoundedPetriNet<>(
-				new AutomataLibraryServices(services), alphabet, contentFactory, false);
-		
+				new AutomataLibraryServices(services), alphabet, false);
+
 		final Set<BoogieIcfgLocation> init = icfg.getInitialNodes();
 		final Map<String, Set<BoogieIcfgLocation>> procErrorNodes = icfg.getProcedureErrorNodes();
-		
-		final IValueConstruction<BoogieIcfgLocation, Place<IPredicate>> valueConstruction = 
+
+		final IValueConstruction<BoogieIcfgLocation, Place<IPredicate>> valueConstruction =
 				new IValueConstruction<BoogieIcfgLocation, Place<IPredicate>>() {
 
 			@Override
@@ -97,14 +94,14 @@ public abstract class Icfg2PetriNet {
 				final Place<IPredicate> place = net.addPlace(pred, isInitial, isFinal);
 				return place;
 			}
-			
+
 		};
 		final ConstructionCache<BoogieIcfgLocation, Place<IPredicate>> cc = new ConstructionCache<>(valueConstruction);
 
 		for (final BoogieIcfgLocation loc : init) {
 			cc.getOrConstruct(loc);
 		}
-		
+
 		final IcfgEdgeIterator it = new IcfgEdgeIterator(icfg);
 		while(it.hasNext()) {
 			final IcfgEdge edge = it.next();
@@ -113,5 +110,5 @@ public abstract class Icfg2PetriNet {
 			net.addTransition(edge, Collections.singleton(pred), Collections.singleton(succ));
 		}
 	}
-	
+
 }

@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -47,7 +47,7 @@ public class PreNestedWord {
 
 	/*
 	 * public static NestedWord<Integer> getIntNestedWord(){
-	 * 
+	 *
 	 * }
 	 */
 	private List<Integer> expand(final List<Loop> loops) {
@@ -76,7 +76,7 @@ public class PreNestedWord {
 
 	public <LETTER> INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getAutomaton(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton,
-			final IStateFactory<IPredicate> taContentFactory, final PredicateFactory predicateFactory,
+			final IEmptyStackStateFactory<IPredicate> taContentFactory, final PredicateFactory predicateFactory,
 			final ManagedScript script) {
 
 		final Set<LETTER> internalAlphabet = automaton.getVpAlphabet().getInternalAlphabet();
@@ -126,14 +126,14 @@ public class PreNestedWord {
 		 * NestedWord<LETTER> word = getNestedWord(automaton); mLogger.info("Client has chosen the word: " +
 		 * word.toString()); for (int i = 0; i < mSymbols.length; i++) { final boolean isFinal = i >= mSymbols.length -
 		 * 1; final LETTER symbol = word.getSymbol(i);
-		 * 
+		 *
 		 * IPredicate target = newTruePredicate(predicateFactory, script);
-		 * 
+		 *
 		 * nwa.addState(false, isFinal, target); if (word.isCallPosition(i)) { nwa.addCallTransition(previousState,
 		 * symbol, target); previousHierarchyState = previousState; } else if (word.isReturnPosition(i)) {
 		 * nwa.addReturnTransition(previousState, previousHierarchyState, symbol, target); } else if
 		 * (word.isInternalPosition(i)) { nwa.addInternalTransition(previousState, symbol, target); }
-		 * 
+		 *
 		 * previousState = target; }
 		 */
 

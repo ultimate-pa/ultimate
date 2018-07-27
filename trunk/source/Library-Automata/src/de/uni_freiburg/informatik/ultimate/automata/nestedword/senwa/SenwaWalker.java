@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,12 +44,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Visit all states of a SENWA. This can also be used to construct this SEVPA.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -101,7 +102,7 @@ public class SenwaWalker<LETTER, STATE> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param senwa
@@ -168,7 +169,7 @@ public class SenwaWalker<LETTER, STATE> {
 		summarySuccessors.put(summarySucc, returnPred);
 		enqueueSummarySuccs(summaryPred, summarySucc, returnPred);
 	}
-	
+
 	/**
 	 * For all DoubleDeckers (<i>down</i>,summaryPred) that have been marked
 	 * enqueue and mark the DoubleDecker (<i>down</i>,summarySucc) and record
@@ -190,7 +191,7 @@ public class SenwaWalker<LETTER, STATE> {
 			enqueueAndMark(summarySuccDoubleDecker);
 		}
 	}
-	
+
 	/**
 	 * Get all states <i>down</i> such that the DoubleDecker
 	 * (<i>down</i>,<i>up</i>) has been visited so far.
@@ -204,7 +205,7 @@ public class SenwaWalker<LETTER, STATE> {
 			return downStates;
 		}
 	}
-	
+
 	/**
 	 * Get all states <i>up</i> such that the DoubleDecker
 	 * (<i>down</i>,<i>up</i>) has been visited so far.
@@ -304,7 +305,7 @@ public class SenwaWalker<LETTER, STATE> {
 
 	protected Senwa<LETTER, STATE> getTotalizedEmptyAutomaton() {
 		final Senwa<LETTER, STATE> emptyAutomaton =
-				new Senwa<>(mServices, mTraversedSenwa.getVpAlphabet(), mTraversedSenwa.getStateFactory());
+				new Senwa<>(mServices, mTraversedSenwa.getVpAlphabet(), (IEmptyStackStateFactory<STATE>) mTraversedSenwa.getStateFactory());
 		// TODO Christian 2017-02-15 Temporary workaround, make state factory a parameter
 		final STATE sinkState = ((ISinkStateFactory<STATE>) emptyAutomaton.getStateFactory()).createSinkStateContent();
 		emptyAutomaton.addState(sinkState, true, false, sinkState);
@@ -390,7 +391,7 @@ public class SenwaWalker<LETTER, STATE> {
 
 	/**
 	 * Remove in the resulting automaton all states that can not reach a final state.
-	 * 
+	 *
 	 * @param computeRemovedDoubleDeckersAndCallSuccessors
 	 *            compute the set of all DoubleDeckers which occurred in the build automaton but are not reachable after
 	 *            the removal
@@ -507,7 +508,7 @@ public class SenwaWalker<LETTER, STATE> {
 
 	/**
 	 * Remove all state that are accepting and do not have any successor.
-	 * 
+	 *
 	 * @return true iff some state was removed
 	 */
 	private final boolean removeAcceptingStatesWithoutSuccessors() {
@@ -564,7 +565,7 @@ public class SenwaWalker<LETTER, STATE> {
 
 	/**
 	 * Successor visitor.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @param <LETTER>
 	 *            letter type

@@ -194,7 +194,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 				newRules.add(new TreeAutomatonRule<LETTER, STATE>(triple.getSecond(), triple.getFirst(), destination));
 			}
 		}
-		final TreeAutomatonBU<LETTER, STATE> result = new TreeAutomatonBU<>(fac);
+		final TreeAutomatonBU<LETTER, STATE> result = new TreeAutomatonBU<>();
 		result.extendAlphabet(mFirstOperand.getAlphabet());
 		result.extendAlphabet(mSecondOperand.getAlphabet());
 
@@ -259,7 +259,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 		System.out.println(CombinatoricsUtils.getCombinations(rr));
 
 		final StringFactory factory = new StringFactory();
-		final TreeAutomatonBU<StringRankedLetter, String> ones = new TreeAutomatonBU<>(factory);
+		final TreeAutomatonBU<StringRankedLetter, String> ones = new TreeAutomatonBU<>();
 		final String NUM = "Num", LIST = "List";
 		ones.addRule(new TreeAutomatonRule<StringRankedLetter, String>(new StringRankedLetter("cons", 2),
 				Arrays.asList(new String[] { NUM, LIST }), LIST));
@@ -271,7 +271,7 @@ public class LazyDifference<LETTER extends IRankedLetter, STATE>
 				Arrays.asList(new String[] { NUM }), NUM));
 		ones.addFinalState(LIST);
 
-		final TreeAutomatonBU<StringRankedLetter, String> bin = new TreeAutomatonBU<>(factory);
+		final TreeAutomatonBU<StringRankedLetter, String> bin = new TreeAutomatonBU<>();
 		bin.addRule(new TreeAutomatonRule<StringRankedLetter, String>(new StringRankedLetter("cons", 2),
 				Arrays.asList(new String[] { NUM, LIST }), LIST));
 		bin.addRule(new TreeAutomatonRule<StringRankedLetter, String>(new StringRankedLetter("nil", 0),

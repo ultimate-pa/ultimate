@@ -36,7 +36,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReducerFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 
 /**
@@ -173,8 +172,8 @@ public class TreeRun<LETTER extends IRankedLetter, STATE> implements ITreeRun<LE
 	}
 
 	@Override
-	public ITreeAutomatonBU<LETTER, STATE> getAutomaton(final IStateFactory<STATE> factory) {
-		final TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>(factory);
+	public ITreeAutomatonBU<LETTER, STATE> getAutomaton() {
+		final TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>();
 
 		for (final STATE st : getStates()) {
 			treeAutomaton.addState(st);

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Carl Kuesters
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstractionWithAFAs plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstractionWithAFAs plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstractionWithAFAs plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstractionWithAFAs plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstractionWithAFAs plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -45,10 +46,10 @@ public class RAFA_Determination<LETTER> extends GeneralOperation<LETTER, IPredic
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateUnifier mPredicateUnifier;
 	private final NestedWordAutomaton<LETTER, IPredicate> mResultAutomaton;
-	
+
 	public RAFA_Determination(final AutomataLibraryServices services,
 			final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final CfgSmtToolkit csToolkit,
-			final PredicateUnifier predicateUnifier) {
+			final PredicateUnifier predicateUnifier, final IEmptyStackStateFactory<IPredicate> stateFactory) {
 		super(services);
 		assert alternatingAutomaton.isReversed();
 		mAlternatingAutomaton = alternatingAutomaton;
@@ -56,7 +57,7 @@ public class RAFA_Determination<LETTER> extends GeneralOperation<LETTER, IPredic
 		mPredicateUnifier = predicateUnifier;
 		mResultAutomaton = new NestedWordAutomaton<>(services,
 				new VpAlphabet<>(alternatingAutomaton.getAlphabet()),
-				alternatingAutomaton.getStateFactory());
+				stateFactory);
 		final LinkedList<BitSet> newStates = new LinkedList<>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		mResultAutomaton.addState(true,
@@ -80,7 +81,7 @@ public class RAFA_Determination<LETTER> extends GeneralOperation<LETTER, IPredic
 			}
 		}
 	}
-	
+
 	private IPredicate getPredicate(final BitSet state) {
 		IPredicate predicate = mPredicateUnifier.getTruePredicate();
 		int setBitIndex = getNextSetBit(state, 0);
@@ -91,17 +92,17 @@ public class RAFA_Determination<LETTER> extends GeneralOperation<LETTER, IPredic
 		}
 		return predicate;
 	}
-	
+
 	@Override
 	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
 		return mResultAutomaton;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<IPredicate> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-	
+
 	private static int getNextSetBit(final BitSet bitSet, final int offset) {
 		for (int i = offset; i < bitSet.size(); i++) {
 			if (bitSet.get(i)) {

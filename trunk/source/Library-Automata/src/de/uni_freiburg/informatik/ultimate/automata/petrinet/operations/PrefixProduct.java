@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * <li> there is a run of A over w_A
  * <li> w_A is accepted by A or w_N is accepted by N
  * </ ul>
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <CRSF>
  *            check result state factory type
@@ -149,7 +149,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		// prefix product preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = mOperand.constantTokenAmount();
 		final BoundedPetriNet<S, C> result =
-				new BoundedPetriNet<>(mServices, unionAlphabet, mOperand.getStateFactory(), constantTokenAmount);
+				new BoundedPetriNet<>(mServices, unionAlphabet, constantTokenAmount);
 
 		addPlacesAndStates(result);
 
@@ -176,7 +176,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		return result;
 	}
 
-	private void addSharedTransitions(final HashSet<S> sharedAlphabet, BoundedPetriNet<S, C> result) {
+	private void addSharedTransitions(final HashSet<S> sharedAlphabet, final BoundedPetriNet<S, C> result) {
 		for (final S symbol : sharedAlphabet) {
 			if (!mSymbol2netTransitions.containsKey(symbol)) {
 				continue;
@@ -194,7 +194,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	}
 
 	private void addUnsharedTransitions(final HashSet<S> netOnlyAlphabet, final HashSet<S> nwaOnlyAlphabet,
-			BoundedPetriNet<S, C> result) {
+			final BoundedPetriNet<S, C> result) {
 		for (final S symbol : netOnlyAlphabet) {
 			for (final ITransition<S, C> trans : mSymbol2netTransitions.get(symbol)) {
 				final Collection<Place<C>> predecessors = new ArrayList<>();
@@ -226,7 +226,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	}
 
 	private void addSharedTransitionsHelper(final ITransition<S, C> netTrans, final AutomatonTransition nwaTrans,
-			final Collection<Place<C>> predecessors, BoundedPetriNet<S, C> result) {
+			final Collection<Place<C>> predecessors, final BoundedPetriNet<S, C> result) {
 		for (final Place<C> oldPlace : netTrans.getPredecessors()) {
 			final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
 			predecessors.add(newPlace);
@@ -242,7 +242,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		result.addTransition(netTrans.getSymbol(), predecessors, successors);
 	}
 
-	private void addPlacesAndStates(BoundedPetriNet<S, C> result) {
+	private void addPlacesAndStates(final BoundedPetriNet<S, C> result) {
 		//add places of old net
 		for (final Place<C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
@@ -281,7 +281,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 
 	/**
 	 * A transition of the result.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class AutomatonTransition {

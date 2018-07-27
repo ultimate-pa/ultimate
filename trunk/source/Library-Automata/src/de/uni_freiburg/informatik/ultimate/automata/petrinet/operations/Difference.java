@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2018 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,9 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
@@ -68,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  *   <li>Once a final state is reached it cannot be left,
  *       that is final states have a selfloop for each letter from the alphabet.
  * <ul>
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author schaetzc@informatik.uni-freiburg.de
  *
@@ -112,7 +110,7 @@ public final class Difference
 		if (nwa.isFinal(onlyElement(nwa.getInitialStates()))) {
 			// subtrahend accepts everything (because of its special properties)
 			// --> difference is empty
-			mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(), true);
+			mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), true);
 			final C sinkContent = factory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
 		} else {
@@ -140,7 +138,7 @@ public final class Difference
 		}
 		return true;
 	}
-	
+
 	private boolean finalStatesAreTraps() {
 		for (final C finalState : mNwa.getFinalStates()) {
 			if (!stateIsTrap(finalState)) {
@@ -149,7 +147,7 @@ public final class Difference
 		}
 		return true;
 	}
-	
+
 	private boolean stateIsTrap(final C state) {
 		for (final LETTER letter : mNwa.getVpAlphabet().getInternalAlphabet()) {
 			boolean noSuccessors = true;
@@ -165,7 +163,7 @@ public final class Difference
 		}
 		return true;
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + getOperationName() + "First Operand " + mOperand.sizeInformation() + "Second Operand "
@@ -209,7 +207,7 @@ public final class Difference
 		//   mOperand.constantTokenAmount() && mBlackPlace.size() == mWhitePlace.size()
 		// ... but field has to be set in constructor and cannot be changed afterwards.
 		final boolean constantTokenAmount = false;
-		mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(), constantTokenAmount);
+		mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), constantTokenAmount);
 
 		for (final Place<C> oldPlace : mOperand.getPlaces()) {
 			final C content = oldPlace.getContent();
@@ -219,7 +217,7 @@ public final class Difference
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
 	}
-	
+
 	/**
 	 * Heuristic for choosing a synchronization method for all transitions with a given letter.
 	 * @param symbol Label of transitions to be synchronized.
@@ -228,17 +226,17 @@ public final class Difference
 	private boolean invertSyncWithSelfloops(final LETTER symbol) {
 		return mSelfloop.get(symbol).size() >= mStateChanger.get(symbol).size();
 	}
-	
+
 	private Set<C> requiredBlackPlaces() {
-		Set<C> requiredBlack = new HashSet<>();
-		for (LETTER symbol : mOperand.getAlphabet()) {
+		final Set<C> requiredBlack = new HashSet<>();
+		for (final LETTER symbol : mOperand.getAlphabet()) {
 			if (invertSyncWithSelfloops(symbol)) {
 				requiredBlack.addAll(mStateChanger.get(symbol));
 			}
 		}
 		return requiredBlack;
 	}
-	
+
 	private void addBlackAndWhitePlaces() {
 		for (final C state : mNwa.getStates()) {
 			if (mNwa.isFinal(state)) {
@@ -266,7 +264,7 @@ public final class Difference
 			syncWithSelfloops(oldTrans);
 		}
 	}
-	
+
 	private void syncWithChanger(final ITransition<LETTER, C> oldTrans,  final C predState) {
 		final C succState = onlyElement(mNwa.internalSuccessors(predState, oldTrans.getSymbol())).getSucc();
 		if (mNwa.isFinal(succState)) {
@@ -316,7 +314,7 @@ public final class Difference
 	 * (with the same symbol as the transition to be synchronized).
 	 *
 	 * @param oldTrans Minuend's transition to be synchronized with subtrahend
-	 * 
+	 *
 	 * @see #invertSyncWithSelfloops(LETTER)
 	 */
 	private void syncWithEachSelfloop(final ITransition<LETTER, C> oldTrans) {
@@ -352,7 +350,7 @@ public final class Difference
 	 * (with the same symbol as the transition to be synchronized) on nearly all of its states.
 	 *
 	 * @param oldTrans Minuend's transition to be synchronized with subtrahend
-	 * 
+	 *
 	 * @see #invertSyncWithSelfloops(LETTER)
 	 */
 	private void syncWithAnySelfloop(final ITransition<LETTER, C> oldTrans) {
@@ -408,17 +406,17 @@ public final class Difference
 		}
 		return correct;
 	}
-	
+
 	private static <E> E onlyElement(final Iterable<E> iterable) {
-		Iterator<E> iter = iterable.iterator();
+		final Iterator<E> iter = iterable.iterator();
 		assert iter.hasNext() : "Expected one element, found none.";
 		final E result = iter.next();
 		assert !iter.hasNext() : "Expected one element, found more.";
 		return result;
 	}
-	
+
 	private static <E> E atMostOneElement(final Iterable<E> iterable) {
-		Iterator<E> iter = iterable.iterator();
+		final Iterator<E> iter = iterable.iterator();
 		if (!iter.hasNext()) {
 			return null;
 		}

@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -76,7 +76,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	@SuppressWarnings("unchecked")
 	public static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomatonWithSPredicates(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
-			final IStateFactory<IPredicate> automataStateFactory,
+			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
 			final PredicateFactory predicateFactory) {
 		final VpAlphabet<LETTER> vpAlphabet = extractVpAlphabet(icfg, !interprocedural);
@@ -95,7 +95,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 	 */
 	public static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomatonWithDebugPredicates(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
-			final IStateFactory<IPredicate> automataStateFactory,
+			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
 			final VpAlphabet<LETTER> vpAlphabet, final Map<IIcfgTransition<?>, IIcfgTransition<?>> newTransition2OldTransition) {
 		final Function<IcfgLocation, IPredicate> predicateProvider = constructDebugPredicateProvider();
@@ -148,7 +148,7 @@ public class CFG2NestedWordAutomaton<LETTER extends IIcfgTransition<?>> {
 
 	private static <LETTER> INestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
 			final IUltimateServiceProvider services, final IIcfg<? extends IcfgLocation> icfg,
-			final IStateFactory<IPredicate> automataStateFactory,
+			final IEmptyStackStateFactory<IPredicate> automataStateFactory,
 			final Collection<? extends IcfgLocation> acceptingLocations, final boolean interprocedural,
 			final VpAlphabet<LETTER> vpAlphabet, final Function<IcfgLocation, IPredicate> predicateProvider,
 			final Function<IIcfgTransition<?>, LETTER> letterProvider) {

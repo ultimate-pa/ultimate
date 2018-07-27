@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <p>
  * NOTE: The implementation is naive in the sense that both a new automaton is created after each operation and the
  * reversal and determinization do not know each other (potentially they may .
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -61,7 +62,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -97,7 +98,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 
 	/**
 	 * This method simply reverses and determinizes the automaton twice, which results in the minimal DFA.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             when execution is cancelled
 	 */
@@ -106,7 +107,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 		INestedWordAutomaton<LETTER, STATE> automaton = mOperand;
 		for (int i = 0; i < 2; ++i) {
 			super.checkForContinuation();
-			automaton = reverse(automaton);
+			automaton = reverse(automaton, determinizeStateFactory);
 
 			super.checkForContinuation();
 			automaton = determinize(determinizeStateFactory, automaton);
@@ -119,15 +120,17 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * <p>
 	 * Reversal means that - the transitions are turned around, - the final states become the initial states, - the
 	 * initial states become the final states.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
+	 * @param emptyStateFactory
 	 * @return the reversed automaton
 	 */
 	@SuppressWarnings("squid:S3047")
-	private INestedWordAutomaton<LETTER, STATE> reverse(final INestedWordAutomaton<LETTER, STATE> automaton) {
-		final NestedWordAutomaton<LETTER, STATE> reversed =
-				new NestedWordAutomaton<>(mServices, automaton.getVpAlphabet(), automaton.getStateFactory());
+	private INestedWordAutomaton<LETTER, STATE> reverse(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final IEmptyStackStateFactory<STATE> emptyStateFactory) {
+		final NestedWordAutomaton<LETTER, STATE> reversed = new NestedWordAutomaton<>(mServices,
+				automaton.getVpAlphabet(), emptyStateFactory);
 
 		// add states
 		for (final STATE state : automaton.getStates()) {
@@ -145,7 +148,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 
 	/**
 	 * This method determinizes the automaton.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @return the determinized automaton

@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -111,7 +110,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * <p>
 	 * updates the Co-Relation.
 	 * </p>
-	 * 
+	 *
 	 * @param event
 	 *            event
 	 * @return true iff some successor of e corresponds to an accepting place
@@ -154,7 +153,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	/**
 	 * Checks if a new event {@code event}, with regards to {@code order} is a cut-off event. In that case, companions
 	 * are computed as a side-effect.
-	 * 
+	 *
 	 * @param event
 	 *            event
 	 * @param order
@@ -244,7 +243,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * An event is causally minimal iff all its predecessors are initial conditions.
 	 * Events with a non-initial preceding condition c cannot be minimal.
 	 * Because c is non-initial it has to be preceded by another event which is causally smaller.
-	 * 
+	 *
 	 * @return The causally minimal events
 	 */
 	public Collection<Event<S, C>> minEvents() {
@@ -275,7 +274,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * <li>c1 != c2 and c1 is ancestor of c2</li>
 	 * <li>or c1 != c2 and c2 is ancestor of c1</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param c1
 	 *            first condition
 	 * @param c2
@@ -300,7 +299,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * <li>the condition is an ancestor of the event</li>
 	 * <li>or the event is ancestor of the condition.</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param condition
 	 *            condition
 	 * @param event
@@ -320,7 +319,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * Check if the Conditions c1 and c2 are in conflict. In a branching process Conditions c1 and c2 are in conflict
 	 * iff c1 != c2 and there exist two paths leading to c1 and c2 which start at the same condition and diverge
 	 * immediately and never converge again.
-	 * 
+	 *
 	 * @param c1
 	 *            first condition
 	 * @param c2
@@ -442,11 +441,6 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	@Override
 	public Set<S> getAlphabet() {
 		return mNet.getAlphabet();
-	}
-
-	@Override
-	public IStateFactory<C> getStateFactory() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

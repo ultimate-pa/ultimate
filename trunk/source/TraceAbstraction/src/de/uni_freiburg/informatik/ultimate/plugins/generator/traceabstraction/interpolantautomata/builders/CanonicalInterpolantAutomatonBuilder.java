@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -66,7 +66,7 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final TracePredicates ipp, final List<CL> programPointSequence,
 			final VpAlphabet<LETTER> alphabet, final CfgSmtToolkit csToolkit,
-			final IStateFactory<IPredicate> predicateFactory, final ILogger logger,
+			final IEmptyStackStateFactory<IPredicate> predicateFactory, final ILogger logger,
 			final IPredicateUnifier predicateUnifier, final NestedWord<LETTER> nestedWord) {
 		super(services, ipp, programPointSequence, logger, predicateUnifier);
 		mNestedWord = nestedWord;

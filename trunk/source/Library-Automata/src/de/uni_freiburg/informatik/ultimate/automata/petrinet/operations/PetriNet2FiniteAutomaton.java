@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Given a Petri net, this class constructs a finite automaton that recognizes the same language.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
  *            symbols type
@@ -78,7 +78,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param factory
@@ -98,8 +98,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 		mContentFactory = factory;
 		final Set<S> alphabet = new HashSet<>(operand.getAlphabet());
 		final VpAlphabet<S> vpAlphabet = new VpAlphabet<S>(alphabet, Collections.emptySet(), Collections.emptySet());
-		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet,
-				operand.getStateFactory());
+		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
 		getState(operand.getInitialMarking(), true);
 		while (!mWorklist.isEmpty()) {
 			final Marking<S, C> marking = mWorklist.remove(0);

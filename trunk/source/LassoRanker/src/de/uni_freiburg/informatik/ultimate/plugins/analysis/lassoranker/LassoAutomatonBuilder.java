@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -54,7 +54,7 @@ public final class LassoAutomatonBuilder<LETTER> {
 	private final PredicateFactory mPredicateFactory;
 
 	public LassoAutomatonBuilder(final VpAlphabet<LETTER> alphabet,
-			final IStateFactory<IPredicate> predicateFactoryRc, final PredicateFactory predicateFactory,
+			final IEmptyStackStateFactory<IPredicate> predicateFactoryRc, final PredicateFactory predicateFactory,
 			final NestedWord<LETTER> stem, final NestedWord<LETTER> loop, final IUltimateServiceProvider services)
 			throws AutomataOperationCanceledException {
 		mPredicateFactory = predicateFactory;

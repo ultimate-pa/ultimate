@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -87,7 +87,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 
 	@Override
 	protected void getInitialAbstraction() {
-		final IStateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(
+		final IEmptyStackStateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(
 				super.mCsToolkit.getManagedScript(), mPredicateFactory, mPref.computeHoareAnnotation());
 		final Cfg2Nwa<LETTER> cFG2NestedWordAutomaton = new Cfg2Nwa<>(mIcfg, predicateFactory, mCsToolkit,
 				mPredicateFactory, mServices, mXnfConversionTechnique, mSimplificationTechnique);

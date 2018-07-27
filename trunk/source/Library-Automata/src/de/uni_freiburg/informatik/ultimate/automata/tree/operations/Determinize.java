@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Mostafa M.A. (mostafa.amin93@gmail.com)
  * Copyright (C) 2014-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
 /**
  * Determinize a given bottom-up tree automaton.
- * 
+ *
  * @author mostafa (mostafa.amin93@gmail.com)
  *
  * @param <LETTER>
@@ -69,7 +69,7 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 	/***
 	 * Compute the deterministic equivalent automaton of a given Bottom-up Tree
 	 * Automaton
-	 * 
+	 *
 	 * @param services
 	 * @param factory
 	 * @param tree
@@ -108,7 +108,7 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 
 	private TreeAutomatonBU<LETTER, STATE> constructFromRules(
 			final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules) {
-		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>(mStateFactoryMerge);
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 		res.extendAlphabet(mTreeAutomaton.getAlphabet());
 
 		for (final Entry<LETTER, Map<List<Set<STATE>>, Set<STATE>>> letterMap : rules.entrySet()) {
@@ -175,7 +175,7 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 
 	private void addAllSubsetStates(final Set<STATE> state,
 			final Map<LETTER, Map<List<Set<STATE>>, Set<Set<STATE>>>> newRules, final LETTER letter,
-			final ArrayList<Set<STATE>> src, final Set<STATE> dest, int idx) {
+			final ArrayList<Set<STATE>> src, final Set<STATE> dest, final int idx) {
 		if (idx >= src.size()) {
 			assert src.size() == letter.getRank();
 			if (!newRules.get(letter).containsKey(src)) {

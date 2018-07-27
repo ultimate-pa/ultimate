@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
  * Converts to Petri net.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <L>
  *            letter type
@@ -68,17 +68,21 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
-	 * @param stateFactory 
+	 * @param stateFactory
 	 * @param bp
 	 *            branching process
+	 * @param net2autoStateFactory
+	 * @param nwaInclusionStateFactory
 	 * @throws AutomataLibraryException
 	 *             if two nets do not have the same alphabet.
 	 */
-	public FinitePrefix2PetriNet(final AutomataLibraryServices services, IFinitePrefix2PetriNetStateFactory<C> stateFactory, final BranchingProcess<L, C> bp)
-			throws AutomataLibraryException {
+	public FinitePrefix2PetriNet(final AutomataLibraryServices services,
+			final IFinitePrefix2PetriNetStateFactory<C> stateFactory, final BranchingProcess<L, C> bp,
+			final IPetriNet2FiniteAutomatonStateFactory<C> net2autoStateFactory,
+			final INwaInclusionStateFactory<C> nwaInclusionStateFactory) throws AutomataLibraryException {
 		super(services);
 		mStateFactory = stateFactory;
 		// TODO implement merging for markings?
@@ -89,14 +93,14 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 		}
 
 		final BoundedPetriNet<L, C> oldNet = mInput.getNet();
-		mNet = new BoundedPetriNet<>(mServices, oldNet.getAlphabet(), oldNet.getStateFactory(), false);
+		mNet = new BoundedPetriNet<>(mServices, oldNet.getAlphabet(), false);
 		mRepresentatives = new UnionFind<>();
 		constructNet(bp, oldNet);
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
-		assert petriNetLanguageEquivalence(oldNet, mNet) : "The language recognized by the FinitePrefix2PetriNet is "
+		assert petriNetLanguageEquivalence(oldNet, mNet, net2autoStateFactory, nwaInclusionStateFactory) : "The language recognized by the FinitePrefix2PetriNet is "
 				+ "not equal to the language of the original net.";
 	}
 
@@ -117,7 +121,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 		final List<Event<L, C>> events = new ArrayList<>();
 		final List<Event<L, C>> worklist = new LinkedList<Event<L, C>>();
 		final Set<Event<L, C>> visited = new HashSet<>();
-		
+
 		for (final Event<L, C> e : bp.getMinEvents()) {
 			worklist.add(e);
 			events.add(e);
@@ -248,26 +252,25 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 		*/
 	}
 
-	private boolean petriNetLanguageEquivalence(final BoundedPetriNet<L, C> oldNet, final BoundedPetriNet<L, C> newNet)
-			throws AutomataLibraryException {
+	private boolean petriNetLanguageEquivalence(final BoundedPetriNet<L, C> oldNet, final BoundedPetriNet<L, C> newNet,
+			final IPetriNet2FiniteAutomatonStateFactory<C> net2autoStateFactory,
+			final INwaInclusionStateFactory<C> nwaInclusionStateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing Petri net language equivalence");
 		}
 
-		// TODO Christian 2017-02-15 Cast is temporary workaround, state factory should become a parameter
-		final INwaInclusionStateFactory<C> stateFactory = (INwaInclusionStateFactory<C>) oldNet.getStateFactory();
-		final INestedWordAutomaton<L, C> finAuto1 = (new PetriNet2FiniteAutomaton<>(mServices,
-				(IPetriNet2FiniteAutomatonStateFactory<C>) oldNet.getStateFactory(), oldNet)).getResult();
-		final INestedWordAutomaton<L, C> finAuto2 = (new PetriNet2FiniteAutomaton<>(mServices,
-				(IPetriNet2FiniteAutomatonStateFactory<C>) oldNet.getStateFactory(), newNet)).getResult();
-		final NestedRun<L, C> subsetCounterex =
-				new IsIncluded<>(mServices, stateFactory, finAuto1, finAuto2).getCounterexample();
+		final INestedWordAutomaton<L, C> finAuto1 = (new PetriNet2FiniteAutomaton<>(mServices, net2autoStateFactory, oldNet))
+				.getResult();
+		final INestedWordAutomaton<L, C> finAuto2 = (new PetriNet2FiniteAutomaton<>(mServices, net2autoStateFactory, newNet))
+				.getResult();
+		final NestedRun<L, C> subsetCounterex = new IsIncluded<>(mServices, nwaInclusionStateFactory, finAuto1,
+				finAuto2).getCounterexample();
 		final boolean subset = subsetCounterex == null;
 		if (!subset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
-		final NestedRun<L, C> supersetCounterex =
-				new IsIncluded<>(mServices, stateFactory, finAuto2, finAuto1).getCounterexample();
+		final NestedRun<L, C> supersetCounterex = new IsIncluded<>(mServices, nwaInclusionStateFactory, finAuto2,
+				finAuto1).getCounterexample();
 		final boolean superset = supersetCounterex == null;
 		if (!superset && mLogger.isErrorEnabled()) {
 			mLogger.error("Only accepted by second: " + supersetCounterex.getWord());
@@ -328,7 +331,7 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 
 	/**
 	 * A transition set.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	class TransitionSet {

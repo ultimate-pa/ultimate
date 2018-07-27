@@ -2,22 +2,22 @@
  * Copyright (C) 2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Carl Kuesters
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ public class AA_MergedUnion<LETTER, STATE> extends GeneralOperation<LETTER, STAT
 		super(services);
 		assert IAutomaton.sameAlphabet(automaton1, automaton2);
 		assert automaton1.isReversed() == automaton2.isReversed();
-		mResultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
+		mResultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet());
 		final HashMap<Integer, Integer> shiftMap1 = new HashMap<>();
 		final HashMap<Integer, Integer> shiftMap2 = new HashMap<>();
 		for (final STATE state : automaton1.getStates()) {

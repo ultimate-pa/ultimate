@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Mostafa M.A. (mostafa.amin93@gmail.com)
  * Copyright (C) 2014-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Disjoint
 
 /**
  * Minimize a given treeAutomaton.
- * 
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
@@ -79,7 +79,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 
 	/***
 	 * Constructor of Minimize operator
-	 * 
+	 *
 	 * @param services
 	 * @param factory
 	 * @param tree
@@ -114,7 +114,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 
 	/***
 	 * Check if 2 states are replacable (equivalent)
-	 * 
+	 *
 	 * @param s1
 	 * @param s2
 	 * @param rule
@@ -216,7 +216,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 		} while (!worklist.equals(oldWorklist));
 
 		// minimize all states
-		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>(mStateFactory);
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 		for (final STATE st : mTreeAutomaton.getStates()) {
 			res.addState(minimize(worklist.getPartition(st)));
 			if (mTreeAutomaton.isFinalState(st)) {
@@ -239,7 +239,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	}
 
 	private ITreeAutomatonBU<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {
-		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>(mStateFactory);
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 
 		final Set<STATE> worklist = new HashSet<>();
 
@@ -325,7 +325,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.
 	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)

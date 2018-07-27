@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
@@ -74,18 +74,18 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 
-	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final Word<LETTER> word, final VpAlphabet<LETTER> alphabet,
-			final List<TracePredicates> interpolantSequences,
-			final IStateFactory<IPredicate> stateFactory, final InitialAndAcceptingStateMode initialAndAcceptingStateMode) {
+	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final Word<LETTER> word,
+			final VpAlphabet<LETTER> alphabet, final List<TracePredicates> interpolantSequences,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final InitialAndAcceptingStateMode initialAndAcceptingStateMode) {
 		if (interpolantSequences.isEmpty()) {
 			throw new IllegalArgumentException("Empty list of interpolant sequences is not allowed.");
 		}
 		assert sequencesHaveSamePrePostconditions(
 				interpolantSequences) : "The interpolant sequences should have the same pre- and postconditions.";
 
-		mResult = constructInterpolantAutomaton(services, alphabet, interpolantSequences,
-				NestedWord.nestedWord(word), stateFactory, initialAndAcceptingStateMode);
+		mResult = constructInterpolantAutomaton(services, alphabet, interpolantSequences, NestedWord.nestedWord(word),
+				emptyStackFactory, initialAndAcceptingStateMode);
 	}
 
 	@Override
@@ -96,10 +96,10 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(
 			final IUltimateServiceProvider services, final VpAlphabet<LETTER> alphabet,
 			final List<TracePredicates> interpolantSequences, final NestedWord<LETTER> nestedWord,
-			final IStateFactory<IPredicate> taContentFactory, final InitialAndAcceptingStateMode initialAndAcceptingStateMode) {
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final InitialAndAcceptingStateMode initialAndAcceptingStateMode) {
 
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, taContentFactory);
+				new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, emptyStackFactory);
 
 		addStatesAccordingToPredicates(nwa, interpolantSequences, nestedWord, initialAndAcceptingStateMode);
 		addBasicTransitions(nwa, interpolantSequences, nestedWord);

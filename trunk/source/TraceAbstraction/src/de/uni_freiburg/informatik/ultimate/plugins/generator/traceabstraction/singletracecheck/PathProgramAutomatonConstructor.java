@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -89,7 +89,7 @@ public class PathProgramAutomatonConstructor<LETTER extends IIcfgTransition<?>> 
 			}
 		}
 
-		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(
+		final IEmptyStackStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(
 				csToolkit.getManagedScript(), predicateFactory, taPrefs.computeHoareAnnotation());
 		// Create the automaton
 		final NestedWordAutomaton<LETTER, IPredicate> pathPA = new NestedWordAutomaton<>(

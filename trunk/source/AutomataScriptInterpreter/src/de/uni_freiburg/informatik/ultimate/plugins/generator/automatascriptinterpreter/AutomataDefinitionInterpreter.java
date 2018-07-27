@@ -167,8 +167,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final AlternatingAutomatonAST astNode) {
 		mErrorLocation = astNode.getLocation();
 		final HashSet<String> alphabet = new HashSet<>(astNode.getAlphabet());
-		final AlternatingAutomaton<String, String> alternatingAutomaton = new AlternatingAutomaton<>(alphabet,
-				new StringFactory());
+		final AlternatingAutomaton<String, String> alternatingAutomaton = new AlternatingAutomaton<>(alphabet);
 		// States
 		final List<String> states = astNode.getStates();
 		final List<String> finalStates = astNode.getFinalStates();
@@ -205,7 +204,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final TreeAutomatonAST astNode) {
 		mErrorLocation = astNode.getLocation();
 
-		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>(new StringFactory());
+		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>();
 
 		for (final String s : astNode.getStates()) {
 			treeAutomaton.addState(s);
@@ -278,7 +277,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final TreeAutomatonRankedAST astNode) {
 		mErrorLocation = astNode.getLocation();
 
-		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>(new StringFactory());
+		final TreeAutomatonBU<StringRankedLetter, String> treeAutomaton = new TreeAutomatonBU<>();
 		final String nullaryString = "elim0arySymbol_";
 
 		final List<RankedAlphabetEntryAST> ra = astNode.getRankedAlphabet();
@@ -347,31 +346,31 @@ public class AutomataDefinitionInterpreter {
 				nwa, enwa.getEpsilonTransitions());
 		return result;
 	}
-	
+
 	public static NestedWordAutomaton<String, String> constructNestedWordAutomaton(
 			final AbstractNestedwordAutomatonAST nwa, final IUltimateServiceProvider services) {
 		{
-			String duplicateState = checkForDuplicate(nwa.getStates());
+			final String duplicateState = checkForDuplicate(nwa.getStates());
 			if (duplicateState != null) {
 				throw new IllegalArgumentException("State " + duplicateState + " contained twice in states.");
 			}
 		}
 		{
-			String duplicateState = checkForDuplicate(nwa.getInitialStates());
+			final String duplicateState = checkForDuplicate(nwa.getInitialStates());
 			if (duplicateState != null) {
 				throw new IllegalArgumentException("State " + duplicateState + " contained twice in initial states.");
 			}
 		}
 		{
-			String duplicateState = checkForDuplicate(nwa.getFinalStates());
+			final String duplicateState = checkForDuplicate(nwa.getFinalStates());
 			if (duplicateState != null) {
 				throw new IllegalArgumentException("State " + duplicateState + " contained twice in final states.");
 			}
 		}
-		
+
 
 		checkThatInitialAndFinalStatesExist(nwa);
-		
+
 		final Set<String> initStatesAsSet = new HashSet<>(nwa.getInitialStates());
 		final Set<String> finalStatesAsSet = new HashSet<>(nwa.getFinalStates());
 
@@ -463,16 +462,16 @@ public class AutomataDefinitionInterpreter {
 		}
 		return nw;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return The first element that occurs twice in list, returns null if no such
 	 *         element exists.
 	 */
-	public static <E> E checkForDuplicate(List<E> list) {
-		Set<E> listAsSet = new HashSet<>();
-		for (E elem : list) {
-			boolean alreadycontained = listAsSet.add(elem);
+	public static <E> E checkForDuplicate(final List<E> list) {
+		final Set<E> listAsSet = new HashSet<>();
+		for (final E elem : list) {
+			final boolean alreadycontained = listAsSet.add(elem);
 			if (!alreadycontained) {
 				return elem;
 			}
@@ -507,7 +506,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(final PetriNetAutomatonAST pna) {
 		mErrorLocation = pna.getLocation();
 		final BoundedPetriNet<String, String> net = new BoundedPetriNet<>(new AutomataLibraryServices(mServices),
-				new HashSet<>(pna.getAlphabet()), new StringFactory(), false);
+				new HashSet<>(pna.getAlphabet()), false);
 		final Map<String, Place<String>> name2places = new HashMap<>();
 
 		// add the places

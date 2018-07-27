@@ -32,6 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -181,8 +182,9 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier) {
-		super(logger);
+			final TAPreferences taPrefsForInterpolantConsolidation, final TaskIdentifier taskIdentifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
+		super(logger, emptyStackFactory);
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -284,7 +286,7 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder = new StraightLineInterpolantAutomatonBuilder<>(mServices,
 					mCounterexample.getWord(), NestedWordAutomataUtils.getVpAlphabet(mAbstraction), allIpps,
-					mAbstraction.getStateFactory(),
+					mEmptyStackFactory,
 					InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING);
 		}
 		return mInterpolantAutomatonBuilder;

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -115,7 +116,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier,
 			final CfgSmtToolkit csToolkit, final IRun<LETTER, IPredicate, ?> currentCounterExample,
 			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
@@ -123,20 +125,20 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		mCurrentCounterExample = currentCounterExample;
 		mVariableCollector = new VariableCollector();
 		mStatementExtractor = new RcfgStatementExtractor();
-		mResult = constructAutomaton(oldAbstraction, aiResult, predicateUnifier);
+		mResult = constructAutomaton(oldAbstraction, aiResult, predicateUnifier, emptyStackFactory);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier) {
+			final IAbstractInterpretationResult<?, LETTER, ?> aiResult, final IPredicateUnifier predicateUnifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 
 		mLogger.info("Creating interpolant automaton from AI predicates (total)");
 
-		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(),
-						oldAbstraction.getStateFactory());
+		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), emptyStackFactory);
 
 		final NestedRun<LETTER, IPredicate> counterExample = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
 		final Word<LETTER> word = counterExample.getWord();

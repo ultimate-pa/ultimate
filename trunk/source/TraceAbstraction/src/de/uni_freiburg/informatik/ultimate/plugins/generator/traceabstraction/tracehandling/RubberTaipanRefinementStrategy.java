@@ -31,6 +31,7 @@ import java.util.NoSuchElementException;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -57,9 +58,10 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
 			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier) {
+			final TaskIdentifier taskIdentifier,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		super(logger, services, prefs, cfgSmtToolkit, predicateFactory, predicateUnifier, absIntRunner,
-				assertionOrderModulation, counterexample, abstraction, taskIdentifier);
+				assertionOrderModulation, counterexample, abstraction, taskIdentifier, emptyStackFactory);
 	}
 
 	@Override

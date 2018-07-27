@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -258,7 +259,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> createInterpolantAutomatonBuilder(
 			final IPredicateUnifier predicateUnifier, final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final IRun<LETTER, IPredicate, ?> currentCex) {
+			final IRun<LETTER, IPredicate, ?> currentCex,
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 		if (mCurrentIteration == null) {
 			throw createNoFixpointsException();
 		}
@@ -273,12 +275,13 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder<>(mServices, abstraction,
 						predicateUnifier, mCsToolkit.getManagedScript(), mRoot.getCfgSmtToolkit().getSymbolTable(),
-						currentCex, mSimplificationTechnique, mXnfConversionTechnique);
+						currentCex, mSimplificationTechnique, mXnfConversionTechnique, emptyStackFactory);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder<>(mServices, abstraction,
 						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
-						mSimplificationTechnique, mXnfConversionTechnique, mRoot.getCfgSmtToolkit().getSymbolTable());
+						mSimplificationTechnique, mXnfConversionTechnique, mRoot.getCfgSmtToolkit().getSymbolTable(),
+						emptyStackFactory);
 				break;
 			case USE_CANONICAL:
 				throw new UnsupportedOperationException(
@@ -286,7 +289,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder<>(mServices, abstraction,
 						mCurrentIteration.getResult(), predicateUnifier, mCsToolkit, currentCex,
-						mRoot.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+						mRoot.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
+						emptyStackFactory);
 				break;
 			default:
 				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");

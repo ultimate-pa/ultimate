@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -28,12 +28,11 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * All automata have to implement this interface.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Type of objects that are contained in the alphabet.
@@ -52,19 +51,13 @@ public interface IAutomaton<LETTER, STATE> {
 	 * not checked and the user of the library has to use this with caution. (There is no simple check for this property
 	 * since the automata usually take user-provided {@link Set} objects as alphabet and for performance reasons we do
 	 * not want to change this.)
-	 * 
+	 *
 	 * @return {@code true} iff the automaton's alphabet may be modified after the automaton was constructed
 	 */
 	default boolean hasModifiableAlphabet() {
 		return false;
 	}
 
-	/**
-	 * @return StateFactory that was used to construct this automaton.
-	 * @deprecated Automata should not provide their state factory anymore.
-	 */
-	@Deprecated
-	IStateFactory<STATE> getStateFactory();
 
 	/**
 	 * @return Size of the automaton. E.g., the number of states.
@@ -78,7 +71,7 @@ public interface IAutomaton<LETTER, STATE> {
 
 	/**
 	 * Checks whether two automata have the same alphabet.
-	 * 
+	 *
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand

@@ -451,7 +451,7 @@ public class LassoCheck<LETTER extends IIcfgTransition<?>> {
 				final NestedRun<LETTER, IPredicate> run, final TaskIdentifier taskIdentifier) {
 
 			final BaseRefinementStrategy<LETTER> strategy =
-					mRefinementStrategyFactory.createStrategy(run, mAbstraction, taskIdentifier);
+					mRefinementStrategyFactory.createStrategy(run, mAbstraction, taskIdentifier, null);
 
 			final TraceAbstractionRefinementEngine<LETTER> result;
 			try {

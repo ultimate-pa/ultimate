@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.IsEquivalent;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.petruchio.EmptinessPetruchio;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -59,10 +58,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * <p>
  * A petri net is n-bounded iff at all times each place has at most n tokens.
  * A petri net with accepting places accepts a marking m iff m contains at least one accepting place.
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * 
+ *
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
  * @param <C>
@@ -74,14 +73,13 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	private final ILogger mLogger;
 
 	private final Set<LETTER> mAlphabet;
-	private final IStateFactory<C> mStateFactory;
 
 	/**
 	 * Used to check that places have unique contents.
 	 * Remove this field once Places are replaced by just their content.
 	 */
 	private final Collection<C> mContents = new HashSet<>();
-	
+
 	private final Collection<Place<C>> mPlaces = new HashSet<>();
 	private final Set<Place<C>> mInitialPlaces = new HashSet<>();
 	private final Collection<Place<C>> mAcceptingPlaces = new HashSet<>();
@@ -96,7 +94,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 * Redundant to {@link #mTransitions} for better performance.
 	 */
 	private final HashRelation<Place<C>, ITransition<LETTER, C>> mSuccessors = new HashRelation<>();
-	
+
 	/**
 	 * If true the number of tokens in this petri net is constant. Formally: There is a natural number n such that every
 	 * reachable marking consists of n places.
@@ -105,7 +103,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 
 	/**
 	 * Standard constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param alphabet
@@ -114,17 +112,16 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 *            Number of tokens in this net is constant (does not change after any firing sequence)
 	 */
 	public BoundedPetriNet(final AutomataLibraryServices services, final Set<LETTER> alphabet,
-			final IStateFactory<C> stateFactory, final boolean constantTokenAmount) {
+			final boolean constantTokenAmount) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mAlphabet = alphabet;
-		mStateFactory = stateFactory;
 		mConstantTokenAmount = constantTokenAmount;
 	}
 
 	/**
 	 * Constructor from a nested word automaton.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param nwa
@@ -134,7 +131,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	 */
 	public BoundedPetriNet(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, C> nwa)
 			throws AutomataLibraryException {
-		this(services, nwa.getVpAlphabet().getInternalAlphabet(), nwa.getStateFactory(), true);
+		this(services, nwa.getVpAlphabet().getInternalAlphabet(), true);
 		final Map<C, Place<C>> state2place = new HashMap<>();
 		for (final C content : nwa.getStates()) {
 			// C content = state.getContent();
@@ -156,14 +153,14 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		}
 		assert constantTokenAmountGuaranteed();
 	}
-	
+
 	/**
 	 * If {@link #mConstantTokenAmount} is set, check that amount of tokens is preserved for all initial markings*
-	 * and all firing sequences. 
+	 * and all firing sequences.
 	 * <p>
 	 * * Depending on the initial marking and reachability of some transitions, this method may return false
 	 * even though {@link #mConstantTokenAmount} was set correctly to true.
-	 * 
+	 *
 	 * @return {@link #mConstantTokenAmount} implies all (not only the reachable) transitions preserve the token amount.
 	 */
 	private boolean constantTokenAmountGuaranteed() {
@@ -171,8 +168,8 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	}
 
 	public boolean checkResult(final INestedWordAutomaton<LETTER, C> nwa,
-			IPetriNet2FiniteAutomatonStateFactory<C> stateFactoryNet2automaton,
-			INwaInclusionStateFactory<C> stateFactoryInclusion) throws AutomataLibraryException {
+			final IPetriNet2FiniteAutomatonStateFactory<C> stateFactoryNet2automaton,
+			final INwaInclusionStateFactory<C> stateFactoryInclusion) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of constructor" + getClass().getSimpleName());
 		}
@@ -187,7 +184,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 
 	/**
 	 * Adds a place.
-	 * 
+	 *
 	 * @param content
 	 *            content
 	 * @param isInitial
@@ -209,7 +206,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		}
 		return place;
 	}
-	
+
 	private void checkContentUniqueness(final C content) {
 		final boolean wasNew = mContents.add(content);
 		if (!wasNew) {
@@ -219,7 +216,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 
 	/**
 	 * Adds a transition.
-	 * 
+	 *
 	 * @param letter
 	 *            symbol
 	 * @param preds
@@ -268,7 +265,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 
 	/**
 	 * Fires a transition.
-	 * 
+	 *
 	 * @param transition
 	 *            transition
 	 * @param marking
@@ -288,10 +285,10 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 		return mAlphabet;
 	}
 
-	@Override
-	public IStateFactory<C> getStateFactory() {
-		return mStateFactory;
-	}
+//	@Override
+//	public IStateFactory<C> getStateFactory() {
+//		return mStateFactory;
+//	}
 
 	@Override
 	public Collection<Place<C>> getPlaces() {
@@ -302,7 +299,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	public Marking<LETTER, C> getInitialMarking() {
 		return new Marking<>(mInitialPlaces);
 	}
-	
+
 	public Set<Place<C>> getInitialPlaces() {
 		return mInitialPlaces;
 	}
@@ -369,7 +366,7 @@ public final class BoundedPetriNet<LETTER, C> implements IPetriNet<LETTER, C> {
 	public boolean accepts(final Word<LETTER> word) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	/**  @return This petri net accepts the empty word. */
 	@Override
 	public boolean acceptsEmptyWord() {
