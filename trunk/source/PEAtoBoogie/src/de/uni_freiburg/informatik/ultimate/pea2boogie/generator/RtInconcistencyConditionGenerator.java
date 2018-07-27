@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2017-2018 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2018 University of Freiburg
  *
  * This file is part of the ULTIMATE PEAtoBoogie plug-in.
  *
@@ -26,13 +27,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -53,9 +59,11 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -63,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -71,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
@@ -109,14 +119,11 @@ public class RtInconcistencyConditionGenerator {
 	public RtInconcistencyConditionGenerator(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final ReqSymboltable symboltable,
 			final Map<PatternType, PhaseEventAutomata> req2Automata, final BoogieDeclarations boogieDeclarations,
-			final boolean separateInvariantHandling) {
+			final boolean separateInvariantHandling) throws InvariantInfeasibleException {
 		mBoogieSymboltable = symboltable;
 		mServices = services;
 		mLogger = logger;
-		final SolverSettings settings = SolverBuilder.constructSolverSettings("", SolverMode.External_DefaultMode,
-				false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
-		mScript = SolverBuilder.buildAndInitializeSolver(services, storage, SolverMode.External_DefaultMode, settings,
-				false, false, Logics.ALL.toString(), "RtInconsistencySolver");
+		mScript = buildSolver(services, storage);
 		mManagedScript = new ManagedScript(services, mScript);
 		mTrue = mScript.term("true");
 		mFalse = mScript.term("false");
@@ -139,6 +146,22 @@ public class RtInconcistencyConditionGenerator {
 			mPrimedInvariant = mTrue;
 		}
 
+	}
+
+	private static Script buildSolver(final IUltimateServiceProvider services, final IToolchainStorage storage)
+			throws AssertionError {
+		final SolverSettings settings = SolverBuilder.constructSolverSettings("",
+				SolverMode.External_ModelsAndUnsatCoreMode, false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
+		final Script solver =
+				SolverBuilder.buildAndInitializeSolver(services, storage, SolverMode.External_ModelsAndUnsatCoreMode,
+						settings, false, false, Logics.ALL.toString(), "RtInconsistencySolver");
+
+		try {
+			return new LoggingScript(solver, "C:\\Users\\firefox\\Desktop\\result.smt2", true);
+		} catch (final FileNotFoundException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
@@ -232,21 +255,56 @@ public class RtInconcistencyConditionGenerator {
 		return SmtUtils.simplify(mManagedScript, term, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 	}
 
-	private Term constructPrimedStateInvariant(final Map<PatternType, PhaseEventAutomata> req2Automata) {
+	private Term constructPrimedStateInvariant(final Map<PatternType, PhaseEventAutomata> req2Automata)
+			throws InvariantInfeasibleException {
 
-		final List<CDD> primedStateInvariants =
-				req2Automata.entrySet().stream().filter(a -> a.getValue().getPhases().length == 1)
-						.map(a -> a.getValue().getPhases()[0].getStateInvariant().prime()).collect(Collectors.toList());
+		final Map<PatternType, CDD> primedStateInvariants = new HashMap<>();
+		for (final Entry<PatternType, PhaseEventAutomata> entry : req2Automata.entrySet()) {
+			if (entry.getValue().getPhases().length != 1) {
+				continue;
+			}
+			primedStateInvariants.put(entry.getKey(), entry.getValue().getPhases()[0].getStateInvariant().prime());
+		}
+
 		final Term result;
+		final Map<PatternType, Term> terms;
 		if (primedStateInvariants.isEmpty()) {
 			return mTrue;
 		} else if (primedStateInvariants.size() == 1) {
-			result = toSmt(primedStateInvariants.get(0));
+			final Entry<PatternType, CDD> entry = primedStateInvariants.entrySet().iterator().next();
+			result = toSmt(entry.getValue());
+			terms = Collections.singletonMap(entry.getKey(), result);
 		} else {
-			final List<Term> terms = primedStateInvariants.stream().map(a -> toSmt(a)).collect(Collectors.toList());
-			result = SmtUtils.and(mScript, terms);
+			terms = primedStateInvariants.entrySet().stream()
+					.collect(Collectors.toMap(Entry::getKey, a -> toSmt(a.getValue())));
+			result = SmtUtils.and(mScript, terms.values());
 		}
-		return simplify(result);
+		return handleInconsistentStateInvariant(terms, simplify(handleInconsistentStateInvariant(terms, result)));
+	}
+
+	private Term handleInconsistentStateInvariant(final Map<PatternType, Term> terms, final Term invariant)
+			throws InvariantInfeasibleException {
+		if (mFalse != invariant) {
+			return invariant;
+		}
+
+		final Function<TermVariable, IProgramVar> funTermVar2ProgVar = a -> mVars.get(a.getName());
+		final SimplePredicateFactory pfac = new SimplePredicateFactory(mManagedScript, funTermVar2ProgVar);
+		mScript.push(1);
+		final Map<Term, PatternType> name2Req = new HashMap<>();
+		for (final Entry<PatternType, Term> entry : terms.entrySet()) {
+			final Term term = entry.getValue();
+			final BasicPredicate pred = pfac.newPredicate(term);
+			final Term namedTerm = SmtUtils.annotateAndAssert(mScript, pred.getClosedFormula(), entry.getKey().getId());
+			name2Req.put(namedTerm, entry.getKey());
+		}
+		final LBool result = mScript.checkSat();
+		assert result == LBool.UNSAT;
+		final Collection<PatternType> responsibleRequirements = new HashSet<>();
+		final Term[] unsatCore = mScript.getUnsatCore();
+		Arrays.stream(unsatCore).map(a -> name2Req.get(a)).forEach(responsibleRequirements::add);
+		mScript.pop(1);
+		throw new InvariantInfeasibleException(responsibleRequirements);
 	}
 
 	private Term toSmt(final CDD cdd) {
@@ -462,6 +520,23 @@ public class RtInconcistencyConditionGenerator {
 		@Override
 		public Expression transform(final IdentifierExpression node) {
 			return mBoogieSymboltable.getIdentifierExpression(node.getIdentifier());
+		}
+
+	}
+
+	public static final class InvariantInfeasibleException extends Exception {
+
+		private static final long serialVersionUID = 1L;
+		private final Collection<PatternType> mResponsibleRequirements;
+
+		private InvariantInfeasibleException(final Collection<PatternType> responsibleRequirements) {
+			super("Some invariants are already infeasible. Responsible requirements: "
+					+ responsibleRequirements.stream().map(a -> a.getId()).collect(Collectors.joining(", ")));
+			mResponsibleRequirements = responsibleRequirements;
+		}
+
+		public Collection<PatternType> getResponsibleRequirements() {
+			return mResponsibleRequirements;
 		}
 
 	}

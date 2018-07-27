@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltable.TypeErrorInfo;
@@ -126,7 +127,7 @@ public class Req2BoogieTranslator {
 
 	private final ReqSymboltable mSymboltable;
 	private final RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
-	private boolean mSeparateInvariantHandling;
+	private final boolean mSeparateInvariantHandling;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final ILogger logger, final List<PatternType> patterns) {
@@ -178,16 +179,26 @@ public class Req2BoogieTranslator {
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymboltable.constructVariableDeclarations());
 
-		if (mCombinationNum > 1) {
-			final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, logger);
-			mRtInconcistencyConditionGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, storage,
-					mSymboltable, mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
-		} else {
-			mRtInconcistencyConditionGenerator = null;
-		}
+		Unit unit;
+		RtInconcistencyConditionGenerator rticGenerator;
+		try {
+			if (mCombinationNum > 1) {
+				final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(decls, logger);
+				rticGenerator = new RtInconcistencyConditionGenerator(mLogger, mServices, storage, mSymboltable,
+						mReq2Automata, boogieDeclarations, mSeparateInvariantHandling);
+			} else {
+				rticGenerator = null;
+			}
 
-		decls.add(generateProcedures(init));
-		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
+			decls.add(generateProcedures(init));
+			unit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
+		} catch (final InvariantInfeasibleException e) {
+			mPeaResultUtil.infeasibleInvariant(e);
+			unit = null;
+			rticGenerator = null;
+		}
+		mRtInconcistencyConditionGenerator = rticGenerator;
+		mUnit = unit;
 	}
 
 	private Map<String, Integer> genId2Bounds(final List<InitializationPattern> inits) {

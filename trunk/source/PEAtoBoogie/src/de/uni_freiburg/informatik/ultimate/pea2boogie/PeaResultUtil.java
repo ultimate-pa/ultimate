@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.RtInconcistencyConditionGenerator.InvariantInfeasibleException;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqCheck;
 
 /**
@@ -80,6 +81,10 @@ public class PeaResultUtil {
 		final String plugin = Activator.PLUGIN_ID;
 		final IBacktranslationService translatorSequence = mServices.getBacktranslationService();
 		report(new ReqCheckSuccessResult<>(element, plugin, translatorSequence));
+	}
+
+	public void infeasibleInvariant(final InvariantInfeasibleException ex) {
+		errorAndAbort(new RequirementInconsistentErrorResult(ex));
 	}
 
 	public IResult convertTraceAbstractionResult(final IResult result) {
@@ -169,6 +174,14 @@ public class PeaResultUtil {
 		public RequirementTransformationErrorResult(final String id, final String reason) {
 			super(Activator.PLUGIN_ID, "Ignored requirement due to translation errors: " + id,
 					"Ignored requirement due to translation errors: " + id + " Reason: " + reason, Severity.WARNING);
+		}
+	}
+
+	private static final class RequirementInconsistentErrorResult extends GenericResult {
+
+		public RequirementInconsistentErrorResult(final InvariantInfeasibleException ex) {
+			super(Activator.PLUGIN_ID, "Requirements set is inconsistent.",
+					"Requirements set is inconsistent. " + ex.getMessage(), Severity.ERROR);
 		}
 	}
 
