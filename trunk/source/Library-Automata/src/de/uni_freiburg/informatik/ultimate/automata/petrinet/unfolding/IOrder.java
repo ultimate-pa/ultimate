@@ -37,19 +37,19 @@ import java.util.Comparator;
  * 
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public interface IOrder<LETTER, C> extends Comparator<Event<LETTER, C>> {
+public interface IOrder<LETTER, PLACE> extends Comparator<Event<LETTER, PLACE>> {
 
 	/** Compares two events by comparing their local configurations. */
 	@Override
-	default int compare(final Event<LETTER, C> o1, final Event<LETTER, C> o2) {
+	default int compare(final Event<LETTER, PLACE> o1, final Event<LETTER, PLACE> o2) {
 		if (o1 == o2) {
 			return 0;
 		}
-		final Configuration<LETTER, C> c1 = o1.getLocalConfiguration();
-		final Configuration<LETTER, C> c2 = o2.getLocalConfiguration();
+		final Configuration<LETTER, PLACE> c1 = o1.getLocalConfiguration();
+		final Configuration<LETTER, PLACE> c2 = o2.getLocalConfiguration();
 		return compare(c1, c2);
 	}
 
@@ -62,5 +62,5 @@ public interface IOrder<LETTER, C> extends Comparator<Event<LETTER, C>> {
 	 *            second configuration
 	 * @return the value according to {@link Comparator}
 	 */
-	int compare(Configuration<LETTER, C> o1, Configuration<LETTER, C> o2);
+	int compare(Configuration<LETTER, PLACE> o1, Configuration<LETTER, PLACE> o2);
 }

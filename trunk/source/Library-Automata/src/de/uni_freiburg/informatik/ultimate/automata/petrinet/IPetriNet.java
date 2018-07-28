@@ -43,42 +43,42 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
  */
-public interface IPetriNet<LETTER, C> extends IAutomaton<LETTER, C> {
-	Collection<C> getPlaces();
+public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE> {
+	Collection<PLACE> getPlaces();
 
-	Collection<ITransition<LETTER, C>> getTransitions();
+	Collection<ITransition<LETTER, PLACE>> getTransitions();
 
-	Set<C> getInitialPlaces();
+	Set<PLACE> getInitialPlaces();
 
-	Collection<C> getAcceptingPlaces();
+	Collection<PLACE> getAcceptingPlaces();
 
 	/**
 	 * @param marking
 	 *            A marking.
 	 * @return {@code true} iff the marking is accepting.
 	 */
-	boolean isAccepting(Marking<LETTER, C> marking);
+	boolean isAccepting(Marking<LETTER, PLACE> marking);
 
 
 
 	/** @return Outgoing transitions of given place. */
-	Set<ITransition<LETTER, C>> getSuccessors(final C place);
+	Set<ITransition<LETTER, PLACE>> getSuccessors(final PLACE place);
 
 	/** @return Incoming transitions of given place. */
-	Set<ITransition<LETTER, C>> getPredecessors(final C place);
+	Set<ITransition<LETTER, PLACE>> getPredecessors(final PLACE place);
 
 
 	/** @return Outgoing places of given transition. */
-	Set<C> getSuccessors(final ITransition<LETTER, C> transition);
+	Set<PLACE> getSuccessors(final ITransition<LETTER, PLACE> transition);
 
 	/** @return Incoming places of given transition. */
-	Set<C> getPredecessors(final ITransition<LETTER, C> transition);
+	Set<PLACE> getPredecessors(final ITransition<LETTER, PLACE> transition);
 
 
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
-		return new PetriNetToUltimateModel<LETTER, C>().transformToUltimateModel(this);
+		return new PetriNetToUltimateModel<LETTER, PLACE>().transformToUltimateModel(this);
 	}
 
 

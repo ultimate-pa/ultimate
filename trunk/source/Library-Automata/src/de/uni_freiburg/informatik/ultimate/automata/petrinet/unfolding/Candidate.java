@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -40,35 +40,35 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
  * <li>the set of predecessor-places of the transition minus the places that correspond with the conditions in the given
  * condition-set.</li>
  * </ul>
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  **/
-public class Candidate<S, C> {
+public class Candidate<LETTER, PLACE> {
 	/**
 	 * A transition.
 	 */
-	public final Transition<S, C> mT;
+	public final Transition<LETTER, PLACE> mT;
 	/**
 	 * Chosen conditions.
 	 */
-	public final ArrayList<Condition<S, C>> mChosen;
+	public final ArrayList<Condition<LETTER, PLACE>> mChosen;
 	/**
 	 * Places.
 	 */
-	public final ArrayList<C> mPlaces;
+	public final ArrayList<PLACE> mPlaces;
 
 	/**
 	 * Constructor from another candidate.
-	 * 
+	 *
 	 * @param candidate
 	 *            candidate
 	 */
-	public Candidate(final Map.Entry<Transition<S, C>, Map<C, Condition<S, C>>> candidate) {
+	public Candidate(final Map.Entry<Transition<LETTER, PLACE>, Map<PLACE, Condition<LETTER, PLACE>>> candidate) {
 		mT = candidate.getKey();
 		mChosen = new ArrayList<>(candidate.getValue().values());
 		mPlaces = new ArrayList<>(candidate.getValue().keySet());
@@ -76,11 +76,11 @@ public class Candidate<S, C> {
 
 	/**
 	 * Constructor with transition.
-	 * 
+	 *
 	 * @param transition
 	 *            transition
 	 */
-	public Candidate(final Transition<S, C> transition) {
+	public Candidate(final Transition<LETTER, PLACE> transition) {
 		mT = transition;
 		mChosen = new ArrayList<>(mT.getPredecessors().size());
 		mPlaces = new ArrayList<>(mT.getPredecessors());

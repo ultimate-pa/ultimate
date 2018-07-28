@@ -32,18 +32,18 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public interface IPossibleExtensions<S, C> {
+public interface IPossibleExtensions<LETTER, PLACE> {
 	/**
 	 * Removes and returns the minimal element with respect to the specified Order. Throws an Exception if queue empty.
 	 * 
 	 * @return the minimal element
 	 */
-	Event<S, C> remove();
+	Event<LETTER, PLACE> remove();
 
 	/**
 	 * Extends set of possible extensions by all possible extensions which are successors of e.
@@ -51,7 +51,7 @@ public interface IPossibleExtensions<S, C> {
 	 * @param event
 	 *            event
 	 */
-	void update(Event<S, C> event);
+	void update(Event<LETTER, PLACE> event);
 
 	/**
 	 * @return The size.

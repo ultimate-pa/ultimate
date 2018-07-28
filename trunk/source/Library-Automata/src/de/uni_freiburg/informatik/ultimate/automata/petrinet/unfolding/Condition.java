@@ -36,19 +36,19 @@ import java.util.HashSet;
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  **/
-public class Condition<S, C> implements Serializable {
+public class Condition<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
 
 	private static int sSerialNumberCounter;
 
-	private final Event<S, C> mPredecessor;
-	private final Collection<Event<S, C>> mSuccessors;
-	private final C mPlace;
+	private final Event<LETTER, PLACE> mPredecessor;
+	private final Collection<Event<LETTER, PLACE>> mSuccessors;
+	private final PLACE mPlace;
 
 	private final int mSerialNumber;
 
@@ -60,7 +60,7 @@ public class Condition<S, C> implements Serializable {
 	 * @param place
 	 *            place
 	 */
-	public Condition(final Event<S, C> predecessor, final C place) {
+	public Condition(final Event<LETTER, PLACE> predecessor, final PLACE place) {
 		mSerialNumber = sSerialNumberCounter;
 		sSerialNumberCounter++;
 
@@ -75,19 +75,19 @@ public class Condition<S, C> implements Serializable {
 	 * @param event
 	 *            event
 	 */
-	public void addSuccesssor(final Event<S, C> event) {
+	public void addSuccesssor(final Event<LETTER, PLACE> event) {
 		mSuccessors.add(event);
 	}
 
-	public Collection<Event<S, C>> getSuccessorEvents() {
+	public Collection<Event<LETTER, PLACE>> getSuccessorEvents() {
 		return mSuccessors;
 	}
 
-	public Event<S, C> getPredecessorEvent() {
+	public Event<LETTER, PLACE> getPredecessorEvent() {
 		return mPredecessor;
 	}
 
-	public C getPlace() {
+	public PLACE getPlace() {
 		return mPlace;
 	}
 

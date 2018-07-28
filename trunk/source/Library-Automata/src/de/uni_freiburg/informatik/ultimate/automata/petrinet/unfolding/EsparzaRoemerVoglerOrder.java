@@ -11,20 +11,20 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
  * 
  * @param <LETTER>
  *            Type of letters from the alphabet used to label transitions
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class EsparzaRoemerVoglerOrder<LETTER, C> implements IOrder<LETTER, C> {
+public class EsparzaRoemerVoglerOrder<LETTER, PLACE> implements IOrder<LETTER, PLACE> {
 	
 	@Override
-	public int compare(Configuration<LETTER, C> c1, Configuration<LETTER, C> c2) {
+	public int compare(Configuration<LETTER, PLACE> c1, Configuration<LETTER, PLACE> c2) {
 		while (true) {
 			int result = c1.compareTo(c2);
 			if (result != 0) {
 				return result;
 			}
-			final Configuration<LETTER, C> min1 = c1.getMin();
-			final Configuration<LETTER, C> min2 = c2.getMin();
+			final Configuration<LETTER, PLACE> min1 = c1.getMin();
+			final Configuration<LETTER, PLACE> min2 = c2.getMin();
 			result = min1.compareTo(min2);
 			if (result != 0) {
 				return result;

@@ -45,19 +45,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  * conflict-free. A Set E is called Suffix if there is a Configuration C, such that
  * <ul>
  * <li>C united with E is a Configuration</li>
- * <li>The intersection of C and E is empty</li>
+ * <li>The intersection of PLACE and E is empty</li>
  * </ul>
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Comparable<Configuration<S, C>> {
-	private final Set<Event<S, C>> mEvents;
-	private Set<Event<S, C>> mMin;
-	private ArrayList<Transition<S, C>> mPhi;
+public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLACE>> implements Comparable<Configuration<LETTER, PLACE>> {
+	private final Set<Event<LETTER, PLACE>> mEvents;
+	private Set<Event<LETTER, PLACE>> mMin;
+	private ArrayList<Transition<LETTER, PLACE>> mPhi;
 
 	/**
 	 * Constructs a Configuration (Not a Suffix). The set given as parameter has to be causally closed and
@@ -66,7 +66,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	 * @param events
 	 *            set of events
 	 */
-	public Configuration(final Set<Event<S, C>> events) {
+	public Configuration(final Set<Event<LETTER, PLACE>> events) {
 		this(events, null);
 	}
 
@@ -78,15 +78,15 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	 * @param min
 	 *            minimum set of events
 	 */
-	private Configuration(final Set<Event<S, C>> events, final Set<Event<S, C>> min) {
+	private Configuration(final Set<Event<LETTER, PLACE>> events, final Set<Event<LETTER, PLACE>> min) {
 		mEvents = events;
 		mMin = min;
 	}
 
-	public List<Transition<S, C>> getPhi() {
+	public List<Transition<LETTER, PLACE>> getPhi() {
 		if (mPhi == null) {
 			mPhi = new ArrayList<>(mEvents.size());
-			for (final Event<S, C> e : mEvents) {
+			for (final Event<LETTER, PLACE> e : mEvents) {
 				mPhi.add(e.getTransition());
 			}
 			Collections.sort(mPhi);
@@ -101,21 +101,21 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	 * 
 	 * @return causally minimal Events in this Configuration
 	 */
-	public Configuration<S, C> getMin() {
+	public Configuration<LETTER, PLACE> getMin() {
 		if (mMin == null) {
 			mMin = computeMin();
 		}
 		return new Configuration<>(mMin);
 	}
 
-	private Set<Event<S, C>> computeMin() {
+	private Set<Event<LETTER, PLACE>> computeMin() {
 		return mEvents.stream()
 				.filter(event -> SetOperations.disjoint(event.getPredecessorEvents(), mEvents))
 				.collect(Collectors.toCollection(HashSet::new));
 	}
 
 	@Override
-	public Iterator<Event<S, C>> iterator() {
+	public Iterator<Event<LETTER, PLACE>> iterator() {
 		return mEvents.iterator();
 	}
 
@@ -125,12 +125,12 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	}
 
 	@Override
-	public boolean add(final Event<S, C> arg0) {
+	public boolean add(final Event<LETTER, PLACE> arg0) {
 		return mEvents.add(arg0);
 	}
 
 	@Override
-	public boolean addAll(final Collection<? extends Event<S, C>> arg0) {
+	public boolean addAll(final Collection<? extends Event<LETTER, PLACE>> arg0) {
 		return mEvents.addAll(arg0);
 	}
 
@@ -154,8 +154,8 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	 *            Some events.
 	 * @return {@code true} iff the configuration contains any of the specified events
 	 */
-	public boolean containsAny(final Collection<Event<S, C>> events) {
-		for (final Event<S, C> place : events) {
+	public boolean containsAny(final Collection<Event<LETTER, PLACE>> events) {
+		for (final Event<LETTER, PLACE> place : events) {
 			if (mEvents.contains(place)) {
 				return true;
 			}
@@ -179,16 +179,16 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	 *         <p>
 	 *         requires, that getMin() has been called.
 	 */
-	public Configuration<S, C> removeMin() {
+	public Configuration<LETTER, PLACE> removeMin() {
 		assert mMin != null : "getMin() must have been called before removeMin()";
 		assert !mMin.isEmpty() : "The minimum of a configuration must not be empty.";
-		final HashSet<Event<S, C>> events = new HashSet<>(mEvents);
+		final HashSet<Event<LETTER, PLACE>> events = new HashSet<>(mEvents);
 		events.removeAll(mMin);
-		final Set<Event<S, C>> min = Event.getSuccessorEvents(mMin);
+		final Set<Event<LETTER, PLACE>> min = Event.getSuccessorEvents(mMin);
 		min.retainAll(events);
-		final HashSet<Event<S, C>> newmin = new HashSet<>();
-		for (final Event<S, C> e : min) {
-			final Set<Event<S, C>> predEventsOfE = e.getPredecessorEvents();
+		final HashSet<Event<LETTER, PLACE>> newmin = new HashSet<>();
+		for (final Event<LETTER, PLACE> e : min) {
+			final Set<Event<LETTER, PLACE>> predEventsOfE = e.getPredecessorEvents();
 			predEventsOfE.retainAll(mEvents);
 			if (mMin.containsAll(predEventsOfE)) {
 				newmin.add(e);
@@ -222,15 +222,15 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	 * of events with respect to the the total order on their transitions.
 	 */
 	@Override
-	public int compareTo(final Configuration<S, C> other) {
+	public int compareTo(final Configuration<LETTER, PLACE> other) {
 		if (size() != other.size()) {
 			return size() - other.size();
 		}
-		final List<Transition<S, C>> phi1 = getPhi();
-		final List<Transition<S, C>> phi2 = other.getPhi();
+		final List<Transition<LETTER, PLACE>> phi1 = getPhi();
+		final List<Transition<LETTER, PLACE>> phi2 = other.getPhi();
 		for (int i = 0; i < phi1.size(); i++) {
-			final Transition<S, C> t1 = phi1.get(i);
-			final Transition<S, C> t2 = phi2.get(i);
+			final Transition<LETTER, PLACE> t1 = phi1.get(i);
+			final Transition<LETTER, PLACE> t2 = phi2.get(i);
 			final int result = t1.getTotalOrderId() - t2.getTotalOrderId();
 			if (result != 0) {
 				return result;
@@ -248,7 +248,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	 *            another configuration
 	 * @return {@code true} iff two given configurations have the same events.
 	 */
-	public boolean equals(final Configuration<S, C> other) {
+	public boolean equals(final Configuration<LETTER, PLACE> other) {
 		return containsAll(other) && other.containsAll(this);
 	}
 
@@ -270,7 +270,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Configuration<S, C> other = (Configuration) obj;
+		Configuration<LETTER, PLACE> other = (Configuration) obj;
 		if (mEvents == null) {
 			if (other.mEvents != null)
 				return false;

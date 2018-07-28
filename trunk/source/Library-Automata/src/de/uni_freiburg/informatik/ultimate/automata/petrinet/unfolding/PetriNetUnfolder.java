@@ -53,24 +53,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public final class PetriNetUnfolder<S, C> {
+public final class PetriNetUnfolder<LETTER, PLACE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final IPetriNet<S, C> mOperand;
+	private final IPetriNet<LETTER, PLACE> mOperand;
 	private final boolean mStopIfAcceptingRunFound;
 	private final boolean mSameTransitionCutOff;
-	private final IOrder<S, C>  mOrder;
-	private final IPossibleExtensions<S, C> mPossibleExtensions;
-	private final BranchingProcess<S, C> mUnfolding;
-	private PetriNetRun<S, C> mRun;
+	private final IOrder<LETTER, PLACE>  mOrder;
+	private final IPossibleExtensions<LETTER, PLACE> mPossibleExtensions;
+	private final BranchingProcess<LETTER, PLACE> mUnfolding;
+	private PetriNetRun<LETTER, PLACE> mRun;
 
-	private final PetriNetUnfolder<S, C>.Statistics mStatistics = new Statistics();
+	private final PetriNetUnfolder<LETTER, PLACE>.Statistics mStatistics = new Statistics();
 
 
 	/**
@@ -86,7 +86,7 @@ public final class PetriNetUnfolder<S, C> {
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public PetriNetUnfolder(final AutomataLibraryServices services, final BoundedPetriNet<S, C> operand,
+	public PetriNetUnfolder(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> operand,
 			final UnfoldingOrder order, final boolean sameTransitionCutOff, final boolean stopIfAcceptingRunFound)
 			throws AutomataOperationCanceledException {
 		mServices = services;
@@ -118,19 +118,19 @@ public final class PetriNetUnfolder<S, C> {
 		mLogger.info(mStatistics.coRelationInformation());
 	}
 
-	public PetriNetUnfolder<S, C>.Statistics getUnfoldingStatistics() {
+	public PetriNetUnfolder<LETTER, PLACE>.Statistics getUnfoldingStatistics() {
 		return mStatistics;
 	}
 
 	private void computeUnfolding() throws AutomataOperationCanceledException {
 		boolean someInitialPlaceIsAccepting = false;
-		for (final Condition<S, C> c : mUnfolding.getDummyRoot().getSuccessorConditions()) {
-			if (((BoundedPetriNet<S, C>)mOperand).getAcceptingPlaces().contains(c.getPlace())) {
+		for (final Condition<LETTER, PLACE> c : mUnfolding.getDummyRoot().getSuccessorConditions()) {
+			if (((BoundedPetriNet<LETTER, PLACE>)mOperand).getAcceptingPlaces().contains(c.getPlace())) {
 				someInitialPlaceIsAccepting = true;
 			}
 		}
 		if (someInitialPlaceIsAccepting) {
-			mRun = new PetriNetRun<S, C>(
+			mRun = new PetriNetRun<LETTER, PLACE>(
 					new ConditionMarking<>(mUnfolding.getDummyRoot().getSuccessorConditions()).getMarking());
 			if (mStopIfAcceptingRunFound) {
 				return;
@@ -139,7 +139,7 @@ public final class PetriNetUnfolder<S, C> {
 		mPossibleExtensions.update(mUnfolding.getDummyRoot());
 
 		while (!mPossibleExtensions.isEmpy()) {
-			final Event<S, C> e = mPossibleExtensions.remove();
+			final Event<LETTER, PLACE> e = mPossibleExtensions.remove();
 
 			final boolean finished = computeUnfoldingHelper(e);
 			if (finished) {
@@ -152,7 +152,7 @@ public final class PetriNetUnfolder<S, C> {
 		}
 	}
 
-	private boolean computeUnfoldingHelper(final Event<S, C> event) {
+	private boolean computeUnfoldingHelper(final Event<LETTER, PLACE> event) {
 		if (parentIsCutoffEvent(event)) {
 			return false;
 		}
@@ -182,7 +182,7 @@ public final class PetriNetUnfolder<S, C> {
 	 * <p>
 	 * uses the recursive helper-method {@code #constructRun(Event, Marking)}
 	 */
-	private PetriNetRun<S, C> constructRun(final Event<S, C> event) {
+	private PetriNetRun<LETTER, PLACE> constructRun(final Event<LETTER, PLACE> event) {
 		mLogger.debug("Marking: " + mUnfolding.getDummyRoot().getMark());
 		return constructRun(event, mUnfolding.getDummyRoot().getConditionMark()).mRunInner;
 	}
@@ -193,13 +193,13 @@ public final class PetriNetUnfolder<S, C> {
 	 * <p>
 	 * The run starts with the given Marking {@code initialMarking}
 	 */
-	private RunAndConditionMarking constructRun(final Event<S, C> event, final ConditionMarking<S, C> initialMarking) {
+	private RunAndConditionMarking constructRun(final Event<LETTER, PLACE> event, final ConditionMarking<LETTER, PLACE> initialMarking) {
 		assert event != mUnfolding.getDummyRoot();
 		assert !event.getPredecessorConditions().isEmpty();
 		assert !mUnfolding.pairwiseConflictOrCausalRelation(event.getPredecessorConditions());
-		PetriNetRun<S, C> run = new PetriNetRun<>(initialMarking.getMarking());
-		ConditionMarking<S, C> current = initialMarking;
-		for (final Condition<S, C> c : event.getPredecessorConditions()) {
+		PetriNetRun<LETTER, PLACE> run = new PetriNetRun<>(initialMarking.getMarking());
+		ConditionMarking<LETTER, PLACE> current = initialMarking;
+		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
 			if (current.contains(c)) {
 				continue;
 			}
@@ -209,9 +209,9 @@ public final class PetriNetUnfolder<S, C> {
 		}
 		assert current != null;
 
-		final ConditionMarking<S, C> finalMarking = current.fireEvent(event);
-		final ITransition<S, C> t = event.getTransition();
-		final PetriNetRun<S, C> appendix =
+		final ConditionMarking<LETTER, PLACE> finalMarking = current.fireEvent(event);
+		final ITransition<LETTER, PLACE> t = event.getTransition();
+		final PetriNetRun<LETTER, PLACE> appendix =
 				new PetriNetRun<>(current.getMarking(), t.getSymbol(), finalMarking.getMarking());
 		run = run.concatenate(appendix);
 
@@ -220,8 +220,8 @@ public final class PetriNetUnfolder<S, C> {
 		return new RunAndConditionMarking(run, finalMarking);
 	}
 
-	private boolean parentIsCutoffEvent(final Event<S, C> event) {
-		for (final Condition<S, C> c : event.getPredecessorConditions()) {
+	private boolean parentIsCutoffEvent(final Event<LETTER, PLACE> event) {
+		for (final Condition<LETTER, PLACE> c : event.getPredecessorConditions()) {
 			if (c.getPredecessorEvent().isCutoffEvent()) {
 				return true;
 			}
@@ -232,14 +232,14 @@ public final class PetriNetUnfolder<S, C> {
 	/**
 	 * @return Some accepting run of PetriNet net, return null if net does not have an accepting run.
 	 */
-	public PetriNetRun<S, C> getAcceptingRun() {
+	public PetriNetRun<LETTER, PLACE> getAcceptingRun() {
 		return mRun;
 	}
 
 	/**
 	 * @return The occurrence net which is the finite prefix of the unfolding of net.
 	 */
-	public BranchingProcess<S, C> getFinitePrefix() {
+	public BranchingProcess<LETTER, PLACE> getFinitePrefix() {
 		return mUnfolding;
 	}
 
@@ -263,17 +263,17 @@ public final class PetriNetUnfolder<S, C> {
 	}
 
 
-	public BranchingProcess<S, C> getResult() {
+	public BranchingProcess<LETTER, PLACE> getResult() {
 		return mUnfolding;
 	}
 
-	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataOperationCanceledException {
 		mLogger.info("Testing correctness of emptinessCheck");
 
 		boolean correct;
 		if (mRun == null) {
-			final NestedRun<S, C> automataRun = (new IsEmpty<>(mServices,
+			final NestedRun<LETTER, PLACE> automataRun = (new IsEmpty<>(mServices,
 					(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				// TODO Christian 2016-09-30: This assignment is useless - a bug?
@@ -282,8 +282,8 @@ public final class PetriNetUnfolder<S, C> {
 			}
 			correct = automataRun == null;
 		} else {
-			final Word<S> word = mRun.getWord();
-			if (new Accepts<S, C>(mServices, mOperand, word).getResult()) {
+			final Word<LETTER> word = mRun.getWord();
+			if (new Accepts<LETTER, PLACE>(mServices, mOperand, word).getResult()) {
 				correct = true;
 			} else {
 				mLogger.error("Result of EmptinessCheck, but not accepted: " + word);
@@ -295,10 +295,10 @@ public final class PetriNetUnfolder<S, C> {
 	}
 
 	class RunAndConditionMarking {
-		private final PetriNetRun<S, C> mRunInner;
-		private final ConditionMarking<S, C> mMarking;
+		private final PetriNetRun<LETTER, PLACE> mRunInner;
+		private final ConditionMarking<LETTER, PLACE> mMarking;
 
-		public RunAndConditionMarking(final PetriNetRun<S, C> run, final ConditionMarking<S, C> marking) {
+		public RunAndConditionMarking(final PetriNetRun<LETTER, PLACE> run, final ConditionMarking<LETTER, PLACE> marking) {
 			mRunInner = run;
 			mMarking = marking;
 		}
@@ -308,19 +308,19 @@ public final class PetriNetUnfolder<S, C> {
 	 * FIXME documentation.
 	 */
 	public class Statistics {
-		private final Map<ITransition<S, C>, Map<Marking<S, C>, Set<Event<S, C>>>> mTrans2Mark2Events = new HashMap<>();
+		private final Map<ITransition<LETTER, PLACE>, Map<Marking<LETTER, PLACE>, Set<Event<LETTER, PLACE>>>> mTrans2Mark2Events = new HashMap<>();
 		private int mCutOffEvents;
 		private int mNonCutOffEvents;
 
-		public void add(final Event<S, C> event) {
-			final Marking<S, C> marking = event.getMark();
-			final ITransition<S, C> transition = event.getTransition();
-			Map<Marking<S, C>, Set<Event<S, C>>> mark2Events = mTrans2Mark2Events.get(transition);
+		public void add(final Event<LETTER, PLACE> event) {
+			final Marking<LETTER, PLACE> marking = event.getMark();
+			final ITransition<LETTER, PLACE> transition = event.getTransition();
+			Map<Marking<LETTER, PLACE>, Set<Event<LETTER, PLACE>>> mark2Events = mTrans2Mark2Events.get(transition);
 			if (mark2Events == null) {
 				mark2Events = new HashMap<>();
 				mTrans2Mark2Events.put(transition, mark2Events);
 			}
-			Set<Event<S, C>> events = mark2Events.get(marking);
+			Set<Event<LETTER, PLACE>> events = mark2Events.get(marking);
 			if (events == null) {
 				events = new HashSet<>();
 				mark2Events.put(marking, events);
@@ -329,7 +329,7 @@ public final class PetriNetUnfolder<S, C> {
 				mLogger.info("inserting again Event for Transition " + transition + " and Marking " + marking);
 				mLogger.info("new Event has " + event.getAncestors() + " ancestors and is "
 						+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
-				for (final Event<S, C> event2 : events) {
+				for (final Event<LETTER, PLACE> event2 : events) {
 					mLogger.info("  existing Event has " + event2.getAncestors() + " ancestors and is "
 							+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
 					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent();

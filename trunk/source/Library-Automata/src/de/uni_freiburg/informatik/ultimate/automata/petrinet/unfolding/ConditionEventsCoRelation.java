@@ -37,16 +37,16 @@ import java.util.Set;
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
+public class ConditionEventsCoRelation<LETTER, PLACE> implements ICoRelation<LETTER, PLACE> {
 	private int mCoRelationQueries;
 
-	private final HashMap<Condition<S, C>, Set<Event<S, C>>> mCoRelation = new HashMap<>();
-	private final BranchingProcess<S, C> mBranchingProcess;
+	private final HashMap<Condition<LETTER, PLACE>, Set<Event<LETTER, PLACE>>> mCoRelation = new HashMap<>();
+	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 
 	/**
 	 * Constructor.
@@ -54,7 +54,7 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	 * @param branchingProcess
 	 *            branching process
 	 */
-	public ConditionEventsCoRelation(final BranchingProcess<S, C> branchingProcess) {
+	public ConditionEventsCoRelation(final BranchingProcess<LETTER, PLACE> branchingProcess) {
 		mBranchingProcess = branchingProcess;
 	}
 
@@ -64,13 +64,13 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	}
 
 	@Override
-	public void update(final Event<S, C> e) {
-		for (final Condition<S, C> c : e.getSuccessorConditions()) {
-			mCoRelation.put(c, new HashSet<Event<S, C>>());
+	public void update(final Event<LETTER, PLACE> e) {
+		for (final Condition<LETTER, PLACE> c : e.getSuccessorConditions()) {
+			mCoRelation.put(c, new HashSet<Event<LETTER, PLACE>>());
 		}
-		for (final Event<S, C> e1 : mBranchingProcess.getEvents()) {
+		for (final Event<LETTER, PLACE> e1 : mBranchingProcess.getEvents()) {
 			if (isInIrreflexiveCoRelation(e, e1)) {
-				for (final Condition<S, C> c : e1.getSuccessorConditions()) {
+				for (final Condition<LETTER, PLACE> c : e1.getSuccessorConditions()) {
 					assert !e.getPredecessorConditions().contains(c);
 					assert !e.getSuccessorConditions().contains(c);
 					mCoRelation.get(c).add(e);
@@ -94,8 +94,8 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 
 		// (this is the old code)
 		/*
-		for (Condition<S, C> c : e.getPredecessorConditions()) {
-			for (Condition<S, C> sibling : c.getPredecessorEvent()
+		for (Condition<LETTER, PLACE> c : e.getPredecessorConditions()) {
+			for (Condition<LETTER, PLACE> sibling : c.getPredecessorEvent()
 					.getSuccessorConditions()) {
 				if (!e.getPredecessorConditions().contains(sibling)
 						&& isCoset(e.getPredecessorConditions(), sibling)) {
@@ -106,7 +106,7 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 		}
 		*/
 
-		for (final Condition<S, C> c : e.getConditionMark()) {
+		for (final Condition<LETTER, PLACE> c : e.getConditionMark()) {
 			if (!e.getSuccessorConditions().contains(c)) {
 				assert !e.getSuccessorConditions().contains(c);
 				assert !mBranchingProcess.inCausalRelation(c, e) : c + " , " + e
@@ -117,10 +117,10 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	}
 
 	/*
-	private void add(Condition<S, C> c, Event<S, C> e) {
-		Set<Event<S, C>> eSet = coRelation.get(c);
+	private void add(Condition<LETTER, PLACE> c, Event<LETTER, PLACE> e) {
+		Set<Event<LETTER, PLACE>> eSet = coRelation.get(c);
 		if (eSet == null) {
-			eSet = new HashSet<Event<S, C>>();
+			eSet = new HashSet<Event<LETTER, PLACE>>();
 			coRelation.put(c, eSet);
 		}
 		eSet.add(e);
@@ -128,7 +128,7 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	*/
 
 	@Override
-	public boolean isInCoRelation(final Condition<S, C> c1, final Condition<S, C> c2) {
+	public boolean isInCoRelation(final Condition<LETTER, PLACE> c1, final Condition<LETTER, PLACE> c2) {
 		mCoRelationQueries++;
 		final boolean result = mCoRelation.get(c1).contains(c2.getPredecessorEvent())
 				|| mCoRelation.get(c2).contains(c1.getPredecessorEvent())
@@ -182,16 +182,16 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	 * q.e.d.
 	 * </p>
 	 */
-	private boolean isInIrreflexiveCoRelation(final Event<S, C> e1, final Event<S, C> e2) {
+	private boolean isInIrreflexiveCoRelation(final Event<LETTER, PLACE> e1, final Event<LETTER, PLACE> e2) {
 		if (e1 == e2) {
 			return false;
 		}
 		if (mBranchingProcess.getDummyRoot() == e1 || mBranchingProcess.getDummyRoot() == e2) {
 			return false;
 		}
-		final Collection<Condition<S, C>> conditions1 = e1.getPredecessorConditions();
-		final Collection<Condition<S, C>> conditions2 = e2.getPredecessorConditions();
-		for (final Condition<S, C> c1 : conditions1) {
+		final Collection<Condition<LETTER, PLACE>> conditions1 = e1.getPredecessorConditions();
+		final Collection<Condition<LETTER, PLACE>> conditions2 = e2.getPredecessorConditions();
+		for (final Condition<LETTER, PLACE> c1 : conditions1) {
 			// e1 and e2 are in conflict
 			if (conditions2.contains(c1) || !isCoset(conditions2, c1)) {
 				return false;
@@ -201,14 +201,14 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	}
 
 	@Override
-	public void initialize(final Set<Condition<S, C>> initialConditions) {
+	public void initialize(final Set<Condition<LETTER, PLACE>> initialConditions) {
 		// there are no events the conditions could be in relation with yet.
 		// hence there's nothing to do here
 	}
 
 	@Override
-	public boolean isCoset(final Collection<Condition<S, C>> coSet, final Condition<S, C> c) {
-		for (final Condition<S, C> condition : coSet) {
+	public boolean isCoset(final Collection<Condition<LETTER, PLACE>> coSet, final Condition<LETTER, PLACE> c) {
+		for (final Condition<LETTER, PLACE> condition : coSet) {
 			if (!isInCoRelation(c, condition)) {
 				return false;
 			}

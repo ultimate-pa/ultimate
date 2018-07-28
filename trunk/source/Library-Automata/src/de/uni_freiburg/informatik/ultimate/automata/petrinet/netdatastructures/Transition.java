@@ -38,18 +38,18 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de) Copyright (C) 2011-2015 Matthias Heizmann
  *         (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class Transition<S, C> implements ITransition<S, C>, Serializable, Comparable<Transition<S, C>> {
+public class Transition<LETTER, PLACE> implements ITransition<LETTER, PLACE>, Serializable, Comparable<Transition<LETTER, PLACE>> {
 	private static final long serialVersionUID = 5948089529814334197L;
 
 	private final int mHashCode;
-	private final S mSymbol;
-	private final Set<C> mPredecessors;
-	private final Set<C> mSuccessors;
+	private final LETTER mSymbol;
+	private final Set<PLACE> mPredecessors;
+	private final Set<PLACE> mSuccessors;
 
 	private final int mTotalOrderId;
 
@@ -68,8 +68,8 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 	 * @param totalOrderId
 	 *            total order ID
 	 */
-	public Transition(final S symbol, final Set<C> predecessors,
-			final Set<C> successors, final int totalOrderId) {
+	public Transition(final LETTER symbol, final Set<PLACE> predecessors,
+			final Set<PLACE> successors, final int totalOrderId) {
 		mSymbol = symbol;
 		mPredecessors = Collections.unmodifiableSet(predecessors);
 		mSuccessors = Collections.unmodifiableSet(successors);
@@ -78,15 +78,15 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 	}
 
 	@Override
-	public S getSymbol() {
+	public LETTER getSymbol() {
 		return mSymbol;
 	}
 
-	public Set<C> getPredecessors() {
+	public Set<PLACE> getPredecessors() {
 		return mPredecessors;
 	}
 
-	public Set<C> getSuccessors() {
+	public Set<PLACE> getSuccessors() {
 		return mSuccessors;
 	}
 
@@ -112,7 +112,7 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 	}
 
 	@Override
-	public int compareTo(final Transition<S, C> other) {
+	public int compareTo(final Transition<LETTER, PLACE> other) {
 		return mTotalOrderId - other.mTotalOrderId;
 	}
 }

@@ -40,12 +40,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * TODO Christian 2017-02-06 What is an "OcurrenceNet"?
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public final class EventNode<S, C> extends PetriNetVisualizationNode {
+public final class EventNode<LETTER, PLACE> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = -2531826841396458461L;
 
 	/**
@@ -54,10 +54,10 @@ public final class EventNode<S, C> extends PetriNetVisualizationNode {
 	 */
 	// false-positive warning (resp. impossible to solve due to "super constructor comes first" rule in Java)
 	@SuppressWarnings("fb-contrib:PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
-	public EventNode(final Event<S, C> event) {
+	public EventNode(final Event<LETTER, PLACE> event) {
 		super(event.getTransition().getSymbol().toString());
 
-		final Transition<S, C> transition = event.getTransition();
+		final Transition<LETTER, PLACE> transition = event.getTransition();
 		final DefaultAnnotations annot = new DefaultAnnotations();
 		annot.put("Transition", transition);
 		annot.put("Companion", event.getCompanion());
@@ -67,7 +67,7 @@ public final class EventNode<S, C> extends PetriNetVisualizationNode {
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 
-		final S symbol = transition.getSymbol();
+		final LETTER symbol = transition.getSymbol();
 		if (symbol instanceof IAnnotations) {
 			annot.put("Symbol", symbol);
 		}

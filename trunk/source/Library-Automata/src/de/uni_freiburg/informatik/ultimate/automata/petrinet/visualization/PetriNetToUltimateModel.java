@@ -42,33 +42,33 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
  * Converter from {@link IPetriNet} to Ultimate model.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class PetriNetToUltimateModel<S, C> {
+public class PetriNetToUltimateModel<LETTER, PLACE> {
 	/**
 	 * @param net
 	 *            Petri net.
 	 * @return the initial node of the Petri net Ultimate model
 	 */
 	@SuppressWarnings("unchecked")
-	public PetriNetInitialNode transformToUltimateModel(final IPetriNet<S, C> net) {
+	public PetriNetInitialNode transformToUltimateModel(final IPetriNet<LETTER, PLACE> net) {
 		// Hack to see something in visualization. Visualization implemented for old Petri net model where we
 		// had accepting markings.
-		final Collection<Collection<C>> acceptingMarkings = Collections.singleton(net.getAcceptingPlaces());
+		final Collection<Collection<PLACE>> acceptingMarkings = Collections.singleton(net.getAcceptingPlaces());
 		final PetriNetInitialNode graphroot = new PetriNetInitialNode(printAcceptingMarkings(acceptingMarkings));
 
-		final Set<C> initialStates = net.getInitialPlaces();
+		final Set<PLACE> initialStates = net.getInitialPlaces();
 
-		final Map<C, PlaceNode> place2placeNode = new HashMap<>();
-		final Map<ITransition<S, C>, TransitionNode> transition2transitionNode = new HashMap<>();
+		final Map<PLACE, PlaceNode> place2placeNode = new HashMap<>();
+		final Map<ITransition<LETTER, PLACE>, TransitionNode> transition2transitionNode = new HashMap<>();
 
 		final Queue<Object> queue = new LinkedList<>();
 
 		// add all initial states to model - all are successors of the graphroot
-		for (final C place : initialStates) {
+		for (final PLACE place : initialStates) {
 			queue.add(place);
 			final PlaceNode placeNode = new PlaceNode(place, participatedAcceptingMarkings(place, acceptingMarkings));
 			place2placeNode.put(place, placeNode);
@@ -80,19 +80,19 @@ public class PetriNetToUltimateModel<S, C> {
 
 			if (node instanceof ITransition) {
 				transitionHandling(acceptingMarkings, place2placeNode, transition2transitionNode, queue,
-						(ITransition<S, C>) node, net);
+						(ITransition<LETTER, PLACE>) node, net);
 			} else {
-				placeHandling(net, place2placeNode, transition2transitionNode, queue, (C) node);
+				placeHandling(net, place2placeNode, transition2transitionNode, queue, (PLACE) node);
 			}
 		}
 		return graphroot;
 	}
 
-	private void placeHandling(final IPetriNet<S, C> net, final Map<C, PlaceNode> place2placeNode,
-			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
-			final C place) {
+	private void placeHandling(final IPetriNet<LETTER, PLACE> net, final Map<PLACE, PlaceNode> place2placeNode,
+			final Map<ITransition<LETTER, PLACE>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
+			final PLACE place) {
 		final PlaceNode placeNode = place2placeNode.get(place);
-		for (final ITransition<S, C> transition : net.getSuccessors(place)) {
+		for (final ITransition<LETTER, PLACE> transition : net.getSuccessors(place)) {
 			TransitionNode transNode = transition2transitionNode.get(transition);
 			if (transNode == null) {
 				transNode = new TransitionNode((Transition<?, ?>) transition);
@@ -103,10 +103,10 @@ public class PetriNetToUltimateModel<S, C> {
 		}
 	}
 
-	private Collection<String> participatedAcceptingMarkings(final C place,
-			final Collection<Collection<C>> acceptingMarkings) {
+	private Collection<String> participatedAcceptingMarkings(final PLACE place,
+			final Collection<Collection<PLACE>> acceptingMarkings) {
 		final LinkedList<String> participatedAcceptingMarkings = new LinkedList<>();
-		for (final Collection<C> acceptingMarking : acceptingMarkings) {
+		for (final Collection<PLACE> acceptingMarking : acceptingMarkings) {
 			if (acceptingMarking.contains(place)) {
 				addAcceptingMarkingString(participatedAcceptingMarkings, acceptingMarking);
 			}
@@ -114,12 +114,12 @@ public class PetriNetToUltimateModel<S, C> {
 		return participatedAcceptingMarkings;
 	}
 
-	private void transitionHandling(final Collection<Collection<C>> acceptingMarkings,
-			final Map<C, PlaceNode> place2placeNode,
-			final Map<ITransition<S, C>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
-			final ITransition<S, C> transition, final IPetriNet<S, C> net) {
+	private void transitionHandling(final Collection<Collection<PLACE>> acceptingMarkings,
+			final Map<PLACE, PlaceNode> place2placeNode,
+			final Map<ITransition<LETTER, PLACE>, TransitionNode> transition2transitionNode, final Queue<Object> queue,
+			final ITransition<LETTER, PLACE> transition, final IPetriNet<LETTER, PLACE> net) {
 		final TransitionNode transitionNode = transition2transitionNode.get(transition);
-		for (final C place : net.getSuccessors(transition)) {
+		for (final PLACE place : net.getSuccessors(transition)) {
 			PlaceNode placeNode = place2placeNode.get(place);
 			if (placeNode == null) {
 				placeNode = new PlaceNode(place, participatedAcceptingMarkings(place, acceptingMarkings));
@@ -130,9 +130,9 @@ public class PetriNetToUltimateModel<S, C> {
 		}
 	}
 
-	private Collection<String> printAcceptingMarkings(final Collection<Collection<C>> acceptingMarkings) {
+	private Collection<String> printAcceptingMarkings(final Collection<Collection<PLACE>> acceptingMarkings) {
 		final LinkedList<String> acceptingMarkingsList = new LinkedList<>();
-		for (final Collection<C> acceptingMarking : acceptingMarkings) {
+		for (final Collection<PLACE> acceptingMarking : acceptingMarkings) {
 			if (acceptingMarking.isEmpty()) {
 				acceptingMarkingsList.add("{ }");
 			} else {
@@ -143,11 +143,11 @@ public class PetriNetToUltimateModel<S, C> {
 	}
 
 	private void addAcceptingMarkingString(final Collection<String> participatedAcceptingMarkings,
-			final Collection<C> acceptingMarking) {
+			final Collection<PLACE> acceptingMarking) {
 		final StringBuilder builder = new StringBuilder();
 		builder.append("{ ");
 		String comma = "";
-		for (final C placeInMarking : acceptingMarking) {
+		for (final PLACE placeInMarking : acceptingMarking) {
 			builder.append(placeInMarking).append(comma);
 			comma = " , ";
 		}

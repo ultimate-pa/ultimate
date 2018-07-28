@@ -41,30 +41,30 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
+public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LETTER, PLACE> {
 
-	private final PriorityQueue<Event<S, C>> mPe;
-	private final BranchingProcess<S, C> mBranchingProcess;
+	private final PriorityQueue<Event<LETTER, PLACE>> mPe;
+	private final BranchingProcess<LETTER, PLACE> mBranchingProcess;
 
-	public PossibleExtensions(final BranchingProcess<S, C> branchingProcess, final Comparator<Event<S, C>> order) {
+	public PossibleExtensions(final BranchingProcess<LETTER, PLACE> branchingProcess, final Comparator<Event<LETTER, PLACE>> order) {
 		mBranchingProcess = branchingProcess;
 		mPe = new PriorityQueue<>(order);
 	}
 
 	@Override
-	public Event<S, C> remove() {
+	public Event<LETTER, PLACE> remove() {
 		return mPe.remove();
 	}
 
 	@Override
-	public void update(final Event<S, C> event) {
-		final Collection<Candidate<S, C>> candidates = computeCandidates(event);
-		for (final Candidate<S, C> candidate : candidates) {
+	public void update(final Event<LETTER, PLACE> event) {
+		final Collection<Candidate<LETTER, PLACE>> candidates = computeCandidates(event);
+		for (final Candidate<LETTER, PLACE> candidate : candidates) {
 			evolveCandidate(candidate);
 		}
 	}
@@ -74,13 +74,13 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	 * extensions (ones whose predecessors are a co-set) to he possible extension set.
 	 */
 	@SuppressWarnings("squid:S1698")
-	private void evolveCandidate(final Candidate<S, C> cand) {
+	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) {
 		if (cand.mPlaces.isEmpty()) {
 			mPe.add(new Event<>(cand.mChosen, cand.mT));
 			return;
 		}
-		final C p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
-		for (final Condition<S, C> c : mBranchingProcess.place2cond(p)) {
+		final PLACE p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
+		for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
 			assert cand.mT.getPredecessors().contains(c.getPlace());
 			// equality intended here
 			assert c.getPlace().equals(p);
@@ -97,13 +97,13 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	/**
 	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
-	private Collection<Candidate<S, C>> computeCandidates(final Event<S, C> event) {
-		final Map<ITransition<S, C>, Candidate<S, C>> candidates = new HashMap<>();
-		for (final Condition<S, C> cond0 : event.getSuccessorConditions()) {
-			for (final ITransition<S, C> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
-				Candidate<S, C> current;
+	private Collection<Candidate<LETTER, PLACE>> computeCandidates(final Event<LETTER, PLACE> event) {
+		final Map<ITransition<LETTER, PLACE>, Candidate<LETTER, PLACE>> candidates = new HashMap<>();
+		for (final Condition<LETTER, PLACE> cond0 : event.getSuccessorConditions()) {
+			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
+				Candidate<LETTER, PLACE> current;
 				if (!candidates.containsKey(t)) {
-					current = new Candidate<>((Transition<S, C>) t);
+					current = new Candidate<>((Transition<LETTER, PLACE>) t);
 					candidates.put(t, current);
 				} else {
 					current = candidates.get(t);

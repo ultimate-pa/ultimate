@@ -46,14 +46,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2FiniteAutomatonStateFactory<C>> {
-	private final IPetriNet<S, C> mOperand;
-	private final Word<S> mWord;
+public final class Accepts<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IPetriNet2FiniteAutomatonStateFactory<PLACE>> {
+	private final IPetriNet<LETTER, PLACE> mOperand;
+	private final Word<LETTER> mWord;
 	private final boolean mResult;
 
 	/**
@@ -68,7 +68,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public Accepts(final AutomataLibraryServices services, final IPetriNet<S, C> operand, final Word<S> word)
+	public Accepts(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand, final Word<LETTER> word)
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -78,7 +78,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 			mLogger.info(startMessage());
 		}
 
-		// this.marking = new HashSet<C>(net.getInitialMarking());
+		// this.marking = new HashSet<PLACE>(net.getInitialMarking());
 		// this.position = 0;
 		mResult = getResultHelper(0, new Marking(operand.getInitialPlaces()));
 
@@ -87,7 +87,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		}
 	}
 
-	// private Collection<C> marking;
+	// private Collection<PLACE> marking;
 	// private int position;
 
 	@Override
@@ -96,7 +96,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 	}
 
 	@Override
-	protected IPetriNet<S, C> getOperand() {
+	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 
@@ -105,7 +105,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		return mResult;
 	}
 
-	private boolean getResultHelper(final int position, final Marking<S, C> marking)
+	private boolean getResultHelper(final int position, final Marking<LETTER, PLACE> marking)
 			throws AutomataOperationCanceledException {
 		if (position >= mWord.length()) {
 			return mOperand.isAccepting(marking);
@@ -115,15 +115,15 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
-		final S symbol = mWord.getSymbol(position);
+		final LETTER symbol = mWord.getSymbol(position);
 		if (!mOperand.getAlphabet().contains(symbol)) {
 			throw new IllegalArgumentException("Symbol " + symbol + " not in alphabet");
 		}
 
 		final int nextPosition = position + 1;
 		boolean result = false;
-		Marking<S, C> nextMarking;
-		for (final ITransition<S, C> transition : activeTransitionsWithSymbol(marking, symbol)) {
+		Marking<LETTER, PLACE> nextMarking;
+		for (final ITransition<LETTER, PLACE> transition : activeTransitionsWithSymbol(marking, symbol)) {
 			nextMarking = marking.fireTransition(transition, mOperand);
 			if (getResultHelper(nextPosition, nextMarking)) {
 				result = true;
@@ -132,9 +132,9 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		return result;
 	}
 
-	private Set<ITransition<S, C>> activeTransitionsWithSymbol(final Marking<S, C> marking, final S symbol) {
-		final Set<ITransition<S, C>> activeTransitionsWithSymbol = new HashSet<>();
-		for (final C place : marking) {
+	private Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol(final Marking<LETTER, PLACE> marking, final LETTER symbol) {
+		final Set<ITransition<LETTER, PLACE>> activeTransitionsWithSymbol = new HashSet<>();
+		for (final PLACE place : marking) {
 			mOperand.getSuccessors(place).stream()
 					.filter(transition -> transition.getSymbol().equals(symbol))
 					.filter((transition -> marking.isTransitionEnabled(transition, mOperand)))
@@ -144,13 +144,13 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 	}
 
 	@Override
-	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
+	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<PLACE> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of accepts");
 		}
 
-		final NestedWord<S> nw = NestedWord.nestedWord(mWord);
+		final NestedWord<LETTER> nw = NestedWord.nestedWord(mWord);
 		final boolean resultAutomata =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts<>(mServices,
 						(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult(), nw))

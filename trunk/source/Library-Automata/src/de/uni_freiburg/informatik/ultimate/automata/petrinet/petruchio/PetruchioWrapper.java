@@ -45,24 +45,24 @@ import petruchio.pn.PetriNet;
  * representations.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            Type of alphabet symbols
- * @param <C>
+ * @param <PLACE>
  *            Type of place labeling
  */
 
-public class PetruchioWrapper<S, C> {
+public class PetruchioWrapper<LETTER, PLACE> {
 	private final ILogger mLogger;
 
-	private final BoundedPetriNet<S, C> mBoundedNet;
+	private final BoundedPetriNet<LETTER, PLACE> mBoundedNet;
 	private final PetriNet mNetPetruchio = new PetriNet();
 
 	// Maps each place of mBoundedNet to the corresponding place in mNetPetruchio
-	private final Map<C, Place> mPBounded2pPetruchio =
+	private final Map<PLACE, Place> mPBounded2pPetruchio =
 			new IdentityHashMap<>();
 
 	// Maps each transition of mNetPetruchio to the corresponding transition in mBoundedNet
-	private final Map<Transition, ITransition<S, C>> mTPetruchio2tBounded = new IdentityHashMap<>();
+	private final Map<Transition, ITransition<LETTER, PLACE>> mTPetruchio2tBounded = new IdentityHashMap<>();
 
 	/**
 	 * @param services
@@ -70,7 +70,7 @@ public class PetruchioWrapper<S, C> {
 	 * @param net
 	 *            Petri net
 	 */
-	public PetruchioWrapper(final AutomataLibraryServices services, final BoundedPetriNet<S, C> net) {
+	public PetruchioWrapper(final AutomataLibraryServices services, final BoundedPetriNet<LETTER, PLACE> net) {
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mBoundedNet = net;
 		constructNetPetruchio();
@@ -86,10 +86,10 @@ public class PetruchioWrapper<S, C> {
 	 */
 	private void constructNetPetruchio() {
 		// construct a Petruchio place for each BoundedNet place
-		for (final C pBounded : mBoundedNet.getPlaces()) {
+		for (final PLACE pBounded : mBoundedNet.getPlaces()) {
 			Place pPetruchio;
 			String pLabel = "";
-			final C content = pBounded;
+			final PLACE content = pBounded;
 			pLabel += content;
 			pLabel += String.valueOf(content.hashCode());
 			pPetruchio = mNetPetruchio.addPlace(pLabel, mBoundedNet.getInitialPlaces().contains(pBounded) ? 1 : 0);
@@ -98,17 +98,17 @@ public class PetruchioWrapper<S, C> {
 			mPBounded2pPetruchio.put(pBounded, pPetruchio);
 		}
 		// construct a Petruchio transition for each BoundedNet transition
-		for (final ITransition<S, C> tBounded : mBoundedNet.getTransitions()) {
+		for (final ITransition<LETTER, PLACE> tBounded : mBoundedNet.getTransitions()) {
 			final Transition transitionPetruchio = mNetPetruchio.addTransition(tBounded.toString());
 			mTPetruchio2tBounded.put(transitionPetruchio, tBounded);
 			// PTArcs kopieren
-			for (final C pBounded :
+			for (final PLACE pBounded :
 				mBoundedNet.getSuccessors(tBounded)) {
 				// 1-safe net
 				mNetPetruchio.addArc(transitionPetruchio, mPBounded2pPetruchio.get(pBounded), 1);
 			}
 			// TPArcs kopieren
-			for (final C p :
+			for (final PLACE p :
 					mBoundedNet.getPredecessors(tBounded)) {
 				// 1-safe net
 				mNetPetruchio.addArc(mPBounded2pPetruchio.get(p), transitionPetruchio, 1);
@@ -132,14 +132,14 @@ public class PetruchioWrapper<S, C> {
 	/**
 	 * @return Map (place in {@link BoundedPetriNet} -> place in Petruchio).
 	 */
-	public Map<C, Place> getpBounded2pPetruchio() {
+	public Map<PLACE, Place> getpBounded2pPetruchio() {
 		return mPBounded2pPetruchio;
 	}
 
 	/**
 	 * @return Map (transition in {@link BoundedPetriNet} -> transition in Petruchio).
 	 */
-	public Map<Transition, ITransition<S, C>> gettPetruchio2tBounded() {
+	public Map<Transition, ITransition<LETTER, PLACE>> gettPetruchio2tBounded() {
 		return mTPetruchio2tBounded;
 	}
 

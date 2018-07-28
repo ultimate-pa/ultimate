@@ -52,14 +52,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Given a Petri net, this class constructs a finite automaton that recognizes the same language.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbols type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C, IStateFactory<C>> {
-	private final IPetriNet<S, C> mOperand;
-	private final NestedWordAutomaton<S, C> mResult;
+public final class PetriNet2FiniteAutomaton<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
+	private final IPetriNet<LETTER, PLACE> mOperand;
+	private final NestedWordAutomaton<LETTER, PLACE> mResult;
 
 	/**
 	 * List of markings for which
@@ -68,12 +68,12 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	 * <li>outgoing transitions of this state have not yet been constructed.
 	 * </ul>
 	 */
-	private final List<Marking<S, C>> mWorklist = new LinkedList<>();
+	private final List<Marking<LETTER, PLACE>> mWorklist = new LinkedList<>();
 	/**
 	 * Maps a marking to the automaton state that represents this marking.
 	 */
-	private final Map<Marking<S, C>, C> mMarking2State = new HashMap<>();
-	private final IPetriNet2FiniteAutomatonStateFactory<C> mContentFactory;
+	private final Map<Marking<LETTER, PLACE>, PLACE> mMarking2State = new HashMap<>();
+	private final IPetriNet2FiniteAutomatonStateFactory<PLACE> mContentFactory;
 
 	/**
 	 * Constructor.
@@ -86,7 +86,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	 *            operand Petri net
 	 */
 	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
-			final IPetriNet2FiniteAutomatonStateFactory<C> factory, final IPetriNet<S, C> operand) {
+			final IPetriNet2FiniteAutomatonStateFactory<PLACE> factory, final IPetriNet<LETTER, PLACE> operand) {
 		super(services);
 		mOperand = operand;
 
@@ -95,12 +95,12 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 		}
 
 		mContentFactory = factory;
-		final Set<S> alphabet = new HashSet<>(operand.getAlphabet());
-		final VpAlphabet<S> vpAlphabet = new VpAlphabet<S>(alphabet, Collections.emptySet(), Collections.emptySet());
+		final Set<LETTER> alphabet = new HashSet<>(operand.getAlphabet());
+		final VpAlphabet<LETTER> vpAlphabet = new VpAlphabet<LETTER>(alphabet, Collections.emptySet(), Collections.emptySet());
 		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
 		getState(new Marking(operand.getInitialPlaces()), true);
 		while (!mWorklist.isEmpty()) {
-			final Marking<S, C> marking = mWorklist.remove(0);
+			final Marking<LETTER, PLACE> marking = mWorklist.remove(0);
 			constructOutgoingTransitions(marking);
 		}
 
@@ -118,8 +118,8 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	 * Returns the automaton state that represents marking. If this state is not yet constructed, construct it and
 	 * enqueue the marking. If it has to be constructed it is an initial state iff isInitial is true.
 	 */
-	private C getState(final Marking<S, C> marking, final boolean isInitial) {
-		C state = mMarking2State.get(marking);
+	private PLACE getState(final Marking<LETTER, PLACE> marking, final boolean isInitial) {
+		PLACE state = mMarking2State.get(marking);
 		if (state == null) {
 			final boolean isFinal = mOperand.isAccepting(marking);
 			state = mContentFactory.getContentOnPetriNet2FiniteAutomaton(marking);
@@ -130,9 +130,9 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 		return state;
 	}
 
-	private Collection<C> getMarkingContents(final Set<C> marking) {
-		final ArrayList<C> result = new ArrayList<>(marking.size());
-		for (final C place : marking) {
+	private Collection<PLACE> getMarkingContents(final Set<PLACE> marking) {
+		final ArrayList<PLACE> result = new ArrayList<>(marking.size());
+		for (final PLACE place : marking) {
 			result.add(place);
 		}
 		return result;
@@ -142,38 +142,38 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	 * Given a marking. Get the state that represents the marking. Add all possible outgoing automaton transitions to
 	 * state. Construct (and enqueue to worklist) successor states if necessary.
 	 */
-	private void constructOutgoingTransitions(final Marking<S, C> marking) {
-		final C state = getState(marking, false);
-		final Set<ITransition<S, C>> outgoing = getOutgoingNetTransitions(marking);
-		for (final ITransition<S, C> transition : outgoing) {
+	private void constructOutgoingTransitions(final Marking<LETTER, PLACE> marking) {
+		final PLACE state = getState(marking, false);
+		final Set<ITransition<LETTER, PLACE>> outgoing = getOutgoingNetTransitions(marking);
+		for (final ITransition<LETTER, PLACE> transition : outgoing) {
 			if (marking.isTransitionEnabled(transition, mOperand)) {
-				final Marking<S, C> succMarking = marking.fireTransition(transition, mOperand);
-				final C succState = getState(succMarking, false);
+				final Marking<LETTER, PLACE> succMarking = marking.fireTransition(transition, mOperand);
+				final PLACE succState = getState(succMarking, false);
 				mResult.addInternalTransition(state, transition.getSymbol(), succState);
 			}
 		}
 	}
 
-	private Set<ITransition<S, C>> getOutgoingNetTransitions(final Marking<S, C> marking) {
-		final Set<ITransition<S, C>> transitions = new HashSet<>();
-		for (final C place : marking) {
+	private Set<ITransition<LETTER, PLACE>> getOutgoingNetTransitions(final Marking<LETTER, PLACE> marking) {
+		final Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
+		for (final PLACE place : marking) {
 			transitions.addAll(mOperand.getSuccessors(place));
 		}
 		return transitions;
 	}
 
 	@Override
-	protected IPetriNet<S, C> getOperand() {
+	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
 
 	@Override
-	public INestedWordAutomaton<S, C> getResult() {
+	public INestedWordAutomaton<LETTER, PLACE> getResult() {
 		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<PLACE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

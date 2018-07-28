@@ -39,12 +39,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * Ultimate model of a OccurenceNet condition.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
+public final class ConditionNode<LETTER, PLACE> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;
 
 	/**
@@ -53,7 +53,7 @@ public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 	 * @param branchingProcess
 	 *            branching process
 	 */
-	public ConditionNode(final Condition<S, C> condition, final BranchingProcess<S, C> branchingProcess) {
+	public ConditionNode(final Condition<LETTER, PLACE> condition, final BranchingProcess<LETTER, PLACE> branchingProcess) {
 		super(condition.toString());
 
 		final DefaultAnnotations annot = new DefaultAnnotations();
@@ -64,7 +64,7 @@ public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 
-		final C content = condition.getPlace();
+		final PLACE content = condition.getPlace();
 		if (content instanceof IAnnotations) {
 			annot.put("Content", content);
 
@@ -72,10 +72,10 @@ public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 		// super.setPayload(payload);
 	}
 
-	private ArrayList<Condition<S, C>> allConditionsInCoRelation(final Condition<S, C> condition,
-			final BranchingProcess<S, C> bc) {
-		final ArrayList<Condition<S, C>> conditionsInCoRelation = new ArrayList<>();
-		for (final Condition<S, C> c : bc.getConditions()) {
+	private ArrayList<Condition<LETTER, PLACE>> allConditionsInCoRelation(final Condition<LETTER, PLACE> condition,
+			final BranchingProcess<LETTER, PLACE> bc) {
+		final ArrayList<Condition<LETTER, PLACE>> conditionsInCoRelation = new ArrayList<>();
+		for (final Condition<LETTER, PLACE> c : bc.getConditions()) {
 			if (bc.isInCoRelation(condition, c)) {
 				conditionsInCoRelation.add(c);
 			}

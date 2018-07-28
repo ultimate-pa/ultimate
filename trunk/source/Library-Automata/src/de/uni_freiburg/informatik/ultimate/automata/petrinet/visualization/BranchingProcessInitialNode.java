@@ -37,19 +37,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * Ultimate model of a {@link BranchingProcess} (Petri net) place.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public final class BranchingProcessInitialNode<S, C> extends PetriNetVisualizationNode {
+public final class BranchingProcessInitialNode<LETTER, PLACE> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;
 
 	/**
 	 * @param net
 	 *            Branching process (UNUSED!).
 	 */
-	public BranchingProcessInitialNode(final BranchingProcess<S, C> net) {
+	public BranchingProcessInitialNode(final BranchingProcess<LETTER, PLACE> net) {
 		super("My sucessors are the initial conditions");
 		final IAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();

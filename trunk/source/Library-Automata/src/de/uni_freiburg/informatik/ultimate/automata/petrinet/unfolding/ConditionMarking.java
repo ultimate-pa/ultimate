@@ -39,15 +39,15 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
  * A Marking of an occurencenet which is a set of conditions.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
+ * @param <LETTER>
  *            symbol type
- * @param <C>
+ * @param <PLACE>
  *            place content type
  */
-public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serializable {
+public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTER, PLACE>>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
-	private final Set<Condition<S, C>> mConditions;
+	private final Set<Condition<LETTER, PLACE>> mConditions;
 
 	/**
 	 * Constructor.
@@ -55,7 +55,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 * @param conditions
 	 *            set of conditions
 	 */
-	public ConditionMarking(final Set<Condition<S, C>> conditions) {
+	public ConditionMarking(final Set<Condition<LETTER, PLACE>> conditions) {
 		mConditions = conditions;
 	}
 
@@ -64,7 +64,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 *            A condition.
 	 * @return {@code true} iff the condition is contained
 	 */
-	public boolean contains(final Condition<S, C> condition) {
+	public boolean contains(final Condition<LETTER, PLACE> condition) {
 		return mConditions.contains(condition);
 	}
 
@@ -74,7 +74,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 * @return {@code true} iff all conditions are contained.
 	 * @see java.util.Set#containsAll(java.util.Collection)
 	 */
-	public boolean containsAll(final Collection<Condition<S, C>> conditions) {
+	public boolean containsAll(final Collection<Condition<LETTER, PLACE>> conditions) {
 		return mConditions.containsAll(conditions);
 	}
 
@@ -90,7 +90,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 * @see java.util.Set#iterator()
 	 */
 	@Override
-	public Iterator<Condition<S, C>> iterator() {
+	public Iterator<Condition<LETTER, PLACE>> iterator() {
 		return mConditions.iterator();
 	}
 
@@ -132,7 +132,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 *            An event.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isEventEnabled(final Event<S, C> event) {
+	public boolean isEventEnabled(final Event<LETTER, PLACE> event) {
 		return mConditions.containsAll(event.getPredecessorConditions());
 	}
 
@@ -142,7 +142,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 * @param other
 	 *            another marking
 	 */
-	public void add(final ConditionMarking<S, C> other) {
+	public void add(final ConditionMarking<LETTER, PLACE> other) {
 		mConditions.addAll(other.mConditions);
 	}
 
@@ -152,7 +152,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 * @param other
 	 *            another set of conditions
 	 */
-	public void addTo(final Set<Condition<S, C>> other) {
+	public void addTo(final Set<Condition<LETTER, PLACE>> other) {
 		other.addAll(mConditions);
 	}
 
@@ -161,9 +161,9 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 *            An event.
 	 * @return the marking to which the occurrence of the specified transition leads.
 	 */
-	public ConditionMarking<S, C> fireEvent(final Event<S, C> event) {
+	public ConditionMarking<LETTER, PLACE> fireEvent(final Event<LETTER, PLACE> event) {
 		assert isEventEnabled(event);
-		final HashSet<Condition<S, C>> resultSet = new HashSet<>(mConditions);
+		final HashSet<Condition<LETTER, PLACE>> resultSet = new HashSet<>(mConditions);
 		resultSet.removeAll(event.getPredecessorConditions());
 		resultSet.addAll(event.getSuccessorConditions());
 		return new ConditionMarking<>(resultSet);
@@ -176,7 +176,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 *            event
 	 * @return {@code true} iff revoking was successful
 	 */
-	public boolean undoEvent(final Event<S, C> event) {
+	public boolean undoEvent(final Event<LETTER, PLACE> event) {
 		if (!mConditions.containsAll(event.getSuccessorConditions())) {
 			return false;
 		}
@@ -193,9 +193,9 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	/**
 	 * @return A new marking containing the places corresponding to the conditionMarkings Conditions.
 	 */
-	public Marking<S, C> getMarking() {
-		final HashSet<C> mark = new HashSet<>();
-		for (final Condition<S, C> c : mConditions) {
+	public Marking<LETTER, PLACE> getMarking() {
+		final HashSet<PLACE> mark = new HashSet<>();
+		for (final Condition<LETTER, PLACE> c : mConditions) {
 			assert !mark.contains(c.getPlace()) : "Petri Net not one safe!";
 			mark.add(c.getPlace());
 		}

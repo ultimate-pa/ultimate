@@ -70,32 +70,32 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  *
  * @param <LETTER>
  *            Type of letters from the alphabet
- * @param <C>
+ * @param <PLACE>
  *            content type
  * @param <CRSF>
  *            check result state factory type
  */
 public final class Difference
-		<LETTER, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & INwaInclusionStateFactory<C>>
-		extends GeneralOperation<LETTER, C, CRSF> {
+		<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+		extends GeneralOperation<LETTER, PLACE, CRSF> {
 
-	private final BoundedPetriNet<LETTER, C> mOperand;
-	private final INestedWordAutomaton<LETTER, C> mNwa;
-	private final IBlackWhiteStateFactory<C> mContentFactory;
+	private final BoundedPetriNet<LETTER, PLACE> mOperand;
+	private final INestedWordAutomaton<LETTER, PLACE> mNwa;
+	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
 
-	private BoundedPetriNet<LETTER, C> mResult;
+	private BoundedPetriNet<LETTER, PLACE> mResult;
 
-	private final Map<C, C> mOldPlace2NewPlace = new HashMap<>();
+	private final Map<PLACE, PLACE> mOldPlace2NewPlace = new HashMap<>();
 
-	private final Map<LETTER, Set<C>> mSelfloop = new HashMap<>();
-	private final Map<LETTER, Set<C>> mStateChanger = new HashMap<>();
+	private final Map<LETTER, Set<PLACE>> mSelfloop = new HashMap<>();
+	private final Map<LETTER, Set<PLACE>> mStateChanger = new HashMap<>();
 
-	private final Map<C, C> mWhitePlace = new HashMap<>();
-	private final Map<C, C> mBlackPlace = new HashMap<>();
+	private final Map<PLACE, PLACE> mWhitePlace = new HashMap<>();
+	private final Map<PLACE, PLACE> mBlackPlace = new HashMap<>();
 
-	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> Difference(
+	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
-			final BoundedPetriNet<LETTER, C> net, final INestedWordAutomaton<LETTER, C> nwa) {
+			final BoundedPetriNet<LETTER, PLACE> net, final INestedWordAutomaton<LETTER, PLACE> nwa) {
 		super(services);
 		mOperand = net;
 		mNwa = nwa;
@@ -109,7 +109,7 @@ public final class Difference
 			// subtrahend accepts everything (because of its special properties)
 			// --> difference is empty
 			mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), true);
-			final C sinkContent = factory.createSinkStateContent();
+			final PLACE sinkContent = factory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
 		} else {
 			partitionStates();
@@ -138,7 +138,7 @@ public final class Difference
 	}
 
 	private boolean finalStatesAreTraps() {
-		for (final C finalState : mNwa.getFinalStates()) {
+		for (final PLACE finalState : mNwa.getFinalStates()) {
 			if (!stateIsTrap(finalState)) {
 				return false;
 			}
@@ -146,10 +146,10 @@ public final class Difference
 		return true;
 	}
 
-	private boolean stateIsTrap(final C state) {
+	private boolean stateIsTrap(final PLACE state) {
 		for (final LETTER letter : mNwa.getVpAlphabet().getInternalAlphabet()) {
 			boolean noSuccessors = true;
-			for (final OutgoingInternalTransition<LETTER, C> out : mNwa.internalSuccessors(state, letter)) {
+			for (final OutgoingInternalTransition<LETTER, PLACE> out : mNwa.internalSuccessors(state, letter)) {
 				if (!out.getSucc().equals(state)) {
 					return false;
 				}
@@ -175,14 +175,14 @@ public final class Difference
 
 	private void partitionStates() {
 		for (final LETTER symbol : mNwa.getVpAlphabet().getInternalAlphabet()) {
-			final Set<C> selfloopStates = new HashSet<>();
-			final Set<C> changerStates = new HashSet<>();
-			for (final C state : mNwa.getStates()) {
+			final Set<PLACE> selfloopStates = new HashSet<>();
+			final Set<PLACE> changerStates = new HashSet<>();
+			for (final PLACE state : mNwa.getStates()) {
 				if (mNwa.isFinal(state)) {
 					// final states are not copied to the result because of subtrahend's special properties
 					continue;
 				}
-				final OutgoingInternalTransition<LETTER, C> successors = atMostOneElement(mNwa.internalSuccessors(state, symbol));
+				final OutgoingInternalTransition<LETTER, PLACE> successors = atMostOneElement(mNwa.internalSuccessors(state, symbol));
 				if (successors == null) {
 					continue;
 				} else if (successors.getSucc().equals(state)) {
@@ -207,11 +207,11 @@ public final class Difference
 		final boolean constantTokenAmount = false;
 		mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), constantTokenAmount);
 
-		for (final C oldPlace : mOperand.getPlaces()) {
-			final C content = oldPlace;
+		for (final PLACE oldPlace : mOperand.getPlaces()) {
+			final PLACE content = oldPlace;
 			final boolean isInitial = mOperand.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
-			final C newPlace = mResult.addPlace(content, isInitial, isAccepting);
+			final PLACE newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
 	}
@@ -225,8 +225,8 @@ public final class Difference
 		return mSelfloop.get(symbol).size() >= mStateChanger.get(symbol).size();
 	}
 
-	private Set<C> requiredBlackPlaces() {
-		final Set<C> requiredBlack = new HashSet<>();
+	private Set<PLACE> requiredBlackPlaces() {
+		final Set<PLACE> requiredBlack = new HashSet<>();
 		for (final LETTER symbol : mOperand.getAlphabet()) {
 			if (invertSyncWithSelfloops(symbol)) {
 				requiredBlack.addAll(mStateChanger.get(symbol));
@@ -236,46 +236,46 @@ public final class Difference
 	}
 
 	private void addBlackAndWhitePlaces() {
-		for (final C state : mNwa.getStates()) {
+		for (final PLACE state : mNwa.getStates()) {
 			if (mNwa.isFinal(state)) {
 				continue;
 			}
 			final boolean isInitial = mNwa.getInitialStates().contains(state);
-			final C whiteContent = mContentFactory.getWhiteContent(state);
-			final C whitePlace = mResult.addPlace(whiteContent, isInitial, false);
+			final PLACE whiteContent = mContentFactory.getWhiteContent(state);
+			final PLACE whitePlace = mResult.addPlace(whiteContent, isInitial, false);
 			mWhitePlace.put(state, whitePlace);
 		}
-		for (final C state : requiredBlackPlaces()) {
+		for (final PLACE state : requiredBlackPlaces()) {
 			final boolean isInitial = mNwa.getInitialStates().contains(state);
-			final C blackContent = mContentFactory.getBlackContent(state);
-			final C blackPlace = mResult.addPlace(blackContent, !isInitial, false);
+			final PLACE blackContent = mContentFactory.getBlackContent(state);
+			final PLACE blackPlace = mResult.addPlace(blackContent, !isInitial, false);
 			mBlackPlace.put(state, blackPlace);
 		}
 	}
 
 	private void addTransitions() {
-		for (final ITransition<LETTER, C> oldTrans : mOperand.getTransitions()) {
+		for (final ITransition<LETTER, PLACE> oldTrans : mOperand.getTransitions()) {
 			final LETTER symbol = oldTrans.getSymbol();
-			for (final C predState : mStateChanger.get(symbol)) {
+			for (final PLACE predState : mStateChanger.get(symbol)) {
 				syncWithChanger(oldTrans, predState);
 			}
 			syncWithSelfloops(oldTrans);
 		}
 	}
 
-	private void syncWithChanger(final ITransition<LETTER, C> oldTrans,  final C predState) {
-		final C succState = onlyElement(mNwa.internalSuccessors(predState, oldTrans.getSymbol())).getSucc();
+	private void syncWithChanger(final ITransition<LETTER, PLACE> oldTrans,  final PLACE predState) {
+		final PLACE succState = onlyElement(mNwa.internalSuccessors(predState, oldTrans.getSymbol())).getSucc();
 		if (mNwa.isFinal(succState)) {
 			// optimization for special structure of subtrahend automata:
 			// omit this transition because subtrahend will accept everything afterwards
 			return;
 		}
-		final Set<C> predecessors = new HashSet<>();
-		final Set<C> successors = new HashSet<>();
+		final Set<PLACE> predecessors = new HashSet<>();
+		final Set<PLACE> successors = new HashSet<>();
 		predecessors.add(mWhitePlace.get(predState));
 		successors.add(mWhitePlace.get(succState));
-		final C blackSucc = mBlackPlace.get(succState);
-		final C blackPred = mBlackPlace.get(predState);
+		final PLACE blackSucc = mBlackPlace.get(succState);
+		final PLACE blackPred = mBlackPlace.get(predState);
 		if (blackSucc != null) {
 			predecessors.add(blackSucc);
 		}
@@ -286,7 +286,7 @@ public final class Difference
 		mResult.addTransition(oldTrans.getSymbol(), predecessors, successors);
 	}
 
-	private void syncWithSelfloops(final ITransition<LETTER, C> oldTrans) {
+	private void syncWithSelfloops(final ITransition<LETTER, PLACE> oldTrans) {
 		if (invertSyncWithSelfloops(oldTrans.getSymbol())) {
 			syncWithAnySelfloop(oldTrans);
 		} else {
@@ -315,13 +315,13 @@ public final class Difference
 	 *
 	 * @see #invertSyncWithSelfloops(LETTER)
 	 */
-	private void syncWithEachSelfloop(final ITransition<LETTER, C> oldTrans) {
+	private void syncWithEachSelfloop(final ITransition<LETTER, PLACE> oldTrans) {
 		// Relies on the special properties of the subtrahend, usually we would have to sync at least
 		// with the selfloop of the implicit (!) sink state which is not in mSelfloop.get(symbol)
 		final LETTER symbol = oldTrans.getSymbol();
-		for (final C state : mSelfloop.get(symbol)) {
-			final Set<C> predecessors = new HashSet<>();
-			final Set<C> successors = new HashSet<>();
+		for (final PLACE state : mSelfloop.get(symbol)) {
+			final Set<PLACE> predecessors = new HashSet<>();
+			final Set<PLACE> successors = new HashSet<>();
 			predecessors.add(mWhitePlace.get(state));
 			successors.add(mWhitePlace.get(state));
 			copyMinuendFlow(oldTrans, predecessors, successors);
@@ -351,35 +351,35 @@ public final class Difference
 	 *
 	 * @see #invertSyncWithSelfloops(LETTER)
 	 */
-	private void syncWithAnySelfloop(final ITransition<LETTER, C> oldTrans) {
+	private void syncWithAnySelfloop(final ITransition<LETTER, PLACE> oldTrans) {
 		final LETTER symbol = oldTrans.getSymbol();
 		if (mSelfloop.get(symbol).isEmpty()) {
 			// This optimization relies on the special properties of the subtrahend.
 			// Usually we would have to sync at least with the selfloop of the implicit (!) sink state.
 			return;
 		}
-		final Set<C> predecessors = new HashSet<>();
-		final Set<C> successors = new HashSet<>();
+		final Set<PLACE> predecessors = new HashSet<>();
+		final Set<PLACE> successors = new HashSet<>();
 		copyMinuendFlow(oldTrans, predecessors, successors);
-		for (final C state : mStateChanger.get(symbol)) {
+		for (final PLACE state : mStateChanger.get(symbol)) {
 			predecessors.add(mBlackPlace.get(state));
 			successors.add(mBlackPlace.get(state));
 		}
 		mResult.addTransition(symbol, predecessors, successors);
 	}
 
-	private void copyMinuendFlow(final ITransition<LETTER, C> trans,
-			final Collection<C> preds, final Collection<C> succs) {
-		for (final C oldPlace : mOperand.getPredecessors(trans)) {
+	private void copyMinuendFlow(final ITransition<LETTER, PLACE> trans,
+			final Collection<PLACE> preds, final Collection<PLACE> succs) {
+		for (final PLACE oldPlace : mOperand.getPredecessors(trans)) {
 			preds.add(mOldPlace2NewPlace.get(oldPlace));
 		}
-		for (final C oldPlace : mOperand.getSuccessors(trans)) {
+		for (final PLACE oldPlace : mOperand.getSuccessors(trans)) {
 			succs.add(mOldPlace2NewPlace.get(oldPlace));
 		}
 	}
 
 	@Override
-	public BoundedPetriNet<LETTER, C> getResult() {
+	public BoundedPetriNet<LETTER, PLACE> getResult() {
 		return mResult;
 	}
 
@@ -389,11 +389,11 @@ public final class Difference
 			mLogger.info("Testing correctness of " + getOperationName());
 		}
 
-		final INestedWordAutomaton<LETTER, C> op1AsNwa =
+		final INestedWordAutomaton<LETTER, PLACE> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, C> rcResult =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> rcResult =
 				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, C> resultAsNwa =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
 
 		boolean correct = true;
