@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.EpsilonNestedWord
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.StringRankedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -505,25 +504,25 @@ public class AutomataDefinitionInterpreter {
 		mErrorLocation = pna.getLocation();
 		final BoundedPetriNet<String, String> net = new BoundedPetriNet<>(new AutomataLibraryServices(mServices),
 				new HashSet<>(pna.getAlphabet()), false);
-		final Map<String, Place<String>> name2places = new HashMap<>();
+		final Map<String, String> name2places = new HashMap<>();
 
 		// add the places
 		for (final String p : pna.getPlaces()) {
-			final Place<String> place = net.addPlace(p, pna.getInitialMarkings().containsPlace(p),
+			final String place = net.addPlace(p, pna.getInitialMarkings().containsPlace(p),
 					pna.getAcceptingPlaces().contains(p));
 			name2places.put(p, place);
 		}
 
 		// add the transitions
 		for (final PetriNetTransitionAST ptrans : pna.getTransitions()) {
-			final Set<Place<String>> preds = new HashSet<>();
+			final Set<String> preds = new HashSet<>();
 			for (final String pred : ptrans.getPreds()) {
 				if (!name2places.containsKey(pred)) {
 					throw new IllegalArgumentException(UNDEFINED_PLACE + pred);
 				}
 				preds.add(name2places.get(pred));
 			}
-			final Set<Place<String>> succs = new HashSet<>();
+			final Set<String> succs = new HashSet<>();
 			for (final String succ : ptrans.getSuccs()) {
 				if (!name2places.containsKey(succ)) {
 					throw new IllegalArgumentException(UNDEFINED_PLACE + succ);
