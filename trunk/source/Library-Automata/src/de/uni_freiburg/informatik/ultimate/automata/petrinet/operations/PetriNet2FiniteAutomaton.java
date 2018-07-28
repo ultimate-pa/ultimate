@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -131,10 +130,10 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 		return state;
 	}
 
-	private Collection<C> getMarkingContents(final Set<Place<C>> marking) {
+	private Collection<C> getMarkingContents(final Set<C> marking) {
 		final ArrayList<C> result = new ArrayList<>(marking.size());
-		for (final Place<C> place : marking) {
-			result.add(place.getContent());
+		for (final C place : marking) {
+			result.add(place);
 		}
 		return result;
 	}
@@ -157,7 +156,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 
 	private Set<ITransition<S, C>> getOutgoingNetTransitions(final Marking<S, C> marking) {
 		final Set<ITransition<S, C>> transitions = new HashSet<>();
-		for (final Place<C> place : marking) {
+		for (final C place : marking) {
 			transitions.addAll(mOperand.getSuccessors(place));
 		}
 		return transitions;

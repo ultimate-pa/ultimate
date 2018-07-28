@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -86,13 +85,13 @@ public final class Difference
 
 	private BoundedPetriNet<LETTER, C> mResult;
 
-	private final Map<Place<C>, Place<C>> mOldPlace2NewPlace = new HashMap<>();
+	private final Map<C, C> mOldPlace2NewPlace = new HashMap<>();
 
 	private final Map<LETTER, Set<C>> mSelfloop = new HashMap<>();
 	private final Map<LETTER, Set<C>> mStateChanger = new HashMap<>();
 
-	private final Map<C, Place<C>> mWhitePlace = new HashMap<>();
-	private final Map<C, Place<C>> mBlackPlace = new HashMap<>();
+	private final Map<C, C> mWhitePlace = new HashMap<>();
+	private final Map<C, C> mBlackPlace = new HashMap<>();
 
 	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> Difference(
 			final AutomataLibraryServices services, final SF factory,
@@ -208,11 +207,11 @@ public final class Difference
 		final boolean constantTokenAmount = false;
 		mResult = new BoundedPetriNet<>(mServices, mOperand.getAlphabet(), constantTokenAmount);
 
-		for (final Place<C> oldPlace : mOperand.getPlaces()) {
-			final C content = oldPlace.getContent();
+		for (final C oldPlace : mOperand.getPlaces()) {
+			final C content = oldPlace;
 			final boolean isInitial = mOperand.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
-			final Place<C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
+			final C newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2NewPlace.put(oldPlace, newPlace);
 		}
 	}
@@ -243,13 +242,13 @@ public final class Difference
 			}
 			final boolean isInitial = mNwa.getInitialStates().contains(state);
 			final C whiteContent = mContentFactory.getWhiteContent(state);
-			final Place<C> whitePlace = mResult.addPlace(whiteContent, isInitial, false);
+			final C whitePlace = mResult.addPlace(whiteContent, isInitial, false);
 			mWhitePlace.put(state, whitePlace);
 		}
 		for (final C state : requiredBlackPlaces()) {
 			final boolean isInitial = mNwa.getInitialStates().contains(state);
 			final C blackContent = mContentFactory.getBlackContent(state);
-			final Place<C> blackPlace = mResult.addPlace(blackContent, !isInitial, false);
+			final C blackPlace = mResult.addPlace(blackContent, !isInitial, false);
 			mBlackPlace.put(state, blackPlace);
 		}
 	}
@@ -271,12 +270,12 @@ public final class Difference
 			// omit this transition because subtrahend will accept everything afterwards
 			return;
 		}
-		final Set<Place<C>> predecessors = new HashSet<>();
-		final Set<Place<C>> successors = new HashSet<>();
+		final Set<C> predecessors = new HashSet<>();
+		final Set<C> successors = new HashSet<>();
 		predecessors.add(mWhitePlace.get(predState));
 		successors.add(mWhitePlace.get(succState));
-		final Place<C> blackSucc = mBlackPlace.get(succState);
-		final Place<C> blackPred = mBlackPlace.get(predState);
+		final C blackSucc = mBlackPlace.get(succState);
+		final C blackPred = mBlackPlace.get(predState);
 		if (blackSucc != null) {
 			predecessors.add(blackSucc);
 		}
@@ -321,8 +320,8 @@ public final class Difference
 		// with the selfloop of the implicit (!) sink state which is not in mSelfloop.get(symbol)
 		final LETTER symbol = oldTrans.getSymbol();
 		for (final C state : mSelfloop.get(symbol)) {
-			final Set<Place<C>> predecessors = new HashSet<>();
-			final Set<Place<C>> successors = new HashSet<>();
+			final Set<C> predecessors = new HashSet<>();
+			final Set<C> successors = new HashSet<>();
 			predecessors.add(mWhitePlace.get(state));
 			successors.add(mWhitePlace.get(state));
 			copyMinuendFlow(oldTrans, predecessors, successors);
@@ -359,8 +358,8 @@ public final class Difference
 			// Usually we would have to sync at least with the selfloop of the implicit (!) sink state.
 			return;
 		}
-		final Set<Place<C>> predecessors = new HashSet<>();
-		final Set<Place<C>> successors = new HashSet<>();
+		final Set<C> predecessors = new HashSet<>();
+		final Set<C> successors = new HashSet<>();
 		copyMinuendFlow(oldTrans, predecessors, successors);
 		for (final C state : mStateChanger.get(symbol)) {
 			predecessors.add(mBlackPlace.get(state));
@@ -370,11 +369,11 @@ public final class Difference
 	}
 
 	private void copyMinuendFlow(final ITransition<LETTER, C> trans,
-			final Collection<Place<C>> preds, final Collection<Place<C>> succs) {
-		for (final Place<C> oldPlace : mOperand.getPredecessors(trans)) {
+			final Collection<C> preds, final Collection<C> succs) {
+		for (final C oldPlace : mOperand.getPredecessors(trans)) {
 			preds.add(mOldPlace2NewPlace.get(oldPlace));
 		}
-		for (final Place<C> oldPlace : mOperand.getSuccessors(trans)) {
+		for (final C oldPlace : mOperand.getSuccessors(trans)) {
 			succs.add(mOldPlace2NewPlace.get(oldPlace));
 		}
 	}

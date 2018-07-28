@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
 /**
@@ -79,7 +78,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 			mLogger.info(startMessage());
 		}
 
-		// this.marking = new HashSet<Place<C>>(net.getInitialMarking());
+		// this.marking = new HashSet<C>(net.getInitialMarking());
 		// this.position = 0;
 		mResult = getResultHelper(0, new Marking(operand.getInitialPlaces()));
 
@@ -88,7 +87,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		}
 	}
 
-	// private Collection<Place<C>> marking;
+	// private Collection<C> marking;
 	// private int position;
 
 	@Override
@@ -135,7 +134,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 
 	private Set<ITransition<S, C>> activeTransitionsWithSymbol(final Marking<S, C> marking, final S symbol) {
 		final Set<ITransition<S, C>> activeTransitionsWithSymbol = new HashSet<>();
-		for (final Place<C> place : marking) {
+		for (final C place : marking) {
 			mOperand.getSuccessors(place).stream()
 					.filter(transition -> transition.getSymbol().equals(symbol))
 					.filter((transition -> marking.isTransitionEnabled(transition, mOperand)))

@@ -32,7 +32,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
@@ -45,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  *            Type of letters from the alphabet used to label transitions
  */
 public interface IPetriNet<LETTER, C> extends IAutomaton<LETTER, C> {
-	Collection<Place<C>> getPlaces();
+	Collection<C> getPlaces();
 
 	Collection<ITransition<LETTER, C>> getTransitions();
 
-	Set<Place<C>> getInitialPlaces();
+	Set<C> getInitialPlaces();
 
-	Collection<Place<C>> getAcceptingPlaces();
+	Collection<C> getAcceptingPlaces();
 
 	/**
 	 * @param marking
@@ -63,18 +62,18 @@ public interface IPetriNet<LETTER, C> extends IAutomaton<LETTER, C> {
 
 
 	/** @return Outgoing transitions of given place. */
-	Set<ITransition<LETTER, C>> getSuccessors(final Place<C> place);
+	Set<ITransition<LETTER, C>> getSuccessors(final C place);
 
 	/** @return Incoming transitions of given place. */
-	Set<ITransition<LETTER, C>> getPredecessors(final Place<C> place);
-	
-	
+	Set<ITransition<LETTER, C>> getPredecessors(final C place);
+
+
 	/** @return Outgoing places of given transition. */
-	Set<Place<C>> getSuccessors(final ITransition<LETTER, C> transition);
+	Set<C> getSuccessors(final ITransition<LETTER, C> transition);
 
 	/** @return Incoming places of given transition. */
-	Set<Place<C>> getPredecessors(final ITransition<LETTER, C> transition);
-	
+	Set<C> getPredecessors(final ITransition<LETTER, C> transition);
+
 
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)

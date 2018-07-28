@@ -117,7 +117,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 		// construct the following target:
 		// at least one of { {p_j} | p_j \in P accepting } is coverable
 		final Collection<Map<Place, Integer>> targets = new ArrayList<>();
-		for (final de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place<C> pAcceptingBounded : mBoundedNet
+		for (final C pAcceptingBounded : mBoundedNet
 				.getAcceptingPlaces()) {
 			// construct single target pAccepting >= 1
 			final Place pAcceptingPetruchio = mPetruchio.getpBounded2pPetruchio().get(pAcceptingBounded);

@@ -48,8 +48,8 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 
 	private final int mHashCode;
 	private final S mSymbol;
-	private final Set<Place<C>> mPredecessors;
-	private final Set<Place<C>> mSuccessors;
+	private final Set<C> mPredecessors;
+	private final Set<C> mSuccessors;
 
 	private final int mTotalOrderId;
 
@@ -68,8 +68,8 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 	 * @param totalOrderId
 	 *            total order ID
 	 */
-	public Transition(final S symbol, final Set<Place<C>> predecessors,
-			final Set<Place<C>> successors, final int totalOrderId) {
+	public Transition(final S symbol, final Set<C> predecessors,
+			final Set<C> successors, final int totalOrderId) {
 		mSymbol = symbol;
 		mPredecessors = Collections.unmodifiableSet(predecessors);
 		mSuccessors = Collections.unmodifiableSet(successors);
@@ -82,11 +82,11 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 		return mSymbol;
 	}
 
-	public Set<Place<C>> getPredecessors() {
+	public Set<C> getPredecessors() {
 		return mPredecessors;
 	}
 
-	public Set<Place<C>> getSuccessors() {
+	public Set<C> getSuccessors() {
 		return mSuccessors;
 	}
 

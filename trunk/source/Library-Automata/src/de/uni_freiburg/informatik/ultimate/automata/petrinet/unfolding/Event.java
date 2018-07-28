@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
@@ -103,7 +102,7 @@ public final class Event<S, C> implements Serializable {
 		mLocalConfiguration.add(this);
 
 		mSuccessors = new HashSet<>();
-		for (final Place<C> p : transition.getSuccessors()) {
+		for (final C p : transition.getSuccessors()) {
 			mSuccessors.add(new Condition<>(this, p));
 		}
 		for (final Event<S, C> a : mLocalConfiguration) {
@@ -129,7 +128,7 @@ public final class Event<S, C> implements Serializable {
 		mConditionMark = new ConditionMarking<>(conditionMarkSet);
 		mPredecessors = new HashSet<>();
 		mSuccessors = new HashSet<>();
-		for (final Place<C> p : mMark) {
+		for (final C p : mMark) {
 			final Condition<S, C> c = new Condition<>(this, p);
 			mSuccessors.add(c);
 			conditionMarkSet.add(c);
@@ -198,8 +197,8 @@ public final class Event<S, C> implements Serializable {
 	 * well defined isomorphism. this is a helper method used only for assertions.
 	 */
 	private boolean conditionToPlaceEqual(final Collection<Condition<S, C>> conditions,
-			final Collection<Place<C>> placesIn) {
-		final Collection<Place<C>> places = new HashSet<>(placesIn);
+			final Collection<C> placesIn) {
+		final Collection<C> places = new HashSet<>(placesIn);
 		for (final Condition<S, C> c : conditions) {
 			if (!places.remove(c.getPlace())) {
 				return false;

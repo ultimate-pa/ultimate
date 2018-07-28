@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -34,12 +34,11 @@ import java.util.Map;
 import java.util.PriorityQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * Implementation of a possible extension.
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
@@ -80,11 +79,11 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 			mPe.add(new Event<>(cand.mChosen, cand.mT));
 			return;
 		}
-		final Place<C> p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
+		final C p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
 		for (final Condition<S, C> c : mBranchingProcess.place2cond(p)) {
 			assert cand.mT.getPredecessors().contains(c.getPlace());
 			// equality intended here
-			assert c.getPlace() == p;
+			assert c.getPlace().equals(p);
 			assert !cand.mChosen.contains(c);
 			if (mBranchingProcess.isCoset(cand.mChosen, c)) {
 				cand.mChosen.add(c);

@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -61,7 +60,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 
 	private final ICoRelation<S, C> mCoRelation;
 
-	private final Map<Place<C>, Set<Condition<S, C>>> mPlace2cond;
+	private final Map<C, Set<Condition<S, C>>> mPlace2cond;
 
 	/**
 	 * Dummy root event with all initial conditions as successors.
@@ -85,7 +84,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		mNet = net;
 		mOrder = order;
 		mPlace2cond = new HashMap<>();
-		for (final Place<C> p : net.getPlaces()) {
+		for (final C p : net.getPlaces()) {
 			mPlace2cond.put(p, new HashSet<Condition<S, C>>());
 		}
 		mConditions = new HashSet<>();
@@ -179,7 +178,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 *            place
 	 * @return all conditions c s.t. p is the corresponding place of c.
 	 */
-	public Set<Condition<S, C>> place2cond(final Place<C> place) {
+	public Set<Condition<S, C>> place2cond(final C place) {
 		return mPlace2cond.get(place);
 	}
 

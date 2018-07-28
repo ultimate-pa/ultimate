@@ -2,22 +2,22 @@
  * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -33,11 +33,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 
 /**
  * A marking of a Petri Net which is a set of places.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @param <S>
@@ -45,18 +44,18 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.P
  * @param <C>
  *            place content type
  */
-public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
+public class Marking<S, C> implements Iterable<C>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 
-	private final Set<Place<C>> mPlaces;
+	private final Set<C> mPlaces;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param places
 	 *            places
 	 */
-	public Marking(final Set<Place<C>> places) {
+	public Marking(final Set<C> places) {
 		mPlaces = places;
 	}
 
@@ -66,7 +65,7 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 * @return {@code true} iff the place is contained
 	 * @see java.util.Set#contains(Object)
 	 */
-	public boolean contains(final Place<C> place) {
+	public boolean contains(final C place) {
 		return mPlaces.contains(place);
 	}
 
@@ -76,7 +75,7 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 * @return {@code true} iff all places are contained
 	 * @see java.util.Set#containsAll(java.util.Collection)
 	 */
-	public boolean containsAll(final Collection<Place<C>> places) {
+	public boolean containsAll(final Collection<C> places) {
 		return mPlaces.containsAll(places);
 	}
 
@@ -85,8 +84,8 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 *            The places.
 	 * @return {@code true} if the marking contains any of the specified places.
 	 */
-	public boolean containsAny(final Collection<Place<C>> places) {
-		for (final Place<C> place : places) {
+	public boolean containsAny(final Collection<C> places) {
+		for (final C place : places) {
 			if (mPlaces.contains(place)) {
 				return true;
 			}
@@ -102,7 +101,7 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 * @see java.util.Set#iterator()
 	 */
 	@Override
-	public Iterator<Place<C>> iterator() {
+	public Iterator<C> iterator() {
 		return mPlaces.iterator();
 	}
 
@@ -145,7 +144,7 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
-	public boolean isTransitionEnabled(final ITransition<S, C> transition, IPetriNet<S, C> net) {
+	public boolean isTransitionEnabled(final ITransition<S, C> transition, final IPetriNet<S, C> net) {
 //		if (transition instanceof InhibitorTransition<?, ?>) {
 //			final InhibitorTransition<S, C> it = (InhibitorTransition<S, C>) transition;
 //			if (containsAny(it.getInhibitors())) {
@@ -172,8 +171,8 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 	 *            The transition.
 	 * @return The marking to which the occurrence of the specified transition leads.
 	 */
-	public Marking<S, C> fireTransition(final ITransition<S, C> transition, IPetriNet<S, C> net) {
-		final HashSet<Place<C>> resultSet = new HashSet<>(mPlaces);
+	public Marking<S, C> fireTransition(final ITransition<S, C> transition, final IPetriNet<S, C> net) {
+		final HashSet<C> resultSet = new HashSet<>(mPlaces);
 		resultSet.removeAll(net.getPredecessors(transition));
 		resultSet.addAll(net.getSuccessors(transition));
 		return new Marking<>(resultSet);
@@ -181,12 +180,12 @@ public class Marking<S, C> implements Iterable<Place<C>>, Serializable {
 
 	/**
 	 * Revokes the occurrence of the specified transition if valid.
-	 * 
+	 *
 	 * @param transition
 	 *            transition
 	 * @return {@code true} iff all successor places are contained.
 	 */
-	public boolean undoTransition(final ITransition<S, C> transition, IPetriNet<S, C> net) {
+	public boolean undoTransition(final ITransition<S, C> transition, final IPetriNet<S, C> net) {
 		if (!mPlaces.containsAll(net.getSuccessors(transition))) {
 			return false;
 		}

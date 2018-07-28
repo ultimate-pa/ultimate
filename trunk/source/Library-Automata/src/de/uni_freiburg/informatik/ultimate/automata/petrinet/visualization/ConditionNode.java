@@ -64,7 +64,7 @@ public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 
-		final C content = condition.getPlace().getContent();
+		final C content = condition.getPlace();
 		if (content instanceof IAnnotations) {
 			annot.put("Content", content);
 

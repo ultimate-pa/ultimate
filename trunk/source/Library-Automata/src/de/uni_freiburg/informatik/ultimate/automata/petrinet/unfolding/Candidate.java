@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 import java.util.ArrayList;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
@@ -61,7 +60,7 @@ public class Candidate<S, C> {
 	/**
 	 * Places.
 	 */
-	public final ArrayList<Place<C>> mPlaces;
+	public final ArrayList<C> mPlaces;
 
 	/**
 	 * Constructor from another candidate.
@@ -69,7 +68,7 @@ public class Candidate<S, C> {
 	 * @param candidate
 	 *            candidate
 	 */
-	public Candidate(final Map.Entry<Transition<S, C>, Map<Place<C>, Condition<S, C>>> candidate) {
+	public Candidate(final Map.Entry<Transition<S, C>, Map<C, Condition<S, C>>> candidate) {
 		mT = candidate.getKey();
 		mChosen = new ArrayList<>(candidate.getValue().values());
 		mPlaces = new ArrayList<>(candidate.getValue().keySet());

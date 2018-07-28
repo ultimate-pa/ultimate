@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 
 /**
  * A Marking of an occurencenet which is a set of conditions.
@@ -195,7 +194,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	 * @return A new marking containing the places corresponding to the conditionMarkings Conditions.
 	 */
 	public Marking<S, C> getMarking() {
-		final HashSet<Place<C>> mark = new HashSet<>();
+		final HashSet<C> mark = new HashSet<>();
 		for (final Condition<S, C> c : mConditions) {
 			assert !mark.contains(c.getPlace()) : "Petri Net not one safe!";
 			mark.add(c.getPlace());

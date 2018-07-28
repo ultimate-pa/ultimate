@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Place;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 
@@ -69,8 +68,8 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	private final INestedWordAutomaton<S, C> mNwa;
 	private final BoundedPetriNet<S, C> mResult;
 
-	private final Map<Place<C>, Place<C>> mOldPlace2newPlace = new HashMap<>();
-	private final Map<C, Place<C>> mState2newPlace = new HashMap<>();
+	private final Map<C, C> mOldPlace2newPlace = new HashMap<>();
+	private final Map<C, C> mState2newPlace = new HashMap<>();
 
 	private final Map<S, Collection<ITransition<S, C>>> mSymbol2netTransitions = new HashMap<>();
 	private final Map<S, Collection<AutomatonTransition>> mSymbol2nwaTransitions = new HashMap<>();
@@ -186,7 +185,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 					continue;
 				}
 				for (final AutomatonTransition nwaTrans : mSymbol2nwaTransitions.get(symbol)) {
-					final Set<Place<C>> predecessors = new HashSet<>();
+					final Set<C> predecessors = new HashSet<>();
 					addSharedTransitionsHelper(netTrans, nwaTrans, predecessors, result);
 				}
 			}
@@ -197,14 +196,14 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 			final BoundedPetriNet<S, C> result) {
 		for (final S symbol : netOnlyAlphabet) {
 			for (final ITransition<S, C> trans : mSymbol2netTransitions.get(symbol)) {
-				final Set<Place<C>> predecessors = new HashSet<>();
-				for (final Place<C> oldPlace : mOperand.getPredecessors(trans)) {
-					final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
+				final Set<C> predecessors = new HashSet<>();
+				for (final C oldPlace : mOperand.getPredecessors(trans)) {
+					final C newPlace = mOldPlace2newPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-				final Set<Place<C>> successors = new HashSet<>();
-				for (final Place<C> oldPlace : mOperand.getSuccessors(trans)) {
-					final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
+				final Set<C> successors = new HashSet<>();
+				for (final C oldPlace : mOperand.getSuccessors(trans)) {
+					final C newPlace = mOldPlace2newPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
 				result.addTransition(trans.getSymbol(), predecessors, successors);
@@ -213,12 +212,12 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 
 		for (final S symbol : nwaOnlyAlphabet) {
 			for (final AutomatonTransition trans : mSymbol2nwaTransitions.get(symbol)) {
-				final Set<Place<C>> predecessors = new HashSet<>();
-				final Place<C> newPlacePred = mState2newPlace.get(trans.getPredecessor());
+				final Set<C> predecessors = new HashSet<>();
+				final C newPlacePred = mState2newPlace.get(trans.getPredecessor());
 				predecessors.add(newPlacePred);
 
-				final Set<Place<C>> successors = new HashSet<>();
-				final Place<C> newPlaceSucc = mState2newPlace.get(trans.getSuccessor());
+				final Set<C> successors = new HashSet<>();
+				final C newPlaceSucc = mState2newPlace.get(trans.getSuccessor());
 				successors.add(newPlaceSucc);
 				result.addTransition(trans.getSymbol(), predecessors, successors);
 			}
@@ -226,16 +225,16 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	}
 
 	private void addSharedTransitionsHelper(final ITransition<S, C> netTrans, final AutomatonTransition nwaTrans,
-			final Set<Place<C>> predecessors, final BoundedPetriNet<S, C> result) {
-		for (final Place<C> oldPlace : mOperand.getPredecessors(netTrans)) {
-			final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
+			final Set<C> predecessors, final BoundedPetriNet<S, C> result) {
+		for (final C oldPlace : mOperand.getPredecessors(netTrans)) {
+			final C newPlace = mOldPlace2newPlace.get(oldPlace);
 			predecessors.add(newPlace);
 		}
 		predecessors.add(mState2newPlace.get(nwaTrans.getPredecessor()));
 
-		final Set<Place<C>> successors = new HashSet<>();
-		for (final Place<C> oldPlace : mOperand.getSuccessors(netTrans)) {
-			final Place<C> newPlace = mOldPlace2newPlace.get(oldPlace);
+		final Set<C> successors = new HashSet<>();
+		for (final C oldPlace : mOperand.getSuccessors(netTrans)) {
+			final C newPlace = mOldPlace2newPlace.get(oldPlace);
 			successors.add(newPlace);
 		}
 		successors.add(mState2newPlace.get(nwaTrans.getSuccessor()));
@@ -244,11 +243,11 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 
 	private void addPlacesAndStates(final BoundedPetriNet<S, C> result) {
 		//add places of old net
-		for (final Place<C> oldPlace : mOperand.getPlaces()) {
-			final C content = oldPlace.getContent();
+		for (final C oldPlace : mOperand.getPlaces()) {
+			final C content = oldPlace;
 			final boolean isInitial = mOperand.getInitialPlaces().contains(oldPlace);
 			final boolean isAccepting = mOperand.getAcceptingPlaces().contains(oldPlace);
-			final Place<C> newPlace = result.addPlace(content, isInitial, isAccepting);
+			final C newPlace = result.addPlace(content, isInitial, isAccepting);
 			mOldPlace2newPlace.put(oldPlace, newPlace);
 		}
 
@@ -257,7 +256,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 			final C content = state;
 			final boolean isInitial = mNwa.getInitialStates().contains(state);
 			final boolean isAccepting = mNwa.isFinal(state);
-			final Place<C> newPlace = result.addPlace(content, isInitial, isAccepting);
+			final C newPlace = result.addPlace(content, isInitial, isAccepting);
 			mState2newPlace.put(state, newPlace);
 		}
 	}
