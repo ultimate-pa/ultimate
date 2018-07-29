@@ -35,4 +35,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- net.sf.javabdd
+ net.sf.javabdd,
+ org.eclipse.swt
+Import-Package: org.apache.xpath.operations
