@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
@@ -52,27 +51,27 @@ public class Candidate<LETTER, PLACE> {
 	/**
 	 * A transition.
 	 */
-	public final Transition<LETTER, PLACE> mT;
+	private final Transition<LETTER, PLACE> mT;
 	/**
 	 * Chosen conditions.
 	 */
-	public final ArrayList<Condition<LETTER, PLACE>> mChosen;
+	private final ArrayList<Condition<LETTER, PLACE>> mChosen;
 	/**
 	 * Places.
 	 */
-	public final ArrayList<PLACE> mPlaces;
+	private final ArrayList<PLACE> mPlaces;
 
-	/**
-	 * Constructor from another candidate.
-	 *
-	 * @param candidate
-	 *            candidate
-	 */
-	public Candidate(final Map.Entry<Transition<LETTER, PLACE>, Map<PLACE, Condition<LETTER, PLACE>>> candidate) {
-		mT = candidate.getKey();
-		mChosen = new ArrayList<>(candidate.getValue().values());
-		mPlaces = new ArrayList<>(candidate.getValue().keySet());
-	}
+//	/**
+//	 * Constructor from another candidate.
+//	 *
+//	 * @param candidate
+//	 *            candidate
+//	 */
+//	public Candidate(final Map.Entry<Transition<LETTER, PLACE>, Map<PLACE, Condition<LETTER, PLACE>>> candidate) {
+//		mT = candidate.getKey();
+//		mChosen = new ArrayList<>(candidate.getValue().values());
+//		mPlaces = new ArrayList<>(candidate.getValue().keySet());
+//	}
 
 	/**
 	 * Constructor with transition.
@@ -85,6 +84,30 @@ public class Candidate<LETTER, PLACE> {
 		mChosen = new ArrayList<>(mT.getPredecessors().size());
 		mPlaces = new ArrayList<>(mT.getPredecessors());
 	}
+
+
+
+
+	public Transition<LETTER, PLACE> getT() {
+		return mT;
+	}
+
+
+
+
+	public ArrayList<Condition<LETTER, PLACE>> getChosen() {
+		return mChosen;
+	}
+
+
+
+
+	public ArrayList<PLACE> getPlaces() {
+		return mPlaces;
+	}
+
+
+
 
 	@Override
 	public int hashCode() {

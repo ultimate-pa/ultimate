@@ -75,23 +75,27 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	 */
 	@SuppressWarnings("squid:S1698")
 	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) {
-		if (cand.mPlaces.isEmpty()) {
-			mPe.add(new Event<>(cand.mChosen, cand.mT));
+		if (cand.getPlaces().isEmpty()) {
+			mPe.add(new Event<>(cand.getChosen(), cand.getT()));
 			return;
 		}
-		final PLACE p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
+		// mod!
+		final PLACE p = cand.getPlaces().remove(cand.getPlaces().size() - 1);
 		for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
-			assert cand.mT.getPredecessors().contains(c.getPlace());
+			assert cand.getT().getPredecessors().contains(c.getPlace());
 			// equality intended here
 			assert c.getPlace().equals(p);
-			assert !cand.mChosen.contains(c);
-			if (mBranchingProcess.isCoset(cand.mChosen, c)) {
-				cand.mChosen.add(c);
+			assert !cand.getChosen().contains(c);
+			if (mBranchingProcess.isCoset(cand.getChosen(), c)) {
+				// mod!
+				cand.getChosen().add(c);
 				evolveCandidate(cand);
-				cand.mChosen.remove(cand.mChosen.size() - 1);
+				// mod!
+				cand.getChosen().remove(cand.getChosen().size() - 1);
 			}
 		}
-		cand.mPlaces.add(p);
+		// mod!
+		cand.getPlaces().add(p);
 	}
 
 	/**
@@ -108,9 +112,9 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				} else {
 					current = candidates.get(t);
 				}
-				current.mChosen.add(cond0);
-				current.mPlaces.remove(cond0.getPlace());
-				assert current.mPlaces.size() + current.mChosen.size() == mBranchingProcess.getNet().getPredecessors(t).size();
+				current.getChosen().add(cond0);
+				current.getPlaces().remove(cond0.getPlace());
+				assert current.getPlaces().size() + current.getChosen().size() == mBranchingProcess.getNet().getPredecessors(t).size();
 			}
 		}
 		return candidates.values();
