@@ -39,6 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
  */
 public class PetriNetUtils {
 
+	private PetriNetUtils() {
+		// do not instantiate
+	}
+
 	public static <LETTER, PLACE> boolean similarPredecessorPlaces(final Collection<ITransition<LETTER, PLACE>> transitions,
 			final IPetriNet<LETTER, PLACE> net) {
 		if (transitions.isEmpty()) {
