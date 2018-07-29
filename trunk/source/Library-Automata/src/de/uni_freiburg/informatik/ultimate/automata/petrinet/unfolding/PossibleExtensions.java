@@ -28,12 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
@@ -76,13 +78,15 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 	@SuppressWarnings("squid:S1698")
 	private void evolveCandidate(final Candidate<LETTER, PLACE> cand) {
 		if (cand.getPlaces().isEmpty()) {
-			mPe.add(new Event<>(cand.getChosen(), cand.getT()));
+			for (final ITransition<LETTER, PLACE> trans : cand.getTransition().getTransitions()) {
+				mPe.add(new Event<>(cand.getChosen(), trans, mBranchingProcess.getNet()));
+			}
 			return;
 		}
 		// mod!
 		final PLACE p = cand.getPlaces().remove(cand.getPlaces().size() - 1);
 		for (final Condition<LETTER, PLACE> c : mBranchingProcess.place2cond(p)) {
-			assert cand.getT().getPredecessors().contains(c.getPlace());
+			assert cand.getTransition().getPredecessorPlaces().contains(c.getPlace());
 			// equality intended here
 			assert c.getPlace().equals(p);
 			assert !cand.getChosen().contains(c);
@@ -107,7 +111,9 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
 				Candidate<LETTER, PLACE> current;
 				if (!candidates.containsKey(t)) {
-					current = new Candidate<>((Transition<LETTER, PLACE>) t);
+					final Transition<LETTER, PLACE> trans = (Transition<LETTER, PLACE>) t;
+					current = new Candidate<>(new SimpleSuccessorTransitionProvider<>(Collections.singleton(trans),
+							mBranchingProcess.getNet()));
 					candidates.put(t, current);
 				} else {
 					current = candidates.get(t);

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.SetOperations;
  * <li>C united with E is a Configuration</li>
  * <li>The intersection of PLACE and E is empty</li>
  * </ul>
- * 
+ *
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            symbol type
@@ -62,7 +62,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	/**
 	 * Constructs a Configuration (Not a Suffix). The set given as parameter has to be causally closed and
 	 * conflict-free.
-	 * 
+	 *
 	 * @param events
 	 *            set of events
 	 */
@@ -72,7 +72,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 
 	/**
 	 * Constructor with a minimum set of events.
-	 * 
+	 *
 	 * @param events
 	 *            set of events
 	 * @param min
@@ -87,7 +87,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 		if (mPhi == null) {
 			mPhi = new ArrayList<>(mEvents.size());
 			for (final Event<LETTER, PLACE> e : mEvents) {
-				mPhi.add(e.getTransition());
+				mPhi.add((Transition<LETTER, PLACE>) e.getTransition());
 			}
 			Collections.sort(mPhi);
 		}
@@ -98,7 +98,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	 * Returns the causally minimal Events in this Configuration.
 	 * An Event e is causally minimal in a Configuration,
 	 * iff all Events preceding e are not in the configuration.
-	 * 
+	 *
 	 * @return causally minimal Events in this Configuration
 	 */
 	public Configuration<LETTER, PLACE> getMin() {
@@ -243,7 +243,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 	/**
 	 * TODO Christian 2016-08-16: This does not override the Object.equals() method. It may be confusing when using in
 	 * Collections.
-	 * 
+	 *
 	 * @param other
 	 *            another configuration
 	 * @return {@code true} iff two given configurations have the same events.
@@ -261,7 +261,7 @@ public class Configuration<LETTER, PLACE> extends AbstractSet<Event<LETTER, PLAC
 				+ ((mEvents == null) ? 0 : mEvents.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

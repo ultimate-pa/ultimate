@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 
 /**
  * Event of a {@link BranchingProcess}.
@@ -64,7 +63,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	private final ConditionMarking<LETTER, PLACE> mConditionMark;
 
 	private Event<LETTER, PLACE> mCompanion;
-	private final Transition<LETTER, PLACE> mTransition;
+	private final ITransition<LETTER, PLACE> mTransition;
 
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from the net system it is mapped to by the
@@ -76,11 +75,12 @@ public final class Event<LETTER, PLACE> implements Serializable {
 	 * @param transition
 	 *            homomorphism transition
 	 */
-	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final Transition<LETTER, PLACE> transition) {
+	public Event(final Collection<Condition<LETTER, PLACE>> predecessors, final ITransition<LETTER, PLACE> transition,
+			final BoundedPetriNet<LETTER, PLACE> net) {
 		assert conditionToPlaceEqual(predecessors,
-				transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
+				net.getPredecessors(transition)) : "An event was created with inappropriate predecessors.\n  "
 						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
-						+ "\n  " + "transitions predecessors:" + transition.getPredecessors();
+						+ "\n  " + "transitions predecessors:" + net.getPredecessors(transition);
 		mPredecessors = new HashSet<>(predecessors);
 		// HashSet<Event<LETTER, PLACE>> localConfiguration = new HashSet<Event<LETTER, PLACE>>();
 		mLocalConfiguration = new Configuration<>(new HashSet<Event<LETTER, PLACE>>());
@@ -102,7 +102,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		mLocalConfiguration.add(this);
 
 		mSuccessors = new HashSet<>();
-		for (final PLACE p : transition.getSuccessors()) {
+		for (final PLACE p : net.getSuccessors(transition)) {
 			mSuccessors.add(new Condition<>(this, p));
 		}
 		for (final Event<LETTER, PLACE> a : mLocalConfiguration) {
@@ -308,7 +308,7 @@ public final class Event<LETTER, PLACE> implements Serializable {
 		return mCompanion;
 	}
 
-	public Transition<LETTER, PLACE> getTransition() {
+	public ITransition<LETTER, PLACE> getTransition() {
 		return mTransition;
 	}
 

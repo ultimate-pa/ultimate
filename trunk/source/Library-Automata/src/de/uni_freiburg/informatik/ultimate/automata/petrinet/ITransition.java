@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+
 /**
  * A Petri net transition interface.
  *
@@ -35,7 +37,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
  * @param <PLACE>
  *            place content type
  */
-public interface ITransition<LETTER, PLACE> {
+public interface ITransition<LETTER, PLACE> extends Comparable<Transition<LETTER, PLACE>>{
 	/**
 	 * @return The symbol.
 	 */

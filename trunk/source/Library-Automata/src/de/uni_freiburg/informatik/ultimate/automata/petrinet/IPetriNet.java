@@ -26,14 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * General Petri net interface.
@@ -79,6 +84,21 @@ public interface IPetriNet<LETTER, PLACE> extends IAutomaton<LETTER, PLACE> {
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
 		return new PetriNetToUltimateModel<LETTER, PLACE>().transformToUltimateModel(this);
+	}
+
+	default Collection<ISuccessorTransitionProvider<LETTER, PLACE>> getSuccessorTransitionProviders(final Collection<PLACE> places) {
+		final HashRelation<Set<PLACE>, ITransition<LETTER, PLACE>> predecessorPlaces2Transition = new HashRelation<>();
+		for (final PLACE p : places) {
+			for (final ITransition<LETTER, PLACE> t : getSuccessors(p)) {
+				predecessorPlaces2Transition.addPair(getPredecessors(t), t);
+			}
+		}
+		final List<ISuccessorTransitionProvider<LETTER, PLACE>> result = new ArrayList<>();
+		for (final Set<PLACE> predecessors : predecessorPlaces2Transition.getDomain()) {
+			final Set<ITransition<LETTER, PLACE>> transitions = predecessorPlaces2Transition.getImage(predecessors);
+			result.add(new SimpleSuccessorTransitionProvider<>(transitions, this));
+		}
+		return result;
 	}
 
 

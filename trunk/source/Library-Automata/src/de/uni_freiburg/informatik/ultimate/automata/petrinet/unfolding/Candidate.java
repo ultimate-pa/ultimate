@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.ISuccessorTransitionProvider;
 
 /**
  * Represents an incomplete Event. A <i>Candidate</i> consists of
@@ -48,10 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
  *            place content type
  **/
 public class Candidate<LETTER, PLACE> {
-	/**
-	 * A transition.
-	 */
-	private final Transition<LETTER, PLACE> mT;
+
+	private final ISuccessorTransitionProvider<LETTER, PLACE> mSuccTransProvider;
 	/**
 	 * Chosen conditions.
 	 */
@@ -79,17 +77,17 @@ public class Candidate<LETTER, PLACE> {
 	 * @param transition
 	 *            transition
 	 */
-	public Candidate(final Transition<LETTER, PLACE> transition) {
-		mT = transition;
-		mChosen = new ArrayList<>(mT.getPredecessors().size());
-		mPlaces = new ArrayList<>(mT.getPredecessors());
+	public Candidate(final ISuccessorTransitionProvider<LETTER, PLACE> succTransProvider) {
+		mSuccTransProvider = succTransProvider;
+		mChosen = new ArrayList<>(succTransProvider.getPredecessorPlaces().size());
+		mPlaces = new ArrayList<>(succTransProvider.getPredecessorPlaces());
 	}
 
 
 
 
-	public Transition<LETTER, PLACE> getT() {
-		return mT;
+	public ISuccessorTransitionProvider<LETTER, PLACE> getTransition() {
+		return mSuccTransProvider;
 	}
 
 
@@ -114,7 +112,7 @@ public class Candidate<LETTER, PLACE> {
 		final int prime = 31;
 		int result = prime + ((mChosen == null) ? 0 : mChosen.hashCode());
 		result = prime * result + ((mPlaces == null) ? 0 : mPlaces.hashCode());
-		result = prime * result + ((mT == null) ? 0 : mT.hashCode());
+		result = prime * result + ((mSuccTransProvider == null) ? 0 : mSuccTransProvider.hashCode());
 		return result;
 	}
 
@@ -141,11 +139,11 @@ public class Candidate<LETTER, PLACE> {
 		} else if (!mPlaces.equals(other.mPlaces)) {
 			return false;
 		}
-		if (mT == null) {
-			if (other.mT != null) {
+		if (mSuccTransProvider == null) {
+			if (other.mSuccTransProvider != null) {
 				return false;
 			}
-		} else if (!mT.equals(other.mT)) {
+		} else if (!mSuccTransProvider.equals(other.mSuccTransProvider)) {
 			return false;
 		}
 		return true;
