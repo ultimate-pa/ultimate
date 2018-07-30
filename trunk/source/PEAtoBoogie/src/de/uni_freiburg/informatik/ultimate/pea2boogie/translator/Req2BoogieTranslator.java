@@ -149,6 +149,13 @@ public class Req2BoogieTranslator {
 		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
 
+		// log preferences
+		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
+				mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
+				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
+				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
+				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
+
 		mPeaResultUtil = new PeaResultUtil(mLogger, mServices);
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
@@ -179,7 +186,6 @@ public class Req2BoogieTranslator {
 		final List<Declaration> decls = new ArrayList<>();
 		decls.addAll(mSymboltable.constructVariableDeclarations());
 
-		Unit unit;
 		RtInconcistencyConditionGenerator rticGenerator;
 		try {
 			if (mCombinationNum > 1) {
@@ -189,16 +195,15 @@ public class Req2BoogieTranslator {
 			} else {
 				rticGenerator = null;
 			}
-
-			decls.add(generateProcedures(init));
-			unit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
 		} catch (final InvariantInfeasibleException e) {
 			mPeaResultUtil.infeasibleInvariant(e);
-			unit = null;
-			rticGenerator = null;
+			mRtInconcistencyConditionGenerator = null;
+			mUnit = null;
+			return;
 		}
 		mRtInconcistencyConditionGenerator = rticGenerator;
-		mUnit = unit;
+		decls.add(generateProcedures(init));
+		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
 	}
 
 	private Map<String, Integer> genId2Bounds(final List<InitializationPattern> inits) {
