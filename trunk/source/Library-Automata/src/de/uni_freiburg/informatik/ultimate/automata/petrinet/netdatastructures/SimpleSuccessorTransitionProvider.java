@@ -39,20 +39,16 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
  */
 public class SimpleSuccessorTransitionProvider<LETTER, PLACE> implements ISuccessorTransitionProvider<LETTER, PLACE> {
 
-
 	private final Collection<ITransition<LETTER, PLACE>> mTransitions;
 	private final IPetriNet<LETTER, PLACE> mNet;
-
-
-
-
 
 	public SimpleSuccessorTransitionProvider(final Collection<ITransition<LETTER, PLACE>> transitions,
 			final IPetriNet<LETTER, PLACE> net) {
 		super();
 		mTransitions = transitions;
 		mNet = net;
-		assert PetriNetUtils.similarPredecessorPlaces(transitions, net) : "not all transitions have similar predecessor places";
+		assert PetriNetUtils.similarPredecessorPlaces(transitions,
+				net) : "not all transitions have similar predecessor places";
 	}
 
 	@Override
@@ -65,7 +61,9 @@ public class SimpleSuccessorTransitionProvider<LETTER, PLACE> implements ISucces
 		return mTransitions;
 	}
 
-
-
+	@Override
+	public String toString() {
+		return getPredecessorPlaces().toString();
+	}
 
 }
