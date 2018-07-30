@@ -114,10 +114,7 @@ public class PartialQuantifierElimination {
 
 	/**
 	 * Returns equivalent formula. Quantifier is dropped if quantified variable not in formula. Quantifier is eliminated
-	 * if this can be done by using a naive "destructive equality resolution".
-	 *
-	 * @param services
-	 * @param logger
+	 * if this can be done by the complete quantifier elimination.
 	 */
 	public static Term quantifier(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript, final SimplificationTechnique simplificationTechnique,
