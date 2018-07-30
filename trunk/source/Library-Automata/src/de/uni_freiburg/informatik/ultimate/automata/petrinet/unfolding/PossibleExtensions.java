@@ -27,12 +27,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.SimpleSuccessorTransitionProvider;
@@ -123,8 +127,24 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				assert current.getPlaces().size() + current.getChosen().size() == mBranchingProcess.getNet().getPredecessors(t).size();
 			}
 		}
+//		Collection<Candidate<LETTER, PLACE>> alternativeResult = computeCandidatesCollectTransitionsFirst(event);
 		return candidates.values();
 	}
+	
+	private Collection<Candidate<LETTER, PLACE>> computeCandidatesCollectTransitionsFirst(final Event<LETTER, PLACE> event) {
+		Set<ITransition<LETTER, PLACE>> transitions = new HashSet<>();
+		for (final Condition<LETTER, PLACE> cond0 : event.getSuccessorConditions()) {
+			for (final ITransition<LETTER, PLACE> t : mBranchingProcess.getNet().getSuccessors(cond0.getPlace())) {
+				transitions.add(t);
+			}
+		}
+		List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
+		for (ITransition<LETTER, PLACE> transition : transitions) {
+			candidates.add(new Candidate<>(new SimpleSuccessorTransitionProvider<>(Collections.singleton(transition), mBranchingProcess.getNet())));
+		}
+		return candidates;
+	}
+	
 
 	@Override
 	public boolean isEmpy() {
