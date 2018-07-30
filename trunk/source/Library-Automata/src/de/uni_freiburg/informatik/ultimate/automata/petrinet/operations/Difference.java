@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.NumberOfConditions;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
@@ -82,6 +81,14 @@ public final class Difference
 		<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends GeneralOperation<LETTER, PLACE, CRSF> {
 
+	public enum LoopSyncMethod {
+		PAIRWISE,
+		HEURISTIC,
+		INVERTED,
+	}
+	
+	private final LoopSyncMethod mLoopSyncMethod;
+	
 	private final BoundedPetriNet<LETTER, PLACE> mMinuend;
 	private final INestedWordAutomaton<LETTER, PLACE> mSubtrahend;
 	private final IBlackWhiteStateFactory<PLACE> mContentFactory;
@@ -98,17 +105,27 @@ public final class Difference
 
 	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> Difference(
 			final AutomataLibraryServices services, final SF factory,
-			final BoundedPetriNet<LETTER, PLACE> net, final INestedWordAutomaton<LETTER, PLACE> nwa) {
+			final BoundedPetriNet<LETTER, PLACE> minuendNet,
+			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa) {
+		this(services, factory, minuendNet, subtrahendDfa, LoopSyncMethod.HEURISTIC);
+	}
+	
+	public <SF extends IBlackWhiteStateFactory<PLACE> & ISinkStateFactory<PLACE>> Difference(
+			final AutomataLibraryServices services, final SF factory,
+			final BoundedPetriNet<LETTER, PLACE> minuendNet,
+			final INestedWordAutomaton<LETTER, PLACE> subtrahendDfa,
+			final LoopSyncMethod loopSyncMethod) {
 		super(services);
-		mMinuend = net;
-		mSubtrahend = nwa;
+		mMinuend = minuendNet;
+		mSubtrahend = subtrahendDfa;
 		mContentFactory = factory;
+		mLoopSyncMethod = loopSyncMethod;
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		assert checkMostSubtrahendProperties();
-		if (nwa.isFinal(onlyElement(nwa.getInitialStates()))) {
+		if (subtrahendDfa.isFinal(onlyElement(subtrahendDfa.getInitialStates()))) {
 			// subtrahend accepts everything (because of its special properties)
 			// --> difference is empty
 			mResult = new BoundedPetriNet<>(mServices, mMinuend.getAlphabet(), true);
@@ -226,7 +243,8 @@ public final class Difference
 	 * @return Use {@link #syncWithAnySelfloop(ITransition)}, else use {@link #syncWithEachSelfloop(ITransition)}
 	 */
 	private boolean invertSyncWithSelfloops(final LETTER symbol) {
-		return mSelfloop.get(symbol).size() >= mStateChanger.get(symbol).size();
+		return mLoopSyncMethod == LoopSyncMethod.INVERTED || (mLoopSyncMethod == LoopSyncMethod.HEURISTIC
+				&& mSelfloop.get(symbol).size() >= mStateChanger.get(symbol).size());
 	}
 
 	private Set<PLACE> requiredBlackPlaces() {
@@ -434,10 +452,10 @@ public final class Difference
 		for (LETTER letter : mSubtrahend.getAlphabet()) {
 			Set<PLACE> loopers = mSelfloop.get(letter);
 			Set<PLACE> changers = mStateChanger.get(letter);
-			if (changers.isEmpty()) {
+			if (changers == null || changers.isEmpty()) {
 				++looperOnlyLetters;
 			}
-			if (changers.size() > loopers.size()) {
+			if (changers != null && changers.size() > loopers.size()) {
 				++moreChangersThanLoopers;
 			}
 		}
