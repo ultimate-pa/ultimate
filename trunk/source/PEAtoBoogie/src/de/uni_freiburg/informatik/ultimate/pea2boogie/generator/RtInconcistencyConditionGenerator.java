@@ -139,7 +139,7 @@ public class RtInconcistencyConditionGenerator {
 
 		if (mSeparateInvariantHandling) {
 			mPrimedInvariant = constructPrimedStateInvariant(req2Automata);
-			mLogger.info("Finished generating primed state invariant: " + mPrimedInvariant.toString());
+			mLogger.info("Finished generating primed state invariant of size " + new DAGSize().size(mPrimedInvariant));
 		} else {
 			mPrimedInvariant = mTrue;
 		}
