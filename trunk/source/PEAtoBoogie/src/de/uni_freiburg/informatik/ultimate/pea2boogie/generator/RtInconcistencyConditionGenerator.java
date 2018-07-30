@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.pea2boogie.generator;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -92,6 +94,7 @@ public class RtInconcistencyConditionGenerator {
 
 	private static final boolean SIMPLIFY = false;
 	private static final boolean PRINT_STATS = false;
+	private static final String SOLVER_LOGFILE = null;
 
 	private final ReqSymboltable mBoogieSymboltable;
 	private final Term mPrimedInvariant;
@@ -146,14 +149,22 @@ public class RtInconcistencyConditionGenerator {
 
 	}
 
-	private static Script buildSolver(final IUltimateServiceProvider services, final IToolchainStorage storage)
+	private Script buildSolver(final IUltimateServiceProvider services, final IToolchainStorage storage)
 			throws AssertionError {
 		final SolverSettings settings = SolverBuilder.constructSolverSettings("",
 				SolverMode.External_ModelsAndUnsatCoreMode, false, SolverBuilder.COMMAND_Z3_NO_TIMEOUT, false, null);
 		final Script solver =
 				SolverBuilder.buildAndInitializeSolver(services, storage, SolverMode.External_ModelsAndUnsatCoreMode,
 						settings, false, false, Logics.ALL.toString(), "RtInconsistencySolver");
-		return solver;
+		if (SOLVER_LOGFILE == null) {
+			return solver;
+		}
+		try {
+			return new LoggingScript(solver, SOLVER_LOGFILE, false);
+		} catch (final FileNotFoundException e) {
+			mLogger.error("Could not create log file for solver, disabling logging. ");
+			return solver;
+		}
 	}
 
 	public Expression nonDLCGenerator(final PhaseEventAutomata[] automata) {
