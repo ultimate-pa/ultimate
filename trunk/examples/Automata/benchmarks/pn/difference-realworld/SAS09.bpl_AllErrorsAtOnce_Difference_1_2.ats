@@ -1,0 +1,117 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SAS09.bpl_AllErrorsAtOnce_Iteration1_AbstractionAfterDifference.ats (2018/07/30 09:55:00)
+// SAS09.bpl_AllErrorsAtOnce_Iteration2_EagerFloydHoareAutomaton.ats (2018/07/30 09:55:00)
+
+difference(net, nwa);
+
+PetriNet net = (
+	alphabet = {"critical := 0;assume true;" "#0#a := 0;" "#1#b := 0;" "#5#assume true;" "#6#a := a + 1;" "#8#assume !(a != -1);" "#9#assume a != -1;" "#10#assume !(b != -1);" "#11#assume b != -1;" "#12#assume true;" "#15#x := 0;" "#16#y := 0;" "#17#g := 0;" "#21#assume true;" "#22#x := x + 1;" "#23#g := g + 1;" "#25#assume !(x != -1);" "#26#assume x != -1;" "#27#assume !(y != -1);" "#28#assume y != -1;" "#29#assume !(g != -1);" "#30#assume g != -1;" "#31#assume true;" },
+	places = {"5#Thread2FINALtrue" "6#L53-1true" "7#L59true" "8#Thread2Err1ASSERT_VIOLATIONASSERTtrue" "9#L54true" "10#Thread2ENTRYtrue" "11#L51true" "12#Thread2EXITtrue" "13#Thread2Err0ASSERT_VIOLATIONASSERTtrue" "14#~initENTRYtrue" "16#Thread1ENTRYtrue" "17#L37true" "18#L38true" "19#Thread1Err2ASSERT_VIOLATIONASSERTtrue" "20#L28true" "21#L29true" "22#L31-1true" "23#Thread1FINALtrue" "24#L32true" "25#Thread1Err0ASSERT_VIOLATIONASSERTtrue" "26#Thread1EXITtrue" "27#Thread1Err1ASSERT_VIOLATIONASSERTtrue" "28#L33true" "29#~initENTRYtrue" "30#true" "32#(<= 0 Thread2_a)" "Black: 32#(<= 0 Thread2_a)" "Black: 30#true" },
+	transitions = {
+		({"22#L31-1true" } "#26#assume x != -1;" {"17#L37true" })
+		({"Black: 32#(<= 0 Thread2_a)" "10#Thread2ENTRYtrue" "30#true" } "#0#a := 0;" {"32#(<= 0 Thread2_a)" "Black: 30#true" "11#L51true" })
+		({"22#L31-1true" } "#21#assume true;" {"24#L32true" })
+		({"18#L38true" } "#30#assume g != -1;" {"23#Thread1FINALtrue" })
+		({"29#~initENTRYtrue" "14#~initENTRYtrue" } "critical := 0;assume true;" {"16#Thread1ENTRYtrue" "10#Thread2ENTRYtrue" })
+		({"18#L38true" } "#29#assume !(g != -1);" {"19#Thread1Err2ASSERT_VIOLATIONASSERTtrue" })
+		({"20#L28true" } "#16#y := 0;" {"21#L29true" })
+		({"Black: 32#(<= 0 Thread2_a)" "6#L53-1true" } "#8#assume !(a != -1);" {"Black: 32#(<= 0 Thread2_a)" "13#Thread2Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"16#Thread1ENTRYtrue" } "#15#x := 0;" {"20#L28true" })
+		({"28#L33true" } "#23#g := g + 1;" {"22#L31-1true" })
+		({"17#L37true" } "#27#assume !(y != -1);" {"27#Thread1Err1ASSERT_VIOLATIONASSERTtrue" })
+		({"Black: 30#true" "10#Thread2ENTRYtrue" } "#0#a := 0;" {"Black: 30#true" "11#L51true" })
+		({"17#L37true" } "#28#assume y != -1;" {"18#L38true" })
+		({"9#L54true" } "#6#a := a + 1;" {"6#L53-1true" })
+		({"7#L59true" } "#10#assume !(b != -1);" {"8#Thread2Err1ASSERT_VIOLATIONASSERTtrue" })
+		({"22#L31-1true" } "#25#assume !(x != -1);" {"25#Thread1Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"5#Thread2FINALtrue" } "#12#assume true;" {"12#Thread2EXITtrue" })
+		({"6#L53-1true" } "#9#assume a != -1;" {"7#L59true" })
+		({"11#L51true" } "#1#b := 0;" {"6#L53-1true" })
+		({"6#L53-1true" } "#5#assume true;" {"9#L54true" })
+		({"21#L29true" } "#17#g := 0;" {"22#L31-1true" })
+		({"24#L32true" } "#22#x := x + 1;" {"28#L33true" })
+		({"23#Thread1FINALtrue" } "#31#assume true;" {"26#Thread1EXITtrue" })
+		({"7#L59true" } "#11#assume b != -1;" {"5#Thread2FINALtrue" })
+	},
+	initialMarking = {"Black: 32#(<= 0 Thread2_a)" "29#~initENTRYtrue" "14#~initENTRYtrue" "30#true" },
+	acceptingPlaces = {"19#Thread1Err2ASSERT_VIOLATIONASSERTtrue" "8#Thread2Err1ASSERT_VIOLATIONASSERTtrue" "25#Thread1Err0ASSERT_VIOLATIONASSERTtrue" "27#Thread1Err1ASSERT_VIOLATIONASSERTtrue" "13#Thread2Err0ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"critical := 0;assume true;" "#0#a := 0;" "#1#b := 0;" "#5#assume true;" "#6#a := a + 1;" "#8#assume !(a != -1);" "#9#assume a != -1;" "#10#assume !(b != -1);" "#11#assume b != -1;" "#12#assume true;" "#15#x := 0;" "#16#y := 0;" "#17#g := 0;" "#21#assume true;" "#22#x := x + 1;" "#23#g := g + 1;" "#25#assume !(x != -1);" "#26#assume x != -1;" "#27#assume !(y != -1);" "#28#assume y != -1;" "#29#assume !(g != -1);" "#30#assume g != -1;" "#31#assume true;" },
+	states = {"36#true" "37#false" "38#(<= 0 Thread1_x)" },
+	initialStates = {"36#true" },
+	finalStates = {"37#false" },
+	transitions = {
+		("36#true" "critical := 0;assume true;" "36#true")
+		("36#true" "#0#a := 0;" "36#true")
+		("36#true" "#1#b := 0;" "36#true")
+		("36#true" "#5#assume true;" "36#true")
+		("36#true" "#6#a := a + 1;" "36#true")
+		("36#true" "#8#assume !(a != -1);" "36#true")
+		("36#true" "#9#assume a != -1;" "36#true")
+		("36#true" "#10#assume !(b != -1);" "36#true")
+		("36#true" "#11#assume b != -1;" "36#true")
+		("36#true" "#12#assume true;" "36#true")
+		("36#true" "#15#x := 0;" "38#(<= 0 Thread1_x)")
+		("36#true" "#16#y := 0;" "36#true")
+		("36#true" "#17#g := 0;" "36#true")
+		("36#true" "#21#assume true;" "36#true")
+		("36#true" "#22#x := x + 1;" "36#true")
+		("36#true" "#23#g := g + 1;" "36#true")
+		("36#true" "#25#assume !(x != -1);" "36#true")
+		("36#true" "#26#assume x != -1;" "36#true")
+		("36#true" "#27#assume !(y != -1);" "36#true")
+		("36#true" "#28#assume y != -1;" "36#true")
+		("36#true" "#29#assume !(g != -1);" "36#true")
+		("36#true" "#30#assume g != -1;" "36#true")
+		("36#true" "#31#assume true;" "36#true")
+		("37#false" "critical := 0;assume true;" "37#false")
+		("37#false" "#0#a := 0;" "37#false")
+		("37#false" "#1#b := 0;" "37#false")
+		("37#false" "#5#assume true;" "37#false")
+		("37#false" "#6#a := a + 1;" "37#false")
+		("37#false" "#8#assume !(a != -1);" "37#false")
+		("37#false" "#9#assume a != -1;" "37#false")
+		("37#false" "#10#assume !(b != -1);" "37#false")
+		("37#false" "#11#assume b != -1;" "37#false")
+		("37#false" "#12#assume true;" "37#false")
+		("37#false" "#15#x := 0;" "37#false")
+		("37#false" "#16#y := 0;" "37#false")
+		("37#false" "#17#g := 0;" "37#false")
+		("37#false" "#21#assume true;" "37#false")
+		("37#false" "#22#x := x + 1;" "37#false")
+		("37#false" "#23#g := g + 1;" "37#false")
+		("37#false" "#25#assume !(x != -1);" "37#false")
+		("37#false" "#26#assume x != -1;" "37#false")
+		("37#false" "#27#assume !(y != -1);" "37#false")
+		("37#false" "#28#assume y != -1;" "37#false")
+		("37#false" "#29#assume !(g != -1);" "37#false")
+		("37#false" "#30#assume g != -1;" "37#false")
+		("37#false" "#31#assume true;" "37#false")
+		("38#(<= 0 Thread1_x)" "critical := 0;assume true;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#0#a := 0;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#1#b := 0;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#5#assume true;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#6#a := a + 1;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#8#assume !(a != -1);" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#9#assume a != -1;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#10#assume !(b != -1);" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#11#assume b != -1;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#12#assume true;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#15#x := 0;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#16#y := 0;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#17#g := 0;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#21#assume true;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#22#x := x + 1;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#23#g := g + 1;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#25#assume !(x != -1);" "37#false")
+		("38#(<= 0 Thread1_x)" "#26#assume x != -1;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#27#assume !(y != -1);" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#28#assume y != -1;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#29#assume !(g != -1);" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#30#assume g != -1;" "38#(<= 0 Thread1_x)")
+		("38#(<= 0 Thread1_x)" "#31#assume true;" "38#(<= 0 Thread1_x)")
+	}
+);

@@ -1,0 +1,72 @@
+// Benchmark for difference of Petri net and DFA  
+// Generated from
+// SimpleParallelProgram.bpl_AllErrorsAtOnce_Iteration1_AbstractionAfterDifference.ats (2018/07/30 09:55:01)
+// SimpleParallelProgram.bpl_AllErrorsAtOnce_Iteration2_EagerFloydHoareAutomaton.ats (2018/07/30 09:55:01)
+
+difference(net, nwa);
+
+PetriNet net = (
+	alphabet = {"#2#x := x + 2;" "#3#assume true;" "#4#x := x + 1;" "#5#assume !(x <= 3);" "#6#assume x <= 3;" "#7#assume true;" "x := 0;assume true;" },
+	places = {"5#Thread1ENTRYtrue" "6#Thread1FINALtrue" "7#Thread1EXITtrue" "8#~initENTRYtrue" "10#Thread0Err0ASSERT_VIOLATIONASSERTtrue" "11#Thread0FINALtrue" "12#Thread0ENTRYtrue" "13#Thread0EXITtrue" "14#L27true" "15#~initENTRYtrue" "16#true" "18#(<= x 0)" "19#(<= x 1)" },
+	transitions = {
+		({"18#(<= x 0)" "8#~initENTRYtrue" "15#~initENTRYtrue" } "x := 0;assume true;" {"18#(<= x 0)" "5#Thread1ENTRYtrue" "12#Thread0ENTRYtrue" })
+		({"6#Thread1FINALtrue" } "#3#assume true;" {"7#Thread1EXITtrue" })
+		({"16#true" "8#~initENTRYtrue" "15#~initENTRYtrue" } "x := 0;assume true;" {"18#(<= x 0)" "5#Thread1ENTRYtrue" "12#Thread0ENTRYtrue" })
+		({"16#true" "12#Thread0ENTRYtrue" } "#4#x := x + 1;" {"16#true" "14#L27true" })
+		({"18#(<= x 0)" "5#Thread1ENTRYtrue" } "#2#x := x + 2;" {"16#true" "6#Thread1FINALtrue" })
+		({"16#true" "14#L27true" } "#5#assume !(x <= 3);" {"16#true" "10#Thread0Err0ASSERT_VIOLATIONASSERTtrue" })
+		({"19#(<= x 1)" "8#~initENTRYtrue" "15#~initENTRYtrue" } "x := 0;assume true;" {"18#(<= x 0)" "5#Thread1ENTRYtrue" "12#Thread0ENTRYtrue" })
+		({"16#true" "5#Thread1ENTRYtrue" } "#2#x := x + 2;" {"16#true" "6#Thread1FINALtrue" })
+		({"19#(<= x 1)" "12#Thread0ENTRYtrue" } "#4#x := x + 1;" {"16#true" "14#L27true" })
+		({"14#L27true" } "#6#assume x <= 3;" {"11#Thread0FINALtrue" })
+		({"19#(<= x 1)" "5#Thread1ENTRYtrue" } "#2#x := x + 2;" {"16#true" "6#Thread1FINALtrue" })
+		({"18#(<= x 0)" "12#Thread0ENTRYtrue" } "#4#x := x + 1;" {"19#(<= x 1)" "14#L27true" })
+		({"11#Thread0FINALtrue" } "#7#assume true;" {"13#Thread0EXITtrue" })
+	},
+	initialMarking = {"16#true" "8#~initENTRYtrue" "15#~initENTRYtrue" },
+	acceptingPlaces = {"10#Thread0Err0ASSERT_VIOLATIONASSERTtrue" }
+);
+
+FiniteAutomaton nwa = (
+	alphabet = {"#2#x := x + 2;" "#3#assume true;" "#4#x := x + 1;" "#5#assume !(x <= 3);" "#6#assume x <= 3;" "#7#assume true;" "x := 0;assume true;" },
+	states = {"21#true" "22#false" "23#(<= x 0)" "24#(<= x 2)" "25#(<= x 3)" },
+	initialStates = {"21#true" },
+	finalStates = {"22#false" },
+	transitions = {
+		("21#true" "#2#x := x + 2;" "21#true")
+		("21#true" "#3#assume true;" "21#true")
+		("21#true" "#4#x := x + 1;" "21#true")
+		("21#true" "#5#assume !(x <= 3);" "21#true")
+		("21#true" "#6#assume x <= 3;" "25#(<= x 3)")
+		("21#true" "#7#assume true;" "21#true")
+		("21#true" "x := 0;assume true;" "23#(<= x 0)")
+		("22#false" "#2#x := x + 2;" "22#false")
+		("22#false" "#3#assume true;" "22#false")
+		("22#false" "#4#x := x + 1;" "22#false")
+		("22#false" "#5#assume !(x <= 3);" "22#false")
+		("22#false" "#6#assume x <= 3;" "22#false")
+		("22#false" "#7#assume true;" "22#false")
+		("22#false" "x := 0;assume true;" "22#false")
+		("23#(<= x 0)" "#2#x := x + 2;" "24#(<= x 2)")
+		("23#(<= x 0)" "#3#assume true;" "23#(<= x 0)")
+		("23#(<= x 0)" "#4#x := x + 1;" "24#(<= x 2)")
+		("23#(<= x 0)" "#5#assume !(x <= 3);" "22#false")
+		("23#(<= x 0)" "#6#assume x <= 3;" "23#(<= x 0)")
+		("23#(<= x 0)" "#7#assume true;" "23#(<= x 0)")
+		("23#(<= x 0)" "x := 0;assume true;" "23#(<= x 0)")
+		("24#(<= x 2)" "#2#x := x + 2;" "21#true")
+		("24#(<= x 2)" "#3#assume true;" "24#(<= x 2)")
+		("24#(<= x 2)" "#4#x := x + 1;" "25#(<= x 3)")
+		("24#(<= x 2)" "#5#assume !(x <= 3);" "22#false")
+		("24#(<= x 2)" "#6#assume x <= 3;" "24#(<= x 2)")
+		("24#(<= x 2)" "#7#assume true;" "24#(<= x 2)")
+		("24#(<= x 2)" "x := 0;assume true;" "23#(<= x 0)")
+		("25#(<= x 3)" "#2#x := x + 2;" "21#true")
+		("25#(<= x 3)" "#3#assume true;" "25#(<= x 3)")
+		("25#(<= x 3)" "#4#x := x + 1;" "21#true")
+		("25#(<= x 3)" "#5#assume !(x <= 3);" "22#false")
+		("25#(<= x 3)" "#6#assume x <= 3;" "25#(<= x 3)")
+		("25#(<= x 3)" "#7#assume true;" "25#(<= x 3)")
+		("25#(<= x 3)" "x := 0;assume true;" "23#(<= x 0)")
+	}
+);
