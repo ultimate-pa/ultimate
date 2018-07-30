@@ -102,6 +102,8 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 			printTransition(transition, net);
 		}
 		printTransitionsSuffix();
+		print(',');
+		print(NEW_LINE);
 	}
 
 	private void printTransition(final ITransition<LETTER, STATE> transition, BoundedPetriNet<LETTER, STATE> net) {
