@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe;
@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
  * Destructive equality resolution (DER) for terms in XNF.
+ *
  * @author Matthias Heizmann
  */
 public class XnfDer extends XjunctPartialQuantifierElimination {
@@ -66,16 +67,14 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	public String getAcronym() {
 		return "DER";
 	}
-	
+
 	@Override
 	public boolean resultIsXjunction() {
 		return true;
-	};
-
+	}
 
 	@Override
-	public Term[] tryToEliminate(final int quantifier, final Term[] inputAtoms,
-			final Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] inputAtoms, final Set<TermVariable> eliminatees) {
 		Term[] resultAtoms = inputAtoms;
 		boolean someVariableWasEliminated;
 		// an elimination may allow further eliminations
@@ -85,22 +84,20 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			final Iterator<TermVariable> it = eliminatees.iterator();
 			while (it.hasNext()) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(this.getClass(),
-							"eliminating " + eliminatees.size() + 
-							" quantified variables from " + inputAtoms.length + " xjuncts");
+					throw new ToolchainCanceledException(this.getClass(), "eliminating " + eliminatees.size()
+							+ " quantified variables from " + inputAtoms.length + " xjuncts");
 				}
 				final TermVariable tv = it.next();
 				if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
 					// case where var does not occur
 					it.remove();
 					continue;
-				} else {
-					final Term[] withoutTv = derSimple(mScript, quantifier, resultAtoms, tv, mLogger);
-					if (withoutTv != null) {
-						resultAtoms = withoutTv;
-						it.remove();
-						someVariableWasEliminated = true;
-					}
+				}
+				final Term[] withoutTv = derSimple(mScript, quantifier, resultAtoms, tv, mLogger);
+				if (withoutTv != null) {
+					resultAtoms = withoutTv;
+					it.remove();
+					someVariableWasEliminated = true;
 				}
 			}
 		} while (someVariableWasEliminated);
@@ -108,15 +105,14 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	}
 
 	/**
-	 * TODO: revise documentation Try to eliminate the variables vars in term.
-	 * Let vars = {x_1,...,x_n} and term = φ. Returns a term that is equivalent
-	 * to ∃x_1,...,∃x_n φ, but were variables are removed. Successfully removed
-	 * variables are also removed from vars. Analogously for universal
-	 * quantification.
-	 * 
+	 * TODO: revise documentation Try to eliminate the variables vars in term. Let vars = {x_1,...,x_n} and term = φ.
+	 * Returns a term that is equivalent to ∃x_1,...,∃x_n φ, but were variables are removed. Successfully removed
+	 * variables are also removed from vars. Analogously for universal quantification.
+	 *
 	 * @param logger
 	 */
-	public Term[] derSimple(final Script script, final int quantifier, final Term[] inputAtoms, final TermVariable tv, final ILogger logger) {
+	public Term[] derSimple(final Script script, final int quantifier, final Term[] inputAtoms, final TermVariable tv,
+			final ILogger logger) {
 		final Term[] resultAtoms;
 		final EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier);
 		if (eqInfo == null) {
@@ -125,9 +121,9 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		} else {
 			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
 			resultAtoms = new Term[inputAtoms.length - 1];
-			final Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-			final Substitution substitution = new SubstitutionWithLocalSimplification(
-					mMgdScript, substitutionMapping);
+			final Map<Term, Term> substitutionMapping =
+					Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
+			final Substitution substitution = new SubstitutionWithLocalSimplification(mMgdScript, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}
@@ -137,7 +133,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		}
 		return resultAtoms;
 	}
-	
+
 	/**
 	 * Apply substitution to term and normalize afterwards if the substitution modified the term.
 	 */
@@ -153,8 +149,5 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		}
 		return result;
 	}
-
-	
-
 
 }

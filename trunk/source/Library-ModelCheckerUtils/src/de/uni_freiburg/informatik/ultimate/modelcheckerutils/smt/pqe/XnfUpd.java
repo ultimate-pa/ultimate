@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe;
@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class XnfUpd extends XjunctPartialQuantifierElimination {
-	
 
 	public XnfUpd(final ManagedScript script, final IUltimateServiceProvider services) {
 		super(script, services);
@@ -62,20 +61,19 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	public String getAcronym() {
 		return "UPD";
 	}
-	
+
 	@Override
 	public boolean resultIsXjunction() {
 		return true;
-	};
+	}
 
 	@Override
-	public Term[] tryToEliminate(final int quantifier, final Term[] parameters,
-			final Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] parameters, final Set<TermVariable> eliminatees) {
 		final Set<TermVariable> occuringVars = new HashSet<>();
 		for (final Term param : parameters) {
 			occuringVars.addAll(Arrays.asList(param.getFreeVars()));
 		}
-		
+
 		eliminatees.retainAll(occuringVars);
 
 		final ConnectionPartition connection = new ConnectionPartition(Arrays.asList(parameters));
@@ -83,7 +81,7 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 		final List<TermVariable> unremoveableTvs = new ArrayList<>();
 		final List<Term> removeableTerms = new ArrayList<>();
 		final List<Term> unremoveableTerms = new ArrayList<>();
-		for (final Set<NonTheorySymbol<?>> connectedSymbols  : connection.getConnectedNonTheorySymbols()) {
+		for (final Set<NonTheorySymbol<?>> connectedSymbols : connection.getConnectedNonTheorySymbols()) {
 			final Set<Term> connectedTerms = connection.getTermsOfConnectedNonTheorySymbols(connectedSymbols);
 			final Set<TermVariable> freeVarsOfConnectedTerms = SmtUtils.getFreeVars(connectedTerms);
 			final boolean isSuperfluous;
@@ -91,7 +89,8 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 				isSuperfluous = false;
 			} else {
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					final Term simplified = isSuperfluousConjunction(mScript, connectedTerms, freeVarsOfConnectedTerms, eliminatees);
+					final Term simplified =
+							isSuperfluousConjunction(mScript, connectedTerms, freeVarsOfConnectedTerms, eliminatees);
 					if (SmtUtils.isTrue(simplified)) {
 						isSuperfluous = true;
 					} else if (SmtUtils.isFalse(simplified)) {
@@ -102,7 +101,8 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 						throw new AssertionError("illegal case");
 					}
 				} else if (quantifier == QuantifiedFormula.FORALL) {
-					final Term simplified = isSuperfluousDisjunction(mScript, connectedTerms, freeVarsOfConnectedTerms, eliminatees);
+					final Term simplified =
+							isSuperfluousDisjunction(mScript, connectedTerms, freeVarsOfConnectedTerms, eliminatees);
 					if (SmtUtils.isFalse(simplified)) {
 						isSuperfluous = true;
 					} else if (SmtUtils.isTrue(simplified)) {
@@ -152,46 +152,46 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 			}
 		}
 		if (removeableTerms.isEmpty()) {
-			mLogger.debug(new DebugMessage("not eliminated quantifier via UPD for {0}", occuringVars));
-			return parameters;
-		} else {
-			eliminatees.removeAll(removeableTvs);
-			mLogger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
-			final Term[] result;
-			if (unremoveableTerms.isEmpty()) {
-				if (quantifier == QuantifiedFormula.EXISTS) {
-					result = new Term[] { mScript.term("true") };
-				} else if (quantifier == QuantifiedFormula.FORALL) {
-					result = new Term[] { mScript.term("false") };
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
-			} else {
-				result = unremoveableTerms.toArray(new Term[unremoveableTerms.size()]);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(new DebugMessage("not eliminated quantifier via UPD for {0}", occuringVars));
 			}
-			return result;
+			return parameters;
 		}
+		eliminatees.removeAll(removeableTvs);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
+		}
+		final Term[] result;
+		if (unremoveableTerms.isEmpty()) {
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				result = new Term[] { mScript.term("true") };
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				result = new Term[] { mScript.term("false") };
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+		} else {
+			result = unremoveableTerms.toArray(new Term[unremoveableTerms.size()]);
+		}
+		return result;
 
 	}
-	
-	
-	
-	private boolean containsNonTheoryConstant(final Set<NonTheorySymbol<?>> connectedSymbols) {
+
+	private static boolean containsNonTheoryConstant(final Set<NonTheorySymbol<?>> connectedSymbols) {
 		final Predicate<? super NonTheorySymbol<?>> predicate = x -> (x instanceof Constant);
 		return connectedSymbols.stream().anyMatch(predicate);
 	}
 
 	/**
-	 * Return "true" if connectedVars is a subset of quantifiedVars and the
-	 * conjunction of terms is satisfiable.
-	 * Return "false" if connectedVars is a subset of quantifiedVars and the
-	 * conjunction of terms is not satisfiable.
-	 * Return null otherwise
+	 * Return "true" if connectedVars is a subset of quantifiedVars and the conjunction of terms is satisfiable. Return
+	 * "false" if connectedVars is a subset of quantifiedVars and the conjunction of terms is not satisfiable. Return
+	 * null otherwise
 	 */
-	public static Term isSuperfluousConjunction(final Script script, final Set<Term> terms, final Set<TermVariable> connectedVars,
-			final Set<TermVariable> quantifiedVars) {
+	public static Term isSuperfluousConjunction(final Script script, final Set<Term> terms,
+			final Set<TermVariable> connectedVars, final Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			final Term conjunction = SmtUtils.and(script, terms.toArray(new Term[terms.size()]));
+
+			final Term conjunction = SmtUtils.and(script, terms);
 			final LBool isSat = Util.checkSat(script, conjunction);
 			if (isSat == LBool.SAT) {
 				return script.term("true");
@@ -203,14 +203,12 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 	}
 
 	/**
-	 * Return "false" if connectedVars is a subset of quantifiedVars and the
-	 * conjunction of terms is not valid.
-	 * Return "true" if connectedVars is a subset of quantifiedVars and the
-	 * conjunction of terms is valid.
-	 * Return null otherwise
+	 * Return "false" if connectedVars is a subset of quantifiedVars and the conjunction of terms is not valid. Return
+	 * "true" if connectedVars is a subset of quantifiedVars and the conjunction of terms is valid. Return null
+	 * otherwise
 	 */
-	public static Term isSuperfluousDisjunction(final Script script, final Set<Term> terms, final Set<TermVariable> connectedVars,
-			final Set<TermVariable> quantifiedVars) {
+	public static Term isSuperfluousDisjunction(final Script script, final Set<Term> terms,
+			final Set<TermVariable> connectedVars, final Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
 			final Term disjunction = SmtUtils.or(script, terms.toArray(new Term[terms.size()]));
 			final LBool isSat = Util.checkSat(script, SmtUtils.not(script, disjunction));
@@ -222,7 +220,5 @@ public class XnfUpd extends XjunctPartialQuantifierElimination {
 		}
 		return null;
 	}
-	
-	
 
 }

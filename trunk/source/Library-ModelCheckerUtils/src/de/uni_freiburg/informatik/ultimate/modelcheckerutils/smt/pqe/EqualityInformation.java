@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe;
@@ -36,14 +36,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-
 
 /**
  * A given term, an equal term and the index at which this equality occurred.
+ *
  * @author Matthias Heizmann
  */
 public class EqualityInformation {
@@ -73,20 +73,18 @@ public class EqualityInformation {
 	public Term getTerm() {
 		return mEqualTerm;
 	}
-	
+
 	public RelationSymbol getRelation() {
 		return mRelationSymbol;
 	}
-	
-	
+
 	/**
-	 * Check all terms in context if they are an equality of the form givenTerm
-	 * == t, such that t does not contain the subterm forbiddenTerm. If this is
-	 * the case return corresponding equality information, otherwise return
-	 * null. If forbiddenTerm is null all subterms in t are allowed.
+	 * Check all terms in context if they are an equality of the form givenTerm == t, such that t does not contain the
+	 * subterm forbiddenTerm. If this is the case return corresponding equality information, otherwise return null. If
+	 * forbiddenTerm is null all subterms in t are allowed.
 	 */
-	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final Term[] context, final Term forbiddenTerm,
-			final int quantifier) {
+	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final Term[] context,
+			final Term forbiddenTerm, final int quantifier) {
 		final BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
 
 		// stage 1: check if there is an "=" or "distinct" term where the
@@ -123,25 +121,24 @@ public class EqualityInformation {
 			if (binaryRelations[i] == null) {
 				// not even binary equality relation that contains givenTerm
 				continue;
-			} else {
-				AffineRelation affRel;
-				try {
-					affRel = new AffineRelation(script, context[i]);
-				} catch (final NotAffineException e1) {
-					continue;
-				}
-				final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);
-				if (eqInfo != null) {
-					return eqInfo;
-				}
+			}
+			AffineRelation affRel;
+			try {
+				affRel = new AffineRelation(script, context[i]);
+			} catch (final NotAffineException e1) {
+				continue;
+			}
+			final EqualityInformation eqInfo = getEqinfo(script, givenTerm, affRel, forbiddenTerm, i);
+			if (eqInfo != null) {
+				return eqInfo;
 			}
 		}
 		// no equality information found
 		return null;
 	}
-	
-	
-	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final AffineRelation affRel, final Term forbiddenTerm, final int i) {
+
+	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm, final AffineRelation affRel,
+			final Term forbiddenTerm, final int i) {
 		if (affRel.isVariable(givenTerm)) {
 			Term equalTerm;
 			try {
@@ -158,15 +155,14 @@ public class EqualityInformation {
 			}
 			if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
 				return null;
-			} else {
-				return new EqualityInformation(i, givenTerm, equalTerm, affRel.getRelationSymbol());
 			}
-		} else {
-			return null;
+			return new EqualityInformation(i, givenTerm, equalTerm, affRel.getRelationSymbol());
 		}
+		return null;
 	}
-	
-	public static EqualityInformation getEqinfo(final Term givenTerm, final BinaryEqualityRelation ber, final Term forbiddenTerm, final int i) {
+
+	public static EqualityInformation getEqinfo(final Term givenTerm, final BinaryEqualityRelation ber,
+			final Term forbiddenTerm, final int i) {
 		final Term lhs = ber.getLhs();
 		final Term rhs = ber.getRhs();
 
@@ -182,8 +178,9 @@ public class EqualityInformation {
 		}
 		return null;
 	}
-	
-	public static Pair<Set<Term>, Set<Term>> getEqTerms(final Script script, final Term givenTerm, final Term[] context, final Term forbiddenTerm) {
+
+	public static Pair<Set<Term>, Set<Term>> getEqTerms(final Script script, final Term givenTerm, final Term[] context,
+			final Term forbiddenTerm) {
 		final Set<Term> equivalentTerms = new HashSet<>();
 		final Set<Term> disjointTerms = new HashSet<>();
 		for (int i = 0; i < context.length; i++) {
@@ -213,10 +210,10 @@ public class EqualityInformation {
 				}
 			}
 		}
-		return new Pair<Set<Term>, Set<Term>>(equivalentTerms, disjointTerms);
-		
+		return new Pair<>(equivalentTerms, disjointTerms);
+
 	}
-	
+
 	/**
 	 * Returns true if subterm is a subterm of term.
 	 */

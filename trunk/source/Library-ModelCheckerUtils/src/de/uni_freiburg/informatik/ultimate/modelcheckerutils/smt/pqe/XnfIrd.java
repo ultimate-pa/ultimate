@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -65,16 +65,14 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	public String getAcronym() {
 		return "IRD";
 	}
-	
+
 	@Override
 	public boolean resultIsXjunction() {
 		return true;
-	};
-
+	}
 
 	@Override
-	public Term[] tryToEliminate(final int quantifier, final Term[] oldParams,
-			final Set<TermVariable> eliminatees) {
+	public Term[] tryToEliminate(final int quantifier, final Term[] oldParams, final Set<TermVariable> eliminatees) {
 		final Iterator<TermVariable> it = eliminatees.iterator();
 		Term[] result = oldParams;
 		while (it.hasNext()) {
@@ -83,38 +81,35 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 				// case where var does not occur
 				it.remove();
 				continue;
-			} else {
-//				if (tv.getSort().isNumericSort()) {
-					final Term[] withoutTv = irdSimple(mScript, quantifier, result, tv, mLogger);
-					if (withoutTv != null) {
-						mLogger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
-						result = withoutTv;
-						it.remove();
-					} else {
-						mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
-					}
-//				} else {
-//					// ird is only applicable to variables of numeric sort
-//					mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
-//				}
 			}
+			// if (tv.getSort().isNumericSort()) {
+			final Term[] withoutTv = irdSimple(mScript, quantifier, result, tv, mLogger);
+			if (withoutTv != null) {
+				mLogger.debug(new DebugMessage("eliminated quantifier via IRD for {0}", tv));
+				result = withoutTv;
+				it.remove();
+			} else {
+				mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
+			}
+			// } else {
+			// // ird is only applicable to variables of numeric sort
+			// mLogger.debug(new DebugMessage("not eliminated quantifier via IRD for {0}", tv));
+			// }
 		}
 		return result;
 	}
-	
+
 	/**
-	 * If the application term contains only parameters param such that for each
-	 * param one of the following holds and the third case applies at most once,
-	 * we return all params that do not contain tv. 1. param does not contain tv
-	 * 2. param is an AffineRelation such that tv is a variable of the
-	 * AffineRelation and the function symbol is "distinct" and quantifier is ∃
-	 * or the function symbol is "=" and the quantifier is ∀ 3. param is an
-	 * inequality
-	 * 
+	 * If the application term contains only parameters param such that for each param one of the following holds and
+	 * the third case applies at most once, we return all params that do not contain tv. 1. param does not contain tv 2.
+	 * param is an AffineRelation such that tv is a variable of the AffineRelation and the function symbol is "distinct"
+	 * and quantifier is ∃ or the function symbol is "=" and the quantifier is ∀ 3. param is an inequality
+	 *
 	 * @param logger
 	 */
-	public static Term[] irdSimple(final Script script, final int quantifier, final Term[] oldParams, final TermVariable tv, final ILogger logger) {
-//		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
+	public static Term[] irdSimple(final Script script, final int quantifier, final Term[] oldParams,
+			final TermVariable tv, final ILogger logger) {
+		// assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
 
 		final ArrayList<Term> paramsWithoutTv = new ArrayList<>();
 		int inequalitiesWithTv = 0;
@@ -123,21 +118,21 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			if (!Arrays.asList(oldParam.getFreeVars()).contains(tv)) {
 				paramsWithoutTv.add(oldParam);
 			} else {
-				if (SmtSortUtils.isArraySort(tv.getSort()) || SmtSortUtils.isBoolSort(tv.getSort()) || SmtSortUtils.isFloatingpointSort(tv.getSort())) {
+				if (SmtSortUtils.isArraySort(tv.getSort()) || SmtSortUtils.isBoolSort(tv.getSort())
+						|| SmtSortUtils.isFloatingpointSort(tv.getSort())) {
 					final boolean antiDer = isAntiDer(oldParam, tv, quantifier);
 					if (antiDer) {
 						numberOfAntiDer++;
 						continue;
-					} else {
-						return null;
 					}
+					return null;
 				}
-				
+
 				if (!SmtSortUtils.isNumericSort(tv.getSort()) && !SmtSortUtils.isBitvecSort(tv.getSort())) {
-					throw new UnsupportedOperationException("implement support for sort " + tv.getSort() + " in " + XnfIrd.class.getSimpleName());
+					throw new UnsupportedOperationException(
+							"implement support for sort " + tv.getSort() + " in " + XnfIrd.class.getSimpleName());
 				}
-				
-				
+
 				AffineRelation affineRelation;
 				try {
 					affineRelation = new AffineRelation(script, oldParam);
@@ -195,18 +190,17 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 						// unable to eliminate quantifier, we may drop at most
 						// one inequality
 						return null;
-					} else {
-						inequalitiesWithTv++;
-						// we may drop this parameter (but it has to be the
-						// only dropped inequality
 					}
+					inequalitiesWithTv++;
+					// we may drop this parameter (but it has to be the
+					// only dropped inequality
 					break;
 				default:
 					throw new AssertionError("unknown functionSymbol");
 				}
 			}
 		}
-//		throw new AssertionError("ird ftw");
+		// throw new AssertionError("ird ftw");
 		final float numberOfDomainElements = underapproximateNumberOfDomainElements(tv.getSort());
 		if (numberOfAntiDer >= numberOfDomainElements) {
 			return null;
@@ -214,8 +208,6 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 		return paramsWithoutTv.toArray(new Term[paramsWithoutTv.size()]);
 	}
 
-	
-	
 	private static float underapproximateNumberOfDomainElements(final Sort sort) {
 		if (SmtSortUtils.isBoolSort(sort)) {
 			return 2.0f;
@@ -242,8 +234,8 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	}
 
 	/**
-	 * @return true iff oldParam is a not equals relation (resp. quality for universal quantifier)
-	 * such that one side is the variable tv and tv does not occur on the other side.
+	 * @return true iff oldParam is a not equals relation (resp. quality for universal quantifier) such that one side is
+	 *         the variable tv and tv does not occur on the other side.
 	 */
 	private static boolean isAntiDer(final Term oldParam, final TermVariable tv, final int quantifier) {
 		BinaryEqualityRelation ber;
@@ -258,12 +250,10 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 					|| ber.getRhs().equals(tv) && !Arrays.asList(ber.getLhs().getFreeVars()).contains(tv)) {
 				// this is the antiDER case
 				return true;
-			} else {
-				return false;
 			}
-		} else {
 			return false;
 		}
+		return false;
 	}
 
 }

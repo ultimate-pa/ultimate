@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
@@ -51,24 +51,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfTir;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.pqe.XnfUpd;
 
 /**
- * Transform a Term into form where quantifier are pushed as much inwards
- * as possible and quantifiers are eliminated via local quantifier elimination 
- * techniques if possible
- * 
+ * Transform a Term into form where quantifier are pushed as much inwards as possible and quantifiers are eliminated via
+ * local quantifier elimination techniques if possible
+ *
  * @author Matthias Heizmann
- * 
+ *
  */
 public class QuantifierPusher extends TermTransformer {
-	
+
 	public enum PqeTechniques {
 		/**
-		 * Apply only the DER partial quantifier elimination technique 
+		 * Apply only the DER partial quantifier elimination technique
 		 */
 		ONLY_DER,
 		/**
-		 * Apply all our partial quantifier elimination techniques that can
-		 * be applied locally to subterms without knowing the input term
-		 * on which the quantifier elimination was called on.
+		 * Apply all our partial quantifier elimination techniques that can be applied locally to subterms without
+		 * knowing the input term on which the quantifier elimination was called on.
 		 */
 		ALL_LOCAL,
 		/**
@@ -76,29 +74,23 @@ public class QuantifierPusher extends TermTransformer {
 		 */
 		NO_UPD,
 	}
-	
-	private enum SubformulaClassification { 
-		CORRESPONDING_FINITE_CONNECTIVE,
-		DUAL_FINITE_CONNECTIVE,
-		SAME_QUANTIFIER,
-		DUAL_QUANTIFIER,
-		ATOM,
+
+	private enum SubformulaClassification {
+		CORRESPONDING_FINITE_CONNECTIVE, DUAL_FINITE_CONNECTIVE, SAME_QUANTIFIER, DUAL_QUANTIFIER, ATOM,
 	}
-	
+
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final PqeTechniques mPqeTechniques;
 	/**
-	 * Try to apply distributivity rules to get connectives over which we
-	 * can push quantifiers. E.g. if we have a formula or the form (A && (B || C))
-	 * we cannot directly push an existential quantifier. We can apply 
-	 * distributivity, obtain (A && B) || (A && C) and can now push the 
-	 * existential quantifier one step further.
+	 * Try to apply distributivity rules to get connectives over which we can push quantifiers. E.g. if we have a
+	 * formula or the form (A && (B || C)) we cannot directly push an existential quantifier. We can apply
+	 * distributivity, obtain (A && B) || (A && C) and can now push the existential quantifier one step further.
 	 */
 	private final boolean mApplyDistributivity;
 
-	public QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services, 
+	public QuantifierPusher(final ManagedScript script, final IUltimateServiceProvider services,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques) {
 		mServices = services;
 		mMgdScript = script;
@@ -119,7 +111,8 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private Term tryToPush(QuantifiedFormula quantifiedFormula) throws AssertionError {
-		SubformulaClassification classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
+		SubformulaClassification classification =
+				classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
 		if (classification == SubformulaClassification.DUAL_QUANTIFIER) {
 			quantifiedFormula = processDualQuantifier(quantifiedFormula);
 			classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
@@ -152,26 +145,25 @@ public class QuantifierPusher extends TermTransformer {
 	}
 
 	private Term applyEliminationToAtom(final QuantifiedFormula quantifiedFormula) {
-		final Term elimResult = applyEliminationTechniques(quantifiedFormula.getQuantifier(), 
-				new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())), 
+		final Term elimResult = applyEliminationTechniques(quantifiedFormula.getQuantifier(),
+				new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())),
 				new Term[] { quantifiedFormula.getSubformula() });
 		if (elimResult == null) {
 			return quantifiedFormula;
-		} else {
-			return elimResult;
 		}
+		return elimResult;
 	}
 
 	private Term pushOverCorrespondingFiniteConnective(final QuantifiedFormula quantifiedFormula) {
 		assert (quantifiedFormula.getSubformula() instanceof ApplicationTerm);
 		final ApplicationTerm appTerm = (ApplicationTerm) quantifiedFormula.getSubformula();
-		assert (appTerm.getFunction().getApplicationString().equals(
-				SmtUtils.getCorrespondingFiniteConnective(quantifiedFormula.getQuantifier())));
+		assert (appTerm.getFunction().getApplicationString()
+				.equals(SmtUtils.getCorrespondingFiniteConnective(quantifiedFormula.getQuantifier())));
 		final Term[] oldParams = appTerm.getParameters();
 		final Term[] newParams = new Term[oldParams.length];
-		for (int i=0; i<oldParams.length; i++) {
-			newParams[i] = SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), 
-					new HashSet<TermVariable>(Arrays.asList(quantifiedFormula.getVariables())), oldParams[i]);
+		for (int i = 0; i < oldParams.length; i++) {
+			newParams[i] = SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(),
+					new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())), oldParams[i]);
 		}
 		return mScript.term(appTerm.getFunction().getName(), newParams);
 	}
@@ -179,12 +171,14 @@ public class QuantifierPusher extends TermTransformer {
 	private Term tryToPushOverDualFiniteConnective(final QuantifiedFormula quantifiedFormula) {
 		assert (quantifiedFormula.getSubformula() instanceof ApplicationTerm);
 		final ApplicationTerm appTerm = (ApplicationTerm) quantifiedFormula.getSubformula();
-		assert (appTerm.getFunction().getApplicationString().equals(
-				SmtUtils.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier()))));
+		assert (appTerm.getFunction().getApplicationString().equals(SmtUtils
+				.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier()))));
 
-		assert quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS && appTerm.getFunction().getName().equals("and")
-				|| quantifiedFormula.getQuantifier() == QuantifiedFormula.FORALL && appTerm.getFunction().getName().equals("or");
-		
+		assert quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS
+				&& appTerm.getFunction().getName().equals("and")
+				|| quantifiedFormula.getQuantifier() == QuantifiedFormula.FORALL
+						&& appTerm.getFunction().getName().equals("or");
+
 		// Step 1:
 		// do partition
 		// if you can push something, push and return
@@ -193,13 +187,13 @@ public class QuantifierPusher extends TermTransformer {
 		if (!pp.isIsPartitionTrivial()) {
 			return pp.getTermWithPushedQuantifier();
 		}
-		
+
 		// 2016-12-03 Matthias: plan for refactoring
 		//
 		// do partition
 		// if you can push something, push and return
 		// if you cannot push, continue
-		//  
+		//
 		// apply sequence of eliminations
 		// after each, check topmost connector
 		// if 'other finite' continue
@@ -208,38 +202,37 @@ public class QuantifierPusher extends TermTransformer {
 		// if all elimination processed (and still 'other finite')
 		// check for 'same finite' in one 'other finite'
 		// if exists, distribute, apply new pusher to result
-		//            if less quantified return result
-		//            if not less quantified return term after elimination
+		// if less quantified return result
+		// if not less quantified return term after elimination
 		// if not exists return
-		
 
 		final int quantifier = quantifiedFormula.getQuantifier();
 		final Set<TermVariable> eliminatees = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
 		{
-			
+
 			final Term[] dualFiniteParams = QuantifierUtils.getXjunctsInner(quantifier, appTerm);
 			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
 			if (eliminationResult == null) {
 				// nothing was removed
 				if (mApplyDistributivity) {
-					// 2016-12-17 Matthias TODO: 
-					// before applying distributivity bring each disjunct in 
+					// 2016-12-17 Matthias TODO:
+					// before applying distributivity bring each disjunct in
 					// NNF (with quantifier push)
-					// if afterwards some disjunct is disjunction then re-apply 
+					// if afterwards some disjunct is disjunction then re-apply
 					// the tryToPushOverDualFiniteConnective method
-					for (int i=0; i<dualFiniteParams.length; i++) {
+					for (int i = 0; i < dualFiniteParams.length; i++) {
 						if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
-							final Term correspondingFinite = applyDistributivityAndPush(quantifier, eliminatees, dualFiniteParams, i);
+							final Term correspondingFinite =
+									applyDistributivityAndPush(quantifier, eliminatees, dualFiniteParams, i);
 							return correspondingFinite;
 						}
 					}
 				}
-				// failed to apply distributivity,  return original
+				// failed to apply distributivity, return original
 				return quantifiedFormula;
-			} else {
-				return eliminationResult;
 			}
-		} 
+			return eliminationResult;
+		}
 
 	}
 
@@ -247,7 +240,7 @@ public class QuantifierPusher extends TermTransformer {
 			final Term[] dualFiniteParams, final int i) {
 		final Term[] correspondingFiniteParams = QuantifierUtils.getXjunctsOuter(quantifier, dualFiniteParams[i]);
 		final List<Term> otherDualFiniteParams = new ArrayList<>(dualFiniteParams.length - 1);
-		for (int j=0; j<dualFiniteParams.length; j++) {
+		for (int j = 0; j < dualFiniteParams.length; j++) {
 			if (j != i) {
 				otherDualFiniteParams.add(dualFiniteParams[j]);
 			}
@@ -258,8 +251,10 @@ public class QuantifierPusher extends TermTransformer {
 			final List<Term> resultInnerParams = new ArrayList<>();
 			resultInnerParams.add(cfp);
 			resultInnerParams.addAll(otherDualFiniteParams);
-			resultOuterParams[offset] = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultInnerParams);
-			resultOuterParams[offset] = SmtUtils.quantifier(mScript, quantifier, eliminatees, resultOuterParams[offset]);
+			resultOuterParams[offset] =
+					QuantifierUtils.applyDualFiniteConnective(mScript, quantifier, resultInnerParams);
+			resultOuterParams[offset] =
+					SmtUtils.quantifier(mScript, quantifier, eliminatees, resultOuterParams[offset]);
 			offset++;
 		}
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, quantifier, resultOuterParams);
@@ -268,10 +263,10 @@ public class QuantifierPusher extends TermTransformer {
 
 	private boolean isCorrespondingFinite(final Term term, final int quantifier) {
 		if (term instanceof ApplicationTerm) {
-			return ((ApplicationTerm) term).getFunction().getApplicationString().equals(SmtUtils.getCorrespondingFiniteConnective(quantifier));
-		} else {
-			return false;
+			return ((ApplicationTerm) term).getFunction().getApplicationString()
+					.equals(SmtUtils.getCorrespondingFiniteConnective(quantifier));
 		}
+		return false;
 	}
 
 	private Term applyEliminationTechniques(final int quantifier, final Set<TermVariable> eliminatees,
@@ -282,7 +277,8 @@ public class QuantifierPusher extends TermTransformer {
 		case ALL_LOCAL:
 			elimtechniques.add(new XnfDer(mMgdScript, mServices));
 			elimtechniques.add(new XnfIrd(mMgdScript, mServices));
-			elimtechniques.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+			elimtechniques
+					.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 			elimtechniques.add(new XnfUpd(mMgdScript, mServices));
 			break;
 		case NO_UPD:
@@ -299,10 +295,12 @@ public class QuantifierPusher extends TermTransformer {
 		}
 		for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
 			// nothing was removed in last iteration, continue with original params
-			final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifier, dualFiniteParams, eliminatees);
-			final Term result = QuantifierUtils.applyDualFiniteConnective(
-					mScript, quantifier, Arrays.asList(elimResulDualFiniteParams));
-			final Set<TermVariable> eliminateesAfterwards = PartialQuantifierElimination.constructNewEliminatees(result, eliminatees);
+			final Term[] elimResulDualFiniteParams =
+					technique.tryToEliminate(quantifier, dualFiniteParams, eliminatees);
+			final Term result = QuantifierUtils.applyDualFiniteConnective(mScript, quantifier,
+					Arrays.asList(elimResulDualFiniteParams));
+			final Set<TermVariable> eliminateesAfterwards =
+					PartialQuantifierElimination.constructNewEliminatees(result, eliminatees);
 			if (eliminateesAfterwards.isEmpty()) {
 				// all were removed
 				return result;
@@ -313,13 +311,12 @@ public class QuantifierPusher extends TermTransformer {
 				if (quantified instanceof QuantifiedFormula) {
 					final QuantifiedFormula intermediate = (QuantifiedFormula) quantified;
 					return tryToPush(intermediate);
-				} else {
-					// special case:
-					// eliminatees not reported correctly, no quantifier needed
-					// handle similar as empty eliminatees case
-					// TODO: eliminatees should be reported correctly
-					return quantified;
 				}
+				// special case:
+				// eliminatees not reported correctly, no quantifier needed
+				// handle similar as empty eliminatees case
+				// TODO: eliminatees should be reported correctly
+				return quantified;
 			}
 		}
 		return null;
@@ -330,16 +327,16 @@ public class QuantifierPusher extends TermTransformer {
 			final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) subformula;
 			if (quantifiedSubFormula.getQuantifier() == quantifier) {
 				return SubformulaClassification.SAME_QUANTIFIER;
-			} else {
-				return SubformulaClassification.DUAL_QUANTIFIER;
 			}
+			return SubformulaClassification.DUAL_QUANTIFIER;
 		} else if (subformula instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) subformula;
 			final String correspondingFiniteConnective = SmtUtils.getCorrespondingFiniteConnective(quantifier);
 			if (appTerm.getFunction().getApplicationString().equals(correspondingFiniteConnective)) {
 				return SubformulaClassification.CORRESPONDING_FINITE_CONNECTIVE;
 			}
-			final String dualFiniteConnective = SmtUtils.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifier));
+			final String dualFiniteConnective =
+					SmtUtils.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifier));
 			if (appTerm.getFunction().getApplicationString().equals(dualFiniteConnective)) {
 				return SubformulaClassification.DUAL_FINITE_CONNECTIVE;
 			}
@@ -348,7 +345,7 @@ public class QuantifierPusher extends TermTransformer {
 			return SubformulaClassification.ATOM;
 		}
 	}
-	
+
 	private QuantifiedFormula processSameQuantifier(final QuantifiedFormula quantifiedFormula) {
 		assert (quantifiedFormula.getSubformula() instanceof QuantifiedFormula);
 		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) quantifiedFormula.getSubformula();
@@ -363,13 +360,16 @@ public class QuantifierPusher extends TermTransformer {
 		final Term body = quantifiedSubFormula.getSubformula();
 		return (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(), vars, body);
 	}
-	
+
 	private QuantifiedFormula processDualQuantifier(final QuantifiedFormula quantifiedFormula) {
 		assert (quantifiedFormula.getSubformula() instanceof QuantifiedFormula);
 		final QuantifiedFormula quantifiedSubFormula = (QuantifiedFormula) quantifiedFormula.getSubformula();
 		assert (quantifiedSubFormula.getQuantifier() == SmtUtils.getOtherQuantifier(quantifiedFormula.getQuantifier()));
-		final Term quantifiedSubFormulaPushed = (new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques)).transform(quantifiedSubFormula);
-		final QuantifiedFormula update = (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(), quantifiedFormula.getVariables(), quantifiedSubFormulaPushed);
+		final Term quantifiedSubFormulaPushed =
+				(new QuantifierPusher(mMgdScript, mServices, mApplyDistributivity, mPqeTechniques))
+						.transform(quantifiedSubFormula);
+		final QuantifiedFormula update = (QuantifiedFormula) mScript.quantifier(quantifiedFormula.getQuantifier(),
+				quantifiedFormula.getVariables(), quantifiedSubFormulaPushed);
 		return update;
 	}
 
@@ -385,8 +385,5 @@ public class QuantifierPusher extends TermTransformer {
 			super.convertApplicationTerm(appTerm, newArgs);
 		}
 	}
-	
-	
-	
-	
+
 }

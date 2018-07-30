@@ -800,9 +800,8 @@ public final class SmtUtils {
 			} else {
 				throw new AssertionError("unknown type of integer value " + value.getClass().getSimpleName());
 			}
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
